@@ -1,0 +1,569 @@
+{
+  "schema": "task40extra.V13-successful-X-compact-evidence.v1",
+  "language": "zh-CN",
+  "disposition": "PASS_FRESH_X_SAVED_ONLY_INDEPENDENT_CHECKER_WITH_BOUND_SUPERVISION",
+  "point_identity": {
+    "name": "X",
+    "worker_head": "816b7247c8359a7affbd450365de5bbb86de367a",
+    "worker_report_sha256": "f98c393f1056b6722d3fda28775dfa6c98cd25ec332417c08dfc2d7ae883de08",
+    "checker_head": "2a07d23d17b527675e6ae0b904c56121e258b4fc",
+    "checker_file_sha256": "7cfba8a3de25cbb15d9cfaef7000b9d7860feacb474740cdadadcfcace80c08a",
+    "supervisor_file_sha256": "5c0aae7af937ef22e9a2379ab6eae9f8974f579343be676b8dbd9cec602001fd",
+    "supplemental_file_sha256": "8741aee5110e4167e52638a370a7163eee6384d6c2eb755415336c114d40506c",
+    "artifact_manifest_sha256": "ce5fdf1619372f10756f105d25891f8bcbe8c526c79c0bb16ab5ef8db29d8101",
+    "worker_checker_same_HEAD_claimed": false,
+    "source_bridge": {
+      "schema": "task40extra.direct-X-checker-event-stream-source-bridge.v1",
+      "worker_head": "816b7247c8359a7affbd450365de5bbb86de367a",
+      "checker_head": "2a07d23d17b527675e6ae0b904c56121e258b4fc",
+      "same_head_exact_source_identity": false,
+      "allowed_checker_test_paths": [
+        "benchmarks/check_y_orbit_direct_probe.py",
+        "benchmarks/check_y_orbit_quotient_probe.py",
+        "src/test/test_y_orbit_direct_event_stream_metadata.py"
+      ],
+      "changed_paths": [
+        "benchmarks/check_y_orbit_direct_probe.py",
+        "benchmarks/check_y_orbit_quotient_probe.py",
+        "src/test/test_y_orbit_direct_event_stream_metadata.py"
+      ],
+      "all_other_numerical_config_input_dependencies_equal": true,
+      "worker_dependency_manifest_sha256": "b17eac7ff5e937688ae8f7ed05a26327942637f326e6401027277f88f55030d2",
+      "checker_dependency_manifest_sha256": "81935219e156463bd5f75e318f0637c1c318b2f1b90ed0c593424d98e9c13c4d",
+      "changed_dependencies": [
+        {
+          "path": "benchmarks/check_y_orbit_direct_probe.py",
+          "worker_sha256": "ef0bd44c7fcc1ba852fc00e8a74b7851d62cba4f231bbb773681585d98b61d55",
+          "checker_sha256": "d4993f8721d41cbc20fcb4b6fc464a08d016e5677c101d7a5cf066df511c0e93"
+        },
+        {
+          "path": "benchmarks/check_y_orbit_quotient_probe.py",
+          "worker_sha256": "77b4090ebf4395b1e8f37b72def54fde05f4dc09ef466395898b5c2ef0f0c42a",
+          "checker_sha256": "89aeef289b0afacf0c1e82ac138a535c7f30a3ddceb3c456509ac82f64921bb2"
+        },
+        {
+          "path": "src/test/test_y_orbit_direct_event_stream_metadata.py",
+          "worker_sha256": null,
+          "checker_sha256": "9126e257f661858979d89e141029e7b4a6508803c7b20ba4f7c027fc82d2e455"
+        }
+      ]
+    }
+  },
+  "point_scope": {
+    "profile": {
+      "name": "X",
+      "dimensions": [
+        6,
+        4,
+        5
+      ],
+      "cell_count": 120,
+      "local_cell_count": 60,
+      "complete_cell_dimension": 300,
+      "physical_mode_count": 532,
+      "q_port_counts": [
+        76,
+        152,
+        152,
+        152
+      ],
+      "augmented_rows_per_q": [
+        2788,
+        2864,
+        2864,
+        2864
+      ],
+      "notch_comparison": "same_physical_notch",
+      "ordinary_defaults_changed": false
+    },
+    "original_global_interiors": 12960,
+    "full_original_columns_per_cell": 300,
+    "source_output_groups": 8,
+    "finite_modes_per_output_group": 532,
+    "fixed_manual_physical_mode_count": 532,
+    "mesh_refinement": "X为同一光学尺寸和manual532下的p4网格加密点；不构成目标光学规模增长或AUTO32060资格化",
+    "target_geometry_accuracy": false,
+    "original_target_size_qualified": false,
+    "research_boundary": {
+      "tree_cap_bytes": 2147483648,
+      "wall_seconds": 1800,
+      "MPI": 1,
+      "math_threads": 1,
+      "zero_swap_required": true
+    }
+  },
+  "worker_terminal": {
+    "supervisor_classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "supervisor_elapsed_seconds": 1535.1467186810041,
+    "sampled_process_tree_rss_peak_bytes": 1422172160,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "time_exceeded": {
+      "workflow": false,
+      "solve": false,
+      "active_pc": false
+    },
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "status": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+    "factor_count": 4,
+    "PDE_solved": true,
+    "official_results": false,
+    "worker_report_sha256": "f98c393f1056b6722d3fda28775dfa6c98cd25ec332417c08dfc2d7ae883de08",
+    "worker_report_elapsed_seconds": 1529.929072162995,
+    "final_phase_receipt": {
+      "phase": "probe_complete",
+      "factor_count": 4,
+      "worker_elapsed_seconds": 1533.5392253109894,
+      "research_wall_seconds": 1800,
+      "phase_wall_seconds": 1799.6310292170092,
+      "research_memory_gib": 2,
+      "requested_tree_cap_bytes": 2147483648
+    },
+    "interpretation": "worker完成与报告的数值通过属于worker证据；首轮独立checker仍gate/evidence false，不能写成完整独立资格化通过"
+  },
+  "checker_terminal": {
+    "schema_and_gate": {
+      "schema": "task40extra.y-orbit-direct-profile-checker.v1",
+      "gate_pass": true,
+      "evidence_valid_field_defined_by_success_schema": false,
+      "qualification": "fresh X complete full original inverse/FGMRES/residual/recovery/all532 output",
+      "numeric_factor_calls": 0,
+      "factor_count_from_worker": 4,
+      "PDE_solved_from_worker": true,
+      "official_results": false,
+      "historical_arrays_loaded": false,
+      "historical_original312_reused_for_new_point": false,
+      "historical_original_check_count": 0,
+      "global_Ny_reference_matrices_created": false
+    },
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 590.1043245119945,
+      "sampled_process_tree_rss_peak_bytes": 1567666176,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "time_exceeded": {
+        "workflow": false,
+        "solve": false,
+        "active_pc": false
+      },
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "end": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      }
+    },
+    "PDE_JIT_factor_solve_rerun": false
+  },
+  "checker_counts": {
+    "families": {
+      "direct": {
+        "passed_entry_count": 358,
+        "unique_name_count": 358
+      },
+      "raw": {
+        "passed_entry_count": 33519,
+        "unique_name_count": 33519
+      },
+      "operator": {
+        "passed_entry_count": 37,
+        "unique_name_count": 37
+      },
+      "shared": {
+        "passed_entry_count": 41217,
+        "unique_name_count": 35754
+      }
+    },
+    "total_passed_entries": 75131,
+    "shared_repeated_names_legitimate": true,
+    "interpretation": "41217个shared条目/35754个unique name；不同covered entity可使用相同控制label，按success schema条目计数；不增加全局unique-name要求"
+  },
+  "event_metadata_integrity": {
+    "path": "probe_events.jsonl",
+    "file_sha256": "9a014d1acf266b4a8e3573faf1e3c62a1e3832ddf6301d78b7344930c9a85cc2",
+    "file_bytes": 184493589,
+    "line_count": 99657,
+    "blank_line_count": 0,
+    "event_count": 99657,
+    "maximum_line_bytes": 44174864,
+    "read_chunk_bytes": 1048576,
+    "maximum_admitted_line_bytes": 67108864,
+    "all_events_retained": true,
+    "exact_event_order_preserved": true,
+    "complete_EOF_verified": true,
+    "same_file_hash_both_passes": true,
+    "keys_interned_without_value_changes": true
+  },
+  "factor_evidence": {
+    "all_q_factors": 4,
+    "all_four_retained_simultaneously": true,
+    "all_reformed_blocks_compared_before_factor": true,
+    "factor_L_U_copies": false,
+    "factor_reuse_plus_minus_q": false,
+    "setup_seconds": 3.9568744160060305,
+    "setup_timing_scope": "包含factor setup测试与evidence，不作为pure backend factor或pure PC计时",
+    "input_CSR_total_payload_bytes": 54078536,
+    "input_blocks_metadata": [
+      {
+        "q": 0,
+        "shape": [
+          2788,
+          2788
+        ],
+        "nnz": 653788,
+        "CSR_payload_bytes": 13086916,
+        "CSR_sha256": "916d173254c3d5b0e60989c5270bffb0b4c66d062ca52768c4a81a2b2563545d",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      },
+      {
+        "q": 1,
+        "shape": [
+          2864,
+          2864
+        ],
+        "nnz": 682774,
+        "CSR_payload_bytes": 13666940,
+        "CSR_sha256": "e99b98f73ba4ae18b24494d1163837e12898f4c684b1afd53a893f8516c7459b",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      },
+      {
+        "q": 2,
+        "shape": [
+          2864,
+          2864
+        ],
+        "nnz": 682040,
+        "CSR_payload_bytes": 13652260,
+        "CSR_sha256": "7c1ec963c1446fcd9f79a479fa380bf8fc67eb6b77a1652ba732c78bf33bb773",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      },
+      {
+        "q": 3,
+        "shape": [
+          2864,
+          2864
+        ],
+        "nnz": 683048,
+        "CSR_payload_bytes": 13672420,
+        "CSR_sha256": "b750c037b6742d1d81fd2c02f594699220b5a27e3fe20f703c42b88d5e6d82eb",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      }
+    ],
+    "tests": [
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 8.387028846881249e-14,
+        "q": 0,
+        "repeated_difference": 0.0,
+        "true_block_residual": 4.40052082366228e-13
+      },
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 1.559891769540248e-13,
+        "q": 1,
+        "repeated_difference": 0.0,
+        "true_block_residual": 2.753691816975406e-13
+      },
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 9.77636703720587e-14,
+        "q": 2,
+        "repeated_difference": 0.0,
+        "true_block_residual": 4.942723260469516e-13
+      },
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 1.3285245003272673e-13,
+        "q": 3,
+        "repeated_difference": 0.0,
+        "true_block_residual": 2.784670674491133e-13
+      }
+    ],
+    "actual_factor_memory_or_fill_qualification": false
+  },
+  "source_results": [
+    {
+      "source": "generic",
+      "regular_full_original_residual": 5.620585699412784e-12,
+      "notch_iterations": 4,
+      "notch_full_original_residual": 4.655919702156525e-12,
+      "notch_nonzero_q_primal_relative": 0.5683903893362154,
+      "output_finite_modes_regular": 532,
+      "output_finite_modes_notch": 532
+    },
+    {
+      "source": "interior_only",
+      "regular_full_original_residual": 7.232665811223197e-12,
+      "notch_iterations": 4,
+      "notch_full_original_residual": 4.710949682298374e-12,
+      "notch_nonzero_q_primal_relative": 0.6176166079525833,
+      "output_finite_modes_regular": 532,
+      "output_finite_modes_notch": 532
+    },
+    {
+      "source": "notch_supported",
+      "regular_full_original_residual": 1.094281969784667e-11,
+      "notch_iterations": 5,
+      "notch_full_original_residual": 3.0673798839079457e-13,
+      "notch_nonzero_q_primal_relative": 0.5400720500521164,
+      "output_finite_modes_regular": 532,
+      "output_finite_modes_notch": 532
+    },
+    {
+      "source": "physical",
+      "regular_full_original_residual": 7.57682638912512e-11,
+      "notch_iterations": 4,
+      "notch_full_original_residual": 4.249833809435228e-12,
+      "notch_nonzero_q_primal_relative": 9.791635566626867e-05,
+      "output_finite_modes_regular": 532,
+      "output_finite_modes_notch": 532
+    }
+  ],
+  "residual_evidence": {
+    "physical_regular_stored_native": 7.57682638912512e-11,
+    "independently_reconstructed_native_max": 7.546733167266532e-11,
+    "stored_and_independent_true_residual_limit": 1e-10,
+    "notch_full_original_residual_max": 4.710949682298374e-12,
+    "full_native_slave_zero_all_sources": true,
+    "all_original_interiors_preserved": 12960,
+    "residual_binding_semantics": "保存及独立residual各自exact operand定义；差异通过独立operand差异+complex128推导roundoff bound；原failed RHS-crossrepresentation gate保留在历史archive",
+    "tiny_residual_relative_precision_claimed": false,
+    "semantic_correction_verification": {
+      "envelope_scope": "Computed rounded-add/subtract diagnostic, not interval-certified operator bound",
+      "exact_saved_and_recomputed_operand_definitions_bound": true,
+      "independent_operand_gates_limit": 1e-11,
+      "representation_binding_count": 36,
+      "review_receipt_sha256": "1eb8fad8f8e476f6bfa261b068e441505a5d64ccee7a6459a690300d43066ed2",
+      "saved_and_recomputed_each12_native_FE_port_equation_gates_limit": 1e-10,
+      "tiny_residual_cross_representation_1e_minus12_RHS_precision_claimed": false,
+      "underflow_false_zero_rejected": true
+    }
+  },
+  "sample_and_accuracy_limits": {
+    "weak_perturbation_case_only": true,
+    "changed_cells": [
+      58,
+      77
+    ],
+    "notch_physical_nonzero_q_primal_relative": 9.791635566626867e-05,
+    "sampled_right_PC_defect": {
+      "generic": 0.001736049303062485,
+      "interior_only": 0.0014805088197111958,
+      "notch_supported": 0.002668027454859759,
+      "physical": 0.013423201750147613
+    },
+    "PC_defect_is_norm_bound": false,
+    "target_geometry_accuracy": false,
+    "strong_coupling_generalization_established": false,
+    "target_scale_capacity_qualified": false,
+    "target_AUTO32060_or_original_size_qualified": false,
+    "user2TB48h_qualified": false,
+    "pure_backend_factor_time_known": false,
+    "pure_PC_time_known": false,
+    "actual_factor_fill_memory_known": false,
+    "ordinary_1p5GiB_600s_qualification_claimed": false,
+    "Y_or_XZ_qualification_claimed": false,
+    "rounded_diagnostic_is_interval_certified_operator_bound": false
+  },
+  "receipt_only_finalization": {
+    "supplemental_status": "ACTUAL_DIRECT_SUCCESS_SCHEMA_AND_SUPERVISION_VERIFIED",
+    "original_checker_and_worker_unchanged": true,
+    "evidence_valid_invented_or_added": false,
+    "post_success_launcher_failure": {
+      "record_type": "post-run preservation of observed launcher exception",
+      "exception_type": "KeyError",
+      "missing_key": "evidence_valid",
+      "source": "external launcher after successful checker output and watchdog binding",
+      "launch_script_path": "/tmp/task40extra_X_saved_checker_launch.py",
+      "launch_script_sha256": "71f2b9498a03506ce4ec9805785f72ff9ce3b8a43b083d3f9760abeb49b22efa",
+      "original_checker_success_schema_does_not_define_this_key": true,
+      "PDE_or_checker_rerun": false
+    },
+    "first_supplemental_finalizer_failure": {
+      "exception_type": "AssertionError",
+      "stage": "extra unique-name assertion in supplemental finalizer before any receipt or original-file mutation",
+      "script_sha256": "b5e06e0e372c4c43de44f3212f574b3799690752ea12554e53bb768e94e058f7",
+      "expected_shared_entries": 41217,
+      "actual_shared_entries": 41217,
+      "actual_shared_unique_names": 35754,
+      "reason": "existing shared checker repeats generic control names for distinct covered entities; success schema binds entry count rather than global name uniqueness",
+      "PDE_or_checker_rerun": false
+    },
+    "finalization_script_sha256": "4afcdcb7bb9b1789ca128c887598054b1525151e4a6b8fde2919b07dc70e2d1c",
+    "metadata_only": true,
+    "PDE_JIT_factor_solve_or_checker_rerun": false,
+    "meaning": "真实direct success schema不定义evidence_valid；receipt-only确认实际schema/gates/counts/终态，不改写原packet或伪造字段"
+  },
+  "historical_failure_archives": [
+    {
+      "directory": "staging/direct_X_failure_and_proof_archive_5758f5e",
+      "report": {
+        "path": "staging/direct_X_failure_and_proof_archive_5758f5e/report_zh.md",
+        "sha256": "f1c60af08a4111d0dbb8683a5418703c91057daff5810b8befb2f9c357589033",
+        "bytes": 6112,
+        "role": "preserved historical snapshot direct_X_failure_and_proof_archive_5758f5e"
+      },
+      "compact": {
+        "path": "staging/direct_X_failure_and_proof_archive_5758f5e/compact_record.json",
+        "sha256": "b7ea37e17e70c4be96f071d22089175249bcd48146b5e733179ea433aecfee19",
+        "bytes": 36964,
+        "role": "preserved historical metrics direct_X_failure_and_proof_archive_5758f5e"
+      },
+      "manifest_sha256": "abdbd9b467ca5a54527f4ef51a9dab622aed58c1b217c1297f9959d375f1e6c0",
+      "interpretation": "历史终态快照保持原状；当前X资格化结论由本次success packet/supervision/supplemental确定"
+    },
+    {
+      "directory": "staging/direct_X_resource_stop_archive_5758f5e",
+      "report": {
+        "path": "staging/direct_X_resource_stop_archive_5758f5e/report_zh.md",
+        "sha256": "c8990819dbcae8f683726c8d8e47c6ac777ccfef2626fa13951b3102b1d6f2d9",
+        "bytes": 4753,
+        "role": "preserved historical snapshot direct_X_resource_stop_archive_5758f5e"
+      },
+      "compact": {
+        "path": "staging/direct_X_resource_stop_archive_5758f5e/compact_record.json",
+        "sha256": "bf003653428d53aedd4050afee4128e94d963c03f7c10c907d18a9afb8c0c307",
+        "bytes": 22245,
+        "role": "preserved historical metrics direct_X_resource_stop_archive_5758f5e"
+      },
+      "manifest_sha256": "f0b74a82bda0bd6585b1622e4d7f87c423a858de157438e11b484285214fbf4f",
+      "interpretation": "历史终态快照保持原状；当前X资格化结论由本次success packet/supervision/supplemental确定"
+    },
+    {
+      "directory": "staging/direct_X_attempt5_worker_archive_816b7247",
+      "report": {
+        "path": "staging/direct_X_attempt5_worker_archive_816b7247/report_zh.md",
+        "sha256": "daf2b2f155840cdd7dd0b20665102e8ad893b3cbc0ea46504795dcd00e08cf73",
+        "bytes": 4787,
+        "role": "preserved historical snapshot direct_X_attempt5_worker_archive_816b7247"
+      },
+      "compact": {
+        "path": "staging/direct_X_attempt5_worker_archive_816b7247/compact_record.json",
+        "sha256": "f09499601d5e9b560fbe359fb62efe58a9b72064c02057e119c4a49a21bd5d84",
+        "bytes": 23547,
+        "role": "preserved historical metrics direct_X_attempt5_worker_archive_816b7247"
+      },
+      "manifest_sha256": "9eea7a11076961ae9fff1890e3f5153d77b614a5a7338635c1b4ac88da4cb735",
+      "interpretation": "历史终态快照保持原状；当前X资格化结论由本次success packet/supervision/supplemental确定"
+    },
+    {
+      "directory": "staging/direct_X_attempt5_checker_failure_archive_ca1a8cb",
+      "report": {
+        "path": "staging/direct_X_attempt5_checker_failure_archive_ca1a8cb/report_zh.md",
+        "sha256": "3527446273bb4cd5f406b7253baa21afde314d36b8004cd2e3defe1b3531919d",
+        "bytes": 3998,
+        "role": "preserved historical snapshot direct_X_attempt5_checker_failure_archive_ca1a8cb"
+      },
+      "compact": {
+        "path": "staging/direct_X_attempt5_checker_failure_archive_ca1a8cb/compact_record.json",
+        "sha256": "12e248b6b48d6483200b2b4bf2a4feaf4057b900ad1c57f2b0b4e9cdef7faa32",
+        "bytes": 15775,
+        "role": "preserved historical metrics direct_X_attempt5_checker_failure_archive_ca1a8cb"
+      },
+      "manifest_sha256": "5582540c5f8170689c54daf3e816fe0c39cde8792856a2ebe7e924e929e5a8a5",
+      "interpretation": "历史终态快照保持原状；当前X资格化结论由本次success packet/supervision/supplemental确定"
+    },
+    {
+      "directory": "staging/direct_X_attempt5_residual_definition_archive_5851d3d",
+      "report": {
+        "path": "staging/direct_X_attempt5_residual_definition_archive_5851d3d/report_zh.md",
+        "sha256": "8ff6d38253aa96c17c38dd4c5a6f717bb39cbd2578c64df28cba5328eef3e3e6",
+        "bytes": 4631,
+        "role": "preserved historical snapshot direct_X_attempt5_residual_definition_archive_5851d3d"
+      },
+      "compact": {
+        "path": "staging/direct_X_attempt5_residual_definition_archive_5851d3d/compact_record.json",
+        "sha256": "c0b57cbae4ec280240ff2f75ed3011108dfca2e03795b87a872ae774ec641477",
+        "bytes": 34659,
+        "role": "preserved historical metrics direct_X_attempt5_residual_definition_archive_5851d3d"
+      },
+      "manifest_sha256": "e846bc11a9464239dfe082d414c35d55f3b27462a58e1f11aee7ae5b93fdf2d2",
+      "interpretation": "历史终态快照保持原状；当前X资格化结论由本次success packet/supervision/supplemental确定"
+    }
+  ],
+  "final_source_metadata_verification_receipt": {
+    "status": "PASS_FINAL_X_WORKER_SAVED_CHECKER_AND_SUPPLEMENTAL_EVIDENCE_LINKAGE",
+    "binding_pending": false,
+    "original_path": "experiments/y_orbit_direct_calibration_staging/review/independent_final_X_evidence_linkage_review_v1.json",
+    "package_copy": "independent_final_X_evidence_linkage_review_v1.json",
+    "sha256": "cd597f64842896afecd2f51ebd7e436285a13cfc94d99475eccff3dbba817c25",
+    "copied_unchanged": true,
+    "scope": "Independent read-only source, bounded saved JSON metadata, complete check-entry scalar records, hashes/receipts/ABI/resource/source bridge and failure archive; no event-file or numerical-array recomputation",
+    "reviewer_numeric_arrays_events_or_PDE_replay": false,
+    "semantic_correction": {
+      "envelope_scope": "Computed rounded-add/subtract diagnostic, not interval-certified operator bound",
+      "exact_saved_and_recomputed_operand_definitions_bound": true,
+      "independent_operand_gates_limit": 1e-11,
+      "representation_binding_count": 36,
+      "review_receipt_sha256": "1eb8fad8f8e476f6bfa261b068e441505a5d64ccee7a6459a690300d43066ed2",
+      "saved_and_recomputed_each12_native_FE_port_equation_gates_limit": 1e-10,
+      "tiny_residual_cross_representation_1e_minus12_RHS_precision_claimed": false,
+      "underflow_false_zero_rejected": true
+    },
+    "ABI": {
+      "MPI1_thread1_environment_guard_read_and_receipts_bound": true,
+      "actual_and_worker_copied_qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "petsc_int_type": "int32",
+      "petsc_scalar_type": "complex128",
+      "worker_checker_provenance_environment_exactly_equal": true
+    },
+    "canonical_snapshot": {
+      "head": "2a07d23d17b527675e6ae0b904c56121e258b4fc",
+      "status": "",
+      "tree": "57463bbb64e24567ed73239410f7e12a494f1ca6"
+    }
+  },
+  "archiver_actions": {
+    "small_receipts_and_prior_compacts_read": true,
+    "successful_checker_root_scalar_fields_and_metadata_hash_only": true,
+    "new_huge_array_or_event_scan": false,
+    "numerical_rerun": false,
+    "canonical_writes": false,
+    "large_artifact_copy": false,
+    "new_external_outputs": [
+      "report_zh.md",
+      "compact_record.json",
+      "manifest.json",
+      "integration_snippets.md",
+      "independent_final_X_evidence_linkage_review_v1.json"
+    ]
+  }
+}

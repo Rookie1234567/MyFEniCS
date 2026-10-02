@@ -1,0 +1,796 @@
+{
+  "schema": "task40extra.external-direct-X-failure-and-proof-archive.v1",
+  "language": "zh-CN",
+  "archival_scope": "仅归档 immutable attempt1/2/3 及既有 saved-only 诊断/修补审阅/full-proof replay；不读取或更改 attempt4",
+  "archive_source_head": "5758f5e7a04d5ef15ddbc21369e0663b01edd860",
+  "archive_source_tree": "04beffda0762823520e3e66903a2b1d9abb3da7c",
+  "common_direct_X_profile": {
+    "name": "X",
+    "dimensions": [
+      6,
+      4,
+      5
+    ],
+    "cell_count": 120,
+    "local_cell_count": 60,
+    "complete_cell_dimension": 300,
+    "complete_cell_interior_dimension": 108,
+    "physical_mode_count": 532,
+    "q_port_counts": [
+      76,
+      152,
+      152,
+      152
+    ],
+    "sector_port_counts": [
+      228,
+      304
+    ],
+    "notch_comparison": "same_physical_notch"
+  },
+  "base_input": {
+    "path": "repo/input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+    "sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "interpretation": "该输入为共同物理参数源；direct-X 运行由显式 p4/X profile 覆盖基准输入内的 p6/网格设置；实际 direct-X mode inventory 为固定手动532，不代表原 AUTO32060收敛"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "failure_kind": "STARTUP_AUTHORITY_GUARD_FAILURE",
+      "failure_zh": "启动原始 cell authority 守卫失败",
+      "source": {
+        "head": "23fc05cd1bbf2e2b053fab6955eeccedfced6805",
+        "tree": "d17ce8004d4604ebe31854dc1c68a2acca9bd2d3",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "selected_files_sha256": {
+          "benchmarks/run_y_orbit_quotient_probe.py": "4c250ca395fdc3a069da58b9c37b8f85f468dc3ebda2f4df9bd251264a0351b1",
+          "src/solvers/y_orbit_direct_operator_qualification.py": "49e7a7145c01e59d06aa80b232c323896ea1c8ebba7133ffdcff08a01f3db3bb",
+          "src/solvers/y_orbit_direct_profile.py": "bf517872a4de74627ad895f9b2b0c69ce95beb7a805e867c7765bb4b0de8bf15"
+        },
+        "full_source_hash_inventory": "provenance.json:/source/files_sha256"
+      },
+      "base_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_quotient_probe.py",
+        "--run",
+        "--worker",
+        "--stage",
+        "solve",
+        "--expected-head",
+        "23fc05cd1bbf2e2b053fab6955eeccedfced6805",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1",
+        "--shared-transforms",
+        "--direct-profile",
+        "X"
+      ],
+      "resource_contract": {
+        "stage": "solve",
+        "tree_cap_bytes": 1610612736,
+        "wall_seconds": 600,
+        "swap_bytes": 0,
+        "mpi": 1,
+        "math_threads": 1,
+        "evidence_reserve_bytes": 134217728,
+        "factor_workspace_allowance_bytes": 536870912,
+        "factor_fill_and_temporary_workspace_unknown": true,
+        "factor_L_U_statistics_copies_permitted": false,
+        "performance_or_target_capacity_claim": false
+      },
+      "supervisor": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 2,
+        "elapsed_seconds": 3.7786490339931333,
+        "sampled_process_tree_rss_peak_bytes": 352944128,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "worker": {
+        "status": "QUOTIENT_INVERSE_PROBE_FAILED",
+        "factor_count": 0,
+        "PDE_solved": false,
+        "official_results": false,
+        "error_type": "ValueError",
+        "error": "raw mode observer is bounded to the original 80-cell p4 authority or explicit 40-cell p4 sector",
+        "worker_elapsed_seconds": 2.2650306970026577,
+        "worker_status_before_supervisor_classification": "QUOTIENT_INVERSE_PROBE_FAILED"
+      },
+      "last_phase": {
+        "phase": "probe_failure",
+        "factor_count": 0,
+        "worker_elapsed_seconds": 2.2675325980089838
+      },
+      "carrier_component_status": "FAILED_DIRECT_FRESH_CARRIER_COMPONENTS",
+      "carrier_component_full_case_pass": false,
+      "carrier_qualification_source_sha256": "16718cdf52a97aac070f59ec2cded8865a369d93998e8511347774c6e43859b1",
+      "evidence": {
+        "provenance.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/provenance.json",
+          "sha256": "b677a4a16f394e1f223f9f3ad757c28c2b8e1f73daddca4bc600e98e58c54155",
+          "bytes": 184480,
+          "role": "attempt1/provenance.json"
+        },
+        "summary.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/summary.json",
+          "sha256": "8bae299c14e50511efbb7701d03e657a17d0e19f2cdc9a22b8692fa257f33b13",
+          "bytes": 175280,
+          "role": "attempt1/summary.json"
+        },
+        "phase.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/phase.json",
+          "sha256": "5067aec188b1e36a50d1666352d242c3a058ccbc6ab4285d4564610a88add6a4",
+          "bytes": 100,
+          "role": "attempt1/phase.json"
+        },
+        "probe_report.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/probe_report.json",
+          "sha256": "2d29ff0bf3b6fd86f9ad08a2584a9c4ebf777489e78fda293d8f5193a1174684",
+          "bytes": 177252,
+          "role": "attempt1/probe_report.json"
+        },
+        "resources.jsonl": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/resources.jsonl",
+          "sha256": "530e93b8d750011a0008c484dd95f680cbee5dc67d4c66caf020ad24d94eac43",
+          "bytes": 59356,
+          "role": "attempt1/resources.jsonl"
+        },
+        "abi_manifest.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/abi_manifest.json",
+          "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+          "bytes": 8904,
+          "role": "attempt1/abi_manifest.json"
+        },
+        "failed_direct_carrier_qualification.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt1/failed_direct_carrier_qualification.json",
+          "sha256": "dcb0c27177219d03cd58bf6f714385d2156ea3e4d90f3d29554637cc549430e1",
+          "bytes": 46665,
+          "role": "attempt1/failed_direct_carrier_qualification.json"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "failure_kind": "WORKFLOW_TIME_CONTROLLED_STOP",
+      "failure_zh": "600秒工作流预算触发受控停止",
+      "source": {
+        "head": "1ba6e1209a0d360c1ff9c231632b36c26d5fed10",
+        "tree": "870ef3a4ec0ceeeb45d892ee2e79966ace678ab6",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "selected_files_sha256": {
+          "benchmarks/run_y_orbit_quotient_probe.py": "4c250ca395fdc3a069da58b9c37b8f85f468dc3ebda2f4df9bd251264a0351b1",
+          "src/solvers/y_orbit_direct_operator_qualification.py": "49e7a7145c01e59d06aa80b232c323896ea1c8ebba7133ffdcff08a01f3db3bb",
+          "src/solvers/y_orbit_direct_profile.py": "bf517872a4de74627ad895f9b2b0c69ce95beb7a805e867c7765bb4b0de8bf15"
+        },
+        "full_source_hash_inventory": "provenance.json:/source/files_sha256"
+      },
+      "base_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_quotient_probe.py",
+        "--run",
+        "--worker",
+        "--stage",
+        "solve",
+        "--expected-head",
+        "1ba6e1209a0d360c1ff9c231632b36c26d5fed10",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2",
+        "--shared-transforms",
+        "--direct-profile",
+        "X"
+      ],
+      "resource_contract": {
+        "stage": "solve",
+        "tree_cap_bytes": 1610612736,
+        "wall_seconds": 600,
+        "swap_bytes": 0,
+        "mpi": 1,
+        "math_threads": 1,
+        "evidence_reserve_bytes": 134217728,
+        "factor_workspace_allowance_bytes": 536870912,
+        "factor_fill_and_temporary_workspace_unknown": true,
+        "factor_L_U_statistics_copies_permitted": false,
+        "performance_or_target_capacity_claim": false
+      },
+      "supervisor": {
+        "classification": "PERFORMANCE_CONTROLLED_STOP",
+        "leader_exit_code": 15,
+        "elapsed_seconds": 601.0049241460074,
+        "sampled_process_tree_rss_peak_bytes": 840908800,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "time_exceeded": {
+          "workflow": true,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "worker": {
+        "status": "QUOTIENT_INVERSE_PROBE_CONTROLLED_STOP",
+        "factor_count": 0,
+        "PDE_solved": false,
+        "official_results": false,
+        "worker_status_before_supervisor_classification": "STARTED"
+      },
+      "last_phase": {
+        "phase": "allocation_admission",
+        "factor_count": 0,
+        "worker_elapsed_seconds": 599.4841065789951
+      },
+      "carrier_component_status": "PASS_DIRECT_FRESH_CARRIER_COMPONENTS_ONLY",
+      "carrier_component_full_case_pass": false,
+      "carrier_qualification_source_sha256": "f49723b00c1ef963789e809aca2f46a074365a8e5b95f9298b98277b44085e63",
+      "evidence": {
+        "provenance.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/provenance.json",
+          "sha256": "2067aa50cdd3a378a1101be5e292a185cf8e6b5cc9190a1b664b63b49ec52dfc",
+          "bytes": 187518,
+          "role": "attempt2/provenance.json"
+        },
+        "summary.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/summary.json",
+          "sha256": "7a28ae9c044b9fae120e32903d1bde8ff1e9de89b343612a468bc8cf3e4cd903",
+          "bytes": 175996,
+          "role": "attempt2/summary.json"
+        },
+        "phase.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/phase.json",
+          "sha256": "3603253a9cdd198f11c4353a8d0851d53bb90518df369bc0daee7eb9cf735190",
+          "bytes": 106,
+          "role": "attempt2/phase.json"
+        },
+        "probe_report.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/probe_report.json",
+          "sha256": "82d56cba8c8731586bf088ab75ac5ef7049210cba0b6ae78ae13cb67e74d17b0",
+          "bytes": 2514996,
+          "role": "attempt2/probe_report.json"
+        },
+        "resources.jsonl": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/resources.jsonl",
+          "sha256": "380061aa47630774453b6f17c1a76e9fcf3fa8048d556ec5938b61f41a60c421",
+          "bytes": 9350778,
+          "role": "attempt2/resources.jsonl"
+        },
+        "abi_manifest.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/abi_manifest.json",
+          "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+          "bytes": 8904,
+          "role": "attempt2/abi_manifest.json"
+        },
+        "artifact_manifest.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/artifact_manifest.json",
+          "sha256": "d4a83e5c1606ff38ee47b45af4df4ab26eb9af4b8c54010fd6422f12affaf0f1",
+          "bytes": 2196799,
+          "role": "attempt2/artifact_manifest.json"
+        },
+        "direct_carrier_qualification.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt2/direct_carrier_qualification.json",
+          "sha256": "d25f8e9913cd2b5d4c0c56a68b702e3b3f2c8040b0a86ec31eb079ca0f39a7c5",
+          "bytes": 213689,
+          "role": "attempt2/direct_carrier_qualification.json"
+        }
+      }
+    },
+    {
+      "attempt": 3,
+      "failure_kind": "PREFACTOR_ORIGINAL_OPERATOR_PROOF_GATE_FAILURE",
+      "failure_zh": "分解前完整原始算子 proof gate 失败",
+      "source": {
+        "head": "1b8c70b51f0f63b9e9101d0e597b1c981b4a3079",
+        "tree": "c6f2c030a171f77624ed4c67697a0bc72c1a09eb",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": "",
+        "selected_files_sha256": {
+          "benchmarks/run_y_orbit_quotient_probe.py": "cd19a9519b9d2da5224f1a47e48970cb1825dfcced5c4c1612ac11996bc72466",
+          "src/solvers/y_orbit_direct_operator_qualification.py": "49e7a7145c01e59d06aa80b232c323896ea1c8ebba7133ffdcff08a01f3db3bb",
+          "src/solvers/y_orbit_direct_profile.py": "bf517872a4de74627ad895f9b2b0c69ce95beb7a805e867c7765bb4b0de8bf15"
+        },
+        "full_source_hash_inventory": "provenance.json:/source/files_sha256"
+      },
+      "base_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "command": [
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_quotient_probe.py",
+        "--run",
+        "--worker",
+        "--stage",
+        "solve",
+        "--expected-head",
+        "1b8c70b51f0f63b9e9101d0e597b1c981b4a3079",
+        "--run-directory",
+        "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3",
+        "--shared-transforms",
+        "--direct-profile",
+        "X",
+        "--research-wall-seconds",
+        "1800"
+      ],
+      "resource_contract": {
+        "stage": "solve",
+        "tree_cap_bytes": 1610612736,
+        "wall_seconds": 1800,
+        "swap_bytes": 0,
+        "mpi": 1,
+        "math_threads": 1,
+        "evidence_reserve_bytes": 134217728,
+        "factor_workspace_allowance_bytes": 536870912,
+        "factor_fill_and_temporary_workspace_unknown": true,
+        "factor_L_U_statistics_copies_permitted": false,
+        "performance_or_target_capacity_claim": false,
+        "research_wall_seconds": 1800,
+        "worker_phase_wall_seconds": 1799.6506772199937
+      },
+      "supervisor": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 2,
+        "elapsed_seconds": 1237.3274079039984,
+        "sampled_process_tree_rss_peak_bytes": 893919232,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "worker": {
+        "status": "QUOTIENT_INVERSE_PROBE_FAILED",
+        "factor_count": 0,
+        "PDE_solved": false,
+        "official_results": false,
+        "error_type": "ValueError",
+        "error": "complete original contribution sum does not equal existing provider block",
+        "worker_elapsed_seconds": 1235.468984075007,
+        "worker_status_before_supervisor_classification": "QUOTIENT_INVERSE_PROBE_FAILED"
+      },
+      "last_phase": {
+        "phase": "probe_failure",
+        "factor_count": 0,
+        "worker_elapsed_seconds": 1235.700355959998,
+        "research_wall_seconds": 1800,
+        "phase_wall_seconds": 1799.6506772199937
+      },
+      "carrier_component_status": "PASS_DIRECT_FRESH_CARRIER_COMPONENTS_ONLY",
+      "carrier_component_full_case_pass": false,
+      "carrier_qualification_source_sha256": "c09997407f96c994e0be25ac4f7b7e098a030f477fde88ffa84523e0b676b456",
+      "evidence": {
+        "provenance.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/provenance.json",
+          "sha256": "2c5016cd248a1bd3d9f3f268dfc5d7697d935f2af3692648c2ee01cbef3e9708",
+          "bytes": 188310,
+          "role": "attempt3/provenance.json"
+        },
+        "summary.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/summary.json",
+          "sha256": "303c83a51e59ad90458e02a286d7e7ad8c500c8d6ca42b696838ac4b706b15e7",
+          "bytes": 175940,
+          "role": "attempt3/summary.json"
+        },
+        "phase.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/phase.json",
+          "sha256": "11d6c8d2b7dcf73775b7bf191ae9df60f191109ed93636bc781b8001e8901783",
+          "bytes": 176,
+          "role": "attempt3/phase.json"
+        },
+        "probe_report.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/probe_report.json",
+          "sha256": "140fe98f466e2dcd2ac4f9bdd172dea43c58cbe5becb8a65a275a97d16b35bc6",
+          "bytes": 5309504,
+          "role": "attempt3/probe_report.json"
+        },
+        "resources.jsonl": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/resources.jsonl",
+          "sha256": "1a447b7ce06cb2f42978fdd9305512b68dac2062f59fa8a9cddbebbadb542e92",
+          "bytes": 19928367,
+          "role": "attempt3/resources.jsonl"
+        },
+        "abi_manifest.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/abi_manifest.json",
+          "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+          "bytes": 8904,
+          "role": "attempt3/abi_manifest.json"
+        },
+        "artifact_manifest.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/artifact_manifest.json",
+          "sha256": "28d23708941efd05488d148de1d26fd5033375c7054996c4e1cf15baa550f2fe",
+          "bytes": 4849969,
+          "role": "attempt3/artifact_manifest.json"
+        },
+        "direct_carrier_qualification.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt3/direct_carrier_qualification.json",
+          "sha256": "8f2f368bea34067b71c05d0fa55062d11ec2845d147fcb19c61ffd7b926666ac",
+          "bytes": 213690,
+          "role": "attempt3/direct_carrier_qualification.json"
+        }
+      }
+    }
+  ],
+  "saved_only_diagnosis": {
+    "evidence": {
+      "path": "staging/direct_X_block_diagnostic_1b8c70b/compact_diagnostic.json",
+      "sha256": "d1a3711c7bb3b2da8cab931b9805899c8955008eefdeb7e68acba5021c48bcb5",
+      "bytes": 22961,
+      "role": "saved-only block diagnosis"
+    },
+    "original_worker_head": "1b8c70b51f0f63b9e9101d0e597b1c981b4a3079",
+    "all8_provider_left_association_exact_CSR_buffers": true,
+    "checker_right_association": "仅括号顺序导致舍入级差异",
+    "original_failures_preserved": [
+      {
+        "twist": 0,
+        "p": 0,
+        "q": 1,
+        "actual_error": 0.2866622187879368,
+        "limit": 1e-11,
+        "type": "ValueError",
+        "message": "complete original contribution sum does not equal existing provider block"
+      },
+      {
+        "twist": 1,
+        "p": 0,
+        "q": 1,
+        "actual_error": 0.32294982917757414,
+        "limit": 1e-11,
+        "type": "ValueError",
+        "message": "complete original contribution sum does not equal existing provider block"
+      }
+    ],
+    "diagnosis": "接近零的 offbranch 自身范数放大约3.82–3.98e-12的舍入级差值，触发原1e-11 selfrelative gate；没有给原失败 worker 改写通过状态",
+    "first_diagnostic_logging_exception_preserved": "TypeError from duplicated elapsed_seconds in final completion emit after all8 results and report were saved; first watchdog WORKER_FAILED/exit1 retained.",
+    "supplemental_association_resource_receipt": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 47.36019934200158,
+      "sampled_process_tree_rss_peak_bytes": 267071488,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_gate_enforced": true,
+      "descendants_cleared": true
+    },
+    "FE_JIT_assembly_factor_solve_calls": 0
+  },
+  "proof_only_correction": {
+    "review_evidence": {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_X_offbranch_proof_source_review_v1.json",
+      "sha256": "6c0b3c6a061c9ca80a58bf51c937dd55dc662ac81f3f32e043bd93b1af8d9be8",
+      "bytes": 4313,
+      "role": "independent proof-only source review"
+    },
+    "status": "PASS_REGULAR_X_OFFBRANCH_PROOF_SOURCE_ONLY",
+    "threshold": 1e-11,
+    "diagonal_gate": "对角块仍使用原 selfrelative 差异阈值1e-11",
+    "offbranch_gates": "每个 offbranch 的 reference、independent 和 difference 范数，分别对两个对应分支的保守对角尺度做1e-11 gate；尺度为min(qualified reference diagonal F,qualified independent diagonal F)，zero/nonfinite fail closed",
+    "whole_operator_gate": "完整且唯一2x2 block Frobenius 范数以 hypot 聚合；finite positive whole reference、finite whole difference、finite whole relative 且≤1e-11",
+    "unchanged": "proof comparator 与其 metadata contract test 两文件之外的原算子、assembly、provider、factor、inverse、PDE源码均未改变",
+    "reviewed_checker": {
+      "head": "5758f5e7a04d5ef15ddbc21369e0663b01edd860",
+      "dirty": "",
+      "review_manifest_sha256": "f46f00cccd90e44f58d6c61470ca3610cb9b28734e81f75c7e06b242f12bff2d",
+      "changed_files": [
+        "src/solvers/y_orbit_direct_operator_qualification.py",
+        "src/test/test_y_orbit_direct_operator_metadata.py"
+      ],
+      "files_sha256": {
+        "src/solvers/y_orbit_direct_operator_qualification.py": "0304394eade1898e951ee315fb5819737b6347d284aa0ed3f4a33d587ee72388",
+        "src/test/test_y_orbit_direct_operator_metadata.py": "a537e968ffbcd2bef9e145d2981a3b4a9a6f12891f4988133547c37f73def21d"
+      },
+      "all_other_tracked_source_bytes_equal_to_failed_worker": true,
+      "git_ancestry_bound_to_failed_worker": true,
+      "script_sha256": "e1590b5d7049e240cc4af669ff57da7fdd7cfe8ff71d4536e7cef3676c0d5a5a",
+      "frozen_inputs_sha256": "01dd4f4a8dbd0b19b26a28d5580bcb6ed76cd4d37700a5571293087d0b6564a9",
+      "loaded_source_dependencies_sha256": {
+        "benchmarks/__init__.py": "5678b6ce7ef13b9f82c7be455436f0e87d548acf436e13c7db995a2610142445",
+        "benchmarks/task038_full3d_jit_staging.py": "75b540bcb36bdfbf3c38b5ec749fd726f34622207164e3f22f0fba0b546ef7b3",
+        "benchmarks/task034_wsl_resources.py": "bf6d9a7d337ef4d77721d5e260f986937db2f58c8d06ef4dc9344d8798563653",
+        "src/__init__.py": "03b698bbb1fa349e86a99e29ccc436cd73f4fa9dc57d79e39bcdd6dddac4c021",
+        "src/solvers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/solvers/y_orbit_direct_operator_qualification.py": "0304394eade1898e951ee315fb5819737b6347d284aa0ed3f4a33d587ee72388",
+        "src/solvers/task40extra_y_orbit_reference.py": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+        "src/solvers/y_orbit_sparse_reference.py": "863884e978b21facc93e16b4ed19befeee59da23ec187e12b552a3e5193ca86f",
+        "src/solvers/y_orbit_direct_profile.py": "bf517872a4de74627ad895f9b2b0c69ce95beb7a805e867c7765bb4b0de8bf15",
+        "src/solvers/fullspace_dtn_action.py": "e328b69351484daa9e12802af62645cc0149c41f66781b2ec7600e68c099f8c4",
+        "src/solvers/dtn_boundary_phase_gauge.py": "61af1f50dd430641bc5cb36d539419a9dc2c71ee6b86c23862bb5ebe76c03e45"
+      }
+    },
+    "normalization_semantics_changed": true,
+    "claims_excluded": [
+      "tiny-entry relative accuracy",
+      "inverse accuracy",
+      "whole-qualified X solve",
+      "target-scale physical accuracy",
+      "target-scale capacity"
+    ]
+  },
+  "saved_only_full_proof": {
+    "status": "PASS_SAVED_FULL_PREFACTOR_OPERATOR_PROOF",
+    "original_failed_worker": {
+      "head": "1b8c70b51f0f63b9e9101d0e597b1c981b4a3079",
+      "status": "QUOTIENT_INVERSE_PROBE_FAILED",
+      "classification": "WORKER_FAILED",
+      "factor_count": 0,
+      "error": "complete original contribution sum does not equal existing provider block",
+      "error_type": "ValueError",
+      "metadata_sha256": {
+        "probe_report.json": "140fe98f466e2dcd2ac4f9bdd172dea43c58cbe5becb8a65a275a97d16b35bc6",
+        "provenance.json": "2c5016cd248a1bd3d9f3f268dfc5d7697d935f2af3692648c2ee01cbef3e9708",
+        "artifact_manifest.json": "28d23708941efd05488d148de1d26fd5033375c7054996c4e1cf15baa550f2fe",
+        "probe_events.jsonl": "facd09c3a5a08dc3c4baa9e83fbb784f5cc7b4533cc94b48795f250e8589ab78",
+        "summary.json": "303c83a51e59ad90458e02a286d7e7ad8c500c8d6ca42b696838ac4b706b15e7",
+        "phase.json": "11d6c8d2b7dcf73775b7bf191ae9df60f191109ed93636bc781b8001e8901783",
+        "abi_manifest.json": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96"
+      },
+      "receipt_line": 53273,
+      "receipt_line_sha256": "cd46c8c5f4fdabec31a07e183baa2efad74336410bc7eb99f1f51525bfa36e24"
+    },
+    "evidence": {
+      "proof_packet.json": {
+        "path": "staging/direct_X_full_proof_replay_1b8c70b/reviewed_full_proof/proof_packet.json",
+        "sha256": "717f78df1b23c521fde76fd5385c0d03407341fb913c4d6f304c3c660b4c4422",
+        "bytes": 188430,
+        "role": "saved-only full proof/proof_packet.json"
+      },
+      "summary.json": {
+        "path": "staging/direct_X_full_proof_replay_1b8c70b/reviewed_full_proof/summary.json",
+        "sha256": "3be20ceb3884197d27f9bff0ae7188fdc94106162618f76a9618c6d89d33e4c8",
+        "bytes": 4633,
+        "role": "saved-only full proof/summary.json"
+      },
+      "phase.json": {
+        "path": "staging/direct_X_full_proof_replay_1b8c70b/reviewed_full_proof/phase.json",
+        "sha256": "e64594e2917fc8f2c9b9e9cd60f66acc61881a0ae400c1d3d73af159d2804f21",
+        "bytes": 64,
+        "role": "saved-only full proof/phase.json"
+      },
+      "resources.jsonl": {
+        "path": "staging/direct_X_full_proof_replay_1b8c70b/reviewed_full_proof/resources.jsonl",
+        "sha256": "71eb621c48bdd7c4e07aea6a87a23e77b465f6f5bea61f21954072cdf430dc2f",
+        "bytes": 1163097,
+        "role": "saved-only full proof/resources.jsonl"
+      },
+      "consumed_arrays.json": {
+        "path": "staging/direct_X_full_proof_replay_1b8c70b/reviewed_full_proof/consumed_arrays.json",
+        "sha256": "3eeadcdfc503d212a537fc2f7c526cee0dc6985baaf15cbbd709ae8da1ec2010",
+        "bytes": 4199390,
+        "role": "saved-only full proof/consumed_arrays.json"
+      },
+      "worker.log": {
+        "path": "staging/direct_X_full_proof_replay_1b8c70b/reviewed_full_proof/worker.log",
+        "sha256": "dc91547649d731bb4d728c3af2c7d0d355b9a207fcf349d78af828a80ae614d4",
+        "bytes": 2463,
+        "role": "saved-only full proof/worker.log"
+      }
+    },
+    "frozen_bindings": {
+      "path": "staging/direct_X_full_proof_replay_1b8c70b/frozen_inputs.json",
+      "sha256": "01dd4f4a8dbd0b19b26a28d5580bcb6ed76cd4d37700a5571293087d0b6564a9",
+      "bytes": 1264,
+      "role": "immutable failed-worker / reviewed-checker bindings"
+    },
+    "worker_elapsed_seconds": 74.49101422200329,
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "sampled_process_tree_rss_peak_bytes": 322588672,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "elapsed_seconds": 75.86082174199692
+    },
+    "timing_evidence": {
+      "terminal_resource_sample_elapsed_seconds": 75.86014437199628,
+      "terminal_resource_strict_budget_seconds": 75.86020943800395,
+      "supervisor_summary_has_elapsed_seconds": true,
+      "parent_reported_launcher_elapsed_seconds_approx": 75.861,
+      "interpretation": "完整supervisor summary与proof_packet.supervisor_receipt均记录75.86082174199692s；worker74.491014222s与末资源采样75.860144372s为不同时间范围",
+      "supervisor_elapsed_seconds": 75.86082174199692,
+      "supervisor_packet_summary_equal": true
+    },
+    "verified_consumed_array_file_hash_count": 5871,
+    "numeric_array_load_count": 35916,
+    "sources": [
+      {
+        "cell_count": 120,
+        "full300_columns_per_cell": 300,
+        "independent_rows": 23808,
+        "all_interior_rows": 12960,
+        "entity_record_count": 912,
+        "orientation_maximum": 1.347844154018227e-17,
+        "map_maximum": 0.0,
+        "complete_congruence_maximum": 0.0,
+        "complete_unique_congruence_count": 63,
+        "complete_actual_coverage": true
+      },
+      {
+        "cell_count": 60,
+        "full300_columns_per_cell": 300,
+        "independent_rows": 11904,
+        "all_interior_rows": 6480,
+        "entity_record_count": 456,
+        "orientation_maximum": 1.5886804429914956e-17,
+        "map_maximum": 0.0,
+        "complete_congruence_maximum": 0.0,
+        "complete_unique_congruence_count": 48,
+        "complete_actual_coverage": true
+      },
+      {
+        "cell_count": 60,
+        "full300_columns_per_cell": 300,
+        "independent_rows": 11904,
+        "all_interior_rows": 6480,
+        "entity_record_count": 456,
+        "orientation_maximum": 1.5886804429914956e-17,
+        "map_maximum": 0.0,
+        "complete_congruence_maximum": 0.0,
+        "complete_unique_congruence_count": 48,
+        "complete_actual_coverage": true
+      }
+    ],
+    "actual_xz_orbit_count": 30,
+    "global_q_pairs_total": 480,
+    "local_q_pairs_total": 240,
+    "provider_blocks_total": 8,
+    "provider_block_summary": [
+      {
+        "twist": 0,
+        "whole_2x2_frobenius_relative_difference": 1.2558390072183366e-16,
+        "diagonal_selfrelative_max": 1.0986065039796009e-16,
+        "offbranch_difference_against_both_diagonal_scales_max": 6.844948814077663e-17,
+        "reference_offbranch_leakage_max": 2.3878098910346217e-16,
+        "independent_offbranch_leakage_max": 2.387674105488406e-16
+      },
+      {
+        "twist": 1,
+        "whole_2x2_frobenius_relative_difference": 1.2814448672807145e-16,
+        "diagonal_selfrelative_max": 1.0841752388899772e-16,
+        "offbranch_difference_against_both_diagonal_scales_max": 7.044224624307633e-17,
+        "reference_offbranch_leakage_max": 2.243956663969229e-16,
+        "independent_offbranch_leakage_max": 2.234255557818497e-16
+      }
+    ],
+    "FE_JIT_assembly_factor_solve_calls": 0,
+    "numeric_factor_calls": 0,
+    "PDE_solved": false,
+    "full_PDE_pass": false,
+    "official_results": [],
+    "mandatory_other_gates": [
+      "fresh literal raw/stored all532C/D/H and alias/fold/cross-sector proof",
+      "source_ABI_manifest_and_resource_supervision",
+      "original fullFE/augmented/port residual and full recovery/output"
+    ]
+  },
+  "validation_prior_to_replay": {
+    "targeted_tests": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 7.582555304004927,
+      "sampled_process_tree_rss_peak_bytes": 74821632,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source": {
+        "head": "5758f5e7a04d5ef15ddbc21369e0663b01edd860",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "evidence": {
+        "summary.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_tests_attempt1/summary.json",
+          "sha256": "04f1ab5abb0f3573ae8c6dca9d3c5634173b82a6bd9923fde10f9c58b3f20b71",
+          "bytes": 175893,
+          "role": "targeted_tests/summary.json"
+        },
+        "worker.log": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_tests_attempt1/worker.log",
+          "sha256": "0469aa69a2c1a391b60278c6daffa609adc62f0da6b3c41ca32def00a0f45bae",
+          "bytes": 142,
+          "role": "targeted_tests/worker.log"
+        }
+      },
+      "not_rerun_by_archiver": true,
+      "passed": 47,
+      "subtests_passed": 122,
+      "pytest_elapsed_seconds": 6.07
+    },
+    "preflight_attempt1": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.262213266993058,
+      "sampled_process_tree_rss_peak_bytes": 21770240,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source": {
+        "head": "5758f5e7a04d5ef15ddbc21369e0663b01edd860",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "evidence": {
+        "summary.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_preflight_attempt1/summary.json",
+          "sha256": "33a9cb4537bbdff4956ad636f6cec8c13ea3af5512be144e924f4f673508048e",
+          "bytes": 175874,
+          "role": "preflight_attempt1/summary.json"
+        },
+        "worker.log": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_preflight_attempt1/worker.log",
+          "sha256": "e21704b2898d03d6d4d76732495ab8c60692c5810b2f5cf3054b02d2b54c5889",
+          "bytes": 230,
+          "role": "preflight_attempt1/worker.log"
+        }
+      },
+      "not_rerun_by_archiver": true,
+      "classification_preserved": true,
+      "cause": "/tmp launcher缺repo PYTHONPATH，import benchmarks失败；非数学gate失败"
+    },
+    "preflight_attempt2": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0160888289974537,
+      "sampled_process_tree_rss_peak_bytes": 126668800,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source": {
+        "head": "5758f5e7a04d5ef15ddbc21369e0663b01edd860",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "evidence": {
+        "summary.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_preflight_attempt2/summary.json",
+          "sha256": "db10567f3940618ed4cebccaa0c63b28d47d4a74e8bf8921ac27c6cc2d2266f2",
+          "bytes": 175894,
+          "role": "preflight_attempt2/summary.json"
+        },
+        "worker.log": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_preflight_attempt2/worker.log",
+          "sha256": "a33bb0870f155948699ee40417f28b954837d46631225a2cffbfc60f298010fe",
+          "bytes": 450,
+          "role": "preflight_attempt2/worker.log"
+        },
+        "preflight_receipt.json": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_offbranch_fix_preflight_attempt2/preflight_receipt.json",
+          "sha256": "79c85f7d768ba1fd227ee5a5e2bb2eaa18968dd969f458c607698651158621ad",
+          "bytes": 188756,
+          "role": "preflight_attempt2/preflight_receipt.json"
+        }
+      },
+      "not_rerun_by_archiver": true,
+      "preflight_receipt_sha256": "79c85f7d768ba1fd227ee5a5e2bb2eaa18968dd969f458c607698651158621ad",
+      "receipt_summary": {
+        "numerical_probe_run": false,
+        "syntax_and_cli_pass": true
+      },
+      "plan_status": "NOT_RUN_STAGED_PLAN_ONLY",
+      "plan_PDE_solved": false,
+      "plan_factor_count": 0
+    }
+  },
+  "scientific_boundary": {
+    "established": "本缩小 direct-X profile 的既有组件资格化与保存数据上完整原始/augmented operator contribution proof，在明示新归一化语义下通过",
+    "still_unknown": [
+      "目标尺度物理精度",
+      "目标尺度容量",
+      "完整 direct-X factor/inverse/PDE/residual/recovery/output资格化"
+    ],
+    "mode_inventory_boundary": "固定手动532 modes 的 proof不能转写为原AUTO32060模式收敛证据"
+  },
+  "archiver_actions": {
+    "stdlib_text_json_hash_reads_only": true,
+    "project_imports": 0,
+    "array_numeric_decoding": 0,
+    "numerical_reruns": 0,
+    "canonical_writes": 0,
+    "matrices_or_artifacts_copied": 0,
+    "attempt4_artifacts_read": 0,
+    "external_output_files": [
+      "compact_record.json",
+      "report_zh.md",
+      "manifest.json"
+    ]
+  }
+}

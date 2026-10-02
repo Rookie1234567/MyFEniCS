@@ -152,20 +152,26 @@ def centered_identity(bundle, *, event=None):
             "all_532_contributions_nonempty": True, "cutoffs_unchanged": True}
 
 
-def fixture_interior_positions(space, layout):
+def fixture_interior_positions(space, layout, *, direct_profile=None):
     local = np.asarray(space.element.basix_element.entity_dofs[3][0], dtype=np.int64)
     rows = np.unique(np.concatenate([np.asarray(space.dofmap.cell_dofs(c))[local]
             for c in range(int(space.mesh.topology.index_map(3).size_local))]))
     positions = np.flatnonzero(np.isin(layout.independent, rows))
     degree = int(space.element.basix_element.degree)
     expected = {2:480,4:8640}.get(degree)
+    if direct_profile is not None:
+        from .y_orbit_direct_profile import direct_profile_metadata
+        profile=direct_profile_metadata(direct_profile)
+        if profile.name!='X' or degree!=4 or layout.full_rows!=profile.storage_rows:
+            raise ValueError('only the admitted directX full original interior inventory is enabled')
+        expected=profile.interior_rows
     if expected is None or len(positions) != expected or len(rows) != expected:
         raise ValueError("centered profile must retain every actual p2/p4 interior row")
     return positions
 
 
-def interior_only_rhs(space, layout):
-    positions = fixture_interior_positions(space, layout)
+def interior_only_rhs(space, layout, *, direct_profile=None):
+    positions = fixture_interior_positions(space, layout, direct_profile=direct_profile)
     rhs = np.zeros(len(layout.independent), dtype=np.complex128)
     j = np.arange(len(positions))
     rhs[positions] = np.cos(.29*j) + 1j*np.sin(.43*j)

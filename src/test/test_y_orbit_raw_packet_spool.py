@@ -104,6 +104,7 @@ def test_metadata_codec_preserves_complex_and_explicit_nonfinite_failure_markers
 def test_complete_metadata_stream_is_still_unqualified(isolated, profile, count):
     captured = []
     dummy = SimpleNamespace(_profile=profile, _identity={"context": "frozen"}, _failure=None,
+                            _mode_counts=isolated["MODE_COUNTS"], _direct_identity=None,
                             _records=[{"all_finite": True} for _ in range(count)],
                             root_directory=Path("/tmp/run"), manifest_path=Path("/tmp/manifest.json"),
                             _write_json=lambda path, value: captured.append(value))
@@ -119,7 +120,8 @@ def test_complete_metadata_stream_is_still_unqualified(isolated, profile, count)
 
 
 def test_incomplete_or_captured_failed_stream_cannot_supply_ready_packets(isolated):
-    dummy = SimpleNamespace(_profile=0, _identity={}, _failure=None, _records=[])
+    dummy = SimpleNamespace(_profile=0, _identity={}, _failure=None, _records=[],
+                            _mode_counts=isolated["MODE_COUNTS"], _direct_identity=None)
     with pytest.raises(ValueError, match="partial"):
         list(isolated["packets"](dummy))
     dummy._records = [None]*228
@@ -131,6 +133,7 @@ def test_incomplete_or_captured_failed_stream_cannot_supply_ready_packets(isolat
 def test_complete_nonfinite_evidence_is_diagnostic_only(isolated):
     captured = []
     dummy = SimpleNamespace(_profile=0, _identity={}, _failure=None,
+                            _mode_counts=isolated["MODE_COUNTS"], _direct_identity=None,
                             _records=[{"all_finite": False}]+[{"all_finite": True}]*227,
                             root_directory=Path("/tmp/run"), manifest_path=Path("/tmp/manifest.json"),
                             _write_json=lambda path, value: captured.append(value))
@@ -146,7 +149,7 @@ def test_packet_fields_match_the_frozen_oracle_without_changing_its_source():
     assert set(_constant("METADATA_FIELDS")) | {"component_masked_entries", "stored_C_sparse", "stored_D_sparse"} == set(
         _constant("REQUIRED_PACKET_METADATA", ORACLE))
     oracle_path = ROOT / "src/solvers/y_orbit_quotient_raw_qualification.py"
-    assert hashlib.sha256(oracle_path.read_bytes()).hexdigest() == "781cf7a028c049f300cb02edbbaab88e29e3da04d0895d8b0469ea231c518f50"
+    assert hashlib.sha256(oracle_path.read_bytes()).hexdigest() == "269f27e57fe2de214086b51485749f35d066d697fc129a7b48ac18e126314a45"
 
 
 def test_allocation_gate_precedes_every_current_nonzero_extract_copy_write():
@@ -239,7 +242,15 @@ def test_spool_retains_descriptors_only_and_generator_yields_one_current_packet(
     forbidden = {"outgoing_port_modes_3d", "build_fullspace_dtn_carrier_from_surface", "assemble_raw_mpc_vector",
                  "build_physical_rhs", "splu", "solve", "conjugate"}
     assert all(not _calls(TREE, name) for name in forbidden)
-    assert not any(isinstance(node, ast.ImportFrom) and node.level for node in ast.walk(TREE))
+    # Only the reviewed standard-library metadata profile is imported, and
+    # only in the explicit opt-in branch. The old None path stays import-free.
+    relative = [node for node in ast.walk(TREE) if isinstance(node, ast.ImportFrom) and node.level]
+    assert len(relative) == 2
+    assert all(node.level == 1 and node.module == "y_orbit_direct_profile"
+               and [alias.name for alias in node.names] == ["direct_profile_metadata"] for node in relative)
+    guarded = [node for node in ast.walk(TREE) if isinstance(node, ast.If)
+               and ast.unparse(node.test) == "direct_profile is not None"]
+    assert all(any(item is node for branch in guarded for item in ast.walk(branch)) for node in relative)
 
 
 def test_row_validation_precedes_writing_and_no_narrowing_is_added():

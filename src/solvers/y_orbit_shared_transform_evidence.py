@@ -37,9 +37,13 @@ def _relative(left, right):
 
 
 class SharedTransformEvidence:
-    def __init__(self, bank, *, save_array, event, allocation_gate, mapping_limit):
+    def __init__(self, bank, *, save_array, event, allocation_gate, mapping_limit, direct_profile=None):
         self.bank, self.save, self.event, self.gate = bank, save_array, event, allocation_gate
         self.limit = float(mapping_limit)
+        self.direct_profile=direct_profile
+        if direct_profile is not None:
+            from .y_orbit_direct_profile import direct_profile_metadata
+            if direct_profile_metadata(direct_profile).name!='X':raise ValueError('only directX shared evidence is admitted')
         self.roles, self.stages, self.named, self.owner_artifacts = [], [], {}, {}
         self.reference_artifacts = {}
         self.payload_artifacts = {}
@@ -92,6 +96,140 @@ class SharedTransformEvidence:
             "sum_view_nbytes_with_aliases": receipt["sum_view_nbytes_with_aliases"],
             "unique_backing_owner_nbytes": receipt["unique_backing_owner_nbytes"], "payload_is_RSS": False})
         return receipt
+
+    def compare_streamed(self, role, shared, *, space, floquet, axes, frozen_context, load_array):
+        """X actual records, one original-helper control at a time; no collector copy."""
+        from .hcurl_canonical_vector_dolfinx import _physical_entity_transform
+        if self.direct_profile!='X' or role not in ROLES or shared._transform_bank is not self.bank:
+            raise ValueError('streamed controls require the exact directX run-local bank')
+        if role in [item['role'] for item in self.roles]:raise ValueError('duplicate streamed role')
+        n=len(shared.independent);cell_dim=int(space.element.space_dimension)
+        self.gate('direct_streamed_native_partition_'+role,{'matrix_payload_bytes':3*shared.full_rows*8,'workspace_bytes':1<<20})
+        expected=np.setdiff1d(np.arange(shared.full_rows),np.asarray(floquet.mpc.slaves))
+        if not np.array_equal(expected,shared.independent):raise ValueError('actual complete native independent/slave partition differs')
+        row_of={int(value):index for index,value in enumerate(shared.independent)}
+        self.named.update(shared.named_backing_arrays(role));self.snapshot(role+'_streamed_controls_begin')
+        before=self.bank.receipt(stage='lazy_before_'+role)['lazy_inverse_count']
+        actual_arrays={}
+        for name,array,signature in (('cell_info',space.mesh.topology.get_cell_permutation_info(),frozen_context['orientation']),
+                                    ('geometry_x',space.mesh.geometry.x,frozen_context['mesh']['geometry_x'])):
+            actual={'shape':list(array.shape),'dtype':str(array.dtype),'sha256':_hash(array)}
+            if actual!={'shape':list(signature['shape']),'dtype':signature['dtype'],'sha256':signature['sha256']}:
+                raise ValueError('fresh actual topology/orientation witness differs')
+            artifact='shared_'+role+'_'+name;self.save(artifact,array);actual_arrays[name]={'artifact':artifact,'signature':actual}
+        insertion={key:index for index,key in enumerate(shared.records,1)}
+        records=[];rows_flat=[];references={};covered=[];canonical=[]
+        grid=[np.asarray(axes[name],float) for name in ('x','y','z')]
+        self.gate('direct_shared_one_state_control_'+role,{'matrix_payload_bytes':2*cell_dim*cell_dim*8+4*108*108*16,
+            'workspace_bytes':4<<20,'one_state_control_only':True,'unshared_collector_created':False})
+        for orbit in range(shared.ny):
+            for base in shared.bases:
+                record_key=(orbit,base);rows,matrix=shared.records[record_key];key=shared.transform_key(record_key)
+                witness=shared.actual_state_witness(record_key);dimension=int(base[0]);positions=witness['positions']
+                storage=np.asarray(space.dofmap.cell_dofs(witness['cell']))[positions]
+                if not np.array_equal(rows,np.asarray([row_of[int(value)] for value in storage])):
+                    raise ValueError('actual native ordered entity channels differ')
+                coords=np.asarray(witness['native_coordinates'],float);indexed=[]
+                for point in coords:
+                    location=[]
+                    for axis,value in zip(grid,point,strict=True):
+                        matches=np.flatnonzero(np.abs(axis-value)<=1e-9)
+                        if len(matches)!=1:raise ValueError('actual entity lacks unique original grid coordinate')
+                        location.append(int(matches[0]))
+                    indexed.append(tuple(location))
+                anchor=min(point[1] for point in indexed)
+                actual_base=(dimension,tuple(sorted((ix,iy-anchor,iz) for ix,iy,iz in indexed)))
+                if actual_base!=base or anchor!=orbit:raise ValueError('actual orbit/base/slot geometry differs')
+                transform_t=None
+                if dimension in (1,2):
+                    control,semantics=_physical_entity_transform(coords,dimension,4,1e-9)
+                    if tuple(semantics)!=tuple(key.semantics):raise ValueError('original coefficient semantics differ')
+                else:
+                    raw=np.eye(cell_dim,dtype=float).ravel()
+                    space.element.Tt_apply(raw,np.asarray([witness['cell_info']],dtype=np.uint32),cell_dim)
+                    transform_t=raw.reshape(cell_dim,cell_dim)
+                    control=np.linalg.inv(transform_t[np.ix_(positions,positions)]).astype(np.complex128)
+                inverse_control=np.linalg.inv(control);inverse=self.bank.inverse(matrix);size=len(rows)
+                if not records:self.snapshot(role+'_after_first_inverse_request')
+                md,idiff=_relative(matrix,control),_relative(inverse,inverse_control)
+                composition=float(np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size))
+                if max(md,idiff,composition)>self.limit or _hash(matrix)!=_hash(control) or _hash(inverse)!=_hash(inverse_control):
+                    raise ValueError('complete actual state matrix/inverse differs from original helper')
+                template=self.bank.template_id_for(matrix)
+                if template not in references:
+                    prefix='shared_reference_'+role+'_'+template.replace('-','_')
+                    self.save(prefix+'_matrix',control);self.save(prefix+'_inverse',inverse_control)
+                    references[template]={'matrix_artifact':prefix+'_matrix','inverse_artifact':prefix+'_inverse',
+                        'matrix_sha256':_hash(control),'inverse_sha256':_hash(inverse_control)}
+                    if transform_t is not None:
+                        self.save(prefix+'_full_Tt',transform_t)
+                        references[template]['full_Tt_artifact']=prefix+'_full_Tt'
+                elif references[template]['matrix_sha256']!=_hash(control) or references[template]['inverse_sha256']!=_hash(inverse_control):
+                    raise ValueError('actual semantic keys collide with a different full control')
+                first,count=shared.slots[base];offset=len(rows_flat);rows_flat.extend(map(int,rows));covered.extend(map(int,rows))
+                canonical.extend(range(orbit*shared.width+first,orbit*shared.width+first+count))
+                j=np.arange(size);x=np.cos(.31*j)+1j*np.sin(.47*j);d=np.sin(.29*j)+1j*np.cos(.41*j);f=np.cos(.23*j)+1j*np.sin(.37*j)
+                pairing=float(max(abs(np.vdot(inverse.conj().T@d,matrix@x)-np.vdot(d,x)),
+                                  abs(np.dot(inverse.T@f,matrix@x)-np.dot(f,x)))/max(np.linalg.norm(d)*np.linalg.norm(x),np.linalg.norm(f)*np.linalg.norm(x),1.))
+                if not np.isfinite(pairing) or pairing>self.limit:raise ValueError('original non-Hermitian moment pairing failed')
+                records.append({'orbit':int(orbit),'base':_plain(base),'dimension':dimension,'first':int(first),'size':int(count),
+                    'rows_offset':offset,'rows_count':size,'template_id':template,'actual_key':_plain(key.__dict__),
+                    'actual_state_witness':_plain(witness),'borrower_record_index':insertion[record_key],
+                    'matrix_sha256':_hash(matrix),'inverse_sha256':_hash(inverse),'matrix_difference':md,'inverse_difference':idiff,
+                    'inverse_composition':composition,'nonhermitian_pairing':pairing})
+        control=inverse_control=transform_t=raw=None
+        if sorted(covered)!=list(range(n)) or sorted(canonical)!=list(range(n)):
+            raise ValueError('complete actual native and canonical partitions must occur exactly once')
+        row_artifact='shared_'+role+'_record_rows'
+        self.gate('direct_streamed_complete_row_export_'+role,{'matrix_payload_bytes':n*8,'workspace_bytes':1<<20})
+        self.save(row_artifact,np.asarray(rows_flat,dtype=np.int64))
+        self.gate('direct_streamed_six_operator_panels_'+role,{'matrix_payload_bytes':4*n*32*16,'workspace_bytes':8<<20,
+            'all_record_columns':True,'one_state_control_only':True})
+        groups={template:[item for item in records if item['template_id']==template] for template in references}
+        directions=[]
+        for direction in DIRECTIONS:
+            ih=hashlib.sha256();oh=hashlib.sha256();nh=hashlib.sha256();difference=0.
+            for start in range(0,108,32):
+                columns=min(32,108-start);panel=np.zeros((n,columns),complex);expected_panel=np.empty_like(panel)
+                for item in records:
+                    if start>=item['size']:continue
+                    rr=rows_flat[item['rows_offset']:item['rows_offset']+item['size']]
+                    cr=list(range(item['orbit']*shared.width+item['first'],item['orbit']*shared.width+item['first']+item['size']))
+                    source_rows=rr if direction.endswith('to_canonical') else cr;count=min(columns,item['size']-start)
+                    panel[np.asarray(source_rows)[start:start+count],np.arange(count)]=1
+                for template,items in groups.items():
+                    control=load_array(references[template]['matrix_artifact']);inverse_control=load_array(references[template]['inverse_artifact'])
+                    for item in items:
+                        rr=rows_flat[item['rows_offset']:item['rows_offset']+item['size']]
+                        cr=list(range(item['orbit']*shared.width+item['first'],item['orbit']*shared.width+item['first']+item['size']))
+                        if direction==DIRECTIONS[0]:expected_panel[cr]=inverse_control@panel[rr]
+                        elif direction==DIRECTIONS[1]:expected_panel[rr]=control@panel[cr]
+                        elif direction==DIRECTIONS[2]:expected_panel[cr]=control.conj().T@panel[rr]
+                        elif direction==DIRECTIONS[3]:expected_panel[rr]=inverse_control.conj().T@panel[cr]
+                        elif direction==DIRECTIONS[4]:expected_panel[cr]=control.T@panel[rr]
+                        else:expected_panel[rr]=inverse_control.T@panel[cr]
+                    control=inverse_control=None
+                actual=shared.transform(panel,direction=direction);difference=max(difference,_relative(actual,expected_panel))
+                ih.update(panel.tobytes(order='C'));oh.update(expected_panel.tobytes(order='C'));nh.update(actual.tobytes(order='C'))
+            if difference>self.limit or oh.hexdigest()!=nh.hexdigest():raise ValueError('complete six-direction streamed original action differs')
+            directions.append({'direction':direction,'relative_difference':difference,'complete_columns':108,'panel_columns_max':32,
+                'input_sha256':ih.hexdigest(),'default_action_sha256':oh.hexdigest(),'shared_action_sha256':nh.hexdigest()})
+            if direction==DIRECTIONS[0]:
+                self.named.update(shared.named_backing_arrays(role));self.snapshot(role+'_after_first_inverse_direction')
+        self.named.update(shared.named_backing_arrays(role));complete=self.snapshot(role+'_after_all_six_directions')
+        views={item['name']:item for item in complete['views']}
+        for item in records:
+            prefix=role+'.record.'+format(item['borrower_record_index'],'06d')
+            for member in ('rows','matrix','inverse'):item[member+'_owner_id']=views[prefix+'.'+member]['owner_id']
+        result={'role':role,'full_rows':int(shared.full_rows),'ny':int(shared.ny),'width':int(shared.width),'independent_rows':n,
+            'dimension_counts':_plain(shared.dimension_counts),'record_count':len(records),'base_count':len(shared.bases),
+            'records':records,'record_rows_artifact':row_artifact,'references':references,'directions':directions,'actual_arrays':actual_arrays,
+            'lazy_inverse_before':before,'lazy_inverse_after':self.bank.receipt(stage='lazy_after_'+role)['lazy_inverse_count'],
+            'complete_native_independent_partition_equal':True,'complete_orbit_base_slot_partition_equal':True,
+            'every_actual_record_matrix_inverse_compared':True,'all_six_complete_operator_columns_compared':True,
+            'shared_bank_instance_equal':True,'mutable_transform_borrow_detected':False,'key_collision_detected':False,
+            'original_control_scope':'streamed actual original helpers; one state scratch; no unshared collector'}
+        self.roles.append(result);self.event('shared_complete_role_equivalence_before_factor',result);return result
 
     def compare(self, role, shared, default, *, cell_info, geometry_x, frozen_context):
         if role not in ROLES or role in [item["role"] for item in self.roles]:
@@ -250,7 +388,8 @@ class SharedTransformEvidence:
     def result(self):
         if [item["role"] for item in self.roles]!=list(ROLES) or not self.bank.receipt(stage="sealed_check")["sealed"]:
             raise ValueError("complete full/two-local comparisons and sealed bank required before factors")
-        return {"schema":SCHEMA,"roles":self.roles,"owner_stages":self.stages,
+        return {"schema":SCHEMA if self.direct_profile is None else "task40extra.direct-shared-transform-equivalence.v1",
+            "direct_profile":self.direct_profile,"roles":self.roles,"owner_stages":self.stages,
             "owner_artifacts":self.owner_artifacts,"mapping_limit":self.limit,"shared_transforms":True,
-            "same80_p4_only":True,"local_layout_borrows_existing_entities":True,
+            "same80_p4_only":self.direct_profile is None,"local_layout_borrows_existing_entities":True,
             "complete_before_any_factor":True,"payload_is_RSS":False,"target_savings_measured":False}

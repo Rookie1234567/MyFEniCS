@@ -109,6 +109,7 @@ def build_same_mesh_physical_action(
     physical_cfg: Any | None = None,
     quotient_context: Any | None = None,
     raw_mode_observer: Callable[[Mapping[str, Any]], None] | None = None,
+    raw_observer_profile: str | None = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -126,6 +127,8 @@ def build_same_mesh_physical_action(
         build_gauge_assembly_context,
     )
     validate_phase_gauge(dtn_phase_gauge)
+    if raw_observer_profile is not None and raw_mode_observer is None:
+        raise ValueError("raw observer profile requires its explicit research callback")
     if raw_mode_observer is not None and (dtn_phase_gauge != BOUNDARY_PLANE or not callable(raw_mode_observer)):
         raise ValueError("raw mode observer requires an explicit boundary-plane research callback")
     from .dtn_port_3d import _dtn_surface_quadrature_degree
@@ -207,7 +210,7 @@ def build_same_mesh_physical_action(
                 modes, assemblers, floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
                 assembly_context=(build_gauge_assembly_context(function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers)
                                   if dtn_phase_gauge == BOUNDARY_PLANE else None),
-                raw_mode_observer=raw_mode_observer,
+                raw_mode_observer=raw_mode_observer, raw_observer_profile=raw_observer_profile,
             )
         else:
             carrier = build_fullspace_dtn_carrier_from_surface(
@@ -218,6 +221,7 @@ def build_same_mesh_physical_action(
                 ),
                 physical_cfg=physical_cfg, physical_mode_inventory=mode_inventory,
                 quotient_context=quotient_context, raw_mode_observer=raw_mode_observer,
+                raw_observer_profile=raw_observer_profile,
             )
         if dtn_phase_gauge == BOUNDARY_PLANE and mode_sha != carrier.physical_generator_manifest_sha256:
             raise ValueError("physical generator identity differs from supplied inventory")

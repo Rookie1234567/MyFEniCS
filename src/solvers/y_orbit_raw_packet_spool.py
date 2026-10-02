@@ -31,8 +31,14 @@ METADATA_FIELDS = (
 )
 
 
-def _profile_errors(packet, *, next_index, original_indices):
+def _profile_errors(packet, *, next_index, original_indices, direct_profile=None):
     """Pure observer metadata checks; no numerical array access."""
+    direct = None
+    if direct_profile is not None:
+        from .y_orbit_direct_profile import direct_profile_metadata
+        direct = direct_profile_metadata(direct_profile)
+    K = direct.replication_count if direct is not None else 2
+    counts = {None: 532, **{b: count for b, count in enumerate(direct.sector_port_counts)}} if direct else MODE_COUNTS
     errors = ["missing " + name for name in METADATA_FIELDS if name not in packet]
     index, original, twist = (packet.get(name) for name in
                              ("local_mode_index", "original_mode_index", "quotient_twist_index"))
@@ -42,9 +48,9 @@ def _profile_errors(packet, *, next_index, original_indices):
         errors.append("local indices must be unique contiguous integers")
     if type(original) is not int or not 0 <= original < 532 or original in original_indices:
         errors.append("original index is missing, duplicated, or out of range")
-    if twist is not None and (type(twist) is not int or twist not in (0, 1)):
+    if twist is not None and (type(twist) is not int or twist not in tuple(range(K))):
         errors.append("only global or two quotient twists are supported")
-    count = MODE_COUNTS.get(twist) if twist is None or type(twist) is int else None
+    count = counts.get(twist) if twist is None or type(twist) is int else None
     if count is not None and type(index) is int and index >= count:
         errors.append("packet exceeds the exact global/sector inventory")
     key = packet.get("original_mode_key")
@@ -61,8 +67,8 @@ def _profile_errors(packet, *, next_index, original_indices):
             errors.append("local branch must be explicit 0 or 1")
         if not isinstance(key, (tuple, list)) or len(key) != 4 or type(key[2]) is not int:
             errors.append("complete original semantic key is required")
-        elif type(twist) is int and twist in (0, 1):
-            if (key[2]-twist) % 2 or branch != ((key[2]-twist)//2) % 2:
+        elif type(twist) is int and twist in tuple(range(K)):
+            if (key[2]-twist) % K or branch != ((key[2]-twist)//K) % 2:
                 errors.append("original n and explicit twist/branch disagree")
         if not packet.get("quotient_contract_sha256"):
             errors.append("quotient contract hash is required")
@@ -71,7 +77,8 @@ def _profile_errors(packet, *, next_index, original_indices):
     ownership = packet.get("ownership_range")
     if (not isinstance(ownership, (tuple, list)) or len(ownership) != 2
             or any(type(value) is not int for value in ownership) or ownership[0] != 0
-            or ownership[1] != (17204 if twist is None else 8940)):
+            or ownership[1] != ((direct.storage_rows if twist is None else direct.local_storage_rows)
+                                if direct is not None else (17204 if twist is None else 8940))):
         errors.append("bounded MPI1 p4 owned storage is required")
     return errors
 
@@ -174,13 +181,22 @@ class RawModeSpool:
     Returned sparse arrays are read-only mmaps and belong to the caller.
     """
 
-    def __init__(self, directory, *, save_array, allocation_gate, root_directory=None):
+    def __init__(self, directory, *, save_array, allocation_gate, root_directory=None, direct_profile=None):
         if not callable(save_array) or not callable(allocation_gate):
             raise TypeError("existing save_array and allocation_gate callbacks are required")
         self.directory = Path(directory).resolve()
         self.root_directory = Path(root_directory).resolve() if root_directory is not None else self.directory
         self.directory.relative_to(self.root_directory)
         self.save_array, self.allocation_gate = save_array, allocation_gate
+        self.direct_profile = direct_profile
+        if direct_profile is not None:
+            from .y_orbit_direct_profile import direct_profile_metadata
+            metadata = direct_profile_metadata(direct_profile)
+            self._mode_counts = {None: 532, **dict(enumerate(metadata.sector_port_counts))}
+            self._maximum_storage_rows = metadata.storage_rows
+            self._direct_identity = metadata.identity()
+        else:
+            self._mode_counts, self._maximum_storage_rows, self._direct_identity = MODE_COUNTS, 17204, None
         self.manifest_path = self.directory / "raw_packet_manifest.json"
         if self.manifest_path.exists():
             raise ValueError("raw spool manifest already exists; use a fresh directory")
@@ -202,7 +218,7 @@ class RawModeSpool:
         return hashlib.sha256(encoded).hexdigest()
 
     def _write_manifest(self):
-        expected = MODE_COUNTS.get(self._profile) if self._identity is not None else None
+        expected = self._mode_counts.get(self._profile) if self._identity is not None else None
         complete = expected is not None and len(self._records) == expected
         finite = all(record["all_finite"] for record in self._records)
         status = ("FAILED_RAW_PACKET_SPOOL" if self._failure is not None else
@@ -210,6 +226,7 @@ class RawModeSpool:
                   "READY_RAW_PACKETS_UNQUALIFIED" if complete else "PARTIAL_RAW_PACKET_SPOOL")
         self._write_json(self.manifest_path, {
             "schema": SPOOL_SCHEMA, "observer_schema": OBSERVER_SCHEMA, "status": status,
+            **({"direct_profile_metadata": self._direct_identity} if self._direct_identity is not None else {}),
             "raw_port_qualified": False, "PDE_solved": False, "factor_count": 0, "official_results": False,
             "root_directory": str(self.root_directory), "expected_mode_count": expected,
             "recorded_mode_count": len(self._records), "all_finite": finite,
@@ -259,9 +276,9 @@ class RawModeSpool:
         artifacts, offsets = {}, []
         try:
             ownership = packet.get("ownership_range")
-            n = ownership[1] if isinstance(ownership, (tuple, list)) and len(ownership) == 2 else 17204
-            if type(n) is not int or not 0 < n <= 17204:
-                n = 17204
+            n = ownership[1] if isinstance(ownership, (tuple, list)) and len(ownership) == 2 else self._maximum_storage_rows
+            if type(n) is not int or not 0 < n <= self._maximum_storage_rows:
+                n = self._maximum_storage_rows
             # Conservative current-mode sparse upper bound, including all four
             # existing masked pairs. This precedes extraction, copying, encoding,
             # and writes; no hidden conversion or dense all-mode cache occurs.
@@ -273,7 +290,7 @@ class RawModeSpool:
             })
             admitted = True
             metadata = {field: packet[field] for field in METADATA_FIELDS if field in packet}
-            errors = _profile_errors(packet, next_index=len(self._records), original_indices=self._original_indices)
+            errors = _profile_errors(packet, next_index=len(self._records), original_indices=self._original_indices, direct_profile=self.direct_profile)
             if errors:
                 raise ValueError("; ".join(errors))
             identity = {field: metadata[field] for field in (
@@ -397,14 +414,14 @@ class RawModeSpool:
         for field in ("stored_C_sparse", "stored_D_sparse"):
             packet[field] = slices[field]
         packet["raw_failure_diagnostic_only"] = descriptor["raw_failure_diagnostic_only"]
-        errors = _profile_errors(packet, next_index=index, original_indices=set())
+        errors = _profile_errors(packet, next_index=index, original_indices=set(), direct_profile=self.direct_profile)
         if errors or packet["original_mode_index"] != record["original_mode_index"]:
             raise ValueError("decoded raw packet metadata no longer matches its exact descriptor index")
         return packet
 
     def packets(self):
         """Yield exactly one current-mode sparse packet; no packet collection."""
-        expected = MODE_COUNTS.get(self._profile) if self._identity is not None else None
+        expected = self._mode_counts.get(self._profile) if self._identity is not None else None
         if expected is None or len(self._records) != expected:
             raise ValueError("raw audit stream is partial; exact 532/228/304 packet count is required")
         if self._failure is not None:

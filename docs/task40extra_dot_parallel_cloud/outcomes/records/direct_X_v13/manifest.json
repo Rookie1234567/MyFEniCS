@@ -1,0 +1,140 @@
+{
+  "schema": "task40extra.V13-successful-X-evidence-manifest.v1",
+  "base_root": "/workspace/scratch/9c465670b46b/task40extra_cloud",
+  "disposition": "PASS_FRESH_X_SAVED_ONLY_INDEPENDENT_CHECKER_WITH_BOUND_SUPERVISION",
+  "links_only_no_large_artifact_copy": true,
+  "evidence": [
+    {
+      "path": "staging/direct_X_failure_and_proof_archive_5758f5e/report_zh.md",
+      "sha256": "f1c60af08a4111d0dbb8683a5418703c91057daff5810b8befb2f9c357589033",
+      "bytes": 6112,
+      "role": "preserved historical snapshot direct_X_failure_and_proof_archive_5758f5e"
+    },
+    {
+      "path": "staging/direct_X_failure_and_proof_archive_5758f5e/compact_record.json",
+      "sha256": "b7ea37e17e70c4be96f071d22089175249bcd48146b5e733179ea433aecfee19",
+      "bytes": 36964,
+      "role": "preserved historical metrics direct_X_failure_and_proof_archive_5758f5e"
+    },
+    {
+      "path": "staging/direct_X_resource_stop_archive_5758f5e/report_zh.md",
+      "sha256": "c8990819dbcae8f683726c8d8e47c6ac777ccfef2626fa13951b3102b1d6f2d9",
+      "bytes": 4753,
+      "role": "preserved historical snapshot direct_X_resource_stop_archive_5758f5e"
+    },
+    {
+      "path": "staging/direct_X_resource_stop_archive_5758f5e/compact_record.json",
+      "sha256": "bf003653428d53aedd4050afee4128e94d963c03f7c10c907d18a9afb8c0c307",
+      "bytes": 22245,
+      "role": "preserved historical metrics direct_X_resource_stop_archive_5758f5e"
+    },
+    {
+      "path": "staging/direct_X_attempt5_worker_archive_816b7247/report_zh.md",
+      "sha256": "daf2b2f155840cdd7dd0b20665102e8ad893b3cbc0ea46504795dcd00e08cf73",
+      "bytes": 4787,
+      "role": "preserved historical snapshot direct_X_attempt5_worker_archive_816b7247"
+    },
+    {
+      "path": "staging/direct_X_attempt5_worker_archive_816b7247/compact_record.json",
+      "sha256": "f09499601d5e9b560fbe359fb62efe58a9b72064c02057e119c4a49a21bd5d84",
+      "bytes": 23547,
+      "role": "preserved historical metrics direct_X_attempt5_worker_archive_816b7247"
+    },
+    {
+      "path": "staging/direct_X_attempt5_checker_failure_archive_ca1a8cb/report_zh.md",
+      "sha256": "3527446273bb4cd5f406b7253baa21afde314d36b8004cd2e3defe1b3531919d",
+      "bytes": 3998,
+      "role": "preserved historical snapshot direct_X_attempt5_checker_failure_archive_ca1a8cb"
+    },
+    {
+      "path": "staging/direct_X_attempt5_checker_failure_archive_ca1a8cb/compact_record.json",
+      "sha256": "12e248b6b48d6483200b2b4bf2a4feaf4057b900ad1c57f2b0b4e9cdef7faa32",
+      "bytes": 15775,
+      "role": "preserved historical metrics direct_X_attempt5_checker_failure_archive_ca1a8cb"
+    },
+    {
+      "path": "staging/direct_X_attempt5_residual_definition_archive_5851d3d/report_zh.md",
+      "sha256": "8ff6d38253aa96c17c38dd4c5a6f717bb39cbd2578c64df28cba5328eef3e3e6",
+      "bytes": 4631,
+      "role": "preserved historical snapshot direct_X_attempt5_residual_definition_archive_5851d3d"
+    },
+    {
+      "path": "staging/direct_X_attempt5_residual_definition_archive_5851d3d/compact_record.json",
+      "sha256": "c0b57cbae4ec280240ff2f75ed3011108dfca2e03795b87a872ae774ec641477",
+      "bytes": 34659,
+      "role": "preserved historical metrics direct_X_attempt5_residual_definition_archive_5851d3d"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_stream_attempt3/independent_checker.json",
+      "sha256": "7cfba8a3de25cbb15d9cfaef7000b9d7860feacb474740cdadadcfcace80c08a",
+      "bytes": 11331128,
+      "role": "actual successful saved-only checker metadata"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_stream_attempt3/supervision/summary.json",
+      "sha256": "5c0aae7af937ef22e9a2379ab6eae9f8974f579343be676b8dbd9cec602001fd",
+      "bytes": 176039,
+      "role": "successful checker terminal supervision"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_stream_attempt3/checker_phase.json",
+      "sha256": "f7694d23d8a9bad3d7127d0f7aca9277ab6b7df96f716c7a14f00cf70f6de4f7",
+      "bytes": 250,
+      "role": "successful checker last phase"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_supplemental_receipt_attempt1/supplemental_receipt.json",
+      "sha256": "8741aee5110e4167e52638a370a7163eee6384d6c2eb755415336c114d40506c",
+      "bytes": 357051,
+      "role": "receipt-only supplemental finalization"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_supplemental_receipt_attempt1/launcher_failure.json",
+      "sha256": "88748961a2da7239dd3c0d9a8b46b196166f8fe8afd128d8cfebf1678b77f666",
+      "bytes": 494,
+      "role": "preserved post-success launcher KeyError"
+    },
+    {
+      "path": "experiments/direct_X_residual_saved_diagnostics/supplemental_finalizer_attempt1_failure.json",
+      "sha256": "7945d61d237725be398f23d923c7cc2ccb652b6955064a8bd5311449a98f540a",
+      "bytes": 551,
+      "role": "preserved first supplemental uniqueness assertion failure"
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_final_X_evidence_linkage_review_v1.json",
+      "sha256": "cd597f64842896afecd2f51ebd7e436285a13cfc94d99475eccff3dbba817c25",
+      "bytes": 8332,
+      "role": "independent final source/metadata linkage review"
+    }
+  ],
+  "worker_report_hash_authority": "actual checker/supplemental/previous immutable worker compact bindings; no new huge report scan",
+  "final_source_metadata_verification_receipt": {
+    "status": "PASS_FINAL_X_WORKER_SAVED_CHECKER_AND_SUPPLEMENTAL_EVIDENCE_LINKAGE",
+    "sha256": "cd597f64842896afecd2f51ebd7e436285a13cfc94d99475eccff3dbba817c25",
+    "package_copy": "independent_final_X_evidence_linkage_review_v1.json",
+    "copied_unchanged": true
+  },
+  "outputs": [
+    {
+      "path": "report_zh.md",
+      "sha256": "3cfc0d0cbcc6c17d7df8739f79bbf9779151a4b364fe593d2ad8516d6a85caf5",
+      "bytes": 5323
+    },
+    {
+      "path": "compact_record.json",
+      "sha256": "913064789949efb4ecf14fdbe699ead9678232ff0d7bd4d70554481b006b57b6",
+      "bytes": 23649
+    },
+    {
+      "path": "integration_snippets.md",
+      "sha256": "588da276e1f3588b066f0cf92c216558378a677eb6d136b27d81e4d78ac55ad5",
+      "bytes": 2941
+    },
+    {
+      "path": "independent_final_X_evidence_linkage_review_v1.json",
+      "sha256": "cd597f64842896afecd2f51ebd7e436285a13cfc94d99475eccff3dbba817c25",
+      "bytes": 8332
+    }
+  ],
+  "verification": "Successful checker/root scalars/schema/hash and supervision bound to unchanged supplemental; final independent source/metadata/ABI/scalar/failure/resource linkage receipt copied byte-for-byte; no new numerical or huge-event execution"
+}

@@ -45,3 +45,6 @@ real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_or
 
 
 [V12共享完整实体变换](response_v12.md)通过同80-cell full3D原312＋38,881存储门。shared matrix/inverse owners为410,624B，完整记录逻辑体积69,435,392B；它们不是RSS，整树监督峰反而因资格证据重叠增大。本路线p6、原尺寸2TB/48h仍未资格，first X direct profile实施中、未运行。
+
+
+[V13 X网格加密资格](response_v13.md)已完成：p4/120 cells、同光学尺寸/manual532，worker816b7247与saved-only checker2a07d23独立绑定，75131项通过，全部12960内部、四q、8组532输出保留。X-only 2GiB/1800s；目标原尺寸/AUTO库存/2TB48h仍未资格，历史失败完整保留。

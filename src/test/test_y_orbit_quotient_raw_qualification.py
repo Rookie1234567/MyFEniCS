@@ -67,7 +67,7 @@ def valid_metadata():
 
 def test_source_and_expected_authority_parse_and_hash_without_imports():
     ast.parse(SOURCE_TEXT, filename=str(SOURCE))
-    assert hashlib.sha256(HELPER.read_bytes()).hexdigest() == "6b9a432da910e4a3c1ec9cc011974b6938c58a8230d571c575f5d4338dbc9fd1"
+    assert hashlib.sha256(HELPER.read_bytes()).hexdigest() == "baf07751697ec92bb209571927fec41223b735a14d19dd3f55710a6c8bddb136"
     assert hashlib.sha256(PLAN.read_bytes()).hexdigest() == "0e30704302472ee421e0dd5b250ef0361d6c6f96a84fea6082298a4baab8ebd2"
 
 
@@ -101,7 +101,11 @@ def test_narrow_api_has_no_primary_rebuild_generator_rhs_or_factor_call():
     main = _function("qualify_quotient_raw_bundle")
     assert [arg.arg for arg in main.args.args] == ["bundle"]
     assert {arg.arg for arg in main.args.kwonlyargs} == {
-        "raw_mode_packets", "record_path", "expected_physical_manifest", "expected_global_ordered_keys", "seed", "tolerance"}
+        "raw_mode_packets", "record_path", "expected_physical_manifest", "expected_global_ordered_keys", "seed", "tolerance",
+        "direct_profile", "literal_mode_observer"}
+    defaults = dict(zip((arg.arg for arg in main.args.kwonlyargs), main.args.kw_defaults))
+    assert ast.literal_eval(defaults["direct_profile"]) is None
+    assert ast.literal_eval(defaults["literal_mode_observer"]) is None
     forbidden = {"build_same_mesh_physical_action", "build_fullspace_dtn_carrier_from_surface",
                  "outgoing_port_modes_3d", "build_dynamic_mode_inventory", "build_physical_rhs",
                  "prepare_boundary_plane_outputs", "splu", "factor", "solve", "solve_repeated"}
@@ -173,8 +177,14 @@ def test_actual_carrier_basis_MPC_source_Gauss_are_checked_at_both_ends():
     assert len(_calls(function, "_check_loaded_primary_provenance")) == 4
     assert len(_calls(function, "select_inventory")) == 2
     for token in ("carrier is carrier", "carrier.quotient_context is ctx", "carrier_numeric_identity(carrier) == identity_before",
-                  "actual_local_cells", "n == 8940", "actual_finalized_slave_rows", "== 1004", "ctx.tau == ctx.eta**2"):
+                  "actual_local_cells", "n == expected_storage", "actual_finalized_slave_rows", "== expected_slaves", "ctx.tau == ctx.eta**2"):
         assert token in SOURCE_TEXT
+    for name, unchanged_default in (("expected_cells", 40), ("expected_storage", 8940), ("expected_slaves", 1004)):
+        value = next(node.value for node in ast.walk(function) if isinstance(node, ast.Assign)
+                     and any(isinstance(target, ast.Name) and target.id == name for target in node.targets))
+        assert isinstance(value, ast.IfExp)
+        assert ast.unparse(value.test) == "direct is not None"
+        assert ast.literal_eval(value.orelse) == unchanged_default
     discrete = ast.unparse(_function("_actual_discrete_binding"))
     assert "mpc.coefficients()" in discrete and "basix_coefficients" in discrete and "orientation" in discrete
 

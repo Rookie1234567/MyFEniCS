@@ -202,3 +202,18 @@ worker145.83506661900174s/RSS788480000B，saved-only checker7.072437755996361s/R
 原regular/notch最大true residual为5.2675719230699435e-12/7.96690203269436e-12，notch generic/interior/physical/support为4/4/3/4步。worker170.035s/RSS1,065,373,696B，checker43.125s/RSS952,623,104B，分别swap0/清场、同1.5GiB/600s。因独立legacy/evidence重叠，整树峰高于V11，本轮不授予RSS或加速收益。p6、原尺寸准确网格/端口收敛/2TB/48h仍未资格；X direct profile正在实施且尚未运行。
 
 [Response V12](../response_v12.md)、[compact](records/shared_transform_v12/shared_transform_v12_compact.json)、[独立归档](records/shared_transform_v12/independent_verification.json)。历史V11与所有失败范围保留。
+
+
+## V13：X网格加密点完整保存证据资格
+
+X在同光学尺寸、manual532下将网格加密至p4/6×4×5=120 cells；两local twist各60 cells，精确消去再恢复全部12960内部未知量，四q因子同时保留。其意义是检查完整三维恢复路线随离散密度增长的行为。
+
+| 项目 | measured结果与范围 |
+|---|---|
+| 完整独立核验 | 358 direct＋33519 raw＋37 operator＋41217 shared＝75131条通过；shared控制名称允许合法重复 |
+| 原三维残差 | notch最大4.710949682298374e-12；regular physical native保存7.57682638912512e-11、独立最大7.546733167266532e-11，gate为1e-10 |
+| notch与输出 | generic/interior/support/physical为4/4/5/4步；8组各532完整有限且可表示模式输出 |
+| worker / checker | 1535.1467s / 590.1043s；整树RSS峰1422172160B / 1567666176B；swap0、清场 |
+| 明确限制 | X-only 2GiB/1800s；非普通1.5GiB/600s；目标尺寸/AUTO32060/2TB48h、official RTA未资格 |
+
+worker816b7247与checker2a07d23分别绑定。原startup/resource/source-role/residual定义失败、成功后launcher KeyError及首supplemental唯一label断言失败均保留；当前checker只消费保存证据，factor calls0。CSR54078536B不是factor fill/RSS；sampled PC defect0.013423不是算子范数。详见[Response V13](../response_v13.md)、[compact及失败索引](records/direct_X_v13/compact_record.json)、[最终独立核验](records/direct_X_v13/independent_final_X_evidence_linkage_review_v1.json)。下一步须审查后再准入XZ/Ny扩展，尚不推出目标可行性。

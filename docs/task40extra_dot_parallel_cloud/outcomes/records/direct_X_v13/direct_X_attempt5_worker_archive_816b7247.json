@@ -1,0 +1,657 @@
+{
+  "schema": "task40extra.external-direct-X-attempt5-worker-pending-checker-archive.v1",
+  "language": "zh-CN",
+  "disposition": "WORKER_PASS_INDEPENDENT_QUALIFICATION_PENDING",
+  "scope": "归档不可变attempt5 worker及首轮独立checker资源失败；不读取矩阵、不重跑PDE、不读取正在审阅的修补",
+  "worker_source": {
+    "head": "816b7247c8359a7affbd450365de5bbb86de367a",
+    "branch": "task40extra_dot_parallel_cloud",
+    "dirty": "",
+    "source_clean_unchanged_reported": true,
+    "selected_source_files_sha256": {
+      "benchmarks/run_y_orbit_quotient_probe.py": "53db2750df8d6ce0768d1e1fada832fb81110c2d2cfc29975067612dd6279f74",
+      "benchmarks/check_y_orbit_direct_probe.py": "ef0bd44c7fcc1ba852fc00e8a74b7851d62cba4f231bbb773681585d98b61d55",
+      "benchmarks/check_y_orbit_quotient_probe.py": "77b4090ebf4395b1e8f37b72def54fde05f4dc09ef466395898b5c2ef0f0c42a",
+      "src/solvers/y_orbit_direct_probe.py": "7e6c4238c1492f439cd2e3dfcdadee8b939d39cb3eb273f03d832c1c2c9da336",
+      "src/solvers/y_orbit_direct_operator_qualification.py": "0304394eade1898e951ee315fb5819737b6347d284aa0ed3f4a33d587ee72388",
+      "src/solvers/y_orbit_two_cell_inverse.py": "db9590525ba95e5ac55060395f88de89b9933bdae828d59a8d573d92a90fa45b"
+    },
+    "complete_source_inventory": "provenance.json:/source/files_sha256",
+    "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+  },
+  "command": [
+    "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_quotient_probe.py",
+    "--run",
+    "--worker",
+    "--stage",
+    "solve",
+    "--expected-head",
+    "816b7247c8359a7affbd450365de5bbb86de367a",
+    "--run-directory",
+    "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt5",
+    "--shared-transforms",
+    "--direct-profile",
+    "X",
+    "--research-wall-seconds",
+    "1800",
+    "--research-memory-gib",
+    "2"
+  ],
+  "resource_contract": {
+    "stage": "solve",
+    "tree_cap_bytes": 2147483648,
+    "wall_seconds": 1800,
+    "swap_bytes": 0,
+    "mpi": 1,
+    "math_threads": 1,
+    "evidence_reserve_bytes": 134217728,
+    "factor_workspace_allowance_bytes": 536870912,
+    "factor_fill_and_temporary_workspace_unknown": true,
+    "factor_L_U_statistics_copies_permitted": false,
+    "performance_or_target_capacity_claim": false,
+    "research_wall_seconds": 1800,
+    "worker_phase_wall_seconds": 1799.6310292170092,
+    "research_memory_gib": 2,
+    "requested_tree_cap_bytes": 2147483648,
+    "research_memory_launch_admission": {
+      "fresh_memory_envelope": {
+        "cgroup_limits": [],
+        "effective_available_bytes": 8126038016,
+        "effective_total_bytes": 10451460096,
+        "launch_cap_bytes": 3831070720,
+        "mem_available_bytes": 8126038016,
+        "mem_total_bytes": 10451460096,
+        "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+        "reserve_bytes": 4294967296,
+        "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+        "static_tree_cap_bytes": 12000000000
+      },
+      "launch_admission_passed": true,
+      "requested_memory_gib": 2,
+      "requested_tree_cap_bytes": 2147483648,
+      "required_cap_plus_evidence_reserve_bytes": 2281701376
+    }
+  },
+  "worker_terminal": {
+    "supervisor_classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "supervisor_elapsed_seconds": 1535.1467186810041,
+    "sampled_process_tree_rss_peak_bytes": 1422172160,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "time_exceeded": {
+      "workflow": false,
+      "solve": false,
+      "active_pc": false
+    },
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "status": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+    "factor_count": 4,
+    "PDE_solved": true,
+    "official_results": false,
+    "worker_report_sha256": "f98c393f1056b6722d3fda28775dfa6c98cd25ec332417c08dfc2d7ae883de08",
+    "worker_report_elapsed_seconds": 1529.929072162995,
+    "final_phase_receipt": {
+      "phase": "probe_complete",
+      "factor_count": 4,
+      "worker_elapsed_seconds": 1533.5392253109894,
+      "research_wall_seconds": 1800,
+      "phase_wall_seconds": 1799.6310292170092,
+      "research_memory_gib": 2,
+      "requested_tree_cap_bytes": 2147483648
+    },
+    "interpretation": "worker完成与报告的数值通过属于worker证据；首轮独立checker仍gate/evidence false，不能写成完整独立资格化通过"
+  },
+  "profile": {
+    "name": "X",
+    "dimensions": [
+      6,
+      4,
+      5
+    ],
+    "cell_count": 120,
+    "local_cell_count": 60,
+    "complete_cell_dimension": 300,
+    "physical_mode_count": 532,
+    "q_port_counts": [
+      76,
+      152,
+      152,
+      152
+    ],
+    "augmented_rows_per_q": [
+      2788,
+      2864,
+      2864,
+      2864
+    ],
+    "notch_comparison": "same_physical_notch",
+    "ordinary_defaults_changed": false
+  },
+  "reported_regular_source_results": [
+    {
+      "augmented_FE_true_residual": 1.3773680049420084e-12,
+      "augmented_port_closure_relative": 3.23447399726369e-13,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 5.620585699412784e-12,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "source_name": "generic",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        1920.0800233955888,
+        330.3024714325654,
+        1025.1288942554265,
+        780.6127724343088
+      ]
+    },
+    {
+      "augmented_FE_true_residual": 1.0347418220162177e-12,
+      "augmented_port_closure_relative": 2.660808143234214e-13,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 7.232665811223197e-12,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "source_name": "interior_only",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        6.256240571251801,
+        1.0553129451665875,
+        3.3938235229357003,
+        3.4199018034436355
+      ]
+    },
+    {
+      "augmented_FE_true_residual": 1.4787671324821695e-12,
+      "augmented_port_closure_relative": 2.9742381292927275e-13,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 1.094281969784667e-11,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "source_name": "notch_supported",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        8.749693256720025,
+        1.6501313135985491,
+        4.149224614885551,
+        3.4392222030497357
+      ]
+    },
+    {
+      "augmented_FE_true_residual": 7.995861159154784e-12,
+      "augmented_port_closure_relative": 1.555460335088005e-13,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 7.57682638912512e-11,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "source_name": "physical",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        8.462961346607782,
+        4.569127296095837e-16,
+        9.443911276609974e-15,
+        3.130548938572095e-15
+      ]
+    }
+  ],
+  "reported_notched_source_results": [
+    {
+      "augmented_FE_true_residual": 4.655919604101338e-12,
+      "augmented_port_closure_relative": 5.96340345355892e-17,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 4.655919702156525e-12,
+      "iterations": 4,
+      "nonzero_q_primal_relative": 0.5683903893362154,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "outer_operator": "full_original_3D_FFCx_form_action_plus_all_DtN_modes",
+      "reason": 2,
+      "right_pc": "all_y_blocks_regular_geometry_reference_inverse",
+      "seconds": 2.5682224149932154,
+      "source_name": "generic",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        1925.2850301437875,
+        330.3105507922459,
+        1024.7452924459126,
+        780.9189597556277
+      ]
+    },
+    {
+      "augmented_FE_true_residual": 4.7109496823952835e-12,
+      "augmented_port_closure_relative": 8.959004835609767e-17,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 4.710949682298374e-12,
+      "iterations": 4,
+      "nonzero_q_primal_relative": 0.6176166079525833,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "outer_operator": "full_original_3D_FFCx_form_action_plus_all_DtN_modes",
+      "reason": 2,
+      "right_pc": "all_y_blocks_regular_geometry_reference_inverse",
+      "seconds": 2.5857410359894857,
+      "source_name": "interior_only",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        6.2814459754158705,
+        1.0554917121379563,
+        3.390822625337111,
+        3.4235253806422423
+      ]
+    },
+    {
+      "augmented_FE_true_residual": 3.0673798839079457e-13,
+      "augmented_port_closure_relative": 5.64512860942957e-17,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 3.0673798839079457e-13,
+      "iterations": 5,
+      "nonzero_q_primal_relative": 0.5400720500521164,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "outer_operator": "full_original_3D_FFCx_form_action_plus_all_DtN_modes",
+      "reason": 2,
+      "right_pc": "all_y_blocks_regular_geometry_reference_inverse",
+      "seconds": 3.9153508599993074,
+      "source_name": "notch_supported",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        8.791771909041834,
+        1.6499285524281482,
+        4.152716697921488,
+        3.444104409654796
+      ]
+    },
+    {
+      "augmented_FE_true_residual": 4.249833812035306e-12,
+      "augmented_port_closure_relative": 7.72943429342924e-20,
+      "condensed_action_used_for_residual": false,
+      "degree": 4,
+      "full_native_slave_zero": true,
+      "full_original_true_residual": 4.249833809435228e-12,
+      "iterations": 4,
+      "nonzero_q_primal_relative": 9.791635566626867e-05,
+      "original_action_used": true,
+      "original_storage_rows": 25468,
+      "outer_operator": "full_original_3D_FFCx_form_action_plus_all_DtN_modes",
+      "reason": 2,
+      "right_pc": "all_y_blocks_regular_geometry_reference_inverse",
+      "seconds": 2.632680351001909,
+      "source_name": "physical",
+      "outputs": {
+        "actual_degree": 4,
+        "finite_plane_mode_count": 532,
+        "full_physical_field_recovered": true,
+        "global_output_component_consistency_checked": true,
+        "official_results": false,
+        "solver_auxiliary_coordinate": "boundary_plane",
+        "status": "representable_global_output"
+      },
+      "solution_primal_q_norms": [
+        8.482137776833552,
+        0.000597607705695857,
+        3.5648760438826315e-07,
+        0.0005767682666311573
+      ]
+    }
+  ],
+  "reported_notch_iterations": [
+    4,
+    4,
+    5,
+    4
+  ],
+  "reported_notch_full_original_residual_max": 4.710949682298374e-12,
+  "reported_notch_physical_nonzero_q_primal_relative": 9.791635566626867e-05,
+  "outputs_summary": {
+    "source_count": 8,
+    "per_source_finite_plane_mode_count": 532,
+    "status": "representable_global_output",
+    "full_physical_field_recovered": true,
+    "independent_output_replay_in_this_archive": false
+  },
+  "factor_evidence": {
+    "all_q_factors": 4,
+    "all_four_retained_simultaneously": true,
+    "all_reformed_blocks_compared_before_factor": true,
+    "factor_L_U_copies": false,
+    "factor_reuse_plus_minus_q": false,
+    "setup_seconds": 3.9568744160060305,
+    "setup_timing_scope": "包含factor setup测试与evidence，不作为pure backend factor或pure PC计时",
+    "input_CSR_total_payload_bytes": 54078536,
+    "input_blocks_metadata": [
+      {
+        "q": 0,
+        "shape": [
+          2788,
+          2788
+        ],
+        "nnz": 653788,
+        "CSR_payload_bytes": 13086916,
+        "CSR_sha256": "916d173254c3d5b0e60989c5270bffb0b4c66d062ca52768c4a81a2b2563545d",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      },
+      {
+        "q": 1,
+        "shape": [
+          2864,
+          2864
+        ],
+        "nnz": 682774,
+        "CSR_payload_bytes": 13666940,
+        "CSR_sha256": "e99b98f73ba4ae18b24494d1163837e12898f4c684b1afd53a893f8516c7459b",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      },
+      {
+        "q": 2,
+        "shape": [
+          2864,
+          2864
+        ],
+        "nnz": 682040,
+        "CSR_payload_bytes": 13652260,
+        "CSR_sha256": "7c1ec963c1446fcd9f79a479fa380bf8fc67eb6b77a1652ba732c78bf33bb773",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      },
+      {
+        "q": 3,
+        "shape": [
+          2864,
+          2864
+        ],
+        "nnz": 683048,
+        "CSR_payload_bytes": 13672420,
+        "CSR_sha256": "b750c037b6742d1d81fd2c02f594699220b5a27e3fe20f703c42b88d5e6d82eb",
+        "public_backend": "scipy.sparse.linalg.splu",
+        "factor_memory_bytes": null
+      }
+    ],
+    "tests": [
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 8.387028846881249e-14,
+        "q": 0,
+        "repeated_difference": 0.0,
+        "true_block_residual": 4.40052082366228e-13
+      },
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 1.559891769540248e-13,
+        "q": 1,
+        "repeated_difference": 0.0,
+        "true_block_residual": 2.753691816975406e-13
+      },
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 9.77636703720587e-14,
+        "q": 2,
+        "repeated_difference": 0.0,
+        "true_block_residual": 4.942723260469516e-13
+      },
+      {
+        "limit_linear": 1e-11,
+        "limit_residual": 1e-10,
+        "linearity_difference": 1.3285245003272673e-13,
+        "q": 3,
+        "repeated_difference": 0.0,
+        "true_block_residual": 2.784670674491133e-13
+      }
+    ],
+    "actual_factor_memory_or_fill_qualification": false
+  },
+  "fresh_carrier_scope": {
+    "status": "PASS_DIRECT_FRESH_CARRIER_COMPONENTS_ONLY",
+    "original532_alias_union_exactly_once": true,
+    "fresh_primary_and_literal_forms": true,
+    "full_case_pass": false
+  },
+  "physical_and_sample_scope": {
+    "changed_cells": [
+      58,
+      77
+    ],
+    "notch_supported_RHS": {
+      "full_original_FE_load": true,
+      "seed_formula": "cos(.31j)+i sin(.47j)",
+      "support_actual_changed_cells": [
+        58,
+        77
+      ],
+      "support_independent_rows": 560
+    },
+    "physical_rhs_facts": {
+      "assembly_context_sha256": "f8b3a6df1452d6de31d1be19e2407d9c287b28929dab9193b07c85a2811a9c1a",
+      "assembly_mode_manifest_sha256": "1a6129de57e99318c0bacb9cffbc64ccb8868346b1dd6b719a4969c586beb96f",
+      "degree": 4,
+      "dtn_phase_gauge": "boundary_plane",
+      "generation": "dtn_port_modal_physical_rhs",
+      "mode_count": 532,
+      "mode_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+      "phase_application": "finalized_floquet_mpc_once",
+      "physical_generator_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+      "role": "physical_maxwell_rhs",
+      "solver_incident_coordinate": "boundary_plane"
+    },
+    "sampled_right_PC_defect": {
+      "generic": 0.001736049303062485,
+      "interior_only": 0.0014805088197111958,
+      "notch_supported": 0.002668027454859759,
+      "physical": 0.013423201750147613
+    },
+    "PC_defect_is_norm_bound": false,
+    "sampled_notch_off_q_delta_relative": 0.7070935408800789,
+    "sampled_notch_q_coupling": [
+      {
+        "delta_dual_norm": 5.91347066686526,
+        "off_q_delta_dual_norm": 4.181332867165362,
+        "source_q": 0
+      },
+      {
+        "delta_dual_norm": 5.864016717139815,
+        "off_q_delta_dual_norm": 4.148406927050683,
+        "source_q": 1
+      },
+      {
+        "delta_dual_norm": 5.790757627946237,
+        "off_q_delta_dual_norm": 4.094864802296803,
+        "source_q": 2
+      },
+      {
+        "delta_dual_norm": 5.841427804696775,
+        "off_q_delta_dual_norm": 4.128217807087556,
+        "source_q": 3
+      }
+    ],
+    "scope_flags": {
+      "candidate_full_F_created": false,
+      "candidate_full_Ny_CSR_created": false,
+      "candidate_full_Q_created": false,
+      "candidate_global_FE_square_matrix_created": false,
+      "fresh_global_and_local_carriers": true,
+      "full_layout_entity_stream": true,
+      "performance_or_target_capacity_claim": false,
+      "snapshots_reused": false
+    },
+    "target_geometry_accuracy": false,
+    "no_2TB_or_48h_claim": true
+  },
+  "first_independent_checker": {
+    "source_head": "816b7247c8359a7affbd450365de5bbb86de367a",
+    "gate_pass": false,
+    "evidence_valid": false,
+    "error_type": "MemoryError",
+    "reason": "checker measured whole-tree allocation plus evidence reserve exceeds cap",
+    "official_results": false,
+    "PDE_rerun": false,
+    "supervisor": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 2,
+      "elapsed_seconds": 33.567088395997416,
+      "sampled_process_tree_rss_peak_bytes": 803282944,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    "watchdog_summary_hash_bound_by_checker_packet": "c35ef8775b44e21f5fb456d9229480f7b3db9e7592f59b418daf226308622bcc",
+    "allocation_admission": {
+      "event": {
+        "admitted": false,
+        "boundary": "direct_checker_event_metadata",
+        "checker_elapsed_seconds": 32.1475675279944,
+        "current_tree_rss_bytes": 725405696,
+        "effective_cap_bytes": 2147483648,
+        "event": "allocation_admission",
+        "evidence_reserve_bytes": 134217728,
+        "fresh_memory_envelope": {
+          "cgroup_limits": [],
+          "effective_available_bytes": 7534940160,
+          "effective_total_bytes": 10451460096,
+          "launch_cap_bytes": 3239972864,
+          "mem_available_bytes": 7534940160,
+          "mem_total_bytes": 10451460096,
+          "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+          "reserve_bytes": 4294967296,
+          "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+          "static_tree_cap_bytes": 12000000000
+        },
+        "global_swap_counters": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "launch_cap_bytes": 2147483648,
+        "phase_wall_seconds": 258.8707749090099,
+        "projected_tree_bytes": 2339766440,
+        "requested_payload_bytes": 0,
+        "requested_tree_cap_bytes": 2147483648,
+        "research_memory_gib": 2,
+        "research_wall_seconds": 1800,
+        "workspace_bytes": 1480143016
+      },
+      "event_line": 13360,
+      "event_line_sha256": "8d4c7ba807c2064768c77124ad60725a20ac25370450d6a13765dbdfefb36c0b"
+    },
+    "projection_over_cap_bytes": 192282792,
+    "failure_stage": "direct_checker_event_metadata；尚未进入独立matrix检查",
+    "failure_classification_preserved": true,
+    "interpretation": "事件metadata forecast工作区的资源admission失败；不是已证明worker数学失败，也不是已通过独立checker"
+  },
+  "pending_remediation_parent_context_only": {
+    "status": "PENDING_SOURCE_REVIEW_NO_NEW_CHECKER_RUN",
+    "proposal": "streaming event metadata与显式跨HEAD checker来源绑定修补",
+    "source_patch_or_new_checker_read_by_archiver": false,
+    "PDE_rerun_planned": false,
+    "fresh_separate_checker_directory_planned": true,
+    "approval_or_PASS_claim_in_this_record": false
+  },
+  "limits": {
+    "complete_independent_qualification": "PENDING",
+    "target_scale_physical_accuracy": "UNKNOWN",
+    "target_scale_capacity": "UNKNOWN",
+    "stronger_nonseparable_coupling_generalization": "NOT_ESTABLISHED",
+    "weak_perturbation_case_only": true,
+    "physical_RHS_small_nonzero_q_fraction": "约9.79e-5，不能用该小样本推广强coupling性能",
+    "sampled_PC_defect_is_operator_norm_bound": false,
+    "fixed_manual532_is_original_AUTO32060_convergence": false,
+    "explicit_2GiB_X_research_cap_is_user_2TB_48h_qualification": false,
+    "pure_backend_or_pure_PC_performance_claim": false
+  },
+  "archiver_actions": {
+    "stdlib_metadata_and_file_hash_reads_only": true,
+    "array_numeric_reads": 0,
+    "numerical_reruns": 0,
+    "project_imports": 0,
+    "canonical_writes": 0,
+    "matrix_or_artifact_copies": 0,
+    "source_edit": false
+  }
+}

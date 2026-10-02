@@ -8,23 +8,32 @@ from .y_orbit_sparse_reference import integer_admission, csr_audit, _gate
 
 
 class TwoCellBranchCoordinates:
-    def __init__(self, trace, condensed, context, *, global_original_H, allocation_gate, index_dtype):
+    def __init__(self, trace, condensed, context, *, global_original_H, allocation_gate, index_dtype, direct_profile=None):
         self.trace,self.context,self.index_dtype=trace,context,np.dtype(index_dtype)
         self.gate=allocation_gate
         self.width=int(trace['trace_width']);self.trace_rows=int(condensed.system.active_rows)
         self.ports=len(condensed.action_bundle['modes']);self.rows=self.trace_rows+self.ports
-        if trace['ny']!=2 or self.width!=1808 or self.trace_rows!=3616 or self.ports not in (228,304):
+        if direct_profile is None:
+            width_expected, trace_expected, sector_expected, replication_count = 1808, 3616, (228, 304), 2
+        else:
+            from .y_orbit_direct_profile import direct_profile_metadata
+            profile = direct_profile_metadata(direct_profile)
+            width_expected, trace_expected = profile.trace_rows_per_q, profile.local_trace_rows
+            sector_expected, replication_count = profile.sector_port_counts, profile.replication_count
+            if context.direct_profile_name != profile.name:
+                raise ValueError('direct branch coordinates/context profile differs')
+        if trace['ny']!=2 or self.width!=width_expected or self.trace_rows!=trace_expected or self.ports!=sector_expected[context.twist_index]:
             raise ValueError('fixed complete two40 p4 trace/port inventory required')
         carrier=condensed.action_bundle['dtn_action'].carrier
         h=np.asarray([e.normalization_h for e in carrier.entries])
         global_h=np.asarray(global_original_H)[np.asarray(context.original_mode_indices)]
         if (h.shape!=global_h.shape or np.any(h<=0) or not np.isfinite(h).all()
-                or np.max(np.abs(h-global_h/2)/h)>1e-12):
+                or np.max(np.abs(h-global_h/replication_count)/h)>1e-12):
             raise ValueError('actual local originalH must equal frozen globalH/K per mode')
         self.scale=1/np.sqrt(h)
         branch=np.asarray(context.local_branch_indices)
         self.aliases=tuple(np.flatnonzero(branch==b) for b in (0,1))
-        expected=(76,152) if context.twist_index==0 else (152,152)
+        expected=((76,152) if context.twist_index==0 else (152,152)) if direct_profile is None else tuple(profile.q_port_counts[q] for q in context.global_q_indices)
         if tuple(map(len,self.aliases))!=expected or not np.array_equal(np.sort(np.concatenate(self.aliases)),np.arange(self.ports)):
             raise ValueError('both branches must cover every local physical alias exactly once')
         _gate(allocation_gate,'local_trace_R_F_product',payload=4*sum(a.nbytes for m in (trace['R_t'],trace['F_t'])
@@ -37,7 +46,8 @@ class TwoCellBranchCoordinates:
             raise ValueError('physical Gamma_n aliases disagree with explicit eta/tau branches')
         self.audit={'global_q_indices':list(context.global_q_indices),'alias_counts':list(expected),
                     'original_H_scale_verified':True,'port_eta':[ [v.real,v.imag] for v in eta],
-                    'positive_H_coordinates':True,'global_matrices_created':False,'numeric_factor_calls':0}
+                    'positive_H_coordinates':True,'global_matrices_created':False,'numeric_factor_calls':0,
+                    **({} if direct_profile is None else {'direct_profile': profile.name, 'H_global_to_local_ratio': replication_count})}
 
     def q_map(self, branch):
         if branch not in (0,1):raise ValueError('both local branches have explicit indices0/1')

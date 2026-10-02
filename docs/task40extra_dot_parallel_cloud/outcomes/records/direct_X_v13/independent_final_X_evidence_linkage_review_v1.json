@@ -1,0 +1,173 @@
+{
+  "ABI": {
+    "MPI1_thread1_environment_guard_read_and_receipts_bound": true,
+    "actual_and_worker_copied_qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "worker_checker_provenance_environment_exactly_equal": true
+  },
+  "canonical": {
+    "head": "2a07d23d17b527675e6ae0b904c56121e258b4fc",
+    "status": "",
+    "tree": "57463bbb64e24567ed73239410f7e12a494f1ca6"
+  },
+  "checker": {
+    "PDE_rerun": false,
+    "counts": {
+      "direct": 358,
+      "operator": 37,
+      "raw": 33519,
+      "shared": 41217
+    },
+    "event_loader_receipt_verified_from_saved_checker_metadata_only": {
+      "all_events_retained": true,
+      "blank_line_count": 0,
+      "complete_EOF_verified": true,
+      "event_count": 99657,
+      "exact_event_order_preserved": true,
+      "file_bytes": 184493589,
+      "file_sha256": "9a014d1acf266b4a8e3573faf1e3c62a1e3832ddf6301d78b7344930c9a85cc2",
+      "keys_interned_without_value_changes": true,
+      "line_count": 99657,
+      "maximum_admitted_line_bytes": 67108864,
+      "maximum_line_bytes": 44174864,
+      "path": "probe_events.jsonl",
+      "read_chunk_bytes": 1048576,
+      "same_file_hash_both_passes": true
+    },
+    "evidence_valid_field_present": false,
+    "file_sha256": "7cfba8a3de25cbb15d9cfaef7000b9d7860feacb474740cdadadcfcace80c08a",
+    "gate_pass": true,
+    "global_Ny_reference_matrices_created": false,
+    "head": "2a07d23d17b527675e6ae0b904c56121e258b4fc",
+    "historical_arrays_loaded": false,
+    "numeric_factor_calls": 0,
+    "schema": "task40extra.y-orbit-direct-profile-checker.v1",
+    "shared_repeated_labels_permitted_by_actual_existing_schema": true,
+    "shared_unique_names": 35754,
+    "supervisor_sha256": "5c0aae7af937ef22e9a2379ab6eae9f8974f579343be676b8dbd9cec602001fd",
+    "total_passed_entries": 75131
+  },
+  "preserved_failures": {
+    "launcher_missing_evidence_valid_failure_sha256": "88748961a2da7239dd3c0d9a8b46b196166f8fe8afd128d8cfebf1678b77f666",
+    "original_checker_resource_failure_sha256": "c257c848fad7407210f129d472a597a4525121d65b5c7862aca10805a2df7526",
+    "stream_attempt1_role_failure_sha256": "5cc0d835e13bd2e3ab8f8234c5b3c21e44f7f28ec8bffa6ad30eb6558a76e323",
+    "stream_attempt2_residual_representation_failure_sha256": "aba4c4f991e5f629fd19407d7dfc3f79b6f3e688f677ab17e93aeff57f3e3bd4",
+    "supplemental_unique_name_assertion_failure_sha256": "7945d61d237725be398f23d923c7cc2ccb652b6955064a8bd5311449a98f540a"
+  },
+  "qualification_limits": [
+    "Existing reviewed checker verifies all arrays/operators; this audit independently checks its complete metadata/scalar gates and immutable linkage rather than recomputing numerical arrays",
+    "FirstX physical calibration only; no target-geometry accuracy, Y/XZ or600s capacity claim",
+    "Official results remain false"
+  ],
+  "resources": {
+    "actual_cap_bytes": 2147483648,
+    "approved_scope": "Explicit X research2GiB/1800s per admitted worker and fresh saved-only checker; ordinary1.5GiB/600s qualification not claimed",
+    "checker": {
+      "descendants_cleared": true,
+      "elapsed_seconds": 590.1043245119945,
+      "observed_child_identity_coverage": "complete",
+      "process_tree_identity_coverage": "complete",
+      "sampled_process_tree_rss_peak_bytes": 1567666176,
+      "sampled_process_tree_swap_peak_bytes": 0
+    },
+    "current_phase_remaining_budget_matches_supervisor": true,
+    "evidence_reserve_bytes": 134217728,
+    "factor_aggregate_allowance_bytes": 536870912,
+    "fresh_dynamic_host_each_finite_cgroup_launch_admissions_joined": true,
+    "global_swap_delta_zero": true,
+    "remaining_descendants_empty": true,
+    "worker": {
+      "descendants_cleared": true,
+      "elapsed_seconds": 1535.1467186810041,
+      "observed_child_identity_coverage": "complete",
+      "process_tree_identity_coverage": "complete",
+      "sampled_process_tree_rss_peak_bytes": 1422172160,
+      "sampled_process_tree_swap_peak_bytes": 0
+    }
+  },
+  "reviewer_FE_JIT_factors_solves_PDE_or_checker_rerun": false,
+  "reviewer_canonical_writes": false,
+  "reviewer_huge_event_file_read": false,
+  "reviewer_project_imports_tests_or_numeric_arrays": false,
+  "schema": "task40extra.independent-final-direct-X-evidence-linkage-review.v1",
+  "scope": "Independent read-only source, bounded saved JSON metadata, complete check-entry scalar records, hashes/receipts/ABI/resource/source bridge and failure archive; no event-file or numerical-array recomputation",
+  "semantic_correction": {
+    "envelope_scope": "Computed rounded-add/subtract diagnostic, not interval-certified operator bound",
+    "exact_saved_and_recomputed_operand_definitions_bound": true,
+    "independent_operand_gates_limit": 1e-11,
+    "representation_binding_count": 36,
+    "review_receipt_sha256": "1eb8fad8f8e476f6bfa261b068e441505a5d64ccee7a6459a690300d43066ed2",
+    "saved_and_recomputed_each12_native_FE_port_equation_gates_limit": 1e-10,
+    "tiny_residual_cross_representation_1e_minus12_RHS_precision_claimed": false,
+    "underflow_false_zero_rejected": true
+  },
+  "source_bridge": {
+    "all_other_numerical_config_input_dependencies_equal": true,
+    "allowed_checker_test_paths": [
+      "benchmarks/check_y_orbit_direct_probe.py",
+      "benchmarks/check_y_orbit_quotient_probe.py",
+      "src/test/test_y_orbit_direct_event_stream_metadata.py"
+    ],
+    "changed_dependencies": [
+      {
+        "checker_sha256": "d4993f8721d41cbc20fcb4b6fc464a08d016e5677c101d7a5cf066df511c0e93",
+        "path": "benchmarks/check_y_orbit_direct_probe.py",
+        "worker_sha256": "ef0bd44c7fcc1ba852fc00e8a74b7851d62cba4f231bbb773681585d98b61d55"
+      },
+      {
+        "checker_sha256": "89aeef289b0afacf0c1e82ac138a535c7f30a3ddceb3c456509ac82f64921bb2",
+        "path": "benchmarks/check_y_orbit_quotient_probe.py",
+        "worker_sha256": "77b4090ebf4395b1e8f37b72def54fde05f4dc09ef466395898b5c2ef0f0c42a"
+      },
+      {
+        "checker_sha256": "9126e257f661858979d89e141029e7b4a6508803c7b20ba4f7c027fc82d2e455",
+        "path": "src/test/test_y_orbit_direct_event_stream_metadata.py",
+        "worker_sha256": null
+      }
+    ],
+    "changed_paths": [
+      "benchmarks/check_y_orbit_direct_probe.py",
+      "benchmarks/check_y_orbit_quotient_probe.py",
+      "src/test/test_y_orbit_direct_event_stream_metadata.py"
+    ],
+    "checker_dependency_manifest_sha256": "81935219e156463bd5f75e318f0637c1c318b2f1b90ed0c593424d98e9c13c4d",
+    "checker_head": "2a07d23d17b527675e6ae0b904c56121e258b4fc",
+    "same_head_exact_source_identity": false,
+    "schema": "task40extra.direct-X-checker-event-stream-source-bridge.v1",
+    "worker_dependency_manifest_sha256": "b17eac7ff5e937688ae8f7ed05a26327942637f326e6401027277f88f55030d2",
+    "worker_head": "816b7247c8359a7affbd450365de5bbb86de367a"
+  },
+  "status": "PASS_FINAL_X_WORKER_SAVED_CHECKER_AND_SUPPLEMENTAL_EVIDENCE_LINKAGE",
+  "supplemental": {
+    "actual_schema_verified": true,
+    "evidence_valid_not_added_or_invented": true,
+    "finalization_script_sha256": "4afcdcb7bb9b1789ca128c887598054b1525151e4a6b8fde2919b07dc70e2d1c",
+    "original_output_hashes_match_supplied_frozen_pins": true,
+    "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_supplemental_receipt_attempt1/supplemental_receipt.json",
+    "sha256": "8741aee5110e4167e52638a370a7163eee6384d6c2eb755415336c114d40506c"
+  },
+  "worker": {
+    "PDE_solved": true,
+    "all_outputs_per_packet": 532,
+    "artifact_manifest_sha256": "ce5fdf1619372f10756f105d25891f8bcbe8c526c79c0bb16ab5ef8db29d8101",
+    "factor_count": 4,
+    "four_augmented_q_controls": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "head": "816b7247c8359a7affbd450365de5bbb86de367a",
+    "provenance_sha256": "66eb0ec08612b4c6f4c6b543775154b6617708de13bb8af3e33e7166cbd5867a",
+    "regular_and_notch_each_four_loads": [
+      "physical",
+      "generic",
+      "interior_only",
+      "notch_supported"
+    ],
+    "report_sha256": "f98c393f1056b6722d3fda28775dfa6c98cd25ec332417c08dfc2d7ae883de08",
+    "status": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+    "supervisor_sha256": "e6333fdc9ae4e18dce473c297c5504ce5e9399a56e570316b9cf4208c5ee154a"
+  }
+}

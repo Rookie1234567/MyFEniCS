@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import time
 import traceback
 
 SCHEMA = "task40extra.y-orbit-two-cell-quotient-probe.v1"
@@ -148,9 +149,15 @@ def bind_checker_source(worker_source, checker_source):
 
 
 def admit_checker_output(worker_source, checker_source, *, worker_directory, output_directory,
-                         explicit_checker_directory, prior_checker_output):
+                         explicit_checker_directory, prior_checker_output, direct_profile=None):
     """Reject unsafe output paths before the failure logger can write anything."""
-    binding = bind_checker_source(worker_source, checker_source)
+    if direct_profile is None:
+        binding = bind_checker_source(worker_source, checker_source)
+    elif direct_profile == "X":
+        from benchmarks.check_y_orbit_direct_probe import bind_direct_checker_source
+        binding = bind_direct_checker_source(worker_source, checker_source)
+    else:
+        raise ValueError("only the explicit direct X saved-worker checker bridge is admitted")
     same_directory = Path(worker_directory).resolve() == Path(output_directory).resolve()
     if (type(explicit_checker_directory) is not bool or type(prior_checker_output) is not bool
             or prior_checker_output or (explicit_checker_directory and same_directory)
@@ -573,12 +580,22 @@ def validate_array_inventory(report, stage):
     return True
 
 
-def validate_shared_storage_metadata(evidence, descriptors):
+def validate_shared_storage_metadata(evidence, descriptors, *, direct_profile=None):
     """Nonvacuous complete same80 record, class, owner and lazy inventory."""
     directions = ("primal_to_canonical", "primal_from_canonical", "dual_to_canonical",
         "dual_from_canonical", "functional_to_canonical", "functional_from_canonical")
-    if (evidence.get("schema") != "task40extra.same80-shared-transform-equivalence.v1"
-            or evidence.get("shared_transforms") is not True or evidence.get("same80_p4_only") is not True
+    if direct_profile is None:
+        shared_schema="task40extra.same80-shared-transform-equivalence.v1"
+        independent_counts=(15872,7936,7936);record_totals=(608,304,304);base_count=152;row_width=3968
+        storage_counts=(17204,8940,8940);dimension_record_counts=({1:272,2:256,3:80},{1:136,2:128,3:40},{1:136,2:128,3:40})
+    else:
+        if direct_profile!="X":raise ValueError("only directX shared inventory is admitted")
+        shared_schema="task40extra.direct-shared-transform-equivalence.v1"
+        independent_counts=(23808,11904,11904);record_totals=(912,456,456);base_count=228;row_width=5952
+        storage_counts=(25468,13236,13236);dimension_record_counts=({1:408,2:384,3:120},{1:204,2:192,3:60},{1:204,2:192,3:60})
+        if evidence.get("direct_profile")!="X":raise ValueError("actual direct profile missing from shared inventory")
+    if (evidence.get("schema") != shared_schema
+            or evidence.get("shared_transforms") is not True or evidence.get("same80_p4_only") is not (direct_profile is None)
             or evidence.get("complete_before_any_factor") is not True
             or evidence.get("local_layout_borrows_existing_entities") is not True
             or evidence.get("payload_is_RSS") is not False or evidence.get("target_savings_measured") is not False
@@ -587,12 +604,12 @@ def validate_shared_storage_metadata(evidence, descriptors):
     roles = evidence.get("roles", [])
     if [item.get("role") for item in roles] != ["full", "twist_0", "twist_1"]:
         raise ValueError("complete ordered full/two-local roles required")
-    for role, n, ny, total, expected_counts in zip(roles,(15872,7936,7936),(4,2,2),(608,304,304),
-            ({1:272,2:256,3:80},{1:136,2:128,3:40},{1:136,2:128,3:40}),strict=True):
+    for role, n, ny, total, expected_counts, storage_count in zip(roles,independent_counts,(4,2,2),record_totals,
+            dimension_record_counts,storage_counts,strict=True):
         records=role.get("records",[])
-        if (role.get("independent_rows")!=n or role.get("width")!=3968 or role.get("ny")!=ny
-                or role.get("record_count")!=total or len(records)!=total or role.get("base_count")!=152
-                or role.get("full_rows")!=(17204 if ny==4 else 8940)
+        if (role.get("independent_rows")!=n or role.get("width")!=row_width or role.get("ny")!=ny
+                or role.get("record_count")!=total or len(records)!=total or role.get("base_count")!=base_count
+                or role.get("full_rows")!=storage_count
                 or any(role.get(key) is not True for key in ("complete_native_independent_partition_equal",
                     "complete_orbit_base_slot_partition_equal","every_actual_record_matrix_inverse_compared",
                     "all_six_complete_operator_columns_compared","shared_bank_instance_equal"))
@@ -626,7 +643,7 @@ def validate_shared_storage_metadata(evidence, descriptors):
     names=[item.get("stage") for item in stages]
     required=["before_collect"]
     for role in ("full","twist_0","twist_1"):
-        required.extend([role+"_after_collect",role+"_unshared_overlap",role+"_after_first_inverse_request",
+        required.extend([role+"_after_collect",role+("_unshared_overlap" if direct_profile is None else "_streamed_controls_begin"),role+"_after_first_inverse_request",
                          role+"_after_first_inverse_direction",role+"_after_all_six_directions"])
         if role!="full":required.append(role+"_layout_after_build")
     required.extend(["all_sectors_retained_before_factor","cleanup"])
@@ -762,12 +779,12 @@ def validate_shared_record_key(key,witness,*,dimension,size,basis_descriptor,act
     return True
 
 
-def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gate, native_inventories, snapshot_contexts):
+def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gate, native_inventories, snapshot_contexts, direct_profile=None):
     """Independently rebuild logical views and all six complete record actions."""
     import numpy as np
     from src.solvers.hcurl_canonical_vector_dolfinx import _entity_canonical_order
     from src.constraints.high_order_floquet_trace import quadrilateral_face_info
-    validate_shared_storage_metadata(evidence,descriptors)
+    validate_shared_storage_metadata(evidence,descriptors,direct_profile=direct_profile)
     checks=[];owner_hashes={};view_hashes={};known_owner_facts={};raw_buffers={}
     unique_artifacts={item['artifact'] for stage in evidence['owner_stages'] for item in stage['owner_artifacts'].values()}
     allocation_gate('checker_shared_owner_payloads',{'matrix_payload_bytes':sum(descriptors[name]['payload_bytes'] for name in unique_artifacts),
@@ -831,10 +848,13 @@ def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gat
                 raise ValueError("complete actual orientation/geometry not bound to historical immutable topology")
             actual_arrays[member]=actual
         rows=load(role["record_rows_artifact"])
+        native=load(native_inventories[name])
         default_stage=next(item for item in evidence["owner_stages"] if item["stage"]==name+"_after_all_six_directions")
         default_views={item["name"]:item for item in default_stage["views"]}
-        default_native=borrowed("default_"+name+".independent",default_stage)
-        native=load(native_inventories[name]);saved_independent=borrowed(name+".independent")
+        default_native=borrowed("default_"+name+".independent",default_stage) if direct_profile is None else native
+        if direct_profile is not None and role.get("original_control_scope")!="streamed actual original helpers; one state scratch; no unshared collector":
+            raise ValueError("directX requires streamed original helper controls")
+        saved_independent=borrowed(name+".independent")
         if not np.array_equal(native,saved_independent) or not np.array_equal(native,default_native) or native.shape!=(n,):raise ValueError("complete actual native inventory differs")
         if rows.dtype!=np.dtype(np.int64) or rows.shape!=(n,) or not np.array_equal(np.sort(rows),np.arange(n)):
             raise ValueError("every native independent channel must occur exactly once")
@@ -891,7 +911,7 @@ def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gat
             matrix=borrowed(prefix+".matrix");inverse=borrowed(prefix+".inverse")
             record_rows=borrowed(prefix+".rows")
             default_prefix="default_"+prefix
-            default_rows=borrowed(default_prefix+".rows",default_stage)
+            default_rows=borrowed(default_prefix+".rows",default_stage) if direct_profile is None else record_rows
             if (views[prefix+".rows"]["owner_id"]!=item["rows_owner_id"]
                     or not np.array_equal(record_rows,rows[item["rows_offset"]:item["rows_offset"]+size])
                     or not np.array_equal(record_rows,default_rows)):
@@ -905,7 +925,7 @@ def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gat
                         or value.shape!=(size,size) or value.dtype!=np.dtype(np.complex128)
                         or raw_hash(value)!=item[member+"_sha256"] or raw_hash(value)!=template[member+"_sha256"]):
                     raise ValueError("complete per-entity immutable template/owner alias differs")
-                reference=borrowed(default_prefix+"."+member,default_stage)
+                reference=borrowed(default_prefix+"."+member,default_stage) if direct_profile is None else load(role["references"][item["template_id"]][member+"_artifact"])
                 saved_reference=load(role["references"][item["template_id"]][member+"_artifact"])
                 if (reference.tobytes(order="C")!=saved_reference.tobytes(order="C")
                         or raw_hash(reference)!=role["references"][item["template_id"]][member+"_sha256"]):
@@ -913,15 +933,27 @@ def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gat
                 difference=float(np.linalg.norm(value-reference)/max(np.linalg.norm(reference),np.finfo(float).tiny))
                 if value.tobytes(order="C")!=reference.tobytes(order="C"):raise ValueError("complete default record transform changed")
                 add(name+"_record_"+str(item["borrower_record_index"])+"_"+member,difference)
+            if direct_profile is not None:
+                if dimension in (1,2):
+                    from src.solvers.hcurl_canonical_vector_dolfinx import _physical_entity_transform
+                    original_control,semantics=_physical_entity_transform(coords,dimension,4,1e-9)
+                    if list(semantics)!=key["semantics"]:raise ValueError("original physical helper semantics changed")
+                else:
+                    full_t=load(role["references"][item["template_id"]]["full_Tt_artifact"])
+                    if full_t.shape!=(300,300) or full_t.dtype!=np.dtype(float):raise ValueError("complete actual originalTt control required")
+                    original_control=np.linalg.inv(full_t[np.ix_(expected_positions,expected_positions)]).astype(complex)
+                if original_control.tobytes(order="C")!=matrix.tobytes(order="C"):
+                    raise ValueError("every actual state differs from its original helper control")
+                add(name+"_original_helper_state_control",0.,0.)
             composition=float(np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size));add(name+"_inverse_composition",composition)
             j=np.arange(size);x=np.cos(.31*j)+1j*np.sin(.47*j);d=np.sin(.29*j)+1j*np.cos(.41*j);f=np.cos(.23*j)+1j*np.sin(.37*j)
             scale=max(np.linalg.norm(d)*np.linalg.norm(x),np.linalg.norm(f)*np.linalg.norm(x),1.)
             pairing=float(max(abs(np.vdot(inverse.conj().T@d,matrix@x)-np.vdot(d,x)),abs(np.dot(inverse.T@f,matrix@x)-np.dot(f,x)))/scale)
             add(name+"_nonhermitian_pairing",pairing)
             operators[item["borrower_record_index"]]=(matrix,inverse)
-        if len(bases)!=152 or sorted(canonical)!=list(range(n)):raise ValueError("all canonical/orbit/base/slot channels must occur exactly once")
+        if len(bases)!=(152 if direct_profile is None else 228) or sorted(canonical)!=list(range(n)):raise ValueError("all canonical/orbit/base/slot channels must occur exactly once")
         interior=sum(item["size"] for item in records if item["dimension"]==3)
-        if interior!=(8640 if name=="full" else 4320):raise ValueError("complete original cell interior channels differ")
+        if interior!=((8640 if name=="full" else 4320) if direct_profile is None else (12960 if name=="full" else 6480)):raise ValueError("complete original cell interior channels differ")
         allocation_gate("checker_shared_six_direction_complete_panels_"+name,{"matrix_payload_bytes":2*n*32*16,"workspace_bytes":8<<20})
         for direction,recorded in zip(directions,role["directions"],strict=True):
             ih=hashlib.sha256();oh=hashlib.sha256()
@@ -950,7 +982,22 @@ def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gat
     return checks
 
 
-def check(directory, *, checker_source, checker_environment, stage, allocation_gate, checker_directory=None):
+def check(directory, *, checker_source, checker_environment, stage, allocation_gate, checker_directory=None,
+          research_wall_seconds=None, research_memory_gib=None):
+    # The small provenance determines schema before any large report decode.
+    provenance_path=Path(directory).resolve()/"provenance.json"
+    allocation_gate("checker_profile_dispatch_metadata",{"matrix_payload_bytes":0,"workspace_bytes":8*provenance_path.stat().st_size+(1<<20)})
+    dispatch_provenance=json.loads(provenance_path.read_text())
+    if dispatch_provenance.get("direct_profile") is not None:
+        if dispatch_provenance.get("direct_profile")!="X":raise ValueError("only directX checker is admitted")
+        from benchmarks.check_y_orbit_direct_probe import check_direct
+        return check_direct(directory,checker_source=checker_source,checker_environment=checker_environment,
+                            stage=stage,allocation_gate=allocation_gate,checker_directory=checker_directory,
+                            research_wall_seconds=research_wall_seconds, research_memory_gib=research_memory_gib)
+    if research_wall_seconds is not None:
+        raise ValueError("research wall1800 requires saved direct X evidence")
+    if research_memory_gib is not None:
+        raise ValueError("research memory2GiB requires saved direct X solve/wall1800 evidence")
     import numpy as np
     from scipy import sparse
     from benchmarks.y_orbit_two_cell_authority import (SavedFullP4Authority, AUTHORITY_RUN,
@@ -1482,12 +1529,18 @@ def check(directory, *, checker_source, checker_environment, stage, allocation_g
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--expected-head", required=True)
+    parser.add_argument("--expected-head", "--expected-checker-head", dest="expected_head", required=True,
+        help="actual clean checker HEAD; the saved worker source remains separately bound")
     parser.add_argument("--stage", choices=("prefactor", "solve"), required=True)
     parser.add_argument("--run-directory", type=Path, required=True)
     parser.add_argument("--checker-directory", type=Path,
         help="fresh ignored attempt directory for saved-worker rechecks; worker evidence remains readonly")
+    parser.add_argument("--research-wall-seconds", type=int, choices=(1800,),
+        help="explicit X-only research allowance; ordinary default is600 seconds")
+    parser.add_argument("--research-memory-gib", type=int, choices=(2,),
+        help="explicit X/solve/wall1800 cap; ordinary default is1.5GiB")
     args = parser.parse_args(argv)
+    started = time.monotonic()
     from benchmarks.run_real_p4_probe import source_facts, environment_facts
     from benchmarks.task038_full3d_jit_staging import process_tree_snapshot, append_jsonl
     from benchmarks.subreaper_watchdog import memory_envelope, runtime_tree_cap
@@ -1503,9 +1556,16 @@ def main(argv=None):
         raise ValueError("checker recheck requires a fresh supervisor-created attempt directory")
     parent = int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID", "0"))
     cap = int(os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES", "0"))
-    if (not args.worker or parent != os.getppid() or parent <= 0 or not 0 < cap <= TREE_CAP_BYTES
+    from benchmarks.run_y_orbit_quotient_probe import research_wall_budget, research_phase_budget, research_memory_child_budget
+    timing_provenance = json.loads((directory / "provenance.json").read_text())
+    direct_profile = timing_provenance.get("direct_profile")
+    tree_cap, memory_launch_admission = research_memory_child_budget(direct_profile, args.stage,
+        args.research_wall_seconds, args.research_memory_gib, os.environ, cap)
+    if (not args.worker or parent != os.getppid() or parent <= 0 or not 0 < cap <= tree_cap
             or os.environ.get("PHYSICAL_TIMEBASE_GUARD") != "1"):
         raise RuntimeError("checker requires the quotient CLI's strict supervised child contract")
+    wall_seconds = research_wall_budget(direct_profile, args.research_wall_seconds)
+    phase_seconds = research_phase_budget(direct_profile, args.research_wall_seconds, os.environ)
     # Actual clean source admission belongs outside the failure-writing try.
     # A stale expected HEAD or refused output path must not overwrite the
     # immutable worker's earlier checker report, traceback or phase records.
@@ -1513,6 +1573,7 @@ def main(argv=None):
     worker_source = json.loads((directory / "probe_report.json").read_text())["source"]
     admit_checker_output(worker_source, source, worker_directory=directory, output_directory=output_directory,
         explicit_checker_directory=args.checker_directory is not None,
+        direct_profile=direct_profile,
         prior_checker_output=any((output_directory / name).exists() for name in
             ("independent_checker.json", "checker_events.jsonl", "checker_phase.json", "checker_traceback.txt")))
     environment = swap_baseline = None
@@ -1528,6 +1589,9 @@ def main(argv=None):
         return values
 
     def allocation_gate(name, facts):
+        elapsed = time.monotonic() - started
+        if args.research_wall_seconds is not None and elapsed >= phase_seconds:
+            raise TimeoutError("direct X checker remaining watchdog allowance expired before allocation")
         sample = process_tree_snapshot(parent, name, None, pss_sampling_policy="disabled_by_profile")
         if (sample.get("all_status_readable") is not True or sample.get("identity_complete") is not True
                 or sample.get("swap_bytes") != 0 or global_swap() != swap_baseline):
@@ -1537,13 +1601,21 @@ def main(argv=None):
             raise ValueError("negative checker allocation declaration")
         projected = int(sample["rss_bytes"]) + payload + workspace + RESERVE_BYTES
         envelope = memory_envelope()
-        effective = runtime_tree_cap(cap, int(sample["rss_bytes"]), envelope, explicit_tree_cap_bytes=TREE_CAP_BYTES)
+        effective = runtime_tree_cap(cap, int(sample["rss_bytes"]), envelope, explicit_tree_cap_bytes=tree_cap)
         append_jsonl(output_directory / "checker_events.jsonl", {"event": "allocation_admission", "boundary": name,
             "current_tree_rss_bytes": sample["rss_bytes"], "requested_payload_bytes": payload,
             "workspace_bytes": workspace, "evidence_reserve_bytes": RESERVE_BYTES, "projected_tree_bytes": projected,
             "launch_cap_bytes": cap, "effective_cap_bytes": effective, "fresh_memory_envelope": envelope,
-            "admitted": projected < effective, "global_swap_counters": swap_baseline})
-        write_json(output_directory / "checker_phase.json", {"phase": name, "factor_count": 0})
+            "admitted": projected < effective, "global_swap_counters": swap_baseline,
+            **({"research_wall_seconds": wall_seconds, "phase_wall_seconds": phase_seconds,
+                "checker_elapsed_seconds": elapsed} if args.research_wall_seconds is not None else {}),
+            **({"research_memory_gib": 2, "requested_tree_cap_bytes": tree_cap}
+               if args.research_memory_gib is not None else {})})
+        write_json(output_directory / "checker_phase.json", {"phase": name, "factor_count": 0,
+            **({"research_wall_seconds": wall_seconds, "phase_wall_seconds": phase_seconds,
+                "checker_elapsed_seconds": elapsed} if args.research_wall_seconds is not None else {}),
+            **({"research_memory_gib": 2, "requested_tree_cap_bytes": tree_cap}
+               if args.research_memory_gib is not None else {})})
         if projected >= effective:
             raise MemoryError("checker measured whole-tree allocation plus evidence reserve exceeds cap")
     try:
@@ -1552,7 +1624,8 @@ def main(argv=None):
         environment = environment_facts()
         swap_baseline = global_swap()
         result = check(directory, checker_source=source, checker_environment=environment,
-                       stage=args.stage, allocation_gate=allocation_gate, checker_directory=output_directory)
+                       stage=args.stage, allocation_gate=allocation_gate, checker_directory=output_directory,
+                       research_wall_seconds=args.research_wall_seconds, research_memory_gib=args.research_memory_gib)
         if source_facts(args.expected_head) != source:
             raise RuntimeError("source changed during independent checker")
     except Exception as exc:
@@ -1563,7 +1636,12 @@ def main(argv=None):
     # Hash-bound provenance for this attempt never mutates the worker report.
     result["checker_attempt_provenance"] = {"checker_source": source, "environment": environment,
         "command": sys.argv, "worker_directory": str(directory), "output_directory": str(output_directory),
-        "PDE_rerun": False}
+        "PDE_rerun": False,
+        **({"research_wall_seconds": wall_seconds, "phase_wall_seconds": phase_seconds}
+           if args.research_wall_seconds is not None else {}),
+        **({"research_memory_gib": 2, "requested_tree_cap_bytes": tree_cap,
+            "research_memory_launch_admission": memory_launch_admission}
+           if args.research_memory_gib is not None else {})}
     write_json(output_directory / "independent_checker.json", result)
     return 0 if result["gate_pass"] else 2
 

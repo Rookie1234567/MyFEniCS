@@ -36,8 +36,14 @@ def _indices(values, upper, int_type):
     return result
 
 
-def _sector_inventory(action_bundle, global_mode_inventory, global_mode_indices, qbase, int_type):
-    if type(qbase) is not int or qbase not in (0, 1):
+def _sector_inventory(action_bundle, global_mode_inventory, global_mode_indices, qbase, int_type, direct_profile=None):
+    if direct_profile is None:
+        replication_count, sector_counts = 2, (228, 304)
+    else:
+        from .y_orbit_direct_profile import direct_profile_metadata
+        profile = direct_profile_metadata(direct_profile)
+        replication_count, sector_counts = profile.replication_count, profile.sector_port_counts
+    if type(qbase) is not int or qbase not in range(replication_count):
         raise ValueError("two-cell Ny4 profile requires qbase0 or1")
     if len(global_mode_inventory) != 3:
         raise ValueError("complete global modes/rows/hash inventory required")
@@ -46,12 +52,12 @@ def _sector_inventory(action_bundle, global_mode_inventory, global_mode_indices,
             or action_bundle.get("mode_sha256") != str(digest)):
         raise ValueError("complete frozen532 physical generator identity differs")
     indices = _indices(global_mode_indices, len(modes), int_type)
-    expected = np.asarray([i for i, mode in enumerate(modes) if int(mode.n) % 2 == qbase])
+    expected = np.asarray([i for i, mode in enumerate(modes) if int(mode.n) % replication_count == qbase])
     if not np.array_equal(indices, expected):
         raise ValueError("sector must preserve every compatible original alias in original order")
     local_modes = tuple(action_bundle["modes"])
     carrier = action_bundle["dtn_action"].carrier
-    if (len(indices) != (228 if qbase == 0 else 304) or len(local_modes) != len(indices)
+    if (len(indices) != sector_counts[qbase] or len(local_modes) != len(indices)
             or len(carrier.entries) != len(indices)
             or getattr(carrier, "physical_generator_manifest_sha256", None) != digest
             or getattr(carrier, "phase_gauge", None) != "boundary_plane"):
@@ -62,7 +68,7 @@ def _sector_inventory(action_bundle, global_mode_inventory, global_mode_indices,
         key = (local, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
         if (local_modes[local] is not mode or tuple(entry.mode_key) != key
                 or int(entry.mode_identity["mode_index"]) != local
-                or (int(mode.n) - qbase) % 2):
+                or (int(mode.n) - qbase) % replication_count):
             raise ValueError("local carrier does not preserve selected original mode objects/keys")
     return indices
 
@@ -100,6 +106,20 @@ class QuotientCondensedBundle:
         self._live()
         return self.action.iter_reduced_contributions(allocation_gate=allocation_gate)
 
+    def complete_cell_inventory(self):
+        """Yield complete borrowed cell rows/tensor identities for exhaustive external audit."""
+        self._live()
+        identities = self.audit["condensation"]["action_only_complete_tensor_identities"]
+        constraints = self.system.trace_constraints
+        for index, cell in enumerate(self.system.cell_recovery_maps):
+            yield {"cell_index": index, "class_key": cell.class_key,
+                   "interior_original_rows": cell.interior_original_dofs,
+                   "trace_original_rows": cell.trace_original_dofs,
+                   "full_tensor_identity": identities[repr(cell.class_key)],
+                   "trace_expansions": tuple(constraints.expansion_by_original[int(row)]
+                                             for row in cell.trace_original_dofs),
+                   "retained_schur": self.system.retained_local_schur_by_class[cell.class_key]}
+
     def reduce_rhs(self, full_rhs, *, port_rhs=None, rhs_is_mpc_dual=False):
         self._live()
         return self.action.reduce_rhs(full_rhs, port_rhs=port_rhs, rhs_is_mpc_dual=rhs_is_mpc_dual)
@@ -128,7 +148,7 @@ class QuotientCondensedBundle:
 
 
 def build_quotient_condensed(action_bundle, *, global_mode_inventory,
-                             global_mode_indices, qbase, allocation_gate):
+                             global_mode_indices, qbase, allocation_gate, direct_profile=None):
     """Construct only the exact local action/cache, with all sector aliases.
 
     This frozen profile is degree4,40cells,8940storage/7936independent,
@@ -142,6 +162,15 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
     from .p6_cell_condensed_action import build_p6_cell_condensed_action_from_carrier
     from .y_orbit_condensed_adapter import _boundary_support, _integer_capacity, _mpc_expansion_width
 
+    if direct_profile is None:
+        cell_count_expected, storage_expected, independent_expected, interior_expected, trace_expected = 40, 8940, 7936, 4320, 3616
+    else:
+        from .y_orbit_direct_profile import direct_profile_metadata
+        profile = direct_profile_metadata(direct_profile)
+        cell_count_expected, storage_expected = profile.local_cell_count, profile.local_storage_rows
+        independent_expected, interior_expected, trace_expected = profile.local_independent_rows, profile.local_interior_rows, profile.local_trace_rows
+        if action_bundle["quotient_context"].direct_profile_name != profile.name:
+            raise ValueError("direct condensation/profile context identity differs")
     setup = action_bundle["setup"]
     space, floquet = setup["spaces"][4], setup["floquets"][4]
     carrier = action_bundle["dtn_action"].carrier
@@ -153,19 +182,19 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
             or set(setup["spaces"]) != {4} or set(setup["floquets"]) != {4}
             or space.mesh.comm.size != 1 or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
             or int(space.element.basix_element.degree) != 4 or (nc, nc-ni) != (300, 192)
-            or ni != 108 or cell_count != 40 or full_rows != 8940
+            or ni != 108 or cell_count != cell_count_expected or full_rows != storage_expected
             or int(carrier.global_rows) != full_rows or tuple(carrier.ownership_range) != (0, full_rows)):
         raise ValueError("require exact serial degree-only40cell p4 action profile")
     _integer_capacity(full_rows, None, PETSc.IntType)
-    _integer_capacity(3616 + len(carrier.entries), None, PETSc.IntType)
+    _integer_capacity(trace_expected + len(carrier.entries), None, PETSc.IntType)
     index_bytes = np.dtype(PETSc.IntType).itemsize
     _gate(allocation_gate, "quotient_original_inventory", 8 * full_rows * index_bytes,
           8 * full_rows * index_bytes)
     indices = _sector_inventory(action_bundle, global_mode_inventory, global_mode_indices,
-                                qbase, PETSc.IntType)
+                                qbase, PETSc.IntType, direct_profile=direct_profile)
     slaves = _indices(floquet.mpc.slaves, full_rows, PETSc.IntType)
     independent = np.setdiff1d(np.arange(full_rows, dtype=PETSc.IntType), slaves)
-    if len(independent) != 7936:
+    if len(independent) != independent_expected:
         raise ValueError("actual finalized MPC independent count differs from7936")
     expansion_audit = _mpc_expansion_width(floquet.mpc, full_rows)
     groups, row_groups, support = _boundary_support(action_bundle)
@@ -196,7 +225,7 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
         finally:
             del compiled
         if (system.matrix is not None or system.full_rows != full_rows
-                or system.active_rows != 3616 or system.active_interior_rows != 4320
+                or system.active_rows != trace_expected or system.active_interior_rows != interior_expected
                 or system.appended_rows != len(indices)
                 or system.retained_local_schur_by_class is None):
             raise ValueError("complete action-only trace/interior/port count mismatch")
@@ -211,7 +240,7 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
         trace = _indices(system.trace_constraints.owned_active_original_dofs, full_rows, PETSc.IntType)
         interiors = _indices(np.concatenate([c.interior_original_dofs for c in system.cell_recovery_maps]),
                              full_rows, PETSc.IntType)
-        if (len(interiors) != 4320 or len(trace) != 3616 or np.intersect1d(trace, interiors).size
+        if (len(interiors) != interior_expected or len(trace) != trace_expected or np.intersect1d(trace, interiors).size
                 or not np.array_equal(np.sort(np.concatenate((trace, interiors))), independent)
                 or any(system.trace_constraints.original_to_active[int(row)] != i
                        for i, row in enumerate(trace))):
@@ -234,7 +263,8 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
                  "original_H_from_local_area_carrier": True, "Hhat_diagonal_assumed": False,
                  "interior_port_zero_assumed": False, "owns_action_and_system": True,
                  "borrows_physical_bundle_and_setup": True, "no_materialized_S": True,
-                 "no_global_or_q_factor": True, "qualification": "NOT_RUN_STAGED_COMPONENT"}
+                 "no_global_or_q_factor": True, "qualification": "NOT_RUN_STAGED_COMPONENT",
+                 **({} if direct_profile is None else {"direct_profile": profile.identity()})}
         return QuotientCondensedBundle(action_bundle, system, action, trace, interiors,
                                        independent, original_to_independent, indices, qbase, audit)
     except BaseException:

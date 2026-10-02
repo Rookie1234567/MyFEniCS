@@ -760,9 +760,12 @@ def build_fullspace_dtn_carrier_from_surface(
     physical_mode_inventory: tuple[Any, Any, Any] | None = None,
     quotient_context: Any | None = None,
     raw_mode_observer: Callable[[Mapping[str, Any]], None] | None = None,
+    raw_observer_profile: str | None = None,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
+    if raw_observer_profile is not None and raw_mode_observer is None:
+        raise ValueError("raw observer profile requires its explicit research callback")
     if mpc is None:
         raise ValueError("dynamic DtN surface carrier requires the finalized MPC")
     from .dtn_port_3d import _combine_owned_entries
@@ -829,15 +832,24 @@ def build_fullspace_dtn_carrier_from_surface(
     # centered C/D/H do not use its tiny global values to construct coefficients.
     comm = mpc.function_space.mesh.comm
     if raw_mode_observer is not None:
-        from .y_orbit_quotient_context import PHYSICAL_GENERATOR_SHA256
-        actual_cells = int(mpc.function_space.mesh.topology.index_map(3).size_local)
-        expected_cells = 80 if quotient_context is None else 40
-        expected_modes = 532 if quotient_context is None else (228, 304)[quotient_context.twist_index]
-        if (int(comm.size) != 1 or actual_cells != expected_cells
-                or int(mpc.function_space.element.basix_element.degree) != 4
-                or len(modes) != expected_modes or _manifest_sha != PHYSICAL_GENERATOR_SHA256
-                or int(assembly_context["gauss"]["degree"]) != 23):
-            raise ValueError("raw mode observer is bounded to the original 80-cell p4 authority or explicit 40-cell p4 sector")
+        if raw_observer_profile is None:
+            from .y_orbit_quotient_context import PHYSICAL_GENERATOR_SHA256
+            actual_cells = int(mpc.function_space.mesh.topology.index_map(3).size_local)
+            expected_cells = 80 if quotient_context is None else 40
+            expected_modes = 532 if quotient_context is None else (228, 304)[quotient_context.twist_index]
+            if (int(comm.size) != 1 or actual_cells != expected_cells
+                    or int(mpc.function_space.element.basix_element.degree) != 4
+                    or len(modes) != expected_modes or _manifest_sha != PHYSICAL_GENERATOR_SHA256
+                    or int(assembly_context["gauss"]["degree"]) != 23):
+                raise ValueError("raw mode observer is bounded to the original 80-cell p4 authority or explicit 40-cell p4 sector")
+        else:
+            from .y_orbit_raw_observer_admission import validate_direct_raw_observer_profile
+            validate_direct_raw_observer_profile(
+                raw_observer_profile, modes=modes, mpc=mpc, cfg=cfg,
+                assembly_context=assembly_context, physical_cfg=physical_cfg,
+                quotient_context=quotient_context, physical_manifest_sha=_manifest_sha,
+                surface_assemblers=surface_assemblers,
+            )
     index_map = mpc.function_space.dofmap.index_map
     owned_start = int(index_map.local_range[0])
     owned_end = owned_start + int(index_map.size_local)

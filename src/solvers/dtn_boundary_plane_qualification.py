@@ -106,8 +106,20 @@ def _check_loaded_primary_provenance(primary_gauss):
             assert digest.hexdigest() == kernel[hash_key], (path_key, "loaded provenance artifact changed")
 
 
-def _qualification_degree_profile(bundle):
+def _qualification_degree_profile(bundle, *, direct_profile=None):
     """Admit fixed p2/p4 metadata only; never substitute a live numerical proof."""
+    direct = None
+    if direct_profile is not None:
+        from .y_orbit_direct_profile import validate_direct_physical_config
+        direct = validate_direct_physical_config(bundle.get("physical_cfg", bundle["cfg"]), direct_profile)
+        context = bundle.get("quotient_context")
+        if context is not None:
+            if (context.direct_profile_name != direct.name or context.global_axes != direct.global_axes
+                    or context.local_axes != direct.local_axes
+                    or tuple(bundle["cfg"].mesh_axis_cell_counts) != (direct.nx, 2, direct.nz)):
+                raise ValueError("actual local setup differs from the explicit direct profile")
+        if bundle["degree"] != 4:
+            raise ValueError("direct calibration retains the complete p4 element")
     degree = bundle["degree"]
     if type(degree) is not int or degree not in (2, 4):
         raise ValueError("live component profile requires an integer degree 2 or 4")
@@ -144,7 +156,8 @@ def _qualification_degree_profile(bundle):
                 or rule["points"]["dtype"] != "float64"
                 or rule["weights"]["dtype"] != "float64"):
             raise ValueError("actual compiled primary Gauss nodes/weights differ from the degree profile")
-    return {"degree": degree, "element_degree": int(space.element.basix_element.degree),
+    return {**({"direct_profile_name": direct.name, "direct_profile_metadata": direct.identity()} if direct else {}),
+            "degree": degree, "element_degree": int(space.element.basix_element.degree),
             "local_space_dimension": int(space.element.space_dimension),
             "quadrature_degree": qdegree, "primary_facet_points": point_count}
 
@@ -152,7 +165,8 @@ def _qualification_degree_profile(bundle):
 def qualify_boundary_plane_bundle(bundle, *, record_path,
                                    expected_physical_manifest, expected_ordered_keys,
                                    seed=4053202, tolerance=1e-10,
-                                   optional_legacy_bundle=None):
+                                   optional_legacy_bundle=None, direct_profile=None,
+                                   literal_mode_observer=None):
     """Qualify exactly this supplied live p2/p4/MPI1/532-mode carrier before factors.
 
     ``expected_ordered_keys`` uses complete carrier keys
@@ -177,7 +191,11 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         raise RuntimeError("component assertion gates require nonoptimized Python")
     if tolerance != 1e-10 or seed != 4053202:
         raise ValueError("this admitted p2/p4 component contract fixes tolerance/seed")
+    if literal_mode_observer is not None and (direct_profile is None or not callable(literal_mode_observer)):
+        raise ValueError("literal current-mode evidence observer requires explicit direct profile")
     new, old = bundle, optional_legacy_bundle
+    if direct_profile is not None and old is not None:
+        raise ValueError("fresh direct profile cannot reuse a legacy bundle association")
     carrier = new["dtn_action"].carrier
     identity_before = carrier_numeric_identity(carrier)
     before_digest = identity_before["carrier_numeric_sha256"]
@@ -207,7 +225,7 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         assert MPI.COMM_WORLD.size == 1
         cfg, levels = new["cfg"], new["setup"]
         assert new["dtn_phase_gauge"] == BOUNDARY_PLANE
-        profile = _qualification_degree_profile(new)
+        profile = _qualification_degree_profile(new, direct_profile=direct_profile)
         degree = profile["degree"]
         base_identity.update(profile)
         modes = tuple(new["modes"])
@@ -237,6 +255,12 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         n = int(V.dofmap.index_map.size_global)
         qdegree = int(new["dtn_quadrature_degree"])
         assert carrier.ownership_range == (0, n)
+        if direct_profile is not None:
+            from .y_orbit_direct_profile import direct_profile_metadata
+            direct = direct_profile_metadata(direct_profile)
+            actual_cells = int(mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_local)
+            assert (actual_cells == direct.cell_count and n == direct.storage_rows
+                    and len(mpc.slaves) == direct.storage_rows-direct.independent_rows)
         assert carrier.assembly_context["gauss"]["degree"] == qdegree
         primary_gauss = new["compiled_surface_gauss_identity"]
         assert primary_gauss == carrier.assembly_context["gauss"]["compiled_forms_verified"]
@@ -283,6 +307,9 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
                     assert oracle_identity["rules"] == primary_identity["rules"]
                     oracle_gauss[f"{gauge}/{side}/{component}"] = oracle_identity
                     raw_forms[(gauge, side, component)] = (alpha, gamma, kz, compiled)
+
+        if literal_mode_observer is not None:
+            _check_loaded_primary_provenance(oracle_gauss)
 
         def dense_entry(entry, side):
             result = np.zeros(n, dtype=np.complex128)
@@ -340,6 +367,21 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
                 "raw_C_norm": float(np.linalg.norm(Cp)), "raw_D_norm": float(np.linalg.norm(Dp))})
             assert all(value <= 1e-10 for value in errors.values()), (index, errors)
             assert abs(new_entry.normalization_h-H) <= 1e-14*H
+            if literal_mode_observer is not None:
+                literal_C, literal_D = Cp.view(), Dp.view()
+                literal_C.flags.writeable = literal_D.flags.writeable = False
+                literal_mode_observer({
+                    "schema": "task40extra.direct-literal-mode-observer.v1",
+                    "local_mode_index": index, "original_mode_index": index,
+                    "original_mode_key": (mode.side, mode.m, mode.n, mode.polarization),
+                    "ownership_range": (0, n), "literal_C": literal_C, "literal_D": literal_D,
+                    "literal_H": float(H), "physical_generator_manifest_sha256": expected_physical_manifest,
+                    "assembly_context_sha256": carrier.assembly_context_sha256,
+                    "quotient_contract_sha256": None, "quotient_twist_index": None, "local_branch_index": None,
+                    "qualification_source_sha256": base_identity["qualification_source_sha256"],
+                    "primary_compiled_gauss": primary_gauss, "literal_compiled_gauss": oracle_gauss,
+                    "array_ownership": "borrowed_readonly_during_synchronous_callback; copy_to_retain"})
+                del literal_C, literal_D
             if old_entry is not None:
                 C_old, D_old = dense_entry(old_entry, "C")/s, dense_entry(old_entry, "D")/np.conjugate(s)
             C_new, D_new = dense_entry(new_entry, "C"), dense_entry(new_entry, "D")
@@ -535,6 +577,8 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         assert new["dtn_action"].carrier is carrier
         assert primary_gauss == carrier.assembly_context["gauss"]["compiled_forms_verified"]
         _check_loaded_primary_provenance(primary_gauss)
+        if literal_mode_observer is not None:
+            _check_loaded_primary_provenance(oracle_gauss)
         after_digest = boundary_carrier_digest(carrier)
         assert carrier_numeric_identity(carrier) == identity_before
         assert after_digest == before_digest

@@ -1,3 +1,15 @@
+# dot Task40extra V13：X网格加密点资格通过
+
+在V12共享变换基础上，本轮将同一光学尺寸/manual532的p4网格加密到6×4×5=120 cells。两胞元参考分块求逆恢复全部12960内部未知量，避免构造完整周期参考矩阵；四q因子及完整原三维action仍保留。worker816b7247与saved-only checker2a07d23分别绑定，75131项独立检查通过。
+
+notch generic/interior/support/physical为4/4/5/4步，原残差最大4.710949682298374e-12；regular physical native保存7.57682638912512e-11、独立最大7.546733167266532e-11，均通过1e-10。8组各532输出通过。worker1535.1467s/RSS1422172160B，checker590.1043s/RSS1567666176B，分别swap0/清场。只授予X-only 2GiB/1800s研究资格；CSR54078536B不等于factor内存，sampled PC defect0.013423不是范数界。
+
+历史资源/来源/残差定义失败、成功后launcher KeyError与首supplemental label断言失败保留。没有新PDE重跑；checker数值factor calls0。目标尺寸/光学规模/AUTO32060、official RTA、2TB48h仍未资格；后续XZ/Ny扩展先审查准入。
+
+[Response V13](task40extra_dot_parallel_cloud/response_v13.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/direct_X_v13/compact_record.json)、[最终独立核验](task40extra_dot_parallel_cloud/outcomes/records/direct_X_v13/independent_final_X_evidence_linkage_review_v1.json)。
+
+---
+
 # dot Task40extra V12 共享完整实体变换资格通过
 
 同80-cell共享变换在source `3570347c`通过资格：原312项数值门与新38,881项状态/存储/生命周期门全部通过，四q、8640内部及532端口保留。完整outer+local记录矩阵/inverse逻辑体积69,435,392B由4个矩阵内容模板与4个lazy inverse复用，实际8个template owners为410,624B；全部named owners另为46,234,084B，不能混称RSS。

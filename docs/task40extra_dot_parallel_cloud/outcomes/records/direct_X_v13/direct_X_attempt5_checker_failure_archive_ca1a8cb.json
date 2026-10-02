@@ -1,0 +1,297 @@
+{
+  "schema": "task40extra.external-attempt5-saved-only-checker-failures.v1",
+  "language": "zh-CN",
+  "archive_scope": "追加独立外部package，仅保留两轮checker原失败、来源桥接与source-role诊断；不更改先前worker archive",
+  "disposition": "WORKER_PASS_CHECKER_FAILURES_PRESERVED_NO_OVERALL_INDEPENDENT_PASS",
+  "immutable_PDE_worker": {
+    "directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt5",
+    "head": "816b7247c8359a7affbd450365de5bbb86de367a",
+    "dirty": "",
+    "report_sha256": "f98c393f1056b6722d3fda28775dfa6c98cd25ec332417c08dfc2d7ae883de08",
+    "reported_status": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+    "factor_count": 4,
+    "PDE_solved": true,
+    "official_results": false,
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1535.1467186810041,
+      "sampled_process_tree_rss_peak_bytes": 1422172160,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "identity_unchanged": true,
+    "further_PDE_rerun": false
+  },
+  "checker_attempts": [
+    {
+      "label": "first_automatic_checker",
+      "directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt5",
+      "checker_head": "816b7247c8359a7affbd450365de5bbb86de367a",
+      "gate_pass": false,
+      "evidence_valid": false,
+      "error_type": "MemoryError",
+      "reason": "checker measured whole-tree allocation plus evidence reserve exceeds cap",
+      "supervisor": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 2,
+        "elapsed_seconds": 33.567088395997416,
+        "sampled_process_tree_rss_peak_bytes": 803282944,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "PDE_rerun": false,
+      "failure_boundary": "direct_checker_event_metadata",
+      "admission_evidence_from_immutable_prior_worker_archive": {
+        "event": {
+          "admitted": false,
+          "boundary": "direct_checker_event_metadata",
+          "checker_elapsed_seconds": 32.1475675279944,
+          "current_tree_rss_bytes": 725405696,
+          "effective_cap_bytes": 2147483648,
+          "event": "allocation_admission",
+          "evidence_reserve_bytes": 134217728,
+          "fresh_memory_envelope": {
+            "cgroup_limits": [],
+            "effective_available_bytes": 7534940160,
+            "effective_total_bytes": 10451460096,
+            "launch_cap_bytes": 3239972864,
+            "mem_available_bytes": 7534940160,
+            "mem_total_bytes": 10451460096,
+            "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+            "reserve_bytes": 4294967296,
+            "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+            "static_tree_cap_bytes": 12000000000
+          },
+          "global_swap_counters": {
+            "pswpin": 0,
+            "pswpout": 0
+          },
+          "launch_cap_bytes": 2147483648,
+          "phase_wall_seconds": 258.8707749090099,
+          "projected_tree_bytes": 2339766440,
+          "requested_payload_bytes": 0,
+          "requested_tree_cap_bytes": 2147483648,
+          "research_memory_gib": 2,
+          "research_wall_seconds": 1800,
+          "workspace_bytes": 1480143016
+        },
+        "event_line": 13360,
+        "event_line_sha256": "8d4c7ba807c2064768c77124ad60725a20ac25370450d6a13765dbdfefb36c0b"
+      },
+      "failure_disposition": "event metadata forecast allocation未admit；独立matrix检查尚未开始；原失败保留"
+    },
+    {
+      "label": "fresh_saved_only_stream_checker_attempt1",
+      "directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_X_attempt5_checker_stream_attempt1",
+      "checker_head": "ca1a8cbf3c0adf442fa8f20649b0868f74912198",
+      "checker_dirty": "",
+      "gate_pass": false,
+      "evidence_valid": false,
+      "error_type": "ValueError",
+      "reason": "quotient assembly source proof is incomplete",
+      "supervisor": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 2,
+        "elapsed_seconds": 444.65619717199297,
+        "sampled_process_tree_rss_peak_bytes": 1406697472,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "time_exceeded": {
+          "workflow": false,
+          "solve": false,
+          "active_pc": false
+        }
+      },
+      "PDE_rerun": false,
+      "last_phase": {
+        "phase": "direct_checker_entity_vector",
+        "factor_count": 0,
+        "research_wall_seconds": 1800,
+        "phase_wall_seconds": 1800.0,
+        "checker_elapsed_seconds": 442.49243433299125,
+        "research_memory_gib": 2,
+        "requested_tree_cap_bytes": 2147483648
+      },
+      "failure_location": "benchmarks/check_y_orbit_direct_probe.py:1290 source_files = _source_binding(context) -> src/solvers/y_orbit_quotient_raw_qualification.py:164 ValueError",
+      "failure_disposition": "quotient-only _source_binding用于global/full context时拒绝来源角色；未获得完整checker gate/evidence PASS"
+    }
+  ],
+  "worker_to_checker_source_bridge": {
+    "evidence_file": "fresh checker launch_receipt.json",
+    "exact_recorded_bridge": {
+      "schema": "task40extra.direct-X-checker-event-stream-source-bridge.v1",
+      "worker_head": "816b7247c8359a7affbd450365de5bbb86de367a",
+      "checker_head": "ca1a8cbf3c0adf442fa8f20649b0868f74912198",
+      "same_head_exact_source_identity": false,
+      "allowed_checker_test_paths": [
+        "benchmarks/check_y_orbit_direct_probe.py",
+        "benchmarks/check_y_orbit_quotient_probe.py",
+        "src/test/test_y_orbit_direct_event_stream_metadata.py"
+      ],
+      "changed_paths": [
+        "benchmarks/check_y_orbit_direct_probe.py",
+        "benchmarks/check_y_orbit_quotient_probe.py",
+        "src/test/test_y_orbit_direct_event_stream_metadata.py"
+      ],
+      "all_other_numerical_config_input_dependencies_equal": true,
+      "worker_dependency_manifest_sha256": "b17eac7ff5e937688ae8f7ed05a26327942637f326e6401027277f88f55030d2",
+      "checker_dependency_manifest_sha256": "de36bdc31a41a948ae64d926a9f0c959b9b959fc40f82e6d14d03e950353ea72",
+      "changed_dependencies": [
+        {
+          "path": "benchmarks/check_y_orbit_direct_probe.py",
+          "worker_sha256": "ef0bd44c7fcc1ba852fc00e8a74b7851d62cba4f231bbb773681585d98b61d55",
+          "checker_sha256": "37395f90a1d0df4264cfe4c8bfebce221c4745cd398235a0c249787eacd1ef79"
+        },
+        {
+          "path": "benchmarks/check_y_orbit_quotient_probe.py",
+          "worker_sha256": "77b4090ebf4395b1e8f37b72def54fde05f4dc09ef466395898b5c2ef0f0c42a",
+          "checker_sha256": "89aeef289b0afacf0c1e82ac138a535c7f30a3ddceb3c456509ac82f64921bb2"
+        },
+        {
+          "path": "src/test/test_y_orbit_direct_event_stream_metadata.py",
+          "worker_sha256": null,
+          "checker_sha256": "7838c05bc8aeae14f3b430e2b751bf834174b15d944f5be6c6a37052c7777361"
+        }
+      ]
+    },
+    "interpretation": "worker816b与checker ca1a8cb分开；该桥接记录3个checker/test差异并记录其余numerical/config/input依赖相同；归档只读取桥接receipt、不重做源码比较",
+    "watchdog_summary_sha256": "94923f973b731fdfbced83b49a02a63ac71e058effbfcf91eda9eb18c334be60"
+  },
+  "source_role_diagnosis": {
+    "confirmed_by_parent": true,
+    "observed_representative_saved_metadata": [
+      {
+        "role": "global/full",
+        "metadata_evidence": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt5/raw_global/packet_0000.json",
+          "sha256": "91925fd7a1b45e1111486dce8c39b32cb092dafbefe4a9be564fdd106f7afad9",
+          "bytes": 34099,
+          "role": "representative saved raw-packet metadata/global/full"
+        },
+        "assembly_context_sha256": "f8b3a6df1452d6de31d1be19e2407d9c287b28929dab9193b07c85a2811a9c1a",
+        "source_count": 7,
+        "sources_sha256": {
+          "dtn_boundary_phase_gauge.py": "61af1f50dd430641bc5cb36d539419a9dc2c71ee6b86c23862bb5ebe76c03e45",
+          "dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+          "fullspace_dtn_action.py": "e328b69351484daa9e12802af62645cc0149c41f66781b2ec7600e68c099f8c4",
+          "fullspace_same_mesh_hcurl_pmg_physical.py": "437542356ea441c65dd25c3ed4fa086af2ca67b1f53deff69c664f20c954bbb7",
+          "dtn_boundary_plane_qualification.py": "baf07751697ec92bb209571927fec41223b735a14d19dd3f55710a6c8bddb136",
+          "modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+          "config_3d.py": "612e615f4aa5ae0411556523b9061ee47a755b8110a7c097d28b8d6f698bfc1b"
+        },
+        "has_y_orbit_quotient_field": false,
+        "coverage_scope": "代表性packet_0000的保存metadata；不声称本归档重扫全部packets或数组"
+      },
+      {
+        "role": "local/twist0",
+        "metadata_evidence": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt5/raw_twist_0/packet_0000.json",
+          "sha256": "545b435418ecae3a59a0695549a5b150efbd3ff18f739a0dda60ef29dc3f17af",
+          "bytes": 959133,
+          "role": "representative saved raw-packet metadata/local/twist0"
+        },
+        "assembly_context_sha256": "d21983f22c09676564cf2344c7d2762b86febbe4c30593665f17b32cdd0a7343",
+        "source_count": 13,
+        "sources_sha256": {
+          "dtn_boundary_phase_gauge.py": "61af1f50dd430641bc5cb36d539419a9dc2c71ee6b86c23862bb5ebe76c03e45",
+          "dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+          "fullspace_dtn_action.py": "e328b69351484daa9e12802af62645cc0149c41f66781b2ec7600e68c099f8c4",
+          "fullspace_same_mesh_hcurl_pmg_physical.py": "437542356ea441c65dd25c3ed4fa086af2ca67b1f53deff69c664f20c954bbb7",
+          "dtn_boundary_plane_qualification.py": "baf07751697ec92bb209571927fec41223b735a14d19dd3f55710a6c8bddb136",
+          "modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+          "config_3d.py": "612e615f4aa5ae0411556523b9061ee47a755b8110a7c097d28b8d6f698bfc1b",
+          "y_orbit_quotient_context.py": "0622024f93d0a7e056c7658c242a94d452aa0220cc04d548328ddf86f68ba6e6",
+          "fullspace_same_mesh_hcurl_pmg_global.py": "acf962abbf25fa4f0b34e975ba6b932553be484bff66867354f69594965641f6",
+          "y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+          "floquet_3d.py": "a61fbaf1b03f73c2ce183643028fbfe2845f39d8531944682b4f93a1f460008f",
+          "floquet_3d_high_order.py": "78a54d98c5274f217698747bf074c202b9f8f43d914122629389d5ae371325ff",
+          "high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb"
+        },
+        "has_y_orbit_quotient_field": true,
+        "coverage_scope": "代表性packet_0000的保存metadata；不声称本归档重扫全部packets或数组"
+      },
+      {
+        "role": "local/twist1",
+        "metadata_evidence": {
+          "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_X_attempt5/raw_twist_1/packet_0000.json",
+          "sha256": "3397255c0ae174db09379297ccde2640d2619f67410f5ea1d058710e734cf2da",
+          "bytes": 1266450,
+          "role": "representative saved raw-packet metadata/local/twist1"
+        },
+        "assembly_context_sha256": "c146da63acaf1f691d736b166201266e60eedc043cc2598f693596dc1b3ee68b",
+        "source_count": 13,
+        "sources_sha256": {
+          "dtn_boundary_phase_gauge.py": "61af1f50dd430641bc5cb36d539419a9dc2c71ee6b86c23862bb5ebe76c03e45",
+          "dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+          "fullspace_dtn_action.py": "e328b69351484daa9e12802af62645cc0149c41f66781b2ec7600e68c099f8c4",
+          "fullspace_same_mesh_hcurl_pmg_physical.py": "437542356ea441c65dd25c3ed4fa086af2ca67b1f53deff69c664f20c954bbb7",
+          "dtn_boundary_plane_qualification.py": "baf07751697ec92bb209571927fec41223b735a14d19dd3f55710a6c8bddb136",
+          "modes_3d.py": "5731dc67d292b2eef854f6afdfa2a951fd5a109150cfa17f35f45c7c41cda2dd",
+          "config_3d.py": "612e615f4aa5ae0411556523b9061ee47a755b8110a7c097d28b8d6f698bfc1b",
+          "y_orbit_quotient_context.py": "0622024f93d0a7e056c7658c242a94d452aa0220cc04d548328ddf86f68ba6e6",
+          "fullspace_same_mesh_hcurl_pmg_global.py": "acf962abbf25fa4f0b34e975ba6b932553be484bff66867354f69594965641f6",
+          "y_orbit_condensed_adapter.py": "156a30713eec6618a28db3baacca4fcd1a150f479fefd9b69e892f98c71c9a44",
+          "floquet_3d.py": "a61fbaf1b03f73c2ce183643028fbfe2845f39d8531944682b4f93a1f460008f",
+          "floquet_3d_high_order.py": "78a54d98c5274f217698747bf074c202b9f8f43d914122629389d5ae371325ff",
+          "high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb"
+        },
+        "has_y_orbit_quotient_field": true,
+        "coverage_scope": "代表性packet_0000的保存metadata；不声称本归档重扫全部packets或数组"
+      }
+    ],
+    "global_full_role": "恰7个base sources，无y_orbit_quotient field",
+    "local_quotient_role": "twist0/twist1各恰13个sources，有y_orbit_quotient field",
+    "old_helper_contract_parent_verified": "quotient-only helper要求8项required subset，误用于global/full七源context",
+    "error_meaning": "原ValueError来自checker来源角色contract不匹配；不能改写worker PASS，也不能在修补重检之前宣告独立资格化通过"
+  },
+  "pending_checker_only_fix_parent_context": {
+    "root_approval_reported": true,
+    "scope": "exact7/global/full 与 exact13/local quotient role binding修补；checker-only，不修改物理worker/PDE",
+    "staged_tests_parent_reported": {
+      "passed": 21,
+      "rerun_by_archiver": false,
+      "raw_test_evidence_supplied_to_archiver": false
+    },
+    "fix_patch_or_recheck_output_read_by_archiver": false,
+    "PDE_rerun": false,
+    "overall_independent_PASS_in_this_archive": false,
+    "next_step": "父任务修补/审阅后另目录saved-only recheck；归档仍保留全部原失败"
+  },
+  "limitations": {
+    "target_scale_accuracy": "UNKNOWN",
+    "target_scale_capacity": "UNKNOWN",
+    "fixed_manual532_is_AUTO32060_convergence": false,
+    "weak_perturbation_result_generalizes_to_stronger_coupling": false,
+    "2GiB_research_cap_is_user_2TB_48h_qualification": false,
+    "worker_vs_checker_identity_split_required": true,
+    "full_checker_failing_packet_overwrites_worker_PASS": false
+  },
+  "prior_worker_archive_preserved": {
+    "directory": "staging/direct_X_attempt5_worker_archive_816b7247",
+    "sha256": {
+      "report_zh.md": "daf2b2f155840cdd7dd0b20665102e8ad893b3cbc0ea46504795dcd00e08cf73",
+      "compact_record.json": "f09499601d5e9b560fbe359fb62efe58a9b72064c02057e119c4a49a21bd5d84",
+      "manifest.json": "9eea7a11076961ae9fff1890e3f5153d77b614a5a7338635c1b4ac88da4cb735"
+    },
+    "verified_unchanged": true
+  },
+  "archiver_actions": {
+    "bounded_JSON_metadata_and_log_ends_only": true,
+    "huge_array_rescan": false,
+    "array_numeric_reads": 0,
+    "project_imports": 0,
+    "PDE_or_numerical_reruns": 0,
+    "canonical_writes": 0,
+    "source_changes": 0,
+    "matrix_or_large_artifact_copies": 0,
+    "events_resources_read_for_file_hash_only": true
+  }
+}

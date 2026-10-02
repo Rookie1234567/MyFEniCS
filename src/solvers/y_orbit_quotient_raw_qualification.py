@@ -200,7 +200,8 @@ def _actual_discrete_binding(bundle, carrier):
 
 def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
                                 expected_physical_manifest, expected_global_ordered_keys,
-                                seed=FIXED_SEED, tolerance=FIXED_TOLERANCE):
+                                seed=FIXED_SEED, tolerance=FIXED_TOLERANCE, direct_profile=None,
+                                literal_mode_observer=None):
     """Audit one supplied live sector and current-mode raw packet stream.
 
     Packets are the existing observer v1 mappings. A caller may instead provide
@@ -230,6 +231,8 @@ def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
         raise RuntimeError("raw audit gates require nonoptimized Python")
     if tolerance != FIXED_TOLERANCE or seed != FIXED_SEED:
         raise ValueError("admitted raw audit fixes tolerance 1e-10 and seed 4053202")
+    if literal_mode_observer is not None and (direct_profile is None or not callable(literal_mode_observer)):
+        raise ValueError("literal current-mode evidence observer requires explicit direct profile")
     carrier = bundle["dtn_action"].carrier
     identity_before = carrier_numeric_identity(carrier)
     record_path = Path(record_path)
@@ -277,7 +280,14 @@ def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
         cfg, physical_cfg, setup = bundle["cfg"], bundle["physical_cfg"], bundle["setup"]
         selected, rows, manifest = ctx.select_inventory(physical_cfg, cfg, bundle["global_mode_inventory"])
         modes = tuple(bundle["modes"])
-        M = SECTOR_COUNTS[ctx.twist_index]
+        direct = None
+        if direct_profile is not None:
+            from .y_orbit_direct_profile import validate_direct_physical_config
+            direct = validate_direct_physical_config(physical_cfg, direct_profile)
+            require(ctx.direct_profile_name == direct.name, "explicit direct profile/context identity required")
+        else:
+            require(getattr(ctx, "direct_profile_name", None) is None, "direct context requires explicit direct profile opt-in")
+        M = (direct.sector_port_counts if direct is not None else SECTOR_COUNTS)[ctx.twist_index]
         require(len(modes) == len(carrier.entries) == M and all(a is b for a, b in zip(modes, selected, strict=True)),
                 "exact original selected mode objects and sector count required")
         require(manifest == expected_physical_manifest == PHYSICAL_GENERATOR_SHA256
@@ -306,16 +316,19 @@ def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
         require(local_context["contract_sha256"] == ctx.sha256
                 and _canonical_json_bytes(local_context["contract"]) == _canonical_json_bytes(ctx.identity()),
                 "exact explicit phase/sector contract required")
-        profile = _qualification_degree_profile(bundle)
+        profile = _qualification_degree_profile(bundle, direct_profile=direct_profile)
         require(profile["degree"] == 4 and profile["local_space_dimension"] == 300
                 and profile["quadrature_degree"] == 23 and profile["primary_facet_points"] == 144,
                 "actual degree4/local300/Gauss23/144 profile required")
         V, mpc, mesh_data = setup["spaces"][4], setup["floquets"][4].mpc, setup["mesh_data"]
         n, qdegree = int(V.dofmap.index_map.size_global), int(bundle["dtn_quadrature_degree"])
         discrete = _actual_discrete_binding(bundle, carrier)
-        require(discrete["actual_local_cells"] == 40 and n == 8940
-                and discrete["actual_finalized_slave_rows"] == 1004
-                and carrier.ownership_range == (0, n), "actual bounded 40-cell local storage/MPC profile required")
+        expected_cells = direct.local_cell_count if direct is not None else 40
+        expected_storage = direct.local_storage_rows if direct is not None else 8940
+        expected_slaves = (direct.local_storage_rows-direct.local_independent_rows) if direct is not None else 1004
+        require(discrete["actual_local_cells"] == expected_cells and n == expected_storage
+                and discrete["actual_finalized_slave_rows"] == expected_slaves
+                and carrier.ownership_range == (0, n), "actual bounded local storage/MPC profile required")
         floquet = setup["floquets"][4]
         require((complex(floquet.phase_x), complex(floquet.phase_y)) == ctx.phase_override
                 and complex(floquet.phase_corner) == ctx.phase_x*ctx.tau and ctx.tau == ctx.eta**2,
@@ -434,7 +447,7 @@ def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
                           "gauge_H": abs(Hg/(abs(phase)**2)-H)/H,
                           "local_H": abs(supplied["local_plane_H"]-H)/H,
                           "original_H": abs(supplied["original_plane_H"]-original_H)/original_H,
-                          "area_H_scaling": abs(original_H/2-H)/H,
+                          "area_H_scaling": abs(original_H/(direct.replication_count if direct is not None else 2)-H)/H,
                           "stored_H": abs(entry.normalization_h-H)/H}
             current["raw_literal_errors"] = raw_errors
             # Measure true raw identities before either mask policy is applied.
@@ -442,6 +455,22 @@ def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
                     "true pre-mask primary/literal C/D/H mismatch")
             require(raw_errors["stored_H"] <= 1e-14 and raw_errors["area_H_scaling"] <= 1e-14,
                     "original unchanged positive-H normalization/area gate failed")
+            if literal_mode_observer is not None:
+                literal_C, literal_D = Cp.view(), Dp.view()
+                literal_C.flags.writeable = literal_D.flags.writeable = False
+                literal_mode_observer({
+                    "schema": "task40extra.direct-literal-mode-observer.v1",
+                    "local_mode_index": index, "original_mode_index": ctx.original_mode_indices[index],
+                    "original_mode_key": ctx.original_mode_keys[index], "ownership_range": (0, n),
+                    "literal_C": literal_C, "literal_D": literal_D, "literal_H": float(H),
+                    "physical_generator_manifest_sha256": manifest,
+                    "assembly_context_sha256": carrier.assembly_context_sha256,
+                    "quotient_contract_sha256": ctx.sha256, "quotient_twist_index": ctx.twist_index,
+                    "local_branch_index": ctx.local_branch_indices[index],
+                    "qualification_source_sha256": base["qualification_source_sha256"],
+                    "primary_compiled_gauss": primary_gauss, "literal_compiled_gauss": oracle_gauss,
+                    "array_ownership": "borrowed_readonly_during_synchronous_callback; copy_to_retain"})
+                del literal_C, literal_D
             after_components = tuple(_mask(component) for component in observed_components)
             component_measurements = []
             for component, (masked, threshold) in enumerate(after_components):

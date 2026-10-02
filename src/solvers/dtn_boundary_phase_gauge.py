@@ -265,8 +265,12 @@ def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_as
         from .y_orbit_condensed_adapter import _mpc_expansion_width
         if not isinstance(quotient_context, YOrbitTwoCellQuotientContext):
             raise TypeError("quotient context must use the frozen two-cell contract")
+        expected_local_cells = 40
+        if quotient_context.direct_profile_name is not None:
+            from .y_orbit_raw_observer_admission import direct_raw_observer_expected_local_cells
+            expected_local_cells = direct_raw_observer_expected_local_cells(quotient_context, cfg)
         if (quotient_context.assembly_config_sha256 != _config_sha256(cfg)
-                or int(element.degree) != 4 or cell_count != 40 or int(qdegree) != 23
+                or int(element.degree) != 4 or cell_count != expected_local_cells or int(qdegree) != 23
                 or not all(np.array_equal(np.unique(mesh.geometry.x[:, axis]), expected)
                            for axis, expected in enumerate(quotient_context.local_axes))):
             raise ValueError("actual local mesh/config/Basix/Gauss differs from the frozen p4 quotient")
