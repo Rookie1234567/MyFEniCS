@@ -1,0 +1,8 @@
+schema_version = 1
+
+[task042_v24]
+stage = "SETUP"
+run_id = "task042_v24_local_block_setup"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "FIXED_LOCAL_BLOCK_AND_COARSE_PAIR"
+target_cycles = 0

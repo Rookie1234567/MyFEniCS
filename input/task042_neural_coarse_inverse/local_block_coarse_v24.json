@@ -1,0 +1,149 @@
+{
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+  "initial_states": {
+    "GPOLY": {
+      "name": "V21-C-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v21/C/cycles/CALL_0112/physical.npz",
+        "sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+        "x_sha256": "bd1e676989c95e77753bd477d863e32d8ff84ca93bbc0a5ab11a79afe565cb4b",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      }
+    }
+  },
+  "T": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/T.npz",
+    "sha256": "22e21cd840efb51d2dc66e556d85587088f406dce3221f564109a27b7b096fd8",
+    "shape": [
+      18144,
+      1248
+    ],
+    "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a"
+  },
+  "Ac": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/Ac.npy",
+    "sha256": "d03304fba540afd66d63a00975b655158696d88301e4dd989cdf9e442674b6fc",
+    "array_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+    "shape": [
+      1248,
+      1248
+    ],
+    "capacity": {
+      "n1": 1248,
+      "matrix_and_LU_explicit_upper_bytes": 49850112,
+      "new_workspace_upper_bytes": 204711936,
+      "simultaneous_planned_bytes": 3613375308,
+      "qualified": true,
+      "memory_values_are_derived_not_RSS": true,
+      "assembly_seconds": 1.7258447259664536,
+      "max_local_p1_support": 102,
+      "duplicate_contributions_merged": true,
+      "coarse_formula": "T^H K T - T^H C Hhat^-1 F T",
+      "Ac_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+      "Cc_sha256": "6ee128df3b839677bb84378ec328d0efaa9b8123a57a0a090ebe76b43f0f1e3c",
+      "Fc_sha256": "9384ddcf64568851ef3e4d7ddda20538e8f9a92d35bdaf691035bcab70694952",
+      "global_fine_matrix_constructed": false,
+      "separate_curl_mass_condensation": false
+    }
+  },
+  "upstream_SETUP_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/task042_v22_p1_trace_setup_20261002T043332305991Z/stage_result.json",
+    "sha256": "a841d106c7ec7b451764617f93bf018c33aab0f1b627cd8e0661d097a00b07d7"
+  },
+  "batch": "V24_FIXED_LOCAL_BLOCK_AND_COARSE_PAIR",
+  "review_sha": "c3370061c6693eab70e20c34965ec7d640b978bd",
+  "U": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/U.npy",
+    "sha256": "1e7624c2531739cafefb500906514f1da7e5b0649064899a957ef6d937822fd1",
+    "array_sha256": "937ee850978481d87f4632e08b59f4420db5959e39678ec5de4c9212be1189d8",
+    "shape": [
+      18144,
+      1248
+    ],
+    "bytes": 362299392
+  },
+  "R": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/R.npy",
+    "sha256": "8acdec1077a1259d71ad0ef3386a8680ec79aff9047d0f7e3d89e77597f6e8bc",
+    "array_sha256": "dd7307374b5406c1cedc940308221976b6fb34c3d5096a232b08ba867211b863",
+    "shape": [
+      1248,
+      1248
+    ],
+    "bytes": 24920064
+  },
+  "map": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_setup_20260930T093204740955Z/canonical_entity_map.npz",
+    "sha256": "bd40a9cc9d9040cf1efdd17d2e3682a7cad84ff10402b2110d8945e74e9b32a9",
+    "row_sha256": "daf914170831a3e7661740a066594b0897baa2e40bdcd159e4761f7f19427000",
+    "entity_dim_sha256": "86aa9e84642c94e7a9e550585f3d0d69667bddf08c7ebd28d1a73f75cf664ca0",
+    "entity_id_sha256": "a1fb4b405a9a556d26506929bd54f91f0d3e2343fec35a7708e98f393e1e31cf",
+    "entity_moment_sha256": "1017dc45d6f2523c52010a1a2448e9b57781fb7022af858f044a93d3d12be8eb",
+    "master_native_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+    "owner_cell_sha256": "77dd0367ed561d312f09b25978848f707108f199c4f86b23e7d097e6472467d2",
+    "owner_position_sha256": "cbec7b39444baaf15f2afab0f04bdc88dd6874192e379edf93fd3c1ff686cc41",
+    "orientation_id_sha256": "a1f97b7ba1d2af261d9820b79d3e8e26ba7bf0818d35b3b2b32f21d67ade3508",
+    "physical_center_sha256": "cde45e31bd9da1906aa4c3e58f8f096fe556c5ccc804ce20b1241d2bd463dc30",
+    "patch_id_sha256": "1a52de35a8c1b796eeb779eff3f672782baba0f8bb2711c4601b49a3a8665ca5",
+    "periodic_representative_center_sha256": "cde45e31bd9da1906aa4c3e58f8f096fe556c5ccc804ce20b1241d2bd463dc30",
+    "boxes_sha256": "a26cbc63efd544bcbd8f99ffd7897013586ef0d8ea6fb99e56cc377bc3b9f9dd"
+  },
+  "map_summary": {
+    "canonical_rows": 18144,
+    "patch_rows": [
+      2913,
+      2676,
+      2289,
+      2076,
+      2439,
+      2220,
+      1863,
+      1668
+    ],
+    "complete_entity_count": 2448,
+    "slaves_added": 0,
+    "slave_rows": 2082,
+    "same_entity_moments_never_split": true,
+    "rule": "canonical master complete edge/face center; cut ties lower; upper periodic center uses equivalent representative",
+    "native_integral_coordinates_unchanged": true,
+    "owner_used_only_for_original_moment_evaluation": true
+  },
+  "backend": "EXACT_CLASS_BATCH64",
+  "local_specification": {
+    "blocks": 8,
+    "rows": [
+      2913,
+      2676,
+      2289,
+      2076,
+      2439,
+      2220,
+      1863,
+      1668
+    ],
+    "complex": "complex128",
+    "LU": "LAPACK partial pivoting",
+    "shift": null,
+    "drop": null,
+    "refinement": 0
+  },
+  "role_rules": {
+    "SETUP": "packet/map/T/U/R only",
+    "WARM": "trace/port/z/residual whitelist",
+    "ZERO": "no parent or neural state decode",
+    "VERIFY": "REF7 only after queue freeze"
+  },
+  "history_control_files": [
+    "docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v23.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v23.csv"
+  ],
+  "prior_formal_lower_bound_seconds": 75124.91759302444,
+  "max_independent_factor_readers": 5
+}
