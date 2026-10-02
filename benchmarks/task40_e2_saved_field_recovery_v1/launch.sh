@@ -4,11 +4,11 @@ set -euo pipefail
 ROOT=/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering
 ENTRY=$ROOT/benchmarks/task40_e2_saved_field_recovery_v1
 RUN_ROOT=$ROOT/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z
-REPAIR_ROOT=$RUN_ROOT/postprocess_repair_v2
+REPAIR_ROOT=$RUN_ROOT/postprocess_repair_v3
 WATCHDOG_DIR=$REPAIR_ROOT/watchdog
 LOG_DIR=$ROOT/benchmarks/artifacts/user_services
-LOG=$LOG_DIR/task40-e2-saved-field-recovery-v2.log
-UNIT=myfenics-task40-e2-saved-field-recovery-v2-$(date -u +%Y%m%dT%H%M%S)-$$
+LOG=$LOG_DIR/task40-e2-saved-field-recovery-v3.log
+UNIT=myfenics-task40-e2-saved-field-recovery-v3-$(date -u +%Y%m%dT%H%M%S)-$$
 MODE=${1:-launch}
 
 if [[ "$MODE" == service ]]; then

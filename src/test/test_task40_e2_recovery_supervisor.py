@@ -1,3 +1,6 @@
+import pytest
+
+from benchmarks.task40_e2_saved_field_recovery_v1.packets import saved_solution_and_rhs_descriptors
 from benchmarks.task40_e2_saved_field_recovery_v1.supervise import (
     qualified_python_environment,
     recovery_failure_record,
@@ -13,7 +16,7 @@ def _passing_summary():
         "timebase_policy": "conservative_realtime",
         "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
         "process_tree_swap_gate_enforced": True,
-        "process_tree_samples": [{"rss_bytes": 100}],
+        "process_tree_samples": 10,
         "process_tree_all_status_readable": True,
         "process_tree_all_identity_complete": True,
         "process_tree_identity_coverage": "complete",
@@ -42,7 +45,7 @@ def test_watchdog_accepts_complete_zero_swap_sample_and_cleanup():
 
 def test_watchdog_rejects_empty_sample_and_incomplete_identity():
     summary = _passing_summary()
-    summary["process_tree_samples"] = []
+    summary["process_tree_samples"] = 0
     summary["process_tree_all_identity_complete"] = False
     summary["process_tree_identity_coverage"] = "incomplete"
     sample = _passing_last_sample()
@@ -87,3 +90,37 @@ def test_qualified_python_rejects_unactivated_or_external_entry(tmp_path):
     external.write_text("system interpreter")
     assert not qualified_python_environment("0", local, venv, venv)
     assert not qualified_python_environment("1", external, venv, venv)
+
+
+def test_watchdog_rejects_missing_sample_count():
+    summary = _passing_summary()
+    summary.pop("process_tree_samples")
+    assert not watchdog_gate_checks(summary, _passing_last_sample())["sample_present"]
+
+
+def test_e2_saved_packet_uses_top_level_solution_and_rhs_descriptors():
+    # The real E2 packet has full_solution=array_20, physical_rhs=array_1,
+    # while facts contains scalar solver facts and residuals is a sibling.
+    packet = {
+        "full_solution": {"array_key": "array_20", "dtype": "complex128", "shape": [595512]},
+        "physical_rhs": {"array_key": "array_1", "dtype": "complex128", "shape": [595512]},
+        "residuals": {
+            "storage_solution": {"array_key": "array_2", "dtype": "complex128", "shape": [595512]}
+        },
+        "facts": {"explicit_true_residual": 9.793073227317083e-7, "physical_residual_pass": True},
+    }
+    solution, rhs = saved_solution_and_rhs_descriptors(packet)
+    assert solution["array_key"] == "array_20"
+    assert rhs["array_key"] == "array_1"
+    assert solution["shape"] == rhs["shape"] == [595512]
+
+
+def test_e2_saved_packet_does_not_fallback_to_nested_residual_descriptor():
+    packet = {
+        "physical_rhs": {"array_key": "array_1", "dtype": "complex128", "shape": [595512]},
+        "residuals": {
+            "storage_solution": {"array_key": "array_2", "dtype": "complex128", "shape": [595512]}
+        },
+    }
+    with pytest.raises(KeyError, match="full_solution"):
+        saved_solution_and_rhs_descriptors(packet)

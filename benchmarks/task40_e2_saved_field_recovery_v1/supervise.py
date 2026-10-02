@@ -17,9 +17,12 @@ RUN_ROOT = ROOT / (
     "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/"
     "20261002T023827.030745Z"
 )
-REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v2"
+REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v3"
 WATCHDOG_DIR = REPAIR_ROOT / "watchdog"
-PRIOR_ATTEMPT = RUN_ROOT / "postprocess_repair_v1/startup_failure_record.json"
+PRIOR_ATTEMPTS = (
+    RUN_ROOT / "postprocess_repair_v1/startup_failure_record.json",
+    RUN_ROOT / "postprocess_repair_v2/repair_record.json",
+)
 RECORD = REPAIR_ROOT / "repair_record.json"
 ENTRY = ROOT / "benchmarks/task40_e2_saved_field_recovery_v1"
 
@@ -52,7 +55,11 @@ def watchdog_gate_checks(summary: Mapping[str, Any], last_sample: Mapping[str, A
         ),
         "physical_memory_policy": summary.get("memory_policy") == "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
         "process_tree_swap_gate_enforced": summary.get("process_tree_swap_gate_enforced") is True,
-        "sample_present": bool(summary.get("process_tree_samples")),
+        "sample_present": (
+            isinstance(summary.get("process_tree_samples"), int)
+            and not isinstance(summary.get("process_tree_samples"), bool)
+            and summary["process_tree_samples"] > 0
+        ),
         "last_sample_identity_complete": last_sample.get("identity_complete") is True,
         "last_sample_status_readable": last_sample.get("all_status_readable") is True,
         "process_tree_status_readable": summary.get("process_tree_all_status_readable") is True,
@@ -111,6 +118,16 @@ def main() -> int:
     assert branch == "task40extra_0p7nm_engineering"
     assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()
     assert REPAIR_ROOT.is_dir() and not WATCHDOG_DIR.exists()
+    prior_records = []
+    for prior_path in PRIOR_ATTEMPTS:
+        prior_sha = hashlib.sha256(prior_path.read_bytes()).hexdigest()
+        sidecar = prior_path.with_suffix(".json.sha256")
+        assert sidecar.is_file() and sidecar.read_text().split()[0] == prior_sha
+        prior_records.append({
+            "record_path": str(prior_path),
+            "record_sha256": prior_sha,
+            "record": json.loads(prior_path.read_text(encoding="utf-8")),
+        })
 
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY, supervise
 
@@ -156,15 +173,7 @@ def main() -> int:
         record = json.loads(RECORD.read_text(encoding="utf-8"))
     else:
         record = recovery_failure_record(summary, worker_tail, source_identity=source_identity)
-    if PRIOR_ATTEMPT.exists():
-        prior_sha = hashlib.sha256(PRIOR_ATTEMPT.read_bytes()).hexdigest()
-        expected_sha = PRIOR_ATTEMPT.with_suffix(".json.sha256").read_text().split()[0]
-        assert prior_sha == expected_sha
-        record["prior_recovery_attempts"] = [{
-            "record_path": str(PRIOR_ATTEMPT),
-            "record_sha256": prior_sha,
-            "record": json.loads(PRIOR_ATTEMPT.read_text(encoding="utf-8")),
-        }]
+    record["prior_recovery_attempts"] = prior_records
     record.setdefault("additional_cost", {})
     record.setdefault("repair_identity", {}).update(source_identity)
     record["additional_cost"]["process_tree_watchdog"] = {
@@ -178,7 +187,7 @@ def main() -> int:
         "pss_sampling_policy": summary.get("pss_sampling_policy"),
         "pss_status": summary.get("pss_status"),
         "sampled_process_tree_pss_peak_bytes": summary.get("sampled_process_tree_pss_peak_bytes"),
-        "process_tree_sample_count": len(summary.get("process_tree_samples", [])),
+        "process_tree_sample_count": summary.get("process_tree_samples"),
         "process_tree_all_status_readable": summary.get("process_tree_all_status_readable"),
         "process_tree_all_identity_complete": summary.get("process_tree_all_identity_complete"),
         "process_tree_identity_coverage": summary.get("process_tree_identity_coverage"),

@@ -24,8 +24,11 @@ RUN_ROOT = ROOT / (
     "20261002T023827.030745Z"
 )
 INPUT = ROOT / "input/task40extra_0p7nm_engineering/nonseparable_e2_p6_q4_manual_m2_growth.dat"
-REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v2"
-PRIOR_ATTEMPT = RUN_ROOT / "postprocess_repair_v1/startup_failure_record.json"
+REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v3"
+PRIOR_ATTEMPTS = (
+    RUN_ROOT / "postprocess_repair_v1/startup_failure_record.json",
+    RUN_ROOT / "postprocess_repair_v2/repair_record.json",
+)
 OUTPUT = REPAIR_ROOT / "numerical_output"
 RECORD = REPAIR_ROOT / "repair_record.json"
 LAUNCHER = ROOT / "benchmarks/task40_e2_saved_field_recovery_v1/launch.sh"
@@ -97,6 +100,7 @@ assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, t
 assert REPAIR_ROOT.is_dir() and (REPAIR_ROOT / "watchdog").is_dir()
 assert not OUTPUT.exists() and not RECORD.exists()
 
+from benchmarks.task40_e2_saved_field_recovery_v1.packets import saved_solution_and_rhs_descriptors
 from src.io import load_and_resolve
 from src.io.input_validation import simulation_config_3d_from_normalized
 from src.postprocessing.diffraction_3d import (
@@ -118,14 +122,14 @@ from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
 from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
 prior_attempts = []
-if PRIOR_ATTEMPT.exists():
-    prior_sha = sha256_file(PRIOR_ATTEMPT)
-    prior_sidecar = PRIOR_ATTEMPT.with_suffix(".json.sha256")
-    assert prior_sidecar.is_file() and prior_sidecar.read_text().split()[0] == prior_sha
-    prior_record = read_json(PRIOR_ATTEMPT)
-    assert prior_record["classification"] == "SERVICE_PREFLIGHT_FAILED_BEFORE_WATCHDOG"
+for prior_path in PRIOR_ATTEMPTS:
+    prior_sha = sha256_file(prior_path)
+    sidecar = prior_path.with_suffix(".json.sha256")
+    assert sidecar.is_file() and sidecar.read_text().split()[0] == prior_sha
+    prior_record = read_json(prior_path)
+    assert prior_record["original_e2_worker_result_mutated"] is False
     prior_attempts.append({
-        "record_path": str(PRIOR_ATTEMPT),
+        "record_path": str(prior_path),
         "record_sha256": prior_sha,
         "record": prior_record,
     })
@@ -177,14 +181,11 @@ field_archive = Path(x2["arrays"]["path"])
 if not field_archive.is_absolute():
     field_archive = RUN_ROOT / field_archive
 assert sha256_file(field_archive) == FIELD_ARCHIVE == x2["arrays"]["sha256"]
-storage_desc = x2["facts"]["residuals"]["storage_solution"]
+solution_desc, rhs_desc = saved_solution_and_rhs_descriptors(x2)
 with np.load(field_archive, allow_pickle=False) as z:
-    solution = load_array(z, storage_desc)
-    full_solution = load_array(z, x2["full_solution"])
-    rhs = load_array(z, x2["physical_rhs"])
+    solution = load_array(z, solution_desc)
+    rhs = load_array(z, rhs_desc)
     slave_rows = load_array(z, x2["owned_slave_rows"]).astype(np.int64, copy=False)
-assert np.array_equal(solution, full_solution)
-del full_solution
 assert solution.dtype == np.complex128 and np.isfinite(solution).all() and np.isfinite(rhs).all()
 assert slave_rows.size == 22392 and np.all(solution[slave_rows] == 0.0)
 
