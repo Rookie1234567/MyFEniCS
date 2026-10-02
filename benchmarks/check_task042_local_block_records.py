@@ -3,9 +3,19 @@ import csv, hashlib, json, math, sys
 from pathlib import Path
 from src.solvers.local_block_readiness import local_readiness
 
+FIELD_METRICS = ('full_FE_L2_relative', 'full_FE_scaled_curl_relative',
+    'scattered_FE_L2_relative', 'scattered_scaled_curl_relative',
+    'selected_E_relative', 'selected_H_relative')
+POWER_METRICS = ('R_total', 'T_total', 'A_balance', 'A_volume')
+
 def read(path): return json.loads(Path(path).read_text())
 def bounded(values,tol):
-    return all(math.isfinite(float(v)) and 0<=float(v)<=tol for v in values)
+    try:
+        return all(math.isfinite(float(v)) and 0<=float(v)<=tol for v in values)
+    except (TypeError, ValueError, KeyError):
+        return False
+def required(values,keys,tol):
+    return isinstance(values,dict) and all(k in values for k in keys) and bounded((values[k] for k in keys),tol)
 def equation(a):
     return bounded((a[k] for k in ('schur_relative','native_relative','augmented_relative',
         'original_total_augmented_relative','port_full_rhs_relative','port_operation_relative')),1e-6) and \
@@ -13,12 +23,29 @@ def equation(a):
 def reference_equation(a):
     return equation(a) and bounded((a['independent_DOLFINx_total_native_relative'],),1e-6)
 def complete(row,reference):
-    c=row['comparison']
-    return equation(row['audit']) and reference and \
-        bounded((row['audit']['independent_DOLFINx_total_native_relative'],),1e-6) and \
-        bounded(row['fields'].values(),1e-4) and bounded((c['ordered_complex_ports_relative'],),1e-4) and \
-        bounded(c['power_absolute_differences'].values(),1e-5) and \
-        bounded((c['max_channel_power_difference'],),1e-6) and bounded((c['energy_closure_absolute'],),1e-5)
+    try:
+        c=row['comparison']
+        return equation(row['audit']) and bool(reference) and \
+            bounded((row['audit']['independent_DOLFINx_total_native_relative'],),1e-6) and \
+            required(row['fields'],FIELD_METRICS,1e-4) and bounded((c['ordered_complex_ports_relative'],),1e-4) and \
+            required(c['power_absolute_differences'],POWER_METRICS,1e-5) and \
+            bounded((c['max_channel_power_difference'],),1e-6) and bounded((c['energy_closure_absolute'],),1e-5)
+    except (KeyError,TypeError,ValueError):
+        return False
+
+def channels_valid(ports,powers,expected,planes):
+    """Require every original mode, polarization and reference plane, separately."""
+    try:
+        if len(expected)!=40 or len(ports)!=40 or len(powers)!=40:return False
+        for rows in (ports,powers):
+            if {int(v['index']) for v in rows}!=set(range(40)):return False
+            for v in rows:
+                mode=expected[int(v['index'])]
+                if rows is ports and json.loads(v['original_key'])!=mode:return False
+                if (v['side'],int(v['m']),int(v['n']),v['polarization'])!=(mode['side'],mode['m'],mode['n'],mode['polarization']):return False
+                if float(v['reference_plane_z'])!=planes[mode['side']]:return False
+        return True
+    except (KeyError,TypeError,ValueError):return False
 
 def check(root):
     root=Path(root);part=read(root/'partition_v24.json');block=read(root/'block_action_v24.json');factors=read(root/'local_factor_safety_v24.json')
@@ -55,7 +82,7 @@ def check(root):
     channels=list(csv.DictReader((root/'field_channels_v24.csv').open()));powers=list(csv.DictReader((root/'per_channel_power_v24.csv').open()))
     for row in candidates:
         name=row['state'];ports=[v for v in channels if v['state']==name];power=[v for v in powers if v['state']==name]
-        assert len(ports)==len(power)==40 and len({int(v['index']) for v in ports})==40
+        assert channels_valid(ports,power,raw['physical_identity']['full_channel_inventory'],dict(top=1.225,bottom=-0.175)), 'mode/polarization/reference-plane inventory differs'
         for v in ports:
             assert abs((float(v['total_real'])-float(v['reference_total_real']))-float(v['error_real']))<=1e-14
             assert abs((float(v['total_imag'])-float(v['reference_total_imag']))-float(v['error_imag']))<=1e-14

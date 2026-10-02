@@ -3,7 +3,9 @@ from copy import deepcopy
 
 import pytest
 
-from benchmarks.check_task042_local_block_records import complete, equation, reference_equation
+from benchmarks.check_task042_local_block_records import (
+    FIELD_METRICS, POWER_METRICS, channels_valid, complete, equation, reference_equation,
+)
 
 
 def valid_record():
@@ -13,9 +15,9 @@ def valid_record():
                           "schur_original_identity_operation_relative",
                           "independent_DOLFINx_total_native_relative"), 1e-12)
     audit["slave_storage_max"] = 0
-    return dict(audit=audit, fields=dict(total_E=1e-6, scattered_E=1e-6, H=1e-6),
+    return dict(audit=audit, fields=dict.fromkeys(FIELD_METRICS, 1e-6),
                 comparison=dict(ordered_complex_ports_relative=1e-6,
-                                power_absolute_differences=dict(R=1e-8, T=1e-8, A=1e-8, A_volume=1e-8),
+                                power_absolute_differences=dict.fromkeys(POWER_METRICS, 1e-8),
                                 max_channel_power_difference=1e-8, energy_closure_absolute=1e-8),
                 status="SAME_DISCRETE_QUALIFIED")
 
@@ -43,5 +45,48 @@ def test_aggregate_power_and_fields_cannot_replace_single_channel_gate():
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), -1e-8])
 def test_nonfinite_or_negative_error_is_not_qualification(value):
     row = deepcopy(valid_record())
-    row["fields"]["scattered_E"] = value
+    row["fields"]["scattered_FE_L2_relative"] = value
     assert not complete(row, True)
+
+
+@pytest.mark.parametrize('key', FIELD_METRICS + POWER_METRICS)
+def test_every_required_metric_is_mandatory(key):
+    row = valid_record()
+    values = row['fields'] if key in FIELD_METRICS else row['comparison']['power_absolute_differences']
+    del values[key]
+    assert not complete(row, True)
+
+
+@pytest.mark.parametrize('key', FIELD_METRICS + POWER_METRICS)
+@pytest.mark.parametrize('bad', [float('nan'), float('inf'), -1e-8])
+def test_every_required_metric_fails_closed(key, bad):
+    row = valid_record()
+    values = row['fields'] if key in FIELD_METRICS else row['comparison']['power_absolute_differences']
+    values[key] = bad
+    assert not complete(row, True)
+
+
+def test_empty_dictionaries_are_not_complete():
+    for where in ('fields', 'power'):
+        row = valid_record()
+        if where == 'fields':row['fields'] = {}
+        else:row['comparison']['power_absolute_differences'] = {}
+        assert not complete(row, True)
+
+
+@pytest.mark.parametrize('bad', ['missing', 'duplicate', 'key', 'pol', 'plane', 'side'])
+def test_original_forty_channel_inventory_is_mandatory(bad):
+    import json
+    expected = [dict(side='top' if j<20 else 'bottom',m=j%20,n=0,polarization='s') for j in range(40)]
+    ports = [dict(index=j,side=m['side'],m=m['m'],n=m['n'],polarization=m['polarization'],
+                  original_key=json.dumps(m),reference_plane_z=1.225 if j<20 else -0.175) for j,m in enumerate(expected)]
+    powers = deepcopy(ports)
+    planes = dict(top=1.225,bottom=-0.175)
+    assert channels_valid(ports,powers,expected,planes)
+    if bad == 'missing':ports.pop()
+    elif bad == 'duplicate':powers[0] = deepcopy(powers[1])
+    elif bad == 'key':ports[0]['original_key'] = '{}'
+    elif bad == 'pol':powers[0]['polarization'] = 'p'
+    elif bad == 'plane':ports[0]['reference_plane_z'] = 0
+    elif bad == 'side':powers[0]['side'] = 'bottom'
+    assert not channels_valid(ports,powers,expected,planes)

@@ -146,13 +146,15 @@ def setup(stage):
     return result
 
 
-def load_local(stage,setup):
+def load_local(stage,setup,*,factor_root=None):
+    # Explicit cross-batch read-only reuse; the default V24 ownership is intact.
+    factor_root=(stage.io.ARTIFACT_ROOT/'blocks') if factor_root is None else Path(factor_root).resolve()
     stage.pc_count('factor_readers');ids=[];A=[];factors=[];checks=[]
     for b,item in enumerate(setup['block_inventory']):
         values={}
         for key in ('matrix','LU','pivots'):
             receipt=item[key];p=Path(receipt['path']).resolve()
-            if not p.is_relative_to(stage.io.ARTIFACT_ROOT/'blocks') or file_hash(p)!=receipt['sha256']:raise ValueError('local block file hash')
+            if not p.is_relative_to(factor_root) or file_hash(p)!=receipt['sha256']:raise ValueError('local block file hash')
             v=np.load(p,mmap_mode='r',allow_pickle=False)
             if list(v.shape)!=receipt['shape'] or array_hash(v)!=receipt['array_sha256']:raise ValueError('local block numeric hash')
             if v.flags.writeable:raise ValueError('factor reload must be read-only')
