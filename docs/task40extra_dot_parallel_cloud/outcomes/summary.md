@@ -182,3 +182,14 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 |未资格|Q3–Q5 inverse/forcing/outer/notch/full outputs；目标尺寸/精度/2TB/48h；官方R/T/A、MPI/restart|
 
 [Response V10](../response_v10.md)、[compact](records/two_cell_p4_v10/two_cell_p4_v10_compact.json)、[独立复核](records/two_cell_p4_v10/independent_verification.json)记录1267源文件、2222 artifact hash entries和1064 raw packet JSON描述符；不重跑数值，不重命名旧ad356715权威，不改历史失败。
+
+
+## V11 两胞元full3D p4完整恢复逆通过
+
+数值worker `5e0364cd` 与saved-only checker `029a0cd8` 独立绑定；仅checker和新增测试有差异，数值/配置/ABI依赖不变。prefactor19/19及完整inverse checker312/312、evidence_valid=true。两个40-cell三维空间覆盖原80-cell、15872独立FE/8640内部、四q/532 aliases；四fresh q CSR差0后才分解，四因子全部保留。
+
+regular四载荷最大原残差 `5.26717490249291e-12`；真实两cell三维notch的generic/interior/physical/support迭代4/4/3/4、最大原残差 `7.966735639625955e-12`，对不可变V9 full-period保存场差最大 `2.609464583066699e-14`。8 packets各532模式通过独立原系数与V9输出门，仍非official R/T/A或目标截断资格。
+
+worker145.83506661900174s/RSS788480000B，saved-only checker7.072437755996361s/RSS300224512B，分别swap0/清场、同1.5GiB/600s。首个checker因历史old full_Q行未排序失败，原失败保留；新checker只做被hash钉住的private row-sort copy及exact permutation/action等价门，无候选CSR放宽、算子改变或PDE重跑。只授予有界scaled full3D架构资格；本两cell路线p6、强对比、目标精度/32060模式收敛、跨ABI/MPI/restart、原尺寸λ0.7nm及2TB/48h仍未资格。
+
+[Response V11](../response_v11.md)、[compact](records/quotient_inverse_v11/quotient_inverse_v11_compact.json)、[配对归档核验](records/quotient_inverse_v11/independent_verification.json)。历史V9/V10范围及全部失败保持原身份。

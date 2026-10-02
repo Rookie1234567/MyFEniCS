@@ -1,0 +1,102 @@
+{
+  "schema": "task40extra.two-cell-quotient-inverse.independent-static-review.v1",
+  "disposition": "STATIC_REVIEW_PASS_NUMERICAL_QUALIFICATION_NOT_RUN",
+  "reviewed_at_utc": "2026-10-02T00:55:19Z",
+  "reviewer": "independent bounded source review",
+  "canonical_repository": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo",
+  "canonical_branch": "task40extra_dot_parallel_cloud",
+  "canonical_head": "b65f64668e0de30ffa077e360fbbef5275905346",
+  "canonical_porcelain_status": "",
+  "approved_plan_sha256": "a52a75ce3844c3c05be5800a7d9f57032c04909c3571ebfb5b1a274753b554e7",
+  "authority_head": "35dd9e5c39939d14bbded98f288007aff4a08368",
+  "authority_report_sha256": "d0bade55828b8e842f240ad3eb8b5d79d9adfdeb06976ad5be8e0a8fb2aeb37f",
+  "manifest_sha256": {
+    "snapshot/manifest.json": "962806701ff7dcf865faa68931a81564482ee756af26a2a0db5f577c35977e0d",
+    "inverse/manifest.json": "e481878d8872cc2e5c1f255d75115c990e0d6e3e419ada1c59f885f4f1545db2",
+    "runner/manifest.json": "d95fd178fa594d35b963c1b2809d9e4b45135a9ac5990a49961a69d8dd71e9df"
+  },
+  "source_sha256": {
+    "snapshot/src/solvers/y_orbit_qualified_snapshot.py": "17cd94a6a30d468ac3448c8b08b1db0e108ad1a24520985091f62913ba53790d",
+    "inverse/src/solvers/y_orbit_two_cell_inverse.py": "76e297edb7102d9b45085f09b2b198bfe0891637200957039b6f5185c4644eaa",
+    "inverse/src/solvers/y_orbit_two_cell_inverse_probe.py": "818785a773b78a4850094371771e172533d65ef66057c5b88701d3e5e2431e6c",
+    "runner/benchmarks/run_y_orbit_quotient_probe.py": "d188ccb7add5363a5aa4d5e568ae687dabb5822162f25a09da20c60cf79df390",
+    "runner/benchmarks/check_y_orbit_quotient_probe.py": "7d641a8b6750427fafa7585d77ff2dcbb47913e6f9b18ed36516c171327fae90"
+  },
+  "review_execution": {
+    "method": "read-only source, manifest, historical JSON metadata, installed public API source, and SHA256 review",
+    "python_or_project_imports_performed_by_reviewer": false,
+    "numeric_arrays_opened_by_reviewer": false,
+    "FE_assembly_or_new_JIT_performed_by_reviewer": false,
+    "factorizations_or_solves_performed_by_reviewer": false,
+    "canonical_files_modified_by_reviewer": false,
+    "only_reviewer_write": "this external source review receipt"
+  },
+  "component_reported_isolated_tests": {
+    "snapshot": 20,
+    "inverse": 12,
+    "runner_checker_metadata": 52,
+    "independently_reexecuted_by_this_reviewer": false,
+    "scope": "isolated contracts only; no actual FE restoration, factors, PDE or independent numeric checker qualification"
+  },
+  "reviewed_contracts": [
+    {
+      "name": "native and auxiliary coordinates",
+      "result": "PASS_STATIC",
+      "detail": "Full native FE vectors retain 15872 independent rows and all 8640 interiors. Entity R and inverse transformations are distinct from dual R^H. The full layout uses only entity blocks and a 4x4 DFT. Local dual load is P_b^H f; local port load is g_sector/sqrt2; recovered global alpha is beta/sqrt2. Both local branches and all 532 original ports survive exactly once."
+    },
+    {
+      "name": "augmentation signs and complete recovery",
+      "result": "PASS_STATIC",
+      "detail": "Inherited reduce_rhs and recover_storage APIs receive complete 8940 local storage, original independent rows, rhs_is_mpc_dual=True and expand_trace=False. They retain 4320 interiors, nonzero interior C/D support and dense Hhat. Stored D is copied without a second conjugation. Original nonzero-g residual uses f-C H^-1g, port residual Du-Halpha+g, and e_native=e_FE-C H^-1e_port."
+    },
+    {
+      "name": "snapshot and new recovery provenance",
+      "result": "PASS_STATIC",
+      "detail": "Pinned complete packet inventories, exact metadata and public carrier construction are required. Actual finalized MPC, both dofmaps, geometry/facets/materials, orientation, Basix, config and ABI must match. Historical primary binary/generated-C files are rehashed before restoration and remain historical-only. New volume/recovery uses existing constructors. Exact local row and all 20 raw/oriented tensor hashes plus cache policy are checked before factors; old and new compiler signatures are retained separately."
+    },
+    {
+      "name": "factor ownership, integer admission and resources",
+      "result": "PASS_STATIC",
+      "detail": "All four freshly compared CSR inputs are hash-bound before public SuperLU calls. Bounded dimensions and integer checks precede conversion. Four factors remain simultaneously retained; no L/U statistics copies occur. Current measured RSS includes previous factors, local caches and resident CSR; declared additional workspace, remaining (4-j)*128 MiB factor allowance and 128 MiB reserve are added. Unknown fill remains unknown. Constructor, incident-JIT and FGMRES vector admissions are explicit. The watchdog remains the actual memory/time/swap authority."
+    },
+    {
+      "name": "ownership and failure evidence",
+      "result": "PASS_STATIC",
+      "detail": "Borrowed volume Vec data is consumed or copied before reapply and never destroyed by wrappers. Condensed objects own their action/system, physical bundles own their actions, and the notch action borrows original DtN. Acquired objects have finally cleanup and partial factor failures clear retained factors. Factor-created count/hash evidence is emitted immediately after retention, before diagnostic saves. Failed, controlled-stop and supervision failures cannot become PASS."
+    },
+    {
+      "name": "prefactor and original notch scope",
+      "result": "PASS_STATIC",
+      "detail": "Default CLI is plan-only. External staging cannot execute numeric dispatch. Prefactor returns before q-factor or solve construction and rejects factor callbacks, allowance and solved-source payloads. Solve uses all four unchanged original full FE loads, four within-q nonzero-port controls, and the genuine exactly-two-cell notch with inherited full-size right FGMRES/restart 32/max 128. Final A1 auxiliary ports are recomputed from the final field."
+    },
+    {
+      "name": "independent evidence nonvacuity",
+      "result": "PASS_STATIC",
+      "detail": "Checker requires full array/source/ABI/provenance/receipt inventories; independently checks all CSR entries, factor residual/repeat/linearity, native vectors, original C/D/H, incident identities, scales, MPC recovery and all 532 plane/global outputs. Global values are converted through the existing representability-safe gauge API and tied per mode to current fields and immutable p4 controls. Exact zero operation scales fail on nonzero errors. Comparison/recovery event payloads bind exactly to report receipts before factor admission. Missing or nonfinite outputs cannot qualify."
+    }
+  ],
+  "resolved_findings": [
+    "Added pre-factor exact local native row, raw/oriented tensor and cache recipe comparisons",
+    "Normalized recursively frozen historical metadata before JSON-list equality comparisons",
+    "Added bounded adapter for the inherited 532-element real power diagnostic list",
+    "Bound required global totals/incidents and original auxiliary ports per mode",
+    "Added full/local mesh-space-MPC, notch volume, physical incident-JIT and Krylov admissions",
+    "Added historical binary/generated-C verification and exact checker receipt/context/file binding",
+    "Added immediate factor-created diagnostic count/hash evidence and complete report/event/artifact binding"
+  ],
+  "unresolved_static_blockers": [],
+  "remaining_required_supervised_gates": [
+    "Actual public-constructor restoration with exact local/global carrier identities",
+    "Actual new volume/recovery discrete and source/ABI equality, exact tensor/cache/row bridge",
+    "Fresh complete four-q CSR comparison at unchanged 1e-11 norm/max thresholds",
+    "All-four-factor retained residual/repeat/linearity tests and actual fill/RSS/time/swap limits",
+    "Original full FE and augmented nonzero-port inverse residuals, all interiors and four fixed sources",
+    "Genuine two-cell notch right-FGMRES, final field recovery and complete 532 outputs",
+    "Independent numeric checker and fresh source-clean/supervisor receipts"
+  ],
+  "numeric_execution_authorized_by_this_review": false,
+  "numeric_qualification_granted": false,
+  "PDE_solved_by_this_review": false,
+  "production_or_target_capacity_qualification": false,
+  "scope_extension_or_physics_rewrite": false
+}

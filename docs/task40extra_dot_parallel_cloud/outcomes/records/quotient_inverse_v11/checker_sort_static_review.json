@@ -1,0 +1,182 @@
+{
+  "ABI_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+  "added_top_level_functions": [
+    "admit_checker_output",
+    "bind_checker_source",
+    "csr_row_sort_permutation",
+    "sort_pinned_historical_full_q",
+    "validate_pinned_full_q_asset"
+  ],
+  "canonical_head": "5e0364cd2eebfffb63a5f3ee8bda8e21083b2495",
+  "changed_existing_top_level_functions": [
+    "check",
+    "main"
+  ],
+  "classification": "BOUNDED_STATIC_REVIEW_PASS_NUMERICAL_RECHECK_NOT_RUN",
+  "component_freeze": {
+    "all_6_staged_file_hashes_independently_verified": true,
+    "baseline_checker_sha256": "7d641a8b6750427fafa7585d77ff2dcbb47913e6f9b18ed36516c171327fae90",
+    "files_sha256": {
+      "benchmarks/check_y_orbit_quotient_probe.py": "5cd0a9140264596307896f6f79a1bf226111ef523a6089cb91387b9b641bc71a",
+      "checker_sort_fix.patch": "36fd1ed81be8a5543f00f8e011abf44e69a2a9d28e321c72fd0579aabd8852ee",
+      "proposed_seam_zh.md": "5ccc212a890c7a8a54a10bbdc3c7da4ce233f7350eb82805e1e64e209bae75ef",
+      "src/test/test_y_orbit_quotient_checker_sort_metadata.py": "f9107b75802685c00322b097fadf205fa4b43012bac728ed82fe315720be1314",
+      "static_validation.json": "e26c4b559bec53b01528c2d9bd7863ee7ae6a0e171292d3ef4aae829fcc3ec3d"
+    },
+    "integration_paths": [
+      "benchmarks/check_y_orbit_quotient_probe.py",
+      "src/test/test_y_orbit_quotient_checker_sort_metadata.py"
+    ],
+    "manifest_sha256": "43f9a9d1220933e007b0877052c6d56e943a9554d1715e7b234250f94e6760e1",
+    "patch_check_against_canonical": "PASS; git apply --check, no mutation",
+    "patch_numstat": [
+      {
+        "added": 232,
+        "deleted": 15,
+        "path": "benchmarks/check_y_orbit_quotient_probe.py"
+      },
+      {
+        "added": 205,
+        "deleted": 0,
+        "path": "src/test/test_y_orbit_quotient_checker_sort_metadata.py"
+      }
+    ]
+  },
+  "final_original_worker_and_failed_checker_file_hashes_unchanged": true,
+  "historical_full_Q": {
+    "actual_raw_file_hashes_verified_without_decoding": true,
+    "dtypes": {
+      "data": "complex128",
+      "indices": "int32",
+      "indptr": "int32"
+    },
+    "duplicate_count_origin": "parent-provided completed diagnostic; new checker rejects duplicates before any correction",
+    "duplicate_entries": 0,
+    "file_sha256": {
+      "data": "b00c007208e34fb6a933b514f5470445ce6f1c05241f7737b1b4518fe7faee31",
+      "indices": "aaffda99f55cbe067dde40e45feee79342bf0f1a7020a72d25f29dd76b407712",
+      "indptr": "767e1b2e7addc19dcdf6a8d737af5bcc3010803ab8e1dd4b15f5f8c6bcb9cedb"
+    },
+    "head": "ad356715da86ab34fa6b10838cccc8629b3f6e8b",
+    "nnz": 107840,
+    "payload_bytes": 2220292,
+    "shape": [
+      15872,
+      15872
+    ],
+    "unsorted_row_count_origin": "parent-provided completed diagnostic; not recomputed by this static reviewer",
+    "unsorted_rows": 15872
+  },
+  "historical_sort_declared_additional_bytes": {
+    "evidence_reserve_bytes": 134217728,
+    "matrix_payload_bytes": 11433740,
+    "static_formula_only": true,
+    "total_before_evidence_reserve": 29431564,
+    "workspace_bytes": 17997824
+  },
+  "limits": [
+    "Static source review does not qualify saved solve results, execute the correction, or establish the later checker outcome",
+    "Runtime ABI, supervision and numerical saved-worker recheck remain the parent responsibility"
+  ],
+  "method": [
+    "Read source and unified diff",
+    "Parse source with Python standard-library ast without executing project functions",
+    "Stream SHA256 with 1 MiB chunks and before/after file identity checks",
+    "Read existing JSON metadata only"
+  ],
+  "observed_parent_integration": {
+    "all_other_1274_worker_source_hashes_equal": true,
+    "baseline_review_bound_to_immutable_git_show": true,
+    "clean": true,
+    "exact_two_git_changed_paths": [
+      "benchmarks/check_y_orbit_quotient_probe.py",
+      "src/test/test_y_orbit_quotient_checker_sort_metadata.py"
+    ],
+    "head": "029a0cd883d5a95474d7e7278e28857e3f981cc6",
+    "integrated_checker_and_test_match_frozen_stage": true,
+    "reviewer_performed_integration": false,
+    "source_inventory_SHA256": "ab518d596bcf023ebbdb0e2fca153bbaf850a66d07f53c8a2ec60afe4438823c",
+    "source_inventory_count": 1276
+  },
+  "original_worker_directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_solve_attempt1",
+  "original_worker_files": {
+    "checker_traceback.txt": "169ed23237cdd67b1925a552f936f5a05264846488ed4eae6bc87403114eb29a",
+    "independent_checker.json": "b8934c880371128eef8a7f70704c74af72089e4479b642835e652471984c89df",
+    "probe_report.json": "32a9ee70f2641d2465b2b12431526b7f204bbc524b9ed18e12553734e6896352",
+    "provenance.json": "59b7279d2151529aacabd0f91a6d1569071a6845360a47028bd6abeb776f1eb7",
+    "summary.json": "6de806890b24fad0a24c721c989b62aa0ecf0432f7db467a2ea45265ec847426"
+  },
+  "prohibited_actions_executed": {
+    "FE_assembly": false,
+    "PDE_rerun": false,
+    "array_decoding": false,
+    "canonical_edits": false,
+    "factor": false,
+    "numerical_checker_rerun": false,
+    "project_imports": false,
+    "reviewer_test_rerun": false,
+    "solve": false
+  },
+  "reported_owner_tests": {
+    "existing_contracts_against_staged_overlay": 52,
+    "new_stdlib_contracts": 16,
+    "reviewer_reran": false,
+    "source": "frozen static_validation.json; exact hash bound above",
+    "status": "PASS",
+    "total": 68
+  },
+  "resolved_findings": [
+    {
+      "finding": "Rejected missing checker-directory cross-head path could overwrite old failed checker in main exception logger",
+      "resolution": "Actual clean source and source/output admission moved before failure-writing try; stale expected HEAD and prior checker files also reject before writes",
+      "status": "resolved"
+    }
+  ],
+  "review_date_UTC": "2026-10-02",
+  "schema": "task40extra.quotient-checker-sort-fix-static-independent-review.v1",
+  "scope": "Pinned historical full_Q storage-order correction and saved-worker checker source/output bridge only",
+  "static_counted_new_tests": 16,
+  "static_findings": [
+    "Only old=True, prefix=full_Q, csc=False reaches the specialized correction; literal historical head, raw file hashes, dimensions, count, dtypes and payload are pinned",
+    "Before-copy current-tree RSS admission includes private buffers, exact permutation, Python sort workspace, action vectors/results and serialization workspace with unchanged 128 MiB reserve and 1.5 GiB cap",
+    "Malformed pointer/column/shape and duplicate columns stop; no duplicate summation, implicit mutating sort or candidate sorting",
+    "Per-row positions are a bijection within each unchanged indptr segment; sorted columns and coefficient bytes are checked exactly and nnz stays identical",
+    "Raw CSR hash and readonly status are checked before/after; private normalized CSR is strict-audited and made readonly",
+    "Raw/sorted CSR hashes, saved exact permutation, and two saved probe/raw-action/sorted-action packets bind the storage correction; action threshold is 1e-12",
+    "Candidate and every other historical CSR keep unchanged strict csr_audit; both solve-check branches, residual signs/scales and output thresholds are AST-identical; all 12 original metadata/policy helpers remain unchanged",
+    "Cross-head bridge pins original worker 5e0364cd, same clean branch and complete dependency inventories; only checker and its new test may differ; original worker lacks the new test",
+    "Worker supervision, snapshot authority, old full-p4 authority, unchanged metadata-binding helper and restoration source validation route to original worker_source; current checker source is recorded separately; environment identity must remain exact",
+    "Fresh checker attempt uses distinct output directory, exclusive binary evidence creation and early rejection before failure writes; worker report and failed checker are preserved"
+  ],
+  "unchanged_AST": {
+    "nested_helpers": [
+      "load",
+      "add",
+      "relative",
+      "bind_metric"
+    ],
+    "solve_conditional_blocks": 2,
+    "standalone_helpers": [
+      "digest_json",
+      "expected_array_shapes",
+      "file_sha",
+      "finite_gate",
+      "per_mode_operation_error",
+      "validate_array_inventory",
+      "validate_factor_event_contract",
+      "validate_historical_file_metadata",
+      "validate_metadata_bindings",
+      "validate_recovery_identity_bindings",
+      "validate_restoration_metadata",
+      "validate_scope"
+    ]
+  },
+  "unresolved_blockers": [],
+  "worker_source_inventory": {
+    "all_actual_files_match": true,
+    "canonical_json_sha256": "5a57a2b067541da0bde4cfc7060b77e21846ae794984873c3a2ac6c1275099b0",
+    "count": 1275,
+    "exact_tracked_inventory_match": true,
+    "streamed_bytes": 28128764
+  }
+}
