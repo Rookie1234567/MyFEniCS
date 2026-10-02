@@ -1,0 +1,398 @@
+{
+  "schema": "task42extra.diagnostic-design.v12",
+  "authority_release": "bafc9570110bbdcd28de455e9cd4552f3cd80215",
+  "initial_HEAD": "bafc9570110bbdcd28de455e9cd4552f3cd80215",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "canonical": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "batch_started_UTC": "2026-10-02T23:39:09Z",
+  "old_project_seconds": 154319.25454592914,
+  "new_limit_seconds": 21600,
+  "no_training": true,
+  "no_optimizer_steps": true,
+  "reference_exposed_diagnostic_only": true,
+  "states": {
+    "phase75": {
+      "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_resource_freeze_20261002T040058739087Z/frozen_checkpoint.npz",
+        "sha256": "4b538b3f785902de369d5a0602b5d3267a08cc34fa8e68ab509ebc51c2652917"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T025423030332Z/durable_checkpoints/committed_000015.pt",
+        "sha256": "cf6919a8ee86e32ad7f0f4b0d4ef8411061b149c564dd289237334f90b7d9e86"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+    },
+    "Ifinal": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/frozen_checkpoint.npz",
+        "sha256": "0603ddb952bf604edcad742aeea7ac160f180e43ae8d680c789af6caf2fdc0f5"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000025.pt",
+        "sha256": "62703d221e29b5895924fdc5c1d675e7c45cb6c01a0e347bc5d49e6aaf081da4"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+    },
+    "Mfinal": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/frozen_checkpoint.npz",
+        "sha256": "58fcaf697307a56204d4af960f37f42c86171c605c2fe97f016efe3e5148e28d"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000021.pt",
+        "sha256": "4c475bfba0eb816a4d62b6086f2e47006051b896ba442f09b7aab50c8b7c206d"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+    },
+    "I1800": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_time_1800.npz",
+        "sha256": "46a2f209f9fdacf7c811d37c87bc90419d60daa5bcb09844a49b740835f7b8e9"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000006.pt",
+        "sha256": "c20c141dcede01c5ddbadbb2847c63b81386f5e1c1548bfaedcc87aa2ad42131"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+    },
+    "M1800": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_1800.npz",
+        "sha256": "ae7786156a5842501be7bd24fe56dd6168c88cd5e569753fdeff76ab262e3b02"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000005.pt",
+        "sha256": "5745cc6c8be25ecddafc51ffa270d34f224286e704b0ab3beb5a5fda1e909a47"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+    },
+    "I3600": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_time_3600.npz",
+        "sha256": "1629abc2ee89c3ce8ca0c1020bf90f65b82817a1c756370a5791240c9fcce051"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000015.pt",
+        "sha256": "84be541ec1854bc82ef118dcc9fa5ddc7bcfba84efa0a2218ae4b45527c94ba1"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+    },
+    "M3600": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_3600.npz",
+        "sha256": "895b715509bec97c752623b4c82e09c41b85b052564c1a7eaa1f7f7e16753be5"
+      },
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000014.pt",
+        "sha256": "f59d4d367312d24835278a81a0ad303ffaff6d53c1142d288489fa98b7a36616"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "accepted_outer": 89
+    },
+    "V8phase": {
+      "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_dual_20260930T185704939802Z/frozen_checkpoint.npz",
+        "sha256": "5b39451155246cb26ad2a57640df331e3bf1c680bc44cdfd2fefac77f4048ade"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "historical final explanation control, not an initialization",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_dual_20260930T185704939802Z/durable_checkpoints/committed_000652.pt",
+        "sha256": "9dc927c85c78f4e15baae7c0b09d029f7b2fd6e3598f1c4a8fdab49b6c27c499"
+      }
+    },
+    "V9phase": {
+      "source_sha": "ebff76949c78560187d836830483172faf0cfc9a",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/frozen_checkpoint.npz",
+        "sha256": "b1aeef1e5cf28a9b4435b490147d4767d2f5ea9539e9707c66cdffe61432aef4"
+      },
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "historical final explanation control, not an initialization",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/durable_checkpoints/committed_000055.pt",
+        "sha256": "8f590ed900323368d13afab86b03c141a5a672951087371f3f25616a9d487062"
+      }
+    },
+    "V10phasefit": {
+      "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_fit_gn_20261002T050305927664Z/frozen_checkpoint.npz",
+        "sha256": "0ea56d0babdaa402efe70bee8687d24baaec2e823db48e8f6b2472abac9a2f0d"
+      },
+      "phase": true,
+      "reference_exposed": true,
+      "selection": "historical final explanation control, not an initialization",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_fit_gn_20261002T050305927664Z/durable_checkpoints/committed_000008.pt",
+        "sha256": "7ac2e7ed27391d4d937886c891791ffc948d84a7fe0802c4188662f5ca79c56a"
+      }
+    },
+    "V6readout": {
+      "source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/frozen_checkpoint.npz",
+        "sha256": "ac78cb50e8f7525454e88555b9d510e243f461a0b3b40bda59321ee18ac18c68"
+      },
+      "phase": false,
+      "reference_exposed": true,
+      "selection": "historical final explanation control, not an initialization",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/frozen_model_parameter_only.pt",
+        "sha256": "364e9986aa465e3e9253a91dd9111765150566fb672c27d4be8ec9e14d68edf6"
+      }
+    },
+    "V2free": {
+      "source_sha": "19c725efd27ae5daedba8e77d2ad98375711bb71",
+      "checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v2_free_fe_dual_gram_diag_20260929T231238962991Z/frozen_checkpoint.npz",
+        "sha256": "baa58092c4a6fdf18420f0169f08042e323e26d5c1ef6d188ec622f20f500aab"
+      },
+      "phase": false,
+      "reference_exposed": false,
+      "selection": "historical final explanation control, not an initialization"
+    }
+  },
+  "decline_steps": {
+    "M90": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000015.pt",
+        "sha256": "f23895e78ea830e2b462a9ad3056e1c05223b4321f6a20126f6c872771de4f10"
+      },
+      "accepted_outer": 90,
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "status": "RETAINED"
+    },
+    "M91": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000016.pt",
+        "sha256": "566fce51ab992eede9d8f71d651a518a7617335e1a7a74539251058c9ce5b488"
+      },
+      "accepted_outer": 91,
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "status": "RETAINED"
+    },
+    "M92": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000017.pt",
+        "sha256": "66f37df841adea748788cdabe1fb124dc9c5bc6e5d5b95524533fed24aa693a7"
+      },
+      "accepted_outer": 92,
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "status": "RETAINED"
+    },
+    "M93": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000018.pt",
+        "sha256": "b51f351bbfce25731f55995c1b3a0a370d5d39f0b94b6f2d95ce029df7ac8b06"
+      },
+      "accepted_outer": 93,
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "status": "RETAINED"
+    },
+    "M94": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000019.pt",
+        "sha256": "b6357c67526b5e174b591624bfd435dddc335a35494c362e004eb814a13de70d"
+      },
+      "accepted_outer": 94,
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "status": "RETAINED"
+    },
+    "M95": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "durable_final": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000020.pt",
+        "sha256": "12cfca530297a5e96eaca6c1e233454a54791105e35101c20ba90ff786e14983"
+      },
+      "accepted_outer": 95,
+      "phase": true,
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "status": "RETAINED"
+    }
+  },
+  "identity": {
+    "e1_fe": {
+      "source_sha": "a3dd65f594dda0ffd593ef53f7a0f4adfbd7a35e",
+      "files": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+          "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+        },
+        "gram": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+          "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+        }
+      }
+    },
+    "e3_reference": {
+      "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9",
+      "files": {
+        "reference": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+          "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+        }
+      }
+    },
+    "v8_phase_checks": {
+      "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+      "files": {
+        "moments": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q15.npz",
+          "sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e"
+        }
+      }
+    },
+    "v7_p_transfer_checks": {
+      "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+      "files": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz",
+          "sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad"
+        }
+      }
+    },
+    "v8_p4_reference_recovery": {
+      "source_sha": "d0b82d7a165be89d9fa90b03be3151db9a9c3869",
+      "files": {
+        "reference": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_p4_reference_recovery_20260930T153638132044Z/p4_reference_state.npz",
+          "sha256": "249d7dcb4f683a87e4a5169bc75f5bcf9374ca64e2075910c3a874d88e1cc2c2"
+        }
+      }
+    }
+  },
+  "selected_old_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v11_evidence_audit.json",
+    "sha256": "ac9bf8d2e95b53cd2eb9bfbd3ce5807a9a1d5761c88bef6c7272a08892c0e87c",
+    "reuse": "24 retained artifact/hash pairs and nine original field validations; hash only actual newly loaded data"
+  },
+  "B": {
+    "A": 64,
+    "AH": 64,
+    "Gsolve": 128,
+    "G_matvec": 256,
+    "new_G_factor_lifecycles": 1,
+    "field_directions": [
+      "e_phase75",
+      "e_M3600",
+      "e_Mfinal",
+      "e_Ifinal",
+      "delta_phase75_M3600",
+      "delta_M3600_Mfinal",
+      "delta_phase75_Ifinal",
+      "delta_M89_M90"
+    ]
+  },
+  "C1": {
+    "states": [
+      "M3600",
+      "Mfinal"
+    ],
+    "directions": "eight original W/b groups, nonzero normalized PDE gradient and reference G-error gradient within each group; max16/state",
+    "JVP": 64,
+    "VJP": 16,
+    "A": 64,
+    "AH": 64,
+    "Gsolve": 80,
+    "G_matvec": 128,
+    "new_G_factor_lifecycles": 1,
+    "main_rcond": 1e-10,
+    "sensitivity_rcond": 1e-12,
+    "QR_tolerance": 1e-14,
+    "parameter_step_caps": [
+      0.001,
+      0.01
+    ],
+    "witnesses": 8,
+    "new_direction_checks": 2,
+    "JVP_adjoint_tolerance": 1e-09,
+    "FD_steps": [
+      1e-05,
+      1e-06
+    ],
+    "FD_tolerance": 1e-05,
+    "reference_removed_energy_signal": 0.5
+  },
+  "C2": {
+    "states": [
+      "p3reference",
+      "M3600",
+      "Mfinal"
+    ],
+    "A4": 8,
+    "adapter_restore_limit_seconds": 600,
+    "new_factors": 0,
+    "new_assembly": 0
+  },
+  "D0": {
+    "prefix_lower_bound_seconds": 15758.74009511806,
+    "time_gain_required": 0.2,
+    "D1_requires_existing_same_M5_nonzero_initializer": true
+  },
+  "limits": {
+    "A": 900,
+    "B": 5400,
+    "C1": 3600,
+    "C2": 1500,
+    "D": 3600,
+    "E": 2400,
+    "repair_pool": 2400,
+    "saving_and_clearance": 1800,
+    "max_local_repairs": 2
+  },
+  "resource": {
+    "numeric_warn_GiB": 12,
+    "numeric_hard_GiB": 16,
+    "light_GiB": 2,
+    "detached_cache_GiB": 2,
+    "self_swap_bytes": 0,
+    "MPI": 1,
+    "math_Torch_threads": 1,
+    "neighbor_growth_GiB": 384,
+    "PSI_stable_seconds": 60
+  },
+  "data_status": "pre_registered_from_original_indices; actual file/model identity qualified by freeze stage; missing fields NOT_RETAINED"
+}

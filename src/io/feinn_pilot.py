@@ -20,8 +20,12 @@ from src.runners.feinn_cached_gn_campaign import (
 )
 
 from src.runners.feinn_metric_campaign import STAGES as METRIC_STAGES
+from src.runners.feinn_attribution_campaign import (
+    STAGES as ATTRIBUTION_STAGES,
+    DIAGNOSTIC_POLICY,
+)
 
-GN_STAGES = GN_STAGES | CACHED_STAGES | METRIC_STAGES
+GN_STAGES = GN_STAGES | CACHED_STAGES | METRIC_STAGES | ATTRIBUTION_STAGES
 GN_SUPERVISED = GN_SUPERVISED | CACHED_SUPERVISED
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -123,6 +127,8 @@ def load_pilot(path):
             pde_only_solve=not supervised,
             benchmark_previously_seen=True,
         )
+    if item.get("stage") in ATTRIBUTION_STAGES:
+        policy = DIAGNOSTIC_POLICY.copy()
     allowed = (
         {"stage", "run_id", "design_sha256"}
         | (set(policy) if readout or v8_neural else set())

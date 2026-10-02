@@ -289,10 +289,13 @@ def launch(spec):
     v7 = stage.startswith("v7_")
     v8 = stage.startswith("v8_")
     v11 = stage.startswith("v11_")
+    v12 = stage.startswith("v12_")
     v10 = stage.startswith("v10_")
-    v9 = stage.startswith(("v9_", "v10_", "v11_"))
-    gn_version = "V11" if v11 else "V10" if v10 else "V9"
-    if v11:
+    v9 = stage.startswith(("v9_", "v10_", "v11_", "v12_"))
+    gn_version = "V12" if v12 else "V11" if v11 else "V10" if v10 else "V9"
+    if v12:
+        from src.runners import feinn_attribution_campaign as gn_campaign
+    elif v11:
         from src.runners import feinn_metric_campaign as gn_campaign
     elif v10:
         from src.runners import feinn_cached_gn_campaign as gn_campaign
@@ -316,7 +319,9 @@ def launch(spec):
             run_id=directory.name,
             v9_review_sha=GN_REVIEW,
             v9_campaign_design_sha256=sha(
-                ROOT
+                gn_campaign.DESIGN_RECORD
+                if v12
+                else ROOT
                 / (
                     "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_"
                     + gn_version.lower()
@@ -363,9 +368,20 @@ def launch(spec):
                 if sha(frozen[key]["path"]) != frozen[key]["sha256"]:
                     raise RuntimeError("PHASE75_BYTES_CHANGED_BEFORE_WORKER")
             state["V10_phase75_bound_before_worker"] = frozen
+        if v12:
+            state["v12_review_sha"] = state.pop("v9_review_sha")
+            state["v12_diagnostic_design_sha256"] = state.pop(
+                "v9_campaign_design_sha256"
+            )
+            state.update(**gn_campaign.DIAGNOSTIC_POLICY)
+            state.update(
+                data_role="REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+                no_training=True,
+                optimizer_steps=0,
+            )
         if stage in GN_AUTHORITY:
             state.update(**POLICY)
-        else:
+        elif not v12:
             supervised = stage in SUPERVISED
             state.update(
                 reference_used_for_training=supervised,
@@ -540,11 +556,16 @@ def launch(spec):
         tree_limit = (
             2 * 2**30
             if stage
-            in ("v4_boundary_checks", "v5_readout_checks", "v6_operator_readout_checks")
+            in (
+                "v4_boundary_checks",
+                "v5_readout_checks",
+                "v6_operator_readout_checks",
+                "v12_saved_state_freeze",
+            )
             else 16 * 2**30
         )
         try:
-            if v11:
+            if v11 or v12:
                 from src.runners.feinn_resources import stable_window
 
                 state["pressure_stable_window"] = stable_window(directory, tree_limit)
@@ -554,7 +575,7 @@ def launch(spec):
                 classification="RESOURCE_WINDOW_UNAVAILABLE",
                 reason=str(error),
                 stage=stage,
-                elapsed_seconds=perf_counter() - launch_origin if v11 else 0,
+                elapsed_seconds=perf_counter() - launch_origin if v11 or v12 else 0,
                 leader_exit_code=None,
                 descendants_cleared=True,
             )
@@ -569,7 +590,7 @@ def launch(spec):
         if v9:
             ledger[gn_version] = gn_campaign.campaign_budget(ledger["entries"])
             ledger["remaining_seconds"] = ledger[gn_version]["new_remaining_seconds"]
-            if v11 and gn_campaign.STAGES[stage][2] == "E":
+            if (v11 or v12) and gn_campaign.STAGES[stage][2] == "E":
                 ledger["remaining_seconds"] += 1200
         if (
             ledger["remaining_seconds"] <= 120
@@ -880,6 +901,11 @@ def launch(spec):
                 and "reconstruct" not in stage,
                 network_quadrature_degree=15,
             )
+            if v12:
+                state["gram_loaded_by_route"] = stage in (
+                    "v12_saved_field_attribution",
+                    "v12_local_parameter_diagnostic",
+                )
             if stage in GN_AUTHORITY:
                 state.update(
                     gram_sha256=None,
@@ -899,7 +925,7 @@ def launch(spec):
                         authoritative_packet_stage="v9_p5_checks",
                         physical_hash_meaning="actual p5 full independent FE packet and fixed affine rhs",
                     )
-            else:
+            elif not v12:
                 q = load_index("v8_phase_checks")
                 state.update(
                     network_moments_sha256=q["files"]["moments"]["sha256"],
@@ -1035,7 +1061,7 @@ def launch(spec):
                                     "V10_FULL_STATE_RECOVERY_REQUIRED_NO_V9_REPLAY"
                                 )
                         state["retry_boundary"] = "SAME_V9_FINAL_BEFORE_ANY_NEW_GN_WORK"
-            if group != "E":
+            if group != "E" and not v12:
                 limit = min(limit, ledger["remaining_seconds"] - 1200)
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V9_BUDGET_RESERVE_UNAVAILABLE")
@@ -1142,7 +1168,7 @@ def worker(directory):
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
     if stage.startswith(
-        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_", "v11_")
+        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_", "v11_", "v12_")
     ) or stage in (
         "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
         "FEINN-FROZEN-HIDDEN-READOUT-G",
@@ -1185,8 +1211,10 @@ def worker(directory):
         design = json.loads(DESIGN.read_text())
         if sha(DESIGN) != manifest["design_sha256"]:
             raise RuntimeError("design changed after admission")
-        if stage.startswith(("v9_", "v10_", "v11_")):
-            if stage.startswith("v11_"):
+        if stage.startswith(("v9_", "v10_", "v11_", "v12_")):
+            if stage.startswith("v12_"):
+                from src.runners.feinn_attribution_campaign import dispatch
+            elif stage.startswith("v11_"):
                 from src.runners.feinn_metric_campaign import dispatch
             elif stage.startswith("v10_"):
                 from src.runners.feinn_cached_gn_campaign import dispatch

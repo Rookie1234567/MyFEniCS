@@ -63,8 +63,9 @@ def main():
     from src.runners.feinn_cached_gn_campaign import STAGES as CACHED_STAGES
 
     from src.runners.feinn_metric_campaign import STAGES as METRIC_STAGES
+    from src.runners.feinn_attribution_campaign import STAGES as ATTRIBUTION_STAGES
 
-    STAGES = STAGES | GN_STAGES | CACHED_STAGES | METRIC_STAGES
+    STAGES = STAGES | GN_STAGES | CACHED_STAGES | METRIC_STAGES | ATTRIBUTION_STAGES
     stages.update(
         {name: (name, "task42extra-" + name.replace("_", "-")) for name in STAGES}
     )
@@ -76,7 +77,7 @@ def main():
     if len(sys.argv) == 4:
         attempt = int(sys.argv[3])
         if not spec.derived["stage"].startswith(
-            ("v9_", "v10_", "v11_")
+            ("v9_", "v10_", "v11_", "v12_")
         ) or attempt not in (
             2,
             3,
@@ -85,6 +86,8 @@ def main():
             raise ValueError("ONLY_REVIEW_V8_EVIDENCED_RETRIES")
         if spec.derived["stage"].startswith("v11_phase_") and attempt != 2:
             raise ValueError("V11_ONLY_ONE_COMPLETE_STATE_RECOVERY")
+        if spec.derived["stage"].startswith("v12_") and attempt > 3:
+            raise ValueError("V12_AT_MOST_TWO_EVIDENCED_LOCAL_REPAIRS")
         # A prior attempt must be closed and cleared; never replace its files.
         previous = sorted(
             (ROOT / "results/task42extra").glob(spec.identity["run_id"] + "_*")
