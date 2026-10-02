@@ -366,6 +366,527 @@ _QUANTITIES = {
 }
 
 
+def _background_code_fields(
+    cfg: Any, points: np.ndarray, background: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Evaluate a named background E, H and analytic curl(E) in code units."""
+
+    from src.common.analytic_fields_3d import (
+        electric_field_code_values,
+        magnetic_field_code_values,
+        pml_complex_z,
+    )
+
+    coordinates = np.asarray(points, dtype=np.float64).reshape((-1, 3))
+    if background == "layered_fresnel":
+        electric = electric_field_code_values(cfg, coordinates)
+        magnetic = magnetic_field_code_values(cfg, coordinates)
+    elif background == "incident_plane_wave":
+        wavevector = np.asarray(cfg.wavevector, dtype=np.complex128)
+        polarization = np.asarray(cfg.polarization_vector, dtype=np.complex128)
+        zeta = pml_complex_z(cfg, coordinates[:, 2])
+        phase = np.exp(
+            1j
+            * (
+                wavevector[0] * coordinates[:, 0]
+                + wavevector[1] * coordinates[:, 1]
+                + wavevector[2] * zeta
+            )
+        )
+        electric = complex(cfg.incident_amplitude) * phase[:, None] * polarization[None, :]
+        h_amplitude = np.cross(wavevector, polarization) / (
+            cfg.k0 * cfg.mu_r
+        )
+        magnetic = complex(cfg.incident_amplitude) * phase[:, None] * h_amplitude[None, :]
+    else:
+        raise ValueError(f"unknown saved-field background {background!r}")
+
+    # The incident plane wave is extended through substrate only to reproduce
+    # the legacy R5 metric.  Layered Fresnel is Maxwell-consistent regionwise.
+    # Both analytic curls are independent of the FE curl evaluated below.
+    curl = 1j * cfg.k0 * cfg.mu_r * magnetic
+    return electric, magnetic, curl
+
+
+@dataclass
+class P6BackgroundRepresentation:
+    electric: Any
+    curl: Any
+    mpc_constraint_residual: float
+    slave_interpolation_adjustment_relative: float
+    slave_interpolation_adjustment_max: float
+
+
+def interpolate_p6_background(
+    field: P6TotalField, background: str
+) -> P6BackgroundRepresentation:
+    """Apply the actual p6 N1curl interpolation and finalized Floquet MPC map."""
+
+    from dolfinx import fem
+
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
+        _mpc_constraint_residual,
+    )
+
+    space = field.electric.function_space
+    interpolated = fem.Function(space, name=f"{field.label}_{background}_IhE")
+    interpolated.interpolate(
+        lambda x: _background_code_fields(field.cfg, x.T, background)[0].T
+    )
+    interpolated.x.scatter_forward()
+
+    mpc = field.levels["floquets"][6].mpc
+    slave_dofs = np.asarray(mpc.slaves, dtype=np.int64)
+    raw_slave_values = np.asarray(interpolated.x.array[slave_dofs]).copy()
+    mpc.homogenize(interpolated)
+    interpolated.x.scatter_forward()
+    mpc.backsubstitution(interpolated)
+    interpolated.x.scatter_forward()
+    constrained_slave_values = np.asarray(interpolated.x.array[slave_dofs])
+    adjustment = constrained_slave_values - raw_slave_values
+    raw_norm = float(np.linalg.norm(raw_slave_values))
+    adjustment_norm = float(np.linalg.norm(adjustment))
+    adjustment_relative = adjustment_norm / max(raw_norm, np.finfo(float).tiny)
+    adjustment_max = float(np.max(np.abs(adjustment), initial=0.0))
+    residual = float(_mpc_constraint_residual(interpolated, field.levels["floquets"][6]))
+    curl = direct_curl_dg(interpolated, degree=6)
+    return P6BackgroundRepresentation(
+        electric=interpolated,
+        curl=curl,
+        mpc_constraint_residual=residual,
+        slave_interpolation_adjustment_relative=adjustment_relative,
+        slave_interpolation_adjustment_max=adjustment_max,
+    )
+
+
+def _sample_l2(values: np.ndarray, weights: np.ndarray) -> float:
+    return float(np.sqrt(weighted_vector_squared_norm(values, weights)))
+
+
+def _incident_norm_for_quantity(
+    quantity: str, incident_e_norm: float, incident_h_norm: float, k0: float
+) -> float:
+    if quantity.startswith("E_") or quantity.startswith("scaled_curl"):
+        return incident_e_norm
+    if quantity.startswith("H_"):
+        return incident_h_norm
+    return incident_e_norm * k0
+
+
+def _attribution_terms(
+    d: np.ndarray, d_b: np.ndarray, weights: np.ndarray
+) -> dict[str, float]:
+    inner = np.sum(np.conjugate(d) * d_b, axis=1)
+    return {
+        "d_sq": weighted_vector_squared_norm(d, weights),
+        "d_b_sq": weighted_vector_squared_norm(d_b, weights),
+        "remainder_sq": weighted_vector_squared_norm(d - d_b, weights),
+        "inner_re": float(np.dot(np.real(inner), weights)),
+        "inner_im": float(np.dot(np.imag(inner), weights)),
+    }
+
+
+def _format_attribution(
+    terms: dict[str, float],
+    field_scale: float,
+    unit: str,
+    derivative_scale: float = 1.0,
+    volume_integrated: bool = False,
+) -> dict[str, Any]:
+    factor = field_scale * derivative_scale
+    d_norm = np.sqrt(terms["d_sq"]) * factor
+    d_b_norm = np.sqrt(terms["d_b_sq"]) * factor
+    remainder_norm = np.sqrt(terms["remainder_sq"]) * factor
+    inner_re = terms["inner_re"] * factor**2
+    inner_im = terms["inner_im"] * factor**2
+    closure = (
+        terms["remainder_sq"]
+        - terms["d_sq"]
+        - terms["d_b_sq"]
+        + 2.0 * terms["inner_re"]
+    ) * factor**2
+    measure_suffix = "·nm^(3/2)" if volume_integrated else ""
+    inner_suffix = "·nm^3" if volume_integrated else ""
+    return {
+        "field_unit": unit,
+        "l2_norm_unit": f"{unit}{measure_suffix}",
+        "inner_product_unit": f"{unit}^2{inner_suffix}",
+        "d_l2_norm": float(d_norm),
+        "d_b_l2_norm": float(d_b_norm),
+        "d_minus_d_b_l2_norm": float(remainder_norm),
+        "complex_inner_product": [float(inner_re), float(inner_im)],
+        "two_real_inner_product": float(2.0 * inner_re),
+        "squared_norm_identity_closure": float(closure),
+        "squared_norm_identity_closure_relative": float(
+            abs(closure)
+            / max(remainder_norm**2, d_norm**2 + d_b_norm**2, np.finfo(float).tiny)
+        ),
+        "two_real_inner_product_definition": "2 Re <d,d_b>, <u,v>=integral(conj(u)·v)dV",
+    }
+
+
+def _sample_pair_metrics(
+    first: P6TotalField,
+    second: P6TotalField,
+    sample_points: np.ndarray,
+    sample_metadata: dict[str, Any],
+    representations: dict[str, tuple[P6BackgroundRepresentation, P6BackgroundRepresentation]],
+) -> dict[str, Any]:
+    from src.postprocessing.full3d_reference import (
+        _sample_distributed_function,
+        reference_plane_sides,
+    )
+
+    points = np.asarray(sample_points, dtype=np.float64).reshape((-1, 3))
+    z_count, y_count, x_count, _ = tuple(
+        int(value) for value in sample_metadata["array_shape_z_y_x_component"]
+    )
+    sides = reference_plane_sides(z_count, x_count * y_count)
+    if len(points) != z_count * y_count * x_count:
+        raise ValueError("fixed sample point count differs from its archived array shape")
+    e0 = _sample_distributed_function(first.electric, points, sides)
+    c0 = _sample_distributed_function(first.curl, points, sides)
+    e1 = _sample_distributed_function(second.electric, points, sides)
+    c1 = _sample_distributed_function(second.curl, points, sides)
+    weights = np.ones(len(points), dtype=np.float64)
+    scale_e = float(first.cfg.electric_field_scale_V_per_m)
+    scale_h = float(first.cfg.magnetic_field_scale_A_per_m)
+    k0 = float(first.cfg.k0)
+    incident_e, incident_h, _ = _background_code_fields(first.cfg, points, "incident_plane_wave")
+    inc_e_norm = _sample_l2(incident_e, weights) * scale_e
+    inc_h_norm = _sample_l2(incident_h, weights) * scale_h
+    result: dict[str, Any] = {"sample_count": int(len(points)), "backgrounds": {}}
+    for name, (rep0, rep1) in representations.items():
+        bg_e, bg_h, bg_curl = _background_code_fields(first.cfg, points, name)
+        q0 = _quantities(first, e0, c0, bg_e, bg_h)
+        q1 = _quantities(second, e1, c1, bg_e, bg_h)
+        metrics: dict[str, Any] = {}
+        for quantity, (unit, factor_name) in _QUANTITIES.items():
+            factor = float(getattr(first.cfg, factor_name))
+            left, right = q0[quantity], q1[quantity]
+            difference_norm = _sample_l2(left - right, weights) * factor
+            denominator = _sample_l2(right, weights) * factor
+            incident_norm = _incident_norm_for_quantity(
+                quantity, inc_e_norm, inc_h_norm, k0
+            )
+            metrics[quantity] = {
+                "unit": unit,
+                "g0_l2_norm": _sample_l2(left, weights) * factor,
+                "g1_l2_norm": denominator,
+                "difference_l2_norm": difference_norm,
+                "relative_to_g1": difference_norm / max(denominator, np.finfo(float).tiny),
+                "incident_normalizer_l2": incident_norm,
+                "difference_over_incident_l2": difference_norm
+                / max(incident_norm, np.finfo(float).tiny),
+            }
+
+        sample_representation: dict[str, Any] = {}
+        for label, actual, actual_curl, representation in (
+            ("G0", e0, c0, rep0),
+            ("G1", e1, c1, rep1),
+        ):
+            represented_e = _sample_distributed_function(
+                representation.electric, points, sides
+            )
+            represented_curl = _sample_distributed_function(
+                representation.curl, points, sides
+            )
+            sample_representation[label] = {
+                "mpc_constraint_residual": representation.mpc_constraint_residual,
+                "slave_interpolation_adjustment_relative": representation.slave_interpolation_adjustment_relative,
+                "slave_interpolation_adjustment_max": representation.slave_interpolation_adjustment_max,
+                "E_interp_error_l2_norm": _sample_l2(
+                    represented_e - bg_e, weights
+                )
+                * scale_e,
+                "E_background_l2_norm": _sample_l2(bg_e, weights) * scale_e,
+                "curl_E_interp_error_l2_norm": _sample_l2(
+                    represented_curl - bg_curl, weights
+                )
+                * scale_e,
+                "curl_E_background_l2_norm": _sample_l2(bg_curl, weights) * scale_e,
+                "actual_E_l2_norm": _sample_l2(actual, weights) * scale_e,
+                "actual_curl_E_l2_norm": _sample_l2(actual_curl, weights) * scale_e,
+            }
+
+        attribution: dict[str, Any] = {}
+        sampled_rep0_e = _sample_distributed_function(rep0.electric, points, sides)
+        sampled_rep1_e = _sample_distributed_function(rep1.electric, points, sides)
+        sampled_rep0_c = _sample_distributed_function(rep0.curl, points, sides)
+        sampled_rep1_c = _sample_distributed_function(rep1.curl, points, sides)
+        for label, actual_first, actual_second, represented_first, represented_second in (
+            ("E", e0, e1, sampled_rep0_e, sampled_rep1_e),
+            ("curl_E", c0, c1, sampled_rep0_c, sampled_rep1_c),
+        ):
+            d = actual_first - actual_second
+            db = represented_first - represented_second
+            attribution[label] = _format_attribution(
+                _attribution_terms(d, db, weights),
+                scale_e,
+                "V/m" if label == "E" else "V/m/nm",
+            )
+            attribution[label]["two_real_inner_product_definition"] = (
+                "2 Re <d,d_b>, <u,v>=sum(conj(u)*v)"
+            )
+        result["backgrounds"][name] = {
+            "quantities": metrics,
+            "representation": sample_representation,
+            "attribution": attribution,
+        }
+    result["trace_sides"] = sample_metadata.get("interface_trace_sides")
+    result["sample_z_nm"] = points[:: x_count * y_count, 2].tolist()
+    result["reference_plane_sides"] = [
+        "positive_z" if int(value) > 0 else "negative_z"
+        for value in sides[:: x_count * y_count]
+    ]
+    return result
+
+
+def compare_paired_background_attribution(
+    first: P6TotalField,
+    second: P6TotalField,
+    sample_points: np.ndarray,
+    sample_metadata: dict[str, Any],
+    *,
+    progress: bool = True,
+) -> dict[str, Any]:
+    """Compare both saved-field backgrounds and their true p6 MPC interpolants."""
+
+    if not np.isclose(first.cfg.k0, second.cfg.k0, rtol=0.0, atol=1.0e-14):
+        raise ValueError("paired attribution requires the same wavenumber")
+    if not np.isclose(
+        first.cfg.electric_field_scale_V_per_m,
+        second.cfg.electric_field_scale_V_per_m,
+        rtol=1.0e-13,
+        atol=0.0,
+    ):
+        raise ValueError("paired attribution requires one electric field scale")
+    if not np.isclose(first.cfg.mu_r, second.cfg.mu_r, rtol=0.0, atol=1.0e-14):
+        raise ValueError("paired attribution requires the same relative permeability")
+
+    names = ("incident_plane_wave", "layered_fresnel")
+    representations = {
+        name: (
+            interpolate_p6_background(first, name),
+            interpolate_p6_background(second, name),
+        )
+        for name in names
+    }
+    fixed_samples = _sample_pair_metrics(
+        first, second, sample_points, sample_metadata, representations
+    )
+
+    axes, axis_facts = _exact_axis_union(first, second)
+    catalog = _cell_catalog(first, second, axes)
+    centers, widths, masks = catalog["centers"], catalog["widths"], catalog["masks"]
+    legendre, one_d_weights = np.polynomial.legendre.leggauss(COMMON_QUADRATURE_ORDER)
+    qx, qy, qz = np.meshgrid(legendre, legendre, legendre, indexing="ij")
+    qref = np.column_stack((qx.ravel(), qy.ravel(), qz.ravel()))
+    qw_x, qw_y, qw_z = np.meshgrid(one_d_weights, one_d_weights, one_d_weights, indexing="ij")
+    qweights_ref = (qw_x * qw_y * qw_z).ravel()
+    nq = len(qweights_ref)
+
+    volume_results: dict[str, Any] = {}
+    scale_e = float(first.cfg.electric_field_scale_V_per_m)
+    scale_h = float(first.cfg.magnetic_field_scale_A_per_m)
+    k0 = float(first.cfg.k0)
+
+    def new_stats() -> dict[str, Any]:
+        return {
+            region: {
+                "volume_nm3": 0.0,
+                "quantities": {
+                    key: {"g0_sq": 0.0, "g1_sq": 0.0, "difference_sq": 0.0}
+                    for key in _QUANTITIES
+                },
+                "representation": {
+                    grid: {
+                        key: {"error_sq": 0.0, "background_sq": 0.0}
+                        for key in ("E", "scaled_curl_E")
+                    }
+                    for grid in ("G0", "G1")
+                },
+                "attribution": {
+                    key: {
+                        "d_sq": 0.0,
+                        "d_b_sq": 0.0,
+                        "remainder_sq": 0.0,
+                        "inner_re": 0.0,
+                        "inner_im": 0.0,
+                    }
+                    for key in ("E", "scaled_curl_E")
+                },
+                "incident_E_sq": 0.0,
+                "incident_H_sq": 0.0,
+            }
+            for region in masks
+        }
+
+    stats_by_background = {name: new_stats() for name in names}
+    total = len(centers)
+    last_tenth = -1
+    for start in range(0, total, SUBCELL_BATCH):
+        stop = min(start + SUBCELL_BATCH, total)
+        half = 0.5 * widths[start:stop]
+        points = (
+            centers[start:stop, None, :]
+            + half[:, None, :] * qref[None, :, :]
+        ).reshape((-1, 3))
+        weights = (np.prod(half, axis=1)[:, None] * qweights_ref[None, :]).reshape((-1,))
+        cells0 = np.repeat(catalog["cells_g0"][start:stop], nq)
+        cells1 = np.repeat(catalog["cells_g1"][start:stop], nq)
+        # Evaluate each saved field/curl once; both background definitions use
+        # this identical pair and the same quadrature coordinates.
+        e0, c0 = _eval(first.electric, points, cells0), _eval(first.curl, points, cells0)
+        e1, c1 = _eval(second.electric, points, cells1), _eval(second.curl, points, cells1)
+        incident_e, incident_h, _ = _background_code_fields(
+            first.cfg, points, "incident_plane_wave"
+        )
+        for name in names:
+            rep0, rep1 = representations[name]
+            ih_e0, ih_c0 = _eval(rep0.electric, points, cells0), _eval(rep0.curl, points, cells0)
+            ih_e1, ih_c1 = _eval(rep1.electric, points, cells1), _eval(rep1.curl, points, cells1)
+            bg_e, bg_h, bg_curl = _background_code_fields(first.cfg, points, name)
+            q0 = _quantities(first, e0, c0, bg_e, bg_h)
+            q1 = _quantities(second, e1, c1, bg_e, bg_h)
+            representation = {
+                "G0": {
+                    "E": (ih_e0 - bg_e, bg_e),
+                    "scaled_curl_E": ((ih_c0 - bg_curl) / k0, bg_curl / k0),
+                },
+                "G1": {
+                    "E": (ih_e1 - bg_e, bg_e),
+                    "scaled_curl_E": ((ih_c1 - bg_curl) / k0, bg_curl / k0),
+                },
+            }
+            differences = {
+                "E": (e0 - e1, ih_e0 - ih_e1),
+                "scaled_curl_E": ((c0 - c1) / k0, (ih_c0 - ih_c1) / k0),
+            }
+            stats = stats_by_background[name]
+            for region, mask in masks.items():
+                selected = np.repeat(mask[start:stop], nq)
+                if not np.any(selected):
+                    continue
+                w = weights[selected]
+                state = stats[region]
+                state["volume_nm3"] += float(np.sum(w))
+                state["incident_E_sq"] += weighted_vector_squared_norm(incident_e[selected], w)
+                state["incident_H_sq"] += weighted_vector_squared_norm(incident_h[selected], w)
+                for quantity in _QUANTITIES:
+                    left, right = q0[quantity][selected], q1[quantity][selected]
+                    row = state["quantities"][quantity]
+                    row["g0_sq"] += weighted_vector_squared_norm(left, w)
+                    row["g1_sq"] += weighted_vector_squared_norm(right, w)
+                    row["difference_sq"] += weighted_vector_squared_norm(left - right, w)
+                for grid, data in representation.items():
+                    for key, (error, background_values) in data.items():
+                        row = state["representation"][grid][key]
+                        row["error_sq"] += weighted_vector_squared_norm(error[selected], w)
+                        row["background_sq"] += weighted_vector_squared_norm(background_values[selected], w)
+                for key, (d, d_b) in differences.items():
+                    d, d_b = d[selected], d_b[selected]
+                    entry = state["attribution"][key]
+                    for term, value in _attribution_terms(d, d_b, w).items():
+                        entry[term] += value
+        tenth = int(10 * stop / total)
+        if progress and tenth > last_tenth:
+            print(
+                f"background attribution volume: {stop}/{total} common subcells "
+                f"({100 * stop / total:.0f}%)",
+                flush=True,
+            )
+            last_tenth = tenth
+
+    for name in names:
+        stats = stats_by_background[name]
+        regions: dict[str, Any] = {}
+        for region, state in stats.items():
+            quantity_metrics: dict[str, Any] = {}
+            incident_e_norm = np.sqrt(state["incident_E_sq"]) * scale_e
+            incident_h_norm = np.sqrt(state["incident_H_sq"]) * scale_h
+            for quantity, (unit, factor_name) in _QUANTITIES.items():
+                factor = float(getattr(first.cfg, factor_name))
+                row = state["quantities"][quantity]
+                n0 = np.sqrt(row["g0_sq"]) * factor
+                n1 = np.sqrt(row["g1_sq"]) * factor
+                difference = np.sqrt(row["difference_sq"]) * factor
+                incident_norm = _incident_norm_for_quantity(
+                    quantity, incident_e_norm, incident_h_norm, k0
+                )
+                quantity_metrics[quantity] = {
+                    "unit": unit,
+                    "l2_norm_unit": f"{unit}·nm^(3/2)",
+                    "g0_l2_norm": float(n0),
+                    "g1_l2_norm": float(n1),
+                    "difference_l2_norm": float(difference),
+                    "relative_to_g1": float(difference / max(n1, np.finfo(float).tiny)),
+                    "incident_normalizer_l2": float(incident_norm),
+                    "difference_over_incident_l2": float(difference / max(incident_norm, np.finfo(float).tiny)),
+                }
+            representation_metrics: dict[str, Any] = {}
+            for grid in ("G0", "G1"):
+                representation_metrics[grid] = {}
+                for key, row in state["representation"][grid].items():
+                    error = np.sqrt(row["error_sq"]) * scale_e
+                    background_norm = np.sqrt(row["background_sq"]) * scale_e
+                    representation_metrics[grid][key] = {
+                        "l2_norm_unit": "(V/m)·nm^(3/2)",
+                        "field_unit": "V/m",
+                        "interpolation_error_l2_norm": float(error),
+                        "analytic_background_l2_norm": float(background_norm),
+                        "relative_to_analytic_background": float(error / max(background_norm, np.finfo(float).tiny)),
+                        "relative_to_incident_E": float(error / max(incident_e_norm, np.finfo(float).tiny)),
+                    }
+                curl_row = representation_metrics[grid]["scaled_curl_E"]
+                curl_row["curl_E_l2_norm_unit"] = "(V/m/nm)·nm^(3/2)"
+                curl_row["curl_E_interpolation_error_l2_norm"] = float(curl_row["interpolation_error_l2_norm"] * k0)
+                curl_row["curl_E_analytic_background_l2_norm"] = float(curl_row["analytic_background_l2_norm"] * k0)
+            attribution_metrics: dict[str, Any] = {}
+            for key, row in state["attribution"].items():
+                attribution_metrics[key] = _format_attribution(
+                    row, scale_e, "V/m", volume_integrated=True
+                )
+                if key == "scaled_curl_E":
+                    attribution_metrics["curl_E_raw"] = _format_attribution(
+                        row,
+                        scale_e,
+                        "V/m/nm",
+                        derivative_scale=k0,
+                        volume_integrated=True,
+                    )
+            regions[region] = {
+                "volume_nm3": float(state["volume_nm3"]),
+                "quantities": quantity_metrics,
+                "p6_interpolation_representation": representation_metrics,
+                "cross_mesh_attribution": attribution_metrics,
+            }
+        volume_results[name] = {
+            "common_subcell_shape": catalog["shape"],
+            "common_subcell_count": int(len(centers)),
+            "axis_union": axis_facts,
+            "quadrature_order_per_axis": COMMON_QUADRATURE_ORDER,
+            "curl_source": "direct UFL curl(E_FE) into DG6 for both saved field and I_h b",
+            "regions": regions,
+            "l2_measure": "volume in nm^3; each reported L2 norm therefore has its field unit multiplied by nm^(3/2)",
+        }
+
+    return {
+        "method": {
+            "backgrounds": {
+                "incident_plane_wave": "legacy R5 incident plane wave extended through the substrate; its substrate values reproduce the metric but are not a substrate Maxwell solution",
+                "layered_fresnel": "existing flat air/substrate Fresnel background used by P1/P4",
+            },
+            "coordinates": "input coordinates and structured-mesh code coordinates are nm; xyz order; exp(i k·r), exp(-i omega t)",
+            "interpolant": "Basix N1curl p6 moment interpolation followed by the run's finalized double-Floquet MPC homogenize/backsubstitution; no fit or projection factor",
+            "curl": "independent UFL curl(E_FE) into DG6; analytic curl is the direct derivative of the named plane-wave components",
+            "attribution": "d=E_G0-E_G1; d_b=I_G0 b-I_G1 b; no fitted coefficient or phase",
+        },
+        "fixed_samples": fixed_samples,
+        "volume": volume_results,
+    }
+
+
 def compare_common_subcell_volume(
     first: P6TotalField,
     second: P6TotalField,
