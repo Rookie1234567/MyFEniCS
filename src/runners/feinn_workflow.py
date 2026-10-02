@@ -288,10 +288,13 @@ def launch(spec):
     v6 = stage.startswith("v6_") or stage == "FEINN-FROZEN-FEATURE-RESIDUAL-READOUT"
     v7 = stage.startswith("v7_")
     v8 = stage.startswith("v8_")
+    v11 = stage.startswith("v11_")
     v10 = stage.startswith("v10_")
-    v9 = stage.startswith(("v9_", "v10_"))
-    gn_version = "V10" if v10 else "V9"
-    if v10:
+    v9 = stage.startswith(("v9_", "v10_", "v11_"))
+    gn_version = "V11" if v11 else "V10" if v10 else "V9"
+    if v11:
+        from src.runners import feinn_metric_campaign as gn_campaign
+    elif v10:
         from src.runners import feinn_cached_gn_campaign as gn_campaign
     elif v9:
         from src.runners import feinn_gn_campaign as gn_campaign
@@ -352,6 +355,14 @@ def launch(spec):
                     if sha(entry[file_key]["path"]) != entry[file_key]["sha256"]:
                         raise RuntimeError("V9_FINAL_BYTES_CHANGED_BEFORE_WORKER")
             state["V9_final_states_bound_before_worker"] = chosen
+        if v11:
+            state["v11_review_sha"] = state.pop("v9_review_sha")
+            state["v11_campaign_design_sha256"] = state.pop("v9_campaign_design_sha256")
+            frozen = gn_campaign.anchor()
+            for key in ("checkpoint", "durable_final", "checkpoint_index"):
+                if sha(frozen[key]["path"]) != frozen[key]["sha256"]:
+                    raise RuntimeError("PHASE75_BYTES_CHANGED_BEFORE_WORKER")
+            state["V10_phase75_bound_before_worker"] = frozen
         if stage in GN_AUTHORITY:
             state.update(**POLICY)
         else:
@@ -533,13 +544,17 @@ def launch(spec):
             else 16 * 2**30
         )
         try:
+            if v11:
+                from src.runners.feinn_resources import stable_window
+
+                state["pressure_stable_window"] = stable_window(directory, tree_limit)
             baseline = admission(tree_limit)
         except RuntimeError as error:
             result = dict(
                 classification="RESOURCE_WINDOW_UNAVAILABLE",
                 reason=str(error),
                 stage=stage,
-                elapsed_seconds=0,
+                elapsed_seconds=perf_counter() - launch_origin if v11 else 0,
                 leader_exit_code=None,
                 descendants_cleared=True,
             )
@@ -554,6 +569,8 @@ def launch(spec):
         if v9:
             ledger[gn_version] = gn_campaign.campaign_budget(ledger["entries"])
             ledger["remaining_seconds"] = ledger[gn_version]["new_remaining_seconds"]
+            if v11 and gn_campaign.STAGES[stage][2] == "E":
+                ledger["remaining_seconds"] += 1200
         if (
             ledger["remaining_seconds"] <= 120
             or (stage.startswith("v2_") or stage == "FREE-FE-DUAL-GRAM-DIAG")
@@ -722,6 +739,10 @@ def launch(spec):
             prerequisite_stages = DEPENDENCIES[stage]
         if v9:
             prerequisite_stages = gn_campaign.DEPENDENCIES[stage]
+            if v11 and stage in ("v11_metric_reconstruct", "v11_metric_compare"):
+                prerequisite_stages = prerequisite_stages + list(
+                    gn_campaign.selected_routes(load_index)
+                )
             if v10 and stage in (
                 "v10_gn_reconstruct",
                 "v10_gn_compare",
@@ -1098,7 +1119,7 @@ def worker(directory):
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
     if stage.startswith(
-        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_")
+        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_", "v11_")
     ) or stage in (
         "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
         "FEINN-FROZEN-HIDDEN-READOUT-G",
@@ -1141,8 +1162,10 @@ def worker(directory):
         design = json.loads(DESIGN.read_text())
         if sha(DESIGN) != manifest["design_sha256"]:
             raise RuntimeError("design changed after admission")
-        if stage.startswith(("v9_", "v10_")):
-            if stage.startswith("v10_"):
+        if stage.startswith(("v9_", "v10_", "v11_")):
+            if stage.startswith("v11_"):
+                from src.runners.feinn_metric_campaign import dispatch
+            elif stage.startswith("v10_"):
                 from src.runners.feinn_cached_gn_campaign import dispatch
             else:
                 from src.runners.feinn_gn_campaign import dispatch

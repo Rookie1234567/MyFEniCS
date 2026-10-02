@@ -1,0 +1,84 @@
+{
+  "schema": "task42extra.metric-campaign.v11",
+  "authority_release": "13ca73756a4c74bd24ad5241d97a810bfcce6971",
+  "reviewed_baseline": "c35fb5714e81736a5fe5e4f90159f4dacaf4b2a9",
+  "frozen_phase75": {
+    "checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_resource_freeze_20261002T040058739087Z/frozen_checkpoint.npz",
+      "sha256": "4b538b3f785902de369d5a0602b5d3267a08cc34fa8e68ab509ebc51c2652917"
+    },
+    "durable_final": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T025423030332Z/durable_checkpoints/committed_000015.pt",
+      "sha256": "cf6919a8ee86e32ad7f0f4b0d4ef8411061b149c564dd289237334f90b7d9e86"
+    },
+    "checkpoint_index": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T025423030332Z/durable_checkpoints/current.json",
+      "sha256": "6b085f5bea29ff6f393de9e0c0ceb19d4a7729707aa52d62360491d9ef2bfe62"
+    },
+    "phase": true,
+    "supervised": false,
+    "source_sha": "5cda1c3995633c4f6c86f4b47d3163efb1cdc8c6",
+    "export_source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+    "stage": "v10_phase_resource_freeze",
+    "logical_prefix_seconds": 15758.74009511806
+  },
+  "old_cumulative_seconds": 137403.03555569297,
+  "new_limit_seconds": 21600,
+  "limits_seconds": {
+    "A": 1800,
+    "A_numerical": 1200,
+    "B": 5400,
+    "C": 10800,
+    "C_each": 5400,
+    "E": 3600
+  },
+  "E_min_reserve_seconds": 1200,
+  "probe_seed": 4211101,
+  "probe_group_sizes": [
+    192,
+    64,
+    4096,
+    64,
+    4096,
+    64,
+    384,
+    6
+  ],
+  "probe_directions_per_group": 3,
+  "curvature_actions_A_max": 32,
+  "curvature_actions_B_max": 96,
+  "true_trials_A_max": 4,
+  "metric_clip": [
+    0.0001,
+    10000.0
+  ],
+  "C_new_PC_allowed": false,
+  "fixed_time_seconds": [
+    0,
+    1800,
+    3600,
+    5400
+  ],
+  "system_pressure_recoveries_max": 1,
+  "pressure_observe_seconds": 60,
+  "watchdog_thresholds": {
+    "some_avg10": 1,
+    "full_avg10": 0.1,
+    "bad_samples": 3
+  },
+  "logical_fork_prefix_cost_counted_each": true,
+  "project_prefix_cost_counted_again": false,
+  "labels_in_A_B_C": false,
+  "banned_reads": [
+    "reference_state",
+    "D",
+    "Phi",
+    "Q",
+    "p4",
+    "p5"
+  ],
+  "ordinary_default_changed": false,
+  "engineering_root_cause_retries_max": 3,
+  "C_complete_state_recoveries_each_max": 1,
+  "budget_transfer_registered": null
+}

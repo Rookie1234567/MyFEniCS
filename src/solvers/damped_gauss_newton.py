@@ -10,11 +10,21 @@ import numpy as np
 
 
 def damped_cg(
-    K, gradient, mu, *, preconditioner=None, max_iter=40, tolerance=0.01, budget=None
+    K,
+    gradient,
+    mu,
+    *,
+    preconditioner=None,
+    max_iter=40,
+    tolerance=0.01,
+    budget=None,
+    residual_to_original=None,
 ):
     rhs = -np.asarray(gradient, np.float64)
     s = np.zeros_like(rhs)
     norm = np.linalg.norm(rhs)
+    original = residual_to_original or (lambda v: v)
+    original_norm = np.linalg.norm(original(rhs))
     if norm == 0:
         return s, dict(iterations=0, true_relative=0.0, converged=True, hit_limit=False)
     r = rhs.copy()
@@ -42,7 +52,10 @@ def damped_cg(
         r -= alpha * Hp
         if np.linalg.norm(r) <= tolerance * norm:
             true = rhs - K(s) - mu * s
-            if np.linalg.norm(true) <= tolerance * norm:
+            if (
+                np.linalg.norm(true) <= tolerance * norm
+                and np.linalg.norm(original(true)) <= tolerance * original_norm
+            ):
                 r = true
                 break
             r = true
@@ -60,10 +73,13 @@ def damped_cg(
     if budget is not None:
         budget.event("CG_TRUE_RESIDUAL", "end", iterations=iterations)
     relative = float(np.linalg.norm(true) / norm)
+    original_relative = float(np.linalg.norm(original(true)) / original_norm)
     return s, dict(
         iterations=iterations,
-        true_relative=relative,
-        converged=relative <= tolerance,
+        true_relative=original_relative,
+        transformed_true_relative=relative,
+        original_parameter_true_relative=original_relative,
+        converged=original_relative <= tolerance,
         hit_limit=iterations >= max_iter,
         max_iter=max_iter,
         target_true_relative=tolerance,
@@ -155,7 +171,16 @@ class DampedGNState:
         self.mu = float(np.clip(self.mu, 1e-12 * self.h0, 1e6 * self.h0))
 
     def propose(
-        self, theta, loss, gradient, K, evaluate, emit=lambda *_: None, *, budget=None
+        self,
+        theta,
+        loss,
+        gradient,
+        K,
+        evaluate,
+        emit=lambda *_: None,
+        *,
+        budget=None,
+        parameter_metric=None,
     ):
         """A rejected trial always leaves theta/forward state at committed theta."""
         theta = np.asarray(theta).copy()
@@ -224,7 +249,11 @@ class DampedGNState:
                 if not budget.allow(K=4, trial=1):
                     raise budget.stop_exception("BUDGET_FRONTIER_CG_RESERVE")
                 budget.event("CG", "begin", damping_trial=damping_trial)
-            s, cg = damped_cg(
+            if parameter_metric is not None and pc is not None:
+                raise ValueError("PARAMETER_METRIC_PILOT_FORBIDS_PC")
+            s, cg = (
+                parameter_metric.solve if parameter_metric is not None else damped_cg
+            )(
                 K,
                 g,
                 self.mu,
@@ -275,15 +304,16 @@ class DampedGNState:
                 return new, row
             self.mu *= 10
             self.clamp()
-        Kg = K(g)
-        curvature = float(g @ Kg)
+        d = g if parameter_metric is None else parameter_metric.inverse * g
+        Kg = K(d)
+        curvature = float(d @ Kg)
         if curvature <= 0 or not np.isfinite(curvature):
             return None, dict(
                 stop_reason="GN_MODEL_STAGNATION",
                 gradient_norm=float(np.linalg.norm(g)),
                 cauchy_curvature=curvature,
             )
-        base = -(g @ g / curvature) * g
+        base = -(g @ d / curvature) * d
         for scale in (1.0, 0.5, 0.25):
             accepted, new, row = trial(scale * base, "CAUCHY_TRIAL")
             if accepted:

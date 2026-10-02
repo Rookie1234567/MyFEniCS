@@ -50,6 +50,44 @@ def admission(hard=16 * 2**30):
     return value
 
 
+def stable_window(directory, hard=16 * 2**30, *, seconds=60):
+    """One bounded observation; never waits for a future resource window."""
+    start = time.monotonic()
+    samples = []
+    while True:
+        psi, env = pressure(), envelope(hard)
+        sample = dict(
+            elapsed_seconds=time.monotonic() - start, memory_pressure=psi, memory=env
+        )
+        samples.append(sample)
+        bad = (
+            psi["some"]["avg10"] >= 1
+            or psi["full"]["avg10"] >= 0.1
+            or env["launch_cap_bytes"] < hard
+        )
+        if bad or sample["elapsed_seconds"] >= seconds:
+            break
+        time.sleep(min(5, seconds - sample["elapsed_seconds"]))
+    result = dict(
+        passed=not bad and samples[-1]["elapsed_seconds"] >= seconds,
+        required_seconds=seconds,
+        samples=samples,
+        thresholds=dict(some_avg10=1.0, full_avg10=0.1),
+        watchdog_bad_samples_to_stop=3,
+        observed_seconds=time.monotonic() - start,
+        source_of_system_pressure="UNKNOWN",
+        automatic_wait_or_restart=False,
+    )
+    Path(directory, "pressure_stable_window.json").write_text(
+        json.dumps(result, indent=2) + "\n"
+    )
+    if not result["passed"]:
+        raise RuntimeError(
+            "RESOURCE_WINDOW_UNAVAILABLE: 60s PSI stability not established"
+        )
+    return result
+
+
 class Health:
     def __init__(self, directory, hard, neighbors):
         self.directory, self.hard, self.neighbors = directory, hard, neighbors

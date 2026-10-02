@@ -1,0 +1,147 @@
+"""Review V10 fixed-parameter-metric pilot inventory; no FE Torch import."""
+
+from pathlib import Path
+import json
+
+ROOT = Path(__file__).resolve().parents[2]
+REVIEW_SHA = "13ca73756a4c74bd24ad5241d97a810bfcce6971"
+OLD_SECONDS = 137403.03555569297
+LIMITS = dict(A=1800, B=5400, C=10800, E=3600)
+STAGES = {
+    "v11_parameter_scale_diagnostic": ("ml", 1200, "A"),
+    "v11_parameter_metric_checks": ("ml", 2400, "B"),
+    "v11_phase_identity_metric": ("ml", 5400, "C"),
+    "v11_phase_block_metric": ("ml", 5400, "C"),
+    "v11_metric_reconstruct": ("ml", 900, "E"),
+    "v11_metric_compare": ("fe", 1200, "E"),
+}
+AUTHORITY, SUPERVISED = set(), set()
+BASE = ["e1_fe", "v8_phase_checks", "v10_phase_resource_freeze"]
+DEPENDENCIES = {stage: BASE.copy() for stage in STAGES}
+DEPENDENCIES["v11_parameter_metric_checks"] += ["v11_parameter_scale_diagnostic"]
+for stage in ("v11_phase_identity_metric", "v11_phase_block_metric"):
+    DEPENDENCIES[stage] += [
+        "v11_parameter_scale_diagnostic",
+        "v11_parameter_metric_checks",
+    ]
+DEPENDENCIES["v11_metric_compare"] += ["e3_reference", "v11_metric_reconstruct"]
+
+
+def anchor():
+    record = json.loads(
+        (
+            ROOT
+            / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v11.json"
+        ).read_text()
+    )
+    return record["frozen_phase75"]
+
+
+def campaign_budget(entries):
+    chosen = [
+        r
+        for r in entries
+        if "/task42extra_v11_" in r["path"] or "/checks/v11_" in r["path"]
+    ]
+    groups = dict.fromkeys(LIMITS, 0.0)
+    for row in chosen:
+        name = Path(row["path"]).parent.name
+        group = next(
+            (
+                e[2]
+                for s, e in STAGES.items()
+                if name.startswith("task42extra_" + s + "_")
+            ),
+            None,
+        )
+        group = group or (name[4:5].upper() if name.startswith("v11_") else "E")
+        groups[group if group in LIMITS else "E"] += row["seconds"]
+    used = sum(groups.values())
+    return dict(
+        old_V1_V10_conservative_seconds=OLD_SECONDS,
+        new_limit_seconds=21600,
+        new_used_seconds=used,
+        new_remaining_seconds=21600 - used - 1200,
+        cumulative_seconds=OLD_SECONDS + used,
+        groups_used_seconds=groups,
+        groups_remaining_seconds={k: LIMITS[k] - groups[k] for k in LIMITS},
+        entries=chosen,
+        E_reserved_seconds=1200,
+        historical_prefix_charged_again_to_project=False,
+        old_interruption_and_replay_costs_preserved=True,
+    )
+
+
+def selected_routes(load_index):
+    from src.runners.feinn_workflow import index_path
+
+    routes = {"v10_phase_resource_freeze": load_index("v10_phase_resource_freeze")}
+    for stage in ("v11_phase_identity_metric", "v11_phase_block_metric"):
+        if index_path(stage).exists():
+            routes[stage] = load_index(stage)
+    return routes
+
+
+def dispatch(stage, design, artifact, marker, manifest, load_index):
+    if stage == "v11_metric_reconstruct":
+        from src.solvers.feinn_phase_verification import reconstruct
+
+        return reconstruct(
+            design,
+            load_index("v8_phase_checks"),
+            selected_routes(load_index),
+            artifact,
+            marker,
+            manifest,
+            retain_initial=False,
+        )
+    if stage == "v11_metric_compare":
+        from src.solvers.feinn_phase_compare import compare
+
+        return compare(
+            design,
+            load_index("e1_fe"),
+            load_index("e3_reference"),
+            selected_routes(load_index),
+            load_index("v11_metric_reconstruct"),
+            artifact,
+            marker,
+            manifest,
+            supervised=False,
+        )
+    from src.solvers import feinn_metric_diagnostic as diagnostic
+
+    if stage == "v11_parameter_scale_diagnostic":
+        return diagnostic.diagnose(
+            design,
+            load_index("e1_fe"),
+            load_index("v8_phase_checks"),
+            artifact,
+            marker,
+            manifest,
+        )
+    if stage == "v11_parameter_metric_checks":
+        return diagnostic.qualify(
+            design,
+            load_index("e1_fe"),
+            load_index("v8_phase_checks"),
+            load_index("v11_parameter_scale_diagnostic"),
+            artifact,
+            marker,
+            manifest,
+        )
+    from src.solvers.feinn_gn_training import run
+
+    return run(
+        design,
+        load_index("e1_fe"),
+        load_index("v8_phase_checks"),
+        load_index("v11_parameter_metric_checks"),
+        artifact,
+        marker,
+        manifest,
+        phase=True,
+        supervised=False,
+        continuation=anchor(),
+        metric_pilot=load_index("v11_parameter_scale_diagnostic"),
+    )

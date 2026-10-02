@@ -363,11 +363,23 @@ def run(
     reference=None,
     continuation=None,
     recovery=None,
+    metric_pilot=None,
 ):
     configure()
     if continuation is None and checks["result"]["status"] != "GN_INTERFACE_PASS":
         raise ValueError("COMMON_GN_INTERFACE_NOT_QUALIFIED")
-    if continuation is not None:
+    if metric_pilot is not None:
+        if (
+            not metric_pilot["result"]["C_start_signal"]
+            or not checks["result"]["passed"]
+        ):
+            raise ValueError("BLOCK_METRIC_PILOT_NOT_ADMITTED")
+        if not phase or supervised:
+            raise ValueError("METRIC_PILOT_ONLY_UNLABELLED_PHASE")
+        from src.solvers.feinn_metric_diagnostic import load_anchor as load_final
+
+        entry = continuation
+    elif continuation is not None:
         key = ("phase" if phase else "plain") + ("_fit_gn" if supervised else "_gn")
         if not checks["result"]["states"][key]["passed"]:
             raise ValueError("CORRESPONDING_DERIVATIVE_ACCELERATION_NOT_QUALIFIED")
@@ -389,6 +401,8 @@ def run(
     ]
     if supervised:
         allowed.append(reference["files"]["reference"]["path"])
+    if metric_pilot is not None:
+        allowed.append(metric_pilot["files"]["metric"]["path"])
     if recovery is not None:
         allowed.extend(
             recovery[k]["path"]
@@ -435,6 +449,8 @@ def run(
         JVP_VJP=2500 if supervised else 8000,
         trial=256 if supervised else 512,
     )
+    if metric_pilot is not None:
+        caps = dict(accepted=30, K=1200, JVP_VJP=2500, trial=128)
     if recovery is not None:
         for key, reserved in recovery["incomplete_work_quota_reserve"].items():
             caps[key] -= reserved
@@ -482,6 +498,12 @@ def run(
         route = ("V10-PHASE" if phase else "V10-PLAIN") + (
             "-CACHED-FIT-GN-CONTINUE" if supervised else "-CACHED-GN-CONTINUE"
         )
+    if metric_pilot is not None:
+        route = "V11-PHASE-" + (
+            "IDENTITY-METRIC-CONTROL"
+            if manifest["stage"] == "v11_phase_identity_metric"
+            else "BLOCK-METRIC"
+        )
     history_path = artifact / "history.jsonl"
     history = history_path.open("w", buffering=1)
     audits = []
@@ -527,6 +549,24 @@ def run(
             > 1e-10 * metric.denominator
         ):
             raise ValueError("CONTINUATION_ORIGINAL_DENOMINATOR_CHANGED")
+    if metric_pilot is not None:
+        from src.solvers.feinn_parameter_metric import (
+            ParameterMetric,
+            MetricDampedGNState,
+        )
+
+        if manifest["stage"] == "v11_phase_identity_metric":
+            fixed_metric = ParameterMetric(np.ones(len(initial)))
+        else:
+            with np.load(
+                metric_pilot["files"]["metric"]["path"], allow_pickle=False
+            ) as item:
+                fixed_metric = ParameterMetric(item["M"])
+            if fixed_metric.sha256 != metric_pilot["result"]["metric_sha256"]:
+                raise ValueError("FIXED_BLOCK_METRIC_CHANGED")
+        previous_gn = optimizer.state_dict()
+        optimizer = MetricDampedGNState(h0, fixed_metric)
+        optimizer.load_state_dict(previous_gn)
     store = CheckpointStore(artifact / "durable_checkpoints")
     flags = policy(supervised)
     frozen_buffers = {
@@ -542,6 +582,8 @@ def run(
         if continuation is not None
         else entry["metadata"]["elapsed_charged_seconds"]
     )
+    if metric_pilot is not None:
+        prefix_seconds = entry["logical_prefix_seconds"]
     inherited_accepted = (
         old["metadata"]["inherited_accepted_outer"]
         if recovery is not None
@@ -647,6 +689,17 @@ def run(
             ),
             **(update or {}),
         )
+        if metric_pilot is not None:
+            meta.update(
+                initialization_kind="V10_PHASE75_FULL_STATE_METRIC_FORK",
+                parameter_metric_sha256=fixed_metric.sha256,
+                parameter_metric=fixed_metric.record(),
+                PC_allowed=False,
+                schema_migration="DampedGNState -> MetricDampedGNState; original theta/mu/h0/RNG retained",
+                shared_diagnostic_index_sha256=manifest.get(
+                    "v11_campaign_design_sha256"
+                ),
+            )
         state = capture(model, optimizer, meta)
         state["complete_c"] = c.copy()
         return store.save(state, pin=pin)
@@ -718,7 +771,12 @@ def run(
                 c = mapping.forward(model)
                 if frontier is not None:
                     frontier.event("COMMIT", "begin", accepted_outer=optimizer.accepted)
-                record = save("accepted_outer", c, optimizer.accepted % 5 == 0, update)
+                record = save(
+                    "accepted_outer",
+                    c,
+                    metric_pilot is not None or optimizer.accepted % 5 == 0,
+                    update,
+                )
                 if frontier is not None:
                     frontier.event("COMMIT", "end", accepted_outer=optimizer.accepted)
                 published = True
@@ -756,8 +814,12 @@ def run(
                                 )
                             )
                 raise
-            if optimizer.accepted % 5 == 0 or (
-                continuation is not None and perf_counter() - last_audit_time >= 300
+            if (
+                metric_pilot is not None
+                or optimizer.accepted % 5 == 0
+                or (
+                    continuation is not None and perf_counter() - last_audit_time >= 300
+                )
             ):
                 actual = audit(c, "accepted_outer", record)
                 actual["audit_interval_seconds"] = perf_counter() - last_audit_time
@@ -937,6 +999,43 @@ def run(
             costs_scope="current attempt only; prior attempt wall and retained timer lower bounds in recovery provenance"
             if recovery is not None
             else "current attempt",
+        )
+    if metric_pilot is not None:
+        fixed_times = {}
+        boundaries = [initial_audit] + audits[1:]
+        elapsed = perf_counter() - manifest["supervision_budget_origin_monotonic"]
+        for t in (0, 1800, 3600, 5400):
+            choices = [r for r in boundaries if r["elapsed_charged_seconds"] <= t]
+            selected = (
+                initial_audit
+                if t == 0
+                else max(choices, key=lambda r: r["elapsed_charged_seconds"])
+                if choices
+                else None
+            )
+            fixed_times[str(t)] = (
+                dict(status="NOT_RUN")
+                if t > elapsed
+                else dict(
+                    status="RETAINED" if selected else "NOT_RETAINED",
+                    target_seconds=t,
+                    actual_seconds=selected["elapsed_charged_seconds"]
+                    if selected
+                    else None,
+                    audit=selected,
+                )
+            )
+        result.update(
+            status="V11_METRIC_FORK_FROZEN"
+            if failure is None
+            else "V11_METRIC_RETAINED_FAILURE",
+            initialization_kind="V10_PHASE75_FULL_STATE_METRIC_FORK",
+            PC_allowed=False,
+            parameter_metric=fixed_metric.record(),
+            fixed_time_boundaries=fixed_times,
+            common_theta0_sha256=array_hash(initial),
+            common_mu0=old["optimizer"]["mu"],
+            common_h0=old["optimizer"]["h0"],
         )
     marker(
         "GN_route_frozen",

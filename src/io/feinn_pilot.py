@@ -19,7 +19,9 @@ from src.runners.feinn_cached_gn_campaign import (
     SUPERVISED as CACHED_SUPERVISED,
 )
 
-GN_STAGES = GN_STAGES | CACHED_STAGES
+from src.runners.feinn_metric_campaign import STAGES as METRIC_STAGES
+
+GN_STAGES = GN_STAGES | CACHED_STAGES | METRIC_STAGES
 GN_SUPERVISED = GN_SUPERVISED | CACHED_SUPERVISED
 
 ROOT = Path(__file__).resolve().parents[2]

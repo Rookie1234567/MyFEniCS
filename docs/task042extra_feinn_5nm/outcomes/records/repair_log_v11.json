@@ -1,0 +1,24 @@
+{
+  "repairs": [
+    {
+      "root_cause": "light test selector referenced nonexistent file",
+      "failure": "pytest exit4; no tests run",
+      "hypothesis": "test file naming mismatch",
+      "change": "replaced selector with tracked test_replay_budget_clock.py",
+      "test": "v11_B_metric_unit_corrected completed exit0",
+      "retry": 1,
+      "costs_retained": true
+    },
+    {
+      "root_cause": "read-only identity helper unnecessarily imported Torch checkpoint utility in pure environment",
+      "failure": "ModuleNotFoundError torch before any artifact mutation/numerical action",
+      "hypothesis": "unneeded import",
+      "change": "removed import; JSON/hash-only audit",
+      "test": "six new input parser identities pass",
+      "retry": 1,
+      "costs_retained": true
+    }
+  ],
+  "normal_stagnation_is_bug": false,
+  "blind_retry": false
+}
