@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+from time import perf_counter, process_time
 from typing import Any, Callable, Mapping
 
 import numpy as np
@@ -75,9 +76,10 @@ def _compile_volume_form(volume_action: Any) -> Any:
 def _geometry_identity_policy_for_profile(profile_identity: str) -> str:
     from src.io.native_capacity_profile import (
         V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES,
+        V6_NATIVE_PROFILES,
     )
 
-    if profile_identity in V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES:
+    if profile_identity in V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES | V6_NATIVE_PROFILES:
         return "rounded_12_representative"
     return "raw_unrounded"
 
@@ -180,6 +182,10 @@ class RetainedCondensedRuntime:
     coarse_degree: int = 4
     sum_factorized_work: bool = False
     pc_physical: dict[str, Any] | None = None
+    fast_a4: dict[str, Any] | None = None
+    component_options: Mapping[str, Any] | None = None
+    coarse_timings: list[dict[str, Any]] | None = None
+    last_a4_timing: Mapping[str, Any] | None = None
     p4_factor: Any = None
     p4_inverse: P4CellCondensedInverse | None = None
     p4_ledger: P4RefinementLedger | None = None
@@ -201,6 +207,7 @@ class RetainedCondensedRuntime:
         coarse_degree: int = 4,
         sum_factorized_work: bool = False,
         geometry_identity_policy: str = "raw_unrounded",
+        component_options: Mapping[str, Any] | None = None,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -217,6 +224,7 @@ class RetainedCondensedRuntime:
         if int(comm.size) != 1:
             raise ValueError("the D2 retained route is qualified for MPI1 only")
         coarse_degree = int(coarse_degree)
+        options = dict(component_options or {})
         notify = (lambda name, facts: marker(name, dict(facts))) if marker else (lambda *_: None)
         levels = _build_same_mesh_levels(
             cfg, comm, (6, coarse_degree), include_positive_coefficients=True
@@ -237,6 +245,7 @@ class RetainedCondensedRuntime:
         )
         p4 = None
         pc_physical = None
+        fast_a4 = None
         try:
             p4 = build_same_mesh_physical_action(
                 levels,
@@ -252,11 +261,16 @@ class RetainedCondensedRuntime:
                     contiguous_work=True,
                     preallocated_work=False,
                     sum_factorized_work=True,
+                    fuse_components=options.get('fused_a6', False),
+                    share_readonly_geometry=options.get('shared_readonly_geometry', False),
                 )
-                notify(
-                    "retained_sum_factorized_physical_action_complete",
-                    pc_physical["facts"],
-                )
+                notify("retained_sum_factorized_physical_action_complete", pc_physical["facts"])
+            if options.get('fast_complete_a4'):
+                fast_a4 = build_packed_physical_action(
+                    {"levels": levels, "fine": fine, "p4": p4}, cfg,
+                    degree=coarse_degree, sum_factorized_work=True,
+                    fuse_components=True, share_readonly_geometry=True)
+                notify('retained_fast_complete_a4_action_complete', fast_a4['facts'])
             cell_tags = levels["mesh_data"].cell_tags
             p6_space = levels["spaces"][6]
             p4_space = levels["spaces"][coarse_degree]
@@ -265,6 +279,14 @@ class RetainedCondensedRuntime:
             p6_form = _compile_volume_form(fine["volume_action"])
             p4_form = _compile_volume_form(p4["volume_action"])
             notify("retained_forms_compiled", {"p6": True, "p4": True})
+            evaluators = {}
+            if options.get('blocked_gram'):
+                from src.solvers.hcurl_blocked_gram_tensor import HcurlBlockedGramTensor
+                for degree, form, bundle, space in ((6, p6_form, fine, p6_space),
+                         (coarse_degree, p4_form, p4, p4_space)):
+                    evaluators[degree] = HcurlBlockedGramTensor(
+                        space.element.basix_element, cfg, bundle['volume_action'].bilinear_form,
+                        compiled_form=form)
             p6_system = build_unconstrained_assembly_time_condensation(
                 p6_form,
                 p6_space,
@@ -277,6 +299,7 @@ class RetainedCondensedRuntime:
                 strict_local_checks=True,
                 geometry_identity_policy=geometry_identity_policy,
                 share_identity_cache=True,
+                raw_tensor_evaluator=evaluators.get(6),
             )
             p6_action = build_p6_cell_condensed_action_from_carrier(
                 p6_system, p6_carrier, owns_condensed=True
@@ -298,6 +321,7 @@ class RetainedCondensedRuntime:
                 defer_final_assembly=True,
                 geometry_identity_policy=geometry_identity_policy,
                 share_identity_cache=True,
+                raw_tensor_evaluator=evaluators.get(coarse_degree),
             )
             p4_terms = assemble_condensed_ports(p4_system, p4_carrier)
             # Port H/B/D insertion occurs after trace Schur insertion; finish
@@ -328,6 +352,7 @@ class RetainedCondensedRuntime:
                 coarse_degree=coarse_degree,
                 sum_factorized_work=bool(sum_factorized_work),
                 pc_physical=pc_physical,
+                fast_a4=fast_a4, component_options=options, coarse_timings=[],
             )
         except BaseException:
             from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
@@ -340,6 +365,8 @@ class RetainedCondensedRuntime:
                     if callable(destroy):
                         destroy()
             failed_pc = locals().get("pc_physical")
+            if fast_a4 is not None:
+                fast_a4['physical_action'].destroy()
             if failed_pc is not None:
                 failed_action = failed_pc.get("physical_action")
                 if failed_action is not None:
@@ -371,13 +398,16 @@ class RetainedCondensedRuntime:
             if pre.get("icntl23") == 0:
                 factor.set_icntl(23, 0)
             marker("reference_symbolic_started", {"route": "retained_v20_p4"})
+            api_wall, api_cpu = perf_counter(), process_time()
             factor.symbolic(matrix)
+            symbolic_cost = {"api_wall_seconds": perf_counter()-api_wall, "process_cpu_seconds": process_time()-api_cpu}
             symbolic = {
                 "symbolic_calls": int(factor.symbolic_calls),
                 "numeric_calls": int(factor.numeric_calls),
                 "solve_calls": int(factor.solve_calls),
                 "info": factor.info((1, 7, 16, 22, 29)),
                 "icntl23": factor.get_icntl(23),
+                "timing": symbolic_cost,
             }
             if pre.get("icntl23") == 0 and symbolic["icntl23"] != 0:
                 raise RuntimeError("MUMPS ICNTL(23) readback was not zero")
@@ -385,13 +415,16 @@ class RetainedCondensedRuntime:
             budget = reference_budget(
                 sample(), symbolic["info"], int(future_bytes), marker=marker
             )
+            api_wall, api_cpu = perf_counter(), process_time()
             factor.numeric(matrix)
+            numeric_cost = {"api_wall_seconds": perf_counter()-api_wall, "process_cpu_seconds": process_time()-api_cpu}
             numeric = {
                 "symbolic_calls": int(factor.symbolic_calls),
                 "numeric_calls": int(factor.numeric_calls),
                 "solve_calls": int(factor.solve_calls),
                 "info": factor.info((1, 7, 16, 22, 29)),
                 "budget": budget,
+                "timing": numeric_cost,
             }
             marker("reference_numeric_complete", numeric)
             inverse = P4CellCondensedInverse(
@@ -407,6 +440,7 @@ class RetainedCondensedRuntime:
             self.p4_ledger = P4RefinementLedger(
                 inverse,
                 self.apply_original_a4,
+                action_timing=lambda: dict(self.last_a4_timing or {}),
                 port_closure=self.port_closure,
                 failure_sink=failure_sink,
             )
@@ -606,7 +640,9 @@ class RetainedCondensedRuntime:
 
         output = solution.duplicate()
         try:
-            apply_owned(self.p4["physical_action"], solution, output)
+            action = self.fast_a4['physical_action'] if self.fast_a4 else self.p4['physical_action']
+            apply_owned(action, solution, output)
+            self.last_a4_timing = dict(getattr(action, 'last_apply_timing', {}))
             return output
         except BaseException:
             output.destroy()
@@ -640,6 +676,9 @@ class RetainedCondensedRuntime:
             packed_apply=True,
             sum_factorized_work=self.sum_factorized_work,
             sum_factorized_power10=self.sum_factorized_work,
+            reference_metric_diagonal=(self.component_options or {}).get('reference_metric_diagonal', False),
+            direct_selected_backend=(self.component_options or {}).get('direct_h6_backend', False),
+            projection_layout_v31_natural_order_internal=(self.component_options or {}).get('h6_natural_order', False),
         )
         # Transfer construction can fail after H6 setup.  Make its existing
         # owner visible to runtime.destroy as soon as it is created.
@@ -657,7 +696,9 @@ class RetainedCondensedRuntime:
         self.transfer = transfer
 
         def coarse(source: PETSc.Vec) -> PETSc.Vec:
+            started = perf_counter()
             rhs = transfer.apply_adjoint(source)
+            ph_seconds = perf_counter()-started
             value = None
             logical_before = self.p4_ledger.logical_apply_calls
             try:
@@ -672,9 +713,17 @@ class RetainedCondensedRuntime:
                         "source": "retained_bal_h_coarse",
                     }
                 )
+                p_started = perf_counter()
+                result = transfer.apply_primal(value)
+                audit.update(ph_restriction_seconds=ph_seconds,
+                    p_prolongation_seconds=perf_counter()-p_started,
+                    coarse_wall_seconds=perf_counter()-started,
+                    timing_scope='C parent wall; ledger and inverse timings are children')
+                if self.coarse_timings is not None:
+                    self.coarse_timings.append(audit)
+                    del self.coarse_timings[:-2]
                 if audit_append is not None:
                     audit_append("p4_decisions.jsonl", audit)
-                result = transfer.apply_primal(value)
                 return result
             finally:
                 if value is not None:
@@ -780,6 +829,9 @@ class RetainedCondensedRuntime:
             if action is not None:
                 action.destroy()
             self.pc_physical = None
+        if self.fast_a4 is not None:
+            self.fast_a4['physical_action'].destroy()
+            self.fast_a4 = None
         self.solver_stack_released = True
         return {
             "status": "CLEARED",
@@ -1037,6 +1089,11 @@ def run_retained_condensed_workflow(
     import json
     import time
 
+    if contract.get("execution_mode") == "h6_only":
+        from .physical_positive_setup_scope import run_positive_setup_scope
+        return run_positive_setup_scope(payload, directory, cfg=cfg, contract=contract,
+            ledger=ledger, sample=sample, summary=summary, source_sha=source_sha)
+
     if setup_only:
         from src.io.native_capacity_profile import setup_only_5nm_identity_errors
 
@@ -1140,10 +1197,10 @@ def run_retained_condensed_workflow(
         }
 
     try:
-        from src.io.native_capacity_profile import V5_NATIVE_PROFILES
+        from src.io.native_capacity_profile import V5_NATIVE_PROFILES, V6_NATIVE_PROFILES, V6_BASE_PROFILES
 
         profile_identity = str(payload["solver"]["preconditioner"])
-        sum_factorized_work = profile_identity in V5_NATIVE_PROFILES
+        sum_factorized_work = profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES)
         geometry_identity_policy = _geometry_identity_policy_for_profile(
             profile_identity
         )
@@ -1163,9 +1220,10 @@ def run_retained_condensed_workflow(
             sum_factorized_work=sum_factorized_work,
             geometry_identity_policy=geometry_identity_policy,
             marker=ledger.marker,
+            component_options=contract.get("component_options"),
         )
         provenance = payload["provenance"]
-        if profile_identity in V5_NATIVE_PROFILES:
+        if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
             summary["provenance"] = {
                 "input_sha256": provenance["input_sha256"],
                 "physical_model_sha256": provenance["physical_model_sha256"],
@@ -1428,6 +1486,7 @@ def run_retained_condensed_workflow(
         setup_pc_record = {
             **setup_bal_h_facts,
             "scope": "setup",
+            "coarse_corrections": list(runtime.coarse_timings or []),
             "setup_check": "one_actual_BAL_H_apply_two_logical_p4_calls",
             "outer_pc_apply": int(bridge.apply_count),
             "p4_logical_apply_before": setup_logical_before,
@@ -1583,6 +1642,7 @@ def run_retained_condensed_workflow(
                             for key in ("symbolic_calls", "numeric_calls", "solve_calls")
                         },
                         "p4_audit": dict(runtime.p4_ledger.last_audit),
+                        "coarse_corrections": list(runtime.coarse_timings or []),
                         "p4_logical_apply_calls": int(
                             runtime.p4_ledger.logical_apply_calls
                         ),
@@ -1605,6 +1665,7 @@ def run_retained_condensed_workflow(
             resource_sample=sample,
             stop_requested=lambda: ledger.stop_signal is not None,
             save_retained=save_retained,
+            planned_stop_iteration=contract["outer"].get("planned_stop_iteration"),
         )
         solve_summary = {
             key: value for key, value in result.items() if key != "final_solution"
@@ -1627,6 +1688,24 @@ def run_retained_condensed_workflow(
         summary["retained_runtime"]["p6_cache_unchanged_before_release"] = (
             cache_after_solve == cache_before
         )
+        if contract.get("execution_mode") == "pilot_16" and result["status"] in (
+            "PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION", "TRUE_RESIDUAL_PASS"
+        ):
+            pilot_facts = dict(status="PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION",
+                iterations=int(result["iterations"]), planned_stop_iteration=16,
+                physical_residual_pass=bool(result["final_evaluation"]["physical_residual_pass"]),
+                final_native_A6_relative=float(result["final_true_residual"]),
+                p4_factor_counts=dict(runtime.p4_ledger._factor_counts()),
+                qa_and_outer_share_one_factor=True, zero_start=True)
+            summary.update(status="PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION",
+                execution_mode="pilot_16", complete_solve=False,
+                result_classification="pilot_16", pilot_facts=pilot_facts,
+                official_result=None, rta_status="NOT_RUN", physical_checker_status="NOT_RUN",
+                elapsed_monotonic_seconds=time.monotonic()-ledger.started)
+            ledger.marker("PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION", pilot_facts)
+            _atomic_json(directory / "physical_intermediate_summary.json", summary)
+            return dict(passed=True, result_classification="pilot_16", complete_solve=False,
+                errors=[], summary=str(directory / "physical_intermediate_summary.json"))
         if result["status"] != "TRUE_RESIDUAL_PASS":
             summary["status"] = result["status"]
             raise RuntimeError(result["status"])
@@ -1698,9 +1777,9 @@ def run_retained_condensed_workflow(
             export_all_port_modes=True,
         )
         summary["official_result"] = outputs
-        if profile_identity in V5_NATIVE_PROFILES:
+        if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
             summary["matched_reference"] = compare_retained_v5_output(
-                profile_identity,
+                V6_BASE_PROFILES.get(profile_identity, profile_identity),
                 outputs,
                 directory / "numerical_output",
                 fine=runtime.fine,

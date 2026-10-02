@@ -149,6 +149,14 @@ def _load_and_validate_worker_payload(
         errors.append("manifest requested-mode identity mismatch")
 
     expected_execution_mode = "setup_only" if setup_only else "full_solve"
+    if not setup_only:
+        from src.io.native_capacity_profile import V6_NATIVE_PROFILES, native_profile_facts
+        profile_name = resolved.get('solver', {}).get('preconditioner')
+        if profile_name in V6_NATIVE_PROFILES:
+            profile = native_profile_facts(profile_name)
+            expected_execution_mode = profile['execution_mode']
+            if manifest_value.get('component_options') != profile['component_options']:
+                errors.append('manifest V6 component options mismatch')
     if manifest_value.get("execution_mode", "full_solve") != expected_execution_mode:
         errors.append("worker CLI and manifest execution mode mismatch")
     if setup_only:

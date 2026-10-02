@@ -1209,7 +1209,7 @@ FIELD_SPECS: Final = (
         "native worker memory policy",
         '"none"',
         default="none",
-        allowed=("none", "membind_node1", "preferred_node1"),
+        allowed=("none", "membind_node1", "preferred_node1", "interleave_nodes0_1"),
     ),
     # output
     _f(

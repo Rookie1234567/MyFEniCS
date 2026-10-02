@@ -102,10 +102,10 @@ def _retained_v5_aq_projection_errors(
     """Validate V5 Aq evidence while keeping its summed identity record-only."""
 
     from src.io.native_capacity_profile import (
-        V5_NATIVE_PROFILES,
+        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES,
     )
 
-    if identity not in V5_NATIVE_PROFILES:
+    if identity not in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
         return []
     errors = []
 
@@ -318,14 +318,14 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
 
     from src.io.physical_intermediate_profile import profile_facts
     from src.io.native_capacity_profile import (
-        V5_EXPECTED_MODE_COUNTS,
-        V5_NATIVE_PROFILES,
+        V5_EXPECTED_MODE_COUNTS, V6_BASE_PROFILES,
+        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES,
     )
 
     identity = summary.get('profile', {}).get('identity')
-    is_v5 = identity in V5_NATIVE_PROFILES
+    is_v5 = identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES)
     expected_mode_count = (
-        V5_EXPECTED_MODE_COUNTS.get(identity)
+        V5_EXPECTED_MODE_COUNTS.get(V6_BASE_PROFILES.get(identity, identity))
         if is_v5
         else 600 if identity == 'dual_condensed_balh_native_5nm_v3'
         else None
@@ -699,11 +699,11 @@ def check(directory: Path) -> dict:
     summary = json.loads((directory / 'physical_intermediate_summary.json').read_text())
     from src.io.native_capacity_profile import (
         RETAINED_CONDENSED_PROFILE,
-        V5_NATIVE_PROFILES,
+        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES,
     )
 
     identity = summary.get('profile', {}).get('identity')
-    if identity == RETAINED_CONDENSED_PROFILE or identity in V5_NATIVE_PROFILES:
+    if identity == RETAINED_CONDENSED_PROFILE or identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
         return check_retained_v20(directory, summary)
     errors, facts, expected_errors = [], {}, []
     controlled = summary['status'] in ('SCREEN_BUDGET_NO_QUALIFIED_PROGRESS',

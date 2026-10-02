@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from types import MappingProxyType
 from typing import Any
 
 import basix
@@ -39,11 +40,26 @@ def _normalized_legendre_derivatives(points: np.ndarray, degree: int) -> np.ndar
 class N1ESumFactorizedAction:
     """Apply one isotropic N1E cell action with fixed batch workspace."""
 
-    def __init__(self, space: Any, basis: Any, *, batch_size: int) -> None:
+    def __init__(
+        self,
+        space: Any,
+        basis: Any,
+        *,
+        batch_size: int,
+        reuse_projection_work: bool = False,
+        natural_order_internal: bool = False,
+        continuous_projection_matmul: bool = False,
+        shared_contractions: bool = False,
+        combine_real_imag_transforms: bool = False,
+        reference_bundle=None,
+        share_reference: bool = False,
+    ) -> None:
         batch_size = int(batch_size)
         if batch_size < 1:
             raise ValueError("sum-factorized batch_size must be positive")
         self.batch_size = batch_size
+        self.shared_contractions = bool(shared_contractions)
+        self.combine_real_imag_transforms = bool(combine_real_imag_transforms)
         element = space.element.basix_element
         if (
             element.family != basix.ElementFamily.N1E
@@ -84,39 +100,103 @@ class N1ESumFactorizedAction:
         input_to_natural = np.empty(len(points), dtype=np.int64)
         input_to_natural[natural_to_input] = np.arange(len(points), dtype=np.int64)
 
-        coefficient_matrix = np.ascontiguousarray(
+        candidate_coefficient_matrix = np.ascontiguousarray(
             basis.coefficient_matrix, dtype=np.float64
         )
         polynomial_dimension = (degree + 1) ** 3
         expected_shape = (int(element.dim), 3 * polynomial_dimension)
-        if coefficient_matrix.shape != expected_shape:
+        if candidate_coefficient_matrix.shape != expected_shape:
             raise NotImplementedError(
                 "actual N1E coefficient matrix is not a 3-block hexahedron polyset"
             )
-        if not np.all(np.isfinite(coefficient_matrix)):
+        if not np.all(np.isfinite(candidate_coefficient_matrix)):
             raise ValueError("N1E coefficient matrix contains non-finite values")
-        coefficient_matrix.flags.writeable = False
-
-        values_1d = []
-        derivatives_1d = []
-        for axis in axes:
-            axis_points = np.ascontiguousarray(axis[:, None], dtype=np.float64)
-            values = np.asarray(
-                polynomials.tabulate_polynomials(
-                    basix.PolynomialType.legendre,
-                    basix.CellType.interval,
-                    degree,
-                    axis_points,
+        reference_identity = None
+        if share_reference or reference_bundle is not None:
+            reference_identity = {
+                "element_family": element.family.name,
+                "element_degree": int(element.degree),
+                "element_variant": getattr(
+                    getattr(element, "lagrange_variant", None), "name", "unknown"
                 ),
-                dtype=np.float64,
+                "element_map_type": element.map_type.name,
+                "element_value_size": int(element.value_size),
+                "degree": degree,
+                "quadrature_shape": list(shape),
+                "points_sha256": hashlib.sha256(points.tobytes()).hexdigest(),
+                "weights_sha256": hashlib.sha256(weights.tobytes()).hexdigest(),
+                "coefficient_matrix_sha256": hashlib.sha256(
+                    candidate_coefficient_matrix.tobytes()
+                ).hexdigest(),
+                "quadrature_degree": int(basis.audit["quadrature_degree"]),
+                "quadrature_rule": basis.audit["quadrature_rule"],
+            }
+        if reference_bundle is not None:
+            if not share_reference:
+                raise ValueError("reference bundle requires explicit sharing opt-in")
+            bundle_identity = dict(reference_bundle.get("identity", {}))
+            if bundle_identity != reference_identity:
+                raise ValueError("shared reference bundle identity mismatch")
+            shared_arrays = (
+                reference_bundle["points"],
+                reference_bundle["weights"],
+                reference_bundle["natural_to_input"],
+                reference_bundle["input_to_natural"],
+                reference_bundle["coefficient_matrix"],
+                *reference_bundle["values_1d"],
+                *reference_bundle["derivatives_1d"],
             )
-            derivatives = _normalized_legendre_derivatives(axis, degree)
-            if values.shape != (degree + 1, len(axis)):
-                raise RuntimeError("Basix interval Legendre table has an unexpected shape")
-            # Basix returns (polynomial, quadrature); contractions below use
-            # (quadrature, polynomial).
-            values_1d.append(np.ascontiguousarray(values.T))
-            derivatives_1d.append(np.ascontiguousarray(derivatives.T))
+            if any(array.flags.writeable for array in shared_arrays):
+                raise ValueError("shared reference bundle arrays integrity mismatch")
+            if (
+                hashlib.sha256(reference_bundle["points"].tobytes()).hexdigest()
+                != bundle_identity["points_sha256"]
+                or hashlib.sha256(reference_bundle["weights"].tobytes()).hexdigest()
+                != bundle_identity["weights_sha256"]
+                or hashlib.sha256(
+                    reference_bundle["coefficient_matrix"].tobytes()
+                ).hexdigest()
+                != bundle_identity["coefficient_matrix_sha256"]
+            ):
+                raise ValueError("shared reference bundle arrays integrity mismatch")
+            coefficient_matrix = reference_bundle["coefficient_matrix"]
+            points = reference_bundle["points"]
+            weights = reference_bundle["weights"]
+            natural_to_input = reference_bundle["natural_to_input"]
+            input_to_natural = reference_bundle["input_to_natural"]
+            values_1d = tuple(reference_bundle["values_1d"])
+            derivatives_1d = tuple(reference_bundle["derivatives_1d"])
+            # Release the duplicate ReferenceCellBasis payload; the basis
+            # remains the identity/audit owner while the immutable numeric
+            # arrays are borrowed from the live reference bundle.
+            basis.points = points
+            basis.weights = weights
+            basis.coefficient_matrix = coefficient_matrix
+        else:
+            coefficient_matrix = candidate_coefficient_matrix
+            values_1d = []
+            derivatives_1d = []
+            for axis in axes:
+                axis_points = np.ascontiguousarray(axis[:, None], dtype=np.float64)
+                values = np.asarray(
+                    polynomials.tabulate_polynomials(
+                        basix.PolynomialType.legendre,
+                        basix.CellType.interval,
+                        degree,
+                        axis_points,
+                    ),
+                    dtype=np.float64,
+                )
+                derivatives = _normalized_legendre_derivatives(axis, degree)
+                if values.shape != (degree + 1, len(axis)):
+                    raise RuntimeError(
+                        "Basix interval Legendre table has an unexpected shape"
+                    )
+                # Basix returns (polynomial, quadrature); contractions below use
+                # (quadrature, polynomial).
+                values_1d.append(np.ascontiguousarray(values.T))
+                derivatives_1d.append(np.ascontiguousarray(derivatives.T))
+        coefficient_matrix.flags.writeable = False
 
         tensor_points_upper_bound = int(
             np.prod([max(len(axis), degree + 1) for axis in axes])
@@ -144,16 +224,45 @@ class N1ESumFactorizedAction:
         self.degree = degree
         self.polynomial_dimension = polynomial_dimension
         self.batch_size = int(batch_size)
+        self.reuse_projection_work = bool(reuse_projection_work)
+        self.share_reference = bool(share_reference)
         self.shape = shape
         self.points = points
-        # Keep FFCx's native point order for metric multiplication.  The
-        # field conversion helpers alone cross the natural tensor ordering.
-        self.weights = np.ascontiguousarray(weights)
+        # Preserve source-order weights; candidate weights are a private copy.
+        self._weights_input_order = np.ascontiguousarray(weights)
+        self.weights = self._weights_input_order
+        self.natural_order_internal = False
+        self.continuous_projection_matmul = False
         self.natural_to_input = natural_to_input
         self.input_to_natural = input_to_natural
         self.coefficient_matrix = coefficient_matrix
         self.values_1d = tuple(values_1d)
         self.derivatives_1d = tuple(derivatives_1d)
+        if self.share_reference and reference_bundle is None:
+            for array in (
+                self.points,
+                self.weights,
+                self.natural_to_input,
+                self.input_to_natural,
+                *self.values_1d,
+                *self.derivatives_1d,
+            ):
+                array.flags.writeable = False
+            self.reference_bundle = MappingProxyType({
+                "schema": "task039extra.readonly-reference-bundle.v1",
+                "identity": reference_identity,
+                "points": self.points,
+                "weights": self.weights,
+                "natural_to_input": self.natural_to_input,
+                "input_to_natural": self.input_to_natural,
+                "coefficient_matrix": self.coefficient_matrix,
+                "values_1d": self.values_1d,
+                "derivatives_1d": self.derivatives_1d,
+            })
+        elif reference_bundle is not None:
+            self.reference_bundle = reference_bundle
+        else:
+            self.reference_bundle = None
         self._poly = np.empty(
             (self.batch_size, 3, polynomial_dimension), dtype=np.complex128
         )
@@ -170,22 +279,89 @@ class N1ESumFactorizedAction:
         self._result = np.empty(
             (self.batch_size, int(element.dim)), dtype=np.complex128
         )
+        # This extra workspace is opt-in because the qualified V25 path must
+        # keep its allocation and audit contract unchanged.  Curl terms
+        # consume the first projection before requesting the second, so the
+        # shared result buffer never aliases two operands of the subtraction.
+        if self.reuse_projection_work:
+            self._projection_first = np.empty(
+                (self.batch_size, shape[0], shape[1], degree + 1),
+                dtype=np.complex128,
+            )
+            self._projection_second = np.empty(
+                (self.batch_size, shape[0], degree + 1, degree + 1),
+                dtype=np.complex128,
+            )
+            self._projection_result = np.empty(
+                (self.batch_size, polynomial_dimension), dtype=np.complex128
+            )
+        else:
+            self._projection_first = None
+            self._projection_second = None
+            self._projection_result = None
+        self._projection_y_input = None
+        self._projection_x_input = None
+        self._projection_x_result = None
         # These four contiguous real arrays are reused for both coefficient
         # transforms.  They avoid stride-2 complex views as BLAS operands and
         # avoid promoting the real coefficient matrix to a complex temporary.
+        transform_batch = (
+            2 * self.batch_size
+            if self.combine_real_imag_transforms
+            else self.batch_size
+        )
         self._coefficient_real_work = np.empty(
-            (self.batch_size, int(element.dim)), dtype=np.float64
+            (transform_batch, int(element.dim)), dtype=np.float64
         )
-        self._coefficient_imag_work = np.empty_like(self._coefficient_real_work)
+        self._coefficient_imag_work = (
+            None
+            if self.combine_real_imag_transforms
+            else np.empty_like(self._coefficient_real_work)
+        )
         self._polynomial_real_work = np.empty(
-            (self.batch_size, 3 * polynomial_dimension), dtype=np.float64
+            (transform_batch, 3 * polynomial_dimension), dtype=np.float64
         )
-        self._polynomial_imag_work = np.empty_like(self._polynomial_real_work)
+        self._polynomial_imag_work = (
+            None
+            if self.combine_real_imag_transforms
+            else np.empty_like(self._polynomial_real_work)
+        )
+        if self.shared_contractions:
+            qx, qy, _ = shape
+            width = degree + 1
+            self._x_values = np.empty(
+                (self.batch_size, qx, width, width), dtype=np.complex128
+            )
+            self._x_derivatives = np.empty_like(self._x_values)
+            self._y_values = np.empty(
+                (self.batch_size, qx, qy, width), dtype=np.complex128
+            )
+            self._y_derivatives = np.empty_like(self._y_values)
+            self._y_from_x_derivatives = np.empty_like(self._y_values)
+            self._tensor_evaluation = np.empty(
+                (self.batch_size, len(points)), dtype=np.complex128
+            )
+        else:
+            self._x_values = None
+            self._x_derivatives = None
+            self._y_values = None
+            self._y_derivatives = None
+            self._y_from_x_derivatives = None
+            self._tensor_evaluation = None
+        self._contraction_counts = {"x": 0, "y": 0, "z": 0}
+        self._backward_projection_count = 0
         self.timing = {
             "coefficient_transform": 0.0,
             "reference_forward": 0.0,
             "metric": 0.0,
             "reference_backward": 0.0,
+            "projection_input_pack_or_reorder": 0.0,
+            "projection_y_pack": 0.0,
+            "projection_z_matmul": 0.0,
+            "projection_y_matmul": 0.0,
+            "projection_x_pack": 0.0,
+            "projection_x_matmul": 0.0,
+            "projection_result_copy": 0.0,
         }
         self.audit = {
             "backend": "isotropic_sum_factorized_n1e_v26",
@@ -223,11 +399,20 @@ class N1ESumFactorizedAction:
                     self._derivatives,
                     self._poly_result,
                     self._result,
+                    self._projection_first,
+                    self._projection_second,
+                    self._projection_result,
                     self._coefficient_real_work,
                     self._coefficient_imag_work,
                     self._polynomial_real_work,
                     self._polynomial_imag_work,
-                ))
+                    self._x_values,
+                    self._x_derivatives,
+                    self._y_values,
+                    self._y_derivatives,
+                    self._y_from_x_derivatives,
+                    self._tensor_evaluation,
+                ) if array is not None)
             ),
             "temporary_einsum_workspace_upper_bound_bytes": temporary_einsum_bytes,
             "temporary_local_intermediate_upper_bound_bytes": temporary_local_bytes,
@@ -237,7 +422,171 @@ class N1ESumFactorizedAction:
             "workspace_scope": "one fixed local batch; no global matrix or cell tensor",
             "native_tensor_product_api": bool(element.has_tensor_product_factorisation),
             "coefficient_transform_real_imag": True,
+            "coefficient_transform_real_imag_layout": (
+                "stacked_real_then_imag_single_real_gemm"
+                if self.combine_real_imag_transforms
+                else "separate_real_and_imag_real_gemms"
+            ),
+            "combined_real_imag_transform_opt_in": (
+                self.combine_real_imag_transforms
+            ),
+            "reuse_projection_work_opt_in": self.reuse_projection_work,
+            "projection_layout_v31_candidate": {
+                "natural_order_internal": False,
+                "continuous_projection_matmul": False,
+            },
+            "projection_layout_v31_scratch_bytes": 0,
+            "projection_layout_v31_blas_pack_upper_bound_bytes": 0,
+            "shared_contractions_opt_in": self.shared_contractions,
+            "shared_contraction_scratch_bytes": int(
+                sum(
+                    array.nbytes
+                    for array in (
+                        self._x_values,
+                        self._x_derivatives,
+                        self._y_values,
+                        self._y_derivatives,
+                        self._y_from_x_derivatives,
+                        self._tensor_evaluation,
+                    )
+                    if array is not None
+                )
+            ),
+            "forward_tensor_contraction_counts": self._contraction_counts,
+            "forward_tensor_contraction_count": 0,
+            "backward_projection_count": 0,
+            "backward_tensor_contraction_count": 0,
+            "backward_tensor_contraction_counts": {"x": 0, "y": 0, "z": 0},
         }
+        self._base_batch_workspace_bytes = int(self.audit["batch_workspace_bytes"])
+        if natural_order_internal or continuous_projection_matmul:
+            self.configure_projection_layout_v31_candidate(
+                natural_order_internal=natural_order_internal,
+                continuous_projection_matmul=continuous_projection_matmul,
+            )
+
+    def configure_projection_layout_v31_candidate(
+        self,
+        *,
+        natural_order_internal: bool,
+        continuous_projection_matmul: bool,
+    ) -> None:
+        """Select the bounded R3 diagnostic variant without changing defaults."""
+        natural_order_internal = bool(natural_order_internal)
+        continuous_projection_matmul = bool(continuous_projection_matmul)
+        if continuous_projection_matmul and not natural_order_internal:
+            raise ValueError("fixed projection matmul requires natural internal order")
+        if natural_order_internal and self.reuse_projection_work:
+            raise ValueError(
+                "natural internal order cannot use the legacy reordered projection workspace"
+            )
+        self.natural_order_internal = natural_order_internal
+        self.continuous_projection_matmul = continuous_projection_matmul
+        self.weights = (
+            np.ascontiguousarray(
+                self._weights_input_order[self.natural_to_input],
+                dtype=np.float64,
+            )
+            if natural_order_internal
+            else self._weights_input_order
+        )
+        if continuous_projection_matmul:
+            width = self.degree + 1
+            qx, qy, _ = self.shape
+            if self._projection_first is None:
+                self._projection_first = np.empty(
+                    (self.batch_size, qx, qy, width), dtype=np.complex128
+                )
+                self._projection_second = np.empty(
+                    (self.batch_size, qx, width, width), dtype=np.complex128
+                )
+                self._projection_result = np.empty(
+                    (self.batch_size, self.polynomial_dimension),
+                    dtype=np.complex128,
+                )
+            if self._projection_y_input is None:
+                self._projection_y_input = np.empty(
+                    (self.batch_size, qx, width, qy), dtype=np.complex128
+                )
+                self._projection_x_input = np.empty(
+                    (self.batch_size, width, width, qx), dtype=np.complex128
+                )
+                self._projection_x_result = np.empty(
+                    (self.batch_size, width, width, width), dtype=np.complex128
+                )
+        auxiliary = (
+            self._projection_y_input,
+            self._projection_x_input,
+            self._projection_x_result,
+        )
+        scratch_arrays = tuple(array for array in auxiliary if array is not None)
+        if not self.reuse_projection_work:
+            scratch_arrays += tuple(
+                array
+                for array in (
+                    self._projection_first,
+                    self._projection_second,
+                    self._projection_result,
+                )
+                if array is not None
+            )
+        scratch_bytes = sum(array.nbytes for array in scratch_arrays)
+        permutation = self.natural_to_input
+        expected = np.arange(len(permutation), dtype=np.int64)
+        permutation_verified = (
+            permutation.shape == expected.shape
+            and np.array_equal(np.sort(permutation), expected)
+            and np.array_equal(self.input_to_natural[permutation], expected)
+        )
+        if not permutation_verified:
+            raise ValueError("quadrature point-order maps are not inverse permutations")
+        internal_points = (
+            self.points[permutation] if natural_order_internal else self.points
+        )
+        internal_weights = self.weights
+        self.audit["natural_order_internal_opt_in"] = natural_order_internal
+        self.audit["continuous_projection_matmul_opt_in"] = (
+            continuous_projection_matmul
+        )
+        self.audit["points_sha256"] = hashlib.sha256(
+            self.points.tobytes()
+        ).hexdigest()
+        self.audit["weights_sha256"] = hashlib.sha256(
+            self._weights_input_order.tobytes()
+        ).hexdigest()
+        self.audit["internal_points_sha256"] = hashlib.sha256(
+            internal_points.tobytes()
+        ).hexdigest()
+        self.audit["internal_weights_sha256"] = hashlib.sha256(
+            internal_weights.tobytes()
+        ).hexdigest()
+        self.audit["internal_quadrature_order"] = (
+            "natural_tensor_order_v31"
+            if natural_order_internal
+            else "source_input_order"
+        )
+        self.audit["point_permutation_bijection_verified"] = True
+        self.audit["weights_permuted_with_points"] = natural_order_internal
+        self.audit["backward_projection_kernel"] = (
+            "continuous_z_y_x_matmul_v31"
+            if continuous_projection_matmul
+            else "einsum_z_y_x_legacy"
+        )
+        self.audit["projection_workspace_bytes"] = int(scratch_bytes)
+        self.audit["projection_layout_v31_candidate"] = {
+            "natural_order_internal": natural_order_internal,
+            "continuous_projection_matmul": continuous_projection_matmul,
+        }
+        self.audit["projection_layout_v31_scratch_bytes"] = int(scratch_bytes)
+        self.audit["projection_layout_v31_blas_pack_upper_bound_bytes"] = int(
+            self.batch_size
+            * max(self.shape)
+            * (self.degree + 1) ** 2
+            * np.dtype(np.complex128).itemsize
+        )
+        self.audit["batch_workspace_bytes"] = int(
+            self._base_batch_workspace_bytes + scratch_bytes
+        )
 
     @staticmethod
     def _evaluate(
@@ -270,88 +619,318 @@ class N1ESumFactorizedAction:
 
     def _field_from_polynomial(self, coefficients: np.ndarray, tables) -> np.ndarray:
         natural = self._evaluate(coefficients, *tables)
+        if self.natural_order_internal:
+            return natural
         return natural[:, self.input_to_natural]
 
     def _polynomial_from_field(self, values: np.ndarray, tables) -> np.ndarray:
+        started = time.perf_counter()
+        if self.natural_order_internal:
+            natural = np.ascontiguousarray(values).reshape(
+                values.shape[0], *self.shape
+            )
+        else:
+            natural = values[:, self.natural_to_input].reshape(
+                values.shape[0], *self.shape
+            )
+        self.timing["projection_input_pack_or_reorder"] += time.perf_counter() - started
+        return self._project(natural, *tables)
+
+    def _polynomial_from_field_matmul(
+        self, values: np.ndarray, tables
+    ) -> np.ndarray:
+        if not self.continuous_projection_matmul or not self.natural_order_internal:
+            raise RuntimeError("R3 fixed projection matmul is not configured")
+        started = time.perf_counter()
+        natural = np.ascontiguousarray(values).reshape(
+            values.shape[0], *self.shape
+        )
+        self.timing["projection_input_pack_or_reorder"] += time.perf_counter() - started
+        x_table, y_table, z_table = tables
+        count = int(values.shape[0])
+        qx, qy, qz = self.shape
+        width = self.degree + 1
+        first = self._projection_first[:count]
+        second = self._projection_second[:count]
+        result = self._projection_result[:count]
+
+        started = time.perf_counter()
+        np.matmul(
+            natural.reshape(count * qx * qy, qz),
+            z_table,
+            out=first.reshape(count * qx * qy, width),
+        )
+        self.timing["projection_z_matmul"] += time.perf_counter() - started
+
+        started = time.perf_counter()
+        y_input = self._projection_y_input[:count]
+        np.copyto(y_input, first.transpose(0, 1, 3, 2))
+        self.timing["projection_y_pack"] += time.perf_counter() - started
+        started = time.perf_counter()
+        np.matmul(
+            y_input.reshape(count * qx * width, qy),
+            y_table,
+            out=second.reshape(count * qx * width, width),
+        )
+        self.timing["projection_y_matmul"] += time.perf_counter() - started
+
+        started = time.perf_counter()
+        x_input = self._projection_x_input[:count]
+        np.copyto(x_input, second.transpose(0, 2, 3, 1))
+        self.timing["projection_x_pack"] += time.perf_counter() - started
+        started = time.perf_counter()
+        x_result = self._projection_x_result[:count]
+        np.matmul(
+            x_input.reshape(count * width * width, qx),
+            x_table,
+            out=x_result.reshape(count * width * width, width),
+        )
+        self.timing["projection_x_matmul"] += time.perf_counter() - started
+        started = time.perf_counter()
+        np.copyto(
+            result.reshape(count, width, width, width),
+            x_result.transpose(0, 3, 2, 1),
+        )
+        self.timing["projection_result_copy"] += time.perf_counter() - started
+        return result
+
+    def _polynomial_from_field_reuse(
+        self, values: np.ndarray, tables
+    ) -> np.ndarray:
+        """Project through fixed buffers while preserving contraction order."""
+        if not self.reuse_projection_work:
+            raise RuntimeError("projection work reuse is not enabled")
         natural = values[:, self.natural_to_input].reshape(
             values.shape[0], *self.shape
         )
-        return self._project(natural, *tables)
+        x_table, y_table, z_table = tables
+        count = int(values.shape[0])
+        first = self._projection_first[:count, :, :, : z_table.shape[1]]
+        second = self._projection_second[:count, :, : y_table.shape[1], : z_table.shape[1]]
+        result = self._projection_result[:count]
+        np.einsum(
+            "bxyz,zk->bxyk",
+            natural,
+            z_table,
+            out=first,
+            optimize=True,
+        )
+        np.einsum(
+            "bxyk,yj->bxjk",
+            first,
+            y_table,
+            out=second,
+            optimize=True,
+        )
+        np.einsum(
+            "bxjk,xi->bijk",
+            second,
+            x_table,
+            out=result.reshape(count, self.degree + 1, self.degree + 1, self.degree + 1),
+            optimize=True,
+        )
+        return result
 
-    def apply(
-        self,
-        local: np.ndarray,
-        metrics: np.ndarray,
-        materials: np.ndarray,
-        *,
-        component: str | None = None,
-    ) -> np.ndarray:
-        """Apply ``curl_coefficient*curl^H curl + mass_coefficient*mass``."""
+    def _record_contractions(self, x: int, y: int, z: int) -> None:
+        self._contraction_counts["x"] += int(x)
+        self._contraction_counts["y"] += int(y)
+        self._contraction_counts["z"] += int(z)
 
+    def _store_tensor_field(
+        self, intermediate: np.ndarray, z_table: np.ndarray, destination: np.ndarray
+    ) -> None:
+        count = int(destination.shape[0])
+        tensor = self._tensor_evaluation[:count].reshape(count, *self.shape)
+        np.einsum(
+            "zk,bxyk->bxyz", z_table, intermediate, out=tensor, optimize=True
+        )
+        if self.natural_order_internal:
+            np.copyto(destination, tensor.reshape(count, -1))
+        else:
+            np.take(
+                tensor.reshape(count, -1),
+                self.input_to_natural,
+                axis=1,
+                out=destination,
+            )
+        self._contraction_counts["z"] += 1
+
+    def _evaluate_shared_fields(
+        self, polynomial: np.ndarray, component: str | None
+    ) -> None:
+        values = self.values_1d
+        derivatives = self.derivatives_1d
+        for vector_component in range(3):
+            need_dx = component != "mass" and vector_component in (1, 2)
+            need_dy = component != "mass" and vector_component in (0, 2)
+            need_dz = component != "mass" and vector_component in (0, 1)
+            need_value = component != "curl"
+            need_x_value = need_value or need_dy or need_dz
+            if need_x_value:
+                np.einsum(
+                    "xi,bijk->bxjk",
+                    values[0],
+                    polynomial[:, vector_component],
+                    out=self._x_values[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["x"] += 1
+            if need_dx:
+                np.einsum(
+                    "xi,bijk->bxjk",
+                    derivatives[0],
+                    polynomial[:, vector_component],
+                    out=self._x_derivatives[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["x"] += 1
+            if need_value or need_dz:
+                np.einsum(
+                    "yj,bxjk->bxyk",
+                    values[1],
+                    self._x_values[: polynomial.shape[0]],
+                    out=self._y_values[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["y"] += 1
+            if need_dy:
+                np.einsum(
+                    "yj,bxjk->bxyk",
+                    derivatives[1],
+                    self._x_values[: polynomial.shape[0]],
+                    out=self._y_derivatives[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["y"] += 1
+            if need_dx:
+                np.einsum(
+                    "yj,bxjk->bxyk",
+                    values[1],
+                    self._x_derivatives[: polynomial.shape[0]],
+                    out=self._y_from_x_derivatives[: polynomial.shape[0]],
+                    optimize=True,
+                )
+                self._contraction_counts["y"] += 1
+            if need_value:
+                self._store_tensor_field(
+                    self._y_values[: polynomial.shape[0]],
+                    values[2],
+                    self._values[: polynomial.shape[0], :, vector_component],
+                )
+            if need_dx:
+                self._store_tensor_field(
+                    self._y_from_x_derivatives[: polynomial.shape[0]],
+                    values[2],
+                    self._derivatives[
+                        : polynomial.shape[0], :, vector_component, 0
+                    ],
+                )
+            if need_dy:
+                self._store_tensor_field(
+                    self._y_derivatives[: polynomial.shape[0]],
+                    values[2],
+                    self._derivatives[
+                        : polynomial.shape[0], :, vector_component, 1
+                    ],
+                )
+            if need_dz:
+                self._store_tensor_field(
+                    self._y_values[: polynomial.shape[0]],
+                    derivatives[2],
+                    self._derivatives[
+                        : polynomial.shape[0], :, vector_component, 2
+                    ],
+                )
+
+    def _coefficients_to_polynomial(self, local: np.ndarray) -> np.ndarray:
         local = np.asarray(local, dtype=np.complex128)
-        metrics = np.asarray(metrics, dtype=np.float64)
-        materials = np.asarray(materials, dtype=np.complex128)
         count = int(local.shape[0])
         if (
             local.ndim != 2
             or local.shape[1] != self.coefficient_matrix.shape[0]
             or count > self.batch_size
+        ):
+            raise ValueError("sum-factorized coefficient input has incompatible shape")
+        started = time.perf_counter()
+        polynomial_work = self._poly[:count].reshape(count, -1)
+        if self.combine_real_imag_transforms:
+            coefficient_stack = self._coefficient_real_work[: 2 * count]
+            polynomial_stack = self._polynomial_real_work[: 2 * count]
+            np.copyto(coefficient_stack[:count], local.real)
+            np.copyto(coefficient_stack[count:], local.imag)
+            np.matmul(
+                coefficient_stack,
+                self.coefficient_matrix,
+                out=polynomial_stack,
+            )
+            np.copyto(polynomial_work.real, polynomial_stack[:count])
+            np.copyto(polynomial_work.imag, polynomial_stack[count:])
+        else:
+            coefficient_real = self._coefficient_real_work[:count]
+            coefficient_imag = self._coefficient_imag_work[:count]
+            polynomial_real = self._polynomial_real_work[:count]
+            polynomial_imag = self._polynomial_imag_work[:count]
+            np.copyto(coefficient_real, local.real)
+            np.copyto(coefficient_imag, local.imag)
+            np.matmul(coefficient_real, self.coefficient_matrix, out=polynomial_real)
+            np.matmul(coefficient_imag, self.coefficient_matrix, out=polynomial_imag)
+            np.copyto(polynomial_work.real, polynomial_real)
+            np.copyto(polynomial_work.imag, polynomial_imag)
+        self.timing["coefficient_transform"] += time.perf_counter() - started
+        return self._poly[:count].reshape(
+            count, 3, self.degree + 1, self.degree + 1, self.degree + 1
+        )
+
+    def _integrate_polynomial(
+        self,
+        polynomial: np.ndarray,
+        metrics: np.ndarray,
+        materials: np.ndarray,
+        *,
+        component: str | None,
+    ) -> np.ndarray:
+        count = int(polynomial.shape[0])
+        metrics = np.asarray(metrics, dtype=np.float64)
+        materials = np.asarray(materials, dtype=np.complex128)
+        if (
+            polynomial.shape
+            != (count, 3, self.degree + 1, self.degree + 1, self.degree + 1)
+            or count > self.batch_size
             or metrics.shape != (count, 2, 3, 3)
             or materials.shape != (count, 2)
             or component not in (None, "curl", "mass")
         ):
-            raise ValueError("sum-factorized local action has incompatible inputs")
+            raise ValueError("sum-factorized polynomial action has incompatible inputs")
+
         started = time.perf_counter()
-        # C is real.  Transforming the real and imaginary parts separately
-        # keeps the real coefficient matrix from being promoted or copied to
-        # a full complex temporary on every batch.
-        coefficient_real = self._coefficient_real_work[:count]
-        coefficient_imag = self._coefficient_imag_work[:count]
-        polynomial_real = self._polynomial_real_work[:count]
-        polynomial_imag = self._polynomial_imag_work[:count]
-        np.copyto(coefficient_real, local.real)
-        np.copyto(coefficient_imag, local.imag)
-        np.matmul(coefficient_real, self.coefficient_matrix, out=polynomial_real)
-        np.matmul(coefficient_imag, self.coefficient_matrix, out=polynomial_imag)
-        polynomial_work = self._poly[:count].reshape(count, -1)
-        np.copyto(polynomial_work.real, polynomial_real)
-        np.copyto(polynomial_work.imag, polynomial_imag)
-        self.timing["coefficient_transform"] += time.perf_counter() - started
-        polynomial = self._poly[:count].reshape(
-            count, 3, self.degree + 1, self.degree + 1, self.degree + 1
-        )
-        started = time.perf_counter()
-        if component != "curl":
-            for vector_component in range(3):
-                self._values[:count, :, vector_component] = self._field_from_polynomial(
-                    polynomial[:, vector_component], self.values_1d
+        if self.shared_contractions:
+            self._evaluate_shared_fields(polynomial, component)
+        else:
+            if component != "curl":
+                for vector_component in range(3):
+                    self._values[:count, :, vector_component] = self._field_from_polynomial(
+                        polynomial[:, vector_component], self.values_1d
+                    )
+            if component != "mass":
+                dx = (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
+                dy = (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
+                dz = (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
+                fields = (
+                    (1, 2, dz), (2, 1, dy), (0, 2, dz),
+                    (2, 0, dx), (1, 0, dx), (0, 1, dy),
                 )
+                for vector_component, axis, tables in fields:
+                    self._derivatives[:count, :, vector_component, axis] = (
+                        self._field_from_polynomial(
+                            polynomial[:, vector_component], tables
+                        )
+                    )
+            field_count = (3 if component != "curl" else 0) + (
+                6 if component != "mass" else 0
+            )
+            self._record_contractions(field_count, field_count, field_count)
         if component != "mass":
-            # Only the six cross derivatives entering curl are evaluated.
-            # The diagonal derivatives never enter the H(curl) curl and are
-            # deliberately left out of this opt-in path.
-            dx = (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
-            dy = (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
-            dz = (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
             derivatives = self._derivatives[:count]
-            derivatives[:, :, 1, 2] = self._field_from_polynomial(
-                polynomial[:, 1], dz
-            )
-            derivatives[:, :, 2, 1] = self._field_from_polynomial(
-                polynomial[:, 2], dy
-            )
-            derivatives[:, :, 0, 2] = self._field_from_polynomial(
-                polynomial[:, 0], dz
-            )
-            derivatives[:, :, 2, 0] = self._field_from_polynomial(
-                polynomial[:, 2], dx
-            )
-            derivatives[:, :, 1, 0] = self._field_from_polynomial(
-                polynomial[:, 1], dx
-            )
-            derivatives[:, :, 0, 1] = self._field_from_polynomial(
-                polynomial[:, 0], dy
-            )
             self._curls[:count, :, 0] = (
                 derivatives[:, :, 2, 1] - derivatives[:, :, 1, 2]
             )
@@ -383,61 +962,131 @@ class N1ESumFactorizedAction:
 
         started = time.perf_counter()
         self._poly_result[:count] = 0.0
+        backward_projection = (
+            self._polynomial_from_field_matmul
+            if self.continuous_projection_matmul
+            else (
+                self._polynomial_from_field_reuse
+                if self.reuse_projection_work and not self.natural_order_internal
+                else self._polynomial_from_field
+            )
+        )
+        projection_result_is_reused = (
+            self.reuse_projection_work or self.continuous_projection_matmul
+        )
         for vector_component in range(3):
             if component != "curl":
-                self._poly_result[:count, vector_component] += (
-                    self._polynomial_from_field(
-                        self._flux[:count, :, vector_component], self.values_1d
-                    )
+                self._poly_result[:count, vector_component] += backward_projection(
+                    self._flux[:count, :, vector_component], self.values_1d
                 )
         if component != "mass":
-            fx = self._curl_flux[:count, :, 0]
-            fy = self._curl_flux[:count, :, 1]
-            fz = self._curl_flux[:count, :, 2]
-            self._poly_result[:count, 0] += (
-                self._polynomial_from_field(
-                    fy,
-                    (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2]),
+            fx, fy, fz = (self._curl_flux[:count, :, k] for k in range(3))
+            if projection_result_is_reused:
+                self._poly_result[:count, 0] += backward_projection(
+                    fy, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
                 )
-                - self._polynomial_from_field(
-                    fz,
-                    (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2]),
+                self._poly_result[:count, 0] -= backward_projection(
+                    fz, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
                 )
-            )
-            self._poly_result[:count, 1] += (
-                self._polynomial_from_field(
-                    fz,
-                    (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2]),
+                self._poly_result[:count, 1] += backward_projection(
+                    fz, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
                 )
-                - self._polynomial_from_field(
-                    fx,
-                    (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2]),
+                self._poly_result[:count, 1] -= backward_projection(
+                    fx, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
                 )
-            )
-            self._poly_result[:count, 2] += (
-                self._polynomial_from_field(
-                    fx,
-                    (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2]),
+                self._poly_result[:count, 2] += backward_projection(
+                    fx, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
                 )
-                - self._polynomial_from_field(
-                    fy,
-                    (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2]),
+                self._poly_result[:count, 2] -= backward_projection(
+                    fy, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
                 )
-            )
-        polynomial_result = self._poly_result[:count].reshape(count, -1)
-        np.copyto(polynomial_real, polynomial_result.real)
-        np.copyto(polynomial_imag, polynomial_result.imag)
-        np.matmul(
-            polynomial_real,
-            self.coefficient_matrix.T,
-            out=coefficient_real,
+            else:
+                self._poly_result[:count, 0] += backward_projection(
+                    fy, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
+                ) - backward_projection(
+                    fz, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
+                )
+                self._poly_result[:count, 1] += backward_projection(
+                    fz, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
+                ) - backward_projection(
+                    fx, (self.values_1d[0], self.values_1d[1], self.derivatives_1d[2])
+                )
+                self._poly_result[:count, 2] += backward_projection(
+                    fx, (self.values_1d[0], self.derivatives_1d[1], self.values_1d[2])
+                ) - backward_projection(
+                    fy, (self.derivatives_1d[0], self.values_1d[1], self.values_1d[2])
+                )
+        backward_fields = (3 if component != "curl" else 0) + (
+            6 if component != "mass" else 0
         )
-        np.matmul(
-            polynomial_imag,
-            self.coefficient_matrix.T,
-            out=coefficient_imag,
+        self._backward_projection_count += backward_fields
+        self.timing["reference_backward"] += time.perf_counter() - started
+        self.audit["forward_tensor_contraction_counts"] = dict(
+            self._contraction_counts
         )
-        np.copyto(self._result[:count].real, coefficient_real)
-        np.copyto(self._result[:count].imag, coefficient_imag)
+        self.audit["forward_tensor_contraction_count"] = int(
+            sum(self._contraction_counts.values())
+        )
+        self.audit["backward_projection_count"] = int(
+            self._backward_projection_count
+        )
+        self.audit["backward_tensor_contraction_counts"] = {
+            axis: self._backward_projection_count for axis in ("x", "y", "z")
+        }
+        self.audit["backward_tensor_contraction_count"] = int(
+            3 * self._backward_projection_count
+        )
+        self.audit["contraction_count_scope"] = (
+            "forward reference evaluation and backward field projection; "
+            "coefficient transforms and metric products excluded"
+        )
+        return self._poly_result[:count]
+
+    def _polynomial_to_coefficients(self, polynomial_result: np.ndarray) -> np.ndarray:
+        count = int(polynomial_result.shape[0])
+        started = time.perf_counter()
+        polynomial_work = np.asarray(polynomial_result).reshape(count, -1)
+        if self.combine_real_imag_transforms:
+            polynomial_stack = self._polynomial_real_work[: 2 * count]
+            coefficient_stack = self._coefficient_real_work[: 2 * count]
+            np.copyto(polynomial_stack[:count], polynomial_work.real)
+            np.copyto(polynomial_stack[count:], polynomial_work.imag)
+            np.matmul(
+                polynomial_stack,
+                self.coefficient_matrix.T,
+                out=coefficient_stack,
+            )
+            np.copyto(self._result[:count].real, coefficient_stack[:count])
+            np.copyto(self._result[:count].imag, coefficient_stack[count:])
+        else:
+            coefficient_real = self._coefficient_real_work[:count]
+            coefficient_imag = self._coefficient_imag_work[:count]
+            polynomial_real = self._polynomial_real_work[:count]
+            polynomial_imag = self._polynomial_imag_work[:count]
+            np.copyto(polynomial_real, polynomial_work.real)
+            np.copyto(polynomial_imag, polynomial_work.imag)
+            np.matmul(polynomial_real, self.coefficient_matrix.T, out=coefficient_real)
+            np.matmul(polynomial_imag, self.coefficient_matrix.T, out=coefficient_imag)
+            np.copyto(self._result[:count].real, coefficient_real)
+            np.copyto(self._result[:count].imag, coefficient_imag)
         self.timing["reference_backward"] += time.perf_counter() - started
         return self._result[:count]
+
+    def apply(
+        self,
+        local: np.ndarray,
+        metrics: np.ndarray,
+        materials: np.ndarray,
+        *,
+        component: str | None = None,
+    ) -> np.ndarray:
+        """Apply ``curl_coefficient*curl^H curl + mass_coefficient*mass``."""
+        local = np.asarray(local, dtype=np.complex128)
+        count = int(local.shape[0])
+        if component not in (None, "curl", "mass"):
+            raise ValueError("sum-factorized local action has incompatible inputs")
+        polynomial = self._coefficients_to_polynomial(local)
+        polynomial_result = self._integrate_polynomial(
+            polynomial, metrics, materials, component=component
+        )
+        return self._polynomial_to_coefficients(polynomial_result)

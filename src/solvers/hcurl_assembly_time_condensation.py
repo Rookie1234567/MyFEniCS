@@ -910,6 +910,7 @@ def _global_raw_tensor_cache(
     ],
     *,
     select_lexicographic_representative: bool = False,
+    raw_tensor_evaluator: Any | None = None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each tensor-cache class once globally, then broadcast it.
 
@@ -922,6 +923,10 @@ def _global_raw_tensor_cache(
     """
 
     local_policy_signature = {
+        "raw_tensor_evaluator": (None if raw_tensor_evaluator is None else {
+            "identity": raw_tensor_evaluator.identity,
+            "form_signature": raw_tensor_evaluator.analysis_facts["full_form_signature"],
+        }),
         "coordinate_representative_selection": (
             "lexicographic_min_unrounded_canonical"
             if select_lexicographic_representative
@@ -1012,7 +1017,9 @@ def _global_raw_tensor_cache(
                 raise RuntimeError(f"unknown raw tensor policy {policy!r}")
             compiled_form, kernels, dimension = policy_forms[policy]
             kernel_started = perf_counter()
-            locally_evaluated[key] = _tabulate_raw_tensor_class(
+            evaluator = (_tabulate_raw_tensor_class if raw_tensor_evaluator is None
+                         else raw_tensor_evaluator)
+            locally_evaluated[key] = evaluator(
                 compiled_form,
                 kernels,
                 global_coordinates[key],
@@ -1066,6 +1073,8 @@ def _global_raw_tensor_cache(
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
     cache_audit = {
+        "raw_tensor_evaluator": (None if raw_tensor_evaluator is None
+                                 else raw_tensor_evaluator.audit()),
         "raw_tensor_class_count_sum": evaluation_count,
         "raw_tensor_class_use_count_sum": use_count,
         "raw_tensor_class_count_global_unique": unique_count,
@@ -1207,6 +1216,7 @@ def build_unconstrained_assembly_time_condensation(
     geometry_tolerance: float = 1.0e-11,
     geometry_identity_policy: str = "rounded_12",
     share_identity_cache: bool = False,
+    raw_tensor_evaluator: Any | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1436,6 +1446,7 @@ def build_unconstrained_assembly_time_condensation(
             local_class_coordinates,
             policy_forms,
             select_lexicographic_representative=representative_tensor_groups,
+            raw_tensor_evaluator=raw_tensor_evaluator,
         )
     except Exception:
         if condensed is not None:

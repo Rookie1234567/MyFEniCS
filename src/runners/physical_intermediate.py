@@ -260,6 +260,9 @@ def run_physical_intermediate(
         module_paths={m.__name__: m.__file__ for m in (petsc4py, slepc4py, dolfinx, mpi4py)},
         threads={key: os.environ.get(key) for key in
                  ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')})
+    if contract['resources'].get('pss_sampling_policy') == 'disabled_by_profile':
+        from .math_backend_identity import math_backend_identity
+        summary['abi']['math_backend_boundary_read'] = math_backend_identity()
     previous_handlers = {}
     sample_unreadable_since = None
     sample_unreadable_retries = 0

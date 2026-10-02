@@ -27,12 +27,21 @@ V5_EXPECTED_MODE_COUNTS = {
     'dual_condensed_balh_native_5nm_v5': 600,
     'dual_condensed_balh_native_2nm_v5': 3904,
 }
+# Separate identities keep all V5 inputs and policies immutable.
+V6_BASE_PROFILES = {
+    'dual_condensed_balh_native_5nm_v6': 'dual_condensed_balh_native_5nm_v5',
+    'dual_condensed_balh_native_2nm_h6_only_v6': 'dual_condensed_balh_native_2nm_v5',
+    'dual_condensed_balh_native_2nm_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
+}
+V6_NATIVE_PROFILES = frozenset(V6_BASE_PROFILES)
+V6_MATH_THREADS = 1  # Updated only after the bounded E3 comparison and clean freeze.
 NATIVE_CASES.update(
     {
         identity: (wavelength, meshes, None, None, None)
         for identity, (wavelength, meshes, _) in V5_NATIVE_CASES.items()
     }
 )
+NATIVE_CASES.update({identity: NATIVE_CASES[base] for identity, base in V6_BASE_PROFILES.items()})
 NATIVE_PROFILES = tuple(NATIVE_CASES)
 RETAINED_CONDENSED_PROFILE = 'dual_condensed_balh_native_5nm_v3'
 V5_NATIVE_PROFILES = frozenset(V5_NATIVE_CASES)
@@ -75,7 +84,7 @@ V5_ROUNDED_TENSOR_REPRESENTATIVE_PROFILES = frozenset(
     }
 )
 RETAINED_CONDENSED_PROFILES = frozenset(
-    {RETAINED_CONDENSED_PROFILE, *V5_NATIVE_PROFILES}
+    {RETAINED_CONDENSED_PROFILE, *V5_NATIVE_PROFILES, *V6_NATIVE_PROFILES}
 )
 NATIVE_TIME_LIMIT_MODES = {
     'balanced_h6_p4_native_13p5': 'bounded',
@@ -86,7 +95,7 @@ NATIVE_TIME_LIMIT_MODES = {
     'dual_condensed_balh_native_5nm_v3': 'none',
 }
 NATIVE_TIME_LIMIT_MODES.update(
-    {identity: 'none' for identity in V5_NATIVE_PROFILES}
+    {identity: 'none' for identity in (*V5_NATIVE_PROFILES, *V6_NATIVE_PROFILES)}
 )
 NATIVE_NONE_TIME_PROFILES = frozenset(
     identity for identity, mode in NATIVE_TIME_LIMIT_MODES.items() if mode == 'none'
@@ -120,6 +129,33 @@ USER_MATERIAL_METADATA = {
 
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
+    if identity in V6_NATIVE_PROFILES:
+        facts = native_profile_facts(V6_BASE_PROFILES[identity])
+        h6_only = identity == 'dual_condensed_balh_native_2nm_h6_only_v6'
+        pilot = identity == 'dual_condensed_balh_native_2nm_pilot16_v6'
+        threads = 1 if h6_only else V6_MATH_THREADS
+        facts.update(identity=identity, execution_mode=('h6_only' if h6_only else
+                     'pilot_16' if pilot else 'full_solve'))
+        facts['resources'].update(pss_sampling_policy='disabled_by_profile',
+            pss_interval_seconds=None, uss_sampling_policy='disabled_by_profile',
+            concurrent_neighbor_authorized=False)
+        facts['native_execution'].update(math_threads=threads,
+            worker_cpus=list(range(24, 24+threads)), memory_policy='interleave_nodes0_1')
+        facts['component_options'] = dict(reference_metric_diagonal=True,
+            direct_h6_backend=True, h6_natural_order=True,
+            fused_a6=True, fast_complete_a4=True, blocked_gram=True,
+            shared_readonly_geometry=True, shared_contractions=False,
+            combine_real_imag_transforms=False, continuous_projection_matmul=False,
+            reuse_projection_work=False)
+        facts['outer']['planned_stop_iteration'] = 16 if pilot else None
+        facts['outer']['screen']['enabled'] = False
+        facts['campaign_authorization'].update(source='Review V6 exact p4 speed batch',
+            threads_per_process=threads, execution_mode=facts['execution_mode'],
+            exclusive_heavy_window_required=True, low_memory_p4_inverse_trials=0)
+        facts['backend'].update(h6='reference_metric_direct_sum_factorized_natural',
+            original_a4='fused_original_volume_plus_complete_DtN',
+            local_tensor='blocked_gram_original_FFCx_rules')
+        return facts
     wavelength, meshes, screen, solve, workflow = NATIVE_CASES[identity]
     time_limit_mode = NATIVE_TIME_LIMIT_MODES[identity]
     user_material = USER_MATERIAL_METADATA.get(wavelength)
@@ -374,6 +410,15 @@ def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
     identity = config['solver']['preconditioner']
+    if identity in V6_NATIVE_PROFILES:
+        from copy import deepcopy
+        if config['execution'].get('native_memory_policy') != 'interleave_nodes0_1':
+            raise InputError(f'{identity} fixes native_memory_policy=interleave_nodes0_1')
+        legacy = deepcopy(config)
+        legacy['solver']['preconditioner'] = V6_BASE_PROFILES[identity]
+        legacy['execution']['native_memory_policy'] = 'preferred_node1'
+        validate_native_case(legacy)
+        return
     discretization = config['discretization']
     geometry = config['geometry']
     wavelength, meshes, _, _, workflow = NATIVE_CASES[identity]

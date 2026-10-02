@@ -36,7 +36,8 @@ def _affine_cell_jacobian(geometry_derivatives, coordinates):
 
 
 def accumulate_basis_energy(values, curls, weights, targets, coefficients, output,
-                            *, curl_coefficient, mass_coefficient):
+                            *, curl_coefficient, mass_coefficient,
+                            batched_target_grouping=False):
     """Add target energies after summing all raw basis rows for each target.
 
     Arrays have shape (raw DoF, quadrature point, vector component).
@@ -48,16 +49,73 @@ def accumulate_basis_energy(values, curls, weights, targets, coefficients, outpu
         raise ValueError('incompatible basis/expansion dimensions')
     if not all(np.all(np.isfinite(a)) for a in (values, curls, weights, coefficients)):
         raise ValueError('nonfinite basis or expansion')
-    for target in np.unique(targets[targets >= 0]):
-        if target >= output.size:
-            raise ValueError('target outside output storage')
-        rows, links = np.nonzero(targets == target)
-        factors = coefficients[rows, links]
-        value = np.einsum('i,iqk->qk', factors, values[rows])
-        curl = np.einsum('i,iqk->qk', factors, curls[rows])
-        output[target] += np.dot(weights,
-            mass_coefficient * np.sum(np.abs(value)**2, axis=1)
-            + curl_coefficient * np.sum(np.abs(curl)**2, axis=1))
+    if not batched_target_grouping:
+        for target in np.unique(targets[targets >= 0]):
+            if target >= output.size:
+                raise ValueError('target outside output storage')
+            rows, links = np.nonzero(targets == target)
+            factors = coefficients[rows, links]
+            value = np.einsum('i,iqk->qk', factors, values[rows])
+            curl = np.einsum('i,iqk->qk', factors, curls[rows])
+            output[target] += np.dot(weights,
+                mass_coefficient * np.sum(np.abs(value)**2, axis=1)
+                + curl_coefficient * np.sum(np.abs(curl)**2, axis=1))
+        return
+
+    valid = targets >= 0
+    if not np.any(valid):
+        return
+    flat_targets = np.asarray(targets[valid])
+    if np.any(flat_targets >= output.size):
+        raise ValueError('target outside output storage')
+    rows = np.broadcast_to(
+        np.arange(values.shape[0], dtype=np.intp)[:, None], targets.shape
+    )[valid]
+    factors = coefficients[valid]
+    unique_targets, inverse, counts = np.unique(
+        flat_targets, return_inverse=True, return_counts=True
+    )
+    singleton = counts[inverse] == 1
+    if np.any(singleton):
+        single_rows = rows[singleton]
+        single_factors = factors[singleton]
+        single_values = single_factors[:, None, None] * values[single_rows]
+        single_curls = single_factors[:, None, None] * curls[single_rows]
+        single_energies = np.sum(
+            np.asarray(weights)[None, :, None]
+            * (
+                mass_coefficient * np.abs(single_values) ** 2
+                + curl_coefficient * np.abs(single_curls) ** 2
+            ),
+            axis=(1, 2),
+        )
+        np.add.at(output, unique_targets[inverse[singleton]], single_energies)
+
+    repeated = ~singleton
+    if np.any(repeated):
+        order = np.argsort(flat_targets[repeated], kind='stable')
+        sorted_targets = flat_targets[repeated][order]
+        sorted_rows = rows[repeated][order]
+        sorted_factors = factors[repeated][order]
+        repeated_targets, starts = np.unique(sorted_targets, return_index=True)
+        # Only targets with more than one raw contribution retain a grouped
+        # field buffer, preserving exact complex cross terms without creating
+        # a cell-sized dense energy tensor for the singleton majority.
+        grouped_values = np.add.reduceat(
+            sorted_factors[:, None, None] * values[sorted_rows], starts, axis=0
+        )
+        grouped_curls = np.add.reduceat(
+            sorted_factors[:, None, None] * curls[sorted_rows], starts, axis=0
+        )
+        grouped_energies = np.sum(
+            np.asarray(weights)[None, :, None]
+            * (
+                mass_coefficient * np.abs(grouped_values) ** 2
+                + curl_coefficient * np.abs(grouped_curls) ** 2
+            ),
+            axis=(1, 2),
+        )
+        output[repeated_targets] += grouped_energies
 
 
 class ReferenceCellBasis:
@@ -90,17 +148,25 @@ class ReferenceCellBasis:
             raise NotImplementedError('custom/vertex quadrature unsupported')
         points, self.weights = create_quadrature(
             'hexahedron', md['quadrature_degree'], md['quadrature_rule'], data.argument_elements)
-        table = element.tabulate(1, points)
         if store_reference_tables:
+            # The tensor-product path consumes the coefficient matrix and its
+            # one-dimensional tables instead of the full high-order Basix
+            # table.  Do not tabulate that discarded object just to report an
+            # audit size: this is the setup work this opt-in path removes.
+            table = element.tabulate(1, points)
             self.values = np.ascontiguousarray(table[0].transpose(1, 0, 2))
             self.curls = np.ascontiguousarray(np.stack((
                 table[2, :, :, 2]-table[3, :, :, 1],
                 table[3, :, :, 0]-table[1, :, :, 2],
                 table[1, :, :, 1]-table[2, :, :, 0]), axis=2).transpose(1, 0, 2))
+            reference_table_bytes = int(table.nbytes)
+            coefficient_matrix_bytes = 0
         else:
             self.points = np.ascontiguousarray(points)
             self.coefficient_matrix = np.ascontiguousarray(element.coefficient_matrix)
             self.polynomial_degree = int(element.embedded_superdegree)
+            reference_table_bytes = 0
+            coefficient_matrix_bytes = int(self.coefficient_matrix.nbytes)
         geometry_element = basix.create_element(basix.ElementFamily.P,
             basix.CellType.hexahedron, 1, basix.LagrangeVariant.equispaced)
         self.geometry_derivatives = geometry_element.tabulate(1, points)[1:, :, :, 0]
@@ -108,8 +174,16 @@ class ReferenceCellBasis:
             quadrature_rule=md['quadrature_rule'], points=len(points),
             points_sha256=hashlib.sha256(points.tobytes()).hexdigest(),
             weights_sha256=hashlib.sha256(self.weights.tobytes()).hexdigest(),
-            reference_initialization_array_upper_bound_bytes=int(4*table.nbytes
-                + self.geometry_derivatives.nbytes + points.nbytes + self.weights.nbytes),
+            reference_initialization_array_upper_bound_bytes=int(
+                (4 * reference_table_bytes if store_reference_tables
+                 else reference_table_bytes)
+                + coefficient_matrix_bytes
+                + self.geometry_derivatives.nbytes + points.nbytes
+                + self.weights.nbytes
+            ),
+            reference_table_bytes=reference_table_bytes,
+            coefficient_matrix_bytes=coefficient_matrix_bytes,
+            full_reference_tabulation_performed=bool(store_reference_tables),
             authority='same-ABI FFCx analysis and create_quadrature',
             dense_cell_tensor=False,
             reference_tables_retained=bool(store_reference_tables))
@@ -136,13 +210,14 @@ class PositiveCellBasis(ReferenceCellBasis):
         super().__init__(space, form,
                          store_reference_tables=store_reference_tables)
 
-    def cell(self, cell, permutation):
+    def cell(self, cell, permutation, *, jacobian=None, coefficients=None):
         """Return oriented physical basis values/curls, weights and DG0 data."""
         if not hasattr(self, 'values'):
             raise RuntimeError('cell tables were not retained for sum-factorization')
         mesh = self.space.mesh
-        x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
-        jacobian = _affine_cell_jacobian(self.geometry_derivatives, x)
+        if jacobian is None:
+            x = mesh.geometry.x[mesh.geometry.dofmap[cell]]
+            jacobian = _affine_cell_jacobian(self.geometry_derivatives, x)
         determinant = float(np.linalg.det(jacobian))
         values = np.ascontiguousarray(self.values @ np.linalg.inv(jacobian))
         curls = np.ascontiguousarray(self.curls @ jacobian.T / determinant)
@@ -150,8 +225,11 @@ class PositiveCellBasis(ReferenceCellBasis):
             info = np.asarray([permutation], dtype=np.uint32)
             for a in (values, curls):
                 self.space.element.T_apply(a.reshape(-1), info, a.shape[1]*3)
-        coefficients = [float(f.x.array[f.function_space.dofmap.cell_dofs(cell)[0]].real)
-                        for f in (self.mu, self.mass)]
+        if coefficients is None:
+            coefficients = [
+                float(f.x.array[f.function_space.dofmap.cell_dofs(cell)[0]].real)
+                for f in (self.mu, self.mass)
+            ]
         return values, curls, self.weights * determinant, coefficients
 
 

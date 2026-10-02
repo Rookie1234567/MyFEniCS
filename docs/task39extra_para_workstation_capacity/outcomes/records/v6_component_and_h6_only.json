@@ -1,0 +1,2040 @@
+{
+  "schema": "task39extra.review-v6.components-and-h6-only.v1",
+  "status": "E2_COMPONENTS_PASS_H6_ONLY_NOT_RUN",
+  "component_source_identity": {
+    "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_attempt3/source_identity.json",
+    "sha256": "682acc2b387ea3caf50ef732480ea109ac123b25095b6d997fd332e326761916",
+    "bytes": 8268,
+    "stable_after_process_exit": true
+  },
+  "component_log": {
+    "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_attempt3/math1.log",
+    "sha256": "165c6173a2078a0bd4c3b18f8bf568d4e14d560c32423fc993c2f5eef0734387",
+    "bytes": 2583,
+    "stable_after_process_exit": true
+  },
+  "component_test_result": "2 passed in 872.14s",
+  "formal_pde_qualification": false,
+  "h6_only": {
+    "status": "NOT_RUN"
+  },
+  "components": [
+    {
+      "wavelength_nm": 5,
+      "scope": "bounded FE/MPC with all physical port modes; not a full PDE",
+      "fixture_cells": 18,
+      "mode_count": 600,
+      "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "input_sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "full_case_metadata": {
+        "raw_classes": 175,
+        "raw_classes_verified_not_rounded_for_LU": true,
+        "representative_widths": {
+          "(1, 3.3, 3.571428571429, 3.333333333333)": [
+            3.299999999999997,
+            3.5714285714285694,
+            3.3333333333333286
+          ],
+          "(1, 3.3, 3.571428571429, 4.0)": [
+            3.299999999999997,
+            3.5714285714285694,
+            4.0
+          ],
+          "(1, 3.4, 3.571428571429, 3.333333333333)": [
+            3.3999999999999986,
+            3.5714285714285694,
+            3.3333333333333286
+          ],
+          "(2, 3.3, 3.571428571429, 3.333333333333)": [
+            3.299999999999997,
+            3.5714285714285694,
+            3.333333333333333
+          ],
+          "(2, 3.4, 3.571428571429, 3.333333333333)": [
+            3.3999999999999986,
+            3.5714285714285694,
+            3.333333333333333
+          ],
+          "(3, 3.4, 3.571428571429, 4.0)": [
+            3.3999999999999986,
+            3.5714285714285694,
+            4.0
+          ]
+        },
+        "tensor_groups": 6
+      },
+      "fixture_geometry": {
+        "p6_raw_classes": 6,
+        "p6_tensor_groups": 6,
+        "p6_oriented_classes": 12
+      },
+      "status": "COMPONENT_PASS",
+      "tensor_native_groups_per_degree": 6,
+      "tensor_max_relative_by_degree": {
+        "4": 1.6945401821766586e-15,
+        "6": 1.8260305980350864e-15
+      },
+      "full_action_relative": {
+        "4": 2.731667928962738e-15,
+        "6": 3.4474744007823808e-15
+      },
+      "h6_diagonal_relative": 7.055252510742748e-16,
+      "h6_apply_relative": 8.412731267226804e-16,
+      "h6_power_history_relative": 4.3132161171076156e-16,
+      "aq_projection": {
+        "calls": {
+          "native_Aq_DtN": 1,
+          "native_Aq_volume": 1,
+          "projected_A6_DtN": 1,
+          "projected_A6_volume": 1,
+          "transfer_adjoint_delta": 2,
+          "transfer_primal_delta": 1
+        },
+        "coarse_degree": 4,
+        "input_sha256": "fd1f94fd7731cded996af3556b84d47a531eaaa529f192b47089f3c5a6ef41a2",
+        "input_slave_zero": true,
+        "input_unchanged": true,
+        "limit": 1e-10,
+        "native_Aq_DtN_vs_PqH_A6_DtN_P": {
+          "absolute": 4.839081679438154e-12,
+          "relative": 2.1690141283240016e-14
+        },
+        "native_Aq_total_vs_PqH_A6_total_P": {
+          "absolute": 1.4405896254292535e-10,
+          "relative": 2.138998821123139e-15
+        },
+        "native_Aq_volume_vs_PqH_A6_volume_P": {
+          "absolute": 1.4399789165117273e-10,
+          "relative": 2.1381194956268796e-15
+        },
+        "p6_norm": 66.37100396852436,
+        "passed": true,
+        "probe": "deterministic_nonzero_coarse_vector_with_zero_MPC_slaves",
+        "projected_A6_slave_rows_zero": {
+          "dtn": true,
+          "dtn_max_abs": 0.0,
+          "volume": true,
+          "volume_max_abs": 0.0
+        },
+        "q_norm": 45.36020351126588,
+        "schema": "task039extra.v5.native-aq-projection-check.v1",
+        "source_contract": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d:_build_common.native_aq_projection_check",
+        "space_identity": {
+          "coarse_global_rows": 4160,
+          "coarse_mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+          "fine_global_rows": 13224,
+          "fine_mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645"
+        },
+        "total_identity_policy": "record_only; native volume and DtN components gate independently"
+      },
+      "original_a4_internal_rhs_rho": 6.1746090142177e-13,
+      "explicit_port_rhs_condensed_matrix_relative": 3.5778013249531207e-13,
+      "explicit_port_rhs_original_a4_recovery_gate": "NOT_CLAIMED; separate augmented matrix witness",
+      "pc_original_a4_rho_max": 2.2700695537292101e-13,
+      "pc_port_closure_relative_max": 2.299711899699528e-16,
+      "fixed_rhs_pc_repeats": [
+        {
+          "bal_h": {
+            "apply_count": 1,
+            "counts": {
+              "A_inner_true": 0,
+              "A_structure": 2,
+              "C": 2,
+              "PH_audit": 2,
+              "smoother": 1
+            },
+            "feedback": {
+              "As_norm": 3028.89507203709,
+              "after_field_norm": 38035.24714190752,
+              "before_field_norm": 5889.934637919532,
+              "before_residual_norm": 5909.021950620385,
+              "feedback_norm": 34066.38424793879,
+              "s_norm": 359.90682279728867
+            },
+            "initial": {
+              "Azc_norm": 5128.783264989115,
+              "constraint": {
+                "limit": 1e-08,
+                "norm": 6.176880639310401e-10,
+                "operation_scale": 376.8816614057953,
+                "relative": 1.6389443350122686e-12
+              },
+              "q_norm": 661.4806178075983,
+              "rc_norm": 5096.977581261104,
+              "zc_norm": 5832.207536177494
+            },
+            "inner": [],
+            "live_after_cleanup": 0,
+            "live_before_cleanup": 5,
+            "operation_seconds": {
+              "A_inner_true": 0.0,
+              "A_structure": 0.07380209409166127,
+              "C": 0.15936823200900108,
+              "smoother": 0.05286406702362001
+            },
+            "peak_new_fine_vectors": 6,
+            "projection_space": "ker(PH A), not M0-orthogonal complement",
+            "route": "BAL_H",
+            "status": "BALANCED_ACTION_COMPLETED",
+            "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+          },
+          "coarse_corrections": [
+            {
+              "coarse_wall_seconds": 0.07845247501973063,
+              "factor_counts": {
+                "logical_apply_calls": 2,
+                "numeric_calls": 1,
+                "solve_calls": 3,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.005432555917650461,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.031433337018825114,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 2,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.008898301981389523,
+                  "matrix_identity": {
+                    "csr_sha256": "dd50cfcc7aade91d75814e406dc61abd1870b8a0e3924eabb660018a1b81d08a",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "ed13c6930600fd8583d324fec463316c98d3353f6af592a2b8b6132709e49e94",
+                    "nnz": 757932,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      2304,
+                      2304
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "870ce69b258cebbe3d8420198a34ad82dd16778d5ee565986a3b2eb2af00fa2c"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.01704886299557984,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 2,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.060035586007870734,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.01344291097484529,
+              "ph_restriction_seconds": 0.004957044031471014,
+              "port_state": {
+                "norm": 5.072743548465215,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "70e2ce4a8e7a75315c3b90a5f669367e1a9c85d2a704bdc106e6fd534a10a1de",
+                "size": 600
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.006872344994917512,
+                    "measured_parent_wall_seconds": 0.02535495301708579,
+                    "vector_sum_seconds": 8.733011782169342e-06,
+                    "volume_seconds": 0.018429422052577138,
+                    "wall_seconds": 0.02531056699808687
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 2,
+                    "numeric_calls": 1,
+                    "solve_calls": 3,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 1378.9252273350783,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 1378.9252273350783,
+                    "norm": 6.342261508196713e-13,
+                    "relative_residual": 2.299711899699528e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 2757.8504546701565,
+                    "sha256": "e6b3c0747a031252ad4ec882ede293403fc8b5e08af6849b246e4210828353d2",
+                    "size": 600,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.003057318041101098,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 2.2700695537292101e-13,
+                  "rhs_norm": 188.44083070289832
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.006872344994917512,
+                "a4_volume_seconds": 0.018429422052577138,
+                "a4_wall_seconds": 0.02535495301708579,
+                "actual_factor_solve_seconds": 0.005432555917650461,
+                "internal_recovery_seconds": 0.008898301981389523,
+                "port_closure_seconds": 0.003057318041101098,
+                "rhs_reduce_seconds": 0.01704886299557984,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            },
+            {
+              "coarse_wall_seconds": 0.08086206496227533,
+              "factor_counts": {
+                "logical_apply_calls": 3,
+                "numeric_calls": 1,
+                "solve_calls": 4,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.00594653794541955,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.03219248994719237,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 3,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.008798095979727805,
+                  "matrix_identity": {
+                    "csr_sha256": "dd50cfcc7aade91d75814e406dc61abd1870b8a0e3924eabb660018a1b81d08a",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "ed13c6930600fd8583d324fec463316c98d3353f6af592a2b8b6132709e49e94",
+                    "nnz": 757932,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      2304,
+                      2304
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "870ce69b258cebbe3d8420198a34ad82dd16778d5ee565986a3b2eb2af00fa2c"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.017397718969732523,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 3,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.06068391399458051,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.014638721011579037,
+              "ph_restriction_seconds": 0.005521366954781115,
+              "port_state": {
+                "norm": 10.231053480390042,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "5eab9e48f37ec171ed3934c6f18fec9afaf83f0085718823a30d4e752316fa7a",
+                "size": 600
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.006588279036805034,
+                    "measured_parent_wall_seconds": 0.025250833947211504,
+                    "vector_sum_seconds": 8.724047802388668e-06,
+                    "volume_seconds": 0.01861478399951011,
+                    "wall_seconds": 0.025211870088241994
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 3,
+                    "numeric_calls": 1,
+                    "solve_calls": 4,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 5595.138572557667,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 5595.138572557667,
+                    "norm": 2.273444783144029e-12,
+                    "relative_residual": 2.031625091731003e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 11190.277145115335,
+                    "sha256": "da76225f20170fb797e2a44135964d0286c7d0db85c9aaf4e8d5cdfe321dffa8",
+                    "size": 600,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.003042332944460213,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 1.53057682186888e-13,
+                  "rhs_norm": 1155.4574703315168
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.006588279036805034,
+                "a4_volume_seconds": 0.01861478399951011,
+                "a4_wall_seconds": 0.025250833947211504,
+                "actual_factor_solve_seconds": 0.00594653794541955,
+                "internal_recovery_seconds": 0.008798095979727805,
+                "port_closure_seconds": 0.003042332944460213,
+                "rhs_reduce_seconds": 0.017397718969732523,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            }
+          ],
+          "repeat": 0,
+          "wall_seconds": 0.3402563809650019
+        },
+        {
+          "bal_h": {
+            "apply_count": 2,
+            "counts": {
+              "A_inner_true": 0,
+              "A_structure": 2,
+              "C": 2,
+              "PH_audit": 2,
+              "smoother": 1
+            },
+            "feedback": {
+              "As_norm": 3028.89507203709,
+              "after_field_norm": 38035.24714190752,
+              "before_field_norm": 5889.934637919532,
+              "before_residual_norm": 5909.021950620385,
+              "feedback_norm": 34066.38424793879,
+              "s_norm": 359.90682279728867
+            },
+            "initial": {
+              "Azc_norm": 5128.783264989115,
+              "constraint": {
+                "limit": 1e-08,
+                "norm": 6.176880639310401e-10,
+                "operation_scale": 376.8816614057953,
+                "relative": 1.6389443350122686e-12
+              },
+              "q_norm": 661.4806178075983,
+              "rc_norm": 5096.977581261104,
+              "zc_norm": 5832.207536177494
+            },
+            "inner": [],
+            "live_after_cleanup": 0,
+            "live_before_cleanup": 5,
+            "operation_seconds": {
+              "A_inner_true": 0.0,
+              "A_structure": 0.0731083289720118,
+              "C": 0.18405085883568972,
+              "smoother": 0.05161600501742214
+            },
+            "peak_new_fine_vectors": 6,
+            "projection_space": "ker(PH A), not M0-orthogonal complement",
+            "route": "BAL_H",
+            "status": "BALANCED_ACTION_COMPLETED",
+            "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+          },
+          "coarse_corrections": [
+            {
+              "coarse_wall_seconds": 0.07686850696336478,
+              "factor_counts": {
+                "logical_apply_calls": 4,
+                "numeric_calls": 1,
+                "solve_calls": 5,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.005488879978656769,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.030002645100466907,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 4,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.008294016006402671,
+                  "matrix_identity": {
+                    "csr_sha256": "dd50cfcc7aade91d75814e406dc61abd1870b8a0e3924eabb660018a1b81d08a",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "ed13c6930600fd8583d324fec463316c98d3353f6af592a2b8b6132709e49e94",
+                    "nnz": 757932,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      2304,
+                      2304
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "870ce69b258cebbe3d8420198a34ad82dd16778d5ee565986a3b2eb2af00fa2c"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.016173483105376363,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 4,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.05892296903766692,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.013490547076798975,
+              "ph_restriction_seconds": 0.004439848009496927,
+              "port_state": {
+                "norm": 5.072743548465215,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "70e2ce4a8e7a75315c3b90a5f669367e1a9c85d2a704bdc106e6fd534a10a1de",
+                "size": 600
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.006573166931048036,
+                    "measured_parent_wall_seconds": 0.02553695405367762,
+                    "vector_sum_seconds": 1.0404037311673164e-05,
+                    "volume_seconds": 0.01890627504326403,
+                    "wall_seconds": 0.025489929947070777
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 4,
+                    "numeric_calls": 1,
+                    "solve_calls": 5,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 1378.9252273350783,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 1378.9252273350783,
+                    "norm": 6.342261508196713e-13,
+                    "relative_residual": 2.299711899699528e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 2757.8504546701565,
+                    "sha256": "e6b3c0747a031252ad4ec882ede293403fc8b5e08af6849b246e4210828353d2",
+                    "size": 600,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.0032038119388744235,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 2.2700695537292101e-13,
+                  "rhs_norm": 188.44083070289832
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.006573166931048036,
+                "a4_volume_seconds": 0.01890627504326403,
+                "a4_wall_seconds": 0.02553695405367762,
+                "actual_factor_solve_seconds": 0.005488879978656769,
+                "internal_recovery_seconds": 0.008294016006402671,
+                "port_closure_seconds": 0.0032038119388744235,
+                "rhs_reduce_seconds": 0.016173483105376363,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            },
+            {
+              "coarse_wall_seconds": 0.1071178229758516,
+              "factor_counts": {
+                "logical_apply_calls": 5,
+                "numeric_calls": 1,
+                "solve_calls": 6,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.013869090005755424,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.048051069024950266,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 5,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.012299178983084857,
+                  "matrix_identity": {
+                    "csr_sha256": "dd50cfcc7aade91d75814e406dc61abd1870b8a0e3924eabb660018a1b81d08a",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "ed13c6930600fd8583d324fec463316c98d3353f6af592a2b8b6132709e49e94",
+                    "nnz": 757932,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      2304,
+                      2304
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "870ce69b258cebbe3d8420198a34ad82dd16778d5ee565986a3b2eb2af00fa2c"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.02182817307766527,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 5,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.08130662597250193,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.019131995039060712,
+              "ph_restriction_seconds": 0.00665172899607569,
+              "port_state": {
+                "norm": 10.231053480390042,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "5eab9e48f37ec171ed3934c6f18fec9afaf83f0085718823a30d4e752316fa7a",
+                "size": 600
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.007859694072976708,
+                    "measured_parent_wall_seconds": 0.029324317001737654,
+                    "vector_sum_seconds": 9.912997484207153e-06,
+                    "volume_seconds": 0.021398262935690582,
+                    "wall_seconds": 0.029267949983477592
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 5,
+                    "numeric_calls": 1,
+                    "solve_calls": 6,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 5595.138572557667,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 5595.138572557667,
+                    "norm": 2.273444783144029e-12,
+                    "relative_residual": 2.031625091731003e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 11190.277145115335,
+                    "sha256": "da76225f20170fb797e2a44135964d0286c7d0db85c9aaf4e8d5cdfe321dffa8",
+                    "size": 600,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.003673523897305131,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 1.53057682186888e-13,
+                  "rhs_norm": 1155.4574703315168
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.007859694072976708,
+                "a4_volume_seconds": 0.021398262935690582,
+                "a4_wall_seconds": 0.029324317001737654,
+                "actual_factor_solve_seconds": 0.013869090005755424,
+                "internal_recovery_seconds": 0.012299178983084857,
+                "port_closure_seconds": 0.003673523897305131,
+                "rhs_reduce_seconds": 0.02182817307766527,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            }
+          ],
+          "repeat": 1,
+          "wall_seconds": 0.3698576850583777
+        },
+        {
+          "bal_h": {
+            "apply_count": 3,
+            "counts": {
+              "A_inner_true": 0,
+              "A_structure": 2,
+              "C": 2,
+              "PH_audit": 2,
+              "smoother": 1
+            },
+            "feedback": {
+              "As_norm": 3028.89507203709,
+              "after_field_norm": 38035.24714190752,
+              "before_field_norm": 5889.934637919532,
+              "before_residual_norm": 5909.021950620385,
+              "feedback_norm": 34066.38424793879,
+              "s_norm": 359.90682279728867
+            },
+            "initial": {
+              "Azc_norm": 5128.783264989115,
+              "constraint": {
+                "limit": 1e-08,
+                "norm": 6.176880639310401e-10,
+                "operation_scale": 376.8816614057953,
+                "relative": 1.6389443350122686e-12
+              },
+              "q_norm": 661.4806178075983,
+              "rc_norm": 5096.977581261104,
+              "zc_norm": 5832.207536177494
+            },
+            "inner": [],
+            "live_after_cleanup": 0,
+            "live_before_cleanup": 5,
+            "operation_seconds": {
+              "A_inner_true": 0.0,
+              "A_structure": 0.07636410894338042,
+              "C": 0.19373289786744863,
+              "smoother": 0.05385225196368992
+            },
+            "peak_new_fine_vectors": 6,
+            "projection_space": "ker(PH A), not M0-orthogonal complement",
+            "route": "BAL_H",
+            "status": "BALANCED_ACTION_COMPLETED",
+            "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+          },
+          "coarse_corrections": [
+            {
+              "coarse_wall_seconds": 0.09606731496751308,
+              "factor_counts": {
+                "logical_apply_calls": 6,
+                "numeric_calls": 1,
+                "solve_calls": 7,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.009501321008428931,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.04089939303230494,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 6,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.009452293044887483,
+                  "matrix_identity": {
+                    "csr_sha256": "dd50cfcc7aade91d75814e406dc61abd1870b8a0e3924eabb660018a1b81d08a",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "ed13c6930600fd8583d324fec463316c98d3353f6af592a2b8b6132709e49e94",
+                    "nnz": 757932,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      2304,
+                      2304
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "870ce69b258cebbe3d8420198a34ad82dd16778d5ee565986a3b2eb2af00fa2c"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.02189256204292178,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 6,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.07170082395896316,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.01379525801166892,
+              "ph_restriction_seconds": 0.010550437960773706,
+              "port_state": {
+                "norm": 5.072743548465215,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "70e2ce4a8e7a75315c3b90a5f669367e1a9c85d2a704bdc106e6fd534a10a1de",
+                "size": 600
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.007055621012113988,
+                    "measured_parent_wall_seconds": 0.027216971036978066,
+                    "vector_sum_seconds": 1.1360039934515953e-05,
+                    "volume_seconds": 0.020102245034649968,
+                    "wall_seconds": 0.027169350069016218
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 6,
+                    "numeric_calls": 1,
+                    "solve_calls": 7,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 1378.9252273350783,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 1378.9252273350783,
+                    "norm": 6.342261508196713e-13,
+                    "relative_residual": 2.299711899699528e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 2757.8504546701565,
+                    "sha256": "e6b3c0747a031252ad4ec882ede293403fc8b5e08af6849b246e4210828353d2",
+                    "size": 600,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.0033687809482216835,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 2.2700695537292101e-13,
+                  "rhs_norm": 188.44083070289832
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.007055621012113988,
+                "a4_volume_seconds": 0.020102245034649968,
+                "a4_wall_seconds": 0.027216971036978066,
+                "actual_factor_solve_seconds": 0.009501321008428931,
+                "internal_recovery_seconds": 0.009452293044887483,
+                "port_closure_seconds": 0.0033687809482216835,
+                "rhs_reduce_seconds": 0.02189256204292178,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            },
+            {
+              "coarse_wall_seconds": 0.09759688097983599,
+              "factor_counts": {
+                "logical_apply_calls": 7,
+                "numeric_calls": 1,
+                "solve_calls": 8,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.012065870105288923,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.04146720503922552,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 7,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.010568556957878172,
+                  "matrix_identity": {
+                    "csr_sha256": "dd50cfcc7aade91d75814e406dc61abd1870b8a0e3924eabb660018a1b81d08a",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "ed13c6930600fd8583d324fec463316c98d3353f6af592a2b8b6132709e49e94",
+                    "nnz": 757932,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      2304,
+                      2304
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "870ce69b258cebbe3d8420198a34ad82dd16778d5ee565986a3b2eb2af00fa2c"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.018778619007207453,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 7,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.0749564350116998,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.015504861949011683,
+              "ph_restriction_seconds": 0.007112285005860031,
+              "port_state": {
+                "norm": 10.231053480390042,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "5eab9e48f37ec171ed3934c6f18fec9afaf83f0085718823a30d4e752316fa7a",
+                "size": 600
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.007595603936351836,
+                    "measured_parent_wall_seconds": 0.0291617710608989,
+                    "vector_sum_seconds": 1.0109972208738327e-05,
+                    "volume_seconds": 0.0214849510230124,
+                    "wall_seconds": 0.029090755968354642
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 7,
+                    "numeric_calls": 1,
+                    "solve_calls": 8,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 5595.138572557667,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 5595.138572557667,
+                    "norm": 2.273444783144029e-12,
+                    "relative_residual": 2.031625091731003e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 11190.277145115335,
+                    "sha256": "da76225f20170fb797e2a44135964d0286c7d0db85c9aaf4e8d5cdfe321dffa8",
+                    "size": 600,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.004077279008924961,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 1.53057682186888e-13,
+                  "rhs_norm": 1155.4574703315168
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.007595603936351836,
+                "a4_volume_seconds": 0.0214849510230124,
+                "a4_wall_seconds": 0.0291617710608989,
+                "actual_factor_solve_seconds": 0.012065870105288923,
+                "internal_recovery_seconds": 0.010568556957878172,
+                "port_closure_seconds": 0.004077279008924961,
+                "rhs_reduce_seconds": 0.018778619007207453,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            }
+          ],
+          "repeat": 2,
+          "wall_seconds": 0.3934467979706824
+        }
+      ],
+      "factor_counts": {
+        "logical_apply_calls": 7,
+        "numeric_calls": 1,
+        "solve_calls": 8,
+        "symbolic_calls": 1
+      },
+      "threads_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "math_libraries": null,
+      "actual_process_threads": 3,
+      "source": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_attempt3/actual_5nm_math1.json",
+        "sha256": "17912ff4e688cc54d987df9fb9014baced6f9002581c410b7d4ca9bdf6e856d5",
+        "bytes": 103874,
+        "stable_after_process_exit": true
+      }
+    },
+    {
+      "wavelength_nm": 2,
+      "scope": "bounded FE/MPC with all physical port modes; not a full PDE",
+      "fixture_cells": 18,
+      "mode_count": 3904,
+      "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+      "input_sha256": "bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "full_case_metadata": {
+        "raw_classes": 54,
+        "raw_classes_verified_not_rounded_for_LU": true,
+        "representative_widths": {
+          "(1, 1.416666666667, 1.470588235294, 1.428571428571)": [
+            1.4166666666666643,
+            1.470588235294116,
+            1.4285714285714164
+          ],
+          "(1, 1.5, 1.470588235294, 1.428571428571)": [
+            1.5,
+            1.470588235294116,
+            1.4285714285714164
+          ],
+          "(1, 1.5, 1.470588235294, 1.5)": [
+            1.5,
+            1.470588235294116,
+            1.5
+          ],
+          "(2, 1.416666666667, 1.470588235294, 1.428571428571)": [
+            1.4166666666666643,
+            1.470588235294116,
+            1.428571428571428
+          ],
+          "(2, 1.5, 1.470588235294, 1.428571428571)": [
+            1.5,
+            1.470588235294116,
+            1.428571428571428
+          ],
+          "(3, 1.416666666667, 1.470588235294, 1.5)": [
+            1.4166666666666643,
+            1.470588235294116,
+            1.5
+          ]
+        },
+        "tensor_groups": 6
+      },
+      "fixture_geometry": {
+        "p6_raw_classes": 6,
+        "p6_tensor_groups": 6,
+        "p6_oriented_classes": 12
+      },
+      "status": "COMPONENT_PASS",
+      "tensor_native_groups_per_degree": 6,
+      "tensor_max_relative_by_degree": {
+        "4": 1.9606271041229435e-15,
+        "6": 1.8514358064215624e-15
+      },
+      "full_action_relative": {
+        "4": 1.7202598196600346e-15,
+        "6": 2.090475567832364e-15
+      },
+      "h6_diagonal_relative": 8.809717109111823e-16,
+      "h6_apply_relative": 6.875001659117606e-16,
+      "h6_power_history_relative": 1.0341799144667312e-15,
+      "aq_projection": {
+        "calls": {
+          "native_Aq_DtN": 1,
+          "native_Aq_volume": 1,
+          "projected_A6_DtN": 1,
+          "projected_A6_volume": 1,
+          "transfer_adjoint_delta": 2,
+          "transfer_primal_delta": 1
+        },
+        "coarse_degree": 4,
+        "input_sha256": "fd1f94fd7731cded996af3556b84d47a531eaaa529f192b47089f3c5a6ef41a2",
+        "input_slave_zero": true,
+        "input_unchanged": true,
+        "limit": 1e-10,
+        "native_Aq_DtN_vs_PqH_A6_DtN_P": {
+          "absolute": 1.0064018493658517e-11,
+          "relative": 1.8279503208621757e-14
+        },
+        "native_Aq_total_vs_PqH_A6_total_P": {
+          "absolute": 9.527830570609624e-10,
+          "relative": 1.779023749307894e-15
+        },
+        "native_Aq_volume_vs_PqH_A6_volume_P": {
+          "absolute": 9.527264173761763e-10,
+          "relative": 1.7789182626034662e-15
+        },
+        "p6_norm": 66.37100396852436,
+        "passed": true,
+        "probe": "deterministic_nonzero_coarse_vector_with_zero_MPC_slaves",
+        "projected_A6_slave_rows_zero": {
+          "dtn": true,
+          "dtn_max_abs": 0.0,
+          "volume": true,
+          "volume_max_abs": 0.0
+        },
+        "q_norm": 45.36020351126588,
+        "schema": "task039extra.v5.native-aq-projection-check.v1",
+        "source_contract": "4bf2bba56cc2e568d56ff3096aeb4a108744f28d:_build_common.native_aq_projection_check",
+        "space_identity": {
+          "coarse_global_rows": 4160,
+          "coarse_mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+          "fine_global_rows": 13224,
+          "fine_mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364"
+        },
+        "total_identity_policy": "record_only; native volume and DtN components gate independently"
+      },
+      "original_a4_internal_rhs_rho": 2.4612583681390696e-14,
+      "explicit_port_rhs_condensed_matrix_relative": 8.072295920465455e-15,
+      "explicit_port_rhs_original_a4_recovery_gate": "NOT_CLAIMED; separate augmented matrix witness",
+      "pc_original_a4_rho_max": 8.48024479417611e-15,
+      "pc_port_closure_relative_max": 4.59086479108428e-16,
+      "fixed_rhs_pc_repeats": [
+        {
+          "bal_h": {
+            "apply_count": 1,
+            "counts": {
+              "A_inner_true": 0,
+              "A_structure": 2,
+              "C": 2,
+              "PH_audit": 2,
+              "smoother": 1
+            },
+            "feedback": {
+              "As_norm": 6857.4512157337485,
+              "after_field_norm": 326.9573945098123,
+              "before_field_norm": 338.08219587857405,
+              "before_residual_norm": 8076.074118508053,
+              "feedback_norm": 176.6588719760476,
+              "s_norm": 62.76381720567199
+            },
+            "initial": {
+              "Azc_norm": 2583.299736193562,
+              "constraint": {
+                "limit": 1e-08,
+                "norm": 1.983035013785359e-10,
+                "operation_scale": 347.7774281248551,
+                "relative": 5.702023344290856e-13
+              },
+              "q_norm": 1721.613075480568,
+              "rc_norm": 2904.2858210693053,
+              "zc_norm": 334.6977404641645
+            },
+            "inner": [],
+            "live_after_cleanup": 0,
+            "live_before_cleanup": 5,
+            "operation_seconds": {
+              "A_inner_true": 0.0,
+              "A_structure": 0.22780638409312814,
+              "C": 0.5265600240090862,
+              "smoother": 0.059783656033687294
+            },
+            "peak_new_fine_vectors": 6,
+            "projection_space": "ker(PH A), not M0-orthogonal complement",
+            "route": "BAL_H",
+            "status": "BALANCED_ACTION_COMPLETED",
+            "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+          },
+          "coarse_corrections": [
+            {
+              "coarse_wall_seconds": 0.24856269592419267,
+              "factor_counts": {
+                "logical_apply_calls": 2,
+                "numeric_calls": 1,
+                "solve_calls": 3,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.048329879995435476,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.09916784195229411,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 2,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.024851425900124013,
+                  "matrix_identity": {
+                    "csr_sha256": "878e403ccbf0b936e4621e419ef58f4ba0e783510b6e65dc10f31b7ca1044052",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "1b1bd22fac25c4810db79ccd05033a3d7b1327ca8c41f3bb26e8b2e753a0abfa",
+                    "nnz": 2202740,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      5608,
+                      5608
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "5f461a27923b798c2f30475717558df04236f8a3f1d7822e062f15662e814c61"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.025860948022454977,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 2,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.21174987696576864,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.024271559086628258,
+              "ph_restriction_seconds": 0.012501318007707596,
+              "port_state": {
+                "norm": 1.8378862523942954,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "041698390842df67eaedae5b97df01bf0c36b112358b4ffea955d069efc65563",
+                "size": 3904
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.056752098025754094,
+                    "measured_parent_wall_seconds": 0.08254000195302069,
+                    "vector_sum_seconds": 1.4977995306253433e-05,
+                    "volume_seconds": 0.025601278990507126,
+                    "wall_seconds": 0.08236843696795404
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 2,
+                    "numeric_calls": 1,
+                    "solve_calls": 3,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 519.6379710823288,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 519.6379710823288,
+                    "norm": 4.771175331104669e-13,
+                    "relative_residual": 4.59086479108428e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 1039.2759421646576,
+                    "sha256": "af9cb468a24abf188d2d3dd8bdd42c290f5492509620fbb752aadeafeb794632",
+                    "size": 3904,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.029165231972001493,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 8.48024479417611e-15,
+                  "rhs_norm": 173.88871406241725
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.056752098025754094,
+                "a4_volume_seconds": 0.025601278990507126,
+                "a4_wall_seconds": 0.08254000195302069,
+                "actual_factor_solve_seconds": 0.048329879995435476,
+                "internal_recovery_seconds": 0.024851425900124013,
+                "port_closure_seconds": 0.029165231972001493,
+                "rhs_reduce_seconds": 0.025860948022454977,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            },
+            {
+              "coarse_wall_seconds": 0.27784980298019946,
+              "factor_counts": {
+                "logical_apply_calls": 3,
+                "numeric_calls": 1,
+                "solve_calls": 4,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.08025259803980589,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.13380044198129326,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 3,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.023705495987087488,
+                  "matrix_identity": {
+                    "csr_sha256": "878e403ccbf0b936e4621e419ef58f4ba0e783510b6e65dc10f31b7ca1044052",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "1b1bd22fac25c4810db79ccd05033a3d7b1327ca8c41f3bb26e8b2e753a0abfa",
+                    "nnz": 2202740,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      5608,
+                      5608
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "5f461a27923b798c2f30475717558df04236f8a3f1d7822e062f15662e814c61"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.029704205924645066,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 3,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.2453635729616508,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.024435238912701607,
+              "ph_restriction_seconds": 0.008008894044905901,
+              "port_state": {
+                "norm": 4.999696420316151,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "bbc80672dc8e60894fdb2012469a3c35ca6dc33cac251c8358af363f5f10b03e",
+                "size": 3904
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.056447334005497396,
+                    "measured_parent_wall_seconds": 0.08184997190255672,
+                    "vector_sum_seconds": 1.1926982551813126e-05,
+                    "volume_seconds": 0.02525432500988245,
+                    "wall_seconds": 0.0817136699333787
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 3,
+                    "numeric_calls": 1,
+                    "solve_calls": 4,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 635.0000249992079,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 635.0000249992078,
+                    "norm": 4.3630146298259714e-13,
+                    "relative_residual": 3.4354444551647177e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 1270.0000499984158,
+                    "sha256": "5ea6286eab59f2db3fcedd8e9ded0a5a8ced8bba8ca71ea1537b40a989e37ccc",
+                    "size": 3904,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.02896264207083732,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 4.1334766454472385e-15,
+                  "rhs_norm": 508.75605618800626
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.056447334005497396,
+                "a4_volume_seconds": 0.02525432500988245,
+                "a4_wall_seconds": 0.08184997190255672,
+                "actual_factor_solve_seconds": 0.08025259803980589,
+                "internal_recovery_seconds": 0.023705495987087488,
+                "port_closure_seconds": 0.02896264207083732,
+                "rhs_reduce_seconds": 0.029704205924645066,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            }
+          ],
+          "repeat": 0,
+          "wall_seconds": 5.710660450044088
+        },
+        {
+          "bal_h": {
+            "apply_count": 2,
+            "counts": {
+              "A_inner_true": 0,
+              "A_structure": 2,
+              "C": 2,
+              "PH_audit": 2,
+              "smoother": 1
+            },
+            "feedback": {
+              "As_norm": 6857.4512157337485,
+              "after_field_norm": 326.9573945098123,
+              "before_field_norm": 338.08219587857405,
+              "before_residual_norm": 8076.074118508053,
+              "feedback_norm": 176.6588719760476,
+              "s_norm": 62.76381720567199
+            },
+            "initial": {
+              "Azc_norm": 2583.299736193562,
+              "constraint": {
+                "limit": 1e-08,
+                "norm": 1.983035013785359e-10,
+                "operation_scale": 347.7774281248551,
+                "relative": 5.702023344290856e-13
+              },
+              "q_norm": 1721.613075480568,
+              "rc_norm": 2904.2858210693053,
+              "zc_norm": 334.6977404641645
+            },
+            "inner": [],
+            "live_after_cleanup": 0,
+            "live_before_cleanup": 5,
+            "operation_seconds": {
+              "A_inner_true": 0.0,
+              "A_structure": 0.23197998793330044,
+              "C": 0.5647389549994841,
+              "smoother": 0.06103689002338797
+            },
+            "peak_new_fine_vectors": 6,
+            "projection_space": "ker(PH A), not M0-orthogonal complement",
+            "route": "BAL_H",
+            "status": "BALANCED_ACTION_COMPLETED",
+            "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+          },
+          "coarse_corrections": [
+            {
+              "coarse_wall_seconds": 0.28210507391486317,
+              "factor_counts": {
+                "logical_apply_calls": 4,
+                "numeric_calls": 1,
+                "solve_calls": 5,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.07854439900256693,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.13101047195959836,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 4,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.023396112956106663,
+                  "matrix_identity": {
+                    "csr_sha256": "878e403ccbf0b936e4621e419ef58f4ba0e783510b6e65dc10f31b7ca1044052",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "1b1bd22fac25c4810db79ccd05033a3d7b1327ca8c41f3bb26e8b2e753a0abfa",
+                    "nnz": 2202740,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      5608,
+                      5608
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "5f461a27923b798c2f30475717558df04236f8a3f1d7822e062f15662e814c61"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.02895344898570329,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 4,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.24436103005427867,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.023811794933862984,
+              "ph_restriction_seconds": 0.013894722913391888,
+              "port_state": {
+                "norm": 1.8378862523942954,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "041698390842df67eaedae5b97df01bf0c36b112358b4ffea955d069efc65563",
+                "size": 3904
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.058223417960107327,
+                    "measured_parent_wall_seconds": 0.08430092397611588,
+                    "vector_sum_seconds": 2.757110632956028e-05,
+                    "volume_seconds": 0.02593542099930346,
+                    "wall_seconds": 0.08418652100954205
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 4,
+                    "numeric_calls": 1,
+                    "solve_calls": 5,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 519.6379710823288,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 519.6379710823288,
+                    "norm": 4.771175331104669e-13,
+                    "relative_residual": 4.59086479108428e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 1039.2759421646576,
+                    "sha256": "af9cb468a24abf188d2d3dd8bdd42c290f5492509620fbb752aadeafeb794632",
+                    "size": 3904,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.028203448047861457,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 8.48024479417611e-15,
+                  "rhs_norm": 173.88871406241725
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.058223417960107327,
+                "a4_volume_seconds": 0.02593542099930346,
+                "a4_wall_seconds": 0.08430092397611588,
+                "actual_factor_solve_seconds": 0.07854439900256693,
+                "internal_recovery_seconds": 0.023396112956106663,
+                "port_closure_seconds": 0.028203448047861457,
+                "rhs_reduce_seconds": 0.02895344898570329,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            },
+            {
+              "coarse_wall_seconds": 0.2824684039223939,
+              "factor_counts": {
+                "logical_apply_calls": 5,
+                "numeric_calls": 1,
+                "solve_calls": 6,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.0792349079856649,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.13090961705893278,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 5,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.02320722001604736,
+                  "matrix_identity": {
+                    "csr_sha256": "878e403ccbf0b936e4621e419ef58f4ba0e783510b6e65dc10f31b7ca1044052",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "1b1bd22fac25c4810db79ccd05033a3d7b1327ca8c41f3bb26e8b2e753a0abfa",
+                    "nnz": 2202740,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      5608,
+                      5608
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "5f461a27923b798c2f30475717558df04236f8a3f1d7822e062f15662e814c61"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.02831569593399763,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 5,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.24562390998471528,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.025128505076281726,
+              "ph_restriction_seconds": 0.011673163971863687,
+              "port_state": {
+                "norm": 4.999696420316151,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "bbc80672dc8e60894fdb2012469a3c35ca6dc33cac251c8358af363f5f10b03e",
+                "size": 3904
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.05818837508559227,
+                    "measured_parent_wall_seconds": 0.0846758879488334,
+                    "vector_sum_seconds": 1.4622928574681282e-05,
+                    "volume_seconds": 0.02634310896974057,
+                    "wall_seconds": 0.08454618498217314
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 5,
+                    "numeric_calls": 1,
+                    "solve_calls": 6,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 635.0000249992079,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 635.0000249992078,
+                    "norm": 4.3630146298259714e-13,
+                    "relative_residual": 3.4354444551647177e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 1270.0000499984158,
+                    "sha256": "5ea6286eab59f2db3fcedd8e9ded0a5a8ced8bba8ca71ea1537b40a989e37ccc",
+                    "size": 3904,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.029262946918606758,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 4.1334766454472385e-15,
+                  "rhs_norm": 508.75605618800626
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.05818837508559227,
+                "a4_volume_seconds": 0.02634310896974057,
+                "a4_wall_seconds": 0.0846758879488334,
+                "actual_factor_solve_seconds": 0.0792349079856649,
+                "internal_recovery_seconds": 0.02320722001604736,
+                "port_closure_seconds": 0.029262946918606758,
+                "rhs_reduce_seconds": 0.02831569593399763,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            }
+          ],
+          "repeat": 1,
+          "wall_seconds": 5.818121038028039
+        },
+        {
+          "bal_h": {
+            "apply_count": 3,
+            "counts": {
+              "A_inner_true": 0,
+              "A_structure": 2,
+              "C": 2,
+              "PH_audit": 2,
+              "smoother": 1
+            },
+            "feedback": {
+              "As_norm": 6857.4512157337485,
+              "after_field_norm": 326.9573945098123,
+              "before_field_norm": 338.08219587857405,
+              "before_residual_norm": 8076.074118508053,
+              "feedback_norm": 176.6588719760476,
+              "s_norm": 62.76381720567199
+            },
+            "initial": {
+              "Azc_norm": 2583.299736193562,
+              "constraint": {
+                "limit": 1e-08,
+                "norm": 1.983035013785359e-10,
+                "operation_scale": 347.7774281248551,
+                "relative": 5.702023344290856e-13
+              },
+              "q_norm": 1721.613075480568,
+              "rc_norm": 2904.2858210693053,
+              "zc_norm": 334.6977404641645
+            },
+            "inner": [],
+            "live_after_cleanup": 0,
+            "live_before_cleanup": 5,
+            "operation_seconds": {
+              "A_inner_true": 0.0,
+              "A_structure": 0.21846888901200145,
+              "C": 0.5601610660087317,
+              "smoother": 0.06381664099171758
+            },
+            "peak_new_fine_vectors": 6,
+            "projection_space": "ker(PH A), not M0-orthogonal complement",
+            "route": "BAL_H",
+            "status": "BALANCED_ACTION_COMPLETED",
+            "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+          },
+          "coarse_corrections": [
+            {
+              "coarse_wall_seconds": 0.28300147503614426,
+              "factor_counts": {
+                "logical_apply_calls": 6,
+                "numeric_calls": 1,
+                "solve_calls": 7,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.0797882879851386,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.1323513990500942,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 6,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.024387891055084765,
+                  "matrix_identity": {
+                    "csr_sha256": "878e403ccbf0b936e4621e419ef58f4ba0e783510b6e65dc10f31b7ca1044052",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "1b1bd22fac25c4810db79ccd05033a3d7b1327ca8c41f3bb26e8b2e753a0abfa",
+                    "nnz": 2202740,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      5608,
+                      5608
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "5f461a27923b798c2f30475717558df04236f8a3f1d7822e062f15662e814c61"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.02805228205397725,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 6,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.24363282904960215,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.024528637062758207,
+              "ph_restriction_seconds": 0.014800691045820713,
+              "port_state": {
+                "norm": 1.8378862523942954,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "041698390842df67eaedae5b97df01bf0c36b112358b4ffea955d069efc65563",
+                "size": 3904
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.05731887696310878,
+                    "measured_parent_wall_seconds": 0.08264954097103328,
+                    "vector_sum_seconds": 2.179702278226614e-05,
+                    "volume_seconds": 0.02515178802423179,
+                    "wall_seconds": 0.08249252499081194
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 6,
+                    "numeric_calls": 1,
+                    "solve_calls": 7,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 519.6379710823288,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 519.6379710823288,
+                    "norm": 4.771175331104669e-13,
+                    "relative_residual": 4.59086479108428e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 1039.2759421646576,
+                    "sha256": "af9cb468a24abf188d2d3dd8bdd42c290f5492509620fbb752aadeafeb794632",
+                    "size": 3904,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.02776353689841926,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 8.48024479417611e-15,
+                  "rhs_norm": 173.88871406241725
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.05731887696310878,
+                "a4_volume_seconds": 0.02515178802423179,
+                "a4_wall_seconds": 0.08264954097103328,
+                "actual_factor_solve_seconds": 0.0797882879851386,
+                "internal_recovery_seconds": 0.024387891055084765,
+                "port_closure_seconds": 0.02776353689841926,
+                "rhs_reduce_seconds": 0.02805228205397725,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            },
+            {
+              "coarse_wall_seconds": 0.2770207739667967,
+              "factor_counts": {
+                "logical_apply_calls": 7,
+                "numeric_calls": 1,
+                "solve_calls": 8,
+                "symbolic_calls": 1
+              },
+              "inverse_attempts": [
+                {
+                  "actual_factor_solve_seconds": 0.07923273905180395,
+                  "duplicate_C_H_applied": false,
+                  "elapsed_seconds": 0.13092169107403606,
+                  "factor_solve_call_delta": 1,
+                  "factor_solve_count": 7,
+                  "input_finite": true,
+                  "input_is_mpc_dual_storage": true,
+                  "internal_recovery_seconds": 0.02374269801657647,
+                  "matrix_identity": {
+                    "csr_sha256": "878e403ccbf0b936e4621e419ef58f4ba0e783510b6e65dc10f31b7ca1044052",
+                    "dense_gather": false,
+                    "dtype": "complex128",
+                    "hash_algorithm": "sha256(header||rank||ownership||owned-row-stream-digests)",
+                    "index_dtype": "int64-little-endian-canonical",
+                    "mapping_sha256": "1b1bd22fac25c4810db79ccd05033a3d7b1327ca8c41f3bb26e8b2e753a0abfa",
+                    "nnz": 2202740,
+                    "nnz_semantics": "owned-row-getRow-stored-entries",
+                    "schema_version": "task039extra.v18.petsc-csr-content-identity.v1",
+                    "shape": [
+                      5608,
+                      5608
+                    ],
+                    "value_endianness": "little",
+                    "values_sha256": "5f461a27923b798c2f30475717558df04236f8a3f1d7822e062f15662e814c61"
+                  },
+                  "output_finite": true,
+                  "recovered_interior_rows": 1944,
+                  "retain_through_postprocess_v18": false,
+                  "rhs_reduce_seconds": 0.027810761937871575,
+                  "schema_version": "task039extra.v18.p4-cell-condensed-inverse.v1",
+                  "slave_zero_policy": "zero_initialize_and_no_backsubstitution",
+                  "solution_finite": true,
+                  "status": "SOLVE_COMPLETED"
+                }
+              ],
+              "logical_apply": 7,
+              "logical_apply_delta": 1,
+              "logical_wall_seconds": 0.24455084698274732,
+              "max_refinements": 2,
+              "p_prolongation_seconds": 0.019293547957204282,
+              "ph_restriction_seconds": 0.013138943002559245,
+              "port_state": {
+                "norm": 4.999696420316151,
+                "policy": "cumulative_total_not_last_delta",
+                "sha256": "bbc80672dc8e60894fdb2012469a3c35ca6dc33cac251c8358af363f5f10b03e",
+                "size": 3904
+              },
+              "refinement_count": 0,
+              "rows": [
+                {
+                  "a4_timing": {
+                    "dtn_seconds": 0.058725698036141694,
+                    "measured_parent_wall_seconds": 0.08408185094594955,
+                    "vector_sum_seconds": 1.956603955477476e-05,
+                    "volume_seconds": 0.025195454014465213,
+                    "wall_seconds": 0.083940789103508
+                  },
+                  "attempt": 1,
+                  "factor_counts": {
+                    "logical_apply_calls": 7,
+                    "numeric_calls": 1,
+                    "solve_calls": 8,
+                    "symbolic_calls": 1
+                  },
+                  "physical_factor_delta": {
+                    "numeric_calls": 0,
+                    "solve_calls": 1,
+                    "symbolic_calls": 0
+                  },
+                  "port_closure": {
+                    "d_term_norm": 635.0000249992079,
+                    "finite": true,
+                    "formula": "H*a-D*c",
+                    "h_term_norm": 635.0000249992078,
+                    "norm": 4.3630146298259714e-13,
+                    "relative_residual": 3.4354444551647177e-16,
+                    "rhs_policy": "zero_port_rhs",
+                    "scale": 1270.0000499984158,
+                    "sha256": "5ea6286eab59f2db3fcedd8e9ded0a5a8ced8bba8ca71ea1537b40a989e37ccc",
+                    "size": 3904,
+                    "status": "PASS",
+                    "tolerance": 1e-10
+                  },
+                  "port_closure_wall_seconds": 0.028724672039970756,
+                  "refinement": 0,
+                  "refinement_index": 0,
+                  "relative_residual": 4.1334766454472385e-15,
+                  "rhs_norm": 508.75605618800626
+                }
+              ],
+              "source": "retained_bal_h_coarse",
+              "status": "P4_RETURN_PASS",
+              "timing": {
+                "a4_children_status": "MEASURED",
+                "a4_dtn_seconds": 0.058725698036141694,
+                "a4_volume_seconds": 0.025195454014465213,
+                "a4_wall_seconds": 0.08408185094594955,
+                "actual_factor_solve_seconds": 0.07923273905180395,
+                "internal_recovery_seconds": 0.02374269801657647,
+                "port_closure_seconds": 0.028724672039970756,
+                "rhs_reduce_seconds": 0.027810761937871575,
+                "scope": "children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds"
+              },
+              "timing_scope": "C parent wall; ledger and inverse timings are children"
+            }
+          ],
+          "repeat": 2,
+          "wall_seconds": 5.736839891062118
+        }
+      ],
+      "factor_counts": {
+        "logical_apply_calls": 7,
+        "numeric_calls": 1,
+        "solve_calls": 8,
+        "symbolic_calls": 1
+      },
+      "threads_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "math_libraries": null,
+      "actual_process_threads": 3,
+      "source": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_attempt3/actual_2nm_math1.json",
+        "sha256": "1ed3eba34d3b41d0457a3c65ecb905abf8ea1a6fff0b83c818a1fa1983ef0e72",
+        "bytes": 103772,
+        "stable_after_process_exit": true
+      }
+    }
+  ],
+  "negative_attempts": [
+    {
+      "path": "tmp/review_v6_components/actual_math1.log",
+      "reason": "fixture pre-numerical planner metadata None",
+      "source_log": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_math1.log",
+        "sha256": "e4db0d339ba6a4d7adb7354b91161909deeb47475895ee0902b10f6bfdd870e5",
+        "bytes": 3967,
+        "stable_after_process_exit": true
+      }
+    },
+    {
+      "path": "tmp/review_v6_components/actual_math1_attempt2.log",
+      "reason": "flattened native coordinates broadcast fixture error; no numeric mismatch",
+      "source_log": {
+        "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_math1_attempt2.log",
+        "sha256": "a0e6f6d723bd291ef6274f7dda5e859c9a03e16afe742b02b4ee2281db9ad68d",
+        "bytes": 12773,
+        "stable_after_process_exit": true
+      }
+    }
+  ],
+  "formal_replay_budget_used": 0,
+  "related_final_evidence": [
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/early_final.log",
+      "sha256": "32d6cf2ff64da1ed32ed97c90058af831b2a4531908bc49962f0c727597485a8",
+      "bytes": 99,
+      "stable_after_process_exit": true
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/supervision_final_attempt2.log",
+      "sha256": "26f25f64f9f8fb888e70776c3cc1f3e888bcdc322de89ff6740b55fe5557f234",
+      "bytes": 100,
+      "stable_after_process_exit": true
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/p3_shared.log",
+      "sha256": "5819d0f2408cf67cb055d0d65cae8239081c881b8b590ff83d6beec76f08fa43",
+      "bytes": 99,
+      "stable_after_process_exit": true
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/metric_mpi2.log",
+      "sha256": "6c5ff944351389fc021c58e8db05b203f809040da82ce1079946c28b013a6dfa",
+      "bytes": 196,
+      "stable_after_process_exit": true
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/metric_mpi4.log",
+      "sha256": "9a48c0612c5056f4f059e68fc1e71f03ae43887f029ac3c84837a309d3b12ac8",
+      "bytes": 392,
+      "stable_after_process_exit": true
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/scope_wiring_final.log",
+      "sha256": "afb9db19de62a4c950bc51122566113eebf8e4d7255728983c764dbb49e477b8",
+      "bytes": 99,
+      "stable_after_process_exit": true
+    },
+    {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/lint_comparison.json",
+      "sha256": "6623fbd9e3df7cc8070820941b911b6eda09032481ae9368658c792df54ba58b",
+      "bytes": 20157,
+      "stable_after_process_exit": true
+    }
+  ]
+}

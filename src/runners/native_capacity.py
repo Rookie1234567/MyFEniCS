@@ -201,12 +201,17 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         os.environ['PHYSICAL_NATIVE_CAPACITY'] = profile
         profile_facts = native_profile_facts(profile)
         worker_cpu = profile_facts.get('native_execution', {}).get('worker_cpu', 23)
+        worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
         observe_only_swap = profile_facts['resources'].get('swap_policy') == 'observe_only'
         swap_launch = _launch_swap_snapshot()
         swap_launch['policy'] = _validate_preexisting_swap(
             swap_launch, observe_only=observe_only_swap
         )
         node_admission = None
+        if memory_policy == 'interleave_nodes0_1':
+            from .reviewed_workstation_admission import interleaved_admission
+            os.environ.pop('PHYSICAL_NATIVE_NODE_CAP_BYTES', None)
+            node_admission = interleaved_admission(profile_facts['resources'], worker_cpus)
         if memory_policy in {'membind_node1', 'preferred_node1'}:
             cgroup = current_cgroup_path()
             allowed_mems = None
@@ -275,24 +280,41 @@ def native_capacity_guard(profile, *, memory_policy='none'):
         filesystem = os.statvfs(root)
         isolation = {'canonical_repository': str(root.parent/'task-repository.git'),
                      'worktree': str(root), 'supervisor_affinity': sorted(os.sched_getaffinity(0)),
-                     'worker_affinity': [worker_cpu],
+                     'worker_affinity': worker_cpus,
                      'worker_memory_policy': ({'mode': 'strict_membind', 'node': 1}
                                               if memory_policy == 'membind_node1'
                                               else {'mode': 'preferred', 'preferred_node': 1,
                                                     'fallback': 'allowed_mems'}
                                               if memory_policy == 'preferred_node1'
+                                              else {'mode': 'interleave', 'nodes': [0, 1]}
+                                              if memory_policy == 'interleave_nodes0_1'
                                               else {'mode': 'default'}),
                      'native_memory_policy': memory_policy,
-                     'native_command_prefix': ['/usr/bin/taskset', '-c', str(worker_cpu), *memory_prefix],
+                     'native_command_prefix': ['/usr/bin/taskset', '-c', ','.join(map(str, worker_cpus)), *memory_prefix],
                      'node_memory_admission': node_admission,
                      'swap_launch': swap_launch,
                      'native_capacity_profile': profile,
-                     'cpu_launch_snapshot': _cpu_launch_snapshot({9, worker_cpu}),
-                     'neighbor_concurrent_heavy_authorized': True,
+                     'cpu_launch_snapshot': _cpu_launch_snapshot({9, *worker_cpus}),
+                     'neighbor_concurrent_heavy_authorized': profile_facts['resources']['concurrent_neighbor_authorized'],
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,
                      'inodes_available': filesystem.f_favail}
-        yield root, isolation
+        env_names = ('PHYSICAL_WATCHDOG_PSS_POLICY', 'OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')
+        previous_environment = {name: os.environ.get(name) for name in env_names}
+        if profile_facts['resources'].get('pss_sampling_policy') == 'disabled_by_profile':
+            os.environ['PHYSICAL_WATCHDOG_PSS_POLICY'] = 'disabled_by_profile'
+            threads = str(profile_facts['native_execution']['math_threads'])
+            for name in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS'):
+                os.environ[name] = threads
+        try:
+            yield root, isolation
+        finally:
+            for name, value in previous_environment.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
+
 
 
 def launch_native_capacity(specification, *, setup_only: bool = False):

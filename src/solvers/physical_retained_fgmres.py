@@ -13,13 +13,31 @@ import numpy as np
 def run_retained_fgmres(
     rhs, action, pc, *, evaluate, checkpoint, append, seconds,
     resource_sample=lambda: None, stop_requested=lambda: False,
-    save_retained=lambda iteration, vector: None,
+    save_retained=lambda iteration, vector: None, planned_stop_iteration=None,
 ):
     """Callbacks return owned action/PC vectors and plain evaluation facts."""
+    if planned_stop_iteration not in (None, 16):
+        raise ValueError("only the explicit Review V6 16-step pilot is qualified")
     from petsc4py import PETSc
     from .fullspace_memory_first_krylov import _ActionContext, _PCContext
 
-    ac, pcc = _ActionContext(action), _PCContext(pc)
+    outer_costs = {"outer_schur_seconds": 0.0, "outer_pc_seconds": 0.0}
+
+    def timed_action(vector):
+        started = perf_counter()
+        try:
+            return action(vector)
+        finally:
+            outer_costs["outer_schur_seconds"] += perf_counter()-started
+
+    def timed_pc(vector):
+        started = perf_counter()
+        try:
+            return pc(vector)
+        finally:
+            outer_costs["outer_pc_seconds"] += perf_counter()-started
+
+    ac, pcc = _ActionContext(timed_action), _PCContext(timed_pc)
     sizes = (rhs.getLocalSize(), rhs.getSize())
     operator = solution = target = None
     try:
@@ -43,7 +61,7 @@ def run_retained_fgmres(
     last_checkpoint = -1
     last_iteration_seconds = None
     timings = {"explicit_schur_seconds": 0.0, "physical_evaluation_seconds": 0.0,
-               "checkpoint_seconds": 0.0}
+               "checkpoint_seconds": 0.0, "retained_save_seconds": 0.0}
 
     def snapshot(iteration, current, reported, *, terminal=False):
         nonlocal last_checkpoint
@@ -55,7 +73,9 @@ def run_retained_fgmres(
             current.buildSolution(target)
         retained_saved = terminal or iteration % 32 == 0
         if retained_saved:
+            save_started = perf_counter()
             save_retained(int(iteration), target)
+            timings["retained_save_seconds"] += perf_counter()-save_started
         started = perf_counter()
         applied = action(target)
         residual = rhs.copy()
@@ -122,11 +142,12 @@ def run_retained_fgmres(
                 "step_wall_seconds": step_seconds,
                 "timebase": "monotonic_from_solve_start"})
             stop = bool(stop_requested())
+            planned_stop = planned_stop_iteration is not None and iteration >= planned_stop_iteration
             if not np.isfinite(reported):
                 status = "NONFINITE_KRYLOV_RESIDUAL"
                 return int(PETSc.KSP.ConvergedReason.DIVERGED_NANORINF)
-            if iteration % 8 == 0 or reported / rhs_norm <= 1e-6 or stop:
-                row = snapshot(iteration, current, reported, terminal=stop)
+            if iteration % 8 == 0 or reported / rhs_norm <= 1e-6 or stop or planned_stop:
+                row = snapshot(iteration, current, reported, terminal=stop or planned_stop)
                 if stop:
                     status = "USER_CONTROLLED_STOP"
                     return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
@@ -138,6 +159,9 @@ def run_retained_fgmres(
                         or row["schur_port_identity_relative"] > 1e-10):
                     status = "RECOVERY_IDENTITY_GATE_FAIL"
                     return int(PETSc.KSP.ConvergedReason.DIVERGED_BREAKDOWN)
+                if planned_stop:
+                    status = "PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION"
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
             return 0
 
         ksp.setConvergenceTest(convergence)
@@ -158,11 +182,14 @@ def run_retained_fgmres(
             "reason": reason, "status": status, "snapshots": snapshots,
             "matvec_count": ac.matvec_count, "pc_apply_count": pcc.apply_count,
             "explicit_action_count": len(snapshots), "elapsed_seconds": float(seconds()),
-            "ksp_solve_monotonic_seconds": ksp_monotonic, "timings": timings,
+            "ksp_solve_monotonic_seconds": ksp_monotonic, "timings": dict(timings, **outer_costs,
+                orthogonalization_seconds=None, orthogonalization_status="NOT_INDEPENDENTLY_TIMED",
+                scope="KSP API includes callback checks/output; final snapshot is after the API"),
             "ksp_create_count": 1, "ksp_solve_count": 1, "ksp_destroy_count": 0,
             "restart": 32, "max_it": 2048, "zero_start": True,
             "zero_start_scope": "retained unknowns; full field includes internal particular solution",
             "retained_local_size": sizes[0], "retained_global_size": sizes[1],
+            "planned_stop_iteration": planned_stop_iteration,
             "residual_interval": 8, "checkpoint_interval": 32,
             "screen_enabled": False, "screen_policy": "v19_fullspace_progress_observed_only",
             "time_policy": "observe_only", "time_gate_evaluated": False}

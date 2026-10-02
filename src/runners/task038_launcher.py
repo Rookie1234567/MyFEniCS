@@ -152,6 +152,12 @@ def _base_manifest(
     native_identity = specification.solver.get('preconditioner')
     if native_identity in NATIVE_PROFILES:
         profile = native_profile_facts(native_identity)
+        manifest['execution_mode'] = profile.get('execution_mode', 'full_solve')
+        if 'component_options' in profile:
+            manifest['component_options'] = profile['component_options']
+            from .math_backend_identity import component_factory_identity
+            manifest['configured_component_factories'] = component_factory_identity(
+                Path(__file__).resolve().parents[2])
         derived = snapshot.get('derived', {})
         profile_snapshot = derived.get('physical_intermediate_profile', {})
         material = snapshot['materials']
@@ -536,6 +542,7 @@ def launch_specification(
                         rss_hard_limit_bytes=physical_resources.get('rss_hard_limit_bytes'),
                         rss_warning_bytes=physical_resources.get('rss_warning_bytes'),
                         startup_headroom_bytes=physical_resources.get('startup_headroom_bytes'),
+                        pss_sampling_policy=physical_resources.get('pss_sampling_policy'),
                     ),
                     **(dict(grace_seconds=60 if packed else 30, hard_stop_immediate=True,
                             cooperative_performance_stop=packed,
@@ -603,6 +610,24 @@ def launch_specification(
         if workflow_limit is not None and result['workflow_clock_interval']['budget_seconds']>workflow_limit:
             result['result_classification']='PERFORMANCE_CONTROLLED_STOP'
     end_time = _now()
+    execution_mode = manifest.get('execution_mode', 'full_solve')
+    if execution_mode in ('h6_only', 'pilot_16'):
+        result.update(execution_mode=execution_mode, complete_solve=False,
+            not_run={'rta': 'NOT_RUN', 'physical_checker': 'NOT_RUN'})
+        if result.get('result_classification') == 'worker_exit0':
+            from .reviewed_scope_evidence import validate_scoped_terminal
+            try:
+                scope_summary = json.loads((run_directory/'physical_intermediate_summary.json').read_text())
+                scope_errors = validate_scoped_terminal(execution_mode, scope_summary)
+                if scope_errors:
+                    raise ValueError('; '.join(scope_errors))
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                result.update(result_classification='EVIDENCE_INCOMPLETE', scope_evidence_error=str(exc))
+            else:
+                result.update(result_classification=execution_mode,
+                    worker_result_classification='worker_exit0',
+                    scoped_terminal_status=scope_summary['status'])
+        manifest.update(complete_solve=False, not_run=result['not_run'])
     if physical_candidate:
         result['full_workflow_monotonic_seconds'] = monotonic()-workflow_started
         if workflow_limit is not None and result['full_workflow_monotonic_seconds'] > workflow_limit:

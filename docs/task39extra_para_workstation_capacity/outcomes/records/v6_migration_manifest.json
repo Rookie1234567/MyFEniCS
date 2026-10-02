@@ -1,0 +1,477 @@
+{
+  "schema": "task39extra.review-v6.selective-migration.v1",
+  "status": "COMPONENTS_QUALIFIED_READY_FOR_SINGLE_H6_ONLY",
+  "target_review_head": "da7ab7edee87a8665936c2ac592062d3b109f1f1",
+  "donor_closeout_sha": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
+  "donor_measured_sha": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+  "whole_branch_merge": false,
+  "whole_src_overwrite": false,
+  "strict_return_contract": {
+    "original_aq_tolerance": 1e-10,
+    "maximum_extra_same_factor_refinements": 2,
+    "exhaustion": "raise; no best-finite continuation"
+  },
+  "disabled_research": [
+    "p2_recursive_inverse",
+    "patch_inverse",
+    "recycling",
+    "BLR",
+    "ILU",
+    "subdomain_inverse",
+    "best_finite_policy",
+    "experimental_shared_contractions",
+    "experimental_real_imag_stack",
+    "projection_matmul",
+    "projection_work_reuse"
+  ],
+  "low_memory_p4_inverse_trials": 0,
+  "inherited_unchanged": [
+    "p6_cell_condensed_action",
+    "physical_balanced_coupling",
+    "full_inverse_bridge",
+    "qualified raw_float64_widths_plus_orientation Schur/LU/recovery identity",
+    "V5 qualified rounded12 tensor key with unrounded deterministic representative"
+  ],
+  "component_source_identity": "tmp/review_v6_components/actual_attempt3/source_identity.json",
+  "formal_source_sha": null,
+  "entries": [
+    {
+      "path": "benchmarks/physical_intermediate_checker.py",
+      "group": "checker_tests",
+      "target_base_blob": "1a8376a88e654faf31a5c8c8cf6c82195c8d216b",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "ebc8f4828b2d645c8a1ac10d907ece897b053e69ec42655cce241beac1bf9d21",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "benchmarks/process_tree_pss_diagnostic.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "037713849dda82adab895608637505cecc9edac8c13577c133e199eb57469822",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": "42679f0f55f1ce11d6e3e926cbdc4df8f5f74bec",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "a3fd80f9b3e922a2f1a4ff0eed09dd10aed8f6675fc242b0e7049bfacfbd71b3",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "benchmarks/task038_full3d_jit_staging.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": "d110030d09ac8f405f3481a90c69cb27932db78a",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "4203bada08b59dfbea0f97c092307366b984484218e4bc68e113b49d2bc44295",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/performance_transfer_v6.md",
+      "group": "compact_evidence_docs",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "cd3ffe2653a8ff3997b697855a12db8ef86cdf410b658e71bfb566a6f5e05dba",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_component_and_h6_only.json",
+      "group": "compact_evidence_docs",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "adaptation": "target-specific integration/evidence; no ordinary default profile change",
+      "working_sha256": "6dcb1539ac2690b5c006bcb6323134067635e53047ed8d47086645654a9a260e"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_resource_numa_policy.json",
+      "group": "compact_evidence_docs",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "c379cf18016ed478e5afb5fae9cb3c1cad2c8f27fcdb6e3b6174817d89c3a6b4",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/test_summary.md",
+      "group": "compact_evidence_docs",
+      "target_base_blob": "3616de6a05cdea0438f810cf1842b0e07d375dba",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "adaptation": "target-specific integration/evidence; no ordinary default profile change",
+      "working_sha256": "2a02bb666b4830621d81304f1b8cec2e09b6f1f49c6de258fff9cb9f3ed5c6f0"
+    },
+    {
+      "path": "input/task39extra_para_workstation_capacity/v6_2nm_h6_only.dat",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "f6440d40dfa5a09a105f8948cc065ce6ec9653f4c12f072916a922b3e838d541",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "input/task39extra_para_workstation_capacity/v6_2nm_pilot16.dat",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "input/task39extra_para_workstation_capacity/v6_5nm_full.dat",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/io/execution_plan.py",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": "07e94599eb47793b2a5313c4d0cce8c17815d3a9",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "b106a12ef7919c35048590e657a2618ab08afe9f259e386160a841d96912bb72",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/io/input_schema.py",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": "6d90dedfc5d7e7a3e026fde6296d7a3460874956",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "064817e481140f6f26946438c3031fab73ca1806a835cdd778cbdf33dc5b549f",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/io/input_validation.py",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": "bb81b2614ef2fc543d0684a8c21e4d2c218e6eb7",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "1953f996490e7fbb1ba8b010ac4486d27c7ea70e573f905d0b27b4a853c31447",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/io/native_capacity_profile.py",
+      "group": "profile_explicit_inputs",
+      "target_base_blob": "5d820760e2d7dba6a4ceb3f8d089d52f73de6dd8",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "10610a3bd510e1ee9a5b64e9d63cba7bbdde58c2f76419dcf5d930ab3a28ed25",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/math_backend_identity.py",
+      "group": "reusable_runner_supervision",
+      "donor_commit": null,
+      "working_sha256": "b38eab25267da0b515932961684f9a126435df2306016faf2d11ac16f428ba57",
+      "adaptation": "target boundary identity / p3 shared-path regression"
+    },
+    {
+      "path": "src/runners/native_capacity.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": "ee8e537a47d6da5bbcbdee40c1797ea4e6b7255d",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "8458db6eb493772724d5a3e328e04a6860269053b0f94eb67b185bad452cafaf",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/physical_intermediate.py",
+      "group": "reusable_runner_supervision",
+      "donor_commit": null,
+      "working_sha256": "d9042008f8dec710ea8c478d51c10ab539f223ee7ce7ff57202e32de38c4917f",
+      "adaptation": "target boundary identity / p3 shared-path regression"
+    },
+    {
+      "path": "src/runners/physical_positive_setup_scope.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "b09ec5912d4288f131913c7976bd076d4cf726f05fbb278911a9868527952dd7",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/physical_retained_condensed_v20.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": "8aa73497a271e28d6e46a36590bb2be8fa5749b6",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "e9373141d8b33badbaa34e71f4472400f3c6f53cf36ead6f933cff1409c15f36",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/reviewed_scope_evidence.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "d533ab476478a348864b7832640d2a880b06284007fcf8c726b91cb246647ce1",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/reviewed_workstation_admission.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "52c4f8d51faeafe1cb9f476f47ac0d04b5ed9570b628ba8c71682c8bb0ec6818",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/task038_input_worker.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": "af9013a61022b03181c3ea663da98b82fcdb914c",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "d8a9e7dede15716a46ee6869f03d6d41870802cbc6ab5cb7fc689d1ad0d3bad9",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/runners/task038_launcher.py",
+      "group": "reusable_runner_supervision",
+      "target_base_blob": "065979c464c076a6b77e6d66797ae4886a8f2ea7",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "9da9cbdb3f656040202923f2955b4de1d9708dd0829f8be1b15ce1480fad3a31",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/solvers/fullspace_fused_split_volume.py",
+      "group": "production_numerical_core",
+      "target_base_blob": null,
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/fullspace_fused_split_volume.py",
+      "donor_blob": "e484e726f0c5ac642ad27281fb9308cfa4eafa75",
+      "working_sha256": "730e6def8a5881616849d19dce71b7b1ecdafae71d02586490b0a5dfbc3bd417",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/fullspace_metric_positive_diagonal.py",
+      "group": "production_numerical_core",
+      "target_base_blob": null,
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/fullspace_metric_positive_diagonal.py",
+      "donor_blob": "26d48a9ed03dbaa7f768b40133b47c51997fa3b5",
+      "working_sha256": "292a0ed741d0dacc2a8038fdcd9efe3836c19c57124cdcf1fb2ed648b38b0539",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/fullspace_mpc_action.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "c63fe09af0a5b49c2baaf3a14573455f0199eefc",
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/fullspace_mpc_action.py",
+      "donor_blob": "c585d185f6b9cdfe51777cffcd9b09a725469cd2",
+      "working_sha256": "487405fc1292ef2530be2abf66faa86a4b709facfe6362f164f6e4ece8c3d4c1",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/fullspace_n1e_sum_factor.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "7db861d7187df66c7e5f90135cb483de5b2232db",
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/fullspace_n1e_sum_factor.py",
+      "donor_blob": "f5e58139721fa387436e97710885d7d94ded9454",
+      "working_sha256": "bb6908fed61609907a6cea4ccb891b1acc14c2f2d2277067c318413c14656801",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/fullspace_partial_assembly.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "7fc28d87cadc712018818fe0bb2d24039e530b45",
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/fullspace_partial_assembly.py",
+      "donor_blob": "7b6f7ce0c021de6e9b18c187cd7fea2edb06da9c",
+      "working_sha256": "3808bbf3abef68cd3012de0bce4a90e44302b8e6d7c6d81e988233170e12d01d",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/fullspace_physical_action.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "aaae476fd9b9d498e50ac4731b2a74b579cdbd0f",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "7aaef43e3384e3967cbb7cc5357a03dab4c3eb0757a43278951c1c74fc06f6d5",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/fullspace_quadrature_diagonal.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "921261f00ad66f514026b71aa69356b4d1d896f6",
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/fullspace_quadrature_diagonal.py",
+      "donor_blob": "66decccb2c89991581a87f421fd56758078612a4",
+      "working_sha256": "a4f68bee67ce314e05fe678dbc72ece5a5490a4537c686e61f312ce98e11deff",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "0e053332509f2bc0469f1e79b553b00daa4676aa",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "bdb09e1de10c34ca5b3c3cebfbfa47eb0adc0570e0923bf00038d8efeeb2a309",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/hcurl_blocked_gram_tensor.py",
+      "group": "production_numerical_core",
+      "target_base_blob": null,
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/task39extra_p6_raw_tensor.py",
+      "donor_blob": "c0c67c4501a26f109ff1755c7628a6026a401e62",
+      "working_sha256": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/p4_cell_condensed_inverse.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "ad9faa8ca171e8178b31ab1ced84289fc2e76a81",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "81ddeaa4db5fea5de22d80c69c679e23e35d8b4b3862cbb2e5a5314fd29d6ae1",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/physical_equivalent_fast.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "c9f7955662a71185501f430118c7369dd1bb2e1c",
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/physical_equivalent_fast.py",
+      "donor_blob": "718812d54d6efaed77c18f2691cbc21c471fb115",
+      "working_sha256": "1009c7c4850e18282f121974f5d2af46218952d1e472b795dcafd66349ad7c84",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/physical_light_setup.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "68bd68d29b55dcda2b63ddcfff557e9fd4f1f40a",
+      "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
+      "donor_path": "src/solvers/physical_light_setup.py",
+      "donor_blob": "c272c061a8f0add8b4f5683fe29fd189e5de46f0",
+      "working_sha256": "bc397c7ce5dbae176ace4f97e8d187620c1d6dc764d545d5b6326b701539eb4a",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/solvers/physical_retained_fgmres.py",
+      "group": "production_numerical_core",
+      "target_base_blob": "8b53bfa182695651683f0a665e513bd1fb9f3fd8",
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "93e0e0e7dc3dd0d6914fc1fe975200369bddb3f8f89ff67a9911bd4124202286",
+      "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
+    },
+    {
+      "path": "src/test/test_task39extra_v6_actual_components.py",
+      "group": "checker_tests",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "982b16bb83cbe5d0062fb5f971ff2b553f3e3d7c4a326d77af96f1906c897ff6",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/test/test_task39extra_v6_fused.py",
+      "group": "checker_tests",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "2d9dcf69d11b795f066d9a9e40d1752f45e4336a06338a40c21bfb42b64cb9e6",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/test/test_task39extra_v6_metric.py",
+      "group": "checker_tests",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "780101cd72ccbc3812d8ea93c9b03565309ec186456d2218d865a9685455cdf7",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/test/test_task39extra_v6_p3_shared_path.py",
+      "group": "checker_tests",
+      "donor_commit": null,
+      "working_sha256": "b1fed6ce9964e579702e0f306ce6e5991f90ef3ea58996c36ca248cec18ff861",
+      "adaptation": "target boundary identity / p3 shared-path regression"
+    },
+    {
+      "path": "src/test/test_task39extra_v6_scope.py",
+      "group": "checker_tests",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "a863c5befc933a3e1fb4f96fd147547e26a55f7c8b23ea34d4eb3b1396ca36ab",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    },
+    {
+      "path": "src/test/test_task39extra_v6_supervision.py",
+      "group": "checker_tests",
+      "target_base_blob": null,
+      "donor_commit": null,
+      "donor_path": null,
+      "donor_blob": null,
+      "working_sha256": "a8d44f46637ecf52d79d2fabe2b0d9cb2dddc81ef7c30e44f5b688225a34f38a",
+      "adaptation": "target-specific integration/evidence; no default profile change"
+    }
+  ],
+  "qualification": {
+    "fresh_full_5nm": "NOT_RUN",
+    "2nm_h6_only": "NOT_RUN",
+    "2nm_setup_16_pilot": "NOT_RUN",
+    "thread_selection": "NOT_RUN",
+    "real_5nm_2nm_components": "2 passed / 872.14s",
+    "p3_shared_path": "1 passed / 13.15s",
+    "rss_supervision_final": "24 passed / 32.95s",
+    "mpi2_metric": "1 passed per rank / 6.51-6.52s",
+    "mpi4_metric": "1 passed per rank / 5.04-5.05s",
+    "scope_wiring_final": "48 passed / 5.06s",
+    "metric_fused_final": "8 passed / 32.00s",
+    "new_file_ruff": "PASS",
+    "changed_file_F821_F401_F811": "no introduced findings; baseline findings retained"
+  },
+  "supervision_commit": "3bda76479f78fe775a30de63ad20789ae66d881a",
+  "post_component_changes": "Unused imports/import ordering and scalar lint only; boundary library/factory metadata added; no numerical algorithm or Gate changed. E3 test can reuse E2 tensor witnesses without repeating native integration."
+}

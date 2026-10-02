@@ -511,14 +511,19 @@ class P4CellCondensedInverse:
                     }
                 )
                 return result
+            section_started = perf_counter()
             reduced_rhs = self._reduce_storage_rhs(rhs)
+            audit["rhs_reduce_seconds"] = perf_counter()-section_started
             reduced_values = np.asarray(reduced_rhs.getArray(readonly=True))
             if not np.isfinite(reduced_values).all():
                 raise FloatingPointError(
                     "reduced native p4 RHS contains non-finite values"
                 )
             # Nonzero native g always takes exactly one global MatSolve.
+            section_started = perf_counter()
             solution = self._solve_once(reduced_rhs)
+            audit["actual_factor_solve_seconds"] = perf_counter()-section_started
+            section_started = perf_counter()
             solution_values = np.asarray(solution.getArray(readonly=True))
             solution_finite = bool(np.isfinite(solution_values).all())
             audit["solution_finite"] = solution_finite
@@ -559,6 +564,7 @@ class P4CellCondensedInverse:
                     )
                 result.setValues(rows, np.asarray(values, dtype=PETSc.ScalarType), addv=PETSc.InsertMode.INSERT_VALUES); recovered_rows += len(rows)
             result.assemble()
+            audit["internal_recovery_seconds"] = perf_counter()-section_started
             output_values = np.asarray(result.getArray(readonly=True))
             output_finite = bool(np.isfinite(output_values).all())
             audit["output_finite"] = output_finite
@@ -663,6 +669,7 @@ class P4RefinementLedger:
         tolerance: float = 1.0e-10,
         max_refinements: int = 2,
         port_closure: Callable[[PETSc.Vec, np.ndarray], Mapping[str, Any]] | None = None,
+        action_timing: Callable[[], Mapping[str, Any]] | None = None,
         failure_sink: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         if not isinstance(inverse, P4CellCondensedInverse):
@@ -677,6 +684,9 @@ class P4RefinementLedger:
             raise ValueError("p4 refinement contract requires 0 <= max_refinements <= 2")
         self.inverse = inverse
         self.apply_a4 = apply_a4
+        if action_timing is not None and not callable(action_timing):
+            raise TypeError("action_timing must be callable or None")
+        self.action_timing = action_timing
         self.tolerance = float(tolerance)
         self.max_refinements = int(max_refinements)
         if self.tolerance > 1.0e-10:
@@ -790,6 +800,17 @@ class P4RefinementLedger:
         """Solve ``rhs`` and refine the same total state with one factor."""
 
         self._logical_started = perf_counter()
+        timing_keys = ("rhs_reduce_seconds", "actual_factor_solve_seconds", "internal_recovery_seconds",
+                       "a4_wall_seconds", "a4_volume_seconds", "a4_dtn_seconds", "port_closure_seconds")
+        timings = {key: 0.0 for key in timing_keys}
+        inverse_attempts = []
+
+        def inverse_record():
+            facts = dict(self.inverse.last_audit)
+            for key in timing_keys[:3]:
+                timings[key] += float(facts.get(key, 0.0))
+            inverse_attempts.append(facts)
+
         total = None
         rows: list[dict[str, Any]] = []
         residual = None
@@ -824,13 +845,22 @@ class P4RefinementLedger:
 
             before = self._factor_counts()
             total = self.inverse.apply(rhs)
+            inverse_record()
             after = self._factor_counts()
             initial_factor_delta = self._factor_delta(before, after)
             self.total_port_solution = np.asarray(
                 self.inverse.last_port_solution, dtype=np.complex128
             ).copy()
             for refinement in range(self.max_refinements + 1):
+                section_started = perf_counter()
                 applied = self.apply_a4(total, self.total_port_solution)
+                a4_wall = perf_counter()-section_started
+                action_cost = dict(self.action_timing() if self.action_timing else {})
+                timings["a4_wall_seconds"] += a4_wall
+                for key in ("volume", "dtn"):
+                    if action_cost.get(key+"_seconds") is not None:
+                        timings["a4_"+key+"_seconds"] += float(action_cost[key+"_seconds"])
+
                 if not isinstance(applied, PETSc.Vec):
                     raise TypeError("apply_a4 must return a PETSc.Vec")
                 residual = rhs.duplicate()
@@ -840,7 +870,10 @@ class P4RefinementLedger:
                     relative = float(residual.norm()) / rhs_norm
                 finally:
                     applied.destroy()
+                section_started = perf_counter()
                 port_facts = self._port_closure_facts(total)
+                closure_wall = perf_counter()-section_started
+                timings["port_closure_seconds"] += closure_wall
                 row = {
                     "refinement": int(refinement),
                     "relative_residual": float(relative),
@@ -856,6 +889,9 @@ class P4RefinementLedger:
                         }
                     ),
                     "port_closure": port_facts,
+                    "a4_timing": dict(action_cost, measured_parent_wall_seconds=a4_wall),
+                    "port_closure_wall_seconds": closure_wall,
+
                 }
                 rows.append(row)
                 if port_facts.get("status") != "PASS":
@@ -897,6 +933,7 @@ class P4RefinementLedger:
                 before = self._factor_counts()
                 try:
                     correction = self.inverse.apply(residual)
+                    inverse_record()
                 except BaseException as exc:
                     self._failure(rhs, total, residual, rows, error=exc)
                     failure_recorded = True
@@ -928,6 +965,11 @@ class P4RefinementLedger:
             if total is not None:
                 total.destroy()
             raise
+        finally:
+            self.last_audit["timing"] = dict(timings,
+                a4_children_status="MEASURED" if self.action_timing else "UNKNOWN",
+                scope="children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds")
+            self.last_audit["inverse_attempts"] = inverse_attempts
 
 
 __all__ = [

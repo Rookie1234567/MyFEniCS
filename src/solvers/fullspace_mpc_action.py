@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from types import MappingProxyType
+import time
 from typing import Any
 
 import numpy as np
@@ -162,6 +163,9 @@ class FullspaceMpcFormAction:
                 local_kernel.audit["reference_table_bytes"])
             components["borrowed_local_kernel_cell_metadata_bytes"] = int(
                 local_kernel.audit["cell_metadata_bytes"])
+            components["borrowed_local_kernel_batch_workspace_bytes"] = int(
+                local_kernel.audit.get("preallocated_batch_workspace_bytes", 0)
+            )
         local_payload = int(sum(components.values()))
         if local_payload != int(sum(int(value) for value in components.values())):
             raise RuntimeError("full-space retained payload does not close")
@@ -229,6 +233,13 @@ class FullspaceMpcFormAction:
             "last_packed_coefficient_entry_count": 0,
             "last_packed_coefficient_bytes": 0,
             "per_apply_bounded_temporary_bytes": 0,
+            "timing_cumulative": {
+                "apply_seconds": 0.0,
+                "input_mpc_seconds": 0.0,
+                "volume_seconds": 0.0,
+                "restriction_rh_seconds": 0.0,
+                "ghost_seconds": 0.0,
+            },
         }
         if local_kernel is not None:
             self._audit["backend"] = "exact reference quadrature + owner-local MPC R^H"
@@ -313,20 +324,35 @@ class FullspaceMpcFormAction:
         self._audit["apply_count"] = int(self._audit["apply_count"])
         return MappingProxyType(self._audit)
 
-    def apply(self, source: PETSc.Vec) -> PETSc.Vec:
+    def apply(
+        self,
+        source: PETSc.Vec,
+        *,
+        local_component: str | None = None,
+        slave_row_identity: bool | None = None,
+    ) -> PETSc.Vec:
         if self._destroyed:
             raise RuntimeError("full-space action has been destroyed")
+        if local_component is not None and not hasattr(
+            self._local_kernel, "apply_component"
+        ):
+            raise ValueError("local component application is unavailable")
+        apply_started = time.perf_counter()
         source_values = np.asarray(source.getArray(readonly=True))
         if source_values.size != self._owned_rows:
             raise RuntimeError("action source has an incompatible owned layout")
         coefficient = self._coefficient
+        input_mpc_started = time.perf_counter()
         coefficient.x.array[: self._owned_rows] = source_values
         coefficient.x.scatter_forward()
         if self._mpc is not None:
             self._mpc.homogenize(coefficient)
             self._mpc.backsubstitution(coefficient)
             coefficient.x.scatter_forward()
+        timing = self._audit["timing_cumulative"]
+        timing["input_mpc_seconds"] += time.perf_counter() - input_mpc_started
 
+        volume_started = time.perf_counter()
         with self._output_vector.localForm() as output_local:
             output_local.set(0.0)
             raw = output_local.array_w
@@ -341,10 +367,16 @@ class FullspaceMpcFormAction:
             if self._local_kernel is None:
                 self._assemble_vector(raw, self._action_form, self._constants,
                                       packed_coefficients)
+            elif local_component is not None:
+                self._local_kernel.apply_component(
+                    coefficient.x.array, raw, component=local_component
+                )
             else:
                 self._local_kernel.apply(coefficient.x.array, raw)
             del packed_arrays
             del packed_coefficients
+            timing["volume_seconds"] += time.perf_counter() - volume_started
+            restriction_started = time.perf_counter()
             if self._mpc is not None:
                 np.take(raw, self._flat_slave_indices, out=self._constraint_work)
                 np.multiply(
@@ -354,12 +386,19 @@ class FullspaceMpcFormAction:
                 )
                 np.add.at(raw, self._master_indices, self._constraint_work)
                 raw[self._slave_indices] = 0.0
+            timing["restriction_rh_seconds"] += time.perf_counter() - restriction_started
 
+        ghost_started = time.perf_counter()
         self._output_vector.ghostUpdate(
             addv=PETSc.InsertMode.ADD_VALUES,
             mode=PETSc.ScatterMode.REVERSE,
         )
-        if self._mpc is not None and self._slave_row_identity:
+        restore_identity = (
+            self._slave_row_identity
+            if slave_row_identity is None
+            else bool(slave_row_identity)
+        )
+        if self._mpc is not None and restore_identity:
             np.take(
                 source_values,
                 self._owned_slave_indices,
@@ -373,6 +412,8 @@ class FullspaceMpcFormAction:
             addv=PETSc.InsertMode.INSERT_VALUES,
             mode=PETSc.ScatterMode.FORWARD,
         )
+        timing["ghost_seconds"] += time.perf_counter() - ghost_started
+        timing["apply_seconds"] += time.perf_counter() - apply_started
         self._audit["apply_count"] = int(self._audit["apply_count"]) + 1
         self._audit["last_packed_coefficient_shapes"] = packed_shapes
         self._audit["last_packed_coefficient_entry_count"] = packed_entries

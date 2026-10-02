@@ -82,6 +82,8 @@ def native_memory_policy_prefix(policy: str | None) -> tuple[str, ...]:
         return ("/usr/bin/numactl", "--membind=1")
     if policy == "preferred_node1":
         return ("/usr/bin/numactl", "--preferred=1")
+    if policy == "interleave_nodes0_1":
+        return ("/usr/bin/numactl", "--interleave=0,1")
     raise InputError(f"unsupported native_memory_policy: {policy!r}")
 
 
@@ -172,7 +174,8 @@ def build_execution_plan(
         worker_cpu = profile_facts.get("native_execution", {}).get(
             "worker_cpu", 23
         )
-        argv = ["/usr/bin/taskset", "-c", str(worker_cpu),
+        worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
+        argv = ["/usr/bin/taskset", "-c", ','.join(map(str, worker_cpus)),
                 *native_memory_policy_prefix(
                     specification.execution.get("native_memory_policy")),
                 *argv]

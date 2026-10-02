@@ -1,5 +1,18 @@
 # 测试与证据资格
 
+## Review V6：组件阶段（2026-10-02）
+
+| 检查 | 结果 | 边界 |
+|---|---|---|
+| 真实 5/2 nm Si、全部 600/3904 模式、有界 18-cell FE | 2 passed / 872.14 s | 每个配置一个 p4 factor，全部六个实际 full-case tensor 组独立 FFCx 见证；完整作用、H6、Aq、恢复与 C；非完整 PDE |
+| 最终 RSS-only 监督 | 24 passed / 32.95 s | PSS provider 零调用、慢诊断不阻塞 RSS、RSS 触线清场、正常/失败退出及旧合同 |
+| 真实 p3 共用快速路径 | 1 passed / 13.15 s | 实际 5 nm 系数、600 模式、原 FFCx tensor 与完整原作用；不启动 q3 长场 |
+| MPI2/MPI4 reference-metric 对角 | 各 rank 1 passed，6.51–6.52 / 5.04–5.05 s | 小 p3 Floquet FE，同原积分对角与已装配矩阵；MPI1/math1 是正式候选 |
+| 作用域、manifest 与严格粗返回最终合同 | 48 passed / 5.06 s | 真小 KSP 16 步预设停止，精化耗尽拒绝、原入口与负 schema；无完整场资格 |
+| metric/fused/原积分对角最终回归 | 8 passed / 32.00 s | 真实小 FE、复多主/目标合并 fallback；新增文件 Ruff 通过，修改文件无新增 F821/F401/F811 |
+
+源为 Review HEAD 上 WIP，精确文件 hash、patch、日志和组件指标见 [V6 component compact](records/v6_component_and_h6_only.json)。失败留证包括 fixture metadata None、坐标形状错误；合跑监督与 FE 命令为 23 passed/2 failed，其中 watchdog 在 MPI 初始化后已有子进程时正确拒绝专用父进程合同，p3 工厂被多传一个位置参数。分开纯监督与 FE 后通过，未弱化生产 guard。新增 donor 文件只做 import/lint 修整，不改变数值公式；正式 source SHA 在后续 clean-run manifest 记录。完整 5 nm、2 nm H6-only 和 16 步 pilot 此时仍 NOT_RUN；未跑全仓 pytest 或 CI。
+
 ## Review V5：5 nm rounded-tensor representative bounded component
 
 | 检查 | 实际结果 | 范围 / 限制 |

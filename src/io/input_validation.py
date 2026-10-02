@@ -620,13 +620,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             from .native_capacity_profile import NATIVE_PROFILES, validate_native_case
             preconditioner = solver["preconditioner"]
-            from .native_capacity_profile import V5_NATIVE_PROFILES, V5_R13_PROFILES
-            if "coarse_degree" in solver and preconditioner not in V5_NATIVE_PROFILES:
+            from .native_capacity_profile import V5_NATIVE_PROFILES, V5_R13_PROFILES, V6_NATIVE_PROFILES
+            retained_profiles = V5_NATIVE_PROFILES | V6_NATIVE_PROFILES
+            if "coarse_degree" in solver and preconditioner not in retained_profiles:
                 raise _error(
                     "solver.coarse_degree",
                     "coarse_degree is reserved for the explicit V5 retained profiles",
                 )
-            if preconditioner in V5_NATIVE_PROFILES and "coarse_degree" not in solver:
+            if preconditioner in retained_profiles and "coarse_degree" not in solver:
                 raise _error(
                     "solver.coarse_degree",
                     "V5 retained profiles require an explicit coarse Nedelec degree",

@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from contextlib import nullcontext
 from types import MappingProxyType
+from time import perf_counter
 from typing import Any
 
 from petsc4py import PETSc
@@ -150,6 +151,7 @@ class FullspacePhysicalAction:
         self._volume_action = volume_action
         self._dtn_action = dtn_action
         self._owns_dtn = owns_dtn
+        self.last_apply_timing = {}
         self._apply_count = 0
         self._destroyed = False
 
@@ -164,9 +166,16 @@ class FullspacePhysicalAction:
 
         if self._destroyed:
             raise RuntimeError("full physical action has been destroyed")
+        started = perf_counter()
         self._dtn_action.apply(source, target)
+        dtn_ended = perf_counter()
         volume_result = self._volume_action.apply(source)
+        volume_ended = perf_counter()
         target.axpy(PETSc.ScalarType(1.0), volume_result)
+        self.last_apply_timing = dict(dtn_seconds=dtn_ended-started,
+            volume_seconds=volume_ended-dtn_ended,
+            vector_sum_seconds=perf_counter()-volume_ended,
+            wall_seconds=perf_counter()-started)
         self._apply_count += 1
 
     def compose_physical_rhs(
@@ -197,6 +206,7 @@ class FullspacePhysicalAction:
                 "schema": "task038.fullspace-physical-action.v1",
                 "operator": "A_volume_plus_dynamic_DtN",
                 "owns_dtn": self._owns_dtn,
+                "last_apply_timing": dict(self.last_apply_timing),
                 "volume_action": dict(volume_audit),
                 "dtn_action": dict(dtn_audit),
                 "t4_transmission_included": False,

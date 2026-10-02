@@ -19,21 +19,30 @@ def build_packed_physical_action(
     contiguous_work=True,
     preallocated_work=False,
     sum_factorized_work=False,
+    reuse_projection_work=False,
+    shared_contractions=False,
+    fuse_components=False,
+    share_readonly_geometry=False,
+    geometry_bundle=None,
+    degree=6,
 ):
     """Build a packed volume action for one explicit PC owner.
 
-    The returned physical action borrows the established degree-6 DtN action
-    and owns only the two packed volume components.  Keeping this object
-    separate from ``common['fine']['physical_action']`` preserves the native
-    A6 action as the independent residual authority.
+    The returned physical action borrows the matching degree's established
+    DtN action and owns only the two packed volume components. For degree 6,
+    it remains separate from the native A6 residual authority; degree 4 is
+    available only as a complete A4 verification candidate.
     """
 
     from .fullspace_physical_action import FullspacePhysicalAction
 
+    degree = int(degree)
+    if degree not in (3, 4, 6):
+        raise ValueError("packed physical actions support degree 3, 4 or 6")
     levels = common["levels"]
-    fine = common["fine"]
-    space = levels["floquets"][6].mpc.function_space
-    original_components = fine["volume_action"].component_actions
+    reference_bundle = common["fine"] if degree == 6 else common["p4"]
+    space = levels["floquets"][degree].mpc.function_space
+    original_components = reference_bundle["volume_action"].component_actions
     forms = tuple(
         original_components[key]._bilinear_form
         for key in ("curl", "material_mass")
@@ -57,43 +66,166 @@ def build_packed_physical_action(
                 physical_mass.x.array[dof] += -cfg.k0**2 * epsilon
         physical_mu.x.scatter_forward()
         physical_mass.x.scatter_forward()
-        kernels = tuple(
-            IsotropicPartialAssembly(
+        kernels_list = []
+        external_geometry_bundle = geometry_bundle if share_readonly_geometry else None
+        geometry_bundle = None
+        geometry_borrowed_components = []
+        geometry_fallbacks = []
+        for index, (form, component) in enumerate(
+            zip(forms, ("curl", "mass"), strict=True)
+        ):
+            candidate_bundle = (
+                external_geometry_bundle if index == 0 else geometry_bundle
+            ) if share_readonly_geometry else None
+            try:
+                kernel = IsotropicPartialAssembly(
+                    space,
+                    physical_mu,
+                    physical_mass,
+                    component_form=form,
+                    component=component,
+                    contiguous_work=contiguous_work,
+                    preallocated_work=preallocated_work,
+                    sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    shared_contractions=shared_contractions,
+                    share_geometry=share_readonly_geometry,
+                    geometry_bundle=candidate_bundle,
+                )
+                if candidate_bundle is not None:
+                    geometry_borrowed_components.append(component)
+            except ValueError as exc:
+                if candidate_bundle is None or str(exc) not in {
+                    "shared geometry bundle quadrature identity mismatch",
+                    "shared reference bundle identity mismatch",
+                }:
+                    raise
+                geometry_fallbacks.append({"component": component, "reason": str(exc)})
+                kernel = IsotropicPartialAssembly(
+                    space,
+                    physical_mu,
+                    physical_mass,
+                    component_form=form,
+                    component=component,
+                    contiguous_work=contiguous_work,
+                    preallocated_work=preallocated_work,
+                    sum_factorized_work=sum_factorized_work,
+                    reuse_projection_work=reuse_projection_work,
+                    shared_contractions=shared_contractions,
+                    share_geometry=share_readonly_geometry,
+                )
+            kernels_list.append(kernel)
+            if share_readonly_geometry and geometry_bundle is None:
+                geometry_bundle = kernel.geometry_bundle
+        kernels = tuple(kernels_list)
+        if fuse_components:
+            from .fullspace_fused_split_volume import FullspaceFusedSplitVolumeAction
+
+            volume = FullspaceFusedSplitVolumeAction(
+                *forms,
                 space,
-                physical_mu,
-                physical_mass,
-                component_form=form,
-                component=component,
-                contiguous_work=contiguous_work,
-                preallocated_work=preallocated_work,
-                sum_factorized_work=sum_factorized_work,
+                mpc=levels["floquets"][degree].mpc,
+                local_kernels=kernels,
             )
-            for form, component in zip(forms, ("curl", "mass"), strict=True)
-        )
-        volume = FullspaceSplitVolumeAction(
-            *forms, space, mpc=levels["floquets"][6].mpc, local_kernels=kernels
-        )
+        else:
+            volume = FullspaceSplitVolumeAction(
+                *forms,
+                space,
+                mpc=levels["floquets"][degree].mpc,
+                local_kernels=kernels,
+            )
         action = FullspacePhysicalAction(
-            volume, fine["dtn_action"], owns_dtn=False
+            volume, reference_bundle["dtn_action"], owns_dtn=False
         )
         component_audits = [
             dict(component)
             for component in action.audit["volume_action"]["components"].values()
         ]
+        if fuse_components:
+            # The component views borrow one shared MPC owner.  Count its
+            # retained payload once instead of treating each local-kernel
+            # view as a complete owner audit.
+            component_audits = [
+                dict(volume.audit["shared_fullspace_mpc_action"])
+            ]
         facts = {
-            "schema": "task039extra.v24.packed-pc-physical-action.v1",
+            "schema": (
+                "task039extra.v29.p4-fast-a4-action.v1"
+                if degree != 6
+                else "task039extra.v24.packed-pc-physical-action.v1"
+            ),
+            "degree": degree,
+            "implementation_identity": (
+                "fused_sum_factorized_partial_assembly_full_A4"
+                if degree != 6 and fuse_components and sum_factorized_work
+                else "isotropic_partial_assembly_physical_action"
+            ),
+            "oracle_identity": (
+                "native_ffcx_full_A4_same_p4_forms_and_dtn"
+                if degree != 6
+                else "independent_native_full_A6_authority"
+            ),
+            "action_role": (
+                "full_A4_verification_candidate"
+                if degree != 6
+                else "candidate_pc_internal_A6"
+            ),
             "backend": "isotropic_partial_assembly",
             "contiguous_work": bool(contiguous_work),
             "preallocated_work": bool(preallocated_work),
             "sum_factorized_work": bool(sum_factorized_work),
+            "reuse_projection_work": bool(reuse_projection_work),
+            "shared_contractions": bool(shared_contractions),
+            "fuse_components": bool(fuse_components),
+            "shared_geometry_bundle": (
+                {
+                    "schema": geometry_bundle["schema"],
+                    "identity": dict(geometry_bundle["identity"]),
+                    "enabled": bool(geometry_borrowed_components),
+                    "same_owner": True,
+                    "borrowed_components": list(geometry_borrowed_components),
+                    "source_owner": (
+                        "h6_external"
+                        if external_geometry_bundle is not None
+                        and "curl" in geometry_borrowed_components
+                        else "a6_curl"
+                    ),
+                    "readonly_arrays": all(
+                        not geometry_bundle[key].flags.writeable
+                        for key in (
+                            "dofs",
+                            "permutations",
+                            "metrics",
+                            "geometry_derivatives",
+                        )
+                    ),
+                    "reference_data_shared": bool(
+                        geometry_borrowed_components
+                        and geometry_bundle.get("reference_bundle") is not None
+                    ),
+                    "reference_quadrature_not_shared": not bool(
+                        geometry_borrowed_components
+                        and geometry_bundle.get("reference_bundle") is not None
+                    ),
+                    "material_data_not_shared": True,
+                    "fallbacks": geometry_fallbacks,
+                }
+                if share_readonly_geometry
+                else {"enabled": False}
+            ),
             "dtn_borrowed": True,
-            "native_a6_independent": True,
+            "native_a6_independent": degree == 6,
+            "native_physical_authority_independent": True,
             "material_function_array_bytes": int(
                 physical_mu.x.array.nbytes + physical_mass.x.array.nbytes
             ),
             "kernels": [dict(kernel.audit) for kernel in kernels],
             "kernel_temporary_bytes": int(
-                max(kernel.audit["temporary_budget_bytes"] for kernel in kernels)
+                volume.audit["fused_local_kernel"]["temporary_budget_bytes"]
+                if fuse_components
+                else max(
+                    kernel.audit["temporary_budget_bytes"] for kernel in kernels
+                )
             ),
             "reference_initialization_array_upper_bound_bytes": int(
                 max(
@@ -103,6 +235,19 @@ def build_packed_physical_action(
             ),
             "component_audits": component_audits,
         }
+        if fuse_components:
+            facts["schema"] = (
+                "task039extra.v29.p4-fast-a4-action.v1"
+                if degree != 6
+                else "task039extra.v28.fused-pc-physical-action.v1"
+            )
+            facts["backend"] = "fused_sum_factorized_split_volume"
+            facts["fused_volume_audit"] = dict(
+                volume.audit["fused_local_kernel"]
+            )
+            facts["fused_volume_runtime_audit_source"] = (
+                "physical_action.audit.volume_action.fused_local_kernel"
+            )
         return {
             "physical_action": action,
             "volume_action": volume,
