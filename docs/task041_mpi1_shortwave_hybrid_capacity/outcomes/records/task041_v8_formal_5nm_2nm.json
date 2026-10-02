@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-02T08:36:03Z",
+  "observed_utc": "2026-10-02T09:04:05Z",
   "progress": {
-    "phase": "modal_full_build_bottom_modal_action_batch_30_of_30_logical_928_of_960",
+    "phase": "modal_full_build_top_modal_action_batch_1_of_30_logical_0_of_960",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -939,19 +939,19 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 96288.437539596,
-      "authority_bytes": 43236954112,
-      "process_tree_rss_bytes": 43236954112,
-      "cgroup_memory_current_bytes": 41232777216,
+      "elapsed_seconds": 97970.13669427193,
+      "authority_bytes": 43246325760,
+      "process_tree_rss_bytes": 43246325760,
+      "cgroup_memory_current_bytes": 41284177920,
       "cgroup_memory_peak_bytes": 42709970944,
       "job_swap_bytes": 0,
-      "global_swap_used_bytes": 22827008,
+      "global_swap_used_bytes": 22822912,
       "global_swap_used_bytes_delta": 0,
-      "global_pswpin_pages_delta": 1480885,
+      "global_pswpin_pages_delta": 1480887,
       "global_pswpout_pages_delta": 2781714,
-      "host_memavailable_bytes": 2098477801472,
+      "host_memavailable_bytes": 2098377306112,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-02T08:36:03Z"
+      "retrieved_utc": "2026-10-02T09:04:05Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -962,7 +962,7 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "modal_full_build active; latest markers.jsonl records bottom modal_action batch 30/30 begun, index=928 and logical_completed=928/960, stage_wall_seconds=88845.9707892841 at elapsed 94537.51233985298 s; this is modal setup work, not formal RHS completion. At 2026-10-02T08:36:03Z, worker run_summary.json and consumer_summary.json are still absent. Authority/tree is 43236954112 B, dedicated cgroup current 41232777216 B, cgroup peak 42709970944 B, and job/cgroup swap 0. Global swap used is 22827008 B with existing clamped nonnegative delta field 0; pswpin delta is 1480885 pages and pswpout delta is 2781714 pages. Global values remain observe-only and unattributed. The 86400s target has been missed (time_target_met=false); the run remains active with time_stop_enforced=false. Final elapsed wall and numerical outputs remain pending.",
+    "numerical_setup_marker": "底侧 modal_action 已完成 960/960：batch 30/30 的 end marker wall_seconds=97849.47089537396、stage_wall_seconds=92157.92504988902。顶侧 modal_action batch 1/30 已开始，logical_completed=0/960，marker wall_seconds=97849.54570630402。当前仍为 modal build，不是正式响应结果；run_summary/consumer_summary在 2026-10-02T08:36:03Z 检查时尚未生成。2026-10-02T09:04:05Z authority/tree 为 43246325760 B，dedicated cgroup current 41284177920 B、peak 42709970944 B，job/cgroup swap 0。global swap 绝对值 22822912 B，既有 clamped nonnegative delta 字段为 0；pswpin delta 1480887 pages，pswpout delta 2781714 pages。global 数值仅作观测且未归因。86400s 目标未达（time_target_met=false）；运行仍 active，time_stop_enforced=false。最终 elapsed wall 与数值输出待生成。",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
@@ -995,10 +995,10 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "modal_full_build_bottom_modal_action_batch_30_of_30_logical_928_of_960",
+    "stage_marker": "modal_full_build_top_modal_action_batch_1_of_30_logical_0_of_960",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
-    "status": "running_modal_full_build_bottom_modal_action",
+    "status": "running_modal_full_build_top_modal_action",
     "target_tolerance": 5e-13,
     "threads_per_rank": 1,
     "time_stop_enforced": false,
@@ -1064,6 +1064,6 @@
         "physical_action_source": "build_side_balanced_inverse"
       }
     },
-    "stage_marker_wall_seconds": 88845.9707892841
+    "stage_marker_wall_seconds": 8.66095069795847e-06
   }
 }
