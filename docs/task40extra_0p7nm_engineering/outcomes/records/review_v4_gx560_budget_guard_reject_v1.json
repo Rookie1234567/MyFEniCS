@@ -1,0 +1,39 @@
+{
+  "schema": "task40extra.review-v4.bootstrap-reject.v1",
+  "classification": "PRE_PDE_BUDGET_AUTHORIZATION_REJECT",
+  "case": "Gx560",
+  "run_id": "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+  "source_sha": "86ae6e176f2f54847b1097de23f55770fceb13f1",
+  "input_sha256": "f5b30f26fa7b6e119dcfed139b7ac2a45cbd528dbdaef19bc0178030f78276ca",
+  "service": {
+    "unit": "myfenics-case-20261002T233656-1636258.service",
+    "service_result": "exit-code",
+    "main_exit_status": 2,
+    "main_start_monotonic_us": 592658548826,
+    "main_exit_monotonic_us": 592659319131,
+    "main_process_window_seconds_derived": 0.770305,
+    "log_path": "benchmarks/artifacts/user_services/myfenics-case-20261002T233656-1636258.log",
+    "log_sha256": "a6833432f2e4da2ffcace3b2132973279af6907251730ca59b5641fa3575c889"
+  },
+  "attempt_output_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261002T233656.780074Z",
+  "findings": {
+    "first_cause": "Task38 input error: Task40 budget requires a run authorized by its review batch",
+    "failed_gate": "explicit Task40 review-batch run_id allowlist in _reserve_task40_0p7nm_budget",
+    "subsequent_bootstrap_error": "MPI child reported signal 11 while exiting after the input rejection",
+    "formal_worker_started": false,
+    "pde_started": false,
+    "factorization_started": false,
+    "numerical_residual": "not_run",
+    "official_result": false,
+    "memory_and_task_swap_gate": "not_reached; no Task40 solver worker was launched",
+    "pde_or_factor_cost": "none measured",
+    "service_window_scope": "service main-process monotonic start-to-exit interval only; not full wrapper or workflow time",
+    "post_failure_process_check": "no matching Gx/Gz run_case or task038 worker process remained"
+  },
+  "repair_policy": {
+    "review": "review_report_v4.md",
+    "scope": "explicitly admit only the two frozen Gx560/Gz528 run_ids",
+    "per_case_implementation_bug_replay_limit": 1,
+    "old_batch_ledgers": "read-only and independently accounted"
+  }
+}
