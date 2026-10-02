@@ -1621,6 +1621,18 @@ R0 不改变旧 V16–V18 结果；R1/R2/R3、official E/H、near-field、R/T/A�
 因此完整同期 process peak 与 cache closeout 仍是 unknown；不得把该条目登记为已通过的
 production model。
 
+## 3.43 Task39extra_para Review V6：5 nm F5完整场正式通过
+
+F5在5 nm Si、p6/h4 q4、3780 cells和600个DtN模态上完成完整三维场求解。p4在装配时逐单元消去内部自由度；随后对全局凝聚增广矩阵建立一个准确MUMPS因子并复用，外层仍以p6算子检查原方程。结果只资格化这套明确离散和运行配置，不构成连续体收敛声明。
+
+| 模型 / run | clean运行source / 输入身份 | measured 数值与物理结果 | 时间与资源 | 状态 / evidence |
+|---|---|---|---|---|
+| 5 nm Si p6/h4 q4，`20261002T153058.967208Z`；3780 cells、600 modes | source `1828bc675f2862025e0eaed0beccf15982eb09e6`；input `599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9`；physical `96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d`；resolved/mode `24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427` / `dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645` | 121 outer步；完整原A6 `8.704501286501755e-7`；244/244 p4 returns PASS，最大原A4 `9.604857895562664e-11`，最多单次1次额外精化、总额外2次；symbolic/numeric/MatSolve=`1/1/246`。全场L2/scaled-curl=`7.35463e-8/7.31531e-8`，选定E/H=`1.13057e-7/1.12349e-7`；600模态幅值/功率差=`5.08874e-8/2.86881e-8`；official R/T/A_port/A_volume=`0.7331835098/0.000222439625/0.2665940506/0.2665940349`，能量闭合差`1.56590e-8` | workflow `12534.182499 s`；同钟setup `1696.196008 s`；solve含最终检查 `9952.023125 s`；整树RSS峰`38082981888 B`、任务swap0、global pswp增量0；36145资源样本全可读，最大间隔`0.544715086 s`，终态间隔`0.068841 s`，4个样本含已消失PID条目；watchdog清场 | `F5_FULL_REGRESSION_ACCEPTED`；主审24项通过。旧同物理离散5 nm场的完整FE/EH/600-mode/物理对照通过；非continuum convergence。资源hash和全部轻量数值见 [F5终态compact](task39extra_para_workstation_capacity/outcomes/records/v6_5nm_terminal.json) |
+
+同旧V5 5 nm run的工程比为setup `6.6402x`、solve `1.0723x`、workflow `1.8095x`（旧/新时间比）。这是不同实现、几何分组、NUMA、PSS和缓存条件下的非受控同case比较，不单独归因任何优化，也不据此预测2 nm耗时。正式setup/KSP/solve与C父子计时边界收录在上述compact中；iterations日志125行含32/64/96重复标记，不能当124个正式outer步。
+
+下一项仅准备一次2 nm Si p6/h1.5 q4、54332-cell/3904-mode setup+16步；QA与16步共用一个准确p4 MUMPS因子。当前P2未启动，候选与命令包须先由主审复核并在正式启动前通过fresh资源/CPU/NUMA/ABI准入；16步计划终点不等于收敛，不能输出official R/T/A或自动续跑。
+
 ## task39extra Review V5：5 nm Si p6/h4 q4 F5 完整场
 
 | run / source | 数值与物理结果 | 资源与状态 | evidence |

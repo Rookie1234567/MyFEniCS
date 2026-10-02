@@ -2826,6 +2826,22 @@ run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db
 1300GB measured guard 另记 attachment peak=`640141377536 B`，后以 worker RSS unreadable/`monitoring_failed` 停止，触发晚于原 watchdog stop约`0.245228993 s`，不作为最初原因。详见 [终态 compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json)；不自动重跑。后续 cgroup v2 swap隔离只作建议，不在本轮修改系统或 Gate。
 
 
+## Task39extra_para Review V6：5 nm F5完整回归通过，准备唯一P2
+
+F5在clean source `1828bc675f2862025e0eaed0beccf15982eb09e6` 上完成5 nm Si、p6/h4 q4、3780 cells、600个DtN模态的完整场求解。主审对数值、场、模态、物理量、同对象缓存/释放、244条p4返回和监督/清场共24项全部通过；它资格化的是这一离散模型与运行配置，不是连续体收敛证明。正式记录见 [F5终态compact](task39extra_para_workstation_capacity/outcomes/records/v6_5nm_terminal.json)。
+
+| 方面 | measured 结果 | 解释与边界 |
+|---|---|---|
+| 算法与残差 | 121个正式outer步，最终完整原A6相对残差 `8.704501286501755e-7`；精确p4 MUMPS一个symbolic/一个numeric、246次solve；244/244 p4返回通过，最差原A4 `9.604857895562664e-11` | 保持 `Aq<=1e-10`、每次C完整原A4检查、至多两次同因子额外精化；每个返回最多1次，全run额外2次 |
+| 场与物理量 | FE全场L2/scaled-curl `7.35463e-8/7.31531e-8`；E/H `1.13057e-7/1.12349e-7`；600模态幅值/功率差 `5.08874e-8/2.86881e-8`；`R/T/A_port/A_volume=0.7331835098/0.000222439625/0.2665940506/0.2665940349` | 原完整场、EH、模态及能量Gate通过。吸收闭合差 `1.56590e-8`；official R/T/A来自过残差场的DtN模态振幅 |
+| 生命周期 | workflow `12534.182499 s`，setup同钟 `1696.196008 s`，solve含最终检查 `9952.023125 s`；RSS峰 `38082981888 B`、任务/global swap增量0、36,145资源样本全可读，最大采样间隔 `0.544715086 s` | 最后样本距watchdog终态时钟 `0.068841 s`，descendants清场；4个样本含已消失PID条目，不能写成0个 |
+| 计时解释 | KSP API `9830.705350 s`，按121步为 `81.245499 s/步`；solve按121步为 `82.248125 s/步`（含检查/输出） | iterations文件125条含32/64/96重复标记，不能把callback数误作outer步数 |
+| 旧V5比较 | setup/solve/workflow旧÷新=`6.6402/1.0723/1.8095` | 非受控同case工程对照；source实现、几何分组、NUMA、PSS和缓存条件不同，不作单因素因果解释 |
+| 下一步 | P2候选为2 nm Si p6/h1.5 q4、54332 cells、3904 modes；一次setup和16步，共用同一个准确p4因子 | 审阅包待主审核验并需启动前fresh CPU/NUMA/内存/ABI/窗口准入。计划停在16步不等于收敛，不报official R/T/A，不自动续算 |
+
+旧F2的OOM负结果仍保留为node1受限分配失败，不被本次F5通过覆盖。F5归档后的文档提交SHA与运行源码SHA分开；P2包将在归档提交后刷新至新clean HEAD，再送主审审阅，不在此阶段启动。
+
+
 ## Task39extra_para V5：5 nm setup-only 终态
 
 5 nm Si p6/h4 q4 setup-only run `20260924T092250.568977Z`（source `96057565d171077cc84a8dae3cd4eb88b6ff21ea`）自然 exit 0，`SETUP_ONLY_COMPLETED`，setup checks PASS。setup-only/workflow 为 `2023.440526/2028.390414 s`；整树同时RSS峰 `37236830208 B`，watchdog 6192个样本全可读、最大间隔 `0.653519 s`、swap 0、后代清场。p6/p4各175 raw几何类在本run实际形成6个近似tensor组，组内核计时 `292.039/33.847 s`。与旧完整F5 setup `11263.076 s` 比约快 `5.57×`，但旧F5走raw类，本run采用不同source和近似分组；本run不含outer solve、完整A6 recovery、R/T/A或checker，故只记setup候选证据。完整哈希与计时范围见 [compact](task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json)。主审批准在fresh准入通过时执行唯一F2；未通过任一CPU、身份、内存或隔离条件则不启动。

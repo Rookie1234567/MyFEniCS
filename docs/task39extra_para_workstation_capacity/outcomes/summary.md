@@ -1,5 +1,35 @@
 # 原生迁移与容量任务：本轮执行结果
 
+## Review V6 F5 终态：5 nm完整场主审通过（2026-10-03）
+
+F5在5 nm硅模型上组装有限元系统、用p6外层迭代求完整场，并用精确凝聚p4 MUMPS因子做修正；检查的是本run完整残差、场、模态和能量，不把较快setup当数值资格。当前正式记录绑定运行时clean source `1828bc675f2862025e0eaed0beccf15982eb09e6`。后续归档文档的提交SHA不替代此运行SHA。
+
+| 项目 | 实测结果 | 结论与证据边界 |
+|---|---|---|
+| 模型与身份 | 5 nm Si，p6/h4，q4；3780 cells、600个原始DtN模态；input `599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9`、physical `96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d`、resolved/mode `24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427` / `dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645` | run `20261002T153058.967208Z`；[F5终态compact](records/v6_5nm_terminal.json)；运行源码SHA与归档提交分列 |
+| 残差与p4 | 121个正式外层步；最终完整原A6相对残差 `8.704501286501755e-7`；244/244 p4返回PASS，最差原A4 `9.604857895562664e-11`；每次C至多1次额外精化、全程额外精化2次 | 过原Gate；精确p4 MUMPS一个symbolic/一个numeric、246次solve；每次C均检查完整原A4。保留`Aq<=1e-10`和最多两次同因子额外精化 |
+| 场、模态与能量 | 全场L2/scaled-curl `7.35463e-8/7.31531e-8`；选定E/H相对误差 `1.13057e-7/1.12349e-7`；600模态幅值最大相对差 `5.08874e-8`、功率最大绝对差 `2.86881e-8`；official `R00_s/R00_p/R00_total=0.7325626994/1.63965e-23/0.7325626994`，`R/T/A_port=0.7331835098/0.000222439625/0.2665940506`，`A_volume=0.2665940349` | 完整场、E/H、600-mode与旧同物理离散参考通过；端口与体吸收差 `1.56590e-8`。不是continuum convergence证明；诊断EH Fourier通量不替代official R/T/A |
+| 时间 | workflow `12534.182499 s`；同单调时钟setup `1696.196008 s`；solve含最终检查 `9952.023125 s`；KSP API `9830.705350 s`，折算121外层步 `81.245499 s/步`；solve折算 `82.248125 s/步`（含检查/输出） | `iterations.jsonl`有125条记录，32/64/96各重复；正式步数仍为121，不能用124个callback求均值。checker `176.390309 s`，physical intermediate summary `12349.965614 s`。阶段定义见下表与compact |
+| 资源与清场 | 整树RSS峰 `38082981888 B`，低于 `1300000000000 B` hard线；任务swap峰0，global pswp增量0；36145条资源样本可读，最大相邻间隔 `0.544715086 s`，末样本距watchdog clock_end `0.068841 s`；4个样本含已消失PID条目；watchdog COMPLETED、后代清场 | 主审按同一资源文件hash单次流式核验，PSS全程关闭；不把4个消失条目写成零，也不把终态后时间增长判作运行中stale。资源原文件不入Git，hash/范围见compact |
+| 与旧V5工程比较 | setup `11263.075601→1696.196008 s`，旧/新比 `6.6402x`；solve `10671.215508→9952.023125 s`，`1.0723x`；workflow `22680.911776→12534.182499 s`，`1.8095x` | 同case非受控工程比较：实现、几何分组、NUMA、PSS和缓存条件不同；不作单因素因果归因，不据此承诺2 nm耗时 |
+| 下一步 | F5 `F5_FULL_REGRESSION_ACCEPTED`；P2候选输入与审阅包已备，尚未启动 | 本机ignored审阅包路径为 `tmp/review_v6_components/p2_setup16_launch_review_20261003.json`；归档提交后刷新到新clean HEAD并以短哈希交主审。启动还须主审核包及fresh现场准入。P2的16步计划终点不是收敛资格，不报告official R/T/A，不自动续跑 |
+
+| F5阶段 | 相邻marker实测秒 | 计时边界 |
+|---|---:|---|
+| retained runtime准备 | 605.609374 | workflow开始至runtime build complete |
+| reference symbolic | 8.076159 | symbolic started→complete |
+| reference numeric | 376.282022 | budget evaluated→numeric complete |
+| p4 retained factor阶段 | 25.312807 | numeric complete→retained p4 factor complete |
+| H6原对角窗口/packed action | 110.275482 | 对角setup阶段；不是solve阶段 |
+| BAL_H bridge | 18.146809 | retained bridge marker间隔 |
+| native Aq投影检查 | 79.315851 | Aq projection marker间隔 |
+| same-object setup checks | 473.089887 | 同对象检查marker间隔 |
+| setup结束 | 1696.196008 | workflow开始→solve开始的同单调时钟边界 |
+
+全run的C/PC父记录122条，包含一次setup apply及121次正式outer apply；对应244次C及244条通过的p4决定。run总体C parent为4470.977117 s、p4 logical child ledger为4122.425117 s；其余分项和父子重叠范围保存在compact中，不将嵌套timer相加。最后两次C合计36.0696 s，其中MatSolve 15.06384 s、局部恢复4.12764 s、A4 parent 6.78377 s；这组末段计时不能替代全程均值。
+
+主审终态回执为 `tmp/review_v6_components/f5_main_terminal_review_20261003.json`（SHA `b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3`）；资源单次审核回执为 `tmp/review_v6_components/f5_resource_main_terminal_audit_20261002T190922Z.json`（SHA `1866be1343fc97cec4c920d05a33743ed20c71ae9bd8c0e79fcaf1b6b1ee4a53`）。资源log SHA `a4bf28a10c75fcc88adb0d087b97e739c3f965af1618d68a69a66c71c672fd04`，398061029 bytes；没有再次扫描。旧V5工程比较回执SHA为 `93914a10d778a9151b408cfe258a94bd490bb8abd3a743cbac6f6a57dde3ef6d`。
+
 ## F2 异常终态交接 2026年10月2日
 
 | 项目 | 同run实测或派生结果 | 证据 |
@@ -12,14 +42,14 @@
 
 本条记录冻结于 `2026-10-02T04:49:18.771814+00:00` UTC / `2026-10-02T12:49:18.771814+08:00` UTC+8。内核OOM发生时node1 Normal free448.629 MiB低于min451.973 MiB、swap free0，全机尚有derived887.976 GB free；不能把本场允许回落的preferred策略直接认作严格node1绑定，也不能将全机换页归因到邻近项目。只追加文档交接，未优化、重启、另跑或merge master。下面9月28日及更早段落是原时刻历史快照，保留不改；当前终态以上表为准。
 
-## Review V6 E3 阶段收口：线程配置已冻结，F5 待主审
+## Review V6 E3 阶段收口时状态（2026-10-02；随后F5已通过）
 
 | 项目 | 实测结论 | 证据与边界 |
 |---|---|---|
 | 固定工作量 | 5 nm 与 2 nm 各一个 18-cell FE fixture；math1→math4→math4→math1，共四场。每场每个 fixture 一个 p4 factor，三次固定 PC 输出；各场及 AB/BA 比较通过 | [线程选择 compact](records/v6_thread_selection.json)；全部运行绑定 clean source `41bd6afa0be4e6ff242025f3730a3e458d3717e7` 与 launcher SHA |
 | PC 对照 | 首次调用单列；warm 仅取第 2、3 次调用均值。5 nm math1/math4 warm 比值 AB/BA=`1.384866/1.717097`；2 nm=`1.047754/0.975515` | 2 nm 未显示稳定收益，不能以 factor API 单独耗时替代完整 PC 结论 |
 | 冻结配置 | MPI1、math1、worker CPU24、parent CPU9、NUMA interleave node0/1；不做 8 线程 | math4 数值等价与组件 PASS 证据保留；math4线程设置4、`openblas_get_num_threads()`=4、OS线程数6；报告`parallel_runtime=1`是`openblas_get_parallel()`返回的`OPENBLAS_THREAD`类型枚举，不是线程数。MUMPS共享内存能力 unknown |
-| 下一门 | 唯一 F5：5 nm Si p6/h4 q4，3780 cells、600 channels；当前仅有启动审阅包，未启动 | [E3 线程选择 compact](records/v6_thread_selection.json)；ignored F5 审阅包路径为 `tmp/review_v6_components/f5_5nm_launch_review_package_20261002.json`，其 SHA256 在执行交接中报告；须主审批准并通过 fresh 现场准入后才运行 |
+| 下一门 | 当时计划为唯一 F5；此后已按批准完成并由主审通过 | [F5终态compact](records/v6_5nm_terminal.json)；运行SHA `1828bc675f2862025e0eaed0beccf15982eb09e6` |
 
 此 E3 只证明限定小网格、固定工作量组件上的比较，不是完整场 PDE 资格，不替代 F5 的 A6、物理量、同离散参考与资源 Gate。邻近任务未被修改；CPU与背景进程快照不代表整机独占。
 

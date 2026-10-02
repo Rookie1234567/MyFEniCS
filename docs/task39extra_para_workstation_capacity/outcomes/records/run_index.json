@@ -281,9 +281,30 @@
       "compact": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_compact_v1.json",
       "report": "docs/task39extra_para_workstation_capacity/outcomes/f2_terminal_oom_20261002.md",
       "classification": "KERNEL_OOM_MEMORY_POLICY_NODE1_NOT_NUMERICAL_QUALIFIED"
+    },
+    {
+      "stage": "F5_V6_FULL_REGRESSION",
+      "attempt": 1,
+      "run_id": "20261002T153058.967208Z",
+      "record": "v6_5nm_terminal.json",
+      "status": "COMPLETED_F5_FULL_REGRESSION_ACCEPTED",
+      "source_sha": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+      "input_sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9",
+      "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "resolved_config_sha256": "24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427",
+      "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "cells": 3780,
+      "modes": 600,
+      "iterations": 121,
+      "true_residual": 8.704501286501755e-07,
+      "tree_rss_peak_bytes": 38082981888,
+      "tree_swap_peak_bytes": 0,
+      "workflow_seconds": 12534.182499101968,
+      "main_review_sha256": "b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3",
+      "resource_audit_sha256": "1866be1343fc97cec4c920d05a33743ed20c71ae9bd8c0e79fcaf1b6b1ee4a53"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "F2_TERMINAL_OOM_EVIDENCE_REVIEW_NO_RESTART_OR_NEW_COMPUTATION_AUTHORIZED_BY_THIS_HANDOFF"
+  "next_gate": "P2_FIXED_SETUP16_PACKAGE_MAIN_REVIEW_AND_FRESH_ADMISSION_REQUIRED; no launch before main review of updated clean source package"
 }

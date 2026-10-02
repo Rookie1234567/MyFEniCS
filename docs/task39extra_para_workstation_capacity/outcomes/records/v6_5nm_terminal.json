@@ -1,0 +1,651 @@
+{
+  "C_component_timings": {
+    "A4_child_timing_status_counts": {
+      "MEASURED": 244
+    },
+    "C_invocation_count": 244,
+    "C_parent_minus_P4_logical_and_P_PH_seconds": 0.171712,
+    "C_parent_minus_P4_logical_seconds": 348.552,
+    "C_parent_wall_seconds": 4470.977117,
+    "P4_A4_DtN_child_seconds": 11.845,
+    "P4_A4_parent_seconds": 830.0133,
+    "P4_A4_volume_child_seconds": 814.928103,
+    "P4_actual_factor_solve_seconds": 1917.673209,
+    "P4_internal_recovery_seconds": 496.722325,
+    "P4_logical_apply_delta_sum": 244,
+    "P4_logical_return_records": 244,
+    "P4_logical_wall_seconds": 4122.425117,
+    "P4_port_closure_seconds": 4.634656,
+    "P4_rhs_reduction_seconds": 864.785925,
+    "P4_status_counts": {
+      "P4_RETURN_PASS": 244
+    },
+    "PH_restriction_seconds": 101.003428,
+    "P_plus_PH_seconds": 348.380289,
+    "P_prolongation_seconds": 247.37686,
+    "maximum_actual_refinements_in_any_return": 1,
+    "maximum_configured_refinements": 2,
+    "operation_seconds_from_pc_applies": {
+      "A_inner_true": 0.0,
+      "A_structure": 1205.863045,
+      "C": 4470.977117,
+      "smoother": 1159.58598
+    },
+    "pc_apply_parent_records": 122,
+    "scope_note": "C parent and P4 logical ledger are parent/child scopes; A4 volume/DtN are children of A4 parent. These timings must not be added together. Parent-minus-ledger remainders are left unassigned.",
+    "total_actual_refinement_count": 2
+  },
+  "captured_utc": "2026-10-02T19:17:27.103002Z",
+  "decision": "F5_FULL_REGRESSION_ACCEPTED; P2 package preparation approved; P2 remains not started pending package review and fresh admission.",
+  "engineering_comparison": {
+    "new_setup_same_clock_seconds": 1696.1960083970334,
+    "new_solve_seconds": 9952.023125263979,
+    "new_workflow_seconds": 12534.182499101968,
+    "old_setup_same_clock_seconds": 11263.075601217002,
+    "old_solve_seconds": 10671.215508132998,
+    "old_workflow_seconds": 22680.91177625401,
+    "path": "tmp/review_v6_components/f5_old_v5_engineering_comparison_20261003.json",
+    "scope": "noncontrolled same-case engineering comparison; implementation, geometry grouping, NUMA, PSS and cache conditions differ; no isolated causal claim",
+    "setup_old_over_new_ratio": 6.640196973379872,
+    "sha256": "93914a10d778a9151b408cfe258a94bd490bb8abd3a743cbac6f6a57dde3ef6d",
+    "solve_old_over_new_ratio": 1.0722659477190415,
+    "workflow_old_over_new_ratio": 1.8095246162148209
+  },
+  "evidence_files_sha256": {
+    "checker.json": {
+      "bytes": 972,
+      "sha256": "96c3bb64069dd4d31f204df0dbc751f5b400406e4ea15d69ed991d98b527ba87"
+    },
+    "input_original.dat": {
+      "bytes": 2172,
+      "sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9"
+    },
+    "input_sha256.txt": {
+      "bytes": 65,
+      "sha256": "9944f0aa95aa2fdd9e24ecaae4fb008e70e0a22dafbbcb24c947374bfb3d8bca"
+    },
+    "monitor_residuals.jsonl": {
+      "bytes": 16785,
+      "sha256": "1ea73059a6cb79ee8d6762b63c4f09f1910a96b521c9bc796dac1ce010b5d955"
+    },
+    "numerical_output/dtn_port_power_metrics_3d.json": {
+      "bytes": 2262,
+      "sha256": "ce2cd24a0b3c8cdbc6fc9cf27d32aaf4b4d6420b665f152970efaccfcf1d90b2"
+    },
+    "numerical_output/full3d_reference_samples.json": {
+      "bytes": 1986,
+      "sha256": "be6cda5238a09968e8cf54a703ef3290a4fd7f4882591224a08ccef26db9c664"
+    },
+    "numerical_output/full3d_reference_samples.npz": {
+      "bytes": 415031,
+      "sha256": "c7c5319c7104de95ef45b57cbaf308f68b887171ecedfa25685679e5d56e3893"
+    },
+    "numerical_output/volume_absorption.json": {
+      "bytes": 2338,
+      "sha256": "609e89e55d55a79c4aa476e536a1293dd0b3908364ed9c4aa5f2f625068a2762"
+    },
+    "p4_decisions.jsonl": {
+      "bytes": 836792,
+      "records": 244,
+      "sha256": "ec725b52534e40bac0b383b17e587210c73b3f04cc799de447adc4e36017f0db"
+    },
+    "pc_applies.jsonl": {
+      "bytes": 1409394,
+      "records": 122,
+      "sha256": "3cd3fa42bf8ee6b06af8ef098d03d18128c459fa4fb69989f3c096420a4d69b8"
+    },
+    "physical_intermediate_summary.json": {
+      "bytes": 921616,
+      "sha256": "38835ed438e026dcc0ae7916d15bc17b728cd0d0f925a8398954e81f62614cc0"
+    },
+    "physical_model_sha256.txt": {
+      "bytes": 65,
+      "sha256": "29f7ac90496da1ee5a621c5460c66a8875faa14e9b4ba298e0f98a2922af20eb"
+    },
+    "resolved_config.json": {
+      "bytes": 10523,
+      "sha256": "24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427"
+    },
+    "run_manifest.json": {
+      "bytes": 23244,
+      "sha256": "0707e2b5a21191b3e95a0152519f8ebba71107b651f36ae71527785c99aa7e92"
+    },
+    "run_summary.json": {
+      "bytes": 5309,
+      "sha256": "83660bf6dad3df673e34e7bbd08d42b39125409ad2df8d420d2decfcea8331a8"
+    },
+    "stages.jsonl": {
+      "byte_range": [
+        0,
+        457945
+      ],
+      "bytes": 457945,
+      "records": 26,
+      "sha256": "7b534eadd063a1844457752b17cf69e930f24e5c231f76c165650c18632d7a00"
+    },
+    "watchdog/resources.jsonl": {
+      "byte_range": [
+        0,
+        398061029
+      ],
+      "bytes": 398061029,
+      "records": 36145,
+      "sha256": "a4bf28a10c75fcc88adb0d087b97e739c3f965af1618d68a69a66c71c672fd04"
+    },
+    "watchdog/summary.json": {
+      "bytes": 5066,
+      "sha256": "449c49e9f68a85a7385e6aa18be8bcde478bede84d950de4ee2fb2aa1b41bb28"
+    },
+    "workflow_phase.json": {
+      "bytes": 2435,
+      "sha256": "a0b0212867eb0865b42d59a78d1728e7f6f72697466b93554f1ae658134ab286"
+    }
+  },
+  "identity_checks": {
+    "current_worktree_clean": true,
+    "head_equals_manifest_source": true,
+    "input_copy_matches_manifest": true,
+    "input_sha_file_matches_manifest": true,
+    "mode_hashes_consistent": true,
+    "physical_file_matches_manifest": true,
+    "resolved_file_matches_manifest": true
+  },
+  "main_review_receipt": {
+    "all_checks_pass": true,
+    "checks_passed": 24,
+    "checks_total": 24,
+    "decision": "F5_FULL_REGRESSION_ACCEPTED; P2 launch requires reviewed fixed package and fresh admission",
+    "path": "tmp/review_v6_components/f5_main_terminal_review_20261003.json",
+    "review_head_at_acceptance": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+    "reviewed_run_source_sha": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+    "sha256": "b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3"
+  },
+  "main_review_scalar_reconciliation": {
+    "C_invocations_and_p4_returns": 244,
+    "formal_outer_iterations": 121,
+    "iterations_jsonl_duplicate_markers": [
+      32,
+      64,
+      96
+    ],
+    "iterations_jsonl_note": "records include repeated markers at 32, 64, and 96; do not calculate a 124-callback per-outer-step mean.",
+    "iterations_jsonl_record_count": 125,
+    "iterations_jsonl_records": 125,
+    "ksp_api_seconds": 9830.70535,
+    "ksp_api_seconds_per_formal_outer_iteration": 81.2454987625122,
+    "last_two_C_calls_A4_parent_seconds": 6.78377,
+    "last_two_C_calls_mat_solve_seconds": 15.06384,
+    "last_two_C_calls_recovery_seconds": 4.12764,
+    "last_two_C_calls_wall_seconds": 36.0696,
+    "p4_all_244_returns_pass": true,
+    "p4_final_A4_relative_max": 9.604857895562664e-11,
+    "p4_gate": "exact condensed p4 MUMPS; Aq <= 1e-10; at most two additional same-factor refinements; every C retains complete original A4 verification.",
+    "p4_symbolic_numeric_matsolve_counts": [
+      1,
+      1,
+      246
+    ],
+    "pc_apply_parent_records": 122,
+    "pc_apply_parent_scope": "one setup apply plus 121 formal outer-iteration applies",
+    "provenance": "Main reviewer raw-scalar recomputation reported by user; resources.jsonl is not reread for this v2.",
+    "resource_max_adjacent_elapsed_gap_seconds": 0.5447150859981775,
+    "resource_samples_containing_vanished_entries": 4,
+    "same_clock_setup_seconds": 1696.1960083970334,
+    "solve_seconds_including_final_check": 9952.023125,
+    "solve_seconds_per_formal_outer_iteration_including_checks_and_output": 82.24812500218164,
+    "timing_scope_note": "Parent and child timers overlap; A4 volume and DtN are children of A4 parent. Keep per-call/per-stage scopes distinct and do not sum nested timers.",
+    "watchdog_elapsed_seconds_approximate_not_setup_clock": 1750.0,
+    "workflow_seconds": 12534.182499
+  },
+  "official_physics": {
+    "A_port_balance": 0.2665940505921425,
+    "A_volume_grating": 0.2665320873277171,
+    "A_volume_substrate": 6.194760542435344e-05,
+    "A_volume_total": 0.26659403493314143,
+    "R00_p": 1.6396484864912243e-23,
+    "R00_s": 0.7325626994247282,
+    "R00_total": 0.7325626994247282,
+    "R_total": 0.7331835097833246,
+    "T_total": 0.0002224396245329203,
+    "air_cells_excluded": true,
+    "diagnostic_EH_fourier_not_official_RTA": {
+      "A_balance": 0.26702907558582545,
+      "R_plus_T": 0.7329709244141746,
+      "R_total": 0.7327365349808054,
+      "T_total": 0.00023438943336922716,
+      "power_source": "diagnostic_eh_fourier_probe"
+    },
+    "full_field_L2_relative": 7.354627198844677e-08,
+    "full_field_limit": 0.0001,
+    "full_field_scaled_curl_relative": 7.315312723256512e-08,
+    "full_field_status": "FULL_FIELD_PASS",
+    "matched_mode_count": 600,
+    "modal_amplitude_limit": 0.0001,
+    "modal_amplitude_relative_difference": 5.088736960158287e-08,
+    "modal_power_limit": 1e-06,
+    "modal_power_max_absolute_difference": 2.868811443956787e-08,
+    "official_RTA_source": "dtn_port_modal_amplitudes",
+    "old_reference_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z",
+    "old_reference_power_absolute_differences": {
+      "A": 2.868107679132592e-08,
+      "A_volume": 4.2009479506166514e-08,
+      "R": 2.854084868442186e-08,
+      "T": 1.402280699327671e-10,
+      "limit": 1e-05
+    },
+    "old_reference_status": "MATCHED_REFERENCE_PASS",
+    "old_same_physics_reference_kind": "old_5nm_same_physics_full_field_and_600_modal",
+    "pml_cells_excluded": true,
+    "port_absorption_minus_volume": 1.5659001040280174e-08,
+    "selected_EH_limit": 0.0001,
+    "selected_EH_status": "SELECTED_EH_PASS",
+    "selected_E_relative_L2": 1.1305707868939433e-07,
+    "selected_H_relative_L2": 1.1234864117936291e-07,
+    "volume_method": "volume_absorption"
+  },
+  "resource_main_audit_receipt": {
+    "all_checks_pass": true,
+    "all_readable": true,
+    "global_swap_activity": {
+      "baseline": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "scope": "WSL-global diagnostic, not dedicated job"
+    },
+    "last_sample_age_at_watchdog_clock_end_seconds": 0.068840831,
+    "max_adjacent_elapsed_gap_seconds": 0.5447150859981775,
+    "path": "tmp/review_v6_components/f5_resource_main_terminal_audit_20261002T190922Z.json",
+    "resources_bytes": 398061029,
+    "resources_sha256": "a4bf28a10c75fcc88adb0d087b97e739c3f965af1618d68a69a66c71c672fd04",
+    "rss_peak_bytes": 38082981888,
+    "sample_count": 36145,
+    "samples_containing_vanished_entries": 4,
+    "sha256": "1866be1343fc97cec4c920d05a33743ed20c71ae9bd8c0e79fcaf1b6b1ee4a53",
+    "task_swap_peak_bytes": 0
+  },
+  "resource_terminal": {
+    "descendants_cleared": true,
+    "global_swap_activity": {
+      "baseline": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "scope": "WSL-global diagnostic, not dedicated job"
+    },
+    "job_swap_activity": "no_task_or_global_swap_observed",
+    "leader_exit_code": 0,
+    "pss_sampling_policy": "disabled_by_profile",
+    "remaining_child_pids": [],
+    "resource_log_single_pass": {
+      "all_samples_readable": true,
+      "byte_range": [
+        0,
+        398061029
+      ],
+      "bytes_read": 398061029,
+      "file_bytes_after": 398061029,
+      "file_bytes_before": 398061029,
+      "first_sample": {
+        "byte_start": 0,
+        "elapsed_seconds": 0.10654280404560268,
+        "row_index": 1,
+        "timestamp_ns": 1790955059115740241
+      },
+      "global_swap_activity": {
+        "baseline": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "end": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "scope": "WSL-global diagnostic, not dedicated job"
+      },
+      "last_sample": {
+        "all_status_readable": true,
+        "byte_end": 398061029,
+        "byte_start": 398055064,
+        "elapsed_seconds": 12534.010798776057,
+        "row_index": 36145,
+        "rss_bytes": 40202240,
+        "swap_bytes": 0,
+        "timestamp_ns": 1790967593020331949,
+        "warning": false
+      },
+      "last_sample_gap_to_watchdog_clock_end_seconds": 0.068840831,
+      "last_sample_members": [
+        {
+          "cpu_seconds": 3493.59,
+          "pid": 1304328,
+          "rss_bytes": 40202240,
+          "start_ticks": 88005247,
+          "state": "R"
+        }
+      ],
+      "malformed_nonempty_lines": 0,
+      "max_gap_record_indices": [
+        2686,
+        2687
+      ],
+      "max_gap_timestamp_pair_ns": [
+        1790955994973017288,
+        1790955995517351843
+      ],
+      "max_sample_gap_seconds": 0.5447150859981775,
+      "readability_field_missing_count": 0,
+      "record_count": 36145,
+      "rss_peak": {
+        "byte_start": 172998430,
+        "elapsed_seconds": 4821.189362379955,
+        "row_index": 13899,
+        "rss_bytes": 38082981888,
+        "timestamp_ns": 1790959880199081806
+      },
+      "samples_containing_vanished_entries": 4,
+      "sha256": "a4bf28a10c75fcc88adb0d087b97e739c3f965af1618d68a69a66c71c672fd04",
+      "stable_size_during_scan": true,
+      "swap_peak_bytes": 0,
+      "unreadable_record_count": 0,
+      "warning_record_count": 0
+    },
+    "rss_hard_limit_bytes": 1300000000000,
+    "rss_warning_bytes": 1170000000000,
+    "samples": 36145,
+    "tree_rss_peak_bytes": 38082981888,
+    "tree_swap_peak_bytes": 0,
+    "watchdog_classification": "COMPLETED",
+    "watchdog_elapsed_seconds": 12534.07831819402
+  },
+  "run_identity": {
+    "actual_output_cell_count": 3780,
+    "approved_launcher_session_record": {
+      "path": "tmp/review_v6_components/f5_launcher_session_identity_20261002T153058Z.json",
+      "sha256": "07d51da01ddc9ea773252cc450c01acae1c8c1d5138426310f59ea5ac385213c"
+    },
+    "current_head": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+    "current_worktree_clean": true,
+    "execution_mode": "full_solve",
+    "fine_dof_rows": 2514372,
+    "input_copy_sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9",
+    "input_sha256": "599017bde2b8bef953939cfd519fb72f97bec5bb6a9667fe5e8b379303dd69c9",
+    "mode_count": 600,
+    "mode_identity_consistent": true,
+    "mode_sha256_values": {
+      "coarse_space": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "fine_space": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+      "rhs": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645"
+    },
+    "mpi_size": 1,
+    "physical_model_file_value": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+    "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+    "resolved_config_file_sha256": "24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427",
+    "resolved_config_sha256": "24ea2abf0d6212ff6c63f79f25a021a01b2dcd8586beb7ad15d48457b779f427",
+    "retained_rows": 756600,
+    "run_id": "v6_interleave_5nm_p6h4_q4",
+    "run_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v6_interleave_5nm_p6h4_q4__full3d_iterative__mpi1__Mna/20261002T153058.967208Z",
+    "source_after_clean": true,
+    "source_after_sha": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+    "source_sha": "1828bc675f2862025e0eaed0beccf15982eb09e6"
+  },
+  "schema": "review-v6-f5-terminal-evidence.v2",
+  "scope_and_limits": {
+    "PSS": "disabled_by_profile",
+    "not_included": "P2 has not started; no official P2 R/T/A claim",
+    "reference": "same-physics 5nm full-field/600-modal discrete comparison; not continuum convergence",
+    "resource_stop_policy": "measured_tree_rss_only_v3",
+    "swap": "observed only; not a stop trigger"
+  },
+  "stage_markers": {
+    "major_intervals_seconds": {
+      "h6_window_and_packed_action": 110.275482,
+      "recovery_to_watchdog_end": 680.320836,
+      "reference_budget_to_numeric_complete": 376.282022,
+      "reference_symbolic": 8.076159,
+      "retained_runtime_build": 605.591397,
+      "solve_start_to_solver_stack_release": 10093.947078,
+      "workflow_start_to_solve_start_setup": 1696.195957
+    },
+    "phase_marker_note": "Markers are observed stage boundaries; C and P4 internals are in the following independent cumulative counters.",
+    "timeline": [
+      {
+        "elapsed_from_workflow_start_seconds": 0.0,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.0,
+        "stage": "workflow_started"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 0.017977,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.017977,
+        "stage": "retained_runtime_build_started"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 15.178089,
+        "phase": "setup",
+        "since_previous_marker_seconds": 15.160112,
+        "stage": "retained_shared_mesh_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 15.298135,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.120046,
+        "stage": "retained_volume_quadrature_metadata_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 296.9971,
+        "phase": "setup",
+        "since_previous_marker_seconds": 281.698965,
+        "stage": "retained_sum_factorized_physical_action_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 298.736672,
+        "phase": "setup",
+        "since_previous_marker_seconds": 1.739572,
+        "stage": "retained_fast_complete_a4_action_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 381.793219,
+        "phase": "setup",
+        "since_previous_marker_seconds": 83.056547,
+        "stage": "retained_forms_compiled"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 542.077218,
+        "phase": "setup",
+        "since_previous_marker_seconds": 160.284,
+        "stage": "retained_condensed_components_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 605.424457,
+        "phase": "setup",
+        "since_previous_marker_seconds": 63.347238,
+        "stage": "retained_postprocess_jit_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 605.608187,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.18373,
+        "stage": "retained_postprocess_jit_released"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 605.609374,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.001187,
+        "stage": "retained_runtime_build_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 605.651685,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.042311,
+        "stage": "reference_symbolic_started"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 613.727844,
+        "phase": "setup",
+        "since_previous_marker_seconds": 8.076159,
+        "stage": "reference_symbolic_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 613.760972,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.033128,
+        "stage": "reference_budget_evaluated"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 990.042994,
+        "phase": "setup",
+        "since_previous_marker_seconds": 376.282022,
+        "stage": "reference_numeric_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1015.3558,
+        "phase": "setup",
+        "since_previous_marker_seconds": 25.312807,
+        "stage": "retained_p4_factor_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1015.357985,
+        "phase": "setup",
+        "since_previous_marker_seconds": 0.002185,
+        "stage": "h6_original_setup_started"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1125.633468,
+        "phase": "setup",
+        "since_previous_marker_seconds": 110.275482,
+        "stage": "h6_original_window_and_packed_action_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1143.780276,
+        "phase": "setup",
+        "since_previous_marker_seconds": 18.146809,
+        "stage": "retained_bal_h_bridge_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1223.096127,
+        "phase": "setup",
+        "since_previous_marker_seconds": 79.315851,
+        "stage": "retained_native_aq_projection_check_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1696.186014,
+        "phase": "setup",
+        "since_previous_marker_seconds": 473.089887,
+        "stage": "retained_same_object_setup_checks_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 1696.195957,
+        "phase": "solve",
+        "since_previous_marker_seconds": 0.009943,
+        "stage": "solve_started"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 11787.994605,
+        "phase": "solve",
+        "since_previous_marker_seconds": 10091.798649,
+        "stage": "retained_pre_release_packet_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 11788.014715,
+        "phase": "solve",
+        "since_previous_marker_seconds": 0.020109,
+        "stage": "retained_solver_stack_release_started"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 11790.143034,
+        "phase": "solve",
+        "since_previous_marker_seconds": 2.12832,
+        "stage": "retained_solver_stack_release_complete"
+      },
+      {
+        "elapsed_from_workflow_start_seconds": 11852.734841,
+        "phase": "recovery",
+        "since_previous_marker_seconds": 62.591807,
+        "stage": "recovery_started"
+      }
+    ]
+  },
+  "supersedes": {
+    "note": "v1 retained unchanged; v2 adds iteration/setup/C timing scope corrections from main-review raw scalar recheck. Resource stream is reused by hash/range; it is not rescanned here.",
+    "path": "tmp/review_v6_components/f5_terminal_evidence_20261002T153058.967208Z.json",
+    "sha256": "9650b54899077e9640de6c8539b4361884d14ed933a2701ecd78e46b796558ad"
+  },
+  "terminal": {
+    "checker_classification": "BALANCED_OUTPUT_PASS",
+    "checker_gate_failures": [],
+    "checker_independent_output_gates_passed": true,
+    "exit_status": 0,
+    "explicit_action_count": 21,
+    "factor_counts": {
+      "logical_apply_calls": 244,
+      "numeric_calls": 1,
+      "solve_calls": 246,
+      "symbolic_calls": 1
+    },
+    "final_original_A4_relative_max": 9.604857895562664e-11,
+    "final_original_A6_relative": 8.704501286501755e-07,
+    "full_explicit_true_relative_residual": 8.704501286501755e-07,
+    "iterations": 121,
+    "iterations_jsonl_duplicate_markers": [
+      32,
+      64,
+      96
+    ],
+    "iterations_jsonl_record_count": 125,
+    "iterations_jsonl_semantics": "125 records include duplicated markers at 32, 64, and 96; formal outer iteration count remains 121.",
+    "ksp_solve_count": 1,
+    "max_extra_refinements_per_return": 1,
+    "native_identity_relative": 4.386880697708631e-12,
+    "p4_factor_counts": {
+      "logical_apply_calls": 244,
+      "numeric_calls": 1,
+      "solve_calls": 246,
+      "symbolic_calls": 1
+    },
+    "physical_residual_pass": true,
+    "physical_summary_status": "BALANCED_OUTPUT_PASS",
+    "port_closure_relative": 2.6076245457612465e-16,
+    "reference_authority": "MATCHED_REFERENCE_PASS",
+    "run_classification": "worker_exit0",
+    "run_status": "finished",
+    "setup_checks": "PASS",
+    "solve_status": "TRUE_RESIDUAL_PASS",
+    "solver_reason": 2,
+    "total_extra_refinements": 2,
+    "workflow_seconds": 12534.182499101968
+  },
+  "timings_seconds": {
+    "KSP_API_including_callback_checks_and_output": 9830.705350263976,
+    "checker": 176.39030851400457,
+    "ksp_API": 9830.705350263976,
+    "mean_KSP_seconds_per_121_outer_steps": 81.2454987625122,
+    "mean_solve_seconds_per_121_outer_steps_including_checks_and_output": 82.24812500218164,
+    "physical_intermediate_elapsed": 12349.965614269953,
+    "setup_same_monotonic_boundary": 1696.1960083970334,
+    "solve_including_final_evaluation": 9952.023125263979,
+    "solver": 9952.023125263979,
+    "workflow": 12534.182499101968
+  }
+}
