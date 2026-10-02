@@ -1,5 +1,18 @@
 # 原生迁移与容量任务：本轮执行结果
 
+## F2 异常终态交接 2026年10月2日
+
+| 项目 | 同run实测或派生结果 | 证据 |
+|---|---|---|
+| 状态与首因 | `WORKER_FAILED / exit137`；内核node1 memory-policy OOM杀worker341839；触发分配的是另一PID1172428，其任务归属unknown；后代清场 | [终态报告](f2_terminal_oom_20261002.md)、[内核摘录](records/f2_kernel_oom_20261002_excerpt.txt) |
+| run与运行源码 | `20260924T104936.107285Z`；`64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa`，启动/终态clean；文档HEAD不代表运行SHA | [compact](records/f2_terminal_oom_20261002_compact_v1.json) |
+| 进展与资格 | 完成228步Schur `9.373049823814199e-5`；最近独立原A6第224步 `9.758316562442362e-5`，未到1e-6；RTA/checker NOT_RUN；224步解检查点仍在 | [全部A6检查CSV](records/f2_a6_residual_history_20261002.csv) |
+| 时间 | workflow `666232.838509 s`；setup `184388.380644 s`；最后228步callback solve `479635.727603 s`，非纯KSP API timer | compact.time |
+| 资源 | 整树采样RSS峰 `1154381864960` B，低于1.3e12 B硬线；任务VmSwap峰 `8574500864` B；global pswp增量3138800/5146004页，归因未决 | compact.resource与evidence.watchdog_summary |
+
+本条记录冻结于 `2026-10-02T04:49:18.771814+00:00` UTC / `2026-10-02T12:49:18.771814+08:00` UTC+8。内核OOM发生时node1 Normal free448.629 MiB低于min451.973 MiB、swap free0，全机尚有derived887.976 GB free；不能把本场允许回落的preferred策略直接认作严格node1绑定，也不能将全机换页归因到邻近项目。只追加文档交接，未优化、重启、另跑或merge master。下面9月28日及更早段落是原时刻历史快照，保留不改；当前终态以上表为准。
+
+
 ## Review V5 运行中交接（2026-09-28 02:34:15.838437 UTC / 10:34:15.838437 UTC+8）：F2 RUNNING
 
 唯一2 nm Si、p6/h1.5、q4、3904通道run `20260924T104936.107285Z` 仍在solve，启动source为 `64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa`；文档提交HEAD不代表运行源码。最后完成outer iteration64，独立原A6相对残差 `0.022358747111508717`（iteration64、solve_seconds130416.063935、physical_residual_pass=false），尚未收敛；不记录正式数值/物理/RTA PASS。bridge sequence65含setup一次，实际已完成64次outer PC；logical131已返回，当前完整PC与outer65完成记录未写。

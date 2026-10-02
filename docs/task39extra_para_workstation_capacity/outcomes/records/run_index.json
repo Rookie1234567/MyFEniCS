@@ -264,9 +264,26 @@
       "source_sha": "96057565d171077cc84a8dae3cd4eb88b6ff21ea",
       "input_sha256": "03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36",
       "physical_model_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d"
+    },
+    {
+      "run_id": "v5_node1_2nm_p6h1p5_q4",
+      "execution_id": "20260924T104936.107285Z",
+      "record_kind": "terminal_oom_handoff",
+      "status": "WORKER_FAILED",
+      "exit_status": 137,
+      "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+      "input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "last_completed_outer_iteration": 228,
+      "latest_original_A6_iteration": 224,
+      "latest_original_A6_relative": 9.758316562442362e-05,
+      "snapshot_utc": "2026-10-02T04:49:18.771814+00:00",
+      "compact": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_compact_v1.json",
+      "report": "docs/task39extra_para_workstation_capacity/outcomes/f2_terminal_oom_20261002.md",
+      "classification": "KERNEL_OOM_MEMORY_POLICY_NODE1_NOT_NUMERICAL_QUALIFIED"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "F2_FRESH_PRELAUNCH_ADMISSION_PENDING_MAIN_REVIEW_APPROVED_IF_ALL_GATES_PASS"
+  "next_gate": "F2_TERMINAL_OOM_EVIDENCE_REVIEW_NO_RESTART_OR_NEW_COMPUTATION_AUTHORIZED_BY_THIS_HANDOFF"
 }

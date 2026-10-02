@@ -1628,3 +1628,12 @@ production model。
 | `20260923T231207.264441Z` / `b468907cf54d04280b461cae5fc9078186302d54`；input `03a9992d576612335135fa22f25192f97754feb4a281e6c06ce29534e4095d36`；3780 cells、p6/h4、600 DtN channels | 121步；explicit A6 residual `8.60422e-7`；244/244 p4 returns `<=1e-10`、最多1次 refinement；`BALANCED_OUTPUT_PASS` 与旧5 nm 同物理 `MATCHED_REFERENCE_PASS`；全场 L2/scaled-curl `7.20455e-8/7.16517e-8`；R/T/A/A_volume=`0.733183508848/0.000222439621/0.266594051531/0.266594036660`；energy closure `1.49e-8` | workflow `22680.912 s`、solve `10671.216 s`；整树RSS峰 `38,934,622,208 B`、swap0；watchdog completed/cleared。后续独立setup-only须另立run身份，不代表完整物理结果。 | [F5 compact](task39extra_para_workstation_capacity/outcomes/records/f5_5nm_q4_terminal_compact_v1.json) |
 | `F5_GEOMETRY_EQUIVALENCE_COMPONENT` | 同一5 nm Si物理/材料输入；派生105-cell网格；每阶18个raw类→9个tensor组；4个实际零阶mode | 逐raw类代表tensor、A6、Aq、p4原A4及独立增广port RHS检查通过；仅组件资格，非完整setup/600通道/资源PASS | [105-cell compact](task39extra_para_workstation_capacity/outcomes/records/v5_5nm_geometry_105_component_v1.json) |
 | `F5_SETUP_ONLY_V5` | run `20260924T092250.568977Z`、source `96057565d171077cc84a8dae3cd4eb88b6ff21ea`；同一5 nm Si input/physical SHA；3780 cells、p6/h4、q4、600 channels | `SETUP_ONLY_COMPLETED`、setup checks PASS；setup `2023.440526 s`，workflow `2028.390414 s`；p6/p4各175 raw几何类实际并为6个近似tensor组，kernel `292.039/33.847 s`；RSS峰 `37236830208 B`、6192样本全可读、swap0、后代清场。`outer_solve/full_a6_recovery/RTA/checker=NOT_RUN`，不构成新完整数值/物理资格；当前分组策略仍待完整F2场验证 | [setup-only compact](task39extra_para_workstation_capacity/outcomes/records/f5_setup_only_v5_compact_v1.json) |
+
+
+## Task39extra_para V5 2 nm F2 内核 OOM 终态 2026年10月2日
+
+| 模型与运行身份 | 同run数值进展 measured | 时间与资源 measured | 结论与证据 |
+|---|---|---|---|
+| 2 nm Si、p6/h1.5、q4；54332 cells、3904端口；retained10803256行、p4凝聚增广4586288行/2070391064 NNZ；run `20260924T104936.107285Z`；source `64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa` | 完成228步Schur9.373049823814199e-5；最近独立原A6在224步9.758316562442362e-5，未到1e-6；第224步解检查点仍在；正式RTA/checker NOT_RUN | workflow666232.838509 s、setup184388.380644 s；整树RSS采样峰1154381864960 B、swap峰8574500864 B；global pswp增量3138800/5146004页，归因未决 | WORKER_FAILED/exit137；内核node1 memory-policy OOM，victim341839、触发分配PID1172428所属任务unknown；RSS未达1.3e12 B；后代清场。[报告](task39extra_para_workstation_capacity/outcomes/f2_terminal_oom_20261002.md)、[compact](task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_compact_v1.json) |
+
+记录冻结于 2026-10-02T04:49:18.771814+00:00 UTC。文档更新不改变运行SHA；不将PC sequence230当228之后已完成的外层步，也不将Schur报告量作为独立原A6。保留历史失败与5 nm成功各自范围；本条无优化、重跑或master合并。

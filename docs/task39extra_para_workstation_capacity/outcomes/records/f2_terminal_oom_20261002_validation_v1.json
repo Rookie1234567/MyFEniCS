@@ -1,0 +1,295 @@
+{
+  "schema": "task39extra.f2.terminal-document-validation.v1",
+  "checked_utc": "2026-10-02T05:04:14.813064+00:00",
+  "documentation_parent_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "running_source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+  "checks": [
+    {
+      "check": "execution_worktree_and_frozen_identity",
+      "status": "PASS",
+      "details": "runtime branch, SHA and clean state unchanged; document parent distinct; UTC and UTC+8 same instant"
+    },
+    {
+      "check": "stable_small_source_hashes",
+      "status": "PASS",
+      "details": {
+        "files": 13,
+        "bytes": 1709903,
+        "no_large_arrays": true
+      }
+    },
+    {
+      "check": "new_and_historical_evidence_hashes",
+      "status": "PASS",
+      "details": {
+        "files": 8
+      }
+    },
+    {
+      "check": "terminal_and_resource_cross_fields",
+      "status": "PASS",
+      "details": "exit137, cleared tree, source/physical/input identities, RSS/swap/global counts; no qualified final output claimed"
+    },
+    {
+      "check": "event_byte_ranges_and_numerical_semantics",
+      "status": "PASS",
+      "details": "228 complete iterations; A6 at224, PC sequence230 includes setup; no residual types merged"
+    },
+    {
+      "check": "CSV_sources_duplicates_clocks_and_mean",
+      "status": "PASS",
+      "details": {
+        "f2_a6_residual_history_20261002.csv": {
+          "rows": 36,
+          "distinct_iterations": 29
+        },
+        "f2_recent_iterations_20261002.csv": {
+          "rows": 17,
+          "distinct_iterations": 16
+        }
+      }
+    },
+    {
+      "check": "checkpoint_metadata_and_file_sizes",
+      "status": "PASS",
+      "details": "iteration224 full/retained solution files exist; only metadata/size inspected, large arrays not read"
+    },
+    {
+      "check": "kernel_excerpt_and_bounded_resource_range",
+      "status": "PASS",
+      "details": "kernel OOM victim bound; only frozen512KiB resource tail checked, no full scan"
+    },
+    {
+      "check": "historical_evidence_preservation",
+      "status": "PASS",
+      "details": "old run-index entries identical; response/registry/progress append-only; old summary body verbatim"
+    },
+    {
+      "check": "Markdown_tables_fences_new_relative_links",
+      "status": "PASS",
+      "details": [
+        {
+          "path": "docs/task39extra_para_workstation_capacity/outcomes/f2_terminal_oom_20261002.md",
+          "sha256": "3a18ca48e2f8a45340220a0faa8446016ffdc9c033bb1d3c4735b9c8a447e875",
+          "table_columns": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            4
+          ],
+          "new_link_count": 9
+        },
+        {
+          "path": "docs/task39extra_para_workstation_capacity/outcomes/summary.md",
+          "sha256": "1dc5a67fc336d38091ef7a91953c4a549ac5a78dd347910f564c3bfa899c3b8c",
+          "table_columns": [
+            3,
+            2,
+            2,
+            2,
+            3,
+            2,
+            8,
+            3,
+            3
+          ],
+          "new_link_count": 0
+        },
+        {
+          "path": "docs/task39extra_para_workstation_capacity/response_v5.md",
+          "sha256": "d0ff7bc897928c1a9cee9590dc6ec15bc742a00ab8e6e1db4eb5b267fec7db4a",
+          "table_columns": [],
+          "new_link_count": 0
+        },
+        {
+          "path": "docs/development_model_registry.md",
+          "sha256": "29e812bd390d313c421b1d4a2dd0688df82b621e6a0b48c1aba112c6aeef9d82",
+          "table_columns": [
+            2,
+            2,
+            7,
+            2,
+            2,
+            13,
+            13,
+            13,
+            13,
+            13,
+            13,
+            10,
+            15,
+            6,
+            13,
+            4,
+            10,
+            7,
+            12,
+            11,
+            11,
+            3,
+            13,
+            8,
+            9,
+            7,
+            7,
+            4,
+            7,
+            7,
+            4,
+            4,
+            4,
+            2,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            4,
+            7,
+            7,
+            5,
+            7,
+            4,
+            7,
+            4,
+            7,
+            4,
+            7,
+            4,
+            7,
+            7,
+            3,
+            7,
+            4,
+            7,
+            5,
+            4,
+            5,
+            4,
+            7,
+            2,
+            2,
+            7,
+            8,
+            3,
+            3,
+            8,
+            6,
+            5,
+            3,
+            6,
+            3,
+            2,
+            7,
+            2,
+            2,
+            2,
+            3,
+            3,
+            4,
+            5,
+            4,
+            28,
+            17,
+            13,
+            9,
+            6,
+            5,
+            5,
+            6,
+            4,
+            4
+          ],
+          "new_link_count": 0
+        },
+        {
+          "path": "docs/development_progress.md",
+          "sha256": "ab4f9a27d1381574b490831e8e8c8ee583ecb5278bb45defde9523984caef61d",
+          "table_columns": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            3,
+            4,
+            4,
+            3,
+            3,
+            3,
+            5,
+            5,
+            3,
+            3,
+            4,
+            7,
+            3,
+            7,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            3
+          ],
+          "new_link_count": 0
+        }
+      ]
+    },
+    {
+      "check": "git_diff_check",
+      "status": "PASS",
+      "details": "PASS; no source, input, task/review or default configuration paths changed"
+    }
+  ],
+  "tests_or_new_computation": "NOT_RUN; stdlib document/evidence validation only",
+  "github_render": {
+    "status": "API_UPLOAD_REJECTED_AUTO_REVIEW_NOT_EXECUTED",
+    "reason": "Approval review rejected uploading internal report content to a separate Markdown API destination; no retry or alternate upload was performed.",
+    "next_read_only_check": "Read the authorized repository blob page after normal push; no extra content upload."
+  }
+}

@@ -1,0 +1,418 @@
+{
+  "schema": "task39extra.f2.terminal-oom-compact.v1",
+  "status": "WORKER_FAILED",
+  "failure_classification": "KERNEL_OOM_MEMORY_POLICY_NODE1",
+  "exit_status": 137,
+  "final_numerical_or_physical_qualification": "NOT_QUALIFIED_INTERRUPTED",
+  "latest_original_a6_gate_pass": false,
+  "formal_rta_and_physical_checker": "NOT_RUN",
+  "snapshot_utc": "2026-10-02T04:49:18.771814+00:00",
+  "snapshot_utc_plus8": "2026-10-02T12:49:18.771814+08:00",
+  "run_id": "v5_node1_2nm_p6h1p5_q4",
+  "execution_id": "20260924T104936.107285Z",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z",
+  "running_source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+  "input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+  "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+  "resolved_config_sha256": "ceb5d3123ff856c70ca685f1a9df5492e23cead9edad5168997ac101331de291",
+  "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+  "start_utc": "2026-09-24T10:49:36.107349+00:00",
+  "end_utc": "2026-10-02T03:53:28.924683+00:00",
+  "watchdog_end_utc": "2026-10-02T03:53:28.872330+00:00",
+  "watchdog_end_utc_plus8": "2026-10-02T11:53:28.872330+08:00",
+  "running_source_clean_before_and_after": true,
+  "process_identity_at_launch_or_previous_live_observation": {
+    "root": {
+      "pid": 341799,
+      "start_ticks": 17196977,
+      "cpu": 9
+    },
+    "mpi": {
+      "pid": 341830,
+      "start_ticks": 17197099,
+      "cpu": 24
+    },
+    "worker": {
+      "pid": 341839,
+      "start_ticks": 17197130,
+      "cpu": 24
+    },
+    "observer": {
+      "pid": 341987,
+      "start_ticks": 17219061,
+      "cpu": 10
+    },
+    "scope": "same-run earlier identity records; no assertion these processes are alive at terminal snapshot"
+  },
+  "runtime_path": {
+    "outer_space": "p6 condensed independent trace plus appended port rows; retained-space FGMRES",
+    "p4_factor_space": "direct assembly-time cell-condensed augmented AIJ, not full A4 augmented matrix",
+    "pc_a6_volume": "two separate curl and mass sum-factorized isotropic_sum_factorized_n1e_v26 kernels",
+    "pc_a6_curl_mass_fused": false,
+    "independent_original_a6": "native action",
+    "original_a4_verification": "p4 native physical_action, not new packed fast A4",
+    "p6_local_tensor_generation": "original compiled FFCx tabulate_tensor_complex128 summed cell integrals, not blocked Gram",
+    "h6": {
+      "degree": 3,
+      "lambda_lo": 1.3965717017305685,
+      "lambda_hi": 13.965717017305685,
+      "lambda_power10": 12.696106379368803,
+      "power_mult_count": 20,
+      "backend": "isotropic_sum_factorized_n1e_v26",
+      "component": "positive_sum",
+      "shared_mesh_levels": [
+        6
+      ],
+      "calls_per_PC": {
+        "B6": 4,
+        "H6": 2,
+        "S6": 0,
+        "positive_p1": 0,
+        "positive_p3": 0
+      }
+    },
+    "transfer": "same-mesh degrees6->4, AlgebraicOwnerTransfer, fixed_serial_owner_route and optimized_owner_apply enabled; PH adjoint/P primal",
+    "geometry": {
+      "policy": "rounded_12_representative",
+      "key_rounding": "decimal_round_12",
+      "coordinates_unrounded": true,
+      "representative": "lexicographic_min_unrounded_canonical_coordinates",
+      "approximate": true,
+      "schur_lu_recovery_key": "raw_float64_widths_plus_orientation",
+      "mpc_per_cell": true
+    },
+    "coarse_refinement": {
+      "original_a4_rho_tolerance": 1e-10,
+      "independent_port_closure_tolerance": 1e-10,
+      "max_extra_refinements": 2,
+      "reuse_one_factor": true,
+      "exhaustion": "save failure packet and raise; no unqualified coarse return"
+    },
+    "outer": {
+      "ksp": "FGMRES",
+      "side": "RIGHT",
+      "norm": "UNPRECONDITIONED",
+      "restart": 32,
+      "max_iterations": 2048,
+      "initial_guess": "zero",
+      "original_a6_residual_interval": 8,
+      "checkpoint_interval": 32,
+      "exhaustion": "terminal original residual/checkpoint, ITERATION_BUDGET_EXHAUSTED then workflow rejects before official output"
+    }
+  },
+  "abi": {
+    "mpi_size": 1,
+    "math_threads_configured": 1,
+    "worker_os_threads_observed": 3,
+    "worker_affinities": [
+      24
+    ],
+    "petsc": "3.19.6",
+    "petsc_index_bits": 64,
+    "scalar": "complex128",
+    "mumps_version": "5.5.1 (same overlay headers/build identity; no new backend probe)",
+    "ordering": "PORD; this run numeric INFOG(7)=4",
+    "icntl23": 0,
+    "loaded_maps": [
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+      "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+    ],
+    "blas": "OpenBLAS pthread libopenblasp-r0.3.26.so as actually mapped",
+    "static_mumps_identity_record": "docs/task39extra_para_workstation_capacity/outcomes/records/v5_m_c_and_four_input_contract_v1.json",
+    "loaded_library_bytes_rehashed_this_handoff": false
+  },
+  "counts": {
+    "cells": 54332,
+    "port_channels": 3904,
+    "propagating_channels": null,
+    "p6": {
+      "full_storage_rows": 35594790,
+      "mpc_slave_rows": 346038,
+      "full_independent_rows_derived": 35248752,
+      "full_trace_rows": 11145390,
+      "active_independent_trace_rows": 10799352,
+      "retained_trace_plus_ports_rows": 10803256,
+      "cell_interior_rows": 24449400,
+      "global_full_a6_or_s6_nnz": null,
+      "global_full_a6_allocated": false,
+      "global_s6_allocated": false,
+      "local_tensor_dimension": 882,
+      "local_interior_dimension": 450,
+      "local_trace_dimension": 432,
+      "raw_geometry_classes": 54,
+      "tensor_groups": 6,
+      "oriented_schur_classes": 87
+    },
+    "p4": {
+      "full_storage_rows": 10604228,
+      "full_plus_ports_rows_derived": 10608132,
+      "mpc_slave_rows": 153988,
+      "full_independent_rows_derived": 10450240,
+      "full_trace_rows": 4736372,
+      "active_condensed_trace_rows": 4582384,
+      "condensed_augmented_factor_rows": 4586288,
+      "cell_interior_rows": 5867856,
+      "nnz_stored": 2070391064,
+      "preallocated_structural_nnz": 2284367488,
+      "original_full_a4_nnz": null,
+      "local_tensor_dimension": 300,
+      "local_interior_dimension": 108,
+      "local_trace_dimension": 192,
+      "raw_geometry_classes": 54,
+      "tensor_groups": 6,
+      "oriented_schur_classes": 87
+    }
+  },
+  "runtime_and_abi_evidence_asof_utc": "2026-09-28T02:34:15.838437+00:00",
+  "kernel_oom": {
+    "victim_pid": 341839,
+    "allocation_trigger_pid": 1172428,
+    "allocation_trigger_cpu": 30,
+    "allocation_trigger_project_or_command": null,
+    "allocation_trigger_start_ticks": null,
+    "kill_utc": "2026-10-02T03:52:46.095318+00:00",
+    "kill_utc_plus8": "2026-10-02T11:52:46.095318+08:00",
+    "constraint": "CONSTRAINT_MEMORY_POLICY",
+    "allocation_nodemask": "1",
+    "cpuset": "/",
+    "mems_allowed": "0-1",
+    "kernel_field": "global_oom",
+    "victim_task_memcg": "/user.slice/user-1000.slice/session-129.scope",
+    "node1_normal_free_kib": 459396,
+    "node1_normal_min_kib": 462820,
+    "node1_normal_free_mib_derived": 448.62890625,
+    "node1_normal_min_mib_derived": 451.97265625,
+    "page_bytes": 4096,
+    "global_free_pages": 216791019,
+    "global_free_bytes_derived": 887976013824,
+    "global_free_decimal_gb_derived": 887.976013824,
+    "swap_free_kib": 0,
+    "swap_total_kib": 8388604,
+    "victim_total_vm_kib": 1314274044,
+    "victim_anon_rss_kib": 1111743464,
+    "victim_file_rss_kib": 88800,
+    "selection_policy_details": null,
+    "claim_limit": "kernel-confirmed memory-policy OOM; invoker identity and why its allocation was node1-limited unknown; no attribution to a neighboring project or proof that worker preferred policy caused it"
+  },
+  "resource": {
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "sampled_process_tree_rss_peak_bytes": 1154381864960,
+    "sampled_process_tree_swap_peak_bytes": 8574500864,
+    "samples": 151234,
+    "rss_hard_limit_bytes": 1300000000000,
+    "rss_warning_bytes": 1170000000000,
+    "resource_stop_policy": "measured_tree_rss_only_v3",
+    "swap_policy": "observe_only",
+    "global_swap_delta_policy": "observe_only",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 3138800,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 3138800,
+        "pswpout_pages": 5146004
+      }
+    },
+    "job_swap_activity": "TASK_AND_GLOBAL_SWAP_OBSERVED_unresolved_attribution",
+    "time_limit_mode": "none",
+    "descendants_cleared": true,
+    "remaining_child_pids": []
+  },
+  "memory_scope_limits": {
+    "current_active_solve_rss_or_pss_bytes": null,
+    "terminal_pss_peak_bytes": null,
+    "full_sampling_coverage_reaudited": false,
+    "rss_peak_gb_decimal": 1154.38186496,
+    "rss_peak_percent_of_hard_line_derived": 88.79860499692307,
+    "predicted_peak_is_stop_cause": false,
+    "rss_hard_line_observed_reached": false,
+    "do_not_add": "RSS, swap, global page traffic, backend memory and derived vector payload are different scopes"
+  },
+  "latest_progress": {
+    "last_completed_outer_iteration": 228,
+    "reported_schur_relative": 9.373049823814199e-05,
+    "latest_original_A6_relative": 9.758316562442362e-05,
+    "original_A6_iteration": 224,
+    "original_A6_tolerance": 1e-06,
+    "original_A6_over_tolerance_derived": 97.58316562442363,
+    "original_A6_monitor_solve_seconds": 471552.96561069996,
+    "original_A6_monitor_time_derived": {
+      "utc_derived": "2026-10-02T01:01:58.498935+00:00",
+      "utc_plus8_derived": "2026-10-02T09:01:58.498935+08:00"
+    },
+    "first_same_iteration_monitor_solve_seconds": 470003.658450208,
+    "last_completed_pc_sequence": 230,
+    "pc_scope_counts": {
+      "setup": 1,
+      "outer_pc": 229
+    },
+    "pc_sequence_includes_setup": true,
+    "latest_pc_outer_call_ordinal_derived": 229,
+    "latest_pc_is_not_an_outer_iteration_completion": true,
+    "p4_logical_calls": 460,
+    "p4_factor_counts": {
+      "logical_apply_calls": 460,
+      "numeric_calls": 1,
+      "solve_calls": 686,
+      "symbolic_calls": 1
+    }
+  },
+  "time": {
+    "full_workflow_monotonic_seconds": 666232.838508756,
+    "watchdog_enclosing_seconds": 666232.740784148,
+    "complete_setup_monotonic_seconds": 184388.380644418,
+    "last_outer_callback_solve_seconds": 479635.72760327,
+    "solve_marker_to_watchdog_end_seconds_derived": 481843.33900525805,
+    "final_pure_ksp_api_seconds": null,
+    "timing_scope": "solve-relative callback/phase clocks include monitoring, true-residual checks and checkpoint/output; launcher and watchdog scopes separate",
+    "recent_completed_iteration_numbers": [
+      221,
+      222,
+      223,
+      224,
+      225,
+      226,
+      227,
+      228
+    ],
+    "recent_mean_step_seconds": 2136.747273451867,
+    "recent_mean_excluding_step225_seconds": 1950.7616943191304,
+    "step_policy": "first callback per distinct completed iteration; duplicate restart callbacks not counted as a new step; step225 includes preceding224 checks/checkpoints"
+  },
+  "setup_child_timers": {
+    "p6_build": {
+      "total_build_seconds": 463.35584773198934,
+      "kernel_seconds_max": 292.1243196360592,
+      "local_schur_seconds_max": 12.27561647206312
+    },
+    "p4_build": {
+      "total_build_seconds": 292.2023990970047,
+      "kernel_seconds_max": 33.861448555020615,
+      "local_schur_seconds_max": 0.9598256651079282,
+      "trace_preallocation_seconds": 91.63215205000597,
+      "local_insert_seconds_max": 57.49247940146597,
+      "final_assembly_seconds": 0.0,
+      "final_assembly_status": "deferred"
+    },
+    "h6": {
+      "b6_shell_seconds": 0.00021304801339283586,
+      "diagonal_seconds": 118597.09289895801,
+      "positive_native_action_seconds": 83.42555451800581,
+      "power10_seconds": 1352.1281882710173
+    },
+    "numeric_budget_to_complete_marker_seconds": 44111.673835251015,
+    "numeric_resource_sample_span_seconds": 44110.416670841,
+    "exact_numeric_api_timer_seconds": null,
+    "setup_minus_numeric_marker_seconds_unattributed": 140276.706809167,
+    "independent_child_cpu_times": null,
+    "policy": "child timers included in parent stage intervals, do not add both; assembly/port/identity remainder not separately attributed"
+  },
+  "last_complete_pc": {
+    "sequence": 230,
+    "two_C_seconds": 1607.683174033882,
+    "first_p4_ledger_seconds": 1038.4208798609907,
+    "second_p4_ledger_seconds": 499.45010847598314,
+    "two_p4_ledger_seconds": 1537.8709883369738,
+    "C_minus_ledger_seconds_unattributed": 69.81218569690827,
+    "ledger_fraction_of_C_derived": 0.9565759057353691,
+    "A6_two_calls_seconds": 222.84016754990444,
+    "H6_seconds": 146.09903390705585,
+    "sum_of_recorded_components_seconds_not_whole_pc": 1976.6223754908424,
+    "complete_PC_wall_seconds": null,
+    "refinement_counts": [
+      1,
+      0
+    ],
+    "actual_MatSolve_calls": 3,
+    "numeric_and_symbolic_delta": [
+      0,
+      0
+    ],
+    "unknown_subtimers": [
+      "PH",
+      "P",
+      "RHS reduce/pack",
+      "MatSolve",
+      "internal recovery",
+      "original A4 volume",
+      "original A4 DtN",
+      "port closure",
+      "orthogonalization",
+      "output"
+    ]
+  },
+  "checkpoint_iteration": 224,
+  "checkpoint_contents": "solution only; not saved MUMPS factors or Krylov basis",
+  "checkpoint_large_arrays_read_or_rehashed": false,
+  "existing_performance_evidence": {
+    "previous_running_report": "docs/task39extra_para_workstation_capacity/outcomes/f2_running_handoff_20260928.md",
+    "setup_parent_stage_csv": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_setup_stages_20260928.csv",
+    "PSS_observation": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_pss_observation_20260926.json",
+    "PSS_disabled_control_or_saved_seconds": null
+  },
+  "documentation_publication": {
+    "canonical_execution_worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+    "execution_branch": "task39extra_para_workstation_capacity",
+    "execution_upstream": "origin/task39extra_para_workstation_capacity",
+    "documentation_worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928",
+    "documentation_parent_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+    "remote_base_verified_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+    "running_source_head_not_replaced_by_documentation_head": true,
+    "source_parameters_resources_threads_numa_watchdog_unchanged": true,
+    "restart_or_new_computation": false,
+    "merge_master": false
+  },
+  "evidence_artifacts": {
+    "f2_terminal_oom_20261002_evidence_v1.json": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_evidence_v1.json",
+      "bytes": 54612,
+      "sha256": "cdb63843b193aba47c8e2619686176af136d121639a00818036f889008b35bb9"
+    },
+    "f2_kernel_oom_20261002_excerpt.txt": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_kernel_oom_20261002_excerpt.txt",
+      "bytes": 2652,
+      "sha256": "633cd98d456f8c440565cbf2cd1b55333f8d80e2da97801f2c885879559df6ea"
+    },
+    "f2_mpi_exit_20261002_excerpt.txt": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_mpi_exit_20261002_excerpt.txt",
+      "bytes": 521,
+      "sha256": "c137411d3df9ef36d67070a170b8bcf181f55bab1376b7b8c2725d9beecb3a2c"
+    },
+    "f2_a6_residual_history_20261002.csv": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_a6_residual_history_20261002.csv",
+      "bytes": 8912,
+      "sha256": "0d60e62d1fb7e9beca5861b53e92d8cc9cad9129c33ea892402399687ac214fd"
+    },
+    "f2_recent_iterations_20261002.csv": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_recent_iterations_20261002.csv",
+      "bytes": 3791,
+      "sha256": "61c455b5cf96226107edb23dfa6c336485ad37f80e34b13470986e62ef8840d5"
+    }
+  },
+  "existing_evidence_artifacts": {
+    "f2_running_handoff_20260928_compact_v1.json": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_running_handoff_20260928_compact_v1.json",
+      "bytes": 19709,
+      "sha256": "c5a5b15db69dd4b01260abb4b2930ab1ffb5b144db470503a602a09fe9dd122a"
+    },
+    "f2_setup_stages_20260928.csv": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_setup_stages_20260928.csv",
+      "bytes": 6219,
+      "sha256": "a7897a0f6a5ce09e4f07f116c96144f13e2b9bcff339a1e4ce391afc355222c2"
+    },
+    "f2_pss_observation_20260926.json": {
+      "repository_relative_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_pss_observation_20260926.json",
+      "bytes": 2991,
+      "sha256": "f72a067db62d78ce1a379dcac20051a28eac8fb96d988473586dc1b5f70b339f"
+    }
+  }
+}

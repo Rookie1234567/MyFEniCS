@@ -1,0 +1,15 @@
+2026-10-02T03:52:46.058390+00:00 fenics-ws01 kernel: python invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+2026-10-02T03:52:46.070085+00:00 fenics-ws01 kernel: CPU: 30 UID: 1000 PID: 1172428 Comm: python Tainted: G           O        7.0.0-31-generic #31~24.04.1-Ubuntu PREEMPT(lazy)
+2026-10-02T03:52:46.077556+00:00 fenics-ws01 kernel: Mem-Info:
+                                                      free:216791019 free_pcp:0 free_cma:8496640
+2026-10-02T03:52:46.078198+00:00 fenics-ws01 kernel: Node 1 active_anon:1014354368kB inactive_anon:36469392kB active_file:0kB inactive_file:2904kB unevictable:16kB isolated(anon):0kB isolated(file):0kB mapped:179208kB dirty:0kB writeback:0kB shmem:42872kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:27934720kB kernel_stack:19456kB pagetables:2187640kB sec_pagetables:5096kB all_unreclaimable? no Balloon:0kB
+2026-10-02T03:52:46.078503+00:00 fenics-ws01 kernel: Node 1 Normal free:459396kB boost:376832kB min:462820kB low:1418784kB high:2374748kB reserved_highatomic:0KB free_highatomic:0KB active_anon:1014354368kB inactive_anon:36469392kB active_file:0kB inactive_file:2904kB unevictable:16kB writepending:0kB zspages:0kB present:1073741824kB managed:1056902648kB mlocked:16kB bounce:0kB free_pcp:0kB local_pcp:0kB free_cma:0kB
+2026-10-02T03:52:46.080417+00:00 fenics-ws01 kernel: Free swap  = 0kB
+2026-10-02T03:52:46.080772+00:00 fenics-ws01 kernel: Total swap = 8388604kB
+2026-10-02T03:52:46.081981+00:00 fenics-ws01 kernel: Tasks state (memory values in pages):
+2026-10-02T03:52:46.081999+00:00 fenics-ws01 kernel: [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+2026-10-02T03:52:46.091812+00:00 fenics-ws01 kernel: [ 341839]  1000 341839 328568511 277958064 277935864    22200         0 2322227200  2091293             0 python
+2026-10-02T03:52:46.094772+00:00 fenics-ws01 kernel: [1172428]  1000 1172428  3771354  2607238  2552301    54937         0 22376448      109             0 python
+2026-10-02T03:52:46.095297+00:00 fenics-ws01 kernel: oom-kill:constraint=CONSTRAINT_MEMORY_POLICY,nodemask=1,cpuset=/,mems_allowed=0-1,global_oom,task_memcg=/user.slice/user-1000.slice/session-129.scope,task=python,pid=341839,uid=1000
+2026-10-02T03:52:46.095318+00:00 fenics-ws01 kernel: Out of memory: Killed process 341839 (python) total-vm:1314274044kB, anon-rss:1111743464kB, file-rss:88800kB, shmem-rss:0kB, UID:1000 pgtables:2267800kB oom_score_adj:0
+2026-10-02T03:53:27.301270+00:00 fenics-ws01 kernel: oom_reaper: reaped process 341839 (python), now anon-rss:0kB, file-rss:8kB, shmem-rss:0kB

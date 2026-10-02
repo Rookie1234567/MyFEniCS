@@ -56,3 +56,14 @@ H1 是合成负载，不是 FE 结果。CPU23/node0 与 CPU24/node1 的 60 秒�
 总workflow/setup/实时KSP阶段分别315878.685780/184388.380644/131490.305148 s，最终KSP内部累计timer尚未写。当前/既有前缀峰RSS=1151172259840/1154356473856 B，task swap0、global pswpout增量229页仅机器诊断；watchdog固定RSS硬线1.3e12 B、无截止未改变。完整marker numeric44111.673835 s与44110.416671 s采样覆盖有区别；两次C的主要时间落在p4 ledger，MatSolve/恢复/native A4验算未分项计时，不称全部LU回代，也不保证H6关闭PSS后只需5小时。
 
 本次按用户授权仅核验现有运行身份、读取已有日志和轻量证据，新增[运行中outcome](outcomes/f2_running_handoff_20260928.md)、[compact](outcomes/records/f2_running_handoff_20260928_compact_v1.json)及相应小型CSV/选字段日志摘录，更新summary；保留原失败与旧snapshot。未改任何求解代码、task/review、默认配置、运行参数、绑定、资源或swap/watchdog策略，未发信号、重启或启动额外计算。本次新commit只含这些文档，在隔离sparse detached worktree基于运行SHA提交并向执行分支推送；canonical执行worktree HEAD/clean不变，避免终态source gate因文档提交误拒。正常快进push携带既有3个批准提交，运行SHA不变。远端提交完成身份以主控最终回读HEAD为准，报告数值只对应上述冻结快照。
+
+
+## 2026年10月2日 F2 内核 OOM 终态证据交接
+
+按用户“把这些记录写成报告推送到远程”的授权，追加[终态报告](outcomes/f2_terminal_oom_20261002.md)、[compact](outcomes/records/f2_terminal_oom_20261002_compact_v1.json)、[选字段证据](outcomes/records/f2_terminal_oom_20261002_evidence_v1.json)、完整已有A6检查CSV与近期完成步CSV，以及内核/MPI小摘录；summary和运行索引记录本场异常终态，历史RUNNING与旧失败原文保留。
+
+冻结时间 `2026-10-02T04:49:18.771814+00:00` UTC / `2026-10-02T12:49:18.771814+08:00` UTC+8。F2 `20260924T104936.107285Z` / source `64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa` 为 `WORKER_FAILED / exit137`，后代清场。内核确认node1 `CONSTRAINT_MEMORY_POLICY` OOM，victim341839；触发分配PID1172428的所属任务和实际策略unknown。任务RSS峰 `1154381864960` B未达1.3e12 B；任务swap峰 `8574500864` B，全机pswp从0/0到3138800/5146004页独立记账。
+
+最后外层完成228步，Schur `9.373049823814199e-05`；最近独立原A6第224步 `9.758316562442362e-05`，未过1e-6，NOT_QUALIFIED_INTERRUPTED，无正式RTA/checker。第224步full/retained解manifest与文件存在/尺寸已核对，没有重读或重hash大型数组。完整workflow/setup/末次callback solve为 `666232.838509/184388.380644/479635.727603 s`；最终纯KSP内部timer unknown。最后PC sequence230含setup一次及outer229次，不称外层229/230步已完成；两次C `1607.683174 s`，ledger `1537.870988 s`，MatSolve/恢复/native A4分项仍unknown。
+
+本次没有源码、参数、CPU/NUMA、线程、资源、watchdog或swap策略改动，没有新计算、重启或master合并。文档提交在已有canonical detached文档worktree上，基线为 `ccd357885f7f9be84efe3be07868cc94f13d93fc`，向同一远端执行分支正常追加；运行工作树HEAD/clean保持64ca6048。远端最终SHA由提交后回读给出，不在文件内自引用伪造运行源码。

@@ -1,0 +1,1539 @@
+{
+  "schema": "task39extra.f2.terminal-oom-evidence.v1",
+  "captured_utc": "2026-10-02T04:49:18.771814+00:00",
+  "captured_utc_plus8": "2026-10-02T12:49:18.771814+08:00",
+  "collection_started_utc": "2026-10-02T04:49:18.703647+00:00",
+  "run_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z",
+  "running_source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+  "stable_source_files": {
+    "run_manifest.json": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/run_manifest.json",
+      "bytes": 12676,
+      "sha256": "9cfdf77d8dece643530242d7f55711c536646954f678e52e1ea914b069857446",
+      "mtime_utc": "2026-10-02T03:53:28.925253+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "run_summary.json": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/run_summary.json",
+      "bytes": 5148,
+      "sha256": "d10ce7a9dc1237347c182df46960eb9ead978cbc1cce3bb95eec1cab4ab78403",
+      "mtime_utc": "2026-10-02T03:53:28.925520+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "watchdog/summary.json": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/watchdog/summary.json",
+      "bytes": 4908,
+      "sha256": "bc5002e4466efe2f0a921312bea3a27ddff3ce820ca6c5674f11e703c8848115",
+      "mtime_utc": "2026-10-02T03:53:28.872889+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "resolved_config.json": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/resolved_config.json",
+      "bytes": 9792,
+      "sha256": "ceb5d3123ff856c70ca685f1a9df5492e23cead9edad5168997ac101331de291",
+      "mtime_utc": "2026-09-24T10:49:36.107848+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "input_original.dat": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/input_original.dat",
+      "bytes": 2164,
+      "sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+      "mtime_utc": "2026-09-24T10:49:36.107945+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "stages.jsonl": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/stages.jsonl",
+      "bytes": 228161,
+      "sha256": "5db04eab9841680af9080f76f8c93aa47aac5a0e9d1bfc01f0955be0e9557377",
+      "mtime_utc": "2026-09-26T14:02:45.533117+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "iterations.jsonl": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/iterations.jsonl",
+      "bytes": 55543,
+      "sha256": "04ccdecd0a27264188cb3bdc8d4c69b8a9d63954c6a02d94816967e8720ef0c7",
+      "mtime_utc": "2026-10-02T03:16:41.260363+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "monitor_residuals.jsonl": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/monitor_residuals.jsonl",
+      "bytes": 28713,
+      "sha256": "e18544fa3f83ee518ebb95162b97ce79ddcc8aa02dfcb1602d3081de9e56f4e5",
+      "mtime_utc": "2026-10-02T01:01:58.505067+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "pc_applies.jsonl": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/pc_applies.jsonl",
+      "bytes": 617598,
+      "sha256": "476c0ce1b4de6a914a30ac0d0636f530532c40d6e4cc8b4e8b53333ae6be2aef",
+      "mtime_utc": "2026-10-02T03:50:42.657933+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "p4_decisions.jsonl": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/p4_decisions.jsonl",
+      "bytes": 742869,
+      "sha256": "afe7ce571888266f5e27ca1525796781c2547a19717704259b1fa9ddbb847cce",
+      "mtime_utc": "2026-10-02T03:49:57.349514+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "full_solution_checkpoint_manifests/iteration_000224/manifest.json": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/full_solution_checkpoint_manifests/iteration_000224/manifest.json",
+      "bytes": 905,
+      "sha256": "c2cf867dc36c6514b65e895e786d725f8b7c49772e65c8d7f76787e249e96309",
+      "mtime_utc": "2026-10-02T00:36:18.054425+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "retained_checkpoint_manifests/iteration_000224/manifest.json": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/retained_checkpoint_manifests/iteration_000224/manifest.json",
+      "bytes": 905,
+      "sha256": "cfdfded2040bf4afba8706e76821850383352066969328b2b703e2fe5230b544",
+      "mtime_utc": "2026-10-02T00:36:15.721068+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    },
+    "watchdog/worker.log": {
+      "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/watchdog/worker.log",
+      "bytes": 521,
+      "sha256": "c137411d3df9ef36d67070a170b8bcf181f55bab1376b7b8c2725d9beecb3a2c",
+      "mtime_utc": "2026-10-02T03:52:48.080024+00:00",
+      "hash_scope": "entire small stable terminal file; not a matrix, factor or large field"
+    }
+  },
+  "kernel_journal": {
+    "read_command": [
+      "journalctl",
+      "-k",
+      "--since",
+      "2026-10-02 03:52:40 UTC",
+      "--until",
+      "2026-10-02 03:53:35 UTC",
+      "--utc",
+      "--no-pager",
+      "-o",
+      "short-iso-precise"
+    ],
+    "view_line_numbers_selected": [
+      1,
+      2,
+      39,
+      47,
+      48,
+      49,
+      56,
+      57,
+      64,
+      65,
+      174,
+      235,
+      237,
+      238,
+      239
+    ],
+    "view_bytes": 35526,
+    "stable_excerpt_path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_kernel_oom_20261002_excerpt.txt",
+    "stable_excerpt_sha256": "633cd98d456f8c440565cbf2cd1b55333f8d80e2da97801f2c885879559df6ea",
+    "fields": {
+      "victim_pid": 341839,
+      "allocation_trigger_pid": 1172428,
+      "allocation_trigger_cpu": 30,
+      "allocation_trigger_project_or_command": null,
+      "allocation_trigger_start_ticks": null,
+      "kill_utc": "2026-10-02T03:52:46.095318+00:00",
+      "kill_utc_plus8": "2026-10-02T11:52:46.095318+08:00",
+      "constraint": "CONSTRAINT_MEMORY_POLICY",
+      "allocation_nodemask": "1",
+      "cpuset": "/",
+      "mems_allowed": "0-1",
+      "kernel_field": "global_oom",
+      "victim_task_memcg": "/user.slice/user-1000.slice/session-129.scope",
+      "node1_normal_free_kib": 459396,
+      "node1_normal_min_kib": 462820,
+      "node1_normal_free_mib_derived": 448.62890625,
+      "node1_normal_min_mib_derived": 451.97265625,
+      "page_bytes": 4096,
+      "global_free_pages": 216791019,
+      "global_free_bytes_derived": 887976013824,
+      "global_free_decimal_gb_derived": 887.976013824,
+      "swap_free_kib": 0,
+      "swap_total_kib": 8388604,
+      "victim_total_vm_kib": 1314274044,
+      "victim_anon_rss_kib": 1111743464,
+      "victim_file_rss_kib": 88800,
+      "selection_policy_details": null,
+      "claim_limit": "kernel-confirmed memory-policy OOM; invoker identity and why its allocation was node1-limited unknown; no attribution to a neighboring project or proof that worker preferred policy caused it"
+    },
+    "selected_lines_sha256_before_whitespace_normalization": "6a060a6489428050be73f352440c7864e28ecb445138a2edf4329beea0ba33c8",
+    "excerpt_transformation": "Selected kernel journal lines; trailing whitespace removed for Git text conventions. Event fields and times unchanged; original raw journal preserved."
+  },
+  "run_summary_selected": {
+    "status": "finished",
+    "run_id": "v5_node1_2nm_p6h1p5_q4",
+    "exit_status": 137,
+    "result_classification": "WORKER_FAILED",
+    "full_workflow_monotonic_seconds": 666232.838508756,
+    "job_swap_qualification": "observed_only"
+  },
+  "watchdog_summary": {
+    "workflow_deadline_seconds": null,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "none",
+    "resource_stop_policy": "measured_tree_rss_only_v3",
+    "rss_hard_limit_bytes": 1300000000000,
+    "rss_warning_bytes": 1170000000000,
+    "startup_headroom_bytes": 137438953472,
+    "swap_policy": "observe_only",
+    "global_swap_delta_policy": "observe_only",
+    "clock_info": {
+      "monotonic": {
+        "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+        "monotonic": true,
+        "adjustable": false,
+        "resolution": 1e-09
+      },
+      "utc": {
+        "implementation": "clock_gettime(CLOCK_REALTIME)",
+        "monotonic": false,
+        "adjustable": true,
+        "resolution": 1e-09
+      },
+      "boottime": {
+        "available": true,
+        "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+        "resolution": 1e-09
+      }
+    },
+    "clock_start": {
+      "monotonic": 171970.992403629,
+      "boottime": 171970.992404914,
+      "utc_ns": 1790246976131538808
+    },
+    "timebase_policy": "conservative_realtime",
+    "timebase_policy_version": 1,
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 137,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      341830,
+      341839,
+      341952,
+      341953,
+      341968,
+      341972,
+      341973,
+      341974,
+      342027,
+      342028,
+      342123,
+      342187,
+      342188,
+      342189,
+      342214,
+      342215,
+      342365,
+      342378,
+      342379,
+      342380,
+      342414,
+      342415,
+      342529,
+      342539,
+      342540,
+      342541,
+      346708,
+      346709,
+      346711,
+      346729,
+      346730,
+      346732,
+      346753,
+      346754,
+      346759,
+      346763,
+      346764,
+      346770,
+      346775,
+      346776,
+      346777,
+      346794,
+      346795,
+      346801,
+      346806,
+      346807,
+      346821,
+      346822,
+      346823,
+      346824,
+      348038,
+      348039,
+      348040,
+      348050,
+      348051,
+      348078,
+      348079,
+      348104,
+      348105,
+      348106,
+      348107,
+      348108,
+      348109,
+      348126,
+      350419,
+      350420,
+      350421,
+      350425,
+      350426,
+      350430,
+      350436,
+      350437,
+      350438,
+      350442,
+      350443,
+      350457,
+      350462,
+      350463,
+      350494,
+      350498,
+      350499,
+      350504,
+      350505,
+      350506,
+      350507,
+      350508,
+      350509,
+      350516,
+      350517,
+      350518,
+      350526,
+      350527,
+      350528,
+      383162,
+      383163,
+      383178,
+      455728,
+      455729,
+      455731
+    ],
+    "sampled_process_tree_rss_peak_bytes": 1154381864960,
+    "sampled_process_tree_swap_peak_bytes": 8574500864,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 3138800,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 3138800,
+        "pswpout_pages": 5146004
+      }
+    },
+    "job_swap_activity": "TASK_AND_GLOBAL_SWAP_OBSERVED_unresolved_attribution",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2143183851520,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2143183851520,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 1300000000000,
+      "planning_cap_bytes": 1300000000000,
+      "cgroup_limits": []
+    },
+    "samples": 151234,
+    "elapsed_seconds": 666232.740784148,
+    "cache_metadata_stamp": "1ca9caa4bef5981c1c0e0cffc160d4449c443b5440276f4c7ce91385fe7ee937",
+    "source_state": {
+      "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+      "tracked_and_nonignored_untracked_clean": true,
+      "actual_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git/worktrees/task39extra_para_workstation_capacity"
+    },
+    "clock_end": {
+      "monotonic": 838203.733193121,
+      "boottime": 838203.733195705,
+      "utc_ns": 1790913208872330399
+    },
+    "workflow_clock_interval": {
+      "elapsed_seconds": {
+        "monotonic": 666232.740789492,
+        "boottime": 666232.740790791,
+        "utc": 666232.740791591
+      },
+      "budget_seconds": 666232.8431753009,
+      "discrepancy_seconds": 2.0989682525396347e-06,
+      "tolerance_seconds": 6662.32740790791,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": 2.0989682525396347e-06,
+      "step": {
+        "elapsed_seconds": {
+          "monotonic": 0.057349920039996505,
+          "boottime": 0.05734894599299878,
+          "utc": 0.057349838
+        },
+        "budget_seconds": 0.057349920039996505,
+        "discrepancy_seconds": 9.740469977259636e-07,
+        "tolerance_seconds": 5.0,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -8.203999650457927e-08
+      },
+      "utc_positive_excess_seconds": 0.007981093455677601
+    }
+  },
+  "manifest_selected": {
+    "start_time": "2026-09-24T10:49:36.107349+00:00",
+    "end_time": "2026-10-02T03:53:28.924683+00:00",
+    "input_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/input/task39extra_para_workstation_capacity/v5_node1_2nm_p6h1p5_q4.dat",
+    "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+    "source_after": {
+      "actual_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git/worktrees/task39extra_para_workstation_capacity",
+      "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+      "tracked_and_nonignored_untracked_clean": true
+    },
+    "input_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+    "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "resolved_config_sha256": "ceb5d3123ff856c70ca685f1a9df5492e23cead9edad5168997ac101331de291",
+    "worker_command": [
+      "/usr/bin/taskset",
+      "-c",
+      "24",
+      "/usr/bin/numactl",
+      "--preferred=1",
+      "/usr/bin/mpiexec",
+      "-n",
+      "1",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "-m",
+      "src.runners.task038_input_worker",
+      "--resolved-config",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/resolved_config.json",
+      "--manifest",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/run_manifest.json",
+      "--expected-input-sha256",
+      "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+      "--expected-physical-model-sha256",
+      "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "--expected-source-sha",
+      "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+      "--expected-mpi-size",
+      "1",
+      "--expected-method",
+      "full3d_iterative",
+      "--expected-adapter",
+      "task038.full3d_iterative",
+      "--expected-output-directory",
+      "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z",
+      "--resolved-config-sha256",
+      "ceb5d3123ff856c70ca685f1a9df5492e23cead9edad5168997ac101331de291"
+    ],
+    "environment": {
+      "native_qualified_activation": "1",
+      "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+      "python_executable": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "qualified_activation": null
+    },
+    "solver": {
+      "coarse_degree": 4,
+      "ksp_type": "fgmres",
+      "linear_solver": "iterative",
+      "max_iterations": 2048,
+      "preconditioner": "dual_condensed_balh_native_2nm_v5",
+      "restart": 32
+    },
+    "native_capacity_contract": {
+      "global_swap_delta_policy": "observe_only",
+      "icntl23": 0,
+      "initial_guess": "zero",
+      "material": {
+        "epsilon_grating": [
+          0.9976043569199937,
+          0.00042686507507764344
+        ],
+        "epsilon_substrate": [
+          0.9976043569199937,
+          0.00042686507507764344
+        ],
+        "grating_name": "Si / silicon",
+        "n_grating": [
+          0.99880148307,
+          0.000213688647
+        ],
+        "n_substrate": [
+          0.99880148307,
+          0.000213688647
+        ],
+        "substrate_name": "Si / silicon"
+      },
+      "material_authority": "user-provided for this execution; not independently database-verified",
+      "max_iterations": 2048,
+      "native_execution": {
+        "math_threads": 1,
+        "mpi_size": 1,
+        "native_memory_policy": "preferred_node1",
+        "supervisor_cpu": 9,
+        "worker_cpu": 24
+      },
+      "prediction_admission_policy": "record_only",
+      "profile": "dual_condensed_balh_native_2nm_v5",
+      "resource_stop_policy": "measured_tree_rss_only_v3",
+      "restart": 32,
+      "rss_hard_limit_bytes": 1300000000000,
+      "rss_warning_bytes": 1170000000000,
+      "screen": {
+        "enabled": true,
+        "iterations": 128,
+        "notch_policy": "enabled",
+        "progress_only": true,
+        "solve_seconds": null,
+        "stop_on_screen": false
+      },
+      "solve_seconds": null,
+      "swap_policy": "observe_only",
+      "time_limit_mode": "none",
+      "wavelength_nm": 2.0,
+      "workflow_seconds": null
+    }
+  },
+  "manifest_native_memory_policy": {
+    "fallback": "allowed_mems",
+    "mode": "preferred",
+    "preferred_node": 1
+  },
+  "manifest_neighbor_concurrent_heavy_authorized": true,
+  "last_iteration": {
+    "source": {
+      "file": "iterations.jsonl",
+      "line": 236,
+      "byte_start": 55308,
+      "byte_end_exclusive": 55543,
+      "line_sha256_with_newline": "fd456ec9ac2da481c5c3401f436f46d1ca2d89226b4646ff1eedb899de4857fc"
+    },
+    "record": {
+      "iteration": 228,
+      "outer_matvec_count": 235,
+      "outer_pc_count": 228,
+      "reported_schur_relative": 9.373049823814199e-05,
+      "solve_seconds": 479635.72760327,
+      "step_wall_seconds": 2162.590727625997,
+      "timebase": "monotonic_from_solve_start"
+    }
+  },
+  "last_monitor": {
+    "source": {
+      "file": "monitor_residuals.jsonl",
+      "line": 36,
+      "byte_start": 27912,
+      "byte_end_exclusive": 28713,
+      "line_sha256_with_newline": "d0c1a379405a3384da726fe1342908f14bd6238ce367ca8fda3a422032d8fe11"
+    },
+    "record": {
+      "explicit_true_residual": 9.758316562442362e-05,
+      "internal_operation_scale": 13177628.656551173,
+      "internal_residual_relative": 3.225575541071512e-18,
+      "iteration": 224,
+      "logical_p4_count": 450,
+      "native_identity_relative": 2.783568357621616e-11,
+      "native_rhs_norm": 8.882234984100776,
+      "original_A6_relative": 9.758316562442362e-05,
+      "p4_factor_counts": {
+        "logical_apply_calls": 450,
+        "numeric_calls": 1,
+        "solve_calls": 671,
+        "symbolic_calls": 1
+      },
+      "physical_residual_pass": false,
+      "port_closure_relative": 5.818880337276761e-16,
+      "port_operation_scale": 4340.899232561367,
+      "reported_schur_relative": 9.758316556340815e-05,
+      "schur_port_identity_relative": 4.4045858081039e-28,
+      "schur_true_relative_residual": 9.758316556340815e-05,
+      "solution_source": "live_buildSolution",
+      "solve_seconds": 471552.96561069996
+    }
+  },
+  "first_monitor_for_last_iteration": {
+    "source": {
+      "file": "monitor_residuals.jsonl",
+      "line": 35,
+      "byte_start": 27113,
+      "byte_end_exclusive": 27912,
+      "line_sha256_with_newline": "de634a198e2a5ad3544f287a5f095bbbfb25c864cdc28f6ff29dece806535849"
+    },
+    "record": {
+      "explicit_true_residual": 9.758316562442362e-05,
+      "internal_operation_scale": 13177628.656551173,
+      "internal_residual_relative": 3.225575541071512e-18,
+      "iteration": 224,
+      "logical_p4_count": 450,
+      "native_identity_relative": 2.783568357621616e-11,
+      "native_rhs_norm": 8.882234984100776,
+      "original_A6_relative": 9.758316562442362e-05,
+      "p4_factor_counts": {
+        "logical_apply_calls": 450,
+        "numeric_calls": 1,
+        "solve_calls": 671,
+        "symbolic_calls": 1
+      },
+      "physical_residual_pass": false,
+      "port_closure_relative": 5.818880337276761e-16,
+      "port_operation_scale": 4340.899232561367,
+      "reported_schur_relative": 9.758316556427865e-05,
+      "schur_port_identity_relative": 4.4045858081039e-28,
+      "schur_true_relative_residual": 9.758316556340815e-05,
+      "solution_source": "live_buildSolution",
+      "solve_seconds": 470003.658450208
+    }
+  },
+  "last_complete_pc": {
+    "source": {
+      "file": "pc_applies.jsonl",
+      "line": 230,
+      "byte_start": 614913,
+      "byte_end_exclusive": 617598,
+      "line_sha256_with_newline": "a57c457ce1642581a8519ba7d615c9750c6969a240cdf5782872da4a1e6fc687"
+    },
+    "record": {
+      "apply_count": 230,
+      "counts": {
+        "A_inner_true": 0,
+        "A_structure": 2,
+        "C": 2,
+        "PH_audit": 2,
+        "smoother": 1
+      },
+      "feedback": {
+        "As_norm": 9.49955624713314,
+        "after_field_norm": 9.53063658399468,
+        "before_field_norm": 10.755205174904814,
+        "before_residual_norm": 4.129904015760338,
+        "feedback_norm": 5.400266651965009,
+        "s_norm": 0.0243497989832406
+      },
+      "initial": {
+        "Azc_norm": 8.899843119379842,
+        "constraint": {
+          "limit": 1e-08,
+          "norm": 1.069034135939189e-11,
+          "operation_scale": 0.7731857934862474,
+          "relative": 1.3826355126353002e-11
+        },
+        "q_norm": 1.0000000000014169,
+        "rc_norm": 8.90749830588248,
+        "zc_norm": 10.756623179141664
+      },
+      "inner": [],
+      "live_after_cleanup": 0,
+      "live_before_cleanup": 5,
+      "operation_seconds": {
+        "A_inner_true": 0.0,
+        "A_structure": 222.84016754990444,
+        "C": 1607.683174033882,
+        "smoother": 146.09903390705585
+      },
+      "outer_pc_apply": 230,
+      "p4_audit": {
+        "factor_counts": {
+          "logical_apply_calls": 460,
+          "numeric_calls": 1,
+          "solve_calls": 686,
+          "symbolic_calls": 1
+        },
+        "logical_wall_seconds": 499.45010847598314,
+        "max_refinements": 2,
+        "port_state": {
+          "norm": 0.005096542662761828,
+          "policy": "cumulative_total_not_last_delta",
+          "sha256": "1f76de9e08e41036ca2851aacac0888f61899d6264f397f0a561671ffc511bae",
+          "size": 3904
+        },
+        "refinement_count": 0,
+        "rows": [
+          {
+            "attempt": 1,
+            "factor_counts": {
+              "logical_apply_calls": 460,
+              "numeric_calls": 1,
+              "solve_calls": 686,
+              "symbolic_calls": 1
+            },
+            "physical_factor_delta": {
+              "numeric_calls": 0,
+              "solve_calls": 1,
+              "symbolic_calls": 0
+            },
+            "port_closure": {
+              "d_term_norm": 4.721738492680155,
+              "finite": true,
+              "formula": "H*a-D*c",
+              "h_term_norm": 4.721738492679493,
+              "norm": 4.5089635670026745e-11,
+              "relative_residual": 4.774685821750804e-12,
+              "rhs_policy": "zero_port_rhs",
+              "scale": 9.443476985359649,
+              "sha256": "a80e20e8358d39821512330f8c2af517ed9fd3ef407545e274db9017af32b365",
+              "size": 3904,
+              "status": "PASS",
+              "tolerance": 1e-10
+            },
+            "refinement": 0,
+            "refinement_index": 0,
+            "relative_residual": 3.9704938496434244e-11,
+            "rhs_norm": 1.0896398190625785
+          }
+        ],
+        "status": "P4_RETURN_PASS"
+      },
+      "p4_factor_counts_after": {
+        "logical_apply_calls": 460,
+        "numeric_calls": 1,
+        "solve_calls": 686,
+        "symbolic_calls": 1
+      },
+      "p4_factor_counts_before": {
+        "logical_apply_calls": 458,
+        "numeric_calls": 1,
+        "solve_calls": 683,
+        "symbolic_calls": 1
+      },
+      "p4_logical_apply_after": 460,
+      "p4_logical_apply_before": 458,
+      "p4_logical_apply_calls": 460,
+      "p4_logical_apply_delta": 2,
+      "p4_physical_factor_delta": {
+        "numeric_calls": 0,
+        "solve_calls": 3,
+        "symbolic_calls": 0
+      },
+      "peak_new_fine_vectors": 6,
+      "projection_space": "ker(PH A), not M0-orthogonal complement",
+      "route": "BAL_H",
+      "scope": "outer_pc",
+      "status": "BALANCED_ACTION_COMPLETED",
+      "vector_scope": "new fine vectors only; coarse solver/smoother/outer storage separate"
+    }
+  },
+  "last_pc_p4_decisions": [
+    {
+      "source": {
+        "file": "p4_decisions.jsonl",
+        "line": 459,
+        "byte_start": 739621,
+        "byte_end_exclusive": 741651,
+        "line_sha256_with_newline": "de9179290be54499576e887fc444ae9ca76e430a2334e93665e82153dd920d06"
+      },
+      "record": {
+        "factor_counts": {
+          "logical_apply_calls": 459,
+          "numeric_calls": 1,
+          "solve_calls": 685,
+          "symbolic_calls": 1
+        },
+        "logical_apply": 459,
+        "logical_apply_delta": 1,
+        "logical_wall_seconds": 1038.4208798609907,
+        "max_refinements": 2,
+        "port_state": {
+          "norm": 0.011053045426859663,
+          "policy": "cumulative_total_not_last_delta",
+          "sha256": "951ebe4118c0c74805d31bd535bfd4e2f29d0723e2d8f0bf1c7fbe2c88de4c72",
+          "size": 3904
+        },
+        "refinement_count": 1,
+        "rows": [
+          {
+            "attempt": 1,
+            "factor_counts": {
+              "logical_apply_calls": 459,
+              "numeric_calls": 1,
+              "solve_calls": 684,
+              "symbolic_calls": 1
+            },
+            "physical_correction_factor_delta": {
+              "numeric_calls": 0,
+              "solve_calls": 1,
+              "symbolic_calls": 0
+            },
+            "physical_factor_delta": {
+              "numeric_calls": 0,
+              "solve_calls": 1,
+              "symbolic_calls": 0
+            },
+            "port_closure": {
+              "d_term_norm": 9.65945645738445,
+              "finite": true,
+              "formula": "H*a-D*c",
+              "h_term_norm": 9.659456457381857,
+              "norm": 8.513465225135357e-11,
+              "relative_residual": 4.4068034587122836e-12,
+              "rhs_policy": "zero_port_rhs",
+              "scale": 19.318912914766308,
+              "sha256": "5e24c264b9bcd99e36b10fd4ae82cdd807e43b9dd3f162cf898ae6602c67f14b",
+              "size": 3904,
+              "status": "PASS",
+              "tolerance": 1e-10
+            },
+            "refinement": 0,
+            "refinement_index": 0,
+            "relative_residual": 2.1129296703276094e-10,
+            "rhs_norm": 0.3865928967430895
+          },
+          {
+            "attempt": 2,
+            "factor_counts": {
+              "logical_apply_calls": 459,
+              "numeric_calls": 1,
+              "solve_calls": 685,
+              "symbolic_calls": 1
+            },
+            "physical_factor_delta": {
+              "numeric_calls": 0,
+              "solve_calls": 0,
+              "symbolic_calls": 0
+            },
+            "port_closure": {
+              "d_term_norm": 9.659456457378942,
+              "finite": true,
+              "formula": "H*a-D*c",
+              "h_term_norm": 9.659456457376354,
+              "norm": 8.51346091423396e-11,
+              "relative_residual": 4.406801227273815e-12,
+              "rhs_policy": "zero_port_rhs",
+              "scale": 19.318912914755295,
+              "sha256": "817af8a188eda8d521c51994502a82fcae3ac1cefd805e7857a92f67e82bcb5a",
+              "size": 3904,
+              "status": "PASS",
+              "tolerance": 1e-10
+            },
+            "refinement": 1,
+            "refinement_index": 1,
+            "relative_residual": 3.3086969439069224e-13,
+            "rhs_norm": 0.3865928967430895
+          }
+        ],
+        "source": "retained_bal_h_coarse",
+        "status": "P4_RETURN_PASS"
+      }
+    },
+    {
+      "source": {
+        "file": "p4_decisions.jsonl",
+        "line": 460,
+        "byte_start": 741651,
+        "byte_end_exclusive": 742869,
+        "line_sha256_with_newline": "5f4f8a3ab5a4bf9da20d43172a94e0100ac7d83f47a1ae0fe2a05f7e188a25e3"
+      },
+      "record": {
+        "factor_counts": {
+          "logical_apply_calls": 460,
+          "numeric_calls": 1,
+          "solve_calls": 686,
+          "symbolic_calls": 1
+        },
+        "logical_apply": 460,
+        "logical_apply_delta": 1,
+        "logical_wall_seconds": 499.45010847598314,
+        "max_refinements": 2,
+        "port_state": {
+          "norm": 0.005096542662761828,
+          "policy": "cumulative_total_not_last_delta",
+          "sha256": "1f76de9e08e41036ca2851aacac0888f61899d6264f397f0a561671ffc511bae",
+          "size": 3904
+        },
+        "refinement_count": 0,
+        "rows": [
+          {
+            "attempt": 1,
+            "factor_counts": {
+              "logical_apply_calls": 460,
+              "numeric_calls": 1,
+              "solve_calls": 686,
+              "symbolic_calls": 1
+            },
+            "physical_factor_delta": {
+              "numeric_calls": 0,
+              "solve_calls": 1,
+              "symbolic_calls": 0
+            },
+            "port_closure": {
+              "d_term_norm": 4.721738492680155,
+              "finite": true,
+              "formula": "H*a-D*c",
+              "h_term_norm": 4.721738492679493,
+              "norm": 4.5089635670026745e-11,
+              "relative_residual": 4.774685821750804e-12,
+              "rhs_policy": "zero_port_rhs",
+              "scale": 9.443476985359649,
+              "sha256": "a80e20e8358d39821512330f8c2af517ed9fd3ef407545e274db9017af32b365",
+              "size": 3904,
+              "status": "PASS",
+              "tolerance": 1e-10
+            },
+            "refinement": 0,
+            "refinement_index": 0,
+            "relative_residual": 3.9704938496434244e-11,
+            "rhs_norm": 1.0896398190625785
+          }
+        ],
+        "source": "retained_bal_h_coarse",
+        "status": "P4_RETURN_PASS"
+      }
+    }
+  ],
+  "pc_scope_counts": {
+    "setup": 1,
+    "outer_pc": 229
+  },
+  "p4_return_statistics": {
+    "complete_records": 460,
+    "statuses": {
+      "P4_RETURN_PASS": 460
+    },
+    "maximum_extra_refinements": 1,
+    "maximum_final_return_rho": 9.924795446931908e-11
+  },
+  "setup_event_boundaries": [
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 1,
+        "byte_start": 0,
+        "byte_end_exclusive": 2417,
+        "line_sha256_with_newline": "5b2af40626139a9412978ae3a8aabaf92f754f87719ae1f5bda04e0e2ee3aa29"
+      },
+      "stage": "workflow_started",
+      "phase": "setup",
+      "clock": {
+        "boottime": 171972.013579013,
+        "monotonic": 171972.013578348,
+        "utc_ns": 1790246977152712673
+      },
+      "updated_monotonic": 171972.01357669,
+      "workflow_elapsed_monotonic_seconds": 2.257400774396956e-05
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 2,
+        "byte_start": 2417,
+        "byte_end_exclusive": 4931,
+        "line_sha256_with_newline": "6e591c78502af1ae024b95aecb92a1c2c93d8c538146e913ba1d51f14ddc2ec8"
+      },
+      "stage": "retained_runtime_build_started",
+      "phase": "setup",
+      "clock": {
+        "boottime": 171972.022458886,
+        "monotonic": 171972.022457959,
+        "utc_ns": 1790246977161592558
+      },
+      "updated_monotonic": 171972.022456127,
+      "workflow_elapsed_monotonic_seconds": 0.00890218501444906
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 3,
+        "byte_start": 4931,
+        "byte_end_exclusive": 7361,
+        "line_sha256_with_newline": "9c96e61424def937ac9a77a152a67fca0dbe6b936788ca2b4f4f95e93a6c7f06"
+      },
+      "stage": "retained_shared_mesh_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 172123.499415136,
+        "monotonic": 172123.499413281,
+        "utc_ns": 1790247128638549008
+      },
+      "updated_monotonic": 172123.499411212,
+      "workflow_elapsed_monotonic_seconds": 151.48585750701022
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 4,
+        "byte_start": 7361,
+        "byte_end_exclusive": 10207,
+        "line_sha256_with_newline": "5a63301314c6ddcef8e899696901b96f44efcc54095d13832b29f3982acd5b90"
+      },
+      "stage": "retained_volume_quadrature_metadata_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 172123.839371972,
+        "monotonic": 172123.839367851,
+        "utc_ns": 1790247128978505912
+      },
+      "updated_monotonic": 172123.839364517,
+      "workflow_elapsed_monotonic_seconds": 151.82581207700423
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 5,
+        "byte_start": 10207,
+        "byte_end_exclusive": 27544,
+        "line_sha256_with_newline": "d8f2cbb59f0a542177a81863c4bebe3bc105b02f32efeff6a68b6f991278712e"
+      },
+      "stage": "retained_sum_factorized_physical_action_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 180968.729020043,
+        "monotonic": 180968.729015765,
+        "utc_ns": 1790255973868153982
+      },
+      "updated_monotonic": 180968.729013472,
+      "workflow_elapsed_monotonic_seconds": 8996.715459991014
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 6,
+        "byte_start": 27544,
+        "byte_end_exclusive": 30001,
+        "line_sha256_with_newline": "0352392c76c48f79c1c989f57543e28efcff338f79e89051f2b59947c0fb06ba"
+      },
+      "stage": "retained_forms_compiled",
+      "phase": "setup",
+      "clock": {
+        "boottime": 181033.647598446,
+        "monotonic": 181033.647595725,
+        "utc_ns": 1790256038786732232
+      },
+      "updated_monotonic": 181033.647592755,
+      "workflow_elapsed_monotonic_seconds": 9061.634039950994
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 7,
+        "byte_start": 30001,
+        "byte_end_exclusive": 99360,
+        "line_sha256_with_newline": "7d1e3fc64ad1dc99a4442db99a8c471838911d0137d65b5db1d1bbd00ea80d28"
+      },
+      "stage": "retained_condensed_components_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 183875.152361366,
+        "monotonic": 183875.152357659,
+        "utc_ns": 1790258880291495253
+      },
+      "updated_monotonic": 183875.15235362,
+      "workflow_elapsed_monotonic_seconds": 11903.138801885012
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 8,
+        "byte_start": 99360,
+        "byte_end_exclusive": 102460,
+        "line_sha256_with_newline": "89dfa2169454c30978b50afc3f1855c73d5a34c814d30978b8823d9908e719de"
+      },
+      "stage": "retained_postprocess_jit_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 183932.628052448,
+        "monotonic": 183932.628050631,
+        "utc_ns": 1790258937767186251
+      },
+      "updated_monotonic": 183932.62804671,
+      "workflow_elapsed_monotonic_seconds": 11960.614494857
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 9,
+        "byte_start": 102460,
+        "byte_end_exclusive": 105581,
+        "line_sha256_with_newline": "923e30b45e436b1615e66c4cd2a46fa8d8ab1f8a7c09bb1fa6dca00ecdf26741"
+      },
+      "stage": "retained_postprocess_jit_released",
+      "phase": "setup",
+      "clock": {
+        "boottime": 183933.170127612,
+        "monotonic": 183933.170123906,
+        "utc_ns": 1790258938309261757
+      },
+      "updated_monotonic": 183933.170117112,
+      "workflow_elapsed_monotonic_seconds": 11961.156568131992
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 10,
+        "byte_start": 105581,
+        "byte_end_exclusive": 109672,
+        "line_sha256_with_newline": "2b7067e71b88d759d5ae2de01cd721f3a75e6504e08d12905953fb123620508b"
+      },
+      "stage": "retained_runtime_build_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 183933.171589767,
+        "monotonic": 183933.171588325,
+        "utc_ns": 1790258938310723519
+      },
+      "updated_monotonic": 183933.17158667,
+      "workflow_elapsed_monotonic_seconds": 11961.158032551
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 11,
+        "byte_start": 109672,
+        "byte_end_exclusive": 112162,
+        "line_sha256_with_newline": "bb4e0d2989b42ecdd87a0113af38617f6c937723d1c6d7dec236c0941eb35f56"
+      },
+      "stage": "reference_symbolic_started",
+      "phase": "setup",
+      "clock": {
+        "boottime": 183933.213920057,
+        "monotonic": 183933.213918599,
+        "utc_ns": 1790258938353053711
+      },
+      "updated_monotonic": 183933.213916571,
+      "workflow_elapsed_monotonic_seconds": 11961.20036282501
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 12,
+        "byte_start": 112162,
+        "byte_end_exclusive": 115195,
+        "line_sha256_with_newline": "7db10e0de374ebe2fa4b46a417624966fd84178a351811e51849be658d09f0b5"
+      },
+      "stage": "reference_symbolic_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 184012.840272123,
+        "monotonic": 184012.840267851,
+        "utc_ns": 1790259017979406722
+      },
+      "updated_monotonic": 184012.840265199,
+      "workflow_elapsed_monotonic_seconds": 12040.826712076989
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 13,
+        "byte_start": 115195,
+        "byte_end_exclusive": 118124,
+        "line_sha256_with_newline": "c2b8a28ea5ab9b7e7c9161213933df3eadd12b59f2e56e90c910280c3e56023c"
+      },
+      "stage": "reference_budget_evaluated",
+      "phase": "setup",
+      "clock": {
+        "boottime": 184012.872618817,
+        "monotonic": 184012.872617082,
+        "utc_ns": 1790259018011752508
+      },
+      "updated_monotonic": 184012.872615148,
+      "workflow_elapsed_monotonic_seconds": 12040.859061308001
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 14,
+        "byte_start": 118124,
+        "byte_end_exclusive": 121737,
+        "line_sha256_with_newline": "84f139aa8772b6233e97783952e9af311ac9ea09a4f949c8d60ea2f1ab2c29d3"
+      },
+      "stage": "reference_numeric_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 228124.546457504,
+        "monotonic": 228124.546454144,
+        "utc_ns": 1790303129685591978
+      },
+      "updated_monotonic": 228124.546450399,
+      "workflow_elapsed_monotonic_seconds": 56152.53289837
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 15,
+        "byte_start": 121737,
+        "byte_end_exclusive": 125952,
+        "line_sha256_with_newline": "64bad90a898a81d693d52fe3207fff6390ab66b1708909da00680c725561a37a"
+      },
+      "stage": "retained_p4_factor_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 228397.883652752,
+        "monotonic": 228397.88364953,
+        "utc_ns": 1790303403022787316
+      },
+      "updated_monotonic": 228397.88364539,
+      "workflow_elapsed_monotonic_seconds": 56425.870093756006
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 16,
+        "byte_start": 125952,
+        "byte_end_exclusive": 128406,
+        "line_sha256_with_newline": "57dbb97a0e99cd46d9bb2b444a84d9bccd0208ce3b96cdd3224a46ad1ffae3ef"
+      },
+      "stage": "h6_original_setup_started",
+      "phase": "setup",
+      "clock": {
+        "boottime": 228397.88552086,
+        "monotonic": 228397.885519039,
+        "utc_ns": 1790303403024654625
+      },
+      "updated_monotonic": 228397.885517376,
+      "workflow_elapsed_monotonic_seconds": 56425.871963265
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 17,
+        "byte_start": 128406,
+        "byte_end_exclusive": 137646,
+        "line_sha256_with_newline": "007d8e68df66c8f041e966cc81f011713084c5f0d94e9f061b740129554ca4c6"
+      },
+      "stage": "h6_original_window_and_packed_action_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 348622.674348043,
+        "monotonic": 348622.674341896,
+        "utc_ns": 1790423627813482152
+      },
+      "updated_monotonic": 348622.674337001,
+      "workflow_elapsed_monotonic_seconds": 176650.66078612203
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 18,
+        "byte_start": 137646,
+        "byte_end_exclusive": 140147,
+        "line_sha256_with_newline": "40c311e3cf5203fc5324efc411846dc00a028b6f7a85be4feabd05e67b46bd8a"
+      },
+      "stage": "retained_bal_h_bridge_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 349749.960382908,
+        "monotonic": 349749.960379917,
+        "utc_ns": 1790424755099517076
+      },
+      "updated_monotonic": 349749.96037296,
+      "workflow_elapsed_monotonic_seconds": 177777.946824143
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 19,
+        "byte_start": 140147,
+        "byte_end_exclusive": 144053,
+        "line_sha256_with_newline": "c4395738ce244dd3d782e631dc3776ca31e0854c05bd17ef10f5eec4b17160f2"
+      },
+      "stage": "retained_native_aq_projection_check_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 350619.272287749,
+        "monotonic": 350619.272282511,
+        "utc_ns": 1790425624411422044
+      },
+      "updated_monotonic": 350619.27227462,
+      "workflow_elapsed_monotonic_seconds": 178647.258726737
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 20,
+        "byte_start": 144053,
+        "byte_end_exclusive": 225726,
+        "line_sha256_with_newline": "00e09c298943eddcc43a62a1803fccf8ecbda5b73c4fe66f15ef1e5d4c8eb741"
+      },
+      "stage": "retained_same_object_setup_checks_complete",
+      "phase": "setup",
+      "clock": {
+        "boottime": 356360.39044713,
+        "monotonic": 356360.390442696,
+        "utc_ns": 1790431365529581325
+      },
+      "updated_monotonic": 356360.39043938,
+      "workflow_elapsed_monotonic_seconds": 184388.376886922
+    },
+    {
+      "source": {
+        "file": "stages.jsonl",
+        "line": 21,
+        "byte_start": 225726,
+        "byte_end_exclusive": 228161,
+        "line_sha256_with_newline": "e6de5a7d5c6ab1fa57e32e50bac2e86e7bbb4d24a5a0eacaa66a738174b26e03"
+      },
+      "stage": "solve_started",
+      "phase": "solve",
+      "clock": {
+        "boottime": 356360.394200402,
+        "monotonic": 356360.394200192,
+        "utc_ns": 1790431365533333913
+      },
+      "updated_monotonic": 356360.394198959,
+      "workflow_elapsed_monotonic_seconds": 184388.380644418
+    }
+  ],
+  "checkpoint_224_metadata": [
+    {
+      "kind": "full_solution_checkpoint_manifests",
+      "manifest": {
+        "explicit_true_residual": 9.758316562442362e-05,
+        "forbidden_vector_roles": [
+          "action",
+          "residual",
+          "krylov_basis"
+        ],
+        "input_identity_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+        "iteration": 224,
+        "mpi_size": 1,
+        "numeric_allgather": false,
+        "operator_identity_sha256": "58f61100febb2174c260bfacc39442a161ccffeb0a47d2575c52c90c3568760b",
+        "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+        "ranks": [
+          {
+            "ownership": {
+              "global_size": 35594790,
+              "local_size": 35594790,
+              "ownership_range": [
+                0,
+                35594790
+              ],
+              "rank": 0
+            },
+            "rank": 0,
+            "solution": {
+              "bytes": 569516768,
+              "dtype": "complex128",
+              "relative_path": "solution_rank0.npy",
+              "sha256": "e7a363281bb1c1da0e87fa73975aa94188f74b0917aa69763656f225e8138ff4",
+              "shape": [
+                35594790
+              ]
+            }
+          }
+        ],
+        "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+        "solution_only": true,
+        "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+        "vector_roles": [
+          "solution"
+        ]
+      },
+      "solution_files": [
+        {
+          "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/full_solution_checkpoint_manifests/iteration_000224/solution_rank0.npy",
+          "bytes": 569516768,
+          "sha256_recorded_by_producer": "e7a363281bb1c1da0e87fa73975aa94188f74b0917aa69763656f225e8138ff4",
+          "large_array_read_or_rehashed_this_handoff": false
+        }
+      ]
+    },
+    {
+      "kind": "retained_checkpoint_manifests",
+      "manifest": {
+        "explicit_true_residual": 9.758316562442362e-05,
+        "forbidden_vector_roles": [
+          "action",
+          "residual",
+          "krylov_basis"
+        ],
+        "input_identity_sha256": "e3febbe6a785d3866e37fd3353565111952fbfe0926ee0b2c5a42eaef32149e1",
+        "iteration": 224,
+        "mpi_size": 1,
+        "numeric_allgather": false,
+        "operator_identity_sha256": "58f61100febb2174c260bfacc39442a161ccffeb0a47d2575c52c90c3568760b",
+        "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+        "ranks": [
+          {
+            "ownership": {
+              "global_size": 10803256,
+              "local_size": 10803256,
+              "ownership_range": [
+                0,
+                10803256
+              ],
+              "rank": 0
+            },
+            "rank": 0,
+            "solution": {
+              "bytes": 172852224,
+              "dtype": "complex128",
+              "relative_path": "solution_rank0.npy",
+              "sha256": "87aafa5b28dfdfc69e5a728544507883ad417f7ef53cf891630cc94886d6e92a",
+              "shape": [
+                10803256
+              ]
+            }
+          }
+        ],
+        "schema": "fixed-memory-krylov.solution-checkpoint.v1",
+        "solution_only": true,
+        "source_sha": "64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa",
+        "vector_roles": [
+          "solution"
+        ]
+      },
+      "solution_files": [
+        {
+          "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/retained_checkpoint_manifests/iteration_000224/solution_rank0.npy",
+          "bytes": 172852224,
+          "sha256_recorded_by_producer": "87aafa5b28dfdfc69e5a728544507883ad417f7ef53cf891630cc94886d6e92a",
+          "large_array_read_or_rehashed_this_handoff": false
+        }
+      ]
+    }
+  ],
+  "resource_terminal_tail": {
+    "absolute_path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/watchdog/resources.jsonl",
+    "file_bytes_at_read": 1447468256,
+    "read_byte_range": [
+      1446943968,
+      1447468256
+    ],
+    "sha256_of_read_tail_bytes": "8b0e8bc1557ea6f5c5c95f3852ac1110d7d829344fdd1ba691736b18f0c40a60",
+    "entire_file_read_or_hashed": false,
+    "parsed_complete_lines": 54,
+    "last_worker_containing_sample": {
+      "source": {
+        "file": "watchdog/resources.jsonl",
+        "byte_start": 1447433673,
+        "byte_end_exclusive": 1447443103,
+        "line_sha256_with_newline": "aa68bb85671a5b8c9ffacd7ce7786347936237087b28964583ec6d39b37d1e42"
+      },
+      "record": {
+        "timestamp_ns": 1790913207396696148,
+        "elapsed_seconds": 666231.268168261,
+        "exit_code": null,
+        "rss_bytes": 1138941894656,
+        "pss_bytes": 1138541643776,
+        "pss_sampled": true,
+        "swap_bytes": 8574500864,
+        "warning": false,
+        "all_status_readable": true,
+        "unreadable_pids": [],
+        "vanished_pids": [],
+        "global_swap_pages": {
+          "pswpin_pages": 3138799,
+          "pswpout_pages": 5146004
+        },
+        "global_swap_stop_reason": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+        "launch_cap_bytes": 1300000000000,
+        "rss_warning_bytes": 1170000000000,
+        "memory_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2015707721728,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2015707721728,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 1300000000000,
+          "planning_cap_bytes": 1300000000000,
+          "cgroup_limits": []
+        },
+        "live_or_unreaped_children": [
+          341830,
+          341839
+        ],
+        "members": [
+          {
+            "pid": 341799,
+            "ppid": 1,
+            "start_ticks": 17196977,
+            "state": "R",
+            "rss_bytes": 39256064,
+            "swap_bytes": 0,
+            "cpu_seconds": 628238.66,
+            "affinity": [
+              9
+            ]
+          },
+          {
+            "pid": 341830,
+            "ppid": 341799,
+            "start_ticks": 17197099,
+            "state": "S",
+            "rss_bytes": 14168064,
+            "swap_bytes": 7753728,
+            "cpu_seconds": 0.35,
+            "affinity": [
+              24
+            ]
+          },
+          {
+            "pid": 341839,
+            "ppid": 341830,
+            "start_ticks": null,
+            "state": "R",
+            "rss_bytes": 1138888470528,
+            "swap_bytes": 8566747136,
+            "cpu_seconds": null,
+            "affinity": null
+          }
+        ]
+      }
+    },
+    "last_sample": {
+      "source": {
+        "file": "watchdog/resources.jsonl",
+        "byte_start": 1447461959,
+        "byte_end_exclusive": 1447468256,
+        "line_sha256_with_newline": "8d7db1b6cdcd6514ed678cc1f243391f39a60ff20f563aff26bf7598950041e8"
+      },
+      "record": {
+        "timestamp_ns": 1790913208814115649,
+        "elapsed_seconds": 666232.683311383,
+        "exit_code": 137,
+        "rss_bytes": 37572608,
+        "pss_bytes": null,
+        "pss_sampled": false,
+        "swap_bytes": 0,
+        "warning": false,
+        "all_status_readable": true,
+        "unreadable_pids": [],
+        "vanished_pids": [],
+        "global_swap_pages": {
+          "pswpin_pages": 3138800,
+          "pswpout_pages": 5146004
+        },
+        "global_swap_stop_reason": "GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED",
+        "launch_cap_bytes": 1300000000000,
+        "rss_warning_bytes": 1170000000000,
+        "memory_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2016845312000,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2016845312000,
+          "reserve_bytes": 324465057792,
+          "launch_cap_bytes": 1300000000000,
+          "planning_cap_bytes": 1300000000000,
+          "cgroup_limits": []
+        },
+        "live_or_unreaped_children": [],
+        "members": [
+          {
+            "pid": 341799,
+            "ppid": 1,
+            "start_ticks": 17196977,
+            "state": "R",
+            "rss_bytes": 37572608,
+            "swap_bytes": 0,
+            "cpu_seconds": 628239.08,
+            "affinity": [
+              9
+            ]
+          }
+        ]
+      }
+    },
+    "scope_limit": "bounded terminal tail only; kernel kills/reaping can race member RSS reads; not a fresh alive-worker snapshot or full coverage audit"
+  },
+  "limits": [
+    "no new PDE, factorization, action pairing or benchmark",
+    "no large arrays/matrices/factors copied or rehashed",
+    "bounded resource tail; no reparse/hash of full 1.447 GB resource log",
+    "trigger PID project/command/policy details remain unknown",
+    "no final KSP reason/timer, final original A6 residual or formal RTA/checker"
+  ]
+}
