@@ -143,11 +143,26 @@ def test_warm_reader_white_list_and_zero_role_never_opens_parent(tmp_path,monkey
 
 def test_six_actual_input_schema_and_registered_real_driver(tmp_path,monkeypatch):
     from src.io.task042_profile import TASK042_PROFILES
+    from src.solvers import p1_trace_window as w
     monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path/'not-frozen')
+    # A completed real campaign must remain frozen. Only this test process
+    # and its validate-only child receive a separate, non-running fixture.
+    monkeypatch.setattr(w,'require_live',lambda **kw:dict(heavy_remaining_seconds=12600))
+    monkeypatch.setattr(w,'ledger',lambda:dict(routes={}))
+    child='''import runpy,sys
+from pathlib import Path
+from src.io import p1_trace_galerkin as io
+from src.solvers import p1_trace_window as w
+io.ARTIFACT_ROOT=Path(sys.argv[1])/'not-frozen'
+w.require_live=lambda **kw:dict(heavy_remaining_seconds=12600)
+w.ledger=lambda:dict(routes={})
+sys.argv=['scripts/run_case.py',sys.argv[2],'--validate-only']
+runpy.run_path('scripts/run_case.py',run_name='__main__')
+'''
     for stage,name in io.FILES.items():
         path=io.ROOT/f'input/task042_neural_coarse_inverse/v22_{name}.dat';spec=io.load_p1_trace(path)
         assert spec.derived['stage']=='V22-'+stage and TASK042_PROFILES[spec.solver['preconditioner']]=='V22-'+stage
-        result=subprocess.run([sys.executable,'scripts/run_case.py',str(path),'--validate-only'],text=True,capture_output=True)
+        result=subprocess.run([sys.executable,'-c',child,str(tmp_path),str(path)],text=True,capture_output=True)
         assert result.returncode==0,result.stderr
         assert json.loads(result.stdout)['stage']=='V22-'+stage
     p=tmp_path/'bad.dat';p.write_text((io.ROOT/'input/task042_neural_coarse_inverse/v22_p1_coarse_warm.dat').read_text().replace('stage = "P"','stage = "FAKE"'))
