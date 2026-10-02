@@ -1,0 +1,930 @@
+{
+  "schema": "task42extra.review-v11-read-only-audit.v1",
+  "reviewed_head": "59248ebb5f6394e06ea8484a414597b811c07252",
+  "method": "SHA256 of selected retained files; scalar division, power differences, accepted-trial arithmetic and chronology only",
+  "limitations": [
+    "No fresh FE residual/action/field integral or independent parameter reconstruction",
+    "No training, optimizer proposal, PDE, Gram factor, environment installation or full repository tests",
+    "3600 s is a predeclared observation boundary, not the best state over the entire history"
+  ],
+  "verified_artifacts": [
+    {
+      "stage": "v11_parameter_scale_diagnostic",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_parameter_scale_diagnostic_20261002T105143113853Z/result.json",
+      "bytes": 20255,
+      "sha256": "ecfcad7c1f317de0cd7c9fd4e02fb78be78359180b85bde7fa7b580c83d1cf24"
+    },
+    {
+      "stage": "v11_parameter_metric_checks",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_parameter_metric_checks_20261002T110642003996Z/result.json",
+      "bytes": 12443,
+      "sha256": "53c7d956f47b1cf5ccee808c06dba1b2b81f43ea5f3e2517f3b17e392ebbb752"
+    },
+    {
+      "stage": "v11_parameter_metric_checks_repair",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_parameter_metric_checks_repair_20261002T111817871250Z/result.json",
+      "bytes": 13391,
+      "sha256": "8cd4045354fd5a590b4b98edd333d701a9bf4c291f049b9439ad7cfcbe5b166d"
+    },
+    {
+      "stage": "v11_parameter_metric_checks_stability",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_parameter_metric_checks_stability_20261002T112653995862Z/result.json",
+      "bytes": 13554,
+      "sha256": "0f10480574d942e5053efa6a68631928371a01d8e1433692e101b9dcc670afd9"
+    },
+    {
+      "stage": "v11_phase_identity_metric",
+      "name": "checkpoint",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/frozen_checkpoint.npz",
+      "bytes": 589200,
+      "sha256": "0603ddb952bf604edcad742aeea7ac160f180e43ae8d680c789af6caf2fdc0f5"
+    },
+    {
+      "stage": "v11_phase_identity_metric",
+      "name": "history",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/history.jsonl",
+      "bytes": 748984,
+      "sha256": "4aec574973a7718d911311278f826ee1812b6555bee08a2ff11e9ba8bff42a60"
+    },
+    {
+      "stage": "v11_phase_identity_metric",
+      "name": "durable_final",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000025.pt",
+      "bytes": 1107684,
+      "sha256": "62703d221e29b5895924fdc5c1d675e7c45cb6c01a0e347bc5d49e6aaf081da4"
+    },
+    {
+      "stage": "v11_phase_identity_metric",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/result.json",
+      "bytes": 10171578,
+      "sha256": "46e1e8d88562c08de1a68ccc5ae11d8a0ec87436b81c0dd6bf3999b53516783d"
+    },
+    {
+      "stage": "v11_phase_block_metric",
+      "name": "checkpoint",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/frozen_checkpoint.npz",
+      "bytes": 589156,
+      "sha256": "58fcaf697307a56204d4af960f37f42c86171c605c2fe97f016efe3e5148e28d"
+    },
+    {
+      "stage": "v11_phase_block_metric",
+      "name": "history",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/history.jsonl",
+      "bytes": 768910,
+      "sha256": "59db25bed1bd4b92349b5568cf2ec62e43f846fc96d8a499b5aec044a9f577d4"
+    },
+    {
+      "stage": "v11_phase_block_metric",
+      "name": "durable_final",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000021.pt",
+      "bytes": 1108452,
+      "sha256": "4c475bfba0eb816a4d62b6086f2e47006051b896ba442f09b7aab50c8b7c206d"
+    },
+    {
+      "stage": "v11_phase_block_metric",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/result.json",
+      "bytes": 16326422,
+      "sha256": "d7c47e526fa3e6e213a0aff744f2de3b8c40b147e021a195af0b4cf154ced7e7"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v10_phase_resource_freeze",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v10_phase_resource_freeze_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "2e613d57dc9b0cb9935833ef2da61965dc6ac047baebf4c69afde06c561a04d9"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_identity_metric",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "c977df80135a12922fc7036101642bfbefc51e965b72b73c14a062414e6deab5"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_block_metric",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "f34347e23036a5d693e494a6a2e1b160fd67aeee9b9c2a5087f6a792fb017340"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_identity_metric_time_1800",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_time_1800_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "3e15492693f693be7e792e9b54fa733dcfbf911fe399d903e5eb573f9dc7224b"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_block_metric_time_1800",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_1800_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "69fc7cf22d9de909b73f1cd99fa757ce7203aa60c1f94935bba11c6c6b0007d9"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_identity_metric_time_3600",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_time_3600_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "5fee1b72fbc9013ac70988530589ad3723d0a093e506f5064de3fbad83b8c267"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_block_metric_time_3600",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_3600_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "e2b16849de72ffcfefdf89c6fc183af91d2db0ad71f4c2ba75e327db123cbd95"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_identity_metric_work_20",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_work_20_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "3d67f572d3ef77d7d5dd9ef5d3c5c764f9d764aa17b746390a9fd0192f4aab24"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "v11_phase_block_metric_work_20",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_work_20_reconstructed.npz",
+      "bytes": 1025459,
+      "sha256": "f34347e23036a5d693e494a6a2e1b160fd67aeee9b9c2a5087f6a792fb017340"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "time_route_index",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/time_route_index.json",
+      "bytes": 15577020,
+      "sha256": "e16bb96e4f6a92d8e43d467da438611f745ffd32a8d4d66ab70d1632a651dc79"
+    },
+    {
+      "stage": "v11_metric_reconstruct",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/result.json",
+      "bytes": 14826,
+      "sha256": "a12a36a94348b755a7a4dffab2fc426915ce529904af87d356ed179ec33d2175"
+    },
+    {
+      "stage": "v11_metric_compare",
+      "name": "result",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_compare_20261002T144524841802Z/result.json",
+      "bytes": 759528,
+      "sha256": "3d76d049562d6a29e6972e9ecc55c988d3997e63d7717d6f716e36a3c076544c"
+    }
+  ],
+  "routes": {
+    "V10-PHASE-CACHED-GN-CONTINUE": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.9788211986315143,
+        "augmented_relative": 0.9788211986315143,
+        "original_total_augmented_relative": 0.46366932569769215,
+        "independent_DOLFINx_total_native_relative": 0.46366932569771413
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.2482552586494209,
+        "scattered_L2": 0.3620178802685469,
+        "total_scaled_curl": 0.24796564462773193,
+        "scattered_scaled_curl": 0.3626337341790867,
+        "selected_total_E": 0.24284532004016338,
+        "selected_total_E_point_0": 0.28948688969406616,
+        "selected_total_E_point_1": 0.30569342707367886,
+        "selected_total_E_point_2": 0.30156142555044596,
+        "selected_total_E_point_3": 0.3059206111483812,
+        "selected_total_E_point_4": 0.23061286901030775,
+        "selected_total_E_point_5": 0.1818287035845376,
+        "selected_total_H": 0.23979737553138739,
+        "selected_total_H_point_0": 0.2788503961214772,
+        "selected_total_H_point_1": 0.29717627022506027,
+        "selected_total_H_point_2": 0.30273005093809197,
+        "selected_total_H_point_3": 0.29216608811103095,
+        "selected_total_H_point_4": 0.22830504107441485,
+        "selected_total_H_point_5": 0.1828722470612878,
+        "selected_scattered_E": 0.3589245703679938,
+        "selected_scattered_E_point_0": 0.31967594313475367,
+        "selected_scattered_E_point_1": 0.34723607565775344,
+        "selected_scattered_E_point_2": 0.37570940335556496,
+        "selected_scattered_E_point_3": 0.37699160370914897,
+        "selected_scattered_E_point_4": 0.36886882543641597,
+        "selected_scattered_E_point_5": 0.33926512800710124,
+        "selected_scattered_H": 0.35703673364978716,
+        "selected_scattered_H_point_0": 0.3169655667946743,
+        "selected_scattered_H_point_1": 0.3452636089459691,
+        "selected_scattered_H_point_2": 0.37618164982611,
+        "selected_scattered_H_point_3": 0.3685049660059361,
+        "selected_scattered_H_point_4": 0.3674102702605184,
+        "selected_scattered_H_point_5": 0.3405460434171693,
+        "ordered_total_channels": 0.18400802692388035,
+        "ordered_outgoing_channels": 0.08831493583409195,
+        "ordered_boundary_outgoing_channels": 0.08550785562704513,
+        "ordered_scattered_channels": 0.3266891065635704,
+        "total_H_code_L2": 0.24796564462773193,
+        "scattered_H_code_L2": 0.3626337341790867
+      },
+      "closure_recomputed": 0.09274774829317689,
+      "absorption_gap_recomputed": 0.09274774829317678,
+      "max_channel_power_difference_recomputed": 0.018986048741890943,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7943159977623175,
+        0.05134157970582265,
+        0.1543424225318598,
+        0.2470901708250366
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 9.588095527628724,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 1.5432769789199147e-14,
+          "denominator": 9.588095527628724,
+          "relative": 1.6095761399882398e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-IDENTITY-METRIC-CONTROL": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.9843635472875234,
+        "augmented_relative": 0.9843635472875234,
+        "original_total_augmented_relative": 0.4662947460172509,
+        "independent_DOLFINx_total_native_relative": 0.46629474601727733
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.1094477185070545,
+        "scattered_L2": 0.1596019809195889,
+        "total_scaled_curl": 0.10961547196627078,
+        "scattered_scaled_curl": 0.1603055454823526,
+        "selected_total_E": 0.10649320115277443,
+        "selected_total_E_point_0": 0.1137882583984465,
+        "selected_total_E_point_1": 0.12847962418537573,
+        "selected_total_E_point_2": 0.13407820513853086,
+        "selected_total_E_point_3": 0.134348609036881,
+        "selected_total_E_point_4": 0.10604512458807996,
+        "selected_total_E_point_5": 0.07763882416932155,
+        "selected_total_H": 0.10442554843716567,
+        "selected_total_H_point_0": 0.10942150339664874,
+        "selected_total_H_point_1": 0.12536053796358265,
+        "selected_total_H_point_2": 0.1347128990234734,
+        "selected_total_H_point_3": 0.12141287455876659,
+        "selected_total_H_point_4": 0.10512264064458342,
+        "selected_total_H_point_5": 0.07872763873156341,
+        "selected_scattered_E": 0.1573965949376761,
+        "selected_scattered_E_point_0": 0.12565463278708877,
+        "selected_scattered_E_point_1": 0.14593954777235107,
+        "selected_scattered_E_point_2": 0.16704537844531342,
+        "selected_scattered_E_point_3": 0.16556026541258828,
+        "selected_scattered_E_point_4": 0.16962080528261902,
+        "selected_scattered_E_point_5": 0.14486241776386735,
+        "selected_scattered_H": 0.1554802534471992,
+        "selected_scattered_H_point_0": 0.12437797946872958,
+        "selected_scattered_H_point_1": 0.1456456524066867,
+        "selected_scattered_H_point_2": 0.16739838166205653,
+        "selected_scattered_H_point_3": 0.1531363461831969,
+        "selected_scattered_H_point_4": 0.16917339025000724,
+        "selected_scattered_H_point_5": 0.14660718785078905,
+        "ordered_total_channels": 0.07662653288164387,
+        "ordered_outgoing_channels": 0.0367770224362591,
+        "ordered_boundary_outgoing_channels": 0.035970786492993054,
+        "ordered_scattered_channels": 0.13604326933261376,
+        "total_H_code_L2": 0.10961547196627078,
+        "scattered_H_code_L2": 0.1603055454823526
+      },
+      "closure_recomputed": 0.029326288705458614,
+      "absorption_gap_recomputed": 0.02932628870545867,
+      "max_channel_power_difference_recomputed": 0.013682332899375593,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7986169604253355,
+        0.03855227973182226,
+        0.16283075984284226,
+        0.19215704854830093
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 12.618504474110267,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 2.0279788446983202e-14,
+          "denominator": 12.618504474110267,
+          "relative": 1.6071467493308579e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-BLOCK-METRIC": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.8465419049282757,
+        "augmented_relative": 0.8465419049282757,
+        "original_total_augmented_relative": 0.40100839129937027,
+        "independent_DOLFINx_total_native_relative": 0.40100839129937793
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.08430971287661955,
+        "scattered_L2": 0.12294451971607742,
+        "total_scaled_curl": 0.08413301996444283,
+        "scattered_scaled_curl": 0.12303910585384957,
+        "selected_total_E": 0.08315684916771722,
+        "selected_total_E_point_0": 0.13298572017117125,
+        "selected_total_E_point_1": 0.1239160333109252,
+        "selected_total_E_point_2": 0.1045919048520612,
+        "selected_total_E_point_3": 0.10660020293213551,
+        "selected_total_E_point_4": 0.06233243338408471,
+        "selected_total_E_point_5": 0.06148111921029353,
+        "selected_total_H": 0.08520502254514219,
+        "selected_total_H_point_0": 0.1341662671480345,
+        "selected_total_H_point_1": 0.1247475811309845,
+        "selected_total_H_point_2": 0.10440443765431896,
+        "selected_total_H_point_3": 0.1178009379519075,
+        "selected_total_H_point_4": 0.0610653834019481,
+        "selected_total_H_point_5": 0.06186432285838081,
+        "selected_scattered_E": 0.12290554479593256,
+        "selected_scattered_E_point_0": 0.1468540961012129,
+        "selected_scattered_E_point_1": 0.14075578114275394,
+        "selected_scattered_E_point_2": 0.1303089813163664,
+        "selected_scattered_E_point_3": 0.13136539348639772,
+        "selected_scattered_E_point_4": 0.09970168441880467,
+        "selected_scattered_E_point_5": 0.11471456028504481,
+        "selected_scattered_H": 0.12686261837795645,
+        "selected_scattered_H_point_0": 0.15250502600246155,
+        "selected_scattered_H_point_1": 0.14493351045810302,
+        "selected_scattered_H_point_2": 0.12973615762381244,
+        "selected_scattered_H_point_3": 0.14858066148641327,
+        "selected_scattered_H_point_4": 0.09827224538576347,
+        "selected_scattered_H_point_5": 0.11520419700996574,
+        "ordered_total_channels": 0.07129184613397482,
+        "ordered_outgoing_channels": 0.03421663131804843,
+        "ordered_boundary_outgoing_channels": 0.032105539913263356,
+        "ordered_scattered_channels": 0.1265720300800269,
+        "total_H_code_L2": 0.08413301996444283,
+        "scattered_H_code_L2": 0.12303910585384957
+      },
+      "closure_recomputed": 0.04922823229285034,
+      "absorption_gap_recomputed": 0.049228232292850366,
+      "max_channel_power_difference_recomputed": 0.01686580058607745,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7954613174211479,
+        0.025047081095564833,
+        0.17949160148328727,
+        0.1302633691904369
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 16.722638023733737,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 2.7010618309375403e-14,
+          "denominator": 16.722638023733737,
+          "relative": 1.6152127595562596e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-IDENTITY-METRIC-CONTROL-TIME-1800": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.9711213772225598,
+        "augmented_relative": 0.9711213772225598,
+        "original_total_augmented_relative": 0.46002190673529353,
+        "independent_DOLFINx_total_native_relative": 0.46002190673532056
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.23278310232293747,
+        "scattered_L2": 0.33945563015965,
+        "total_scaled_curl": 0.23253756951003007,
+        "scattered_scaled_curl": 0.34007117112916496,
+        "selected_total_E": 0.22767085003434112,
+        "selected_total_E_point_0": 0.2702975645452412,
+        "selected_total_E_point_1": 0.28617306046573326,
+        "selected_total_E_point_2": 0.2829254012138443,
+        "selected_total_E_point_3": 0.2868623981763242,
+        "selected_total_E_point_4": 0.2167073752230196,
+        "selected_total_E_point_5": 0.17016174016842428,
+        "selected_total_H": 0.22472925441304753,
+        "selected_total_H_point_0": 0.2602471903775332,
+        "selected_total_H_point_1": 0.2782026584668542,
+        "selected_total_H_point_2": 0.28407035900816874,
+        "selected_total_H_point_3": 0.27321727534640483,
+        "selected_total_H_point_4": 0.21456204141666935,
+        "selected_total_H_point_5": 0.17120705690590005,
+        "selected_scattered_E": 0.33649675447884664,
+        "selected_scattered_E_point_0": 0.2984854649699123,
+        "selected_scattered_E_point_1": 0.32506296071305435,
+        "selected_scattered_E_point_2": 0.35249114998763453,
+        "selected_scattered_E_point_3": 0.3535058168404716,
+        "selected_scattered_E_point_4": 0.3466267745810448,
+        "selected_scattered_E_point_5": 0.3174963216591991,
+        "selected_scattered_H": 0.3346016559746887,
+        "selected_scattered_H_point_0": 0.2958195482311636,
+        "selected_scattered_H_point_1": 0.3232197974888269,
+        "selected_scattered_H_point_2": 0.35299454410702663,
+        "selected_scattered_H_point_3": 0.34460509573410736,
+        "selected_scattered_H_point_4": 0.34529372305385153,
+        "selected_scattered_H_point_5": 0.31882304051779997,
+        "ordered_total_channels": 0.17198775517130255,
+        "ordered_outgoing_channels": 0.08254578789916842,
+        "ordered_boundary_outgoing_channels": 0.07995749422635383,
+        "ordered_scattered_channels": 0.3053482340747555,
+        "total_H_code_L2": 0.23253756951003007,
+        "scattered_H_code_L2": 0.34007117112916496
+      },
+      "closure_recomputed": 0.08481069786678175,
+      "absorption_gap_recomputed": 0.08481069786678169,
+      "max_channel_power_difference_recomputed": 0.017979863320357392,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7942987589899593,
+        0.049850771190976036,
+        0.1558504698190647,
+        0.2406611676858464
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 9.925082516770027,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 1.590775363242013e-14,
+          "denominator": 9.925082516770027,
+          "relative": 1.602783010170587e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-BLOCK-METRIC-TIME-1800": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.9172569414403704,
+        "augmented_relative": 0.9172569414403704,
+        "original_total_augmented_relative": 0.4345062286389082,
+        "independent_DOLFINx_total_native_relative": 0.4345062286389177
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.11295169991582399,
+        "scattered_L2": 0.16471165685960382,
+        "total_scaled_curl": 0.11305615505975877,
+        "scattered_scaled_curl": 0.1653373222036463,
+        "selected_total_E": 0.11107627545966396,
+        "selected_total_E_point_0": 0.12434085878839017,
+        "selected_total_E_point_1": 0.12647440168186344,
+        "selected_total_E_point_2": 0.12684463834575382,
+        "selected_total_E_point_3": 0.12839377695600768,
+        "selected_total_E_point_4": 0.11393399768373247,
+        "selected_total_E_point_5": 0.09119419712000941,
+        "selected_total_H": 0.1089004321436127,
+        "selected_total_H_point_0": 0.1113023123182028,
+        "selected_total_H_point_1": 0.11929226444874763,
+        "selected_total_H_point_2": 0.12927433015928524,
+        "selected_total_H_point_3": 0.11773225204858254,
+        "selected_total_H_point_4": 0.11215305238151435,
+        "selected_total_H_point_5": 0.09270318431691543,
+        "selected_scattered_E": 0.16417036342657626,
+        "selected_scattered_E_point_0": 0.13730770794273608,
+        "selected_scattered_E_point_1": 0.14366182266845984,
+        "selected_scattered_E_point_2": 0.15803322094245595,
+        "selected_scattered_E_point_3": 0.15822201616040488,
+        "selected_scattered_E_point_4": 0.18223917894623387,
+        "selected_scattered_E_point_5": 0.17015471347206923,
+        "selected_scattered_H": 0.16214295298038595,
+        "selected_scattered_H_point_0": 0.1265158701590226,
+        "selected_scattered_H_point_1": 0.13859544610247368,
+        "selected_scattered_H_point_2": 0.1606402491222454,
+        "selected_scattered_H_point_3": 0.1484940289253478,
+        "selected_scattered_H_point_4": 0.18048740006841588,
+        "selected_scattered_H_point_5": 0.17263255162341773,
+        "ordered_total_channels": 0.09344965123968108,
+        "ordered_outgoing_channels": 0.04485130399428045,
+        "ordered_boundary_outgoing_channels": 0.04390612519444393,
+        "ordered_scattered_channels": 0.16591114845657107,
+        "total_H_code_L2": 0.11305615505975877,
+        "scattered_H_code_L2": 0.1653373222036463
+      },
+      "closure_recomputed": 0.00829676725917139,
+      "absorption_gap_recomputed": 0.0082967672591715,
+      "max_channel_power_difference_recomputed": 0.03695452025500301,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7753539229555795,
+        0.03984225351173798,
+        0.18480382353268254,
+        0.19310059079185404
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 12.686418779985996,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 2.013076747362215e-14,
+          "denominator": 12.686418779985996,
+          "relative": 1.5867967014757788e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-IDENTITY-METRIC-CONTROL-TIME-3600": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.9621627389595195,
+        "augmented_relative": 0.9621627389595195,
+        "original_total_augmented_relative": 0.4557781840120789,
+        "independent_DOLFINx_total_native_relative": 0.4557781840121079
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.1923579098758029,
+        "scattered_L2": 0.2805056503736172,
+        "total_scaled_curl": 0.19223212379085797,
+        "scattered_scaled_curl": 0.28112706090438416,
+        "selected_total_E": 0.18800300326608704,
+        "selected_total_E_point_0": 0.21969991911508951,
+        "selected_total_E_point_1": 0.23489444283135125,
+        "selected_total_E_point_2": 0.23420946399715856,
+        "selected_total_E_point_3": 0.23699874021165784,
+        "selected_total_E_point_4": 0.18041619159848069,
+        "selected_total_E_point_5": 0.13976140495207867,
+        "selected_total_H": 0.18533686727652085,
+        "selected_total_H_point_0": 0.2112538214342937,
+        "selected_total_H_point_1": 0.2283840347091446,
+        "selected_total_H_point_2": 0.23526172937881662,
+        "selected_total_H_point_3": 0.22362008142852383,
+        "selected_total_H_point_4": 0.1786860899637732,
+        "selected_total_H_point_5": 0.14081026745541234,
+        "selected_scattered_E": 0.2778678096988351,
+        "selected_scattered_E_point_0": 0.2426112592662428,
+        "selected_scattered_E_point_1": 0.2668157614750231,
+        "selected_scattered_E_point_2": 0.2917969293253626,
+        "selected_scattered_E_point_3": 0.2920579127180968,
+        "selected_scattered_E_point_4": 0.2885784690604946,
+        "selected_scattered_E_point_5": 0.2607738492700308,
+        "selected_scattered_H": 0.2759499330243161,
+        "selected_scattered_H_point_0": 0.24012943205320503,
+        "selected_scattered_H_point_1": 0.2653398132684116,
+        "selected_scattered_H_point_2": 0.2923434433562914,
+        "selected_scattered_H_point_3": 0.28204885460131335,
+        "selected_scattered_H_point_4": 0.2875587166031375,
+        "selected_scattered_H_point_5": 0.262217915648968,
+        "ordered_total_channels": 0.1406216362319976,
+        "ordered_outgoing_channels": 0.06749157082071927,
+        "ordered_boundary_outgoing_channels": 0.06548245067588578,
+        "ordered_scattered_channels": 0.2496606124859041,
+        "total_H_code_L2": 0.19223212379085797,
+        "scattered_H_code_L2": 0.28112706090438416
+      },
+      "closure_recomputed": 0.06521868996824098,
+      "absorption_gap_recomputed": 0.06521868996824101,
+      "max_channel_power_difference_recomputed": 0.017313979852918826,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7949710919845612,
+        0.046025447454990806,
+        0.159003460560448,
+        0.22422215052868902
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 10.805909822502876,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 1.7410601168923873e-14,
+          "denominator": 10.805909822502876,
+          "relative": 1.6112110368223683e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-BLOCK-METRIC-TIME-3600": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.885852183252661,
+        "augmented_relative": 0.885852183252661,
+        "original_total_augmented_relative": 0.4196297393751353,
+        "independent_DOLFINx_total_native_relative": 0.4196297393751436
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.06398105046672371,
+        "scattered_L2": 0.09330027647078917,
+        "total_scaled_curl": 0.06396283613159005,
+        "scattered_scaled_curl": 0.09354151519621208,
+        "selected_total_E": 0.06321993513860745,
+        "selected_total_E_point_0": 0.10639284387241367,
+        "selected_total_E_point_1": 0.09505754176319732,
+        "selected_total_E_point_2": 0.07701268635399701,
+        "selected_total_E_point_3": 0.07931829154307904,
+        "selected_total_E_point_4": 0.04708911546964324,
+        "selected_total_E_point_5": 0.04763581989764769,
+        "selected_total_H": 0.06515462425001566,
+        "selected_total_H_point_0": 0.10570407248207511,
+        "selected_total_H_point_1": 0.09540864753657553,
+        "selected_total_H_point_2": 0.07775886630398901,
+        "selected_total_H_point_3": 0.09106269061707142,
+        "selected_total_H_point_4": 0.0446537244462673,
+        "selected_total_H_point_5": 0.04846561688159551,
+        "selected_scattered_E": 0.09343885257728764,
+        "selected_scattered_E_point_0": 0.11748798967596134,
+        "selected_scattered_E_point_1": 0.10797552331921777,
+        "selected_scattered_E_point_2": 0.09594857959055882,
+        "selected_scattered_E_point_3": 0.09774539159047214,
+        "selected_scattered_E_point_4": 0.07531976332747782,
+        "selected_scattered_E_point_5": 0.08888130540833342,
+        "selected_scattered_H": 0.09700937790855833,
+        "selected_scattered_H_point_0": 0.12015242478691111,
+        "selected_scattered_H_point_1": 0.11084712096354365,
+        "selected_scattered_H_point_2": 0.09662555310977254,
+        "selected_scattered_H_point_3": 0.11485608725917643,
+        "selected_scattered_H_point_4": 0.07186103683796528,
+        "selected_scattered_H_point_5": 0.09025302819879767,
+        "ordered_total_channels": 0.05768994412118367,
+        "ordered_outgoing_channels": 0.027688377504543928,
+        "ordered_boundary_outgoing_channels": 0.025985643578738574,
+        "ordered_scattered_channels": 0.10242312043511129,
+        "total_H_code_L2": 0.06396283613159005,
+        "scattered_H_code_L2": 0.09354151519621208
+      },
+      "closure_recomputed": 0.04600475293649087,
+      "absorption_gap_recomputed": 0.046004752936490756,
+      "max_channel_power_difference_recomputed": 0.023512819584829536,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7888171823330803,
+        0.026976900966444603,
+        0.1842059167004751,
+        0.13820116376398434
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 16.180497940012614,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 2.6151965619629725e-14,
+          "denominator": 16.180497940012614,
+          "relative": 1.6162645745875815e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-IDENTITY-METRIC-CONTROL-WORK-20": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.962182760258141,
+        "augmented_relative": 0.962182760258141,
+        "original_total_augmented_relative": 0.4557876681364986,
+        "independent_DOLFINx_total_native_relative": 0.45578766813652355
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.16760847167561735,
+        "scattered_L2": 0.24441481707642093,
+        "total_scaled_curl": 0.16756068627418524,
+        "scattered_scaled_curl": 0.24504667756068094,
+        "selected_total_E": 0.1636941013496496,
+        "selected_total_E_point_0": 0.1882766290219637,
+        "selected_total_E_point_1": 0.20325774680726516,
+        "selected_total_E_point_2": 0.20437986056524485,
+        "selected_total_E_point_3": 0.20643781926014868,
+        "selected_total_E_point_4": 0.1582403517809788,
+        "selected_total_E_point_5": 0.12117291784813884,
+        "selected_total_H": 0.16120222602726475,
+        "selected_total_H_point_0": 0.1809309232130101,
+        "selected_total_H_point_1": 0.19769781462815234,
+        "selected_total_H_point_2": 0.20534838328681101,
+        "selected_total_H_point_3": 0.19321060594751754,
+        "selected_total_H_point_4": 0.15676180638927825,
+        "selected_total_H_point_5": 0.12222446062129837,
+        "selected_scattered_E": 0.2419393340130282,
+        "selected_scattered_E_point_0": 0.207911000793284,
+        "selected_scattered_E_point_1": 0.23087975107616895,
+        "selected_scattered_E_point_2": 0.2546328176115367,
+        "selected_scattered_E_point_3": 0.2543971269440067,
+        "selected_scattered_E_point_4": 0.2531078727245094,
+        "selected_scattered_E_point_5": 0.22609051637234873,
+        "selected_scattered_H": 0.24001562198213375,
+        "selected_scattered_H_point_0": 0.20566179365193388,
+        "selected_scattered_H_point_1": 0.2296881272099997,
+        "selected_scattered_H_point_2": 0.25517220168457627,
+        "selected_scattered_H_point_3": 0.24369381209505248,
+        "selected_scattered_H_point_4": 0.2522760661830449,
+        "selected_scattered_H_point_5": 0.22760728947258543,
+        "ordered_total_channels": 0.12141574928298447,
+        "ordered_outgoing_channels": 0.058273675808777306,
+        "ordered_boundary_outgoing_channels": 0.05662482174545141,
+        "ordered_scattered_channels": 0.21556234974691177,
+        "total_H_code_L2": 0.16756068627418524,
+        "scattered_H_code_L2": 0.24504667756068094
+      },
+      "closure_recomputed": 0.054101725221462615,
+      "absorption_gap_recomputed": 0.05410172522146267,
+      "max_channel_power_difference_recomputed": 0.01632236329509118,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7959667797100082,
+        0.04372750542793357,
+        0.16030571486205825,
+        0.21440744008352092
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 11.345687403257651,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 1.8279192509994892e-14,
+          "denominator": 11.345687403257651,
+          "relative": 1.611113708698377e-15
+        },
+        "quadrature_pass": true
+      }
+    },
+    "V11-PHASE-BLOCK-METRIC-WORK-20": {
+      "residuals_from_retained_FE_audit": {
+        "native_relative": 0.8465419049282757,
+        "augmented_relative": 0.8465419049282757,
+        "original_total_augmented_relative": 0.40100839129937027,
+        "independent_DOLFINx_total_native_relative": 0.40100839129937793
+      },
+      "error_ratios_recomputed": {
+        "total_L2": 0.08430971287661955,
+        "scattered_L2": 0.12294451971607742,
+        "total_scaled_curl": 0.08413301996444283,
+        "scattered_scaled_curl": 0.12303910585384957,
+        "selected_total_E": 0.08315684916771722,
+        "selected_total_E_point_0": 0.13298572017117125,
+        "selected_total_E_point_1": 0.1239160333109252,
+        "selected_total_E_point_2": 0.1045919048520612,
+        "selected_total_E_point_3": 0.10660020293213551,
+        "selected_total_E_point_4": 0.06233243338408471,
+        "selected_total_E_point_5": 0.06148111921029353,
+        "selected_total_H": 0.08520502254514219,
+        "selected_total_H_point_0": 0.1341662671480345,
+        "selected_total_H_point_1": 0.1247475811309845,
+        "selected_total_H_point_2": 0.10440443765431896,
+        "selected_total_H_point_3": 0.1178009379519075,
+        "selected_total_H_point_4": 0.0610653834019481,
+        "selected_total_H_point_5": 0.06186432285838081,
+        "selected_scattered_E": 0.12290554479593256,
+        "selected_scattered_E_point_0": 0.1468540961012129,
+        "selected_scattered_E_point_1": 0.14075578114275394,
+        "selected_scattered_E_point_2": 0.1303089813163664,
+        "selected_scattered_E_point_3": 0.13136539348639772,
+        "selected_scattered_E_point_4": 0.09970168441880467,
+        "selected_scattered_E_point_5": 0.11471456028504481,
+        "selected_scattered_H": 0.12686261837795645,
+        "selected_scattered_H_point_0": 0.15250502600246155,
+        "selected_scattered_H_point_1": 0.14493351045810302,
+        "selected_scattered_H_point_2": 0.12973615762381244,
+        "selected_scattered_H_point_3": 0.14858066148641327,
+        "selected_scattered_H_point_4": 0.09827224538576347,
+        "selected_scattered_H_point_5": 0.11520419700996574,
+        "ordered_total_channels": 0.07129184613397482,
+        "ordered_outgoing_channels": 0.03421663131804843,
+        "ordered_boundary_outgoing_channels": 0.032105539913263356,
+        "ordered_scattered_channels": 0.1265720300800269,
+        "total_H_code_L2": 0.08413301996444283,
+        "scattered_H_code_L2": 0.12303910585384957
+      },
+      "closure_recomputed": 0.04922823229285034,
+      "absorption_gap_recomputed": 0.049228232292850366,
+      "max_channel_power_difference_recomputed": 0.01686580058607745,
+      "residual_gate_from_saved_scalars": false,
+      "field_gate_from_saved_numerators": false,
+      "diagnostic_RTA": [
+        0.7954613174211479,
+        0.025047081095564833,
+        0.17949160148328727,
+        0.1302633691904369
+      ],
+      "parameter_reconstruction": {
+        "parameters_to_saved_c": {
+          "absolute": 0.0,
+          "denominator": 16.722638023733737,
+          "relative": 0.0
+        },
+        "next_quadrature_to_selected": {
+          "absolute": 2.7010618309375403e-14,
+          "denominator": 16.722638023733737,
+          "relative": 1.6152127595562596e-15
+        },
+        "quadrature_pass": true
+      }
+    }
+  },
+  "histories": {
+    "v11_phase_identity_metric": {
+      "accepted": 24,
+      "rejected": 10,
+      "accepted_loss_strictly_decreasing": true,
+      "initial_loss": 0.23467076193991687,
+      "at_3600": {
+        "accepted_outer": 90,
+        "actual_seconds": 3525.1388454100816,
+        "loss": 0.19742971903357848,
+        "checkpoint": {
+          "name": "committed_000015.pt",
+          "sha256": "84be541ec1854bc82ef118dcc9fa5ddc7bcfba84efa0a2218ae4b45527c94ba1"
+        }
+      },
+      "final_loss": 0.15360003173119766,
+      "final_accepted_outer": 99,
+      "K": 930,
+      "JVP_VJP": {
+        "JVP": 930,
+        "VJP": 954
+      },
+      "reference_used_for_training": false,
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524"
+    },
+    "v11_phase_block_metric": {
+      "accepted": 20,
+      "rejected": 11,
+      "accepted_loss_strictly_decreasing": true,
+      "initial_loss": 0.23467076193991687,
+      "at_3600": {
+        "accepted_outer": 89,
+        "actual_seconds": 3566.3681636950932,
+        "loss": 0.0943146715760124,
+        "checkpoint": {
+          "name": "committed_000014.pt",
+          "sha256": "f59d4d367312d24835278a81a0ad303ffaff6d53c1142d288489fa98b7a36616"
+        }
+      },
+      "final_loss": 0.0872060784094609,
+      "final_accepted_outer": 95,
+      "K": 991,
+      "JVP_VJP": {
+        "JVP": 991,
+        "VJP": 1012
+      },
+      "reference_used_for_training": false,
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524"
+    }
+  },
+  "mid_to_final_derived": {
+    "native_reduction_fraction": 0.044375663420556544,
+    "scattered_L2_growth_fraction": 0.3177294255346541,
+    "scaled_curl_growth_fraction": 0.31534223703521946,
+    "loss_reduction_fraction": 0.07537102179083943
+  },
+  "evidence_classes": {
+    "original_values": "historical_measured",
+    "arithmetic_here": "derived",
+    "next_round_diagnostics": "not_run"
+  },
+  "reviewer_script_sha256": "ee289b379828bc71bc610f22888e3dc0c20b1fa947376644b1004418428b2c03",
+  "reviewer_executed_script": "tmp/task42extra/review_v11_scalar_audit_executed_source.py",
+  "supervision": {
+    "completed": "tmp/task42extra/checks/review_v11_saved_scalar_audit_20261002T224957173279Z/summary.json",
+    "elapsed_seconds": 2.783112721052021,
+    "sampled_process_tree_rss_peak_bytes": 97427456,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "compact_export_note": "Removed repeated checkpoint metadata only after completed audit; no numeric values changed.",
+  "later_optional_rerun": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "reason": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+    "worker_started": false,
+    "numeric_result_invalidated": false,
+    "attempt_directory": "tmp/task42extra/checks/review_v11_saved_scalar_audit_compact_20261002T225104646116Z"
+  },
+  "document_delivery_checks": {
+    "scope": "review_report_v11.md only; no numerical source changed",
+    "static_structure": {
+      "method": "Codex orchestration JavaScript inspection, not repository Markdown parser",
+      "tables": 12,
+      "math_fences": 3,
+      "links": 56,
+      "existing_local_link_targets": 50,
+      "structural_errors": 0,
+      "git_diff_whitespace_errors": 0
+    },
+    "repository_markdown_parser": {
+      "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+      "reason": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "worker_started": false,
+      "attempt_directory": "tmp/task42extra/checks/review_v11_markdown_contract_20261002T230535103219Z"
+    },
+    "actual_GitHub_rendered_view": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "new_training_or_PDE": false,
+    "full_repository_pytest": false,
+    "CI_claimed": false
+  }
+}
