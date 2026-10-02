@@ -1,3 +1,12 @@
+# dot Task40extra V10 两胞元full3D p4运算资格通过
+
+本轮在source35dd9e5c39939d14bbded98f288007aff4a08368上完成Q0–Q2 audit-only资格。两个40-cell真实三维sector保留全部原内部通道、四q及532 aliases，独立checker4842/4842通过。完整CSR、每q3968 FE列、raw双向运输和每侧4320内部RHS恢复均通过；没有global/q factor或PDE solve，使用原108×108 cell-interior LU。四fresh同twist off-block与八历史跨twist controls严格区分。
+
+worker/checker监督wall334.13608062599815/10.395193903998006s，采样同时整树RSS741564416/312737792B，swap0、后代清场。只授予scaled full3D架构运算资格；Q3–Q5 quotient inverse/forcing/outer/notch/完整输出及原50×25×140 nm、λ0.7nm、2TB/48h目标未资格。[Response V10](task40extra_dot_parallel_cloud/response_v10.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/two_cell_p4_v10/two_cell_p4_v10_compact.json)、[独立复核](task40extra_dot_parallel_cloud/outcomes/records/two_cell_p4_v10/independent_verification.json)。V5–V9全部历史失败、默认及其他分支保持。
+
+
+---
+
 # dot Task40extra V9：centered full3D p4同网格升阶资格通过
 
 2026-10-01，source `ad356715da86ab34fa6b10838cccc8629b3f6e8b` 先完成显式跨HEAD p2 sparse桥接，对不可变7c4410d dense权威的全部2048原列差0，再完成同80三维单元的centered p4；独立checker164/164与148/148通过。全部15872独立原FE自由度、8640内部自由度、4q和532非空端口保留。

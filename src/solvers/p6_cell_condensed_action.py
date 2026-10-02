@@ -912,6 +912,118 @@ class P6CellCondensedAction:
         self._apply_count += 1
         return np.ascontiguousarray(result)
 
+    def iter_reduced_contributions(self, *, allocation_gate):
+        """Yield complete native reduced (rows, columns, block, label).
+
+        Opt-in read-only provider for a bounded quotient audit. Cached port
+        mode is required: no local solve, global matrix or factor is created
+        here. Consume/project each block before advancing; do not retain
+        scratch or borrowed views after advancing or destroying this action.
+        Original H includes any direct Hlocal already merged at construction;
+        cached Hhat is not emitted. All internal Di*XiB terms follow separately.
+        """
+        from .static_local_schur_action import iter_owned_constrained_schur_contributions
+
+        if not callable(allocation_gate):
+            raise ValueError("fresh whole-tree contribution allocation gate required")
+        if self._destroyed or self.condensed._destroyed:
+            raise RuntimeError("action-only system has been destroyed")
+        if self.condensed.comm.Get_size() != 1 or self.port_coupling_mode != "cached":
+            raise ValueError("initial contribution provider requires MPI1 cached ports")
+        nt = int(self.condensed.active_rows)
+        nr = self.reduced_size
+        index_bytes = np.dtype(PETSc.IntType).itemsize
+        if nr <= 0 or nr > int(np.iinfo(PETSc.IntType).max):
+            raise OverflowError("reduced row range exceeds PETSc.IntType before narrowing")
+
+        def gate(label, payload=0, workspace=0):
+            if self._destroyed or self.condensed._destroyed:
+                raise RuntimeError("contribution owner destroyed during iteration")
+            allocation_gate("quotient_contribution/" + label, {
+                "matrix_payload_bytes": int(payload), "workspace_bytes": int(workspace),
+                "allocation_semantics": "additional_objects_to_current_resident_RSS",
+                "consumer_must_release_before_next": True,
+                "global_q_factor_count": 0, "PETSc_index_itemsize_bytes": index_bytes,
+            })
+
+        def view(value):
+            result = np.asarray(value).view()
+            result.setflags(write=False)
+            return result
+
+        def checked(rows, columns, block, label):
+            rows, columns, block = np.asarray(rows), np.asarray(columns), np.asarray(block)
+            for ids in (rows, columns):
+                if (ids.ndim != 1 or ids.dtype.kind not in "iu"
+                        or (ids.size and (int(ids.min()) < 0 or int(ids.max()) >= nr))
+                        or len(np.unique(ids)) != len(ids)):
+                    raise ValueError("invalid native reduced contribution indices")
+            if (block.shape != (len(rows), len(columns)) or block.dtype != np.dtype(np.complex128)
+                    or not np.isfinite(block).all()):
+                raise ValueError("invalid finite complex128 contribution block")
+            return view(rows), view(columns), view(block), label
+
+        np_ = int(self.condensed.appended_rows)
+        gate("ports/H_original", np_ * index_bytes, np_ * np_)
+        ports = np.arange(nt, nr, dtype=PETSc.IntType)
+        yield checked(ports, ports, self._H_p, "ports/H_original")
+        del ports
+
+        for cell_index, cell in enumerate(self._cells):
+            na, nc = len(cell.active_ids), len(cell.original_trace)
+            expansion_bytes = sum(a.nbytes for a in (
+                cell.expansion.data, cell.expansion.indices, cell.expansion.indptr))
+            # Existing iterator rebuilds the local sparse expansion, then
+            # C_K^H S_K C_K. Include Python triplet work and both dense products.
+            gate(f"volume/cell/{cell_index}", 16 * na * na + na * index_bytes,
+                 2 * expansion_bytes + cell.expansion.nnz * 224
+                 + 16 * (na * nc + 2 * na * na) + na * na)
+            _index, ids, block = next(iter_owned_constrained_schur_contributions(
+                self.condensed, (cell_index,)))
+            if not np.array_equal(ids, cell.active_ids):
+                raise ValueError("inherited volume/port active row ordering differs")
+            yield checked(ids, ids, block, f"volume/cell/{cell_index}")
+            del ids, block
+            count = len(cell.ports)
+            if not count:
+                continue
+            if cell.Bhat is None or cell.Dhat is None or cell.XiB is None:
+                raise ValueError("cached complete port formulas are unavailable")
+            gate(f"cell/C_hat/{cell_index}", count * index_bytes + 16 * na * count,
+                 2 * expansion_bytes + na * count)
+            port_ids = nt + cell.ports
+            block = np.asarray(cell.expansion.conjugate().T @ cell.Bhat)
+            yield checked(cell.active_ids, port_ids, block, f"cell/C_hat/{cell_index}")
+            del block
+            # D is already the original dual functional; only the native
+            # expansion is applied on the right. No additional conjugation.
+            gate(f"cell/-D_hat/{cell_index}", 16 * count * na,
+                 expansion_bytes + 16 * count * na + count * na)
+            block = -np.asarray(cell.expansion.T @ cell.Dhat.T).T
+            yield checked(port_ids, cell.active_ids, block, f"cell/-D_hat/{cell_index}")
+            del block
+            gate(f"cell/Hhat_correction/{cell_index}", 16 * count * count,
+                 count * count)
+            block = cell.Di @ cell.XiB
+            yield checked(port_ids, port_ids, block, f"cell/Hhat_correction/{cell_index}")
+            del block, port_ids
+
+        # Each shared already-MPC-reduced carrier trace entry is emitted
+        # once here, rather than copied into every adjacent volume cell.
+        for port, (rows, values) in sorted(self._direct_B_active.items()):
+            label = f"direct/C/port/{port}"
+            gate(label, index_bytes, len(rows))
+            port_id = np.asarray([nt + port], dtype=PETSc.IntType)
+            yield checked(rows, port_id, values.reshape(-1, 1), label)
+            del port_id
+        for port, (columns, values) in sorted(self._direct_D_active.items()):
+            label = f"direct/-D/port/{port}"
+            gate(label, index_bytes + values.nbytes, len(columns))
+            port_id = np.asarray([nt + port], dtype=PETSc.IntType)
+            block = -values.reshape(1, -1)
+            yield checked(port_id, columns, block, label)
+            del port_id, block
+
     def _add_direct_reduced(self, target: np.ndarray, alpha: np.ndarray, active: np.ndarray) -> None:
         for port, (rows, values) in self._direct_B_active.items():
             factor = alpha[port]

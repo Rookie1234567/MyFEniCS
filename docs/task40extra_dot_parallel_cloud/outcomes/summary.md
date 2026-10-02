@@ -165,3 +165,20 @@ DtN 实验检查开放边界通道的编号、物理方向和局部投影积分�
 | not_run | p6、强对比、原尺寸精度/截断、跨ABI/MPI/restart、2TB/48h | 下一阶段仅两单元参考quotient计划；不将数值块当物理降维 |
 
 缺口的四个采样PC缺陷仅1.8697e−4至2.0507e−3，不是算子范数界或大型收敛证明。原volume authority为保存live FFCx作用，p4未做全局direct对照。详见[Response V9](../response_v9.md)、[compact](records/centered_p4_v9/centered_p4_v9_compact.json)、[独立核验](records/centered_p4_v9/independent_verification.json)：1251源文件、591产物hash条目及48 raw-factor hash。本轮归档不重跑数值，全部历史失败与源身份保留。
+
+### V10 两胞元full3D p4 Q0–Q2审计
+
+两个真实三维40-cell空间按y平移相位覆盖原80-cell/p4的四个q分支；边、面、胞元内部、MPC及532原alias全部保留。这里只验证同一原方程的表示、作用及manufactured恢复，不是物理解或quotient inverse。
+
+|项|实测/边界|
+|---|---|
+|source/tree|35dd9e5c39939d14bbded98f288007aff4a08368 /38fde56b7e8988194699a8943145d7b087f22318，clean|
+|资格|Q0–Q2；独立checker4842/4842；evidence_valid=true|
+|覆盖|两sector228/304 modes；全部四q；每q3968 FE列；每侧4320内部RHS全非零|
+|最大运算差|CSR norm7.623844459299511e−16；entry1.2633342716896627e−15；map1.112995121386375e−15；original action9.123615983914468e−16；complete recovery2.0082399999380633e−13|
+|cross控制来源|4 fresh local同twist；8 immutable旧S/maps跨twist，complete map桥接和2 fresh原作用witness支持|
+|资源|worker334.13608062599815s /741564416B；checker10.395193903998006s /312737792B；采样整树RSS、swap0、后代清场|
+|因子|global/q0；继承108×108 cell内部LU，20 shared buffers/sector|
+|未资格|Q3–Q5 inverse/forcing/outer/notch/full outputs；目标尺寸/精度/2TB/48h；官方R/T/A、MPI/restart|
+
+[Response V10](../response_v10.md)、[compact](records/two_cell_p4_v10/two_cell_p4_v10_compact.json)、[独立复核](records/two_cell_p4_v10/independent_verification.json)记录1267源文件、2222 artifact hash entries和1064 raw packet JSON描述符；不重跑数值，不重命名旧ad356715权威，不改历史失败。

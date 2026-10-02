@@ -199,7 +199,8 @@ def loaded_surface_kernel_identity(ufl_form, compiled_form, code, semantic_const
         "restoration_exact": True, "numerical_assembly_during_probe": False,
     })
 
-def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_assemblers):
+def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_assemblers,
+                                 *, quotient_context=None):
     """Bind actual discrete inputs/source; initially MPI1 only, no big tables.
 
     Degree/rule and compiler/Basix ABI bind the same current default facet
@@ -259,6 +260,36 @@ def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_as
                 "ffcx": ffcx.__version__, "PETSc": PETSc.Sys.getVersion(),
                 "scalar": str(np.dtype(PETSc.ScalarType)), "integer": str(np.dtype(PETSc.IntType))},
     }
+    if quotient_context is not None:
+        from .y_orbit_quotient_context import YOrbitTwoCellQuotientContext, _config_sha256
+        from .y_orbit_condensed_adapter import _mpc_expansion_width
+        if not isinstance(quotient_context, YOrbitTwoCellQuotientContext):
+            raise TypeError("quotient context must use the frozen two-cell contract")
+        if (quotient_context.assembly_config_sha256 != _config_sha256(cfg)
+                or int(element.degree) != 4 or cell_count != 40 or int(qdegree) != 23
+                or not all(np.array_equal(np.unique(mesh.geometry.x[:, axis]), expected)
+                           for axis, expected in enumerate(quotient_context.local_axes))):
+            raise ValueError("actual local mesh/config/Basix/Gauss differs from the frozen p4 quotient")
+        rows = int(space.dofmap.index_map.size_local)
+        width = _mpc_expansion_width(mpc, rows)
+        constraints = Path(__file__).parent.parent / "constraints"
+        extra_sources = [Path(__file__).with_name("y_orbit_quotient_context.py"),
+                         Path(__file__).with_name("fullspace_same_mesh_hcurl_pmg_global.py"),
+                         Path(__file__).with_name("y_orbit_condensed_adapter.py"),
+                         constraints/"floquet_3d.py", constraints/"floquet_3d_high_order.py",
+                         constraints/"high_order_floquet_trace.py"]
+        payload["source_sha256"].update({p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                                         for p in extra_sources})
+        payload["y_orbit_quotient"] = {
+            "contract": quotient_context.identity(), "contract_sha256": quotient_context.sha256,
+            "actual_local_cells": cell_count, "actual_local_storage_rows": rows,
+            "actual_finalized_mpc_max_expansion_width": width,
+            "actual_finalized_mpc_slave_rows": len(mpc.slaves),
+            "actual_finalized_mpc_nonzero_master_check": "existing public-map admission validator",
+            "local_boundary_area": float((cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)),
+            "global_boundary_area": float((cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*2),
+            "twist_requires_global_dual_rhs_transport": True,
+        }
     return deep_frozen_identity(payload)
 
 

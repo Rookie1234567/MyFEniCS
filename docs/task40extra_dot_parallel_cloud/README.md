@@ -37,3 +37,5 @@ real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_or
 [V8完整centered p2资格](response_v8.md)已在source7c4410完成：dense129项、sparse164项checker通过，全部2048原FE列差0，完整480内部载荷与真实三维缺口恢复通过，全部532实际端口C/D非空。V7候选的未运行状态保留为历史；两次严格上下文身份门失败也保留。本次仅小规模弱对比离散架构资格，p4/p6、官方R/T/A、连续/截断精度和原尺寸2TB/48h仍未资格。
 
 [V9同网格centered p4升阶](response_v9.md)已在sourcead356715完成：新源码p2对旧不可变dense权威全部2048原列差0，checker164/148项通过。p4保留15872原独立自由度、全部8640内部自由度、4q及532非空端口；缺口原残差最大7.9669e−12。自身basis/Gauss/live证明通过；没有full p4 direct，volume权威为保存live FFCx作用。原目标尺寸/精度/2TB/48h仍未资格，下一阶段仅准备两单元参考quotient计划。
+
+[V10两胞元full3D p4运算审计](response_v10.md)在clean source35dd9e5完成Q0–Q2：两个40-cell三维sector、完整四q/532 aliases、每q全部3968 FE列及每侧4320内部RHS完整恢复，独立checker4842/4842通过。四fresh local同twist off-block与八历史cross-twist controls来源分开；global/q factors0，使用继承108×108 cell-interior LU。Q3–Q5 quotient inverse/forcing/outer/notch/output仍未资格，原50×25×140 nm、λ0.7nm及2TB/48h目标仍未解决。

@@ -106,6 +106,9 @@ def build_same_mesh_physical_action(
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     dtn_phase_gauge: str = "global_z",
     verify_dtn_quadrature: bool = False,
+    physical_cfg: Any | None = None,
+    quotient_context: Any | None = None,
+    raw_mode_observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -123,6 +126,8 @@ def build_same_mesh_physical_action(
         build_gauge_assembly_context,
     )
     validate_phase_gauge(dtn_phase_gauge)
+    if raw_mode_observer is not None and (dtn_phase_gauge != BOUNDARY_PLANE or not callable(raw_mode_observer)):
+        raise ValueError("raw mode observer requires an explicit boundary-plane research callback")
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
     from .fullspace_dtn_action import (
@@ -143,7 +148,20 @@ def build_same_mesh_physical_action(
     if getattr(floquet, "mpc", None) is None:
         raise ValueError("same-mesh physical action requires a finalized Floquet MPC")
 
-    if mode_inventory is None:
+    if quotient_context is not None:
+        from .y_orbit_quotient_context import YOrbitTwoCellQuotientContext
+        if (not isinstance(quotient_context, YOrbitTwoCellQuotientContext)
+                or physical_cfg is None or mode_inventory is None
+                or dtn_phase_gauge != BOUNDARY_PLANE or degree != 4):
+            raise ValueError("quotient physical action requires p4, full original inventory/config and boundary-plane context")
+        if ((complex(floquet.phase_x), complex(floquet.phase_y)) != quotient_context.phase_override
+                or complex(floquet.phase_corner) != quotient_context.phase_x*quotient_context.tau
+                or floquet.orientation_factor_stats.get("research_phase_source") != "explicit_pre_finalize_topology_materialization"):
+            raise ValueError("local setup does not contain the explicit finalized quotient MPC wrap")
+        modes, mode_rows, mode_sha = quotient_context.select_inventory(physical_cfg, cfg, mode_inventory)
+    elif physical_cfg is not None:
+        raise ValueError("separate physical_cfg requires an explicit quotient context")
+    elif mode_inventory is None:
         modes, mode_rows, mode_sha = build_dynamic_mode_inventory(cfg)
     else:
         if len(mode_inventory) != 3:
@@ -156,7 +174,14 @@ def build_same_mesh_physical_action(
     if not modes or len(mode_rows) != len(modes):
         raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
-    qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
+    if quotient_context is None:
+        qdegree = _dtn_surface_quadrature_degree(cfg, list(modes))
+    else:
+        # Same Gauss rule as the full physical inventory, even if a sector's
+        # maximum local alias order would select a different rule.
+        qdegree = _dtn_surface_quadrature_degree(physical_cfg, list(mode_inventory[0]))
+        if qdegree != 23:
+            raise ValueError("bounded p4 quotient requires the original degree23 facet Gauss rule")
     assemblers = _surface_assemblers(
         function_space,
         setup["mesh_data"],
@@ -171,11 +196,29 @@ def build_same_mesh_physical_action(
     volume_action = None
     physical_action = None
     try:
-        carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
-            assembly_context=(build_gauge_assembly_context(function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers)
-                              if dtn_phase_gauge == BOUNDARY_PLANE else None),
-        )
+        if quotient_context is None and raw_mode_observer is None:
+            carrier = build_fullspace_dtn_carrier_from_surface(
+                modes, assemblers, floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
+                assembly_context=(build_gauge_assembly_context(function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers)
+                                  if dtn_phase_gauge == BOUNDARY_PLANE else None),
+            )
+        elif quotient_context is None:
+            carrier = build_fullspace_dtn_carrier_from_surface(
+                modes, assemblers, floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
+                assembly_context=(build_gauge_assembly_context(function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers)
+                                  if dtn_phase_gauge == BOUNDARY_PLANE else None),
+                raw_mode_observer=raw_mode_observer,
+            )
+        else:
+            carrier = build_fullspace_dtn_carrier_from_surface(
+                modes, assemblers, floquet.mpc, cfg, phase_gauge=dtn_phase_gauge,
+                assembly_context=build_gauge_assembly_context(
+                    function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers,
+                    quotient_context=quotient_context,
+                ),
+                physical_cfg=physical_cfg, physical_mode_inventory=mode_inventory,
+                quotient_context=quotient_context, raw_mode_observer=raw_mode_observer,
+            )
         if dtn_phase_gauge == BOUNDARY_PLANE and mode_sha != carrier.physical_generator_manifest_sha256:
             raise ValueError("physical generator identity differs from supplied inventory")
     finally:
@@ -202,12 +245,24 @@ def build_same_mesh_physical_action(
         owned_dtn_action = dtn_action
         dtn_action = None
         volume_action = None
-        incident_projections = tuple(
-            incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
-            if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
-            for mode in modes
-        )
+        if quotient_context is None:
+            incident_projections = tuple(
+                incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
+                if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
+                for mode in modes
+            )
+        else:
+            incident_projections = None  # Physical forcing must be folded from the original global load.
         return {
+            **({"quotient_context": quotient_context, "physical_cfg": physical_cfg,
+                "global_mode_inventory": mode_inventory,
+                "original_mode_indices": quotient_context.original_mode_indices,
+                "global_mode_indices": quotient_context.original_mode_indices,
+                "qbase": quotient_context.twist_index,
+                "original_mode_keys": quotient_context.original_mode_keys,
+                "local_branch_indices": quotient_context.local_branch_indices,
+                "physical_rhs_source": "dual_transport_of_original_global_MPC_load"}
+               if quotient_context is not None else {}),
             **({"compiled_surface_gauss_identity": compiled_gauss} if compiled_gauss is not None else {}),
             **({"dtn_phase_gauge": dtn_phase_gauge,
                 "physical_generator_manifest_sha256": mode_sha,
@@ -491,6 +546,8 @@ def audit_p6_same_mesh_physical_bundle(bundle: Mapping[str, Any]) -> dict[str, A
 def build_physical_rhs(bundle: Mapping[str, Any]) -> tuple[Any, dict[str, Any]]:
     """Build the current dtn-port physical RHS, without applying the operator."""
 
+    if bundle.get("quotient_context") is not None:
+        raise ValueError("quotient physical RHS must use dual transport of the original global MPC load")
     from .dtn_port_3d import _assemble_mpc_vector, _incident_top_traction_form
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 

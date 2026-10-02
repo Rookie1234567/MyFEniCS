@@ -1,0 +1,124 @@
+{
+  "schema": "independent_quotient_Q0_Q2_saved_evidence_review_v1",
+  "disposition": "PASS within Q0-Q2 audit-only scope",
+  "source_head": "35dd9e5c39939d14bbded98f288007aff4a08368",
+  "verified_source_files": 1267,
+  "verified_artifact_hashes": 2222,
+  "verified_raw_packet_descriptor_hashes": 1064,
+  "checker_gates": 4842,
+  "ABI_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+  "old_authority_head": "ad356715da86ab34fa6b10838cccc8629b3f6e8b",
+  "exact_old_new_dependency_list_verified": true,
+  "resources": {
+    "worker": {
+      "rss_sampled_tree_peak_bytes": 741564416,
+      "wall_seconds": 334.13608062599815,
+      "sample_count": 1325,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary_sha256": "e7addcd433069fecc379d0827638ab9c4548e6b8ce203b5d724a92d981fa6f98"
+    },
+    "checker": {
+      "rss_sampled_tree_peak_bytes": 312737792,
+      "wall_seconds": 10.395193903998006,
+      "sample_count": 42,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary_sha256": "9bd2bd6a90054d693a449a143dd3f33ca8495ab64a73b1f0fdf4e506dd3d2645"
+    }
+  },
+  "metrics": {
+    "q_CSR_relative_Frobenius_max": 7.623844459299511e-16,
+    "q_CSR_relative_max_entry_max": 1.2633342716896627e-15,
+    "complete_3968_FE_column_per_q_error_max": 1.112995121386375e-15,
+    "cross_12_relative_Frobenius_max": 6.7295961749368e-16,
+    "cross_12_relative_max_entry_max": 1.0462045068457151e-15,
+    "raw_fold_max": 3.5511349852001364e-15,
+    "raw_lift_max": 5.034776843574962e-15,
+    "original_action_max": 9.123615983914468e-16,
+    "complete_recovery_max": 2.0082399999380633e-13
+  },
+  "sector_receipts": [
+    {
+      "twist": 0,
+      "mode_count": 228,
+      "receipt_sha256": "16a6e11102a91592f26f80fe943296bd0f668ff4be58236b766ddfa1a81f0bef",
+      "ledger_sha256": "dfa862c7ab5e016d7a398bd4c1414375be5ddb2f4c237fb8d4bee6db6eb28c83",
+      "largest_ledger_defect": 1.669963102687237e-13,
+      "carrier_numeric_sha256": "72453449ab8b758a74bd3613d237368554fa7f2cf8f3e1dcd978cf40097db930",
+      "original_action": {
+        "twist": 0,
+        "relative_original_FE_action_defect": 9.123615983914468e-16,
+        "local_FE_rows": 7936,
+        "all_local_interior_rows": 4320,
+        "global_FE_rows": 15872,
+        "q_factors_used": false,
+        "volume_and_DtN_original_action": true
+      },
+      "complete_recovery": {
+        "twist": 0,
+        "reduced_original_augmented_action_defect": 5.987708424370298e-15,
+        "full_original_storage_recovery_defect": 1.5948927912628173e-13,
+        "arbitrary_interior_rhs_nonzero_count": 4320,
+        "all_interior_rows": 4320,
+        "port_rhs_norm": 51.36358120387356,
+        "strict_slave_zero": true,
+        "global_and_q_factors": 0,
+        "inherited_cell_interior_LU_used": true
+      }
+    },
+    {
+      "twist": 1,
+      "mode_count": 304,
+      "receipt_sha256": "e85d03c9460641d2d273e0df600337d659dca6651724e274d877b97169fc84fe",
+      "ledger_sha256": "18b9c6e593ff2d65812c7eda11110c28f637dd8fa0d9cf1db2a62538159811da",
+      "largest_ledger_defect": 1.6376412924840744e-13,
+      "carrier_numeric_sha256": "b08580a66e52d07ac06fd68840d027a267f062572fc3c7200c7875f77bf25292",
+      "original_action": {
+        "twist": 1,
+        "relative_original_FE_action_defect": 8.92055498245975e-16,
+        "local_FE_rows": 7936,
+        "all_local_interior_rows": 4320,
+        "global_FE_rows": 15872,
+        "q_factors_used": false,
+        "volume_and_DtN_original_action": true
+      },
+      "complete_recovery": {
+        "twist": 1,
+        "reduced_original_augmented_action_defect": 8.012802270233163e-15,
+        "full_original_storage_recovery_defect": 2.0082399999380633e-13,
+        "arbitrary_interior_rhs_nonzero_count": 4320,
+        "all_interior_rows": 4320,
+        "port_rhs_norm": 60.19490906635328,
+        "strict_slave_zero": true,
+        "global_and_q_factors": 0,
+        "inherited_cell_interior_LU_used": true
+      }
+    }
+  ],
+  "scope": {
+    "fresh_local_same_twist_offdiagonal_blocks": 4,
+    "historical_cross_twist_validation_blocks": 8,
+    "all_native_FE_columns_per_q": 3968,
+    "full_original_fresh_action_witnesses": 2,
+    "global_q_factors": 0,
+    "local_cell_interior_LU_used": true,
+    "physical_RHS_outputs_qualified": false
+  },
+  "records": {
+    "audit_report.json": "d0bade55828b8e842f240ad3eb8b5d79d9adfdeb06976ad5be8e0a8fb2aeb37f",
+    "independent_checker.json": "e3afab9490fce0a19f3ac868dbecac73957ddb2da5d528c1086a57c5e2b86b0f",
+    "provenance.json": "58fb8c4aad1d92dd75b07b6136f6c17e86d925aaf2f61db32b3e9a102873e265",
+    "summary.json": "e7addcd433069fecc379d0827638ab9c4548e6b8ce203b5d724a92d981fa6f98",
+    "abi_manifest.json": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+    "artifact_manifest.json": "845bfa52ad674ddc33e470f8017321f74d8ebb6e9d9d946046bde45aef7e2681"
+  },
+  "limits": [
+    "No solver imports, checker rerun, numerical arrays loaded, JIT, PDE, factor or solve performed by independent reviewer",
+    "Eight cross-twist blocks use immutable original S/maps after complete candidate map equivalence; not all12 blocks are freshly assembled candidate cross blocks",
+    "Original default-path preservation was reviewed at source level; this opt-in audit is not a default regression numerical run",
+    "Q3-Q5 quotient inverse/physical forcing/notch/full outputs, target-scale accuracy/capacity/time remain unqualified",
+    "Peak memory is sampled whole-process-tree RSS"
+  ],
+  "verification_completed_utc": "2026-10-01T23:11:07.647709+00:00"
+}

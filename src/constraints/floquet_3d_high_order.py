@@ -753,7 +753,8 @@ def _nonzero_terms(
 
 
 def build_high_order_constraint_data(
-    V, mesh_data, cfg: SimulationConfig3D
+    V, mesh_data, cfg: SimulationConfig3D,
+    *, research_phase_override: tuple[complex, complex] | None = None,
 ) -> HighOrderFloquetConstraintData:
     """Build phase-materialized qualified sparse local Floquet MPC arrays.
 
@@ -793,6 +794,17 @@ def build_high_order_constraint_data(
         "y": complex(cfg.floquet_phase_y),
         "corner": complex(cfg.floquet_phase_x) * complex(cfg.floquet_phase_y),
     }
+    materialized_override = None
+    if research_phase_override is not None:
+        if len(research_phase_override) != 2:
+            raise ValueError("research phase override requires explicit x/y phases")
+        phase_x, phase_y = (complex(value) for value in research_phase_override)
+        if (not np.isfinite((phase_x, phase_y, phase_x*phase_y)).all()
+                or phase_x == 0 or phase_y == 0 or phase_x*phase_y == 0):
+            raise ValueError("research phase override and corner must be finite and nonzero")
+        materialized_override = topology.materialize(phase_x=phase_x, phase_y=phase_y)
+        if any(not np.isfinite(value).all() for value in materialized_override):
+            raise ValueError("explicit phase materialization produced a nonfinite coefficient")
     local_maps: dict[int, tuple[int, np.ndarray, np.ndarray, np.ndarray, bool]] = {}
     local_owned_rows = 0
     local_owned_nnz = 0
@@ -801,7 +813,7 @@ def build_high_order_constraint_data(
     local_ghost_skipped = 0
     local_records_seen = 0
     orientation_values: list[complex] = []
-    for block in topology.blocks:
+    for block_index, block in enumerate(topology.blocks):
         if not block.slave_local_dofs or not block.master_owners:
             raise RuntimeError("Cached Floquet topology block lacks local MPC data.")
         phase = phase_by_kind[block.kind]
@@ -820,8 +832,11 @@ def build_high_order_constraint_data(
             masters, owners, coefficients = _nonzero_terms(
                 block.master_global_dofs,
                 block.master_owners,
-                phase * block.coefficient_transform[row, :],
+                (phase * block.coefficient_transform[row, :]
+                 if materialized_override is None else materialized_override[block_index][row, :]),
             )
+            if materialized_override is not None and np.any(masters == int(slave_global)):
+                raise RuntimeError("Explicit Floquet wrap contains a self-master constraint")
             if int(slave_local) in local_maps:
                 raise RuntimeError(
                     f"Local high-order Floquet slave {int(slave_local)} is duplicated."

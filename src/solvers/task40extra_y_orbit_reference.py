@@ -8,7 +8,7 @@ FFCx-assembled full 3D matrix. It does not implement scalable cell assembly.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, field
 from time import perf_counter
 from types import SimpleNamespace
 from typing import Any, Callable
@@ -96,7 +96,58 @@ class YOrbitLayout:
         return [float(np.linalg.norm(row)) for row in transformed.reshape(self.ny, self.width)]
 
 
-def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
+@dataclass
+class YOrbitEntities:
+    """Complete geometric native moment blocks, with no global R/F/Q matrix.
+
+    Vector/panel transport uses the same entity/cell transforms as the original
+    full-map builder. Native primal and dual transforms remain distinct.
+    """
+    independent: np.ndarray
+    full_rows: int
+    ny: int
+    width: int
+    bases: tuple
+    records: dict
+    slots: dict
+    dimension_counts: dict
+    y_widths: np.ndarray
+    _inverses: dict = field(default_factory=dict)
+
+    def transform(self, values, *, direction):
+        values = np.asarray(values,dtype=np.complex128)
+        n=len(self.independent)
+        if (values.ndim not in (1,2) or values.shape[0]!=n
+                or (values.ndim==2 and values.shape[1]>32) or not np.isfinite(values).all()):
+            raise ValueError("complete native/canonical vector or <=32-column panel required")
+        if direction not in ("primal_to_canonical","primal_from_canonical",
+                             "dual_to_canonical","dual_from_canonical",
+                             "functional_to_canonical","functional_from_canonical"):
+            raise ValueError("explicit primal/dual direction required")
+        result=np.empty_like(values)
+        for orbit in range(self.ny):
+            for base in self.bases:
+                rows,matrix=self.records[(orbit,base)]
+                first,size=self.slots[base]
+                canonical=slice(orbit*self.width+first,orbit*self.width+first+size)
+                if direction in ("primal_to_canonical","dual_from_canonical","functional_from_canonical"):
+                    key=(orbit,base)
+                    if key not in self._inverses:
+                        inverse=np.linalg.inv(matrix)
+                        if np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size)>LIMITS["mapping"]:
+                            raise ValueError("original entity moment inverse failed")
+                        self._inverses[key]=inverse
+                    matrix=self._inverses[key]
+                if direction=="primal_to_canonical":result[canonical]=matrix@values[rows]
+                elif direction=="primal_from_canonical":result[rows]=matrix@values[canonical]
+                elif direction=="dual_to_canonical":result[canonical]=matrix.conj().T@values[rows]
+                elif direction=="dual_from_canonical":result[rows]=matrix.conj().T@values[canonical]
+                elif direction=="functional_to_canonical":result[canonical]=matrix.T@values[rows]
+                else:result[rows]=matrix.T@values[canonical]
+        return result
+
+
+def collect_y_orbit_entities(space, floquet, cfg, axes):
     """Full-FE canonical geometric orbit map; no raw-row spatial assumptions."""
     from src.solvers.hcurl_canonical_vector_dolfinx import (
         _entity_coordinates, _physical_entity_transform, _topology_data,
@@ -182,6 +233,21 @@ def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
         width += len(rows)
     if width * ny != len(independent) or len(records) != ny * len(bases):
         raise ValueError("y orbit multiplicities do not cover the complete FE space")
+    return YOrbitEntities(independent,full_rows,ny,width,tuple(bases),records,slots,
+                          dimension_counts,np.diff(grid[1]))
+
+
+def build_y_orbit_layout(space, floquet, cfg, axes, *, wrap_phase_y=None, cell_phase_y=None) -> YOrbitLayout:
+    """Original full-map entry, plus explicit research-local wrap/eigenphase.
+
+    The candidate only calls this for its two-cell local mesh. Full original
+    outer transport calls collect_y_orbit_entities and never materializes R/F/Q.
+    """
+    entities=collect_y_orbit_entities(space,floquet,cfg,axes)
+    independent,full_rows,ny,width=entities.independent,entities.full_rows,entities.ny,entities.width
+    records,bases,slots=entities.records,entities.bases,entities.slots
+    dimension_counts=entities.dimension_counts
+    tolerance=1e-9
     r_rows, r_cols, r_values, inv_rows, inv_cols, inv_values = [], [], [], [], [], []
     orientation_defect = 0.0
     for orbit in range(ny):
@@ -205,9 +271,14 @@ def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
     identity_defect = sparse.linalg.norm(r_inverse @ r - sparse.eye(n)) / np.sqrt(n)
     if identity_defect > LIMITS["mapping"]:
         raise ValueError("native/canonical inverse maps fail")
-    phase = complex(cfg.floquet_phase_y)
+    phase = complex(cfg.floquet_phase_y if wrap_phase_y is None else wrap_phase_y)
     if abs(abs(phase) - 1.0) > LIMITS["mapping"] or abs(complex(cfg.ky).imag) > LIMITS["mapping"]:
         raise ValueError("initial unitary orbit probe requires real ky")
+    if cell_phase_y is not None:
+        cell_phase_y=complex(cell_phase_y)
+        if (not np.isfinite(cell_phase_y) or abs(abs(cell_phase_y)-1)>LIMITS["mapping"]
+                or abs(cell_phase_y**ny-phase)>LIMITS["mapping"]):
+            raise ValueError("explicit cell eigenphase must retain the exact wrap and real Bloch unit circle")
     shift_rows = np.arange(n)
     shift_cols = ((shift_rows // width + 1) % ny) * width + shift_rows % width
     shift_values = np.ones(n, dtype=complex)
@@ -217,7 +288,8 @@ def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
     for j in range(ny):
         for q_index in range(ny):
             theta = (complex(cfg.ky).real * float(cfg.period_y) + 2 * np.pi * q_index) / ny
-            value = np.exp(1j * theta * j) / np.sqrt(ny)
+            value = (np.exp(1j*theta*j) if cell_phase_y is None else
+                     (cell_phase_y*np.exp(2j*np.pi*q_index/ny))**j)/np.sqrt(ny)
             for slot in range(width):
                 f_rows.append(j * width + slot); f_cols.append(q_index * width + slot); f_values.append(value)
     fourier = sparse.csr_matrix((f_values, (f_rows, f_cols)), shape=(n, n))
@@ -235,7 +307,9 @@ def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
     for _ in range(ny):
         native_cycle = native_cycle @ native_translation
     native_cycle_error = sparse.linalg.norm(native_cycle - phase * sparse.eye(n)) / np.sqrt(n)
-    eta = np.repeat(np.exp(1j * (complex(cfg.ky).real * cfg.period_y + 2 * np.pi * np.arange(ny)) / ny), width)
+    eigenphases=(np.exp(1j*(complex(cfg.ky).real*cfg.period_y+2*np.pi*np.arange(ny))/ny)
+                 if cell_phase_y is None else cell_phase_y*np.exp(2j*np.pi*np.arange(ny)/ny))
+    eta = np.repeat(eigenphases,width)
     eigen_error = sparse.linalg.norm(shift @ fourier - fourier @ sparse.diags(eta)) / np.sqrt(n)
     probe = np.cos(np.arange(n) * 0.37) + 1j * np.sin(np.arange(n) * 0.23)
     dual_probe = np.sin(np.arange(n) * 0.29) + 1j * np.cos(np.arange(n) * 0.41)
@@ -244,7 +318,7 @@ def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
     pairing_error = float(abs(native_work - modal_work) / max(abs(native_work), abs(modal_work), 1.0))
     if max(native_cycle_error, eigen_error, pairing_error) > LIMITS["mapping"]:
         raise ValueError("native cycle, DFT eigenvalues or primal/dual pairing Gate fails")
-    widths = np.diff(grid[1])
+    widths = entities.y_widths
     audit = {"independent_rows": n, "full_storage_rows": full_rows, "ny": ny,
              "rows_per_q": width, "all_q": list(range(ny)), "dimension_dof_counts": dimension_counts,
              "mapping_inverse_relative": float(identity_defect), "orientation_euclidean_defect_max": orientation_defect,
@@ -257,6 +331,8 @@ def build_y_orbit_layout(space, floquet, cfg, axes) -> YOrbitLayout:
              "y_width_max_relative_variation": float(np.ptp(widths) / np.mean(widths)),
              "geometry_index_tolerance": tolerance, "geometry_metric_rounding": False,
              "sparse_Q_payload_bytes": _sparse_payload(q), "dense_Q_created": False}
+    if wrap_phase_y is not None or cell_phase_y is not None:
+        audit.update(explicit_research_wrap=True,explicit_cell_eigenphases=[[v.real,v.imag] for v in eigenphases])
     return YOrbitLayout(independent, full_rows, ny, width, r, r_inverse, fourier, q, shift, native_translation, phase, audit)
 
 

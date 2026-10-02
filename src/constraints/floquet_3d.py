@@ -1843,6 +1843,7 @@ def _build_double_floquet_mpc_high_order(
     cfg: SimulationConfig3D,
     dolfinx_mpc,
     log=None,
+    *, research_phase_override: tuple[complex, complex] | None = None,
 ) -> DoubleFloquet3DData:
     """Create the qualified phase-cacheable high-order Floquet MPC."""
 
@@ -1881,7 +1882,12 @@ def _build_double_floquet_mpc_high_order(
     comm = V.mesh.comm
     comm.barrier()
     total_start = time.perf_counter()
-    constraint_data = build_high_order_constraint_data(V, mesh_data, cfg)
+    if research_phase_override is None:
+        constraint_data = build_high_order_constraint_data(V, mesh_data, cfg)
+    else:
+        constraint_data = build_high_order_constraint_data(
+            V, mesh_data, cfg, research_phase_override=research_phase_override,
+        )
     used_full_boundary_gather = bool(
         constraint_data.topology.used_full_boundary_gather
     )
@@ -1941,6 +1947,10 @@ def _build_double_floquet_mpc_high_order(
     )
     phase_x = complex(cfg.floquet_phase_x)
     phase_y = complex(cfg.floquet_phase_y)
+    if research_phase_override is not None:
+        phase_x, phase_y = (complex(value) for value in research_phase_override)
+        orientation_stats["research_phase_source"] = "explicit_pre_finalize_topology_materialization"
+        orientation_stats["physical_incident_angles_unchanged"] = True
     if log is not None:
         log(
             f"3D Floquet p={degree} global constraints = "
@@ -2235,7 +2245,8 @@ def _build_double_floquet_mpc_p1_legacy(
 
 
 def build_double_floquet_mpc(
-    V, mesh_data, cfg: SimulationConfig3D, log=None
+    V, mesh_data, cfg: SimulationConfig3D, log=None,
+    *, research_phase_override: tuple[complex, complex] | None = None,
 ) -> DoubleFloquet3DData:
     """Create qualified distributed sparse double-periodic Floquet constraints."""
 
@@ -2263,6 +2274,11 @@ def build_double_floquet_mpc(
     }:
         raise RuntimeError(
             f"Unsupported qualified Floquet mode {constraint_mode_resolved!r}."
+        )
+    if research_phase_override is not None:
+        return _build_double_floquet_mpc_high_order(
+            V, mesh_data, cfg, dolfinx_mpc, log,
+            research_phase_override=research_phase_override,
         )
     return _build_double_floquet_mpc_high_order(
         V, mesh_data, cfg, dolfinx_mpc, log

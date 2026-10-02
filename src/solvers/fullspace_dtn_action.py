@@ -10,7 +10,7 @@ applied exactly once.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
 import json
@@ -376,6 +376,12 @@ class FullspaceDtnCarrier:
                     "assembly_context_sha256": self.assembly_context_sha256,
                     "construction_numeric_inventory": dict(self.construction_numeric_inventory)}
                    if getattr(self, "phase_gauge", "global_z") == "boundary_plane" else {}),
+                **({"y_orbit_quotient_contract_sha256": self.quotient_context.sha256,
+                    "global_physical_mode_count": 532, "sector_mode_count": mode_count,
+                    "original_mode_indices": self.original_mode_indices,
+                    "original_mode_keys": self.original_mode_keys,
+                    "local_branch_indices": self.local_branch_indices}
+                   if hasattr(self, "quotient_context") else {}),
                 "schema": "fullspace-dtn.carrier.v1",
                 "profile": FULLSPACE_DTN_PROFILE,
                 "mode_count": mode_count,
@@ -623,6 +629,125 @@ def build_fullspace_dtn_action(
     return FullspaceDtnAction(carrier, comm=carrier.comm if comm is None else comm)
 
 
+def _raw_mask_diagnostic(raw, stored, *, comm, threshold, global_maximum):
+    """Observer metadata only; this never chooses or changes stored support."""
+    raw, stored = np.asarray(raw), np.asarray(stored)
+    if raw.shape != stored.shape or not np.isfinite(raw).all() or not np.isfinite(stored).all():
+        raise ValueError("raw observer vectors must have matching finite owned layouts")
+    def norm(values):
+        squared = float(comm.allreduce(float(np.vdot(values, values).real), op=MPI.SUM))
+        if not np.isfinite(squared) or squared < 0:
+            raise ValueError("raw observer operation norm is nonfinite")
+        return float(np.sqrt(squared))
+    return {
+        "absolute_sparse_floor": 1e-30, "relative_sparse_cutoff": 1e-13,
+        "threshold": float(threshold), "global_maximum": float(global_maximum),
+        "raw_nonzero_support_local": int(np.count_nonzero(raw)),
+        "retained_support_local": int(np.count_nonzero(stored)),
+        "lost_support_local": int(np.count_nonzero((raw != 0) & (stored == 0))),
+        "introduced_support_local": int(np.count_nonzero((raw == 0) & (stored != 0))),
+        "raw_norm_global": norm(raw), "stored_norm_global": norm(stored),
+        "raw_minus_stored_norm_global": norm(raw-stored),
+        "threshold_application": "existing production routines, never changed by observer",
+    }
+
+
+def _raw_owned_surface_components(mode, assemblers, mpc, *, ownership_range, comm):
+    """Assemble only this mode's actual pre-mask vectors; release every Vec."""
+    from .dtn_port_3d import _vec_nonzero_owned_entries
+    start, end = ownership_range
+    raw_components, components, diagnostics = [], [], []
+    for component in (0, 1):
+        vector = assemblers[(mode.side, component)].assemble_raw_mpc_vector(mode, mpc)
+        try:
+            if tuple(map(int, vector.getOwnershipRange())) != (start, end):
+                raise ValueError("raw surface observer has an incompatible owned row layout")
+            raw = np.array(vector.getArray(readonly=True), dtype=np.complex128, copy=True)
+            if raw.shape != (end-start,) or not np.isfinite(raw).all():
+                raise ValueError("raw surface observer received an incomplete/nonfinite vector")
+            # Exactly the existing component-stage mask, on the actual raw Vec.
+            rows, values = _vec_nonzero_owned_entries(vector)
+            masked = np.zeros_like(raw)
+            masked[np.asarray(rows, dtype=np.int64)-start] = values
+            maximum = float(comm.allreduce(float(np.max(np.abs(raw), initial=0)), op=MPI.MAX))
+            threshold = max(1e-30, 1e-13*maximum)
+            diagnostics.append({"component": component, **_raw_mask_diagnostic(
+                raw, masked, comm=comm, threshold=threshold, global_maximum=maximum)})
+            raw.flags.writeable = False
+            raw_components.append(raw)
+            components.append((rows, values))
+        finally:
+            vector.destroy()
+    return tuple(raw_components), tuple(components), tuple(diagnostics)
+
+
+def _observe_raw_mode(observer, *, index, mode, raw_components, components,
+                      component_diagnostics, coupling, projection, denominator,
+                      ownership_range, comm, assembly_context, context_sha,
+                      physical_cfg, assembly_cfg, quotient_context, physical_manifest_sha, original_mode_row):
+    """One synchronous borrowed packet; carrier retains no raw-mode arrays."""
+    from .dtn_port_3d import _traction_vector
+    from .dtn_boundary_phase_gauge import assembly_projection_denominator, deep_frozen_identity
+    start, end = ownership_range
+    traction = _traction_vector(mode, assembly_cfg)
+    coefficients = ((-traction[0], -traction[1]), (mode.e_vector[0], mode.e_vector[1]))
+    raw_values, after_component_values, stored_values, diagnostics = [], [], [], []
+    for label, weights, stored in zip(("C", "D"), coefficients, (coupling, projection), strict=True):
+        raw, after_components, masked = (np.zeros(end-start, dtype=np.complex128) for _ in range(3))
+        for component, weight in enumerate(weights):
+            weight = PETSc.ScalarType(weight)
+            raw += weight*raw_components[component]
+            rows, values = components[component]
+            after_components[np.asarray(rows, dtype=np.int64)-start] += weight*values
+        # D is the native dual functional. The production assembly already
+        # conjugates it once; the observer conjugates its own raw copies once.
+        if label == "D":
+            raw = np.conjugate(raw)
+            after_components = np.conjugate(after_components)
+        rows, values = stored
+        masked[np.asarray(rows, dtype=np.int64)-start] = values
+        maximum = float(comm.allreduce(float(np.max(np.abs(after_components), initial=0)), op=MPI.MAX))
+        threshold = max(1e-30, 1e-13*maximum)
+        diagnostics.append({"functional": label,
+            "combination_stage": _raw_mask_diagnostic(after_components, masked, comm=comm,
+                threshold=threshold, global_maximum=maximum),
+            "complete_raw_vs_stored": _raw_mask_diagnostic(raw, masked, comm=comm,
+                threshold=threshold, global_maximum=maximum)})
+        for array in (raw, after_components, masked):
+            array.flags.writeable = False
+        raw_values.append(raw); after_component_values.append(after_components); stored_values.append(masked)
+    original_index = index if quotient_context is None else quotient_context.original_mode_indices[index]
+    original_key = (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+    packet = MappingProxyType({
+        "schema": "task40extra.dtn-raw-mode-observer.research.v1",
+        "local_mode_index": index, "original_mode_index": original_index,
+        "original_mode_key": original_key, "original_mode_row": deep_frozen_identity(original_mode_row),
+        "physical_generator_manifest_sha256": physical_manifest_sha,
+        "assembly_context_sha256": context_sha, "assembly_context": assembly_context,
+        "quotient_contract_sha256": None if quotient_context is None else quotient_context.sha256,
+        "quotient_twist_index": None if quotient_context is None else quotient_context.twist_index,
+        "local_branch_index": None if quotient_context is None else quotient_context.local_branch_indices[index],
+        "ownership_range": ownership_range,
+        "raw_components": raw_components, "raw_C": raw_values[0], "raw_D": raw_values[1],
+        "component_masked_entries": tuple((_readonly(rows, np.dtype(PETSc.IntType)),
+                                            _readonly(values, np.dtype(np.complex128)))
+                                           for rows, values in components),
+        "stored_C_sparse": (_readonly(coupling[0], np.dtype(PETSc.IntType)),
+                            _readonly(coupling[1], np.dtype(np.complex128))),
+        "stored_D_sparse": (_readonly(projection[0], np.dtype(PETSc.IntType)),
+                            _readonly(projection[1], np.dtype(np.complex128))),
+        "after_component_mask_C": after_component_values[0], "after_component_mask_D": after_component_values[1],
+        "stored_C": stored_values[0], "stored_D": stored_values[1],
+        "component_masks": deep_frozen_identity(component_diagnostics),
+        "combination_masks": deep_frozen_identity(diagnostics),
+        "local_plane_H": float(denominator),
+        "original_plane_H": float(assembly_projection_denominator(mode, physical_cfg, "boundary_plane")),
+        "single_D_conjugation": True, "raw_vectors_destroyed_before_callback": True,
+        "array_ownership": "borrowed_readonly_during_synchronous_callback; copy_to_retain",
+    })
+    observer(packet)
+
+
 def build_fullspace_dtn_carrier_from_surface(
     modes: Sequence[Any],
     surface_assemblers: Mapping[tuple[str, int], Any],
@@ -631,6 +756,10 @@ def build_fullspace_dtn_carrier_from_surface(
     *,
     phase_gauge: str = "global_z",
     assembly_context: Mapping[str, Any] | None = None,
+    physical_cfg: Any | None = None,
+    physical_mode_inventory: tuple[Any, Any, Any] | None = None,
+    quotient_context: Any | None = None,
+    raw_mode_observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
@@ -642,7 +771,23 @@ def build_fullspace_dtn_carrier_from_surface(
         assembly_projection_denominator, phase_gauge_descriptor, deep_frozen_identity,
     )
     validate_phase_gauge(phase_gauge)
+    if raw_mode_observer is not None and (phase_gauge != BOUNDARY_PLANE or not callable(raw_mode_observer)):
+        raise ValueError("raw mode observer requires an explicit boundary-plane research callback")
     modes = tuple(modes)
+    if quotient_context is not None:
+        from .y_orbit_quotient_context import YOrbitTwoCellQuotientContext
+        if (phase_gauge != BOUNDARY_PLANE or physical_cfg is None
+                or physical_mode_inventory is None
+                or not isinstance(quotient_context, YOrbitTwoCellQuotientContext)):
+            raise ValueError("quotient carrier requires explicit boundary-plane/global physical inventory/context")
+        expected_modes, quotient_rows, quotient_manifest_sha = quotient_context.select_inventory(
+            physical_cfg, cfg, physical_mode_inventory,
+        )
+        quotient_contract_sha = quotient_context.sha256
+        if len(modes) != len(expected_modes) or any(left is not right for left, right in zip(modes, expected_modes, strict=True)):
+            raise ValueError("quotient carrier must use the original selected physical mode objects")
+    elif physical_cfg is not None or physical_mode_inventory is not None:
+        raise ValueError("separate physical inventory/config requires an explicit quotient context")
     for mode in modes:
         for component in (0, 1):
             actual_reference = getattr(surface_assemblers[(mode.side, component)], "boundary_reference_z", None)
@@ -654,6 +799,13 @@ def build_fullspace_dtn_carrier_from_surface(
                             "basix_coefficients", "MPC", "config_sha256", "gauss", "ABI"}
         if not isinstance(assembly_context, Mapping) or required_context.difference(assembly_context):
             raise ValueError("boundary-plane carrier requires complete frozen discrete/source context")
+        if quotient_context is not None:
+            local = assembly_context.get("y_orbit_quotient", {})
+            if (local.get("contract_sha256") != quotient_contract_sha
+                    or _canonical_json_bytes(local.get("contract")) != _canonical_json_bytes(quotient_context.identity())):
+                raise ValueError("quotient carrier assembly context does not bind its exact twist/sector")
+        elif "y_orbit_quotient" in assembly_context:
+            raise ValueError("quotient assembly identity requires its explicit physical/context arguments")
         assembly_context = deep_frozen_identity(assembly_context)
         context_sha = hashlib.sha256(_canonical_json_bytes(assembly_context)).hexdigest()
         for mode in modes:
@@ -665,12 +817,27 @@ def build_fullspace_dtn_carrier_from_surface(
                     raise ValueError("actual Gauss/tag differs from the centered assembly context")
     elif assembly_context is not None:
         raise ValueError("assembly context argument belongs to the explicit boundary-plane research path")
-    manifest_rows, _manifest_bytes, _manifest_sha = build_ordered_mode_manifest(
-        modes, cfg
-    )
+    if quotient_context is None:
+        manifest_rows, _manifest_bytes, _manifest_sha = build_ordered_mode_manifest(
+            modes, cfg
+        )
+    else:
+        # These rows/H belong to the complete original physical manifest;
+        # local C/D/H assembly uses cfg and retains contiguous local indices.
+        manifest_rows, _manifest_sha = quotient_rows, quotient_manifest_sha
     # This pilot keeps the representable legacy physical manifest; primary
     # centered C/D/H do not use its tiny global values to construct coefficients.
     comm = mpc.function_space.mesh.comm
+    if raw_mode_observer is not None:
+        from .y_orbit_quotient_context import PHYSICAL_GENERATOR_SHA256
+        actual_cells = int(mpc.function_space.mesh.topology.index_map(3).size_local)
+        expected_cells = 80 if quotient_context is None else 40
+        expected_modes = 532 if quotient_context is None else (228, 304)[quotient_context.twist_index]
+        if (int(comm.size) != 1 or actual_cells != expected_cells
+                or int(mpc.function_space.element.basix_element.degree) != 4
+                or len(modes) != expected_modes or _manifest_sha != PHYSICAL_GENERATOR_SHA256
+                or int(assembly_context["gauss"]["degree"]) != 23):
+            raise ValueError("raw mode observer is bounded to the original 80-cell p4 authority or explicit 40-cell p4 sector")
     index_map = mpc.function_space.dofmap.index_map
     owned_start = int(index_map.local_range[0])
     owned_end = owned_start + int(index_map.size_local)
@@ -700,7 +867,12 @@ def build_fullspace_dtn_carrier_from_surface(
 
     entries: list[FullspaceDtnModeFunctional] = []
     for index, mode in enumerate(modes):
-        components = components_for(mode)
+        if raw_mode_observer is None:
+            components = components_for(mode)
+        else:
+            raw_components, components, component_diagnostics = _raw_owned_surface_components(
+                mode, surface_assemblers, mpc, ownership_range=(owned_start, owned_end), comm=comm,
+            )
         projection_rows, projection_values = _combine_owned_entries(
             components,
             (mode.e_vector[0], mode.e_vector[1]),
@@ -722,6 +894,20 @@ def build_fullspace_dtn_carrier_from_surface(
                 "global_projection_denominator_diagnostic": manifest_rows[index]["projection_denominator"],
                 "phase_gauge": phase_gauge_descriptor(mode, cfg, phase_gauge),
             })
+            if quotient_context is not None:
+                global_h = assembly_projection_denominator(mode, physical_cfg, phase_gauge)
+                if not np.isclose(denominator*2, global_h, rtol=32*np.finfo(float).eps, atol=0):
+                    raise ValueError("quotient original plane H must equal global plane H / K")
+                assembly_identity.update({
+                    "original_mode_index": quotient_context.original_mode_indices[index],
+                    "original_mode_key": quotient_context.original_mode_keys[index],
+                    "original_mode_row": manifest_rows[index],
+                    "original_plane_projection_denominator": float(global_h),
+                    "local_branch_index": quotient_context.local_branch_indices[index],
+                    "quotient_twist_index": quotient_context.twist_index,
+                    "quotient_contract_sha256": quotient_contract_sha,
+                    "local_H_scale_from_global_plane_H": 0.5,
+                })
             assembly_identity = deep_frozen_identity(assembly_identity)
         traction = _traction_vector(mode, cfg)
         coupling_rows, coupling_values = _combine_owned_entries(
@@ -729,6 +915,20 @@ def build_fullspace_dtn_carrier_from_surface(
             (-traction[0], -traction[1]),
             comm=comm,
         )
+        if raw_mode_observer is not None:
+            _observe_raw_mode(
+                raw_mode_observer, index=index, mode=mode,
+                raw_components=raw_components, components=components,
+                component_diagnostics=component_diagnostics,
+                coupling=(coupling_rows, coupling_values),
+                projection=(projection_rows, np.conjugate(projection_values)),
+                denominator=denominator, ownership_range=(owned_start, owned_end), comm=comm,
+                assembly_context=assembly_context, context_sha=context_sha,
+                physical_cfg=cfg if quotient_context is None else physical_cfg,
+                assembly_cfg=cfg, quotient_context=quotient_context,
+                physical_manifest_sha=_manifest_sha, original_mode_row=manifest_rows[index],
+            )
+            del raw_components, components, component_diagnostics
         entries.append(
             FullspaceDtnModeFunctional(
                 mode_key=(int(index), str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)),
@@ -758,6 +958,12 @@ def build_fullspace_dtn_carrier_from_surface(
         result.physical_generator_manifest_sha256 = _manifest_sha
         result.assembly_context = assembly_context
         result.assembly_context_sha256 = context_sha
+        if quotient_context is not None:
+            result.quotient_context = quotient_context
+            result.original_mode_indices = quotient_context.original_mode_indices
+            result.original_mode_keys = quotient_context.original_mode_keys
+            result.original_mode_rows = quotient_context.original_mode_rows
+            result.local_branch_indices = quotient_context.local_branch_indices
         component_arrays = [array for pair in component_cache.values() for component in pair for array in component]
         staging_arrays = [array for item in entries for array in (
             item.coupling_rows, item.coupling_values, item.projection_rows, item.projection_values)]
