@@ -343,6 +343,7 @@ def launch(spec):
                     "v10_phase_cached_gn",
                     "v10_plain_cached_fit_gn",
                     "v10_phase_cached_fit_gn",
+                    "v10_phase_resource_freeze",
                 )
                 else frozen
             )
@@ -929,6 +930,26 @@ def launch(spec):
         if v9:
             group = gn_campaign.STAGES[stage][2]
             limit = min(limit, ledger[gn_version]["groups_remaining_seconds"][group])
+            if v10 and stage == "v10_phase_resource_freeze":
+                from src.runners.feinn_gn_recovery import recovery_boundary
+
+                prior = [
+                    row
+                    for row in ledger["entries"]
+                    if Path(row["path"]).parent.name.startswith(
+                        "task42extra_v10_phase_cached_gn_"
+                    )
+                ]
+                state["resource_boundary"] = recovery_boundary(
+                    ROOT, "v10_phase_cached_gn", prior
+                )
+                if state["resource_boundary"] is None:
+                    raise RuntimeError("OWN_PHASE_COMPLETE_STATE_NOT_RETAINED")
+                state["phase_training_attempt_seconds"] = (
+                    gn_campaign.route_spent_seconds(
+                        "v10_phase_cached_gn", ledger["entries"]
+                    )
+                )
             if v10 and group in ("C", "D"):
                 inherited_attempt_seconds = gn_campaign.route_spent_seconds(
                     stage, ledger["entries"]

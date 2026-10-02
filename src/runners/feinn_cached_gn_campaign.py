@@ -27,6 +27,7 @@ STAGES = {
     "v10_derivative_benchmark": ("ml", 9000, "B"),
     "v10_plain_cached_gn": ("ml", 10800, "C"),
     "v10_phase_cached_gn": ("ml", 10800, "C"),
+    "v10_phase_resource_freeze": ("ml", 300, "E"),
     "v10_gn_reconstruct": ("ml", 900, "E"),
     "v10_gn_compare": ("fe", 900, "E"),
     "v10_plain_cached_fit_gn": ("ml", 3600, "D"),
@@ -39,6 +40,7 @@ BASE = ["e1_fe", "v8_phase_checks"]
 OLD = ["v9_" + p + s for s in ("_gn", "_fit_gn") for p in ("plain", "phase")]
 DEPENDENCIES = {s: BASE.copy() for s in STAGES}
 DEPENDENCIES["v10_state_and_work_audit"] += OLD
+DEPENDENCIES["v10_phase_resource_freeze"] += ["v9_phase_gn", "v10_derivative_benchmark"]
 DEPENDENCIES["v10_derivative_checks"] += OLD + [
     "e3_reference",
     "v10_state_and_work_audit",
@@ -119,6 +121,11 @@ def selected_routes(load_index, *, supervised, include_old=False):
         new = "v10_" + p + ("_cached_fit_gn" if supervised else "_cached_gn")
         key = p + ("_fit_gn" if supervised else "_gn")
         stage = new if gates[key]["passed"] else old
+        if stage == "v10_phase_cached_gn":
+            from src.runners.feinn_workflow import index_path
+
+            if not index_path(stage).exists():
+                stage = "v10_phase_resource_freeze"
         routes[stage] = load_index(stage)
     if include_old:
         for p in ("plain", "phase"):
@@ -128,6 +135,17 @@ def selected_routes(load_index, *, supervised, include_old=False):
 
 
 def dispatch(stage, design, artifact, marker, manifest, load_index):
+    if stage == "v10_phase_resource_freeze":
+        from src.solvers.feinn_gn_freeze import freeze_resource_boundary
+
+        return freeze_resource_boundary(
+            design,
+            load_index("e1_fe"),
+            load_index("v8_phase_checks"),
+            artifact,
+            marker,
+            manifest,
+        )
     if stage in ("v10_gn_compare", "v10_fit_compare"):
         from src.solvers.feinn_phase_compare import compare
 

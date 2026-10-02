@@ -129,21 +129,78 @@
     "JVP_VJP": 2500,
     "trial": 256
   },
-  "stages": [
-    "v10_state_and_work_audit",
-    "v10_derivative_checks",
-    "v10_derivative_benchmark",
-    "v10_plain_cached_gn",
-    "v10_phase_cached_gn",
-    "v10_gn_reconstruct",
-    "v10_gn_compare",
-    "v10_plain_cached_fit_gn",
-    "v10_phase_cached_fit_gn",
-    "v10_fit_reconstruct",
-    "v10_fit_compare",
-    "v10_derivative_checks_repair",
-    "v10_derivative_checks_tangent_repair"
-  ],
+  "stages": {
+    "v10_state_and_work_audit": {
+      "environment": "ml",
+      "timeout_seconds": 1800,
+      "group": "A"
+    },
+    "v10_derivative_checks": {
+      "environment": "ml",
+      "timeout_seconds": 6000,
+      "group": "B"
+    },
+    "v10_derivative_checks_repair": {
+      "environment": "ml",
+      "timeout_seconds": 6000,
+      "group": "B"
+    },
+    "v10_derivative_checks_tangent_repair": {
+      "environment": "ml",
+      "timeout_seconds": 6000,
+      "group": "B"
+    },
+    "v10_derivative_benchmark": {
+      "environment": "ml",
+      "timeout_seconds": 9000,
+      "group": "B"
+    },
+    "v10_plain_cached_gn": {
+      "environment": "ml",
+      "timeout_seconds": 10800,
+      "group": "C"
+    },
+    "v10_phase_cached_gn": {
+      "environment": "ml",
+      "timeout_seconds": 10800,
+      "group": "C"
+    },
+    "v10_phase_resource_freeze": {
+      "environment": "ml",
+      "timeout_seconds": 300,
+      "group": "E"
+    },
+    "v10_gn_reconstruct": {
+      "environment": "ml",
+      "timeout_seconds": 900,
+      "group": "E"
+    },
+    "v10_gn_compare": {
+      "environment": "fe",
+      "timeout_seconds": 900,
+      "group": "E"
+    },
+    "v10_plain_cached_fit_gn": {
+      "environment": "ml",
+      "timeout_seconds": 3600,
+      "group": "D"
+    },
+    "v10_phase_cached_fit_gn": {
+      "environment": "ml",
+      "timeout_seconds": 3600,
+      "group": "D"
+    },
+    "v10_fit_reconstruct": {
+      "environment": "ml",
+      "timeout_seconds": 900,
+      "group": "E"
+    },
+    "v10_fit_compare": {
+      "environment": "fe",
+      "timeout_seconds": 900,
+      "group": "E"
+    }
+  },
   "original_group_limits_seconds": {
     "A": 1800,
     "B": 9000,
@@ -254,5 +311,24 @@
     },
     "no_policy_change": true,
     "maximum_recoveries_per_route": 2
+  },
+  "resource_stop_retained_export": {
+    "stage": "v10_phase_resource_freeze",
+    "selection": "latest own V10 successfully persisted complete state only",
+    "complete_PT_sha256": "cf6919a8ee86e32ad7f0f4b0d4ef8411061b149c564dd289237334f90b7d9e86",
+    "original_parameter_source_sha": "5cda1c3995633c4f6c86f4b47d3163efb1cdc8c6",
+    "new_accepted_outer": 21,
+    "cumulative_accepted_outer": 75,
+    "reference_read": false,
+    "additional_training": false,
+    "additional_Gram_or_Maxwell_factor": false,
+    "both_stopped_attempt_seconds": 5125.151738638058,
+    "no_third_phase_training_start": true,
+    "identity_check": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/phase_resource_export_identity_v10.json",
+      "sha256": "c95211e99890c174a78b3f16897259b22a1f266d1e332f570460f13ad68cf17f"
+    },
+    "export_source_is_distinct_from_parameter_source": true,
+    "failure_classification": "RESOURCE_WINDOW_UNAVAILABLE; own RSS/swap legal; PSI origin NOT_DETERMINED"
   }
 }
