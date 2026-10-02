@@ -36,7 +36,7 @@ def close_point(bar, trace, rhs):
 
 def cycle_commit(bar, base, rhs, directory, identity, metadata, audit, *, restart=64,
                  callback=None, returned=None, io_begin=None, io_done=None, fault=None,
-                 preconditioner=None):
+                 preconditioner=None, residual_action=None):
     """Actual cycle -> proposed -> closed audit-pending -> audited -> commit.
 
     fault is used only by bounded tests at these named return boundaries.
@@ -63,7 +63,9 @@ def cycle_commit(bar, base, rhs, directory, identity, metadata, audit, *, restar
             proposed,inner=correction_cycle(bar.apply,base,bar.reduced_rhs(rhs),
                                            float(np.linalg.norm(rhs)),callback,restart=restart)
         else:
-            residual=bar.reduced_rhs(rhs)-bar.apply(base)
+            # Optional independent oracle residual; the effective matvec may
+            # use a qualified exact backend with another summation order.
+            residual=bar.reduced_rhs(rhs)-(residual_action or bar.apply)(base)
             y,inner=correction_cycle(lambda x:bar.apply(preconditioner(x)),
                 np.zeros_like(base),residual,float(np.linalg.norm(rhs)),callback,restart=restart)
         if returned is not None:returned(inner)

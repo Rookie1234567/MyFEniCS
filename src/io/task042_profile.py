@@ -6,6 +6,8 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 TASK042_PROFILES = {
+    **{"task042_v22_"+name.lower(): "V22-"+name
+       for name in ("SETUP", "N", "P", "Z", "T", "VERIFY")},
     **{"task042_v21_"+name.lower(): "V21-"+name
        for name in ("PREFLIGHT", "B", "C", "T", "Z", "VERIFY")},
     **{"task042_v20_"+name.lower(): "V20-"+name

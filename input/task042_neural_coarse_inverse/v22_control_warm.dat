@@ -1,0 +1,7 @@
+schema_version = 1
+
+[task042_v22]
+stage = "N"
+run_id = "task042_v22_control_warm"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "P1_TRACE_GALERKIN_CORRECTION"

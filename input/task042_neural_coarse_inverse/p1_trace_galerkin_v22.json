@@ -1,0 +1,49 @@
+{
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+  "batch": "V22_P1_TRACE_GALERKIN_CORRECTION",
+  "review_sha": "4d14192e082117e69f76cd3a94c549557ce5693b",
+  "initial_states": {
+    "GPOLY": {
+      "name": "V21-C-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v21/C/cycles/CALL_0112/physical.npz",
+        "sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+        "x_sha256": "bd1e676989c95e77753bd477d863e32d8ff84ca93bbc0a5ab11a79afe565cb4b",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      }
+    },
+    "GNN": {
+      "name": "L-GNN-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v19/L_GNN/cycles/CYCLE_0064/numeric/slot0.npz",
+        "sha256": "f71378e9aa528f6f6f4eddb3a4a1d53c24a54e71c36c932551011ccfffa45450",
+        "x_sha256": "f6cf0b644826cc6f416cb32085607dd0fb21ce85a2ab88995e4f2c865b721030",
+        "trace_sha256": "95b3ab8b157f81296b4757fbdf124620b2e465b6a2493cabb70895e3d7ea3255",
+        "outer_directions_sha256": "cd63c63584f3b94b00404a8dae6758a963506c80618d6ffce9da4e22bb114c05",
+        "port_sha256": "456b4949037938b4f26a40d60ec4975874bf010a0489c465b2a7066b655ac904",
+        "z_sha256": "b891349ff9a718c42c43a897246d633849e7038ce2569f3853e41ec9ddb3ad75",
+        "residual_sha256": "a3dc392c03fc5fefe30655e4b5709e7d1fa9aa5d4964228931a76e7997238428"
+      },
+      "source_sha": "b58919a4a0dcd677b915eb7d9bbd314520aef0e0"
+    }
+  },
+  "backend": "EXACT_CLASS_BATCH64",
+  "coarse_name": "P1_TRACE_GALERKIN",
+  "transfer_random_seeds": [
+    422201,
+    422202
+  ],
+  "coarse_witness_seed": 422211,
+  "PC_seeds": [
+    422221,
+    422222
+  ],
+  "one_fixed_LU_with_one_refinement": true,
+  "cold_independent_after_setup": true,
+  "individual_triangular_passes_conservatively_counted": true
+}
