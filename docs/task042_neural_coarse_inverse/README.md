@@ -1,3 +1,9 @@
+# 最新导航：V21 / Review V18 已收口
+
+[Review](review_report_v18.md)、[Response](response_v21.md)、[详细结果](outcomes/exact_action_recycled_correction_v21.md)、[Gate](outcomes/records/qualification_and_dispatch_v21.json)、[run/source](outcomes/records/run_index_v21.json)、[费用](outcomes/records/resource_costs_v21.json)。D0/A/B/C/V已执行，条件T/Z按原进展准入。数值队列清场后等待review，不能依旧导航继续旧实验；不merge。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # 最新导航：V20 / Review V17 已收口
 
 [Review V17](review_report_v17.md)、[Response V20](response_v20.md)、[结果](outcomes/fixed_p3_ilu0_port_v20.md)、[原Gate](outcomes/records/qualification_and_dispatch_v20.json)、[source/run](outcomes/records/run_index_v20.json)、[费用](outcomes/records/resource_costs_v20.json)。S0/N/P0/P40/V已实际完成，0/5资格；T/C未准入。正式数值清场于窗口内，总elapsed交付超限单列。等待review，不merge。

@@ -1,3 +1,18 @@
+# V21最小改动与依赖顺序
+
+| 组 | 实际改变、依赖与资格 |
+|---|---|
+| research-only numerical | 独立ClassBatchAction按精确class/64cell作用；SciPy边界GCROT保留None及33库存；原oracle数学与普通默认不变 |
+| reusable runner/watchdog | 参数化V21 stage、不可刷新UTC/monotonic/boot窗口及conservative计费；成熟0.5秒整树监督复用 |
+| checker/schema/test | 六个显式opt-in dat；raw/hash/Gate反例；R04只收窄物理parent reader，B原no-read FAIL保留 |
+| compact evidence/docs | 实际source、失败/恢复/未运行、同工作量、独立场与40通道、RSS/预算和旧成本；不冒称NN训练 |
+| production numerical/core | 无资格晋升、无ordinary default改变 |
+| do-not-merge | ignored CU/向量/日志/缓存/环境、不批准merge master |
+
+[完整依赖manifest](records/selective_merge_v21.json)给出文件、数值行为、测试与fresh证据。建议只按研究核心→runner→reader/schema→compact证据审阅；原task/review/response/raw保持。实际数值source与最终文档HEAD分开，B读取缺口不可追溯标PASS。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # V20 最小变更与依赖
 
 | 组 | 改变及依赖 | Gate／合入定位 |

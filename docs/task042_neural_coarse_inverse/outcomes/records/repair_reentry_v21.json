@@ -1,0 +1,54 @@
+{
+  "repairs": [
+    {
+      "id": "R01",
+      "root_cause": "prematurely pinned low-load queue restricted child fresh-core admission to busy startup core",
+      "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "code_modified": false,
+      "numeric_actor_started": false,
+      "repair_scope": "launcher invocation only; leave initial permitted CPUs for child admission, each actual run still pinned",
+      "wall_seconds_upper": 180
+    },
+    {
+      "id": "R02",
+      "root_cause": "LGMRES proxy lacked n despite preserved public close",
+      "repair_scope": "one n property; actual B/C dat-stage-save-audit regression",
+      "wall_seconds_upper": 66.9815502166748,
+      "source_before": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "test": "20 passed in 4.16s; saved return publication hash validated",
+      "replayed_Arnoldi_cycles": 0
+    },
+    {
+      "id": "R03",
+      "root_cause": "GCROT recycle qualified used numpy.bool_ in JSONL history",
+      "repair_scope": "one bool conversion; real metadata serialization and hash-verified saved C8 publication without Arnoldi replay",
+      "wall_seconds_upper": 66.9815502166748,
+      "source_before": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "test": "20 passed in 4.16s; saved return publication hash validated",
+      "replayed_Arnoldi_cycles": 0
+    },
+    {
+      "id": "R04",
+      "root_cause": "fixed physical parent loader unnecessarily decompressed historical correction and LGMRES directions",
+      "repair_scope": "read only trace/port/z/residual; two decode-trap modes; old B contract failure retained",
+      "source_before": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+      "wall_seconds_upper": 66,
+      "observed_repair_before_commit_seconds": 35.2757302459795,
+      "test": "35 passed in 4.03s",
+      "replayed_Arnoldi_cycles": 0,
+      "replayed_C_calls": 0,
+      "B_literal_no_read_contract": "FAIL_RETAINED",
+      "old_vectors_used_for_solver": false,
+      "code_modified": true
+    }
+  ],
+  "reentries": 0,
+  "cooldown_seconds": 0.0,
+  "old_failure_costs_retained": true,
+  "Arnoldi_replayed_after_C8_failure": false,
+  "saved_C8_history_publication": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/call8_history_publication_repair.json",
+    "sha256": "7fc873e992f4033938309751bada76b3198faa4f9d21f62a8ce85249c3fa3091",
+    "bytes": 4108
+  }
+}

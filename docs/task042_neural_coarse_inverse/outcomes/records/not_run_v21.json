@@ -1,0 +1,45 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T02:26:16.470818+00:00",
+    "observed_monotonic": 832971.331685572,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 6765.470818281174,
+    "heavy_remaining_seconds": 5834.529181718826,
+    "total_remaining_seconds": 7634.529181718826
+  },
+  "T": {
+    "status": "not_run",
+    "reason": "C no original equation PASS and gain=3.8282779570862195<10"
+  },
+  "Z": {
+    "status": "not_run",
+    "reason": "same admission; not a cold-start failure"
+  },
+  "FIRST_PASS_optional_polish": "not_entered_no_pass",
+  "new_p4_reference": "not_run_contract",
+  "maximum_0p7nm_model": "not_run_contract",
+  "hidden_training": "not_run_contract",
+  "GPU": "not_run_contract",
+  "ILU_ordering_scan": "not_run_contract",
+  "global_matrix_or_factor": "not_constructed",
+  "source_code_final_tests": "35 passed",
+  "document_contract": "10 passed; 1 legacy-only failure confirmed against starting snapshot",
+  "GitHub_visual": "NOT_VERIFIED"
+}

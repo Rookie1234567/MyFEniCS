@@ -1,0 +1,43 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T02:30:20.225244+00:00",
+    "observed_monotonic": 833215.086111034,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 7009.225243806839,
+    "heavy_remaining_seconds": 5590.774756193161,
+    "total_remaining_seconds": 7390.774756193161
+  },
+  "protected_unchanged": 452,
+  "protected_history_errors": [],
+  "mutable_navigation_old_bytes_preserved": [
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/development_model_registry.md",
+    "docs/development_progress.md"
+  ],
+  "Markdown_table_fence_errors": [],
+  "missing_local_links": [],
+  "Github_visual": "NOT_VERIFIED",
+  "Github_exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/4803449986d64723b5fa353e1bd0a53f1dc5a918/docs/task042_neural_coarse_inverse/review_report_v18.md",
+  "visual_evidence": false,
+  "local_text_checks_do_not_prove_visual_rendering": true
+}

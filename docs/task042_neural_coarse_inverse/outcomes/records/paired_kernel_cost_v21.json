@@ -1,0 +1,130 @@
+{
+  "kernel": [
+    {
+      "group": 0,
+      "order": [
+        "OLD_ACTION",
+        "EXACT_CLASS_BATCH64"
+      ],
+      "OLD_ACTION_seconds": 3.62877562106587,
+      "EXACT_CLASS_BATCH64_seconds": 1.0721415209118277
+    },
+    {
+      "group": 1,
+      "order": [
+        "EXACT_CLASS_BATCH64",
+        "OLD_ACTION"
+      ],
+      "EXACT_CLASS_BATCH64_seconds": 2.4930356650147587,
+      "OLD_ACTION_seconds": 3.5401325708953664
+    },
+    {
+      "group": 2,
+      "order": [
+        "OLD_ACTION",
+        "EXACT_CLASS_BATCH64"
+      ],
+      "OLD_ACTION_seconds": 5.054903032025322,
+      "EXACT_CLASS_BATCH64_seconds": 1.3398149019340053
+    }
+  ],
+  "complete_call": {
+    "OLD_ACTION": {
+      "wall_seconds": 44.536533650010824,
+      "inner": {
+        "method": "BOUNDARY_DRIVEN_LGMRES256_K3",
+        "scipy_version": "1.11.4",
+        "relative_keyword": "tol",
+        "relative_tolerance": 0.0,
+        "inner_m": 256,
+        "outer_k": 3,
+        "maxiter": 1,
+        "M": null,
+        "prepend_outer_v": false,
+        "store_outer_Av": false,
+        "callback_semantics": "outer state; not Arnoldi",
+        "internal_Arnoldi_iterations": null,
+        "long_call_bitwise_equivalence_claimed": false,
+        "info": 1,
+        "actual_bar_actions": 257,
+        "outer_callback_count": 1,
+        "absolute_tolerance": 8.267827694851709e-10,
+        "returned_update": true,
+        "direction_count": 1,
+        "zero_correction_rhs": false
+      },
+      "audit": {
+        "schur_relative": 9.590271560793539e-06,
+        "augmented_relative": 3.719143577659056e-06,
+        "native_relative": 3.719143577659029e-06,
+        "original_total_augmented_relative": 1.2905404218020737e-06,
+        "port_absolute": 3.469486502109413e-18,
+        "port_full_rhs_relative": 1.62736819797848e-17,
+        "port_operation_relative": 5.981575994685084e-18,
+        "recovery_relative": 4.68504881439882e-13,
+        "schur_original_identity_operation_relative": 5.307213543125915e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314603022346945,
+        "port_unknown_norm": 0.19744364758508468,
+        "strict_pass": false
+      },
+      "identity_relative": 6.645192768792522e-17,
+      "test_update_not_used_as_formal_initial": true
+    },
+    "EXACT_CLASS_BATCH64": {
+      "wall_seconds": 23.471869089989923,
+      "inner": {
+        "method": "BOUNDARY_DRIVEN_LGMRES256_K3",
+        "scipy_version": "1.11.4",
+        "relative_keyword": "tol",
+        "relative_tolerance": 0.0,
+        "inner_m": 256,
+        "outer_k": 3,
+        "maxiter": 1,
+        "M": null,
+        "prepend_outer_v": false,
+        "store_outer_Av": false,
+        "callback_semantics": "outer state; not Arnoldi",
+        "internal_Arnoldi_iterations": null,
+        "long_call_bitwise_equivalence_claimed": false,
+        "info": 1,
+        "actual_bar_actions": 257,
+        "outer_callback_count": 1,
+        "absolute_tolerance": 8.267827694851709e-10,
+        "returned_update": true,
+        "direction_count": 1,
+        "zero_correction_rhs": false
+      },
+      "audit": {
+        "schur_relative": 9.590271560788362e-06,
+        "augmented_relative": 3.7191435776589096e-06,
+        "native_relative": 3.7191435776588825e-06,
+        "original_total_augmented_relative": 1.2905404218020396e-06,
+        "port_absolute": 3.4694865021099305e-18,
+        "port_full_rhs_relative": 1.627368197978723e-17,
+        "port_operation_relative": 5.981575994685977e-18,
+        "recovery_relative": 4.685428252175852e-13,
+        "schur_original_identity_operation_relative": 5.307598033264485e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314603022346945,
+        "port_unknown_norm": 0.19744364758508468,
+        "strict_pass": false
+      },
+      "identity_relative": 6.64517610707592e-17,
+      "test_update_not_used_as_formal_initial": true
+    }
+  },
+  "backend_choice": {
+    "selected_backend": "EXACT_CLASS_BATCH64",
+    "math_qualified": true,
+    "full_call_wall_ratio": 0.5270250548559299,
+    "choice_rule": "math Gate plus at least 20% lower complete-call wall; otherwise OLD_ACTION",
+    "backend_frozen_before_formal_solve": true,
+    "reference_read": false,
+    "repeated_old_action_difference_full_b": 0.0
+  },
+  "classification": "EXACT_ACTION_ENGINEERING_GAIN",
+  "performance_conditions": "shared-workstation; separate from convergence and inconclusive for uncontended speedup",
+  "complete_call_samples_per_backend": 1,
+  "median_of_one_is_not_a_distribution_estimate": true
+}

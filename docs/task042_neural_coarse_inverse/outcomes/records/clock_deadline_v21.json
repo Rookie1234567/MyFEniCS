@@ -1,0 +1,282 @@
+{
+  "window": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d"
+  },
+  "ledger": {
+    "charged": {
+      "actions": 36022,
+      "audits": 144,
+      "field_states": 5
+    },
+    "runs": [
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v21_action_recycling_preflight_20261002T005108407240Z",
+        "stage": "PREFLIGHT",
+        "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 715,
+          "audits": 4,
+          "field_states": 0
+        },
+        "completed": {
+          "actions": 715,
+          "audits": 4,
+          "field_states": 0
+        },
+        "upper": {
+          "actions": 715,
+          "audits": 4,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 102.22514859202784,
+        "rss_peak_bytes": 592568320,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v21_lgmres_control_20261002T005250960281Z",
+        "stage": "B",
+        "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "classification": "WORKER_FAILED",
+        "exact_counts": false,
+        "charged": {
+          "actions": 389,
+          "audits": 3,
+          "field_states": 0
+        },
+        "completed": {
+          "actions": 5,
+          "audits": 1,
+          "field_states": 0
+        },
+        "upper": {
+          "actions": 389,
+          "audits": 3,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 7.239769867039286,
+        "rss_peak_bytes": 454094848,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v21_gcrot_gpoly_20261002T005258540556Z",
+        "stage": "C",
+        "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "classification": "WORKER_FAILED",
+        "exact_counts": false,
+        "charged": {
+          "actions": 2392,
+          "audits": 11,
+          "field_states": 0
+        },
+        "completed": {
+          "actions": 2360,
+          "audits": 9,
+          "field_states": 0
+        },
+        "upper": {
+          "actions": 2392,
+          "audits": 11,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 218.3183500720188,
+        "rss_peak_bytes": 624467968,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v21_lgmres_control_r02_attempt0_20261002T010330485402Z",
+        "stage": "B",
+        "source_sha": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 4267,
+          "audits": 16,
+          "field_states": 0
+        },
+        "completed": {
+          "actions": 4267,
+          "audits": 16,
+          "field_states": 0
+        },
+        "upper": {
+          "actions": 4267,
+          "audits": 16,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 386.5037657410139,
+        "rss_peak_bytes": 620302336,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v21_gcrot_gpoly_r03_attempt0_20261002T010957584834Z",
+        "stage": "C",
+        "source_sha": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 28253,
+          "audits": 104,
+          "field_states": 0
+        },
+        "completed": {
+          "actions": 28253,
+          "audits": 104,
+          "field_states": 0
+        },
+        "upper": {
+          "actions": 28253,
+          "audits": 104,
+          "field_states": 0
+        },
+        "launch_wall_seconds": 2720.9703141340287,
+        "rss_peak_bytes": 776007680,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v21_verify_20261002T015744216422Z",
+        "stage": "VERIFY",
+        "source_sha": "d7bfcb58632b344f8ed9b9fd1467c6c224df0bc4",
+        "classification": "COMPLETED",
+        "exact_counts": true,
+        "charged": {
+          "actions": 6,
+          "audits": 6,
+          "field_states": 5
+        },
+        "completed": {
+          "actions": 6,
+          "audits": 6,
+          "field_states": 5
+        },
+        "upper": {
+          "actions": 6,
+          "audits": 6,
+          "field_states": 5
+        },
+        "launch_wall_seconds": 55.12244580104016,
+        "rss_peak_bytes": 730533888,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      }
+    ],
+    "active": null,
+    "closed": true,
+    "reentries": 0,
+    "cooldown_seconds": 0.0,
+    "repairs": [
+      {
+        "id": "R01",
+        "root_cause": "prematurely pinned low-load queue restricted child fresh-core admission to busy startup core",
+        "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "code_modified": false,
+        "numeric_actor_started": false,
+        "repair_scope": "launcher invocation only; leave initial permitted CPUs for child admission, each actual run still pinned",
+        "wall_seconds_upper": 180
+      },
+      {
+        "id": "R02",
+        "root_cause": "LGMRES proxy lacked n despite preserved public close",
+        "repair_scope": "one n property; actual B/C dat-stage-save-audit regression",
+        "wall_seconds_upper": 66.9815502166748,
+        "source_before": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "test": "20 passed in 4.16s; saved return publication hash validated",
+        "replayed_Arnoldi_cycles": 0
+      },
+      {
+        "id": "R03",
+        "root_cause": "GCROT recycle qualified used numpy.bool_ in JSONL history",
+        "repair_scope": "one bool conversion; real metadata serialization and hash-verified saved C8 publication without Arnoldi replay",
+        "wall_seconds_upper": 66.9815502166748,
+        "source_before": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "test": "20 passed in 4.16s; saved return publication hash validated",
+        "replayed_Arnoldi_cycles": 0
+      },
+      {
+        "id": "R04",
+        "root_cause": "fixed physical parent loader unnecessarily decompressed historical correction and LGMRES directions",
+        "repair_scope": "read only trace/port/z/residual; two decode-trap modes; old B contract failure retained",
+        "source_before": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+        "wall_seconds_upper": 66,
+        "observed_repair_before_commit_seconds": 35.2757302459795,
+        "test": "35 passed in 4.03s",
+        "replayed_Arnoldi_cycles": 0,
+        "replayed_C_calls": 0,
+        "B_literal_no_read_contract": "FAIL_RETAINED",
+        "old_vectors_used_for_solver": false,
+        "code_modified": true
+      }
+    ],
+    "routes": {
+      "PREFLIGHT": {
+        "wall_seconds": 102.22514859202784,
+        "actions": 715
+      },
+      "B": {
+        "wall_seconds": 393.7435356080532,
+        "actions": 4656
+      },
+      "C": {
+        "wall_seconds": 2939.2886642060475,
+        "actions": 30645
+      },
+      "VERIFY": {
+        "wall_seconds": 55.12244580104016,
+        "actions": 6
+      }
+    }
+  },
+  "snapshot": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T01:59:15.059499+00:00",
+    "observed_monotonic": 831349.920366379,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5144.059499263763,
+    "heavy_remaining_seconds": 7455.940500736237,
+    "total_remaining_seconds": 9255.940500736237
+  },
+  "minimum_result_package": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/minimum_result_package.json",
+    "sha256": "b3699916f197a3a8c62b9532f1c5d8d471a07eb1a7d2e758b982f2639d0a8679",
+    "bytes": 473731
+  },
+  "unknown_intervals_excluded": false,
+  "V20_elapsed_FAIL_preserved": true
+}

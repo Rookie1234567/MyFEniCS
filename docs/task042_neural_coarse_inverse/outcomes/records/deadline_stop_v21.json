@@ -1,0 +1,44 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T02:30:20.036865+00:00",
+    "observed_monotonic": 833214.897732243,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 7009.036864995956,
+    "heavy_remaining_seconds": 5590.963135004044,
+    "total_remaining_seconds": 7390.963135004044
+  },
+  "phase": "FINAL_C4_DELIVERY_PREPARED",
+  "total_elapsed_compliant_at_capture": true,
+  "publication_not_yet_performed": true,
+  "actual_final_push_and_response_clock_record": "tmp/task042/v21/final_git_receipt.json and final user reply",
+  "active_numerical_actor": null,
+  "active_v21_run_case_pids": [],
+  "own_lock_available": true,
+  "all_run_descendants_cleared": true,
+  "ledger_counts": {
+    "actions": 36022,
+    "audits": 144,
+    "field_states": 5
+  },
+  "immutable_window_not_refreshed": true,
+  "unknown_intervals_not_excluded": true,
+  "source_of_independent_verification": "d7bfcb58632b344f8ed9b9fd1467c6c224df0bc4",
+  "source_of_main_corrector": "c91954c47d55242fd95ae7efcb44272dcce3a0ec"
+}

@@ -1,0 +1,100 @@
+{
+  "initial_disclosure": {
+    "clock": {
+      "schema": "task042.campaign-window.v21",
+      "start_utc": "2026-10-02T00:33:31+00:00",
+      "start_monotonic": 826205.8608689993,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 12600,
+      "total_limit_seconds": 14400,
+      "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+      "deadline_utc": "2026-10-02T04:33:31+00:00",
+      "first_observed_UTC_resolution_seconds": 1,
+      "clock_pair_at_freeze": {
+        "utc": "2026-10-02T00:33:56.812302+00:00",
+        "monotonic": 826231.673170635
+      },
+      "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+      "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+      "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+      "observed_utc": "2026-10-02T01:38:26.686687+00:00",
+      "observed_monotonic": 830101.547554157,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 3895.6866869926453,
+      "heavy_remaining_seconds": 8704.313313007355,
+      "total_remaining_seconds": 10504.313313007355
+    },
+    "source_affected": [
+      "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "c91954c47d55242fd95ae7efcb44272dcce3a0ec"
+    ],
+    "affected_loader": "src.solvers.exact_action_recycle_study.load_state",
+    "extra_array_keys_decompressed": [
+      "x",
+      "outer_directions"
+    ],
+    "old_reference_or_Q_K_ILU_loaded": false,
+    "solver_initialization": "x=np.zeros_like(tb), CU=[], directions=[]; old arrays not used",
+    "B_literal_no_read_contract": "NOT_COMPLIANT_RETAINED",
+    "C_no_inheritance_contract": "EMPTY_CU_AND_ZERO_CORRECTION_PRESERVED",
+    "action": "narrow parent/verification reader after active trusted C exits; no active source mutation; no B replay beyond quotas"
+  },
+  "repair": {
+    "id": "R04",
+    "root_cause": "fixed physical parent loader unnecessarily decompressed historical correction and LGMRES directions",
+    "repair_scope": "read only trace/port/z/residual; two decode-trap modes; old B contract failure retained",
+    "source_before": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+    "wall_seconds_upper": 66,
+    "observed_repair_before_commit_seconds": 35.2757302459795,
+    "test": "35 passed in 4.03s",
+    "replayed_Arnoldi_cycles": 0,
+    "replayed_C_calls": 0,
+    "B_literal_no_read_contract": "FAIL_RETAINED",
+    "old_vectors_used_for_solver": false,
+    "code_modified": true
+  },
+  "actual_solver_initialization": "x=0, B directions=[], C CU=[]",
+  "B_no_read_gate": "FAIL_RETAINED",
+  "C_inheritance_gate": "ZERO_CORRECTION_EMPTY_CU_PRESERVED",
+  "decode_keys_after_repair": [
+    "trace",
+    "port",
+    "z",
+    "residual"
+  ],
+  "whole_file_hash_read_is_not_array_decode": true,
+  "no_numeric_replay": true,
+  "repair_test_source_worktree": "c91954c47d55242fd95ae7efcb44272dcce3a0ec plus two tracked edits; tested contents subsequently committed as repair_source_sha",
+  "test_summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/r04_reader_and_core/summary.json",
+  "clock": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T01:56:24.084789+00:00",
+    "observed_monotonic": 831178.945655711,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4973.084788799286,
+    "heavy_remaining_seconds": 7626.915211200714,
+    "total_remaining_seconds": 9426.915211200714
+  },
+  "repair_source_sha": "d7bfcb58632b344f8ed9b9fd1467c6c224df0bc4",
+  "tested_content_sha256": {
+    "src/solvers/exact_action_recycle_study.py": "5cc7a1c51dab9bec5dfc8edc71e1b193ad4e39483abdf36a648ed940142a80de",
+    "src/test/test_task042_v21_recycling.py": "c8f0f33175311e261d441d70ce3ea7f7838bb277cdf7dbbbb8aad3630ecfd564"
+  }
+}

@@ -1,0 +1,4424 @@
+{
+  "formal_runs": [
+    {
+      "stage": "PREFLIGHT",
+      "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "cpu": 0,
+      "supervised_wall_seconds": 100.85671498999,
+      "launch_wall_seconds": 102.22514859202784,
+      "worker_wall_seconds": 96.80861828499474,
+      "numerical_actor_wall_seconds": 98.22945800004527,
+      "RSS_peak_bytes": 592568320,
+      "own_swap_peak_bytes": 0,
+      "actual_old_action_counts": {
+        "S": 321,
+        "SH": 42,
+        "audit": 4
+      },
+      "actual_new_action_counts": {
+        "S": 308,
+        "SH": 44
+      },
+      "old_action_inclusive_seconds": {
+        "S": 45.99833453085739,
+        "SH": 11.373330048518255,
+        "audit": 1.9711361310910434
+      },
+      "new_action_inclusive_seconds": {
+        "S": 17.48252296668943,
+        "SH": 5.124380266992375
+      },
+      "action_completed": 715,
+      "action_conservative_charged": 715,
+      "original_audits_completed": 4,
+      "original_audits_charged": 4,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 954688593920,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 954688593920,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "neighbor_public_stage_endpoints": {
+        "available": true,
+        "first": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "last": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "comparison": "recorded public phase only; natural stage transitions do not establish interference",
+        "causal_zero_impact_claim": false
+      },
+      "MemAvailable_min_bytes": 954162733056,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 137
+    },
+    {
+      "stage": "B",
+      "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "cpu": 0,
+      "supervised_wall_seconds": 5.8773545160656795,
+      "launch_wall_seconds": 7.239769867039286,
+      "worker_wall_seconds": 1.4787948010489345,
+      "numerical_actor_wall_seconds": 3.3776011569425464,
+      "RSS_peak_bytes": 454094848,
+      "own_swap_peak_bytes": 0,
+      "actual_old_action_counts": {
+        "S": 5,
+        "SH": 0,
+        "audit": 1
+      },
+      "actual_new_action_counts": {
+        "S": 0,
+        "SH": 0
+      },
+      "old_action_inclusive_seconds": {
+        "S": 0.7378871189430356,
+        "SH": 0.0,
+        "audit": 0.36481314490083605
+      },
+      "new_action_inclusive_seconds": {
+        "S": 0.0,
+        "SH": 0.0
+      },
+      "action_completed": 5,
+      "action_conservative_charged": 389,
+      "original_audits_completed": 1,
+      "original_audits_charged": 3,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 955078422528,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 955078422528,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "neighbor_public_stage_endpoints": {
+        "available": true,
+        "first": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1140982,
+              "start_ticks": 82725988,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1141028,
+              "start_ticks": 82725998,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1141032,
+              "start_ticks": 82726157,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "last": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1140982,
+              "start_ticks": 82725988,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1141028,
+              "start_ticks": 82725998,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1141032,
+              "start_ticks": 82726157,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "comparison": "recorded public phase only; natural stage transitions do not establish interference",
+        "causal_zero_impact_claim": false
+      },
+      "MemAvailable_min_bytes": 954595565568,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 9
+    },
+    {
+      "stage": "C",
+      "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+      "cpu": 0,
+      "supervised_wall_seconds": 216.9385654979851,
+      "launch_wall_seconds": 218.3183500720188,
+      "worker_wall_seconds": 212.16101456293836,
+      "numerical_actor_wall_seconds": 213.8157738170121,
+      "RSS_peak_bytes": 624467968,
+      "own_swap_peak_bytes": 0,
+      "actual_old_action_counts": {
+        "S": 61,
+        "SH": 0,
+        "audit": 9
+      },
+      "actual_new_action_counts": {
+        "S": 2299,
+        "SH": 0
+      },
+      "old_action_inclusive_seconds": {
+        "S": 8.966460775118321,
+        "SH": 0.0,
+        "audit": 5.59930693753995
+      },
+      "new_action_inclusive_seconds": {
+        "S": 124.69224676466547,
+        "SH": 0.0
+      },
+      "action_completed": 2360,
+      "action_conservative_charged": 2392,
+      "original_audits_completed": 9,
+      "original_audits_charged": 11,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 954496065536,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 954496065536,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "neighbor_public_stage_endpoints": {
+        "available": true,
+        "first": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "last": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "comparison": "recorded public phase only; natural stage transitions do not establish interference",
+        "causal_zero_impact_claim": false
+      },
+      "MemAvailable_min_bytes": 951122305024,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 291
+    },
+    {
+      "stage": "B",
+      "source_sha": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+      "cpu": 0,
+      "supervised_wall_seconds": 385.0997686769115,
+      "launch_wall_seconds": 386.5037657410139,
+      "worker_wall_seconds": 381.36616940097883,
+      "numerical_actor_wall_seconds": 382.76068681594916,
+      "RSS_peak_bytes": 620302336,
+      "own_swap_peak_bytes": 0,
+      "actual_old_action_counts": {
+        "S": 65,
+        "SH": 0,
+        "audit": 16
+      },
+      "actual_new_action_counts": {
+        "S": 4202,
+        "SH": 0
+      },
+      "old_action_inclusive_seconds": {
+        "S": 9.512943161418661,
+        "SH": 0.0,
+        "audit": 10.413171925581992
+      },
+      "new_action_inclusive_seconds": {
+        "S": 238.9277119943872,
+        "SH": 0.0
+      },
+      "action_completed": 4267,
+      "action_conservative_charged": 4267,
+      "original_audits_completed": 16,
+      "original_audits_charged": 16,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949204856832,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949204856832,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "neighbor_public_stage_endpoints": {
+        "available": true,
+        "first": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143483,
+              "start_ticks": 82795735,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143484,
+              "start_ticks": 82795735,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143623,
+              "start_ticks": 82800318,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143673,
+              "start_ticks": 82800346,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "last": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143483,
+              "start_ticks": 82795735,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143484,
+              "start_ticks": 82795735,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143623,
+              "start_ticks": 82800318,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143673,
+              "start_ticks": 82800346,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "comparison": "recorded public phase only; natural stage transitions do not establish interference",
+        "causal_zero_impact_claim": false
+      },
+      "MemAvailable_min_bytes": 948095311872,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 515
+    },
+    {
+      "stage": "C",
+      "source_sha": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+      "cpu": 0,
+      "supervised_wall_seconds": 2719.6069857220864,
+      "launch_wall_seconds": 2720.9703141340287,
+      "worker_wall_seconds": 2712.43041379191,
+      "numerical_actor_wall_seconds": 2713.969223354012,
+      "RSS_peak_bytes": 776007680,
+      "own_swap_peak_bytes": 0,
+      "actual_old_action_counts": {
+        "S": 1017,
+        "SH": 0,
+        "audit": 104
+      },
+      "actual_new_action_counts": {
+        "S": 27236,
+        "SH": 0
+      },
+      "old_action_inclusive_seconds": {
+        "S": 148.5242785862647,
+        "SH": 0.0,
+        "audit": 64.52929225820117
+      },
+      "new_action_inclusive_seconds": {
+        "S": 1465.8596875768853,
+        "SH": 0.0
+      },
+      "action_completed": 28253,
+      "action_conservative_charged": 28253,
+      "original_audits_completed": 104,
+      "original_audits_charged": 104,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 948853424128,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 948853424128,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "neighbor_public_stage_endpoints": {
+        "available": true,
+        "first": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143483,
+              "start_ticks": 82795735,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1143484,
+              "start_ticks": 82795735,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "last": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "comparison": "recorded public phase only; natural stage transitions do not establish interference",
+        "causal_zero_impact_claim": false
+      },
+      "MemAvailable_min_bytes": 946306215936,
+      "PSI_full_avg10_max": 0.14,
+      "resource_samples": 3650
+    },
+    {
+      "stage": "VERIFY",
+      "source_sha": "d7bfcb58632b344f8ed9b9fd1467c6c224df0bc4",
+      "cpu": 0,
+      "supervised_wall_seconds": 53.746273163938895,
+      "launch_wall_seconds": 55.12244580104016,
+      "worker_wall_seconds": 48.34938537294511,
+      "numerical_actor_wall_seconds": 50.1823710630415,
+      "RSS_peak_bytes": 730533888,
+      "own_swap_peak_bytes": 0,
+      "actual_old_action_counts": {
+        "S": 6,
+        "SH": 0,
+        "audit": 6
+      },
+      "actual_new_action_counts": {
+        "S": 0,
+        "SH": 0
+      },
+      "old_action_inclusive_seconds": {
+        "S": 0.8908962678397074,
+        "SH": 0.0,
+        "audit": 3.7381891534896567
+      },
+      "new_action_inclusive_seconds": {},
+      "action_completed": 6,
+      "action_conservative_charged": 6,
+      "original_audits_completed": 6,
+      "original_audits_charged": 6,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 949609037824,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 949609037824,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "neighbor_public_stage_endpoints": {
+        "available": true,
+        "first": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1153333,
+              "start_ticks": 83125632,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1153382,
+              "start_ticks": 83125737,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "last": {
+          "timestamp": null,
+          "neighbors": [
+            {
+              "pid": 341799,
+              "start_ticks": 17196977,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 341830,
+              "start_ticks": 17197099,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341839,
+              "start_ticks": 17197130,
+              "rss_bytes": null,
+              "phase": {
+                "application_worker": {
+                  "pid": 341839,
+                  "start_ticks": 17197130
+                },
+                "clock": {
+                  "boottime": 356360.394200402,
+                  "monotonic": 356360.394200192,
+                  "utc_ns": 1790431365533333913
+                },
+                "clock_info": {
+                  "boottime": {
+                    "available": true,
+                    "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+                    "resolution": 1e-09
+                  },
+                  "monotonic": {
+                    "adjustable": false,
+                    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+                    "monotonic": true,
+                    "resolution": 1e-09
+                  },
+                  "utc": {
+                    "adjustable": true,
+                    "implementation": "clock_gettime(CLOCK_REALTIME)",
+                    "monotonic": false,
+                    "resolution": 1e-09
+                  }
+                },
+                "facts": {},
+                "phase": "solve",
+                "phase_clock_interval": {
+                  "budget_seconds": 1.2329022865742445e-05,
+                  "discrepancy_seconds": 2.3280228657424454e-06,
+                  "elapsed_seconds": {
+                    "boottime": 1.024699304252863e-05,
+                    "monotonic": 1.2329022865742445e-05,
+                    "utc": 1.0001e-05
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 1.2329022865742445e-05,
+                    "discrepancy_seconds": 2.3280228657424454e-06,
+                    "elapsed_seconds": {
+                      "boottime": 1.024699304252863e-05,
+                      "monotonic": 1.2329022865742445e-05,
+                      "utc": 1.0001e-05
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -2.3280228657424454e-06
+                  },
+                  "tolerance_seconds": 5.0,
+                  "utc_minus_monotonic_seconds": -2.3280228657424454e-06,
+                  "utc_positive_excess_seconds": 0.0
+                },
+                "phase_started_clock": {
+                  "boottime": 356360.394190155,
+                  "monotonic": 356360.394187863,
+                  "utc_ns": 1790431365533323912
+                },
+                "phase_started_monotonic": 356360.394185421,
+                "stage": "solve_started",
+                "updated_monotonic": 356360.394198959,
+                "workflow_clock_interval": {
+                  "budget_seconds": 184388.380664856,
+                  "discrepancy_seconds": 1.8560094758868217e-06,
+                  "elapsed_seconds": {
+                    "boottime": 184388.38064308502,
+                    "monotonic": 184388.380644418,
+                    "utc": 184388.380642562
+                  },
+                  "policy": "conservative_realtime",
+                  "policy_version": 1,
+                  "step": {
+                    "budget_seconds": 0.0037574960151687264,
+                    "discrepancy_seconds": 4.9080151687266e-06,
+                    "elapsed_seconds": {
+                      "boottime": 0.003753272001631558,
+                      "monotonic": 0.0037574960151687264,
+                      "utc": 0.003752588
+                    },
+                    "policy": "conservative_realtime",
+                    "policy_version": 1,
+                    "tolerance_seconds": 5.0,
+                    "utc_minus_monotonic_seconds": -4.9080151687266e-06
+                  },
+                  "tolerance_seconds": 1843.8838064441802,
+                  "utc_minus_monotonic_seconds": -1.8560094758868217e-06,
+                  "utc_positive_excess_seconds": 2.922046398925321e-06
+                },
+                "workflow_started_clock": {
+                  "boottime": 171972.013557317,
+                  "monotonic": 171972.013555774,
+                  "utc_ns": 1790246977152691351
+                }
+              }
+            },
+            {
+              "pid": 341987,
+              "start_ticks": 17219061,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026209,
+              "start_ticks": 75886958,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026214,
+              "start_ticks": 75887002,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026216,
+              "start_ticks": 75887026,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026232,
+              "start_ticks": 75887216,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026235,
+              "start_ticks": 75887252,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026236,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026237,
+              "start_ticks": 75887253,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026238,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026239,
+              "start_ticks": 75887254,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026240,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026241,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1026242,
+              "start_ticks": 75887255,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132318,
+              "start_ticks": 82372021,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1132387,
+              "start_ticks": 82372256,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1153333,
+              "start_ticks": 83125632,
+              "rss_bytes": null,
+              "phase": null
+            },
+            {
+              "pid": 1153382,
+              "start_ticks": 83125737,
+              "rss_bytes": null,
+              "phase": null
+            }
+          ]
+        },
+        "comparison": "recorded public phase only; natural stage transitions do not establish interference",
+        "causal_zero_impact_claim": false
+      },
+      "MemAvailable_min_bytes": 948770361344,
+      "PSI_full_avg10_max": 0.0,
+      "resource_samples": 74
+    }
+  ],
+  "formal_supervised_wall_seconds": 3482.1256625669776,
+  "formal_launch_wall_seconds": 3490.3797942071687,
+  "auxiliary": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/call8_publication_recovery/summary.json",
+        "sha256": "c33618a1a71bf2eb6d801a52dc355629597b057d0ec0308bbf7efc49f52c2ae3",
+        "bytes": 2414
+      },
+      "wall_seconds": 2.0293752209981903,
+      "RSS_peak_bytes": 69144576,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/channel_power_reader/summary.json",
+        "sha256": "6c3fe5eaa1c8120c373bb127c0f029c856c3f6c2635207cb73ca19e316f926a8",
+        "bytes": 4727
+      },
+      "wall_seconds": 7.897830071975477,
+      "RSS_peak_bytes": 231211008,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/collector_v21/summary.json",
+        "sha256": "6e562ee2aa17abf535308b288d41954500db688792226881d21accb895addcf6",
+        "bytes": 2280
+      },
+      "wall_seconds": 7.076673691044562,
+      "RSS_peak_bytes": 376750080,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/final_doc_contract/summary.json",
+        "sha256": "e7792f834c2a06353dc6474f57485f036453533c8894a4730a6d63412f337508",
+        "bytes": 4770
+      },
+      "wall_seconds": 2.1552908399607986,
+      "RSS_peak_bytes": 82841600,
+      "swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/final_targeted/summary.json",
+        "sha256": "ab1c395d886ccfe3cb15f697deafeee80e5ad6ceb63b690eecc2065592d150c4",
+        "bytes": 3448
+      },
+      "wall_seconds": 5.204049917054363,
+      "RSS_peak_bytes": 147816448,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_01/summary.json",
+        "sha256": "01f783a8235c86b253a309925e0573ee2cd3e08623b93c33ce5ba9893ef2d96f",
+        "bytes": 3602
+      },
+      "wall_seconds": 12.420181559049524,
+      "RSS_peak_bytes": 155447296,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_02/summary.json",
+        "sha256": "f816f4d450b2d474dd8a61b3254bcf468072693012dd7fbbad5312e44fd5ad6f",
+        "bytes": 3622
+      },
+      "wall_seconds": 12.22588306805119,
+      "RSS_peak_bytes": 152895488,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/r04_reader_and_core/summary.json",
+        "sha256": "d815e5216558697703482bacd0725cce5e95d018c2104c404f69b953b0e9f7cf",
+        "bytes": 2545
+      },
+      "wall_seconds": 5.937251967028715,
+      "RSS_peak_bytes": 153534464,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/repair02_03_focused/summary.json",
+        "sha256": "f191c69165174cd5985c1530e0fda5b7e974f693ca905b44f98a931d75dc3e07",
+        "bytes": 2530
+      },
+      "wall_seconds": 6.562085434095934,
+      "RSS_peak_bytes": 148705280,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds": 61.50862176925875,
+  "outer_queue_supervision": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/solve_supervision/summary.json",
+        "sha256": "accf85d8389efc380a181b42b558898713d25eaac3a6c46a5111ec54d4861975",
+        "bytes": 4779
+      },
+      "wall_seconds": 4.637423563050106,
+      "RSS_peak_bytes": 131461120,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/solve_supervision_r01/summary.json",
+        "sha256": "ce56a1122f4231761bdc7efdbed5538eba54678090939a96ecca1410fd6cf322",
+        "bytes": 4859
+      },
+      "wall_seconds": 330.6589128669584,
+      "RSS_peak_bytes": 702164992,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/solve_supervision_r02_r03/summary.json",
+        "sha256": "ded101dbacfacef9c8b144d613d6e419670884a1d73eea1ac7d8be3fe1a11bc4",
+        "bytes": 4926
+      },
+      "wall_seconds": 3111.378677546978,
+      "RSS_peak_bytes": 870723584,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/verify_supervision/summary.json",
+        "sha256": "7581f2086a5f4992e12e675dac5cb9ea9f2f648f8439e4caea3f1855f65833e5",
+        "bytes": 5121
+      },
+      "wall_seconds": 57.37017951102462,
+      "RSS_peak_bytes": 799428608,
+      "swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "simultaneous_sampled_tree_peak_bytes": 870723584,
+  "own_swap_peak_bytes": 0,
+  "own_VRAM_bytes": 0,
+  "cgroup_delegated": false,
+  "continuous_kernel_RSS_limit_claimed": false,
+  "supervision_interval_seconds": 0.5,
+  "old_formal_lower_bound_seconds": 67488.47412200551,
+  "cumulative_formal_lower_bound_seconds": 70970.59978457249,
+  "historical_auxiliary_unknown_preserved": true,
+  "nested_timers_additive": false,
+  "outer_and_nested_formal_times_additive": false,
+  "performance": "shared-workstation; uncontended speedup and neighbor impact INCONCLUSIVE",
+  "parts": {
+    "artifacts": {
+      "logical_regular_bytes": 458088347,
+      "allocated_unique_regular_bytes": 460193792,
+      "regular_files": 672,
+      "symlinks_not_followed": 0
+    },
+    "tmp": {
+      "logical_regular_bytes": 154969612,
+      "allocated_unique_regular_bytes": 160186368,
+      "regular_files": 2174,
+      "symlinks_not_followed": 28
+    },
+    "results": {
+      "logical_regular_bytes": 51132139,
+      "allocated_unique_regular_bytes": 51363840
+    }
+  },
+  "new_persistent_logical_regular_bytes": 664190098,
+  "artifact_limit_scope": "V21 artifact tree <=2GiB; tmp/results storage reported separately",
+  "historical_Task042_artifact_storage_snapshot": {
+    "logical_regular_bytes": 11953663416,
+    "allocated_unique_regular_bytes": 11967201280,
+    "regular_files": 5337,
+    "symlinks_not_followed": 7
+  },
+  "no_new_K_or_global_factor_constructed": true,
+  "total_elapsed_is_not_sum_of_nested_timers": true,
+  "collection_clock": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T01:59:15.038067+00:00",
+    "observed_monotonic": 831349.898936142,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5144.038067142712,
+    "heavy_remaining_seconds": 7455.961932857288,
+    "total_remaining_seconds": 9255.961932857288
+  },
+  "final_low_load_cost_snapshot": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T02:26:16.470818+00:00",
+    "observed_monotonic": 832971.331685572,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 6765.470818281174,
+    "heavy_remaining_seconds": 5834.529181718826,
+    "total_remaining_seconds": 7634.529181718826
+  },
+  "postfreeze_modal_reader": {
+    "S_SH_actions": 0,
+    "new_audits": 0,
+    "new_FE_states": 0,
+    "role": "derived from frozen complex amplitudes; original code only"
+  }
+}

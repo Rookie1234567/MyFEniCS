@@ -1,0 +1,396 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v21",
+    "start_utc": "2026-10-02T00:33:31+00:00",
+    "start_monotonic": 826205.8608689993,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T04:03:31+00:00",
+    "deadline_utc": "2026-10-02T04:33:31+00:00",
+    "first_observed_UTC_resolution_seconds": 1,
+    "clock_pair_at_freeze": {
+      "utc": "2026-10-02T00:33:56.812302+00:00",
+      "monotonic": 826231.673170635
+    },
+    "start_scope": "first actual realtime UTC inspection; monotonic anchor mapped using simultaneous clock pair, no interval excluded",
+    "review_expected_commit": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+    "prior_HEAD": "4636c601bc94809cdea3adc36af178a82d80599d",
+    "observed_utc": "2026-10-02T02:01:54.366689+00:00",
+    "observed_monotonic": 831509.227556848,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5303.366689443588,
+    "heavy_remaining_seconds": 7296.633310556412,
+    "total_remaining_seconds": 9096.633310556412
+  },
+  "bounded_checks": [
+    {
+      "name": "call8_publication_recovery",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/call8_publication_recovery/summary.json",
+      "summary_sha256": "c33618a1a71bf2eb6d801a52dc355629597b057d0ec0308bbf7efc49f52c2ae3",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "wall_seconds": 2.0293752209981903,
+      "RSS_peak_bytes": 69144576,
+      "swap_peak_bytes": 0,
+      "pytest_results": [],
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/call8_publication_recovery_environment.json",
+        "python",
+        "tmp/task042/v21/recover_call8.py"
+      ],
+      "source_state": {
+        "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "git_status": " M src/solvers/exact_action_recycle_study.py\n M src/solvers/gcrot_boundary.py\n M src/test/test_task042_v21_recycling.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+          "task042-v21",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v21/call8_publication_recovery_environment.json",
+          "python",
+          "tmp/task042/v21/recover_call8.py"
+        ],
+        "utc": "2026-10-02T01:02:24.467771+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "scope": "bounded auxiliary, overlapping tests not summed"
+    },
+    {
+      "name": "final_targeted",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/final_targeted/summary.json",
+      "summary_sha256": "ab1c395d886ccfe3cb15f697deafeee80e5ad6ceb63b690eecc2065592d150c4",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "wall_seconds": 5.204049917054363,
+      "RSS_peak_bytes": 147816448,
+      "swap_peak_bytes": 0,
+      "pytest_results": [
+        "19 passed in 2.43s"
+      ],
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/final_targeted_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v21_recycling.py",
+        "src/test/test_fixed_p3_ilu0_evidence.py"
+      ],
+      "source_state": {
+        "source_sha": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+        "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/exact_action_recycling_v21.json\n?? input/task042_neural_coarse_inverse/v21_action_recycling_preflight.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_gnn.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_gpoly.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_zero.dat\n?? input/task042_neural_coarse_inverse/v21_lgmres_control.dat\n?? input/task042_neural_coarse_inverse/v21_verify.dat\n?? src/io/exact_action_recycling.py\n?? src/io/exact_recycle_check.py\n?? src/io/fixed_p3_ilu0_check.py\n?? src/runners/exact_action_recycle_queue.py\n?? src/runners/exact_action_recycling.py\n?? src/solvers/class_batch_action.py\n?? src/solvers/exact_action_recycle_study.py\n?? src/solvers/exact_recycle_window.py\n?? src/solvers/gcrot_boundary.py\n?? src/test/test_fixed_p3_ilu0_evidence.py\n?? src/test/test_task042_v21_recycling.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+          "task042-v21",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v21/final_targeted_environment.json",
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v21_recycling.py",
+          "src/test/test_fixed_p3_ilu0_evidence.py"
+        ],
+        "utc": "2026-10-02T00:48:05.373971+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "scope": "bounded auxiliary, overlapping tests not summed"
+    },
+    {
+      "name": "focused_01",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_01/summary.json",
+      "summary_sha256": "01f783a8235c86b253a309925e0573ee2cd3e08623b93c33ce5ba9893ef2d96f",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "wall_seconds": 12.420181559049524,
+      "RSS_peak_bytes": 155447296,
+      "swap_peak_bytes": 0,
+      "pytest_results": [
+        "42 passed, 1 deselected, 1 warning in 9.17s"
+      ],
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_01_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v21_recycling.py",
+        "src/test/test_fixed_p3_ilu0_evidence.py",
+        "src/test/test_task042_v19_polish.py",
+        "src/test/test_task042_v20_ilu0.py",
+        "-k",
+        "not native_petsc"
+      ],
+      "source_state": {
+        "source_sha": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+        "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/exact_action_recycling_v21.json\n?? input/task042_neural_coarse_inverse/v21_action_recycling_preflight.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_gnn.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_gpoly.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_zero.dat\n?? input/task042_neural_coarse_inverse/v21_lgmres_control.dat\n?? input/task042_neural_coarse_inverse/v21_verify.dat\n?? src/io/exact_action_recycling.py\n?? src/io/fixed_p3_ilu0_check.py\n?? src/runners/exact_action_recycle_queue.py\n?? src/runners/exact_action_recycling.py\n?? src/solvers/class_batch_action.py\n?? src/solvers/exact_action_recycle_study.py\n?? src/solvers/exact_recycle_window.py\n?? src/solvers/gcrot_boundary.py\n?? src/test/test_fixed_p3_ilu0_evidence.py\n?? src/test/test_task042_v21_recycling.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+          "task042-v21",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_01_environment.json",
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v21_recycling.py",
+          "src/test/test_fixed_p3_ilu0_evidence.py",
+          "src/test/test_task042_v19_polish.py",
+          "src/test/test_task042_v20_ilu0.py",
+          "-k",
+          "not native_petsc"
+        ],
+        "utc": "2026-10-02T00:45:24.215383+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "scope": "bounded auxiliary, overlapping tests not summed"
+    },
+    {
+      "name": "focused_02",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_02/summary.json",
+      "summary_sha256": "f816f4d450b2d474dd8a61b3254bcf468072693012dd7fbbad5312e44fd5ad6f",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "wall_seconds": 12.22588306805119,
+      "RSS_peak_bytes": 152895488,
+      "swap_peak_bytes": 0,
+      "pytest_results": [
+        "43 passed, 1 deselected in 9.19s"
+      ],
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_02_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v21_recycling.py",
+        "src/test/test_fixed_p3_ilu0_evidence.py",
+        "src/test/test_task042_v19_polish.py",
+        "src/test/test_task042_v20_ilu0.py",
+        "-k",
+        "not native_petsc"
+      ],
+      "source_state": {
+        "source_sha": "4803449986d64723b5fa353e1bd0a53f1dc5a918",
+        "git_status": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n?? input/task042_neural_coarse_inverse/exact_action_recycling_v21.json\n?? input/task042_neural_coarse_inverse/v21_action_recycling_preflight.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_gnn.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_gpoly.dat\n?? input/task042_neural_coarse_inverse/v21_gcrot_zero.dat\n?? input/task042_neural_coarse_inverse/v21_lgmres_control.dat\n?? input/task042_neural_coarse_inverse/v21_verify.dat\n?? src/io/exact_action_recycling.py\n?? src/io/exact_recycle_check.py\n?? src/io/fixed_p3_ilu0_check.py\n?? src/runners/exact_action_recycle_queue.py\n?? src/runners/exact_action_recycling.py\n?? src/solvers/class_batch_action.py\n?? src/solvers/exact_action_recycle_study.py\n?? src/solvers/exact_recycle_window.py\n?? src/solvers/gcrot_boundary.py\n?? src/test/test_fixed_p3_ilu0_evidence.py\n?? src/test/test_task042_v21_recycling.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+          "task042-v21",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v21/focused_02_environment.json",
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v21_recycling.py",
+          "src/test/test_fixed_p3_ilu0_evidence.py",
+          "src/test/test_task042_v19_polish.py",
+          "src/test/test_task042_v20_ilu0.py",
+          "-k",
+          "not native_petsc"
+        ],
+        "utc": "2026-10-02T00:47:06.334011+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "scope": "bounded auxiliary, overlapping tests not summed"
+    },
+    {
+      "name": "r04_reader_and_core",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/r04_reader_and_core/summary.json",
+      "summary_sha256": "d815e5216558697703482bacd0725cce5e95d018c2104c404f69b953b0e9f7cf",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "wall_seconds": 5.937251967028715,
+      "RSS_peak_bytes": 153534464,
+      "swap_peak_bytes": 0,
+      "pytest_results": [
+        "35 passed in 4.03s"
+      ],
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/r04_reader_and_core_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v21_recycling.py",
+        "src/test/test_fixed_p3_ilu0_evidence.py",
+        "src/test/test_task042_v19_polish.py"
+      ],
+      "source_state": {
+        "source_sha": "c91954c47d55242fd95ae7efcb44272dcce3a0ec",
+        "git_status": " M src/solvers/exact_action_recycle_study.py\n M src/test/test_task042_v21_recycling.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+          "task042-v21",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v21/r04_reader_and_core_environment.json",
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v21_recycling.py",
+          "src/test/test_fixed_p3_ilu0_evidence.py",
+          "src/test/test_task042_v19_polish.py"
+        ],
+        "utc": "2026-10-02T01:55:50.520389+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "scope": "bounded auxiliary, overlapping tests not summed"
+    },
+    {
+      "name": "repair02_03_focused",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/repair02_03_focused/summary.json",
+      "summary_sha256": "f191c69165174cd5985c1530e0fda5b7e974f693ca905b44f98a931d75dc3e07",
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "wall_seconds": 6.562085434095934,
+      "RSS_peak_bytes": 148705280,
+      "swap_peak_bytes": 0,
+      "pytest_results": [
+        "20 passed in 4.16s"
+      ],
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/repair02_03_focused_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v21_recycling.py",
+        "src/test/test_fixed_p3_ilu0_evidence.py"
+      ],
+      "source_state": {
+        "source_sha": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+        "git_status": " M src/solvers/exact_action_recycle_study.py\n M src/solvers/gcrot_boundary.py\n M src/test/test_task042_v21_recycling.py\n",
+        "stage": "F0",
+        "formal_pde": false,
+        "command": [
+          "bash",
+          "-c",
+          "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+          "task042-v21",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v21/repair02_03_focused_environment.json",
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "src/test/test_task042_v21_recycling.py",
+          "src/test/test_fixed_p3_ilu0_evidence.py"
+        ],
+        "utc": "2026-10-02T01:01:36.611372+00:00",
+        "affinity": [
+          0
+        ],
+        "environment_mode": "pure",
+        "gpu_visible": false
+      },
+      "scope": "bounded auxiliary, overlapping tests not summed"
+    }
+  ],
+  "final_code_targeted": "35 passed before d7bfcb58632b344f8ed9b9fd1467c6c224df0bc4 commit; identical core/test content; only documents changed afterward",
+  "old_V20_reader_tests_run_in_V21": true,
+  "V20_original_not_run_and_time_FAIL_preserved": true,
+  "full_pytest": "not_run",
+  "MPI2_MPI4": "not_run",
+  "CI": "not_run",
+  "Ruff": "not_run: unavailable; not installed",
+  "final_document_contract": {
+    "result": "10 passed, 1 failed, 15 deselected in 0.34s",
+    "source_state": {
+      "source_sha": "d7bfcb58632b344f8ed9b9fd1467c6c224df0bc4",
+      "git_status": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? docs/task042_neural_coarse_inverse/outcomes/exact_action_recycled_correction_v21.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/action_equivalence_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v21.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v21.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/data_loading_boundary_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/deadline_stop_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v21.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/input_lineage_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/original_audit_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/paired_kernel_cost_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/paired_same_work_v21.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v21.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/recycle_contract_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/review_render_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_v21.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/test_results_v21.json\n?? docs/task042_neural_coarse_inverse/response_v21.md\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v21",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v21/final_doc_contract_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_development_model_registry_contract.py",
+        "src/test/test_24_repository_work_principles.py",
+        "src/test/test_task042_v21_recycling.py",
+        "-k",
+        "repository or registry or reader_counter or fixed_parent_reader"
+      ],
+      "utc": "2026-10-02T02:08:30.099759+00:00",
+      "affinity": [
+        0
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    },
+    "failure_is_preexisting": true,
+    "baseline_record": "legacy_registry_check_v21.json",
+    "supervised_seconds": 2.1552908399607986,
+    "descendants_cleared": true
+  },
+  "additional_offline_modal_check": {
+    "result": "5 states × 40 channels; derived sums/max paired",
+    "summary": "/home/fenics/Projects/NN-Lab/tmp/task042/v21/channel_power_reader/summary.json",
+    "new_operator_or_audit_calls": 0
+  }
+}

@@ -1,3 +1,20 @@
+# V21：真实作用、循环保存与读取边界的focused检查
+
+| 检查／成本口径 | measured结果／限制 |
+|---|---|
+| 首轮精确class/循环/旧事务/reader | 42 passed / 1 deselected，后修正fixture及最终43 passed / 1 deselected；未重跑旧campaign |
+| 最终preformal targeted | 19 passed；包括独立旧oracle、deadline过期拒绝、CU None/k+1/hash、真实B/C dat→保存→audit |
+| R02/R03公共链与JSON发布 | 20 passed；C8原hash完整补发布，未重算Arnoldi |
+| R04 parent reader | 旧x/outer_directions解码反例；两模式明确只解码四个物理数组，最终数量见record |
+| V20 reader | 本批最小mutation回归通过；不追溯改变V20 not_run/时间FAIL |
+| A真实原/new S与SH及完整暖点残差 | 数学Gate通过；性能只是shared-workstation工程收益 |
+| 独立物理VERIFY与raw checker | frozen后读取REF7一次；原残差/场/功率重新判断，不信保存status |
+| 完整pytest/MPI2/4/CI/Ruff/GitHub视觉 | not_run或NOT_VERIFIED，未安装或伪称通过 |
+
+B的旧方向不得读取Gate仍FAIL_RETAINED；算法使用零校正与空方向不抵销字面读取缺口。R04后只补独立验证，不重跑已耗尽B预算。全部失败、辅助监督、测试耗时与源身份见[测试](records/test_results_v21.json)、[读取边界](records/data_loading_boundary_v21.json)、[费用](records/resource_costs_v21.json)。最后文档合同10 passed / 1 failed / 15 deselected；失败的总账Task列表及Task038路径在Review V18基线中逐项相同，未修改历史或扩大全仓清理，见[基线对照](records/legacy_registry_check_v21.json)。代码最终35项已在相同内容上通过，文档改动不重跑旧数值Gate。最终compileall/git diff与文字/历史保护见[静态](records/static_checks_v21.json)，本地结构不替代GitHub像素证据。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # V20 本地验证与截止
 
 正式source d41470d17d2babf29fabb0960886b0f60ae2aceb提交前最终38 passed（test_task042_v20_ilu0＋V18/V19事务回归），compileall及git diff --check通过；七dat注册/schema验证通过。真实native PC小fixture及formal S0配对、N/P0/P40实际端到端均通过接口Gate。两次计划内fixture失败22/1和37/1保留，最终38/0；正式求解/验证重放0、意外修复0。

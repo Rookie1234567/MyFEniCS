@@ -1,0 +1,174 @@
+{
+  "equivalence": [
+    {
+      "name": "random422101",
+      "S": {
+        "absolute": 1.357964671094751e-13,
+        "operation_relative": 1.1371736364838215e-16
+      },
+      "SH": {
+        "absolute": 1.3683467120590553e-13,
+        "operation_relative": 1.145860116394765e-16
+      },
+      "residual_difference_full_b": 1.6424685191980255e-12
+    },
+    {
+      "name": "random422102",
+      "S": {
+        "absolute": 1.425426619428493e-13,
+        "operation_relative": 1.163785497080609e-16
+      },
+      "SH": {
+        "absolute": 1.436749695866036e-13,
+        "operation_relative": 1.1730285973150563e-16
+      },
+      "residual_difference_full_b": 1.7240642548901828e-12
+    },
+    {
+      "name": "GPOLY-warm",
+      "S": {
+        "absolute": 1.1612245534965793e-14,
+        "operation_relative": 7.022550370309783e-14
+      },
+      "SH": {
+        "absolute": 1.155050608152234e-14,
+        "operation_relative": 1.1670295229418361e-14
+      },
+      "residual_difference_full_b": 1.4045098620277995e-13,
+      "old_original_audit": {
+        "schur_relative": 9.678334709617142e-06,
+        "augmented_relative": 3.7532948000733737e-06,
+        "native_relative": 3.7532948000736033e-06,
+        "original_total_augmented_relative": 1.3023908733910555e-06,
+        "port_absolute": 2.8819394302757675e-17,
+        "port_full_rhs_relative": 1.3517783033539817e-16,
+        "port_operation_relative": 4.968614322288396e-17,
+        "recovery_relative": 4.727871753891869e-13,
+        "schur_original_identity_operation_relative": 5.359799157603172e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314602477901916,
+        "port_unknown_norm": 0.19744364058635402,
+        "strict_pass": false
+      }
+    },
+    {
+      "name": "GPOLY-residual",
+      "S": {
+        "absolute": 1.0031646091320326e-20,
+        "operation_relative": 4.4230134062864583e-16
+      },
+      "SH": {
+        "absolute": 9.316059734014131e-21,
+        "operation_relative": 4.1062696622804796e-16
+      },
+      "residual_difference_full_b": 1.2133351663299573e-19
+    },
+    {
+      "name": "GNN-warm",
+      "S": {
+        "absolute": 1.1610105930751938e-14,
+        "operation_relative": 7.021256440552616e-14
+      },
+      "SH": {
+        "absolute": 1.1524362097524195e-14,
+        "operation_relative": 1.1644073492583643e-14
+      },
+      "residual_difference_full_b": 1.4042510752832248e-13,
+      "old_original_audit": {
+        "schur_relative": 1.4439383854599514e-05,
+        "augmented_relative": 5.599647662707267e-06,
+        "native_relative": 5.599647662707319e-06,
+        "original_total_augmented_relative": 1.943074204098899e-06,
+        "port_absolute": 3.469452018836172e-18,
+        "port_full_rhs_relative": 1.6273520235439634e-17,
+        "port_operation_relative": 5.981616897382256e-18,
+        "recovery_relative": 4.740980683181288e-13,
+        "schur_original_identity_operation_relative": 5.38008481698698e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.631431798848037,
+        "port_unknown_norm": 0.19744033548826947,
+        "strict_pass": false
+      }
+    },
+    {
+      "name": "GNN-residual",
+      "S": {
+        "absolute": 1.648418631234705e-20,
+        "operation_relative": 3.586923040814469e-16
+      },
+      "SH": {
+        "absolute": 1.5065950313245367e-20,
+        "operation_relative": 3.277690281678661e-16
+      },
+      "residual_difference_full_b": 1.9937747762464356e-19
+    },
+    {
+      "name": "zero",
+      "S": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "SH": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "residual_difference_full_b": 0.0
+    }
+  ],
+  "bar_pairs": [
+    {
+      "S": {
+        "absolute": 1.3581393377212827e-13,
+        "operation_relative": 1.1366446423681007e-16
+      },
+      "SH": {
+        "absolute": 1.3685369130290246e-13,
+        "operation_relative": 1.145104489416596e-16
+      }
+    },
+    {
+      "S": {
+        "absolute": 1.4256769637503712e-13,
+        "operation_relative": 1.1621160509337584e-16
+      },
+      "SH": {
+        "absolute": 1.4374429554196846e-13,
+        "operation_relative": 1.1711866663727944e-16
+      }
+    }
+  ],
+  "dot_tests": [
+    {
+      "operation_relative": 1.4348166521374147e-17
+    }
+  ],
+  "old_oracle_unchanged": true,
+  "capacity": {
+    "backend": "EXACT_CLASS_BATCH64",
+    "batch_cells": 64,
+    "cells": 384,
+    "local_trace": 108,
+    "classes": 122,
+    "persistent_cache_bytes": 22771200,
+    "block_workspace_upper_bytes": 407808,
+    "old_expanded_S_payload_derived_bytes": 71663616,
+    "old_payload_is_not_measured_RSS_saving": true,
+    "independent_old_oracle": true
+  },
+  "action_source": "97a17aee9a9cc2d91904b4c89f07c4d1cfbd631c",
+  "original_action": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M1-FE/task042_v7_real_fe_interface_20260929T053615881143Z/physical_action_packet.npz",
+    "sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "file_bytes": 209248356
+  },
+  "backend_choice": {
+    "selected_backend": "EXACT_CLASS_BATCH64",
+    "math_qualified": true,
+    "full_call_wall_ratio": 0.5270250548559299,
+    "choice_rule": "math Gate plus at least 20% lower complete-call wall; otherwise OLD_ACTION",
+    "backend_frozen_before_formal_solve": true,
+    "reference_read": false,
+    "repeated_old_action_difference_full_b": 0.0
+  },
+  "test_initial_not_used": true
+}
