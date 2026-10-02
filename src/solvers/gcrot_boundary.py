@@ -140,6 +140,6 @@ def recycle_check(action,CU, *, k=32):
         cs.append(c)
     gram=np.array(cs).conj()@np.array(cs).T if cs else np.zeros((0,0))
     defect=float(np.linalg.norm(gram-np.eye(len(cs))))
-    qualified=all(row['operation_relative']<=1e-10 for row in pairs) and np.isfinite(defect)
+    qualified=bool(all(row['operation_relative']<=1e-10 for row in pairs) and np.isfinite(defect))
     return dict(pairs=pairs,C_orthogonality_Frobenius=defect,None_indices=[j for j,(c,u) in enumerate(CU) if c is None],
                 inventory=len(CU),finite=True,qualified=qualified,orthogonality_is_diagnostic=True)

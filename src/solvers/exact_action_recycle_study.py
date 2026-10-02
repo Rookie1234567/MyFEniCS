@@ -40,6 +40,7 @@ class OracleClosedBar:
     def __init__(self,solver,oracle):
         self.apply=solver.apply;self.close=oracle.close;self.reduced_rhs=oracle.reduced_rhs
         self.packet=oracle.packet
+        self.n=oracle.n
 
 
 def physical_point(stage,bar,trace,path):

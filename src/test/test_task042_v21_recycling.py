@@ -71,7 +71,8 @@ np.savez(p/'output.npz',x=x,**pack_CU(CU,len(x),k=2))
     with np.load(tmp_path/'output.npz') as f:
         for key,v in dict(x=full,**gc.pack_CU(CU,80,k=2)).items():np.testing.assert_allclose(f[key],v,rtol=1e-12,atol=1e-12)
     z=bar.close(base+full,packet.a['b']);assert np.linalg.norm(z[-40:])>0
-    assert gc.recycle_check(bar.apply,CU,k=2)['qualified']
+    check=gc.recycle_check(bar.apply,CU,k=2)
+    assert json.loads(json.dumps(check,allow_nan=False))['qualified'] is True
     bad=[(c+1 if c is not None else None,u) for c,u in CU]
     assert not gc.recycle_check(bar.apply,bad,k=2)['qualified']
 
@@ -163,7 +164,8 @@ def test_six_real_inputs_registration_and_reference_barrier(tmp_path,monkeypatch
     assert io.load_recycling('input/task042_neural_coarse_inverse/v21_verify.dat')
 
 
-def test_real_dat_to_stage_gcrot_close_save_old_audit(tmp_path,monkeypatch):
+@pytest.mark.parametrize('name,label',[('C','gcrot_gpoly'),('B','lgmres_control')])
+def test_real_dat_to_stage_gcrot_close_save_old_audit(tmp_path,monkeypatch,name,label):
     from src.io import exact_action_recycling as io
     from src.solvers import exact_recycle_window as w
     from src.solvers import exact_action_recycle_study as study
@@ -173,7 +175,7 @@ def test_real_dat_to_stage_gcrot_close_save_old_audit(tmp_path,monkeypatch):
     from src.runners.orthonormal_trace_reprofile import atomic_arrays
     for key,file in [('LEDGER_PATH','ledger.json'),('JOURNAL_PATH','journal.jsonl')]:monkeypatch.setattr(w,key,tmp_path/file)
     monkeypatch.setattr(w,'snapshot',lambda:dict(heavy_remaining_seconds=12000,total_remaining_seconds=13800))
-    spec=io.load_recycling('input/task042_neural_coarse_inverse/v21_gcrot_gpoly.dat')
+    spec=io.load_recycling(f'input/task042_neural_coarse_inverse/v21_{label}.dat')
     packet,bar,exact=small_problem(12);packet.costs=dict(S=0.,SH=0.)
     monkeypatch.setattr(io,'ARTIFACT_ROOT',tmp_path/'artifacts');io.ARTIFACT_ROOT.mkdir()
     parent=atomic_arrays(io.ARTIFACT_ROOT/'parent.npz',**close_point_for_test(bar,exact[:12]*.2,packet.a['b']))
@@ -184,7 +186,7 @@ def test_real_dat_to_stage_gcrot_close_save_old_audit(tmp_path,monkeypatch):
     monkeypatch.setattr(study,'ports_for',lambda stage:bar.ports)
     directory=tmp_path/'run';directory.mkdir();(directory/'source_sha.txt').write_text('c'*40)
     stage=RecycleStage(spec,directory);result=study.route(stage);stage.finish(result)
-    stored,_=io.read_result('C');assert stored['first_pass_cycle']==1
+    stored,_=io.read_result(name);assert stored['first_pass_cycle']==1
     with np.load(stored['final']['state']['path']) as f:
         assert f['port'].shape==(40,) and f['z'].shape==(52,)
         np.testing.assert_allclose(f['z'],exact,rtol=1e-7,atol=1e-8)
