@@ -1,0 +1,235 @@
+{
+  "baseline_AST_unchanged_function_count": 35,
+  "baseline_AST_unchanged_functions": [
+    "_complex_matrix",
+    "_complex_vector",
+    "_readonly",
+    "_borrow_matrix",
+    "_factored_matrix_action",
+    "_operation_relative",
+    "_array_sha256",
+    "CondensedPhysicalCell.solve_interior",
+    "CondensedPhysicalCell.recover",
+    "condense_physical_cell_blocks",
+    "_as_direct_term",
+    "P6CellCondensedAction._prepare_direct_terms",
+    "P6CellCondensedAction.Hhat",
+    "P6CellCondensedAction.audit",
+    "P6CellCondensedAction.operator_recipe",
+    "P6CellCondensedAction.reduced_size",
+    "P6CellCondensedAction.hp_solve_count",
+    "P6CellCondensedAction._check_reduced_array",
+    "P6CellCondensedAction._streamed_cell_action",
+    "P6CellCondensedAction._add_direct_reduced",
+    "P6CellCondensedAction.mult",
+    "P6CellCondensedAction.apply",
+    "P6CellCondensedAction.create_matrix",
+    "P6CellCondensedAction._full_array",
+    "P6CellCondensedAction.inject_trace_port",
+    "P6CellCondensedAction._cell_internal_rhs",
+    "P6CellCondensedAction.reduce_rhs",
+    "P6CellCondensedAction.recover_storage",
+    "P6CellCondensedAction.apply_B_full",
+    "P6CellCondensedAction.apply_D_full",
+    "P6CellCondensedAction.create_reduced_rhs_vector",
+    "P6CellCondensedAction.destroy",
+    "P6RetainedBALHBridge.__init__",
+    "P6RetainedBALHBridge.apply",
+    "native_residual_from_augmented"
+  ],
+  "created_utc": "2026-10-02T21:41:07.032571+00:00",
+  "freeze_sha256": "e51559c0c2372fc957db12b8656173f8e3a360ef90819e127d38c55be604720a",
+  "qualified": false,
+  "reconstruction_status": "NEW_UNQUALIFIED",
+  "resolved_review_finding": {
+    "final_resolution": "Final research factory bounds full_rows and appended_rows against installed PETSc.IntType before original-H construction and generated port-list casts. Research consume validates native row dimensionality, integer dtype, nonnegative native row range, and PETSc width before inherited int64/PETSc casts. The existing compact iterator separately bounds total reduced rows before reduced contribution indices are formed. No default-branch behavior was changed by these final guards.",
+    "id": "R1",
+    "initial_issue": "New normalizer admission ran after factory-generated port indices had already been narrowed.",
+    "initial_location": "P6 public carrier factory generated PETSc.IntType port-list cast; previous P6 sha ea11174554903057f20c91b6e68df65e7a1c681e03487dce40d85d4ea5f7290a"
+  },
+  "review_scope": "One bounded read-only source/AST/hash/test-definition review, plus parent-requested confirmation of the final factory-admission and portable-test-path seams",
+  "review_stopping_condition": "Bounded review delivered and final source-bound seams confirmed. Reconstruction remains NEW_UNQUALIFIED; source-only review ends here.",
+  "reviewed_contracts": [
+    {
+      "contract": "Mathematical signs and independent D",
+      "observation": "Source preserves augmented [[V,B],[-D,H]]. Bhat=Bt+trace_from_interior@Bi; Dhat=Dt+Di@recovery with recovery=-Vii^-1 Vit; Hhat correction is +Di@XiB. D is not inferred from B conjugate transpose."
+    },
+    {
+      "contract": "Original H versus Hhat",
+      "observation": "Research original-H object remains separate from condensed action. original_hp_solve uses original_port_block.solve; action uses condensed_port_block.apply. BAL_H bridge/native residual continue using original-H solve. Implicit research H_p/Hhat materialization raises MemoryError."
+    },
+    {
+      "contract": "Cached Di/XiB and no new unprojected port square",
+      "observation": "Helper borrows exact readonly ports/Di/XiB and recovered action computes Di@(XiB@alpha). Research constructor skips dense H_p/Hhat. Iterator yields original representation and CachedPortCorrection; exact recovered provider projects factor recipes after q-support restriction without raw Di@XiB. Explicit existing dense original-H fallback remains bounded and nonscalable."
+    },
+    {
+      "contract": "None/zero/nonzero Hlocal",
+      "observation": "Research preserves None without synthesizing a port square. Existing exact-zero Hlocal is validated, borrowed and identity-bound. Any nonzero Hlocal causes controlled NotImplementedError even with supplied dense original H. Generic Hlocal options are unsupported. Nonzero-Hlocal research fallback has not been implemented and must be disclosed."
+    },
+    {
+      "contract": "Legacy defaults and streamed behavior",
+      "observation": "Both public APIs default to dense_legacy. Research requires cached coupling. Legacy merge and cached Hhat construction, streamed staging clearing and streamed original-H action remain on their inherited branches; this is source inspection, not runtime equivalence."
+    },
+    {
+      "contract": "Owner lifetime and all-cell inventory",
+      "observation": "Action retains original/cached representations and all cell objects. Helper inventory strongly retains exact readonly numerical arrays, including every supplied zero-port cell and optional Hlocal. Nonempty corrections alias matching arrays in order. Identity binds complete supplied order, all array values, integer dtype and Hlocal None sentinel. Helper explicitly cannot discover cells never supplied by an arbitrary caller. Iterator checks owner destruction between yields; no claim of private-state tamper resistance."
+    },
+    {
+      "contract": "Native arbitrary interior RHS and recovery",
+      "observation": "reduce_rhs and recover_storage are AST-identical to immutable V15, as are apply_B_full, apply_D_full, injection, BAL_H bridge and native_residual_from_augmented. Native residual modifications dispatch original-H action only for research."
+    },
+    {
+      "contract": "Public physical key and H-value binding",
+      "observation": "Carrier factory checks full count. Default original representation invokes recovered from_carrier schema/order/mode-identity validation. Supplied diagonal representation must match every ordered physical carrier mode_key and every normalization_h exactly before carrier consume/build. Carrier factory rejects dense original override; low-level action constructor separately admits explicit dense original without a carrier schema."
+    },
+    {
+      "contract": "Typed iterator/provider compatibility",
+      "observation": "Recovered provider dispatches on uses_port_block_representation. Candidate labels, native index ordering, typed classes and exact recipe objects match provider expectations. Provider validates every expected label, every volume cell and all nonempty corrections, preserves zero-threshold output, and avoids raw port-square construction. Runtime integration remains untested."
+    },
+    {
+      "contract": "Final test portability seam",
+      "observation": "source_paths resolves checkout/src/test to checkout/src/solvers and otherwise keeps the explicit V15-original/staged-helper pair. Added definition tests both selections. Final source contains 27 pure test definitions."
+    }
+  ],
+  "schema": "retained-H-reconstruction.external-source-review.v1",
+  "source_sha256": {
+    "recovery_staging/compact_provider/y_orbit_two_cell_block_audit.py": "cd37ac48af2aeaebc2741d92927a2278f18aacc5b2dcec852440b6a6a33e39ab",
+    "recovery_staging/retained_H_reconstruction/NEW_UNQUALIFIED/src/solvers/p6_cell_condensed_action.py": "cac493f61095c58b7abca8c28877545aa78e4fdf3f0c6defaac512aaffed07c4",
+    "recovery_staging/retained_H_reconstruction/NEW_UNQUALIFIED/src/solvers/retained_port_block_layout.py": "1b074f6efbe5689df55d0e7e55fbd3e3b3861caab5e9e27695e1f48c53b6fb50",
+    "recovery_staging/retained_H_reconstruction/test_retained_port_block_layout.py": "d77bab3ee968e0a53f1fb7c9ff74e8c6ee9bbe17b5cc758d83ffd16c448bcda8",
+    "task40extra_cloud/recovered_v15/src/solvers/original_port_blocks.py": "de6940522d97343484851f7abe75dbb6302a3b64be2f0903cee3361bc9816645",
+    "task40extra_cloud/recovered_v15/src/solvers/p6_cell_condensed_action.py": "c717a42516b8202e41e46c906f4c29042eb8c41a9f3e620959c3ddaddb2633df"
+  },
+  "status": "NO_SOURCE_BLOCKER_WITHIN_BOUNDED_REVIEWED_CONTRACT",
+  "superseded_source_sha256": {
+    "P6": "ea11174554903057f20c91b6e68df65e7a1c681e03487dce40d85d4ea5f7290a",
+    "test": "d57756f7b8857570f97dede8d7652ad1b4a3aa2a2f173e04a410bc42cc8c0a90"
+  },
+  "test_definition_review": {
+    "coverage": "Material complex non-Hermitian synthetic independent dense oracle recomputes XiB from separate Vii/Bi; original-H/Hhat distinction; exact borrowed owners; helper no-square/no-new-solve guards; empty cell and Hlocal controls; dense original; invalid arrays/ports; full identities/omission/order; shared backing inventory; source-path portability.",
+    "definition_count": 27,
+    "definitions": [
+      {
+        "line": 148,
+        "name": "CachedPortReconstructionTests.test_portable_source_selection_preserves_explicit_staging_fallback"
+      },
+      {
+        "line": 156,
+        "name": "CachedPortReconstructionTests.test_constants_and_returned_original_identity"
+      },
+      {
+        "line": 164,
+        "name": "CachedPortReconstructionTests.test_material_complex_nonhermitian_action_against_independent_dense"
+      },
+      {
+        "line": 175,
+        "name": "CachedPortReconstructionTests.test_original_h_solve_is_materially_distinct_from_hhat_solve"
+      },
+      {
+        "line": 183,
+        "name": "CachedPortReconstructionTests.test_exact_borrowed_owner_and_nonempty_correction_order"
+      },
+      {
+        "line": 199,
+        "name": "CachedPortReconstructionTests.test_none_hlocal_never_allocates_a_square_or_uses_a_new_solve"
+      },
+      {
+        "line": 219,
+        "name": "CachedPortReconstructionTests.test_helper_never_reads_bi_or_local_factor"
+      },
+      {
+        "line": 237,
+        "name": "CachedPortReconstructionTests.test_generator_is_consumed_once_with_every_zero_cell"
+      },
+      {
+        "line": 247,
+        "name": "CachedPortReconstructionTests.test_no_cells_and_only_empty_cells_are_explicitly_distinct"
+      },
+      {
+        "line": 255,
+        "name": "CachedPortReconstructionTests.test_exact_zero_hlocal_is_borrowed_and_hashed"
+      },
+      {
+        "line": 266,
+        "name": "CachedPortReconstructionTests.test_any_nonzero_hlocal_stops_even_with_dense_original"
+      },
+      {
+        "line": 278,
+        "name": "CachedPortReconstructionTests.test_explicit_complex_dense_original_is_preserved"
+      },
+      {
+        "line": 290,
+        "name": "CachedPortReconstructionTests.test_every_array_is_validated_on_empty_cells"
+      },
+      {
+        "line": 306,
+        "name": "CachedPortReconstructionTests.test_invalid_ports_shape_dtype_and_range_are_rejected"
+      },
+      {
+        "line": 315,
+        "name": "CachedPortReconstructionTests.test_every_nonfinite_complex_array_is_rejected"
+      },
+      {
+        "line": 326,
+        "name": "CachedPortReconstructionTests.test_wrong_dtype_shape_or_writeability_is_rejected"
+      },
+      {
+        "line": 348,
+        "name": "CachedPortReconstructionTests.test_array_hashes_match_recovered_evidence_complex_cast_contract"
+      },
+      {
+        "line": 361,
+        "name": "CachedPortReconstructionTests.test_mode_keys_original_h_and_every_cell_factor_bind_numerical_identity"
+      },
+      {
+        "line": 383,
+        "name": "CachedPortReconstructionTests.test_omitted_and_reordered_empty_cell_change_full_identity"
+      },
+      {
+        "line": 396,
+        "name": "CachedPortReconstructionTests.test_nonempty_omission_is_a_material_negative_control"
+      },
+      {
+        "line": 405,
+        "name": "CachedPortReconstructionTests.test_wrong_projection_and_conjugate_d_are_material_negative_controls"
+      },
+      {
+        "line": 417,
+        "name": "CachedPortReconstructionTests.test_replaced_reordered_or_copied_corrections_fail_owner_validation"
+      },
+      {
+        "line": 430,
+        "name": "CachedPortReconstructionTests.test_original_mutation_or_foreign_block_is_rejected"
+      },
+      {
+        "line": 441,
+        "name": "CachedPortReconstructionTests.test_mutated_factor_readonly_state_is_revalidated"
+      },
+      {
+        "line": 447,
+        "name": "CachedPortReconstructionTests.test_unique_backing_inventory_deduplicates_shared_views_and_is_not_rss"
+      },
+      {
+        "line": 463,
+        "name": "CachedPortReconstructionTests.test_same_numerical_identity_can_have_different_backing_inventory"
+      },
+      {
+        "line": 477,
+        "name": "CachedPortReconstructionTests.test_missing_inventory_and_legacy_identity_request_fail_explicitly"
+      }
+    ],
+    "limits": "Definitions do not import P6, FEniCS or PETSc and do not execute public carrier factory or typed provider. Reviewer did not execute them. No algebraic PASS, PDE qualification, physical fixture result, RSS measurement, performance result, or launch authorization follows from this receipt."
+  },
+  "verification": {
+    "AST_parse_all_six_sources": "OK",
+    "FEniCS_or_PETSc_runtime_validation": false,
+    "all_final_hashes_match": "YES",
+    "candidate_sources_modified_by_reviewer": false,
+    "historical_PASS_inherited": false,
+    "numerical_launch": false,
+    "old_raw_artifacts_reconstructed": false,
+    "solver_or_test_imports": false,
+    "source6f_reconstructed": false,
+    "test_execution": false
+  }
+}

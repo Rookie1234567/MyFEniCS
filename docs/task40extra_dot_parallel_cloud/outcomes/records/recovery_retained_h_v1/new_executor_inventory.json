@@ -1,0 +1,47 @@
+{
+  "status": "NEW_EXECUTOR_READ_ONLY_INVENTORY_NOT_QUALIFIED",
+  "time_UTC": "2026-10-02T21:09:30Z",
+  "python": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "version": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "prefix": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python",
+  "machine": "x86_64",
+  "packages": {
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "dolfinx": null,
+    "dolfinx-mpc": null,
+    "petsc4py": null,
+    "mpi4py": null,
+    "fenics-basix": null,
+    "fenics-ufl": null,
+    "fenics-ffcx": null
+  },
+  "old_ABI_receipt_present": false,
+  "old_complex_prefix_present": false,
+  "numerical_run": false,
+  "memory": [
+    "MemTotal:       10206504 kB",
+    "MemAvailable:    9143688 kB",
+    "SwapTotal:             0 kB",
+    "SwapFree:              0 kB"
+  ],
+  "swap_table": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+  "cgroup": "0::/\n",
+  "logical_cpus": 9,
+  "mpi_version": "mpiexec (Open MPI) 5.0.7",
+  "gcc_version": "gcc (Debian 14.2.0-19) 14.2.0",
+  "thread_environment": {
+    "OMP_NUM_THREADS": null,
+    "OPENBLAS_NUM_THREADS": null,
+    "MKL_NUM_THREADS": null,
+    "NUMEXPR_NUM_THREADS": null,
+    "_MYFENICS_CLOUD_QUALIFIED_ACTIVATION": null
+  },
+  "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "source_recovery": {
+    "published_V15_head": "de14d2a28333348a0f3eefc8d4471dcdafbddb37",
+    "published_V15_tree": "846fe8a974fcbbabbd21a64e32fbbef737af850d",
+    "previous_checker_outcome": "UNKNOWN_EXECUTOR_REPLACED",
+    "raw_artifacts_found": false
+  }
+}

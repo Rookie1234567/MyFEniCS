@@ -1,0 +1,9 @@
+{
+  "status": "TEST_HARNESS_FAILED_BEFORE_PRODUCTION_BRANCH",
+  "error": "TypeError: required field lineno missing from stmt",
+  "failed_cases": 4,
+  "source_sha256": "df0ec234d94183c0bc75b615676dcc67c4578177aa60997b7ed1fd125588d593",
+  "tool_chunk_id": "7fd3a4",
+  "first_stdout_record": "conversation tool result only; no historical raw log file claimed",
+  "FE_PETSc_PDE_run": false
+}

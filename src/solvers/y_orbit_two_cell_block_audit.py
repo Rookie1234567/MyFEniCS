@@ -70,6 +70,8 @@ class TwoCellBlockProvider:
         self.calls=0
 
     def block(self,p,q):
+        if getattr(getattr(self.condensed, 'action', None), 'uses_port_block_representation', False):
+            return self._block_compact(p, q)
         c=self.coordinates;left=c.q_map(p);right=c.q_map(q)
         shape=(left.shape[1],right.shape[1]);integer_admission(shape,0,index_dtype=c.index_dtype)
         result=sparse.csr_matrix(shape,dtype=complex)
@@ -99,6 +101,253 @@ class TwoCellBlockProvider:
             del lr,rr,l,r,projected,term
         self.calls+=1
         csr_audit(result,petsc_index_dtype=c.index_dtype)
+        return result
+
+    def _block_compact(self, p, q):
+        """Project the exact cached layout without creating an Hhat square.
+
+        This is a narrow consumer of P6CellCondensedAction's typed recipes.
+        Current named owners are disclosed separately from additional bytes;
+        the caller's fresh RSS gate covers earlier q outputs and all other
+        retained objects. CSR/CSC bounds use the actual ABI and native index
+        widths before allocation. Sparse/BLAS native workspace remains an
+        explicit allowance, never an RSS measurement or fill prediction.
+        """
+        from .original_port_blocks import (
+            CachedPortCorrection, DenseOriginalPortBlock, DiagonalOriginalPortBlock,
+        )
+
+        c = self.coordinates
+        action = self.condensed.action
+        if (action._destroyed or action.condensed._destroyed
+                or action.port_coupling_mode != 'cached'
+                or action.condensed.comm.Get_size() != 1):
+            raise ValueError('compact provider requires a live MPI1 cached action')
+        if action._H_p is not None or action._Hhat is not None:
+            raise ValueError('compact provider owner unexpectedly retains H/Hhat arrays')
+        nt = int(action.condensed.active_rows)
+        np_ = int(action.condensed.appended_rows)
+        if c.rows != nt + np_:
+            raise ValueError('compact native trace/port inventory differs from coordinates')
+        integer_admission((c.rows, c.rows), 0, index_dtype=c.index_dtype)
+        # Admit Python owner/label inventories before constructing them.
+        _gate(self.gate, 'compact_provider_owner_inventory', workspace=512 * (
+            1 + len(action._cells) + np_), no_new_unprojected_port_square_created=True)
+        expected = {'ports/H_original': ('H', None)}
+        for index, cell in enumerate(action._cells):
+            expected[f'volume/cell/{index}'] = ('volume', cell)
+            if len(cell.ports):
+                expected[f'cell/C_hat/{index}'] = ('C', cell)
+                expected[f'cell/-D_hat/{index}'] = ('D', cell)
+                expected[f'cell/Hhat_correction/{index}'] = ('correction', cell)
+        for port in action._direct_B_active:
+            expected[f'direct/C/port/{port}'] = ('direct_C', port)
+        for port in action._direct_D_active:
+            expected[f'direct/-D/port/{port}'] = ('direct_D', port)
+        seen = set()
+        carrier = self.condensed.action_bundle['dtn_action'].carrier
+        keys = tuple(tuple(entry.mode_key) for entry in carrier.entries)
+        if action._original_port_block.mode_keys != keys or len(keys) != np_:
+            raise ValueError('compact original H keys differ from complete carrier order')
+
+        # Count unique backing owners of all named cell/cache/port arrays.
+        # Views, shared local classes and cached correction aliases count once.
+        borrowed = {}
+        def retain(array):
+            if array is None:
+                return
+            owner = array
+            while isinstance(getattr(owner, 'base', None), np.ndarray):
+                owner = owner.base
+            borrowed[id(owner)] = int(owner.nbytes)
+        for cell in action._cells:
+            for field in ('original_interiors', 'original_trace', 'active_ids',
+                          'S_V', 'recovery', 'trace_from_interior', 'Bi', 'Bt',
+                          'Di', 'Dt', 'ports', 'Bhat', 'Dhat', 'XiB', 'Hlocal'):
+                retain(getattr(cell, field))
+            for array in (*cell.interior_lu, cell.expansion.data,
+                          cell.expansion.indices, cell.expansion.indptr):
+                retain(array)
+        for term in action._port_terms.values():
+            for field in ('Bi', 'Di', 'Bt', 'Dt', 'H', 'port_indices'):
+                retain(getattr(term, field))
+        for mapping in (action._direct_B_original, action._direct_D_original,
+                        action._direct_B_active, action._direct_D_active):
+            for pair in mapping.values():
+                for array in pair:
+                    retain(array)
+        for array in action._original_port_block.numeric_arrays:
+            retain(array)
+        borrowed_bytes = sum(borrowed.values())
+        del borrowed
+
+        def sparse_bytes(matrix):
+            return int(matrix.data.nbytes + matrix.indices.nbytes + matrix.indptr.nbytes)
+
+        left, right = c.q_map(p), c.q_map(q)
+        for matrix in (left, right):
+            csr_audit(matrix, petsc_index_dtype=c.index_dtype)
+            if matrix.shape[0] != c.rows:
+                raise ValueError('compact q map has the wrong native row inventory')
+        shape = (left.shape[1], right.shape[1])
+        integer_admission(shape, 0, index_dtype=c.index_dtype)
+        ibytes = max(c.index_dtype.itemsize, np.dtype(np.intp).itemsize,
+                     left.indices.dtype.itemsize, left.indptr.dtype.itemsize,
+                     right.indices.dtype.itemsize, right.indptr.dtype.itemsize)
+        maps_bytes = sparse_bytes(left) + sparse_bytes(right)
+        def gate(label, payload=0, workspace=0, **facts):
+            _gate(self.gate, 'compact_provider/' + label, payload=payload,
+                  workspace=workspace, borrowed_action_backing_bytes=borrowed_bytes,
+                  current_q_map_bytes=maps_bytes,
+                  current_q_result_bytes=0 if result is None else sparse_bytes(result),
+                  current_objects_in_fresh_RSS=True,
+                  earlier_q_outputs_in_fresh_RSS=True,
+                  native_index_itemsize_upper=ibytes,
+                  PETSc_index_itemsize_bytes=c.index_dtype.itemsize,
+                  CSR_and_CSC_workspaces_included=True,
+                  numeric_factor_count=0, no_new_unprojected_port_square_created=True,
+                  native_sparse_and_BLAS_workspace_unknown=True, **facts)
+        result = None
+        gate('empty_q_result', payload=(shape[0] + 1) * ibytes)
+        result = sparse.csr_matrix(shape, dtype=np.complex128)
+
+        def equal_ids(ids, expected_ids):
+            return np.array_equal(ids, expected_ids)
+        def port_ids(ids, ports):
+            return len(ids) == len(ports) and all(
+                int(value) == nt + int(port) for value, port in zip(ids, ports, strict=True))
+        def readonly_finite(array, *, complex_values=False):
+            if not isinstance(array, np.ndarray) or array.flags.writeable:
+                raise ValueError('compact payload must borrow readonly NumPy arrays')
+            if complex_values and array.dtype != np.dtype(np.complex128):
+                raise ValueError('compact numeric payload must be complex128')
+            # Row-wise masks never allocate a borrowed factor/matrix square.
+            for row in array:
+                if not np.isfinite(row).all():
+                    raise ValueError('compact contribution contains nonfinite values')
+
+        for rows, cols, values, label in self.condensed.iter_contributions(allocation_gate=self.gate):
+            if label not in expected or label in seen:
+                raise ValueError('compact contribution label is unknown or duplicated: ' + str(label))
+            seen.add(label)
+            kind, owner = expected[label]
+            for ids in (rows, cols):
+                if (not isinstance(ids, np.ndarray) or ids.ndim != 1 or ids.dtype.kind not in 'iu'
+                        or ids.flags.writeable
+                        or any(int(v) < 0 or int(v) >= c.rows for v in ids)
+                        or len(set(map(int, ids))) != len(ids)):
+                    raise ValueError('invalid compact native contribution indices: ' + label)
+            if kind == 'H':
+                if (values is not action._original_port_block
+                        or not isinstance(values, (DiagonalOriginalPortBlock, DenseOriginalPortBlock))
+                        or values.count != np_ or values.mode_keys != keys
+                        or not all(int(v) == nt + i for i, v in enumerate(rows))
+                        or not equal_ids(rows, cols) or len(rows) != np_):
+                    raise ValueError('compact original H recipe or key/index order differs')
+                arrays = values.numeric_arrays
+                expected_h_shape = (np_,) if isinstance(values, DiagonalOriginalPortBlock) else (np_, np_)
+                if len(arrays) != 1 or arrays[0].shape != expected_h_shape:
+                    raise ValueError('compact original H stored shape differs from its representation')
+                for array in arrays:
+                    readonly_finite(array, complex_values=True)
+                del arrays
+            elif kind == 'correction':
+                if (not isinstance(values, CachedPortCorrection)
+                        or values.port_indices is not owner.ports
+                        or values.Di is not owner.Di or values.XiB is not owner.XiB
+                        or not port_ids(rows, owner.ports) or not equal_ids(rows, cols)):
+                    raise ValueError('compact correction differs from exact borrowed cell recipe')
+                for array in (values.port_indices, values.Di, values.XiB):
+                    readonly_finite(array, complex_values=array is not values.port_indices)
+                if (values.Di.ndim != 2 or values.XiB.ndim != 2
+                        or values.Di.shape != (len(rows), values.XiB.shape[0])
+                        or values.XiB.shape[1] != len(cols)):
+                    raise ValueError('compact correction factors have incompatible dimensions')
+            else:
+                readonly_finite(values, complex_values=True)
+                if values.shape != (len(rows), len(cols)):
+                    raise ValueError('compact dense contribution dimensions differ')
+                if kind == 'volume':
+                    valid = equal_ids(rows, owner.active_ids) and equal_ids(cols, owner.active_ids)
+                elif kind == 'C':
+                    valid = equal_ids(rows, owner.active_ids) and port_ids(cols, owner.ports)
+                elif kind == 'D':
+                    valid = port_ids(rows, owner.ports) and equal_ids(cols, owner.active_ids)
+                elif kind == 'direct_C':
+                    valid = equal_ids(rows, action._direct_B_active[owner][0]) and port_ids(cols, (owner,))
+                else:
+                    valid = port_ids(rows, (owner,)) and equal_ids(cols, action._direct_D_active[owner][0])
+                if not valid:
+                    raise ValueError('compact contribution native row/column order differs: ' + label)
+
+            # Upper bounds for row gathers, support discovery and sparse
+            # column slicing include actual CSR/CSC index widths.
+            row_slice_bytes = 2 * maps_bytes + (len(rows) + len(cols) + 2) * ibytes
+            gate('q_slices/' + label, payload=row_slice_bytes,
+                 workspace=maps_bytes + (left.nnz + right.nnz) * ibytes)
+            lr, rr = left[rows, :].tocsr(), right[cols, :].tocsr()
+            support_p, support_q = np.unique(lr.indices), np.unique(rr.indices)
+            if not len(support_p) or not len(support_q):
+                del lr, rr, support_p, support_q, rows, cols, values
+                continue
+            count = int(len(support_p)) * int(len(support_q))
+            upper = int(result.nnz) + count
+            integer_admission(shape, upper, index_dtype=c.index_dtype)
+            integer_admission(shape, upper, index_dtype=np.intp)
+            sparse_upper = upper * (16 + ibytes) + (shape[0] + 1) * ibytes
+            term_upper = count * (16 + 2 * ibytes) + (shape[0] + 1) * ibytes
+            slice_bytes = sparse_bytes(lr) + sparse_bytes(rr)
+            if isinstance(values, DiagonalOriginalPortBlock):
+                # Sparse row scaling implements diagonal H without even a
+                # temporary sector square or dense q-support rectangle.
+                gate('diagonal_H_projection/' + label,
+                     payload=2 * slice_bytes + term_upper + sparse_upper,
+                     workspace=2 * term_upper + sparse_upper + slice_bytes,
+                     current_contribution_slice_bytes=slice_bytes)
+                weighted = rr.copy()
+                for index, diagonal in enumerate(values.diagonal):
+                    first, last = int(weighted.indptr[index]), int(weighted.indptr[index + 1])
+                    weighted.data[first:last] *= diagonal
+                dual = lr.conjugate().T  # CSC view of a bounded conjugated CSR
+                term = (dual @ weighted).tocsr()
+                del weighted, dual
+            else:
+                lp, rq = len(support_p), len(support_q)
+                if isinstance(values, CachedPortCorrection):
+                    ni = int(values.XiB.shape[0])
+                    factor_entries = lp * ni + ni * rq
+                else:
+                    factor_entries = lp * len(cols)
+                dense_entries = 2 * len(rows) * lp + len(cols) * rq + factor_entries + count
+                gate('factored_or_dense_projection/' + label,
+                     payload=16 * dense_entries + 2 * slice_bytes + term_upper + sparse_upper,
+                     workspace=16 * (factor_entries + count) + 2 * term_upper + sparse_upper,
+                     borrowed_correction_factors=isinstance(values, CachedPortCorrection),
+                     current_contribution_slice_bytes=slice_bytes)
+                l = lr[:, support_p].toarray()
+                r = rr[:, support_q].toarray()
+                if isinstance(values, CachedPortCorrection):
+                    dual_di = l.conj().T @ values.Di
+                    xib_primal = values.XiB @ r
+                    projected = dual_di @ xib_primal
+                    del dual_di, xib_primal
+                else:
+                    matrix = values.numeric_arrays[0] if isinstance(values, DenseOriginalPortBlock) else values
+                    projected = l.conj().T @ matrix @ r
+                    del matrix
+                if not np.isfinite(projected).all():
+                    raise FloatingPointError('compact projected contribution is nonfinite: ' + label)
+                ii, jj = np.nonzero(projected)  # every numerical nonzero, no cutoff
+                term = sparse.coo_matrix((projected[ii, jj],
+                    (support_p[ii], support_q[jj])), shape=shape).tocsr()
+                del l, r, projected, ii, jj
+            csr_audit(term, petsc_index_dtype=c.index_dtype)
+            result = (result + term).tocsr()
+            del lr, rr, support_p, support_q, term, rows, cols, values
+        if seen != set(expected):
+            raise ValueError('compact contribution inventory is incomplete: ' + ','.join(sorted(set(expected) - seen)))
+        self.calls += 1
+        csr_audit(result, petsc_index_dtype=c.index_dtype)
         return result
 
 

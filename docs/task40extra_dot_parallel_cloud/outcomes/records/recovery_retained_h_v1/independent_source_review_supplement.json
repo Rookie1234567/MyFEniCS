@@ -1,0 +1,69 @@
+{
+  "checks": {
+    "P6_and_metadata_AST_parse": "OK",
+    "dimension_guard_before_carrier_entries_tuple": true,
+    "dimension_guard_is_first_executable_factory_statement": true,
+    "guard_ABI": "np.iinfo(PETSc.IntType).max",
+    "guard_dimensions": "max(condensed.full_rows, condensed.appended_rows)",
+    "metadata_test_definition_count": 4,
+    "metadata_test_definitions": [
+      {
+        "line": 58,
+        "name": "test_count_overflow_stops_before_reading_carrier"
+      },
+      {
+        "line": 68,
+        "name": "test_wide_rows_fail_before_integer_conversion"
+      },
+      {
+        "line": 75,
+        "name": "test_nominal_factory_binds_all_keys_and_H_values"
+      },
+      {
+        "line": 85,
+        "name": "test_legacy_factory_keeps_existing_dense_default"
+      }
+    ],
+    "unchanged_helper_and_existing_test_hashes": true
+  },
+  "created_utc": "2026-10-02T21:43:54.788527+00:00",
+  "final_source_sha256": {
+    "recovery_staging/retained_H_reconstruction/NEW_UNQUALIFIED/src/solvers/p6_cell_condensed_action.py": "7f2b2132569f8f40d9ba62f42bfd8e07dfcecc7eb98f041bebff7f7c6bdab692",
+    "recovery_staging/retained_H_reconstruction/NEW_UNQUALIFIED/src/solvers/retained_port_block_layout.py": "1b074f6efbe5689df55d0e7e55fbd3e3b3861caab5e9e27695e1f48c53b6fb50",
+    "recovery_staging/retained_H_reconstruction/test_reconstructed_p6_source_metadata.py": "3ee6dbc888e298477a68157130dc192083be18ab23eac45f638c08fce641b10e",
+    "recovery_staging/retained_H_reconstruction/test_retained_port_block_layout.py": "d77bab3ee968e0a53f1fb7c9ff74e8c6ee9bbe17b5cc758d83ffd16c448bcda8"
+  },
+  "limits": {
+    "no_FE_or_PETSc_runtime_claim": true,
+    "no_historical_PASS_inheritance": true,
+    "no_numerical_launch_by_reviewer": true,
+    "no_solver_or_test_imports_by_reviewer": true,
+    "nonzero_Hlocal_research_fallback": "Still intentionally unsupported as stated in the prior receipt"
+  },
+  "metadata_definition_review": {
+    "count_overflow": "UnreadableCarrier.entries raises AssertionError; each count above int32 max expects OverflowError before carrier access.",
+    "explicit_stubs": "PETSc.IntType is np.int32 and final owned P6CellCondensedAction constructor is a kwargs-returning lambda. Tests validate factory metadata/control-flow, not real PETSc ABI, action construction, FE assembly, native recovery, provider integration or PDE numerics.",
+    "legacy_default": "Implicit legacy path expects existing dense original-H default and dense_legacy layout.",
+    "native_row_admission": "Float, negative, native-out-of-range and uint64-overflow rows expect the production pre-cast ValueError.",
+    "physical_binding": "Nominal one-mode factory checks exact key and H diagonal; supplied mismatched H diagonal is a negative control. The test does not include a separate wrong-key negative control.",
+    "production_definition_selection": "Harness extracts the actual production factory, _complex_vector and port-term dataclasses from candidate AST; executes exact recovered original-H module only after its fixed SHA check.",
+    "reviewer_execution": "None. Reviewer read and AST-parsed definitions without importing or executing solver/test modules."
+  },
+  "parent_reported_execution_context": {
+    "NumPy": "2.3.5",
+    "earlier_AST_harness_lineno_failure": "Reported preserved by parent; no runtime qualification inferred",
+    "helper_cases": 27,
+    "independently_verified_by_this_reviewer": false,
+    "metadata_cases": 4,
+    "reported_passed": true
+  },
+  "prior_receipt": "recovery_staging/retained_H_reconstruction/review/external_source_review_final_20261002T2139Z.json",
+  "prior_receipt_sha256": "124b323619b7fd0fa4369c2db3ab226d89a77cdc1f09433c9175a68b48310275",
+  "qualified": false,
+  "reconstruction_status": "NEW_UNQUALIFIED",
+  "review_stopping_condition": "Requested supplement complete against final hashes; no candidate or test source edits by reviewer.",
+  "schema": "retained-H-reconstruction.external-source-review.supplement.v1",
+  "scope": "Supplement to prior bounded review; confirm only moved public-factory dimension gate and four new metadata test definitions. No full review repeated.",
+  "status": "NO_SOURCE_BLOCKER_IN_REQUESTED_FINAL_ORDERING_AND_METADATA_SEAMS",
+  "superseded_P6_sha256": "cac493f61095c58b7abca8c28877545aa78e4fdf3f0c6defaac512aaffed07c4"
+}

@@ -1,0 +1,22 @@
+{
+  "status": "PASS_FRESH_CLEAN_CLONE_PURE_TEST_PATHS",
+  "results": [
+    {
+      "name": "test_retained_port_block_layout.py",
+      "returncode": 0,
+      "elapsed_seconds": 0.30355719699991823,
+      "log_sha256": "190a606fd4f9b02aa11d12c4daa583b83bb30be6099f9744d3a0824c92f8bac1"
+    },
+    {
+      "name": "test_reconstructed_p6_source_metadata.py",
+      "returncode": 0,
+      "elapsed_seconds": 0.28421825999976136,
+      "log_sha256": "473351569a98129c30340f7d7ba0f5e6d2f3d993a3cd99d5be26cbff9ffd414c"
+    }
+  ],
+  "source_manifest_sha256": "5da267af55059779b0d20a40b40a7ba2543ead1a3cc4bdae81ad4a56b3a06d98",
+  "child_maxrss_bytes": 36155392,
+  "FE_PETSc_or_PDE_run": false,
+  "old_ABI_reused": false,
+  "scope": "portable helper plus explicitly stubbed production metadata branches, source subset overlay only; not a full Git checkout"
+}

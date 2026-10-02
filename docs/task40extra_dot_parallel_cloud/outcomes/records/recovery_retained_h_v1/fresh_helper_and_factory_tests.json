@@ -1,0 +1,32 @@
+{
+  "status": "PASS_FRESH_PURE_NUMPY_AND_FACTORY_METADATA_ONLY",
+  "results": [
+    {
+      "test": "recovery_staging/retained_H_reconstruction/test_retained_port_block_layout.py",
+      "returncode": 0,
+      "elapsed_seconds": 0.2885589659999823,
+      "log_sha256": "5f70af532afec028e593702ca041cb089c6f465b3b1a364c008da1091267a461"
+    },
+    {
+      "test": "recovery_staging/retained_H_reconstruction/test_reconstructed_p6_source_metadata.py",
+      "returncode": 0,
+      "elapsed_seconds": 0.3117919669998628,
+      "log_sha256": "8c79ce1c4e730f0c85c92cf45dbd8bea67e3162fc5ab655b8fc5d0e07ac95e3b"
+    }
+  ],
+  "source_sha256": {
+    "recovery_staging/retained_H_reconstruction/NEW_UNQUALIFIED/src/solvers/retained_port_block_layout.py": "1b074f6efbe5689df55d0e7e55fbd3e3b3861caab5e9e27695e1f48c53b6fb50",
+    "recovery_staging/retained_H_reconstruction/NEW_UNQUALIFIED/src/solvers/p6_cell_condensed_action.py": "7f2b2132569f8f40d9ba62f42bfd8e07dfcecc7eb98f041bebff7f7c6bdab692",
+    "recovery_staging/retained_H_reconstruction/test_retained_port_block_layout.py": "d77bab3ee968e0a53f1fb7c9ff74e8c6ee9bbe17b5cc758d83ffd16c448bcda8",
+    "recovery_staging/retained_H_reconstruction/test_reconstructed_p6_source_metadata.py": "3ee6dbc888e298477a68157130dc192083be18ab23eac45f638c08fce641b10e"
+  },
+  "source_unchanged": true,
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "numpy": "2.3.5",
+  "scipy": "1.17.0",
+  "child_maxrss_bytes": 36028416,
+  "threads": 1,
+  "FE_PETSc_or_PDE_run": false,
+  "factory_metadata_PETSc_IntType_and_action_constructor_are_stubs": true,
+  "old_ABI_or_evidence_reused": false
+}

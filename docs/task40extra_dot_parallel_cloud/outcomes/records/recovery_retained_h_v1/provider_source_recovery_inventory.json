@@ -1,0 +1,79 @@
+{
+  "schema": "compact-provider-source-recovery-inventory.v1",
+  "recovered_files": {
+    "y_orbit_two_cell_block_audit.py": {
+      "fresh_sha256": "cd37ac48af2aeaebc2741d92927a2278f18aacc5b2dcec852440b6a6a33e39ab",
+      "lines": 382,
+      "recovery_status": "SOURCE_BYTES_VERIFIED_AGAINST_PREVIOUSLY_OBSERVED_HASH",
+      "historically_observed_source_sha256": "cd37ac48af2aeaebc2741d92927a2278f18aacc5b2dcec852440b6a6a33e39ab"
+    },
+    "y_orbit_two_cell_block_audit.baseline.py": {
+      "fresh_sha256": "606c3744bf46a6d827b4e4a44a37b8ff7890e26b65b39096ccaac7ecefb745ab",
+      "lines": 133,
+      "recovery_status": "SOURCE_BYTES_VERIFIED_AGAINST_PREVIOUSLY_OBSERVED_HASH",
+      "historically_observed_source_sha256": "606c3744bf46a6d827b4e4a44a37b8ff7890e26b65b39096ccaac7ecefb745ab"
+    },
+    "y_orbit_quotient_condensed.py": {
+      "fresh_sha256": "55846638b8d1bc2e3c0f3fa32c2b567e40e4e91743f4823526d2534d276b79fa",
+      "lines": 361,
+      "recovery_status": "SOURCE_BYTES_VERIFIED_AGAINST_PREVIOUSLY_OBSERVED_HASH",
+      "historically_observed_source_sha256": "55846638b8d1bc2e3c0f3fa32c2b567e40e4e91743f4823526d2534d276b79fa"
+    },
+    "recover_p6_provider_seam.py": {
+      "fresh_sha256": "395f73b79f13d2d7f40315db2531198a2a8342e0632271309b903d294eb51e23",
+      "lines": 141,
+      "recovery_status": "NEW_UNVERIFIED_SOURCE_RECIPE_OR_FRAGMENT"
+    },
+    "recover_quotient_constructor.py": {
+      "fresh_sha256": "6b132c4b2c5baa9408b5486efa0f50f34264a10defdeed640495226f52925b75",
+      "lines": 142,
+      "recovery_status": "NEW_UNVERIFIED_SOURCE_RECIPE_OR_FRAGMENT"
+    },
+    "compact_provider_method.py.fragment": {
+      "fresh_sha256": "59a033d132cd15f62d55c5fcf8fe26b9dbb0d92063712738050e27b943660606",
+      "lines": 246,
+      "recovery_status": "NEW_UNVERIFIED_SOURCE_RECIPE_OR_FRAGMENT"
+    },
+    "p6_legacy_iterator.py.fragment": {
+      "fresh_sha256": "36b4f79ab1f6f008c98ab7e008bae194473a4d760ee0f897994c8091800b2d04",
+      "lines": 111,
+      "recovery_status": "NEW_UNVERIFIED_SOURCE_RECIPE_OR_FRAGMENT"
+    },
+    "p6_provider_iterators.NEW_UNVERIFIED_SOURCE.py.fragment": {
+      "fresh_sha256": "6c8e3621621873e20dca7bf1c0c3387b43a91158056759b4f2ebd9e2b1fa9094",
+      "lines": 262,
+      "recovery_status": "NEW_UNVERIFIED_SOURCE_RECIPE_OR_FRAGMENT"
+    }
+  },
+  "not_recovered": {
+    "complete_p6_source": {
+      "historically_observed_base_sha256": "7d7eb2032f6cbd59be7fa6ad95add62e17b54f1d7266bf699cfabc21f550bb17",
+      "historically_observed_candidate_sha256": "baa9c4229160d072e641d125f826dba9373991dcfdcc823b6feaecff252ce1f9",
+      "dependency": "retained-H prebridge source absent; recovered V15 P6 source differs; recipe refuses it"
+    },
+    "complete_test_source": {
+      "historically_observed_sha256": "ddbbc39c0f92bbe840d4bc7613f520d83bdf216dfcc32a828b24a34b82342ab1",
+      "historical_lines": 751,
+      "recovery_status": "PARTIAL_TRANSCRIPT_EXCERPTS_AND_HASH_ONLY_FINAL_IDENTITY",
+      "completed_author_worker_access": "followup_task failed: agent thread limit reached; worker absent from current live tree"
+    },
+    "complete_original_patch": {
+      "historically_observed_sha256": "0ba3fe9652d8d041cf29cc74d1c955d6799b2212e33777d248583e1d264219e4",
+      "recovery_status": "HASH_ONLY; complete patch bytes were not printed"
+    },
+    "old_receipts_logs_raw_artifacts": "Not recovered or regenerated"
+  },
+  "scope": "authored source recovery only",
+  "numeric_modules_imported": false,
+  "tests_or_numerics_run": false,
+  "historical_PASS_or_Git_identity_recreated": false,
+  "whole_patch_or_runtime_qualification_restored": false,
+  "read_prohibited_session_paths": false,
+  "P6_legacy_iterator_transcript_crosscheck": {
+    "restored_source": "task40extra_cloud/recovered_v15/src/solvers/p6_cell_condensed_action.py",
+    "fragment_method_text_matches_restored_V15_ignoring_terminal_newlines": true,
+    "restored_method_raw_sha256": "53d129822b0bf671e8a2b157ca53a89959e077fe5df37695cd0a7566ff416cf9",
+    "complete_retained_H_baseline_not_established": true,
+    "runtime_or_numerical_gate": false
+  }
+}

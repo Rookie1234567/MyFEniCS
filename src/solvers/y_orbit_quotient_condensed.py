@@ -148,7 +148,9 @@ class QuotientCondensedBundle:
 
 
 def build_quotient_condensed(action_bundle, *, global_mode_inventory,
-                             global_mode_indices, qbase, allocation_gate, direct_profile=None):
+                             global_mode_indices, qbase, allocation_gate, direct_profile=None,
+                             port_block_layout="dense_legacy", original_port_block=None,
+                             generic_hlocal_max_new_bytes=None, generic_hlocal_reason=None):
     """Construct only the exact local action/cache, with all sector aliases.
 
     This frozen profile is degree4,40cells,8940storage/7936independent,
@@ -161,6 +163,25 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
     from .hcurl_assembly_time_condensation import build_unconstrained_assembly_time_condensation
     from .p6_cell_condensed_action import build_p6_cell_condensed_action_from_carrier
     from .y_orbit_condensed_adapter import _boundary_support, _integer_capacity, _mpc_expansion_width
+    from .original_port_blocks import DiagonalOriginalPortBlock, DenseOriginalPortBlock
+    from .retained_port_block_layout import LEGACY_PORT_LAYOUT, RESEARCH_PORT_LAYOUT
+
+    if port_block_layout not in {LEGACY_PORT_LAYOUT, RESEARCH_PORT_LAYOUT}:
+        raise ValueError("unknown retained port-block layout")
+    compact = port_block_layout == RESEARCH_PORT_LAYOUT
+    if not compact and (original_port_block is not None or generic_hlocal_max_new_bytes is not None
+                        or generic_hlocal_reason is not None):
+        raise ValueError("original-H representation/fallback requires explicit compact layout")
+    if compact and original_port_block is not None:
+        if not isinstance(original_port_block, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)):
+            raise TypeError("compact original H needs an admitted representation")
+        entries = action_bundle["dtn_action"].carrier.entries
+        if (original_port_block.count != len(entries)
+                or original_port_block.mode_keys != tuple(tuple(e.mode_key) for e in entries)):
+            raise ValueError("compact original-H keys/count differ from complete local carrier")
+    if compact and generic_hlocal_max_new_bytes is not None:
+        if type(generic_hlocal_max_new_bytes) is not int or generic_hlocal_max_new_bytes < 0:
+            raise ValueError("generic original-H construction bound must be a nonnegative integer")
 
     if direct_profile is None:
         cell_count_expected, storage_expected, independent_expected, interior_expected, trace_expected = 40, 8940, 7936, 4320, 3616
@@ -229,12 +250,60 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
                 or system.appended_rows != len(indices)
                 or system.retained_local_schur_by_class is None):
             raise ValueError("complete action-only trace/interior/port count mismatch")
-        _gate(allocation_gate, "quotient_complete_port_action", port_arrays + 4*carrier_bytes + 3*dense_h,
-              2*carrier_bytes + carrier_entries*224 + 2*dense_h,
-              actual_interior_support=support["carrier_nonzero_interior_cell_count"],
-              estimate_status="declared_named_array_and_Python_allowance_not_peak_RSS")
-        action = build_p6_cell_condensed_action_from_carrier(
-            system, carrier, owns_condensed=False, port_coupling_mode="cached")
+        if compact:
+            # The inherited carrier translator can allocate Bi/Di, cached
+            # XiB/Bhat/Dhat and zero Bt/Dt, but missing Hlocal remains None.
+            # counts are complete boundary-support upper bounds, including
+            # sectors with zero interior support; no weak entry is trimmed.
+            compact_port_arrays = sum((3*ni + 4*(nc-ni))*count*16 + count*index_bytes
+                                      for count in counts)
+            expansion_nnz_upper = (nc-ni) * expansion_audit
+            active_per_cell_upper = min(trace_expected, expansion_nnz_upper)
+            _integer_capacity(nc-ni, expansion_nnz_upper, np.int32)
+            _integer_capacity(active_per_cell_upper, expansion_nnz_upper, PETSc.IntType)
+            sparse_index_bytes = max(index_bytes, np.dtype(np.int32).itemsize)
+            compact_expansion_upper = cell_count * (
+                expansion_nnz_upper*(16+sparse_index_bytes) + (nc-ni+1)*sparse_index_bytes)
+            compact_cell_index_upper = cell_count*(ni + nc-ni + active_per_cell_upper)*index_bytes
+            compact_h_new = 0 if original_port_block is not None else 4*len(indices)*16
+            fallback_new = generic_hlocal_max_new_bytes or 0
+            original_borrowed = 0
+            if original_port_block is not None:
+                owners = {}
+                for array in original_port_block.numeric_arrays:
+                    owner = array
+                    while isinstance(getattr(owner, "base", None), np.ndarray):
+                        owner = owner.base
+                    owners[id(owner)] = int(owner.nbytes)
+                original_borrowed = sum(owners.values())
+            compact_port_upper = (compact_port_arrays + compact_expansion_upper + compact_cell_index_upper
+                                  + 4*carrier_bytes + compact_h_new + fallback_new)
+            construction_scratch = (expansion_nnz_upper*224
+                                    + 16*(ni+2*(nc-ni))*max(counts, default=0)
+                                    + 2*compact_expansion_upper)
+            _gate(allocation_gate, "quotient_compact_complete_port_action", compact_port_upper,
+                  2*carrier_bytes + carrier_entries*224 + 64*len(indices) + construction_scratch,
+                  actual_interior_support=support["carrier_nonzero_interior_cell_count"],
+                  borrowed_original_H_backing_bytes=original_borrowed,
+                  generic_original_H_new_bytes_policy=fallback_new,
+                  resident_Hhat_bytes=0, missing_Hlocal_allocated=False,
+                  PETSc_index_itemsize_bytes=index_bytes,
+                  cell_MPC_expansion_nnz_upper=expansion_nnz_upper,
+                  cell_expansion_and_index_payload_upper_bytes=compact_expansion_upper+compact_cell_index_upper,
+                  native_sparse_and_BLAS_workspace_unknown=True,
+                  estimate_status="declared_named_array_and_Python_allowance_not_peak_RSS")
+            action = build_p6_cell_condensed_action_from_carrier(
+                system, carrier, owns_condensed=False, port_coupling_mode="cached",
+                port_block_layout=port_block_layout, original_port_block=original_port_block,
+                generic_hlocal_max_new_bytes=generic_hlocal_max_new_bytes,
+                generic_hlocal_reason=generic_hlocal_reason)
+        else:
+            _gate(allocation_gate, "quotient_complete_port_action", port_arrays + 4*carrier_bytes + 3*dense_h,
+                  2*carrier_bytes + carrier_entries*224 + 2*dense_h,
+                  actual_interior_support=support["carrier_nonzero_interior_cell_count"],
+                  estimate_status="declared_named_array_and_Python_allowance_not_peak_RSS")
+            action = build_p6_cell_condensed_action_from_carrier(
+                system, carrier, owns_condensed=False, port_coupling_mode="cached")
         _gate(allocation_gate, "quotient_native_row_partition", 4*full_rows*index_bytes,
               8*full_rows*index_bytes)
         trace = _indices(system.trace_constraints.owned_active_original_dofs, full_rows, PETSc.IntType)
@@ -265,6 +334,18 @@ def build_quotient_condensed(action_bundle, *, global_mode_inventory,
                  "borrows_physical_bundle_and_setup": True, "no_materialized_S": True,
                  "no_global_or_q_factor": True, "qualification": "NOT_RUN_STAGED_COMPONENT",
                  **({} if direct_profile is None else {"direct_profile": profile.identity()})}
+        if compact:
+            inventory = dict(action.buffer_inventory)
+            audit.update({"port_block_layout": port_block_layout,
+                          "port_allocation_named_upper_bytes": compact_port_upper,
+                          "borrowed_original_H_backing_bytes": original_borrowed,
+                          "retained_unique_port_backing_bytes": inventory["unique_port_payload_with_H_owner_bytes"],
+                          "original_H_from_local_area_carrier": original_port_block is None,
+                          "original_H_kind": action._original_port_block.representation,
+                          "resident_Hhat_bytes": inventory["resident_Hhat_bytes"],
+                          "contribution_representation": "borrowed_original_H_and_cached_cell_corrections",
+                          "generic_original_H_fallback_truthful": isinstance(action._original_port_block, DenseOriginalPortBlock),
+                          "named_inventory_is_not_RSS": True})
         return QuotientCondensedBundle(action_bundle, system, action, trace, interiors,
                                        independent, original_to_independent, indices, qbase, audit)
     except BaseException:
