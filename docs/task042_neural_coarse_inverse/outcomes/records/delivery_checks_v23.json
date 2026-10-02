@@ -1,0 +1,27 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v23",
+    "start_utc": "2026-10-02T10:14:18.868457+00:00",
+    "start_monotonic": 861053.729339336,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T13:44:18.868457+00:00",
+    "deadline_utc": "2026-10-02T14:14:18.868457+00:00",
+    "review_expected_commit": "5c91a8101644f09d6e6e1b45043ae5581394c0e9",
+    "prior_HEAD": "c9ee41f362669995908a55b57325e0fc06884599",
+    "scope": "first clock after identity inspection; implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T11:34:51.724724+00:00",
+    "observed_monotonic": 865886.585597349,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4832.856266736984,
+    "heavy_remaining_seconds": 7767.143733263016,
+    "total_remaining_seconds": 9567.143733263016
+  },
+  "owned_actors": [],
+  "active_ledger": null,
+  "all_run_descendants_cleared": true,
+  "changes_only_authorized_Task042": true,
+  "not_a_new_numerical_source": true
+}

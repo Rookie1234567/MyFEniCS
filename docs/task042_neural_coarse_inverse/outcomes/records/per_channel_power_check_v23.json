@@ -1,0 +1,85 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v23",
+    "start_utc": "2026-10-02T10:14:18.868457+00:00",
+    "start_monotonic": 861053.729339336,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T13:44:18.868457+00:00",
+    "deadline_utc": "2026-10-02T14:14:18.868457+00:00",
+    "review_expected_commit": "5c91a8101644f09d6e6e1b45043ae5581394c0e9",
+    "prior_HEAD": "c9ee41f362669995908a55b57325e0fc06884599",
+    "scope": "first clock after identity inspection; implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T11:14:27.372784+00:00",
+    "observed_monotonic": 864662.233651745,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 3608.5043268203735,
+    "heavy_remaining_seconds": 8991.495673179626,
+    "total_remaining_seconds": 10791.495673179626
+  },
+  "status": "DERIVED_ORIGINAL_FORMULA_PAIRED",
+  "source_sha": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+  "script_sha256": "2c5c930795c9b51a811c530f5f62f7e24aeb6cb9418d0a11ed6ce57f608b01cf",
+  "original_formula_file": "src/solvers/dtn_port_3d.py",
+  "original_formula_sha256": "4e07a6daecb893caffe545bd79ff33dadfa123ef76adb6f968f0827f42907ebd",
+  "input_csv_sha256": "6886fde17c01654567696bf07f0ebe8adef5c0f34189017a630b3b50463e0218",
+  "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "original_power_arrays_were_not_persisted_by_legacy_physical_qualification": true,
+  "checks": {
+    "V21-C-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 1.1102230246251565e-16,
+      "original_max_channel_difference": 1.7196446511213992e-06,
+      "derived_max_channel_difference": 1.7196446511213992e-06,
+      "max_difference_pair": 0.0
+    },
+    "D-G": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 0.0,
+      "original_max_channel_difference": 1.6183747790776692e-06,
+      "derived_max_channel_difference": 1.6183747790776692e-06,
+      "max_difference_pair": 0.0
+    },
+    "D-MR": {
+      "total_channels": 40,
+      "R_sum_difference": 1.3877787807814457e-17,
+      "T_sum_difference": 1.1102230246251565e-16,
+      "original_max_channel_difference": 1.7196493143911695e-06,
+      "derived_max_channel_difference": 1.7196493143911695e-06,
+      "max_difference_pair": 0.0
+    },
+    "M-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 0.0,
+      "original_max_channel_difference": 1.699731464355203e-06,
+      "derived_max_channel_difference": 1.699731464355203e-06,
+      "max_difference_pair": 0.0
+    },
+    "Z-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 0.0,
+      "original_max_channel_difference": 0.009105690356622287,
+      "derived_max_channel_difference": 0.009105690356622287,
+      "max_difference_pair": 0.0
+    },
+    "Z-CYCLE4": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 0.0,
+      "original_max_channel_difference": 0.009406737812146668,
+      "derived_max_channel_difference": 0.009406737812146668,
+      "max_difference_pair": 0.0
+    }
+  },
+  "S_SH_actions": 0,
+  "new_FE_states": 0,
+  "new_audits": 0,
+  "reference_feedback": false,
+  "role": "derived offline evidence; measured original max and field qualification unchanged"
+}

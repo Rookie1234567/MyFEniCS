@@ -1,3 +1,76 @@
+# V23变更／显式research opt-in
+
+| 依赖组 | 内容与资格 |
+|---|---|
+| research numerical core | src/solvers/p1_image_minres.py、p1_image_study.py：J/B_M、同r比较、实际右GMRES和费用；new only，没有普通默认提升 |
+| reusable IO/runner/watchdog | 新io/薄adapter/queue/window、五dat和注册；共用旧Stage/reader增加参数，原默认保留；线程/事务/监督回归 |
+| checker/benchmark/tests | raw-field资格/不等式/资源复算和篡改反例；只读records，不重新实现求解器 |
+| compact evidence/docs | V23来源/QR/场/通道/周期/费用/负结果；旧authority/response/raw byte保护 |
+| do-not-merge | ignored W/U/R/field/run/cache/日志；无production或master merge批准 |
+
+
+本轮变更入口：
+
+- `benchmarks/check_task042_p1_image_records.py`
+- `docs/development_model_registry.md`
+- `docs/development_progress.md`
+- `docs/task042_neural_coarse_inverse/README.md`
+- `docs/task042_neural_coarse_inverse/outcomes/changed_files.md`
+- `docs/task042_neural_coarse_inverse/outcomes/p1_image_minres_comparison_v23.md`
+- `docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v23.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/coarse_compare_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v23.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/deadline_repair_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v23.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/historical_control_identity_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/historical_control_prefix_v23.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/legacy_registry_check_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/not_run_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v23.csv`
+- `docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v23.jsonl`
+- `docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/run_index_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/setup_QR_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/small_overlap_Gate_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/records/test_results_v23.json`
+- `docs/task042_neural_coarse_inverse/outcomes/summary.md`
+- `docs/task042_neural_coarse_inverse/outcomes/test_summary.md`
+- `docs/task042_neural_coarse_inverse/response_v23.md`
+- `input/task042_neural_coarse_inverse/p1_image_minres_v23.json`
+- `input/task042_neural_coarse_inverse/v23_p1_coarse_compare.dat`
+- `input/task042_neural_coarse_inverse/v23_p1_image_mr_warm.dat`
+- `input/task042_neural_coarse_inverse/v23_p1_image_mr_zero.dat`
+- `input/task042_neural_coarse_inverse/v23_p1_image_setup.dat`
+- `input/task042_neural_coarse_inverse/v23_verify.dat`
+- `scripts/run_case.py`
+- `scripts/task042_v17_campaign.py`
+- `scripts/task042_v17_queue_watchdog.py`
+- `src/io/p1_image_minres.py`
+- `src/io/p1_trace_galerkin.py`
+- `src/io/task042_profile.py`
+- `src/runners/p1_image_minres.py`
+- `src/runners/p1_image_queue.py`
+- `src/runners/p1_trace_galerkin.py`
+- `src/runners/p1_trace_queue.py`
+- `src/runners/task042_shared.py`
+- `src/solvers/p1_image_minres.py`
+- `src/solvers/p1_image_study.py`
+- `src/solvers/p1_image_window.py`
+- `src/test/test_task042_v23_image_minres.py`
+- `src/test/test_task042_v23_records.py`
+
+当前研究路径不提升production default；所有既有权威和历史结果保留。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # V22改动／selective-merge分组（未获合并许可）
 
 | 依赖组 | 文件／变化 | 数值行为／资格与顺序 |

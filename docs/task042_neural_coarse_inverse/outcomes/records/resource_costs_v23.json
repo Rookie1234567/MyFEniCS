@@ -1,0 +1,822 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v23",
+    "start_utc": "2026-10-02T10:14:18.868457+00:00",
+    "start_monotonic": 861053.729339336,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T13:44:18.868457+00:00",
+    "deadline_utc": "2026-10-02T14:14:18.868457+00:00",
+    "review_expected_commit": "5c91a8101644f09d6e6e1b45043ae5581394c0e9",
+    "prior_HEAD": "c9ee41f362669995908a55b57325e0fc06884599",
+    "scope": "first clock after identity inspection; implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T11:31:12.535125+00:00",
+    "observed_monotonic": 865667.395992274,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4613.666667938232,
+    "heavy_remaining_seconds": 7986.333332061768,
+    "total_remaining_seconds": 9786.333332061768
+  },
+  "formal_runs": [
+    {
+      "stage": "SETUP",
+      "CPU": 0,
+      "source_sha": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+      "supervised_wall_seconds": 131.59875364601612,
+      "launch_wall_seconds": 132.9928153649671,
+      "numerical_actor_wall_seconds": 129.35824107704684,
+      "charged": {
+        "B_M": 4,
+        "R_triangular": 14,
+        "image_builds": 1,
+        "image_columns": 1248,
+        "image_QR": 1,
+        "R_SVD": 1,
+        "D_SVD": 1,
+        "factor_setups": 0,
+        "G_triangular": 0,
+        "actions": 1267,
+        "audits": 0,
+        "field_states": 0
+      },
+      "old_action_counts": {
+        "S": 12,
+        "SH": 1,
+        "audit": 0
+      },
+      "new_backend_counts": {
+        "S": 1253,
+        "SH": 1
+      },
+      "old_action_costs_inclusive_seconds": {
+        "S": 1.2225109292194247,
+        "SH": 0.14305967302061617,
+        "audit": 0.0
+      },
+      "PC_inclusive_seconds": null,
+      "R_solve_seconds_nested": 1.5671483350452036,
+      "G_solve_seconds": null,
+      "RSS_peak_bytes": 1965875200,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "health": {
+        "samples": 180,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2095592554496
+      },
+      "neighbor_observation": {
+        "first": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "last": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      },
+      "actual_BLAS_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "stage": "COMPARE",
+      "CPU": 0,
+      "source_sha": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+      "supervised_wall_seconds": 12.429613835993223,
+      "launch_wall_seconds": 13.776490887044929,
+      "numerical_actor_wall_seconds": 10.268822611076757,
+      "charged": {
+        "B_M": 0,
+        "R_triangular": 2,
+        "image_builds": 0,
+        "image_columns": 0,
+        "image_QR": 0,
+        "R_SVD": 0,
+        "D_SVD": 0,
+        "factor_setups": 1,
+        "G_triangular": 8,
+        "actions": 21,
+        "audits": 3,
+        "field_states": 0
+      },
+      "old_action_counts": {
+        "S": 20,
+        "SH": 0,
+        "audit": 3
+      },
+      "new_backend_counts": {
+        "S": 1,
+        "SH": 0
+      },
+      "old_action_costs_inclusive_seconds": {
+        "S": 1.7238656758563593,
+        "SH": 0.0,
+        "audit": 1.1485264169750735
+      },
+      "PC_inclusive_seconds": null,
+      "R_solve_seconds_nested": 0.18364285095594823,
+      "G_solve_seconds": 0.05029910698067397,
+      "RSS_peak_bytes": 1430302720,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "health": {
+        "samples": 18,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2096512471040
+      },
+      "neighbor_observation": {
+        "first": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "last": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      },
+      "actual_BLAS_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "stage": "M",
+      "CPU": 0,
+      "source_sha": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+      "supervised_wall_seconds": 299.14720456593204,
+      "launch_wall_seconds": 300.51765000692103,
+      "numerical_actor_wall_seconds": 296.73394528904464,
+      "charged": {
+        "B_M": 1040,
+        "R_triangular": 1040,
+        "image_builds": 0,
+        "image_columns": 0,
+        "image_QR": 0,
+        "R_SVD": 0,
+        "D_SVD": 0,
+        "factor_setups": 0,
+        "G_triangular": 0,
+        "actions": 2106,
+        "audits": 5,
+        "field_states": 0
+      },
+      "old_action_counts": {
+        "S": 26,
+        "SH": 0,
+        "audit": 5
+      },
+      "new_backend_counts": {
+        "S": 2080,
+        "SH": 0
+      },
+      "old_action_costs_inclusive_seconds": {
+        "S": 3.7046681182691827,
+        "SH": 0.0,
+        "audit": 2.5802070279605687
+      },
+      "PC_inclusive_seconds": 206.46252791234292,
+      "R_solve_seconds_nested": 145.4150075071957,
+      "G_solve_seconds": null,
+      "RSS_peak_bytes": 1444290560,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "health": {
+        "samples": 404,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2096133087232
+      },
+      "neighbor_observation": {
+        "first": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "last": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      },
+      "actual_BLAS_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "stage": "Z",
+      "CPU": 0,
+      "source_sha": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+      "supervised_wall_seconds": 563.193281008047,
+      "launch_wall_seconds": 564.5683798160171,
+      "numerical_actor_wall_seconds": 560.7799748959951,
+      "charged": {
+        "B_M": 2076,
+        "R_triangular": 2076,
+        "image_builds": 0,
+        "image_columns": 0,
+        "image_QR": 0,
+        "R_SVD": 0,
+        "D_SVD": 0,
+        "factor_setups": 0,
+        "G_triangular": 0,
+        "actions": 4202,
+        "audits": 9,
+        "field_states": 0
+      },
+      "old_action_counts": {
+        "S": 46,
+        "SH": 0,
+        "audit": 9
+      },
+      "new_backend_counts": {
+        "S": 4156,
+        "SH": 0
+      },
+      "old_action_costs_inclusive_seconds": {
+        "S": 5.255758950253949,
+        "SH": 0.0,
+        "audit": 4.051007855683565
+      },
+      "PC_inclusive_seconds": 395.6043319910532,
+      "R_solve_seconds_nested": 277.53901647229213,
+      "G_solve_seconds": null,
+      "RSS_peak_bytes": 1312030720,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "health": {
+        "samples": 761,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2094406529024
+      },
+      "neighbor_observation": {
+        "first": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "last": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      },
+      "actual_BLAS_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    },
+    {
+      "stage": "VERIFY",
+      "CPU": 0,
+      "source_sha": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+      "supervised_wall_seconds": 55.06173645204399,
+      "launch_wall_seconds": 56.450758197926916,
+      "numerical_actor_wall_seconds": 51.98833262093831,
+      "charged": {
+        "B_M": 0,
+        "R_triangular": 0,
+        "image_builds": 0,
+        "image_columns": 0,
+        "image_QR": 0,
+        "R_SVD": 0,
+        "D_SVD": 0,
+        "factor_setups": 0,
+        "G_triangular": 0,
+        "actions": 7,
+        "audits": 7,
+        "field_states": 6
+      },
+      "old_action_counts": {
+        "S": 7,
+        "SH": 0,
+        "audit": 7
+      },
+      "new_backend_counts": {},
+      "old_action_costs_inclusive_seconds": {
+        "S": 1.3451292039826512,
+        "SH": 0.0,
+        "audit": 3.8211334567749873
+      },
+      "PC_inclusive_seconds": null,
+      "R_solve_seconds_nested": null,
+      "G_solve_seconds": null,
+      "RSS_peak_bytes": 734531584,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "health": {
+        "samples": 75,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2096372387840
+      },
+      "neighbor_observation": {
+        "first": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "last": [
+          {
+            "pid": 1223091,
+            "start_ticks": 85298871,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          },
+          {
+            "pid": 1223094,
+            "start_ticks": 85298890,
+            "phase": "setup",
+            "stage": "h6_original_setup_started",
+            "updated_monotonic": 853080.187021284
+          }
+        ],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      },
+      "actual_BLAS_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    }
+  ],
+  "formal_supervised_wall_seconds": 1061.4305895080324,
+  "formal_launch_wall_seconds": 1068.306094272877,
+  "auxiliary_runs": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/focused_fixed/summary.json",
+        "sha256": "df53ed7a7a6c84e04d26207b30b4ec0060e083b73d83f56448fe19d6eaa53e0a",
+        "bytes": 3513
+      },
+      "wall_seconds": 12.622204940998927,
+      "RSS_peak_bytes": 143708160,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/focused_initial/summary.json",
+        "sha256": "4b8ff763eee04b37187226721785ac47443ed92606e4ec459c1c2bdf4d6a67b3",
+        "bytes": 3519
+      },
+      "wall_seconds": 15.244772376026958,
+      "RSS_peak_bytes": 146792448,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/five_dat_validate/summary.json",
+        "sha256": "9d2eacee426fb2ab60c1192bb4d707ce5c7ca7f7a4c90fb33ce001e2e3592c60",
+        "bytes": 2544
+      },
+      "wall_seconds": 4.220553050050512,
+      "RSS_peak_bytes": 72511488,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/compact_collect_final/summary.json",
+        "sha256": "f551f10c73f41bb49b9d12470aaf704b4a0fc6b0d3d93fddfb9784364ac4e053",
+        "bytes": 4195
+      },
+      "wall_seconds": 3.1750680750701576,
+      "RSS_peak_bytes": 79171584,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/derive_channel_power_fe/summary.json",
+        "sha256": "68f291caf29188841bfca83092709d25af07c0e76c6cb82159b983a3192f5204",
+        "bytes": 3977
+      },
+      "wall_seconds": 7.639298644033261,
+      "RSS_peak_bytes": 230842368,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/final_focused_and_records/summary.json",
+        "sha256": "2b09f0f82f9e8b50d31005614739e2eead7290428eab03bfdd98a40cc66011a9",
+        "bytes": 4583
+      },
+      "wall_seconds": 12.706801188993268,
+      "RSS_peak_bytes": 147345408,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/compact_collect/summary.json",
+        "sha256": "e3dd0e422c31b90c9c0ef41ef8a080fb469ac5d4cd7afce02e5c36bb15a54d2b",
+        "bytes": 2287
+      },
+      "wall_seconds": 2.7976247780025005,
+      "RSS_peak_bytes": 80224256,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/initial_resource_and_abi/summary.json",
+        "sha256": "bec98cdd478346b318a11f702f8e7cdb6967893d52fe445d44a52a6f7b5aab87",
+        "bytes": 2556
+      },
+      "wall_seconds": 2.0895962880458683,
+      "RSS_peak_bytes": 40718336,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/document_checks_final/summary.json",
+        "sha256": "e4907bf9fbe321ffb8b45764893431ef39dcb5a08dff4d95052aef41c8fdb221",
+        "bytes": 4812
+      },
+      "wall_seconds": 4.708467854070477,
+      "RSS_peak_bytes": 63631360,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/document_checks/summary.json",
+        "sha256": "8645729b4b57382eb15f68676db8a1b419723f8b1b3dd142e1f4d9e616ea41d0",
+        "bytes": 4644
+      },
+      "wall_seconds": 4.620103492983617,
+      "RSS_peak_bytes": 63979520,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/boundary_final/summary.json",
+        "sha256": "e47ce8ca2f7371eb2fd79f842595b56a61fa83137232d916cb987a1c2456f816",
+        "bytes": 2476
+      },
+      "wall_seconds": 6.69157786492724,
+      "RSS_peak_bytes": 141012992,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/fe_import/summary.json",
+        "sha256": "2be0b81caa7894af4696ba65c4df4d204980c6948fc5bdb525ce48112481d4cf",
+        "bytes": 3429
+      },
+      "wall_seconds": 9.44679754495155,
+      "RSS_peak_bytes": 241938432,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/derive_channel_power/summary.json",
+        "sha256": "b3f9777b72ea66c5d668329da5d20887ed45a95079a27cd5a5d5454b8d9b0fed",
+        "bytes": 3876
+      },
+      "wall_seconds": 4.96991614298895,
+      "RSS_peak_bytes": 151117824,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/focused_final/summary.json",
+        "sha256": "5fd4f96c76ec0580d38aad0807a07258ff25dd1aceff621e25fd00f42ee5aec9",
+        "bytes": 3512
+      },
+      "wall_seconds": 12.67910968803335,
+      "RSS_peak_bytes": 146030592,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "outer_supervision": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/verify_queue/summary.json",
+        "sha256": "437fff5d8dae80457cfd8db948aa907d48bf9a6a51d938d6b39e5489164860aa",
+        "bytes": 4935
+      },
+      "wall_seconds": 58.78271909302566,
+      "RSS_peak_bytes": 827801600,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/solve_queue/summary.json",
+        "sha256": "311cb935db5ac403bf8288b23e91359cb2eda56e9975634c1db257a8ce37a56b",
+        "bytes": 4727
+      },
+      "wall_seconds": 1016.0509696570225,
+      "RSS_peak_bytes": 2061123584,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds": 103.61189192917664,
+  "simultaneous_sampled_tree_peak_bytes": 2061123584,
+  "own_swap_peak_bytes": 0,
+  "VRAM_bytes": 0,
+  "storage": {
+    "artifacts": {
+      "logical_bytes": 815545453,
+      "allocated_bytes": 815939584,
+      "regular_files": 139
+    },
+    "tmp": {
+      "logical_bytes": 132306091,
+      "allocated_bytes": 137310208,
+      "regular_files": 2156
+    }
+  },
+  "construction": {
+    "capacity": {
+      "rows": 18144,
+      "columns": 1248,
+      "U_bytes": 362299392,
+      "R_bytes": 24920064,
+      "U_R_bytes": 387219456,
+      "new_workspace_planned_bytes": 1727684368,
+      "simultaneous_tree_planned_bytes": 4948909840,
+      "derived_not_RSS": true,
+      "qualified": true
+    },
+    "original_action_columns": 1248,
+    "construction_seconds": 61.15471961593721
+  },
+  "decomposition": {
+    "qr_policy": "complex128 economic nonpivoting Householder; no truncation",
+    "QR_reconstruction_relative": 7.224113435018873e-16,
+    "U_orthogonality_normalized_Frobenius": 4.909082002764327e-16,
+    "TH_W_Ac": {
+      "absolute": 5.1745023196495375e-14,
+      "operation_relative": 9.929550902511532e-17
+    },
+    "DH_R_Ac": {
+      "absolute": 2.4173796089967024e-13,
+      "operation_relative": 4.638802419138137e-16
+    },
+    "R_safety": {
+      "sigma_min": 0.5953522735939198,
+      "sigma_max": 733.4591011519736,
+      "ratio": 0.0008117048007978322,
+      "fixed_threshold": 1e-12,
+      "numerical_full_column_rank": true,
+      "meaning": "small block safety; not the fine operator condition"
+    },
+    "D_safety": {
+      "sigma_min": 0.04199606090086143,
+      "sigma_max": 0.5048458832924066,
+      "ratio": 0.08318590344241218,
+      "fixed_threshold": 1e-12,
+      "numerical_full_column_rank": true,
+      "meaning": "small block safety; not the fine operator condition"
+    },
+    "decomposition_seconds": 49.3595871879952,
+    "QR_seconds": 24.936563967959955,
+    "R_SVD_seconds": 3.1082702029962093,
+    "D_SVD_seconds": 5.589667107909918,
+    "decomposition_subtimers_not_additive": true,
+    "U_sha256": "937ee850978481d87f4632e08b59f4420db5959e39678ec5de4c9212be1189d8",
+    "R_sha256": "dd7307374b5406c1cedc940308221976b6fb34c3d5096a232b08ba867211b863",
+    "D_sha256": "0294b210232aa586b4863314cbaf07de4fabd0975785c466cf1b20f5ca93ba48",
+    "global_factor_status": "GLOBAL_TALL_IMAGE_QR_PRESENT",
+    "normal_equations": false,
+    "full_projector": false,
+    "small_SVD_only": true,
+    "image_qualified": true,
+    "full_space_PC_safe": true
+  },
+  "charged": {
+    "actions": 7603,
+    "B_M": 3120,
+    "R_triangular": 3132,
+    "audits": 24,
+    "field_states": 6,
+    "image_builds": 1,
+    "image_columns": 1248,
+    "image_QR": 1,
+    "R_SVD": 1,
+    "D_SVD": 1,
+    "factor_setups": 1,
+    "G_triangular": 8
+  },
+  "previous_formal_lower_bound_seconds": 74063.4870035164,
+  "cumulative_formal_lower_bound_seconds": 75124.91759302444,
+  "upstream_warm_per_solution_cost": "unknown; V14-V19 feature/basis/LSQR and V21C; not erased",
+  "historical_auxiliary": "unknown retained",
+  "nested_timers_additive": false,
+  "outer_and_child_wall_additive": false,
+  "cgroup_continuous_kernel_limit_claimed": false,
+  "PSI_full_avg10_threshold_percent": 0.1,
+  "tree_supervision_interval_seconds": 0.5,
+  "performance": "shared-workstation; uncontended speedup INCONCLUSIVE"
+}

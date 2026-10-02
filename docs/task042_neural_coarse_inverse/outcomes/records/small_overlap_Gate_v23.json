@@ -1,0 +1,50 @@
+{
+  "DH_R_Ac": {
+    "absolute": 2.4173796089967024e-13,
+    "operation_relative": 4.638802419138137e-16
+  },
+  "D_safety": {
+    "sigma_min": 0.04199606090086143,
+    "sigma_max": 0.5048458832924066,
+    "ratio": 0.08318590344241218,
+    "fixed_threshold": 1e-12,
+    "numerical_full_column_rank": true,
+    "meaning": "small block safety; not the fine operator condition"
+  },
+  "R_safety": {
+    "sigma_min": 0.5953522735939198,
+    "sigma_max": 733.4591011519736,
+    "ratio": 0.0008117048007978322,
+    "fixed_threshold": 1e-12,
+    "numerical_full_column_rank": true,
+    "meaning": "small block safety; not the fine operator condition"
+  },
+  "right_PC": {
+    "repeat": {
+      "absolute": 0.0,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "absolute": 5.7096398120568896e-15,
+      "operation_relative": 1.0259746726022083e-15
+    },
+    "UH_A_B_balance": [
+      {
+        "absolute": 3.284751410504842e-14,
+        "operation_relative": 6.310238371260508e-14
+      },
+      {
+        "absolute": 4.2868576260341714e-14,
+        "operation_relative": 8.194632216598517e-14
+      }
+    ],
+    "tau": 0.13558083643793006,
+    "full_fine_direction_present": true,
+    "PC_is_not_an_accurate_fine_inverse": true,
+    "qualified": true
+  },
+  "PC_qualified": true,
+  "singular_counterexample": "A=[[0,1],[1,0]], T=[1,0]^T: A and W full rank but D=0, B singular; focused regression rejects",
+  "tau": 0.13558083643793006,
+  "no_shift_pseudoinverse_or_rank_truncation": true
+}

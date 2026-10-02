@@ -1,0 +1,2046 @@
+{
+  "rows": {
+    "V21-C-FINAL": {
+      "audit": {
+        "schur_relative": 2.5281170328038355e-06,
+        "augmented_relative": 9.804133463830746e-07,
+        "native_relative": 9.804133463828658e-07,
+        "original_total_augmented_relative": 3.4020245549607745e-07,
+        "port_absolute": 6.939005808263692e-18,
+        "port_full_rhs_relative": 3.254751782746719e-17,
+        "port_operation_relative": 1.196315580050776e-17,
+        "recovery_relative": 4.670860079691773e-13,
+        "schur_original_identity_operation_relative": 5.299495608321221e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314671862151193,
+        "port_unknown_norm": 0.19744451835411464,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 3.40202831061405e-07
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.179123566511216e-06,
+        "full_FE_scaled_curl_relative": 8.180970187819742e-06,
+        "scattered_FE_L2_relative": 7.816080389144779e-05,
+        "scattered_scaled_curl_relative": 7.817696680246941e-05,
+        "selected_E_relative": 9.084272944948745e-06,
+        "selected_H_relative": 7.165116496625119e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 2.5281170328038355e-06,
+          "augmented_relative": 9.804133463830746e-07,
+          "native_relative": 9.804133463828658e-07,
+          "original_total_augmented_relative": 3.4020245549607745e-07,
+          "port_absolute": 6.939005808263692e-18,
+          "port_full_rhs_relative": 3.254751782746719e-17,
+          "port_operation_relative": 1.196315580050776e-17,
+          "recovery_relative": 4.670860079691773e-13,
+          "schur_original_identity_operation_relative": 5.299495608321221e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314671862151193,
+          "port_unknown_norm": 0.19744451835411464,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 3.40202831061405e-07
+        },
+        "full_FE_L2_relative": 8.179123566511216e-06,
+        "full_FE_scaled_curl_relative": 8.180970187819742e-06,
+        "selected_E_relative": 9.084272944948745e-06,
+        "selected_H_relative": 7.165116496625119e-06,
+        "scattered_FE_L2_relative": 7.816080389144779e-05,
+        "ordered_complex_ports_relative": 3.2104577893836272e-06,
+        "power_absolute_differences": {
+          "R_total": 2.1106143111015996e-07,
+          "T_total": 1.7196562748234001e-06,
+          "A_balance": 1.93071770593356e-06,
+          "A_volume": 9.139115041134627e-09
+        },
+        "max_channel_power_difference": 1.7196446511213992e-06,
+        "energy_closure_absolute": 1.939859727295712e-06
+      },
+      "selected_E": [
+        [
+          {
+            "real": -1.1442287427647646e-05,
+            "imag": -5.757944279013728e-06
+          },
+          {
+            "real": 1.0395837552346177,
+            "imag": 0.8220652862212271
+          },
+          {
+            "real": 1.855814086047612e-05,
+            "imag": 1.2268724481869999e-05
+          }
+        ],
+        [
+          {
+            "real": -1.3862263374146193e-05,
+            "imag": 6.0976709388593966e-06
+          },
+          {
+            "real": 1.0517892694679514,
+            "imag": 0.8088636777093209
+          },
+          {
+            "real": 1.8365693388696694e-05,
+            "imag": -4.182165523876153e-06
+          }
+        ],
+        [
+          {
+            "real": -1.594348017855119e-05,
+            "imag": -1.5787365947417534e-05
+          },
+          {
+            "real": -1.0762301214783914,
+            "imag": -0.781544512830309
+          },
+          {
+            "real": -3.5182849764206066e-07,
+            "imag": 1.8121319562620007e-06
+          }
+        ],
+        [
+          {
+            "real": 2.3276677063164393e-05,
+            "imag": -2.5599672658225615e-05
+          },
+          {
+            "real": 1.076721543010959,
+            "imag": 0.7808189451704814
+          },
+          {
+            "real": -1.7662401833014845e-06,
+            "imag": -2.3936966588988068e-05
+          }
+        ],
+        [
+          {
+            "real": -3.7729384865186548e-06,
+            "imag": -9.733602474085396e-06
+          },
+          {
+            "real": -0.7387544478408071,
+            "imag": 1.111944997328948
+          },
+          {
+            "real": -2.4532677927741174e-05,
+            "imag": -2.3518576822419965e-05
+          }
+        ],
+        [
+          {
+            "real": 4.183257757297254e-05,
+            "imag": -2.5605940946764723e-06
+          },
+          {
+            "real": 0.725473591791003,
+            "imag": -1.1228421341389474
+          },
+          {
+            "real": 1.1152475748716775e-05,
+            "imag": 2.760315598811187e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008451592335009044,
+            "imag": 0.007662317349929224
+          },
+          {
+            "real": 1.8563791409252333e-07,
+            "imag": -8.48108740682425e-07
+          },
+          {
+            "real": 1.0414969527946856,
+            "imag": 0.8236551693830025
+          }
+        ],
+        [
+          {
+            "real": 0.008455178266222281,
+            "imag": 0.007749425044760207
+          },
+          {
+            "real": 1.7375245452166328e-07,
+            "imag": -8.458603510848831e-07
+          },
+          {
+            "real": 1.0537795383813697,
+            "imag": 0.8104118592039196
+          }
+        ],
+        [
+          {
+            "real": -0.008644650251743387,
+            "imag": -0.0075175730886983235
+          },
+          {
+            "real": -1.668819442946175e-07,
+            "imag": 8.396906025082612e-07
+          },
+          {
+            "real": -1.078257828453802,
+            "imag": -0.7827529059527615
+          }
+        ],
+        [
+          {
+            "real": 0.008568352620916417,
+            "imag": 0.0075554203749897
+          },
+          {
+            "real": 1.6689477877237734e-07,
+            "imag": -8.390642706230601e-07
+          },
+          {
+            "real": 1.078857642694914,
+            "imag": 0.7822363375386655
+          }
+        ],
+        [
+          {
+            "real": -0.0072897224768087784,
+            "imag": 0.00881026649657092
+          },
+          {
+            "real": 8.194442222482322e-07,
+            "imag": 2.0838313681631777e-07
+          },
+          {
+            "real": -0.7402283789783318,
+            "imag": 1.1139030714774916
+          }
+        ],
+        [
+          {
+            "real": 0.007032460458819061,
+            "imag": -0.009022948823678587
+          },
+          {
+            "real": -7.994011365773474e-07,
+            "imag": -2.2449645427047078e-07
+          },
+          {
+            "real": 0.7268211048806611,
+            "imag": -1.12486688571792
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.11764603038434744,
+        "R00_total": 0.1176449734376533,
+        "R00_s": 0.11764497343695177,
+        "R00_p": 7.015365406185137e-13,
+        "R00_by_polarization": {
+          "s": 0.11764497343695177,
+          "p": 7.015365406185137e-13
+        },
+        "T_total": 0.877049502590108,
+        "R_plus_T": 0.9946955329744555,
+        "A_balance": 0.005304467025544546,
+        "R_total_dtn_port_modal": 0.11764603038434744,
+        "T_total_dtn_port_modal": 0.877049502590108,
+        "R_plus_T_dtn_port_modal": 0.9946955329744555,
+        "A_balance_dtn_port_modal": 0.005304467025544546,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.041924453073693e-05,
+            "A_volume": 0.003930553179182242
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7648789186535167e-05,
+            "A_volume": 0.0013758537060896154
+          }
+        },
+        "A_grating": 0.003930553179182242,
+        "A_substrate": 0.0013758537060896154,
+        "A_volume_grating": 0.003930553179182242,
+        "A_volume_substrate": 0.0013758537060896154,
+        "A_volume_total": 0.005306406885271857,
+        "A_port_balance_minus_A_volume_total": -1.9398597273113244e-06,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 1.939859727295712e-06
+      }
+    },
+    "D-G": {
+      "audit": {
+        "schur_relative": 5.7895868334564626e-05,
+        "augmented_relative": 2.2452236677497196e-05,
+        "native_relative": 2.2452236677495413e-05,
+        "original_total_augmented_relative": 7.79091188805893e-06,
+        "port_absolute": 3.9860918839568127e-17,
+        "port_full_rhs_relative": 1.869682779347177e-16,
+        "port_operation_relative": 6.872201443574382e-17,
+        "recovery_relative": 4.694192785532796e-13,
+        "schur_original_identity_operation_relative": 5.310747174176398e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314669164269997,
+        "port_unknown_norm": 0.19744448733426662,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 7.790912329860127e-06
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.14392682727675e-06,
+        "full_FE_scaled_curl_relative": 8.145795039355669e-06,
+        "scattered_FE_L2_relative": 7.782445912167475e-05,
+        "scattered_scaled_curl_relative": 7.784083473614774e-05,
+        "selected_E_relative": 9.051700190669312e-06,
+        "selected_H_relative": 7.120931094473166e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 5.7895868334564626e-05,
+          "augmented_relative": 2.2452236677497196e-05,
+          "native_relative": 2.2452236677495413e-05,
+          "original_total_augmented_relative": 7.79091188805893e-06,
+          "port_absolute": 3.9860918839568127e-17,
+          "port_full_rhs_relative": 1.869682779347177e-16,
+          "port_operation_relative": 6.872201443574382e-17,
+          "recovery_relative": 4.694192785532796e-13,
+          "schur_original_identity_operation_relative": 5.310747174176398e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314669164269997,
+          "port_unknown_norm": 0.19744448733426662,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 7.790912329860127e-06
+        },
+        "full_FE_L2_relative": 8.14392682727675e-06,
+        "full_FE_scaled_curl_relative": 8.145795039355669e-06,
+        "selected_E_relative": 9.051700190669312e-06,
+        "selected_H_relative": 7.120931094473166e-06,
+        "scattered_FE_L2_relative": 7.782445912167475e-05,
+        "ordered_complex_ports_relative": 3.2081154635582215e-06,
+        "power_absolute_differences": {
+          "R_total": 1.5708421556570595e-07,
+          "T_total": 1.6183858512208715e-06,
+          "A_balance": 1.7754700668559664e-06,
+          "A_volume": 8.524052731891107e-09
+        },
+        "max_channel_power_difference": 1.6183747790776692e-06,
+        "energy_closure_absolute": 1.7839970258837212e-06
+      },
+      "selected_E": [
+        [
+          {
+            "real": -1.1442995697601602e-05,
+            "imag": -5.758987907243077e-06
+          },
+          {
+            "real": 1.0395837021550451,
+            "imag": 0.8220652136078691
+          },
+          {
+            "real": 1.8546671576724744e-05,
+            "imag": 1.2258757714215824e-05
+          }
+        ],
+        [
+          {
+            "real": -1.3863433294030674e-05,
+            "imag": 6.095898309028163e-06
+          },
+          {
+            "real": 1.0517892176397754,
+            "imag": 0.8088636079478156
+          },
+          {
+            "real": 1.8355816687037987e-05,
+            "imag": -4.191906963853455e-06
+          }
+        ],
+        [
+          {
+            "real": -1.5941640747495317e-05,
+            "imag": -1.5787156518190627e-05
+          },
+          {
+            "real": -1.076230069665412,
+            "imag": -0.7815444417567762
+          },
+          {
+            "real": -3.4128527013751326e-07,
+            "imag": 1.8182080146948642e-06
+          }
+        ],
+        [
+          {
+            "real": 2.3275158947462556e-05,
+            "imag": -2.560007766001598e-05
+          },
+          {
+            "real": 1.0767214913831575,
+            "imag": 0.7808188743061207
+          },
+          {
+            "real": -1.7765753023889845e-06,
+            "imag": -2.3942998391494236e-05
+          }
+        ],
+        [
+          {
+            "real": -3.772110863981432e-06,
+            "imag": -9.734014230197358e-06
+          },
+          {
+            "real": -0.738754461362928,
+            "imag": 1.1119449123649081
+          },
+          {
+            "real": -2.453368470810113e-05,
+            "imag": -2.3537245736777988e-05
+          }
+        ],
+        [
+          {
+            "real": 4.1831826843072546e-05,
+            "imag": -2.560201727547514e-06
+          },
+          {
+            "real": 0.7254736042471319,
+            "imag": -1.1228420457717188
+          },
+          {
+            "real": 1.1153633878345226e-05,
+            "imag": 2.762099868499087e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008451589850269024,
+            "imag": 0.007662318841185454
+          },
+          {
+            "real": 2.014116422349232e-07,
+            "imag": -8.361328424197809e-07
+          },
+          {
+            "real": 1.041496833665641,
+            "imag": 0.8236551864002853
+          }
+        ],
+        [
+          {
+            "real": 0.008455177876852434,
+            "imag": 0.007749425438114191
+          },
+          {
+            "real": 1.928784446446342e-07,
+            "imag": -8.352452118872583e-07
+          },
+          {
+            "real": 1.0537794268538174,
+            "imag": 0.810411876877978
+          }
+        ],
+        [
+          {
+            "real": -0.008644651741126014,
+            "imag": -0.00751757325662325
+          },
+          {
+            "real": -1.897891521357182e-07,
+            "imag": 8.346444461369904e-07
+          },
+          {
+            "real": -1.07825772602865,
+            "imag": -0.7827529236671587
+          }
+        ],
+        [
+          {
+            "real": 0.008568354177643065,
+            "imag": 0.00755542037214901
+          },
+          {
+            "real": 1.896697434975357e-07,
+            "imag": -8.33906124924492e-07
+          },
+          {
+            "real": 1.078857540296282,
+            "imag": 0.7822363550898525
+          }
+        ],
+        [
+          {
+            "real": -0.0072897217667113965,
+            "imag": 0.008810267525756081
+          },
+          {
+            "real": 8.197383448765994e-07,
+            "imag": 2.2637327491703625e-07
+          },
+          {
+            "real": -0.7402282832542302,
+            "imag": 1.113903010015135
+          }
+        ],
+        [
+          {
+            "real": 0.007032458107993411,
+            "imag": -0.009022949642682097
+          },
+          {
+            "real": -8.008235527111674e-07,
+            "imag": -2.4401709697080017e-07
+          },
+          {
+            "real": 0.7268210006422265,
+            "imag": -1.1248668226346483
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.1176459764071319,
+        "R00_total": 0.11764491946064544,
+        "R00_s": 0.11764491945993233,
+        "R00_p": 7.131090395257028e-13,
+        "R00_by_polarization": {
+          "s": 0.11764491945993233,
+          "p": 7.131090395257028e-13
+        },
+        "T_total": 0.8770494013196845,
+        "R_plus_T": 0.9946953777268164,
+        "A_balance": 0.0053046222731836234,
+        "R_total_dtn_port_modal": 0.1176459764071319,
+        "T_total_dtn_port_modal": 0.8770494013196845,
+        "R_plus_T_dtn_port_modal": 0.9946953777268164,
+        "A_balance_dtn_port_modal": 0.0053046222731836234,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.041923878690151e-05,
+            "A_volume": 0.003930552731407771
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.764878704064729e-05,
+            "A_volume": 0.0013758535388017773
+          }
+        },
+        "A_grating": 0.003930552731407771,
+        "A_substrate": 0.0013758535388017773,
+        "A_volume_grating": 0.003930552731407771,
+        "A_volume_substrate": 0.0013758535388017773,
+        "A_volume_total": 0.005306406270209548,
+        "A_port_balance_minus_A_volume_total": -1.7839970259244872e-06,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 1.7839970258837212e-06
+      }
+    },
+    "D-MR": {
+      "audit": {
+        "schur_relative": 2.527812964250167e-06,
+        "augmented_relative": 9.802954277273624e-07,
+        "native_relative": 9.802954277273629e-07,
+        "original_total_augmented_relative": 3.401615417071811e-07,
+        "port_absolute": 2.852710431930221e-20,
+        "port_full_rhs_relative": 1.338068394888453e-19,
+        "port_operation_relative": 4.918200139674777e-20,
+        "recovery_relative": 4.680464091689938e-13,
+        "schur_original_identity_operation_relative": 5.301974863296444e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314671862500216,
+        "port_unknown_norm": 0.19744451844378494,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 3.401619175034599e-07
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.179122809120091e-06,
+        "full_FE_scaled_curl_relative": 8.180969419654171e-06,
+        "scattered_FE_L2_relative": 7.816079665371642e-05,
+        "scattered_scaled_curl_relative": 7.81769594619153e-05,
+        "selected_E_relative": 9.084272400049899e-06,
+        "selected_H_relative": 7.165108415873362e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 2.527812964250167e-06,
+          "augmented_relative": 9.802954277273624e-07,
+          "native_relative": 9.802954277273629e-07,
+          "original_total_augmented_relative": 3.401615417071811e-07,
+          "port_absolute": 2.852710431930221e-20,
+          "port_full_rhs_relative": 1.338068394888453e-19,
+          "port_operation_relative": 4.918200139674777e-20,
+          "recovery_relative": 4.680464091689938e-13,
+          "schur_original_identity_operation_relative": 5.301974863296444e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314671862500216,
+          "port_unknown_norm": 0.19744451844378494,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 3.401619175034599e-07
+        },
+        "full_FE_L2_relative": 8.179122809120091e-06,
+        "full_FE_scaled_curl_relative": 8.180969419654171e-06,
+        "selected_E_relative": 9.084272400049899e-06,
+        "selected_H_relative": 7.165108415873362e-06,
+        "scattered_FE_L2_relative": 7.816079665371642e-05,
+        "ordered_complex_ports_relative": 3.210413331229709e-06,
+        "power_absolute_differences": {
+          "R_total": 2.1107503971051766e-07,
+          "T_total": 1.7196608705916105e-06,
+          "A_balance": 1.930735910371517e-06,
+          "A_volume": 9.139103713390329e-09
+        },
+        "max_channel_power_difference": 1.7196493143911695e-06,
+        "energy_closure_absolute": 1.9398779205204164e-06
+      },
+      "selected_E": [
+        [
+          {
+            "real": -1.1442292823908343e-05,
+            "imag": -5.7579324429172995e-06
+          },
+          {
+            "real": 1.0395837552689027,
+            "imag": 0.8220652862306405
+          },
+          {
+            "real": 1.8558150621115163e-05,
+            "imag": 1.2268720581002184e-05
+          }
+        ],
+        [
+          {
+            "real": -1.3862274103855194e-05,
+            "imag": 6.0976676255643965e-06
+          },
+          {
+            "real": 1.051789269468551,
+            "imag": 0.8088636776972978
+          },
+          {
+            "real": 1.8365717961336858e-05,
+            "imag": -4.182164664971731e-06
+          }
+        ],
+        [
+          {
+            "real": -1.5943466547039466e-05,
+            "imag": -1.5787370302012886e-05
+          },
+          {
+            "real": -1.0762301214684191,
+            "imag": -0.7815445128174645
+          },
+          {
+            "real": -3.518462165759799e-07,
+            "imag": 1.8121455736229851e-06
+          }
+        ],
+        [
+          {
+            "real": 2.3276660965662813e-05,
+            "imag": -2.559966571255405e-05
+          },
+          {
+            "real": 1.0767215430041188,
+            "imag": 0.7808189451792398
+          },
+          {
+            "real": -1.7662349378408855e-06,
+            "imag": -2.3936970654013704e-05
+          }
+        ],
+        [
+          {
+            "real": -3.7729518259079763e-06,
+            "imag": -9.733595365565555e-06
+          },
+          {
+            "real": -0.7387544478527912,
+            "imag": 1.1119449973193651
+          },
+          {
+            "real": -2.453268637952576e-05,
+            "imag": -2.3518562246907216e-05
+          }
+        ],
+        [
+          {
+            "real": 4.183256671578254e-05,
+            "imag": -2.5606207119703185e-06
+          },
+          {
+            "real": 0.7254735917471762,
+            "imag": -1.1228421341464392
+          },
+          {
+            "real": 1.115246541859574e-05,
+            "imag": 2.760315987180717e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008451592344389802,
+            "imag": 0.0076623173359479475
+          },
+          {
+            "real": 1.8561963825872545e-07,
+            "imag": -8.480957471813003e-07
+          },
+          {
+            "real": 1.0414969527628297,
+            "imag": 0.823655169353508
+          }
+        ],
+        [
+          {
+            "real": 0.008455178279503699,
+            "imag": 0.007749425041756669
+          },
+          {
+            "real": 1.7376646947649775e-07,
+            "imag": -8.458422430703103e-07
+          },
+          {
+            "real": 1.0537795383532338,
+            "imag": 0.8104118592455805
+          }
+        ],
+        [
+          {
+            "real": -0.008644650246385405,
+            "imag": -0.007517573102245335
+          },
+          {
+            "real": -1.6688940898240867e-07,
+            "imag": 8.396920742697045e-07
+          },
+          {
+            "real": -1.0782578284782134,
+            "imag": -0.7827529059291624
+          }
+        ],
+        [
+          {
+            "real": 0.00856835262068269,
+            "imag": 0.007555420387031549
+          },
+          {
+            "real": 1.668961335769163e-07,
+            "imag": -8.390439058984445e-07
+          },
+          {
+            "real": 1.078857642714845,
+            "imag": 0.7822363375000211
+          }
+        ],
+        [
+          {
+            "real": -0.00728972250605668,
+            "imag": 0.008810266561648612
+          },
+          {
+            "real": 8.194586033470607e-07,
+            "imag": 2.084061977719031e-07
+          },
+          {
+            "real": -0.7402283789682889,
+            "imag": 1.1139030714552736
+          }
+        ],
+        [
+          {
+            "real": 0.007032460497742625,
+            "imag": -0.009022948884674035
+          },
+          {
+            "real": -7.994054500817552e-07,
+            "imag": -2.2451049507138726e-07
+          },
+          {
+            "real": 0.7268211048408111,
+            "imag": -1.1248668857697122
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.11764603039795604,
+        "R00_total": 0.11764497345120581,
+        "R00_s": 0.11764497345050426,
+        "R00_p": 7.015436960940123e-13,
+        "R00_by_polarization": {
+          "s": 0.11764497345050426,
+          "p": 7.015436960940123e-13
+        },
+        "T_total": 0.8770495025947038,
+        "R_plus_T": 0.9946955329926599,
+        "A_balance": 0.005304467007340108,
+        "R_total_dtn_port_modal": 0.11764603039795604,
+        "T_total_dtn_port_modal": 0.8770495025947038,
+        "R_plus_T_dtn_port_modal": 0.9946955329926599,
+        "A_balance_dtn_port_modal": 0.005304467007340108,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.04192445306125e-05,
+            "A_volume": 0.003930553179172542
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.764878918651428e-05,
+            "A_volume": 0.0013758537060879871
+          }
+        },
+        "A_grating": 0.003930553179172542,
+        "A_substrate": 0.0013758537060879871,
+        "A_volume_grating": 0.003930553179172542,
+        "A_volume_substrate": 0.0013758537060879871,
+        "A_volume_total": 0.0053064068852605294,
+        "A_port_balance_minus_A_volume_total": -1.939877920421537e-06,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 1.9398779205204164e-06
+      }
+    },
+    "M-FINAL": {
+      "audit": {
+        "schur_relative": 2.507714365255226e-06,
+        "augmented_relative": 9.725011138559373e-07,
+        "native_relative": 9.725011138564934e-07,
+        "original_total_augmented_relative": 3.374569264857452e-07,
+        "port_absolute": 2.860979620235815e-17,
+        "port_full_rhs_relative": 1.341947070901009e-16,
+        "port_operation_relative": 4.9324553417644537e-17,
+        "recovery_relative": 4.726051178191563e-13,
+        "schur_original_identity_operation_relative": 5.362263017730069e-13,
+        "slave_storage_max": 0.0,
+        "field_norm": 1.6314675848976294,
+        "port_unknown_norm": 0.19744456838631644,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 3.3745729126159297e-07
+      },
+      "fields": {
+        "full_FE_L2_relative": 8.168507341064624e-06,
+        "full_FE_scaled_curl_relative": 8.170355729944179e-06,
+        "scattered_FE_L2_relative": 7.805935381449871e-05,
+        "scattered_scaled_curl_relative": 7.80755355416393e-05,
+        "selected_E_relative": 9.068655226281644e-06,
+        "selected_H_relative": 7.1606708095395365e-06
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 2.507714365255226e-06,
+          "augmented_relative": 9.725011138559373e-07,
+          "native_relative": 9.725011138564934e-07,
+          "original_total_augmented_relative": 3.374569264857452e-07,
+          "port_absolute": 2.860979620235815e-17,
+          "port_full_rhs_relative": 1.341947070901009e-16,
+          "port_operation_relative": 4.9324553417644537e-17,
+          "recovery_relative": 4.726051178191563e-13,
+          "schur_original_identity_operation_relative": 5.362263017730069e-13,
+          "slave_storage_max": 0.0,
+          "field_norm": 1.6314675848976294,
+          "port_unknown_norm": 0.19744456838631644,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 3.3745729126159297e-07
+        },
+        "full_FE_L2_relative": 8.168507341064624e-06,
+        "full_FE_scaled_curl_relative": 8.170355729944179e-06,
+        "selected_E_relative": 9.068655226281644e-06,
+        "selected_H_relative": 7.1606708095395365e-06,
+        "scattered_FE_L2_relative": 7.805935381449871e-05,
+        "ordered_complex_ports_relative": 3.1822030151983775e-06,
+        "power_absolute_differences": {
+          "R_total": 2.137779621241842e-07,
+          "T_total": 1.6997424605591505e-06,
+          "A_balance": 1.913520422669457e-06,
+          "A_volume": 9.064867427868717e-09
+        },
+        "max_channel_power_difference": 1.699731464355203e-06,
+        "energy_closure_absolute": 1.922588196423547e-06
+      },
+      "selected_E": [
+        [
+          {
+            "real": -1.1441257941874489e-05,
+            "imag": -5.75909066812174e-06
+          },
+          {
+            "real": 1.03958378402397,
+            "imag": 0.8220652638016867
+          },
+          {
+            "real": 1.8569492742773e-05,
+            "imag": 1.226289089450458e-05
+          }
+        ],
+        [
+          {
+            "real": -1.3861328358873039e-05,
+            "imag": 6.095451792792456e-06
+          },
+          {
+            "real": 1.0517892982078445,
+            "imag": 0.8088636550876662
+          },
+          {
+            "real": 1.8377249872385648e-05,
+            "imag": -4.186613045445529e-06
+          }
+        ],
+        [
+          {
+            "real": -1.5944042700800004e-05,
+            "imag": -1.578611855274381e-05
+          },
+          {
+            "real": -1.076230153086026,
+            "imag": -0.7815444902938162
+          },
+          {
+            "real": -3.5791709674849937e-07,
+            "imag": 1.8141870155583228e-06
+          }
+        ],
+        [
+          {
+            "real": 2.327735058886435e-05,
+            "imag": -2.5601112950033533e-05
+          },
+          {
+            "real": 1.0767215748885364,
+            "imag": 0.7808189229655529
+          },
+          {
+            "real": -1.760105014744101e-06,
+            "imag": -2.3939152470009734e-05
+          }
+        ],
+        [
+          {
+            "real": -3.7718070317667607e-06,
+            "imag": -9.731751278124144e-06
+          },
+          {
+            "real": -0.7387544124983522,
+            "imag": 1.111944992271963
+          },
+          {
+            "real": -2.452103866027976e-05,
+            "imag": -2.352209271907073e-05
+          }
+        ],
+        [
+          {
+            "real": 4.1832524473936125e-05,
+            "imag": -2.5622738650311314e-06
+          },
+          {
+            "real": 0.7254735566959821,
+            "imag": -1.122842129158172
+          },
+          {
+            "real": 1.114256874349107e-05,
+            "imag": 2.7607557071748707e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.008451592601606035,
+            "imag": 0.007662317151850803
+          },
+          {
+            "real": 1.7604411927252578e-07,
+            "imag": -8.405558501588829e-07
+          },
+          {
+            "real": 1.0414969426756195,
+            "imag": 0.8236551200865833
+          }
+        ],
+        [
+          {
+            "real": 0.008455178472627726,
+            "imag": 0.00774942536184345
+          },
+          {
+            "real": 1.6768799463676458e-07,
+            "imag": -8.363869631042245e-07
+          },
+          {
+            "real": 1.0537795293813814,
+            "imag": 0.8104118122115647
+          }
+        ],
+        [
+          {
+            "real": -0.008644650916593229,
+            "imag": -0.00751757521754471
+          },
+          {
+            "real": -1.6658881833182485e-07,
+            "imag": 8.280718665132897e-07
+          },
+          {
+            "real": -1.0782578217256455,
+            "imag": -0.7827528640691266
+          }
+        ],
+        [
+          {
+            "real": 0.00856835303702321,
+            "imag": 0.007555422333162279
+          },
+          {
+            "real": 1.6617059663166926e-07,
+            "imag": -8.270246033476765e-07
+          },
+          {
+            "real": 1.0788576361364643,
+            "imag": 0.7822362954547682
+          }
+        ],
+        [
+          {
+            "real": -0.007289722812651013,
+            "imag": 0.008810266207191133
+          },
+          {
+            "real": 8.146908541055988e-07,
+            "imag": 2.1372425064663498e-07
+          },
+          {
+            "real": -0.7402283532637409,
+            "imag": 1.1139031133547581
+          }
+        ],
+        [
+          {
+            "real": 0.007032461153705758,
+            "imag": -0.009022948925231214
+          },
+          {
+            "real": -7.919526066080519e-07,
+            "imag": -2.3032843976303912e-07
+          },
+          {
+            "real": 0.7268210781880815,
+            "imag": -1.124866930755486
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.11764603310087846,
+        "R00_total": 0.11764497615409626,
+        "R00_s": 0.11764497615340704,
+        "R00_p": 6.892260165448255e-13,
+        "R00_by_polarization": {
+          "s": 0.11764497615340704,
+          "p": 6.892260165448255e-13
+        },
+        "T_total": 0.8770494826762938,
+        "R_plus_T": 0.9946955157771722,
+        "A_balance": 0.00530448422282781,
+        "R_total_dtn_port_modal": 0.11764603310087846,
+        "T_total_dtn_port_modal": 0.8770494826762938,
+        "R_plus_T_dtn_port_modal": 0.9946955157771722,
+        "A_balance_dtn_port_modal": 0.00530448422282781,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 5.041924396860936e-05,
+            "A_volume": 0.0039305531353602385
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7648788796250083e-05,
+            "A_volume": 0.0013758536756640052
+          }
+        },
+        "A_grating": 0.0039305531353602385,
+        "A_substrate": 0.0013758536756640052,
+        "A_volume_grating": 0.0039305531353602385,
+        "A_volume_substrate": 0.0013758536756640052,
+        "A_volume_total": 0.005306406811024244,
+        "A_port_balance_minus_A_volume_total": -1.9225881964339553e-06,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": 1.922588196423547e-06
+      }
+    },
+    "Z-FINAL": {
+      "audit": {
+        "schur_relative": 0.06811317716103583,
+        "augmented_relative": 0.02641454767922325,
+        "native_relative": 0.02641454767922325,
+        "original_total_augmented_relative": 0.009165831836376488,
+        "port_absolute": 2.8417863416486777e-20,
+        "port_full_rhs_relative": 1.3329444328539498e-19,
+        "port_operation_relative": 9.162800952161528e-19,
+        "recovery_relative": 2.5960541711167797e-14,
+        "schur_original_identity_operation_relative": 2.9197548028014266e-14,
+        "slave_storage_max": 0.0,
+        "field_norm": 0.09321297806912662,
+        "port_unknown_norm": 0.010558258571749225,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.009165831836804743
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.10350872640911486,
+        "full_FE_scaled_curl_relative": 0.10350813766051103,
+        "scattered_FE_L2_relative": 0.9891432988054559,
+        "scattered_scaled_curl_relative": 0.9891189010465933,
+        "selected_E_relative": 0.10351417262873298,
+        "selected_H_relative": 0.10350337491342247
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.06811317716103583,
+          "augmented_relative": 0.02641454767922325,
+          "native_relative": 0.02641454767922325,
+          "original_total_augmented_relative": 0.009165831836376488,
+          "port_absolute": 2.8417863416486777e-20,
+          "port_full_rhs_relative": 1.3329444328539498e-19,
+          "port_operation_relative": 9.162800952161528e-19,
+          "recovery_relative": 2.5960541711167797e-14,
+          "schur_original_identity_operation_relative": 2.9197548028014266e-14,
+          "slave_storage_max": 0.0,
+          "field_norm": 0.09321297806912662,
+          "port_unknown_norm": 0.010558258571749225,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.009165831836804743
+        },
+        "full_FE_L2_relative": 0.10350872640911486,
+        "full_FE_scaled_curl_relative": 0.10350813766051103,
+        "selected_E_relative": 0.10351417262873298,
+        "selected_H_relative": 0.10350337491342247,
+        "scattered_FE_L2_relative": 0.9891432988054559,
+        "ordered_complex_ports_relative": 0.10337551721563976,
+        "power_absolute_differences": {
+          "R_total": 0.009105231522968021,
+          "T_total": 0.0022625763873024285,
+          "A_balance": 0.011367807910270367,
+          "A_volume": 5.495273838008151e-05
+        },
+        "max_channel_power_difference": 0.009105690356622287,
+        "energy_closure_absolute": 0.011422760645744101
+      },
+      "selected_E": [
+        [
+          {
+            "real": -1.010895430887534e-05,
+            "imag": -3.6975098644817627e-06
+          },
+          {
+            "real": 0.9474655301185271,
+            "imag": 0.9238348226032538
+          },
+          {
+            "real": 2.107520956442639e-05,
+            "imag": 9.20226832039424e-06
+          }
+        ],
+        [
+          {
+            "real": -1.2967776363269318e-05,
+            "imag": 6.23641745680867e-06
+          },
+          {
+            "real": 0.9603100747614486,
+            "imag": 0.9115444752209176
+          },
+          {
+            "real": 1.5336358223752982e-05,
+            "imag": -8.681296926848748e-06
+          }
+        ],
+        [
+          {
+            "real": -9.781337496012635e-06,
+            "imag": -1.472832823397813e-05
+          },
+          {
+            "real": -0.9847044223560564,
+            "imag": -0.8845909676966223
+          },
+          {
+            "real": -3.1583132766925864e-06,
+            "imag": 2.9832417549541497e-06
+          }
+        ],
+        [
+          {
+            "real": 2.6173835658439075e-05,
+            "imag": -2.4503209499468228e-05
+          },
+          {
+            "real": 0.9852583755867439,
+            "imag": 0.883902385597844
+          },
+          {
+            "real": 4.212418268088635e-06,
+            "imag": -2.677543846863488e-05
+          }
+        ],
+        [
+          {
+            "real": -3.7384784801972026e-06,
+            "imag": -8.664879131967616e-06
+          },
+          {
+            "real": -0.8389422110284488,
+            "imag": 1.0170792814423006
+          },
+          {
+            "real": -2.497333885474207e-05,
+            "imag": -2.5097433945205755e-05
+          }
+        ],
+        [
+          {
+            "real": 3.46317033312878e-05,
+            "imag": -2.4463080173192784e-06
+          },
+          {
+            "real": 0.8236558828794249,
+            "imag": -1.0258282357919302
+          },
+          {
+            "real": 2.0497759296556358e-06,
+            "imag": 3.239975449030225e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.007743951054694752,
+            "imag": 0.008194640595653382
+          },
+          {
+            "real": -4.397479937250532e-07,
+            "imag": -6.391130874383786e-07
+          },
+          {
+            "real": 0.9492899198514231,
+            "imag": 0.9256803307994774
+          }
+        ],
+        [
+          {
+            "real": 0.008019695125820446,
+            "imag": 0.008037130619201534
+          },
+          {
+            "real": -1.118806034134784e-06,
+            "imag": 4.775709953491735e-07
+          },
+          {
+            "real": 0.9622042828786767,
+            "imag": 0.9132828182486953
+          }
+        ],
+        [
+          {
+            "real": -0.008792406435840403,
+            "imag": -0.007195498965750891
+          },
+          {
+            "real": -6.779609254838652e-07,
+            "imag": -1.1174629695445716e-06
+          },
+          {
+            "real": -0.9866276901978583,
+            "imag": -0.8860005576407883
+          }
+        ],
+        [
+          {
+            "real": 0.00873677115926215,
+            "imag": 0.007190958408205832
+          },
+          {
+            "real": -7.3470720148139e-08,
+            "imag": 5.467885259710739e-07
+          },
+          {
+            "real": 0.9872986395762302,
+            "imag": 0.8855729180348736
+          }
+        ],
+        [
+          {
+            "real": -0.006110548791813399,
+            "imag": 0.009866888058211551
+          },
+          {
+            "real": 4.2529741385451623e-07,
+            "imag": 1.967164797569207e-07
+          },
+          {
+            "real": -0.8406544166166412,
+            "imag": 1.018869599501392
+          }
+        ],
+        [
+          {
+            "real": 0.005585163913422386,
+            "imag": -0.010457712450055109
+          },
+          {
+            "real": -2.2716206131949206e-06,
+            "imag": -4.957540193077972e-07
+          },
+          {
+            "real": 0.8252462763837942,
+            "imag": -1.0277145639344065
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.10854058779994831,
+        "R00_total": 0.10853907203062246,
+        "R00_s": 0.10853907203062244,
+        "R00_p": 2.825304361188972e-17,
+        "R00_by_polarization": {
+          "s": 0.10853907203062244,
+          "p": 2.825304361188972e-17
+        },
+        "T_total": 0.8747852065465308,
+        "R_plus_T": 0.9833257943464792,
+        "A_balance": 0.016674205653520846,
+        "R_total_dtn_port_modal": 0.10854058779994831,
+        "T_total_dtn_port_modal": 0.8747852065465308,
+        "R_plus_T_dtn_port_modal": 0.9833257943464792,
+        "A_balance_dtn_port_modal": 0.016674205653520846,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 4.976614566547463e-05,
+            "A_volume": 0.0038796392901490158
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.7596863538715678e-05,
+            "A_volume": 0.0013718057176277183
+          }
+        },
+        "A_grating": 0.0038796392901490158,
+        "A_substrate": 0.0013718057176277183,
+        "A_volume_grating": 0.0038796392901490158,
+        "A_volume_substrate": 0.0013718057176277183,
+        "A_volume_total": 0.0052514450077767345,
+        "A_port_balance_minus_A_volume_total": 0.011422760645744112,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.011422760645744101
+      }
+    },
+    "Z-CYCLE4": {
+      "audit": {
+        "schur_relative": 0.06907817136722219,
+        "augmented_relative": 0.026788776081595446,
+        "native_relative": 0.026788776081595446,
+        "original_total_augmented_relative": 0.009295688862376911,
+        "port_absolute": 4.3392074642368805e-19,
+        "port_full_rhs_relative": 2.035312207566344e-18,
+        "port_operation_relative": 1.3458283658207102e-17,
+        "recovery_relative": 2.7273639577415223e-14,
+        "schur_original_identity_operation_relative": 3.070800850072126e-14,
+        "slave_storage_max": 0.0,
+        "field_norm": 0.09660475182174204,
+        "port_unknown_norm": 0.010975476382082223,
+        "strict_pass": false,
+        "independent_DOLFINx_total_native_relative": 0.00929568886280085
+      },
+      "fields": {
+        "full_FE_L2_relative": 0.1044918741075344,
+        "full_FE_scaled_curl_relative": 0.10449141755088555,
+        "scattered_FE_L2_relative": 0.9985383903244456,
+        "scattered_scaled_curl_relative": 0.9985150774880858,
+        "selected_E_relative": 0.10449039740876288,
+        "selected_H_relative": 0.10447262790955274
+      },
+      "comparison": {
+        "status": "NOT_QUALIFIED",
+        "equation_audit": {
+          "schur_relative": 0.06907817136722219,
+          "augmented_relative": 0.026788776081595446,
+          "native_relative": 0.026788776081595446,
+          "original_total_augmented_relative": 0.009295688862376911,
+          "port_absolute": 4.3392074642368805e-19,
+          "port_full_rhs_relative": 2.035312207566344e-18,
+          "port_operation_relative": 1.3458283658207102e-17,
+          "recovery_relative": 2.7273639577415223e-14,
+          "schur_original_identity_operation_relative": 3.070800850072126e-14,
+          "slave_storage_max": 0.0,
+          "field_norm": 0.09660475182174204,
+          "port_unknown_norm": 0.010975476382082223,
+          "strict_pass": false,
+          "independent_DOLFINx_total_native_relative": 0.00929568886280085
+        },
+        "full_FE_L2_relative": 0.1044918741075344,
+        "full_FE_scaled_curl_relative": 0.10449141755088555,
+        "selected_E_relative": 0.10449039740876288,
+        "selected_H_relative": 0.10447262790955274,
+        "scattered_FE_L2_relative": 0.9985383903244456,
+        "ordered_complex_ports_relative": 0.10432905397496013,
+        "power_absolute_differences": {
+          "R_total": 0.00940696558619837,
+          "T_total": 0.0025042594859830958,
+          "A_balance": 0.011911225072181453,
+          "A_volume": 5.78460059658982e-05
+        },
+        "max_channel_power_difference": 0.009406737812146668,
+        "energy_closure_absolute": 0.011969071075241033
+      },
+      "selected_E": [
+        [
+          {
+            "real": -1.0019110281597893e-05,
+            "imag": -9.21733688046098e-06
+          },
+          {
+            "real": 0.9465428240716881,
+            "imag": 0.9246901347790606
+          },
+          {
+            "real": 6.923951669591699e-06,
+            "imag": 1.526062502502251e-05
+          }
+        ],
+        [
+          {
+            "real": -1.4105109408322169e-05,
+            "imag": 2.792730713042103e-06
+          },
+          {
+            "real": 0.9593598045131179,
+            "imag": 0.9122520285219811
+          },
+          {
+            "real": 1.4374772106617702e-05,
+            "imag": 1.0022326863147575e-05
+          }
+        ],
+        [
+          {
+            "real": -1.9117979121780497e-05,
+            "imag": -2.0140176936863642e-05
+          },
+          {
+            "real": -0.9835526589104459,
+            "imag": -0.8853401891525644
+          },
+          {
+            "real": 8.773830545541495e-08,
+            "imag": 6.7279271512416e-06
+          }
+        ],
+        [
+          {
+            "real": 2.9962036800999817e-05,
+            "imag": -2.28637924795529e-05
+          },
+          {
+            "real": 0.9842002570760363,
+            "imag": 0.8846840214243681
+          },
+          {
+            "real": -2.042538605362526e-06,
+            "imag": -2.5008684921785502e-05
+          }
+        ],
+        [
+          {
+            "real": -2.809558975993784e-06,
+            "imag": -1.0271846901658242e-05
+          },
+          {
+            "real": -0.8396013374498577,
+            "imag": 1.0156694433226925
+          },
+          {
+            "real": -1.5947594676622868e-05,
+            "imag": -2.9431856020212125e-05
+          }
+        ],
+        [
+          {
+            "real": 4.585058128957748e-05,
+            "imag": 8.606322152801872e-06
+          },
+          {
+            "real": 0.8241805985296156,
+            "imag": -1.0244862744443224
+          },
+          {
+            "real": 1.2178656394845322e-05,
+            "imag": 3.840707773093477e-05
+          }
+        ]
+      ],
+      "selected_H_code": [
+        [
+          {
+            "real": 0.00783203456473399,
+            "imag": 0.008268333415766346
+          },
+          {
+            "real": 6.553003069525882e-07,
+            "imag": -1.2101714481480822e-06
+          },
+          {
+            "real": 0.9482966194999103,
+            "imag": 0.9264574436422616
+          }
+        ],
+        [
+          {
+            "real": 0.008111046435602837,
+            "imag": 0.00795909830940933
+          },
+          {
+            "real": 4.406739498154333e-07,
+            "imag": -2.504621171772938e-06
+          },
+          {
+            "real": 0.9611843545537677,
+            "imag": 0.9140259357651873
+          }
+        ],
+        [
+          {
+            "real": -0.00883745783143875,
+            "imag": -0.007133311250031298
+          },
+          {
+            "real": 1.944310263770031e-06,
+            "imag": 1.5232083728561713e-06
+          },
+          {
+            "real": -0.9854798082114544,
+            "imag": -0.886777609172443
+          }
+        ],
+        [
+          {
+            "real": 0.008741303468814217,
+            "imag": 0.0072469193434308125
+          },
+          {
+            "real": -7.209010579868802e-07,
+            "imag": -1.817162779710289e-06
+          },
+          {
+            "real": 0.9861455133538802,
+            "imag": 0.8863064642793521
+          }
+        ],
+        [
+          {
+            "real": -0.006059954669108291,
+            "imag": 0.01001322738667463
+          },
+          {
+            "real": -2.38842351054988e-06,
+            "imag": -4.1759969464276495e-07
+          },
+          {
+            "real": -0.841236782574551,
+            "imag": 1.0175334968307965
+          }
+        ],
+        [
+          {
+            "real": 0.005557868626254757,
+            "imag": -0.010477480154448765
+          },
+          {
+            "real": 1.2856990757013805e-06,
+            "imag": -3.964598656993807e-06
+          },
+          {
+            "real": 0.8257108614681203,
+            "imag": -1.0263723089550567
+          }
+        ]
+      ],
+      "power": {
+        "R_total": 0.10823885373671796,
+        "R00_total": 0.10823802457509805,
+        "R00_s": 0.10823802457509805,
+        "R00_p": 5.6679333723298755e-18,
+        "R00_by_polarization": {
+          "s": 0.10823802457509805,
+          "p": 5.6679333723298755e-18
+        },
+        "T_total": 0.8745435234478501,
+        "R_plus_T": 0.9827823771845681,
+        "A_balance": 0.017217622815431932,
+        "R_total_dtn_port_modal": 0.10823885373671796,
+        "T_total_dtn_port_modal": 0.8745435234478501,
+        "R_plus_T_dtn_port_modal": 0.9827823771845681,
+        "A_balance_dtn_port_modal": 0.017217622815431932,
+        "R_plus_T_plus_A_volume": null,
+        "R_plus_T_plus_A_volume_dtn_port_modal": null,
+        "energy_closure_error_dtn_port_modal_volume": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+        "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+        "dtn_port_top_reference_z": 1.225,
+        "dtn_port_bottom_reference_z": -0.175,
+        "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+        "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+        "incident_power_code_units": 0.012827518731403281,
+        "stage4_dtn_order_policy": "auto_propagating",
+        "stage4_dtn_assembly": "auxiliary",
+        "dtn_port_mode_count": 40,
+        "dtn_port_top_mode_count": 20,
+        "dtn_port_bottom_mode_count": 20,
+        "dtn_port_propagating_mode_count": 40,
+        "dtn_port_rayleigh_warning_count": 0,
+        "port_power_file": "port_power.json",
+        "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+        "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+        "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
+        "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+      },
+      "volume_absorption": {
+        "method": "volume_absorption",
+        "role": "absorption_check",
+        "status": "ok",
+        "power_source": "volume_integral_Im_epsilon_E2",
+        "field_model_for_absorption": "total_field",
+        "incident_power_code_units": 0.012827518731403281,
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+        "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+        "pml_cells_excluded": true,
+        "air_cells_excluded": true,
+        "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+        "regions": {
+          "grating": {
+            "name": "grating",
+            "tag": 3,
+            "cell_count": 136,
+            "volume_nm3": 0.7288750000000053,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 4.973435067279034e-05,
+            "A_volume": 0.0038771606352080218
+          },
+          "substrate": {
+            "name": "substrate",
+            "tag": 2,
+            "cell_count": 48,
+            "volume_nm3": 0.2572500000000009,
+            "n_complex": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_r_complex": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "Im_epsilon_r": 8.648547597811433e-06,
+            "material_label": null,
+            "status": "ok",
+            "reason": null,
+            "absorbed_power_code_units": 1.759154508724795e-05,
+            "A_volume": 0.0013713911049828965
+          }
+        },
+        "A_grating": 0.0038771606352080218,
+        "A_substrate": 0.0013713911049828965,
+        "A_volume_grating": 0.0038771606352080218,
+        "A_volume_substrate": 0.0013713911049828965,
+        "A_volume_total": 0.005248551740190918,
+        "A_port_balance_minus_A_volume_total": 0.011969071075241014,
+        "A_probe_balance_minus_A_volume_total": null,
+        "A_flux_minus_A_volume_total": null,
+        "energy_closure_error_port_volume": -0.011969071075241033
+      }
+    }
+  },
+  "reference_audit": {
+    "schur_relative": 6.4241465032853714e-12,
+    "augmented_relative": 2.5438195219817865e-12,
+    "native_relative": 3.0179630439596658e-12,
+    "original_total_augmented_relative": 5.603871795512029e-12,
+    "port_absolute": 8.723611222112326e-15,
+    "port_full_rhs_relative": 4.09182380901682e-14,
+    "port_operation_relative": 1.5039466315151165e-14,
+    "recovery_relative": 4.728274022027856e-13,
+    "schur_original_identity_operation_relative": 5.352280622536047e-13,
+    "slave_storage_max": 0.0,
+    "field_norm": 1.631513757018415,
+    "port_unknown_norm": 0.1974501489758752,
+    "strict_pass": true,
+    "independent_DOLFINx_total_native_relative": 1.4374448661883937e-12
+  },
+  "reference_native_pass": true,
+  "reference": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v7/V7-M3-REFERENCE/task042_v7_same_mesh_p3_reference_20260929T081232010551Z/accurate_reference_state.npz",
+    "sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+    "z_sha256": "4a681a75950ac8087ee8265f34e10363fef99b523c8eecf434f30fafecc09936"
+  },
+  "reference_feedback": false,
+  "no_reference_error_projection": true,
+  "no_new_LU": true,
+  "not_continuum_or_discretization_error": true
+}

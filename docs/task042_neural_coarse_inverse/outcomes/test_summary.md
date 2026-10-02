@@ -1,3 +1,17 @@
+# V23测试／Review V20
+
+最终相关pure-array/真实dat接线/事务/读取白名单/奇异反例/截止清场回归及记录篡改反例见[测试](records/test_results_v23.json)。五实际dat已实现并validate，正式S/D/M/Z/V均实际one-run。Ruff模块未安装，不改环境；full pytest/MPI2/4/CI/旧campaign not_run。原代码ActionPacket/recover/uncondensed/audit的数学实现未重定向到class64；共享IO/Stage只加保留原默认的显式参数，并有旧pure回归。本地GFM表格/围栏/链接/compile/diff与旧历史字节保护见[静态](records/static_checks_v23.json)，旧总账checker问题与review起点逐项相同，不做全仓清理。GitHub精确review/结果页无视觉证据，**NOT_VERIFIED**；本地结构不替代视觉。
+
+| 类别 | 真实结果 |
+|---|---|
+| 复数小模型/40port/右PC/奇异反例/role/schema/返回失败/截止清场 | 最终相关测试由test_results_v23记录；不构造新FE解 |
+| 真实S1248列/QR/原作用/PC | 通过；额外19 fine作用，rank不扫描 |
+| 正式M/Z、独立6状态 | 全部实际执行，原方程与完整资格0/2新求解、0/6审核 |
+| 离线通道功率 | 240项原公式配对通过；activation失败费用保留，仅重放辅助reader |
+
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # V22 targeted回归与独立证据审核
 
 | 检查 | 实际结果／边界 |

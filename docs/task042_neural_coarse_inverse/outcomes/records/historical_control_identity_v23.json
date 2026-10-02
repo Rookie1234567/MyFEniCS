@@ -1,0 +1,31 @@
+{
+  "V22_cycles": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv",
+    "sha256": "e933286f7175fbfe97b1e94131ed01c54399b3b5d6eae8fc7953c0710b1a69ed",
+    "bytes": 19871
+  },
+  "V22_run_index": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json",
+    "sha256": "8ff42cc99eb56a208d0c5c3df143212959012bd49425db3b447147fc224ece7b",
+    "bytes": 15179
+  },
+  "V22_candidates": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv",
+    "sha256": "fd7fbeecc630c31d687ba0f1093c5761c9ed409dc721fc1d2e84745a79d0af19",
+    "bytes": 3243
+  },
+  "V22_cost": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json",
+    "sha256": "7471f065f4198ef45f7623b080abd254de84893bcfe0b1f9ff829c3cb72c0a9e",
+    "bytes": 20299
+  },
+  "new_prefix": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/compact_records/historical_control_prefix_v23.csv",
+    "sha256": "a8d216300141f6056e32fae08a949e757b17692b9cff354e924e686ca0045e05",
+    "bytes": 2303
+  },
+  "N_cycle4_rho": 2.5098820276660174e-06,
+  "no_historical_rerun": true,
+  "no_interpolated_equal_action_or_equal_wall_comparison": true,
+  "common_public_behavior_regression": "24 passed / two consumed old-entry deselected"
+}

@@ -1,0 +1,132 @@
+{
+  "routes": {
+    "M": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/M/INITIAL.npz",
+        "sha256": "e80fc942dcfc0fa804442706aab9a1fa6b2b4ad6ec8c3629306909ef036e8a76",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/M/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "bb11d04aae15ad3b53d4cfea05620d52daa736b0578b486179a5e32d6c2da283",
+        "trace_sha256": "67f0db31775e385ca4e44abbcaba6aa555acc5870d40e5a271be13218bca6b53",
+        "port_sha256": "712881946e1ac76e259eb92c1f3abdaad4c400dbca9c6337c8dcd05ce3fbfd1a",
+        "z_sha256": "964ff9cb0fb7e185ca780c9db35eb8058ab32ec566a43b8c0dc6244e84992b70",
+        "residual_sha256": "a7afe130fe4c4fb47ec68c76ba6e486275373d73ab249c8e19712d8bf81b3a3f",
+        "y_sha256": "9005b344d8e9a19a6e8af9027dc2360afb815231cda226817b860ae1340c3279",
+        "By_sha256": "24309f7fd4a6d681bc74a8c1c2e9cbfabd30ac7a25c88bce7237f4149a59d13f"
+      },
+      "stop": "FIXED_PROGRESS_RULE_STOP",
+      "first_pass_cycle": null
+    },
+    "Z": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/Z/INITIAL.npz",
+        "sha256": "27a6b306669f93953d96eb7655c74c4c8601b974278e3107f565434e4a6b0058",
+        "trace_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "port_sha256": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee",
+        "z_sha256": "da0f008435083d9720b57802ac7a1af81853f26f1c80e3766f84ead5888bf454",
+        "residual_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/Z/cycles/CYCLE_0008/numeric/slot1.npz",
+        "sha256": "8218358ff2c9afa800735e51abc4780edf95e829330180ba99a1f25793ff1107",
+        "trace_sha256": "bc5b72781875f0952b09f83a7debd9c07b24d6088e5ee95192440971f860b049",
+        "port_sha256": "d86c6081303074da506ce17731b89e009f843959430021ebc9fa6c8f08650ebe",
+        "z_sha256": "ee30b139a8942cfb7678788aba566629928f639455c509c8f3e47d7f2473dea5",
+        "residual_sha256": "d987a97ea1dbc33a00af9c58b267585f5a98a9d6b1f724ae8847d4bc6d7e331c",
+        "y_sha256": "f6dc0d9a06a2dc57d7ce098395ecaffe3031be21e65ab8167b64334262d4ca84",
+        "By_sha256": "f662815808f000c5aaadd39ba8aee866054021f9c24a584dcd8f0abb26efae72"
+      },
+      "stop": "FIXED_PROGRESS_RULE_STOP",
+      "first_pass_cycle": null
+    }
+  },
+  "FROZEN": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/FROZEN.json",
+    "sha256": "c6e9319ff054266b162a65290e21be318a8559e0287107e89be1eac2e8a8df2e",
+    "bytes": 41738
+  },
+  "inventory": [
+    {
+      "name": "V21-C-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v21/C/cycles/CALL_0112/physical.npz",
+        "sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+        "x_sha256": "bd1e676989c95e77753bd477d863e32d8ff84ca93bbc0a5ab11a79afe565cb4b",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      }
+    },
+    {
+      "name": "D-G",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_coarse_compare_20261002T105034159990Z/G_WARM.npz",
+        "sha256": "58cdf8bd0da2c1e1fe36cc8b43d1c4f2ba653fd19daa4b297dc583a5f2290f29",
+        "trace_sha256": "66870fc907e947f1da5ee3e0863ebf73ab39d7fe677032b6854238e33fb526f0",
+        "port_sha256": "e4f99a3df75100e8fcd72dbf6e66c1103ec4f866d1b815e45eb371dfb15fa051",
+        "z_sha256": "462b8a9f75390626a0ee19592d3b8e764afd8309ceea28b45aad696b0dca3de4",
+        "residual_sha256": "05aef3bf726e3c9249a1584dd9dae89000de8f8313ed5c20300fbf47aff70b1f",
+        "c_sha256": "47404c85437d3e6047209b67359b657a4766dab3f115b74d23868ed2bfd5d94a"
+      }
+    },
+    {
+      "name": "D-MR",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_coarse_compare_20261002T105034159990Z/MR_WARM.npz",
+        "sha256": "798e87cdf5875acfed3ccfbaa5f42199d3d5f593c7f24948989197e63a17d76e",
+        "trace_sha256": "71d0caac3dec2a76e78c85513fc096bf291f1500fa0a5e7ae006ce06028dd8b6",
+        "port_sha256": "612a8a2d7a5195b78a3515ced5cde00b626634844d960b0bda4b9a82491f6ad8",
+        "z_sha256": "31b4a6e7be03f4c6a89c181fb12096be67450ffaeaca51d2e43ebe326f4a0221",
+        "residual_sha256": "4f909f2e2240e0b07bd3b55b82dd44bc55e66fdfccb3ac00b1f95ead37c12fc5",
+        "c_sha256": "07d719c65249fb4a95fa8dfde62982446d4dbb90fd7a5e208ff97e99f59a4036"
+      }
+    },
+    {
+      "name": "M-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/M/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "bb11d04aae15ad3b53d4cfea05620d52daa736b0578b486179a5e32d6c2da283",
+        "trace_sha256": "67f0db31775e385ca4e44abbcaba6aa555acc5870d40e5a271be13218bca6b53",
+        "port_sha256": "712881946e1ac76e259eb92c1f3abdaad4c400dbca9c6337c8dcd05ce3fbfd1a",
+        "z_sha256": "964ff9cb0fb7e185ca780c9db35eb8058ab32ec566a43b8c0dc6244e84992b70",
+        "residual_sha256": "a7afe130fe4c4fb47ec68c76ba6e486275373d73ab249c8e19712d8bf81b3a3f",
+        "y_sha256": "9005b344d8e9a19a6e8af9027dc2360afb815231cda226817b860ae1340c3279",
+        "By_sha256": "24309f7fd4a6d681bc74a8c1c2e9cbfabd30ac7a25c88bce7237f4149a59d13f"
+      }
+    },
+    {
+      "name": "Z-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/Z/cycles/CYCLE_0008/numeric/slot1.npz",
+        "sha256": "8218358ff2c9afa800735e51abc4780edf95e829330180ba99a1f25793ff1107",
+        "trace_sha256": "bc5b72781875f0952b09f83a7debd9c07b24d6088e5ee95192440971f860b049",
+        "port_sha256": "d86c6081303074da506ce17731b89e009f843959430021ebc9fa6c8f08650ebe",
+        "z_sha256": "ee30b139a8942cfb7678788aba566629928f639455c509c8f3e47d7f2473dea5",
+        "residual_sha256": "d987a97ea1dbc33a00af9c58b267585f5a98a9d6b1f724ae8847d4bc6d7e331c",
+        "y_sha256": "f6dc0d9a06a2dc57d7ce098395ecaffe3031be21e65ab8167b64334262d4ca84",
+        "By_sha256": "f662815808f000c5aaadd39ba8aee866054021f9c24a584dcd8f0abb26efae72"
+      }
+    },
+    {
+      "name": "Z-CYCLE4",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/Z/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "563e7815122a492ad0421363e1f02b357d3df43e40cda5ddfcdf7777589612a9",
+        "trace_sha256": "7d6c5cd8f2c7cf39f36bd34c08d0cb0a535df7a6e29a53835b712afac5d75168",
+        "port_sha256": "c84660ffed7ead26e8aa1815479b92172a9aa95ca73efaf0749dfbb7cf550cb5",
+        "z_sha256": "ee8e23bd0e980e0b09b0fcf4cb020de26ec6046d3e886bb647fae3f6efd5fd69",
+        "residual_sha256": "db777b86b80f732b91f7482e12a40b25bcb668100026cbd66ba6d146e1ecfd7b",
+        "y_sha256": "f1910046a959524256489f7520d9768a53ff0ffe3461a35c899d3a39ce290e18",
+        "By_sha256": "84e8d058ead3d709185970dabcd62206ac039b56c5d356e3944781835244c1cf"
+      }
+    }
+  ],
+  "transactions": "y -> By/trace -> full z/port/residual -> old audit -> commit",
+  "no_Krylov_resume_claim": true
+}

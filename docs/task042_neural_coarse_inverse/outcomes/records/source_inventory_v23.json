@@ -1,0 +1,70 @@
+{
+  "review": "5c91a8101644f09d6e6e1b45043ae5581394c0e9",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "raw_results": {
+    "SETUP": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_image_setup_20261002T104820734060Z/stage_result.json",
+      "sha256": "ffed6a0f369f601c980c393872f50e715a1243e79ce3827fbf39abd7efc783b8",
+      "bytes": 191823
+    },
+    "COMPARE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_coarse_compare_20261002T105034159990Z/stage_result.json",
+      "sha256": "179528b3392b7dc11ddba161276b8506bef6888c9fae3c3bd2fa6f63f010180c",
+      "bytes": 190393
+    },
+    "VERIFY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_verify_20261002T110704212314Z/stage_result.json",
+      "sha256": "3b7b6ff2d7e91abb633872ceb28880c9f9eb88e181935c317c8131a275a042fd",
+      "bytes": 351557
+    },
+    "M": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_image_mr_warm_20261002T105048565583Z/stage_result.json",
+      "sha256": "27bd7cc80cccae6b624ec16ea06e932cf331888f73d097c966b637abf7f7177e",
+      "bytes": 249089
+    },
+    "Z": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_image_mr_zero_20261002T105549615337Z/stage_result.json",
+      "sha256": "70bd617b45978ab3507d0b19ba6a531ac1e652b24c265fe79d6d9ba213b84c9e",
+      "bytes": 293878
+    }
+  },
+  "plan": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/p1_image_minres_v23.json",
+    "sha256": "3321917b1e9dbdb362e1970a845912f80d6cc52a90070c87ec6b1f7f17b98f0d",
+    "bytes": 3807
+  },
+  "material": {
+    "path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "bytes": 5236
+  },
+  "hashes": {
+    "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355"
+  },
+  "material_modes_hash": {
+    "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262"
+  },
+  "full_recipe_source": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/task042_v23_p1_image_setup_20261002T104820734060Z/stage_result.json",
+    "sha256": "ffed6a0f369f601c980c393872f50e715a1243e79ce3827fbf39abd7efc783b8",
+    "bytes": 191823
+  },
+  "full_recipe_not_repeated": true,
+  "actual_sources": [
+    "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52"
+  ],
+  "delivery_HEAD_is_not_run_source": true,
+  "collector": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/collect_records.py",
+    "sha256": "c72440495b3dc915ca1958497c2615813f880a5dd06bd6ed704f7a16e23b0a07",
+    "bytes": 16237
+  },
+  "reader_helper_source": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/collect_records.py",
+    "sha256": "60cc8eeebb4f4c90d68f895b832088ef3b6a8f72069ea15d735be3638317fb50",
+    "bytes": 17189
+  }
+}

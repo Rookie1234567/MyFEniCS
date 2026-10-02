@@ -1,0 +1,86 @@
+{
+  "observed_clock": {
+    "schema": "task042.campaign-window.v23",
+    "start_utc": "2026-10-02T10:14:18.868457+00:00",
+    "start_monotonic": 861053.729339336,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T13:44:18.868457+00:00",
+    "deadline_utc": "2026-10-02T14:14:18.868457+00:00",
+    "review_expected_commit": "5c91a8101644f09d6e6e1b45043ae5581394c0e9",
+    "prior_HEAD": "c9ee41f362669995908a55b57325e0fc06884599",
+    "scope": "first clock after identity inspection; implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T11:24:09.091124+00:00",
+    "observed_monotonic": 865243.951993013,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4190.222666978836,
+    "heavy_remaining_seconds": 8409.777333021164,
+    "total_remaining_seconds": 10209.777333021164
+  },
+  "formal_run_source": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+  "final_focused": {
+    "passed": 27,
+    "failed": 0,
+    "deselected": 2,
+    "command": "python -m pytest -q src/test/test_task042_v23_image_minres.py src/test/test_task042_v22_p1_trace.py src/test/test_task042_v23_records.py -k not-actual-old-entry",
+    "actual_command_in_log": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/final_focused_and_records/worker.log",
+    "code_content_final": true,
+    "environment": "own pure; math1; shared-workstation"
+  },
+  "preformal_tests": [
+    {
+      "name": "focused_initial",
+      "passed": 23,
+      "failed": 1,
+      "deselected": 2,
+      "failure": "R01 event default signature; retained"
+    },
+    {
+      "name": "focused_fixed",
+      "passed": 24,
+      "failed": 0,
+      "deselected": 2
+    },
+    {
+      "name": "focused_final",
+      "passed": 24,
+      "failed": 0,
+      "deselected": 2
+    },
+    {
+      "name": "boundary_final",
+      "passed": 11,
+      "failed": 0
+    }
+  ],
+  "real_dat_validate": {
+    "stages": [
+      "SETUP",
+      "COMPARE",
+      "M",
+      "Z",
+      "VERIFY"
+    ],
+    "status": "PASS",
+    "log": "/home/fenics/Projects/NN-Lab/tmp/task042/v23/five_dat_validate/worker.log"
+  },
+  "real_formal_original_actions": "S/D/M/Z actual original packet; QR R/D and old/new S/SH plus old audit passed; strict M/Z fail retained",
+  "FE_ABI": "complex128/int64/MPI1; independent six-state verification",
+  "checker": {
+    "command": "python benchmarks/check_task042_p1_image_records.py docs/task042_neural_coarse_inverse/outcomes/records",
+    "raw_recomputed": true,
+    "states": 6,
+    "passed": 0,
+    "forged_PASS_and_MR_violation_tests": true
+  },
+  "no_full_pytest_MPI24_CI_or_environment_install": true,
+  "auxiliary_source_status": "post-run compact checker/docs files; not claimed as new numerical source",
+  "local_static": {
+    "status": "PASS",
+    "old_task_documents_byte_identical": 519,
+    "compile_files": 17,
+    "registry_errors_exactly_inherited": true
+  }
+}

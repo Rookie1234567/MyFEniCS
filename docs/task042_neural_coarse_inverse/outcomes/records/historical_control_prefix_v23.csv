@@ -1,0 +1,13 @@
+new_route,old_route,cycle,new_rho,old_rho,new_post_initial_actions,old_post_initial_actions,exact_common_action_prefix,new_cumulative_cycle_wall,old_cumulative_cycle_wall,new_W_QR_setup_supervision_extra,common_T_upstream_cost_retained,interpolation,performance
+M,P,1,2.5212627320609904e-06,2.5148639948689765e-06,524,524,True,63.62998736591544,88.18503825191874,True,True,False,shared-workstation; NOT same strict qualified accuracy
+M,P,2,2.5168161647534756e-06,2.5144981507567618e-06,1048,1048,True,133.04235908493865,166.88304195483215,True,True,False,shared-workstation; NOT same strict qualified accuracy
+M,P,3,2.5121672819911633e-06,2.5143763342222936e-06,1572,1572,True,211.82793437491637,253.66157932486385,True,True,False,shared-workstation; NOT same strict qualified accuracy
+M,P,4,2.507714365255226e-06,2.5142977622142912e-06,2096,2096,True,288.3786336889025,349.41962513979524,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,1,0.08501767535569019,0.12277943897566279,524,524,True,81.30185893806629,95.48045622592326,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,2,0.07250492597733184,0.1140085302761284,1048,1048,True,160.46269878197927,190.3602459318936,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,3,0.06975632215511178,0.10923098532898824,1572,1572,True,228.97760826791637,286.9884991758736,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,4,0.06907817136722219,0.10073830514015258,2096,2096,True,292.33588496688753,377.0335187697783,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,5,0.06874223798386904,0.08003388687691619,2620,2620,True,356.0072933458723,449.39388249279,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,6,0.06851909539412587,0.07122588119937408,3144,3144,True,419.73216696293093,520.8812939347699,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,7,0.06831934829973972,0.06764046062080827,3668,3668,True,483.8462264339905,580.3108422107762,True,True,False,shared-workstation; NOT same strict qualified accuracy
+Z,Z,8,0.06811317716103583,0.06431677281177706,4192,4192,True,550.7736671030289,641.1450418038294,True,True,False,shared-workstation; NOT same strict qualified accuracy

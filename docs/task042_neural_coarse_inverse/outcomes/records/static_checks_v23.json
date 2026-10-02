@@ -1,0 +1,66 @@
+{
+  "status": "LOCAL_STRUCTURE_AND_HISTORY_PASS",
+  "observed_utc": "2026-10-02T11:32:09.030637+00:00",
+  "errors": [],
+  "source_SHA": "0d64407e9ec8c5d0b1da947a17f7bc390b8ccd52",
+  "source_worktree_state": "post-run evidence/checker/docs edits; not a PDE source claim",
+  "targeted_compile_files": [
+    "/home/fenics/Projects/NN-Lab/benchmarks/check_task042_p1_image_records.py",
+    "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+    "/home/fenics/Projects/NN-Lab/scripts/task042_v17_campaign.py",
+    "/home/fenics/Projects/NN-Lab/scripts/task042_v17_queue_watchdog.py",
+    "/home/fenics/Projects/NN-Lab/src/io/p1_image_minres.py",
+    "/home/fenics/Projects/NN-Lab/src/io/p1_trace_galerkin.py",
+    "/home/fenics/Projects/NN-Lab/src/io/task042_profile.py",
+    "/home/fenics/Projects/NN-Lab/src/runners/p1_image_minres.py",
+    "/home/fenics/Projects/NN-Lab/src/runners/p1_image_queue.py",
+    "/home/fenics/Projects/NN-Lab/src/runners/p1_trace_galerkin.py",
+    "/home/fenics/Projects/NN-Lab/src/runners/p1_trace_queue.py",
+    "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+    "/home/fenics/Projects/NN-Lab/src/solvers/p1_image_minres.py",
+    "/home/fenics/Projects/NN-Lab/src/solvers/p1_image_study.py",
+    "/home/fenics/Projects/NN-Lab/src/solvers/p1_image_window.py",
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v23_image_minres.py",
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v23_records.py"
+  ],
+  "compileall_pass": true,
+  "ruff": "NOT_RUN; module not installed, no environment change",
+  "table_blocks": 19,
+  "fenced_math_blocks": 9,
+  "old_documents_checked": 519,
+  "navigation_history": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "old_blob": "585009b05ed8966054c764b8e650dddc93c4954d",
+      "old_text_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "old_blob": "2a18235c09b989204662ec3d775b0715fc958129",
+      "old_text_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "old_blob": "598ef37dee391fddcb9dd89e886e57e7e3d76083",
+      "old_text_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "old_blob": "1c8f2c1658baefb9eefe8179ac223971ff48c6e3",
+      "old_text_suffix_preserved": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "old_blob": "25fef1ab8c5abc7c4d8129909b3a1a743b3c563c",
+      "old_text_suffix_preserved": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "old_blob": "0594820c46812f79f0ab361f41e2908d710408f0",
+      "old_text_suffix_preserved": true
+    }
+  ],
+  "git_diff_check_pass": true,
+  "exact_GitHub_visual": "NOT_VERIFIED; no pixel evidence; local text is not visual render",
+  "registry_errors_inherited": true
+}

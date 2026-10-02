@@ -1,0 +1,51 @@
+{
+  "status": "NOT_QUALIFIED",
+  "recomputed_from_raw_fields": true,
+  "gates": {
+    "V21-C-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "D-G": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "D-MR": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "M-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "Z-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "Z-CYCLE4": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    }
+  },
+  "passed": 0,
+  "states": 6,
+  "image_qualified": true,
+  "PC_qualified": true,
+  "routes": {
+    "M": {
+      "status": "ROUTE_COMPLETE",
+      "stop": "FIXED_PROGRESS_RULE_STOP",
+      "cycles": 4,
+      "first_pass_cycle": null
+    },
+    "Z": {
+      "status": "ROUTE_COMPLETE",
+      "stop": "FIXED_PROGRESS_RULE_STOP",
+      "cycles": 8,
+      "first_pass_cycle": null
+    }
+  },
+  "no_reference_selection": true,
+  "no_neural_training_increment": true,
+  "no_uncontended_strict_speedup_claim": true
+}

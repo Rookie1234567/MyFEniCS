@@ -1,3 +1,9 @@
+# 最新导航：V23 / Review V20 已收口
+
+[Review](review_report_v20.md)、[Response](response_v23.md)、[结果](outcomes/p1_image_minres_comparison_v23.md)、[Gate](outcomes/records/qualification_and_dispatch_v23.json)、[source/run](outcomes/records/run_index_v23.json)。S/D/M/Z/V完成，六状态0/6完整资格；同T原作用像QR可信但未突破暖平台，零trace散射未求出。数值已清场等待review，不merge。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # 最新导航：V22 / Review V19 已收口
 
 [Review](review_report_v19.md)、[Response](response_v22.md)、[结果](outcomes/p1_trace_galerkin_correction_v22.md)、[Gate](outcomes/records/qualification_and_dispatch_v22.json)、[run/source](outcomes/records/run_index_v22.json)。S/N/P/Z/V完成，T未准入；粗层资格通过，0/3新候选原方程与完整物理通过。队列已清场，等待review；旧阶段只作历史，不merge。
