@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-02T00:29:48Z",
+  "observed_utc": "2026-10-02T01:32:35Z",
   "progress": {
-    "phase": "modal_full_build_bottom_modal_schur_audit_674",
+    "phase": "modal_full_build_bottom_modal_schur_audit_713",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-02T00:30:00Z",
+  "record_written_utc": "2026-10-02T01:32:45Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +241,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-02T01:29:48Z",
+  "next_progress_update_due_utc": "2026-10-02T02:32:35Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -939,16 +939,16 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 67117.2832175839,
-      "authority_bytes": 43415318528,
-      "process_tree_rss_bytes": 43415318528,
-      "cgroup_memory_current_bytes": 42432356352,
+      "elapsed_seconds": 70868.97042999999,
+      "authority_bytes": 43415367680,
+      "process_tree_rss_bytes": 43415367680,
+      "cgroup_memory_current_bytes": 42523189248,
       "job_swap_bytes": 0,
-      "global_swap_used_bytes_delta": 347557888,
-      "global_pswpin_pages_delta": 894741,
-      "global_pswpout_pages_delta": 1006992,
+      "global_swap_used_bytes_delta": 947494912,
+      "global_pswpin_pages_delta": 937499,
+      "global_pswpout_pages_delta": 1196495,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-02T00:29:48Z"
+      "retrieved_utc": "2026-10-02T01:32:35Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -959,7 +959,7 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "modal_full_build active; latest existing bottom modal_schur audit index=674, KSP_CONVERGED, 9 iterations at parent_wall_seconds=65228.034s; formal response outputs not yet emitted; logical completion count not refreshed beyond the earlier 352/960 observation",
+    "numerical_setup_marker": "modal_full_build active; latest existing bottom modal_schur audit index=713, KSP_CONVERGED, 12 iterations at parent_wall_seconds=68951.081s; formal response outputs not yet emitted; global swap/pswp rose in the latest observation while job/cgroup swap remained zero, source unknown and observe-only; logical completion count not refreshed beyond the earlier 352/960 observation",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
@@ -992,7 +992,7 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "modal_full_build_bottom_modal_schur_audit_index_674",
+    "stage_marker": "modal_full_build_bottom_modal_schur_audit_index_713",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
     "status": "running_modal_full_build",
