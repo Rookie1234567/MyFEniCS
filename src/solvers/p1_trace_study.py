@@ -16,6 +16,11 @@ from src.solvers.p1_trace_galerkin import RefinedCoarse,TraceGalerkinPC,assemble
 
 
 def load_state(stage,item,*,legacy=False):
+    if stage.name=='Z':
+        path=Path(item['state']['path']).resolve()
+        allowed=(stage.io.ARTIFACT_ROOT/'Z',stage.artifact)
+        if not any(path.is_relative_to(Path(root).resolve()) for root in allowed):
+            raise ValueError('cold actor may only read its own returned physical states')
     return stage.io.physical_state(item,role='VERIFY' if stage.name=='VERIFY' else 'WARM',
         nt=stage.packet.nt,np_=stage.packet.np,size=stage.packet.size)
 

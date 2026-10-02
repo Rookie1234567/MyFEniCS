@@ -163,7 +163,7 @@ def continue_route(stage):
     return result
 
 
-def verify(stage,*,state_loader=None):
+def verify(stage,*,state_loader=None,offline_diagnostic=None):
     state_loader=state_loader or load_state
     from src.io.neural_fe_continuation import read_index,V7_ROOT
     from src.runners.autonomous_neural_head import owned
@@ -184,8 +184,13 @@ def verify(stage,*,state_loader=None):
     if file_hash(path)!=stage.own_plan['reference_sha256']:raise ValueError('REF7 hash differs')
     with np.load(path,allow_pickle=False) as f:reference=np.array(f['z'])
     stage.meta['reference_arrays_read']=True;stage.count('field_states',len(candidates));stage.count('original_audits',len(candidates)+1)
-    physics,comparisons=independent_physics(stage.design,stage.packet,reference,candidates,stage.artifact)
+    physics,comparisons=independent_physics(stage.design,stage.packet,reference,candidates,stage.artifact,
+                                          offline_diagnostic=offline_diagnostic)
     rows={name:physical_qualification(physics['rows'][name],comparisons[name],physics['reference_native_pass']) for name in candidates}
-    return dict(status='FROZEN_VALIDATION_COMPLETE',rows=rows,states_read=len(candidates),missing=missing,state_sources=sources,
+    result=dict(status='FROZEN_VALIDATION_COMPLETE',rows=rows,states_read=len(candidates),missing=missing,state_sources=sources,
         reference_identity=ref['reference_state'],reference_audit=physics['rows']['REFERENCE']['audit'],reference_native_pass=physics['reference_native_pass'],
         reference_feedback_to_solver=False,no_new_solve=True,no_new_LU=True,threads=thread_qualification(),queue_frozen=True)
+    if offline_diagnostic is not None:
+        result['offline_diagnostic']=physics['offline_diagnostic']
+        result['no_new_LU']=True  # no new reference/operator LU; the Gram solve is disclosed separately
+    return result

@@ -370,7 +370,7 @@ def verify_saved_reference(design, packet, route_records, identity, artifact):
     )
 
 
-def independent_physics(design, packet, reference, states, artifact):
+def independent_physics(design, packet, reference, states, artifact, *, offline_diagnostic=None):
     import ufl
     from dolfinx import fem
 
@@ -429,6 +429,20 @@ def independent_physics(design, packet, reference, states, artifact):
 
         ref_norm = np.asarray(norms(refE))
         ref_sca_norm = np.asarray(norms(ref_scattered))
+        diagnostic = None
+        if offline_diagnostic is not None:
+            try:
+                diagnostic = offline_diagnostic(dict(
+                    reference=reference, states=states,
+                    restore=lambda values: restore_p0_full_field(floquet, values),
+                    norms=norms, dx=dx, k0=cfg.k0,
+                ))
+            except Exception as error:
+                # This optional, frozen representation check cannot block the
+                # independent checks of the saved physical candidates.
+                diagnostic = dict(status="OFFLINE_DIAGNOSTIC_FAILED",
+                                  error=type(error).__name__ + ": " + str(error),
+                                  reference_feedback=False)
         points = np.array(
             [
                 [-0.6125, -0.4375, -0.0875],
@@ -589,7 +603,7 @@ def independent_physics(design, packet, reference, states, artifact):
                 max_channel_power_difference=channel_difference,
                 energy_closure_absolute=closure,
             )
-        return dict(
+        result = dict(
             physical=physical,
             reference_norms=ref_norm,
             reference_scattered_norms=ref_sca_norm,
@@ -600,6 +614,9 @@ def independent_physics(design, packet, reference, states, artifact):
             rows=records,
             reference_feedback=False,
             large_field_files_written=False,
-        ), comparisons
+        )
+        if offline_diagnostic is not None:
+            result["offline_diagnostic"] = diagnostic
+        return result, comparisons
     finally:
         destroy_same_mesh_physical_action(bundle)

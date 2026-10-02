@@ -69,6 +69,30 @@ def test_fixed_coarse_lu_one_refinement_and_individual_triangular_cost():
     with pytest.raises(ValueError,match='rcond'):RefinedCoarse(np.diag([1,1e-14]).astype(complex))
 
 
+def test_offline_trace_projection_uses_homogeneous_recovery_and_complex_cross():
+    from src.solvers.p1_trace_error_diagnostic import homogeneous_projection
+    packet,bar,reference,A,T,coarse,B=dense_case()
+    warm=bar.close(.41*reference[:packet.nt],packet.a['b'])
+    values,row=homogeneous_projection(packet,bar,T,reference,warm)
+    assert np.linalg.norm(packet.a['b'][-40:])>0
+    assert np.linalg.norm(packet.recover(values['e'])-(packet.recover(reference)-packet.recover(warm)))>1
+    np.testing.assert_allclose(values['Fe'],packet.recover(reference)-packet.recover(warm),atol=1e-13)
+    np.testing.assert_allclose(values['Fe'],values['Fq']+values['Fc'],atol=1e-13)
+    assert row['trace_Gram_stationarity']<1e-12
+    assert row['operation_cross_sum_defect']<1e-12
+    assert row['original_action_pair']['operation_relative']<1e-12
+    assert not row['reference_feedback']
+
+
+def test_zero_stage_role_rejects_parent_before_any_decompression(tmp_path,monkeypatch):
+    from src.solvers.p1_trace_study import load_state
+    def trap(*a,**kw):raise AssertionError('parent was opened')
+    stage=SimpleNamespace(name='Z',artifact=tmp_path/'own-Z',
+                          io=SimpleNamespace(ARTIFACT_ROOT=tmp_path/'v22',physical_state=trap))
+    with pytest.raises(ValueError,match='cold actor'):
+        load_state(stage,dict(state=dict(path=str(tmp_path/'v21/warm.npz'))))
+
+
 def test_actual_right_cycle_return_close_save_audit_and_pending_recovery(tmp_path):
     packet,bar,z,A,T,coarse,B=dense_case()
     base=z[:14]*.37;identity={'test':'V22-real-BarAction'};audit_calls=[]

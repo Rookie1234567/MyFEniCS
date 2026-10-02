@@ -80,7 +80,8 @@ def main():
         if stage.name=='SETUP':result=setup(stage)
         elif stage.name=='VERIFY':
             from src.solvers.gmres_residual_completion import verify
-            result=verify(stage,state_loader=load_state)
+            from src.solvers.p1_trace_error_diagnostic import frozen_callback
+            result=verify(stage,state_loader=load_state,offline_diagnostic=frozen_callback(stage))
         else:result=route(stage)
     except Exception as error:
         result.update(getattr(stage,'partial_result',{}))
