@@ -19,9 +19,16 @@
   },
   "new_PSI_stops": 0,
   "numerical_CPU_readmissions": 1,
-  "light_CPU_preflight_stops": 2,
+  "light_CPU_preflight_stops": 3,
   "reference_recomputed": false,
   "full_pytest_run": false,
   "production_initialization_allowed": false,
-  "merge_approved": false
+  "merge_approved": false,
+  "last_successful_document_check": "tmp/task42extra/checks/v11_E_delivery_doc_contract_20261002T153120771641Z/summary.json",
+  "final_table_only_check": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "worker_started": false,
+    "cost_from_final_tail_seconds": 8.0,
+    "retry": false
+  }
 }

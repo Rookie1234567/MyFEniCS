@@ -242,5 +242,11 @@
     }
   ],
   "system_PSI_recoveries_used": 0,
-  "numerical_CPU_readmissions_used": 1
+  "numerical_CPU_readmissions_used": 1,
+  "final_light_table_preflight": {
+    "status": "RESOURCE_WINDOW_UNAVAILABLE",
+    "worker_started": false,
+    "reason": "No audited unoccupied physical core",
+    "no_retry": true
+  }
 }
