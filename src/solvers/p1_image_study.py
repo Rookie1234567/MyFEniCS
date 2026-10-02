@@ -162,6 +162,9 @@ def route(stage):
     start=dict(state=atomic_arrays(stage.io.ARTIFACT_ROOT/name/'INITIAL.npz',**arrays),audit=audit,
         original_equation_gate=original_gate(audit),original_residual_identity_relative=identity)
     t=base.copy();history=[]
+    stage.partial_result=dict(status='ROUTE_INCOMPLETE',start=start,final=start,cycles=history,
+        parent=parent,initialization='ZERO_TRACE_FROM_FROZEN_OPERATOR' if name=='Z' else 'FIXED_V21_C_FINAL',
+        PC_kind='P1_IMAGE_MINRES_FULL_SPACE',reference_read=False,hidden_training=False)
     for p in sorted((work/'cycles').glob('CYCLE_*/commit.json')):
         row=json.loads(p.read_text());load_state(stage,row)
         if not row['committed'] or row['audit_pending']:raise ValueError('V23 invalid boundary')
@@ -192,6 +195,10 @@ def route(stage):
         write_json(work/'cycles'/('CYCLE_'+str(cycle).zfill(4))/'commit.json',row);write_json(work/'last_cycle.json',row)
         history.append(row);t=physical['trace']
         if row['original_equation_gate']['status']=='ORIGINAL_EQUATION_PASS' and first is None:first=cycle;write_json(work/'FIRST_EQUATION_PASS.json',row)
+        # A budget or resource exception after this boundary must retain the
+        # last real audited vector, without inventing the interrupted cycle.
+        stage.partial_result.update(final=row,first_pass_cycle=first,
+            stop_reason='LAST_TRUSTED_BOUNDARY_BEFORE_INTERRUPTION')
         stage.event('image_mr_cycle_complete',route=name,cycle=cycle,rho=row['original_equation_gate']['rho'],info=row['inner']['info'])
         if len(history)>=3 and all(history[-3+j+1]['audit']['schur_relative']>history[-3+j]['audit']['schur_relative']+max(1e-10,100*delta) for j in range(2)):
             write_json(work/'two_increases_recheck.json',dict(audit=stage.audit(physical['z'])));stop='TWO_TRUE_RHO_INCREASES';break

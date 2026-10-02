@@ -155,6 +155,7 @@ def test_actual_dat_stage_PC_GMRES_close_atomic_original_audit(tmp_path,monkeypa
     directory=tmp_path/f'actual_{role}';directory.mkdir();(directory/'source_sha.txt').write_text('a'*40)
     stage=ImageStage(spec,directory);result=core.route(stage);stage.finish(result);stored,_=read(role)
     assert stored['first_pass_cycle']==1 and stored['final']['committed']
+    assert stage.partial_result['final']['state']==stored['final']['state']
     assert stored['aux_counts']['B_M']>0 and stored['aux_counts']['R_triangular']>0
     if role=='Z':assert stored['cold_parent_NPZ_decoded'] is False
     with np.load(stored['final']['state']['path']) as f:
