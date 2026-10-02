@@ -73,3 +73,87 @@ def test_complex_attribution_closes_and_raw_curl_scales_from_scaled_curl() -> No
     assert raw_curl["complex_inner_product"][0] == (
         scaled["complex_inner_product"][0] * k0**2
     )
+
+
+def test_paired_metrics_use_common_incident_denominator_for_both_backgrounds(
+    monkeypatch,
+) -> None:
+    from src.postprocessing import full3d_reference
+    from src.postprocessing import task40_saved_field_h_comparison as comparison
+
+    class FakeFunction:
+        def __init__(self, value: np.ndarray) -> None:
+            self.value = np.asarray(value, dtype=np.complex128)
+
+    def representation(electric: np.ndarray, curl: np.ndarray):
+        return SimpleNamespace(
+            electric=FakeFunction(electric),
+            curl=FakeFunction(curl),
+            mpc_constraint_residual=0.0,
+            slave_interpolation_adjustment_relative=0.0,
+            slave_interpolation_adjustment_max=0.0,
+        )
+
+    def sample(function, points, _sides):
+        return np.broadcast_to(function.value, (len(points), 3)).copy()
+
+    backgrounds = {
+        "incident_plane_wave": (
+            np.asarray([1.0, 0.0, 0.0]),
+            np.asarray([0.0, 1.0, 0.0]),
+            np.asarray([0.0, 0.0, 1.0]),
+        ),
+        "layered_fresnel": (
+            np.asarray([3.0, 0.0, 0.0]),
+            np.asarray([0.0, 4.0, 0.0]),
+            np.asarray([0.0, 0.0, 3.0]),
+        ),
+    }
+
+    def background_fields(_cfg, points, name):
+        return tuple(
+            np.broadcast_to(value, (len(points), 3)).copy()
+            for value in backgrounds[name]
+        )
+
+    monkeypatch.setattr(full3d_reference, "_sample_distributed_function", sample)
+    monkeypatch.setattr(comparison, "_background_code_fields", background_fields)
+
+    cfg = SimpleNamespace(
+        k0=1.0,
+        mu_r=1.0,
+        electric_field_scale_V_per_m=2.0,
+        magnetic_field_scale_A_per_m=3.0,
+    )
+    first = SimpleNamespace(
+        cfg=cfg,
+        electric=FakeFunction([5.0, 0.0, 0.0]),
+        curl=FakeFunction([0.0, 0.0, 10.0j]),
+    )
+    second = SimpleNamespace(
+        cfg=cfg,
+        electric=FakeFunction([4.0, 0.0, 0.0]),
+        curl=FakeFunction([0.0, 0.0, 8.0j]),
+    )
+    representations = {
+        name: (
+            representation(electric, curl),
+            representation(electric, curl),
+        )
+        for name, (electric, _magnetic, curl) in backgrounds.items()
+    }
+    metadata = {"array_shape_z_y_x_component": [2, 1, 2, 3]}
+    points = np.asarray(
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 1.0]]
+    )
+
+    metrics = comparison._sample_pair_metrics(
+        first, second, points, metadata, representations
+    )["backgrounds"]
+    plane = metrics["incident_plane_wave"]["quantities"]["E_scattered"]
+    fresnel = metrics["layered_fresnel"]["quantities"]["E_scattered"]
+
+    assert plane["difference_l2_norm"] == fresnel["difference_l2_norm"]
+    assert plane["incident_normalizer_l2"] == fresnel["incident_normalizer_l2"]
+    assert plane["difference_over_incident_l2"] == fresnel["difference_over_incident_l2"]
+    assert plane["relative_to_g1"] != fresnel["relative_to_g1"]
