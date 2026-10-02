@@ -1,3 +1,34 @@
+# Task42extra Review V9 后续：V10 当前结果导航
+
+本轮A–E授权矩阵已执行。完整导数复用与包含建立/释放的加速通过；两条C仍未求准原p3。plain正常预算冻结，phase因两次系统压力停止后保全最后完整状态，停止原因与保存状态的精度分开报告。条件D已独立完成；全部候选功率仅为diagnostic。
+
+| 路线，相对原p3参考 | native | augmented | 散射E L2 | 散射curl/H | E_G | 独立能量闭合 | 分类 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| V10-PLAIN-CACHED-GN-CONTINUE | 1.0154347975 | 1.0154347975 | 0.99888849996 | 0.99890594486 | 0.99890551512 | 0.41593547468 | PDE_OPTIMIZATION_NEGATIVE |
+| V10-PHASE-CACHED-GN-CONTINUE | 0.97882119863 | 0.97882119863 | 0.36201788027 | 0.36263373418 | 0.36261857554 | 0.092747748293 | PDE_OPTIMIZATION_NEGATIVE |
+| V9-PLAIN-DAMPED-GN | 1.0285051156 | 1.0285051156 | 0.9989232163 | 0.9989423061 | 0.99894183584 | 0.4157492147 | PDE_OPTIMIZATION_NEGATIVE |
+| V9-PHASE-DAMPED-GN | 1.0187461988 | 1.0187461988 | 0.43715907484 | 0.43778332738 | 0.43776795997 | 0.12094192809 | PDE_OPTIMIZATION_NEGATIVE |
+| V10-PLAIN-CACHED-FIT-GN-CONTINUE | 6.9238228453 | 6.9238228453 | 0.035964629101 | 0.048041839362 | 0.047781012309 | 0.0074739007987 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V10-PHASE-CACHED-FIT-GN-CONTINUE | 0.53147218171 | 0.53147218171 | 0.0095579252068 | 0.010034208799 | 0.010022747742 | 9.4658158489e-05 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V9-PLAIN-FIT-GN-DIAGNOSTIC | 11.001030573 | 11.001030573 | 0.068217087643 | 0.1000521103 | 0.09939045116 | 0.014917309507 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V9-PHASE-FIT-GN-DIAGNOSTIC | 0.8082166866 | 0.8082166866 | 0.014403534682 | 0.013024032447 | 0.013059766413 | 0.0028868109962 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+
+| 子包 | 实际完成与边界 | 证据 |
+|---|---|---|
+| A | 四个V9 final身份、原历史/PC/未提交工作聚合；缺项NOT_RETAINED | records/state_identity_v10.json；records/inner_summary_v10.json |
+| B | 四态等价、两条完整C proposal逐位一致；含建立/释放加速1.46–1.57倍 | derivative_reuse_v10.md；records/cache_checks_v10.json |
+| C | plain新增14接受；phase新增21接受并保全第75完整边界；均无严格/10倍研究资格 | cached_gn_v10.md；records/gate_decisions_v10.json |
+| D | 两条各自V9-D final隔离监督续算与完整独立审核 | records/comparison_v10.json；FIT CSV |
+| E | q15/q30、原场/通道/功率/区域和独立checker；实际渲染另列 | records/run_index_v10.json；records/render_check_v10.json |
+
+严格原方程1e-6、场/复通道1e-4、功率/独立能量1e-5、逐级功率1e-6未放宽。D的三项表示门限1e-3/1e-2不等于无标签求解或官方功率资格。p5已有准确参考只读复用，p4/p5仍有curl/H敏感性，不称连续/h/端口收敛。
+
+[Response V10](../response_v10.md)、[导数复用](derivative_reuse_v10.md)、[GN续算](cached_gn_v10.md)、[最终资源账](records/resource_costs_v10.json)、[run/source/hash](records/run_index_v10.json)、[原字段Gate](records/gate_decisions_v10.json)。文档HEAD不冒充043资格、902性能、acdd/5cda训练或ca0c导出/独立验算源码。
+
+本轮结束“只靠等价加速再加时间继续原GN”的尝试。唯一下一轮建议是一次有界、无标签的参数尺度与阻尼诊断：在冻结phase C状态记录同一K的方向曲率、mu所占比例及逐层更新尺度，并配对预测/真实下降。依据是C plain内层CG中位68步、真线性残差中位0.00955，phase中位28步/0.00834，但最终原方程仍近1，接受步也可能增加native；内层解得较准不能保证真正的场改善。建议未来授权上限20分钟、32次K和4次真实目标试探，保留120秒保存窗口；本批只写设计、不执行，不新增loss/PC/训练或改参数尺度，不声称已证明条件数是唯一根因。完整矩、原A/f/G和严格物理验收仍是基准。目标尺寸5nm/0.7nm、p6、h和端口扩展不启动。
+
+以下V1–V9历史全部原样保留。
+
 # Task42extra Review V8 后续：V9 当前结果导航
 
 本页首先给出最新状态；下方全部V1–V8历史原样保留，历史V7 p4 blocked不代表现状。V8已完成等价装配、合格p4参考、plain/phase无标签与条件监督对照及实际渲染。V9完整A–E也已执行，停止等待review。

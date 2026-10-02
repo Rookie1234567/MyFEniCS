@@ -1753,6 +1753,23 @@ p4/p5散射L2/curl差2.15910e-4/1.17945e-3，六点total H差1.40896e-3；通道
 
 本页冻结新增账25370.493464s，旧74341.02060587064s及旧失联/重放保留；后续尾段更新[最终资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v9.json)。未取得严格解、GN研究信号、监督1%表示见证或神经增量；不是生产0.7nm能力。
 
+## 3.44.9 Task42extra Review V9 后续：缓存导数与完整GN续算
+
+保持原M5/5nm/384hex/h1.25/Si-air非可分缺口/双Floquet/p3/q15、31968独立复FE/40端口和8966实参数。缓存同一theta处完整参数切线/伴随的数值，含建立/释放快1.46–1.57倍，数学、loss与接受规则不变，额外缓存约1.10GiB。C分别从自己V9无标签final续算，D分别从自己V9监督final隔离续算，非Adam重播或冻结末层诊断。
+
+| 路线，相对原p3参考 | native | augmented | 散射E L2 | 散射curl/H | E_G | 独立能量闭合 | 分类 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| V10-PLAIN-CACHED-GN-CONTINUE | 1.0154347975 | 1.0154347975 | 0.99888849996 | 0.99890594486 | 0.99890551512 | 0.41593547468 | PDE_OPTIMIZATION_NEGATIVE |
+| V10-PHASE-CACHED-GN-CONTINUE | 0.97882119863 | 0.97882119863 | 0.36201788027 | 0.36263373418 | 0.36261857554 | 0.092747748293 | PDE_OPTIMIZATION_NEGATIVE |
+| V9-PLAIN-DAMPED-GN | 1.0285051156 | 1.0285051156 | 0.9989232163 | 0.9989423061 | 0.99894183584 | 0.4157492147 | PDE_OPTIMIZATION_NEGATIVE |
+| V9-PHASE-DAMPED-GN | 1.0187461988 | 1.0187461988 | 0.43715907484 | 0.43778332738 | 0.43776795997 | 0.12094192809 | PDE_OPTIMIZATION_NEGATIVE |
+| V10-PLAIN-CACHED-FIT-GN-CONTINUE | 6.9238228453 | 6.9238228453 | 0.035964629101 | 0.048041839362 | 0.047781012309 | 0.0074739007987 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V10-PHASE-CACHED-FIT-GN-CONTINUE | 0.53147218171 | 0.53147218171 | 0.0095579252068 | 0.010034208799 | 0.010022747742 | 9.4658158489e-05 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V9-PLAIN-FIT-GN-DIAGNOSTIC | 11.001030573 | 11.001030573 | 0.068217087643 | 0.1000521103 | 0.09939045116 | 0.014917309507 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V9-PHASE-FIT-GN-DIAGNOSTIC | 0.8082166866 | 0.8082166866 | 0.014403534682 | 0.013024032447 | 0.013059766413 | 0.0028868109962 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+
+C plain14新增接受正常预算冻结，phase21新增接受后因第二次PSI停止保存第75完整状态；非OOM或确定方法停滞。strict/10倍研究资格未过；C功率diagnostic。D权重不反馈无标签路线或生产。后续source/doc SHA分离，完整R00/功率/复杂通道及区域见[详细结果](task042extra_feinn_5nm/outcomes/cached_gn_v10.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v10.json)、[全部资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v10.json)。本批不新增参考或p6/h/端口/目标尺寸；小模型结果不推广为0.7nm能力。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

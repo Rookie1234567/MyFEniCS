@@ -1,0 +1,198 @@
+{
+  "plain_gn": {
+    "checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/frozen_checkpoint.npz",
+      "sha256": "21ed65cec10c377bf18d4e06ff6621e4c892a0ba804a9d53f2d1e2d01b194fa9"
+    },
+    "durable_final": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/durable_checkpoints/committed_000030.pt",
+      "sha256": "55583f893e83418834669e169310a2991d8a823cd8aa13a81af1ed4580275cdd"
+    },
+    "checkpoint_index": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/checkpoint_index.json",
+      "sha256": "3050c830d0ced9f6102e21810137c9eb1f3b25786fb944c38e90533e337cb3e3"
+    },
+    "history": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/history.jsonl",
+      "sha256": "36bf89e69577bd7c819bcb0b6ee90d29481b0cb88905e83d9881a0bc6bd7f07e"
+    },
+    "source_sha": "bc4ecb2192e687273926e1d1f0ce5e7df4b78542",
+    "stage": "v9_plain_gn",
+    "supervised": false,
+    "phase": false,
+    "parameters_to_saved_c": {
+      "absolute": 0.0,
+      "denominator": 0.1535276261867714,
+      "relative": 0.0
+    },
+    "native_identity": 1.028505115617886,
+    "GN": {
+      "h0": 1673393.1176278302,
+      "mu": 0.3949995548099965,
+      "accepted": 29,
+      "slow_streak": 1,
+      "PC_completed": 2,
+      "PC_last_source": 9,
+      "PC_basis_sha256": "6644b7d760ca9b1560458ef1968903c3916d8fa2306aef6d1cab6468ecb174a2",
+      "PC_eigenvalues_sha256": "804cfffb1749c0d3b948232441d914363bd6646f98c4ec4fc092eab9e5101dd0"
+    },
+    "RNG_retained": true,
+    "parameter_only": false,
+    "label_policy": {
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false
+    }
+  },
+  "phase_gn": {
+    "checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/frozen_checkpoint.npz",
+      "sha256": "b1aeef1e5cf28a9b4435b490147d4767d2f5ea9539e9707c66cdffe61432aef4"
+    },
+    "durable_final": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/durable_checkpoints/committed_000055.pt",
+      "sha256": "8f590ed900323368d13afab86b03c141a5a672951087371f3f25616a9d487062"
+    },
+    "checkpoint_index": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/checkpoint_index.json",
+      "sha256": "c96e0376bc6f1f9c606baadcc5da9daf7bbb2f3396a2e966ae5c438a2e48dffe"
+    },
+    "history": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/history.jsonl",
+      "sha256": "2e07a01d17bee4a730b81c8ef10e1d43e341d63a903206507998c50417c5ec2a"
+    },
+    "source_sha": "ebff76949c78560187d836830483172faf0cfc9a",
+    "stage": "v9_phase_gn",
+    "supervised": false,
+    "phase": true,
+    "parameters_to_saved_c": {
+      "absolute": 0.0,
+      "denominator": 8.466170602326622,
+      "relative": 0.0
+    },
+    "native_identity": 1.0187461988089233,
+    "GN": {
+      "h0": 506073208.19371504,
+      "mu": 8.702932021296286,
+      "accepted": 54,
+      "slow_streak": 0,
+      "PC_completed": 0,
+      "PC_last_source": -5,
+      "PC_basis_sha256": null,
+      "PC_eigenvalues_sha256": null
+    },
+    "RNG_retained": true,
+    "parameter_only": false,
+    "label_policy": {
+      "reference_used_for_training": false,
+      "features_reference_exposed": false,
+      "pde_only_solve": true,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false
+    }
+  },
+  "plain_fit_gn": {
+    "checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/frozen_checkpoint.npz",
+      "sha256": "b26cda19c6a7594e25ca477aec89a04770e1aad950b77e948864460001ab9f52"
+    },
+    "durable_final": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/durable_checkpoints/committed_000007.pt",
+      "sha256": "97c3a8761bf2cbd416bde36b85d51a8cfb473eb073fc8f0bf5e0ed58c481dfcc"
+    },
+    "checkpoint_index": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/checkpoint_index.json",
+      "sha256": "0240d5397957601aa5bf9a9dec9710124d69164990f790036c3b275b0ce3e5e1"
+    },
+    "history": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/history.jsonl",
+      "sha256": "93c68abe6cc8aa8358c226101b68b21abd92ee295be4e76070f1607f5a4f6440"
+    },
+    "source_sha": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+    "stage": "v9_plain_fit_gn",
+    "supervised": true,
+    "phase": false,
+    "parameters_to_saved_c": {
+      "absolute": 0.0,
+      "denominator": 14.836655179350549,
+      "relative": 0.0
+    },
+    "native_identity": 11.001030573488661,
+    "GN": {
+      "h0": 1205.044713914954,
+      "mu": 0.016530105815019947,
+      "accepted": 6,
+      "slow_streak": 0,
+      "PC_completed": 0,
+      "PC_last_source": -5,
+      "PC_basis_sha256": null,
+      "PC_eigenvalues_sha256": null
+    },
+    "RNG_retained": true,
+    "parameter_only": false,
+    "label_policy": {
+      "reference_used_for_training": true,
+      "features_reference_exposed": true,
+      "pde_only_solve": false,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false
+    }
+  },
+  "phase_fit_gn": {
+    "checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/frozen_checkpoint.npz",
+      "sha256": "794a8e38be3e4805653ef7d4136eb16164936c5de4f499ad89c3cff8f616201e"
+    },
+    "durable_final": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/durable_checkpoints/committed_000005.pt",
+      "sha256": "44e53c6096130b8e3910bad53a4d327a6c206b8be5a57ed33883dbf19774955b"
+    },
+    "checkpoint_index": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/checkpoint_index.json",
+      "sha256": "5534f053cbb10b67c8a36f47b242e053c244f7f18e7c2eff0ec7c2945592947d"
+    },
+    "history": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/history.jsonl",
+      "sha256": "32607cee2b5261bc1b2f33c0018ee69c6bcb812c21be774f34da83bef824b9ab"
+    },
+    "source_sha": "556cb3e608db21c5a2fd44cb97cc553ae5d70e5f",
+    "stage": "v9_phase_fit_gn",
+    "supervised": true,
+    "phase": true,
+    "parameters_to_saved_c": {
+      "absolute": 0.0,
+      "denominator": 14.956054744961584,
+      "relative": 0.0
+    },
+    "native_identity": 0.8082166866010337,
+    "GN": {
+      "h0": 119.31063270452255,
+      "mu": 0.001472970774129908,
+      "accepted": 4,
+      "slow_streak": 2,
+      "PC_completed": 0,
+      "PC_last_source": -5,
+      "PC_basis_sha256": null,
+      "PC_eigenvalues_sha256": null
+    },
+    "RNG_retained": true,
+    "parameter_only": false,
+    "label_policy": {
+      "reference_used_for_training": true,
+      "features_reference_exposed": true,
+      "pde_only_solve": false,
+      "benchmark_previously_seen": true,
+      "production_initialization_allowed": false,
+      "pde_only_solver_qualified": false,
+      "official_candidate_results": false
+    }
+  }
+}

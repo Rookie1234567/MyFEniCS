@@ -1,0 +1,942 @@
+{
+  "original_V9": {
+    "plain_gn": {
+      "accepted": 29,
+      "rejected": 8,
+      "cg_iterations": {
+        "count": 37,
+        "min": 8.0,
+        "median": 80.0,
+        "max": 80.0
+      },
+      "cg_true_relative": {
+        "count": 37,
+        "min": 0.003796893495032134,
+        "median": 0.01627384827239979,
+        "max": 1.2111209317307448
+      },
+      "pred": {
+        "count": 37,
+        "min": 0.0005529417163334137,
+        "median": 0.0044318815153102705,
+        "max": 0.0463424195556235
+      },
+      "ared": {
+        "count": 37,
+        "min": -0.07584929900475967,
+        "median": 0.0015534203361134424,
+        "max": 0.019553245117292173
+      },
+      "eta": {
+        "count": 37,
+        "min": -3.8315501950999926,
+        "median": 0.9479657416385936,
+        "max": 1.0092283611138242
+      },
+      "PC_completed": 2,
+      "PC_started": "NOT_RETAINED",
+      "PC_interrupted": "NOT_RETAINED",
+      "uncommitted_K": 18,
+      "uncommitted_subphase": "NOT_RETAINED",
+      "counts": {
+        "K": 2449,
+        "full_loss_gradient": 30,
+        "trial_loss": 37,
+        "G_matvec": 0
+      },
+      "JVP_VJP_counts": {
+        "JVP": 2449,
+        "VJP": 2479
+      },
+      "JVP_VJP_costs": {
+        "JVP": 4462.91576683009,
+        "VJP": 4117.151216288446
+      },
+      "native_costs": {
+        "A": 71.25566919799894,
+        "AH": 133.0965743487468,
+        "audit": 0.5256019207881764,
+        "port_solve": 0.1167069097282365
+      },
+      "nested_timers_not_additive": {
+        "K": 9338.640174707514,
+        "gradient": 66.97385660861619,
+        "trial_loss": 28.62963189603761
+      },
+      "original_history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_gn_20261001T020335735420Z/history.jsonl",
+        "sha256": "36bf89e69577bd7c819bcb0b6ee90d29481b0cb88905e83d9881a0bc6bd7f07e"
+      },
+      "final_GN": {
+        "h0": 1673393.1176278302,
+        "mu": 0.3949995548099965,
+        "accepted": 29,
+        "slow_streak": 1,
+        "PC_completed": 2,
+        "PC_last_source": 9,
+        "PC_basis_sha256": "6644b7d760ca9b1560458ef1968903c3916d8fa2306aef6d1cab6468ecb174a2",
+        "PC_eigenvalues_sha256": "804cfffb1749c0d3b948232441d914363bd6646f98c4ec4fc092eab9e5101dd0"
+      }
+    },
+    "phase_gn": {
+      "accepted": 54,
+      "rejected": 21,
+      "cg_iterations": {
+        "count": 75,
+        "min": 1.0,
+        "median": 27.0,
+        "max": 40.0
+      },
+      "cg_true_relative": {
+        "count": 75,
+        "min": 0.0018830374138164856,
+        "median": 0.008846433727972374,
+        "max": 28.53024374600381
+      },
+      "pred": {
+        "count": 75,
+        "min": 5.723474487672753e-06,
+        "median": 0.002683210098353544,
+        "max": 0.03954240298186204
+      },
+      "ared": {
+        "count": 75,
+        "min": -1.6266305087674768,
+        "median": 0.00013284100068827742,
+        "max": 0.005619619100398987
+      },
+      "eta": {
+        "count": 75,
+        "min": -41.13635960651168,
+        "median": 0.9979969306941212,
+        "max": 1.0018297111719354
+      },
+      "PC_completed": 0,
+      "PC_started": "NOT_RETAINED",
+      "PC_interrupted": "NOT_RETAINED",
+      "uncommitted_K": 30,
+      "uncommitted_subphase": "NOT_RETAINED",
+      "counts": {
+        "K": 1923,
+        "full_loss_gradient": 55,
+        "trial_loss": 75,
+        "G_matvec": 0
+      },
+      "JVP_VJP_counts": {
+        "JVP": 1923,
+        "VJP": 1978
+      },
+      "JVP_VJP_costs": {
+        "JVP": 4493.73634330905,
+        "VJP": 4017.7333797198953
+      },
+      "native_costs": {
+        "A": 65.21908186539076,
+        "AH": 120.0085514523089,
+        "audit": 0.8786062112776563,
+        "port_solve": 0.08726942702196538
+      },
+      "nested_timers_not_additive": {
+        "K": 9133.270083597861,
+        "gradient": 162.35916741832625,
+        "trial_loss": 71.78388416056987
+      },
+      "original_history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/history.jsonl",
+        "sha256": "2e07a01d17bee4a730b81c8ef10e1d43e341d63a903206507998c50417c5ec2a"
+      },
+      "final_GN": {
+        "h0": 506073208.19371504,
+        "mu": 8.702932021296286,
+        "accepted": 54,
+        "slow_streak": 0,
+        "PC_completed": 0,
+        "PC_last_source": -5,
+        "PC_basis_sha256": null,
+        "PC_eigenvalues_sha256": null
+      }
+    },
+    "plain_fit_gn": {
+      "accepted": 6,
+      "rejected": 2,
+      "cg_iterations": {
+        "count": 8,
+        "min": 12.0,
+        "median": 28.5,
+        "max": 40.0
+      },
+      "cg_true_relative": {
+        "count": 8,
+        "min": 0.005290086108794944,
+        "median": 0.008747155580021142,
+        "max": 0.009712836587345161
+      },
+      "pred": {
+        "count": 8,
+        "min": 0.0008126511660071711,
+        "median": 0.0026941892652186036,
+        "max": 0.004053779257745171
+      },
+      "ared": {
+        "count": 8,
+        "min": -0.001934526801094824,
+        "median": 0.001856998260511423,
+        "max": 0.00405915796563819
+      },
+      "eta": {
+        "count": 8,
+        "min": -0.7132923411742845,
+        "median": 0.9745656415537728,
+        "max": 1.0314878649333907
+      },
+      "PC_completed": 0,
+      "PC_started": "NOT_RETAINED",
+      "PC_interrupted": "NOT_RETAINED",
+      "uncommitted_K": 55,
+      "uncommitted_subphase": "NOT_RETAINED",
+      "counts": {
+        "K": 265,
+        "full_loss_gradient": 7,
+        "trial_loss": 8,
+        "G_matvec": 265
+      },
+      "JVP_VJP_counts": {
+        "JVP": 265,
+        "VJP": 272
+      },
+      "JVP_VJP_costs": {
+        "JVP": 1347.3866596127627,
+        "VJP": 1028.8909497412387
+      },
+      "native_costs": {
+        "A": 0.0,
+        "AH": 0.0,
+        "audit": 0.4147914042696357,
+        "port_solve": 0.0002457610098645091
+      },
+      "nested_timers_not_additive": {
+        "K": 2366.6885755141266,
+        "gradient": 37.19402619788889,
+        "trial_loss": 11.866442478843965
+      },
+      "original_history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_plain_fit_gn_20261001T073341508373Z/history.jsonl",
+        "sha256": "93c68abe6cc8aa8358c226101b68b21abd92ee295be4e76070f1607f5a4f6440"
+      },
+      "final_GN": {
+        "h0": 1205.044713914954,
+        "mu": 0.016530105815019947,
+        "accepted": 6,
+        "slow_streak": 0,
+        "PC_completed": 0,
+        "PC_last_source": -5,
+        "PC_basis_sha256": null,
+        "PC_eigenvalues_sha256": null
+      }
+    },
+    "phase_fit_gn": {
+      "accepted": 4,
+      "rejected": 0,
+      "cg_iterations": {
+        "count": 4,
+        "min": 13.0,
+        "median": 37.5,
+        "max": 40.0
+      },
+      "cg_true_relative": {
+        "count": 4,
+        "min": 0.005159211228340923,
+        "median": 0.013280277097747196,
+        "max": 0.13453860980228174
+      },
+      "pred": {
+        "count": 4,
+        "min": 3.999707784863079e-06,
+        "median": 5.2789098951540435e-06,
+        "max": 6.990884624411836e-06
+      },
+      "ared": {
+        "count": 4,
+        "min": 4.000353377682641e-06,
+        "median": 5.267303862981478e-06,
+        "max": 6.756394036208001e-06
+      },
+      "eta": {
+        "count": 4,
+        "min": 0.966457665831731,
+        "median": 0.9981665889351723,
+        "max": 1.0001614099965017
+      },
+      "PC_completed": 0,
+      "PC_started": "NOT_RETAINED",
+      "PC_interrupted": "NOT_RETAINED",
+      "uncommitted_K": 103,
+      "uncommitted_subphase": "NOT_RETAINED",
+      "counts": {
+        "K": 247,
+        "full_loss_gradient": 5,
+        "trial_loss": 4,
+        "G_matvec": 247
+      },
+      "JVP_VJP_counts": {
+        "JVP": 247,
+        "VJP": 252
+      },
+      "JVP_VJP_costs": {
+        "JVP": 1340.2518669685815,
+        "VJP": 1018.4803057126701
+      },
+      "native_costs": {
+        "A": 0.0,
+        "AH": 0.0,
+        "audit": 0.16210544493515044,
+        "port_solve": 0.00011281506158411503
+      },
+      "nested_timers_not_additive": {
+        "K": 2354.9888008394046,
+        "gradient": 29.260408654110506,
+        "trial_loss": 4.925354833132587
+      },
+      "original_history": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_fit_gn_20261001T081542267092Z/history.jsonl",
+        "sha256": "32607cee2b5261bc1b2f33c0018ee69c6bcb812c21be774f34da83bef824b9ab"
+      },
+      "final_GN": {
+        "h0": 119.31063270452255,
+        "mu": 0.001472970774129908,
+        "accepted": 4,
+        "slow_streak": 2,
+        "PC_completed": 0,
+        "PC_last_source": -5,
+        "PC_basis_sha256": null,
+        "PC_eigenvalues_sha256": null
+      }
+    }
+  },
+  "current_V10": {
+    "v10_plain_cached_gn": {
+      "route": "V10-PLAIN-CACHED-GN-CONTINUE",
+      "new_accepted_outer": 14,
+      "cumulative_accepted_outer": 43,
+      "counts": {
+        "K": 1393,
+        "full_loss_gradient": 14,
+        "trial_loss": 21,
+        "G_matvec": 0
+      },
+      "JVP_VJP_counts": {
+        "JVP": 1393,
+        "VJP": 1407
+      },
+      "PC_completed_total": 2,
+      "PC_provenance": [
+        {
+          "rank_requested": 32,
+          "rank_retained": 32,
+          "seed": 421902,
+          "rcond": 1e-12,
+          "K_actions": 64,
+          "ritz_eigenvalues": [
+            667.7111456135282,
+            844.6708431318673,
+            953.9471188961429,
+            1093.551031828058,
+            1120.9229039280253,
+            1232.699026845249,
+            8525.62359617513,
+            8963.967410245878,
+            11107.811339941547,
+            11241.54981264547,
+            20314.256556519445,
+            20511.72117932108,
+            21920.76296975227,
+            21995.525335658956,
+            45482.45689003146,
+            45496.080266230056,
+            75346.20617225078,
+            75541.19383520317,
+            75590.95107210656,
+            75644.18941403367,
+            150027.67813532255,
+            150515.94459582862,
+            246891.8332344969,
+            246959.10228808896,
+            1005949.2995904703,
+            1007422.946363107,
+            1626439.4025901314,
+            1626689.085061391,
+            1680994.6516217184,
+            1681303.0584451705,
+            1682042.686382112,
+            1683913.932456626
+          ],
+          "negative_roundoff_tolerance": 4.7859712494091187e-08,
+          "projected_symmetry_relative": 1.4154597097607468e-15,
+          "orthogonality": 8.014066273558139e-15,
+          "basis_payload_bytes": 2295296,
+          "setup_seconds": 195.6445782390656,
+          "source_accepted_outer": 4
+        },
+        {
+          "rank_requested": 32,
+          "rank_retained": 32,
+          "seed": 421902,
+          "rcond": 1e-12,
+          "K_actions": 64,
+          "ritz_eigenvalues": [
+            836.4805584600047,
+            891.709864130274,
+            1004.9108313310156,
+            1066.070420577951,
+            1280.5242429419188,
+            1463.53367281526,
+            10511.970145027974,
+            10939.6365481149,
+            11128.31780537072,
+            14037.160271462213,
+            21070.16775804694,
+            21261.290501701525,
+            23066.711195394862,
+            23137.202048401574,
+            46843.32008918627,
+            47028.523837270244,
+            75704.26750352583,
+            76010.01925262807,
+            78638.00400630891,
+            86986.19069769575,
+            163564.68747328734,
+            190431.81116256374,
+            246702.5234107368,
+            247230.85501108982,
+            1079500.3338359399,
+            1089329.467232239,
+            1627861.0077746594,
+            1629625.5401160687,
+            1685298.5958280591,
+            1687410.4471913523,
+            1724387.4943326553,
+            1828540.5386479269
+          ],
+          "negative_roundoff_tolerance": 5.197024787116581e-08,
+          "projected_symmetry_relative": 1.2267380425785272e-15,
+          "orthogonality": 8.04790417751796e-15,
+          "basis_payload_bytes": 2295296,
+          "setup_seconds": 197.40057131496724,
+          "source_accepted_outer": 9
+        }
+      ],
+      "PC_deferred_by_budget": 0,
+      "PC_quota_consumed_after_rollback": 0,
+      "new_K_after_last_accepted_boundary": 0,
+      "inner_CG_summary": {
+        "completed": 21,
+        "iterations": {
+          "count": 21,
+          "minimum": 30.0,
+          "median": 68.0,
+          "maximum": 80.0,
+          "total": 1338.0
+        },
+        "true_relative": {
+          "count": 21,
+          "minimum": 0.005332678874103273,
+          "median": 0.009552830539998893,
+          "maximum": 0.15377524354598546,
+          "total": 0.9103508156761364
+        },
+        "early_budget_returns": 1,
+        "scope": "CG end rows, including proposals interrupted after inner solve; not only accepted trials"
+      },
+      "work_events": {
+        "K": {
+          "started": 1393,
+          "ended": 1393,
+          "completed_nested_seconds": 7958.376452730037,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG": {
+          "started": 21,
+          "ended": 21,
+          "completed_nested_seconds": 7845.473160977825,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG_TRUE_RESIDUAL": {
+          "started": 21,
+          "ended": 21,
+          "completed_nested_seconds": 120.25615126057528,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_BUILD": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_K_OMEGA": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_KU": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_EIGH": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "TRUE_TRIAL": {
+          "started": 21,
+          "ended": 21,
+          "completed_nested_seconds": 41.986662418115884,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "COMMIT": {
+          "started": 14,
+          "ended": 14,
+          "completed_nested_seconds": 0.8733976170187816,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        }
+      },
+      "histories": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_plain_cached_gn_20261001T235205639724Z/history.jsonl",
+          "sha256": "91ab46aecf91b54858ef0a1d00b11c45430e67d914d0440d8ec2b82480aea23a",
+          "source_sha": "acdd853e592923f6a21f5f165964d63f73c60c77",
+          "run_id": "task42extra_v10_plain_cached_gn_20261001T235205639724Z",
+          "parsed_rows": 3003,
+          "incomplete_journal_lines": 0
+        }
+      ],
+      "count_scope": "all completed V10 work lower bounds across this route attempts; incomplete reservations separate",
+      "cost_scope": "current attempt only; all whole-attempt walls in resource ledger"
+    },
+    "v10_phase_resource_freeze": {
+      "route": "V10-PHASE-CACHED-GN-CONTINUE",
+      "new_accepted_outer": 21,
+      "cumulative_accepted_outer": 75,
+      "counts": {
+        "K": 834,
+        "full_loss_gradient": 23,
+        "trial_loss": 31,
+        "G_matvec": 0
+      },
+      "JVP_VJP_counts": {
+        "JVP": 834,
+        "VJP": 857
+      },
+      "PC_completed_total": 0,
+      "PC_provenance": [],
+      "PC_deferred_by_budget": 0,
+      "PC_quota_consumed_after_rollback": 0,
+      "new_K_after_last_accepted_boundary": 21,
+      "inner_CG_summary": {
+        "completed": 31,
+        "iterations": {
+          "count": 31,
+          "minimum": 1.0,
+          "median": 28.0,
+          "maximum": 40.0,
+          "total": 706.0
+        },
+        "true_relative": {
+          "count": 31,
+          "minimum": 0.004117066725938484,
+          "median": 0.008338713491701618,
+          "maximum": 1.0212709937410365,
+          "total": 4.074313151580283
+        },
+        "early_budget_returns": 0,
+        "scope": "CG end rows, including proposals interrupted after inner solve; not only accepted trials"
+      },
+      "work_events": {
+        "K": {
+          "started": 835,
+          "ended": 834,
+          "completed_nested_seconds": 4580.273788488354,
+          "unfinished_begins": 1,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG": {
+          "started": 33,
+          "ended": 31,
+          "completed_nested_seconds": 4173.959746606764,
+          "unfinished_begins": 2,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG_TRUE_RESIDUAL": {
+          "started": 31,
+          "ended": 31,
+          "completed_nested_seconds": 172.21974925522227,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_BUILD": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_K_OMEGA": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_KU": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_EIGH": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "TRUE_TRIAL": {
+          "started": 31,
+          "ended": 31,
+          "completed_nested_seconds": 64.12766118394211,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "COMMIT": {
+          "started": 21,
+          "ended": 21,
+          "completed_nested_seconds": 0.511419992079027,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        }
+      },
+      "histories": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T021129560832Z/history.jsonl",
+          "sha256": "1a0875b32c8c64a886c2376c12e5809cae4a2b429e21ad3a5120c28b4a1d7c10",
+          "source_sha": "acdd853e592923f6a21f5f165964d63f73c60c77",
+          "run_id": "task42extra_v10_phase_cached_gn_20261002T021129560832Z",
+          "parsed_rows": 611,
+          "incomplete_journal_lines": 0
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T025423030332Z/history.jsonl",
+          "sha256": "1b5d030e0aada41e3b5b2aac00f6bcf43a2b0f4d3f968ebb63130c4028f54ced",
+          "source_sha": "5cda1c3995633c4f6c86f4b47d3163efb1cdc8c6",
+          "run_id": "task42extra_v10_phase_cached_gn_20261002T025423030332Z",
+          "parsed_rows": 1386,
+          "incomplete_journal_lines": 0
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_resource_freeze_20261002T040058739087Z/freeze_history.jsonl",
+          "sha256": "879ecf76312fc608963a92607c08e67fd0edf95935446fdd0440131c05df0885",
+          "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+          "run_id": "task42extra_v10_phase_resource_freeze_20261002T040058739087Z",
+          "parsed_rows": 1,
+          "incomplete_journal_lines": 0
+        }
+      ],
+      "count_scope": "all completed V10 work lower bounds across this route attempts; incomplete reservations separate",
+      "cost_scope": "current attempt only; all whole-attempt walls in resource ledger"
+    },
+    "v10_plain_cached_fit_gn": {
+      "route": "V10-PLAIN-CACHED-FIT-GN-CONTINUE",
+      "new_accepted_outer": 10,
+      "cumulative_accepted_outer": 16,
+      "counts": {
+        "K": 426,
+        "full_loss_gradient": 10,
+        "trial_loss": 13,
+        "G_matvec": 426
+      },
+      "JVP_VJP_counts": {
+        "JVP": 426,
+        "VJP": 436
+      },
+      "PC_completed_total": 0,
+      "PC_provenance": [],
+      "PC_deferred_by_budget": 0,
+      "PC_quota_consumed_after_rollback": 0,
+      "new_K_after_last_accepted_boundary": 0,
+      "inner_CG_summary": {
+        "completed": 13,
+        "iterations": {
+          "count": 13,
+          "minimum": 4.0,
+          "median": 36.0,
+          "maximum": 40.0,
+          "total": 392.0
+        },
+        "true_relative": {
+          "count": 13,
+          "minimum": 0.00769536028899332,
+          "median": 0.00969936996482758,
+          "maximum": 0.34479491824667174,
+          "total": 0.8418181997776895
+        },
+        "early_budget_returns": 1,
+        "scope": "CG end rows, including proposals interrupted after inner solve; not only accepted trials"
+      },
+      "work_events": {
+        "K": {
+          "started": 426,
+          "ended": 426,
+          "completed_nested_seconds": 3229.741527499864,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG": {
+          "started": 13,
+          "ended": 13,
+          "completed_nested_seconds": 3126.9006848847494,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG_TRUE_RESIDUAL": {
+          "started": 13,
+          "ended": 13,
+          "completed_nested_seconds": 100.00956873910036,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_BUILD": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_K_OMEGA": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_KU": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_EIGH": {
+          "started": 0,
+          "ended": 0,
+          "completed_nested_seconds": 0,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "TRUE_TRIAL": {
+          "started": 13,
+          "ended": 13,
+          "completed_nested_seconds": 24.083450801903382,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "COMMIT": {
+          "started": 10,
+          "ended": 10,
+          "completed_nested_seconds": 0.34804018202703446,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        }
+      },
+      "histories": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_plain_cached_fit_gn_20261002T040528254352Z/history.jsonl",
+          "sha256": "f1fe87414ceaf559e7ff829463d03c808c89e3a1b8ae9c3cbf8de0c28af760a8",
+          "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+          "run_id": "task42extra_v10_plain_cached_fit_gn_20261002T040528254352Z",
+          "parsed_rows": 993,
+          "incomplete_journal_lines": 0
+        }
+      ],
+      "count_scope": "all completed V10 work lower bounds across this route attempts; incomplete reservations separate",
+      "cost_scope": "current attempt"
+    },
+    "v10_phase_cached_fit_gn": {
+      "route": "V10-PHASE-CACHED-FIT-GN-CONTINUE",
+      "new_accepted_outer": 7,
+      "cumulative_accepted_outer": 11,
+      "counts": {
+        "K": 442,
+        "full_loss_gradient": 7,
+        "trial_loss": 7,
+        "G_matvec": 442
+      },
+      "JVP_VJP_counts": {
+        "JVP": 442,
+        "VJP": 449
+      },
+      "PC_completed_total": 1,
+      "PC_provenance": [
+        {
+          "rank_requested": 32,
+          "rank_retained": 32,
+          "seed": 421902,
+          "rcond": 1e-12,
+          "K_actions": 64,
+          "ritz_eigenvalues": [
+            0.11392952794733105,
+            0.13601306794448423,
+            0.18235778043196646,
+            0.195295148670945,
+            0.24979644613674257,
+            0.28305856423989223,
+            0.3432164934514025,
+            0.38580018333589666,
+            0.491012332990727,
+            0.500557334363727,
+            0.8555676654201201,
+            0.8700481358274842,
+            0.8983356332516026,
+            1.1946246430088916,
+            2.907780676961678,
+            2.915101133544197,
+            5.479470612468782,
+            5.483143850287917,
+            6.425637480740274,
+            6.717070759131843,
+            8.466352327605899,
+            9.133071495578768,
+            9.142956185868883,
+            10.654613668283172,
+            36.63637296613439,
+            36.639898401484004,
+            38.76484203891723,
+            39.74770522667153,
+            119.10495031627232,
+            120.44917172906588,
+            120.46059952835523,
+            121.21118518567431
+          ],
+          "negative_roundoff_tolerance": 3.445029085062126e-12,
+          "projected_symmetry_relative": 5.640318677049899e-16,
+          "orthogonality": 7.101802450634241e-15,
+          "basis_payload_bytes": 2295296,
+          "setup_seconds": 380.8761929770699,
+          "source_accepted_outer": 4
+        }
+      ],
+      "PC_deferred_by_budget": 0,
+      "PC_quota_consumed_after_rollback": 0,
+      "new_K_after_last_accepted_boundary": 0,
+      "inner_CG_summary": {
+        "completed": 7,
+        "iterations": {
+          "count": 7,
+          "minimum": 16.0,
+          "median": 40.0,
+          "maximum": 80.0,
+          "total": 361.0
+        },
+        "true_relative": {
+          "count": 7,
+          "minimum": 0.008944677790497183,
+          "median": 0.010677823957207424,
+          "maximum": 0.06571470346406817,
+          "total": 0.16713959132520823
+        },
+        "early_budget_returns": 1,
+        "scope": "CG end rows, including proposals interrupted after inner solve; not only accepted trials"
+      },
+      "work_events": {
+        "K": {
+          "started": 442,
+          "ended": 442,
+          "completed_nested_seconds": 3266.279549585539,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG": {
+          "started": 7,
+          "ended": 7,
+          "completed_nested_seconds": 2823.024907356943,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "CG_TRUE_RESIDUAL": {
+          "started": 7,
+          "ended": 7,
+          "completed_nested_seconds": 59.28409806091804,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_BUILD": {
+          "started": 1,
+          "ended": 1,
+          "completed_nested_seconds": 380.87640801409725,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_K_OMEGA": {
+          "started": 1,
+          "ended": 1,
+          "completed_nested_seconds": 184.30872467299923,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_KU": {
+          "started": 1,
+          "ended": 1,
+          "completed_nested_seconds": 196.53714447596576,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "PC_EIGH": {
+          "started": 1,
+          "ended": 1,
+          "completed_nested_seconds": 0.0003344849683344364,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "TRUE_TRIAL": {
+          "started": 7,
+          "ended": 7,
+          "completed_nested_seconds": 16.51464797090739,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        },
+        "COMMIT": {
+          "started": 7,
+          "ended": 7,
+          "completed_nested_seconds": 0.38335548900067806,
+          "unfinished_begins": 0,
+          "scope": "nested measured duration; not added again to launcher wall"
+        }
+      },
+      "histories": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_fit_gn_20261002T050305927664Z/history.jsonl",
+          "sha256": "707ad94ec27c43b139aa8329f349066709f7e40f08fbbbc5015ae0fd21c21722",
+          "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+          "run_id": "task42extra_v10_phase_cached_fit_gn_20261002T050305927664Z",
+          "parsed_rows": 977,
+          "incomplete_journal_lines": 0
+        }
+      ],
+      "count_scope": "all completed V10 work lower bounds across this route attempts; incomplete reservations separate",
+      "cost_scope": "current attempt"
+    }
+  },
+  "full_K_trajectory": "ignored hash-bound originals only; no replay to fill missing history"
+}

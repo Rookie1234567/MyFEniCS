@@ -1,0 +1,2544 @@
+{
+  "states": {
+    "plain_gn": {
+      "c": {
+        "absolute": 0.0,
+        "denominator": 0.1535276261867714,
+        "relative": 0.0
+      },
+      "directions": [
+        {
+          "kind": "hidden",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 1.1701758898931602,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 214.87600072260906,
+            "relative": 0.0
+          },
+          "real_adjoint": 5.656142703704801e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 0.4192002710374777,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 0.7954129148930759,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 0.7489332686365703,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "last",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 10.162955281980787,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 163.7518362753016,
+            "relative": 0.0
+          },
+          "real_adjoint": 1.797525748747342e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 3.428221983473089,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 6.8003073026176475,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 6.729693506062405,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "random",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 2.477910162300793,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 241.27701543036943,
+            "relative": 0.0
+          },
+          "real_adjoint": 8.448952262857722e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 0.866994038344789,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 1.6708258606107875,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 1.611428265056292,
+              "relative": 0.0
+            }
+          }
+        }
+      ],
+      "K": {
+        "absolute": 0.0,
+        "denominator": 55853.231930501104,
+        "relative": 0.0
+      },
+      "gradient": {
+        "absolute": 0.0,
+        "denominator": 28.002430502168405,
+        "relative": 0.0
+      },
+      "loss_absolute": 0.0,
+      "batch": {
+        "JVP": {
+          "absolute": 9.927782520046441e-16,
+          "denominator": 2.477910162300793,
+          "relative": 4.006514308342915e-16
+        },
+        "VJP": {
+          "absolute": 1.937386398106421e-13,
+          "denominator": 241.27701543036943,
+          "relative": 8.029718017900195e-16
+        },
+        "c": {
+          "absolute": 7.41360063219837e-17,
+          "denominator": 0.1535276261867714,
+          "relative": 4.828838181331275e-16
+        }
+      },
+      "cache_rejection_reuses": true,
+      "cache_acceptance_invalidates": true,
+      "buffer_invalidates": true,
+      "mu_only_reuse": true,
+      "recovery_rebuilt": true,
+      "recovery_JVP": {
+        "absolute": 0.0,
+        "denominator": 2.477910162300793,
+        "relative": 0.0
+      },
+      "K_symmetry": 9.476331907095659e-19,
+      "K_energy_pair": 0.0,
+      "proposal": {
+        "direction": {
+          "absolute": 0.0,
+          "denominator": 0.011266041186558488,
+          "relative": 0.0
+        },
+        "pred": {
+          "absolute": 0.0,
+          "denominator": 0.0007493468381260125,
+          "relative": 0.0
+        },
+        "ared": {
+          "absolute": 0.0,
+          "denominator": 0.0007551365819198907,
+          "relative": 0.0
+        },
+        "old_seconds": 1126.1340809019748,
+        "new_seconds": 721.2328693339368,
+        "old_final_trial": {
+          "kind": "GN_TRIAL",
+          "mu": 3.949995548099965,
+          "gradient_norm": 28.002430502168405,
+          "step_norm": 0.011266041186558481,
+          "g_dot_s": -0.0009970846666272804,
+          "pred": 0.0007493468381260125,
+          "cg": {
+            "iterations": 52,
+            "true_relative": 0.005332678874103273,
+            "converged": true,
+            "hit_limit": false,
+            "max_iter": 80,
+            "target_true_relative": 0.01,
+            "finite": true,
+            "budget_frontier_early": false
+          },
+          "PC_build_count": 2,
+          "PC_source_outer": 9,
+          "damping_trial": 1,
+          "ared": 0.0007551365819198907,
+          "eta": 1.0077263871671993,
+          "trial_loss": 0.3099810109107855,
+          "accepted": true,
+          "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+          "inexact_linear_solve": false
+        },
+        "cached_final_trial": {
+          "kind": "GN_TRIAL",
+          "mu": 3.949995548099965,
+          "gradient_norm": 28.002430502168405,
+          "step_norm": 0.011266041186558481,
+          "g_dot_s": -0.0009970846666272804,
+          "pred": 0.0007493468381260125,
+          "cg": {
+            "iterations": 52,
+            "true_relative": 0.005332678874103273,
+            "converged": true,
+            "hit_limit": false,
+            "max_iter": 80,
+            "target_true_relative": 0.01,
+            "finite": true,
+            "budget_frontier_early": false
+          },
+          "PC_build_count": 2,
+          "PC_source_outer": 9,
+          "damping_trial": 1,
+          "ared": 0.0007551365819198907,
+          "eta": 1.0077263871671993,
+          "trial_loss": 0.3099810109107855,
+          "accepted": true,
+          "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+          "inexact_linear_solve": false
+        }
+      },
+      "maximum_relative": 8.029718017900195e-16,
+      "cache": {
+        "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order; native bias-first tangent, primal phase-left and AD tangent phase-right",
+        "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+        "parameter_buffer_key": "aa5bfd2a761137d02c1c8fe23ce2b95a0188d0d5d06e8a468eea49f8b3728030",
+        "version": 7,
+        "builds": 7,
+        "resident_bytes": 1184152856,
+        "cap_bytes": 2147483648,
+        "counts": {
+          "JVP": 146,
+          "VJP": 146
+        },
+        "costs": {
+          "JVP": 364.532923138584,
+          "VJP": 316.1607487462461,
+          "build": 14.168404112919234,
+          "release": 0.29994295979849994
+        }
+      },
+      "passed": true
+    },
+    "phase_gn": {
+      "c": {
+        "absolute": 0.0,
+        "denominator": 8.466170602326622,
+        "relative": 0.0
+      },
+      "directions": [
+        {
+          "kind": "hidden",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 0.6550901977116389,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 212.34339564259048,
+            "relative": 0.0
+          },
+          "real_adjoint": 3.3729345293267975e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 0.19856386797445735,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 0.4299068145178492,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 0.45265404925175745,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "last",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 9.780496913645381,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 205.84575374409349,
+            "relative": 0.0
+          },
+          "real_adjoint": 2.273699800691241e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 3.0857014941347773,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 6.417105474887251,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 6.705022258806692,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "random",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 2.7361740012325844,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 195.20079998043107,
+            "relative": 0.0
+          },
+          "real_adjoint": 3.756903281698028e-19,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 0.8526151076332115,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 1.7987739146762396,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 1.8772607829326922,
+              "relative": 0.0
+            }
+          }
+        }
+      ],
+      "K": {
+        "absolute": 0.0,
+        "denominator": 1060933.9001867264,
+        "relative": 0.0
+      },
+      "gradient": {
+        "absolute": 0.0,
+        "denominator": 1.7285365711464022,
+        "relative": 0.0
+      },
+      "loss_absolute": 0.0,
+      "batch": {
+        "JVP": {
+          "absolute": 1.1756829454375684e-15,
+          "denominator": 2.7361740012325844,
+          "relative": 4.2968135246806303e-16
+        },
+        "VJP": {
+          "absolute": 1.9532762182043352e-13,
+          "denominator": 195.20079998043107,
+          "relative": 1.0006496993865556e-15
+        },
+        "c": {
+          "absolute": 3.9530376695990225e-15,
+          "denominator": 8.466170602326622,
+          "relative": 4.669215700086025e-16
+        }
+      },
+      "cache_rejection_reuses": true,
+      "cache_acceptance_invalidates": true,
+      "buffer_invalidates": true,
+      "mu_only_reuse": true,
+      "recovery_rebuilt": true,
+      "recovery_JVP": {
+        "absolute": 0.0,
+        "denominator": 2.7361740012325844,
+        "relative": 0.0
+      },
+      "K_symmetry": 6.72738700119342e-19,
+      "K_energy_pair": 0.0,
+      "proposal": {
+        "direction": {
+          "absolute": 0.0,
+          "denominator": 0.006328405527526804,
+          "relative": 0.0
+        },
+        "pred": {
+          "absolute": 0.0,
+          "denominator": 0.003511541636501911,
+          "relative": 0.0
+        },
+        "ared": {
+          "absolute": 0.0,
+          "denominator": 0.0034933800578246244,
+          "relative": 0.0
+        },
+        "old_seconds": 631.5767967599677,
+        "new_seconds": 397.3174501329195,
+        "old_final_trial": {
+          "kind": "GN_TRIAL",
+          "mu": 87.02932021296286,
+          "gradient_norm": 1.7285365711464022,
+          "step_norm": 0.006328405527526808,
+          "g_dot_s": -0.0035376707923715062,
+          "pred": 0.003511541636501911,
+          "cg": {
+            "iterations": 28,
+            "true_relative": 0.009761019006654522,
+            "converged": true,
+            "hit_limit": false,
+            "max_iter": 40,
+            "target_true_relative": 0.01,
+            "finite": true,
+            "budget_frontier_early": false
+          },
+          "PC_build_count": 0,
+          "PC_source_outer": null,
+          "damping_trial": 1,
+          "ared": 0.0034933800578246244,
+          "eta": 0.9948280326542337,
+          "trial_loss": 0.27070863940317985,
+          "accepted": true,
+          "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+          "inexact_linear_solve": false
+        },
+        "cached_final_trial": {
+          "kind": "GN_TRIAL",
+          "mu": 87.02932021296286,
+          "gradient_norm": 1.7285365711464022,
+          "step_norm": 0.006328405527526808,
+          "g_dot_s": -0.0035376707923715062,
+          "pred": 0.003511541636501911,
+          "cg": {
+            "iterations": 28,
+            "true_relative": 0.009761019006654522,
+            "converged": true,
+            "hit_limit": false,
+            "max_iter": 40,
+            "target_true_relative": 0.01,
+            "finite": true,
+            "budget_frontier_early": false
+          },
+          "PC_build_count": 0,
+          "PC_source_outer": null,
+          "damping_trial": 1,
+          "ared": 0.0034933800578246244,
+          "eta": 0.9948280326542337,
+          "trial_loss": 0.27070863940317985,
+          "accepted": true,
+          "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+          "inexact_linear_solve": false
+        }
+      },
+      "maximum_relative": 1.0006496993865556e-15,
+      "cache": {
+        "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order; native bias-first tangent, primal phase-left and AD tangent phase-right",
+        "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+        "parameter_buffer_key": "ee573e2b808c581f0cfa217f7098f8c99e0796c00000bd4e4757c8272122bc4b",
+        "version": 7,
+        "builds": 7,
+        "resident_bytes": 1190247704,
+        "cap_bytes": 2147483648,
+        "counts": {
+          "JVP": 82,
+          "VJP": 82
+        },
+        "costs": {
+          "JVP": 207.47548430098686,
+          "VJP": 185.33036887459457,
+          "build": 13.196840788936242,
+          "release": 0.2653721929527819
+        }
+      },
+      "passed": true
+    },
+    "plain_fit_gn": {
+      "c": {
+        "absolute": 0.0,
+        "denominator": 14.836655179350549,
+        "relative": 0.0
+      },
+      "directions": [
+        {
+          "kind": "hidden",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 4.9829296448498965,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 1046.0322255065232,
+            "relative": 0.0
+          },
+          "real_adjoint": 1.929861057657049e-19,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 1.7527026177397023,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 3.3692179296959908,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 3.2258319735391354,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "last",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 38.49039293851773,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 567.5523895139876,
+            "relative": 0.0
+          },
+          "real_adjoint": 1.9105825435479035e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 13.266040980456669,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 25.87415051613498,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 25.220048380895943,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "random",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 5.998244593347511,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 675.6932374139949,
+            "relative": 0.0
+          },
+          "real_adjoint": 2.426982224457244e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 2.0336567922678936,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 4.016538089679046,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 3.9636599282787532,
+              "relative": 0.0
+            }
+          }
+        }
+      ],
+      "K": {
+        "absolute": 0.0,
+        "denominator": 19.447219988208673,
+        "relative": 0.0
+      },
+      "gradient": {
+        "absolute": 0.0,
+        "denominator": 0.5548888815482744,
+        "relative": 0.0
+      },
+      "loss_absolute": 0.0,
+      "batch": {
+        "JVP": {
+          "absolute": 2.6189843119308576e-15,
+          "denominator": 5.998244593347511,
+          "relative": 4.3662512776412976e-16
+        },
+        "VJP": {
+          "absolute": 7.54404647944099e-13,
+          "denominator": 675.6932374139949,
+          "relative": 1.1164898598531894e-15
+        },
+        "c": {
+          "absolute": 6.6911992175652215e-15,
+          "denominator": 14.836655179350549,
+          "relative": 4.509910850309401e-16
+        }
+      },
+      "cache_rejection_reuses": true,
+      "cache_acceptance_invalidates": true,
+      "buffer_invalidates": true,
+      "mu_only_reuse": true,
+      "recovery_rebuilt": true,
+      "recovery_JVP": {
+        "absolute": 0.0,
+        "denominator": 5.998244593347511,
+        "relative": 0.0
+      },
+      "K_symmetry": 0.0,
+      "K_energy_pair": 1.1595503972166554e-16,
+      "proposal": null,
+      "maximum_relative": 1.1164898598531894e-15,
+      "cache": {
+        "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order; native bias-first tangent, primal phase-left and AD tangent phase-right",
+        "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+        "parameter_buffer_key": "9df569b6aef31d9482d257259f22bba62b3f8f6b7491ac3f834e3542a578319b",
+        "version": 7,
+        "builds": 7,
+        "resident_bytes": 1184152856,
+        "cap_bytes": 2147483648,
+        "counts": {
+          "JVP": 9,
+          "VJP": 8
+        },
+        "costs": {
+          "JVP": 23.321057351888157,
+          "VJP": 16.795490401098505,
+          "build": 9.521689014974982,
+          "release": 0.020636462257243693
+        }
+      },
+      "passed": true
+    },
+    "phase_fit_gn": {
+      "c": {
+        "absolute": 0.0,
+        "denominator": 14.956054744961584,
+        "relative": 0.0
+      },
+      "directions": [
+        {
+          "kind": "hidden",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 0.2880015603273249,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 627.0259364851192,
+            "relative": 0.0
+          },
+          "real_adjoint": 4.757179208509114e-19,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 0.09288378078517051,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 0.19096342871103328,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 0.19455197483693681,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "last",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 19.354078295139047,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 483.74646319794215,
+            "relative": 0.0
+          },
+          "real_adjoint": 5.403229842532311e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 6.271363761959681,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 12.761616103384066,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 13.129794272927496,
+              "relative": 0.0
+            }
+          }
+        },
+        {
+          "kind": "random",
+          "JVP": {
+            "absolute": 0.0,
+            "denominator": 5.88779764298498,
+            "relative": 0.0
+          },
+          "VJP": {
+            "absolute": 0.0,
+            "denominator": 703.5024819857972,
+            "relative": 0.0
+          },
+          "real_adjoint": 1.6167423080240054e-18,
+          "families": {
+            "edge": {
+              "absolute": 0.0,
+              "denominator": 1.9603205192818063,
+              "relative": 0.0
+            },
+            "face": {
+              "absolute": 0.0,
+              "denominator": 3.896492583990502,
+              "relative": 0.0
+            },
+            "interior": {
+              "absolute": 0.0,
+              "denominator": 3.954826176879234,
+              "relative": 0.0
+            }
+          }
+        }
+      ],
+      "K": {
+        "absolute": 0.0,
+        "denominator": 3.1178659040430596,
+        "relative": 0.0
+      },
+      "gradient": {
+        "absolute": 0.0,
+        "denominator": 0.005224235067849419,
+        "relative": 0.0
+      },
+      "loss_absolute": 0.0,
+      "batch": {
+        "JVP": {
+          "absolute": 2.208404275301391e-15,
+          "denominator": 5.88779764298498,
+          "relative": 3.7508155157686096e-16
+        },
+        "VJP": {
+          "absolute": 4.899514897969142e-13,
+          "denominator": 703.5024819857972,
+          "relative": 6.964460003238562e-16
+        },
+        "c": {
+          "absolute": 6.764562049892115e-15,
+          "denominator": 14.956054744961584,
+          "relative": 4.522958872005313e-16
+        }
+      },
+      "cache_rejection_reuses": true,
+      "cache_acceptance_invalidates": true,
+      "buffer_invalidates": true,
+      "mu_only_reuse": true,
+      "recovery_rebuilt": true,
+      "recovery_JVP": {
+        "absolute": 0.0,
+        "denominator": 5.88779764298498,
+        "relative": 0.0
+      },
+      "K_symmetry": 7.339619206686183e-18,
+      "K_energy_pair": 4.210689313615404e-16,
+      "proposal": null,
+      "maximum_relative": 6.964460003238562e-16,
+      "cache": {
+        "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order; native bias-first tangent, primal phase-left and AD tangent phase-right",
+        "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+        "parameter_buffer_key": "dcede73282b5d5d4a3d0f4a642cc25b5fee2f2e6a2731b22799753eb196fc111",
+        "version": 7,
+        "builds": 7,
+        "resident_bytes": 1190247704,
+        "cap_bytes": 2147483648,
+        "counts": {
+          "JVP": 9,
+          "VJP": 8
+        },
+        "costs": {
+          "JVP": 21.51060276804492,
+          "VJP": 17.109889294952154,
+          "build": 9.34496093087364,
+          "release": 0.007796302088536322
+        }
+      },
+      "passed": true
+    }
+  },
+  "Gram_factor": {
+    "label": "RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR",
+    "c_source_sha256": "f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5",
+    "library_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/ml/cholmod/f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5.so",
+    "library_sha256": "6ac17fbb78b7a1009e06bf625cc44979fcf186500fa73de29a2d5ab0eb1a1d47",
+    "backend": "installed CHOLMOD int64 complex FP64 simplicial LLH/AMD",
+    "rows": 31968,
+    "nnz": 7336179,
+    "hermitian_relative": 8.087084937051904e-17,
+    "csr_payload_bytes": 146851456,
+    "rss_before_symbolic_bytes": 600948736,
+    "symbolic_seconds": 0.21664006705395877,
+    "symbolic": {
+      "symbolic_l_nnz": 18839705.0,
+      "symbolic_flops": 27589531225.0,
+      "cholmod_current_bytes": 91231456.0,
+      "cholmod_peak_bytes": 180160984.0,
+      "factor_allocated_nnz": 0.0,
+      "positive_pivots": 31968.0,
+      "status": 0.0
+    },
+    "factor_workspace_budget_bytes": 747384196,
+    "rss_after_symbolic_bytes": 660193280,
+    "prediction_kind": "symbolic fill plus conservative workspace reserve",
+    "numeric_seconds": 142.71744398609735,
+    "numeric": {
+      "symbolic_l_nnz": 18839705.0,
+      "symbolic_flops": 27589531225.0,
+      "cholmod_current_bytes": 544918864.0,
+      "cholmod_peak_bytes": 633592648.0,
+      "factor_allocated_nnz": 18839705.0,
+      "positive_pivots": 31968.0,
+      "status": 0.0
+    },
+    "rss_after_numeric_bytes": 1141886976,
+    "setup_seconds": 144.41966172901448,
+    "rss_before_release_bytes": 4114395136,
+    "rss_after_release_bytes": 3603292160,
+    "solve_count": 447,
+    "solve_seconds": 188.77828228566796,
+    "max_solve_true_relative": 1.3858868305088614e-12
+  },
+  "gates": {
+    "plain_gn": {
+      "passed": true,
+      "status": "EXACT_DERIVATIVE_ACCELERATION_PASS",
+      "speedup_including_build_release": 1.4613984764621335,
+      "old": {
+        "count": 3,
+        "min": 129.06553568004165,
+        "median": 137.98991387104616,
+        "max": 138.69225045701023
+      },
+      "cached": {
+        "count": 3,
+        "min": 93.5004905690439,
+        "median": 94.42319538001902,
+        "max": 97.13846211496275
+      },
+      "proposal_cost_qualified": true,
+      "shared_A_G_setup_excluded_equally": true,
+      "candidate_fresh_G_setup_required": true,
+      "median_recomputed": {
+        "old_AD": 137.98991387104616,
+        "cached": 94.42319538001902
+      },
+      "correctness_pass": true
+    },
+    "phase_gn": {
+      "passed": true,
+      "status": "EXACT_DERIVATIVE_ACCELERATION_PASS",
+      "speedup_including_build_release": 1.5433081169979708,
+      "old": {
+        "count": 3,
+        "min": 133.57441507501062,
+        "median": 136.49640560999978,
+        "max": 142.78629460709635
+      },
+      "cached": {
+        "count": 3,
+        "min": 85.53082965209614,
+        "median": 88.44404050405137,
+        "max": 93.0188319919398
+      },
+      "proposal_cost_qualified": true,
+      "shared_A_G_setup_excluded_equally": true,
+      "candidate_fresh_G_setup_required": true,
+      "median_recomputed": {
+        "old_AD": 136.49640560999978,
+        "cached": 88.44404050405137
+      },
+      "correctness_pass": true
+    },
+    "plain_fit_gn": {
+      "passed": true,
+      "status": "EXACT_DERIVATIVE_ACCELERATION_PASS",
+      "speedup_including_build_release": 1.5299406059915368,
+      "old": {
+        "count": 3,
+        "min": 122.02545931597706,
+        "median": 123.85393963800743,
+        "max": 124.39156980405096
+      },
+      "cached": {
+        "count": 3,
+        "min": 76.80225331394468,
+        "median": 80.95342992595397,
+        "max": 91.27376571192872
+      },
+      "proposal_cost_qualified": true,
+      "shared_A_G_setup_excluded_equally": true,
+      "candidate_fresh_G_setup_required": true,
+      "median_recomputed": {
+        "old_AD": 123.85393963800743,
+        "cached": 80.95342992595397
+      },
+      "correctness_pass": true
+    },
+    "phase_fit_gn": {
+      "passed": true,
+      "status": "EXACT_DERIVATIVE_ACCELERATION_PASS",
+      "speedup_including_build_release": 1.571835490508345,
+      "old": {
+        "count": 3,
+        "min": 125.69805308501236,
+        "median": 129.8399571479531,
+        "max": 131.31447685800958
+      },
+      "cached": {
+        "count": 3,
+        "min": 81.09112551005092,
+        "median": 82.60403708403464,
+        "max": 86.38969528698362
+      },
+      "proposal_cost_qualified": true,
+      "shared_A_G_setup_excluded_equally": true,
+      "candidate_fresh_G_setup_required": true,
+      "median_recomputed": {
+        "old_AD": 129.8399571479531,
+        "cached": 82.60403708403464
+      },
+      "correctness_pass": true
+    }
+  },
+  "prior_failed_qualification": {
+    "v10_derivative_checks": {
+      "source_sha": "fc492b25003d457dfdd353cecde9882cb1473e8f",
+      "states": {
+        "plain_gn": {
+          "c": {
+            "absolute": 1.114577792510741e-16,
+            "denominator": 0.1535276261867714,
+            "relative": 7.259786529590579e-16
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 8.21946152878336e-16,
+                "denominator": 1.1701758898931602,
+                "relative": 7.024124834373246e-16
+              },
+              "VJP": {
+                "absolute": 8.460884555301304e-14,
+                "denominator": 214.87600072260906,
+                "relative": 3.937566097120244e-16
+              },
+              "real_adjoint": 2.1210535138893e-18,
+              "families": {
+                "edge": {
+                  "absolute": 8.520913023158708e-17,
+                  "denominator": 0.4192002710374777,
+                  "relative": 2.0326592351837756e-16
+                },
+                "face": {
+                  "absolute": 3.288784577025067e-16,
+                  "denominator": 0.7954129148930759,
+                  "relative": 4.1346884309354787e-16
+                },
+                "interior": {
+                  "absolute": 7.484476216916545e-16,
+                  "denominator": 0.7489332686365703,
+                  "relative": 9.993515484419596e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 6.729142767125047e-15,
+                "denominator": 10.162955281980787,
+                "relative": 6.621246065163753e-16
+              },
+              "VJP": {
+                "absolute": 4.110611579986948e-14,
+                "denominator": 163.7518362753016,
+                "relative": 2.510268998190736e-16
+              },
+              "real_adjoint": 4.04443293468152e-18,
+              "families": {
+                "edge": {
+                  "absolute": 5.120873309792033e-16,
+                  "denominator": 3.428221983473089,
+                  "relative": 1.4937402929212128e-16
+                },
+                "face": {
+                  "absolute": 2.5301315857544556e-15,
+                  "denominator": 6.8003073026176475,
+                  "relative": 3.720613603418378e-16
+                },
+                "interior": {
+                  "absolute": 6.2143031069114725e-15,
+                  "denominator": 6.729693506062405,
+                  "relative": 9.23415472237087e-16
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 1.5804089066887159e-15,
+                "denominator": 2.477910162300793,
+                "relative": 6.377991142428151e-16
+              },
+              "VJP": {
+                "absolute": 6.173866618204046e-14,
+                "denominator": 241.27701543036943,
+                "relative": 2.558829156267383e-16
+              },
+              "real_adjoint": 8.448952262857722e-18,
+              "families": {
+                "edge": {
+                  "absolute": 1.3726569643675754e-16,
+                  "denominator": 0.866994038344789,
+                  "relative": 1.583236912433869e-16
+                },
+                "face": {
+                  "absolute": 6.003576345921772e-16,
+                  "denominator": 1.6708258606107875,
+                  "relative": 3.593178970624206e-16
+                },
+                "interior": {
+                  "absolute": 1.4554796980753943e-15,
+                  "denominator": 1.611428265056292,
+                  "relative": 9.032233886157817e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 1.907113528772252e-11,
+            "denominator": 55853.231930501104,
+            "relative": 3.4145088168672104e-16
+          },
+          "gradient": {
+            "absolute": 7.730715742863697e-15,
+            "denominator": 28.002430502168405,
+            "relative": 2.760730266704906e-16
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 0.0,
+              "denominator": 2.4779101623007924,
+              "relative": 0.0
+            },
+            "VJP": {
+              "absolute": 1.9954412844949796e-13,
+              "denominator": 241.27701543036943,
+              "relative": 8.270333089688137e-16
+            },
+            "c": {
+              "absolute": 0.0,
+              "denominator": 0.15352762618677138,
+              "relative": 0.0
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 2.4779101623007924,
+            "relative": 0.0
+          },
+          "K_symmetry": 9.476331907095659e-19,
+          "K_energy_pair": 4.179176216436764e-16,
+          "proposal": {
+            "direction": {
+              "absolute": 0.0003466490863280535,
+              "denominator": 0.011266041186558488,
+              "relative": 0.030769378576534983
+            },
+            "pred": {
+              "absolute": 1.4613035561203414e-05,
+              "denominator": 0.0007493468381260125,
+              "relative": 0.019501030521124372
+            },
+            "ared": {
+              "absolute": 1.4698353968611855e-05,
+              "denominator": 0.0007551365819198907,
+              "relative": 0.019464497311522302
+            },
+            "old_seconds": 1562.7405548390234,
+            "new_seconds": 752.0131744529353
+          },
+          "maximum_relative": 8.270333089688137e-16,
+          "cache": {
+            "implementation": "detached FP64 analytic tangent/real adjoint; exact oriented CSR moments",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "aa5bfd2a761137d02c1c8fe23ce2b95a0188d0d5d06e8a468eea49f8b3728030",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1184152856,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 140,
+              "VJP": 140
+            },
+            "costs": {
+              "JVP": 404.61253603512887,
+              "VJP": 291.66546997905243,
+              "build": 17.33901271026116,
+              "release": 0.007607229985296726
+            }
+          },
+          "passed": false
+        },
+        "phase_gn": {
+          "c": {
+            "absolute": 5.902401490939484e-15,
+            "denominator": 8.466170602326622,
+            "relative": 6.971748820319568e-16
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 4.3731303605563724e-16,
+                "denominator": 0.6550901977116389,
+                "relative": 6.675615626416929e-16
+              },
+              "VJP": {
+                "absolute": 7.073224144928788e-14,
+                "denominator": 212.34339564259048,
+                "relative": 3.331030910344021e-16
+              },
+              "real_adjoint": 2.9329865472406928e-18,
+              "families": {
+                "edge": {
+                  "absolute": 3.760371043275514e-17,
+                  "denominator": 0.19856386797445735,
+                  "relative": 1.8937841419161096e-16
+                },
+                "face": {
+                  "absolute": 1.5799028263873497e-16,
+                  "denominator": 0.4299068145178492,
+                  "relative": 3.6749890279344576e-16
+                },
+                "interior": {
+                  "absolute": 4.060390659254615e-16,
+                  "denominator": 0.45265404925175745,
+                  "relative": 8.970185213114716e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 6.2163952971204856e-15,
+                "denominator": 9.780496913645381,
+                "relative": 6.355909471682983e-16
+              },
+              "VJP": {
+                "absolute": 7.675259506194852e-14,
+                "denominator": 205.84575374409349,
+                "relative": 3.728646020911707e-16
+              },
+              "real_adjoint": 2.273699800691241e-18,
+              "families": {
+                "edge": {
+                  "absolute": 4.896397473516289e-16,
+                  "denominator": 3.0857014941347773,
+                  "relative": 1.5868020554882696e-16
+                },
+                "face": {
+                  "absolute": 2.332434325468028e-15,
+                  "denominator": 6.417105474887251,
+                  "relative": 3.634714022694179e-16
+                },
+                "interior": {
+                  "absolute": 5.741391253455354e-15,
+                  "denominator": 6.705022258806692,
+                  "relative": 8.562822063587246e-16
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 1.787684115477815e-15,
+                "denominator": 2.7361740012325844,
+                "relative": 6.53351765886418e-16
+              },
+              "VJP": {
+                "absolute": 7.664309572687462e-14,
+                "denominator": 195.20079998043107,
+                "relative": 3.9263720094670775e-16
+              },
+              "real_adjoint": 2.1289118596288824e-18,
+              "families": {
+                "edge": {
+                  "absolute": 1.3902382820262146e-16,
+                  "denominator": 0.8526151076332115,
+                  "relative": 1.6305578796104145e-16
+                },
+                "face": {
+                  "absolute": 6.613866787875904e-16,
+                  "denominator": 1.7987739146762396,
+                  "relative": 3.6768749723982576e-16
+                },
+                "interior": {
+                  "absolute": 1.6550089223463136e-15,
+                  "denominator": 1.8772607829326922,
+                  "relative": 8.81608425101614e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 3.3739971149298283e-10,
+            "denominator": 1060933.9001867264,
+            "relative": 3.1802142568316447e-16
+          },
+          "gradient": {
+            "absolute": 6.599299699091611e-15,
+            "denominator": 1.7285365711464022,
+            "relative": 3.817853674171797e-15
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 0.0,
+              "denominator": 2.736174001232585,
+              "relative": 0.0
+            },
+            "VJP": {
+              "absolute": 2.2472592750361499e-13,
+              "denominator": 195.2007999804311,
+              "relative": 1.1512551563628008e-15
+            },
+            "c": {
+              "absolute": 0.0,
+              "denominator": 8.466170602326622,
+              "relative": 0.0
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 2.736174001232585,
+            "relative": 0.0
+          },
+          "K_symmetry": 1.0571608144732522e-18,
+          "K_energy_pair": 1.8118663441197313e-16,
+          "proposal": {
+            "direction": {
+              "absolute": 8.082057081015411e-07,
+              "denominator": 0.006328405527526804,
+              "relative": 0.00012771079612171994
+            },
+            "pred": {
+              "absolute": 1.7486325728111735e-08,
+              "denominator": 0.003511541636501911,
+              "relative": 4.979672046699999e-06
+            },
+            "ared": {
+              "absolute": 4.887676446907463e-08,
+              "denominator": 0.0034933800578246244,
+              "relative": 1.3991253072965345e-05
+            },
+            "old_seconds": 803.2401721830247,
+            "new_seconds": 418.727501988993
+          },
+          "maximum_relative": 3.817853674171797e-15,
+          "cache": {
+            "implementation": "detached FP64 analytic tangent/real adjoint; exact oriented CSR moments",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "ee573e2b808c581f0cfa217f7098f8c99e0796c00000bd4e4757c8272122bc4b",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1190247704,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 84,
+              "VJP": 84
+            },
+            "costs": {
+              "JVP": 237.4441032022005,
+              "VJP": 166.65554446622264,
+              "build": 18.83957477111835,
+              "release": 0.3215744700282812
+            }
+          },
+          "passed": false
+        },
+        "plain_fit_gn": {
+          "c": {
+            "absolute": 1.0397829834492624e-14,
+            "denominator": 14.836655179350549,
+            "relative": 7.008203472278698e-16
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 3.613679705522977e-15,
+                "denominator": 4.9829296448498965,
+                "relative": 7.25211865926683e-16
+              },
+              "VJP": {
+                "absolute": 3.182303939899268e-13,
+                "denominator": 1046.0322255065232,
+                "relative": 3.042261856089846e-16
+              },
+              "real_adjoint": 2.1228471634227537e-18,
+              "families": {
+                "edge": {
+                  "absolute": 3.555788415625161e-16,
+                  "denominator": 1.7527026177397023,
+                  "relative": 2.028745994691747e-16
+                },
+                "face": {
+                  "absolute": 1.3442265471592148e-15,
+                  "denominator": 3.3692179296959908,
+                  "relative": 3.989728700275872e-16
+                },
+                "interior": {
+                  "absolute": 3.3354609413773872e-15,
+                  "denominator": 3.2258319735391354,
+                  "relative": 1.0339847111497179e-15
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 2.4351351461613335e-14,
+                "denominator": 38.49039293851773,
+                "relative": 6.326605057140034e-16
+              },
+              "VJP": {
+                "absolute": 1.9610068681303888e-13,
+                "denominator": 567.5523895139876,
+                "relative": 3.4551997390226105e-16
+              },
+              "real_adjoint": 7.642330174191613e-18,
+              "families": {
+                "edge": {
+                  "absolute": 2.0205930416924137e-15,
+                  "denominator": 13.266040980456669,
+                  "relative": 1.5231319160472373e-16
+                },
+                "face": {
+                  "absolute": 9.208841351086422e-15,
+                  "denominator": 25.87415051613498,
+                  "relative": 3.559089348786094e-16
+                },
+                "interior": {
+                  "absolute": 2.2452232912060292e-14,
+                  "denominator": 25.220048380895943,
+                  "relative": 8.90253364028744e-16
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 4.071889732789717e-15,
+                "denominator": 5.998244593347511,
+                "relative": 6.788468975249422e-16
+              },
+              "VJP": {
+                "absolute": 3.1400926233071405e-13,
+                "denominator": 675.6932374139949,
+                "relative": 4.64721629496377e-16
+              },
+              "real_adjoint": 1.7191124089905474e-18,
+              "families": {
+                "edge": {
+                  "absolute": 3.922680173743842e-16,
+                  "denominator": 2.0336567922678936,
+                  "relative": 1.9288801279833196e-16
+                },
+                "face": {
+                  "absolute": 1.5614224556220247e-15,
+                  "denominator": 4.016538089679046,
+                  "relative": 3.887483252391601e-16
+                },
+                "interior": {
+                  "absolute": 3.740103168847454e-15,
+                  "denominator": 3.9636599282787532,
+                  "relative": 9.43598400600331e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 4.1311545295845654e-15,
+            "denominator": 19.447219988208673,
+            "relative": 2.1242905320603079e-16
+          },
+          "gradient": {
+            "absolute": 1.0594603987754433e-16,
+            "denominator": 0.5548888815482744,
+            "relative": 1.909319926936168e-16
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 0.0,
+              "denominator": 5.998244593347513,
+              "relative": 0.0
+            },
+            "VJP": {
+              "absolute": 7.390195643729837e-13,
+              "denominator": 675.6932374139949,
+              "relative": 1.09372052797413e-15
+            },
+            "c": {
+              "absolute": 0.0,
+              "denominator": 14.83665517935055,
+              "relative": 0.0
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 5.998244593347513,
+            "relative": 0.0
+          },
+          "K_symmetry": 4.48361695064244e-18,
+          "K_energy_pair": 0.0,
+          "proposal": null,
+          "maximum_relative": 1.09372052797413e-15,
+          "cache": {
+            "implementation": "detached FP64 analytic tangent/real adjoint; exact oriented CSR moments",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "9df569b6aef31d9482d257259f22bba62b3f8f6b7491ac3f834e3542a578319b",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1184152856,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 9,
+              "VJP": 8
+            },
+            "costs": {
+              "JVP": 20.870862670009956,
+              "VJP": 10.751415421254933,
+              "build": 15.023308648029342,
+              "release": 0.09840249980334193
+            }
+          },
+          "passed": true
+        },
+        "phase_fit_gn": {
+          "c": {
+            "absolute": 1.0383255130118316e-14,
+            "denominator": 14.956054744961584,
+            "relative": 6.942509443284995e-16
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 1.899933708571035e-16,
+                "denominator": 0.2880015603273249,
+                "relative": 6.596956302638385e-16
+              },
+              "VJP": {
+                "absolute": 1.6761533394471967e-13,
+                "denominator": 627.0259364851192,
+                "relative": 2.673180233728618e-16
+              },
+              "real_adjoint": 7.928632014181858e-20,
+              "families": {
+                "edge": {
+                  "absolute": 2.2184161825247843e-17,
+                  "denominator": 0.09288378078517051,
+                  "relative": 2.3883784270751484e-16
+                },
+                "face": {
+                  "absolute": 7.192535513046966e-17,
+                  "denominator": 0.19096342871103328,
+                  "relative": 3.7664465712598526e-16
+                },
+                "interior": {
+                  "absolute": 1.7444794989655768e-16,
+                  "denominator": 0.19455197483693681,
+                  "relative": 8.966650173701436e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 1.221966526659173e-14,
+                "denominator": 19.354078295139047,
+                "relative": 6.313741775892687e-16
+              },
+              "VJP": {
+                "absolute": 1.0852251118659203e-13,
+                "denominator": 483.74646319794215,
+                "relative": 2.243375806185195e-16
+              },
+              "real_adjoint": 0.0,
+              "families": {
+                "edge": {
+                  "absolute": 9.095029202358895e-16,
+                  "denominator": 6.271363761959681,
+                  "relative": 1.4502474338240065e-16
+                },
+                "face": {
+                  "absolute": 4.5374597445899945e-15,
+                  "denominator": 12.761616103384066,
+                  "relative": 3.5555526101327967e-16
+                },
+                "interior": {
+                  "absolute": 1.130948640442421e-14,
+                  "denominator": 13.129794272927496,
+                  "relative": 8.61360518629252e-16
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 3.554073676765612e-15,
+                "denominator": 5.88779764298498,
+                "relative": 6.03633802021052e-16
+              },
+              "VJP": {
+                "absolute": 1.727162450617365e-13,
+                "denominator": 703.5024819857972,
+                "relative": 2.4550907705997747e-16
+              },
+              "real_adjoint": 1.6167423080240054e-18,
+              "families": {
+                "edge": {
+                  "absolute": 2.8890487958727003e-16,
+                  "denominator": 1.9603205192818063,
+                  "relative": 1.4737634827855334e-16
+                },
+                "face": {
+                  "absolute": 1.34588896511107e-15,
+                  "denominator": 3.896492583990502,
+                  "relative": 3.4541037512580335e-16
+                },
+                "interior": {
+                  "absolute": 3.2766685160420414e-15,
+                  "denominator": 3.954826176879234,
+                  "relative": 8.285240284890778e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 9.918051262351875e-16,
+            "denominator": 3.1178659040430596,
+            "relative": 3.1810384306428146e-16
+          },
+          "gradient": {
+            "absolute": 2.249425634338664e-18,
+            "denominator": 0.005224235067849419,
+            "relative": 4.3057511867754656e-16
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 0.0,
+              "denominator": 5.88779764298498,
+              "relative": 0.0
+            },
+            "VJP": {
+              "absolute": 4.980893152924474e-13,
+              "denominator": 703.5024819857971,
+              "relative": 7.080135863721136e-16
+            },
+            "c": {
+              "absolute": 0.0,
+              "denominator": 14.956054744961584,
+              "relative": 0.0
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 5.88779764298498,
+            "relative": 0.0
+          },
+          "K_symmetry": 3.745216649987128e-18,
+          "K_energy_pair": 7.017815522692339e-16,
+          "proposal": null,
+          "maximum_relative": 7.080135863721136e-16,
+          "cache": {
+            "implementation": "detached FP64 analytic tangent/real adjoint; exact oriented CSR moments",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "dcede73282b5d5d4a3d0f4a642cc25b5fee2f2e6a2731b22799753eb196fc111",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1190247704,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 9,
+              "VJP": 8
+            },
+            "costs": {
+              "JVP": 18.1484673533123,
+              "VJP": 13.938452068949118,
+              "build": 14.983401914709248,
+              "release": 0.048758130986243486
+            }
+          },
+          "passed": true
+        }
+      },
+      "Gram_factor": {
+        "label": "RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR",
+        "c_source_sha256": "f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5",
+        "library_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/ml/cholmod/f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5.so",
+        "library_sha256": "6ac17fbb78b7a1009e06bf625cc44979fcf186500fa73de29a2d5ab0eb1a1d47",
+        "backend": "installed CHOLMOD int64 complex FP64 simplicial LLH/AMD",
+        "rows": 31968,
+        "nnz": 7336179,
+        "hermitian_relative": 8.087084937051904e-17,
+        "csr_payload_bytes": 146851456,
+        "rss_before_symbolic_bytes": 601034752,
+        "symbolic_seconds": 0.45831715501844883,
+        "symbolic": {
+          "symbolic_l_nnz": 18839705.0,
+          "symbolic_flops": 27589531225.0,
+          "cholmod_current_bytes": 91231456.0,
+          "cholmod_peak_bytes": 180160984.0,
+          "factor_allocated_nnz": 0.0,
+          "positive_pivots": 31968.0,
+          "status": 0.0
+        },
+        "factor_workspace_budget_bytes": 747384196,
+        "rss_after_symbolic_bytes": 660279296,
+        "prediction_kind": "symbolic fill plus conservative workspace reserve",
+        "numeric_seconds": 184.77749537001364,
+        "numeric": {
+          "symbolic_l_nnz": 18839705.0,
+          "symbolic_flops": 27589531225.0,
+          "cholmod_current_bytes": 544918864.0,
+          "cholmod_peak_bytes": 633592648.0,
+          "factor_allocated_nnz": 18839705.0,
+          "positive_pivots": 31968.0,
+          "status": 0.0
+        },
+        "rss_after_numeric_bytes": 1141968896,
+        "setup_seconds": 188.3620041529648,
+        "rss_before_release_bytes": 3521921024,
+        "rss_after_release_bytes": 3010818048,
+        "solve_count": 443,
+        "solve_seconds": 233.053354407195,
+        "max_solve_true_relative": 1.3858868305088614e-12
+      },
+      "raw_checks": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_derivative_checks_20261001T105006351208Z/cache_checks.json",
+        "sha256": "78abea638914df0b9187c573dd6b4e8eae97382c7752f4aebfaf5afa19651b60"
+      }
+    },
+    "v10_derivative_checks_repair": {
+      "source_sha": "055f54533e175fd9de69ac1a7c2db60cdc8bfdc9",
+      "states": {
+        "plain_gn": {
+          "c": {
+            "absolute": 0.0,
+            "denominator": 0.1535276261867714,
+            "relative": 0.0
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 2.0908178700823625e-16,
+                "denominator": 1.1701758898931602,
+                "relative": 1.7867552118795226e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 214.87600072260906,
+                "relative": 0.0
+              },
+              "real_adjoint": 4.5684229529923386e-18,
+              "families": {
+                "edge": {
+                  "absolute": 7.13949923042741e-17,
+                  "denominator": 0.4192002710374777,
+                  "relative": 1.7031237152490098e-16
+                },
+                "face": {
+                  "absolute": 1.3187440207332987e-16,
+                  "denominator": 0.7954129148930759,
+                  "relative": 1.657936395099358e-16
+                },
+                "interior": {
+                  "absolute": 1.4569519830877009e-16,
+                  "denominator": 0.7489332686365703,
+                  "relative": 1.9453695597473932e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 0.0,
+                "denominator": 10.162955281980787,
+                "relative": 0.0
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 163.7518362753016,
+                "relative": 0.0
+              },
+              "real_adjoint": 1.797525748747342e-18,
+              "families": {
+                "edge": {
+                  "absolute": 0.0,
+                  "denominator": 3.428221983473089,
+                  "relative": 0.0
+                },
+                "face": {
+                  "absolute": 0.0,
+                  "denominator": 6.8003073026176475,
+                  "relative": 0.0
+                },
+                "interior": {
+                  "absolute": 0.0,
+                  "denominator": 6.729693506062405,
+                  "relative": 0.0
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 3.112542886517147e-16,
+                "denominator": 2.477910162300793,
+                "relative": 1.2561161150520017e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 241.27701543036943,
+                "relative": 0.0
+              },
+              "real_adjoint": 8.96100997575819e-18,
+              "families": {
+                "edge": {
+                  "absolute": 9.675348679214495e-17,
+                  "denominator": 0.866994038344789,
+                  "relative": 1.1159648453507323e-16
+                },
+                "face": {
+                  "absolute": 1.8958958451405773e-16,
+                  "denominator": 1.6708258606107875,
+                  "relative": 1.1347058301141647e-16
+                },
+                "interior": {
+                  "absolute": 2.270986227202493e-16,
+                  "denominator": 1.611428265056292,
+                  "relative": 1.4093002316321915e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 1.804809967596441e-11,
+            "denominator": 55853.231930501104,
+            "relative": 3.2313438367222673e-16
+          },
+          "gradient": {
+            "absolute": 0.0,
+            "denominator": 28.002430502168405,
+            "relative": 0.0
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 1.0064193468270113e-15,
+              "denominator": 2.477910162300793,
+              "relative": 4.0615651129681363e-16
+            },
+            "VJP": {
+              "absolute": 1.937386398106421e-13,
+              "denominator": 241.27701543036943,
+              "relative": 8.029718017900195e-16
+            },
+            "c": {
+              "absolute": 7.41360063219837e-17,
+              "denominator": 0.1535276261867714,
+              "relative": 4.828838181331275e-16
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 2.477910162300793,
+            "relative": 0.0
+          },
+          "K_symmetry": 3.7905327628382634e-18,
+          "K_energy_pair": 4.179176216436764e-16,
+          "proposal": {
+            "direction": {
+              "absolute": 1.065652863271616e-06,
+              "denominator": 0.011266041186558488,
+              "relative": 9.458982491055032e-05
+            },
+            "pred": {
+              "absolute": 3.5210048468102724e-08,
+              "denominator": 0.0007493468381260125,
+              "relative": 4.69876520145958e-05
+            },
+            "ared": {
+              "absolute": 5.4140359306842356e-08,
+              "denominator": 0.0007551365819198907,
+              "relative": 7.169611511760382e-05
+            },
+            "old_seconds": 1180.173357598018,
+            "new_seconds": 830.7719269919908,
+            "old_final_trial": {
+              "kind": "GN_TRIAL",
+              "mu": 3.949995548099965,
+              "gradient_norm": 28.002430502168405,
+              "step_norm": 0.011266041186558481,
+              "g_dot_s": -0.0009970846666272804,
+              "pred": 0.0007493468381260125,
+              "cg": {
+                "iterations": 52,
+                "true_relative": 0.005332678874103273,
+                "converged": true,
+                "hit_limit": false,
+                "max_iter": 80,
+                "target_true_relative": 0.01,
+                "finite": true,
+                "budget_frontier_early": false
+              },
+              "PC_build_count": 2,
+              "PC_source_outer": 9,
+              "damping_trial": 1,
+              "ared": 0.0007551365819198907,
+              "eta": 1.0077263871671993,
+              "trial_loss": 0.3099810109107855,
+              "accepted": true,
+              "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+              "inexact_linear_solve": false
+            },
+            "cached_final_trial": {
+              "kind": "GN_TRIAL",
+              "mu": 3.949995548099965,
+              "gradient_norm": 28.002430502168405,
+              "step_norm": 0.011265504652167465,
+              "g_dot_s": -0.0009979349355136295,
+              "pred": 0.0007493116280775444,
+              "cg": {
+                "iterations": 51,
+                "true_relative": 0.007987866655459511,
+                "converged": true,
+                "hit_limit": false,
+                "max_iter": 80,
+                "target_true_relative": 0.01,
+                "finite": true,
+                "budget_frontier_early": false
+              },
+              "PC_build_count": 2,
+              "PC_source_outer": 9,
+              "damping_trial": 1,
+              "ared": 0.0007551907222791976,
+              "eta": 1.00784599355109,
+              "trial_loss": 0.3099809567704262,
+              "accepted": true,
+              "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+              "inexact_linear_solve": false
+            }
+          },
+          "maximum_relative": 8.029718017900195e-16,
+          "cache": {
+            "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "aa5bfd2a761137d02c1c8fe23ce2b95a0188d0d5d06e8a468eea49f8b3728030",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1184152856,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 145,
+              "VJP": 145
+            },
+            "costs": {
+              "JVP": 405.1103507481748,
+              "VJP": 371.6107562802499,
+              "build": 13.209240844822489,
+              "release": 0.3267798889428377
+            }
+          },
+          "passed": false
+        },
+        "phase_gn": {
+          "c": {
+            "absolute": 5.778646433523449e-16,
+            "denominator": 8.466170602326622,
+            "relative": 6.825572865181097e-17
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 1.0621483321391252e-16,
+                "denominator": 0.6550901977116389,
+                "relative": 1.62137723301222e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 212.34339564259048,
+                "relative": 0.0
+              },
+              "real_adjoint": 4.39947982086104e-18,
+              "families": {
+                "edge": {
+                  "absolute": 3.3024491572973636e-17,
+                  "denominator": 0.19856386797445735,
+                  "relative": 1.6631672171707395e-16
+                },
+                "face": {
+                  "absolute": 6.456819588102552e-17,
+                  "denominator": 0.4299068145178492,
+                  "relative": 1.501911430583865e-16
+                },
+                "interior": {
+                  "absolute": 7.760104272286144e-17,
+                  "denominator": 0.45265404925175745,
+                  "relative": 1.714356534557393e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 0.0,
+                "denominator": 9.780496913645381,
+                "relative": 0.0
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 205.84575374409349,
+                "relative": 0.0
+              },
+              "real_adjoint": 2.273699800691241e-18,
+              "families": {
+                "edge": {
+                  "absolute": 0.0,
+                  "denominator": 3.0857014941347773,
+                  "relative": 0.0
+                },
+                "face": {
+                  "absolute": 0.0,
+                  "denominator": 6.417105474887251,
+                  "relative": 0.0
+                },
+                "interior": {
+                  "absolute": 0.0,
+                  "denominator": 6.705022258806692,
+                  "relative": 0.0
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 2.9436301581025744e-16,
+                "denominator": 2.7361740012325844,
+                "relative": 1.07581979683183e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 195.20079998043107,
+                "relative": 0.0
+              },
+              "real_adjoint": 1.2523010938993426e-19,
+              "families": {
+                "edge": {
+                  "absolute": 8.331618622571679e-17,
+                  "denominator": 0.8526151076332115,
+                  "relative": 9.771840245359431e-17
+                },
+                "face": {
+                  "absolute": 1.7359145702412854e-16,
+                  "denominator": 1.7987739146762396,
+                  "relative": 9.650543384457139e-17
+                },
+                "interior": {
+                  "absolute": 2.226522046554933e-16,
+                  "denominator": 1.8772607829326922,
+                  "relative": 1.1860483459717398e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 8.986703192708306e-10,
+            "denominator": 1060933.9001867264,
+            "relative": 8.470558996301871e-16
+          },
+          "gradient": {
+            "absolute": 0.0,
+            "denominator": 1.7285365711464022,
+            "relative": 0.0
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 1.175597826077138e-15,
+              "denominator": 2.7361740012325844,
+              "relative": 4.2965024356914353e-16
+            },
+            "VJP": {
+              "absolute": 1.9532762182043352e-13,
+              "denominator": 195.20079998043107,
+              "relative": 1.0006496993865556e-15
+            },
+            "c": {
+              "absolute": 3.9676492081431585e-15,
+              "denominator": 8.466170602326622,
+              "relative": 4.686474433969938e-16
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 2.7361740012325844,
+            "relative": 0.0
+          },
+          "K_symmetry": 1.6337939860041165e-18,
+          "K_energy_pair": 1.8118663441197315e-16,
+          "proposal": {
+            "direction": {
+              "absolute": 2.3797649306209458e-09,
+              "denominator": 0.006328405527526804,
+              "relative": 3.7604494848973097e-07
+            },
+            "pred": {
+              "absolute": 7.118003842593312e-11,
+              "denominator": 0.003511541636501911,
+              "relative": 2.0270310249500693e-08
+            },
+            "ared": {
+              "absolute": 2.2824953593847397e-09,
+              "denominator": 0.0034933800578246244,
+              "relative": 6.533773370212919e-07
+            },
+            "old_seconds": 734.5449334540172,
+            "new_seconds": 412.450563032995,
+            "old_final_trial": {
+              "kind": "GN_TRIAL",
+              "mu": 87.02932021296286,
+              "gradient_norm": 1.7285365711464022,
+              "step_norm": 0.006328405527526808,
+              "g_dot_s": -0.0035376707923715062,
+              "pred": 0.003511541636501911,
+              "cg": {
+                "iterations": 28,
+                "true_relative": 0.009761019006654522,
+                "converged": true,
+                "hit_limit": false,
+                "max_iter": 40,
+                "target_true_relative": 0.01,
+                "finite": true,
+                "budget_frontier_early": false
+              },
+              "PC_build_count": 0,
+              "PC_source_outer": null,
+              "damping_trial": 1,
+              "ared": 0.0034933800578246244,
+              "eta": 0.9948280326542337,
+              "trial_loss": 0.27070863940317985,
+              "accepted": true,
+              "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+              "inexact_linear_solve": false
+            },
+            "cached_final_trial": {
+              "kind": "GN_TRIAL",
+              "mu": 87.02932021296286,
+              "gradient_norm": 1.7285365711464022,
+              "step_norm": 0.006328405436959744,
+              "g_dot_s": -0.0035376704835486904,
+              "pred": 0.0035115415653218726,
+              "cg": {
+                "iterations": 27,
+                "true_relative": 0.009329268607610606,
+                "converged": true,
+                "hit_limit": false,
+                "max_iter": 40,
+                "target_true_relative": 0.01,
+                "finite": true,
+                "budget_frontier_early": false
+              },
+              "PC_build_count": 0,
+              "PC_source_outer": null,
+              "damping_trial": 1,
+              "ared": 0.003493377775329265,
+              "eta": 0.994827402821603,
+              "trial_loss": 0.2707086416856752,
+              "accepted": true,
+              "reason": "TRUE_OBJECTIVE_ACCEPTANCE",
+              "inexact_linear_solve": false
+            }
+          },
+          "maximum_relative": 1.0006496993865556e-15,
+          "cache": {
+            "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "ee573e2b808c581f0cfa217f7098f8c99e0796c00000bd4e4757c8272122bc4b",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1190247704,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 81,
+              "VJP": 81
+            },
+            "costs": {
+              "JVP": 223.72394935472403,
+              "VJP": 197.16768862854224,
+              "build": 14.375266371993348,
+              "release": 0.3689098220784217
+            }
+          },
+          "passed": false
+        },
+        "plain_fit_gn": {
+          "c": {
+            "absolute": 0.0,
+            "denominator": 14.836655179350549,
+            "relative": 0.0
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 8.89903330824525e-16,
+                "denominator": 4.9829296448498965,
+                "relative": 1.78590386429454e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 1046.0322255065232,
+                "relative": 0.0
+              },
+              "real_adjoint": 9.649305288285246e-19,
+              "families": {
+                "edge": {
+                  "absolute": 3.007490851264095e-16,
+                  "denominator": 1.7527026177397023,
+                  "relative": 1.7159162203697604e-16
+                },
+                "face": {
+                  "absolute": 5.441635048337184e-16,
+                  "denominator": 3.3692179296959908,
+                  "relative": 1.6151033153347224e-16
+                },
+                "interior": {
+                  "absolute": 6.366820289715234e-16,
+                  "denominator": 3.2258319735391354,
+                  "relative": 1.9736986743082118e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 0.0,
+                "denominator": 38.49039293851773,
+                "relative": 0.0
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 567.5523895139876,
+                "relative": 0.0
+              },
+              "real_adjoint": 1.9105825435479035e-18,
+              "families": {
+                "edge": {
+                  "absolute": 0.0,
+                  "denominator": 13.266040980456669,
+                  "relative": 0.0
+                },
+                "face": {
+                  "absolute": 0.0,
+                  "denominator": 25.87415051613498,
+                  "relative": 0.0
+                },
+                "interior": {
+                  "absolute": 0.0,
+                  "denominator": 25.220048380895943,
+                  "relative": 0.0
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 9.00053014556817e-16,
+                "denominator": 5.998244593347511,
+                "relative": 1.500527363547397e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 675.6932374139949,
+                "relative": 0.0
+              },
+              "real_adjoint": 3.13485203992394e-18,
+              "families": {
+                "edge": {
+                  "absolute": 2.9727174872866237e-16,
+                  "denominator": 2.0336567922678936,
+                  "relative": 1.461759672816527e-16
+                },
+                "face": {
+                  "absolute": 5.518720070016433e-16,
+                  "denominator": 4.016538089679046,
+                  "relative": 1.3739991870604727e-16
+                },
+                "interior": {
+                  "absolute": 6.458809676005287e-16,
+                  "denominator": 3.9636599282787532,
+                  "relative": 1.6295065149068097e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 3.3463333539393555e-15,
+            "denominator": 19.447219988208673,
+            "relative": 1.7207258188925305e-16
+          },
+          "gradient": {
+            "absolute": 0.0,
+            "denominator": 0.5548888815482744,
+            "relative": 0.0
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 2.6067483803128298e-15,
+              "denominator": 5.998244593347511,
+              "relative": 4.345852090133008e-16
+            },
+            "VJP": {
+              "absolute": 7.54404647944099e-13,
+              "denominator": 675.6932374139949,
+              "relative": 1.1164898598531894e-15
+            },
+            "c": {
+              "absolute": 6.6911992175652215e-15,
+              "denominator": 14.836655179350549,
+              "relative": 4.509910850309401e-16
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 5.998244593347511,
+            "relative": 0.0
+          },
+          "K_symmetry": 8.96723390128488e-19,
+          "K_energy_pair": 0.0,
+          "proposal": null,
+          "maximum_relative": 1.1164898598531894e-15,
+          "cache": {
+            "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "9df569b6aef31d9482d257259f22bba62b3f8f6b7491ac3f834e3542a578319b",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1184152856,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 9,
+              "VJP": 8
+            },
+            "costs": {
+              "JVP": 23.797321322839707,
+              "VJP": 18.965330284787342,
+              "build": 10.704775478108786,
+              "release": 0.19047098292503506
+            }
+          },
+          "passed": true
+        },
+        "phase_fit_gn": {
+          "c": {
+            "absolute": 1.016098973162239e-15,
+            "denominator": 14.956054744961584,
+            "relative": 6.793897123869138e-17
+          },
+          "directions": [
+            {
+              "kind": "hidden",
+              "JVP": {
+                "absolute": 5.532692485684265e-17,
+                "denominator": 0.2880015603273249,
+                "relative": 1.9210633718081758e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 627.0259364851192,
+                "relative": 0.0
+              },
+              "real_adjoint": 4.757179208509114e-19,
+              "families": {
+                "edge": {
+                  "absolute": 1.9696717486771127e-17,
+                  "denominator": 0.09288378078517051,
+                  "relative": 2.1205766303082952e-16
+                },
+                "face": {
+                  "absolute": 3.4176933785259937e-17,
+                  "denominator": 0.19096342871103328,
+                  "relative": 1.7897109418252344e-16
+                },
+                "interior": {
+                  "absolute": 3.8794911153384483e-17,
+                  "denominator": 0.19455197483693681,
+                  "relative": 1.9940641150469087e-16
+                }
+              }
+            },
+            {
+              "kind": "last",
+              "JVP": {
+                "absolute": 0.0,
+                "denominator": 19.354078295139047,
+                "relative": 0.0
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 483.74646319794215,
+                "relative": 0.0
+              },
+              "real_adjoint": 5.403229842532311e-18,
+              "families": {
+                "edge": {
+                  "absolute": 0.0,
+                  "denominator": 6.271363761959681,
+                  "relative": 0.0
+                },
+                "face": {
+                  "absolute": 0.0,
+                  "denominator": 12.761616103384066,
+                  "relative": 0.0
+                },
+                "interior": {
+                  "absolute": 0.0,
+                  "denominator": 13.129794272927496,
+                  "relative": 0.0
+                }
+              }
+            },
+            {
+              "kind": "random",
+              "JVP": {
+                "absolute": 6.78256772200561e-16,
+                "denominator": 5.88779764298498,
+                "relative": 1.15197024987547e-16
+              },
+              "VJP": {
+                "absolute": 0.0,
+                "denominator": 703.5024819857972,
+                "relative": 0.0
+              },
+              "real_adjoint": 0.0,
+              "families": {
+                "edge": {
+                  "absolute": 2.0412839861521998e-16,
+                  "denominator": 1.9603205192818063,
+                  "relative": 1.0413011372752736e-16
+                },
+                "face": {
+                  "absolute": 4.1263115032043274e-16,
+                  "denominator": 3.896492583990502,
+                  "relative": 1.0589809717996336e-16
+                },
+                "interior": {
+                  "absolute": 4.980957535453863e-16,
+                  "denominator": 3.954826176879234,
+                  "relative": 1.2594630744009973e-16
+                }
+              }
+            }
+          ],
+          "K": {
+            "absolute": 9.037592955266174e-16,
+            "denominator": 3.1178659040430596,
+            "relative": 2.898647098179165e-16
+          },
+          "gradient": {
+            "absolute": 0.0,
+            "denominator": 0.005224235067849419,
+            "relative": 0.0
+          },
+          "loss_absolute": 0.0,
+          "batch": {
+            "JVP": {
+              "absolute": 2.210342790388373e-15,
+              "denominator": 5.88779764298498,
+              "relative": 3.7541079439472367e-16
+            },
+            "VJP": {
+              "absolute": 4.899514897969142e-13,
+              "denominator": 703.5024819857972,
+              "relative": 6.964460003238562e-16
+            },
+            "c": {
+              "absolute": 6.806745769745336e-15,
+              "denominator": 14.956054744961584,
+              "relative": 4.551163983963353e-16
+            }
+          },
+          "cache_rejection_reuses": true,
+          "cache_acceptance_invalidates": true,
+          "buffer_invalidates": true,
+          "mu_only_reuse": true,
+          "recovery_rebuilt": true,
+          "recovery_JVP": {
+            "absolute": 0.0,
+            "denominator": 5.88779764298498,
+            "relative": 0.0
+          },
+          "K_symmetry": 8.093689673126547e-18,
+          "K_energy_pair": 2.807126209076937e-16,
+          "proposal": null,
+          "maximum_relative": 6.964460003238562e-16,
+          "cache": {
+            "implementation": "candidate2: detached FP64 analytic tangent/real adjoint; canonical Torch linear/Piola/interpolation/orientation order",
+            "static_key": "44a87b42680a9ff4dff26d51eed1343020070e3bf682ea67f0ab547017ba350c",
+            "parameter_buffer_key": "dcede73282b5d5d4a3d0f4a642cc25b5fee2f2e6a2731b22799753eb196fc111",
+            "version": 7,
+            "builds": 7,
+            "resident_bytes": 1190247704,
+            "cap_bytes": 2147483648,
+            "counts": {
+              "JVP": 9,
+              "VJP": 8
+            },
+            "costs": {
+              "JVP": 21.425016432069242,
+              "VJP": 21.941493208054453,
+              "build": 10.280725566088222,
+              "release": 0.005417966051027179
+            }
+          },
+          "passed": true
+        }
+      },
+      "Gram_factor": {
+        "label": "RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR",
+        "c_source_sha256": "f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5",
+        "library_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/ml/cholmod/f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5.so",
+        "library_sha256": "6ac17fbb78b7a1009e06bf625cc44979fcf186500fa73de29a2d5ab0eb1a1d47",
+        "backend": "installed CHOLMOD int64 complex FP64 simplicial LLH/AMD",
+        "rows": 31968,
+        "nnz": 7336179,
+        "hermitian_relative": 8.087084937051904e-17,
+        "csr_payload_bytes": 146851456,
+        "rss_before_symbolic_bytes": 600952832,
+        "symbolic_seconds": 0.4142857970437035,
+        "symbolic": {
+          "symbolic_l_nnz": 18839705.0,
+          "symbolic_flops": 27589531225.0,
+          "cholmod_current_bytes": 91231456.0,
+          "cholmod_peak_bytes": 180160984.0,
+          "factor_allocated_nnz": 0.0,
+          "positive_pivots": 31968.0,
+          "status": 0.0
+        },
+        "factor_workspace_budget_bytes": 747384196,
+        "rss_after_symbolic_bytes": 660193280,
+        "prediction_kind": "symbolic fill plus conservative workspace reserve",
+        "numeric_seconds": 149.42983120703138,
+        "numeric": {
+          "symbolic_l_nnz": 18839705.0,
+          "symbolic_flops": 27589531225.0,
+          "cholmod_current_bytes": 544918864.0,
+          "cholmod_peak_bytes": 633592648.0,
+          "factor_allocated_nnz": 18839705.0,
+          "positive_pivots": 31968.0,
+          "status": 0.0
+        },
+        "rss_after_numeric_bytes": 1141886976,
+        "setup_seconds": 152.36922010406852,
+        "rss_before_release_bytes": 4020944896,
+        "rss_after_release_bytes": 3509841920,
+        "solve_count": 445,
+        "solve_seconds": 209.0476252178196,
+        "max_solve_true_relative": 1.3858868305088614e-12
+      },
+      "raw_checks": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_derivative_checks_repair_20261001T133841591646Z/cache_checks.json",
+        "sha256": "dd278dc41c9dbdab52530a37f1de16edf3c9155d8089c02770ba93a5f96de083"
+      }
+    }
+  }
+}

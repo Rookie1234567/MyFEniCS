@@ -3162,3 +3162,22 @@ p5准确凝聚恢复146400全部独立复FE，残差1.23e-11、体能量7.03e-13
 下一轮仅建议先资格化等价的分块切线/激活复用：在这四个已冻结状态上做有界 JVP/VJP 配对与计时，保持原矩、参数导数和目标完全不变，再决定是否值得开展同预算 GN 对照。本轮实测 JVP＋VJP 占 C 新段约90%、D约97%–98%，是可定位的主要费用；该建议不授权继续训练、换 loss/PC、扩大模型或放宽门限。
 
 [Response V9](task042extra_feinn_5nm/response_v9.md)、[p序列](task042extra_feinn_5nm/outcomes/p_ladder_v9.md)、[GN完整结果](task042extra_feinn_5nm/outcomes/damped_gn_v9.md)与[summary](task042extra_feinn_5nm/outcomes/summary.md)保留全部实际数据、source与限制。普通默认、目标尺寸5nm/0.7nm与合并资格未提升。
+
+## 2026-10-02 Task42extra V10：导数复用与完整GN续算
+
+本轮A–E授权矩阵已执行。完整导数复用与包含建立/释放的加速通过；两条C仍未求准原p3。plain正常预算冻结，phase因两次系统压力停止后保全最后完整状态，停止原因与保存状态的精度分开报告。条件D已独立完成；全部候选功率仅为diagnostic。
+
+| 路线，相对原p3参考 | native | augmented | 散射E L2 | 散射curl/H | E_G | 独立能量闭合 | 分类 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| V10-PLAIN-CACHED-GN-CONTINUE | 1.0154347975 | 1.0154347975 | 0.99888849996 | 0.99890594486 | 0.99890551512 | 0.41593547468 | PDE_OPTIMIZATION_NEGATIVE |
+| V10-PHASE-CACHED-GN-CONTINUE | 0.97882119863 | 0.97882119863 | 0.36201788027 | 0.36263373418 | 0.36261857554 | 0.092747748293 | PDE_OPTIMIZATION_NEGATIVE |
+| V9-PLAIN-DAMPED-GN | 1.0285051156 | 1.0285051156 | 0.9989232163 | 0.9989423061 | 0.99894183584 | 0.4157492147 | PDE_OPTIMIZATION_NEGATIVE |
+| V9-PHASE-DAMPED-GN | 1.0187461988 | 1.0187461988 | 0.43715907484 | 0.43778332738 | 0.43776795997 | 0.12094192809 | PDE_OPTIMIZATION_NEGATIVE |
+| V10-PLAIN-CACHED-FIT-GN-CONTINUE | 6.9238228453 | 6.9238228453 | 0.035964629101 | 0.048041839362 | 0.047781012309 | 0.0074739007987 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V10-PHASE-CACHED-FIT-GN-CONTINUE | 0.53147218171 | 0.53147218171 | 0.0095579252068 | 0.010034208799 | 0.010022747742 | 9.4658158489e-05 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V9-PLAIN-FIT-GN-DIAGNOSTIC | 11.001030573 | 11.001030573 | 0.068217087643 | 0.1000521103 | 0.09939045116 | 0.014917309507 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+| V9-PHASE-FIT-GN-DIAGNOSTIC | 0.8082166866 | 0.8082166866 | 0.014403534682 | 0.013024032447 | 0.013059766413 | 0.0028868109962 | REPRESENTATION_OR_FIT_OPTIMIZATION_UNRESOLVED |
+
+含建立/释放加速C plain/phase 1.4614/1.5433、D plain/phase 1.52994/1.57184倍。C plain14、phase21个新增完整更新；phase两次系统PSI停止只保全最后完整75步，不写OOM或正常数值停滞。全部failed/未提交费用保留，D与C隔离。
+
+[Response V10](task042extra_feinn_5nm/response_v10.md)、[GN结果](task042extra_feinn_5nm/outcomes/cached_gn_v10.md)、[原字段Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v10.json)、[资源闭账](task042extra_feinn_5nm/outcomes/records/resource_costs_v10.json)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v10.json)。p5只读REFERENCE_ONLY，curl/H/h/端口未全面资格化，目标5nm/0.7nm未运行。只推本分支等待review。

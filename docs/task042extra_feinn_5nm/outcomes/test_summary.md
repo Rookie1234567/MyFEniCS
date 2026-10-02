@@ -150,3 +150,19 @@ C1资格对应实际源码76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2；C2资格对
 | 文档与浏览器 | 新页结构检查与GitHub实际渲染分开；实际状态以记录为准 | records/render_check_v9.json |
 
 lint失败两个未使用名称已局部修复，成本保留。以上是本地证据，不声称CI；数值负结果不改成测试失败或PDE通过。
+
+## Review V9 后续 V10 定向资格
+
+本批测试检验同一完整参数导数能否少做重复前向，并保证预算/恢复只提交已验证的完整状态；接口通过不等于原方程或表示门限通过。复用qualified FE/ML环境和旧完整矩/相位证据，未full pytest、未重装、未宣称CI。
+
+| 定向资格 / 本地实测 | 结果、失败边界 | 原证据 |
+|---|---|---|
+| 缓存切线/匹配伴随与小复链 | 最终19 ML＋1纯FE-dispatch；非零方向、所有边/面/内部、batch1/8、失效/恢复和实伴随 | targeted_tests_v10.json及hash绑定日志；重复测试不加为独立数量 |
+| 四个真实V9固定态 | c/JVP/VJP/伴随≤1e-10，K/梯度≤1e-9；最终两C完整s/pred/ared逐位一致 | cache_checks_v10.json；初版/第一canonical方向超限保留 |
+| 预算末端与事务 | PC不足/中断、有限CG真残差、方向验证、拒绝回滚、原子提交、缓存键和spent PC quota通过 | 8项相关ML及阶段/白名单原日志，未重演旧长训练 |
+| 本轮完整状态恢复 / 导出 | 12项相关资格；保存/失联边界、参数/buffers/GN/RNG/hash/标签与spent计数；导出9 pure＋1 ML | 真phase第60/75边界完整c逐位一致；原PT不改；两次PSI中断成本保留 |
+| 最终compact checker | 5 passed；损坏label/counters/完整proposal/timer/compact大小不能通过 | 606ad775源码；先lint失败一次、修正后通过，原字段checker已完成 |
+| 冻结后独立ML/FE | 四个新终态参数→c相对差0；q30≤1.103e-12；全场/6点/四类各40级复通道/功率/区域及G范数恒等式 | compare-only仅复用原p3参考，未新MUMPS或Gram factor |
+| Ruff/compileall与新页结构 | 最终相关文件检查；Review V9与8个新页/追加节，不全量重渲染历史 | 本地结构与render_check_v10.json实际浏览器记录分开 |
+
+两次phase系统压力停止是执行安全原因；自身swap0/树内存合规，不写OOM、正常预算不收敛或网络不可表达。所有测试失败、保存fixture/metadata问题和对应局部修复见[repair log](records/repair_log_v10.json)，全部费用见[资源](records/resource_costs_v10.json)。[测试原日志/source/hash](records/targeted_tests_v10.json)、[原字段Gate](records/gate_decisions_v10.json)与[实际GitHub渲染](records/render_check_v10.json)均单列。

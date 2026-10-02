@@ -163,3 +163,17 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | ignored fullFE/矩阵/因子、PC基、全部模型/optimizer/checkpoint、完整资源日志/cache | 本地hash索引；不提交大数组，不迁入production训练权重 |
 
 未来selective merge只能按依赖组取经过审查的最小文件；当前没有merge approval。授权只推送本任务分支，不改Task042历史或其他worktree。
+
+## Review V9 后续 V10 文件级边界
+
+| 依赖组 / 建议审阅顺序 | 数值行为、文件和依赖 | tests / fresh evidence / 合并边界 |
+|---|---|---|
+| production numerical/core | 无普通solver默认改变，原A/f/G、完整矩、q15和物理不改 | 无新NN资格或merge approval |
+| research-only，第1组 | feinn_cached_derivatives.py/feinn_derivative_reuse.py：detached激活、匹配解析参数切线/伴随；damped_gauss_newton.py/feinn_gn_budget.py/feinn_gn_training.py预算安全；feinn_gn_freeze.py独立保全导出；phase_verification完整重建 | 小链/事务＋四态真实配对＋正式C/D/E；保留旧AD独立对照，不能提升为production default |
+| reusable runner/watchdog，第2组 | feinn_cached_gn_campaign.py/feinn_gn_recovery.py/feinn_workflow.py/feinn_pilot.py/durable launcher：stage白名单、独立activation、继承预算/计数/GN/PC、own完整状态恢复 | 环境/阶段/FE无Torch守卫、恢复测试和每run清场；不改其他项目监督/共享环境 |
+| research-only inputs，第3组 | 14个v10 one-run dat，qualified FE/ML按stage独立串行 | 所有正式run source clean、输入hash绑定，新attempt不覆盖V1–V9 |
+| checker/benchmark，第4组 | check_task42extra_v10.py及5个负例tests；cached/runner/recovery/export/FE dispatch targeted tests；docs/render/finalizer显式version10 | 原字段重算、≤200KiB JSON、预算/标签/完整proposal与actual screenshots校验；不实现新PDE求解 |
+| compact evidence/docs，第5组 | response_v10、derivative_reuse_v10、cached_gn_v10、records、summary首页及progress/registry/tests/changed追加 | actual source与文档HEAD区分；负结果/中断/全部费用保留，不修改旧task/review/Task042 |
+| do-not-merge | ignored完整矩/Gram/native/参考/PC基/模型/optimizer/GN/history、环境/cache/tmux socket/浏览器profile截图 | 仅hash索引；D权重不反馈C/Task042/0.7nm；大数组不入Git |
+
+实际逐文件SHA与依赖组见[publication manifest](records/publication_manifest_v10.json)。数值组件须逐组审查最小依赖，再看runner/inputs、checker，最后文档；本轮只推本任务分支，不amend/强推/merge、不新增高阶/网格/端口/目标尺寸运行。

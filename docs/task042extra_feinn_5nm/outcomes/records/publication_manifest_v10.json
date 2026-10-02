@@ -1,0 +1,230 @@
+{
+  "source_snapshot": "606ad7754c6d284300294ae9ddb0a1c41dc0471d",
+  "review_commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
+  "merge_approval": false,
+  "files": [
+    {
+      "path": "benchmarks/check_task42extra_docs_v3.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "2986243fa25ad7868ec40c4017edb36e3ffaebb02fe8d858731ff0d4636abe82"
+    },
+    {
+      "path": "benchmarks/check_task42extra_v10.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "f9b78c9c846b4f63887c0c80372a238bed04384f93f248309c7b66a6d73b3ea2"
+    },
+    {
+      "path": "benchmarks/finalize_task42extra_render_v3.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "c2f7f1f0033c4c1c364f131b656ffba8647ba7d69fa1e057d50efced35591e78"
+    },
+    {
+      "path": "benchmarks/render_task42extra.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "bac90eae45f5302efa6555ca0ad662463683e2749a3dab566890f4becf7e8fb3"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "2ddee369c682530c14e523fd533fde6df4461b39b9c3994e73ab5dbd9a9ace00"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/linear_jvp_order_probe_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "ed7907baefee73d99cb0050b823f2a3f27c771a64667bb9779d12a02738f7b7e"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/mlp_layer_order_probe_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "a86a9f3e37c3dc23adffdc922ced2a10fb633882b0e45331609a124bb1543a4d"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/phase_jvp_order_probe_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "eceb90c84754235090bfde60cb5746331da32e593b84200759750d3bda134415"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "9162ce2bfe9adc06e4a0cb4a2a80de815d9fc83f0578d92470ba09dd26cd56e1"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "905386d20bde49d70c78cc65d87868d6f327af3f0be3d1d43ea2b96f7bf4f61d"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_derivative_benchmark.dat",
+      "group": "research-only one-run",
+      "sha256": "85e055a1c4ea692b40c563e784362f02faa5c3d6c7541af5016449025fb6a6c9"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_derivative_checks.dat",
+      "group": "research-only one-run",
+      "sha256": "0e774422c193228e9bca77508743dca2f8f093a84b4a8a04e7854799d0206aba"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_derivative_checks_repair.dat",
+      "group": "research-only one-run",
+      "sha256": "1a72b1bde4b102a7e244fe1649aa8ac8d63d1a860eedf440e44a22aebfdfb5d3"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_derivative_checks_tangent_repair.dat",
+      "group": "research-only one-run",
+      "sha256": "ac979b46dce3b855c548ee76a65509eaad86c8dd8ae2c2c1cad8e68bdcbbd0f4"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_fit_compare.dat",
+      "group": "research-only one-run",
+      "sha256": "7bd278ad857330c832806925d3ee779327fe0b7559284d40659ba612214ba3fa"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_fit_reconstruct.dat",
+      "group": "research-only one-run",
+      "sha256": "7cad9dd9592c8bbce7e969cf911a0fa337c69222e447ed8b13be9158d0d297b4"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_gn_compare.dat",
+      "group": "research-only one-run",
+      "sha256": "39215b2729c2ed3093ca5a7aba83eacd16e996aa1be3adc70ee215c17f5616c8"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_gn_reconstruct.dat",
+      "group": "research-only one-run",
+      "sha256": "d8b9415cf89c9f57076c7f56faeeb3497cfa03e2a5381088fcac5a91f73ab475"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_phase_cached_fit_gn.dat",
+      "group": "research-only one-run",
+      "sha256": "9e6e4ea9a6799a5ea2dda454c4d56a5db06dac2ef4aed6739389641891a92122"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_phase_cached_gn.dat",
+      "group": "research-only one-run",
+      "sha256": "a23467a8f90083c4c2e8ee378008e165a36741b33e246bdfc6569deb69fb0d4c"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_phase_resource_freeze.dat",
+      "group": "research-only one-run",
+      "sha256": "ab97bf5fc237b56743a58f252cd119e64d93eb1f5e66433e0a2ba32d943a3230"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_plain_cached_fit_gn.dat",
+      "group": "research-only one-run",
+      "sha256": "ecf1da77c3e0066e51df93ea4f4dac53f12017d2227b17cca81abc17a1e6b398"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_plain_cached_gn.dat",
+      "group": "research-only one-run",
+      "sha256": "fbab54f95f64a8a6c9d3c998d9deafa45cb57b69b40fb4ba7fbcb401b9eb0920"
+    },
+    {
+      "path": "input/task042extra_feinn_5nm/v10_state_and_work_audit.dat",
+      "group": "research-only one-run",
+      "sha256": "f985135c82a1e0c38dd5460c8af1c8e3ee4a22af4b0fd3fa596df801fb365f2d"
+    },
+    {
+      "path": "scripts/launch_task42extra_durable.py",
+      "group": "reusable runner/watchdog opt-in",
+      "sha256": "ef1da12cd1f40d93b98c520adad7a03e5cc9e094ff35e40b5cad02b825ae6c39"
+    },
+    {
+      "path": "src/io/feinn_pilot.py",
+      "group": "reusable runner/watchdog opt-in",
+      "sha256": "0ef805ec158b41b51f8925366dbe4e146e0c1ed640c6dd734ee9efebddaab914"
+    },
+    {
+      "path": "src/runners/feinn_cached_gn_campaign.py",
+      "group": "reusable runner/watchdog opt-in",
+      "sha256": "f3b41817ce30b6107894f31f629758a4a2acefadebc706163ab745ed0ccf5f32"
+    },
+    {
+      "path": "src/runners/feinn_gn_recovery.py",
+      "group": "reusable runner/watchdog opt-in",
+      "sha256": "36178c6bd50f4573df2d807e6439ef489f9813586e2370009e3cfbb9471e95ba"
+    },
+    {
+      "path": "src/runners/feinn_workflow.py",
+      "group": "reusable runner/watchdog opt-in",
+      "sha256": "aeefc01719e96a60bc22261066666db477e07fade88e7c6d9614edbb9fecb410"
+    },
+    {
+      "path": "src/solvers/damped_gauss_newton.py",
+      "group": "research-only numerical core",
+      "sha256": "ae597893a30b12702f5f31e76bfbf185871c099ce8880bac5568326735e1921e"
+    },
+    {
+      "path": "src/solvers/feinn_cached_derivatives.py",
+      "group": "research-only numerical core",
+      "sha256": "b9c1fa722f52470212c47751d4f2cc759ce356c9fa8a60d2b878fa84078693d6"
+    },
+    {
+      "path": "src/solvers/feinn_derivative_reuse.py",
+      "group": "research-only numerical core",
+      "sha256": "9a5778e24b7532d950671cd26002f75e569dfc5ace73fc68afde34d343aeb485"
+    },
+    {
+      "path": "src/solvers/feinn_gn_budget.py",
+      "group": "research-only numerical core",
+      "sha256": "8e516808430e31b773a586b9a2599fdb467586db5b06b74f06c666a6d251ea6d"
+    },
+    {
+      "path": "src/solvers/feinn_gn_freeze.py",
+      "group": "research-only numerical core",
+      "sha256": "86c66385fa41337760755661a38692e692610b21523efde64bdac0bcad414790"
+    },
+    {
+      "path": "src/solvers/feinn_gn_training.py",
+      "group": "research-only numerical core",
+      "sha256": "51f9e356a75118530b92eca1e7a337ee05cdac00a3de579300faf243d770e5d5"
+    },
+    {
+      "path": "src/solvers/feinn_phase_verification.py",
+      "group": "research-only numerical core",
+      "sha256": "8c2c51dc735e45ff24d3321bf101829c1723b033ab0a0711d7817c6ff3690b4a"
+    },
+    {
+      "path": "src/test/test_feinn_cached_derivatives_ml.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "12fa13881d3a6787ccca1a45f6a557f3f669f20baeca062cd6a47a67ccab9caf"
+    },
+    {
+      "path": "src/test/test_feinn_gn_freeze_ml.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "819cf8f7242b549b9fa2dfa98c1b5b90f21e13166c90c7eaee1166d117010654"
+    },
+    {
+      "path": "src/test/test_feinn_gn_recovery.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "88684f77760b36ccd1308d254072a1ee66a4e9bf73613737bbd745183d044dad"
+    },
+    {
+      "path": "src/test/test_feinn_gn_runner_ml.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "a342855b53de7df664824f23f1aaa52800b699c76d13427bba2592549f903185"
+    },
+    {
+      "path": "src/test/test_feinn_v10_checker.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "bb0cce4e46e358804ce875804be1bd08324878ae5538936085ebec0822273397"
+    },
+    {
+      "path": "src/test/test_feinn_v9_fe_dispatch.py",
+      "group": "checker/benchmark/tests",
+      "sha256": "6a057796da32222979a6d116fc9efd2c9a3da49019a67296842382cad1c043d2"
+    }
+  ],
+  "dependency_order": [
+    "research-only numerical core",
+    "reusable runner/watchdog opt-in",
+    "research-only one-run",
+    "checker/benchmark/tests",
+    "compact evidence/docs"
+  ],
+  "do_not_merge": [
+    "ignored matrices/native/moments/Gram factors/full histories/PC bases/model and GN states",
+    "task-local environments/cache/tmux socket/browser profile/screenshots",
+    "supervised D weights or labels into C/Task042/0.7nm"
+  ],
+  "production_default_changed": false
+}

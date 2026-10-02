@@ -1,87 +1,93 @@
 {
-  "repairs": [
+  "schema": "task42extra.repair-log.v10",
+  "records": [
     {
-      "root_cause": "LOCAL_LINT_FORMAT_AND_AMBIGUOUS_NAMES",
-      "failure": "65 style errors; after formatting two E741 names remained",
-      "hypothesis": "local style and I/O identifier ambiguity",
-      "change": "Ruff formatting, remove unused import, rename exact CSR variables",
-      "test": "final_targeted Ruff + compile + 19 tests pass",
-      "retries_with_changes": 2,
-      "cost_preserved": true
+      "root": "finite-CG floating-operation order",
+      "failure": "Initial primitives <=3.82e-15 but C complete proposal >1e-8; canonical c/VJP/gradient bitwise but JVP/K had last-bit differences and proposals still unqualified",
+      "hypothesis": "Finite Krylov recurrence can amplify tiny arithmetic differences; not a condition-number proof or unique explanation of NN optimization",
+      "change": "Keep the same cached kernel family; canonical Torch primal/Piola/interpolation/orientation, native bias-first tangent, primal phase-left and AD tangent phase-right",
+      "test": [
+        "linear_jvp_order_probe_v10.json",
+        "mlp_layer_order_probe_v10.json",
+        "phase_jvp_order_probe_v10.json"
+      ],
+      "retry": "fc492 initial negative ->055 canonical negative ->043 exact four-state pass; both real C s/pred/ared bitwise zero",
+      "old_failed_indices_retained": true
     },
     {
-      "root_cause": "RUFF_ENVIRONMENT_SELECTION",
-      "failure": "ML environment has no Ruff",
-      "hypothesis": "Ruff already qualified in pure environment",
-      "change": "explicit pure activation for lint then ML activation for pytest",
-      "test": "final_targeted complete pass",
-      "retries_with_changes": 1,
-      "dependencies_installed": false,
-      "cost_preserved": true
-    },
-    {
-      "root_cause": "CACHED_PRIMAL_AND_CONTRACTION_OPERATION_ORDER",
-      "failure": "candidate1 full proposal direction/pred/ared: plain0.0307693785765/0.0195010305211/0.0194644973115; phase0.000127710796122/4.9796720467e-6/1.3991253073e-5 despite derivatives<=3.82e-15",
-      "hypothesis": "Unfused cached primal linear and CSR contraction order can perturb a finite CG path; not a proven unique cause",
-      "change": "candidate2 original Torch fused primal linear, matching native tensor contraction order and analytic tanh backward; retain original candidate evidence; add proposal events/arrays and partial atomic checks",
-      "test": "tmp/task42extra/checks/v10_B_canonical_repair_tests_fixed_20261001T121736210916Z",
-      "qualified_targeted_tests": 19,
-      "retries_with_changes": 1,
-      "cost_preserved": true,
-      "test_composition": "18 ML plus 1 pure FE-dispatch"
-    },
-    {
-      "root_cause": "NEW_PROPOSAL_EVENT_CALLBACK_NAME_BINDING",
-      "failure": "RuffF821 old captured in callback across deletion boundary",
-      "change": "Bind implementation label explicitly in lambda default",
-      "test": "tmp/task42extra/checks/v10_B_canonical_repair_tests_fixed_20261001T121736210916Z",
-      "retries_with_changes": 1,
-      "cost_preserved": true
-    },
-    {
-      "root_cause": "FRONTIER_RESERVE_AND_FIT_THRESHOLD_COMPLETENESS",
-      "failure": "3K reserve can omit optional explicit convergence check; G-only audit cannot certify all3 fit metrics",
-      "change": "Reserve4K; V10 fit defers early-stop qualification to independent3-metric FE check; save expected full cache key at invalidated complete boundary",
-      "test": "tmp/task42extra/checks/v10_B_canonical_repair_tests_fixed_20261001T121736210916Z",
-      "retries_with_changes": 1,
-      "cost_preserved": true
-    },
-    {
-      "root_cause": "NATIVE_FORWARD_AD_TANGENT_ACCUMULATION_AND_PHASE_OPERAND_ORDER",
-      "failure": "Canonical full proposals still differ: plain direction9.45898e-5; phase3.76045e-7, despite gradient/VJP bitwise and primitive differences about1e-16",
-      "hypothesis": "Native forward AD associates bias with first tangent product; fixed phase left/right floating multiplication also differed",
-      "change": "Use bias-first F.linear(dx,W,db)+F.linear(X,dW,None); phase-left multiplication before unchanged complete moments; no GN/physics change",
-      "test": "linear_jvp_order_probe_v10.json; five shapes match independent torch.func.jvp bitwise",
-      "retries_with_changes": 1,
-      "same_arithmetic_root_repair_number": 2,
-      "cost_preserved": true
-    },
-    {
-      "root_cause": "TRANSIENT_SHARED_SYSTEM_MEMORY_PRESSURE",
-      "failure": "First canonical qualification stopped by three PSI samples, not own RSS/swap",
-      "hypothesis": "Shared pressure origin NOT_DETERMINED, capacity remained adequate",
-      "change": "No thresholds changed; bounded three5s read-only admission samples all PSI0 before one distinct attempt2 recovery",
+      "root": "shared resource pressure",
+      "failure": "canonical repair first attempt stopped at1400.024453212s after three consecutive memory PSI full avg10 threshold samples; self swap0/RSS3388379136B",
+      "hypothesis": "Pressure source NOT_DETERMINED; ample total capacity does not prove safe pressure",
+      "change": "No safety threshold, placement policy or system configuration change; bounded three-sample read-only admission proof PSI0",
       "test": "tmp/task42extra/development/resource_reopen_v10.json",
-      "retries_with_evidence": 1,
-      "cost_preserved": true
+      "retry": "one distinct supervised attempt2 at same clean055; closed3746.200976543s; failure and all costs retained",
+      "OOM_claim": false
     },
     {
-      "root_cause": "NATIVE_COMPLEX_FORWARD_AD_OPERAND_ORDER",
-      "failure": "First stricter full-chain bitwise targeted test failed1/19; all linear/tanh intermediates match0",
-      "hypothesis": "Torch JVP complex multiply order differs from primal forward",
-      "change": "Keep phase-left primal and native phase-right tangent; phase buffers and math unchanged",
-      "test": "phase_jvp_order_probe_v10.json: tangent-right bitwise0 versus tangent-left5.3446e-16; final19ML+1pure tests pass",
-      "retries_with_changes": 1,
-      "cost_preserved": true
+      "root": "linearity tangent proof",
+      "failure": "first strict nonzero JVP unit witness failed once while per-layer real linear/tanh tangents were bitwise",
+      "hypothesis": "Complex phase tangent operand accumulation differed from independent torch.func AD",
+      "change": "Known physical phase unchanged; phase-right tangent matches independent AD, phase-left primal remains original physical forward",
+      "test": "phase_jvp_order_probe_v10.json",
+      "retry": "strict complex chain and final19 ML tests pass at043"
     },
     {
-      "root_cause": "COMPLETED_PC_QUOTA_ON_TRANSACTION_ROLLBACK",
-      "failure": "Whole optimizer rollback could refund a completed optional PC build",
-      "change": "Restore matching model/GN/RNG/old basis, keep completed-build quota records marked discarded; oldV9 default unchanged",
-      "test": "test_completed_pc_quota_survives_uncommitted_proposal_rollback",
-      "retries_with_changes": 1,
-      "cost_preserved": true
+      "root": "budget and checkpoint boundary",
+      "failure": "inspection found full-gradient startup was guarded only by current time and complete discarded PC quota could roll back",
+      "hypothesis": "Could consume final save reserve or grant extra PC construction on continuation",
+      "change": "Preserve spent PC quota while restoring committed parameters/GN/RNG/old basis; opt-in measured gradient plus four K/trial reserve; begin/end gradient events; per-state complete performance samples atomic",
+      "test": "targeted cached derivative, CG/PC/trial rollback/checkpoint tests; final8 affected ML tests and pure FE no-Torch/inventory checks",
+      "retry": "qualified at043 and902; no long C/D started before changes",
+      "normal_stagnation_reclassified_as_bug": false
+    },
+    {
+      "root": "continuation initial checkpoint metadata",
+      "failure": "TypeError duplicate initialization_kind before any new gradient/proposal/accepted step",
+      "hypothesis": "V10 metadata extended an existing keyword via dict expansion; small old runner test covered only non-continuation branch",
+      "change": "One initialization kind selected before dict construction; target true continuation runner test; prior attempt wall charged to per-route and logical path; reject V9 replay once any V10 work/boundary exists",
+      "test": "v10_B_continuation_metadata_static and v10_B_continuation_metadata_runner",
+      "retry": "one attempt2 only after final tests/clean commit; same qualified V9 boundary,remaining8442.84020358s",
+      "failed_run": "task42extra_v10_plain_cached_gn_20261001T234127817479Z",
+      "failed_seconds": 157.15979642001912,
+      "new_GN_work": 0,
+      "Gram_complete_cost_record": "NOT_RETAINED",
+      "swap0": true,
+      "descendants_cleared": true
+    },
+    {
+      "root": "phase system memory PSI stop and full-state recovery",
+      "failure": "RESOURCE_WINDOW_UNAVAILABLE; own swap0/RSS legal; global pressure origin NOT_DETERMINED",
+      "hypothesis": "last successfully fsynced own complete GN checkpoint survives SIGKILL; tail work must be charged",
+      "change": "hash-bound own-V10 restore with parameters/buffers/GN/RNG, prior wall deduction, spent-counter lower bounds and incomplete-work reserves; rebuild cache",
+      "tests": "7 recovery identity tests +4 ML runner/PC tests +FE import guard; actual phase complete-c reconstruction bitwise; bounded resource reopen proof PSI0",
+      "auxiliary_failure": "read-only identity script initially used design summary instead of canonical input: KeyError geometry; corrected path and reran identity only; failed wall retained",
+      "retained_checkpoint": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T021129560832Z/durable_checkpoints/committed_000006.pt",
+        "sha256": "a7238e9587426d316c61416190a55c55fcb3f3e80e04b05e5244125d7148027d"
+      },
+      "prior_cost_seconds": 1617.5801926479908,
+      "retry": "one qualified attempt2; no V9/Adam/best/last_trial replay",
+      "policy": "original resource thresholds and watchdog unchanged"
+    },
+    {
+      "root": "repeat system PSI stop in phase full-state recovery",
+      "failure": "RESOURCE_WINDOW_UNAVAILABLE at3507.5715459900675s; PSI full1.38/0.88/2.4; tree peak3031945216B/swap0/clear",
+      "hypothesis": "safe retained accepted75 PT can support independent diagnostics without any more optimization",
+      "change": "add explicit no-training/no-factor export stage, preserve immutable full PT and original source; NPZ carries export source separately",
+      "tests": "9 pure targeted +1 ML export transaction; real complete-c reconstruction bitwise0; initial unit fixture accepted_outer missing fixed once",
+      "retry": "no third phase training; only qualified retained state export and independent remaining matrix",
+      "missing": "full failed lifetime Gram solve/release and exact interrupted suboperation costs NOT_RETAINED; whole failed wall charged"
+    },
+    {
+      "root": "compact checker lint",
+      "failure": "Seven E702 semicolon lint findings before tests, no numeric work",
+      "hypothesis": "Draft formatting differs from repository style",
+      "change": "Ruff format split statements; numerical data and Gates unchanged",
+      "test": "Five checker negative fixtures plus Ruff pass",
+      "retry": "one local targeted rerun; 2.060622434s failed cost retained"
     }
   ],
-  "numerical_restarts": 0
+  "maximum_evidenced_root_retries": 3,
+  "full_failed_costs_preserved": true,
+  "no_unchanged_blind_training_restarts": true
 }

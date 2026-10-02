@@ -144,5 +144,480 @@
   "candidate2_test_composition": "18 ML cache/GN/frontier/campaign tests plus 1 pure FE-dispatch Torch-import guard",
   "final_test_composition": "19 ML plus 1 pure FE-dispatch; 13 inputs/environment/budget/label dependency contracts",
   "full_pytest_run": false,
-  "CI_pass_claim": false
+  "CI_pass_claim": false,
+  "closed_auxiliary_attempts": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_cache_unit_20261001T103922523480Z",
+      "summary_sha256": "e618180a35b0cd2a81dbf94761d4e036b2151280d15ca75eb0794f4be224b4bc",
+      "worker_log_sha256": "1dfe64fdff183661972c54dcc4f122b04d82a27fb724b6f9017f64c4b6e1071c",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 16.550205425010063,
+      "sampled_process_tree_rss_peak_bytes": 380272640,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "13 passed in 8.99s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_canonical_repair_tests_20261001T121559568999Z",
+      "summary_sha256": "15ac47865003b2948089553db62291b9670ba47988f8793d534ce04645d25c22",
+      "worker_log_sha256": "5a06312ab16e49092f612cd599fce024252d1fffb5dacabed140eacc00d617dd",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.065452564973384,
+      "sampled_process_tree_rss_peak_bytes": 43409408,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_canonical_repair_tests_fixed_20261001T121736210916Z",
+      "summary_sha256": "5af6ef3a1c692504305efed0260ea355deb471a019b061b53e96ea097c6833a5",
+      "worker_log_sha256": "689807df6835a466c90b79f9e819ac42c9f737e62655a55a3150e4ec99ce0a6c",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 12.546372757060453,
+      "sampled_process_tree_rss_peak_bytes": 379518976,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "18 passed in 7.56s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_continuation_metadata_runner_20261001T234929761313Z",
+      "summary_sha256": "6e673f5a9813d82db4fbd5a4c47c2eb5e6257f716e300ff544ca21116764cc5e",
+      "worker_log_sha256": "92f46c203bdca9b75bc7484efe6edf1888ebf6c4c4e3c0e5f18f530f4a227347",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 19.391872785054147,
+      "sampled_process_tree_rss_peak_bytes": 397008896,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "9 passed in 15.64s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_continuation_metadata_static_20261001T234851850178Z",
+      "summary_sha256": "60c95fea5de6fabcfd9017f4b44cf86ff035e7090afd7a124f14dcf0fbe2f620",
+      "worker_log_sha256": "3daa44b504b736de113d261f29532285d37ddad53dc82713d3c94723ad765f84",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.4216079900506884,
+      "sampled_process_tree_rss_peak_bytes": 65347584,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "2 passed in 0.53s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_fault_boundary_identity_20261002T025245696221Z",
+      "summary_sha256": "bc0a9196a01aedbc2bd7804372e1fefe3c830d4b8bba41844ed6971632584f6d",
+      "worker_log_sha256": "ccfc025a9bca1f7457d8eace792948fe74950ee4996c1c4f743acdd1cbf5bce9",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 7.08062675606925,
+      "sampled_process_tree_rss_peak_bytes": 337641472,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_fault_boundary_identity_final_20261002T025340267775Z",
+      "summary_sha256": "d314f9468af90d627fa8d44bdd732e748b3a1c12be868194dd4fddeb6fd258af",
+      "worker_log_sha256": "ccfc025a9bca1f7457d8eace792948fe74950ee4996c1c4f743acdd1cbf5bce9",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 6.3179606209741905,
+      "sampled_process_tree_rss_peak_bytes": 337141760,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_fault_recovery_final_static_20261002T025325923753Z",
+      "summary_sha256": "9f1572fcbf6d8d3bfa3b302e3379bb53195cf423e777fbb9e648fdfcad3435f4",
+      "worker_log_sha256": "dacf711a94566559500708cf6213790c47e31a353f87adcd38e0b0bd4c576189",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.7425891250604764,
+      "sampled_process_tree_rss_peak_bytes": 49053696,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "9 passed in 0.38s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_fault_recovery_ml_20261002T025158595430Z",
+      "summary_sha256": "9de4502ce16c9a62595623fb505b0317efaba1baad689626f1d68b1f2a0909f2",
+      "worker_log_sha256": "05d8aba9ea12400cc60f65ff57709724f2a018fc9a0ae4cb0dd847301f1dc77d",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 29.829476448940113,
+      "sampled_process_tree_rss_peak_bytes": 400121856,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "4 passed in 21.86s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_fault_recovery_static_20261002T025117297161Z",
+      "summary_sha256": "53a8c710fed9acbb91ca18eb5a8eb187e0b3a8a6da8ac0972da630c48d0d42d3",
+      "worker_log_sha256": "89a286af4018180e71016a3e6138872c955f51f7216078b2f74651b7dc9d2b13",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.7605779350269586,
+      "sampled_process_tree_rss_peak_bytes": 48361472,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "7 passed in 0.04s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_final_contract_20261001T104651122050Z",
+      "summary_sha256": "5d57a8afb4f41228ec97e99dfac02bc8daf89e98d74f3c3b006e5a32a0dea9dc",
+      "worker_log_sha256": "66d91ac7ec15c08c17320f57d03cf3377b1a8af6dcc78f3ec157d15959a1aa9a",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.115357022965327,
+      "sampled_process_tree_rss_peak_bytes": 43823104,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_final_tangent_contract_20261001T145855818913Z",
+      "summary_sha256": "bf297e724f093c18f06a8001f784356146bf2df3e0ca2f9e24974108330dd2b2",
+      "worker_log_sha256": "d9903e604c6ce54f327e81805249c10864e02edee90852a34ca42a713722be13",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.7478727949783206,
+      "sampled_process_tree_rss_peak_bytes": 81309696,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "1 passed in 0.41s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_final_targeted_20261001T104503271706Z",
+      "summary_sha256": "47f5147b07d85fd2ed3893fed76c6f1f519e36e8c7a0444df07240f0460ac5c9",
+      "worker_log_sha256": "dacb8357fd62d4630c4fbc721ff22533fe042dc4d091c7b22612eeb5419a309b",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 14.366342557012103,
+      "sampled_process_tree_rss_peak_bytes": 442396672,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "19 passed in 9.93s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_gradient_frontier_contract_20261001T223828743830Z",
+      "summary_sha256": "afe5cf04e1e4e7f19db76457de08fec69d6d7cc38ae2291f87a56e991bef47b9",
+      "worker_log_sha256": "c32c56c3f0c593f328be628d68f8d1ca119d082c5f26147aa59e33dad79f50ee",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.7030449711019173,
+      "sampled_process_tree_rss_peak_bytes": 80953344,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "1 passed in 0.47s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_gradient_frontier_tests_20261001T223745943643Z",
+      "summary_sha256": "5381f837b83d9b0a97fe99c6c2f5889a579fabd30e4c9057264152fe34cf6291",
+      "worker_log_sha256": "e2ea1d3b79d9b47fd547ed3d2a99a2d1b462acebac846bf50768378e18969857",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 10.374076512060128,
+      "sampled_process_tree_rss_peak_bytes": 378851328,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "8 passed in 7.07s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_linear_order_probe_20261001T144210672721Z",
+      "summary_sha256": "d6741c66afedde94109756c134bc24504433e144aa8bafe6042fbe88323390cf",
+      "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 6.203966627945192,
+      "sampled_process_tree_rss_peak_bytes": 340762624,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_long_stage_admission_20261001T234037303314Z",
+      "summary_sha256": "6739b2704e82ed97271fc94fa1393c281ad603796db0bc06d888e11d511f902b",
+      "worker_log_sha256": "243607f48bb385c74c403c27c84a370dcc55dcbb9897dcdf5ad2250f7293deb7",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.073936274042353,
+      "sampled_process_tree_rss_peak_bytes": 61259776,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_mlp_order_probe_20261001T145323285096Z",
+      "summary_sha256": "d8d619afcf9cbc53150d22e36874021d1faa4aa1b59b756b2fc73f151b81a304",
+      "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 4.812873899936676,
+      "sampled_process_tree_rss_peak_bytes": 307425280,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_phase_jvp_order_probe_20261001T145522110940Z",
+      "summary_sha256": "c4234f637a038dc57f4cda29b77e9ee8abd8a53f4ae9aea88db37ca96d3a5fd0",
+      "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 7.678882138920017,
+      "sampled_process_tree_rss_peak_bytes": 373727232,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_qualification_tests_20261001T104403244426Z",
+      "summary_sha256": "b44920a03cf2d9da8083349ac1cb1d20d48bd7c22fdf32bb2ad6a972307c5403",
+      "worker_log_sha256": "5e8282ca88bda019599965e7f68d77aaeb23dbfdbcb63060f0be050261b93220",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.027867241995409,
+      "sampled_process_tree_rss_peak_bytes": 39829504,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_repair_FE_dispatch_20261001T122352993335Z",
+      "summary_sha256": "24212153fbb3f81af051c263405b8d2cbdccb0bdb6a5887d4aa7461feb8d2c88",
+      "worker_log_sha256": "7f20721722339faad833bedbd918bbce72ec5ee8917b82cf8b1a09bf4e47f2f3",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.6843799520283937,
+      "sampled_process_tree_rss_peak_bytes": 125423616,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "1 passed in 0.50s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_resource_freeze_contract_20261002T040013164397Z",
+      "summary_sha256": "4a8cde426f0cca021fc6ccbb78849f4ddea871a9b2d9eabf1fcffc030e5f5bd0",
+      "worker_log_sha256": "6ed404018a320635e7daf67c3068aefaa64df2168435975124d2058f0bb4ab22",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.1348194219172,
+      "sampled_process_tree_rss_peak_bytes": 42979328,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_resource_freeze_ml_20261002T035827553968Z",
+      "summary_sha256": "9b751e1d2c7e674915554736958310f04170b4a90fe3b334e05d24e6ab63c3b3",
+      "worker_log_sha256": "436ac3df2dde13df15776e75b67b9a95269f8e1c1e347d44944228e1aac3d7ac",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 6.331159622059204,
+      "sampled_process_tree_rss_peak_bytes": 299155456,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "1 failed in 2.29s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_resource_freeze_ml_corrected_20261002T035907486880Z",
+      "summary_sha256": "645799031cc87ee15882f5956d1468fbec4d1ce1f221438dfed3e04a273efe3e",
+      "worker_log_sha256": "35c91e16f35ee96dc3ffcce7a1f698397b74670061409f69285ed396c71b0f82",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 11.47608987800777,
+      "sampled_process_tree_rss_peak_bytes": 339353600,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "1 passed in 2.20s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_resource_freeze_static_20261002T035731982564Z",
+      "summary_sha256": "0893ee8970febeafc52aa7a5de853c1883bcb38aedfc5211ed43f8f8df9aea67",
+      "worker_log_sha256": "70d784b2cfd0356258bc0c4ac858ecb288771c6bd1036a8da0337a7a091b8ad3",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.8249517439398915,
+      "sampled_process_tree_rss_peak_bytes": 68947968,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "9 passed in 0.61s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_static_20261001T104205699875Z",
+      "summary_sha256": "e48002b422b854d1077cc1b6fe2b528e45b55e862969ea3e9ad5a3ea0dac76ec",
+      "worker_log_sha256": "841cf9e0ce7126186f9e2bb1e7de90e9963f4507ca63d70d85d670a9ffc3e947",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.096564574050717,
+      "sampled_process_tree_rss_peak_bytes": 43839488,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_static_fix_20261001T104251207621Z",
+      "summary_sha256": "88367d01a2c7fd333baaca20c191bc1067fd83184818ac40ecc92e66f6aebb4f",
+      "worker_log_sha256": "010d70ddb85f024e8ebc45e5a340e1434a6ab78a5856da38348df09c5c26ae77",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.0628767180023715,
+      "sampled_process_tree_rss_peak_bytes": 43143168,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_tangent_repair_fixed_20261001T145628679514Z",
+      "summary_sha256": "8f8099f9f7cc2214f4b92750a7f1ec48f2c10a3ca792bbab2eb79e6bc176efdd",
+      "worker_log_sha256": "18eb436387f72fb626d422357f634fe32d86495758a494d9a46fd788e0ae7675",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 11.780894864001311,
+      "sampled_process_tree_rss_peak_bytes": 379056128,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "19 passed in 8.20s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_B_tangent_repair_targeted_20261001T144814216960Z",
+      "summary_sha256": "a7bebdb4dcfe2c8556a070a9e3b48f70dd55ac8b0a63f902c11d648d46ae6d94",
+      "worker_log_sha256": "b41b6ebf38dc7e10dde52a28195cbaf414238181dfa89c29792dcb8d6325c116",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 11.83406061003916,
+      "sampled_process_tree_rss_peak_bytes": 379584512,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "1 failed, 18 passed in 7.63s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_checker_targeted_20261002T060732851463Z",
+      "summary_sha256": "1061417a35065051063a7480f6f72d447c9d86bcfac8ae62068533740a721721",
+      "worker_log_sha256": "99bb40cdf65273071ce52aadb20b30ee0f5d7dc9db7b163dc22e7538b2c594d1",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.060622434015386,
+      "sampled_process_tree_rss_peak_bytes": 39505920,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_checker_targeted_fixed_20261002T060757629460Z",
+      "summary_sha256": "f9b62f5d5cd677de451c8c18334410a8da6d1664163e0712c661beec28797b1f",
+      "worker_log_sha256": "011a1f7e39acc7528605515c6ce7aeea4605f45f156f6a6bf5df8c47767da23e",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.7792263759765774,
+      "sampled_process_tree_rss_peak_bytes": 106217472,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": [
+        "5 passed in 0.45s"
+      ]
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_compact_checker_20261002T060826559285Z",
+      "summary_sha256": "76975eb39de6b37b6a33c13268bba79a388247ff0b8bf2a9ff87eca624c0316e",
+      "worker_log_sha256": "96ce249e22cc66bae294f4941b8f0beaa01e46f3f8f9631151a3f356733005a0",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 6.8542383920867,
+      "sampled_process_tree_rss_peak_bytes": 104341504,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_publish_docs_20261002T060949787339Z",
+      "summary_sha256": "b987a5ec8317429dfc39f4e322c969bcc6affe6e117a297c637d375d526f899d",
+      "worker_log_sha256": "8ccc0dc089e9155a9c01d45493fdf0d635f92e610f49ca85665b83845ff29434",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.1697845300659537,
+      "sampled_process_tree_rss_peak_bytes": 39542784,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_tables_20261002T060859077127Z",
+      "summary_sha256": "e15069c9a594dce51ce4676ea4934f0a4cb667091fdbecbef61b5320f7c6799d",
+      "worker_log_sha256": "3e43a551b15b6ac461e0228bff0bc0d6496decda4feb43753e317675410f6935",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.2378894690191373,
+      "sampled_process_tree_rss_peak_bytes": 39505920,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    }
+  ],
+  "current_stage_inventory_count": 14,
+  "frozen_index_count": 13,
+  "missing_formal_phase_final": "RESOURCE_WINDOW_UNAVAILABLE; immutable saved accepted75 state exported separately; not a fake completed training index",
+  "final_checker_tests": "5 passed, source606ad7754c6d284300294ae9ddb0a1c41dc0471d; raw fields/labels/counters/timer scope/compact cap",
+  "test_count_scope": "Individual suite results, overlap not summed as independent tests; failed attempts retained",
+  "related_file_hashes": {
+    "benchmarks/check_task42extra_docs_v3.py": "2986243fa25ad7868ec40c4017edb36e3ffaebb02fe8d858731ff0d4636abe82",
+    "benchmarks/check_task42extra_v10.py": "f9b78c9c846b4f63887c0c80372a238bed04384f93f248309c7b66a6d73b3ea2",
+    "benchmarks/finalize_task42extra_render_v3.py": "c2f7f1f0033c4c1c364f131b656ffba8647ba7d69fa1e057d50efced35591e78",
+    "benchmarks/render_task42extra.py": "bac90eae45f5302efa6555ca0ad662463683e2749a3dab566890f4becf7e8fb3",
+    "scripts/launch_task42extra_durable.py": "ef1da12cd1f40d93b98c520adad7a03e5cc9e094ff35e40b5cad02b825ae6c39",
+    "src/io/feinn_pilot.py": "0ef805ec158b41b51f8925366dbe4e146e0c1ed640c6dd734ee9efebddaab914",
+    "src/runners/feinn_cached_gn_campaign.py": "f3b41817ce30b6107894f31f629758a4a2acefadebc706163ab745ed0ccf5f32",
+    "src/runners/feinn_gn_recovery.py": "36178c6bd50f4573df2d807e6439ef489f9813586e2370009e3cfbb9471e95ba",
+    "src/runners/feinn_workflow.py": "aeefc01719e96a60bc22261066666db477e07fade88e7c6d9614edbb9fecb410",
+    "src/solvers/damped_gauss_newton.py": "ae597893a30b12702f5f31e76bfbf185871c099ce8880bac5568326735e1921e",
+    "src/solvers/feinn_cached_derivatives.py": "b9c1fa722f52470212c47751d4f2cc759ce356c9fa8a60d2b878fa84078693d6",
+    "src/solvers/feinn_derivative_reuse.py": "9a5778e24b7532d950671cd26002f75e569dfc5ace73fc68afde34d343aeb485",
+    "src/solvers/feinn_gn_budget.py": "8e516808430e31b773a586b9a2599fdb467586db5b06b74f06c666a6d251ea6d",
+    "src/solvers/feinn_gn_freeze.py": "86c66385fa41337760755661a38692e692610b21523efde64bdac0bcad414790",
+    "src/solvers/feinn_gn_training.py": "51f9e356a75118530b92eca1e7a337ee05cdac00a3de579300faf243d770e5d5",
+    "src/solvers/feinn_phase_verification.py": "8c2c51dc735e45ff24d3321bf101829c1723b033ab0a0711d7817c6ff3690b4a",
+    "src/test/test_feinn_cached_derivatives_ml.py": "12fa13881d3a6787ccca1a45f6a557f3f669f20baeca062cd6a47a67ccab9caf",
+    "src/test/test_feinn_gn_freeze_ml.py": "819cf8f7242b549b9fa2dfa98c1b5b90f21e13166c90c7eaee1166d117010654",
+    "src/test/test_feinn_gn_recovery.py": "88684f77760b36ccd1308d254072a1ee66a4e9bf73613737bbd745183d044dad",
+    "src/test/test_feinn_gn_runner_ml.py": "a342855b53de7df664824f23f1aaa52800b699c76d13427bba2592549f903185",
+    "src/test/test_feinn_v10_checker.py": "bb0cce4e46e358804ce875804be1bd08324878ae5538936085ebec0822273397",
+    "src/test/test_feinn_v9_fe_dispatch.py": "6a057796da32222979a6d116fc9efd2c9a3da49019a67296842382cad1c043d2"
+  }
 }
