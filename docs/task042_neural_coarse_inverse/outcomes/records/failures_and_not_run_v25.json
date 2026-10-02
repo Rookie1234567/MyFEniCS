@@ -1,0 +1,99 @@
+{
+  "new_development_roots": [
+    {
+      "id": "D01",
+      "kind": "checker CSV schema wiring",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231053620156/supervision/worker.log",
+        "sha256": "d25a1eb367a7f98e8cabad6813401bab38c4107eac2cadb0dc5754b073030944",
+        "bytes": 855
+      },
+      "correction": "mode uses polarization; power CSV has explicit keys and no full original_key; full key required on amplitude CSV",
+      "minimal_fix_rounds": 1,
+      "elapsed_upper_seconds": 240,
+      "formal_operator_replay": 0
+    },
+    {
+      "id": "D02",
+      "kind": "watchdog smoke test envelope wiring",
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231800454222/supervision/worker.log",
+        "sha256": "cb2a5c88a14390d028eb40f63584bed2fc596302d00ac9a9ca9cd0b1d2857e00",
+        "bytes": 5996
+      },
+      "correction": "test explicitly uses the same shared_envelope as production; warning/hard thresholds unchanged",
+      "minimal_fix_rounds": 1,
+      "elapsed_upper_seconds": 120,
+      "formal_operator_replay": 0
+    }
+  ],
+  "root_count": 2,
+  "root_limit": 2,
+  "old_V24_roots": "4/4 retained; separate historical budget",
+  "optional_tool_probes": [
+    {
+      "tool": "ruff",
+      "status": "unavailable; no install",
+      "test_log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231841512088/supervision/worker.log",
+        "sha256": "5294d6624e5c648bb25ba05a7c80031f1d5cd9a9c8a5def23d743c7a0973c75e",
+        "bytes": 459
+      }
+    },
+    {
+      "tool": "threadpoolctl",
+      "status": "unavailable; used existing qualified ctypes actual BLAS probe"
+    }
+  ],
+  "admission": {
+    "failure": "No audited unoccupied physical core during auxiliary admission; actor not created",
+    "readonly_rechecks": 1,
+    "recheck_result": "PASS",
+    "bounded_interval_upper_seconds": 347.686776314,
+    "interval_role": "conservative bound from preceding completed auxiliary end to successful audited launch; exact failed-admission timestamp unavailable",
+    "explicit_sleep_seconds": 0,
+    "no_background_wait_or_restart": true
+  },
+  "formal_replays": 0,
+  "factor_reader_reentries": 0,
+  "solver_continuations": 0,
+  "operator_tests_failed": 0,
+  "field_recovery_REF7_NN_training_V24_next_cycle": "NOT_RUN_BY_CONTRACT",
+  "new_LU_or_assembly": "NOT_RUN_BY_CONTRACT",
+  "neural_20percent_increment": "NOT_DEMONSTRATED",
+  "target_scale_qualification": "NOT_QUALIFIED",
+  "merge": "NOT_APPROVED",
+  "closing_format_normalization": {
+    "first_staged_diff_check": "FAIL: new CSV CRLF flagged as trailing whitespace; set -e stopped before commit",
+    "correction": "LF-only serialization; exact parsed string cells preserved; no mathematical change or numerical replay",
+    "time": "2026-10-02T23:38:44.973622+00:00",
+    "rows": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/direction_metrics_v25.csv",
+        "rows_unchanged": 3,
+        "before_sha256": "87bebcb8d845e9296c234c5cbb425a4724b128accbf57bf8167d840f6e31e851",
+        "after_sha256": "40ee815a9305f2839166f31790d24094af9a21178125ee0a1b93f84f2d0f8b20"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/complex_cross_terms_v25.csv",
+        "rows_unchanged": 864,
+        "before_sha256": "b673565f67da554de85e8de974a201b774f3f8b271a59560c917332ba0301981",
+        "after_sha256": "c8c44e7ec28e41a1c456eee45015690fb58da69a20a83ec03f0787013820c703"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/block_response_v25.csv",
+        "rows_unchanged": 192,
+        "before_sha256": "13c90703fd1d12949211d05317b0fb0c803c5984974cc690640d4ca5bfa33188",
+        "after_sha256": "e852337115d65748a87fe3b8e26e7206d6db3182f9fba73bbd53b3565506f0de"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/target_coherence_v25.csv",
+        "rows_unchanged": 24,
+        "before_sha256": "832e824d86c4c526e5f7c8cb506e305b8d240734ef71555d8b3da14818db9af7",
+        "after_sha256": "a67c0741465507ec690d03347765a2c11f4e932890f091414391d1934869d279"
+      }
+    ],
+    "formal_source_unchanged": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+    "operator_replays": 0
+  }
+}

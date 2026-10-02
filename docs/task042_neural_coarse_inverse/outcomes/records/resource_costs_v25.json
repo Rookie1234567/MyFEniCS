@@ -1,0 +1,364 @@
+{
+  "schema": "task042.v25.resource-costs.v1",
+  "shared_workstation": true,
+  "actor_supervised_wall_seconds": 25.665227008983493,
+  "actor_launch_wall_seconds": 27.057487629936077,
+  "worker_wall_after_packet_loading_seconds": 20.835108479019254,
+  "auxiliary_supervised_wall_seconds": 26.429975512088276,
+  "auxiliary_runs": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231053620156/summary.json",
+        "sha256": "fb1ea9ecbd7ee832d7da3dd487a148c44d7de613d4b3f1eb149b382717ff6bc9",
+        "bytes": 3524
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231053620156/supervision/worker.log",
+        "sha256": "d25a1eb367a7f98e8cabad6813401bab38c4107eac2cadb0dc5754b073030944",
+        "bytes": 855
+      },
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.1670887110522017,
+      "RSS_peak_bytes": 64581632,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231643469398/summary.json",
+        "sha256": "006dbbd9cb54f584cc0fd40795acf5748509d5f86c1a51d5feb74522c08f076b",
+        "bytes": 3593
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231643469398/supervision/worker.log",
+        "sha256": "9ddc0474ba70a8e14c59ad23414f589e9b3c4a06d0db6797178ffaf4e5dd5bed",
+        "bytes": 652
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.421881888061762,
+      "RSS_peak_bytes": 161591296,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231800454222/summary.json",
+        "sha256": "bff20b264eac95152e76019609a3119965eebe656f7f986d6dae1b9529ae8f05",
+        "bytes": 3566
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231800454222/supervision/worker.log",
+        "sha256": "cb2a5c88a14390d028eb40f63584bed2fc596302d00ac9a9ca9cd0b1d2857e00",
+        "bytes": 5996
+      },
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 4.942479132907465,
+      "RSS_peak_bytes": 166768640,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231841512088/summary.json",
+        "sha256": "cc67255e383b270a977261c36c30916033bda343daec6d702aa1c964ec9bff04",
+        "bytes": 3624
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231841512088/supervision/worker.log",
+        "sha256": "5294d6624e5c648bb25ba05a7c80031f1d5cd9a9c8a5def23d743c7a0973c75e",
+        "bytes": 459
+      },
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 9.736529447021894,
+      "RSS_peak_bytes": 166801408,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_232602980538/summary.json",
+        "sha256": "611154defe6808921d9dadf20204f8e5ced1ec594f17aa6629c21a50a5d23354",
+        "bytes": 3525
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_232602980538/supervision/worker.log",
+        "sha256": "b8fb63300e40a71105d3138ef8bd06920de6d206d05a76928cc5a45d065ba2a0",
+        "bytes": 2027
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.1619963330449536,
+      "RSS_peak_bytes": 65769472,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "simultaneous_sampled_tree_peak_bytes": 1832550400,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "sample_interval_seconds": 0.5,
+  "continuous_kernel_cgroup_limit": false,
+  "cpu": 0,
+  "cpu_topology": [
+    {
+      "cpu": 0,
+      "core": 0,
+      "socket": 0,
+      "siblings": [
+        0
+      ]
+    }
+  ],
+  "system_memory": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 2076309942272,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 2076309942272,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "cgroup": {
+    "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+    "delegated_writable": false,
+    "ancestors": [
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+        "memory.max": "max",
+        "memory.current": "36565860352",
+        "memory.high": "max",
+        "memory.swap.max": "max"
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+        "memory.max": "max",
+        "memory.current": "144568770560",
+        "memory.high": "max",
+        "memory.swap.max": "max"
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice",
+        "memory.max": "max",
+        "memory.current": "144704352256",
+        "memory.high": "max",
+        "memory.swap.max": "max"
+      },
+      {
+        "path": "/sys/fs/cgroup"
+      }
+    ],
+    "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+  },
+  "GPU_used": false,
+  "VRAM_bytes": 0,
+  "own_swap_peak_bytes": 0,
+  "OOC_bytes": 0,
+  "PSI_start": {
+    "some": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 2594438.0
+    },
+    "full": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 2587839.0
+    }
+  },
+  "neighbor_impact": "INCONCLUSIVE: no comparable neighboring phase interval; no pressure stop observed",
+  "descendants_cleared": true,
+  "source_sha": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+  "source_executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "actual_BLAS_pools": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "MPI": 1,
+  "DataLoader_workers": 0,
+  "Torch_loaded": false,
+  "mathematical_counts": {
+    "actions": 39,
+    "L8": 3,
+    "local_lu_solve": 40,
+    "local_triangular_pass": 80,
+    "factor_readers": 1,
+    "thin_decompositions": 3,
+    "port_factors": 1,
+    "port_solves": 37
+  },
+  "actual_action_counts": {
+    "S": 39,
+    "SH": 0,
+    "audit": 0
+  },
+  "limits": {
+    "actions": 64,
+    "local_lu_solve": 96,
+    "local_triangular_pass": 192,
+    "factor_readers": 2,
+    "thin_decompositions_per_state": 1,
+    "actor_wall_seconds": 600
+  },
+  "no_new_assembly_or_local_factor": true,
+  "local_explicit_payload_bytes": 1354503168,
+  "simultaneous_planned_bytes": 5813108752,
+  "planning_role": "derived allowance, not RSS",
+  "namespace_artifact_bytes": 16317520,
+  "formal_result_bytes": 644187,
+  "auxiliary_evidence_bytes": 1917093,
+  "new_persistent_output_bytes_excluding_cache": 18878800,
+  "new_artifact_limit_bytes": 134217728,
+  "task042_artifacts_logical_bytes": 17537999211,
+  "task042_artifacts_limit_bytes": 21474836480,
+  "disk_free_start_bytes": 3392834658304,
+  "disk_free_closing_bytes": 3392781316096,
+  "nonadditive_nested_timers": {
+    "factor_reader_hash_reload_seconds": 14.426483312970959,
+    "original_packet_action_seconds": {
+      "S": 3.6614362489199266,
+      "SH": 0.0,
+      "audit": 0.0
+    },
+    "local_apply_seconds": 0.8256177960429341,
+    "local_LU_solve_seconds": 0.6726459340425208,
+    "port_action_and_solve_seconds": {
+      "S": 3.2509002836886793,
+      "SH": 0.0,
+      "port_solve": 0.005154405487701297
+    },
+    "eight_direction_seconds": [
+      0.9673047449905425,
+      1.461940249078907,
+      1.932286928058602
+    ],
+    "small_LS_seconds": [
+      0.007572227972559631,
+      0.008258877089247108,
+      0.05259341292548925
+    ]
+  },
+  "historical_formal_lower_bound_before_seconds": 77102.629289102,
+  "historical_formal_lower_bound_after_seconds": 77128.29451611098,
+  "historical_auxiliary_and_per_solution_lineage_cost": "unknown retained; no fabricated exact cumulative total",
+  "startup_and_unmonitored_read_implementation_cost": "included in immutable total elapsed; no separate RSS measurement",
+  "immutable_clock": {
+    "schema": "task042.campaign-window.v25",
+    "start_utc": "2026-10-02T23:01:15+00:00",
+    "start_monotonic": 907069.8608675333,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 4500,
+    "total_limit_seconds": 5400,
+    "heavy_stop_utc": "2026-10-03T00:16:15+00:00",
+    "deadline_utc": "2026-10-03T00:31:15+00:00",
+    "review_expected_commit": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
+    "prior_HEAD": "31ad54a9d774f384aa11699da8c14befbdc3b6e2",
+    "scope": "earliest UTC tool observation; includes initial read-only identity/contract work",
+    "bootstrap_measurement": {
+      "utc": "2026-10-02T23:01:51.519793+00:00",
+      "monotonic": 907106.38066009,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "start_monotonic_role": "derived offset from paired bootstrap observation and earliest UTC tool timestamp, not directly sampled at start"
+    },
+    "observed_utc": "2026-10-02T23:30:54.534943+00:00",
+    "observed_monotonic": 908849.395810357,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 1779.534942823695,
+    "heavy_remaining_seconds": 2720.465057176305,
+    "total_remaining_seconds": 3620.465057176305
+  },
+  "ledger": {
+    "charged": {
+      "actions": 39,
+      "L8": 3,
+      "local_lu_solve": 40,
+      "local_triangular_pass": 80,
+      "factor_readers": 1,
+      "thin_decompositions": 3,
+      "port_factors": 1,
+      "port_solves": 37
+    },
+    "runs": [
+      {
+        "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z",
+        "source_sha": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+        "classification": "COMPLETED",
+        "counts": {
+          "actions": 39,
+          "L8": 3,
+          "local_lu_solve": 40,
+          "local_triangular_pass": 80,
+          "factor_readers": 1,
+          "thin_decompositions": 3,
+          "port_factors": 1,
+          "port_solves": 37
+        },
+        "completed": {
+          "actions": 39,
+          "L8": 3,
+          "local_lu_solve": 40,
+          "local_triangular_pass": 80,
+          "factor_readers": 1,
+          "thin_decompositions": 3,
+          "port_factors": 1,
+          "port_solves": 37
+        },
+        "upper": {
+          "actions": 39,
+          "L8": 3,
+          "local_lu_solve": 40,
+          "local_triangular_pass": 80,
+          "factor_readers": 1,
+          "thin_decompositions": 3,
+          "port_factors": 1,
+          "port_solves": 37
+        },
+        "exact_counts": true,
+        "actor_wall_seconds": 25.665227008983493,
+        "launch_wall_seconds": 27.057487629936077,
+        "rss_peak_bytes": 1832550400,
+        "swap_peak_bytes": 0,
+        "descendants_cleared": true
+      }
+    ],
+    "active": null,
+    "closed": true,
+    "actor_wall_seconds": 25.665227008983493
+  },
+  "no_new_solver_results": true,
+  "closing_storage_observation": {
+    "observed_utc": "2026-10-02T23:36:53.139488+00:00",
+    "namespace_artifacts_bytes": 16317520,
+    "formal_result_bytes": 644187,
+    "isolated_TMP_cache_aux_and_metadata_bytes": 10257358,
+    "tracked_V25_records_bytes": 149638,
+    "complete_new_storage_conservative_bytes": 27368703,
+    "note": "includes caches and compact records as an additional conservative check; tracked source and prose sizes are small and separately versioned"
+  },
+  "closing_readonly_checks": {
+    "observed_utc": "2026-10-02T23:36:53.139488+00:00",
+    "observed_monotonic": 909208.000368334,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 2138.139500800753,
+    "numerical_queue_closed": true,
+    "Task042_actors": [],
+    "unmeasured_low_load_metadata_in_total_elapsed": true
+  }
+}

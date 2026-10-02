@@ -1,0 +1,121 @@
+{
+  "stage": "V25-DIAGNOSTIC",
+  "actual_source_sha": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+  "result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/stage_result.json",
+    "sha256": "eb2445654d50c14f813a645f37cfae4f8feafb2f47126b96a3c56972196b4eb3"
+  },
+  "files": {
+    "source_sha.txt": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/source_sha.txt",
+      "sha256": "6a1abd0c4187793b65922a15a2d78eb18c4048dcf7aaed958af7ad7bbbdad62c",
+      "bytes": 41
+    },
+    "input_original.dat": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/input_original.dat",
+      "sha256": "6403cf3a2d2150f97ca886cd0860bb08c894a907e724711fd1d55f55d8666014",
+      "bytes": 230
+    },
+    "input_sha256.txt": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/input_sha256.txt",
+      "sha256": "fc7d5cd70c90f9ddf58e4156aac529d9d6279031f3bc72cf957a06a4a567bd40",
+      "bytes": 65
+    },
+    "physical_model_sha256.txt": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/physical_model_sha256.txt",
+      "sha256": "721af8efb669ea6f038d9cf9bf74bda9f60f2db533540ef75495b4a3eda80460",
+      "bytes": 65
+    },
+    "resolved_config.json": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/resolved_config.json",
+      "sha256": "f6e6298eb0aeab35ef72cdee5f0dc37db30b32d689d3015f780b994c379a1bda",
+      "bytes": 4094
+    },
+    "run_manifest.json": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/run_manifest.json",
+      "sha256": "b4e2e92c679de2e3ef3c69bc7442eac8e6dc3fa500cab8193dcf72d1e0bb0719",
+      "bytes": 2659
+    },
+    "run_summary.json": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/run_summary.json",
+      "sha256": "d7669a5735d50c440be48a725ab29afd7487c8462efebd9580e28c3612f5eec4",
+      "bytes": 6473
+    },
+    "resource_baseline.json": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/resource_baseline.json",
+      "sha256": "fe15d7e55c223a39d7522d1077f06f590ebafd13bad1a510b4c65d49aa793b81",
+      "bytes": 202414
+    },
+    "supervision/summary.json": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/supervision/summary.json",
+      "sha256": "180a35e8bb763bd4624aaeca73665248c346f98f19502357a2d35c7de5b6d31c",
+      "bytes": 6249
+    },
+    "supervision/resources.jsonl": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/supervision/resources.jsonl",
+      "sha256": "a035a22f8e4afef950b0a4d16d86287eb218f6ac9cb9f90d1409de68b256b555",
+      "bytes": 377154
+    },
+    "supervision/worker.log": {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/supervision/worker.log",
+      "sha256": "70762f772ae3933643ec9cce9064775c33748e57207bc9764a3c0b24c704d6a8",
+      "bytes": 6621
+    }
+  },
+  "row_artifacts": [
+    {
+      "name": "V24-LZ-INITIAL",
+      "metadata": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-INITIAL.json",
+        "sha256": "f07736161453b68c9d9f120c93d711765ee876029e09d7018ef7a7f7e8d075d3",
+        "bytes": 69585
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-INITIAL.npz",
+        "sha256": "7977b5860619eb1875f04d5dcfccfd93fae46cd988542795a5164126ee2bd7e5",
+        "directions_sha256": "cf8186fbcffd5edba92757379e02cfac1cca018694f677a50dc99f16fd68c2c1",
+        "images_sha256": "3d6ceebf73edf46902835cd8a26a4e96c7135ea13ab9134436af3b17f2e49030",
+        "coefficients_sha256": "26a4a52282e7f480adfcfe3d0b2b8fef0a98eb1975a3fd749dc8a30eaa6141c0",
+        "local_q_sha256": "021e147bc30fa3c8940abe783b3bc58baa0cdb69b9aa42b326dc76ce519178e2",
+        "diagnostic_residual_sha256": "fc1c335f48a2e386aee626f16beb90108789fe22f40b25ddcb93b42c203f35a0"
+      }
+    },
+    {
+      "name": "V24-LZ-CYCLE4",
+      "metadata": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-CYCLE4.json",
+        "sha256": "2a27e8dd91938a3240afb1ab736b42b810239f074b76fd9826809b28f000e501",
+        "bytes": 69963
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-CYCLE4.npz",
+        "sha256": "3a84a0ca2b0f9a4b7121226d670141b85e5d6585f195c249c650cb7bc4a67df2",
+        "directions_sha256": "45a76360114fd53fbbecac56df2b19822989c2e08458cce5d36d455dc6cbb9f9",
+        "images_sha256": "bed3c416bfc2332f79cf6d88ef5211dd4b2704809fff2dd03552fa4ed6dc4f15",
+        "coefficients_sha256": "64081bf6e3730e5b1ce6b5b4c8f508530b1677c925230280f9a1cc0fcb51d77f",
+        "local_q_sha256": "424db926dbdea2ffa8b00a1c11f3e468518532894a93f7444389a4bed6269f12",
+        "diagnostic_residual_sha256": "a36a00a1d13d840e7542145db0ea59f630a3598045b85c98c2f5e654376dc4d0"
+      }
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "metadata": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LCZ-CYCLE4.json",
+        "sha256": "c41fd78a922685d16f68286bd751743fcf888899830336d2dcdf3ba328eeae9f",
+        "bytes": 69951
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LCZ-CYCLE4.npz",
+        "sha256": "ff50538db9161c25a545825cfcb31f6746732c23304b02ef74dd7506ca559bf2",
+        "directions_sha256": "8fe0ef0e916d81dd2d2181b4f925c2971440039a694f47212fa96e70861055bc",
+        "images_sha256": "506416d3873017a6a80a2777ba1dca7cccbedae36775f20e5357b77369acc534",
+        "coefficients_sha256": "4df384baf4753de10cd847a944c3579edefa3ede5fba9bdf122a2713f5488c63",
+        "local_q_sha256": "c419832d04a5eb1c8310a1b429ce29fb25f9ae9164acdcce8d2a6fb73e93f220",
+        "diagnostic_residual_sha256": "ef6950a8282350fc0f26f1f0fd917060e5423bec69bbbcd87bb2c55b82ec38c0"
+      }
+    }
+  ],
+  "solver_results": 0,
+  "formal_FE": 0,
+  "neural_training": 0
+}

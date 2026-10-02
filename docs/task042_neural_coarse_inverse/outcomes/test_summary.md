@@ -1,3 +1,18 @@
+# V25最终测试与边界
+
+| 本地检查 | 实际结果／口径 |
+|---|---|
+| six-field/four-power/40-mode必需库存 | 52 passed；逐缺键、empty、NaN/Inf/负误差、错mode／极化／参考面拒绝 |
+| 最终Task042 focused | 93 passed in 7.72s；库存52包含在93内，不相加；含复非Hermitian／非互伴40port、零／秩亏／相消、wrong hash、deadline与完整后代清场，以及V24准入/reader默认回归 |
+| 原V24 checker | 0/5保持；无重跑PDE，原six/four库存完整 |
+| V25真实packet原作用见证 | 三状态全通过，S39/SH0；原映射、端口、对角／线性重组、QR／秩／驻点；不是field资格 |
+| 独立cached-array checker | 重算3组eta／驻点／块交叉项，与actor一致；不增加S、QR、SVD或factor读取 |
+| compileall／新dat | PASS（正式commit/actor前）；单个DIAGNOSTIC入口valid，结束后封存拒绝续跑 |
+| Ruff／full pytest／MPI2/4／CI | Ruff未安装NOT_RUN；其他超出array-only范围NOT_RUN；不声明CI |
+| GitHub视觉 | 精确页Cache miss，NOT_VERIFIED；新Markdown本地表格／fence／链接检查单列于render_check_v25 |
+
+两个开发接线失败及一次辅助准入无空闲核拒绝保留，失败费用计入；两次最小修复后正式数值无重放。实际source bc88fe5a81d086059dec705db333b9cf9bf2921e。[库存](records/checker_inventory_v25.json)／[缓存审核](records/cached_array_checker_v25.json)／[失败](records/failures_and_not_run_v25.json)。以下原测试历史字节保留。
+
 # Task042 V24最新收口：对称首块与唯一审核完成
 
 四条首块及唯一冻结审核已完成，完整同离散资格0/5。资格由原方程、场、端口及逐通道功率共同决定；单项native通过或残差降低不能替代完整资格。神经20%增量独立记NOT_DEMONSTRATED：本批无隐藏层训练，也没有最佳合格非神经同精度／完整端到端成本的配对性能证据。

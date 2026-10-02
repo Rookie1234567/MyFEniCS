@@ -1,0 +1,593 @@
+{
+  "rows": [
+    {
+      "name": "V24-LZ-INITIAL",
+      "status": "DIAGNOSTIC_COMPLETE",
+      "gates": {
+        "diagonal": true,
+        "recombination": true,
+        "qr": true,
+        "stationarity": true,
+        "inequality": true,
+        "numerical_full_direction_rank": true,
+        "columns_resolved": true,
+        "whole_response_resolved": true
+      },
+      "coefficients": [
+        {
+          "real": 0.24350535232077825,
+          "imag": -0.07779489894225208
+        },
+        {
+          "real": 0.24167842674279919,
+          "imag": -0.08160423247763846
+        },
+        {
+          "real": 0.205541304528844,
+          "imag": -0.02996603870753698
+        },
+        {
+          "real": 0.19065554170259966,
+          "imag": -0.028409538403400908
+        },
+        {
+          "real": 0.14816409130452865,
+          "imag": 0.006915493624253514
+        },
+        {
+          "real": 0.1493232549164847,
+          "imag": 0.008235539776501837
+        },
+        {
+          "real": 0.3308621452598179,
+          "imag": -0.029534013280032027
+        },
+        {
+          "real": 0.33336016296526594,
+          "imag": -0.03563634740347976
+        }
+      ],
+      "response_column_norms": [
+        0.06875296347363612,
+        0.060824083613315996,
+        0.06570706616318776,
+        0.057329337400651374,
+        0.09199199922705618,
+        0.08047653662934293,
+        0.053147298988684505,
+        0.0448877742918485
+      ],
+      "operation_scales": [
+        25064.200197644815,
+        21604.251929004276,
+        25880.05307944489,
+        21976.98819639915,
+        32429.302353835028,
+        27317.75407395849,
+        16541.07662986045,
+        13215.521471512184
+      ],
+      "roundoff_floors": [
+        3.561837075614678e-10,
+        3.070148853937024e-10,
+        3.6777767433370755e-10,
+        3.1231178633673764e-10,
+        4.6084810426570795e-10,
+        3.8820863429064177e-10,
+        2.3506283681997005e-10,
+        1.8780385561729224e-10
+      ],
+      "resolved_columns": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "singular_values": [
+        1.153086099148747,
+        1.1380732666401001,
+        1.023081450004176,
+        1.00746538602882,
+        0.9591392963918774,
+        0.9532881636817206,
+        0.8756623700980166,
+        0.8473537814961152
+      ],
+      "rank": 8,
+      "rank_threshold": 1e-12,
+      "driver": "gelsd",
+      "QR_relative": 2.347161493992919e-16,
+      "orthogonality_relative": 2.852361891605859e-16,
+      "stationarity_operation_relative": 7.399519791224457e-17,
+      "identity": {
+        "saved_trace_residual_full_b_relative": 0.0,
+        "saved_full_residual_full_b_relative": 0.0,
+        "reclosed_port_operation_relative": 0.0,
+        "port_full_rhs_relative": 0.0,
+        "port_operation_relative": 0.0,
+        "full_b_norm": 0.0826782769485171,
+        "trace_residual_norm": 0.0826782769485171,
+        "physical_state_member_hashes": {
+          "trace": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+          "port": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee",
+          "z": "da0f008435083d9720b57802ac7a1af81853f26f1c80e3766f84ead5888bf454",
+          "residual": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b"
+        },
+        "cold_initial_port_norm": 0.0,
+        "homogeneous_direction_rhs": true,
+        "internal_particular_solution_not_applied_to_directions": true
+      },
+      "diagonal_witnesses": [
+        {
+          "block": 0,
+          "error_norm": 1.3160394672500389e-15,
+          "operation_scale": 25064.200197644815,
+          "operation_relative": 5.2506740964098345e-20
+        },
+        {
+          "block": 1,
+          "error_norm": 9.919125366103977e-16,
+          "operation_scale": 21604.251929004276,
+          "operation_relative": 4.591283881848874e-20
+        },
+        {
+          "block": 2,
+          "error_norm": 1.1884879201596135e-15,
+          "operation_scale": 25880.05307944489,
+          "operation_relative": 4.5922932094121723e-20
+        },
+        {
+          "block": 3,
+          "error_norm": 1.1751237494399119e-15,
+          "operation_scale": 21976.98819639915,
+          "operation_relative": 5.3470645701691356e-20
+        },
+        {
+          "block": 4,
+          "error_norm": 1.5968307128905094e-15,
+          "operation_scale": 32429.302353835028,
+          "operation_relative": 4.9240365872430533e-20
+        },
+        {
+          "block": 5,
+          "error_norm": 1.3036601247902483e-15,
+          "operation_scale": 27317.75407395849,
+          "operation_relative": 4.7722082908455616e-20
+        },
+        {
+          "block": 6,
+          "error_norm": 6.366036307530858e-16,
+          "operation_scale": 16541.07662986045,
+          "operation_relative": 3.8486227045455417e-20
+        },
+        {
+          "block": 7,
+          "error_norm": 6.32172305450747e-16,
+          "operation_scale": 13215.521471512184,
+          "operation_relative": 4.783559292862401e-20
+        }
+      ],
+      "independent_recombination": {
+        "unit": {
+          "error_norm": 1.177637569528011e-16,
+          "full_b_relative": 1.4243615287983247e-15,
+          "current_r_relative": 1.4243615287983247e-15,
+          "operation_relative": 6.39919046935617e-22
+        },
+        "best": {
+          "error_norm": 5.901281434959615e-17,
+          "full_b_relative": 7.13764443668109e-16,
+          "current_r_relative": 7.13764443668109e-16,
+          "operation_relative": 1.462498393110836e-21
+        }
+      },
+      "diagnostic_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-INITIAL.npz",
+        "sha256": "7977b5860619eb1875f04d5dcfccfd93fae46cd988542795a5164126ee2bd7e5",
+        "directions_sha256": "cf8186fbcffd5edba92757379e02cfac1cca018694f677a50dc99f16fd68c2c1",
+        "images_sha256": "3d6ceebf73edf46902835cd8a26a4e96c7135ea13ab9134436af3b17f2e49030",
+        "coefficients_sha256": "26a4a52282e7f480adfcfe3d0b2b8fef0a98eb1975a3fd749dc8a30eaa6141c0",
+        "local_q_sha256": "021e147bc30fa3c8940abe783b3bc58baa0cdb69b9aa42b326dc76ce519178e2",
+        "diagnostic_residual_sha256": "fc1c335f48a2e386aee626f16beb90108789fe22f40b25ddcb93b42c203f35a0"
+      }
+    },
+    {
+      "name": "V24-LZ-CYCLE4",
+      "status": "DIAGNOSTIC_COMPLETE",
+      "gates": {
+        "diagonal": true,
+        "recombination": true,
+        "qr": true,
+        "stationarity": true,
+        "inequality": true,
+        "numerical_full_direction_rank": true,
+        "columns_resolved": true,
+        "whole_response_resolved": true
+      },
+      "coefficients": [
+        {
+          "real": -0.1637127566077544,
+          "imag": 0.0007215691233951491
+        },
+        {
+          "real": 0.06445096277195712,
+          "imag": -0.006344678297795306
+        },
+        {
+          "real": -0.05089878687036257,
+          "imag": -0.005084905666258864
+        },
+        {
+          "real": 0.04221209787821189,
+          "imag": 0.00763353747156068
+        },
+        {
+          "real": -0.007433923218939108,
+          "imag": -0.00219026738320957
+        },
+        {
+          "real": 0.0546757661594184,
+          "imag": 0.00929290324931617
+        },
+        {
+          "real": 0.016303184800278557,
+          "imag": -0.015757933934965947
+        },
+        {
+          "real": 0.05735798630897927,
+          "imag": -0.016178939556084817
+        }
+      ],
+      "response_column_norms": [
+        0.006171729000005064,
+        0.004731170463254658,
+        0.006935071808998225,
+        0.005651678007565271,
+        0.01042859610066761,
+        0.008238940022623887,
+        0.00683719310410978,
+        0.005392859120151054
+      ],
+      "operation_scales": [
+        2027.824891962959,
+        1145.8225187608195,
+        2513.563665052659,
+        2089.245778309379,
+        3880.7893930691735,
+        2898.847485949167,
+        2415.719166203126,
+        1882.413267278808
+      ],
+      "roundoff_floors": [
+        2.881712492755581e-11,
+        1.628311734351683e-11,
+        3.571988806147401e-11,
+        2.968996821990372e-11,
+        5.5149334245202986e-11,
+        4.1195100464352195e-11,
+        3.4329434103641545e-11,
+        2.675070145526786e-11
+      ],
+      "resolved_columns": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "singular_values": [
+        1.221315196383184,
+        1.123685990395391,
+        1.031002019621727,
+        1.0017014792617223,
+        0.9724415314054538,
+        0.9172773084701644,
+        0.8655722080431261,
+        0.8019305007794185
+      ],
+      "rank": 8,
+      "rank_threshold": 1e-12,
+      "driver": "gelsd",
+      "QR_relative": 2.279680187832561e-16,
+      "orthogonality_relative": 3.602173073214553e-16,
+      "stationarity_operation_relative": 5.358096575229645e-17,
+      "identity": {
+        "saved_trace_residual_full_b_relative": 5.998198823756953e-17,
+        "saved_full_residual_full_b_relative": 0.0,
+        "reclosed_port_operation_relative": 0.0,
+        "port_full_rhs_relative": 3.4603780908675205e-16,
+        "port_operation_relative": 5.924020024858614e-17,
+        "full_b_norm": 0.0826782769485171,
+        "trace_residual_norm": 0.006728082686191037,
+        "physical_state_member_hashes": {
+          "trace": "db3906e8dfca78628cc38aae57556ac6e66806a3793a0d45818858cec3ba350d",
+          "port": "6e24b9260d2a6ded1530a7d774887d39402d70762f82eb5a0f79a5fb57998357",
+          "z": "1352294a4b71cd70ea8f307739acd25a0d3edad1ed6e916359d88268ef088e73",
+          "residual": "0337b6acc75576bab2d697cbaedc37fef0a113e6fa7d247f38b9dedd57f99d3a"
+        },
+        "cold_initial_port_norm": 0.16439607402079515,
+        "homogeneous_direction_rhs": true,
+        "internal_particular_solution_not_applied_to_directions": true
+      },
+      "diagonal_witnesses": [
+        {
+          "block": 0,
+          "error_norm": 8.719430916902812e-17,
+          "operation_scale": 2027.824891962959,
+          "operation_relative": 4.299893423471243e-20
+        },
+        {
+          "block": 1,
+          "error_norm": 4.8671823876913263e-17,
+          "operation_scale": 1145.8225187608195,
+          "operation_relative": 4.247762902194549e-20
+        },
+        {
+          "block": 2,
+          "error_norm": 9.763257585687064e-17,
+          "operation_scale": 2513.563665052659,
+          "operation_relative": 3.884229280296556e-20
+        },
+        {
+          "block": 3,
+          "error_norm": 1.1484574932606896e-16,
+          "operation_scale": 2089.245778309379,
+          "operation_relative": 5.496995639211119e-20
+        },
+        {
+          "block": 4,
+          "error_norm": 1.8028058956127627e-16,
+          "operation_scale": 3880.7893930691735,
+          "operation_relative": 4.645461819784531e-20
+        },
+        {
+          "block": 5,
+          "error_norm": 1.2556407716630517e-16,
+          "operation_scale": 2898.847485949167,
+          "operation_relative": 4.331517190018427e-20
+        },
+        {
+          "block": 6,
+          "error_norm": 8.608517567345603e-17,
+          "operation_scale": 2415.719166203126,
+          "operation_relative": 3.563542355329293e-20
+        },
+        {
+          "block": 7,
+          "error_norm": 7.366387377242636e-17,
+          "operation_scale": 1882.413267278808,
+          "operation_relative": 3.9132678808046166e-20
+        }
+      ],
+      "independent_recombination": {
+        "unit": {
+          "error_norm": 1.282212059022918e-17,
+          "full_b_relative": 1.5508451631392103e-16,
+          "current_r_relative": 1.9057614462060296e-15,
+          "operation_relative": 6.800661282483632e-22
+        },
+        "best": {
+          "error_norm": 1.7092755706787432e-18,
+          "full_b_relative": 2.0673817038338758e-17,
+          "current_r_relative": 2.540509161974069e-16,
+          "operation_relative": 1.7402696434992198e-21
+        }
+      },
+      "diagnostic_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-CYCLE4.npz",
+        "sha256": "3a84a0ca2b0f9a4b7121226d670141b85e5d6585f195c249c650cb7bc4a67df2",
+        "directions_sha256": "45a76360114fd53fbbecac56df2b19822989c2e08458cce5d36d455dc6cbb9f9",
+        "images_sha256": "bed3c416bfc2332f79cf6d88ef5211dd4b2704809fff2dd03552fa4ed6dc4f15",
+        "coefficients_sha256": "64081bf6e3730e5b1ce6b5b4c8f508530b1677c925230280f9a1cc0fcb51d77f",
+        "local_q_sha256": "424db926dbdea2ffa8b00a1c11f3e468518532894a93f7444389a4bed6269f12",
+        "diagnostic_residual_sha256": "a36a00a1d13d840e7542145db0ea59f630a3598045b85c98c2f5e654376dc4d0"
+      }
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "status": "DIAGNOSTIC_COMPLETE",
+      "gates": {
+        "diagonal": true,
+        "recombination": true,
+        "qr": true,
+        "stationarity": true,
+        "inequality": true,
+        "numerical_full_direction_rank": true,
+        "columns_resolved": true,
+        "whole_response_resolved": true
+      },
+      "coefficients": [
+        {
+          "real": -0.023246162463687214,
+          "imag": 0.0020005994197492623
+        },
+        {
+          "real": -0.012339540320879305,
+          "imag": -0.029238303482172365
+        },
+        {
+          "real": -0.005202226695270894,
+          "imag": 0.011548032851587156
+        },
+        {
+          "real": 0.014029042368908637,
+          "imag": 0.019043849171919078
+        },
+        {
+          "real": -0.013380319740092069,
+          "imag": 0.00016699569523277757
+        },
+        {
+          "real": -0.003913279637138546,
+          "imag": 0.0012834260269710715
+        },
+        {
+          "real": 0.04337819436988449,
+          "imag": 0.01151563760363388
+        },
+        {
+          "real": 0.1556898481011872,
+          "imag": 0.006032419924787666
+        }
+      ],
+      "response_column_norms": [
+        0.03582866201607471,
+        0.026694987385317996,
+        0.030075685820312312,
+        0.0301359857352687,
+        0.0647685915935656,
+        0.05191360770482567,
+        0.025256292118017522,
+        0.022803494138986573
+      ],
+      "operation_scales": [
+        14507.85817601152,
+        9955.003125291052,
+        11837.837428025585,
+        12008.690547385166,
+        24719.863250420618,
+        19099.529668452906,
+        10069.525497015535,
+        9264.028474444895
+      ],
+      "roundoff_floors": [
+        2.0616906476805524e-10,
+        1.4146910310289303e-10,
+        1.6822578783185214e-10,
+        1.7065375668871021e-10,
+        3.5129038523138857e-10,
+        2.7142064124707454e-10,
+        1.4309656388911e-10,
+        1.3164976272783085e-10
+      ],
+      "resolved_columns": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "singular_values": [
+        1.167031655870153,
+        1.136127170287082,
+        1.0064106012818859,
+        0.979391170007826,
+        0.9637253404653964,
+        0.938677945566473,
+        0.9082872699852544,
+        0.8604151455578123
+      ],
+      "rank": 8,
+      "rank_threshold": 1e-12,
+      "driver": "gelsd",
+      "QR_relative": 2.302839443801247e-16,
+      "orthogonality_relative": 4.8630281416195265e-16,
+      "stationarity_operation_relative": 3.658460382480507e-17,
+      "identity": {
+        "saved_trace_residual_full_b_relative": 3.171320502736413e-17,
+        "saved_full_residual_full_b_relative": 0.0,
+        "reclosed_port_operation_relative": 0.0,
+        "port_full_rhs_relative": 8.458629236595614e-17,
+        "port_operation_relative": 6.618531082951861e-17,
+        "full_b_norm": 0.0826782769485171,
+        "trace_residual_norm": 0.02689212013281442,
+        "physical_state_member_hashes": {
+          "trace": "e97287164f9f92b941f335692aee061413434bbf59d25ddf7a313c89907e9180",
+          "port": "326991c559503be277d1f73816d77dbbac33d6963be305312f40e52d7161bc90",
+          "z": "2f30747bb00602d5a62fd5a94a5e7bf507beffb9ef73716f03b3430e70ac7c48",
+          "residual": "6876c978b19aafb13ce71a38a32c81f1e7b3c8b17f892232d0add1d2ffd693c2"
+        },
+        "cold_initial_port_norm": 0.03597108717721787,
+        "homogeneous_direction_rhs": true,
+        "internal_particular_solution_not_applied_to_directions": true
+      },
+      "diagonal_witnesses": [
+        {
+          "block": 0,
+          "error_norm": 6.425375847178049e-16,
+          "operation_scale": 14507.85817601152,
+          "operation_relative": 4.428893479123122e-20
+        },
+        {
+          "block": 1,
+          "error_norm": 4.3146849052092333e-16,
+          "operation_scale": 9955.003125291052,
+          "operation_relative": 4.334187393922175e-20
+        },
+        {
+          "block": 2,
+          "error_norm": 5.199054940874269e-16,
+          "operation_scale": 11837.837428025585,
+          "operation_relative": 4.391895878351669e-20
+        },
+        {
+          "block": 3,
+          "error_norm": 6.334330291404178e-16,
+          "operation_scale": 12008.690547385166,
+          "operation_relative": 5.27478850954607e-20
+        },
+        {
+          "block": 4,
+          "error_norm": 1.2531834455816732e-15,
+          "operation_scale": 24719.863250420618,
+          "operation_relative": 5.0695403647119687e-20
+        },
+        {
+          "block": 5,
+          "error_norm": 9.247975663233745e-16,
+          "operation_scale": 19099.529668452906,
+          "operation_relative": 4.8419913075183315e-20
+        },
+        {
+          "block": 6,
+          "error_norm": 3.2828030397086427e-16,
+          "operation_scale": 10069.525497015535,
+          "operation_relative": 3.260136776734534e-20
+        },
+        {
+          "block": 7,
+          "error_norm": 3.8746606133235445e-16,
+          "operation_scale": 9264.028474444895,
+          "operation_relative": 4.182479170926465e-20
+        }
+      ],
+      "independent_recombination": {
+        "unit": {
+          "error_norm": 7.324947902437553e-17,
+          "full_b_relative": 8.859579774501979e-16,
+          "current_r_relative": 2.7238268556964657e-15,
+          "operation_relative": 6.571679864541633e-22
+        },
+        "best": {
+          "error_norm": 6.60987290466831e-18,
+          "full_b_relative": 7.994691167529059e-17,
+          "current_r_relative": 2.457921826923115e-16,
+          "operation_relative": 1.9479902201646987e-21
+        }
+      },
+      "diagnostic_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LCZ-CYCLE4.npz",
+        "sha256": "ff50538db9161c25a545825cfcb31f6746732c23304b02ef74dd7506ca559bf2",
+        "directions_sha256": "8fe0ef0e916d81dd2d2181b4f925c2971440039a694f47212fa96e70861055bc",
+        "images_sha256": "506416d3873017a6a80a2777ba1dca7cccbedae36775f20e5357b77369acc534",
+        "coefficients_sha256": "4df384baf4753de10cd847a944c3579edefa3ede5fba9bdf122a2713f5488c63",
+        "local_q_sha256": "c419832d04a5eb1c8310a1b429ce29fb25f9ae9164acdcce8d2a6fb73e93f220",
+        "diagnostic_residual_sha256": "ef6950a8282350fc0f26f1f0fd917060e5423bec69bbbcd87bb2c55b82ec38c0"
+      }
+    }
+  ],
+  "decision": "EIGHT_DIRECTIONS_WEAK",
+  "cross_table": "upper triangle; lower = complex conjugate",
+  "response_axes": "target block i, source local direction j; 0-based canonical geometric labels",
+  "neural_20percent_increment": "NOT_DEMONSTRATED"
+}

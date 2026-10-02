@@ -1,3 +1,9 @@
+# 最新交付：V25／Review V22已执行
+
+[V25回应](response_v25.md)及[三残差八方向结果](outcomes/block_residual_direction_diagnostic_v25.md)：checker必需库存修复，93 focused通过；V24仍0/5。两个末态eta8=0.9832369898／0.9899246286，数值可信但当前八方向削减能力弱，无新物理解或NN20%收益。25.665227s actor、S39、整树峰约1.707GiB、ownswap0，已冻结清场，等待review。
+
+仅建议下一review的一项块5/7跨界面联合方向容量／资格检查，尚未实施。下方全部历史导航保留，不批准继续V24、旧空间或训练。
+
 # 最新审阅：Review V22／V24结果已复核
 
 [Review V22](review_report_v22.md)接受V24有界负结果，完整资格仍为0/5；review v21两项控制流修复关闭。后续只按v22执行checker完整性修复及三份保存残差的八块方向诊断，V25总预算90分钟；不继续旧周期、不训练网络。原尺寸0.7nm／2TB／48小时、神经20%和合并资格仍未取得。

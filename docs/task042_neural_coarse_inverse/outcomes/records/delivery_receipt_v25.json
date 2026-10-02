@@ -1,0 +1,48 @@
+{
+  "status": "RESULT_READY_NOT_PUSHED",
+  "clock": {
+    "schema": "task042.campaign-window.v25",
+    "start_utc": "2026-10-02T23:01:15+00:00",
+    "start_monotonic": 907069.8608675333,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 4500,
+    "total_limit_seconds": 5400,
+    "heavy_stop_utc": "2026-10-03T00:16:15+00:00",
+    "deadline_utc": "2026-10-03T00:31:15+00:00",
+    "review_expected_commit": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
+    "prior_HEAD": "31ad54a9d774f384aa11699da8c14befbdc3b6e2",
+    "scope": "earliest UTC tool observation; includes initial read-only identity/contract work",
+    "bootstrap_measurement": {
+      "utc": "2026-10-02T23:01:51.519793+00:00",
+      "monotonic": 907106.38066009,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "start_monotonic_role": "derived offset from paired bootstrap observation and earliest UTC tool timestamp, not directly sampled at start"
+    },
+    "observed_utc": "2026-10-02T23:37:21.792074+00:00",
+    "observed_monotonic": 909236.652957826,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 2166.792090292787,
+    "heavy_remaining_seconds": 2333.207909707213,
+    "total_remaining_seconds": 3233.207909707213
+  },
+  "actual_source": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+  "branch": "task42_neural_coarse_inverse",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "worktree": "/home/fenics/Projects/NN-Lab",
+  "common_git": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "numerical_queue_closed": true,
+  "descendants_cleared": true,
+  "review_contained": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
+  "result_content_HEAD": null,
+  "final_publish_HEAD_role": "reported after final commit; this receipt does not claim its own self-hash",
+  "precommit_identity": {
+    "HEAD": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+    "ahead": 1,
+    "behind": 0,
+    "actor_inventory": [],
+    "inventory_observed_utc": "2026-10-02T23:36:53.139488+00:00"
+  },
+  "scope_completed": "all authorized V25 paths completed; no numerical work remains; only publication"
+}

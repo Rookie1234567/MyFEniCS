@@ -1,0 +1,114 @@
+{
+  "required_fields": [
+    "full_FE_L2_relative",
+    "full_FE_scaled_curl_relative",
+    "scattered_FE_L2_relative",
+    "scattered_scaled_curl_relative",
+    "selected_E_relative",
+    "selected_H_relative"
+  ],
+  "required_powers": [
+    "R_total",
+    "T_total",
+    "A_balance",
+    "A_volume"
+  ],
+  "missing_key_probes": [
+    {
+      "missing": "full_FE_L2_relative",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "full_FE_scaled_curl_relative",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "scattered_FE_L2_relative",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "scattered_scaled_curl_relative",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "selected_E_relative",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "selected_H_relative",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "R_total",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "T_total",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "A_balance",
+      "observed_complete": false,
+      "expected": false
+    },
+    {
+      "missing": "A_volume",
+      "observed_complete": false,
+      "expected": false
+    }
+  ],
+  "complete_valid_fixture": true,
+  "old_record_recomputed": {
+    "local_qualified": true,
+    "composite_qualified": true,
+    "states": 5,
+    "passed": 0,
+    "first_four_only": true,
+    "raw_fields_recomputed": true,
+    "neural_20percent_increment": "NOT_DEMONSTRATED",
+    "all_limits_pass": true
+  },
+  "raw_old_records_unchanged": true,
+  "old_input_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v24.json",
+      "sha256": "191e0843a3f139088573a2310ae1795fe857af31f7a223408eab9f74903a2d37",
+      "bytes": 62315
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v24.csv",
+      "sha256": "19777a516a1f87464aceeb7bf51df460cc997ea149fe7aa07996892127927703",
+      "bytes": 287753
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v24.csv",
+      "sha256": "bb1a0e11cd54c5be5e8e4f2ff00eb7961593e33bf094a22e7494ea85ac6edb60",
+      "bytes": 28307
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v24.csv",
+      "sha256": "7461e4421b54347996eb8cb28a60abd739684823d5dd9a028fdf5e78527e6f42",
+      "bytes": 3924
+    }
+  ],
+  "positive_fixture_only_not_solver_evidence": true,
+  "inventory_focused_tests": 52,
+  "full_task_focused_tests": 93,
+  "final_focused_stdout": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231841512088/supervision/worker.log",
+    "sha256": "5294d6624e5c648bb25ba05a7c80031f1d5cd9a9c8a5def23d743c7a0973c75e",
+    "bytes": 459
+  },
+  "ruff": "NOT_RUN: not installed; environment unchanged",
+  "compileall": "PASS before formal source commit",
+  "MPI2_MPI4_full_pytest": "NOT_RUN: array-only scope; no numerical FE change",
+  "CI": "NOT_CLAIMED"
+}

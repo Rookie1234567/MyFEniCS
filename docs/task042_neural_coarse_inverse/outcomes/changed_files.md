@@ -1,3 +1,17 @@
+# V25变化与依赖组
+
+| selective merge组 | 变化／证据／边界 |
+|---|---|
+| production numerical/core | 无原方程／材料／恢复／普通默认改变；没有新的production求解资格 |
+| research-only数值 | block_residual_direction.py、block_direction_study.py：同残差8方向上限及原作用见证；复数focused与真实三状态；非PC部署 |
+| reusable runner/watchdog | block_direction_window、薄adapter、schema/dat、shared显式V25注册；原整树监督复用；16/12GiB及deadline未放宽 |
+| 原reader兼容 | load_local仅增加显式factor_root关键字；旧默认相同，独立只读重载/坏hash及V24准入回归通过 |
+| checker/benchmark | 必需six/four和40mode库存；collector从cached数组重算并导出compact records，无新S或求解 |
+| compact evidence/docs | response_v25、outcomes及CSV/JSON；source/input/physical/mode/state/factor/hash与费用绑定；旧task/review/response/raw不改 |
+| do-not-merge | ignored旧因子／三组方向响应／缓存／tmp工具／raw监督；仅有hash-bound历史引用，不迁移大型payload |
+
+实际run source bc88fe5a81d086059dec705db333b9cf9bf2921e；最终文档HEAD独立。源码commit只包含Task04214文件；collector与证据收口另提交。普通路径不提升，merge NOT_APPROVED。建议未来审查顺序：checker及测试→opt-in读取／监督→research诊断核→compact证据；不是合并授权。以下原历史保留。
+
 # Task042 V24最新收口：对称首块与唯一审核完成
 
 四条首块及唯一冻结审核已完成，完整同离散资格0/5。资格由原方程、场、端口及逐通道功率共同决定；单项native通过或残差降低不能替代完整资格。神经20%增量独立记NOT_DEMONSTRATED：本批无隐藏层训练，也没有最佳合格非神经同精度／完整端到端成本的配对性能证据。

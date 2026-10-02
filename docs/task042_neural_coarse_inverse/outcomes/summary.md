@@ -1,3 +1,21 @@
+# Task042 V25：八块方向诊断完成，弱方向分流
+
+把八块原本直接相加的修正分开，在完整原方程中测响应并求最佳复数组合，用来区分组合幅相与方向覆盖问题；代价是每样本8次原作用，没有新求解或神经训练。
+
+| 固定已消费状态／原0.7nm384hex-p3-q15-MPI1-40通道 | eta_unit | 最优单复系数eta1 | 最优八系数eta8 | 范数下降 | rank／分类 |
+|---|---:|---:|---:|---:|---|
+| V24-LZ-INITIAL，仅控制 | 2.0283184653 | 0.8776402575 | 0.8641444186 | 13.585558% | 8／DIAGNOSTIC_COMPLETE |
+| V24-LZ-CYCLE4 | 2.8176911544 | 0.9999995996 | 0.9832369898 | 1.676301% | 8／DIAGNOSTIC_COMPLETE |
+| V24-LCZ-CYCLE4 | 3.9247610154 | 0.9999978273 | 0.9899246286 | 1.007537% | 8／DIAGNOSTIC_COMPLETE |
+
+eta分母为各自当前原trace残差；1为无下降，不是准确场误差。两终态eta8≥0.9，EIGHT_DIRECTIONS_WEAK，停止同八方向系数网络／重组路线。保存残差和端口身份、独立原作用、秩／QR及驻点Gate通过，不能把数值可信诊断当PDE通过。checker六场／四功率及40通道库存修复，52库存／93总focused通过；旧V24完整资格仍0/5。新native/E/H/RTA/REF7未运行，神经20% NOT_DEMONSTRATED，原尺寸0.7nm/2TB/48h NOT_QUALIFIED。
+
+实际source bc88fe5a81d086059dec705db333b9cf9bf2921e；actor25.665227s，整树峰1,832,550,400B、ownswap/VRAM0，S39/SH0、局部解40/三角80/reader1。LOCAL8_DENSE_LU_PRESENT只读reuse；无新assembly/factor、旧T/U/R或参考。shared-workstation成本含hash/reload和失败，历史研发下界77,128.294516s，暖链/历史辅助unknown保留。
+
+唯一下一建议是另审一个跨y=0的块5/7联合方向容量／资格试验，3888行的矩阵+LU载荷483,729,408B为derived，设置/全程时耗unknown；本批不实施，不续V24。GitHub视觉NOT_VERIFIED。
+
+[本轮回应](../response_v25.md)／[详细结果](block_residual_direction_diagnostic_v25.md)／[run index](records/run_index_v25.json)／[数值Gate](records/numerical_gates_v25.json)／[费用](records/resource_costs_v25.json)。以下历史全文原样保留，其“当前／下一建议”仅指当轮。
+
 # Task042 V24最新收口：对称首块与唯一审核完成
 
 四条首块及唯一冻结审核已完成，完整同离散资格0/5。资格由原方程、场、端口及逐通道功率共同决定；单项native通过或残差降低不能替代完整资格。神经20%增量独立记NOT_DEMONSTRATED：本批无隐藏层训练，也没有最佳合格非神经同精度／完整端到端成本的配对性能证据。

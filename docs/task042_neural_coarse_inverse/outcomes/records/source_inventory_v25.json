@@ -1,0 +1,110 @@
+{
+  "actual_run_source_sha": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+  "review_commit": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
+  "frozen_base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "source_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/check_task042_local_block_records.py",
+      "sha256": "deafa71a6b7a94ba1dfabbc1ad0c33b2b56a6e281db861d9a342b4c4dbce94b2",
+      "bytes": 7341
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/block_residual_direction_v25.json",
+      "sha256": "e92a162e87411d95e94702b753ba2971d5d54b9f3811381e5ca238ff443f319c",
+      "bytes": 6173
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v25_block_residual_diagnostic.dat",
+      "sha256": "6403cf3a2d2150f97ca886cd0860bb08c894a907e724711fd1d55f55d8666014",
+      "bytes": 230
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "sha256": "de7d72158679cfc48f2849f1e57accc43aaf21558d1eb9b209c277b257ff1499",
+      "bytes": 11120
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/block_direction_diagnostic.py",
+      "sha256": "194ede9cfe481e0bda527c5957681e934b6266ac7f8968b409a11d9f977efd43",
+      "bytes": 4209
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/task042_profile.py",
+      "sha256": "4559e9d243a3ac16a6e62038d2cc0b94bf14c9f93f6ad17c0ed7171faf47b079",
+      "bytes": 5525
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/block_direction_diagnostic.py",
+      "sha256": "fd8062ce30139a91ef2474b2340679ae0a4c031bff1a76a790c3ca091700fff4",
+      "bytes": 3827
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+      "sha256": "a3f0ba136b0c5d5ce7875683af53835c83e019b10cd760bbba35adcfe2683701",
+      "bytes": 48022
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/block_direction_study.py",
+      "sha256": "6c3cca4e3c5dd6a2f57b8a7d025967cdc00789f9401a0486d02b8f3cc3fe8c51",
+      "bytes": 6886
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/block_direction_window.py",
+      "sha256": "6603778b9627c9f18ccc114c34b152dcde1a53924bdf929043117cfac60278c4",
+      "bytes": 3304
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/block_residual_direction.py",
+      "sha256": "3aefdc2d7ea08090170efb7f317fc511c1df54d1cc6fe929025bd7ccd49069e7",
+      "bytes": 8067
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/local_block_study.py",
+      "sha256": "143962d38e0888e051252f5f7d1cec4613218d6dc3039f05ff21a31deb0f7a67",
+      "bytes": 17991
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v24_compact_qualification.py",
+      "sha256": "9e6f7bcc821690af7cab752db6f3bbfb759d5cbe2773f8f1fbad785859d9ab1d",
+      "bytes": 4006
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v25_block_direction.py",
+      "sha256": "135e310fc34d4d07f599bf074616d85c27d6835dd84e764f0896c6fae542d7d8",
+      "bytes": 7659
+    }
+  ],
+  "collector": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_block_direction.py",
+    "sha256": "71a0266f189154d4467b58c631d122a92a129afccc94dc9c8549cbfec5abd54f",
+    "bytes": 9436,
+    "source_role": "post-run cached-array checker and compact writer; LF normalization after numerical freeze"
+  },
+  "metadata_closer": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/finalize_records.py",
+    "sha256": "a84795d41e8d59492166a331f7377fcb7e28f92157e53414a8fbf23d8d9605eb",
+    "bytes": 9235
+  },
+  "window": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/window.json",
+    "sha256": "9b9afff010ab473b6c6ccbbb14ac519b3b03bd2be9a399db795fd4f27480fea7",
+    "bytes": 880
+  },
+  "journal": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/progress_journal.jsonl",
+    "sha256": "00109c25d8cbb322f82af3c3c631919d3939a03e0cb5890b74c1f6c180e1ede4",
+    "bytes": 15580
+  },
+  "minimum_result": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/minimum_result_cost.json",
+    "sha256": "19aad37a15b39e5a6068155618c658a08527ac03c0ce4f3a45500a117832f234",
+    "bytes": 3988
+  },
+  "historical_review_evidence": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/review_v22_independent_checks.json",
+    "sha256": "f7c7c18ec3b3db27a68d153c84fe8d5bdd7eb64d438337853af8ae85f9b89295",
+    "bytes": 51552
+  },
+  "forbidden_arrays_loaded": false,
+  "document_HEAD_does_not_replace_run_source": true
+}

@@ -1,0 +1,85 @@
+{
+  "review_path": "docs/task042_neural_coarse_inverse/review_report_v22.md",
+  "exact_GitHub_URL": "https://github.com/Rookie1234567/MyFEniCS/blob/8e23b9f4620510c5f578c334faa63a06b4c410a3/docs/task042_neural_coarse_inverse/review_report_v22.md",
+  "retrieval": "web open returned Cache miss",
+  "visual_status": "NOT_VERIFIED",
+  "local_check": {
+    "status": "PASS",
+    "scope": "Review V22 and new V25 documents; new prefixes with byte-identical historical suffixes",
+    "files": [
+      {
+        "path": "docs/development_model_registry.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 2,
+        "historical_suffix_unchanged": true
+      },
+      {
+        "path": "docs/development_progress.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 2,
+        "historical_suffix_unchanged": true
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/README.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 2,
+        "historical_suffix_unchanged": true
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 0,
+        "historical_suffix_unchanged": true
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 5,
+        "historical_suffix_unchanged": true
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 3,
+        "historical_suffix_unchanged": true
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/response_v25.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 12,
+        "historical_suffix_unchanged": false
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/block_residual_direction_diagnostic_v25.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 14,
+        "historical_suffix_unchanged": false
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/review_report_v22.md",
+        "table_errors": [],
+        "fences_closed": true,
+        "links_resolved": 16,
+        "historical_suffix_unchanged": false
+      }
+    ],
+    "compact_CSV_row_counts": {
+      "block_response": 192,
+      "complex_cross_terms": 864,
+      "target_coherence": 24,
+      "direction_metrics": 3
+    },
+    "protected_historical_files_unchanged": 552,
+    "GitHub_visual_separate": "NOT_VERIFIED"
+  },
+  "review_not_modified": true,
+  "local_observed_utc": "2026-10-02T23:36:08.622495+00:00"
+}

@@ -1,3 +1,11 @@
+# Task042 V25：三残差八方向诊断已完成
+
+按Review V22修复完整性checker后，固定原0.7nm/384hex/p3/q15/40通道及材料，对V24三个冷状态做唯一诊断。两个终态最佳八方向eta8=0.9832369898／0.9899246286，rank8、原作用见证可信，EIGHT_DIRECTIONS_WEAK；关闭同八方向系数学习路线，没有新求解结果／神经20%收益，原V24仍0/5。
+
+实际source bc88fe5a81d086059dec705db333b9cf9bf2921e，actor25.665227s、S39/SH0、峰1,832,550,400B、swap0；readonly LOCAL8_DENSE_LU_PRESENT，无新factor／assembly或参考。93 focused通过，所有历史失败／费用保留；自有窗口未刷新，后代清场，等待review。唯一建议是另审块5/7一个联合跨界面方向的容量与资格，未实施。
+
+[回应](task042_neural_coarse_inverse/response_v25.md)／[详细结果](task042_neural_coarse_inverse/outcomes/block_residual_direction_diagnostic_v25.md)。以下项目历史原样保留。
+
 # Task042 V24最新收口：对称首块与唯一审核完成
 
 四条首块及唯一冻结审核已完成，完整同离散资格0/5。资格由原方程、场、端口及逐通道功率共同决定；单项native通过或残差降低不能替代完整资格。神经20%增量独立记NOT_DEMONSTRATED：本批无隐藏层训练，也没有最佳合格非神经同精度／完整端到端成本的配对性能证据。
