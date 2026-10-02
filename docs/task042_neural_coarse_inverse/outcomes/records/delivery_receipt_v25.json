@@ -1,5 +1,5 @@
 {
-  "status": "RESULT_READY_NOT_PUSHED",
+  "status": "RESULT_CONTENT_PUBLISHED_RECEIPT_FINALIZED",
   "clock": {
     "schema": "task042.campaign-window.v25",
     "start_utc": "2026-10-02T23:01:15+00:00",
@@ -18,13 +18,13 @@
       "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
       "start_monotonic_role": "derived offset from paired bootstrap observation and earliest UTC tool timestamp, not directly sampled at start"
     },
-    "observed_utc": "2026-10-02T23:37:21.792074+00:00",
-    "observed_monotonic": 909236.652957826,
+    "observed_utc": "2026-10-02T23:40:02.417987+00:00",
+    "observed_monotonic": 909397.278867341,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 2166.792090292787,
-    "heavy_remaining_seconds": 2333.207909707213,
-    "total_remaining_seconds": 3233.207909707213
+    "elapsed_seconds": 2327.417999807745,
+    "heavy_remaining_seconds": 2172.582000192255,
+    "total_remaining_seconds": 3072.582000192255
   },
   "actual_source": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
   "branch": "task42_neural_coarse_inverse",
@@ -35,8 +35,8 @@
   "numerical_queue_closed": true,
   "descendants_cleared": true,
   "review_contained": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
-  "result_content_HEAD": null,
-  "final_publish_HEAD_role": "reported after final commit; this receipt does not claim its own self-hash",
+  "result_content_HEAD": "00d4164762eed460d30212d5aa8538ba1a1e1e2f",
+  "final_publish_HEAD_role": "the following receipt-only commit and its push are externally reported with full SHA/time; no claim of self-hash or future push completion in this record",
   "precommit_identity": {
     "HEAD": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
     "ahead": 1,
@@ -44,5 +44,21 @@
     "actor_inventory": [],
     "inventory_observed_utc": "2026-10-02T23:36:53.139488+00:00"
   },
-  "scope_completed": "all authorized V25 paths completed; no numerical work remains; only publication"
+  "scope_completed": "all authorized V25 paths completed; no numerical work remains; only publication",
+  "content_push": {
+    "start_utc": "2026-10-02T23:39:26Z",
+    "completed_utc": "2026-10-02T23:39:31Z",
+    "target": "origin HEAD:refs/heads/task42_neural_coarse_inverse",
+    "previous_remote": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
+    "success": true
+  },
+  "delivery_observed_utc": "2026-10-02T23:40:02.417987+00:00",
+  "actor_inventory": [],
+  "working_tree_at_content_delivery": "clean",
+  "ahead": 0,
+  "behind": 0,
+  "upstream_HEAD": "00d4164762eed460d30212d5aa8538ba1a1e1e2f",
+  "stopping_reason": "all authorized V25 work completed; EIGHT_DIRECTIONS_WEAK; numerical queue frozen and own descendants cleared; await review",
+  "no_new_solve_or_NN_qualification": true,
+  "neural_20percent": "NOT_DEMONSTRATED"
 }

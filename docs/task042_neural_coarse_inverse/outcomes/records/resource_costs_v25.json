@@ -276,13 +276,13 @@
       "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
       "start_monotonic_role": "derived offset from paired bootstrap observation and earliest UTC tool timestamp, not directly sampled at start"
     },
-    "observed_utc": "2026-10-02T23:30:54.534943+00:00",
-    "observed_monotonic": 908849.395810357,
+    "observed_utc": "2026-10-02T23:40:02.417987+00:00",
+    "observed_monotonic": 909397.278867341,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 1779.534942823695,
-    "heavy_remaining_seconds": 2720.465057176305,
-    "total_remaining_seconds": 3620.465057176305
+    "elapsed_seconds": 2327.417999807745,
+    "heavy_remaining_seconds": 2172.582000192255,
+    "total_remaining_seconds": 3072.582000192255
   },
   "ledger": {
     "charged": {
@@ -353,12 +353,21 @@
     "note": "includes caches and compact records as an additional conservative check; tracked source and prose sizes are small and separately versioned"
   },
   "closing_readonly_checks": {
-    "observed_utc": "2026-10-02T23:36:53.139488+00:00",
-    "observed_monotonic": 909208.000368334,
+    "observed_utc": "2026-10-02T23:40:02.417987+00:00",
+    "observed_monotonic": 909397.278867341,
     "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
-    "elapsed_seconds": 2138.139500800753,
+    "elapsed_seconds": 2327.417999807745,
     "numerical_queue_closed": true,
     "Task042_actors": [],
     "unmeasured_low_load_metadata_in_total_elapsed": true
+  },
+  "final_delivery_storage_observation": {
+    "utc": "2026-10-02T23:40:02.417987+00:00",
+    "namespace_artifacts_bytes": 16317520,
+    "formal_result_bytes": 644187,
+    "isolated_TMP_cache_aux_and_metadata_bytes": 10335405,
+    "tracked_V25_records_bytes": 152554,
+    "complete_new_storage_conservative_bytes": 27449666,
+    "note": "sample before receipt commit/push; tiny later publication bookkeeping remains within ample bound"
   }
 }
