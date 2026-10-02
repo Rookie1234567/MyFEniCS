@@ -6,6 +6,7 @@ from src.solvers import local_block_window as w
 from src.runners.task042_shared import write_json
 from src.runners.p1_trace_queue import cool
 from src.solvers.neural_fe_action_packet import file_hash
+from src.solvers.local_block_readiness import local_readiness
 
 ORDER=('LW','LCW','LZ','LCZ')
 
@@ -55,27 +56,18 @@ def minimum_package():
 
 def solve():
     setup=run('SETUP') if not (io.ARTIFACT_ROOT/'SETUP.json').exists() else io.read_result('SETUP')[0]
-    if not setup.get('local_qualified'):w.journal('dependent_not_run',reason='local block numerical Gate');return
-    active=[]
+    plan=json.loads(io.PLAN_PATH.read_text())
+    admission=local_readiness(setup,expected_map=plan['map'])
+    if not admission['qualified']:
+        w.journal('dependent_not_run',reason='public local-ready evidence incomplete/unqualified',admission=admission,setup_status=setup.get('status'));return
     for name in ORDER:
         if name.startswith('LC') and not setup.get('composite_qualified'):
             w.journal('conditional_not_run',stage=name,reason='D_L/composite numerical Gate or upstream unavailable');continue
         result=run(name);w.journal('route_end',stage=name,status=result['status'])
         if result['status'] in ('RESOURCE_ENVIRONMENT_BLOCKED','ADMISSION_BLOCKED'):return
-        if result.get('stop_reason')=='SLICE_TARGET_COMPLETE':active.append(name)
-    while active:
-        again=[]
-        for name in active:
-            row=w.ledger()
-            # Explicit Review21 bound: <=5 independent readonly factor actors,
-            # not unbounded process relaunches disguised as free resumes.
-            if row['charged']['factor_readers']>=w.CAPS['factor_readers']:
-                w.journal('conditional_not_run',stage=name,reason='five independent factor-reader cap reached');continue
-            w.require_live(margin=600);prior,_=io.read_result(name);target=len(prior['cycles'])+4
-            result=run(name,target);w.journal('route_end',stage=name,status=result['status'])
-            if result['status'] in ('RESOURCE_ENVIRONMENT_BLOCKED','ADMISSION_BLOCKED'):return
-            if result.get('stop_reason')=='SLICE_TARGET_COMPLETE':again.append(name)
-        active=again
+    # Review21 §10: only the symmetric first block. The fifth reader is a
+    # bounded recovery allowance, never an automatic LW8 asymmetry.
+    w.journal('symmetric_first_blocks_complete',automatic_extension=False,target_cycles=4)
 
 
 def freeze():

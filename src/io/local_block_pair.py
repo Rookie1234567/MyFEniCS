@@ -23,7 +23,7 @@ def load_local_block(path):
     try:
         cfg=tomllib.loads(raw.decode());item=cfg['task042_v24'];stage=item['stage']
         if set(cfg)!={'schema_version','task042_v24'} or cfg['schema_version']!=1 or set(item)!={'stage','run_id','material_table_id','decoder_family','target_cycles'}:raise ValueError('explicit V24 schema required')
-        if item['target_cycles'] not in ((0,) if stage in ('SETUP','VERIFY') else tuple(range(4,35,4))) or stage not in STAGES or not re.fullmatch(r'task042_v24_[a-z0-9_]+',item['run_id']):raise ValueError('V24 unregistered one-run stage')
+        if item['target_cycles'] not in ((0,) if stage in ('SETUP','VERIFY') else (4,)) or stage not in STAGES or not re.fullmatch(r'task042_v24_[a-z0-9_]+',item['run_id']):raise ValueError('V24 unregistered one-run stage; Review21 section10 permits first four cycles only')
         plan,design,material,fe=plan_and_operator();own=json.loads(PLAN_PATH.read_text())
         if own['action_sha256']!=fe['packet']['sha256'] or own['physical_sha256']!=plan['physical_model_sha256']:raise ValueError('V24 frozen physical operator differs')
         if item['decoder_family']!=FAMILY or item['material_table_id']!=material.provenance['material_table_id']:raise ValueError('V24 material/family differs')

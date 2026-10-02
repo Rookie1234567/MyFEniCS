@@ -145,5 +145,9 @@
     "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v23.csv"
   ],
   "prior_formal_lower_bound_seconds": 75124.91759302444,
-  "max_independent_factor_readers": 5
+  "max_independent_factor_readers": 5,
+  "clarification_review_sha": "0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3",
+  "max_cycles_per_route": 4,
+  "automatic_cycle_extension": false,
+  "fifth_factor_reader": "bounded necessary recovery only"
 }

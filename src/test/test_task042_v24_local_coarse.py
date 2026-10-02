@@ -185,9 +185,12 @@ def test_actual_dat_stage_local_right_cycle_close_save_original_audit(tmp_path,m
     parent=tmp_path/'benchmarks/artifacts/task042/v21';parent.mkdir(parents=True)
     arrays,_=close_point(bar,.37*z[:16],packet.a['b'])
     own=json.loads(io.PLAN_PATH.read_text());own['initial_states']['GPOLY']['state']=atomic_arrays(parent/'warm.npz',**arrays)
+    own['local_specification']['rows']=[2]*8
     plan=tmp_path/'plan.json';plan.write_text(json.dumps(own));monkeypatch.setattr(io,'ROOT',tmp_path);monkeypatch.setattr(io,'PLAN_PATH',plan)
     monkeypatch.setattr(adapter,'original_packet',lambda fe:packet);monkeypatch.setattr(LocalStage,'sample',lambda self:dict(rss_bytes=1000000,swap_bytes=0))
-    read=io.read_result;monkeypatch.setattr(io,'read_result',lambda name:({'local_qualified':True,'composite_qualified':True,'block_inventory_sha256':'fake'},None) if name=='SETUP' else read(name))
+    from src.test.test_task042_v24_admission import ready_fixture
+    ready=ready_fixture(rows=(2,)*8)
+    read=io.read_result;monkeypatch.setattr(io,'read_result',lambda name:(ready,None) if name=='SETUP' else read(name))
     def bars(stage):stage.fast=SimpleNamespace(apply=packet.apply,counts=dict(S=0,SH=0));return bar,bar
     monkeypatch.setattr(core,'bars',bars);monkeypatch.setattr(core,'load_local',lambda stage,setup:(local(A,stage.pc_count),dict(qualified=True,independent_process=True)))
     monkeypatch.setattr(core,'load_image',lambda stage:ImageMinres(T,U,R,count=stage.pc_count))

@@ -1,0 +1,62 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v24",
+    "start_utc": "2026-10-02T12:04:23.502588+00:00",
+    "start_monotonic": 867658.363474344,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T15:34:23.502588+00:00",
+    "deadline_utc": "2026-10-02T16:04:23.502588+00:00",
+    "review_expected_commit": "c3370061c6693eab70e20c34965ec7d640b978bd",
+    "prior_HEAD": "dfaf983c2f6de28f59ee3271fb071c5b97210d2d",
+    "scope": "first real clock; all implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T14:45:00.429047+00:00",
+    "observed_monotonic": 877295.289917674,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 9636.926459312439,
+    "heavy_remaining_seconds": 2963.073540687561,
+    "total_remaining_seconds": 4763.073540687561
+  },
+  "review_sha": "0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3",
+  "tests_passed": 26,
+  "pytest_seconds": 5.39,
+  "supervised_test_wall_seconds": 7.658419269951992,
+  "repairs": [
+    {
+      "root": "R01",
+      "failure_directory": "tmp/task042/v24/initial_focused",
+      "cause": "readonly mmap pivot passed to f2py GETRS",
+      "minimal_fix": "private small writable pivot ABI workspace; shared readonly LU/matrix unchanged",
+      "test": "focused_repair_02: 28 passed; no formal replay",
+      "conservative_seconds_upper": 600
+    },
+    {
+      "root": "R02",
+      "failure_directory": "tmp/task042/v24/focused_repair_01",
+      "cause": "rank ratio alone can qualify 1x1 exact-zero overlap with roundoff remnant",
+      "minimal_fix": "separate whole-overlap operation-resolution guard; 1e-12 ratio unchanged",
+      "test": "fixed Review 2x2 counterexample passes",
+      "conservative_seconds_upper": 180
+    },
+    {
+      "root": "R03",
+      "cause": "failed SETUP early true flag admitted by queue and standalone dat",
+      "minimal_fix": "seal raw common evidence after original S/SH pairs; independently recompute admission at both entries",
+      "test": "section10_focused_1 26 passed",
+      "conservative_seconds_upper": 600
+    },
+    {
+      "root": "R04",
+      "cause": "five readers caused asymmetric LW8 automatic continuation",
+      "minimal_fix": "symmetric four-route first-block only, standalone schema rejects target8; fifth reserved for bounded recovery",
+      "test": "section10_focused_1 26 passed",
+      "conservative_seconds_upper": 600
+    }
+  ],
+  "old_failures_preserved": true,
+  "formal_runs_before_repair": 0,
+  "first4_only": true,
+  "reset_card_used": false
+}

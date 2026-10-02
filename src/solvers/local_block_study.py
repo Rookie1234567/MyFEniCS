@@ -15,6 +15,7 @@ from src.solvers.gmres_cycle_commit import close_point,cycle_commit
 from src.runners.orthonormal_trace_reprofile import atomic_arrays
 from src.runners.autonomous_neural_head import original_gate
 from src.runners.task042_shared import write_json
+from src.solvers.local_block_readiness import local_readiness,seal_local_ready
 
 
 def load_state(stage,item,*,legacy=False):
@@ -120,11 +121,13 @@ def setup(stage):
     local=LocalBlocks(stage.packet.nt,ids,A,factors,count=stage.pc_count)
     checks=local_checks(local,old.apply,count=stage.pc_count);result['local_checks']=checks
     if not checks['qualified']:return dict(result,stop_reason='LOCAL_PRINCIPAL_OR_SOLVE_GATE')
-    result['local_qualified']=True
     pairs=[];x=random(stage.packet.size,422460)
     for adj in (False,True):pairs.append(dict(adjoint=adj,**operation_pair(stage.packet.apply(x,adjoint=adj),stage.fast.apply(x,adjoint=adj))))
     result['old_new_S_SH_pairs']=pairs
     if max(x['operation_relative'] for x in pairs)>1e-10:raise ValueError('original/class64 action mismatch')
+    # Seal only after every public Gate. A failed partial SETUP may be indexed,
+    # but neither the queue nor a standalone dat can trust its early flags.
+    seal_local_ready(result,expected_map=stage.own_plan['map'])
     try:image=load_image(stage)
     except (OSError,ValueError) as e:return dict(result,composite_not_run_reason='UPSTREAM_T_U_R_UNAVAILABLE: '+str(e))
     result['global_tall_image_QR_present']=True
@@ -170,7 +173,9 @@ def load_local(stage,setup):
 
 def route(stage):
     setup,_=stage.io.read_result('SETUP');name=stage.name;cold=name.endswith('Z');combo=name.startswith('LC')
-    if not setup['local_qualified'] or (combo and not setup['composite_qualified']):return dict(status='NOT_RUN_PC_GATE')
+    admission=local_readiness(setup,rows=tuple(stage.own_plan['local_specification']['rows']),expected_map=stage.own_plan['map'])
+    if not admission['qualified']:return dict(status='NOT_RUN_PC_GATE',local_admission=admission)
+    if combo and not setup.get('composite_qualified'):return dict(status='NOT_RUN_PC_GATE',reason='composite only',local_admission=admission)
     old,fast=bars(stage);local,reload=load_local(stage,setup)
     image=load_image(stage) if combo else None;body=LocalCoarse(local,image,fast.apply) if combo else local
     root=stage.io.ARTIFACT_ROOT/name;root.mkdir(exist_ok=True);rhs=stage.packet.a['b']
