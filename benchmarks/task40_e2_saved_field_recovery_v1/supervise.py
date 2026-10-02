@@ -17,10 +17,26 @@ RUN_ROOT = ROOT / (
     "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/"
     "20261002T023827.030745Z"
 )
-REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v1"
+REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v2"
 WATCHDOG_DIR = REPAIR_ROOT / "watchdog"
+PRIOR_ATTEMPT = RUN_ROOT / "postprocess_repair_v1/startup_failure_record.json"
 RECORD = REPAIR_ROOT / "repair_record.json"
 ENTRY = ROOT / "benchmarks/task40_e2_saved_field_recovery_v1"
+
+
+def qualified_python_environment(
+    activation_marker: str | None,
+    executable: str | Path,
+    prefix: str | Path,
+    venv: str | Path,
+) -> bool:
+    """Accept the activated venv entry path even when its Python target is a system symlink."""
+    venv_path = Path(venv).absolute()
+    return (
+        activation_marker == "1"
+        and Path(executable).absolute().is_relative_to(venv_path)
+        and Path(prefix).absolute() == venv_path
+    )
 
 
 def watchdog_gate_checks(summary: Mapping[str, Any], last_sample: Mapping[str, Any]) -> dict[str, bool]:
@@ -84,8 +100,12 @@ def _last_resource_sample(path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
-    assert os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") == "1"
-    assert Path(sys.executable).resolve().is_relative_to((ROOT / ".venv").resolve())
+    assert qualified_python_environment(
+        os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION"),
+        sys.executable,
+        sys.prefix,
+        ROOT / ".venv",
+    )
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True).strip()
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     assert branch == "task40extra_0p7nm_engineering"
@@ -136,6 +156,15 @@ def main() -> int:
         record = json.loads(RECORD.read_text(encoding="utf-8"))
     else:
         record = recovery_failure_record(summary, worker_tail, source_identity=source_identity)
+    if PRIOR_ATTEMPT.exists():
+        prior_sha = hashlib.sha256(PRIOR_ATTEMPT.read_bytes()).hexdigest()
+        expected_sha = PRIOR_ATTEMPT.with_suffix(".json.sha256").read_text().split()[0]
+        assert prior_sha == expected_sha
+        record["prior_recovery_attempts"] = [{
+            "record_path": str(PRIOR_ATTEMPT),
+            "record_sha256": prior_sha,
+            "record": json.loads(PRIOR_ATTEMPT.read_text(encoding="utf-8")),
+        }]
     record.setdefault("additional_cost", {})
     record.setdefault("repair_identity", {}).update(source_identity)
     record["additional_cost"]["process_tree_watchdog"] = {

@@ -1,4 +1,5 @@
 from benchmarks.task40_e2_saved_field_recovery_v1.supervise import (
+    qualified_python_environment,
     recovery_failure_record,
     watchdog_gate_checks,
 )
@@ -62,3 +63,27 @@ def test_worker_failure_record_preserves_failure_and_original_result():
     assert record["failure"]["worker_exit_code"] == 3
     assert record["failure"]["worker_log_tail"] == ["postprocess gate failed"]
     assert record["original_worker_result_mutated"] is False
+
+
+def test_qualified_venv_entry_accepts_system_python_symlink(tmp_path):
+    venv = tmp_path / "repo" / ".venv"
+    executable = venv / "bin" / "python"
+    target = tmp_path / "system" / "python3"
+    executable.parent.mkdir(parents=True)
+    target.parent.mkdir(parents=True)
+    target.write_text("system interpreter target")
+    executable.symlink_to(target)
+    assert executable.resolve() != executable
+    assert qualified_python_environment("1", executable, venv, venv)
+
+
+def test_qualified_python_rejects_unactivated_or_external_entry(tmp_path):
+    venv = tmp_path / "repo" / ".venv"
+    local = venv / "bin" / "python"
+    external = tmp_path / "system" / "python3"
+    local.parent.mkdir(parents=True)
+    external.parent.mkdir(parents=True)
+    local.write_text("qualified entry")
+    external.write_text("system interpreter")
+    assert not qualified_python_environment("0", local, venv, venv)
+    assert not qualified_python_environment("1", external, venv, venv)

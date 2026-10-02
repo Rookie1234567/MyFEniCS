@@ -10,6 +10,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
+import sys
 import time
 from typing import Any, Mapping
 
@@ -23,7 +24,8 @@ RUN_ROOT = ROOT / (
     "20261002T023827.030745Z"
 )
 INPUT = ROOT / "input/task40extra_0p7nm_engineering/nonseparable_e2_p6_q4_manual_m2_growth.dat"
-REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v1"
+REPAIR_ROOT = RUN_ROOT / "postprocess_repair_v2"
+PRIOR_ATTEMPT = RUN_ROOT / "postprocess_repair_v1/startup_failure_record.json"
 OUTPUT = REPAIR_ROOT / "numerical_output"
 RECORD = REPAIR_ROOT / "repair_record.json"
 LAUNCHER = ROOT / "benchmarks/task40_e2_saved_field_recovery_v1/launch.sh"
@@ -75,12 +77,19 @@ def sha256_array(array: np.ndarray) -> str:
 
 
 started = time.perf_counter()
-assert os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") == "1"
+from benchmarks.task40_e2_saved_field_recovery_v1.supervise import qualified_python_environment
+assert qualified_python_environment(
+    os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION"),
+    sys.executable,
+    sys.prefix,
+    ROOT / ".venv",
+)
 from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
 
-assert PETSc.ScalarType is np.complex128 and MPI.COMM_WORLD.size == 1
+assert PETSc.ScalarType is np.complex128 and np.dtype(PETSc.IntType) == np.dtype(np.int32)
+assert MPI.COMM_WORLD.size == 1
 head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
 branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True).strip()
 assert branch == "task40extra_0p7nm_engineering"
@@ -107,6 +116,19 @@ from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
     recover_p0_outputs,
 )
 from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+
+prior_attempts = []
+if PRIOR_ATTEMPT.exists():
+    prior_sha = sha256_file(PRIOR_ATTEMPT)
+    prior_sidecar = PRIOR_ATTEMPT.with_suffix(".json.sha256")
+    assert prior_sidecar.is_file() and prior_sidecar.read_text().split()[0] == prior_sha
+    prior_record = read_json(PRIOR_ATTEMPT)
+    assert prior_record["classification"] == "SERVICE_PREFLIGHT_FAILED_BEFORE_WATCHDOG"
+    prior_attempts.append({
+        "record_path": str(PRIOR_ATTEMPT),
+        "record_sha256": prior_sha,
+        "record": prior_record,
+    })
 
 manifest = read_json(RUN_ROOT / "run_manifest.json")
 run_summary_path = RUN_ROOT / "run_summary.json"
@@ -340,6 +362,10 @@ record = {
         "recovery_driver_sha256": sha256_file(Path(__file__).resolve()),
         "recovery_launcher_sha256": sha256_file(LAUNCHER),
         "recovery_supervisor_sha256": sha256_file(SUPERVISOR),
+        "python_executable": sys.executable,
+        "python_prefix": sys.prefix,
+        "petsc_scalar_type": str(np.dtype(PETSc.ScalarType)),
+        "petsc_int_type": str(np.dtype(PETSc.IntType)),
         "supervisor_command": "python -u -m benchmarks.task40_e2_saved_field_recovery_v1.supervise",
         "worker_command": "python -u -m benchmarks.task40_e2_saved_field_recovery_v1.recover",
         "corrected_input_sha256": spec.input_sha256,
@@ -406,6 +432,7 @@ record = {
         "ksp_time_added": False,
         "process_tree_watchdog": "pending launcher finalization",
     },
+    "prior_recovery_attempts": prior_attempts,
     "original_worker_result_mutated": False,
 }
 RECORD.write_text(json.dumps(jsonable(record), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
