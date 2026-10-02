@@ -1986,3 +1986,27 @@ production model。
 8正式stage wall8579.825040766s、同时树采样峰1073967104B/own swap0；V6 carry101.861302031s和全部辅助/失败/后续检查费不重置。用户Task042受控共享授权继续，MPI1/math/Torch1/实时核/own lock/16GiB hard与12GiB warn/独立缓存，CPU-only/GPU0；无cgroup委派不称内核连续限额，邻任务/其锁环境监督不改，无持续PSI触线，影响和性能inconclusive，全部shared-workstation。
 
 神经场有部分信号，仍方程/场/功率0/3，神经增量NOT_DEMONSTRATED；NEURAL_OPTIMIZATION_NEGATIVE。p4 enrichment/final目标/48h/F5/p6/旧teacher/seed420620/四波长扫描not_run；目标尺度/通道/配额/步cost/所需步数unknown，材料已ready。唯一下一建议为固定pilot目标解无关的对角变量尺度均衡LSQR对照，原loss/验算保持，未实施/需review，不回旧p4或自动更大模型。32相关pytest及局部静态/Markdown通过，Review V4实际GitHub4表1math，历史原文保留。[Response V7](task042_neural_coarse_inverse/response_v7.md)、[全费用/source](task042_neural_coarse_inverse/outcomes/records/run_index_v7.json)。
+
+## 3.44.10 Task42extra Review V10 后续：V11固定参数度量
+
+A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度量接口通过，研究分类为`NO_USEFUL_METRIC_GAIN`；严格求解资格按原方程、场及功率分别判定。缓存加速资格保留，不能当作求解收敛。本批无监督D、无新增参考求解。
+
+| 路线，相对原V1同p3参考 | native | augmented | 散射E L2 | 散射curl/H | E_G | 能量闭合 |
+| --- | --- | --- | --- | --- | --- | --- |
+| V10-PHASE-CACHED-GN-CONTINUE | 0.978821198632 | 0.978821198632 | 0.362017880269 | 0.362633734179 | 0.36261857554 | 0.0927477482932 |
+| V11-PHASE-IDENTITY-METRIC-CONTROL | 0.984363547288 | 0.984363547288 | 0.15960198092 | 0.160305545482 | 0.160288250677 | 0.0293262887055 |
+| V11-PHASE-BLOCK-METRIC | 0.846541904928 | 0.846541904928 | 0.122944519716 | 0.123039105854 | 0.123036776653 | 0.0492282322929 |
+
+| 路线，功率均diagnostic | R | T | A_balance | A_volume | R00_s | R00_p | R00_total |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| V10-PHASE-CACHED-GN-CONTINUE | 0.794315997762 | 0.0513415797058 | 0.154342422532 | 0.247090170825 | 0.794296464658 | 4.64479356959e-07 | 0.794296929137 |
+| V11-PHASE-IDENTITY-METRIC-CONTROL | 0.798616960425 | 0.0385522797318 | 0.162830759843 | 0.192157048548 | 0.798574485565 | 6.36199208866e-07 | 0.798575121764 |
+| V11-PHASE-BLOCK-METRIC | 0.795461317421 | 0.0250470810956 | 0.179491601483 | 0.13026336919 | 0.795391017878 | 1.98764166035e-06 | 0.79539300552 |
+
+| 路线 | 新增接受 | K | JVP | VJP | 真实试探 | 拒绝 | 完整新增s | 树峰GiB | 停止原因 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| V11-PHASE-IDENTITY-METRIC-CONTROL | 24 | 930 | 930 | 954 | 34 | 10 | 5225.489258 | 2.83142471313 | GRADIENT_START_SAVE_RESERVE |
+| V11-PHASE-BLOCK-METRIC | 20 | 991 | 991 | 1012 | 31 | 11 | 5219.37018731 | 2.39972305298 | BUDGET_FRONTIER_CG_RESERVE |
+
+M5/5nm/384hex/h1.25/p3q15，31968独立复FE+40端口，8966实参数；两条无标签同phase75分叉。完整代价见[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v11.json)，所有候选功率diagnostic；旧参考与其他Task结果保留。
+

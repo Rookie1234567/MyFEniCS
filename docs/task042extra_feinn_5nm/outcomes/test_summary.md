@@ -166,3 +166,23 @@ lint失败两个未使用名称已局部修复，成本保留。以上是本地�
 | Ruff/compileall与新页结构 | 最终相关文件检查；Review V9与8个新页/追加节，不全量重渲染历史 | 本地结构与render_check_v10.json实际浏览器记录分开 |
 
 两次phase系统压力停止是执行安全原因；自身swap0/树内存合规，不写OOM、正常预算不收敛或网络不可表达。所有测试失败、保存fixture/metadata问题和对应局部修复见[repair log](records/repair_log_v10.json)，全部费用见[资源](records/resource_costs_v10.json)。[测试原日志/source/hash](records/targeted_tests_v10.json)、[原字段Gate](records/gate_decisions_v10.json)与[实际GitHub渲染](records/render_check_v10.json)均单列。
+# Review V10 后续 V11 定向资格
+
+本节只记录本批新增路径，不重跑旧四态缓存 benchmark、参考求解或 full pytest。小型模型测试证明接口和状态保全；实际 M5 的独立审核另见 [Gate](records/gate_decisions_v11.json)，不能用测试通过代替物理精度。
+
+| 检查 | 实际结果 | 证据 |
+|---|---|---|
+| 固定度量的两种代数关系、S=I、组顺序 | 10 targeted passed | `tmp/task42extra/checks/v11_B_metric_unit_corrected_20261002T104310046901Z` |
+| 原 GN 接受/回滚、缓存和持久事务 | 17 targeted passed | `tmp/task42extra/checks/v11_B_transactions_20261002T104543790954Z` |
+| 复用 runner 的度量 fork/完整状态 | 8 targeted passed；后续相关边界 15 passed | `v11_B_metric_runner_20261002T104736215729Z`、`v11_B_commit_boundary_20261002T110532265889Z` |
+| 真实 A | 26 K、4 真实试探；恢复 theta0/cache；启动信号成立 | [尺度记录](records/parameter_scale_v11.json) |
+| 真实 B 链式作用和 S=I proposal | g/K/proposal 配对相对差 0；3 方向均有两步稳定 FD 见证；累计16 K | [接口记录](records/metric_checks_v11.json) |
+| FD 修复小测试 | 两次各9 passed；最初真实 FD 和第一修复失败保留 | [修复记录](records/repair_log_v11.json) |
+| 共同时间/工作量选择及未来恢复次数元数据 | 4 passed；未到时点不生成，禁止按误差挑状态 | `tmp/task42extra/checks/v11_E_frozen_views_tests_20261002T143356060820Z` |
+| 独立 ML q15/q30 | 实际参数→保存系数相对差0；终态 q 漂移约1.6e-15 | [字段诊断](records/metric_field_diagnostics_v11.json) |
+| 独立 FE compare-only | 9个实际冻结状态完成；没有新参考 solve/factor | [比较](records/metric_comparison_v11.csv) |
+| 纯记录 checker | 重算复场、通道分母、功率、G范数、接受/CG及资源；完成 | `tmp/task42extra/checks/v11_E_compact_json_repair_20261002T150136052008Z` |
+| Ruff / compileall | 新增及相关修改模块通过；最终文档合同另核 | [文件范围](changed_files.md) |
+
+首次误选不存在的测试文件得到 exit4，随后改为存在的 targeted selector；不重装环境。两次轻量 checker 启动前 CPU Gate 拒绝，worker 未启动；带只读诊断的原 Gate 通过后，checker 定位并修复 compact JSON 排版体积问题。所有失败/准入/修复成本保留。仅本地测试，不声称 CI。
+

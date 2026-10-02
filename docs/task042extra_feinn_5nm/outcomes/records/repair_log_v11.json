@@ -38,5 +38,32 @@
     }
   ],
   "normal_stagnation_is_bug": false,
-  "blind_retry": false
+  "blind_retry": false,
+  "E_repairs_and_resource_events": [
+    {
+      "component": "E CPU admission",
+      "failure": "FE first preflight and two light checks found no audited unoccupied physical core",
+      "hypothesis": "transient CPU occupation versus selection/ownership bug",
+      "change": "read-only trace and independent immediate snapshot; same original spare_cores return value; no selection/threshold change",
+      "test": "trace retained exact topology/thread activity and candidate cores; supervisor Gate passed unchanged for final checker",
+      "retry": "one numerical FE re-admission completed; instrumented light checker started only after its own unchanged Gate passed",
+      "reason_boundary": "pressure source unknown; CPU startup rejection is not PSI stop/OOM/numerical failure; no background waiting"
+    },
+    {
+      "component": "compact JSON capacity",
+      "failure": "metric_field_diagnostics_v11.json exceeded 200 KiB when pretty printed",
+      "hypothesis": "formatting overhead in nine complete observable records",
+      "change": "V11-only JSON compact separators; all numeric values/denominators/hash retained",
+      "test": "Ruff and full frozen-record arithmetic checker complete; largest new JSON below 200 KiB",
+      "retry": "no numerical stage replay; checker only"
+    },
+    {
+      "component": "V11 recovery schema metadata",
+      "failure": "reused exporter carried legacy fault_resume_limit=2 while V11 launcher already enforced1",
+      "hypothesis": "generic metadata hint missed opt-in override",
+      "change": "future metric_pilot exports now record1, ordinary default2 unchanged",
+      "test": "small reused-runner checkpoint test asserts1 and matching model/optimizer; 4 targeted tests passed",
+      "retry": "old C files retained unchanged; actual recoveries0; no repeated C start"
+    }
+  ]
 }

@@ -160,5 +160,87 @@
   },
   "state_hashes": "campaign_design_v11.json; complete PT/NPZ/c/optimizer verification in formal A",
   "pressure_source": "UNKNOWN",
-  "batch_pressure_recoveries_used": 0
+  "batch_pressure_recoveries_used": 0,
+  "old_PSI_trigger_samples": [
+    {
+      "run": "task42extra_v10_phase_cached_gn_20261002T021129560832Z",
+      "trigger_timestamp_ns": 1790908702730559285,
+      "trigger_sample_UTC": "2026-10-02T02:38:22.730559+00:00",
+      "elapsed_seconds": 1611.1336417690618,
+      "tree_RSS_at_trigger_bytes": 2433507328,
+      "self_swap_at_trigger_bytes": 0,
+      "memory_pressure": {
+        "some": {
+          "avg10": 0.1,
+          "avg60": 0.05,
+          "avg300": 0.01,
+          "total": 1937346.0
+        },
+        "full": {
+          "avg10": 0.1,
+          "avg60": 0.05,
+          "avg300": 0.01,
+          "total": 1934474.0
+        }
+      },
+      "effective_available_bytes": 946452652032,
+      "resource_file": "results/task42extra/task42extra_v10_phase_cached_gn_20261002T021129560832Z/supervision/resources.jsonl",
+      "resource_sha256": "92623b11b37a58b7e52a1e418e9a433027b63e8009910f4197760b301f47f7d2",
+      "time_scope": "first retained resource sample with watchdog stop reason; sample time not guessed wall endpoint",
+      "pressure_source": "UNKNOWN"
+    },
+    {
+      "run": "task42extra_v10_phase_cached_gn_20261002T025423030332Z",
+      "trigger_timestamp_ns": 1790913167764921060,
+      "trigger_sample_UTC": "2026-10-02T03:52:47.764921+00:00",
+      "elapsed_seconds": 3502.656810919987,
+      "tree_RSS_at_trigger_bytes": 3021561856,
+      "self_swap_at_trigger_bytes": 0,
+      "memory_pressure": {
+        "some": {
+          "avg10": 2.5,
+          "avg60": 0.68,
+          "avg300": 0.15,
+          "total": 2594405.0
+        },
+        "full": {
+          "avg10": 2.4,
+          "avg60": 0.65,
+          "avg300": 0.14,
+          "total": 2587806.0
+        }
+      },
+      "effective_available_bytes": 946840469504,
+      "resource_file": "results/task42extra/task42extra_v10_phase_cached_gn_20261002T025423030332Z/supervision/resources.jsonl",
+      "resource_sha256": "661cfbb2097b6f85314966d2f189e5d1e48121b30acbf93345624aaf3fab1abc",
+      "time_scope": "first retained resource sample with watchdog stop reason; sample time not guessed wall endpoint",
+      "pressure_source": "UNKNOWN"
+    }
+  ],
+  "V11_resource_window_events": [
+    {
+      "stage": "v11_metric_compare",
+      "first_attempt": "task42extra_v11_metric_compare_20261002T144059416494Z",
+      "reason": "No audited unoccupied physical core",
+      "PSI_stable_window_passed": true,
+      "worker_started": false,
+      "reentry": "task42extra_v11_metric_compare_20261002T144524841802Z",
+      "reentry_completed": true,
+      "thresholds_changed": false
+    },
+    {
+      "stage": "compact_checker_light",
+      "startup_stops": 2,
+      "workers_started": 0,
+      "read_only_trace": "tmp/task42extra/v11_E_light_admission_trace.json",
+      "trace_candidates": [
+        9,
+        22,
+        34
+      ],
+      "selector_unchanged": true
+    }
+  ],
+  "system_PSI_recoveries_used": 0,
+  "numerical_CPU_readmissions_used": 1
 }

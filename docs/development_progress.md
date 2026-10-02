@@ -3181,3 +3181,16 @@ p5准确凝聚恢复146400全部独立复FE，残差1.23e-11、体能量7.03e-13
 含建立/释放加速C plain/phase 1.4614/1.5433、D plain/phase 1.52994/1.57184倍。C plain14、phase21个新增完整更新；phase两次系统PSI停止只保全最后完整75步，不写OOM或正常数值停滞。全部failed/未提交费用保留，D与C隔离。
 
 [Response V10](task042extra_feinn_5nm/response_v10.md)、[GN结果](task042extra_feinn_5nm/outcomes/cached_gn_v10.md)、[原字段Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v10.json)、[资源闭账](task042extra_feinn_5nm/outcomes/records/resource_costs_v10.json)、[run/source](task042extra_feinn_5nm/outcomes/records/run_index_v10.json)。p5只读REFERENCE_ONLY，curl/H/h/端口未全面资格化，目标5nm/0.7nm未运行。只推本分支等待review。
+
+## 2026-10-02 Task42extra V11：固定参数度量短对照
+
+A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度量接口通过，研究分类为`NO_USEFUL_METRIC_GAIN`；严格求解资格按原方程、场及功率分别判定。缓存加速资格保留，不能当作求解收敛。本批无监督D、无新增参考求解。
+
+| 路线，相对原V1同p3参考 | native | augmented | 散射E L2 | 散射curl/H | E_G | 能量闭合 |
+| --- | --- | --- | --- | --- | --- | --- |
+| V10-PHASE-CACHED-GN-CONTINUE | 0.978821198632 | 0.978821198632 | 0.362017880269 | 0.362633734179 | 0.36261857554 | 0.0927477482932 |
+| V11-PHASE-IDENTITY-METRIC-CONTROL | 0.984363547288 | 0.984363547288 | 0.15960198092 | 0.160305545482 | 0.160288250677 | 0.0293262887055 |
+| V11-PHASE-BLOCK-METRIC | 0.846541904928 | 0.846541904928 | 0.122944519716 | 0.123039105854 | 0.123036776653 | 0.0492282322929 |
+
+[Response V11](task042extra_feinn_5nm/response_v11.md)与[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v11.json)。本批不新增参考、plain长训或监督拟合，停止同类尺度续扫，目标尺寸5nm/0.7nm和production/merge未授权。
+

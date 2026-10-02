@@ -23,10 +23,20 @@ from benchmarks.check_task42extra_v8 import (
     write_comparison,
 )
 from benchmarks.check_task42extra_v9 import load
-from benchmarks.check_task42extra_v10 import compact_write, distribution
+from benchmarks.check_task42extra_v10 import distribution
 from src.runners.feinn_metric_campaign import STAGES, LIMITS, OLD_SECONDS, REVIEW_SHA
 
 PILOTS = ("v11_phase_identity_metric", "v11_phase_block_metric")
+
+
+def compact_write(name, value):
+    """Keep complete scalar diagnostics without repeated pretty-print whitespace."""
+    data = (
+        json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+        + "\n"
+    )
+    require(len(data.encode()) <= 200 * 1024, "COMPACT_JSON_EXCEEDS_200_KIB:" + name)
+    (RECORDS / name).write_text(data)
 
 
 def compact_metric_arrays(value):
@@ -320,6 +330,47 @@ def resources(tail_allowance=120.0):
     )
     for p in sorted(RESULTS.glob("task42extra_v11_*/run_summary.json")):
         r, m = read(p), read(p.parent / "run_manifest.json")
+        resource_file = p.parent / "supervision/resources.jsonl"
+        if not resource_file.exists():
+            require(
+                r["classification"] == "RESOURCE_WINDOW_UNAVAILABLE"
+                and r["descendants_cleared"]
+                and not (p.parent / "supervision/worker.log").exists(),
+                "UNSUPERVISED_FORMAL_RUN_NOT_A_PREFLIGHT_STOP",
+            )
+            stable = read(p.parent / "pressure_stable_window.json")
+            rows.append(
+                dict(
+                    path=str(p),
+                    stage=m["stage"],
+                    group=STAGES[m["stage"]][2],
+                    source_sha=m["source_sha"],
+                    input_sha256=m["input_sha256"],
+                    seconds=r["elapsed_seconds"],
+                    peak_tree_RSS_bytes=None,
+                    own_swap_bytes=None,
+                    classification=r["classification"],
+                    descendants_cleared=True,
+                    worker_started=False,
+                    termination_reason=r["reason"],
+                    pressure_stability={
+                        k: stable[k]
+                        for k in ("passed", "observed_seconds", "thresholds")
+                    },
+                    raw_hashes={
+                        k: sha(p.parent / k)
+                        for k in (
+                            "input_original.dat",
+                            "resolved_config.json",
+                            "run_manifest.json",
+                            "run_summary.json",
+                            "pressure_stable_window.json",
+                        )
+                    },
+                    memory_scope="stopped before supervised worker; RSS/swap not sampled",
+                )
+            )
+            continue
         peak = swap = 0
         for line in (p.parent / "supervision/resources.jsonl").read_text().splitlines():
             x = json.loads(line)
@@ -467,6 +518,8 @@ def resources(tail_allowance=120.0):
         old_lost_attempt_seconds_preserved=3284,
         historical_prefix_not_double_charged_to_project=True,
         system_pressure_recoveries_used=0,
+        resource_window_readmissions_used=1,
+        candidate_fault_recoveries_used=0,
     )
 
 

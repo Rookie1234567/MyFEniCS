@@ -177,3 +177,20 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | ignored完整矩/Gram/native/参考/PC基/模型/optimizer/GN/history、环境/cache/tmux socket/浏览器profile截图 | 仅hash索引；D权重不反馈C/Task042/0.7nm；大数组不入Git |
 
 实际逐文件SHA与依赖组见[publication manifest](records/publication_manifest_v10.json)。数值组件须逐组审查最小依赖，再看runner/inputs、checker，最后文档；本轮只推本任务分支，不amend/强推/merge、不新增高阶/网格/端口/目标尺寸运行。
+# Review V10 后续 V11 文件级边界
+
+新功能按依赖组审阅，普通 solver 默认、物理模型、旧参考和历史证据不改。仅执行分支保留，production/merge 未批准。
+
+| 依赖组 | 文件/行为 | 资格与合入边界 |
+|---|---|---|
+| research-only numerical adapter | `src/solvers/feinn_parameter_metric.py`；`damped_gauss_newton.py` opt-in 固定M及原参数真残差；`feinn_metric_diagnostic.py` | 两种坐标关系、S=I、真实 g/K/FD 配对；固定度量改变优化步，不改变 A/f/G/loss；不提升 production default |
+| reusable training/transactions | `feinn_gn_training.py` opt-in fork、八组真实更新、固定时间点、完整状态；`feinn_gn_recovery.py` | 继承原费用/状态；原子保存后审核；V11最多一次恢复、实际0；先接通 adapter，再审阅事务层 |
+| runner/watchdog | `feinn_metric_campaign.py`；`feinn_workflow.py`；`feinn_resources.py`；`src/io/feinn_pilot.py`；`launch_task42extra_durable.py`；本批 one-run dat | 复用持久监督、60s原PSI窗口与独立FE/ML环境；没有放宽 CPU/内存/swap Gate；新 index 不覆盖历史 |
+| frozen verification | `feinn_metric_verification.py` | 共同时间及共同接受步数的真实已落盘状态，不选best；ML q15/q30、FE compare-only reuse；运行 source 与文档 HEAD 分开 |
+| checker/benchmark | `check_task42extra_v11.py`；docs/render opt-in version11 | 原字段独立重算，不重新实现求解；compact JSON≤200KiB；无空闲核的 preflight 保留真实未采样口径 |
+| targeted tests | `test_feinn_parameter_metric.py`、`test_feinn_metric_runner_ml.py`、`test_feinn_metric_fd_repair_ml.py`、`test_feinn_metric_verification_ml.py` | 小复数代数、事务/恢复、FD稳定区、实际状态选择；不 full pytest |
+| compact evidence/docs | Response V11、parameter_metric、summary新导航、records、progress/模型总账、本页与test_summary | 负结果、失败尝试、资源停止和旧历史均保留；独立审核仍未给出严格PDE资格 |
+| do-not-merge | ignored PT/NPZ、矩阵、Gram因子、参数缓存、完整 history/resources、浏览器profile/原始截图 | 仅路径/hash留compact证据；无标签状态也不能供Task042/0.7nm生产初始化 |
+
+建议依赖审阅顺序为 adapter及小测试→事务与runner→冻结复验/checker→证据；本轮没有合并授权。旧V1–V10正文在下方原样保留。
+
