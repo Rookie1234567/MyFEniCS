@@ -1,0 +1,980 @@
+{
+  "schema": "task40extra.external-V15-Y-success-and-X-XZ-Y-calibration.v1",
+  "language": "zh-CN",
+  "created_at_utc": "2026-10-02T18:06:47.370153+00:00",
+  "status": "Y_FRESH_WORKER_AUTOMATIC_SAVED_CHECKER_AND_FINAL_PAIR_LINKAGE_PASS",
+  "official_results": false,
+  "result_zh": "Y实际fresh worker与automatic saved-only checker均PASS；完成finite Ny6/K3、6q/3twists、固定manual532的离散研究点。read-only最终pair linkage已PASS，152 checks/0 failures，原receipt逐字节保存；该审查认证已记录checker结果而非数值重算。主要accuracy仍未解决，Y新notch不是旧X/XZ同场对照。",
+  "point_identity": {
+    "direct_profile": "Y",
+    "degree": 4,
+    "incident_phi_deg": 5,
+    "source_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+    "source_tree": "29a64d7d3050b9ecc1c0e03f3b9b150243cf3d8a",
+    "clean_at_worker_checker_preflight_tests": true,
+    "mesh_dimensions": [
+      4,
+      6,
+      5
+    ],
+    "global_cells": 120,
+    "local_cells": [
+      40,
+      40,
+      40
+    ],
+    "global_interiors": 12960,
+    "local_interiors": [
+      4320,
+      4320,
+      4320
+    ],
+    "replication_count": 3,
+    "q_count": 6,
+    "twist_count": 3,
+    "physical_modes_fixed_manual": 532,
+    "q_port_counts": [
+      76,
+      76,
+      76,
+      152,
+      76,
+      76
+    ],
+    "sector_port_counts": [
+      228,
+      152,
+      152
+    ],
+    "xz_orbits": 20,
+    "global_q_pairs_per_orbit": 36,
+    "within_twist_local_pairs_per_orbit": 12,
+    "cross_twist_pairs_per_orbit": 24,
+    "source_outputs": 8,
+    "modes_per_output": 532,
+    "configuration_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "ABI_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96"
+  },
+  "worker_terminal": {
+    "summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/summary.json",
+      "sha256": "1829f8724cf6d39ff148d5a0a6bc9ecbd78ef635a7d9a9d46826691dd85f174e",
+      "bytes": 177241
+    },
+    "provenance": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/provenance.json",
+      "sha256": "50eaaef4b97b18250c90234657e609e8d0860b2b871aacbf952e5b9e76a997b8",
+      "bytes": 193380
+    },
+    "ABI_manifest": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/abi_manifest.json",
+      "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "bytes": 8904
+    },
+    "phase": {
+      "phase": "probe_complete",
+      "factor_count": 6,
+      "worker_elapsed_seconds": 1746.6436273509898,
+      "research_wall_seconds": 4500,
+      "phase_wall_seconds": 4499.628071768995,
+      "research_memory_gib": 3,
+      "requested_tree_cap_bytes": 3221225472,
+      "receipt": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/phase.json",
+        "sha256": "5c96243ffafff86e47dea31e159eb974a196554797c99422870c1795f03cca49",
+        "bytes": 247
+      }
+    },
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1748.5040639689978,
+      "sampled_process_tree_rss_peak_bytes": 1606623232,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "source": {
+        "head": "9511930c29414d9db3c25124d7c2a745de211f96",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "tree_cap_bytes": 3221225472,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 1748.5041037269984,
+        "limit_seconds": 4499.628071768995,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "report": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/probe_report.json",
+      "sha256": "17576b9d643912fc32d6997bead964ebd038b8034866010f0983ef9873a73703",
+      "bytes": 156335731,
+      "hash_binding_method": "Fresh verified checker report_sha256 matches parent immutable report hash; no large report rehash/decode by archive",
+      "status_parent_recorded": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+      "factor_count_confirmed_by_phase_and_checker": 6,
+      "PDE_solved_confirmed_by_checker": true,
+      "official_results": false
+    },
+    "resource_contract": {
+      "tree_cap_bytes": 3221225472,
+      "wall_seconds": 4500,
+      "swap_bytes": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "evidence_reserve_bytes": 134217728,
+      "factor_workspace_allowance_bytes": 805306368,
+      "factor_fill_and_temporary_workspace_unknown": true,
+      "factor_L_U_statistics_copies_permitted": false,
+      "performance_or_target_capacity_claim": false
+    },
+    "dependency_manifest_sha256": "f01b1256d3cfc762111f5e989acdfa25b3134710850c58e9c8511c94c8de5e1c",
+    "selected_source_sha256_from_immutable_provenance": {
+      "src/solvers/y_orbit_direct_probe.py": "dbce3be79d19b0add741d97e7ee901c0a38b4ca7efb08707652baff979160bec",
+      "src/solvers/y_orbit_direct_profile.py": "80f21ebebe816e23892ed7a7cf0cc5e273c748de473d2fbcb3e240b43b732391",
+      "src/solvers/y_orbit_direct_operator_qualification.py": "9f32a39c4e0f974184b8db6e25f7828447d61afc1955dad8557964f0c7d16796",
+      "src/solvers/y_orbit_direct_carrier_qualification.py": "37511ef630d111e00401c9733ebe183df4fa6461dc945ecb09321f251ba24127",
+      "src/solvers/y_orbit_centered_evidence.py": "69847a85c1a694550914f30360fba9e48a0f2877c9431ae6ab168ad507290f24",
+      "src/solvers/y_orbit_two_cell_inverse.py": "e9735caff59ca1132ef67ad3353b5acdb88d2a46d15adb738f58ca3e9eccc976",
+      "src/solvers/y_orbit_quotient_condensed.py": "c51791167d0db58723f7d5495419112af23fda343dcb62a44bd452e8ed261274",
+      "src/solvers/fullspace_dtn_action.py": "fd5bfdb360dc2d7cca17ca910758d949ae8cc858b8fd3291521fd0670c4fc725",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "437542356ea441c65dd25c3ed4fa086af2ca67b1f53deff69c664f20c954bbb7",
+      "src/solvers/dtn_boundary_phase_gauge.py": "ed32186a104e5dac13fecea66a14c43533ca757acde12cfc466dfd05d0449997",
+      "benchmarks/check_y_orbit_direct_probe.py": "0977c42935ad13062ef49c5dfffb1a0024c43f3f50822bc1d34153381ecb052f",
+      "benchmarks/check_y_orbit_quotient_probe.py": "26f71b18d61f3facc523f5545d25e233f552f799c276b56f913edaa0539566b9",
+      "benchmarks/run_y_orbit_quotient_probe.py": "6ba29d7435997b840e918a9d3eb079d50b3152d8984149452d07e638a7455aeb",
+      "benchmarks/y_orbit_direct_source_contract.py": "62dabab7c14f2638c29a3dc5b8d2d599a0bcb3fba07e2e001191c7efa7e2b357"
+    }
+  },
+  "checker_terminal": {
+    "checker": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/independent_checker.json",
+      "sha256": "2f4d12e546b89fa5f23a59a5ce249ff673a435bb1fa24b2e7fc4218dbd1fb66d",
+      "bytes": 12949853,
+      "verification": "byte SHA and selected root scalar/source/event receipt metadata only; 85k check-entry arrays not decoded"
+    },
+    "schema": "task40extra.y-orbit-direct-profile-checker.v1",
+    "gate_pass": true,
+    "qualification": "fresh Y complete full original inverse/FGMRES/residual/recovery/all532 output",
+    "evidence_valid_field_present": false,
+    "evidence_valid_field_added_or_invented": false,
+    "supervisor_summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/summary.json",
+      "sha256": "ef1dcbe59d98881d558adb6b3d7a5a1039bc649d001265f28a224dcbf0609a23",
+      "bytes": 177236
+    },
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 565.9665128490014,
+      "sampled_process_tree_rss_peak_bytes": 1707114496,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "source": {
+        "head": "9511930c29414d9db3c25124d7c2a745de211f96",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "tree_cap_bytes": 3221225472,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 565.9665438850061,
+        "limit_seconds": 2744.5022957720066,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "checker_watchdog_receipt": {
+      "path": "checker_supervision/summary.json",
+      "sha256": "ef1dcbe59d98881d558adb6b3d7a5a1039bc649d001265f28a224dcbf0609a23"
+    },
+    "watchdog_receipt_hash_exactly_matches_actual_summary": true,
+    "numeric_factor_calls": 0,
+    "PDE_rerun": false,
+    "worker_factor_count": 6,
+    "worker_PDE_solved": true,
+    "source_binding": {
+      "schema": "task40extra.direct-Y-checker-event-stream-source-bridge.v1",
+      "worker_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+      "checker_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+      "same_head_exact_source_identity": true,
+      "allowed_checker_test_paths": [
+        "benchmarks/check_y_orbit_direct_probe.py",
+        "benchmarks/check_y_orbit_quotient_probe.py",
+        "src/test/test_y_orbit_direct_event_stream_metadata.py"
+      ],
+      "changed_paths": [],
+      "all_other_numerical_config_input_dependencies_equal": true,
+      "worker_dependency_manifest_sha256": "f01b1256d3cfc762111f5e989acdfa25b3134710850c58e9c8511c94c8de5e1c",
+      "checker_dependency_manifest_sha256": "f01b1256d3cfc762111f5e989acdfa25b3134710850c58e9c8511c94c8de5e1c",
+      "changed_dependencies": []
+    },
+    "historical_arrays_loaded": false,
+    "historical_original312_reused_for_new_point": false,
+    "original_check_count": 0,
+    "global_Ny_reference_matrices_created": false,
+    "automatic_checker_succeeded": true,
+    "research_tree_cap_bytes": 3221225472,
+    "research_wall_seconds": 4500,
+    "separate_worker_and_checker_supervision": true,
+    "artifact_manifest": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/artifact_manifest.json",
+      "sha256": "1080a4af9617ebcb5afb9a57956162846242514c343cc87a13061a7fa5a21442",
+      "hash_binding_method": "verified fresh checker artifact_manifest_sha256 scalar; no bulk index reread"
+    }
+  },
+  "checker_counts": {
+    "counts": {
+      "direct": 421,
+      "raw": 33520,
+      "operator": 30,
+      "shared": 51281
+    },
+    "passing_entries_total": 85252,
+    "counts_are_entries_not_global_unique_names": true,
+    "all_gate_pass": true,
+    "archive_count_binding": "selected root check_count scalars and gate_pass plus exact SHA; no new numeric check pass"
+  },
+  "event_metadata_integrity_as_checker_recorded": {
+    "path": "probe_events.jsonl",
+    "file_sha256": "c5a856b54093c25ed6f818836e8df7138337c02b206651a5a08ff0f22ab5dcdf",
+    "file_bytes": 198364094,
+    "line_count": 99227,
+    "blank_line_count": 0,
+    "event_count": 99227,
+    "maximum_line_bytes": 58450245,
+    "read_chunk_bytes": 1048576,
+    "maximum_admitted_line_bytes": 67108864,
+    "all_events_retained": true,
+    "exact_event_order_preserved": true,
+    "complete_EOF_verified": true,
+    "same_file_hash_both_passes": true,
+    "keys_interned_without_value_changes": true
+  },
+  "engineering_metrics_parent_selected_from_bound_report": {
+    "report_sha256": "17576b9d643912fc32d6997bead964ebd038b8034866010f0983ef9873a73703",
+    "report_body_not_reloaded": true,
+    "precision_note": "Residual/defect/coupling values retain parent supplied reporting precision; latest pair review will validate final scalar joins",
+    "six_retained_q_factor_rows": [
+      1884,
+      1884,
+      1884,
+      1960,
+      1884,
+      1884
+    ],
+    "six_CSR_payload_bytes": 52709744,
+    "factor_control_setup_seconds": 5.747859236,
+    "setup_includes_controls_and_IO": true,
+    "pure_LU_or_per_PC_seconds_known": false,
+    "factor_fill_or_whole_memory_inferred_from_CSR": false,
+    "notch_iterations_by_source": {
+      "generic": 4,
+      "interior_only": 4,
+      "physical": 3,
+      "notch_supported": 4
+    },
+    "max_regular_true_original_residual": 8.92748e-12,
+    "max_notch_true_original_residual": 7.2865e-12,
+    "true_equation_gate": 1e-10,
+    "physical_notch_nonzero_q_relative": 4.06863e-05,
+    "all8_outputs_532_finite_representable": true,
+    "max_sample_PC_defect": 0.001783457,
+    "PC_defect_is_norm_bound": false,
+    "notch_delta_off_q_coupling_relative": 0.7071035,
+    "coupling_metric_relative_to_notch_delta_not_global_strong_coupling": true,
+    "actual_sample_physical_PC_defect": 0.00018691878593559766,
+    "max_sample_PC_defect_source": "interior_only"
+  },
+  "notch_geometry_and_comparison_scope": {
+    "new_Y_aligned_changed_cells": 3,
+    "periodic_y_shift_unscaled_exact": "-25/12",
+    "subsequent_scale_exact": "7/135",
+    "Y_box_unscaled_exact": [
+      "25",
+      "33.5",
+      "25/6",
+      "100/6",
+      "40",
+      "80"
+    ],
+    "Y_box_unscaled_as_source_review": [
+      25,
+      33.5,
+      4.166666666666667,
+      16.666666666666668,
+      40,
+      80
+    ],
+    "same_old_width_and_volume": true,
+    "same_old_full_field": false,
+    "same_old_discrete_control": false,
+    "old_X_XZ_two_cell_notch_contract_preserved": true,
+    "notch_source_review": {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_production_source_review_v1.json",
+      "sha256": "cc87ebe9f4822bf3365983ba3423108685c26339297fa2ee5df48837f4d7112c",
+      "bytes": 9072
+    },
+    "interpretation_zh": "Y PC defect与迭代变化可报告为各研究点观察值；新3cell shifted-notch及不同分解阻止把Y直接当作旧X/XZ same-field accuracy/convergence对照。"
+  },
+  "preserved_Y_attempt1_failure": {
+    "summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/summary.json",
+      "sha256": "95ae389020e3df35888f84bb077d2ffef3136858cb85ddf86e175fe6eaab348e",
+      "bytes": 177155
+    },
+    "provenance": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/provenance.json",
+      "sha256": "b0eba392e5ba47d21c7cb6fd3ad9f8ebdc8f276945b12fdbfa1bfbed621cf4b7",
+      "bytes": 192419
+    },
+    "traceback": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/probe_traceback.txt",
+      "sha256": "06fa67d90f612ba40a171281661e0da337f02732cb54d7f085c60e97a76b874e",
+      "bytes": 1650
+    },
+    "carrier_failure": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/failed_direct_carrier_qualification.json",
+      "sha256": "78da0fe0593bf3f4e169a67d830c369e201a530571b657186b9b6fca21312250",
+      "bytes": 50654
+    },
+    "supervisor": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 2,
+      "elapsed_seconds": 88.70482266499312,
+      "sampled_process_tree_rss_peak_bytes": 487489536,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "source": {
+        "head": "67c487e6be3cca3450b833c307d739f9b8ae744d",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "tree_cap_bytes": 3221225472,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 88.70482542998798,
+        "limit_seconds": 4499.608473418004,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "source_tree": "3b86f90e02ba971795ee438cec3c9ee5b0b6eec8",
+    "factor_count": 0,
+    "PDE_solved": false,
+    "full_case_pass": false,
+    "status": "FAILED_DIRECT_FRESH_CARRIER_COMPONENTS",
+    "exception_type": "ValueError",
+    "exception": "quotient original plane H must equal global plane H / K",
+    "failure_gate": "fresh local40 twist 0",
+    "classification_zh": "protected H validation retained hardcoded K2 multiplier; typed K3 context reached the H guard and failed before first factor. The subsequent local-H formula diagnostic is explicitly computed, not a saved local carrier; original validation/metadata failure is preserved.",
+    "failed_worker_promoted_to_PASS": false
+  },
+  "reviewed_H_K3_validation_metadata_correction": {
+    "source_review": {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_H_normalization_source_review_v1.json",
+      "sha256": "dab6244d516154d81c8ee9a5ddeeea78bbacae875cf38760437cdc707a2d0920",
+      "bytes": 4903
+    },
+    "status": "PASS_BOUNDED_Y_REPLICATION_H_GATE_IDENTITY_AND_AREA_METADATA_SOURCE_FIX",
+    "base_head": "67c487e6be3cca3450b833c307d739f9b8ae744d",
+    "changed_files": [
+      {
+        "new_sha256": "fd5bfdb360dc2d7cca17ca910758d949ae8cc858b8fd3291521fd0670c4fc725",
+        "old_sha256": "e328b69351484daa9e12802af62645cc0149c41f66781b2ec7600e68c099f8c4",
+        "path": "src/solvers/fullspace_dtn_action.py"
+      },
+      {
+        "new_sha256": "ed32186a104e5dac13fecea66a14c43533ca757acde12cfc466dfd05d0449997",
+        "old_sha256": "61af1f50dd430641bc5cb36d539419a9dc2c71ee6b86c23862bb5ebe76c03e45",
+        "path": "src/solvers/dtn_boundary_phase_gauge.py"
+      },
+      {
+        "new_sha256": "62dabab7c14f2638c29a3dc5b8d2d599a0bcb3fba07e2e001191c7efa7e2b357",
+        "old_sha256": "a5e99eb6d7d6b636aeba857c05121b2bf0db1cf88fd52b02a4f66442843573ba",
+        "path": "benchmarks/y_orbit_direct_source_contract.py"
+      },
+      {
+        "new_sha256": "d0452dcc3f74f45e23608fa184103591617f633127a7b05c822911b9541d1052",
+        "old_sha256": "34b28026e58b3380536e3b21179a2fd8971f3a7ca80dfb486eb117ac45a61c1b",
+        "path": "src/test/test_y_orbit_direct_XZ_solver_metadata.py"
+      },
+      {
+        "new_sha256": "7b91928ccda31fb8c5b99126bfe9d8d9baef07af95ffeebf2237f847d3143a8c",
+        "old_sha256": null,
+        "path": "src/test/test_y_orbit_direct_Y_H_normalization_metadata.py"
+      }
+    ],
+    "scope": "OnlyvalidatedK H gate multiplier,1/K identity,local_area*K diagnostic plus exact source-contract/test restoration seams; C/D/H assembly and denominator remain unchanged",
+    "retained_rtol": 7.105427357601002e-15,
+    "retained_rtol_expression": "32*float64_eps",
+    "retained_atol": 0,
+    "old_None_X_XZ_K2_behavior_preserved": true,
+    "manifest": {
+      "path": "experiments/y_orbit_Y_staging/H_normalization_fix/manifest.json",
+      "sha256": "0697a8dd0fec2d5890240aa23eb8ad4fc5bdff2e5cc6ca398731bf2a5505e1f6",
+      "bytes": 1728
+    },
+    "roundoff_scope": "The actual first-two-axis local period remains one ulp different from global_period_y/3. No rounding, denominator replacement, exact-area equality claim, or tolerance relaxation is introduced; global_boundary_area remains the diagnostic computed as local area times K.",
+    "actual_width_class_count_parent_recorded": 4,
+    "actual_all4_bitwidth_classes_unrounded_unmerged": true,
+    "tolerance_relaxed": false,
+    "global_area_exact_equality_claimed": false,
+    "all532_formula_diagnostic": {
+      "receipt": {
+        "path": "experiments/y_orbit_Y_staging/H_normalization_diagnostics/all532_H_formula.json",
+        "sha256": "66814c2364965a4c99f35eadcadc403a694ec0fe6c5477dd12cb396baf99648a",
+        "bytes": 457198
+      },
+      "mode_count": 532,
+      "all_old_K2_gate_fail": true,
+      "all_correct_K3_same_gate_pass": true,
+      "all532_stored_mode_flags_agree": true,
+      "maximum_correct_K3_relative_error": 3.4745643136670377e-16,
+      "wrong_K2_relative_error_range": [
+        0.33333333333333315,
+        0.3333333333333333
+      ],
+      "local_H_is_formula_recomputed_not_saved_carrier": true,
+      "global_H_all532_exact_saved_binding": true,
+      "saved_global_component_sha256": "bc4686e63fce4d9aaab152d9754f9861bfc66b1a97b65e91533433ec549f0576",
+      "first_two_axis_local_period_y": 0.4320987654320988,
+      "global_period_y_div3": 0.43209876543209874,
+      "local_period_y_hex": "0x1.ba781948b0fcep-2",
+      "global_period_y_div3_hex": "0x1.ba781948b0fcdp-2",
+      "one_ulp_period_difference_preserved": true,
+      "area_global": 3.36076817558299,
+      "area_local": 1.1202560585276635,
+      "FE_JIT_factor_PDE_calls": 0,
+      "archive_recomputed_formula": false
+    }
+  },
+  "formal_tests_and_preflight": {
+    "201_tests": {
+      "summary": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/summary.json",
+        "sha256": "9268ba38762a9fb160cdcff0ad27b3d0afa8095d3b8b6ba794145005cf5fd2ce",
+        "bytes": 177468
+      },
+      "tests_result": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/tests_result.json",
+        "sha256": "e7d8e927d035feaf1a30ac34ce0857e0036f9c327f61d3597f24ad4f655637bd",
+        "bytes": 120
+      },
+      "log": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/worker.log",
+        "sha256": "f5043a1548ac226c95c71aa3adb51e171d9adeaa43c6075f8b453baa0c8763d1",
+        "bytes": 437
+      },
+      "supervisor": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 25.74733544999617,
+        "sampled_process_tree_rss_peak_bytes": 324546560,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "process_tree_all_status_readable": true,
+        "process_tree_all_identity_complete": true,
+        "process_tree_identity_coverage": "complete",
+        "observed_child_identity_coverage": "complete",
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "source": {
+          "head": "9511930c29414d9db3c25124d7c2a745de211f96",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": ""
+        },
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "tree_cap_bytes": 1610612736,
+        "time_end_observation": {
+          "time_policy": "enforce",
+          "time_gate_evaluated": true,
+          "time_gate_action": "enforce",
+          "observed_seconds": 25.747337994005647,
+          "limit_seconds": 600.0,
+          "inclusive": true,
+          "exceeded": false,
+          "passed": true
+        }
+      },
+      "test_count": 201,
+      "test_seconds": 23.642,
+      "PASS": true,
+      "FE_JIT_factor_PDE_calls": 0
+    },
+    "initial198_failure": {
+      "summary": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/summary.json",
+        "sha256": "be1b9013c8a0ca314cdb85607b7c453a8e7004bf0db81604011477eba32c4e05",
+        "bytes": 177267
+      },
+      "tests_result": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/tests_result.json",
+        "sha256": "0c2a358241f644c6a423d124df9451c787069070d6bdf8ef6d645b9d4e031327",
+        "bytes": 618
+      },
+      "log": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/worker.log",
+        "sha256": "ef3f26a01642cd542aabd642bb016616db58ae73594f8aa13031e63a2e450c98",
+        "bytes": 53362
+      },
+      "supervisor": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 2,
+        "elapsed_seconds": 25.806141152002965,
+        "sampled_process_tree_rss_peak_bytes": 149970944,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "process_tree_all_status_readable": true,
+        "process_tree_all_identity_complete": true,
+        "process_tree_identity_coverage": "complete",
+        "observed_child_identity_coverage": "complete",
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "source": {
+          "head": "298a5b747b36a7d507cf64fd90e4a5bc11154e1a",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": ""
+        },
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "tree_cap_bytes": 1610612736,
+        "time_end_observation": {
+          "time_policy": "enforce",
+          "time_gate_evaluated": true,
+          "time_gate_action": "enforce",
+          "observed_seconds": 25.80614431500726,
+          "limit_seconds": 600.0,
+          "inclusive": true,
+          "exceeded": false,
+          "passed": true
+        }
+      },
+      "result": {
+        "tests": 198,
+        "failures": [
+          "src.test.test_y_orbit_direct_carrier_metadata.DirectCarrierMetadataTests.test_entry_signatures_and_import_only_standard_library"
+        ],
+        "errors": [
+          "src.test.test_y_orbit_direct_budget_metadata.DirectBudgetTests.test_memory_plan_cli_has_no_run_and_rejects_other_routes",
+          "src.test.test_y_orbit_direct_budget_metadata.DirectBudgetTests.test_only_literal2_X_solve_wall1800_and_default_cap",
+          "src.test.test_y_orbit_direct_budget_metadata.DirectBudgetTests.test_plan_cli_and_invalid_nonX_request"
+        ],
+        "skipped": [],
+        "passed": false,
+        "FE_JIT_factor_PDE_calls": 0
+      },
+      "stale_signature_or_K2_literal_cli_tests": true,
+      "numerical_failure_claimed": false,
+      "original_failure_preserved": true
+    },
+    "corrected198_PASS": {
+      "summary": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/summary.json",
+        "sha256": "5223171ba9b6e0b13e6992deab84eaf2d1fef38a007bc9d5a16811a30c7a4ad3",
+        "bytes": 177396
+      },
+      "tests_result": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/tests_result.json",
+        "sha256": "c9bd15aa353b55fbd3be16a7bef6706b3e96577a04afb7f1f63462fedcd0e3e6",
+        "bytes": 120
+      },
+      "log": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/worker.log",
+        "sha256": "544355ee3fe58659846be9a4905371e7744c215656ab60dd81bcdada21754ace",
+        "bytes": 299
+      },
+      "supervisor": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 25.48410693000187,
+        "sampled_process_tree_rss_peak_bytes": 160202752,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "process_tree_all_status_readable": true,
+        "process_tree_all_identity_complete": true,
+        "process_tree_identity_coverage": "complete",
+        "observed_child_identity_coverage": "complete",
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "source": {
+          "head": "67c487e6be3cca3450b833c307d739f9b8ae744d",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": ""
+        },
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "tree_cap_bytes": 1610612736,
+        "time_end_observation": {
+          "time_policy": "enforce",
+          "time_gate_evaluated": true,
+          "time_gate_action": "enforce",
+          "observed_seconds": 25.48410890100058,
+          "limit_seconds": 600.0,
+          "inclusive": true,
+          "exceeded": false,
+          "passed": true
+        }
+      },
+      "result": {
+        "tests": 198,
+        "failures": [],
+        "errors": [],
+        "skipped": [],
+        "passed": true,
+        "FE_JIT_factor_PDE_calls": 0
+      }
+    },
+    "preflight": {
+      "receipt": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_preflight_attempt1/receipt.json",
+        "sha256": "0647fb53ea5ee0b670d73f8f246d281eded83df0bf0046f19aeb0a8a1c3a4b92",
+        "bytes": 229085
+      },
+      "source_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+      "source_dirty": "",
+      "physical_generator_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+      "mode_inventory": {
+        "mode_count": 532,
+        "q_port_counts": [
+          76,
+          76,
+          76,
+          152,
+          76,
+          76
+        ],
+        "sector_port_counts": [
+          228,
+          152,
+          152
+        ],
+        "source": "src.common.modes_3d.outgoing_port_modes_3d(full_physical_cfg)",
+        "FE_assembly_performed": false,
+        "manifest_digest_qualification": "external_complete_manifest_gate"
+      },
+      "fresh_launch_admission": {
+        "requested_memory_gib": 3,
+        "requested_tree_cap_bytes": 3221225472,
+        "required_cap_plus_evidence_reserve_bytes": 3355443200,
+        "fresh_memory_envelope": {
+          "mem_total_bytes": 10451460096,
+          "mem_available_bytes": 8035258368,
+          "effective_total_bytes": 10451460096,
+          "effective_available_bytes": 8035258368,
+          "reserve_bytes": 4294967296,
+          "launch_cap_bytes": 3740291072,
+          "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+          "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+          "static_tree_cap_bytes": 12000000000,
+          "cgroup_limits": []
+        },
+        "launch_admission_passed": true
+      },
+      "H_all532_diagnostic_sha256": "66814c2364965a4c99f35eadcadc403a694ec0fe6c5477dd12cb396baf99648a",
+      "FE_JIT_factor_PDE_calls": 0
+    },
+    "archive_tests_or_preflight_rerun": false
+  },
+  "X_XZ_Y_calibration_comparison": {
+    "points": [
+      {
+        "profile": "X",
+        "source_head": "816b7247c8359a7affbd450365de5bbb86de367a",
+        "mesh_dimensions": [
+          6,
+          4,
+          5
+        ],
+        "global_cells": 120,
+        "local_cells": [
+          60,
+          60
+        ],
+        "global_interiors": 12960,
+        "q_factors": 4,
+        "augmented_rows": [
+          2788,
+          2864,
+          2864,
+          2864
+        ],
+        "CSR_payload_bytes": 54078536,
+        "factor_setup_control_IO_seconds": 3.9568744160060305,
+        "worker_seconds": 1535.1467186810041,
+        "worker_RSS_peak_bytes": 1422172160,
+        "checker_seconds": 590.1043245119945,
+        "checker_RSS_peak_bytes": 1567666176,
+        "notch_iterations_generic_interior_physical_supported": [
+          4,
+          4,
+          4,
+          5
+        ],
+        "max_regular_true_original_residual": 7.57682638912512e-11,
+        "max_notch_true_original_residual": 4.710949682298374e-12,
+        "physical_nonzero_q_relative": 9.791635566626867e-05,
+        "research_cap_bytes": 2147483648,
+        "research_wall_seconds": 1800,
+        "notch_contract": "original aligned two-cell box",
+        "same_field_control_across_X_XZ": true,
+        "source_record": "staging/direct_X_V13_success_evidence_2a07d23/compact_record.json",
+        "actual_sample_physical_PC_defect": 0.013423201750147613,
+        "max_sample_PC_defect": 0.013423201750147613,
+        "max_sample_PC_defect_source": "physical"
+      },
+      {
+        "profile": "XZ",
+        "source_head": "ae6034fa13b4af62263409822fec1c6c4ba4a150",
+        "mesh_dimensions": [
+          6,
+          4,
+          7
+        ],
+        "global_cells": 168,
+        "local_cells": [
+          84,
+          84
+        ],
+        "global_interiors": 18144,
+        "q_factors": 4,
+        "augmented_rows": [
+          3796,
+          3872,
+          3872,
+          3872
+        ],
+        "CSR_payload_bytes": 73801544,
+        "factor_setup_control_IO_seconds": 6.217330755,
+        "worker_seconds": 2392.3387733929994,
+        "worker_RSS_peak_bytes": 1669115904,
+        "checker_seconds": 754.0055825109885,
+        "checker_RSS_peak_bytes": 1594347520,
+        "notch_iterations_generic_interior_physical_supported": [
+          4,
+          4,
+          4,
+          5
+        ],
+        "max_regular_true_original_residual": 7.60336e-11,
+        "max_notch_true_original_residual": 4.58254e-12,
+        "physical_nonzero_q_relative": 8.95626e-05,
+        "research_cap_bytes": 3221225472,
+        "research_wall_seconds": 4500,
+        "notch_contract": "original aligned two-cell box",
+        "same_field_control_across_X_XZ": true,
+        "source_record": "staging/direct_XZ_V14_success_evidence_ae6034fa/compact_record.json",
+        "actual_sample_physical_PC_defect": 0.0134233,
+        "max_sample_PC_defect": null,
+        "max_sample_PC_defect_source": "not separately bound in the archived V14 scalar summary"
+      },
+      {
+        "profile": "Y",
+        "source_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+        "mesh_dimensions": [
+          4,
+          6,
+          5
+        ],
+        "global_cells": 120,
+        "local_cells": [
+          40,
+          40,
+          40
+        ],
+        "global_interiors": 12960,
+        "q_factors": 6,
+        "augmented_rows": [
+          1884,
+          1884,
+          1884,
+          1960,
+          1884,
+          1884
+        ],
+        "CSR_payload_bytes": 52709744,
+        "factor_setup_control_IO_seconds": 5.747859236,
+        "worker_seconds": 1748.5040639689978,
+        "worker_RSS_peak_bytes": 1606623232,
+        "checker_seconds": 565.9665128490014,
+        "checker_RSS_peak_bytes": 1707114496,
+        "notch_iterations_generic_interior_physical_supported": [
+          4,
+          4,
+          3,
+          4
+        ],
+        "max_regular_true_original_residual": 8.92748e-12,
+        "max_notch_true_original_residual": 7.2865e-12,
+        "physical_nonzero_q_relative": 4.06863e-05,
+        "research_cap_bytes": 3221225472,
+        "research_wall_seconds": 4500,
+        "notch_contract": "new aligned three-cell equal-volume periodic-y shifted box",
+        "same_field_control_with_old_X_XZ": false,
+        "source_record": "this V15 compact_record.json",
+        "actual_sample_physical_PC_defect": 0.00018691878593559766,
+        "max_sample_PC_defect": 0.001783457,
+        "max_sample_PC_defect_source": "interior_only"
+      }
+    ],
+    "common_scope_zh": "p4、phi5、same outer optical geometry、manual532；分别完成自己的原始方程门和full output门",
+    "comparison_limits_zh": [
+      "RSS/time为各自whole supervised workflow，含controls/evidence/I/O及不同研究cap",
+      "factor setup不是纯LU或per-PC时序；CSR payload不是factor fill/RSS",
+      "X/XZ旧2cell notch与Y新shifted3cell notch不构成same-field/discrete-control对照",
+      "PC defect均为weak perturbation sampled observation，normboundfalse",
+      "没有场误差/目标accuracy/optical-electrical-size增长/AUTO32060/p6/2TB48h资格；main accuracy仍unresolved"
+    ],
+    "old_source_packages": [
+      {
+        "directory": "staging/direct_X_V13_success_evidence_2a07d23/",
+        "files": [
+          {
+            "path": "staging/direct_X_V13_success_evidence_2a07d23/compact_record.json",
+            "sha256": "913064789949efb4ecf14fdbe699ead9678232ff0d7bd4d70554481b006b57b6",
+            "bytes": 23649
+          },
+          {
+            "path": "staging/direct_X_V13_success_evidence_2a07d23/manifest.json",
+            "sha256": "98aa8ada22d721ae7a690a350f6cd3eb8773ba4ad3ca4d05b8d79c90672314b4",
+            "bytes": 6838
+          }
+        ],
+        "unchanged": true
+      },
+      {
+        "directory": "staging/direct_XZ_V14_success_evidence_ae6034fa/",
+        "files": [
+          {
+            "path": "staging/direct_XZ_V14_success_evidence_ae6034fa/compact_record.json",
+            "sha256": "4b4bf2c446157e275d78949d7f9106ac91f3c5509540c7f57d1926ff3ecfcc6d",
+            "bytes": 21265
+          },
+          {
+            "path": "staging/direct_XZ_V14_success_evidence_ae6034fa/manifest.json",
+            "sha256": "bce3d330533a0af66eb2dba0b98d634ea3c73733692f2ba2992df5d0a9733176",
+            "bytes": 9909
+          }
+        ],
+        "unchanged": true
+      }
+    ]
+  },
+  "source_reviews": [
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_production_source_review_v1.json",
+      "sha256": "cc87ebe9f4822bf3365983ba3423108685c26339297fa2ee5df48837f4d7112c",
+      "bytes": 9072
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_source_review_final_v3.json",
+      "sha256": "3e8dfe50f9d179b44cb8c59b05e7f6facf314d2f1744687395431054139d24b0",
+      "bytes": 10011
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_late_cli_test_literal_source_review_v1.json",
+      "sha256": "5432c5512b0f17ff62f0e2f3d9c8f88fff86f6967c7b56639edf4d55e80b775b",
+      "bytes": 2996
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_H_normalization_source_review_v1.json",
+      "sha256": "dab6244d516154d81c8ee9a5ddeeea78bbacae875cf38760437cdc707a2d0920",
+      "bytes": 4903
+    }
+  ],
+  "final_independent_pair_linkage_receipt": {
+    "status": "PASS_FINAL_PAIR_LINKAGE_AND_CORRECTED_PACKAGE",
+    "original_path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_final_pair_linkage_v1.json",
+    "copy_path": "independent_Y_final_pair_linkage_v1.json",
+    "sha256": "5110624d16a0834fa9a38296045e85ef52d84c774cae7a20fe9f78d4ed084561",
+    "bytes": 21072,
+    "byte_identical_copy": true,
+    "check_count": 152,
+    "failed_check_count": 0,
+    "source_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+    "source_tree": "29a64d7d3050b9ecc1c0e03f3b9b150243cf3d8a",
+    "scope_limits": [
+      "Read-only evidence linkage review; no numerical checker rerun, FE/JIT/factor/PDE work, source or canonical writes. Fresh byte hashes and selected JSON sections only; no canonical array/event replay or check-entry array decoding.",
+      "Six retained factors, 12960 interiors, manual 532 modes and new shifted three-cell notch bound. Y is not an old X/XZ same-field accuracy comparison.",
+      "Geometry scaled 7/135 with lambda 0.7 nm retained; original unscaled target accuracy, AUTO32060, p6 and 2TB/48h capacity remain unqualified.",
+      "Original Y1 K2-protected-H validation failure remains failed, factor0; subsequent correction does not retroactively promote it.",
+      "Passing entry total is a count of recorded checks, not globally unique names. This review authenticates the recorded checker result, not an independent numerical recomputation."
+    ],
+    "reviewed_corrected_package_sha256": {
+      "report_zh.md": "d34e685692989fb442570b033d15e9f52aa1886a6e306de64ff13050450c63df",
+      "calibration_comparison_zh.md": "d060e1746327306673f76e5a76ab0ee532a7f76dcadfa254f4ee350f4e898a78",
+      "compact_record.json": "28381cdc7180b126d7a52eb47b83a1074fc8534b4d7dbc386a9ef2d025b6508e",
+      "manifest.json": "afb8f19aa61585beaa654fa6f124f63b318437ea06563e23b9e9ac6f66c433c0",
+      "integration_snippets.md": "4ab3828c00f64755f4fda635367de9befd8734ea0e38bdba7021dccaa5efa16d"
+    },
+    "finalization_scope": "After review: copy unchanged receipt, add receipt links/status, refresh package hashes; no source/numerical/geometry metric change",
+    "publication_performed_by_archive": false
+  },
+  "archiver_actions": {
+    "external_only": true,
+    "canonical_writes": false,
+    "project_imports": false,
+    "data_arrays_decoded": false,
+    "bulk_events_or_resource_logs_read": false,
+    "huge_report_or_manifest_reread": false,
+    "selected_scalar_checker_and_byte_hash_read": true,
+    "formula_diagnostic_saved_scalar_flags_read": true,
+    "FE_JIT_factor_solve_PDE_rerun": false,
+    "original_failure_and_test_evidence_changed": false,
+    "X_XZ_archives_changed": false
+  },
+  "scalar_label_correction": {
+    "scope": "external compact/report comparison label only; no numerical or source change",
+    "previous_Y_comparison_label": "sample_physical_PC_defect incorrectly held max-sample value0.001783457",
+    "actual_sample_physical_PC_defect": 0.00018691878593559766,
+    "max_sample_PC_defect": 0.001783457,
+    "max_sample_PC_defect_source": "interior_only",
+    "value_binding_source": "Exact physical scalar and separate max source authenticated by copied independent_Y_final_pair_linkage_v1.json; receipt5110624d16a0834fa9a38296045e85ef52d84c774cae7a20fe9f78d4ed084561"
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "schema": "task40extra.external-V15-Y-success-hash-manifest.v1",
+  "status": "COMPACT_STATIC_BINDINGS_AND_INDEPENDENT_CORRECTED_PAIR_LINKAGE_PASS",
+  "base_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud",
+  "archive_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/direct_Y_V15_success_evidence_9511930c",
+  "original_small_evidence": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/summary.json",
+      "sha256": "1829f8724cf6d39ff148d5a0a6bc9ecbd78ef635a7d9a9d46826691dd85f174e",
+      "bytes": 177241
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/phase.json",
+      "sha256": "5c96243ffafff86e47dea31e159eb974a196554797c99422870c1795f03cca49",
+      "bytes": 247
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/provenance.json",
+      "sha256": "50eaaef4b97b18250c90234657e609e8d0860b2b871aacbf952e5b9e76a997b8",
+      "bytes": 193380
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/abi_manifest.json",
+      "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "bytes": 8904
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/direct_carrier_qualification.json",
+      "sha256": "a6e3803db9cb6d2be62b604c636fff378d3bf7e8b9c1214580dc5161446db13c",
+      "bytes": 222496
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/summary.json",
+      "sha256": "ef1dcbe59d98881d558adb6b3d7a5a1039bc649d001265f28a224dcbf0609a23",
+      "bytes": 177236
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_phase.json",
+      "sha256": "a2eafcfd217397268e3f5b0af28a5943053f4e8bfdcfa5687c853644723b5525",
+      "bytes": 262
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/worker.log",
+      "sha256": "9242916587b1b15edb4014484ba3add6c68ec21264bdda2bf5880375703f2fc3",
+      "bytes": 135
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/summary.json",
+      "sha256": "95ae389020e3df35888f84bb077d2ffef3136858cb85ddf86e175fe6eaab348e",
+      "bytes": 177155
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/phase.json",
+      "sha256": "a70b5d48c6fb4e7130d1e88e7f43410c481d6f62753c4de52a1a6bbdfef0964d",
+      "bytes": 245
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/provenance.json",
+      "sha256": "b0eba392e5ba47d21c7cb6fd3ad9f8ebdc8f276945b12fdbfa1bfbed621cf4b7",
+      "bytes": 192419
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/probe_traceback.txt",
+      "sha256": "06fa67d90f612ba40a171281661e0da337f02732cb54d7f085c60e97a76b874e",
+      "bytes": 1650
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/failed_direct_carrier_qualification.json",
+      "sha256": "78da0fe0593bf3f4e169a67d830c369e201a530571b657186b9b6fca21312250",
+      "bytes": 50654
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/summary.json",
+      "sha256": "9268ba38762a9fb160cdcff0ad27b3d0afa8095d3b8b6ba794145005cf5fd2ce",
+      "bytes": 177468
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/tests_result.json",
+      "sha256": "e7d8e927d035feaf1a30ac34ce0857e0036f9c327f61d3597f24ad4f655637bd",
+      "bytes": 120
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/worker.log",
+      "sha256": "f5043a1548ac226c95c71aa3adb51e171d9adeaa43c6075f8b453baa0c8763d1",
+      "bytes": 437
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/summary.json",
+      "sha256": "be1b9013c8a0ca314cdb85607b7c453a8e7004bf0db81604011477eba32c4e05",
+      "bytes": 177267
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/tests_result.json",
+      "sha256": "0c2a358241f644c6a423d124df9451c787069070d6bdf8ef6d645b9d4e031327",
+      "bytes": 618
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/worker.log",
+      "sha256": "ef3f26a01642cd542aabd642bb016616db58ae73594f8aa13031e63a2e450c98",
+      "bytes": 53362
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/summary.json",
+      "sha256": "5223171ba9b6e0b13e6992deab84eaf2d1fef38a007bc9d5a16811a30c7a4ad3",
+      "bytes": 177396
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/tests_result.json",
+      "sha256": "c9bd15aa353b55fbd3be16a7bef6706b3e96577a04afb7f1f63462fedcd0e3e6",
+      "bytes": 120
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/worker.log",
+      "sha256": "544355ee3fe58659846be9a4905371e7744c215656ab60dd81bcdada21754ace",
+      "bytes": 299
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_preflight_attempt1/receipt.json",
+      "sha256": "0647fb53ea5ee0b670d73f8f246d281eded83df0bf0046f19aeb0a8a1c3a4b92",
+      "bytes": 229085
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_H_normalization_source_review_v1.json",
+      "sha256": "dab6244d516154d81c8ee9a5ddeeea78bbacae875cf38760437cdc707a2d0920",
+      "bytes": 4903
+    },
+    {
+      "path": "experiments/y_orbit_Y_staging/H_normalization_diagnostics/all532_H_formula.json",
+      "sha256": "66814c2364965a4c99f35eadcadc403a694ec0fe6c5477dd12cb396baf99648a",
+      "bytes": 457198
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_production_source_review_v1.json",
+      "sha256": "cc87ebe9f4822bf3365983ba3423108685c26339297fa2ee5df48837f4d7112c",
+      "bytes": 9072
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_source_review_final_v3.json",
+      "sha256": "3e8dfe50f9d179b44cb8c59b05e7f6facf314d2f1744687395431054139d24b0",
+      "bytes": 10011
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_late_cli_test_literal_source_review_v1.json",
+      "sha256": "5432c5512b0f17ff62f0e2f3d9c8f88fff86f6967c7b56639edf4d55e80b775b",
+      "bytes": 2996
+    },
+    {
+      "path": "experiments/y_orbit_Y_staging/H_normalization_fix/manifest.json",
+      "sha256": "0697a8dd0fec2d5890240aa23eb8ad4fc5bdff2e5cc6ca398731bf2a5505e1f6",
+      "bytes": 1728
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_final_pair_linkage_v1.json",
+      "sha256": "5110624d16a0834fa9a38296045e85ef52d84c774cae7a20fe9f78d4ed084561",
+      "bytes": 21072
+    }
+  ],
+  "large_hash_bindings": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/probe_report.json",
+      "sha256": "17576b9d643912fc32d6997bead964ebd038b8034866010f0983ef9873a73703",
+      "bytes": 156335731,
+      "hash_binding_method": "Fresh verified checker report_sha256 matches parent immutable report hash; no large report rehash/decode by archive",
+      "status_parent_recorded": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+      "factor_count_confirmed_by_phase_and_checker": 6,
+      "PDE_solved_confirmed_by_checker": true,
+      "official_results": false
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/independent_checker.json",
+      "sha256": "2f4d12e546b89fa5f23a59a5ce249ff673a435bb1fa24b2e7fc4218dbd1fb66d",
+      "bytes": 12949853,
+      "verification": "byte SHA and selected root scalar/source/event receipt metadata only; 85k check-entry arrays not decoded"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/artifact_manifest.json",
+      "sha256": "1080a4af9617ebcb5afb9a57956162846242514c343cc87a13061a7fa5a21442",
+      "hash_binding_method": "verified fresh checker artifact_manifest_sha256 scalar; no bulk index reread"
+    }
+  ],
+  "old_X_XZ_packages": [
+    {
+      "directory": "staging/direct_X_V13_success_evidence_2a07d23/",
+      "files": [
+        {
+          "path": "staging/direct_X_V13_success_evidence_2a07d23/compact_record.json",
+          "sha256": "913064789949efb4ecf14fdbe699ead9678232ff0d7bd4d70554481b006b57b6",
+          "bytes": 23649
+        },
+        {
+          "path": "staging/direct_X_V13_success_evidence_2a07d23/manifest.json",
+          "sha256": "98aa8ada22d721ae7a690a350f6cd3eb8773ba4ad3ca4d05b8d79c90672314b4",
+          "bytes": 6838
+        }
+      ],
+      "unchanged": true
+    },
+    {
+      "directory": "staging/direct_XZ_V14_success_evidence_ae6034fa/",
+      "files": [
+        {
+          "path": "staging/direct_XZ_V14_success_evidence_ae6034fa/compact_record.json",
+          "sha256": "4b4bf2c446157e275d78949d7f9106ac91f3c5509540c7f57d1926ff3ecfcc6d",
+          "bytes": 21265
+        },
+        {
+          "path": "staging/direct_XZ_V14_success_evidence_ae6034fa/manifest.json",
+          "sha256": "bce3d330533a0af66eb2dba0b98d634ea3c73733692f2ba2992df5d0a9733176",
+          "bytes": 9909
+        }
+      ],
+      "unchanged": true
+    }
+  ],
+  "package_files": [
+    {
+      "name": "compact_record.json",
+      "sha256": "4d4d1c00647d07b805c5d34e359462fd26f850ba14fc5cca17d0e0b63cd8157c",
+      "bytes": 41889
+    },
+    {
+      "name": "report_zh.md",
+      "sha256": "35d2acb5ab9e10ecd91775d404c1606ef357ac9eb90a955293ba40aec166094b",
+      "bytes": 4926
+    },
+    {
+      "name": "calibration_comparison_zh.md",
+      "sha256": "700f62db023d56d9acd7664f83b1dc0e6df262c99eb97caa34520b540892fcfc",
+      "bytes": 2383
+    },
+    {
+      "name": "integration_snippets.md",
+      "sha256": "bd5f05065da8a8433b49ae99d0a9bb84f67a6a93f6b620a8aed33bdb0d7ded23",
+      "bytes": 1485
+    },
+    {
+      "name": "independent_Y_final_pair_linkage_v1.json",
+      "sha256": "5110624d16a0834fa9a38296045e85ef52d84c774cae7a20fe9f78d4ed084561",
+      "bytes": 21072
+    }
+  ],
+  "validation": {
+    "Y_worker_checker_terminal_resources_bound": true,
+    "exact_checker_SHA_verified": true,
+    "report_and_artifact_manifest_SHA_match_parent_and_fresh_checker": true,
+    "same_clean_worker_checker_source_and_ABI": true,
+    "checker_watchdog_link_matches_actual_summary": true,
+    "85252_entry_counts_and_gate_pass_bound": true,
+    "original_Y1_failure_and_initial198_test_failures_preserved": true,
+    "all532_H_formula_flags_and_corrected32eps_gate_scope_bound": true,
+    "computed_local_H_not_saved_carrier_disclosed": true,
+    "one_ulp_and_unrounded_width_classes_preserved": true,
+    "X_XZ_Y_not_same_field_Y_notch_limit_disclosed": true,
+    "no_canonical_data_array_bulk_event_or_numeric_rerun": true,
+    "physical_PC_sample_and_max_sample_distinct": true,
+    "final_pair_linkage_receipt_PASS152checks0failures": true,
+    "final_receipt_copy_bytes_identical": true
+  },
+  "final_independent_pair_linkage_receipt": {
+    "original_path": "experiments/y_orbit_direct_calibration_staging/review/independent_Y_final_pair_linkage_v1.json",
+    "byte_identical_copy": "independent_Y_final_pair_linkage_v1.json",
+    "sha256": "5110624d16a0834fa9a38296045e85ef52d84c774cae7a20fe9f78d4ed084561",
+    "status": "PASS_FINAL_PAIR_LINKAGE_AND_CORRECTED_PACKAGE",
+    "checks": 152,
+    "failures": 0,
+    "reviewed_package_snapshot_sha256": {
+      "report_zh.md": "d34e685692989fb442570b033d15e9f52aa1886a6e306de64ff13050450c63df",
+      "calibration_comparison_zh.md": "d060e1746327306673f76e5a76ab0ee532a7f76dcadfa254f4ee350f4e898a78",
+      "compact_record.json": "28381cdc7180b126d7a52eb47b83a1074fc8534b4d7dbc386a9ef2d025b6508e",
+      "manifest.json": "afb8f19aa61585beaa654fa6f124f63b318437ea06563e23b9e9ac6f66c433c0",
+      "integration_snippets.md": "4ab3828c00f64755f4fda635367de9befd8734ea0e38bdba7021dccaa5efa16d"
+    },
+    "finalization_scope": "Receipt copy/link/status and package hash refresh only; original reviewed receipt is unchanged"
+  }
+}

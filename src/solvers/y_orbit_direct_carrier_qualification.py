@@ -1,6 +1,6 @@
 """Fresh direct-profile primary/literal/raw component qualification before q factors.
 
-The numerical entry point is externally admitted and limited to X/XZ. It uses
+The numerical entry point is externally admitted and limited to X/XZ/Y. It uses
 existing full physical constructors, full finalized MPCs and raw observers.
 There is no snapshot restoration, full-Ny reference matrix, factor or solve.
 Importing this module uses only the standard library.
@@ -467,10 +467,10 @@ def _resource_authority(environment):
         if requested != "1800" or not 0 < float(environment.get("QUOTIENT_PHASE_WALL_SECONDS", "nan")) <= 1800:
             raise ValueError("fresh X carrier resource metadata requires the exact supervised research budget")
         return "external min(fresh dynamic cap,1.5GiB)/1800s/zeroSwap/MPI1/thread1 supervision"
-    contracts = {"X": (2, 1800), "XZ": (3, 4500)}
+    contracts = {"X": (2, 1800), "XZ": (3, 4500), "Y": (3, 4500)}
     selected = environment.get("QUOTIENT_RESEARCH_MEMORY_PROFILE")
     if selected not in contracts:
-        raise ValueError("fresh resource metadata admits only X2GiB/1800s or XZ3GiB/4500s")
+        raise ValueError("fresh resource metadata admits only X2GiB/1800s, XZ3GiB/4500s or Y3GiB/4500s")
     memory_gib, wall_seconds = contracts[selected]
     cap_bytes = memory_gib*1024**3
     expected = {"QUOTIENT_RESEARCH_MEMORY_GIB": str(memory_gib), "QUOTIENT_RESEARCH_MEMORY_PROFILE": selected,
@@ -491,7 +491,7 @@ def _resource_authority(environment):
 def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_array,
                                 allocation_gate, event=None, shared_template_bank,
                                 entity_callback=None, layout_callback=None):
-    """Externally supervised X/XZ fresh full/two local setup and raw gates.
+    """Externally supervised X/XZ/Y fresh full/all local setup and raw gates.
 
     The caller owns the admitted source/ABI/same80 storage bridge, resource
     watchdog, artifact writer and shared bank lifecycle. The returned actions
@@ -499,8 +499,8 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
     Failure preserves honest component evidence then releases action owners.
     """
     from .y_orbit_direct_profile import DirectTwoCellProfile, validate_direct_physical_config
-    if DirectTwoCellProfile(direct_profile) not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ):
-        raise ValueError("fresh direct numerical helper admits only X/XZ")
+    if DirectTwoCellProfile(direct_profile) not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ, DirectTwoCellProfile.Y):
+        raise ValueError("fresh direct numerical helper admits only X/XZ/Y")
     metadata = validate_direct_physical_config(cfg, direct_profile)
     if not callable(save_array) or not callable(allocation_gate):
         raise TypeError("caller artifact writer and current-resident allocation gate are required")

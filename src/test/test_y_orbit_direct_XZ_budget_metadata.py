@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parents[2]
 REPO=ROOT.parents[2]/'repo' if ROOT.name=='runner' else ROOT
 RUNNER=ROOT/'benchmarks/run_y_orbit_quotient_probe.py'
 KEEP={'research_wall_budget','research_memory_budget','validate_research_memory_launch',
-      'research_memory_child_budget','research_phase_budget','research_watchdog_environment','plan_metadata','validate_worker_result'}
+      'research_memory_child_budget','research_phase_budget','research_watchdog_environment','plan_metadata','validate_worker_result','factor_policy'}
 SCOPE={'Path':Path,'json':json,'math':math,'WALL_SECONDS':600,'TREE_CAP_BYTES':1610612736,
        'RESERVE_BYTES':128<<20,'FACTOR_ALLOWANCE_BYTES':512<<20,'PASSES':{'prefactor':'QUOTIENT_PREFACTOR_COMPARE_PASS','solve':'QUOTIENT_FULL3D_INVERSE_PROBE_PASS'},
        'DIRECT_SCHEMA':'task40extra.y-orbit-direct-profile-probe.v1','SCHEMA':'task40extra.y-orbit-two-cell-quotient-probe.v1'}
@@ -24,9 +24,9 @@ class XZResearchBudgetTests(unittest.TestCase):
   self.assertEqual(wall('X',1800),1800);self.assertEqual(wall('XZ',4500),4500)
   self.assertEqual(memory('X','solve',1800,2),2*1024**3);self.assertEqual(memory('XZ','solve',4500,3),3*1024**3)
   with self.assertRaises(ValueError):memory('XZ','solve',4500,None)
-  for p,t,m in [('X',4500,3),('XZ',1800,2),('Y',4500,3),(None,4500,3),('XZ',4500,2),('X',1800,3)]:
+  for p,t,m in [('X',4500,3),('XZ',1800,2),('other',4500,3),(None,4500,3),('XZ',4500,2),('X',1800,3)]:
    with self.subTest(tuple=(p,t,m)),self.assertRaises(ValueError):memory(p,'solve',t,m)
-  for p,t in [('Y',4500),('X',4500),('XZ',1800),('XZ',4501),('XZ',True)]:
+  for p,t in [('other',4500),('X',4500),('XZ',1800),('XZ',4501),('XZ',True)]:
    with self.assertRaises(ValueError):wall(p,t)
   for stage in ('prefactor',None,'other'):
    with self.assertRaises(ValueError):memory('XZ',stage,4500,3)
@@ -45,7 +45,7 @@ class XZResearchBudgetTests(unittest.TestCase):
               ('cgroup_limits',[{'limit_bytes':3*1024**3,'current_bytes':0}]),('cgroup_limits',None)]:
    e=envelope();e[k]=v
    with self.subTest(field=k),self.assertRaises(MemoryError):call(e,3,**kw)
-  for p,t in [(None,None),('X',4500),('XZ',1800),('Y',4500)]:
+  for p,t in [(None,None),('X',4500),('XZ',1800),('other',4500)]:
    with self.assertRaises(ValueError):call(envelope(),3,direct_profile=p,research_wall_seconds=t)
 
  def test_exact_child_argv_environment_and_admitted_packet(self):
@@ -114,6 +114,6 @@ class XZResearchBudgetTests(unittest.TestCase):
   wraps=[n for n in ast.walk(TREE) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='research_watchdog_environment']
   self.assertEqual(len(wraps),2);self.assertTrue(all(any(k.arg=='direct_profile' for k in c.keywords) for c in wraps))
   factorfn=next(n for n in TREE.body if isinstance(n,ast.FunctionDef) and n.name=='allocation_request')
-  self.assertIn('FACTOR_ALLOWANCE_BYTES',ast.unparse(factorfn));self.assertEqual(SCOPE['FACTOR_ALLOWANCE_BYTES'],512<<20)
+  self.assertIn('factor_policy',ast.unparse(factorfn));self.assertEqual(SCOPE['factor_policy'](None),(4,512<<20));self.assertEqual(SCOPE['FACTOR_ALLOWANCE_BYTES'],512<<20)
 
 if __name__=='__main__':unittest.main()

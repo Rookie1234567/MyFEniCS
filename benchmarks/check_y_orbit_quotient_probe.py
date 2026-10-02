@@ -153,11 +153,11 @@ def admit_checker_output(worker_source, checker_source, *, worker_directory, out
     """Reject unsafe output paths before the failure logger can write anything."""
     if direct_profile is None:
         binding = bind_checker_source(worker_source, checker_source)
-    elif direct_profile in ("X", "XZ"):
+    elif direct_profile in ("X", "XZ", "Y"):
         from benchmarks.check_y_orbit_direct_probe import bind_direct_checker_source
         binding = bind_direct_checker_source(worker_source, checker_source, direct_profile=direct_profile)
     else:
-        raise ValueError("only explicit direct X/XZ saved-worker checker profiles are admitted")
+        raise ValueError("only explicit reviewed direct X/XZ/Y saved-worker checker profiles are admitted")
     same_directory = Path(worker_directory).resolve() == Path(output_directory).resolve()
     if (type(explicit_checker_directory) is not bool or type(prior_checker_output) is not bool
             or prior_checker_output or (explicit_checker_directory and same_directory)
@@ -592,12 +592,12 @@ def validate_shared_storage_metadata(evidence, descriptors, *, direct_profile=No
         from benchmarks.check_y_orbit_direct_probe import reviewed_direct_profile_metadata
         metadata=reviewed_direct_profile_metadata(direct_profile)
         shared_schema="task40extra.direct-shared-transform-equivalence.v1"
-        independent_counts=(metadata.independent_rows,metadata.local_independent_rows,metadata.local_independent_rows)
+        independent_counts=(metadata.independent_rows,)+(metadata.local_independent_rows,)*metadata.replication_count
         dimension_record_counts=tuple({1:metadata.nx*ny*(3*metadata.nz+2),2:metadata.nx*ny*(3*metadata.nz+1),
-            3:metadata.nx*ny*metadata.nz} for ny in (4,2,2))
+            3:metadata.nx*ny*metadata.nz} for ny in (metadata.ny,)+(metadata.local_y_cells,)*metadata.replication_count)
         record_totals=tuple(sum(counts.values()) for counts in dimension_record_counts)
-        base_count=record_totals[0]//4;row_width=metadata.rows_per_q
-        storage_counts=(metadata.storage_rows,metadata.local_storage_rows,metadata.local_storage_rows)
+        base_count=record_totals[0]//metadata.ny;row_width=metadata.rows_per_q
+        storage_counts=(metadata.storage_rows,)+(metadata.local_storage_rows,)*metadata.replication_count
         if evidence.get("direct_profile")!=metadata.name:raise ValueError("actual direct profile missing from shared inventory")
     if (evidence.get("schema") != shared_schema
             or evidence.get("shared_transforms") is not True or evidence.get("same80_p4_only") is not (direct_profile is None)
@@ -606,10 +606,13 @@ def validate_shared_storage_metadata(evidence, descriptors, *, direct_profile=No
             or evidence.get("payload_is_RSS") is not False or evidence.get("target_savings_measured") is not False
             or evidence.get("mapping_limit") != 1e-12):
         raise ValueError("complete same80 storage-only equivalence required")
+    role_names = ["full", "twist_0", "twist_1"] if direct_profile is None else [
+        "full", *(f"twist_{b}" for b in range(metadata.replication_count))]
+    role_ny = (4,2,2) if direct_profile is None else (metadata.ny,)+(metadata.local_y_cells,)*metadata.replication_count
     roles = evidence.get("roles", [])
-    if [item.get("role") for item in roles] != ["full", "twist_0", "twist_1"]:
-        raise ValueError("complete ordered full/two-local roles required")
-    for role, n, ny, total, expected_counts, storage_count in zip(roles,independent_counts,(4,2,2),record_totals,
+    if [item.get("role") for item in roles] != role_names:
+        raise ValueError("complete ordered full/all-reviewed-local roles required")
+    for role, n, ny, total, expected_counts, storage_count in zip(roles,independent_counts,role_ny,record_totals,
             dimension_record_counts,storage_counts,strict=True):
         records=role.get("records",[])
         if (role.get("independent_rows")!=n or role.get("width")!=row_width or role.get("ny")!=ny
@@ -647,7 +650,7 @@ def validate_shared_storage_metadata(evidence, descriptors, *, direct_profile=No
     stages=evidence.get("owner_stages",[])
     names=[item.get("stage") for item in stages]
     required=["before_collect"]
-    for role in ("full","twist_0","twist_1"):
+    for role in role_names:
         required.extend([role+"_after_collect",role+("_unshared_overlap" if direct_profile is None else "_streamed_controls_begin"),role+"_after_first_inverse_request",
                          role+"_after_first_inverse_direction",role+"_after_all_six_directions"])
         if role!="full":required.append(role+"_layout_after_build")
@@ -722,7 +725,7 @@ def validate_shared_storage_metadata(evidence, descriptors, *, direct_profile=No
             low,high=view.get("backing_span",[-1,-1])
             if not 0<=low<=high<=owner["allocation_nbytes"]:raise ValueError("view exceeds actual owner allocation")
             if (view["name"].startswith("bank.template.") or
-                    view["name"].startswith(("full.record.","twist_0.record.","twist_1.record.")) and
+                    view["name"].startswith(tuple(role+".record." for role in role_names)) and
                     view["name"].endswith((".matrix",".inverse"))):
                 if view.get("writeable") is not False or owner.get("owner_type")!="builtins.bytes":
                     raise ValueError("shared borrowed transform must have immutable byte backing")
@@ -861,7 +864,7 @@ def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gat
         default_views={item["name"]:item for item in default_stage["views"]}
         default_native=borrowed("default_"+name+".independent",default_stage) if direct_profile is None else native
         if direct_profile is not None and role.get("original_control_scope")!="streamed actual original helpers; one state scratch; no unshared collector":
-            raise ValueError("direct X/XZ requires streamed original helper controls")
+            raise ValueError("direct reviewed profiles require streamed original helper controls")
         saved_independent=borrowed(name+".independent")
         if not np.array_equal(native,saved_independent) or not np.array_equal(native,default_native) or native.shape!=(n,):raise ValueError("complete actual native inventory differs")
         if rows.dtype!=np.dtype(np.int64) or rows.shape!=(n,) or not np.array_equal(np.sort(rows),np.arange(n)):
@@ -997,15 +1000,15 @@ def check(directory, *, checker_source, checker_environment, stage, allocation_g
     allocation_gate("checker_profile_dispatch_metadata",{"matrix_payload_bytes":0,"workspace_bytes":8*provenance_path.stat().st_size+(1<<20)})
     dispatch_provenance=json.loads(provenance_path.read_text())
     if dispatch_provenance.get("direct_profile") is not None:
-        if dispatch_provenance.get("direct_profile") not in ("X","XZ"):raise ValueError("only direct X/XZ checker profiles are admitted")
+        if dispatch_provenance.get("direct_profile") not in ("X","XZ","Y"):raise ValueError("only reviewed direct X/XZ/Y checker profiles are admitted")
         from benchmarks.check_y_orbit_direct_probe import check_direct
         return check_direct(directory,checker_source=checker_source,checker_environment=checker_environment,
                             stage=stage,allocation_gate=allocation_gate,checker_directory=checker_directory,
                             research_wall_seconds=research_wall_seconds, research_memory_gib=research_memory_gib)
     if research_wall_seconds is not None:
-        raise ValueError("research wall override requires saved direct X/XZ evidence")
+        raise ValueError("research wall override requires saved reviewed direct evidence")
     if research_memory_gib is not None:
-        raise ValueError("research memory override requires saved direct X/XZ solve evidence")
+        raise ValueError("research memory override requires saved reviewed direct solve evidence")
     import numpy as np
     from scipy import sparse
     from benchmarks.y_orbit_two_cell_authority import (SavedFullP4Authority, AUTHORITY_RUN,
@@ -1544,9 +1547,9 @@ def main(argv=None):
     parser.add_argument("--checker-directory", type=Path,
         help="fresh ignored attempt directory for saved-worker rechecks; worker evidence remains readonly")
     parser.add_argument("--research-wall-seconds", type=int, choices=(1800,4500),
-        help="explicit X/wall1800 or XZ/wall4500 allowance; ordinary default is600 seconds")
+        help="explicit X/wall1800 or XZ/Y/wall4500 allowance; ordinary default is600 seconds")
     parser.add_argument("--research-memory-gib", type=int, choices=(2,3),
-        help="explicit X/solve/wall1800/2GiB or XZ/solve/wall4500/3GiB cap; ordinary default is1.5GiB")
+        help="explicit X/solve/wall1800/2GiB or XZ/Y/solve/wall4500/3GiB cap; ordinary default is1.5GiB")
     args = parser.parse_args(argv)
     started = time.monotonic()
     from benchmarks.run_real_p4_probe import source_facts, environment_facts

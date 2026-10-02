@@ -1,4 +1,4 @@
-"""Independent, saved-only checker for the reviewed fresh direct X/XZ profiles.
+"""Independent, saved-only checker for the reviewed fresh direct X/XZ/Y profiles.
 
 Importing this module is standard-library only. Numerical dependencies are
 loaded solely by the explicitly supervised checker entry point; the checker
@@ -66,7 +66,7 @@ def require(condition, message):
 
 def bind_direct_checker_source(worker_source, checker_source, *, direct_profile="X"):
     """Only the immutable816b X worker's two checkers and one test may differ."""
-    require(direct_profile in ("X", "XZ"), "only explicit direct X/XZ checker profiles are admitted")
+    require(direct_profile in ("X", "XZ", "Y"), "only explicit reviewed direct X/XZ/Y checker profiles are admitted")
     for source in (worker_source, checker_source):
         require(isinstance(source, dict) and source.get("dirty") == ""
             and isinstance(source.get("head"), str) and re.fullmatch(r"[0-9a-f]{40}", source["head"])
@@ -120,7 +120,8 @@ def validate_context_source_role(role, context, worker_source, *, source_root=No
         "floquet_3d_high_order.py": "src/constraints/floquet_3d_high_order.py",
         "high_order_floquet_trace.py": "src/constraints/high_order_floquet_trace.py",
     }
-    require(role in ("full", "twist_0", "twist_1"), "unknown direct carrier context role")
+    require(role in ("full", *(f"twist_{b}" for b in range(metadata.replication_count))),
+            "unknown direct carrier context role")
     expected = dict(base)
     if role == "full":
         require("y_orbit_quotient" not in context, "full carrier cannot use a quotient context")
@@ -136,10 +137,10 @@ def validate_context_source_role(role, context, worker_source, *, source_root=No
             and contract.get("direct_profile") == metadata.name
             and quotient.get("contract_sha256") == digest_json(contract)
             and contract.get("physical_generator_manifest_sha256") == PHYSICAL_MANIFEST
-            and contract.get("global_y_cells") == 4 and contract.get("local_y_cells") == 2
-            and contract.get("global_q_indices") == [twist, twist+2]
+            and contract.get("global_y_cells") == metadata.ny and contract.get("local_y_cells") == metadata.local_y_cells
+            and contract.get("global_q_indices") == [twist, twist+metadata.replication_count]
             and contract.get("global_mode_count") == 532 and contract.get("sector_mode_count") == metadata.sector_port_counts[twist]
-            and contract.get("replication_count") == 2
+            and contract.get("replication_count") == metadata.replication_count
             and quotient.get("actual_local_cells") == metadata.local_cell_count
             and quotient.get("actual_local_storage_rows") == metadata.local_storage_rows
             and quotient.get("twist_requires_global_dual_rhs_transport") is True,
@@ -296,10 +297,25 @@ def bound_path(root, relative):
 
 
 def reviewed_direct_profile_metadata(name):
-    """Only the existing X/XZ enumeration may supply shape/count invariants."""
-    require(name in ("X", "XZ"), "only explicit direct X/XZ saved profiles are admitted; Y remains held")
+    """Only the three reviewed finite profiles may supply shape/count invariants."""
+    require(name in ("X", "XZ", "Y"), "only explicit reviewed direct X/XZ/Y saved profiles are admitted")
     from src.solvers.y_orbit_direct_profile import direct_profile_metadata
-    return direct_profile_metadata(name)
+    metadata = direct_profile_metadata(name)
+    if name == "Y":
+        require(metadata.dimensions == (4, 6, 5) and metadata.local_y_cells == 2
+            and metadata.replication_count == 3 and metadata.q_port_counts == (76, 76, 76, 152, 76, 76)
+            and metadata.sector_port_counts == (228, 152, 152)
+            and metadata.augmented_rows_per_q == (1884, 1884, 1884, 1960, 1884, 1884)
+            and (metadata.cell_count, metadata.storage_rows, metadata.independent_rows, metadata.interior_rows, metadata.trace_rows)
+                == (120, 25468, 23808, 12960, 10848)
+            and (metadata.local_cell_count, metadata.local_storage_rows, metadata.local_independent_rows,
+                metadata.local_interior_rows, metadata.local_trace_rows, metadata.rows_per_q, metadata.trace_rows_per_q)
+                == (40, 8940, 7936, 4320, 3616, 3968, 1808)
+            and metadata.factor_allowance_per_q_bytes == 128*1024**2
+            and metadata.factor_allowance_aggregate_bytes == 768*1024**2
+            and metadata.evidence_reserve_bytes == RESERVE_BYTES,
+            "Y requires the exact reviewed six-q/three-twist mesh/channel/resource inventory")
+    return metadata
 
 
 def validate_profile(profile):
@@ -313,7 +329,61 @@ def validate_profile(profile):
         "factor_allowance_per_q_bytes", "factor_allowance_aggregate_bytes", "evidence_reserve_bytes")
     identity = json.loads(json.dumps(metadata.identity()))
     require(all(profile.get(key) == identity[key] for key in fields),
-            "complete unchanged X/XZ mesh/channel/alias/resource profile required")
+            "complete unchanged reviewed mesh/channel/alias/resource profile required")
+    return True
+
+
+def validate_direct_mode_roles(physical_modes, direct_profile):
+    """Count every original physical alias against the reviewed q/sector roles."""
+    metadata = reviewed_direct_profile_metadata(direct_profile)
+    keys = [(mode.side, int(mode.m), int(mode.n), mode.polarization) for mode in physical_modes]
+    require(len(keys) == len(set(keys)) == 532
+        and tuple(sum(int(mode.n) % metadata.ny == q for mode in physical_modes)
+            for q in range(metadata.ny)) == metadata.q_port_counts,
+        "all532 unique original physical aliases and exact reviewed q counts required")
+    sectors = [[i for i, mode in enumerate(physical_modes)
+        if (int(mode.n)-b) % metadata.replication_count == 0]
+        for b in range(metadata.replication_count)]
+    require(tuple(map(len, sectors)) == metadata.sector_port_counts
+        and sorted(index for sector in sectors for index in sector) == list(range(532)),
+        "every original physical alias must occur exactly once across reviewed twists")
+    return sectors
+
+
+def validate_direct_Y_operator_coverage(proof):
+    """Bind the public recomputation's complete six-q/three-twist coverage."""
+    metadata = reviewed_direct_profile_metadata("Y")
+    sources = proof.get("sources", [])
+    require(len(sources) == 4, "Y requires one full and all three local source proofs")
+    for index, source in enumerate(sources):
+        require(source.get("cell_count") == (metadata.cell_count if index == 0 else metadata.local_cell_count)
+            and source.get("independent_rows") == (metadata.independent_rows if index == 0 else metadata.local_independent_rows)
+            and source.get("all_interior_rows") == (metadata.interior_rows if index == 0 else metadata.local_interior_rows)
+            and source.get("full300_columns_per_cell") == 300 and source.get("complete_actual_coverage") is True,
+            "Y public source proof must cover every original cell/channel/column")
+    orbits = proof.get("complete_actual_xz_y_orbits", [])
+    require(len(orbits) == 20
+        and [tuple(item.get("grid_xz", [])) for item in orbits]
+            == [(ix, iz) for ix in range(metadata.nx) for iz in range(metadata.nz)],
+        "Y requires all20 actual x-z orbits in their complete order")
+    for orbit in orbits:
+        pairs = orbit.get("all_global_q_pairs", [])
+        require([(item.get("p"), item.get("q")) for item in pairs]
+            == [(p, q) for p in range(6) for q in range(6)]
+            and all(item.get("cross_twist") is (item["p"] % 3 != item["q"] % 3) for item in pairs)
+            and sum(item["cross_twist"] for item in pairs) == 24,
+            "each Y orbit requires all36 global and all24 cross-twist pairs")
+        locals_ = orbit.get("local_twists", [])
+        require([item.get("b") for item in locals_] == [0, 1, 2],
+            "each Y orbit requires every actual local twist")
+        for b, local in enumerate(locals_):
+            require([(item.get("p"), item.get("q"), item.get("global_p"), item.get("global_q"))
+                for item in local.get("all2x2_pairs", [])]
+                == [(p, q, b+3*p, b+3*q) for p in range(2) for q in range(2)],
+                "each Y orbit requires all12 local pairs with exact b/b+3 aliases")
+    require(len(proof.get("local_original_condensation", [])) == 3
+        and len(proof.get("existing_provider_all2x2_full_columns", [])) == 3,
+        "Y requires complete original condensation and provider proofs for all three twists")
     return True
 
 
@@ -327,10 +397,10 @@ def validate_scope(report, stage):
         and report.get("source_clean_unchanged") is True and report.get("official_results") is False
         and report.get("prefactor_only") is (stage == "prefactor")
         and report.get("PDE_solved") is (stage == "solve")
-        and report.get("factor_count") == (0 if stage == "prefactor" else 4)
+        and report.get("factor_count") == (0 if stage == "prefactor" else metadata.ny)
         and report.get("input_sha256") == INPUT_SHA
         and report.get("physical_generator_manifest_sha256") == PHYSICAL_MANIFEST,
-        "fresh direct X/XZ stage/source/config identity differs")
+        "fresh reviewed direct stage/source/config identity differs")
     flags = report.get("scope_flags", {})
     require(all(flags.get(key) is True for key in ("full_layout_entity_stream", "fresh_global_and_local_carriers"))
         and all(flags.get(key) is False for key in ("snapshots_reused", "candidate_full_Ny_CSR_created",
@@ -346,8 +416,9 @@ def validate_scope(report, stage):
         require(report.get("PC_defect_is_norm_bound") is False and report.get("target_geometry_accuracy") is False
                 and report.get("no_2TB_or_48h_claim") is True, "diagnostic/capacity scope differs")
         changed = report.get("changed_cells")
-        require(isinstance(changed, list) and len(changed) == 2 and len(set(changed)) == 2
-                and all(type(v) is int and 0 <= v < metadata.cell_count for v in changed), "actual exactly two changed cells required")
+        require(isinstance(changed, list) and len(changed) == (3 if metadata.name == "Y" else 2)
+                and len(set(changed)) == len(changed)
+                and all(type(v) is int and 0 <= v < metadata.cell_count for v in changed), "actual exact reviewed changed-cell support required")
         for name in SOURCES:
             finite_gate(report["sampled_right_PC_defect"][name], float("inf"), "PC_" + name)
         coupling = report.get("sampled_notch_off_q_delta_relative")
@@ -357,15 +428,19 @@ def validate_scope(report, stage):
 
 
 def direct_memory_cap(direct_profile, stage, research_wall_seconds, research_memory_gib=None):
-    """Select only the approved X/1800/2GiB or XZ/4500/3GiB solve pair."""
+    """Select only the approved X/1800/2GiB and XZ/Y/4500/3GiB solve pairs."""
+    if direct_profile == "Y":
+        require(stage == "solve" and type(research_wall_seconds) is int and research_wall_seconds == 4500
+            and type(research_memory_gib) is int and research_memory_gib == 3,
+            "Y requires the explicit reviewed solve/wall4500/3GiB budget")
     if research_memory_gib is None:
-        require(not (direct_profile == "XZ" and research_wall_seconds == 4500),
-                "XZ wall4500 requires the explicit approved 3GiB memory request")
+        require(not (direct_profile in ("XZ", "Y") and research_wall_seconds == 4500),
+                "XZ/Y wall4500 requires the explicit approved 3GiB memory request")
         return TREE_CAP_BYTES
     require(type(research_memory_gib) is int and type(research_wall_seconds) is int
         and stage == "solve"
-        and (direct_profile, research_wall_seconds, research_memory_gib) in (("X", 1800, 2), ("XZ", 4500, 3)),
-        "research memory requires literal X/solve/wall1800/2GiB or XZ/solve/wall4500/3GiB")
+        and (direct_profile, research_wall_seconds, research_memory_gib) in (("X", 1800, 2), ("XZ", 4500, 3), ("Y", 4500, 3)),
+        "research memory requires literal X/solve/wall1800/2GiB or XZ/Y/solve/wall4500/3GiB")
     return research_memory_gib * 1024**3
 
 
@@ -389,7 +464,7 @@ def validate_direct_memory_launch(envelope, *, research_memory_gib=2, dynamic_ca
     if research_memory_gib == 3:
         require(envelope["reserve_bytes"] >= 4 * 1024**3
             and envelope[dynamic_cap_key] <= max(0, envelope["effective_available_bytes"] - envelope["reserve_bytes"]),
-            "XZ launch requires the actual 4GiB host reserve before the 3GiB plus evidence-reserve admission")
+            "XZ/Y launch requires the actual 4GiB host reserve before the 3GiB plus evidence-reserve admission")
     groups = envelope.get("cgroup_limits")
     require(isinstance(groups, list) and all(isinstance(group, dict)
         and type(group.get("limit_bytes")) is int and type(group.get("current_bytes")) is int
@@ -463,12 +538,13 @@ def validate_metadata_bindings(report, provenance, manifest, *, checker_source, 
         "exact immutable worker source/provenance/ABI/manifest and reviewed checker bridge required")
     if research_wall_seconds is not None:
         require(type(research_wall_seconds) is int
-            and (report["direct_profile"], research_wall_seconds) in (("X", 1800), ("XZ", 4500)),
-            "only the explicit X/wall1800 or XZ/wall4500 research request is admitted")
+            and (report["direct_profile"], research_wall_seconds) in (("X", 1800), ("XZ", 4500), ("Y", 4500)),
+            "only the explicit X/wall1800 or XZ/Y/wall4500 research request is admitted")
     wall_seconds = 600 if research_wall_seconds is None else research_wall_seconds
     selected_cap = direct_memory_cap(report.get("direct_profile"), stage, research_wall_seconds, research_memory_gib)
+    metadata = reviewed_direct_profile_metadata(report["direct_profile"])
     expected = {"stage": stage, "wall_seconds": wall_seconds, "swap_bytes": 0, "mpi": 1, "math_threads": 1,
-        "evidence_reserve_bytes": RESERVE_BYTES, "factor_workspace_allowance_bytes": 0 if stage == "prefactor" else FACTOR_ALLOWANCE_BYTES,
+        "evidence_reserve_bytes": RESERVE_BYTES, "factor_workspace_allowance_bytes": 0 if stage == "prefactor" else metadata.factor_allowance_aggregate_bytes,
         "factor_fill_and_temporary_workspace_unknown": True, "factor_L_U_statistics_copies_permitted": False,
         "performance_or_target_capacity_claim": False}
     contract = provenance.get("resource_contract", {})
@@ -510,7 +586,7 @@ def validate_research_timing(provenance, supervision, events, phase, *, research
     if research_wall_seconds is None:
         return True
     require(type(research_wall_seconds) is int
-        and (direct_profile, research_wall_seconds) in (("X", 1800), ("XZ", 4500)),
+        and (direct_profile, research_wall_seconds) in (("X", 1800), ("XZ", 4500), ("Y", 4500)),
         "research timing requires the exact explicit profile/wall request")
     seconds = provenance["resource_contract"]["worker_phase_wall_seconds"]
     require(supervision.get("time_reference_seconds", {}).get("workflow") == seconds
@@ -571,7 +647,7 @@ def expected_array_shapes(report, stage):
     require(report["profile"]["name"] == metadata.name, "array report profile and metadata identity differ")
     q_rows, sector_ports = metadata.augmented_rows_per_q, metadata.sector_port_counts
     blocks = report.get("reformed_blocks", [])
-    require(len(blocks) == 4 and [b.get("q") for b in blocks] == list(range(4)), "complete four q input inventory required")
+    require(len(blocks) == metadata.ny and [b.get("q") for b in blocks] == list(range(metadata.ny)), "complete actual q input inventory required")
     expected = {}
     for q, block in enumerate(blocks):
         nnz = block.get("nnz")
@@ -580,11 +656,11 @@ def expected_array_shapes(report, stage):
             and re.fullmatch(r"[0-9a-f]{64}", block.get("CSR_sha256", "")), "reviewed q CSR dimensions/hash/entries required")
         expected.update({f"q_{q}_S_data": [nnz], f"q_{q}_S_indices": [nnz], f"q_{q}_S_indptr": [q_rows[q] + 1]})
     providers = report.get("direct_provider_blocks", [])
-    require(len(providers) == 8 and [(b.get("twist"), b.get("p"), b.get("q")) for b in providers]
-        == [(b, p, q) for b in range(2) for p in range(2) for q in range(2)], "all original local 2x2 blocks required")
+    require(len(providers) == 4*metadata.replication_count and [(b.get("twist"), b.get("p"), b.get("q")) for b in providers]
+        == [(b, p, q) for b in range(metadata.replication_count) for p in range(2) for q in range(2)], "all original local 2x2 blocks required")
     for block in providers:
         b, p, q = block["twist"], block["p"], block["q"]
-        gp, gq = b + 2*p, b + 2*q
+        gp, gq = b + metadata.replication_count*p, b + metadata.replication_count*q
         nnz, prefix = block.get("nnz"), f"direct_twist_{b}_block_{p}_{q}"
         require(block.get("global_p") == gp and block.get("global_q") == gq
             and block.get("shape") == [q_rows[gp], q_rows[gq]] and block.get("csr_prefix") == prefix
@@ -603,18 +679,26 @@ def expected_array_shapes(report, stage):
         expected.update({f"twist_{b}_{name}": [size] for name, size in
             (("independent_storage_rows", metadata.local_independent_rows), ("trace_original_rows", metadata.local_trace_rows), ("interior_original_rows", metadata.local_interior_rows),
              ("slave_storage_rows", metadata.local_storage_rows - metadata.local_independent_rows), ("original_H", ports))})
+        if metadata.name == "Y":
+            expected[f"direct_twist_{b}_lower_rhs_local_state"] = [metadata.local_independent_rows]
+            expected[f"direct_twist_{b}_lower_rhs_global_state"] = [metadata.independent_rows]
     if stage == "solve":
         factor = report.get("factor", {})
-        require([b.get("q") for b in factor.get("input_blocks", [])] == list(range(4))
-            and [b.get("q") for b in factor.get("tests", [])] == list(range(4))
+        require([b.get("q") for b in factor.get("input_blocks", [])] == list(range(metadata.ny))
+            and [b.get("q") for b in factor.get("tests", [])] == list(range(metadata.ny))
             and factor.get("all_reformed_blocks_compared_before_factor") is True
-            and factor.get("all_four_retained_simultaneously") is True, "all four simultaneous factors and tests required")
+            and (factor.get("all_four_retained_simultaneously") is True if metadata.name != "Y" else
+                factor.get("all_six_retained_simultaneously") is True
+                and factor.get("all_actual_q_retained_simultaneously") is True
+                and factor.get("all_four_retained_simultaneously") is False
+                and factor.get("factor_allowance_aggregate_bytes") == metadata.factor_allowance_aggregate_bytes),
+            "all actual simultaneous factors and tests required")
         for q, block in enumerate(factor["input_blocks"]):
             require(block.get("shape") == blocks[q]["shape"] and block.get("CSR_sha256") == blocks[q]["CSR_sha256"],
                     "factor detached from fresh original-proven input block")
             for name in ("rhs_a", "rhs_b", "solution_a", "solution_b", "solution_a_repeat", "solution_sum"):
                 expected[f"q_{q}_{name}"] = [q_rows[q]]
-        for q in range(4):
+        for q in range(metadata.ny):
             label = f"aug_q_{q}"
             expected.update({label + "_" + key: [metadata.independent_rows] for key in ("FE_rhs", "effective_rhs", "solution")})
             expected.update({label + "_" + key: [532] for key in
@@ -661,6 +745,7 @@ def validate_array_inventory(report, stage):
 
 def validate_direct_event_contract(events, report, stage, *, research_wall_seconds=None, research_memory_gib=None):
     selected_cap = direct_memory_cap(report.get("direct_profile"), stage, research_wall_seconds, research_memory_gib)
+    metadata = reviewed_direct_profile_metadata(report.get("direct_profile"))
     require(isinstance(events, list) and events, "nonempty actual ordered events required")
     gates = {}
     for name in ("direct_fresh_carrier_qualification_complete", "direct_complete_original_operator_qualification",
@@ -680,8 +765,8 @@ def validate_direct_event_contract(events, report, stage, *, research_wall_secon
         name = event.get("event")
         if name == "allocation_admission" and event.get("boundary", "").startswith("quotient_factor_q_"):
             q, facts = len(admitted), event.get("facts", {})
-            allowance = (4 - q)*128*1024**2
-            require(stage == "solve" and index > boundary and q < 4
+            allowance = (metadata.ny - q)*metadata.factor_allowance_per_q_bytes
+            require(stage == "solve" and index > boundary and q < metadata.ny
                 and event["boundary"] == f"quotient_factor_q_{q}" and len(retained) == q
                 and facts.get("retained_factor_count") == q and facts.get("LU_fill_and_workspace_unknown") is True
                 and facts.get("factor_workspace_allowance_bytes") == allowance
@@ -700,21 +785,26 @@ def validate_direct_event_contract(events, report, stage, *, research_wall_secon
             admitted.append(q)
         elif name == "all_branch_factor_created":
             q = len(created)
-            require(stage == "solve" and index > boundary and q < 4 and event.get("q") == q
+            require(stage == "solve" and index > boundary and q < metadata.ny and event.get("q") == q
                 and admitted == list(range(q + 1)) and event.get("factor_count") == q + 1
                 and event.get("retained_factor_count") == q + 1
                 and event.get("input_CSR_sha256") == report["reformed_blocks"][q]["CSR_sha256"], "created factor input/event identity differs")
             created.append(q)
         elif name == "all_branch_factor_retained":
             q = len(retained)
-            require(stage == "solve" and index > boundary and q < 4 and event.get("q") == q
+            require(stage == "solve" and index > boundary and q < metadata.ny and event.get("q") == q
                 and created == list(range(q + 1)) and event.get("retained_factor_count") == q + 1,
                 "every actual factor must remain simultaneously retained")
+            if metadata.name == "Y":
+                require(event.get("remaining_declared_allowance_bytes")
+                    == (metadata.ny-q-1)*metadata.factor_allowance_per_q_bytes
+                    and event.get("factor_memory_bytes") is None,
+                    "Y retained factor event must preserve the exact remaining allowance and unknown fill")
             retained.append(q)
         elif stage == "prefactor" and name in ("all_branch_factor_test", "original_augmented_manufactured_control"):
             raise ValueError("prefactor executed forbidden factor/solve control")
     require((stage == "prefactor" and not admitted and not created and not retained)
-        or (stage == "solve" and admitted == created == retained == list(range(4))), "all q factor event inventory incomplete")
+        or (stage == "solve" and admitted == created == retained == list(range(metadata.ny))), "all q factor event inventory incomplete")
     return True
 
 
@@ -766,8 +856,9 @@ def validate_spool_manifest(manifest, *, literal, count, indices, storage, profi
 
 def validate_same_live_carrier_chain(events, report):
     fresh = report["fresh_carrier_qualification"]
+    metadata = reviewed_direct_profile_metadata(report.get("direct_profile"))
     expected = {"global": fresh["global_carrier_identity_before"], "local": fresh["local_carrier_identities"]}
-    require(fresh["global_carrier_identity_after"] == expected["global"] and len(expected["local"]) == 2
+    require(fresh["global_carrier_identity_after"] == expected["global"] and len(expected["local"]) == metadata.replication_count
         and report.get("same_live_carrier_identity_before_factor") == report.get("same_live_carrier_identity_at_exit") == expected,
         "fresh/current pre-factor/exit same-live carrier chain differs")
     positions = [i for i, item in enumerate(events) if item.get("event") == "direct_same_live_carrier_identity"]
@@ -958,16 +1049,18 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
     require(physical_digest == PHYSICAL_MANIFEST, "original physical mode details differ from complete manifest")
     require(inventory.get("ordered_mode_keys") == keys and inventory.get("q_port_counts") == list(metadata.q_port_counts)
         and inventory.get("physical_generator_manifest_sha256") == PHYSICAL_MANIFEST, "physically regenerated complete alias inventory differs")
+    sector_indices = validate_direct_mode_roles(physical_modes, metadata.name)
     controls = [saved.json(receipt["global_component_receipt"])] + [saved.json(item) for item in receipt["local_raw_receipts"]]
     raw_manifests = [saved.json(item) for item in receipt["raw_spool_manifests"]]
     literals = [saved.json(item) for item in receipt["literal_mode_manifests"]]
-    require(len(controls) == len(raw_manifests) == len(literals) == 3, "full and both fresh twists required")
+    require(len(controls) == len(raw_manifests) == len(literals) == metadata.replication_count+1, "full and every fresh twist required")
     folds = receipt.get("complete_mode_fold_lift", [])
-    require(len(folds) == 2 and len(receipt.get("cell_metric_material_cover", [])) == 2
-        and [item.get("twist_index") for item in receipt["local_raw_receipts"]] == [0, 1],
+    require(len(folds) == metadata.replication_count
+        and len(receipt.get("cell_metric_material_cover", [])) == metadata.replication_count
+        and [item.get("twist_index") for item in receipt["local_raw_receipts"]] == list(range(metadata.replication_count)),
         "both fresh local raw/fold/actual-cell qualification inventories are required")
     for twist, fold in enumerate(folds):
-        indices = [i for i, mode in enumerate(physical_modes) if (int(mode.n)-twist)%2 == 0]
+        indices = sector_indices[twist]
         require(fold.get("mode_count") == metadata.sector_port_counts[twist] and fold.get("original_mode_indices") == indices
             and fold.get("tolerance") == 1e-10 and all(fold.get(key) is True for key in
                 ("raw_and_both_actual_cutoffs_audited", "complete_DOF_fold_and_lift", "single_D_conjugation", "nonzero_lower_dual_rhs_sqrtK_identity")),
@@ -986,7 +1079,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                 require(count < len(indices) and row.get("original_mode_index") == indices[count]
                     and row.get("original_mode_key") == keys[indices[count]][1:]
                     and row.get("local_mode_index") == count and row.get("twist_index") == twist
-                    and row.get("local_branch_index") == ((int(physical_modes[indices[count]].n)-twist)//2)%2
+                    and row.get("local_branch_index") == ((int(physical_modes[indices[count]].n)-twist)//metadata.replication_count)%2
                     and row.get("status") == "PASS_COMPLETE_MODE_FOLD_LIFT_CUTOFF"
                     and set(row.get("stages", {})) == {"raw", "after_component_mask", "stored"},
                     "complete current fold ledger alias/stage/index identity differs")
@@ -1089,7 +1182,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
     for role_index, (control, raw, lit) in enumerate(zip(controls, raw_manifests, literals, strict=True)):
         twist, n = (None, metadata.storage_rows) if role_index == 0 else (role_index-1, metadata.local_storage_rows)
         role = "full" if twist is None else f"twist_{twist}"
-        indices = list(range(532)) if twist is None else [i for i, mode in enumerate(physical_modes) if (int(mode.n)-twist)%2 == 0]
+        indices = list(range(532)) if twist is None else sector_indices[twist]
         if twist is not None:
             require(np.array_equal(saved.reference(operator_receipt["local_condensation"][twist]["port_original_indices"]), indices),
                     "complete same-live local entries must preserve all original physical indices")
@@ -1127,7 +1220,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                 and packet["quotient_twist_index"] == literal_packet["quotient_twist_index"] == twist
                 and packet["assembly_context_sha256"] == literal_packet["assembly_context_sha256"] == binding["assembly_context_sha256"]
                 and canonical_digest(packet["assembly_context"]) == packet["assembly_context_sha256"], "primary/literal actual current context/mode identity differs")
-            branch = None if twist is None else ((int(physical_modes[original].n)-twist)//2)%2
+            branch = None if twist is None else ((int(physical_modes[original].n)-twist)//metadata.replication_count)%2
             require(packet["local_branch_index"] == literal_packet["local_branch_index"] == branch
                 and packet["quotient_contract_sha256"] == literal_packet["quotient_contract_sha256"] == binding["quotient_contract_sha256"]
                 and packet["physical_generator_manifest_sha256"] == literal_packet["physical_generator_manifest_sha256"] == PHYSICAL_MANIFEST
@@ -1145,7 +1238,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
             require(previous[0] == hashes, "independent s/p weights cannot change their shared actual component forms")
             component_hashes[component_key] = (hashes, previous[1]+1)
             H = literal_packet["literal_H"]; finite_gate(H, float("inf"), role+"_H"); require(H > 0, "positive literal H required")
-            expected_h = assembly_projection_denominator(physical_modes[original], cfg, BOUNDARY_PLANE)/(1 if twist is None else 2)
+            expected_h = assembly_projection_denominator(physical_modes[original], cfg, BOUNDARY_PLANE)/(1 if twist is None else metadata.replication_count)
             add(role+f"_m{original}_physical_H", abs(H-expected_h)/expected_h, 1e-10)
             add(role+f"_m{original}_literal_H", abs(packet["local_plane_H"]-H)/H, 1e-10)
             for name in ("C", "D"):
@@ -1186,29 +1279,30 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                     for name in ("C", "D"):
                         functional = name == "D"
                         direction = "functional" if functional else "dual"
-                        gc = global_map.apply(global_stages[stage][name][global_rows], direction+"_to_canonical").reshape(4, metadata.rows_per_q)
+                        gc = global_map.apply(global_stages[stage][name][global_rows], direction+"_to_canonical").reshape(metadata.ny, metadata.rows_per_q)
                         lc = local_maps[twist].apply(stages[stage][name][independent], direction+"_to_canonical").reshape(2, metadata.rows_per_q)
                         phase = tau if functional else np.conjugate(tau)
-                        folded = local_maps[twist].apply(((gc[:2]+phase*gc[2:])/2).reshape(-1), direction+"_from_canonical")
+                        folded = local_maps[twist].apply((sum(phase**replica*gc[2*replica:2*replica+2]
+                            for replica in range(metadata.replication_count))/metadata.replication_count).reshape(-1), direction+"_from_canonical")
                         add(f"twist_{twist}_m{original}_{stage}_{name}_complete_fold", relative(folded-stages[stage][name][independent], stages[stage][name][independent]), 1e-10)
                         phase = np.conjugate(tau) if functional else tau
-                        lifted[name] = global_map.apply(np.concatenate((lc, phase*lc)).reshape(-1), direction+"_from_canonical")
+                        lifted[name] = global_map.apply(np.concatenate([phase**replica*lc for replica in range(metadata.replication_count)]).reshape(-1), direction+"_from_canonical")
                         add(f"twist_{twist}_m{original}_{stage}_{name}_complete_lift", relative(lifted[name]-global_stages[stage][name][global_rows], global_stages[stage][name][global_rows]), 1e-10)
                     C, D = global_stages[stage]["C"][global_rows], global_stages[stage]["D"][global_rows]
                     loss = np.linalg.norm(lifted["C"]-C)*np.linalg.norm(lifted["D"])+np.linalg.norm(C)*np.linalg.norm(lifted["D"]-D)
                     ref = np.linalg.norm(C)*np.linalg.norm(D)
                     add(f"twist_{twist}_m{original}_{stage}_complete_rank_one", float(loss/ref) if ref else (0. if loss == 0 else float("inf")), 1e-10)
                 Hg = Hs[0][original]
-                add(f"twist_{twist}_m{original}_H_over_K", abs(Hg/2-H)/H, 1e-10)
+                add(f"twist_{twist}_m{original}_H_over_K", abs(Hg/metadata.replication_count-H)/H, 1e-10)
                 x = saved.load(f"direct_twist_{twist}_lower_rhs_local_state")
                 gx = saved.load(f"direct_twist_{twist}_lower_rhs_global_state")
                 lc = local_maps[twist].apply(x, "primal_to_canonical").reshape(2, metadata.rows_per_q)
-                lift = global_map.apply(np.concatenate((lc, tau*lc)).reshape(-1)/math.sqrt(2), "primal_from_canonical")
+                lift = global_map.apply(np.concatenate([tau**replica*lc for replica in range(metadata.replication_count)]).reshape(-1)/math.sqrt(metadata.replication_count), "primal_from_canonical")
                 add(f"twist_{twist}_m{original}_lower_primal_lift", relative(gx-lift, lift), 1e-11)
                 beta, g = complex(1+(original+1)/533, .25), complex(.7, -.13-(original+1)/533)
-                lower_global = global_stages["raw"]["D"][global_rows]@gx-Hg*beta/math.sqrt(2)+g
-                lower_local = stages["raw"]["D"][independent]@x-H*beta+g/math.sqrt(2)
-                add(f"twist_{twist}_m{original}_nonzero_lower_dual_sqrtK", relative(np.asarray(lower_global/math.sqrt(2)-lower_local), np.asarray(lower_local)), 1e-10)
+                lower_global = global_stages["raw"]["D"][global_rows]@gx-Hg*beta/math.sqrt(metadata.replication_count)+g
+                lower_local = stages["raw"]["D"][independent]@x-H*beta+g/math.sqrt(metadata.replication_count)
+                add(f"twist_{twist}_m{original}_nonzero_lower_dual_sqrtK", relative(np.asarray(lower_global/math.sqrt(metadata.replication_count)-lower_local), np.asarray(lower_local)), 1e-10)
             del pairs, stages, literal_vectors
         require(len(component_hashes) == len(indices)//2 and all(item[1] == 2 for item in component_hashes.values()),
                 "every original side/m/n component pair must retain both physical polarizations")
@@ -1222,7 +1316,11 @@ def saved_source(saved, path):
 
 def receipt_transport_eta(source, cfg, twist):
     import numpy as np
-    eta = np.exp(1j*(complex(cfg.ky).real*float(cfg.period_y)+2*np.pi*twist)/4)
+    metadata = reviewed_direct_profile_metadata(source["profile"]["name"])
+    require(source["entities"]["ny"] == metadata.ny
+        and type(twist) is int and twist in range(metadata.replication_count),
+        "transport phase requires an actual reviewed global source and twist")
+    eta = np.exp(1j*(complex(cfg.ky).real*float(cfg.period_y)+2*np.pi*twist)/metadata.ny)
     return [float(eta.real), float(eta.imag)]
 
 
@@ -1302,13 +1400,14 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     cfg = build_direct_profile_config(base_cfg, metadata.name)
     require(input_sha == INPUT_SHA and _jsonable(cfg.as_jsonable()) == report["physical_config"], "fresh physical reviewed config differs from unchanged input")
     physical_modes = outgoing_port_modes_3d(cfg)
-    require(len(physical_modes) == 532 and tuple(sum(int(mode.n)%4 == q for mode in physical_modes) for q in range(4)) == metadata.q_port_counts,
-            "all original physical aliases and q counts required")
+    validate_direct_mode_roles(physical_modes, metadata.name)
     operator = report["original_operator_qualification"]
     proof = check_direct_original_cell_contributions(operator, load=saved.load, load_csr=saved.csr,
         allocation_gate=allocation_gate, direct_profile=metadata.name)
     require(proof.get("passed") is True and proof.get("numeric_factor_calls") == 0
         and proof.get("global_whole_Ny_matrix_created") is False, "complete original all-column operator proof required")
+    if metadata.name == "Y":
+        validate_direct_Y_operator_coverage(proof)
     groups = (("source", proof["sources"]), ("complete_xz_y_orbit", proof["complete_actual_xz_y_orbits"]),
         ("original_local_condensation", proof["local_original_condensation"]),
         ("provider_all2x2", proof["existing_provider_all2x2_full_columns"]))
@@ -1328,13 +1427,12 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
         value = saved.descriptor(descriptor)
         del value
     require(fresh["global_carrier_identity_before"] == fresh["global_carrier_identity_after"]
-        and len(fresh["local_carrier_identities"]) == 2, "fresh same-live carrier identities changed")
-    for b in range(2):
+        and len(fresh["local_carrier_identities"]) == metadata.replication_count, "fresh same-live carrier identities changed")
+    for b in range(metadata.replication_count):
         require(operator["local_condensation"][b]["same_live_primary_carrier_identity"] == fresh["local_carrier_identities"][b],
                 "original operator carrier differs from independently qualified fresh primary carrier")
-    for role, volume in (("direct_global", operator["global_source"]),
-                         ("direct_twist_0", operator["local_sources"][0]),
-                         ("direct_twist_1", operator["local_sources"][1])):
+    for role, volume in [("direct_global", operator["global_source"]),
+            *((f"direct_twist_{b}", operator["local_sources"][b]) for b in range(metadata.replication_count))]:
         geometry, geometry_dofmap, tag_indices, tag_values = (saved.load(role+"_"+name) for name in
             ("geometry_x", "cell_geometry_dofmap", "cell_tag_indices", "cell_tag_values"))
         require(len(geometry_dofmap) == volume["cell_count"] and np.array_equal(tag_indices, np.arange(volume["cell_count"]))
@@ -1351,18 +1449,18 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     gx, gd, gt = (saved.load("direct_global_"+name) for name in ("geometry_x", "cell_geometry_dofmap", "cell_tag_values"))
     for twist, metric in enumerate(fresh["cell_metric_material_cover"]):
         require(metric.get("complete_actual_cell_count") == metadata.cell_count and metric.get("local_actual_cell_count") == metadata.local_cell_count
-            and metric.get("replication_count") == 2 and metric.get("metric_tolerance") == 1e-12
+            and metric.get("replication_count") == metadata.replication_count and metric.get("metric_tolerance") == 1e-12
             and metric.get("all_material_tags_equal") is True and metric.get("cell_cover_exactly_once") is True,
             "actual complete local/global cell metric/material cover required")
         cover = saved.descriptor(metric["cover"])
         lx, ld, lt = (saved.load(f"direct_twist_{twist}_"+name) for name in ("geometry_x", "cell_geometry_dofmap", "cell_tag_values"))
-        require(cover.shape == (metadata.local_cell_count, 2) and cover.dtype.kind in "iu" and np.array_equal(np.sort(cover.ravel()), np.arange(metadata.cell_count)),
+        require(cover.shape == (metadata.local_cell_count, metadata.replication_count) and cover.dtype.kind in "iu" and np.array_equal(np.sort(cover.ravel()), np.arange(metadata.cell_count)),
                 "actual original complete cell cover cannot duplicate or omit a cell")
         maximum = 0.
         for cell in range(metadata.local_cell_count):
-            for replica in range(2):
+            for replica in range(metadata.replication_count):
                 old = gx[gd[int(cover[cell, replica])]]
-                translated = lx[ld[cell]]+np.asarray([0., replica*cfg.period_y/2, 0.])
+                translated = lx[ld[cell]]+np.asarray([0., replica*cfg.period_y/metadata.replication_count, 0.])
                 old = old[np.lexsort((old[:, 2], old[:, 1], old[:, 0]))]
                 translated = translated[np.lexsort((translated[:, 2], translated[:, 1], translated[:, 0]))]
                 maximum = max(maximum, float(np.max(np.abs(old-translated))))
@@ -1372,7 +1470,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
         add(f"twist_{twist}_actual_vertex_measurement_binding", abs(maximum-metric["maximum_actual_vertex_difference"]), 1e-12)
     global_map = EntityMap(operator["global_source"], saved)
     local_maps = [EntityMap(source, saved) for source in operator["local_sources"]]
-    require((global_map.ny, global_map.width) == (4, metadata.rows_per_q) and all((item.ny, item.width) == (2, metadata.rows_per_q) for item in local_maps),
+    require((global_map.ny, global_map.width) == (metadata.ny, metadata.rows_per_q) and all((item.ny, item.width) == (2, metadata.rows_per_q) for item in local_maps),
             "complete original native entity/q profile differs")
     original_c = saved.csr("original_port_C", (metadata.storage_rows, 532), csc=True)
     original_d = saved.csr("original_port_D", (532, metadata.storage_rows))
@@ -1381,7 +1479,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     require(fresh["global_carrier_identity_after"]["assembly_context_sha256"] == canonical_digest(contexts["full"])
         and fresh["global_carrier_identity_after"]["physical_generator_manifest_sha256"] == PHYSICAL_MANIFEST,
         "fresh global carrier context/physical inventory differs")
-    for b in range(2):
+    for b in range(metadata.replication_count):
         identity = fresh["local_carrier_identities"][b]
         require(identity["assembly_context_sha256"] == canonical_digest(contexts[f"twist_{b}"])
             and identity["physical_generator_manifest_sha256"] == PHYSICAL_MANIFEST,
@@ -1420,8 +1518,8 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     add("all532_original_carrier_numeric_digest", 0., 0.)
     add("original_H_coordinate_scaling", relative(saved.load("port_factor_coordinate_scale")-1/np.sqrt(h), 1/np.sqrt(h)), 1e-12)
     q_labels = saved.load("port_q_labels")
-    require(np.array_equal(q_labels, [int(mode.n)%4 for mode in physical_modes]), "all original n aliases must retain original q labels")
-    for b in range(2):
+    require(np.array_equal(q_labels, [int(mode.n)%metadata.ny for mode in physical_modes]), "all original n aliases must retain original q labels")
+    for b in range(metadata.replication_count):
         require(np.array_equal(saved.load(f"twist_{b}_original_H"), literal_H[b+1]), "local primary/literal normalization differs")
     for item in report["direct_provider_blocks"] + report["reformed_blocks"]:
         matrix = saved.csr(item["csr_prefix"], tuple(item["shape"]))
@@ -1435,7 +1533,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     require(evidence.get("schema") == "task40extra.direct-shared-transform-equivalence.v1", "direct streamed shared evidence schema required")
     shared_checks = check_shared_storage_evidence(evidence, load=saved.load, descriptors=manifest,
         allocation_gate=allocation_gate, native_inventories={"full": "independent_storage_rows",
-            "twist_0": "twist_0_independent_storage_rows", "twist_1": "twist_1_independent_storage_rows"},
+            **{f"twist_{b}": f"twist_{b}_independent_storage_rows" for b in range(metadata.replication_count)}},
         snapshot_contexts=contexts, direct_profile=metadata.name)
     require(shared_checks and all(item["passed"] for item in shared_checks), "complete shared ownership/equivalence proof cannot be vacuous")
     owner_events = [event for event in events if event.get("event") == "shared_transform_owner_stage"]
@@ -1466,7 +1564,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
         "operator_checks": operator_checks, "operator_check_count": len(operator_checks),
         "shared_checks": shared_checks, "shared_check_count": len(shared_checks),
         "historical_original312_reused_for_new_point": False, "original_check_count": 0,
-        "factor_count": 0 if stage == "prefactor" else 4, "PDE_solved": stage == "solve", "official_results": False,
+        "factor_count": 0 if stage == "prefactor" else metadata.ny, "PDE_solved": stage == "solve", "official_results": False,
         "historical_arrays_loaded": False, "numeric_factor_calls": 0, "global_Ny_reference_matrices_created": False,
         "report_sha256": file_sha(directory / "probe_report.json"), "artifact_manifest_sha256": file_sha(directory / "artifact_manifest.json"),
         "qualification": f"fresh {metadata.name} exhaustive carrier/operator/owner prefactor" if stage == "prefactor" else f"fresh {metadata.name} complete full original inverse/FGMRES/residual/recovery/all532 output",
@@ -1573,11 +1671,11 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
             "support_independent_rows": len(supported), "full_original_FE_load": True, "seed_formula": "cos(.31j)+i sin(.47j)"},
         "complete actual changed-cell original source formula/support differs")
     samples = report["sampled_notch_q_coupling"]
-    require([item.get("source_q") for item in samples] == list(range(4)), "all four original notch coupling diagnostic states required")
+    require([item.get("source_q") for item in samples] == list(range(metadata.ny)), "all actual q original notch coupling diagnostic states required")
     total_norms, off_norms = [], []
-    for q in range(4):
+    for q in range(metadata.ny):
         j = np.arange(metadata.rows_per_q); modal = np.cos(.37*j)+1j*np.sin(.23*j)
-        canonical = np.concatenate([etas[q]**orbit*modal/2 for orbit in range(4)])
+        canonical = np.concatenate([etas[q]**orbit*modal/math.sqrt(metadata.ny) for orbit in range(metadata.ny)])
         sample = global_map.apply(canonical, "primal_from_canonical")
         storage = np.zeros(metadata.storage_rows, complex); storage[independent] = sample
         a0 = saved_direct_volume_action(report["original_operator_qualification"], storage, load=saved.load, allocation_gate=saved.gate)
@@ -1589,9 +1687,9 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
             recorded = samples[q][metric]; finite_gate(recorded, float("inf"), metric)
             add(f"notch_sample_q_{q}_"+metric, abs(recorded-value)/max(abs(recorded), abs(value), np.finfo(float).tiny), 1e-10)
     coupling = float(np.linalg.norm(off_norms)/np.linalg.norm(total_norms))
-    require(coupling >= 1e-8, "actual two-cell material tensors must genuinely couple original q channels")
+    require(coupling >= 1e-8, "actual notch material tensors must genuinely couple original q channels")
     add("notch_original_volume_sampled_coupling_record", abs(coupling-report["sampled_notch_off_q_delta_relative"])/coupling, 1e-10)
-    for q in range(4):
+    for q in range(metadata.ny):
         matrix = saved.csr(f"q_{q}_S", (metadata.augmented_rows_per_q[q], metadata.augmented_rows_per_q[q]))
         a, b, xa, xb, repeat, total = (saved.load(f"q_{q}_"+key) for key in
             ("rhs_a", "rhs_b", "solution_a", "solution_b", "solution_a_repeat", "solution_sum"))
@@ -1621,7 +1719,7 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
     d_norms = np.sqrt(np.asarray(original_d.multiply(original_d.conj()).sum(axis=1)).real.ravel())
     q_labels = saved.load("port_q_labels")
     controls = report.get("augmented_controls", [])
-    require([item.get("q") for item in controls] == list(range(4)), "every q complete manufactured control required")
+    require([item.get("q") for item in controls] == list(range(metadata.ny)), "every q complete manufactured control required")
     packets = [(f"aug_q_{q}", "regular", None, packet) for q, packet in enumerate(controls)]
     packets += [(family+"_"+name, family, name, report[key][name]) for family, key in
         (("regular", "regular_sources"), ("notch", "notched_sources")) for name in SOURCES]
@@ -1739,7 +1837,7 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
 
 
 def check_notch_source(report, *, saved, regular, add):
-    """Same full topology/MPC/maps; exactly two box-derived material tensors."""
+    """Same full topology/MPC/maps; exact reviewed box-derived material tensors."""
     from src.solvers.y_orbit_direct_operator_qualification import _check_source
     metadata = reviewed_direct_profile_metadata(report["direct_profile"])
     notch = report["notch_original_volume_source"]
@@ -1771,7 +1869,8 @@ def check_notch_source(report, *, saved, regular, add):
             "changed material cannot change actual original geometry/dofs/MPC/orientation/maps")
         axes = metadata.global_axes
         grid = old["grid"]
-        lower = (25, 6.25, 40); upper = (33.5, 18.75, 80)
+        lower = (25, 25/6, 40) if metadata.name == "Y" else (25, 6.25, 40)
+        upper = (33.5, 100/6, 80) if metadata.name == "Y" else (33.5, 18.75, 80)
         if all(lower[d]*(7/135) <= axes[d][grid[d]] and axes[d][grid[d]+1] <= upper[d]*(7/135)
                for d in range(3)):
             expected.add(index)
@@ -1785,13 +1884,16 @@ def check_notch_source(report, *, saved, regular, add):
             tags = report["physical_config"]["tags"]
             require(old["tag"] == tags["grating"] and new["tag"] == tags["air"],
                     "approved physical notch must replace exactly grating material with air")
-    require(len(expected) == 2 and expected == changed_tags == changed_tensors == set(report["changed_cells"]),
-            "actual physical-box cells must be exactly the two changed material tags and complete tensors")
+    require(len(expected) == (3 if metadata.name == "Y" else 2)
+        and expected == changed_tags == changed_tensors == set(report["changed_cells"]),
+            "actual physical-box cells must be exactly the reviewed changed material tags and complete tensors")
     cfg = report["notch_config"]
-    box = [value*(7/135) for value in (25, 33.5, 6.25, 18.75, 40, 80)]
-    require(cfg.get("air_void_box_nm") == box, "notch physical geometry differs from approved X/XZ box")
+    box = [value*(7/135) for value in ((25, 33.5, 25/6, 100/6, 40, 80)
+        if metadata.name == "Y" else (25, 33.5, 6.25, 18.75, 40, 80))]
+    require(cfg.get("air_void_box_nm") == box, "notch physical geometry differs from approved reviewed profile box")
     regular_cfg = report["physical_config"]
     require({key: value for key, value in cfg.items() if key not in ("case_name", "geometry_identity", "air_void_box_nm")}
         == {key: value for key, value in regular_cfg.items() if key not in ("case_name", "geometry_identity", "air_void_box_nm")},
         "notch changed an unapproved physical/config/source field")
-    add("notch_complete_original_source_and_exact_two_tensor_support", 0., 0.)
+    add("notch_complete_original_source_and_exact_three_tensor_support" if metadata.name == "Y"
+        else "notch_complete_original_source_and_exact_two_tensor_support", 0., 0.)

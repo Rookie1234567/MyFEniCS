@@ -31,7 +31,7 @@ class ContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.runner = extracted(RUNNER, {"plan_metadata", "allocation_request", "validate_worker_result",
-                                      "apply_supervisor_classification", "plain_metadata"})
+                                      "apply_supervisor_classification", "plain_metadata", "factor_policy"})
         cls.checker = extracted(CHECKER, {"finite_gate", "per_mode_operation_error", "validate_scope", "validate_metadata_bindings",
             "expected_array_shapes", "validate_array_inventory", "validate_restoration_metadata", "validate_factor_event_contract", "validate_recovery_identity_bindings", "validate_historical_file_metadata"})
 

@@ -1,0 +1,656 @@
+{
+  "schema": "task40extra.independent-Y-worker-checker-final-pair-linkage.v1",
+  "status": "PASS_FINAL_PAIR_LINKAGE_AND_CORRECTED_PACKAGE",
+  "created_at_utc": "2026-10-02T18:18:42.483181+00:00",
+  "source_head": "9511930c29414d9db3c25124d7c2a745de211f96",
+  "source_tree": "29a64d7d3050b9ecc1c0e03f3b9b150243cf3d8a",
+  "checks": [
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/summary.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/summary.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/phase.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/phase.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/provenance.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/provenance.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/abi_manifest.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/abi_manifest.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/direct_carrier_qualification.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/direct_carrier_qualification.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/summary.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/summary.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_phase.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_phase.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/worker.log",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/checker_supervision/worker.log",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/summary.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/summary.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/phase.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/phase.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/provenance.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/provenance.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/probe_traceback.txt",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/probe_traceback.txt",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/failed_direct_carrier_qualification.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt1/failed_direct_carrier_qualification.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/summary.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/summary.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/tests_result.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/tests_result.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/worker.log",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_tests_attempt1/worker.log",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/summary.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/summary.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/tests_result.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/tests_result.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/worker.log",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt1/worker.log",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/summary.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/summary.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/tests_result.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/tests_result.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/worker.log",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_frozen_tests_attempt2/worker.log",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_preflight_attempt1/receipt.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_Y_H_frozen_preflight_attempt1/receipt.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:experiments/y_orbit_direct_calibration_staging/review/independent_Y_H_normalization_source_review_v1.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:experiments/y_orbit_direct_calibration_staging/review/independent_Y_H_normalization_source_review_v1.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:experiments/y_orbit_Y_staging/H_normalization_diagnostics/all532_H_formula.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:experiments/y_orbit_Y_staging/H_normalization_diagnostics/all532_H_formula.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_production_source_review_v1.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_production_source_review_v1.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_source_review_final_v3.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:experiments/y_orbit_direct_calibration_staging/review/independent_Y_combined_source_review_final_v3.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:experiments/y_orbit_direct_calibration_staging/review/independent_Y_late_cli_test_literal_source_review_v1.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:experiments/y_orbit_direct_calibration_staging/review/independent_Y_late_cli_test_literal_source_review_v1.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:experiments/y_orbit_Y_staging/H_normalization_fix/manifest.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:experiments/y_orbit_Y_staging/H_normalization_fix/manifest.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/probe_report.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/probe_report.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/independent_checker.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/independent_checker.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_Y_attempt2/artifact_manifest.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_X_V13_success_evidence_2a07d23/compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_X_V13_success_evidence_2a07d23/compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_X_V13_success_evidence_2a07d23/manifest.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_X_V13_success_evidence_2a07d23/manifest.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_XZ_V14_success_evidence_ae6034fa/compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_XZ_V14_success_evidence_ae6034fa/compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_XZ_V14_success_evidence_ae6034fa/manifest.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_XZ_V14_success_evidence_ae6034fa/manifest.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_Y_V15_success_evidence_9511930c/compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_Y_V15_success_evidence_9511930c/compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_Y_V15_success_evidence_9511930c/report_zh.md",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_Y_V15_success_evidence_9511930c/report_zh.md",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_Y_V15_success_evidence_9511930c/calibration_comparison_zh.md",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_Y_V15_success_evidence_9511930c/calibration_comparison_zh.md",
+      "pass": true
+    },
+    {
+      "name": "sha256:staging/direct_Y_V15_success_evidence_9511930c/integration_snippets.md",
+      "pass": true
+    },
+    {
+      "name": "bytes:staging/direct_Y_V15_success_evidence_9511930c/integration_snippets.md",
+      "pass": true
+    },
+    {
+      "name": "worker:classification",
+      "pass": true
+    },
+    {
+      "name": "worker:leader_exit_code",
+      "pass": true
+    },
+    {
+      "name": "worker:elapsed_seconds",
+      "pass": true
+    },
+    {
+      "name": "worker:sampled_process_tree_rss_peak_bytes",
+      "pass": true
+    },
+    {
+      "name": "worker:sampled_process_tree_swap_peak_bytes",
+      "pass": true
+    },
+    {
+      "name": "worker:descendants_cleared",
+      "pass": true
+    },
+    {
+      "name": "worker:remaining_child_pids",
+      "pass": true
+    },
+    {
+      "name": "worker:process_tree_all_status_readable",
+      "pass": true
+    },
+    {
+      "name": "worker:process_tree_all_identity_complete",
+      "pass": true
+    },
+    {
+      "name": "worker:process_tree_identity_coverage",
+      "pass": true
+    },
+    {
+      "name": "worker:observed_child_identity_coverage",
+      "pass": true
+    },
+    {
+      "name": "worker:job_swap_activity",
+      "pass": true
+    },
+    {
+      "name": "worker:source",
+      "pass": true
+    },
+    {
+      "name": "worker:global_swap_delta",
+      "pass": true
+    },
+    {
+      "name": "worker:tree_cap_bytes",
+      "pass": true
+    },
+    {
+      "name": "worker:time_end_observation",
+      "pass": true
+    },
+    {
+      "name": "checker:classification",
+      "pass": true
+    },
+    {
+      "name": "checker:leader_exit_code",
+      "pass": true
+    },
+    {
+      "name": "checker:elapsed_seconds",
+      "pass": true
+    },
+    {
+      "name": "checker:sampled_process_tree_rss_peak_bytes",
+      "pass": true
+    },
+    {
+      "name": "checker:sampled_process_tree_swap_peak_bytes",
+      "pass": true
+    },
+    {
+      "name": "checker:descendants_cleared",
+      "pass": true
+    },
+    {
+      "name": "checker:remaining_child_pids",
+      "pass": true
+    },
+    {
+      "name": "checker:process_tree_all_status_readable",
+      "pass": true
+    },
+    {
+      "name": "checker:process_tree_all_identity_complete",
+      "pass": true
+    },
+    {
+      "name": "checker:process_tree_identity_coverage",
+      "pass": true
+    },
+    {
+      "name": "checker:observed_child_identity_coverage",
+      "pass": true
+    },
+    {
+      "name": "checker:job_swap_activity",
+      "pass": true
+    },
+    {
+      "name": "checker:source",
+      "pass": true
+    },
+    {
+      "name": "checker:global_swap_delta",
+      "pass": true
+    },
+    {
+      "name": "checker:tree_cap_bytes",
+      "pass": true
+    },
+    {
+      "name": "checker:time_end_observation",
+      "pass": true
+    },
+    {
+      "name": "source identity all reports summaries provenance",
+      "pass": true
+    },
+    {
+      "name": "source snapshots identical",
+      "pass": true
+    },
+    {
+      "name": "checker source bridge",
+      "pass": true
+    },
+    {
+      "name": "checker report hash",
+      "pass": true
+    },
+    {
+      "name": "checker artifact manifest hash",
+      "pass": true
+    },
+    {
+      "name": "checker watchdog exact",
+      "pass": true
+    },
+    {
+      "name": "report supervisor exact",
+      "pass": true
+    },
+    {
+      "name": "report provenance exact",
+      "pass": true
+    },
+    {
+      "name": "counts and pass",
+      "pass": true
+    },
+    {
+      "name": "worker completed six factors 532 modes",
+      "pass": true
+    },
+    {
+      "name": "configuration identity",
+      "pass": true
+    },
+    {
+      "name": "geometry qualification scope",
+      "pass": true
+    },
+    {
+      "name": "source selected files actual",
+      "pass": true
+    },
+    {
+      "name": "profile dimensions",
+      "pass": true
+    },
+    {
+      "name": "profile interior_rows",
+      "pass": true
+    },
+    {
+      "name": "profile replication_count",
+      "pass": true
+    },
+    {
+      "name": "profile q_port_counts",
+      "pass": true
+    },
+    {
+      "name": "profile sector_port_counts",
+      "pass": true
+    },
+    {
+      "name": "new Y notch exactly 3 changed cells",
+      "pass": true
+    },
+    {
+      "name": "scaled box identity",
+      "pass": true
+    },
+    {
+      "name": "scaled optical geometry versus original target",
+      "pass": true
+    },
+    {
+      "name": "q rows",
+      "pass": true
+    },
+    {
+      "name": "six CSR bytes",
+      "pass": true
+    },
+    {
+      "name": "setup scalar join",
+      "pass": true
+    },
+    {
+      "name": "rounded scalar max_regular_true_original_residual",
+      "pass": true
+    },
+    {
+      "name": "rounded scalar max_notch_true_original_residual",
+      "pass": true
+    },
+    {
+      "name": "rounded scalar physical_notch_nonzero_q_relative",
+      "pass": true
+    },
+    {
+      "name": "rounded scalar max_sample_PC_defect",
+      "pass": true
+    },
+    {
+      "name": "rounded scalar notch_delta_off_q_coupling_relative",
+      "pass": true
+    },
+    {
+      "name": "notch iteration joins",
+      "pass": true
+    },
+    {
+      "name": "all 8 recovered representable 532 outputs",
+      "pass": true
+    },
+    {
+      "name": "checker ABI qualification hash",
+      "pass": true
+    },
+    {
+      "name": "checker no PDE rerun or factor",
+      "pass": true
+    },
+    {
+      "name": "original Y1 failure retained",
+      "pass": true
+    },
+    {
+      "name": "frozen head tree clean",
+      "pass": true
+    },
+    {
+      "name": "final package sha compact_record.json",
+      "pass": true
+    },
+    {
+      "name": "final package sha report_zh.md",
+      "pass": true
+    },
+    {
+      "name": "final package sha calibration_comparison_zh.md",
+      "pass": true
+    },
+    {
+      "name": "final package sha integration_snippets.md",
+      "pass": true
+    },
+    {
+      "name": "corrected physical defect key",
+      "pass": true
+    },
+    {
+      "name": "corrected max defect separate key",
+      "pass": true
+    }
+  ],
+  "package_sha256": {
+    "report_zh.md": "d34e685692989fb442570b033d15e9f52aa1886a6e306de64ff13050450c63df",
+    "calibration_comparison_zh.md": "d060e1746327306673f76e5a76ab0ee532a7f76dcadfa254f4ee350f4e898a78",
+    "compact_record.json": "28381cdc7180b126d7a52eb47b83a1074fc8534b4d7dbc386a9ef2d025b6508e",
+    "manifest.json": "afb8f19aa61585beaa654fa6f124f63b318437ea06563e23b9e9ac6f66c433c0",
+    "integration_snippets.md": "4ab3828c00f64755f4fda635367de9befd8734ea0e38bdba7021dccaa5efa16d"
+  },
+  "original_publication_metadata_issue": {
+    "path": "X_XZ_Y_calibration_comparison.points[Y].sample_physical_PC_defect",
+    "old_value": 0.001783457,
+    "meaning": "maximum sample from interior_only; not physical",
+    "correct_physical": 0.00018691878593559766,
+    "correct_max": 0.0017834571334270698,
+    "resolution": "corrected package physical/max fields independently checked against frozen report; refreshed manifest hashes verified"
+  },
+  "worker_checker": {
+    "worker_seconds": 1748.5040639689978,
+    "worker_rss_peak_bytes": 1606623232,
+    "checker_seconds": 565.9665128490014,
+    "checker_rss_peak_bytes": 1707114496,
+    "both_exit0_zero_swap_descendants_cleared": true,
+    "report_sha256": "17576b9d643912fc32d6997bead964ebd038b8034866010f0983ef9873a73703",
+    "checker_sha256": "2f4d12e546b89fa5f23a59a5ce249ff673a435bb1fa24b2e7fc4218dbd1fb66d",
+    "artifact_manifest_sha256": "1080a4af9617ebcb5afb9a57956162846242514c343cc87a13061a7fa5a21442",
+    "passing_entries": 85252,
+    "counts": {
+      "direct": 421,
+      "raw": 33520,
+      "operator": 30,
+      "shared": 51281
+    }
+  },
+  "scope_limits": [
+    "Read-only evidence linkage review; no numerical checker rerun, FE/JIT/factor/PDE work, source or canonical writes. Fresh byte hashes and selected JSON sections only; no canonical array/event replay or check-entry array decoding.",
+    "Six retained factors, 12960 interiors, manual 532 modes and new shifted three-cell notch bound. Y is not an old X/XZ same-field accuracy comparison.",
+    "Geometry scaled 7/135 with lambda 0.7 nm retained; original unscaled target accuracy, AUTO32060, p6 and 2TB/48h capacity remain unqualified.",
+    "Original Y1 K2-protected-H validation failure remains failed, factor0; subsequent correction does not retroactively promote it.",
+    "Passing entry total is a count of recorded checks, not globally unique names. This review authenticates the recorded checker result, not an independent numerical recomputation."
+  ]
+}

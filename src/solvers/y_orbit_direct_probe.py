@@ -1,4 +1,4 @@
-"""X/XZ fresh direct two-cell calibration, under the existing supervisor.
+"""X/XZ/Y fresh direct two-cell calibration, under the existing supervisor.
 
 Every original FE channel and physical alias stays. Fresh primary/literal,
 complete original contribution and shared-owner gates finish before factors.
@@ -39,7 +39,7 @@ def run_direct_quotient_probe(input_path,*,direct_profile,event,save_array,alloc
  from .fullspace_same_mesh_hcurl_pmg_physical import _build_split_volume_action,build_physical_rhs
  from .fullspace_physical_action import FullspacePhysicalAction
  from src.geometry.mesh_builder_3d import _mark_cells,_rectangular_air_void_audit
- if type(direct_profile) is not str or direct_profile not in ('X','XZ') or stage not in ('prefactor','solve'):raise ValueError('only explicit directX/XZ prefactor/solve is enabled')
+ if type(direct_profile) is not str or direct_profile not in ('X','XZ','Y') or stage not in ('prefactor','solve'):raise ValueError('only explicit directX/XZ/Y prefactor/solve is enabled')
  metadata=direct_profile_metadata(direct_profile)
  base_cfg,_,input_sha=pilot_config(input_path,azimuth_deg=5.)
  cfg=build_direct_profile_config(base_cfg,direct_profile)
@@ -182,10 +182,11 @@ def run_direct_quotient_probe(input_path,*,direct_profile,event,save_array,alloc
   physical_storage,physical_facts=build_physical_rhs(original)
   try:physical=physical_storage.array[layout.independent].copy()
   finally:physical_storage.destroy()
-  box=tuple(value*(7/135) for value in (25,33.5,6.25,18.75,40,80))
+  from .y_orbit_direct_profile import direct_notch_box_and_count
+  box,expected_changed_cells=direct_notch_box_and_count(direct_profile)
   notch_cfg=replace(cfg,case_name=f'y_orbit_direct_{metadata.name}_p4_notch',air_void_box_nm=box,geometry_identity=cfg.geometry_identity+'.notch')
   tags=_mark_cells(setup['mesh'],notch_cfg);changed=np.flatnonzero(tags.values!=setup['mesh_data'].cell_tags.values)
-  if len(changed)!=2:raise ValueError('directX/XZ keeps exactly the same physical two-cell notch')
+  if len(changed)!=expected_changed_cells:raise ValueError('direct profile must retain its exact reviewed aligned notch cell count')
   supported,support_facts=_notch_supported_rhs(setup['spaces'][4],layout,changed)
   loads={'generic':generic,'interior_only':interior_only_rhs(setup['spaces'][4],layout,direct_profile=direct_profile),
          'physical':physical,'notch_supported':supported}

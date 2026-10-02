@@ -1,4 +1,4 @@
-"""Exhaustive original-cell qualification for the reviewed direct X/XZ profiles.
+"""Exhaustive original-cell qualification for the reviewed direct X/XZ/Y profiles.
 
 This is an opt-in, pre-factor witness producer and an array-only verifier.
 It uses the original FFCx curl+mass tensor source, the finalized native MPC,
@@ -182,8 +182,9 @@ def _metadata(direct_profile):
     inventories = {
         DirectTwoCellProfile.X: ((6, 4, 5), (120, 25468, 23808, 12960, 60, 13236, 11904, 6480)),
         DirectTwoCellProfile.XZ: ((6, 4, 7), (168, 35332, 33024, 18144, 84, 18364, 16512, 9072)),
+        DirectTwoCellProfile.Y: ((4, 6, 5), (120, 25468, 23808, 12960, 40, 8940, 7936, 4320)),
     }
-    _require(selected in inventories, "this qualification is authorized only for direct X/XZ")
+    _require(selected in inventories, "this qualification is authorized only for direct X/XZ/Y")
     metadata = direct_profile_metadata(selected)
     dimensions, inventory = inventories[selected]
     _require(metadata.name == selected.value and metadata.dimensions == dimensions,
@@ -191,7 +192,13 @@ def _metadata(direct_profile):
     _require((metadata.cell_count, metadata.storage_rows, metadata.independent_rows,
               metadata.interior_rows, metadata.local_cell_count, metadata.local_storage_rows,
               metadata.local_independent_rows, metadata.local_interior_rows) == inventory,
-             "reviewed X/XZ complete inventory changed")
+             "reviewed X/XZ/Y complete inventory changed")
+    if selected is DirectTwoCellProfile.Y:
+        _require(metadata.ny == 6 and metadata.local_y_cells == 2 and metadata.replication_count == 3
+                 and metadata.q_port_counts == (76, 76, 76, 152, 76, 76)
+                 and metadata.sector_port_counts == (228, 152, 152)
+                 and metadata.augmented_rows_per_q == (1884, 1884, 1884, 1960, 1884, 1884),
+                 "reviewed Y complete q/sector/alias inventory changed")
     return metadata
 
 
@@ -374,19 +381,23 @@ def _export_source(bundle, entities, *, writer, load_array, role, metadata, enti
         _cell_tag_array, _cell_integral_kernels, _canonical_axis_aligned_coordinates,
         _global_raw_tensor_cache, _orient_cell_tensor,
     )
-    from .y_orbit_direct_profile import validate_direct_physical_config, SCALE
+    from .y_orbit_direct_profile import validate_direct_physical_config, direct_notch_box_and_count
     from dataclasses import fields
     setup = bundle["setup"]
     space, floquet = setup["spaces"][4], setup["floquets"][4]
     mesh, mpc = space.mesh, floquet.mpc
-    local = int(entities.ny) == 2
+    _require(int(entities.ny) in (metadata.local_y_cells, metadata.ny),
+             "actual source Ny differs from the selected full/two-cell profile")
+    local = int(entities.ny) == metadata.local_y_cells
     _require(role != "notch" or (not local and entity_config is not None),
-             "notch export requires explicit original full-X entity config")
+             "notch export requires explicit original full-profile entity config")
     if role == "notch":
         validate_direct_physical_config(entity_config, metadata.name)
-        expected_box = tuple(value * SCALE for value in (25, 33.5, 6.25, 18.75, 40, 80))
+        # The Y box is independently approved for three actual mesh cells;
+        # actual raw geometry and state keys remain unchanged.
+        expected_box, _changed_cell_count = direct_notch_box_and_count(metadata.name)
         _require(tuple(bundle["cfg"].air_void_box_nm) == expected_box and bundle["cfg"].cell_notch is None,
-                 "only the approved existing X physical two-cell air-void notch may be exported")
+                 "only the approved profile-specific physical air-void notch may be exported")
         for field in fields(entity_config):
             if field.name not in ("case_name", "geometry_identity", "air_void_box_nm"):
                 _require(getattr(bundle["cfg"], field.name) == getattr(entity_config, field.name),
@@ -722,8 +733,11 @@ def _check_source(source, *, load, gate, metadata):
     local = bool(source["local_two_cell"])
     expected_cells = metadata.local_cell_count if local else metadata.cell_count
     expected_rows = metadata.local_storage_rows if local else metadata.storage_rows
-    ny = 2 if local else 4
+    ny = metadata.local_y_cells if local else metadata.ny
     axes = metadata.local_axes if local else metadata.global_axes
+    if metadata.name == "Y":
+        _require(_token(source["profile"]) == _token(metadata.identity()),
+                 "saved Y source must retain the complete selected profile identity")
     _require(_token(source["axes"]) == _token(axes) and source["cell_count"] == expected_cells
              and source["native"]["full_rows"] == expected_rows
              and source["entities"]["ny"] == ny and len(source["cells"]) == expected_cells,
@@ -885,10 +899,12 @@ def _orbit_pair_sums(source, cells, etas, *, load, gate, label):
 def _check_orbits(receipt, *, load, gate, metadata):
     sources = [receipt["global_source"], *receipt["local_sources"]]
     global_eta = [_uncomplex(value) for value in receipt["global_eta"]]
-    _require(len(global_eta) == 4, "all four original q eigenphases required")
+    ny, replication_count = metadata.ny, metadata.replication_count
+    _require(len(sources) == replication_count + 1 and len(global_eta) == ny,
+             "every original q eigenphase and local twist source required")
     for q, eta in enumerate(global_eta):
-        _require(abs(abs(eta) - 1) <= 1e-12 and abs(eta**4 - _uncomplex(receipt["global_phase_y"])) <= 1e-12
-                 and abs(eta / global_eta[0] - np.exp(2j * np.pi * q / 4)) <= 1e-12,
+        _require(abs(abs(eta) - 1) <= 1e-12 and abs(eta**ny - _uncomplex(receipt["global_phase_y"])) <= 1e-12
+                 and abs(eta / global_eta[0] - np.exp(2j * np.pi * q / ny)) <= 1e-12,
                  "original all-q/full-cycle Fourier covariance controls fail")
     grouped = [{(ix, iz): [cell for cell in source["cells"] if cell["grid"][0] == ix and cell["grid"][2] == iz]
                 for ix in range(metadata.nx) for iz in range(metadata.nz)} for source in sources]
@@ -896,22 +912,22 @@ def _check_orbits(receipt, *, load, gate, metadata):
     for ix in range(metadata.nx):
         for iz in range(metadata.nz):
             actual = grouped[0][(ix, iz)]
-            _require({cell["grid"][1] for cell in actual} == set(range(4)), "global orbit omits an actual translated cell")
+            _require({cell["grid"][1] for cell in actual} == set(range(ny)), "global orbit omits an actual translated cell")
             support, global_sums = _orbit_pair_sums(sources[0], actual, global_eta,
-                load=load, gate=gate, label="original_all4x4_q_actual_cell_orbit")
-            norms = {q: float(np.linalg.norm(global_sums[(q, q)])) for q in range(4)}
+                load=load, gate=gate, label=f"original_all{ny}x{ny}_q_actual_cell_orbit")
+            norms = {q: float(np.linalg.norm(global_sums[(q, q)])) for q in range(ny)}
             item = {"grid_xz": [ix, iz], "complete_columns": len(support), "global_cell_ids": [c["cell_index"] for c in actual],
                     "all_global_q_pairs": [], "local_twists": []}
-            for p in range(4):
-                for q in range(4):
+            for p in range(ny):
+                for q in range(ny):
                     norm = float(np.linalg.norm(global_sums[(p, q)]))
                     relative = (max(norm / max(norms[p], np.finfo(float).tiny),
                                     norm / max(norms[q], np.finfo(float).tiny)) if p != q else 0.0)
                     _require(np.isfinite(relative) and relative <= LIMIT,
                              "complete actual global off-q/cross-twist contribution covariance failed")
                     item["all_global_q_pairs"].append({"p": p, "q": q, "norm": norm, "off_q_relative": relative,
-                                                      "cross_twist": p % 2 != q % 2})
-            for b in (0, 1):
+                                                      "cross_twist": p % replication_count != q % replication_count})
+            for b in range(replication_count):
                 local_cells = grouped[b + 1][(ix, iz)]
                 _require({cell["grid"][1] for cell in local_cells} == {0, 1}, "local orbit omits either actual cell")
                 # Every actual original cell has a translated local counterpart,
@@ -924,13 +940,13 @@ def _check_orbits(receipt, *, load, gate, metadata):
                                         / np.asarray(local_cell["widths"])) <= 1e-12,
                              "actual translated original/local material or metric differs")
                 local_support, local_sums = _orbit_pair_sums(sources[b + 1], local_cells,
-                    [global_eta[b], global_eta[b + 2]], load=load, gate=gate,
+                    [global_eta[b], global_eta[b + replication_count]], load=load, gate=gate,
                     label="local_all2x2_branch_actual_cell_orbit")
                 _require(local_support == support, "local/full all-polynomial orbit channel support differs")
                 pairs = []
                 for p in (0, 1):
                     for q in (0, 1):
-                        global_p, global_q = b + 2 * p, b + 2 * q
+                        global_p, global_q = b + replication_count * p, b + replication_count * q
                         error = _relative(local_sums[(p, q)], global_sums[(global_p, global_q)])
                         if p == q:
                             _require(error <= LIMIT, "complete original/global versus local diagonal contribution sum differs")
@@ -1167,19 +1183,28 @@ def _check_condensation(source, record, *, load, gate, global_eta, twist):
     trace_slots = sorted({int(record_entity["first"]) + j for record_entity in source["entities"]["records"]
                           if record_entity["orbit"] == 0 and record_entity["actual_state"]["dimension"] < 3
                           for j in range(int(record_entity["size"]))})
-    _require(len(trace_slots) == _metadata(source["profile"]["name"]).trace_rows_per_q, "complete p4 direct trace slots omitted")
+    metadata = _metadata(source["profile"]["name"])
+    _require(len(trace_slots) == metadata.trace_rows_per_q, "complete p4 direct trace slots omitted")
     trace_slot_position = {value: index for index, value in enumerate(trace_slots)}
     independent_position = {int(original): position for position, original in enumerate(independent)}
     H, mode_n = _read(record["port_H"], load), _read(record["port_n"], load)
     _require(len(H) == record["port_rows"] and np.isfinite(H).all() and np.all(H > 0),
              "actual original positive H inventory differs")
+    if metadata.name == "Y":
+        _require(type(twist) is int and twist in range(metadata.replication_count)
+                 and tuple(record["global_q_indices"]) == (twist, twist + metadata.replication_count)
+                 and len(record["q_maps"]) == metadata.local_y_cells
+                 and len(mode_n) == len(H) == metadata.sector_port_counts[twist]
+                 and mode_n.dtype.kind in "iu"
+                 and all((int(n) - twist) % metadata.replication_count == 0 for n in mode_n),
+                 "complete Y sector/q/physical alias inventory differs")
     qmap_errors = []
     for branch in (0, 1):
-        qglobal = twist + 2 * branch
+        qglobal = twist + metadata.replication_count * branch
         _require(record["global_q_indices"][branch] == qglobal, "local branch/global q key changed")
         qmap = _read_csr(record["q_maps"][branch], load)
-        aliases = np.flatnonzero(mode_n % 4 == qglobal)
-        _require(len(aliases) == (76 if qglobal == 0 else 152), "complete physical aliases differ")
+        aliases = np.flatnonzero(mode_n % metadata.ny == qglobal)
+        _require(len(aliases) == metadata.q_port_counts[qglobal], "complete physical aliases differ")
         rows, columns, values = [], [], []
         for active_row, original in enumerate(active):
             transform, entity_row, canonical = owners[independent_position[int(original)]]
@@ -1331,26 +1356,31 @@ def audit_direct_original_cell_contributions(global_bundle, local_condensed_by_t
     _require(float(tolerance) == LIMIT, "original finite gate cannot be relaxed")
     metadata = _metadata(direct_profile)
     _require(callable(event) and callable(load_csr), "record/event/verified CSR loader required")
-    _require(all(local_entities_by_twist[b]._transform_bank is global_entities._transform_bank for b in (0, 1)),
-             "full and both local sources must borrow the same mandatory Step0 bank")
+    replication_count = metadata.replication_count
+    _require(all(len(items) == replication_count for items in (
+        local_condensed_by_twist, local_entities_by_twist, transports, providers_by_twist,
+        provider_block_records_by_twist)), "all ordered actual local twists are required")
+    _require(all(local_entities_by_twist[b]._transform_bank is global_entities._transform_bank
+                 for b in range(replication_count)),
+             "full and all local sources must borrow the same mandatory Step0 bank")
     writer = _Writer(save_array, allocation_gate)
     writer.load = load_array
     ky, period = complex(global_bundle["cfg"].ky), float(global_bundle["cfg"].period_y)
     _require(abs(ky.imag) <= 1e-12 and period > 0, "original physical real ky/full period required")
     phase_y = np.exp(1j * ky.real * period)
-    etas = [np.exp(1j * (ky.real * period + 2 * np.pi * q) / 4) for q in range(4)]
+    etas = [np.exp(1j * (ky.real * period + 2 * np.pi * q) / metadata.ny) for q in range(metadata.ny)]
     receipt = {"schema": SCHEMA, "status": "INCOMPLETE_NOT_QUALIFIED", "profile": metadata.identity(),
                "global_phase_y": _complex(phase_y), "global_eta": [_complex(eta) for eta in etas],
                "global_source": _export_source(global_bundle, global_entities, writer=writer,
                    load_array=load_array, role="original_global", metadata=metadata),
                "local_sources": [], "local_condensation": [], "numeric_factor_calls": 0,
                "no_global_Ny_S_F_Q_FE_square": True,
-               "proof_scope": "all actual original300-column curl+mass cells, every finalized MPC/entity row, all4x4/global and2x2/local sums"}
+               "proof_scope": f"all actual original300-column curl+mass cells, every finalized MPC/entity row, all{metadata.ny}x{metadata.ny}/global and2x2/local sums"}
     event("direct_complete_original_global_source_saved", {"source": receipt["global_source"], "status": receipt["status"]})
-    for b in (0, 1):
+    for b in range(metadata.replication_count):
         condensed, provider, transport = local_condensed_by_twist[b], providers_by_twist[b], transports[b]
         _require(transport.full is global_entities and transport.local is local_entities_by_twist[b]
-                 and transport.b == b and transport.K == 2 and abs(transport.eta - etas[b]) <= 1e-12
+                 and transport.b == b and transport.K == replication_count and abs(transport.eta - etas[b]) <= 1e-12
                  and abs(transport.tau - etas[b]**2) <= 1e-12,
                  "complete actual transport/shared-source/branch phase binding differs")
         source = _export_source(condensed.action_bundle, local_entities_by_twist[b], writer=writer,
@@ -1370,7 +1400,7 @@ def audit_direct_original_cell_contributions(global_bundle, local_condensed_by_t
     receipt["status"] = "PASS_COMPLETE_ORIGINAL_CONTRIBUTION_PROOF_PREFACTOR"
     event("direct_complete_original_operator_qualification", {"status": receipt["status"],
           "global_actual_cells": metadata.cell_count, "local_actual_cells_per_twist": metadata.local_cell_count,
-          "full_original_columns_per_cell": CELL_DIMENSION, "all_q_pairs": 16,
+          "full_original_columns_per_cell": CELL_DIMENSION, "all_q_pairs": metadata.ny**2,
           "all_local_pairs_per_twist": 4, "numeric_factor_calls": 0})
     return receipt
 
@@ -1387,14 +1417,17 @@ def check_direct_original_cell_contributions(receipt, *, load, allocation_gate,
     _require(receipt.get("schema") == SCHEMA and callable(load) and callable(load_csr),
              "same complete proof schema and independent verified loaders required")
     metadata = _metadata(direct_profile)
-    _require(len(receipt["local_sources"]) == 2 and len(receipt["local_condensation"]) == 2,
+    _require(_token(receipt["profile"]) == _token(metadata.identity()),
+             "complete proof receipt profile identity differs")
+    _require(len(receipt["local_sources"]) == metadata.replication_count
+             and len(receipt["local_condensation"]) == metadata.replication_count,
              "all actual twists required")
     source_checks = [_check_source(source, load=load, gate=allocation_gate, metadata=metadata)
                      for source in (receipt["global_source"], *receipt["local_sources"])]
     orbits = _check_orbits(receipt, load=load, gate=allocation_gate, metadata=metadata)
     etas = [_uncomplex(value) for value in receipt["global_eta"]]
     condensation, provider = [], []
-    for b in (0, 1):
+    for b in range(metadata.replication_count):
         record = receipt["local_condensation"][b]
         condensation.append(_check_condensation(receipt["local_sources"][b], record,
             load=load, gate=allocation_gate, global_eta=etas, twist=b))

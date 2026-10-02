@@ -908,7 +908,7 @@ def build_fullspace_dtn_carrier_from_surface(
             })
             if quotient_context is not None:
                 global_h = assembly_projection_denominator(mode, physical_cfg, phase_gauge)
-                if not np.isclose(denominator*2, global_h, rtol=32*np.finfo(float).eps, atol=0):
+                if not np.isclose(denominator*quotient_context.replication_count, global_h, rtol=32*np.finfo(float).eps, atol=0):
                     raise ValueError("quotient original plane H must equal global plane H / K")
                 assembly_identity.update({
                     "original_mode_index": quotient_context.original_mode_indices[index],
@@ -918,7 +918,7 @@ def build_fullspace_dtn_carrier_from_surface(
                     "local_branch_index": quotient_context.local_branch_indices[index],
                     "quotient_twist_index": quotient_context.twist_index,
                     "quotient_contract_sha256": quotient_contract_sha,
-                    "local_H_scale_from_global_plane_H": 0.5,
+                    "local_H_scale_from_global_plane_H": 1/quotient_context.replication_count,
                 })
             assembly_identity = deep_frozen_identity(assembly_identity)
         traction = _traction_vector(mode, cfg)

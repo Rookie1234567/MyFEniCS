@@ -157,7 +157,7 @@ class DirectCarrierMetadataTests(unittest.TestCase):
                             and any(isinstance(target, ast.Attribute) and target.attr == "global_mode_inventory"
                                     for target in item.targets) for item in ast.walk(destructor)))
         text = (PIPELINE/"y_orbit_direct_carrier_qualification.py").read_text()
-        self.assertIn('is not DirectTwoCellProfile.X', text)
+        self.assertIn('DirectTwoCellProfile(direct_profile) not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ, DirectTwoCellProfile.Y)', text)
         self.assertNotIn('authority.restore_bundle', text)
         self.assertNotIn('splu(', text)
         self.assertNotIn('np.save(', text)

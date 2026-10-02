@@ -235,3 +235,19 @@ worker816b7247与checker2a07d23分别绑定。原startup/resource/source-role/re
 XZ1的X-only interior guard失败、XZ2的固定nz=5 coverage失败都在factor0前停止；各自692.81699s/675598336B及1853.20673s/1101979648B保留。attempt2后续saved-proof通过单独记录。attempt3自动checker memory-admission失败也保留，其精确失败host envelope未保存；后续fresh headroom单独启动checker通过，没有PDE重跑。sampled physical PC defect约0.0134233不是范数界。
 
 [Response V14](../response_v14.md)、[compact](records/direct_XZ_v14/compact_record.json)、[原始hash manifest](records/direct_XZ_v14/manifest.json)。完整目标精度/光学规模/强缺陷性能仍未证明，后续Ny扩展须独立准入。
+
+
+## V15：Ny6/K3的Y点完整三维资格
+
+Y在同光学尺寸/manual532下改为p4/4×6×5，global120/local40×3，完整12960内部、六q和三twist。它检验从两个局部空间扩展到三个空间后，分块求逆与完整恢复仍满足原方程。source9511930c的worker和saved-only checker同源通过。
+
+| 项目 | measured结果与范围 |
+|---|---|
+| checker |421direct＋33520raw＋30operator＋51281shared＝85252 passing entries；最终独立metadata linkage152/0 |
+| worker / checker |1748.504063969s /565.966512849s；整树RSS1606623232B /1707114496B，swap0/清场 |
+| residual / outputs |regular最大约8.92748e-12，notch约7.28650e-12；8组各532完整可表示输出 |
+| notch / PC样本 |generic/interior/physical/support4/4/3/4；physical defect0.00018691878593559766，最大约0.001783457为interior_only，均非范数界 |
+| 因子与成本 |六q行1884/1884/1884/1960/1884/1884；CSR52709744B不是factor内存；setup5.747859236s含controls/I/O |
+| 限制 |Y-only3GiB/4500s；新aligned3cell notch平移−25/12（缩放前），不是X/XZ同场对照；目标accuracy/AUTO32060/p6/2TB48h仍未资格 |
+
+Y1在88.704822665s、factor0因旧H验证乘2而失败；修复仅将validation/metadata的2改为validatedK，实际C/D/H assembly和H denominator不变，32eps门不变。公式重算localH不能冒称旧saved carrier；1ulp周期差和4个bitwidth类保持。旧198测试失败与后续198/201通过均保存，未重跑PDE。详见[Response V15](../response_v15.md)、[X/XZ/Y对照](calibration_comparison_v15_zh.md)、[compact](records/direct_Y_v15/compact_record.json)、[152/0独立receipt](records/direct_Y_v15/independent_Y_final_pair_linkage_v1.json)。主要场/几何精度仍未解决，后续选择须依据准确性与目标规模证据，而非小型迭代数。

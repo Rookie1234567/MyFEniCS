@@ -243,9 +243,9 @@ class XZProfileContractTests(unittest.TestCase):
         namespace = isolated([definition("y_orbit_direct_operator_qualification.py", "_metadata")], {
             "_require": require, "direct_profile_metadata": self.profile_module.direct_profile_metadata,
             "DirectTwoCellProfile": self.profile_module.DirectTwoCellProfile})
-        for name in ("X", "XZ"):
+        for name in ("X", "XZ", "Y"):
             self.assertEqual(namespace["_metadata"](name), self.profile_module.direct_profile_metadata(name))
-        for name in ("Y", "xz", "", None, True):
+        for name in ("other", "xz", "", None, True):
             with self.assertRaises(ValueError): namespace["_metadata"](name)
         changed = copy.copy(self.profile_module.direct_profile_metadata("XZ"))
         object.__setattr__(changed, "dimensions", (6, 4, 5))
@@ -269,7 +269,7 @@ class XZProfileContractTests(unittest.TestCase):
                 "QUOTIENT_PHASE_WALL_SECONDS": str(wall - 1),
                 "QUOTIENT_RESEARCH_MEMORY_LAUNCH_ADMISSION": json.dumps(receipt)}
             self.assertEqual(helper(environment), f"external min(fresh dynamic cap,{memory}GiB)/{wall}s/zeroSwap/MPI1/thread1 supervision")
-            for key, bad in (("QUOTIENT_RESEARCH_MEMORY_PROFILE", "Y"), ("QUOTIENT_RESEARCH_MEMORY_GIB", "4"),
+            for key, bad in (("QUOTIENT_RESEARCH_MEMORY_PROFILE", "other"), ("QUOTIENT_RESEARCH_MEMORY_GIB", "4"),
                              ("QUOTIENT_RESEARCH_MEMORY_STAGE", "prefactor"), ("QUOTIENT_RESEARCH_WALL_SECONDS", "600"),
                              ("QUOTIENT_PHASE_WALL_SECONDS", "nan"), ("QUOTIENT_PHASE_WALL_SECONDS", str(wall + 1)),
                              ("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES", "1"),
@@ -283,11 +283,33 @@ class XZProfileContractTests(unittest.TestCase):
 
     def test_none_default_guards_and_numerical_kernels_remain_exact_BASE(self):
         for name in ("fullspace_dtn_action.py", "dtn_boundary_phase_gauge.py",
-                     "fullspace_same_mesh_hcurl_pmg_physical.py", "y_orbit_direct_profile.py",
+                     "fullspace_same_mesh_hcurl_pmg_physical.py",
                      "y_orbit_two_cell_transport.py", "y_orbit_quotient_condensed.py"):
             old = subprocess.run(["git", "-C", str(CANONICAL), "show", BASE + ":src/solvers/" + name],
                                  check=True, capture_output=True, text=True).stdout
-            self.assertEqual((SOLVERS / name).read_text(), old, name)
+            current=(SOLVERS / name).read_text()
+            if name=='fullspace_dtn_action.py':
+                self.assertEqual(current.count('denominator*quotient_context.replication_count'),1)
+                self.assertEqual(current.count('"local_H_scale_from_global_plane_H": 1/quotient_context.replication_count,'),1)
+                current=current.replace('denominator*quotient_context.replication_count','denominator*2').replace('"local_H_scale_from_global_plane_H": 1/quotient_context.replication_count,','"local_H_scale_from_global_plane_H": 0.5,')
+            elif name=='dtn_boundary_phase_gauge.py':
+                self.assertEqual(current.count('(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*quotient_context.replication_count'),1)
+                current=current.replace('(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*quotient_context.replication_count','(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*2')
+            self.assertEqual(current, old, name)
+        profile_tree = ast.parse((SOLVERS / "y_orbit_direct_profile.py").read_text())
+        old_profile = ast.parse(subprocess.run(["git", "-C", str(CANONICAL), "show", BASE + ":src/solvers/y_orbit_direct_profile.py"], check=True, capture_output=True, text=True).stdout)
+        helper = next(n for n in profile_tree.body if isinstance(n, ast.FunctionDef) and n.name == "direct_notch_box_and_count")
+        profile_tree.body.remove(helper)
+        owner = next(n for n in profile_tree.body if isinstance(n, ast.ClassDef) and n.name == "DirectTwoCellProfileMetadata")
+        identity = next(n for n in owner.body if isinstance(n, ast.FunctionDef) and n.name == "identity")
+        return_node = next(n for n in identity.body if isinstance(n, ast.Return))
+        policy_index = next(i for i,key in enumerate(return_node.value.keys) if isinstance(key, ast.Constant) and key.value == "factor_policy")
+        policy = return_node.value.values[policy_index]
+        self.assertIsInstance(policy, ast.IfExp)
+        self.assertEqual(ast.unparse(policy.test), "self.name == 'Y'")
+        self.assertEqual(policy.orelse.value, "unchanged_128MiB_per_q; Y_768MiB_aggregate_requires_review_before_numeric")
+        return_node.value.values[policy_index] = policy.orelse
+        self.assertEqual(ast.dump(profile_tree), ast.dump(old_profile))
         function = definition("fullspace_dtn_action.py", "build_fullspace_dtn_carrier_from_surface")
         wrapper = next(node for node in ast.walk(function) if isinstance(node, ast.If)
                        and ast.unparse(node.test) == "raw_observer_profile is None")
@@ -307,12 +329,12 @@ class XZProfileContractTests(unittest.TestCase):
                 admitted = False
             self.assertEqual(admitted, passed, (cells, modes, twist))
 
-    def test_factor_Y_hold_is_before_any_matrix_factor_access(self):
+    def test_unknown_factor_profile_is_rejected_before_any_matrix_factor_access(self):
         tree = ast.parse((SOLVERS / "y_orbit_two_cell_inverse.py").read_text())
         owner = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "FourBranchFactors")
         init = next(node for node in owner.body if isinstance(node, ast.FunctionDef) and node.name == "__init__")
         first = init.body[0]
-        namespace = {"self": SimpleNamespace(), "direct_profile": "Y",
+        namespace = {"self": SimpleNamespace(), "direct_profile": "other",
                      "direct_profile_metadata": self.profile_module.direct_profile_metadata}
         with self.assertRaises(ValueError): isolated([first], namespace)
         for name in (None, "X", "XZ"):

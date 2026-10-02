@@ -41,9 +41,13 @@ class SharedTransformEvidence:
         self.bank, self.save, self.event, self.gate = bank, save_array, event, allocation_gate
         self.limit = float(mapping_limit)
         self.direct_profile=direct_profile
+        self.expected_roles=ROLES
         if direct_profile is not None:
             from .y_orbit_direct_profile import direct_profile_metadata
-            if direct_profile_metadata(direct_profile).name not in ('X','XZ'):raise ValueError('only directX/XZ shared evidence is admitted')
+            profile=direct_profile_metadata(direct_profile)
+            if profile.name not in ('X','XZ','Y'):raise ValueError('only directX/XZ/Y shared evidence is admitted')
+            self.direct_profile=profile.name
+            self.expected_roles=('full',)+tuple('twist_'+str(b) for b in range(profile.replication_count))
         self.roles, self.stages, self.named, self.owner_artifacts = [], [], {}, {}
         self.reference_artifacts = {}
         self.payload_artifacts = {}
@@ -81,7 +85,7 @@ class SharedTransformEvidence:
             self.owner_artifacts[token] = {"artifact": name, "sha256": owner["sha256"],
                                           "allocation_nbytes": int(raw.nbytes)}
         for name, view in views.items():
-            if (name.startswith("bank.template.") or name.startswith(tuple(role+".record." for role in ROLES))
+            if (name.startswith("bank.template.") or name.startswith(tuple(role+".record." for role in self.expected_roles))
                     and name.endswith((".matrix", ".inverse"))):
                 if view["writeable"] or view["owner_id"] not in self.owner_artifacts:
                     raise ValueError("shared transform borrower is mutable or missing")
@@ -98,10 +102,10 @@ class SharedTransformEvidence:
         return receipt
 
     def compare_streamed(self, role, shared, *, space, floquet, axes, frozen_context, load_array):
-        """X/XZ actual records, one original-helper control at a time; no collector copy."""
+        """X/XZ/Y actual records, one original-helper control at a time; no collector copy."""
         from .hcurl_canonical_vector_dolfinx import _physical_entity_transform
-        if self.direct_profile not in ('X','XZ') or role not in ROLES or shared._transform_bank is not self.bank:
-            raise ValueError('streamed controls require the exact directX/XZ run-local bank')
+        if self.direct_profile not in ('X','XZ','Y') or role not in self.expected_roles or shared._transform_bank is not self.bank:
+            raise ValueError('streamed controls require the exact directX/XZ/Y run-local bank')
         if role in [item['role'] for item in self.roles]:raise ValueError('duplicate streamed role')
         n=len(shared.independent);cell_dim=int(space.element.space_dimension)
         self.gate('direct_streamed_native_partition_'+role,{'matrix_payload_bytes':3*shared.full_rows*8,'workspace_bytes':1<<20})
@@ -232,7 +236,7 @@ class SharedTransformEvidence:
         self.roles.append(result);self.event('shared_complete_role_equivalence_before_factor',result);return result
 
     def compare(self, role, shared, default, *, cell_info, geometry_x, frozen_context):
-        if role not in ROLES or role in [item["role"] for item in self.roles]:
+        if role not in self.expected_roles or role in [item["role"] for item in self.roles]:
             raise ValueError("one complete comparison for each full/twist role required")
         if shared._transform_bank is not self.bank:
             raise ValueError("full/local borrowers must share the exact same run-local bank instance")
@@ -386,8 +390,8 @@ class SharedTransformEvidence:
             'complete_cleanup_qualification_claimed':False,'allocator_RSS_reclamation_claimed':False})
 
     def result(self):
-        if [item["role"] for item in self.roles]!=list(ROLES) or not self.bank.receipt(stage="sealed_check")["sealed"]:
-            raise ValueError("complete full/two-local comparisons and sealed bank required before factors")
+        if [item["role"] for item in self.roles]!=list(self.expected_roles) or not self.bank.receipt(stage="sealed_check")["sealed"]:
+            raise ValueError("complete full/all-local comparisons and sealed bank required before factors")
         return {"schema":SCHEMA if self.direct_profile is None else "task40extra.direct-shared-transform-equivalence.v1",
             "direct_profile":self.direct_profile,"roles":self.roles,"owner_stages":self.stages,
             "owner_artifacts":self.owner_artifacts,"mapping_limit":self.limit,"shared_transforms":True,

@@ -37,6 +37,11 @@ ALLOWED_PATHS=frozenset({
  'src/test/test_y_orbit_direct_XZ_solver_metadata.py',
  'src/test/test_y_orbit_direct_XZ_interior_metadata.py',
  'src/test/test_y_orbit_direct_XZ_coverage_metadata.py',
+ 'src/test/test_y_orbit_direct_Y_runtime_metadata.py',
+ 'src/test/test_y_orbit_direct_Y_solver_metadata.py',
+ 'src/test/test_y_orbit_direct_Y_checker_metadata.py',
+ 'src/test/test_y_orbit_quotient_probe_metadata.py',
+ 'src/test/test_y_orbit_direct_Y_H_normalization_metadata.py',
 })
 ENV_FIELDS=('python','prefix','modules','petsc_scalar_type','petsc_int_type','petsc_version',
             'mpi_library','qualification_manifest_sha256','qualification_scope')
@@ -89,6 +94,21 @@ if quotient_context.direct_profile_name is not None:
   restore=RestoreComparison();restore.visit(function)
   if restore.count!=1 or any(isinstance(node,ast.Name) and node.id=='expected_local_cells' for node in ast.walk(tree)):
    raise ValueError('only the exact reviewed local-cell metadata comparison may change')
+  old_area=ast.parse('(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*2',mode='eval').body
+  new_area=ast.parse('(cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*quotient_context.replication_count',mode='eval').body
+  class RestoreQuotientAreaMetadata(ast.NodeTransformer):
+   count=0
+   def visit_Dict(self,node):
+    for i,key in enumerate(node.keys):
+     if isinstance(key,ast.Constant) and key.value=='global_boundary_area':
+      value=node.values[i]
+      if (not isinstance(value,ast.Call) or not isinstance(value.func,ast.Name) or value.func.id!='float'
+          or len(value.args)!=1 or _ast_dump(value.args[0])!=_ast_dump(new_area)):
+       raise ValueError('only the exact quotient global-area metadata seam is admitted')
+      self.count+=1;value.args[0]=old_area
+    return self.generic_visit(node)
+  restore_area=RestoreQuotientAreaMetadata();restore_area.visit(function)
+  if restore_area.count!=1:raise ValueError('the exact single quotient global-area metadata seam must occur')
  else:
   name='build_fullspace_dtn_carrier_from_surface' if path.endswith('fullspace_dtn_action.py') else 'build_same_mesh_physical_action'
   function=next(node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name==name)
@@ -132,6 +152,27 @@ else:
        or [_ast_dump(item) for item in wrapper.orelse]!=[_ast_dump(item) for item in expected.orelse]):
     raise ValueError('only the explicit X admission else branch may be added')
    outers[0].body=wrapper.body
+   # Exactly two quotient-validation/identity expressions used the original
+   # K=2 fixture. Restore those alone for the original operator AST comparison.
+   old_product=ast.parse('np.isclose(denominator*2,global_h,rtol=32*np.finfo(float).eps,atol=0)',mode='eval').body
+   new_product=ast.parse('np.isclose(denominator*quotient_context.replication_count,global_h,rtol=32*np.finfo(float).eps,atol=0)',mode='eval').body
+   new_scale=ast.parse('1/quotient_context.replication_count',mode='eval').body
+   class RestoreQuotientHMetadata(ast.NodeTransformer):
+    product_count=0
+    scale_count=0
+    def visit_Call(self,node):
+     if _ast_dump(node)==_ast_dump(new_product):
+      self.product_count+=1;return old_product
+     return self.generic_visit(node)
+    def visit_Dict(self,node):
+     for i,key in enumerate(node.keys):
+      if isinstance(key,ast.Constant) and key.value=='local_H_scale_from_global_plane_H':
+       if _ast_dump(node.values[i])!=_ast_dump(new_scale):raise ValueError('only the exact quotient1/K identity seam is admitted')
+       self.scale_count+=1;node.values[i]=ast.Constant(0.5)
+     return self.generic_visit(node)
+   restore_H=RestoreQuotientHMetadata();restore_H.visit(function)
+   if (restore_H.product_count,restore_H.scale_count)!=(1,1):
+    raise ValueError('the exact single quotientK validation and1/K identity seam must both occur')
   else:
    forwarded=0
    for node in ast.walk(function):
@@ -154,7 +195,12 @@ def validate_raw_observer_ast_seams(new_files):
   normalized=normalized_raw_observer_ast(path,data.decode())
   if normalized!=baseline:raise ValueError('protected numerical/default AST changed outside reviewed raw-observer seams: '+path)
   proof.append({'path':path,'whole_file_byte_equality_claimed':False,'baseline_whole_AST_sha256':baseline,
-                'normalized_new_whole_AST_sha256':normalized,'numerical_and_None_default_AST_unchanged':True})
+                'normalized_new_whole_AST_sha256':normalized,'numerical_and_None_default_AST_unchanged':True,
+    'explicit_quotient_H_metadata_seam': ({'validation':'actual_local_H*validated_context_K against original_global_H',
+      'identity':'1/validated_context_K','old_K2_exactly_unchanged':True,'denominator_and_C_D_assembly_unchanged':True,
+      'rtol':'32*float64_eps','atol':0} if path.endswith('fullspace_dtn_action.py') else
+     {'global_area_diagnostic':'local_area*validated_context_K','no_current_consumers':True,
+      'old_K2_exactly_unchanged':True} if path.endswith('dtn_boundary_phase_gauge.py') else None)})
  return proof
 
 
@@ -163,7 +209,7 @@ def digest(value):
 
 
 def validate_direct_source(old,new,old_env,new_env,*,direct_profile="X"):
- if direct_profile not in ("X","XZ"):raise ValueError("only explicit X/XZ source profiles are admitted")
+ if direct_profile not in ("X","XZ","Y"):raise ValueError("only explicit X/XZ/Y source profiles are admitted")
  if (old.get('head')!=STEP0_HEAD or old.get('dirty') or new.get('dirty') or new.get('head')==STEP0_HEAD
      or not re.fullmatch('[0-9a-f]{40}',new.get('head','')) or old.get('branch')!='task40extra_dot_parallel_cloud'
      or new.get('branch')!=old.get('branch') or digest(old.get('files_sha256',{}))!=STEP0_SOURCE_SHA):

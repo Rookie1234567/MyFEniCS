@@ -51,3 +51,6 @@ real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_or
 
 
 [V14 XZ网格加密资格](response_v14.md)：同source ae6034fa的fresh worker与saved-only checker通过90095项，p4/168 cells、18144内部、四q、8组532输出完整。XZ-only 3GiB/4500s，原XZ1/2失败和自动checker admission失败保留；目标尺度/AUTO32060/2TB48h仍未资格。
+
+
+[V15 Ny6/K3完整Y点资格](response_v15.md)：同源9511930c、六q/三twist、12960内部及8组532输出完整，saved checker85252项和独立metadata152/0通过。Y使用平移的新三cell缺口，不能作为X/XZ同场收敛比较；目标accuracy/p6/AUTO32060/2TB48h仍未资格。

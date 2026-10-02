@@ -52,7 +52,7 @@ class ProductionInteriorProfileTests(unittest.TestCase):
 
     def test_production_source_change_is_exact_profile_enum_and_message_only(self):
         text=(ROOT/'src/solvers/y_orbit_centered_evidence.py').read_text()
-        self.assertEqual(text.count("profile.name not in ('X','XZ') or degree!=4 or layout.full_rows!=profile.storage_rows"),1)
+        self.assertEqual(text.count("profile.name not in ('X','XZ','Y') or degree!=4 or layout.full_rows!=profile.storage_rows"),1)
         tree=ast.parse(text);fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='fixture_interior_positions')
         body=ast.unparse(fn);self.assertIn('profile.interior_rows',body);self.assertIn('len(rows) != expected',body);self.assertIn('len(positions) != expected',body)
 

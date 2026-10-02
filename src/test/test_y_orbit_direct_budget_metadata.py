@@ -167,7 +167,7 @@ class DirectBudgetTests(unittest.TestCase):
         self.assertEqual((runner.TREE_CAP_BYTES,runner.RESERVE_BYTES,runner.FACTOR_ALLOWANCE_BYTES),(3*1024**3//2,128*1024**2,512*1024**2))
 
     def test_only_literal2_X_solve_wall1800_and_default_cap(self):
-        for profile in (None,"X","XZ","Y",True):
+        for profile in (None,"X","XZ",True):
             for stage in ("prefactor","solve"):
                 for wall in (None,600,1800):
                     self.assertEqual(runner.research_memory_budget(profile,stage,wall),runner.TREE_CAP_BYTES)

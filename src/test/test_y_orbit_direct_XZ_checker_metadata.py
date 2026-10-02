@@ -104,7 +104,7 @@ class DirectXZCheckerMetadataTests(unittest.TestCase):
             ('factor_allowance_aggregate_bytes', 768*1024**2), ('evidence_reserve_bytes', 0)):
             bad = copy.deepcopy(profile); bad[key] = value
             with self.subTest(key=key), self.assertRaises(ValueError): checker.validate_profile(bad)
-        for name in ('Y', None, 'same80', 'xz'):
+        for name in ('other', None, 'same80', 'xz'):
             with self.assertRaises(ValueError): checker.reviewed_direct_profile_metadata(name)
 
     def test_scope_shapes_and_complete_four_q_two_local_inventory(self):
@@ -135,7 +135,7 @@ class DirectXZCheckerMetadataTests(unittest.TestCase):
     def test_only_exact_combined_research_memory_pairs(self):
         self.assertEqual(checker.direct_memory_cap('X', 'solve', 1800, 2), 2*1024**3)
         self.assertEqual(checker.direct_memory_cap('XZ', 'solve', 4500, 3), 3*1024**3)
-        for name in (None, 'X', 'XZ', 'Y'):
+        for name in (None, 'X', 'XZ'):
             self.assertEqual(checker.direct_memory_cap(name, 'prefactor', None), checker.TREE_CAP_BYTES)
         self.assertEqual(checker.direct_memory_cap('X', 'solve', 1800), checker.TREE_CAP_BYTES)
         for stage in ('prefactor', 'solve'):
@@ -143,7 +143,7 @@ class DirectXZCheckerMetadataTests(unittest.TestCase):
                 self.assertEqual(checker.direct_memory_cap('XZ', stage, wall), checker.TREE_CAP_BYTES)
             with self.assertRaises(ValueError): checker.direct_memory_cap('XZ', stage, 4500)
         invalid = [('XZ', 'solve', 1800, 3), ('XZ', 'solve', 4500, 2), ('X', 'solve', 4500, 3),
-            ('Y', 'solve', 4500, 3), ('XZ', 'prefactor', 4500, 3), (None, 'solve', 4500, 3)]
+            ('other', 'solve', 4500, 3), ('XZ', 'prefactor', 4500, 3), (None, 'solve', 4500, 3)]
         invalid += [('XZ', 'solve', wall, 3) for wall in (None, 600, True, 4500., '4500')]
         invalid += [('XZ', 'solve', 4500, memory) for memory in (True, 3., '3', 0, 4)]
         for args in invalid:
@@ -252,7 +252,7 @@ class DirectXZCheckerMetadataTests(unittest.TestCase):
                     self.assertEqual(generic.check(path, checker_source=source, checker_environment={}, stage='solve',
                         allocation_gate=lambda *args: None, research_wall_seconds=4500, research_memory_gib=3), {'marker': 'dispatched'})
                     self.assertEqual(dispatched.call_args.kwargs['research_memory_gib'], 3)
-                (path/'provenance.json').write_text(json.dumps({'direct_profile': 'Y'}))
+                (path/'provenance.json').write_text(json.dumps({'direct_profile': 'other'}))
                 with self.assertRaises(ValueError): generic.check(path, checker_source=source, checker_environment={},
                     stage='solve', allocation_gate=lambda *args: None)
 
@@ -358,7 +358,7 @@ class DirectXZCheckerMetadataTests(unittest.TestCase):
             check=True, capture_output=True, text=True).stdout)
         def function(source, name):
             return next(node for node in source.body if isinstance(node, ast.FunctionDef) and node.name == name)
-        for name in ('load_direct_events', 'residual_representation_binding', 'validate_direct_event_contract',
+        for name in ('load_direct_events', 'residual_representation_binding',
             'validate_gauss', 'validate_descriptor_metadata', 'validate_descriptor_payload', 'operation_error', 'relative'):
             self.assertEqual(ast.dump(function(tree, name)), ast.dump(function(previous, name)), name)
         solve, old_solve = function(tree, 'check_solve'), function(previous, 'check_solve')
@@ -369,26 +369,52 @@ class DirectXZCheckerMetadataTests(unittest.TestCase):
                 and any(isinstance(target, ast.Name) and target.id == 'volume_source' for target in node.targets))
             return ast.dump(ast.Module(body=outer.body[first:], type_ignores=[]))
         self.assertEqual(residual_tail(solve), residual_tail(old_solve))
-        class XShapes(ast.NodeTransformer):
-            """Restore only reviewed X shape/count substitutions for AST proof."""
-            values = {'storage_rows': 25468, 'local_storage_rows': 13236, 'independent_rows': 23808,
-                      'interior_rows': 12960, 'rows_per_q': 5952}
-            names = {'q_port_counts': 'Q_PORTS', 'sector_port_counts': 'SECTOR_PORTS', 'augmented_rows_per_q': 'Q_ROWS'}
-            def visit_Attribute(self, node):
-                if isinstance(node.value, ast.Name) and node.value.id == 'metadata':
-                    if node.attr in self.values: return ast.copy_location(ast.Constant(self.values[node.attr]), node)
-                    if node.attr in self.names: return ast.copy_location(ast.Name(id=self.names[node.attr], ctx=node.ctx), node)
-                return self.generic_visit(node)
-            def visit_Assign(self, node):
-                if any(isinstance(target, ast.Name) and target.id == 'metadata' for target in node.targets): return None
-                return self.generic_visit(node)
-            def visit_Constant(self, node):
-                if node.value == 'every actual interior load channel must be audited':
-                    return ast.copy_location(ast.Constant('every actual12960 interior load channel must be audited'), node)
-                return node
-        for name in ('check_raw_carriers', 'check_solve'):
-            normalized = XShapes().visit(copy.deepcopy(function(tree, name)))
-            self.assertEqual(ast.dump(normalized), ast.dump(function(previous, name)), name)
+        # Ny/K/sector/role normalization is explicitly new and tested in the
+        # Y production-policy suite. Protect every unchanged coefficient,
+        # cutoff, independent kernel/Gauss, residual and output computation.
+        def dump(nodes):
+            return ast.dump(ast.Module(body=nodes if isinstance(nodes,list) else [nodes],type_ignores=[]))
+        def assigned(node,name):
+            return isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id==name for t in node.targets)
+        def segment(body,start,end=None):
+            first=next(i for i,node in enumerate(body) if start(node))
+            last=len(body) if end is None else next(i+1 for i,node in enumerate(body) if i>=first and end(node))
+            return body[first:last]
+        raw,old_raw=function(tree,'check_raw_carriers'),function(previous,'check_raw_carriers')
+        for name in ('dense','primary','literal','masks'):
+            self.assertEqual(dump(function(raw,name)),dump(function(old_raw,name)),name)
+        def roles(node):
+            return next(n for n in node.body if isinstance(n,ast.For) and isinstance(n.target,ast.Tuple)
+                and getattr(n.target.elts[0],'id',None)=='role_index')
+        role_nodes=[roles(n) for n in (raw,old_raw)]
+        def H_append(n):
+            return isinstance(n,ast.Expr) and isinstance(n.value,ast.Call) and isinstance(n.value.func,ast.Attribute) and isinstance(n.value.func.value,ast.Name) and n.value.func.value.id=='Hs' and n.value.func.attr=='append'
+        self.assertEqual(dump(segment(role_nodes[0].body,lambda n:assigned(n,'binding'),H_append)),dump(segment(role_nodes[1].body,lambda n:assigned(n,'binding'),H_append)))
+        def modes(node):
+            return next(n for n in node.body if isinstance(n,ast.For) and isinstance(n.target,ast.Tuple)
+                and [getattr(v,'id',None) for v in n.target.elts]==['index','original'])
+        mode_nodes=[modes(n) for n in role_nodes]
+        branches=[next(n for n in t.body if isinstance(n,ast.If) and ast.unparse(n.test)=='twist is None') for t in mode_nodes]
+        self.assertEqual(dump(branches[0].body),dump(branches[1].body),'full incident and original C/D')
+        self.assertEqual(dump(segment(branches[0].orelse,lambda n:assigned(n,'entry'),lambda n:isinstance(n,ast.For))),dump(segment(branches[1].orelse,lambda n:assigned(n,'entry'),lambda n:isinstance(n,ast.For))),'local stored C/D')
+        def packets(node):
+            first=next(i for i,n in enumerate(node.body) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Tuple) and getattr(t.elts[0],'id',None)=='literal_packet' for t in n.targets))
+            last=next(i for i,n in enumerate(node.body) if assigned(n,'branch'))
+            return node.body[first+1:last]
+        self.assertEqual(dump(packets(mode_nodes[0])),dump(packets(mode_nodes[1])),'primary literal mode/context')
+        self.assertEqual(dump(segment(mode_nodes[0].body,lambda n:isinstance(n,ast.If) and ast.unparse(n.test)=='role not in contexts',lambda n:assigned(n,'H'))),dump(segment(mode_nodes[1].body,lambda n:isinstance(n,ast.If) and ast.unparse(n.test)=='role not in contexts',lambda n:assigned(n,'H'))),'component hash and finite H')
+        def vectors(node):
+            return next(n for n in node.body if isinstance(n,ast.For) and ast.unparse(n.target)=='name' and ast.unparse(n.iter)=="('C', 'D')")
+        self.assertEqual(dump(vectors(mode_nodes[0])),dump(vectors(mode_nodes[1])),'primary literal vectors')
+        def rank_tail(node):
+            stage=next(n for n in node.orelse if isinstance(n,ast.For) and ast.unparse(n.target)=='stage')
+            first=next(i for i,n in enumerate(stage.body) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Tuple) and [getattr(v,'id',None) for v in t.elts]==['C','D'] for t in n.targets))
+            return stage.body[first:]
+        self.assertEqual(dump(rank_tail(branches[0])),dump(rank_tail(branches[1])),'lift rank-one tail')
+        def factor_body(node):
+            factor=next(n for n in node.body if isinstance(n,ast.For) and any(assigned(v,'matrix') for v in n.body))
+            return factor.body[1:]
+        self.assertEqual(dump(factor_body(solve)),dump(factor_body(old_solve)),'factor numeric controls')
         allowed = {'__future__', 'hashlib', 'json', 'math', 'pathlib', 're'}
         for node in tree.body:
             if isinstance(node, ast.Import): self.assertTrue({alias.name for alias in node.names} <= allowed)

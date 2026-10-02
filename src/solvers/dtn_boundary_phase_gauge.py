@@ -291,7 +291,7 @@ def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_as
             "actual_finalized_mpc_slave_rows": len(mpc.slaves),
             "actual_finalized_mpc_nonzero_master_check": "existing public-map admission validator",
             "local_boundary_area": float((cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)),
-            "global_boundary_area": float((cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*2),
+            "global_boundary_area": float((cfg.x_max-cfg.x_min)*(cfg.y_max-cfg.y_min)*quotient_context.replication_count),
             "twist_requires_global_dual_rhs_transport": True,
         }
     return deep_frozen_identity(payload)

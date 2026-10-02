@@ -193,7 +193,7 @@ class DirectContextSourceRoleTests(unittest.TestCase):
         original=subprocess.run(["git","-C",str(REPO),"show",BASE+":src/solvers/y_orbit_quotient_raw_qualification.py"],
             check=True,capture_output=True).stdout
         actual=(REPO/"src/solvers/y_orbit_quotient_raw_qualification.py").read_bytes()
-        approved_metadata_guard=b'            require(direct.name in ("X", "XZ"), "direct raw numerical qualification admits only X/XZ")\n'
+        approved_metadata_guard=b'            require(direct.name in ("X", "XZ", "Y"), "direct raw numerical qualification admits only X/XZ/Y")\n'
         self.assertEqual(actual.count(approved_metadata_guard),1)
         self.assertEqual(original,actual.replace(approved_metadata_guard,b""))
 
@@ -569,7 +569,37 @@ class DirectEventStreamTests(unittest.TestCase):
         original=subprocess.run(["git","-C",str(REPO),"show",BASE+":"+DIRECT],check=True,capture_output=True,text=True).stdout
         old=next(node for node in ast.parse(original).body if isinstance(node,ast.FunctionDef) and node.name=="validate_direct_event_contract")
         new=next(node for node in ast.parse((ROOT/DIRECT).read_text()).body if isinstance(node,ast.FunctionDef) and node.name=="validate_direct_event_contract")
-        self.assertEqual(ast.dump(old),ast.dump(new))
+        class RestoreOldFourQ(ast.NodeTransformer):
+            metadata_assignment_count=0
+            Y_retention_count=0
+            allowance_assignment_count=0
+            def visit_Assign(self,node):
+                if any(isinstance(t,ast.Name) and t.id=='metadata' for t in node.targets):
+                    self.metadata_assignment_count+=1;return None
+                if any(isinstance(t,ast.Name) and t.id=='allowance' for t in node.targets):
+                    self_outer.assertEqual(ast.unparse(node.value),'(metadata.ny - q) * metadata.factor_allowance_per_q_bytes')
+                    self.allowance_assignment_count+=1
+                    original_allowance=next(n for n in ast.walk(old) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='allowance' for t in n.targets))
+                    return copy.deepcopy(original_allowance)
+                return self.generic_visit(node)
+            def visit_If(self,node):
+                if ast.unparse(node.test)=="metadata.name == 'Y'":
+                    self.Y_retention_count+=1
+                    self_outer.assertEqual(len(node.body),1)
+                    self_outer.assertIn("'remaining_declared_allowance_bytes'",ast.unparse(node.body[0]))
+                    self_outer.assertIn("'factor_memory_bytes'",ast.unparse(node.body[0]))
+                    self_outer.assertIn('is None',ast.unparse(node.body[0]))
+                    return None
+                return self.generic_visit(node)
+            def visit_Attribute(self,node):
+                if isinstance(node.value,ast.Name) and node.value.id=='metadata':
+                    if node.attr=='ny':return ast.Constant(4)
+                    if node.attr=='factor_allowance_per_q_bytes':return ast.parse('128*1024**2',mode='eval').body
+                return self.generic_visit(node)
+        self_outer=self
+        restored=RestoreOldFourQ();normalized=restored.visit(copy.deepcopy(new))
+        self.assertEqual((restored.metadata_assignment_count,restored.Y_retention_count,restored.allowance_assignment_count),(1,1,1))
+        self.assertEqual(ast.dump(old),ast.dump(normalized))
 
     def test_live_checker_source_seams_use_loader_bridge_and_head_alias(self):
         direct_tree=ast.parse((ROOT/DIRECT).read_text())

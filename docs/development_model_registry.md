@@ -1,3 +1,15 @@
+# dot Task40extra V15：Ny6/K3 Y点完整恢复通过
+
+Y把周期y方向扩到六层、三个局部相位空间和六q因子，保留p4/120 global cells/12960内部与manual532。source9511930c的fresh worker及saved-only checker同源，85252 passing entries，最终独立metadata linkage152/0；完整原三维方程、恢复与8组532输出通过。
+
+worker1748.504063969s/RSS1606623232B，checker565.966512849s/RSS1707114496B，分别3GiB/4500s、swap0/清场。regular/notch残差约8.92748e-12/7.28650e-12，generic/interior/physical/support4/4/3/4步。physical PC sample0.00018691878593559766与最大0.001783457（interior_only）分开，均非范数界；CSR52709744B不是factor内存，setup5.747859236s含controls/I/O。
+
+Y新三cell notch在缩放前沿y移−25/12，虽等宽等体积却非旧X/XZ same-field对照。原factor0 H验证失败和旧198测试失败保留；修复只改validatedK相关验证/元数据，实际C/D/H装配不变。公式重算localH及1ulp/4个精确宽度类边界明示。目标场/几何accuracy、p6/AUTO32060、光学规模和2TB48h仍未资格，下一步不能从小型迭代数推导目标可行。
+
+[Response V15](task40extra_dot_parallel_cloud/response_v15.md)、[校准对照](task40extra_dot_parallel_cloud/outcomes/calibration_comparison_v15_zh.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/direct_Y_v15/compact_record.json)。
+
+---
+
 # dot Task40extra V14：XZ网格加密点通过
 
 XZ在X基础上加密z方向至p4/phi5/6×4×7=168 cells，同光学尺寸/manual532。两local空间各84 cells，完整33024独立行/18144内部、四q因子与8组532输出保留。fresh worker与saved-only checker同源ae6034fa，90095 passing entries；checker不重跑FE/JIT/factor/PDE。

@@ -34,23 +34,39 @@ SCHEMA = "task40extra.y-orbit-two-cell-quotient-probe.v1"
 DIRECT_SCHEMA = "task40extra.y-orbit-direct-profile-probe.v1"
 
 
+def factor_policy(direct_profile=None):
+    """Only the reviewed finite profiles select actual q/remaining allowance."""
+    if direct_profile is None:
+        return 4, FACTOR_ALLOWANCE_BYTES
+    if direct_profile not in ("X", "XZ", "Y"):
+        raise ValueError("only reviewed X/XZ/Y factor inventories are admitted")
+    from src.solvers.y_orbit_direct_profile import direct_profile_metadata
+    profile = direct_profile_metadata(direct_profile)
+    expected = 6 if direct_profile == "Y" else 4
+    if profile.ny != expected or profile.factor_allowance_per_q_bytes != 128 * 1024**2:
+        raise ValueError("actual profile q count/per-q allowance differs")
+    return expected, profile.factor_allowance_aggregate_bytes
+
+
 def research_wall_budget(direct_profile, requested=None):
-    """Only the exact approved X/XZ research requests extend the600 default."""
+    """Only the exact approved X/XZ/Y research requests extend the600 default."""
     if requested is None:
         return WALL_SECONDS
-    if type(requested) is not int or (direct_profile, requested) not in (("X", 1800), ("XZ", 4500)):
-        raise ValueError("research wall requires exact X1800 or XZ4500")
+    if type(requested) is not int or (direct_profile, requested) not in (("X", 1800), ("XZ", 4500), ("Y", 4500)):
+        raise ValueError("research wall requires exact X1800 or XZ/Y4500")
     return requested
 
 def research_memory_budget(direct_profile, stage, research_wall_seconds, requested=None):
-    """Exact X2GiB/1800 or XZ3GiB/4500; ordinary1.5GiB is unchanged."""
+    """Exact X2GiB/1800 or XZ/Y3GiB/4500; ordinary1.5GiB is unchanged."""
+    if direct_profile == "Y" and (stage, research_wall_seconds, requested) != ("solve", 4500, 3):
+        raise ValueError("Y requires its explicit solve/4500s/3GiB research tuple")
     if requested is None:
-        if direct_profile == "XZ" and research_wall_seconds == 4500:
-            raise ValueError("XZ4500 research workflow requires its explicit3GiB cap")
+        if direct_profile in ("XZ", "Y") and research_wall_seconds == 4500:
+            raise ValueError("XZ/Y4500 research workflow requires its explicit3GiB cap")
         return TREE_CAP_BYTES
     if (type(requested) is not int or stage != "solve" or type(research_wall_seconds) is not int
-            or (direct_profile, research_wall_seconds, requested) not in (("X", 1800, 2), ("XZ", 4500, 3))):
-        raise ValueError("research memory requires exact X/solve/1800/2 or XZ/solve/4500/3")
+            or (direct_profile, research_wall_seconds, requested) not in (("X", 1800, 2), ("XZ", 4500, 3), ("Y", 4500, 3))):
+        raise ValueError("research memory requires exact X/solve/1800/2 or XZ/Y/solve/4500/3")
     return requested * 1024**3
 
 def validate_research_memory_launch(envelope, requested=None, *, direct_profile=None, research_wall_seconds=None):
@@ -59,7 +75,7 @@ def validate_research_memory_launch(envelope, requested=None, *, direct_profile=
         return None
     if (type(requested) is not int or requested not in (2, 3)
             or (requested == 2 and (direct_profile not in (None, "X") or research_wall_seconds not in (None, 1800)))
-            or (requested == 3 and (direct_profile != "XZ" or type(research_wall_seconds) is not int or research_wall_seconds != 4500))):
+            or (requested == 3 and (direct_profile not in ("XZ", "Y") or type(research_wall_seconds) is not int or research_wall_seconds != 4500))):
         raise ValueError("research launch requires the exact approved profile/time/memory tuple")
     selected = requested * 1024**3
     required = selected + RESERVE_BYTES
@@ -70,7 +86,7 @@ def validate_research_memory_launch(envelope, requested=None, *, direct_profile=
         raise MemoryError("fresh dynamic/host envelope cannot support requested cap plus128MiB reserve")
     if requested == 3 and (envelope["reserve_bytes"] < 4*1024**3
             or envelope["launch_cap_bytes"] > max(0, envelope["effective_available_bytes"]-envelope["reserve_bytes"])):
-        raise MemoryError("XZ launch must retain the actual4GiB host reserve before3GiB+128MiB admission")
+        raise MemoryError("XZ/Y launch must retain the actual4GiB host reserve before3GiB+128MiB admission")
     groups = envelope.get("cgroup_limits")
     if not isinstance(groups, list) or any(not isinstance(group, dict) or type(group.get("limit_bytes")) is not int
             or type(group.get("current_bytes")) is not int or group["current_bytes"] < 0
@@ -145,6 +161,8 @@ def plain_metadata(value):
 
 
 def plan_metadata(stage, *, shared_transforms=False, direct_profile=None, research_wall_seconds=None, research_memory_gib=None):
+    if direct_profile == "Y":
+        research_memory_budget(direct_profile, stage, research_wall_seconds, research_memory_gib)
     wall_seconds = WALL_SECONDS
     tree_cap = TREE_CAP_BYTES
     if research_wall_seconds is not None:
@@ -154,7 +172,7 @@ def plan_metadata(stage, *, shared_transforms=False, direct_profile=None, resear
     if stage not in PASSES:
         raise ValueError("unknown quotient stage")
     if direct_profile is not None:
-        if direct_profile not in ("X", "XZ"):raise ValueError("only explicit X/XZ calibration is enabled; Y remains held")
+        if direct_profile not in ("X", "XZ", "Y"):raise ValueError("only explicit X/XZ/Y calibration is enabled; unknown profiles remain held")
         from src.solvers.y_orbit_direct_profile import direct_profile_metadata
         metadata = direct_profile_metadata(direct_profile)
         return {"schema":DIRECT_SCHEMA,"status":"NOT_RUN_STAGED_PLAN_ONLY","stage":stage,
@@ -164,7 +182,7 @@ def plan_metadata(stage, *, shared_transforms=False, direct_profile=None, resear
             "local_interiors":metadata.local_interior_rows,"q_augmented_rows":list(metadata.augmented_rows_per_q),"q_port_counts":list(metadata.q_port_counts),
             "factor_count":0,"PDE_solved":False,"official_results":False,"shared_transforms":True,
             "tree_cap_bytes":tree_cap,"wall_seconds":wall_seconds,"swap_bytes":0,"mpi":1,"math_threads":1,
-            "evidence_reserve_bytes":RESERVE_BYTES,"factor_workspace_allowance_bytes":0 if stage=="prefactor" else FACTOR_ALLOWANCE_BYTES,
+            "evidence_reserve_bytes":RESERVE_BYTES,"factor_workspace_allowance_bytes":0 if stage=="prefactor" else metadata.factor_allowance_aggregate_bytes,
             "source_of_counts":f"derived {direct_profile} profile metadata; fresh actual counts must pass before factors",
             "fresh_carrier_and_complete_operator_qualification":"NOT_RUN","fill_time_and_RSS_prediction":None}
     return {"schema": SCHEMA, "status": "NOT_RUN_STAGED_PLAN_ONLY", "stage": stage,
@@ -179,10 +197,11 @@ def plan_metadata(stage, *, shared_transforms=False, direct_profile=None, resear
             "shared_transforms": shared_transforms, "shared_profile": "same80_p4_only" if shared_transforms else None}
 
 
-def allocation_request(stage, facts):
+def allocation_request(stage, facts, *, direct_profile=None):
     """Additional bytes only; current RSS already includes both local caches."""
     if stage not in PASSES:
         raise ValueError("unknown quotient allocation stage")
+    nq, aggregate_allowance = factor_policy(direct_profile)
     fields = ("factor_count", "retained_factor_count", "resident_factor_count",
               "factor_workspace_allowance_bytes", "declared_factor_workspace_allowance_bytes")
     for name in fields:
@@ -196,9 +215,9 @@ def allocation_request(stage, facts):
             raise ValueError("factor allowance declarations differ")
     if allowance:
         retained = facts.get("retained_factor_count", facts.get("resident_factor_count"))
-        if type(retained) is not int or retained not in range(4):
+        if type(retained) is not int or retained not in range(nq):
             raise ValueError("factor admission requires actual retained count before the next factor")
-        expected = FACTOR_ALLOWANCE_BYTES * (4 - retained) // 4
+        expected = aggregate_allowance * (nq - retained) // nq
         if allowance != expected:
             raise ValueError("remaining factor allowance must follow actual retained count")
         if facts.get("LU_fill_and_workspace_unknown") is not True:
@@ -212,14 +231,14 @@ def allocation_request(stage, facts):
 
 
 def validate_worker_result(report, stage, *, direct_profile=None):
-    if direct_profile is not None and (direct_profile not in ("X", "XZ") or report.get("direct_profile") != direct_profile):
+    if direct_profile is not None and (direct_profile not in ("X", "XZ", "Y") or report.get("direct_profile") != direct_profile):
         raise ValueError("worker direct profile must match its exact approved CLI profile")
     if (stage not in PASSES or report.get("schema") != (SCHEMA if direct_profile is None else DIRECT_SCHEMA)
             or report.get("stage") != stage or report.get("status") != PASSES[stage]
             or report.get("degree") != 4 or report.get("physical_mode_count") != 532
             or report.get("official_results") is not False):
         raise ValueError("quotient API stage/schema/degree/all532 scope contract differs")
-    count = 0 if stage == "prefactor" else 4
+    count = 0 if stage == "prefactor" else factor_policy(direct_profile)[0]
     if (report.get("factor_count") != count
             or report.get("PDE_solved") is not (stage == "solve")
             or report.get("prefactor_only") is not (stage == "prefactor")):
@@ -247,18 +266,18 @@ def apply_supervisor_classification(report, classification):
     return report
 
 
-def retained_factor_evidence(directory):
+def retained_factor_evidence(directory, *, direct_profile=None):
     """Preserve the last worker receipt after interruption; never infer pass."""
     phase = Path(directory) / "phase.json"
     if not phase.is_file():
         return {"count": None, "authority": "no_worker_phase_receipt"}
     value = json.loads(phase.read_text()).get("factor_count")
-    if type(value) is not int or value not in range(5):
+    if type(value) is not int or value not in range(factor_policy(direct_profile)[0] + 1):
         raise ValueError("bounded last-factor phase receipt differs")
     return {"count": value, "authority": "last_worker_phase_receipt"}
 
 
-def preserve_supervisor_failure(directory, *, stage, source, environment, command, exc):
+def preserve_supervisor_failure(directory, *, stage, source, environment, command, exc, direct_profile=None):
     """Do not fabricate a completed watchdog receipt when launch itself fails."""
     from src.solvers.real_p4_probe import file_sha256, write_json
     directory.mkdir(parents=True, exist_ok=True)
@@ -276,7 +295,7 @@ def preserve_supervisor_failure(directory, *, stage, source, environment, comman
         report = json.loads(report_path.read_text()) if report_path.is_file() else {
             "schema": SCHEMA, "degree": 4, "factor_count": 0, "source": source,
             "environment": environment, "PDE_solved": False, "official_results": False, "stage": stage, "prefactor_only": stage == "prefactor"}
-        report["last_factor_count_evidence"] = retained_factor_evidence(directory)
+        report["last_factor_count_evidence"] = retained_factor_evidence(directory,direct_profile=direct_profile)
         observed = report["last_factor_count_evidence"]["count"]
         if observed is not None:
             report["factor_count"] = max(report.get("factor_count", 0), observed)
@@ -333,11 +352,11 @@ def _worker(args):
             runtime_state["factor_count"] = max(runtime_state["factor_count"], int(facts["retained_factor_count"]))
         if name == "shared_complete_equivalence_before_any_factor":
             if (not args.shared_transforms or facts.get("complete_before_any_factor") is not True
-                    or [item.get("role") for item in facts.get("roles",[])] != ["full","twist_0","twist_1"]):
+                    or [item.get("role") for item in facts.get("roles",[])] != (["full"] + ["twist_"+str(b) for b in range(factor_policy(args.direct_profile)[0]//2)])):
                 raise ValueError("complete actual shared-equivalence event required before factor")
             runtime_state["shared_equivalence_complete"] = True
         if name=="direct_complete_original_qualification_before_any_factor":
-            if args.direct_profile not in ("X", "XZ") or facts.get("factor_count")!=0 or len(facts.get("input_blocks",[]))!=4:
+            if args.direct_profile not in ("X", "XZ", "Y") or facts.get("factor_count")!=0 or len(facts.get("input_blocks",[]))!=factor_policy(args.direct_profile)[0]:
                 raise ValueError("direct complete original qualification event must precede factors")
             runtime_state["direct_original_qualified"]=True
         payload = {"event": name, "worker_elapsed_seconds": time.monotonic() - started, **facts}
@@ -370,7 +389,7 @@ def _worker(args):
         if name.startswith("quotient_factor_q_") and (args.stage != "solve"
                 or not facts.get("factor_workspace_allowance_bytes")):
             raise ValueError("q factor allocation requires the solve stage and remaining factor allowance")
-        payload, workspace, reserve, allowance = allocation_request(args.stage, facts)
+        payload, workspace, reserve, allowance = allocation_request(args.stage, facts,direct_profile=args.direct_profile)
         if time.monotonic() - started >= phase_seconds:
             raise TimeoutError("quotient worker-plus-checker budget expired before allocation")
         sample = process_tree_snapshot(parent, name, None, pss_sampling_policy="disabled_by_profile")
@@ -439,7 +458,7 @@ def _worker(args):
         args.run_directory.joinpath("arrays").mkdir()
         resource = {"stage": args.stage, "tree_cap_bytes": cap, "wall_seconds": wall_seconds, "swap_bytes": 0,
                     "mpi": 1, "math_threads": 1, "evidence_reserve_bytes": RESERVE_BYTES,
-                    "factor_workspace_allowance_bytes": 0 if args.stage == "prefactor" else FACTOR_ALLOWANCE_BYTES,
+                    "factor_workspace_allowance_bytes": 0 if args.stage == "prefactor" else factor_policy(args.direct_profile)[1],
                     "factor_fill_and_temporary_workspace_unknown": True,
                     "factor_L_U_statistics_copies_permitted": False,
                     "performance_or_target_capacity_claim": False,
@@ -526,6 +545,8 @@ def _worker(args):
 
 
 def main(argv=None):
+    # Support the existing direct-file plan CLI as well as python -m.
+    sys.path.insert(0, str(ROOT))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--stage", choices=("prefactor", "solve"), default="prefactor")
@@ -533,11 +554,11 @@ def main(argv=None):
     parser.add_argument("--expected-head")
     parser.add_argument("--run-directory", type=Path)
     parser.add_argument("--shared-transforms", action="store_true", help="same80 p4 storage-only bank; all original gates retained")
-    parser.add_argument("--direct-profile", choices=("X", "XZ"), help="fresh direct X/XZ calibration; Y remains held")
+    parser.add_argument("--direct-profile", choices=("X", "XZ", "Y"), help="fresh direct X/XZ/Y calibration; unknown profiles remain held")
     parser.add_argument("--research-wall-seconds", type=int, choices=(1800, 4500),
-        help="explicit X1800/XZ4500 research workflow allowance; ordinary default is600 seconds")
+        help="explicit X1800/XZ/Y4500 research workflow allowance; ordinary default is600 seconds")
     parser.add_argument("--research-memory-gib", type=int, choices=(2, 3),
-        help="explicit X2GiB/1800 or XZ3GiB/4500 solve cap; ordinary default is1.5GiB")
+        help="explicit X2GiB/1800 or XZ/Y3GiB/4500 solve cap; ordinary default is1.5GiB")
     args = parser.parse_args(argv)
     try:
         wall_seconds = research_wall_budget(args.direct_profile, args.research_wall_seconds)
@@ -602,7 +623,7 @@ def main(argv=None):
                                 args.research_memory_gib, memory_launch_admission, direct_profile=args.direct_profile))
     except Exception as exc:
         preserve_supervisor_failure(args.run_directory, stage=args.stage, source=source,
-                                    environment=environment, command=command, exc=exc)
+                                    environment=environment, command=command, exc=exc,direct_profile=args.direct_profile)
         return 2
     report_path = args.run_directory / "probe_report.json"
     report = json.loads(report_path.read_text()) if report_path.is_file() else {
@@ -611,7 +632,7 @@ def main(argv=None):
         "official_results": False, "source": source, "environment": environment,
         "artifacts": json.loads((args.run_directory / "artifact_manifest.json").read_text())
         if (args.run_directory / "artifact_manifest.json").is_file() else {}}
-    report["last_factor_count_evidence"] = retained_factor_evidence(args.run_directory)
+    report["last_factor_count_evidence"] = retained_factor_evidence(args.run_directory,direct_profile=args.direct_profile)
     observed = report["last_factor_count_evidence"]["count"]
     if observed is not None:
         report["factor_count"] = max(report.get("factor_count", 0), observed)
@@ -647,7 +668,7 @@ def main(argv=None):
                                 args.research_memory_gib, checker_memory_launch_admission, direct_profile=args.direct_profile))
     except Exception as exc:
         preserve_supervisor_failure(args.run_directory, stage="checker", source=source,
-                                    environment=environment, command=checker_command, exc=exc)
+                                    environment=environment, command=checker_command, exc=exc,direct_profile=args.direct_profile)
         return 2
     checker_path = args.run_directory / "independent_checker.json"
     if checker_path.is_file():

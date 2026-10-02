@@ -112,14 +112,18 @@ def _qualification_degree_profile(bundle, *, direct_profile=None):
     if direct_profile is not None:
         from .y_orbit_direct_profile import validate_direct_physical_config
         direct = validate_direct_physical_config(bundle.get("physical_cfg", bundle["cfg"]), direct_profile)
-        if direct.name not in ("X", "XZ"):
-            raise ValueError("direct live numerical qualification admits only X/XZ")
+        if direct.name not in ("X", "XZ", "Y"):
+            raise ValueError("direct live numerical qualification admits only X/XZ/Y")
         context = bundle.get("quotient_context")
         if context is not None:
             if (context.direct_profile_name != direct.name or context.global_axes != direct.global_axes
                     or context.local_axes != direct.local_axes
                     or tuple(bundle["cfg"].mesh_axis_cell_counts) != (direct.nx, 2, direct.nz)):
                 raise ValueError("actual local setup differs from the explicit direct profile")
+            if direct.name == "Y":
+                from .y_orbit_raw_observer_admission import direct_raw_observer_expected_local_cells
+                if direct_raw_observer_expected_local_cells(context, bundle["cfg"]) != direct.local_cell_count:
+                    raise ValueError("actual local Y complete sector/profile identity differs")
         if bundle["degree"] != 4:
             raise ValueError("direct calibration retains the complete p4 element")
     degree = bundle["degree"]

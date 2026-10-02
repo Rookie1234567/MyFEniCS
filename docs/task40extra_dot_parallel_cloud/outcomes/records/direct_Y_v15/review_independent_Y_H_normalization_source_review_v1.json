@@ -1,0 +1,52 @@
+{
+  "author_validation": "Parent reports 12 targeted cases PASS in 5.034 seconds, with no FE/JIT/factor/PDE calls. Reviewer did not execute those tests.",
+  "base_head": "67c487e6be3cca3450b833c307d739f9b8ae744d",
+  "concrete_blockers": [],
+  "files": [
+    {
+      "new_sha256": "fd5bfdb360dc2d7cca17ca910758d949ae8cc858b8fd3291521fd0670c4fc725",
+      "old_sha256": "e328b69351484daa9e12802af62645cc0149c41f66781b2ec7600e68c099f8c4",
+      "path": "src/solvers/fullspace_dtn_action.py"
+    },
+    {
+      "new_sha256": "ed32186a104e5dac13fecea66a14c43533ca757acde12cfc466dfd05d0449997",
+      "old_sha256": "61af1f50dd430641bc5cb36d539419a9dc2c71ee6b86c23862bb5ebe76c03e45",
+      "path": "src/solvers/dtn_boundary_phase_gauge.py"
+    },
+    {
+      "new_sha256": "62dabab7c14f2638c29a3dc5b8d2d599a0bcb3fba07e2e001191c7efa7e2b357",
+      "old_sha256": "a5e99eb6d7d6b636aeba857c05121b2bf0db1cf88fd52b02a4f66442843573ba",
+      "path": "benchmarks/y_orbit_direct_source_contract.py"
+    },
+    {
+      "new_sha256": "d0452dcc3f74f45e23608fa184103591617f633127a7b05c822911b9541d1052",
+      "old_sha256": "34b28026e58b3380536e3b21179a2fd8971f3a7ca80dfb486eb117ac45a61c1b",
+      "path": "src/test/test_y_orbit_direct_XZ_solver_metadata.py"
+    },
+    {
+      "new_sha256": "7b91928ccda31fb8c5b99126bfe9d8d9baef07af95ffeebf2237f847d3143a8c",
+      "old_sha256": null,
+      "path": "src/test/test_y_orbit_direct_Y_H_normalization_metadata.py"
+    }
+  ],
+  "independent_checks": [
+    "Observed clean baseline HEAD 67c487e6be3cca3450b833c307d739f9b8ae744d with exactly the five intended dirty paths; all frozen old/new hashes match. The new focused test is absent at the baseline.",
+    "Exactly two H expression substitutions and one global-area diagnostic substitution restore the entire fullspace_dtn_action.py and dtn_boundary_phase_gauge.py bytes and AST to baseline. Actual H denominator, C/D assembly, phase math, and cutoff logic are unchanged.",
+    "The H validation retains the complete original np.isclose call with rtol=32*float64_eps and atol=0; only its multiplier is the validated context replication_count. The identity is 1/K; the area diagnostic is local_area*K.",
+    "The carrier invokes typed context select_inventory before the H gate; it validates actual global/local axes and profile configuration. K is derived from the global y-cell count divided by the unchanged two local cells. Old K=2 multiplication and 1/2 identities remain exact.",
+    "The source contract adds one exact test path and changes only its two seam-normalization/proof definitions. Complete calls and named identity/area expressions must occur exactly once; the final whole-module AST digest comparison still rejects all unapproved source changes.",
+    "The old XZ preservation test restores exactly the same three expression occurrences and retains whole-source byte comparisons. The new test executes the actual production H gate using all 532 actual Y modes selected by typed sector contexts, checks actual X/XZ mode formulas, wrong K and perturbed H failures, and rejects altered H/identity/area source expressions.",
+    "The prior read-only adjacent carrier/RHS/recovery/output audit found no other K2 execution gate. Local two-cell sqrt(2), eta squared, two tangential components, and 0.5 Poynting factors are legitimate.",
+    "Diagnostic SHA256 66814c2364965a4c99f35eadcadc403a694ec0fe6c5477dd12cb396baf99648a matches; all 532 primitive status flags agree with the reported old K2 failures and corrected K3 passes. It explicitly identifies local H as formula-recomputed, not a saved local carrier."
+  ],
+  "manifest_path": "/workspace/scratch/9c465670b46b/task40extra_cloud/experiments/y_orbit_Y_staging/H_normalization_fix/manifest.json",
+  "manifest_sha256": "0697a8dd0fec2d5890240aa23eb8ad4fc5bdff2e5cc6ca398731bf2a5505e1f6",
+  "next_admission": "Parent-owned clean commit, formal tests, source/ABI admission, fresh resource admission, and conditional numerical retry.",
+  "patch_sha256": "c4e6d313d9c6d1d129a729aa3b30fc26ad3001f74458a602e050d3b86e139358",
+  "preserved_failure": "Y attempt1 remains the preserved pre-factor H-gate failure; this source receipt does not establish numerical qualification.",
+  "reviewed_at_utc": "2026-10-02T17:09:10.004774+00:00",
+  "reviewer_execution": "Standard-library file/hash/git/AST inspection only. No project imports, tests, saved numeric array decoding, FE/JIT, assembly, factors, solves, PDE, or canonical edits.",
+  "roundoff_scope": "The actual first-two-axis local period remains one ulp different from global_period_y/3. No rounding, denominator replacement, exact-area equality claim, or tolerance relaxation is introduced; global_boundary_area remains the diagnostic computed as local area times K.",
+  "schema": "task40extra.independent-source-review.v1",
+  "status": "PASS_BOUNDED_Y_REPLICATION_H_GATE_IDENTITY_AND_AREA_METADATA_SOURCE_FIX"
+}

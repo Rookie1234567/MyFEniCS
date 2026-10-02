@@ -1,0 +1,14 @@
+{
+  "tests": 198,
+  "failures": [
+    "src.test.test_y_orbit_direct_carrier_metadata.DirectCarrierMetadataTests.test_entry_signatures_and_import_only_standard_library"
+  ],
+  "errors": [
+    "src.test.test_y_orbit_direct_budget_metadata.DirectBudgetTests.test_memory_plan_cli_has_no_run_and_rejects_other_routes",
+    "src.test.test_y_orbit_direct_budget_metadata.DirectBudgetTests.test_only_literal2_X_solve_wall1800_and_default_cap",
+    "src.test.test_y_orbit_direct_budget_metadata.DirectBudgetTests.test_plan_cli_and_invalid_nonX_request"
+  ],
+  "skipped": [],
+  "passed": false,
+  "FE_JIT_factor_PDE_calls": 0
+}

@@ -1,7 +1,7 @@
-"""Explicit X/XZ raw-observer admission; no assembly or numerical changes.
+"""Explicit X/XZ/Y raw-observer admission; no assembly or numerical changes.
 
 The default observer remains bounded by its original carrier guard. This
-module verifies actual current metadata for the separately reviewed X/XZ profiles.
+module verifies actual current metadata for the separately reviewed X/XZ/Y profiles.
 Module loading uses only the standard library; runtime checks reuse the exact
 existing discrete identity codecs and profile validators.
 """
@@ -24,12 +24,12 @@ def _file_sha256(path):
 
 
 def direct_raw_observer_expected_local_cells(quotient_context, cfg):
-    """Only an explicit X/XZ context may replace the historical local40 bound."""
+    """Only an explicit X/XZ/Y context may replace the historical local40 bound."""
     from .y_orbit_direct_profile import DirectTwoCellProfile, direct_profile_metadata, PHYSICAL_GENERATOR_SHA256
     from .fullspace_dtn_action import _canonical_json_bytes
     selected = DirectTwoCellProfile(quotient_context.direct_profile_name)
-    if selected not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ):
-        raise ValueError("only explicit frozen X/XZ local config/context is admitted")
+    if selected not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ, DirectTwoCellProfile.Y):
+        raise ValueError("only explicit frozen X/XZ/Y local config/context is admitted")
     metadata = direct_profile_metadata(selected)
     if (quotient_context.direct_profile_name != metadata.name
             or quotient_context.global_axes != metadata.global_axes
@@ -43,16 +43,26 @@ def direct_raw_observer_expected_local_cells(quotient_context, cfg):
             or int(cfg.nedelec_degree) != 4 or cfg.nedelec_trace_degree is not None
             or cfg.nedelec_interior_degree is not None
             or quotient_context.assembly_config_sha256 != hashlib.sha256(_canonical_json_bytes(cfg.as_jsonable())).hexdigest()):
-        raise ValueError("only the explicit frozen X/XZ local config/context is admitted")
+        raise ValueError("only the explicit frozen X/XZ/Y local config/context is admitted")
+    if metadata.name == "Y":
+        b = quotient_context.twist_index
+        if (tuple(quotient_context.global_q_indices) != (b, b + metadata.replication_count)
+                or len(quotient_context.original_mode_indices) != metadata.sector_port_counts[b]
+                or len(set(quotient_context.original_mode_indices)) != metadata.sector_port_counts[b]
+                or len(quotient_context.original_mode_keys) != metadata.sector_port_counts[b]
+                or len(quotient_context.local_branch_indices) != metadata.sector_port_counts[b]
+                or tuple(quotient_context.local_branch_indices.count(branch) for branch in (0, 1))
+                   != tuple(metadata.q_port_counts[q] for q in quotient_context.global_q_indices)):
+            raise ValueError("complete Y local sector/q/physical aliases required")
     return metadata.local_cell_count
 
 
 def validate_direct_raw_observer_profile(profile, *, modes, mpc, cfg,
         assembly_context, physical_cfg, quotient_context, physical_manifest_sha,
         surface_assemblers):
-    """Admit only fresh actual X/XZ full/local p4, without changing C/D/H."""
-    if type(profile) is not str or profile not in ("X", "XZ"):
-        raise ValueError("raw observer profile must be an explicit reviewed X/XZ string")
+    """Admit only fresh actual X/XZ/Y full/local p4, without changing C/D/H."""
+    if type(profile) is not str or profile not in ("X", "XZ", "Y"):
+        raise ValueError("raw observer profile must be an explicit reviewed X/XZ/Y string")
     if not isinstance(assembly_context, Mapping):
         raise ValueError("raw observer X requires the actual frozen discrete context")
     import numpy as np
@@ -77,6 +87,8 @@ def validate_direct_raw_observer_profile(profile, *, modes, mpc, cfg,
                 or quotient_context.global_axes != metadata.global_axes
                 or quotient_context.local_axes != metadata.local_axes):
             raise ValueError("raw observer X requires its exact two-cell physical quotient context")
+        if metadata.name == "Y":
+            direct_raw_observer_expected_local_cells(quotient_context, cfg)
         cells, rows, independent, mode_count, axes = (metadata.local_cell_count, metadata.local_storage_rows,
             metadata.local_independent_rows, metadata.sector_port_counts[quotient_context.twist_index], metadata.local_axes)
         local = assembly_context.get("y_orbit_quotient", {})

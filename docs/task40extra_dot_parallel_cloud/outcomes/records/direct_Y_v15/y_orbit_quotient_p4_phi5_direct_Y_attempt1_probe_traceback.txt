@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/run_y_orbit_quotient_probe.py", line 485, in _worker
+    report=_jsonable(run_direct_quotient_probe(INPUT,direct_profile=args.direct_profile,event=event,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/solvers/y_orbit_direct_probe.py", line 79, in run_direct_quotient_probe
+    fresh=build_fresh_direct_carriers(cfg,direct_profile=direct_profile,run_directory=root,save_array=save,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/solvers/y_orbit_direct_carrier_qualification.py", line 610, in build_fresh_direct_carriers
+    local = build_same_mesh_physical_action(local_setup, local_cfg, 4, mode_inventory=inventory,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py", line 216, in build_same_mesh_physical_action
+    carrier = build_fullspace_dtn_carrier_from_surface(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/src/solvers/fullspace_dtn_action.py", line 912, in build_fullspace_dtn_carrier_from_surface
+    raise ValueError("quotient original plane H must equal global plane H / K")
+ValueError: quotient original plane H must equal global plane H / K

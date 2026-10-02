@@ -98,7 +98,8 @@ class DirectTwoCellProfileMetadata:
         return {"schema": SCHEMA, **{name: getattr(self, name) for name in names},
                 "physical_mode_count": PHYSICAL_MODE_COUNT, "complete_cell_dimension": 300,
                 "complete_cell_interior_dimension": 108, "qualification": "derived_metadata_NOT_RUN",
-                "factor_policy": "unchanged_128MiB_per_q; Y_768MiB_aggregate_requires_review_before_numeric",
+                "factor_policy": ("unchanged_128MiB_per_q; Y_768MiB_aggregate_approved_research_policy_unknown_fill" if self.name == "Y"
+                                  else "unchanged_128MiB_per_q; Y_768MiB_aggregate_requires_review_before_numeric"),
                 "factor_fill_and_workspace": None, "ordinary_defaults_changed": False,
                 "Y_fixed_512MiB_aggregate_alternative": "not_implemented_requires_separate_resource_policy_review",
                 "notch_comparison": "new_uniform_y_aligned_notch" if self.name == "Y" else "same_physical_notch"}
@@ -117,6 +118,14 @@ def direct_profile_metadata(profile: DirectTwoCellProfile | str) -> DirectTwoCel
         axes, dimensions, ports = (_X_OLD, tuple(25 * j / 6 for j in range(7)), _Z_OLD), (4, 6, 5), (76, 76, 76, 152, 76, 76)
     return DirectTwoCellProfileMetadata(selected.value, dimensions,
         tuple(tuple(value * SCALE for value in axis) for axis in axes), ports)
+
+
+def direct_notch_box_and_count(profile):
+    """Exact reviewed notch configuration; Y is a separate aligned3-cell test."""
+    metadata = direct_profile_metadata(profile)
+    values = ((25, 33.5, 25 / 6, 100 / 6, 40, 80) if metadata.name == "Y"
+              else (25, 33.5, 6.25, 18.75, 40, 80))
+    return tuple(value * SCALE for value in values), (3 if metadata.name == "Y" else 2)
 
 
 def validate_direct_physical_config(cfg: Any, profile: DirectTwoCellProfile | str) -> DirectTwoCellProfileMetadata:

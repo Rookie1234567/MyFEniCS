@@ -72,8 +72,8 @@ class FourBranchFactors:
         else:
             from .y_orbit_direct_profile import direct_profile_metadata
             profile = direct_profile_metadata(direct_profile)
-            if profile.name not in ("X", "XZ"):
-                raise ValueError("direct factors admit only X/XZ with the unchanged512MiB aggregate policy")
+            if profile.name not in ("X", "XZ", "Y"):
+                raise ValueError("direct factors admit only reviewed X/XZ/Y with128MiB per q")
             self.nq, self.row_counts, self.per_q_allowance = profile.ny, profile.augmented_rows_per_q, profile.factor_allowance_per_q_bytes
             self.direct_profile_name = profile.name
         if set(matrices)!=set(range(self.nq)):raise ValueError('all actual q branches required before factors')
@@ -134,9 +134,12 @@ class FourBranchFactors:
                               all_four_retained_simultaneously=True)
             if direct_profile is not None:
                 if self.nq != 4:self.audit.pop('all_four_retained_simultaneously')
+                if self.direct_profile_name == "Y":
+                    self.audit['all_four_retained_simultaneously']=False
+                    self.audit['all_six_retained_simultaneously']=True
                 self.audit.update(all_actual_q_retained_simultaneously=True,
                                   factor_allowance_aggregate_bytes=self.nq*self.per_q_allowance,
-                                  resource_policy='unchanged_128MiB_per_q; Y_768MiB_aggregate_requires_review_before_numeric',
+                                  resource_policy=('reviewed_128MiB_per_q; Y_768MiB_aggregate' if profile.name == 'Y' else 'unchanged_128MiB_per_q; Y_768MiB_aggregate_requires_review_before_numeric'),
                                   direct_profile=self.direct_profile_name)
         except BaseException:
             self.destroy();raise
