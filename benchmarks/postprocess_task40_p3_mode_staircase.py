@@ -464,6 +464,106 @@ def _mode_comparison(
     }
 
 
+def _same_discretization_mode_comparison(
+    first: dict[tuple[str, int, int, str], dict[str, Any]],
+    second: dict[tuple[str, int, int, str], dict[str, Any]],
+    *,
+    significant_keys: set[tuple[str, int, int, str]],
+    incident_amplitude: float,
+    relative_limit: float = SIGNIFICANT_MODE_LIMIT,
+) -> dict[str, Any]:
+    """Compare every ordered common mode for two saved runs of the same M set."""
+
+    first_keys, second_keys = list(first), list(second)
+    if first_keys != second_keys:
+        raise ValueError("same-discretization mode keys/order differ between saved runs")
+    if not first_keys:
+        raise ValueError("same-discretization mode inventory is empty")
+    if not math.isfinite(incident_amplitude) or incident_amplitude <= np.finfo(float).tiny:
+        raise ValueError("incident amplitude is not a finite positive normalization")
+    unknown_significant = significant_keys - set(first_keys)
+    if unknown_significant:
+        raise ValueError("frozen significant keys are absent from the common mode inventory")
+
+    rows = []
+    for key in first_keys:
+        left, right = first[key], second[key]
+        left_propagating = bool(left["propagating"])
+        right_propagating = bool(right["propagating"])
+        if left_propagating != right_propagating:
+            raise ValueError(f"propagating status differs for mode {key}")
+        left_amplitude = _complex_pair(
+            left["outgoing_amplitude_at_boundary"],
+            field="outgoing_amplitude_at_boundary",
+        )
+        right_amplitude = _complex_pair(
+            right["outgoing_amplitude_at_boundary"],
+            field="outgoing_amplitude_at_boundary",
+        )
+        difference = abs(right_amplitude - left_amplitude)
+        significant = key in significant_keys and left_propagating
+        if key in significant_keys and not left_propagating:
+            raise ValueError(f"frozen significant key is not propagating: {key}")
+        rows.append(
+            {
+                "key": list(key),
+                "propagating_in_both": left_propagating,
+                "significant_by_frozen_M0_rule": significant,
+                "first_outgoing_amplitude_at_boundary": [
+                    left_amplitude.real, left_amplitude.imag
+                ],
+                "second_outgoing_amplitude_at_boundary": [
+                    right_amplitude.real, right_amplitude.imag
+                ],
+                "absolute_amplitude_difference": float(difference),
+                "relative_difference_to_first_amplitude": float(
+                    difference / max(abs(left_amplitude), np.finfo(float).tiny)
+                ),
+                "incident_normalized_amplitude_difference": float(
+                    difference / incident_amplitude
+                ),
+                "first_power_ratio": float(left["power_ratio"]),
+                "second_power_ratio": float(right["power_ratio"]),
+            }
+        )
+    significant_rows = [row for row in rows if row["significant_by_frozen_M0_rule"]]
+    all_differences = [row["absolute_amplitude_difference"] for row in rows]
+    significant_relative = [
+        row["relative_difference_to_first_amplitude"] for row in significant_rows
+    ]
+    return {
+        "method": "ordered keys verified by the caller; compare boundary-plane complex outgoing amplitudes for every mode",
+        "ordered_mode_count": len(rows),
+        "ordered_keys_identical": True,
+        "propagating_count": sum(row["propagating_in_both"] for row in rows),
+        "significant_mode_count": len(significant_rows),
+        "weak_or_evanescent_mode_count": len(rows) - len(significant_rows),
+        "incident_amplitude_reference": float(incident_amplitude),
+        "significance_rule": "frozen G0 M0 propagating power_ratio >= 1e-8; all other mode rows are retained as diagnostics",
+        "statistics": {
+            "max_absolute_amplitude_difference": max(all_differences, default=0.0),
+            "median_absolute_amplitude_difference": float(np.median(all_differences)),
+            "p95_absolute_amplitude_difference": float(np.percentile(all_differences, 95)),
+            "max_significant_relative_difference": max(significant_relative, default=0.0),
+            "max_weak_or_evanescent_absolute_difference": max(
+                (row["absolute_amplitude_difference"] for row in rows if not row["significant_by_frozen_M0_rule"]),
+                default=0.0,
+            ),
+            "max_weak_or_evanescent_incident_normalized_difference": max(
+                (row["incident_normalized_amplitude_difference"] for row in rows if not row["significant_by_frozen_M0_rule"]),
+                default=0.0,
+            ),
+        },
+        "significant_gate": {
+            "limit_relative_amplitude": float(relative_limit),
+            "max_relative_amplitude": max(significant_relative, default=0.0),
+            "pass": all(value <= relative_limit for value in significant_relative),
+            "keys": [row["key"] for row in significant_rows],
+        },
+        "all_ordered_mode_comparisons": rows,
+    }
+
+
 def _power_comparison(first: RunInput, second: RunInput) -> dict[str, Any]:
     values: dict[str, Any] = {}
     for name in POWER_FIELDS:
