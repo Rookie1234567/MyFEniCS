@@ -107,7 +107,7 @@
     "recovery_and_physics_gates_pass": true,
     "rta_eh_diffraction_completed": false,
     "time_target_seconds": 86400,
-    "time_target_met": null,
+    "time_target_met": false,
     "time_stop_enforced": false,
     "two_nm": "not_started"
   },
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-02T05:52:39Z",
+  "record_written_utc": "2026-10-02T05:54:30Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -962,7 +962,7 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "modal_full_build active; latest markers.jsonl records bottom modal_action batch 27/30, logical_completed=832/960, stage_wall_seconds=79219.059740572; this is modal setup work, not formal RHS completion. Consumer run_summary/consumer_summary are not yet emitted. At 2026-10-02T05:51:44Z authority/tree was 43236810752 B, dedicated cgroup current 40981950464 B, cgroup peak 42709970944 B, and job/cgroup swap 0. Global swap used was 22827008 B with existing clamped nonnegative delta field 0; pswpin delta 1480882 pages and pswpout delta 2781714 pages. Global values remain observe-only and unattributed. Elapsed 86428.8s has passed the 86400s target; the job remains active, time_stop_enforced=false, and time_target_met remains null until completion.",
+    "numerical_setup_marker": "modal_full_build active; latest markers.jsonl records bottom modal_action batch 27/30, logical_completed=832/960, stage_wall_seconds=79219.059740572; this is modal setup work, not formal RHS completion. Consumer run_summary/consumer_summary are not yet emitted. At 2026-10-02T05:51:44Z authority/tree was 43236810752 B, dedicated cgroup current 40981950464 B, cgroup peak 42709970944 B, and job/cgroup swap 0. Global swap used was 22827008 B with existing clamped nonnegative delta field 0; pswpin delta 1480882 pages and pswpout delta 2781714 pages. Global values remain observe-only and unattributed. Elapsed 86428.8s has passed the 86400s target; set time_target_met=false while the run remains active; time_stop_enforced=false and no stop was sent. Final elapsed wall and numerical outputs remain pending.",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
@@ -1002,7 +1002,7 @@
     "target_tolerance": 5e-13,
     "threads_per_rank": 1,
     "time_stop_enforced": false,
-    "time_target_met": null,
+    "time_target_met": false,
     "time_target_seconds": 86400,
     "unit": "task041-v8-5nm-cellcond-a6-formal-20261001T053737Z.service",
     "warning_memory_bytes": 47899046707,
