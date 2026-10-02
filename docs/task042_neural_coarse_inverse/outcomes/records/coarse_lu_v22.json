@@ -1,0 +1,93 @@
+{
+  "condition_estimation_budget": {
+    "LAPACK_runtime_version": [
+      3,
+      12,
+      0
+    ],
+    "per_gecon_triangular_pass_upper": 22,
+    "number_of_gecon_calls": 3,
+    "total_extra_upper": 66,
+    "actual_internal_count": "unknown; upper retained",
+    "ZLACN2_maximum_requests": "2 initial + 2*(5-1) main + 1 final = 11; each ZGECON request uses 2 ZLATRS",
+    "sources": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/lapack312_zlacn2.f",
+        "sha256": "2853fb3cbd4e46e7cc4f5b9c23447331375743a59c1f40c8438820063c3b90ce",
+        "bytes": 7901
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/lapack312_zgecon.f",
+        "sha256": "bb0d556860498aa0fc13ac2fee78607f2d620cc8cb49bc6662bf1387395eb433",
+        "bytes": 8119
+      }
+    ],
+    "primary_urls": [
+      "https://raw.githubusercontent.com/Reference-LAPACK/lapack/v3.12.0/SRC/zlacn2.f",
+      "https://raw.githubusercontent.com/Reference-LAPACK/lapack/v3.12.0/SRC/zgecon.f"
+    ]
+  },
+  "actual": {
+    "factor_status": "GLOBAL_BOUNDED_TRACE_GALERKIN_FACTOR_PRESENT",
+    "n1": 1248,
+    "rcond1_estimate": 0.000269972629637312,
+    "cond1_estimate": 3704.079192558983,
+    "condition_is_estimate_not_fine_condition": true,
+    "factor_policy": "complex128 LAPACK partial pivoting; no shift/drop/reordering; one fixed refinement",
+    "Ac_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+    "LU_sha256": "55d08ff142084c33eaec061180a3dc71b8121bebc076e7197654614a647fd164",
+    "pivot_sha256": "ec6c4ba524f507a9d0a4b7111424c679f10778d0297b54a4d00054a84074841d",
+    "explicit_Ac_LU_pivot_bytes": 49845120,
+    "setup_seconds": 0.27090225799474865,
+    "LU_call_counting": "each lu_solve charged as two individual triangular passes"
+  },
+  "checks": [
+    {
+      "witness": 0,
+      "relative": 2.2349545560455587e-15,
+      "operation_relative": 1.1483260748793109e-19
+    },
+    {
+      "witness": 1,
+      "relative": 1.6359637424289692e-15,
+      "operation_relative": 2.854193885993545e-19
+    },
+    {
+      "witness": 2,
+      "relative": 1.4866832160755794e-15,
+      "operation_relative": 2.5587837223684075e-19
+    },
+    {
+      "witness": 3,
+      "relative": 1.7351876126982026e-15,
+      "operation_relative": 3.017031750543778e-19
+    },
+    {
+      "witness": 4,
+      "relative": 1.5334806174320307e-15,
+      "operation_relative": 2.5680590834205677e-19
+    },
+    {
+      "witness": 5,
+      "relative": 1.8152270296292747e-15,
+      "operation_relative": 3.2291525379147443e-19
+    },
+    {
+      "witness": 6,
+      "relative": 1.4895922078735556e-15,
+      "operation_relative": 2.6432065703064103e-19
+    },
+    {
+      "witness": 7,
+      "relative": 1.4502123048211772e-15,
+      "operation_relative": 2.329112693218677e-19
+    }
+  ],
+  "zero_exact": true,
+  "stop": null,
+  "error": null,
+  "coarse_triangular_counting": "conservative individual L/U passes: 4 per fixed-refined coarse RHS",
+  "global_coarse_factor_disclosed": true,
+  "not_factor_free": true,
+  "no_parameter_scan": true
+}

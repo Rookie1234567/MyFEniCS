@@ -1,0 +1,400 @@
+{
+  "observed_utc": "2026-10-02T06:12:26.132598+00:00",
+  "auxiliary": [
+    {
+      "name": "compact_collect",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": "",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/compact_collect_environment.json",
+        "python",
+        "tmp/task042/v22/collect_records.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 3.156589085003361,
+      "RSS_peak_bytes": 67907584,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/compact_collect/summary.json",
+      "summary_sha256": "26293938829f517dd09ead85865244c7d5ed7c9d78da7a9d69dcdd41692dd608",
+      "log_sha256": "7490a96d5420d8375e475e1cedde94de8dd2b9a90e52b3b531cb45a58df29e91"
+    },
+    {
+      "name": "compact_collect_final",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": "?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/compact_collect_final_environment.json",
+        "python",
+        "tmp/task042/v22/collect_records.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 6.054234792944044,
+      "RSS_peak_bytes": 69615616,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/compact_collect_final/summary.json",
+      "summary_sha256": "358442a8bd8f7e1b89b1f387ffd2440afca25e584e0d9a6dcd40f8154dbe8c29",
+      "log_sha256": "9a5117ba21ee5f9a92bd53e7c4b1c826a8c6a5ac239202b2ff4fac39405dc945"
+    },
+    {
+      "name": "derive_channel_power",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": "?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/derive_channel_power_environment.json",
+        "python",
+        "tmp/task042/v22/derive_channel_power.py"
+      ],
+      "affinity": [
+        13
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 11.226929262047634,
+      "RSS_peak_bytes": 230563840,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/derive_channel_power/summary.json",
+      "summary_sha256": "c4d7a3acf49ee2360e911cb913fd9dbbfc35f0eb2f039d6b5e0a1877edd1f00e",
+      "log_sha256": "0e9fbc1fcf17512500a6a79045e762698799461f25d31564171b162b53a5b358"
+    },
+    {
+      "name": "document_checks",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? benchmarks/check_trace_galerkin_evidence.py\n?? docs/task042_neural_coarse_inverse/outcomes/p1_trace_galerkin_correction_v22.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/tests_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n?? docs/task042_neural_coarse_inverse/response_v22.md\n?? src/test/test_trace_galerkin_evidence.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/document_checks_environment.json",
+        "bash",
+        "-c",
+        "python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_24_repository_work_principles.py src/test/test_development_model_registry_contract.py; test_result=$?; python tmp/task042/v22/static_delivery_check.py; static_result=$?; if [ \"$test_result\" -eq 1 ] && [ \"$static_result\" -eq 0 ]; then exit 0; fi; exit \"$test_result\""
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "WORKER_FAILED",
+      "returncode": 1,
+      "wall_seconds": 8.82385275606066,
+      "RSS_peak_bytes": 82370560,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [
+        "1 failed, 12 passed in 0.28s"
+      ],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/document_checks/summary.json",
+      "summary_sha256": "aacf06af6d0d79d93e4fbdce58835680e0e7569b42ee657e06a7414ec470c76f",
+      "log_sha256": "cbd2ebf398ca91dcf24a9e1e2da8b1f138e6d41a5021c24573c1f7651ec79eda"
+    },
+    {
+      "name": "evidence_reader_checks",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": "?? benchmarks/check_trace_galerkin_evidence.py\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n?? src/test/test_trace_galerkin_evidence.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/evidence_reader_checks_environment.json",
+        "bash",
+        "-c",
+        "set -e; python -m pytest -q src/test/test_trace_galerkin_evidence.py; python -m benchmarks.check_trace_galerkin_evidence docs/task042_neural_coarse_inverse/outcomes/records"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 3.925453662057407,
+      "RSS_peak_bytes": 70987776,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [
+        "6 passed in 0.20s"
+      ],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/evidence_reader_checks/summary.json",
+      "summary_sha256": "17cc6bf43e2f5f37d5f5101d6c4556a824d42dc61730eb9bc8a1b541469bac2f",
+      "log_sha256": "de0f9e005268cb1ab9e3752444092cb1c115a3104505884c223bf5e24b593462"
+    },
+    {
+      "name": "fe_import",
+      "source": "4d14192e082117e69f76cd3a94c549557ce5693b",
+      "source_worktree": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/gmres_cycle_commit.py\n?? input/task042_neural_coarse_inverse/p1_trace_galerkin_v22.json\n?? input/task042_neural_coarse_inverse/v22_control_warm.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_transfer.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_warm.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_zero.dat\n?? input/task042_neural_coarse_inverse/v22_p1_trace_setup.dat\n?? input/task042_neural_coarse_inverse/v22_verify.dat\n?? src/io/p1_trace_galerkin.py\n?? src/runners/p1_trace_galerkin.py\n?? src/runners/p1_trace_queue.py\n?? src/solvers/p1_trace_galerkin.py\n?? src/solvers/p1_trace_study.py\n?? src/solvers/p1_trace_transfer.py\n?? src/solvers/p1_trace_window.py\n?? src/test/test_task042_v22_p1_trace.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe_import_environment.json",
+        "python",
+        "-c",
+        "from src.solvers.hcurl_multilevel import build_active_dof_map,build_nonmatching_active_transfer; from dolfinx import fem; import basix; print(\"QUALIFIED_EXISTING_FE_INTERPOLATION_IMPORT_PASS\")"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 13.839021970983595,
+      "RSS_peak_bytes": 241795072,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe_import/summary.json",
+      "summary_sha256": "f7bde9bab7ba31e946ac0efea5984c12f2f1a4e335a7390be40eeaa018cdae14",
+      "log_sha256": "e577aec24a2974df93ea139605809fdb5e4addeda015bc3791dec7354b79d694"
+    },
+    {
+      "name": "final_focused_after_freeze",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n M src/test/test_task042_v22_p1_trace.py\n?? benchmarks/check_trace_galerkin_evidence.py\n?? docs/task042_neural_coarse_inverse/outcomes/p1_trace_galerkin_correction_v22.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/legacy_registry_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/tests_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n?? docs/task042_neural_coarse_inverse/response_v22.md\n?? src/test/test_trace_galerkin_evidence.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/final_focused_after_freeze_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v22_p1_trace.py",
+        "src/test/test_task042_v18_completion.py",
+        "src/test/test_trace_galerkin_evidence.py",
+        "-k",
+        "not all_actual_dat_schema_registration_and_ref_barrier"
+      ],
+      "affinity": [
+        10
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 14.095207354053855,
+      "RSS_peak_bytes": 152207360,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [
+        "33 passed, 1 deselected in 11.30s"
+      ],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/final_focused_after_freeze/summary.json",
+      "summary_sha256": "c1a0167e9d7d269344a6eb775d621fd8ed44906c7dcad9f9841f3e9d92e48e49",
+      "log_sha256": "e34336b2deadb296035a2862960445b78af79ab6b897490355383af9b8b42491"
+    },
+    {
+      "name": "focused_final",
+      "source": "4d14192e082117e69f76cd3a94c549557ce5693b",
+      "source_worktree": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/gmres_cycle_commit.py\n?? input/task042_neural_coarse_inverse/p1_trace_galerkin_v22.json\n?? input/task042_neural_coarse_inverse/v22_control_warm.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_transfer.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_warm.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_zero.dat\n?? input/task042_neural_coarse_inverse/v22_p1_trace_setup.dat\n?? input/task042_neural_coarse_inverse/v22_verify.dat\n?? src/io/p1_trace_galerkin.py\n?? src/runners/p1_trace_galerkin.py\n?? src/runners/p1_trace_queue.py\n?? src/solvers/p1_trace_galerkin.py\n?? src/solvers/p1_trace_study.py\n?? src/solvers/p1_trace_transfer.py\n?? src/solvers/p1_trace_window.py\n?? src/test/test_task042_v22_p1_trace.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/focused_final_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v22_p1_trace.py",
+        "src/test/test_task042_v18_completion.py",
+        "-k",
+        "not test_all_actual_dat_schema_registration_and_ref_barrier"
+      ],
+      "affinity": [
+        14
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 13.223837872967124,
+      "RSS_peak_bytes": 151605248,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [
+        "25 passed, 1 deselected in 8.09s"
+      ],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/focused_final/summary.json",
+      "summary_sha256": "3e61dd86b00db160f6ffc6760afd790f1bc79f5af5efb453c6bf3ce4e28809c0",
+      "log_sha256": "37de3c641af65d5f3ca369c4fc51012380cf9c625c22362ace901f0589f5d21e"
+    },
+    {
+      "name": "focused_initial",
+      "source": "4d14192e082117e69f76cd3a94c549557ce5693b",
+      "source_worktree": " M scripts/run_case.py\n M scripts/task042_v17_campaign.py\n M scripts/task042_v17_queue_watchdog.py\n M src/io/task042_profile.py\n M src/runners/task042_shared.py\n M src/solvers/gmres_cycle_commit.py\n?? input/task042_neural_coarse_inverse/p1_trace_galerkin_v22.json\n?? input/task042_neural_coarse_inverse/v22_control_warm.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_transfer.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_warm.dat\n?? input/task042_neural_coarse_inverse/v22_p1_coarse_zero.dat\n?? input/task042_neural_coarse_inverse/v22_p1_trace_setup.dat\n?? input/task042_neural_coarse_inverse/v22_verify.dat\n?? src/io/p1_trace_galerkin.py\n?? src/runners/p1_trace_galerkin.py\n?? src/runners/p1_trace_queue.py\n?? src/solvers/p1_trace_galerkin.py\n?? src/solvers/p1_trace_study.py\n?? src/solvers/p1_trace_transfer.py\n?? src/solvers/p1_trace_window.py\n?? src/test/test_task042_v22_p1_trace.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/focused_initial_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v22_p1_trace.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "WORKER_FAILED",
+      "returncode": 1,
+      "wall_seconds": 15.544274570071138,
+      "RSS_peak_bytes": 132640768,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [
+        "1 failed, 9 passed in 10.80s"
+      ],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/focused_initial/summary.json",
+      "summary_sha256": "c6ccd824e652b8c2ac50bb6b40a8a214baeead8db3ef0720f87e069de3fb31e8",
+      "log_sha256": "7d41b84811c9327a0fa62ee107c315929f784596e4211a420449e46024973b6e"
+    },
+    {
+      "name": "frozen_projection_focused",
+      "source": "24fbbad55fbef07b75533e60fc1869749a2f8777",
+      "source_worktree": " M src/runners/p1_trace_galerkin.py\n M src/solvers/gmres_residual_completion.py\n M src/solvers/neural_fe_blind_reference.py\n M src/solvers/p1_trace_study.py\n M src/test/test_task042_v22_p1_trace.py\n?? src/solvers/p1_trace_error_diagnostic.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/frozen_projection_focused_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v22_p1_trace.py",
+        "src/test/test_task042_v18_completion.py",
+        "-k",
+        "not all_actual_dat_schema_registration_and_ref_barrier"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 17.473010464920662,
+      "RSS_peak_bytes": 150642688,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [
+        "27 passed, 1 deselected in 14.62s"
+      ],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/frozen_projection_focused/summary.json",
+      "summary_sha256": "e3182414e9622f20f0c0c619f62ac08c9ebd946ea661ab09f969c2e63889402d",
+      "log_sha256": "75e8f4153daeb4cab283f4224eb1130d718eedeaca51db51fb4f149af2b49ad5"
+    },
+    {
+      "name": "source_validate",
+      "source": "24fbbad55fbef07b75533e60fc1869749a2f8777",
+      "source_worktree": "",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/source_validate_environment.json",
+        "python",
+        "tmp/task042/v22/validate_inputs.py"
+      ],
+      "affinity": [
+        16
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 4.829936811001971,
+      "RSS_peak_bytes": 97906688,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/source_validate/summary.json",
+      "summary_sha256": "892f269c03efe89a13e1891debed59a5b385ed7be7a28d29d80c8b5160572ff1",
+      "log_sha256": "82a394a0fdae136dcb0a8711adddeae7a4b138709e0683f269b6332997f828a2"
+    },
+    {
+      "name": "static_link_fix",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? benchmarks/check_trace_galerkin_evidence.py\n?? docs/task042_neural_coarse_inverse/outcomes/p1_trace_galerkin_correction_v22.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/legacy_registry_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/tests_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n?? docs/task042_neural_coarse_inverse/response_v22.md\n?? src/test/test_trace_galerkin_evidence.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/static_link_fix_environment.json",
+        "python",
+        "tmp/task042/v22/static_delivery_check.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "COMPLETED",
+      "returncode": 0,
+      "wall_seconds": 6.52268463303335,
+      "RSS_peak_bytes": 63574016,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/static_link_fix/summary.json",
+      "summary_sha256": "f7fa9e3402dae4d63a01717158f3c865bf22011d390a6d48325fe3c2d4ab0e29",
+      "log_sha256": "3229dddb446f27157cecc55947c2048291a7610d9ed1b9406e5f5c8e38a2287b"
+    },
+    {
+      "name": "static_path_fix",
+      "source": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "source_worktree": " M docs/development_model_registry.md\n M docs/development_progress.md\n M docs/task042_neural_coarse_inverse/README.md\n M docs/task042_neural_coarse_inverse/outcomes/changed_files.md\n M docs/task042_neural_coarse_inverse/outcomes/summary.md\n M docs/task042_neural_coarse_inverse/outcomes/test_summary.md\n?? benchmarks/check_trace_galerkin_evidence.py\n?? docs/task042_neural_coarse_inverse/outcomes/p1_trace_galerkin_correction_v22.md\n?? docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/clock_deadline_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_identity_capacity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/coarse_lu_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/lineage_cold_access_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/offline_warm_error_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v22.csv\n?? docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v22.jsonl\n?? docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/repair_reentry_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/right_pc_checks_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/run_index_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/tests_v22.json\n?? docs/task042_neural_coarse_inverse/outcomes/records/transfer_checks_v22.json\n?? docs/task042_neural_coarse_inverse/response_v22.md\n?? src/test/test_trace_galerkin_evidence.py\n",
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v22",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v22/static_path_fix_environment.json",
+        "python",
+        "tmp/task042/v22/static_delivery_check.py"
+      ],
+      "affinity": [
+        0
+      ],
+      "classification": "WORKER_FAILED",
+      "returncode": 1,
+      "wall_seconds": 11.622772958944552,
+      "RSS_peak_bytes": 63639552,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary": [],
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/static_path_fix/summary.json",
+      "summary_sha256": "30390198a840d2e37ccf922cc009cef250c8a3e61505fbae26aa41459f699782",
+      "log_sha256": "6a7fe0f7a322b0a3d275427fc3a013dd204d10c8c5f5405e12293d03a1b64d69"
+    }
+  ],
+  "full_repository_pytest": "not_run",
+  "MPI2_MPI4": "not_run; contract MPI1",
+  "CI": "not_claimed",
+  "ruff": "not_run; module not installed; no install",
+  "formal_replay": 0,
+  "original_Gates_unchanged": true,
+  "scalar_fixture_correction": "initial expected 1e-10 solution tighter than driver 1e-8 full-b stop; final fixture residual1e-8/solution1e-7; production thresholds unchanged"
+}

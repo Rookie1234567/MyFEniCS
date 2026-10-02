@@ -1,0 +1,605 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v22",
+    "start_utc": "2026-10-02T03:54:44.446861+00:00",
+    "start_monotonic": 838279.307756222,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T07:24:44.446861+00:00",
+    "deadline_utc": "2026-10-02T07:54:44.446861+00:00",
+    "review_expected_commit": "4d14192e082117e69f76cd3a94c549557ce5693b",
+    "prior_HEAD": "54d249022429366dfb1028199a1d83cd599b6b28",
+    "scope": "first live UTC/monotonic/boot inspection; all implementation, wait, repair, numeric and delivery counted",
+    "observed_utc": "2026-10-02T06:27:42.562507+00:00",
+    "observed_monotonic": 847457.423374191,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 9178.115645885468,
+    "heavy_remaining_seconds": 3421.8843541145325,
+    "total_remaining_seconds": 5221.8843541145325
+  },
+  "formal_runs": [
+    {
+      "stage": "SETUP",
+      "source_sha": "24fbbad55fbef07b75533e60fc1869749a2f8777",
+      "CPU": 10,
+      "supervised_wall_seconds": 513.2525651319884,
+      "launch_wall_seconds": 514.6814742370043,
+      "numerical_actor_wall_seconds": 509.88647873105947,
+      "old_action_costs_inclusive_seconds": {
+        "S": 4.085494720144197,
+        "SH": 0.0,
+        "audit": 3.5490641039796174
+      },
+      "new_backend_cost_seconds": "unknown: actor saved counts but no exclusive class timer",
+      "old_action_counts": {
+        "S": 16,
+        "SH": 0,
+        "audit": 1
+      },
+      "new_action_counts": {
+        "S": 5,
+        "SH": 0
+      },
+      "completed": {
+        "B": 4,
+        "coarse_triangular": 60,
+        "transfer_builds": 1,
+        "coarse_assemblies": 1,
+        "factor_setups": 1,
+        "actions": 21,
+        "audits": 1,
+        "field_states": 0
+      },
+      "charged": {
+        "B": 4,
+        "coarse_triangular": 60,
+        "transfer_builds": 1,
+        "coarse_assemblies": 1,
+        "factor_setups": 1,
+        "actions": 21,
+        "audits": 1,
+        "field_states": 0
+      },
+      "PC_apply_calls": null,
+      "PC_seconds_inclusive": 0.24487674492411315,
+      "coarse_solve_seconds_nested": 0.6707014198182151,
+      "RSS_peak_bytes": 738320384,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2012318736384,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2012318736384,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "resource_health": {
+        "samples": 588,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2010652958720
+      },
+      "neighbor_observation": {
+        "first": [],
+        "last": [],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      }
+    },
+    {
+      "stage": "N",
+      "source_sha": "24fbbad55fbef07b75533e60fc1869749a2f8777",
+      "CPU": 0,
+      "supervised_wall_seconds": 142.75949593796395,
+      "launch_wall_seconds": 144.53528287203517,
+      "numerical_actor_wall_seconds": 138.37397654808592,
+      "old_action_costs_inclusive_seconds": {
+        "S": 2.3439150168560445,
+        "SH": 0.0,
+        "audit": 2.652081032167189
+      },
+      "new_backend_cost_seconds": "unknown: actor saved counts but no exclusive class timer",
+      "old_action_counts": {
+        "S": 20,
+        "SH": 0,
+        "audit": 5
+      },
+      "new_action_counts": {
+        "S": 1040,
+        "SH": 0
+      },
+      "completed": {
+        "B": 0,
+        "coarse_triangular": 0,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 0,
+        "actions": 1060,
+        "audits": 5,
+        "field_states": 0
+      },
+      "charged": {
+        "B": 0,
+        "coarse_triangular": 0,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 0,
+        "actions": 1060,
+        "audits": 5,
+        "field_states": 0
+      },
+      "PC_apply_calls": 0,
+      "PC_seconds_inclusive": 0,
+      "coarse_solve_seconds_nested": 0,
+      "RSS_peak_bytes": 545697792,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2011380625408,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2011380625408,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "resource_health": {
+        "samples": 164,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 1971210817536
+      },
+      "neighbor_observation": {
+        "first": [],
+        "last": [],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      }
+    },
+    {
+      "stage": "P",
+      "source_sha": "24fbbad55fbef07b75533e60fc1869749a2f8777",
+      "CPU": 0,
+      "supervised_wall_seconds": 361.3328150649322,
+      "launch_wall_seconds": 362.7502189540537,
+      "numerical_actor_wall_seconds": 358.9659325960092,
+      "old_action_costs_inclusive_seconds": {
+        "S": 8.172638418385759,
+        "SH": 0.0,
+        "audit": 10.657092593144625
+      },
+      "new_backend_cost_seconds": "unknown: actor saved counts but no exclusive class timer",
+      "old_action_counts": {
+        "S": 26,
+        "SH": 0,
+        "audit": 5
+      },
+      "new_action_counts": {
+        "S": 2080,
+        "SH": 0
+      },
+      "completed": {
+        "B": 1040,
+        "coarse_triangular": 4168,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 1,
+        "actions": 2106,
+        "audits": 5,
+        "field_states": 0
+      },
+      "charged": {
+        "B": 1040,
+        "coarse_triangular": 4168,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 1,
+        "actions": 2106,
+        "audits": 5,
+        "field_states": 0
+      },
+      "PC_apply_calls": 1040,
+      "PC_seconds_inclusive": 189.568333442905,
+      "coarse_solve_seconds_nested": 69.66871287417598,
+      "RSS_peak_bytes": 624783360,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1971709706240,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1971709706240,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "resource_health": {
+        "samples": 404,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 1970781679616
+      },
+      "neighbor_observation": {
+        "first": [],
+        "last": [],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      }
+    },
+    {
+      "stage": "Z",
+      "source_sha": "24fbbad55fbef07b75533e60fc1869749a2f8777",
+      "CPU": 0,
+      "supervised_wall_seconds": 2001.9549087950727,
+      "launch_wall_seconds": 2003.3408085450064,
+      "numerical_actor_wall_seconds": 1999.3210880348925,
+      "old_action_costs_inclusive_seconds": {
+        "S": 29.029160008300096,
+        "SH": 0.0,
+        "audit": 23.834256330505013
+      },
+      "new_backend_cost_seconds": "unknown: actor saved counts but no exclusive class timer",
+      "old_action_counts": {
+        "S": 166,
+        "SH": 0,
+        "audit": 33
+      },
+      "new_action_counts": {
+        "S": 16612,
+        "SH": 0
+      },
+      "completed": {
+        "B": 8292,
+        "coarse_triangular": 33176,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 1,
+        "actions": 16778,
+        "audits": 33,
+        "field_states": 0
+      },
+      "charged": {
+        "B": 8292,
+        "coarse_triangular": 33176,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 1,
+        "actions": 16778,
+        "audits": 33,
+        "field_states": 0
+      },
+      "PC_apply_calls": 8292,
+      "PC_seconds_inclusive": 1114.7322722624522,
+      "coarse_solve_seconds_nested": 420.80852915067226,
+      "RSS_peak_bytes": 625074176,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1971637764096,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1971637764096,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "resource_health": {
+        "samples": 2475,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 1970728386560
+      },
+      "neighbor_observation": {
+        "first": [],
+        "last": [],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      }
+    },
+    {
+      "stage": "VERIFY",
+      "source_sha": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "CPU": 0,
+      "supervised_wall_seconds": 73.58743401395623,
+      "launch_wall_seconds": 74.97865535400342,
+      "numerical_actor_wall_seconds": 70.23238674399909,
+      "old_action_costs_inclusive_seconds": {
+        "S": 1.2307676809141412,
+        "SH": 0.0,
+        "audit": 3.6131933748256415
+      },
+      "new_backend_cost_seconds": "unknown: actor saved counts but no exclusive class timer",
+      "old_action_counts": {
+        "S": 9,
+        "SH": 0,
+        "audit": 5
+      },
+      "new_action_counts": {
+        "S": 0,
+        "SH": 0
+      },
+      "completed": {
+        "B": 0,
+        "coarse_triangular": 2,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 0,
+        "actions": 9,
+        "audits": 5,
+        "field_states": 7
+      },
+      "charged": {
+        "B": 0,
+        "coarse_triangular": 2,
+        "transfer_builds": 0,
+        "coarse_assemblies": 0,
+        "factor_setups": 0,
+        "actions": 9,
+        "audits": 5,
+        "field_states": 7
+      },
+      "PC_apply_calls": null,
+      "PC_seconds_inclusive": null,
+      "coarse_solve_seconds_nested": null,
+      "RSS_peak_bytes": 830451712,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2056133541888,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2056133541888,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "resource_health": {
+        "samples": 92,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2054930784256
+      },
+      "neighbor_observation": {
+        "first": [],
+        "last": [],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      }
+    }
+  ],
+  "formal_supervised_wall_seconds": 3092.8872189439135,
+  "auxiliary_runs": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/static_path_fix/summary.json",
+        "sha256": "30390198a840d2e37ccf922cc009cef250c8a3e61505fbae26aa41459f699782",
+        "bytes": 4639
+      },
+      "wall_seconds": 11.622772958944552,
+      "RSS_peak_bytes": 63639552,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/focused_initial/summary.json",
+        "sha256": "c6ccd824e652b8c2ac50bb6b40a8a214baeead8db3ef0720f87e069de3fb31e8",
+        "bytes": 3369
+      },
+      "wall_seconds": 15.544274570071138,
+      "RSS_peak_bytes": 132640768,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/compact_collect_final/summary.json",
+        "sha256": "358442a8bd8f7e1b89b1f387ffd2440afca25e584e0d9a6dcd40f8154dbe8c29",
+        "bytes": 4022
+      },
+      "wall_seconds": 6.054234792944044,
+      "RSS_peak_bytes": 69615616,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/evidence_reader_checks/summary.json",
+        "sha256": "17cc6bf43e2f5f37d5f5101d6c4556a824d42dc61730eb9bc8a1b541469bac2f",
+        "bytes": 4277
+      },
+      "wall_seconds": 3.925453662057407,
+      "RSS_peak_bytes": 70987776,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/compact_collect/summary.json",
+        "sha256": "26293938829f517dd09ead85865244c7d5ed7c9d78da7a9d69dcdd41692dd608",
+        "bytes": 2285
+      },
+      "wall_seconds": 3.156589085003361,
+      "RSS_peak_bytes": 67907584,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/frozen_projection_focused/summary.json",
+        "sha256": "e3182414e9622f20f0c0c619f62ac08c9ebd946ea661ab09f969c2e63889402d",
+        "bytes": 2830
+      },
+      "wall_seconds": 17.473010464920662,
+      "RSS_peak_bytes": 150642688,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/document_checks/summary.json",
+        "sha256": "aacf06af6d0d79d93e4fbdce58835680e0e7569b42ee657e06a7414ec470c76f",
+        "bytes": 4995
+      },
+      "wall_seconds": 8.82385275606066,
+      "RSS_peak_bytes": 82370560,
+      "own_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/source_validate/summary.json",
+        "sha256": "892f269c03efe89a13e1891debed59a5b385ed7be7a28d29d80c8b5160572ff1",
+        "bytes": 2364
+      },
+      "wall_seconds": 4.829936811001971,
+      "RSS_peak_bytes": 97906688,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/static_link_fix/summary.json",
+        "sha256": "f7fa9e3402dae4d63a01717158f3c865bf22011d390a6d48325fe3c2d4ab0e29",
+        "bytes": 4799
+      },
+      "wall_seconds": 6.52268463303335,
+      "RSS_peak_bytes": 63574016,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe_import/summary.json",
+        "sha256": "f7bde9bab7ba31e946ac0efea5984c12f2f1a4e335a7390be40eeaa018cdae14",
+        "bytes": 3408
+      },
+      "wall_seconds": 13.839021970983595,
+      "RSS_peak_bytes": 241795072,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/final_focused_after_freeze/summary.json",
+        "sha256": "c1a0167e9d7d269344a6eb775d621fd8ed44906c7dcad9f9841f3e9d92e48e49",
+        "bytes": 5185
+      },
+      "wall_seconds": 14.095207354053855,
+      "RSS_peak_bytes": 152207360,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/derive_channel_power/summary.json",
+        "sha256": "c4d7a3acf49ee2360e911cb913fd9dbbfc35f0eb2f039d6b5e0a1877edd1f00e",
+        "bytes": 3882
+      },
+      "wall_seconds": 11.226929262047634,
+      "RSS_peak_bytes": 230563840,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/focused_final/summary.json",
+        "sha256": "3e61dd86b00db160f6ffc6760afd790f1bc79f5af5efb453c6bf3ce4e28809c0",
+        "bytes": 3516
+      },
+      "wall_seconds": 13.223837872967124,
+      "RSS_peak_bytes": 151605248,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "auxiliary_supervised_wall_seconds": 130.33780619408935,
+  "outer_supervision": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/solve_supervision/summary.json",
+        "sha256": "889840a9dab2dc338f8e1086bd9d7955709c5ab77842d9f15e2e27048b39d08d",
+        "bytes": 4802
+      },
+      "wall_seconds": 3029.6123157320544,
+      "RSS_peak_bytes": 814800896,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/verify_supervision/summary.json",
+        "sha256": "ca6ca1d1a3445b819935c5e4ea6e365a0bb38153f15cb1caf37c5533bfe4a40e",
+        "bytes": 5003
+      },
+      "wall_seconds": 77.01778304297477,
+      "RSS_peak_bytes": 912175104,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true
+    }
+  ],
+  "simultaneous_sampled_tree_peak_bytes": 912175104,
+  "own_swap_peak_bytes": 0,
+  "VRAM_bytes": 0,
+  "cgroup_continuous_kernel_limit_claimed": false,
+  "tree_supervision_interval_seconds": 0.5,
+  "original_PSI_threshold_percent": 0.1,
+  "previous_formal_lower_bound_seconds": 70970.59978457249,
+  "cumulative_formal_lower_bound_seconds": 74063.4870035164,
+  "historical_auxiliary": "unknown retained",
+  "nested_timers_additive": false,
+  "outer_and_child_wall_additive": false,
+  "performance": "shared-workstation; uncontended speedup INCONCLUSIVE",
+  "factor_status": "GLOBAL_BOUNDED_TRACE_GALERKIN_FACTOR_PRESENT",
+  "storage": {
+    "artifacts": {
+      "logical_bytes": 150131709,
+      "allocated_bytes": 151273472,
+      "regular_files": 396
+    },
+    "tmp": {
+      "logical_bytes": 199244915,
+      "allocated_bytes": 204529664,
+      "regular_files": 2285
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "status": "EVIDENCE_CONSISTENT",
+  "reader_path": "benchmarks/check_trace_galerkin_evidence.py",
+  "reader_sha256": "9d87d157da8d6ad02c556c576737b3820919fe50d6219988822e68643d13a37e",
+  "source_sha": "d06b8003794cfa4c3e9a1985ce696ebb9b863c8a",
+  "solver_actions": 0,
+  "complete_same_discrete_passes": 0,
+  "raw_metrics_rechecked": true,
+  "reference_feedback": false
+}

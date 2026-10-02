@@ -1,0 +1,66 @@
+{
+  "setup": {
+    "repeat": {
+      "absolute": 0.0,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "absolute": 1.1670461477342248e-15,
+      "operation_relative": 1.72232469814144e-15
+    },
+    "coarse_balance_operation_relative": [
+      1.0295179815452696e-15,
+      1.2032005411697411e-15
+    ],
+    "tau": 0.13558083643793006,
+    "full_space_term_present": true,
+    "PC_is_not_an_accurate_fine_inverse": true,
+    "qualified": true
+  },
+  "routes": {
+    "N": {
+      "qualified": true
+    },
+    "P": {
+      "repeat": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "complex_linearity": {
+        "absolute": 1.1670461477342248e-15,
+        "operation_relative": 1.72232469814144e-15
+      },
+      "coarse_balance_operation_relative": [
+        1.0295179815452696e-15,
+        1.2032005411697411e-15
+      ],
+      "tau": 0.13558083643793006,
+      "full_space_term_present": true,
+      "PC_is_not_an_accurate_fine_inverse": true,
+      "qualified": true
+    },
+    "Z": {
+      "repeat": {
+        "absolute": 0.0,
+        "operation_relative": 0.0
+      },
+      "complex_linearity": {
+        "absolute": 1.1670461477342248e-15,
+        "operation_relative": 1.72232469814144e-15
+      },
+      "coarse_balance_operation_relative": [
+        1.0295179815452696e-15,
+        1.2032005411697411e-15
+      ],
+      "tau": 0.13558083643793006,
+      "full_space_term_present": true,
+      "PC_is_not_an_accurate_fine_inverse": true,
+      "qualified": true
+    }
+  },
+  "formula": "tau*r + T*solve(Ac,T^H*(r-tau*barS*r))",
+  "fine_directions_preserved": true,
+  "tau_not_scanned": true,
+  "old_ActionPacket_oracle_unchanged": true,
+  "no_fine_accuracy_claim_for_single_PC_apply": true
+}

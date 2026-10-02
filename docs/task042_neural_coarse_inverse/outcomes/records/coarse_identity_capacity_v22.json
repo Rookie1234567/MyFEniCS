@@ -1,0 +1,81 @@
+{
+  "Ac": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/Ac.npy",
+    "sha256": "d03304fba540afd66d63a00975b655158696d88301e4dd989cdf9e442674b6fc",
+    "array_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+    "shape": [
+      1248,
+      1248
+    ],
+    "capacity": {
+      "n1": 1248,
+      "matrix_and_LU_explicit_upper_bytes": 49850112,
+      "new_workspace_upper_bytes": 204711936,
+      "simultaneous_planned_bytes": 3613375308,
+      "qualified": true,
+      "memory_values_are_derived_not_RSS": true,
+      "assembly_seconds": 1.7258447259664536,
+      "max_local_p1_support": 102,
+      "duplicate_contributions_merged": true,
+      "coarse_formula": "T^H K T - T^H C Hhat^-1 F T",
+      "Ac_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+      "Cc_sha256": "6ee128df3b839677bb84378ec328d0efaa9b8123a57a0a090ebe76b43f0f1e3c",
+      "Fc_sha256": "9384ddcf64568851ef3e4d7ddda20538e8f9a92d35bdaf691035bcab70694952",
+      "global_fine_matrix_constructed": false,
+      "separate_curl_mass_condensation": false
+    }
+  },
+  "original_action_checks": [
+    {
+      "witness": 0,
+      "seed": 422211,
+      "absolute": 3.2038360047331957e-15,
+      "operation_relative": 2.7707317237397666e-16
+    },
+    {
+      "witness": 1,
+      "seed": 422212,
+      "absolute": 6.532552182232591e-15,
+      "operation_relative": 3.199404366801382e-16
+    },
+    {
+      "witness": 2,
+      "seed": 422213,
+      "absolute": 2.902140757184413e-15,
+      "operation_relative": 3.001736121190723e-16
+    },
+    {
+      "witness": 3,
+      "seed": 422214,
+      "absolute": 3.195461784380904e-15,
+      "operation_relative": 1.5686895371157968e-16
+    },
+    {
+      "witness": 4,
+      "seed": 422215,
+      "absolute": 7.246864432548851e-15,
+      "operation_relative": 6.443853549866756e-16
+    },
+    {
+      "witness": 5,
+      "seed": 422216,
+      "absolute": 4.261383056650182e-15,
+      "operation_relative": 3.305223542999806e-16
+    },
+    {
+      "witness": 6,
+      "seed": 422217,
+      "absolute": 3.4567705198199396e-15,
+      "operation_relative": 3.713351872016034e-16
+    },
+    {
+      "witness": 7,
+      "seed": 422218,
+      "absolute": 5.559155898961619e-15,
+      "operation_relative": 2.594970265774603e-16
+    }
+  ],
+  "factor_status": "GLOBAL_BOUNDED_TRACE_GALERKIN_FACTOR_PRESENT",
+  "no_global_fine_matrix": true,
+  "no_Q_U_R_or_p4_factor": true
+}

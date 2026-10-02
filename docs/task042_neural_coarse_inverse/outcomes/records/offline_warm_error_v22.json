@@ -1,0 +1,80 @@
+{
+  "recovery_pair": {
+    "absolute": 3.768231189169596e-16,
+    "operation_relative": 1.4775786324222396e-12
+  },
+  "original_action_pair": {
+    "absolute": 1.2248322006460479e-18,
+    "operation_relative": 2.929935155337828e-12
+  },
+  "trace_euclidean_norm": 9.304277717208882e-05,
+  "projected_trace_norm": 9.257307362175143e-05,
+  "complement_trace_norm": 9.337259989779572e-06,
+  "trace_Gram_stationarity": 2.5983683564791076e-16,
+  "original_bar_action_norm": 2.0902035978759543e-07,
+  "projected_bar_action_norm": 0.0005117508745468048,
+  "complement_bar_action_norm": 0.0005117508804808648,
+  "original_action_complex_cross": {
+    "real": -2.6188893879142426e-07,
+    "imag": -1.368960514490093e-15
+  },
+  "operation_cross_sum_defect": 1.2128702483445843e-15,
+  "projection_metric": "trace Euclidean Gram; not physical L2 optimal",
+  "affine_particular_removed": true,
+  "reference_feedback": false,
+  "state": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/task042_v22_verify_20261002T053428304733Z/OFFLINE_WARM_ERROR.npz",
+    "sha256": "fd2f75224df617166489b7bd9e48079f8a8699188e11297a26f2861a75b3c747",
+    "e_sha256": "0df23fcdb0b128da2933c16f863593275e4667ad3ee706d2d8996bf77347cea5",
+    "q_sha256": "694374db1e193c903af8e924d79a8f60151a7465065933779a1cc4963c88fbea",
+    "complement_sha256": "c2d889dd605d862406c682923070102390ef44ebebb1461cc4d520a632869cee",
+    "c_sha256": "f82edd42a3b1acd43810342b7d1941e22adbdb9a7b6f3dba3d635d5525a3ab30",
+    "Fe_sha256": "1dd0e95b641596158df92e234b2ea5681ce2cac864dddc8b5aaa8043b336ca02",
+    "Fq_sha256": "90ca43a3281080c5640a8d1d155cdd19839f1c693e112f94833c2af109efa9fc",
+    "Fc_sha256": "9fdef035e7a871c40f38a100fc63d3c3a889490332dda3e7e07df04aef041372"
+  },
+  "field_L2_scaled_curl_norms": {
+    "full_error": [
+      1.5664285447381116e-05,
+      1.566709144610602e-05
+    ],
+    "T_projection": [
+      1.4752323981993132e-05,
+      1.5582746537593707e-05
+    ],
+    "complement": [
+      1.5715050062882676e-06,
+      5.250809385694686e-06
+    ]
+  },
+  "relative_to_full_error": [
+    [
+      0.9417808448108653,
+      0.9946164284032901
+    ],
+    [
+      0.10032407871825426,
+      0.33514895880688494
+    ]
+  ],
+  "complex_cross_L2_scaled_curl": [
+    {
+      "real": 1.2634573861278656e-11,
+      "imag": -1.644172205639296e-14
+    },
+    {
+      "real": -1.2467617239571042e-11,
+      "imag": -2.526025285335017e-14
+    }
+  ],
+  "field_square_sum_relative": [
+    6.455815951893524e-16,
+    4.616404001666405e-15
+  ],
+  "diagnostic_seconds": 17.005972664919682,
+  "additional_offline_Gram_factor": "bounded Cholesky solve; never candidate PC/loss",
+  "original_Ac_PC_not_changed": true,
+  "not_a_solution": true,
+  "solver_frozen": true,
+  "status": "OFFLINE_DIAGNOSTIC_COMPLETE"
+}

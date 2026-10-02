@@ -1,3 +1,19 @@
+# V22改动／selective-merge分组（未获合并许可）
+
+| 依赖组 | 文件／变化 | 数值行为／资格与顺序 |
+|---|---|---|
+| research-only numerical/core | src/solvers/p1_trace_galerkin.py、p1_trace_transfer.py、p1_trace_study.py、p1_trace_error_diagnostic.py、p1_trace_window.py | 新显式opt-in P1_TRACE_GALERKIN及固定全空间右PC/离线诊断；真实mapping/PC合格，物理解负结果，不提升production default |
+| reusable transaction/validator | gmres_cycle_commit.py、gmres_residual_completion.py、neural_fe_blind_reference.py | 原默认不变；optional旧oracle残差action、role loader及一次冻结诊断callback；事务及仿射恢复小回归通过 |
+| runner/watchdog/io | src/io/p1_trace_galerkin.py、p1_trace_galerkin/queue runners、run_case/profile/shared/v17 queue注册 | 六个独立dat、真实deadline/整树监督/角色白名单；依赖numerical/core；不复制每route巨大runner |
+| checker/test/benchmark | benchmarks/check_trace_galerkin_evidence.py、两个相关test模块 | 原字段独立重判与反例；无新求解器/FE重建 |
+| input/config | input/task042_neural_coarse_inverse/p1_trace_galerkin_v22.json与六dat | 冻结物理/材料及warm hash；普通默认不变 |
+| compact evidence/docs | response22/outcome22/records与6份导航/总账前缀 | 负结果、成本、source和历史依赖保留；可独立审阅 |
+| do-not-merge | ignored T/Ac/LU/Gram投影/field/state/cache/results | 大对象不进Git；不从研究结果提升生产PC或宣称可扩展 |
+
+不存在master merge。旧task/review/response/raw不改；实际源提交与文档提交分开。[逐路径source](records/source_inventory_v22.json)、[测试](records/tests_v22.json)、[旧blob保护](records/static_checks_v22.json)。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # V21最小改动与依赖顺序
 
 | 组 | 实际改变、依赖与资格 |

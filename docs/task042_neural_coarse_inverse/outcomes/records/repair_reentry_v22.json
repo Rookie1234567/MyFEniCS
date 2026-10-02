@@ -1,0 +1,59 @@
+{
+  "repairs": [
+    {
+      "id": "R01",
+      "scope": "DELIVERY_HELPER_ONLY",
+      "root_cause": "relative baseline path to absolute-root registry API",
+      "minimal_fix": "resolve baseline path",
+      "start_utc": "2026-10-02T05:55:26.225760+00:00",
+      "end_utc": "2026-10-02T05:57:12.317223+00:00",
+      "repair_observed_seconds": 106.09146308898926,
+      "numerical_replay": 0,
+      "source_sha": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "targeted_result": "path fixed; separate new link error discovered",
+      "failed_log": "tmp/task042/v22/document_checks/worker.log"
+    },
+    {
+      "id": "R02",
+      "scope": "NEW_DELIVERY_LINK_ONLY",
+      "root_cause": "json vs jsonl journal link",
+      "minimal_fix": "point to actual jsonl",
+      "start_utc": "2026-10-02T05:57:12.317223+00:00",
+      "end_utc": "2026-10-02T05:58:43.581099+00:00",
+      "repair_observed_seconds": 91.26387643814087,
+      "numerical_replay": 0,
+      "source_sha": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "targeted_result": "LOCAL_STRUCTURE_AND_HISTORY_PASS",
+      "failed_log": "tmp/task042/v22/static_path_fix/worker.log",
+      "failed_static": "tmp/task042/v22/static_checks_failed_links.json"
+    },
+    {
+      "id": "R03",
+      "scope": "SCHEMA_TEST_FIXTURE_ONLY",
+      "root_cause": "validate-only child did not inherit parent fixture frozen root and deadline",
+      "minimal_fix": "own test window/ledger in both parent and child; actual campaign untouched",
+      "start_utc": "2026-10-02T06:09:25.360595+00:00",
+      "end_utc": "2026-10-02T06:12:25.948248+00:00",
+      "repair_observed_seconds": 180.58765268325806,
+      "numerical_replay": 0,
+      "source_sha": "7a7a44ea567abfc119e4eeec474e3e1bea46b519",
+      "targeted_result": "final related regression passed",
+      "evidence": "tmp/task042/v22/final_focused_after_freeze/worker.log"
+    },
+    {
+      "id": "R04",
+      "scope": "DELIVERY_PROCESS_READER_ONLY",
+      "root_cause": "own bash inspector source text contained matching v22 substring",
+      "minimal_fix": "match actual Python argv/script/dat tokens; shell-source counterexamples",
+      "start_utc": "2026-10-02T06:25:56.127354+00:00",
+      "end_utc": "2026-10-02T06:27:42.352280+00:00",
+      "repair_observed_seconds": 106.22492599487305,
+      "numerical_replay": 0,
+      "source_sha": "d06b8003794cfa4c3e9a1985ce696ebb9b863c8a",
+      "targeted_result": "6 argv counterexamples and live own process/lock check passed",
+      "failed_evidence": "tmp/task042/v22/R04_self_scan_failure.json"
+    }
+  ],
+  "resource_reentries": 0,
+  "cooldown_seconds": 0.0
+}

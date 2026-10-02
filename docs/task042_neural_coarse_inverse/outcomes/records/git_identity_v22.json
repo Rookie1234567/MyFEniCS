@@ -1,0 +1,21 @@
+{
+  "observed_utc": "2026-10-02T06:21:21.365978+00:00",
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "worktree_registration": [
+    "worktree /home/fenics/Projects/NN-Lab",
+    "HEAD d06b8003794cfa4c3e9a1985ce696ebb9b863c8a",
+    "branch refs/heads/task42_neural_coarse_inverse"
+  ],
+  "delivery_preparation_HEAD": "d06b8003794cfa4c3e9a1985ce696ebb9b863c8a",
+  "not_a_PDE_source_or_final_HEAD_claim": true,
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_task_commit": "f8c51c8e614edc806cf72120ac2cfd14ae8b62f7",
+  "all_identity_anchors_are_ancestors": true,
+  "ahead_behind_pre_delivery": "3\t0",
+  "other_worktrees_not_modified": true
+}

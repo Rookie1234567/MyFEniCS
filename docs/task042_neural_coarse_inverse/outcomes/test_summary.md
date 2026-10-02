@@ -1,3 +1,20 @@
+# V22 targeted回归与独立证据审核
+
+| 检查 | 实际结果／边界 |
+|---|---|
+| 最初p1/右PC小fixture | 9 passed / 1 failed；过严fixture期待已局部更正，未改真实driver/Gate |
+| 修正后事务/reader/六dat/schema/clock/cleanup | 25 passed / 1 deselected；无旧campaign重跑 |
+| 离线齐次误差投影与cold角色补强后 | 27 passed / 1 deselected；内容与独立VERIFY source一致 |
+| 正式p1→p3映射/Ac/LU/PC接线 | 真FE资格PASS；不等于物理求解通过 |
+| 独立原方程/场/40通道/功率 | frozen后读取REF7，4状态完整资格0/4；derived逐功率与原公式配对PASS |
+| 离线checker伪造通过反例 | 记录见tests_v22.json；从raw残差/场/功率重算，不信status |
+| 本地Markdown/compile/diff/历史保护 | final/static records，不能替代GitHub视觉 |
+| full repository/MPI2/4/CI/Ruff/GitHub视觉 | 未执行或NOT_VERIFIED，未升级环境/安装工具 |
+
+正式求解source24fbbad55fbef07b75533e60fc1869749a2f8777，独立VERIFY7a7a44ea567abfc119e4eeec474e3e1bea46b519；无正式重放/资源重入；交付辅助R01/R02最小路径修复只重放static；R03隔离schema fixture窗口，最终33passed/1deselected，未重复数值。最终源码/文档相关最小检查及继承旧总账失败若存在逐项记录，不全仓清理。[测试](records/tests_v22.json)、[静态/历史](records/static_checks_v22.json)、[费用](records/resource_costs_v22.json)。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # V21：真实作用、循环保存与读取边界的focused检查
 
 | 检查／成本口径 | measured结果／限制 |

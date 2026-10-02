@@ -1,0 +1,30 @@
+{
+  "observed_utc": "2026-10-02T06:30:13.861535+00:00",
+  "clock": {
+    "schema": "task042.campaign-window.v22",
+    "start_utc": "2026-10-02T03:54:44.446861+00:00",
+    "start_monotonic": 838279.307756222,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T07:24:44.446861+00:00",
+    "deadline_utc": "2026-10-02T07:54:44.446861+00:00",
+    "review_expected_commit": "4d14192e082117e69f76cd3a94c549557ce5693b",
+    "prior_HEAD": "54d249022429366dfb1028199a1d83cd599b6b28",
+    "scope": "first live UTC/monotonic/boot inspection; all implementation, wait, repair, numeric and delivery counted",
+    "observed_utc": "2026-10-02T06:30:13.861535+00:00",
+    "observed_monotonic": 847608.722401826,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 9329.414674043655,
+    "heavy_remaining_seconds": 3270.5853259563446,
+    "total_remaining_seconds": 5070.585325956345
+  },
+  "own_numeric_actor_pids": [],
+  "own_lock_released": true,
+  "all_run_descendants_cleared": true,
+  "window_not_refreshed": true,
+  "final_push_UTC_not_this_preparation_time": true,
+  "post_push_receipt": "tmp/task042/v22/final_git_receipt.json",
+  "late_delivery": false
+}

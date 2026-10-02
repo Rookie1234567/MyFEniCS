@@ -1,0 +1,29 @@
+{
+  "warm_parent": {
+    "name": "V21-C-FINAL",
+    "state": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v21/C/cycles/CALL_0112/physical.npz",
+      "sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+      "x_sha256": "bd1e676989c95e77753bd477d863e32d8ff84ca93bbc0a5ab11a79afe565cb4b",
+      "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+      "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+      "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+      "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+    }
+  },
+  "permitted_decoded_members": [
+    "trace",
+    "port",
+    "z",
+    "residual"
+  ],
+  "warm_metadata_only_extra_hashes_not_decoded": true,
+  "V21_B_read_failure": "FAIL_RETAINED",
+  "Z": "ZERO_TRACE_FROM_FROZEN_OPERATOR",
+  "Z_no_parent_arrays": true,
+  "Z_network_weights_and_Q_U_R_read": false,
+  "previous_formal_lower_bound_seconds": 70970.59978457249,
+  "upstream_per_warm_solution_precise_cost": "unknown retained; V14-V19 baselines/features/LSQR plus V21C",
+  "no_hidden_training": true,
+  "no_neural_training_increment_claimed": true
+}

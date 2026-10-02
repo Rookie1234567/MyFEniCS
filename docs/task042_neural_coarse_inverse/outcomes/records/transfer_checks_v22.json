@@ -1,0 +1,111 @@
+{
+  "actual": {
+    "status": "PASS",
+    "capacity": {
+      "n1": 1248,
+      "coarse_full_rows": 1494,
+      "full_transfer_nnz_upper": 663552,
+      "full_transfer_sparse_bytes_upper": 16197656,
+      "trace_sparse_bytes_upper": 12089096,
+      "support_bound": "sum over p1 MPC-expanded cell support times complete fine cell dimension; shared rows not added twice",
+      "new_workspace_upper_bytes": 289325056
+    },
+    "full_transfer_payload_bytes": 7792544,
+    "full_transfer_data_sha256": "0cb01a4ed54d51ca03f8e9d7539583104177f2e5ba31eb217c6ab7890e578e9a",
+    "full_transfer_shape": [
+      34050,
+      1248
+    ],
+    "p1_active_native_sha256": "871934496c833e8833b229f8dbd175f2808ceec3efae2462d49785e96cdfcd22",
+    "fine_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+    "fine_cell_dofs_sha256": "119897e89291f9b6e31d1db5c47ae9a272e0210b19261a7f5b7523d210994b9c",
+    "p1_cell_dofs_sha256": "66de655468c8af3a36d32f6c9d8858a8b9de255f66868a38f3fad48d4b7ba8c3",
+    "Floquet_phase_x": {
+      "real": 0.9999981684573771,
+      "imag": -0.0019139179426754464
+    },
+    "Floquet_phase_y": {
+      "real": 1.0,
+      "imag": 0.0
+    },
+    "nonidentity_orientation_cells": 96,
+    "orientation_classes": 5,
+    "full_complex_dual_operation_relative": 2.195678809424358e-18,
+    "witnesses": [
+      {
+        "name": "p1-random-422201",
+        "coefficient_operation_relative": 7.812016742937413e-16,
+        "field_operation_relative": 1.0968352396902082e-15,
+        "curl_operation_relative": 5.4375683240481494e-15,
+        "MPC_expansion_relative": 0.0,
+        "slave_zero_storage": 0.0,
+        "complete_high_order_moments": true,
+        "independent_DOLFINx_same_mesh_interpolation": true
+      },
+      {
+        "name": "p1-random-422202",
+        "coefficient_operation_relative": 7.561320397665704e-16,
+        "field_operation_relative": 1.0504249677744144e-15,
+        "curl_operation_relative": 5.22519940139622e-15,
+        "MPC_expansion_relative": 0.0,
+        "slave_zero_storage": 0.0,
+        "complete_high_order_moments": true,
+        "independent_DOLFINx_same_mesh_interpolation": true
+      },
+      {
+        "name": "single-edge",
+        "coefficient_operation_relative": 6.789119402863133e-16,
+        "field_operation_relative": 9.004444993447343e-16,
+        "curl_operation_relative": 4.727034426726965e-15,
+        "MPC_expansion_relative": 0.0,
+        "slave_zero_storage": 0.0,
+        "complete_high_order_moments": true,
+        "independent_DOLFINx_same_mesh_interpolation": true
+      }
+    ],
+    "trace_rank": {
+      "n1": 1248,
+      "fine_rows": 18144,
+      "trace_nnz": 217296,
+      "trace_payload_bytes": 4418500,
+      "column_norm_range": [
+        1.9999999999999958,
+        2.2360679774997925
+      ],
+      "normalization": "nonzero Euclidean column norm only; no clipping or entry deletion",
+      "Gram_eigen_range": [
+        0.9999999999999941,
+        1.0000000000000069
+      ],
+      "numerical_rank": 1248,
+      "rank_threshold_relative": 1e-12,
+      "full_column_rank": true,
+      "data_sha256": "bafbfcde3c77041f203ad5878479d25b04d46a418167b3a76a287befc056ccb3",
+      "indices_sha256": "3cc5da71c8af1b2a78e6acec87643453bef3651b8ba627f01362a7b8c3866522",
+      "indptr_sha256": "81d0e9885953dc7eca68e137ee9658f66f5b1794006f8998288ffdd8c042603b"
+    },
+    "no_drop_tolerance": 0.0,
+    "whole_transfer_seconds": 495.3328296140535,
+    "trace_restriction_is_not_interior_recovery": true,
+    "master_entity_owner": "certified DOLFINx interpolation: assigned once, no additive owner sum",
+    "qualified": true
+  },
+  "status": "QUALIFIED",
+  "coarse_name": "P1_TRACE_GALERKIN",
+  "not_rediscretized_p1": true,
+  "not_a_qualified_V_cycle": true,
+  "T": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/T.npz",
+    "sha256": "22e21cd840efb51d2dc66e556d85587088f406dce3221f564109a27b7b096fd8",
+    "shape": [
+      18144,
+      1248
+    ],
+    "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a"
+  },
+  "column_normalization": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/column_norms.npz",
+    "sha256": "972601b4cb443446436b1a116d847fa2b4f73c0051c5b03ea1afe5f03fc0e67a",
+    "norms_sha256": "7b92fc4b1c2260094b32279b4d0686a64335ce7b8799f7f6d9469beb281be089"
+  }
+}

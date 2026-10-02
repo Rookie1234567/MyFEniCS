@@ -1,0 +1,20 @@
+{
+  "T": {
+    "status": "not_run",
+    "reason": "P rho reduction only0.55%, no original1e-6pass or fivefold reduction"
+  },
+  "polish": {
+    "status": "not_run",
+    "reason": "no FIRST_EQUATION_PASS"
+  },
+  "out_of_scope": [
+    "p4 reference",
+    "largest0.7nm",
+    "otherwavelengths",
+    "GPU",
+    "hidden training",
+    "ILU/p4 inverse/parameter scan"
+  ],
+  "full_repository_MPI2_MPI4_CI": "not_run",
+  "GitHub_visual": "NOT_VERIFIED"
+}

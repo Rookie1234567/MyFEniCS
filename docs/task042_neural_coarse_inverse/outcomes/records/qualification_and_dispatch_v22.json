@@ -1,0 +1,54 @@
+{
+  "states": {
+    "V21-C-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "N-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "P-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "Z-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    }
+  },
+  "states_count": 4,
+  "strict_pass_count": 0,
+  "PC_qualified": true,
+  "original_coarse_name": "P1_TRACE_GALERKIN",
+  "no_neural_increment": true,
+  "final_0p7nm_48h": "NOT_QUALIFIED",
+  "counts": {
+    "actions": 19974,
+    "B": 9336,
+    "coarse_triangular": 37472,
+    "audits": 49,
+    "field_states": 7,
+    "transfer_builds": 1,
+    "coarse_assemblies": 1,
+    "factor_setups": 3
+  },
+  "limits": {
+    "actions": 40000,
+    "B": 20000,
+    "coarse_triangular": 41000,
+    "audits": 160,
+    "field_states": 12,
+    "transfer_builds": 1,
+    "coarse_assemblies": 1,
+    "factor_setups": 4
+  },
+  "counters_within_limits": true,
+  "data_roles_pass": true,
+  "old_V21_B_FAIL_preserved": true,
+  "actual_equation_and_field_numbers_independently_rechecked": true,
+  "reference_not_read_by_solver": true,
+  "not_run": [
+    "T"
+  ]
+}

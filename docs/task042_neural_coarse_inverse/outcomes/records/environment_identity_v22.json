@@ -1,0 +1,170 @@
+{
+  "ABI": {
+    "scalar": "complex128",
+    "integer": "int64",
+    "mpi_size": 1,
+    "petsc_version": [
+      3,
+      19,
+      6
+    ],
+    "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "jit_cache": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/xdg/fenics"
+  },
+  "modules": {
+    "numpy": {
+      "path": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+      "version": "1.26.4"
+    },
+    "src": {
+      "path": "/home/fenics/Projects/NN-Lab/src/__init__.py",
+      "version": null
+    },
+    "src.solvers.coarse_inverse_protocol": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/coarse_inverse_protocol.py",
+      "version": null
+    },
+    "scipy": {
+      "path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+      "version": "1.11.4"
+    },
+    "basix": {
+      "path": "/usr/lib/python3/dist-packages/basix/__init__.py",
+      "version": "0.10.0"
+    },
+    "ufl": {
+      "path": "/usr/lib/python3/dist-packages/ufl/__init__.py",
+      "version": "2025.2.1"
+    },
+    "ffcx": {
+      "path": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
+      "version": "0.10.1.post0"
+    },
+    "mpi4py": {
+      "path": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+      "version": "3.1.5"
+    },
+    "petsc4py": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+      "version": "3.19.6"
+    },
+    "dolfinx": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+      "version": "0.10.0"
+    },
+    "dolfinx_mpc": {
+      "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+      "version": null
+    },
+    "setuptools": {
+      "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/setuptools/__init__.py",
+      "version": "78.1.0"
+    },
+    "cffi": {
+      "path": "/usr/lib/python3/dist-packages/cffi/__init__.py",
+      "version": "1.16.0"
+    },
+    "pyvista": {
+      "path": "/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/pyvista/__init__.py",
+      "version": "0.48.4"
+    },
+    "src.solvers.dtn_port_3d": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/dtn_port_3d.py",
+      "version": null
+    },
+    "src.runners.task042_experiment": {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_experiment.py",
+      "version": null
+    }
+  },
+  "loaded_libraries": [
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib/libdolfinx_mpc.so.0.10.1",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/cpp.cpython-312-x86_64-linux-gnu.so",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/petsc/lib/libscalapack.so.2.2.1",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/python3/dist-packages/basix/_basixcpp.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/python3/dist-packages/scipy/linalg/_fblas.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/python3/dist-packages/scipy/linalg/cython_blas.cpython-312-x86_64-linux-gnu.so",
+    "/usr/lib/x86_64-linux-gnu/libbasix.so.0.10.0",
+    "/usr/lib/x86_64-linux-gnu/libcuda.so.595.91.07",
+    "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+    "/usr/lib/x86_64-linux-gnu/libmpi_cxx.so.40.30.1",
+    "/usr/lib/x86_64-linux-gnu/libmpi_mpifh.so.40.30.0",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+    "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so"
+  ],
+  "qualification": "IMPORT_PATH_ABI_PASS",
+  "qualification_source": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe_import_environment.json",
+    "sha256": "3fa0a089b8adc0e19275b8f88fb23db1726cbc930bb2d426c7b56260a1417bea",
+    "bytes": 8094
+  },
+  "preformal_import_only": true,
+  "preformal_source_sha": "4d14192e082117e69f76cd3a94c549557ce5693b",
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "readonly_native_prefix_reused": true,
+  "caches": {
+    "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/tmp",
+    "TMP": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/tmp",
+    "TEMP": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/tmp",
+    "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/xdg",
+    "XDG_CONFIG_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/config",
+    "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/xdg/fenics",
+    "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/pycache",
+    "MPLCONFIGDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/matplotlib",
+    "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/torch",
+    "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/huggingface",
+    "HUGGINGFACE_HUB_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/huggingface/hub",
+    "TRANSFORMERS_CACHE": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/huggingface/transformers",
+    "TRITON_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/triton",
+    "CUDA_CACHE_PATH": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/cuda",
+    "NUMBA_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/numba",
+    "PIP_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/pip",
+    "UV_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/uv",
+    "RUFF_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/fe/ruff",
+    "TASK042_RESULTS_ROOT": "/home/fenics/Projects/NN-Lab/results/task042",
+    "TASK042_ARTIFACT_ROOT": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042"
+  },
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "VERIFY_actual_threads": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "ordinary_environment_not_changed": true,
+  "queue_environments": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/queue_environment.json",
+      "sha256": "d7477567beab850218f5a7435cadc0c6335db67c05db211ee7206ae2c1588305",
+      "bytes": 3417
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v22/verify_queue_environment.json",
+      "sha256": "e9eac57049e04ec4041cb884ffe74b26e36ac21b729545264acbdcf797e7c883",
+      "bytes": 3417
+    }
+  ]
+}

@@ -1,3 +1,9 @@
+# 最新导航：V22 / Review V19 已收口
+
+[Review](review_report_v19.md)、[Response](response_v22.md)、[结果](outcomes/p1_trace_galerkin_correction_v22.md)、[Gate](outcomes/records/qualification_and_dispatch_v22.json)、[run/source](outcomes/records/run_index_v22.json)。S/N/P/Z/V完成，T未准入；粗层资格通过，0/3新候选原方程与完整物理通过。队列已清场，等待review；旧阶段只作历史，不merge。
+
+以下历史正文逐字保留，旧“当前”仅指其当时阶段。
+
 # 最新导航：V21 / Review V18 已收口
 
 [Review](review_report_v18.md)、[Response](response_v21.md)、[详细结果](outcomes/exact_action_recycled_correction_v21.md)、[Gate](outcomes/records/qualification_and_dispatch_v21.json)、[run/source](outcomes/records/run_index_v21.json)、[费用](outcomes/records/resource_costs_v21.json)。D0/A/B/C/V已执行，条件T/Z按原进展准入。数值队列清场后等待review，不能依旧导航继续旧实验；不merge。
