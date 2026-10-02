@@ -1,39 +1,8 @@
 {
-  "items": [
-    {
-      "stage": "SETUP",
-      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
-      "numerical_status": "NOT_RUN"
-    },
-    {
-      "stage": "LW",
-      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
-      "numerical_status": "NOT_RUN"
-    },
-    {
-      "stage": "LCW",
-      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
-      "numerical_status": "NOT_RUN"
-    },
-    {
-      "stage": "LZ",
-      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
-      "numerical_status": "NOT_RUN"
-    },
-    {
-      "stage": "LCZ",
-      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
-      "numerical_status": "NOT_RUN"
-    },
-    {
-      "stage": "VERIFY",
-      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
-      "numerical_status": "NOT_RUN"
-    }
-  ],
-  "actual_implementation_and_schema_valid": true,
-  "parameter_scans_not_run": true,
-  "new_p4_reference_not_run": true,
-  "p4_global_factor_constructed": false,
-  "actual_local_factor_constructed": false
+  "automatic_extensions": "not_run; latest Review21 section10 restricts first4 each",
+  "p4_reference": "outside contract",
+  "maximum_geometry": "outside contract",
+  "GPU_NN_training_rank_tau_ILU_scan": "outside contract",
+  "new_reference_projection": "forbidden",
+  "GitHub_visual": "NOT_VERIFIED"
 }

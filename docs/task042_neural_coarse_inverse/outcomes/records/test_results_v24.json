@@ -112,5 +112,144 @@
   ],
   "expensive_history_campaigns": "not_run",
   "full_pytest_MPI2_MPI4_CI": "not_run",
-  "new_postapproval_tests": "not_run; approval service unavailable"
+  "new_postapproval_tests": "26 focused passed; prior approval-service not_run snapshot retained in Git history",
+  "initial_postapproval_placeholder": "historical not_run; later resumed within original window",
+  "section10_focused_passed": 26,
+  "section10_summary": {
+    "workflow_deadline_seconds": 180.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 2147483648,
+    "rss_warning_bytes": 1610612736,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      1293375,
+      1293376,
+      1293389,
+      1293390,
+      1293391,
+      1293392,
+      1293393,
+      1293394
+    ],
+    "sampled_process_tree_rss_peak_bytes": 143552512,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "end": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2099544186880,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2099544186880,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 12000000000,
+      "planning_cap_bytes": 12000000000,
+      "cgroup_limits": []
+    },
+    "samples": 27,
+    "elapsed_seconds": 7.658419269951992,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3",
+      "git_status": " M src/io/local_block_pair.py\n M src/runners/local_block_queue.py\n M src/solvers/local_block_study.py\n M src/test/test_task042_v24_local_coarse.py\n?? src/solvers/local_block_readiness.py\n?? src/test/test_task042_v24_admission.py\n",
+      "stage": "F0",
+      "formal_pde": false,
+      "command": [
+        "bash",
+        "-c",
+        "set -e; python scripts/task042_preflight.py --output \"$1\"; shift; exec \"$@\"",
+        "task042-v24",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v24/section10_focused_1_environment.json",
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_task042_v24_admission.py",
+        "src/test/test_task042_v24_local_coarse.py"
+      ],
+      "utc": "2026-10-02T14:43:01.207945+00:00",
+      "affinity": [
+        13
+      ],
+      "environment_mode": "pure",
+      "gpu_visible": false
+    }
+  },
+  "section10_pytest_seconds": 5.39,
+  "formal_setup_and_routes_and_unique_VERIFY": "executed; source bound in run_index",
+  "validate_only_source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc",
+  "actual_each_run_schema_validated_source_sha": [
+    "03fd7874190c33a837879d76312d9911223314e0"
+  ],
+  "final_relevant_source_tests_passed": true,
+  "no_full_pytest_MPI2_MPI4_CI_claim": true,
+  "compact_qualification_tests_passed": 5,
+  "compact_qualification_postfinal_replay_passed": 5,
+  "compact_checker_raw_results": {
+    "local_qualified": true,
+    "composite_qualified": true,
+    "states": 5,
+    "passed": 0
+  },
+  "scalar_replay_cost_scope": "not separately supervised; included in whole elapsed",
+  "final_compact_checker_replay": {
+    "clock": {
+      "schema": "task042.campaign-window.v24",
+      "start_utc": "2026-10-02T12:04:23.502588+00:00",
+      "start_monotonic": 867658.363474344,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 12600,
+      "total_limit_seconds": 14400,
+      "heavy_stop_utc": "2026-10-02T15:34:23.502588+00:00",
+      "deadline_utc": "2026-10-02T16:04:23.502588+00:00",
+      "review_expected_commit": "c3370061c6693eab70e20c34965ec7d640b978bd",
+      "prior_HEAD": "dfaf983c2f6de28f59ee3271fb071c5b97210d2d",
+      "scope": "first real clock; all implementation/tests/wait/setup/solve/verify/delivery included",
+      "observed_utc": "2026-10-02T15:48:36.868027+00:00",
+      "observed_monotonic": 881111.728900264,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 13453.36543917656,
+      "heavy_remaining_seconds": 0.0,
+      "total_remaining_seconds": 946.6345608234406
+    },
+    "command": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "src/test/test_task042_v24_compact_qualification.py"
+    ],
+    "returncode": 0,
+    "output": ".....                                                                    [100%]\n5 passed in 0.17s",
+    "wall_seconds": 0.44862538401503116,
+    "scope": "lightweight frozen-evidence qualification only; reference independently recomputed from raw residuals",
+    "numerical_core_unchanged": true,
+    "separate_RSS_not_measured": true,
+    "cost_in_batch_elapsed": true
+  }
 }

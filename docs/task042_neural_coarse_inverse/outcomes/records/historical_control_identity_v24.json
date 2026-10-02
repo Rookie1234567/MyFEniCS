@@ -1,0 +1,28 @@
+{
+  "controls": {
+    "v22": {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv",
+      "sha256": "e933286f7175fbfe97b1e94131ed01c54399b3b5d6eae8fc7953c0710b1a69ed",
+      "bytes": 19871
+    },
+    "v23": {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v23.csv",
+      "sha256": "c04da9f071b5488084d3b7d72e3270bf8d592a9f6d6e4369df9c3ecd9c42f498",
+      "bytes": 4902
+    }
+  },
+  "candidate_tables": {
+    "v22": {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv",
+      "sha256": "fd7fbeecc630c31d687ba0f1093c5761c9ed409dc721fc1d2e84745a79d0af19",
+      "bytes": 3243
+    },
+    "v23": {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v23.csv",
+      "sha256": "ea2132377b836e6c281f77549b3600ffbc86c7a475bf21233be8d30f94c09dca",
+      "bytes": 4638
+    }
+  },
+  "no_reruns": true,
+  "no_equal_action_or_wall_interpolation": true
+}

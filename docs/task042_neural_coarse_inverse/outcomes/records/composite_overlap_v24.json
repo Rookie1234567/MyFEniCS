@@ -1,6 +1,97 @@
 {
-  "status": "NOT_RUN",
-  "scope": "actual V24 operator/physics",
-  "reason": "No numerical actor launched; synthetic regression is separately recorded",
-  "source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc"
+  "D_L": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/D_L.npy",
+    "sha256": "2e20a2e03b044d9d0642ef7b5b34f88d5a737718d86c42bce90c1ef00d908e47",
+    "array_sha256": "0b26005408babe76ca8f6028bf334665676d814ae84f414c8503eacd856dbe1d",
+    "shape": [
+      1248,
+      1248
+    ],
+    "bytes": 24920064
+  },
+  "overlap": {
+    "safety": {
+      "sigma_min": 0.0374454311368198,
+      "sigma_max": 185.0135995645903,
+      "ratio": 0.000202392857740964,
+      "fixed_threshold": 1e-12,
+      "numerical_full_column_rank": true,
+      "meaning": "small block safety; not the fine operator condition"
+    },
+    "build_seconds": 43.82246584398672,
+    "SVD_seconds": 5.711596321081743,
+    "D_L_sha256": "0b26005408babe76ca8f6028bf334665676d814ae84f414c8503eacd856dbe1d",
+    "column_buffer_max": 32,
+    "known_old_overlap_not_reused": true,
+    "product_operation_scale": 31116.166447067662,
+    "whole_overlap_roundoff_floor": 4.4218732067332187e-10,
+    "whole_overlap_resolved": true,
+    "ratio_threshold_unchanged": true,
+    "qualified": true
+  },
+  "checks": {
+    "witnesses": [
+      {
+        "seed": 422431,
+        "coarse_balance": {
+          "absolute": 5.313738444556588e-15,
+          "operation_relative": 9.93232578150859e-15
+        },
+        "LC_Dop_T": {
+          "absolute": 7.395887373049982e-14,
+          "operation_relative": 1.7828081317634127e-14
+        }
+      },
+      {
+        "seed": 422432,
+        "coarse_balance": {
+          "absolute": 4.1572271573822105e-15,
+          "operation_relative": 7.89879667318149e-15
+        },
+        "LC_Dop_T": {
+          "absolute": 8.52866834749074e-14,
+          "operation_relative": 2.0276359721539044e-14
+        }
+      },
+      {
+        "seed": 422433,
+        "coarse_balance": {
+          "absolute": 5.6380870119358905e-15,
+          "operation_relative": 1.0770286928695065e-14
+        },
+        "LC_Dop_T": {
+          "absolute": 8.690994250125816e-14,
+          "operation_relative": 2.1009099908248703e-14
+        }
+      }
+    ],
+    "repeat": {
+      "absolute": 0.0,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "absolute": 1.2522458219978509e-13,
+      "operation_relative": 9.368734242054294e-14
+    },
+    "qualified": true
+  },
+  "reused_image_pairs": [
+    {
+      "absolute": 2.9461307703795225e-14,
+      "operation_relative": 5.89443047831642e-16
+    },
+    {
+      "absolute": 4.0826689258720147e-14,
+      "operation_relative": 4.54687196158548e-16
+    },
+    {
+      "absolute": 3.323530152412594e-14,
+      "operation_relative": 6.521416178157464e-16
+    }
+  ],
+  "qualified": true,
+  "stop": null,
+  "GLOBAL_TALL_IMAGE_QR_PRESENT": true,
+  "no_new_W_QR": true,
+  "no_rank_cut_shift_or_pseudoinverse": true
 }

@@ -1,39 +1,92 @@
 {
-  "classification": "EXECUTION_RESUMED_NUMERICAL_GATE_PENDING",
-  "implementation_and_focused_tests": "COMPLETE",
-  "entrypoint_validate": "6/6 valid",
-  "first_queue_semantic_status": "ADMISSION_BLOCKED_NO_FREE_PHYSICAL_CORE",
-  "outer_queue_exit_code": 0,
-  "outer_exit_is_not_numerical_success": true,
-  "second_queue_status": "AUTOMATIC_APPROVAL_REVIEW_FAILURE",
-  "second_queue_executed": false,
-  "formal_setup": "NOT_RUN",
-  "formal_routes": {
-    "LW": "NOT_RUN",
-    "LCW": "NOT_RUN",
-    "LZ": "NOT_RUN",
-    "LCZ": "NOT_RUN"
+  "status": "NOT_QUALIFIED",
+  "recomputed_from_raw_fields": true,
+  "gates": {
+    "LW-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "LCW-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "LZ-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "LCZ-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    },
+    "V21-C-FINAL": {
+      "original_equation": false,
+      "complete_same_discrete": false
+    }
   },
-  "reference_validation": "NOT_RUN",
-  "reference_read": false,
-  "physical_pass_count": null,
-  "no_new_numerical_negative_or_success": true,
-  "charged": {
-    "actions": 0,
-    "L8": 0,
-    "local_lu_solve": 0,
-    "local_triangular_pass": 0,
-    "R_triangular": 0,
-    "audits": 0,
-    "field_states": 0,
-    "block_assemblies": 0,
-    "local_factors": 0,
-    "DL_SVD": 0,
-    "factor_readers": 0
+  "passed": 0,
+  "states": 5,
+  "local_qualified": true,
+  "composite_qualified": true,
+  "routes": {
+    "LW": {
+      "status": "ROUTE_COMPLETE",
+      "stop": "FIXED_PROGRESS_RULE_STOP",
+      "cycles": 4,
+      "first_pass_cycle": null,
+      "rho_reduction": 0.01028398840221878
+    },
+    "LCW": {
+      "status": "ROUTE_COMPLETE",
+      "stop": "FIXED_PROGRESS_RULE_STOP",
+      "cycles": 4,
+      "first_pass_cycle": null,
+      "rho_reduction": 0.0015615298714850567
+    },
+    "LZ": {
+      "status": "ROUTE_COMPLETE",
+      "stop": "SLICE_TARGET_COMPLETE",
+      "cycles": 4,
+      "first_pass_cycle": null,
+      "rho_reduction": 0.9186233320950732
+    },
+    "LCZ": {
+      "status": "ROUTE_COMPLETE",
+      "stop": "SLICE_TARGET_COMPLETE",
+      "cycles": 4,
+      "first_pass_cycle": null,
+      "rho_reduction": 0.6747377772572611
+    }
   },
-  "execution_recovered_utc": "2026-10-02T14:08:39.964582+00:00",
-  "prior_approval_failure_preserved": true,
-  "numerical_gate_still_pending": true,
-  "reset_card_used": false,
-  "credits_balance_allowed": true
+  "counts": {
+    "actions": 6370,
+    "L8": 4159,
+    "local_lu_solve": 33352,
+    "local_triangular_pass": 66704,
+    "R_triangular": 2082,
+    "audits": 26,
+    "field_states": 5,
+    "block_assemblies": 1,
+    "local_factors": 8,
+    "DL_SVD": 1,
+    "factor_readers": 4
+  },
+  "limits": {
+    "actions": 45000,
+    "L8": 25000,
+    "local_lu_solve": 210000,
+    "local_triangular_pass": 420000,
+    "R_triangular": 14000,
+    "audits": 160,
+    "field_states": 12,
+    "block_assemblies": 1,
+    "local_factors": 8,
+    "DL_SVD": 1,
+    "factor_readers": 5
+  },
+  "counters_within_limits": true,
+  "neural_20percent_increment": "NOT_DEMONSTRATED",
+  "no_neural_training": true,
+  "final_original_size_0p7nm_48h": "NOT_QUALIFIED",
+  "no_reference_selection": true,
+  "no_uncontended_strict_speedup_claim": true
 }

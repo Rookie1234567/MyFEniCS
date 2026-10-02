@@ -1,90 +1,88 @@
-# V24最新进度：按Review V21新增§10修复后仅执行首块
+# Response V24：固定八块局部解与粗层首块对照已完成
 
-已核对主机无V24数值actor并安全同步至0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3。两个控制流缺口已最小修复，26项focused回归通过。失败SETUP仅凭true标志不再准入；公共证据封存后独立复算，只有粗层失败时L8仍可行。四路各首4周期，不再自动LW8；第五reader只供必要恢复。原窗口不刷新，无重置卡，无dot/master操作。以下阶段记录为早先真实历史；正式数值即将按Gate推进，其source由实际run绑定。
+四条首块及唯一冻结审核已完成，完整同离散资格0/5。资格由原方程、场、端口及逐通道功率共同决定；单项native通过或残差降低不能替代完整资格。神经20%增量独立记NOT_DEMONSTRATED：本批无隐藏层训练，也没有最佳合格非神经同精度／完整端到端成本的配对性能证据。
 
-# V24续行记录：账户接口及执行审批已恢复
+本批用八个固定几何区域中的完整局部解来修正残差，再比较追加既有低阶作用像校正的效果。局部解考虑同组未知量的耦合；组合解在局部修正后再处理粗空间能够消除的部分。原有限元方程、跨块耦合、内部恢复和全部40端口保持，代价是八块稠密LU、每次八个局部解及组合路线额外的原作用和全局薄矩阵乘法。
 
-2026-10-02T14:07Z之后实际只读主机核验通过：新候选核CPU15、PSI full avg10=0、原系统/邻增长余量和磁盘Gate通过。周额度用尽时允许使用现有余额；明确禁止使用重置卡，未调用重置功能。以下认证阻塞是早先真实历史，保留原始失败；本批现继续原Review V21队列，原heavy-stop15:34:23.502588Z、deadline16:04:23.502588Z保持。当前真实数值仍未运行，后续来源与计数由正式run绑定。
+| 路线／起点 | 周期 | Schur（≤1e-6） | native（≤1e-6） | 散射E差（≤1e-4） | 最大通道功率差（≤1e-6） | 完整资格 |
+|---|---:|---:|---:|---:|---:|---|
+| V21-C-FINAL | 历史暖点 | 2.528117033e-06 | 9.804133464e-07 | 7.816080389e-05 | 1.719644651e-06 | FAIL |
+| LW-FINAL | 4 | 2.502117907e-06 | 9.703307865e-07 | 7.778607315e-05 | 1.666968717e-06 | FAIL |
+| LCW-FINAL | 4 | 2.524169303e-06 | 9.788824018e-07 | 7.808877891e-05 | 1.708820964e-06 | FAIL |
+| LZ-FINAL | 4 | 0.0813766679 | 0.03155817955 | 0.5688882779 | 0.007245973616 | FAIL |
+| LCZ-FINAL | 4 | 0.3252622227 | 0.12613792 | 0.8368884535 | 0.007757579435 | FAIL |
 
-# Response V24：八块局部解与粗层配对已实现，正式计算受执行服务阻塞
+## 实际执行和来源
 
-按 Review V21 完成新数值核、六个 one-run 入口、定向回归和入口验证。**真实 SETUP、LW、LCW、LZ、LCZ、VERIFY 均未运行**，没有新的场、通过点或数值负结果。本批停止原因是执行服务认证不可用；不能判断固定八块方法有效或无效，也没有完整有限元、神经增量、目标规模或 merge 资格。
+已只读核查本机无活跃Task042 actor，安全取得Review V21 §10提交0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3。两项控制流修复后26 focused tests通过；正式计算均从clean实现03fd7874190c33a837879d76312d9911223314e0运行。没有重复执行历史campaign、重新索要材料、修改dot或merge master。每个dat是一项明确stage。
 
-本次拟改变每次残差修正：先把全部独立边／面未知量按八个固定几何区域分组，在每组内部解完整局部耦合；再比较是否追加原有低阶空间中的最小残差粗校正。外层仍保留跨块耦合、全部有限元未知量及 40 个端口。代价是八块局部完整 LU、每次八个三角求解，以及组合路线的原算子作用与大型薄矩阵读取。当前只有实现和小模型证据，尚无这一方法的真实 micro 数值结论。
+收口资格checker的5项回归通过，并从保存的原始参考残差、候选场和逐通道功率重新判定0/5；没有用布尔成功标志、native单项或舍入值授予资格。最终checker和文档提交不替代上述正式运行source。
 
-## 实際执行、未运行与停止原因
+SETUP完成后LW4结束；LCW第一次因未找到空闲物理核在actor创建前拒绝。一次低成本复核通过后，受独立整树watchdog推进尚未消费的LCW4/LZ4/LCZ4；直接保留LW，未重新读取其因子或重算周期。队列冻结/hash确定后独立VERIFY读取旧REF7，只做同离散审核，没有新LU参考。第五reader未用于LW8，实际reader=4，各路最多4周期，没有自动扩展。
 
-| 阶段 | 实际证据 | 本轮分类 |
-|---|---|---|
-| 身份／合同 | canonical linked worktree；同分支安全 fetch/ff 至 Review `c3370061c6693eab70e20c34965ec7d640b978bd` | 完成 |
-| C1/C2 实现 | 数值核位于 `src/solvers/local_block_coarse.py`、`local_block_study.py`；薄 runner、角色 reader、监督与六 dat 已接线 | 已提交实现 |
-| 小型回归 | 最终 28 passed、2 个已消费历史接线用例 deselected；包含四条新实际 dat→stage→右 PC→GMRES→close→保存→独立审核 fixture | 小模型通过，非正式 FE 资格 |
-| 新入口验证 | 六项 `scripts/run_case.py --validate-only` 均 valid；source clean | 完成 |
-| 首次 SETUP 准入 | 无空闲物理核，数值 actor 未创建；外层队列退出 0 不能解释为数值成功 | ADMISSION_BLOCKED |
-| 有界资源复核 | 12:30:47.492979Z 主机只读检查发现 CPU27 可用；这不是永久保留核 | 当时准入检查通过 |
-| 受监督队列重试 | 自动审批服务令牌刷新失败，403 区域不支持；工具明确表示命令未执行 | EXECUTION_BLOCKED |
-| 真实 SETUP／四路线／VERIFY | 没有数值 actor、局部因子、D_L、周期或新场；未读取 REF7 | NOT_RUN |
-| 文档提交／push | 服务故障后的记录仅在本地保存；未绕过审批写 canonical Git 或推送 | 待服务恢复 |
+## 数值资格与真实差异
 
-自动审批错误原文为 `Failed to refresh token: 403 Forbidden: Country, region, or territory not supported`；它是审批服务无法完成审核，不是认定 Task042 操作不安全。随后网页工具独立返回 `401 token_expired` 并提示重新登录。用户对本批的授权仍有效。恢复需要客户端／账户侧重新认证；不改工作站网络、共享配置或权限策略绕过检查。
+| 路线 | 首块降rho | 实际原S/Sᴴ | L8 apply | R三角解 | actor监督wall(s) | 树峰(B) |
+|---|---:|---:|---:|---:|---:|---:|
+| LW | 1.0283988% | 1064 | 1036 | 0 | 371.309140 | 1865379840 |
+| LCW | 0.15615299% | 2100 | 1036 | 1036 | 556.559626 | 2490769408 |
+| LZ | 91.862333% | 1064 | 1036 | 0 | 380.836720 | 1916489728 |
+| LCZ | 67.473778% | 2100 | 1036 | 1036 | 507.163305 | 2490302464 |
 
-原始 journal 中首次准入退出的 `dependent_not_run: local block numerical Gate` 是队列的泛化分支描述。实际 worker traceback 是无空闲物理核，SETUP 数值 Gate 根本未执行。原始记录保留；[独立分流记录](outcomes/records/qualification_and_dispatch_v24.json)明确区分准入、审批故障与数学失败。
+完整失败项按原始数值记录，功率均为UNQUALIFIED_DIAGNOSTIC；展示舍入不参与Gate：
 
-## 实现身份与固定模型
+- LW-FINAL: Schur=2.502117907e-06>1e-06; max_channel_power_difference=1.666968717e-06>1e-06；最差功率通道bottom(0,0,s)，reference z=-0.175 nm。
+- LCW-FINAL: Schur=2.524169303e-06>1e-06; max_channel_power_difference=1.708820964e-06>1e-06；最差功率通道bottom(0,0,s)，reference z=-0.175 nm。
+- LZ-FINAL: Schur=0.0813766679>1e-06; native=0.03155817955>1e-06; augmented=0.03155817955>1e-06; independent_total_native=0.01095066894>1e-06; total_E=0.05953121372>0.0001; total_curl=0.05954570821>0.0001; scattered_E=0.5688882779>0.0001; scattered_curl=0.5690159904>0.0001; selected_E=0.05788105244>0.0001; selected_H=0.06119189938>0.0001; complex_ports=0.01809496795>0.0001; max_RTA_Avolume_difference=0.01448273578>1e-05; max_channel_power_difference=0.007245973616>1e-06; energy_closure=0.01451678086>1e-05；最差功率通道bottom(0,0,s)，reference z=-0.175 nm。
+- LCZ-FINAL: Schur=0.3252622227>1e-06; native=0.12613792>1e-06; augmented=0.12613792>1e-06; independent_total_native=0.04376978084>1e-06; total_E=0.08757604492>0.0001; total_curl=0.08757772503>0.0001; scattered_E=0.8368884535>0.0001; scattered_curl=0.8368886263>0.0001; selected_E=0.08790239777>0.0001; selected_H=0.08717459802>0.0001; complex_ports=0.08555298143>0.0001; max_RTA_Avolume_difference=0.007744882354>1e-05; max_channel_power_difference=0.007757579435>1e-06; energy_closure=0.005038904117>1e-05；最差功率通道top(0,0,s)，reference z=1.225 nm。
+- V21-C-FINAL: Schur=2.528117033e-06>1e-06; max_channel_power_difference=1.719644651e-06>1e-06；最差功率通道bottom(0,0,s)，reference z=-0.175 nm。
 
-当前实现 HEAD `370b7bbe2455448b320ca4272eb62950e4715ecc`；base `ccd357885f7f9be84efe3be07868cc94f13d93fc`。唯一分支 `task42_neural_coarse_inverse`，upstream `origin/task42_neural_coarse_inverse`；本地 tracking 比较 ahead 1／behind 0，仅反映最后成功 fetch。没有正式运行源码 SHA；上述 HEAD 是已提交实现身份，不能冒充数值 run source。
+| 状态；全部为未资格诊断 | R00_s | R00_p | R_total | T_total | A_balance | A_volume | 能量误差 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| LW-FINAL | 0.1176449645 | 6.952925802e-13 | 0.1176460215 | 0.8770494499 | 0.005304528605 | 0.005306406598 | 1.877993788e-06 |
+| LCW-FINAL | 0.1176449706 | 7.011877452e-13 | 0.1176460275 | 0.8770494918 | 0.005304480711 | 0.005306406825 | 1.92611376e-06 |
+| LZ-FINAL | 0.1104079944 | 3.889963505e-12 | 0.1104090388 | 0.8698018277 | 0.01978913352 | 0.005272352662 | 0.01451678086 |
+| LCZ-FINAL | 0.109887183 | 1.728616029e-09 | 0.109900937 | 0.8797669468 | 0.01033211621 | 0.005293212092 | 0.005038904117 |
 
-工作树 `/home/fenics/Projects/NN-Lab`，common Git `/home/fenics/Projects/Maxwell3D-Lab/task-repository.git`，origin `git@github-myfenics:Rookie1234567/MyFEniCS.git`。没有 reset、其他 worktree 操作、origin／全局配置修改或历史重写。交付文档若尚未提交，工作树修改状态单独列于最终 receipt，不声称 clean／已推送。
+单通道功率与参考面另保留200条逐项记录；没有把总R/T接近当作每通道通过。完整storage DoF34050（trace18144+internal13824+slave2082），Full3D/MPI1/p3/h0.175nm/q15，M=40；fine全局NNZ未构造，不填伪造NNZ。
 
-原 0.7nm／384hex／p3／h0.175nm／q15、三维缺口、入射、背景及双 Floquet/DtN 保持；trace18144、内部13824、slave2082、top20+bottom20、完整 z18184。材料继续离线读取 canonical `input/materials/si_optical_constants_v1.json`，ID `SI_OPTICAL_CONSTANTS_USER_20260929_V1`；source `0.699999988` 仅明确 alias 至 nominal `0.7`。Si n=0.999885140474+4.32477054e-6i、epsilon=n*n、mu=1；未重新索要或替换用户数值。
+局部收益与粗层额外收益按共同周期及实际原作用前缀分别比较；LC每次PC多一次fine A及全局Uᴴ/R/T作用，不能将相同周期视作同成本。共同作用次数或wall不存在时不插值伪造比较；含setup成本，共享工作站性能结论INCONCLUSIVE。小幅loss改善没有授予神经求解正信号，暖点保留其全部上游费用。
 
-物理／材料／模式／action／map／T/U/R／父状态身份见[来源记录](outcomes/records/source_inventory_v24.json)。本轮的上游 hash 是冻结读取合同，不将尚未执行的真实成员核验写成通过。新 SETUP 不读取暖向量；WARM 只解压 trace/port/z/residual；ZERO 不读取暖解、神经数据或循环方向；VERIFY 只有队列冻结后才允许读 REF7。目前这些大型状态均未由 V24 数值 actor 解压。
+只读既有最终残差所得U空间平方覆盖：LW=0.004466895231，LZ=0.2255810583。这是一次粗修正理论可消除的当前残差比例描述，不是新解、条件数或一般误差界；没有读取参考来算它，也没有回填优化。LZ残差仍有可见粗投影而LCZ更差，不能简单宣称粗空间完全没有方向；当前组合的循环效果和额外成本没有支持收益。
 
-## 数学与容量边界
+## 构造、容量与因子存在
 
-```math
-A=\bar S,\qquad A_b=E_bAE_b^H=K_b-C_bH_{hat}^{-1}F_b,
-\qquad Lr=\sum_b E_b^H A_b^{-1}E_b r.
-```
+原0.7nm/384hex/p3/h0.175nm/q15、三维缺口、双Floquet与完整40通道保持。trace18144、内部13824、slave2082，完整z18184。canonical材料仍是SI_OPTICAL_CONSTANTS_USER_20260929_V1：source0.699999988仅明确alias到nominal0.7；Si n=0.999885140474+4.32477054e-6i，epsilon=n*n，mu=1，材料/背景/端口不变。
 
-每块累加原全部 cell Schur／Floquet／共享贡献，不按 owner 单元截断，不分别凝聚 curl/mass，也不假定 F=Cᴴ。局部规格固定 complex128、LAPACK 部分选主元完整 LU、每 apply 固定一次 lu_solve，无 shift/drop/ILU／精化。外层及审核保持独立旧 ActionPacket；class64 数值 Gate 留待真实 SETUP。
+八组完整canonical实体行数2913/2676/2289/2076/2439/2220/1863/1668，2448实体、18144行各一次。每块累加全部cell Schur/Floquet共享贡献，再准确消去同一40维Hhat端口；不以owner单元代替共享贡献，不假定F=Cᴴ，不分别凝聚curl/mass。
 
-```math
-Jr=TR^{-1}U^Hr,\qquad LCr=Lr+J(r-ALr),
-\qquad D_L=U^H\operatorname{Dop}T.
-```
+八块rcond1估计范围7.443161639e-06至1.495862295e-05，高于1e-12；公共local-ready资格从原始分区/作用/因子/线性/S与Sᴴ配对证据重算并封存。D_L固定一次SVD比值0.0002023928577，整块分辨率与组合恒等式通过；该值不是fine算子的条件数。
 
-U 是原方程作用像，T 是 trace 空间；Hhat 不是 Hp。D_L 通过最多32列缓冲构造，固定一次小 SVD、固定 1e-12 相对安全阈值。二维反例回归确认：原 A 和局部块可逆仍可能得到奇异 LC。旧 UᴴT 检查不能替代新 D_L。whole-overlap 数值分辨率检查另列，未修改阈值、删秩或构造伪逆。
+明确存在LOCAL8_DENSE_LU_PRESENT；组合另有GLOBAL_TALL_IMAGE_QR_PRESENT。单套局部矩阵677215296 B、LU同量，A+LU1354430592 B，全生命周期规划5709615024 B为derived，实测整树峰2782064640 B另列。无global p4 LU、global fine K/A、私有audit CSR、hidden fallback、新W/QR或正规方程。局部与原packet/40port小分解均是精确逆成本，不能称factor-free或原尺寸可扩展。
 
-| derived 规划；不是 RSS | 值 | 合同限额 |
-|---|---:|---:|
-| 八块行数 | 2913/2676/2289/2076/2439/2220/1863/1668 | 每块≤4096 |
-| 总行／完整实体 | 18144／2448 | 全行各一次、同实体矩不拆分 |
-| 一套 A_b | 677215296 B | — |
-| 一套 LU | 677215296 B | — |
-| A_b+LU | 1354430592 B | ≤2 GiB |
-| pivot 上界 | 145152 B | 另计 |
-| 新工作区保守规划 | 746594352 B | 包含临时副本、粗检查及 Krylov |
-| 全部同时规划 | 5709615024 B | ≤8 GiB |
+## 时间、资源、历史与停止
 
-容量算术通过；真实局部 rcond、主块原作用、重载 solve、组合恒等式和 D_L 安全性仍 NOT_RUN。实际新局部矩阵／因子／新 D_L 数量均为0；不得登记它们已存在。部署若执行，应明确 `LOCAL8_DENSE_LU_PRESENT`，组合另有 `GLOBAL_TALL_IMAGE_QR_PRESENT`。没有构造 global fine K/A、global p4 LU、私有 audit CSR、隐藏 fallback 或新 W/QR；这不构成目标规模 factor-free／可扩展资格。
+| 阶段 | wall(s；监督口径) | 峰值RSS(B；同时整树采样) | 选核 | swap |
+|---|---:|---:|---:|---:|
+| SETUP | 111.499986 | 2525442048 | 20 | 0 |
+| LW | 371.309140 | 1865379840 | 31 | 0 |
+| LCW | 556.559626 | 2490769408 | 10 | 0 |
+| LZ | 380.836720 | 1916489728 | 0 | 0 |
+| LCZ | 507.163305 | 2490302464 | 32 | 0 |
+| VERIFY | 50.342920 | 734031872 | 0 | 0 |
 
-## 有界修复、成本和隔离
+正式监督wall合计1977.711696077s，辅助监督62.584019216s；外层与子actor/nested计时不重复相加。历史V6起formal研发下界75124.91759302444s，本轮后下界77102.629289102s；历史辅助与暖解per-solution拆账unknown保持。上游传递、薄QR、特征、LSQR、循环和准备不能从暖尾部秒数中消失；不能据此宣布48小时完整求解。
 
-两个预正式根因保留失败证据。R01：SciPy1.11.4 f2py GETRS 临时原地调整 pivots，传入只读 mmap 导致 SIGSEGV；改为每 reader 私有的小整数 pivot 工作区，矩阵和 LU 文件仍只读，不修改安装栈。R02：二维奇异反例的 1×1 D_L 在舍入后可能得到相对奇异值比1；新增独立整块分辨率检查，仍保留原 1e-12 比值门限。修复次数2/4；修复编辑耗时未单独实测，以600+180秒保守上界记录，包含在总 elapsed，不能再相加冒充成本。
+R01只读pivot ABI写入SIGSEGV、R02二维组合奇异反例、R03失败SETUP早置位准入、R04五reader非对称续行均保留失败/测试证据。4/4根因，编辑费用保守上界1980s，包含在总elapsed，不重复加到wall；本批不扩大修复根因或参数。早先无空闲核/自动审批403未执行/网页401历史保持，服务恢复后不继续称其永久blocker；未调用重置卡。
 
-六段已监督辅助／失败准入 wall 合计43.5801978582秒；其中最终 focused 9.7799590731秒、six-dat validate 3.9001575120秒、首次准入队列3.7742129019秒。正式 FE／setup／求解／VERIFY wall=0。历史 formal 研发下界仍75124.91759302444秒；旧辅助和每个暖解的完整上游拆账仍 unknown，不补造精确累计。
+实时选核避开忙SMT；MPI1、数学/Torch1、DataLoader0、GPU不用，VRAM/OOC/自身swap0。独立activation/cache/自有锁，0.5s整树warn12/hard16GiB sampled停止与PSI/系统/邻增长余量保持。没有 delegated cgroup，不声称kernel连续硬上限；本批所有监督后代清理。未修改邻任务环境、亲和性、优先级、watchdog、锁或系统ABI/BLAS/CUDA。未观察到触线的持续资源压力；邻阶段可比指标不足，因果影响INCONCLUSIVE，不承诺零干扰。
 
-六段顺序监督的最大采样同时树峰为156880896 B；这是已监督的小测试／准入区间峰，**不是完整实现和编辑期间的 RSS 峰，也不是八块部署内存**。自身 swap／VRAM／OOC 均0；失败后所有被监督后代已清理。测试按当时空闲核分别选0、44、28、39、40，未把旧核号固定为正式运行核。
+原start2026-10-02T12:04:23.502588Z、heavy-stop15:34:23.502588Z、交付截止16:04:23.502588Z不刷新。UTC/monotonic/boot_id在恢复、新stage和提交前实读；费用含等待、修复与服务间隔。本次写包时刻2026-10-02T15:31:00.350558+00:00，总elapsed12396.84797s；最终提交/推送时刻见交付receipt。
 
-保留受控共享工作站准入：MPI1、数学／Torch1、DataLoader0、GPU不用；独立环境、TMP/JIT/bytecode/model cache 和自有锁。既有 FE ABI preflight complex128/int64/MPI1 通过，无 JIT。原生库前缀只读复用；没有 ABI／BLAS／CUDA 重装或邻任务修改。正式监督配置保持0.5秒整树 warn12GiB/hard16GiB、ownswap0、原 PSI 和余量保护；无 delegated cgroup，因此不声称 kernel 连续硬限制生效。尚未启动数值负载，不据此声称数学意义上的零干扰或无争用加速。
+## 证据与唯一下一建议
 
-start=2026-10-02T12:04:23.502588Z，monotonic=867658.363474344，boot_id=fd8f4b00-1e17-46af-a6fa-da3a32dbeba3；heavy-stop=15:34:23.502588Z，deadline=16:04:23.502588Z。实现、修复、审批等待及交付均在原窗口内计时；恢复服务不得刷新窗口。真实最终交付时钟见[deadline](outcomes/records/deadline_repair_v24.json)和本地 receipt。
+唯一下一建议：以本批已保存的零初值残差为输入，预登记一次有界的块内／跨块耦合作用分账，判断下一种局部通信机制需要补足的方向及容量；不立即改变块数、重叠、粗空间或追加求解。
 
-## 资格与下一步
+[实际来源与run index](outcomes/records/run_index_v24.json)、[候选](outcomes/records/candidate_comparison_v24.csv)、[场与原审核](outcomes/records/field_checks_v24.json)、[40通道](outcomes/records/field_channels_v24.csv)、[逐通道功率](outcomes/records/per_channel_power_v24.csv)、[费用](outcomes/records/resource_costs_v24.json)、[首块共同前缀](outcomes/records/paired_prefix_v24.csv)、[准入修复](outcomes/records/section10_control_flow_v24.json)、[详细结果](outcomes/local_block_coarse_pair_v24.md)。
 
-LW／LCW／LZ／LCZ 接受周期均0，FIRST_EQUATION_PASS 不存在；Schur/native/port/恢复、E/H/curl、40复通道、R/T/A/A_volume、逐通道功率及能量均没有新测量。空的场／功率 CSV 是未运行的显式记录，不是零场或通过。仅引用已有 V21-C-FINAL 的历史 Schur2.5281170328e-6、native9.80413346383e-7、单通道功率差1.71964465112e-6说明原暖点仍未合格，未把它当成本轮新审核结果。
-
-当前无法区分局部收益与粗层额外收益，也没有 NN 训练增量。唯一下一建议是：客户端恢复认证后，在**同一不可刷新窗口仍有效**且 fresh 资源准入通过时，继续这六个已验证入口的原授权队列。若窗口已经耗尽，保存这些未运行项，由下一 review 授权新的时间窗口；不扩大块数、overlap、shift、模型或精度范围。
-
-[详细结果](outcomes/local_block_coarse_pair_v24.md)、[测试](outcomes/records/test_results_v24.json)、[费用](outcomes/records/resource_costs_v24.json)、[分流](outcomes/records/qualification_and_dispatch_v24.json)、[审批故障](outcomes/records/approval_block_v24.json)。旧 task/review/response/raw 与负结果保持；GitHub 精确页面视觉 **NOT_VERIFIED**，本地结构检查不代替视觉。只允许推送本执行分支，不 merge。
+GitHub精确review/结果页面视觉NOT_VERIFIED；本地表格/公式检查另列，不能冒充视觉或CI。原尺寸0.7nm/2TB/48h、独立离散精度、神经20%及merge资格均未取得。只提交Task042变化，随后停止等待review。

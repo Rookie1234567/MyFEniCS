@@ -1,4 +1,9 @@
 {
+  "window": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v24/window.json",
+    "sha256": "ad9fe59d7580844c8ca77e1dc6230ae91974c465a8f247765cdf419894a4be9a",
+    "bytes": 594
+  },
   "clock": {
     "schema": "task042.campaign-window.v24",
     "start_utc": "2026-10-02T12:04:23.502588+00:00",
@@ -11,12 +16,13 @@
     "review_expected_commit": "c3370061c6693eab70e20c34965ec7d640b978bd",
     "prior_HEAD": "dfaf983c2f6de28f59ee3271fb071c5b97210d2d",
     "scope": "first real clock; all implementation/tests/wait/setup/solve/verify/delivery included",
-    "observed_utc": "2026-10-02T12:49:55.363876+00:00",
-    "observed_monotonic": 870390.224788919,
+    "observed_utc": "2026-10-02T15:39:21.753160+00:00",
+    "observed_monotonic": 880556.614027622,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
-    "elapsed_seconds": 2731.861703,
-    "heavy_remaining_seconds": 9868.138297,
-    "total_remaining_seconds": 11668.138297
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12898.25057220459,
+    "heavy_remaining_seconds": 0.0,
+    "total_remaining_seconds": 1501.7494277954102
   },
   "repairs": [
     {
@@ -34,11 +40,26 @@
       "minimal_fix": "separate whole-overlap operation-resolution guard; 1e-12 ratio unchanged",
       "test": "fixed Review 2x2 counterexample passes",
       "conservative_seconds_upper": 180
+    },
+    {
+      "root": "R03",
+      "cause": "failed SETUP early true flag admitted by queue and standalone dat",
+      "minimal_fix": "seal raw common evidence after original S/SH pairs; independently recompute admission at both entries",
+      "test": "section10_focused_1 26 passed",
+      "conservative_seconds_upper": 600
+    },
+    {
+      "root": "R04",
+      "cause": "five readers caused asymmetric LW8 automatic continuation",
+      "minimal_fix": "symmetric four-route first-block only, standalone schema rejects target8; fifth reserved for bounded recovery",
+      "test": "section10_focused_1 26 passed",
+      "conservative_seconds_upper": 600
     }
   ],
-  "resource_reentries": 0,
-  "formal_replays": 0,
-  "no_window_refresh": true,
-  "stop_reason": "automatic approval authentication unavailable after bounded live admission recheck",
-  "pending_restart_must_not_refresh_window": true
+  "reentries": 0,
+  "cooldown_seconds": 0.0,
+  "elapsed_includes_implementation_wait_tests_setup_failed_runs_delivery": true,
+  "budget_not_reset": true,
+  "numeric_queue_ended_before_heavy_stop": true,
+  "formal_numerical_after_heavy_stop": false
 }

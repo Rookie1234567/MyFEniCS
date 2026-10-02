@@ -1,0 +1,29 @@
+{
+  "rows": {
+    "LW": {
+      "final_original_trace_residual_norm": 2.0687079723633122e-07,
+      "residual_squared_fraction_in_U": 0.004466895231062596,
+      "predicted_one_J_residual_norm_ratio": 0.9977640526542021,
+      "role": "derived from frozen existing residual; no correction applied, no reference, no feedback"
+    },
+    "LZ": {
+      "final_original_trace_residual_norm": 0.006728082686191037,
+      "residual_squared_fraction_in_U": 0.22558105827008568,
+      "predicted_one_J_residual_norm_ratio": 0.8800107622807316,
+      "role": "derived from frozen existing residual; no correction applied, no reference, no feedback"
+    }
+  },
+  "source_U": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v23/U.npy",
+    "sha256": "1e7624c2531739cafefb500906514f1da7e5b0649064899a957ef6d937822fd1",
+    "array_sha256": "937ee850978481d87f4632e08b59f4420db5959e39678ec5de4c9212be1189d8",
+    "shape": [
+      18144,
+      1248
+    ],
+    "bytes": 362299392
+  },
+  "new_S_SH": 0,
+  "new_triangular_solves": 0,
+  "new_FE_states": 0
+}

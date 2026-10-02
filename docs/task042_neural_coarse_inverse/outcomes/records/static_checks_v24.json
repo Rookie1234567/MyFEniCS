@@ -1,48 +1,78 @@
 {
-  "stdlib_AST_parsed": [
-    "scripts/run_case.py",
-    "scripts/task042_v17_campaign.py",
-    "scripts/task042_v17_queue_watchdog.py",
+  "status": "LOCAL_STRUCTURE_AND_HISTORY_PASS",
+  "clock": {
+    "schema": "task042.campaign-window.v24",
+    "start_utc": "2026-10-02T12:04:23.502588+00:00",
+    "start_monotonic": 867658.363474344,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T15:34:23.502588+00:00",
+    "deadline_utc": "2026-10-02T16:04:23.502588+00:00",
+    "review_expected_commit": "c3370061c6693eab70e20c34965ec7d640b978bd",
+    "prior_HEAD": "dfaf983c2f6de28f59ee3271fb071c5b97210d2d",
+    "scope": "first real clock; all implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T15:51:24.037979+00:00",
+    "observed_monotonic": 881278.898846393,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 13620.535390853882,
+    "heavy_remaining_seconds": 0.0,
+    "total_remaining_seconds": 779.4646091461182
+  },
+  "errors": [],
+  "source_SHA": "03fd7874190c33a837879d76312d9911223314e0",
+  "source_role": "post-run evidence/docs/checker; not numerical source",
+  "targeted_compile_files": [
+    "benchmarks/check_task042_local_block_records.py",
     "src/io/local_block_pair.py",
-    "src/io/task042_profile.py",
-    "src/runners/local_block_pair.py",
     "src/runners/local_block_queue.py",
-    "src/runners/task042_shared.py",
-    "src/solvers/local_block_coarse.py",
+    "src/solvers/local_block_readiness.py",
     "src/solvers/local_block_study.py",
-    "src/solvers/local_block_window.py",
+    "src/test/test_task042_v24_admission.py",
+    "src/test/test_task042_v24_compact_qualification.py",
     "src/test/test_task042_v24_local_coarse.py"
   ],
-  "changed_python_count": 12,
-  "protected_old_task_files_checked": 543,
-  "protected_old_task_bytes_unchanged": true,
-  "git_diff_check": "",
-  "fresh_numeric_claims_prohibited": true,
-  "arrays_loaded_during_evidence_collection": 0,
-  "final_local_markdown": [
+  "compileall_pass": true,
+  "ruff": "NOT_RUN: module absent; no environment upgrade",
+  "full_pytest_MPI2_MPI4_CI": "NOT_RUN: bounded review requires focused regressions, historical expensive Gates not repeated",
+  "table_blocks": 18,
+  "fenced_math_blocks": 8,
+  "protected_old_task_files": 543,
+  "latest_review_hash_matches_authorized_commit": true,
+  "navigation_history": [
     {
-      "path": "docs/task042_neural_coarse_inverse/response_v24.md",
-      "table_groups": 2,
-      "existing_local_links": 8
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "old_bytes_sha256": "1625c69bd488f527be3fb89c802cb2295a601f78e10e57568676b730fc68c22b",
+      "suffix_preserved": true
     },
     {
-      "path": "docs/task042_neural_coarse_inverse/outcomes/local_block_coarse_pair_v24.md",
-      "table_groups": 1,
-      "existing_local_links": 5
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "old_bytes_sha256": "19a96c061cf532dc553eaf7ded8bed82c288d889856bae8156177b27084f2671",
+      "suffix_preserved": true
     },
     {
-      "path": "docs/task042_neural_coarse_inverse/review_report_v21.md",
-      "table_groups": 3,
-      "existing_local_links": 8
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "old_bytes_sha256": "bb6a07b6039506c989defff094e747a1514cb4856979e7bf5152b10a5885d5c0",
+      "suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "old_bytes_sha256": "4a70c904671f98cbd6bdecb23ba89f5cc19a2a59c6a52535cef3cd1a51b9cedb",
+      "suffix_preserved": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "old_bytes_sha256": "60d21df3ea0e0f577edaca2620b055640ff1f3e4bcce0546679aed9be2663425",
+      "suffix_preserved": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "old_bytes_sha256": "9878ef17e40cc0411e3ab9c7d44a28493309ca84902dac1c498c020eafa1ffac",
+      "suffix_preserved": true
     }
   ],
-  "compact_JSON_valid": true,
-  "formal_zero_counters_recomputed": true,
-  "source_content_unchanged": true,
-  "old_task_files_final_checked": 543,
-  "old_navigation_ledger_suffixes_final_checked": 6,
-  "descendant_cleanup_all_supervised_intervals": true,
-  "nonew_actor_from_approval_rejection": true,
-  "final_observed_utc": "2026-10-02T12:49:55.363876+00:00",
-  "final_observed_monotonic": 870390.224788919
+  "git_diff_check_pass": true,
+  "GitHub_visual": "NOT_VERIFIED: no pixels",
+  "registry_errors_inherited": true
 }

@@ -1,0 +1,77 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v24",
+    "start_utc": "2026-10-02T12:04:23.502588+00:00",
+    "start_monotonic": 867658.363474344,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T15:34:23.502588+00:00",
+    "deadline_utc": "2026-10-02T16:04:23.502588+00:00",
+    "review_expected_commit": "c3370061c6693eab70e20c34965ec7d640b978bd",
+    "prior_HEAD": "dfaf983c2f6de28f59ee3271fb071c5b97210d2d",
+    "scope": "first real clock; all implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T15:26:01.704818+00:00",
+    "observed_monotonic": 879756.56569179,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 12098.202229738235,
+    "heavy_remaining_seconds": 501.7977702617645,
+    "total_remaining_seconds": 2301.7977702617645
+  },
+  "status": "DERIVED_ORIGINAL_FORMULA_PAIRED",
+  "source_sha": "03fd7874190c33a837879d76312d9911223314e0",
+  "script_sha256": "660b9dfccd1775fb0074394c98ca2b994e982b7eedd58241d942de3695585344",
+  "original_formula_file": "src/solvers/dtn_port_3d.py",
+  "original_formula_sha256": "4e07a6daecb893caffe545bd79ff33dadfa123ef76adb6f968f0827f42907ebd",
+  "input_csv_sha256": "19777a516a1f87464aceeb7bf51df460cc997ea149fe7aa07996892127927703",
+  "mode_manifest_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "original_power_arrays_were_not_persisted_by_legacy_physical_qualification": true,
+  "checks": {
+    "LW-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 0.0,
+      "original_max_channel_difference": 1.6669687167292224e-06,
+      "derived_max_channel_difference": 1.6669687167292224e-06,
+      "max_difference_pair": 0.0
+    },
+    "LCW-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 0.0,
+      "original_max_channel_difference": 1.7088209636195728e-06,
+      "derived_max_channel_difference": 1.7088209636195728e-06,
+      "max_difference_pair": 0.0
+    },
+    "LZ-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 1.1102230246251565e-16,
+      "original_max_channel_difference": 0.007245973616249901,
+      "derived_max_channel_difference": 0.007245973616249901,
+      "max_difference_pair": 0.0
+    },
+    "LCZ-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 1.1102230246251565e-16,
+      "original_max_channel_difference": 0.007757579435316908,
+      "derived_max_channel_difference": 0.007757579435316908,
+      "max_difference_pair": 0.0
+    },
+    "V21-C-FINAL": {
+      "total_channels": 40,
+      "R_sum_difference": 0.0,
+      "T_sum_difference": 1.1102230246251565e-16,
+      "original_max_channel_difference": 1.7196446511213992e-06,
+      "derived_max_channel_difference": 1.7196446511213992e-06,
+      "max_difference_pair": 0.0
+    }
+  },
+  "S_SH_actions": 0,
+  "new_FE_states": 0,
+  "new_audits": 0,
+  "reference_feedback": false,
+  "role": "derived offline evidence; measured original max and field qualification unchanged"
+}

@@ -1,6 +1,373 @@
 {
-  "status": "NOT_RUN",
-  "scope": "actual V24 operator/physics",
-  "reason": "No numerical actor launched; synthetic regression is separately recorded",
-  "source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc"
+  "routes": {
+    "LW": {
+      "witnesses": [
+        {
+          "block": 0,
+          "seed": 422401,
+          "relative": 2.2895118908419565e-13
+        },
+        {
+          "block": 0,
+          "seed": 422402,
+          "relative": 2.2297607827730615e-13
+        },
+        {
+          "block": 1,
+          "seed": 422403,
+          "relative": 2.100133609112442e-13
+        },
+        {
+          "block": 1,
+          "seed": 422404,
+          "relative": 1.8995661780326215e-13
+        },
+        {
+          "block": 2,
+          "seed": 422405,
+          "relative": 2.600306664110906e-13
+        },
+        {
+          "block": 2,
+          "seed": 422406,
+          "relative": 2.6403514658217456e-13
+        },
+        {
+          "block": 3,
+          "seed": 422407,
+          "relative": 2.3743924324199444e-13
+        },
+        {
+          "block": 3,
+          "seed": 422408,
+          "relative": 2.500568322972366e-13
+        },
+        {
+          "block": 4,
+          "seed": 422409,
+          "relative": 2.1693867149416888e-13
+        },
+        {
+          "block": 4,
+          "seed": 422410,
+          "relative": 2.056945577076294e-13
+        },
+        {
+          "block": 5,
+          "seed": 422411,
+          "relative": 2.4613319930798967e-13
+        },
+        {
+          "block": 5,
+          "seed": 422412,
+          "relative": 2.28153825791502e-13
+        },
+        {
+          "block": 6,
+          "seed": 422413,
+          "relative": 1.724167235762897e-13
+        },
+        {
+          "block": 6,
+          "seed": 422414,
+          "relative": 1.7577160163457862e-13
+        },
+        {
+          "block": 7,
+          "seed": 422415,
+          "relative": 1.6455329127279437e-13
+        },
+        {
+          "block": 7,
+          "seed": 422416,
+          "relative": 2.226424327637021e-13
+        }
+      ],
+      "qualified": true,
+      "refactored": false,
+      "same_ABI": true,
+      "independent_process": true,
+      "source_sha": "03fd7874190c33a837879d76312d9911223314e0",
+      "readonly_factor_files": true,
+      "private_pivot_ABI_workspace_bytes": 72576
+    },
+    "LCW": {
+      "witnesses": [
+        {
+          "block": 0,
+          "seed": 422401,
+          "relative": 2.2895118908419565e-13
+        },
+        {
+          "block": 0,
+          "seed": 422402,
+          "relative": 2.2297607827730615e-13
+        },
+        {
+          "block": 1,
+          "seed": 422403,
+          "relative": 2.100133609112442e-13
+        },
+        {
+          "block": 1,
+          "seed": 422404,
+          "relative": 1.8995661780326215e-13
+        },
+        {
+          "block": 2,
+          "seed": 422405,
+          "relative": 2.600306664110906e-13
+        },
+        {
+          "block": 2,
+          "seed": 422406,
+          "relative": 2.6403514658217456e-13
+        },
+        {
+          "block": 3,
+          "seed": 422407,
+          "relative": 2.3743924324199444e-13
+        },
+        {
+          "block": 3,
+          "seed": 422408,
+          "relative": 2.500568322972366e-13
+        },
+        {
+          "block": 4,
+          "seed": 422409,
+          "relative": 2.1693867149416888e-13
+        },
+        {
+          "block": 4,
+          "seed": 422410,
+          "relative": 2.056945577076294e-13
+        },
+        {
+          "block": 5,
+          "seed": 422411,
+          "relative": 2.4613319930798967e-13
+        },
+        {
+          "block": 5,
+          "seed": 422412,
+          "relative": 2.28153825791502e-13
+        },
+        {
+          "block": 6,
+          "seed": 422413,
+          "relative": 1.724167235762897e-13
+        },
+        {
+          "block": 6,
+          "seed": 422414,
+          "relative": 1.7577160163457862e-13
+        },
+        {
+          "block": 7,
+          "seed": 422415,
+          "relative": 1.6455329127279437e-13
+        },
+        {
+          "block": 7,
+          "seed": 422416,
+          "relative": 2.226424327637021e-13
+        }
+      ],
+      "qualified": true,
+      "refactored": false,
+      "same_ABI": true,
+      "independent_process": true,
+      "source_sha": "03fd7874190c33a837879d76312d9911223314e0",
+      "readonly_factor_files": true,
+      "private_pivot_ABI_workspace_bytes": 72576
+    },
+    "LZ": {
+      "witnesses": [
+        {
+          "block": 0,
+          "seed": 422401,
+          "relative": 2.2895118908419565e-13
+        },
+        {
+          "block": 0,
+          "seed": 422402,
+          "relative": 2.2297607827730615e-13
+        },
+        {
+          "block": 1,
+          "seed": 422403,
+          "relative": 2.100133609112442e-13
+        },
+        {
+          "block": 1,
+          "seed": 422404,
+          "relative": 1.8995661780326215e-13
+        },
+        {
+          "block": 2,
+          "seed": 422405,
+          "relative": 2.600306664110906e-13
+        },
+        {
+          "block": 2,
+          "seed": 422406,
+          "relative": 2.6403514658217456e-13
+        },
+        {
+          "block": 3,
+          "seed": 422407,
+          "relative": 2.3743924324199444e-13
+        },
+        {
+          "block": 3,
+          "seed": 422408,
+          "relative": 2.500568322972366e-13
+        },
+        {
+          "block": 4,
+          "seed": 422409,
+          "relative": 2.1693867149416888e-13
+        },
+        {
+          "block": 4,
+          "seed": 422410,
+          "relative": 2.056945577076294e-13
+        },
+        {
+          "block": 5,
+          "seed": 422411,
+          "relative": 2.4613319930798967e-13
+        },
+        {
+          "block": 5,
+          "seed": 422412,
+          "relative": 2.28153825791502e-13
+        },
+        {
+          "block": 6,
+          "seed": 422413,
+          "relative": 1.724167235762897e-13
+        },
+        {
+          "block": 6,
+          "seed": 422414,
+          "relative": 1.7577160163457862e-13
+        },
+        {
+          "block": 7,
+          "seed": 422415,
+          "relative": 1.6455329127279437e-13
+        },
+        {
+          "block": 7,
+          "seed": 422416,
+          "relative": 2.226424327637021e-13
+        }
+      ],
+      "qualified": true,
+      "refactored": false,
+      "same_ABI": true,
+      "independent_process": true,
+      "source_sha": "03fd7874190c33a837879d76312d9911223314e0",
+      "readonly_factor_files": true,
+      "private_pivot_ABI_workspace_bytes": 72576
+    },
+    "LCZ": {
+      "witnesses": [
+        {
+          "block": 0,
+          "seed": 422401,
+          "relative": 2.2895118908419565e-13
+        },
+        {
+          "block": 0,
+          "seed": 422402,
+          "relative": 2.2297607827730615e-13
+        },
+        {
+          "block": 1,
+          "seed": 422403,
+          "relative": 2.100133609112442e-13
+        },
+        {
+          "block": 1,
+          "seed": 422404,
+          "relative": 1.8995661780326215e-13
+        },
+        {
+          "block": 2,
+          "seed": 422405,
+          "relative": 2.600306664110906e-13
+        },
+        {
+          "block": 2,
+          "seed": 422406,
+          "relative": 2.6403514658217456e-13
+        },
+        {
+          "block": 3,
+          "seed": 422407,
+          "relative": 2.3743924324199444e-13
+        },
+        {
+          "block": 3,
+          "seed": 422408,
+          "relative": 2.500568322972366e-13
+        },
+        {
+          "block": 4,
+          "seed": 422409,
+          "relative": 2.1693867149416888e-13
+        },
+        {
+          "block": 4,
+          "seed": 422410,
+          "relative": 2.056945577076294e-13
+        },
+        {
+          "block": 5,
+          "seed": 422411,
+          "relative": 2.4613319930798967e-13
+        },
+        {
+          "block": 5,
+          "seed": 422412,
+          "relative": 2.28153825791502e-13
+        },
+        {
+          "block": 6,
+          "seed": 422413,
+          "relative": 1.724167235762897e-13
+        },
+        {
+          "block": 6,
+          "seed": 422414,
+          "relative": 1.7577160163457862e-13
+        },
+        {
+          "block": 7,
+          "seed": 422415,
+          "relative": 1.6455329127279437e-13
+        },
+        {
+          "block": 7,
+          "seed": 422416,
+          "relative": 2.226424327637021e-13
+        }
+      ],
+      "qualified": true,
+      "refactored": false,
+      "same_ABI": true,
+      "independent_process": true,
+      "source_sha": "03fd7874190c33a837879d76312d9911223314e0",
+      "readonly_factor_files": true,
+      "private_pivot_ABI_workspace_bytes": 72576
+    }
+  },
+  "factor_readers": 4,
+  "maximum": 5,
+  "fifth_reserved_for_necessary_recovery": true,
+  "readonly_LU_and_matrix": true,
+  "no_refactor": true
 }

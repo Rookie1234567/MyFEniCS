@@ -1,5 +1,4 @@
 {
-  "classification": "derived",
   "block_rows": [
     2913,
     2676,
@@ -12,14 +11,11 @@
   ],
   "matrix_bytes": 677215296,
   "LU_bytes": 677215296,
-  "explicit_matrix_LU_bytes": 1354430592,
   "pivots_upper_bytes": 145152,
+  "explicit_matrices_LU_bytes": 1354430592,
   "additional_workspace_upper_bytes": 746594352,
   "simultaneous_planned_bytes": 5709615024,
-  "limit_bytes": 8589934592,
-  "preallocation_arithmetic_qualified": true,
-  "real_local_matrices_constructed": 0,
-  "real_local_factors_constructed": 0,
-  "RSS_not_measured_for_setup": true,
-  "real_capacity_gate": "NOT_RUN"
+  "derived_not_RSS": true,
+  "qualified": true,
+  "whole_tree_RSS_measured_separately": true
 }

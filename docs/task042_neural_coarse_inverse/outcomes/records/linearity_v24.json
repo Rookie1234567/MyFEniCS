@@ -1,6 +1,64 @@
 {
-  "status": "NOT_RUN",
-  "scope": "actual V24 operator/physics",
-  "reason": "No numerical actor launched; synthetic regression is separately recorded",
-  "source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc"
+  "local": {
+    "repeat": {
+      "absolute": 0.0,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "absolute": 1.3043863172271753e-13,
+      "operation_relative": 9.891537513323867e-14
+    },
+    "zero_exact": true,
+    "qualified": true
+  },
+  "composite": {
+    "witnesses": [
+      {
+        "seed": 422431,
+        "coarse_balance": {
+          "absolute": 5.313738444556588e-15,
+          "operation_relative": 9.93232578150859e-15
+        },
+        "LC_Dop_T": {
+          "absolute": 7.395887373049982e-14,
+          "operation_relative": 1.7828081317634127e-14
+        }
+      },
+      {
+        "seed": 422432,
+        "coarse_balance": {
+          "absolute": 4.1572271573822105e-15,
+          "operation_relative": 7.89879667318149e-15
+        },
+        "LC_Dop_T": {
+          "absolute": 8.52866834749074e-14,
+          "operation_relative": 2.0276359721539044e-14
+        }
+      },
+      {
+        "seed": 422433,
+        "coarse_balance": {
+          "absolute": 5.6380870119358905e-15,
+          "operation_relative": 1.0770286928695065e-14
+        },
+        "LC_Dop_T": {
+          "absolute": 8.690994250125816e-14,
+          "operation_relative": 2.1009099908248703e-14
+        }
+      }
+    ],
+    "repeat": {
+      "absolute": 0.0,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "absolute": 1.2522458219978509e-13,
+      "operation_relative": 9.368734242054294e-14
+    },
+    "qualified": true
+  },
+  "old_ActionPacket_oracle_preserved": true,
+  "LC_formula": "L(r)+J(r-A*L(r))",
+  "local_formula": "sum(E_b^H*solve(A_b,E_b*r))",
+  "principal_solve_witnesses": "block_action_v24.json"
 }

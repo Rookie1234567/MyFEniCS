@@ -1,6 +1,170 @@
 {
-  "status": "NOT_RUN",
-  "scope": "actual V24 operator/physics",
-  "reason": "No numerical actor launched; synthetic regression is separately recorded",
-  "source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc"
+  "routes": {
+    "LW": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/INITIAL.npz",
+        "sha256": "e80fc942dcfc0fa804442706aab9a1fa6b2b4ad6ec8c3629306909ef036e8a76",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "5e00c8c9d4f8b802a740aa72e58d5ca9a6d44e1bf1b2bde06af18e084404bdc3",
+        "trace_sha256": "8ddd0c814a28636519699ad0c83d97ebdcd23d6f1244eedacd4b3063e8bacdcc",
+        "port_sha256": "d15bdea4d35a637d428825114bde3faee21f489a25b41f63f405a536bc4441a5",
+        "z_sha256": "67ba65483d7204a2376ad5302460bf7b2c06e5f082a4f6bcf0055291033fe08e",
+        "residual_sha256": "e93447c36344a272feb3b322ab36ab6ec7ba13e34c515800d3a89987b5dcd792",
+        "y_sha256": "e6d369811e754341620c5443135ec3ba8aace9184ce5a53f58f57993c97da80b",
+        "By_sha256": "557a7906abcf178b925ef455d004218b958f1e9d4f645fd5ea7fb3933e7e649e"
+      },
+      "first_pass_cycle": null,
+      "stop": "FIXED_PROGRESS_RULE_STOP"
+    },
+    "LCW": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/INITIAL.npz",
+        "sha256": "e80fc942dcfc0fa804442706aab9a1fa6b2b4ad6ec8c3629306909ef036e8a76",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "06a30ce4112ec17b795dd0642096ec06b05c0af5a20cce2bd02834f8b28d97eb",
+        "trace_sha256": "d6bc44282fc39d44907372abe3c6a7988882295db2abe2b9f8a8f60de5a5d4c5",
+        "port_sha256": "e2d7b39239ab51e918af489bdfaf3cd6e69e4c6b521da95ee58fdc5dfbe5c8f6",
+        "z_sha256": "78d5b5b60cd9187c73b85cf31ab40a7c6e37696936ec3472d350149af28bad8c",
+        "residual_sha256": "feeb64fea5a14852db309dec66061077fcc17a2bd101f73a7ba64aafc3459d47",
+        "y_sha256": "f5501086a8a246c1ccb44e0e9137f673eb5e41a4718806f51367003b118990fc",
+        "By_sha256": "0cdee2048a802c17f13ce1cea1cefb79aa0709a91071b6ea70b8707da843be11"
+      },
+      "first_pass_cycle": null,
+      "stop": "FIXED_PROGRESS_RULE_STOP"
+    },
+    "LZ": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/INITIAL.npz",
+        "sha256": "27a6b306669f93953d96eb7655c74c4c8601b974278e3107f565434e4a6b0058",
+        "trace_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "port_sha256": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee",
+        "z_sha256": "da0f008435083d9720b57802ac7a1af81853f26f1c80e3766f84ead5888bf454",
+        "residual_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "4062d5a83cce4eca86715eaee0a587a4e83fc7c54a7da5a654b1843eff6283d7",
+        "trace_sha256": "db3906e8dfca78628cc38aae57556ac6e66806a3793a0d45818858cec3ba350d",
+        "port_sha256": "6e24b9260d2a6ded1530a7d774887d39402d70762f82eb5a0f79a5fb57998357",
+        "z_sha256": "1352294a4b71cd70ea8f307739acd25a0d3edad1ed6e916359d88268ef088e73",
+        "residual_sha256": "0337b6acc75576bab2d697cbaedc37fef0a113e6fa7d247f38b9dedd57f99d3a",
+        "y_sha256": "f7e5167ba5a5d97a7a9d1fec5317f29a5e4bef447cbe1b0cead9c9c44d5af576",
+        "By_sha256": "a63fbdeb9a461b923199fc3773716be607094c74315ad08de928e73cae78fa86"
+      },
+      "first_pass_cycle": null,
+      "stop": "SLICE_TARGET_COMPLETE"
+    },
+    "LCZ": {
+      "start": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/INITIAL.npz",
+        "sha256": "27a6b306669f93953d96eb7655c74c4c8601b974278e3107f565434e4a6b0058",
+        "trace_sha256": "f826dc70f8de00f2f5ae22ee500b4bb6e7395af1c32b957868377b5df337c88a",
+        "port_sha256": "9e132485d5107211de325a45e7917cbe3e4b5b9cde3e4ee91d7d2102317759ee",
+        "z_sha256": "da0f008435083d9720b57802ac7a1af81853f26f1c80e3766f84ead5888bf454",
+        "residual_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b"
+      },
+      "final": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "6daf6fc209c6515dfc2fef94a46cf16ee341009d84bbd8e78b479093364a14ad",
+        "trace_sha256": "e97287164f9f92b941f335692aee061413434bbf59d25ddf7a313c89907e9180",
+        "port_sha256": "326991c559503be277d1f73816d77dbbac33d6963be305312f40e52d7161bc90",
+        "z_sha256": "2f30747bb00602d5a62fd5a94a5e7bf507beffb9ef73716f03b3430e70ac7c48",
+        "residual_sha256": "6876c978b19aafb13ce71a38a32c81f1e7b3c8b17f892232d0add1d2ffd693c2",
+        "y_sha256": "9473a1f9dfb277b0fd096253621f30c578756f0c4c607cf5e42b82210ce2d672",
+        "By_sha256": "47368b617dbf34c35451eea6f2822fc179e4da7472b6c0be21169d82b5f6affc"
+      },
+      "first_pass_cycle": null,
+      "stop": "SLICE_TARGET_COMPLETE"
+    }
+  },
+  "FROZEN": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/FROZEN.json",
+    "sha256": "ba997adee16205b78728244134b180bd6d7f780a0ffa32f64c4b7035e9b4cad1",
+    "bytes": 52325
+  },
+  "validation_inventory": [
+    {
+      "name": "LW-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "5e00c8c9d4f8b802a740aa72e58d5ca9a6d44e1bf1b2bde06af18e084404bdc3",
+        "trace_sha256": "8ddd0c814a28636519699ad0c83d97ebdcd23d6f1244eedacd4b3063e8bacdcc",
+        "port_sha256": "d15bdea4d35a637d428825114bde3faee21f489a25b41f63f405a536bc4441a5",
+        "z_sha256": "67ba65483d7204a2376ad5302460bf7b2c06e5f082a4f6bcf0055291033fe08e",
+        "residual_sha256": "e93447c36344a272feb3b322ab36ab6ec7ba13e34c515800d3a89987b5dcd792",
+        "y_sha256": "e6d369811e754341620c5443135ec3ba8aace9184ce5a53f58f57993c97da80b",
+        "By_sha256": "557a7906abcf178b925ef455d004218b958f1e9d4f645fd5ea7fb3933e7e649e"
+      },
+      "legacy": false
+    },
+    {
+      "name": "LCW-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "06a30ce4112ec17b795dd0642096ec06b05c0af5a20cce2bd02834f8b28d97eb",
+        "trace_sha256": "d6bc44282fc39d44907372abe3c6a7988882295db2abe2b9f8a8f60de5a5d4c5",
+        "port_sha256": "e2d7b39239ab51e918af489bdfaf3cd6e69e4c6b521da95ee58fdc5dfbe5c8f6",
+        "z_sha256": "78d5b5b60cd9187c73b85cf31ab40a7c6e37696936ec3472d350149af28bad8c",
+        "residual_sha256": "feeb64fea5a14852db309dec66061077fcc17a2bd101f73a7ba64aafc3459d47",
+        "y_sha256": "f5501086a8a246c1ccb44e0e9137f673eb5e41a4718806f51367003b118990fc",
+        "By_sha256": "0cdee2048a802c17f13ce1cea1cefb79aa0709a91071b6ea70b8707da843be11"
+      },
+      "legacy": false
+    },
+    {
+      "name": "LZ-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "4062d5a83cce4eca86715eaee0a587a4e83fc7c54a7da5a654b1843eff6283d7",
+        "trace_sha256": "db3906e8dfca78628cc38aae57556ac6e66806a3793a0d45818858cec3ba350d",
+        "port_sha256": "6e24b9260d2a6ded1530a7d774887d39402d70762f82eb5a0f79a5fb57998357",
+        "z_sha256": "1352294a4b71cd70ea8f307739acd25a0d3edad1ed6e916359d88268ef088e73",
+        "residual_sha256": "0337b6acc75576bab2d697cbaedc37fef0a113e6fa7d247f38b9dedd57f99d3a",
+        "y_sha256": "f7e5167ba5a5d97a7a9d1fec5317f29a5e4bef447cbe1b0cead9c9c44d5af576",
+        "By_sha256": "a63fbdeb9a461b923199fc3773716be607094c74315ad08de928e73cae78fa86"
+      },
+      "legacy": false
+    },
+    {
+      "name": "LCZ-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "6daf6fc209c6515dfc2fef94a46cf16ee341009d84bbd8e78b479093364a14ad",
+        "trace_sha256": "e97287164f9f92b941f335692aee061413434bbf59d25ddf7a313c89907e9180",
+        "port_sha256": "326991c559503be277d1f73816d77dbbac33d6963be305312f40e52d7161bc90",
+        "z_sha256": "2f30747bb00602d5a62fd5a94a5e7bf507beffb9ef73716f03b3430e70ac7c48",
+        "residual_sha256": "6876c978b19aafb13ce71a38a32c81f1e7b3c8b17f892232d0add1d2ffd693c2",
+        "y_sha256": "9473a1f9dfb277b0fd096253621f30c578756f0c4c607cf5e42b82210ce2d672",
+        "By_sha256": "47368b617dbf34c35451eea6f2822fc179e4da7472b6c0be21169d82b5f6affc"
+      },
+      "legacy": false
+    },
+    {
+      "name": "V21-C-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v21/C/cycles/CALL_0112/physical.npz",
+        "sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+        "x_sha256": "bd1e676989c95e77753bd477d863e32d8ff84ca93bbc0a5ab11a79afe565cb4b",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      },
+      "legacy": true
+    }
+  ],
+  "transactions": "y -> By/trace -> full z/port/residual -> independent audit -> commit",
+  "no_Krylov_resumption_claim": true
 }
