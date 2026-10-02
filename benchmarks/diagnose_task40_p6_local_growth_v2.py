@@ -456,7 +456,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         native = _tabulate_raw_tensor_class(
             compiled, kernels, canonical_coordinates, tag=tag, dimension=dimension
         )
-        _orient_cell_tensor(element, native, permutations[cell])
+        _orient_cell_tensor(space.element, native, np.asarray([permutations[cell]], dtype=np.uint32))
         assembly_seconds = time.perf_counter() - assembly_start
         Aii = np.ascontiguousarray(native[np.ix_(interior, interior)])
         Ait = np.ascontiguousarray(native[np.ix_(interior, trace)])
