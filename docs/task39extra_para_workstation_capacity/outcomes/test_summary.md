@@ -11,6 +11,7 @@
 | 作用域、manifest 与严格粗返回最终合同 | 48 passed / 5.06 s | 真小 KSP 16 步预设停止，精化耗尽拒绝、原入口与负 schema；无完整场资格 |
 | metric/fused/原积分对角最终回归 | 8 passed / 32.00 s | 真实小 FE、复多主/目标合并 fallback；新增文件 Ruff 通过，修改文件无新增 F821/F401/F811 |
 | 本次 MPC metadata / p3 小 FE 定向回归 | 纯用例 21 passed / 0.87 s；实际 p3 FE 1 passed / 64.25 s（import/lint-only 变更后再次 1 passed / 31.78 s）；独立监督 6 passed / 7.04 s | 实际物理 Floquet singleton 与人工 complex multi-master/shared-target mapping 分列，均与原 FFCx cell-diagonal oracle 对照；rel≤1e-11、abs≤1e-10、fallback>0。人工映射不是物理 Floquet 见证；保留 native MPC 和 p3 shared-path 回归 |
+| E3 math1/math4 bounded FE 线程对照 | 4 场自然完成；每场 5/2 nm fixture 均 `COMPONENT_PASS`，AB/BA 比较均 `BOUNDED_COMPARISON_PASS` | 18-cell/fixture；每配置一个 factor、三个固定 PC 输出。PC 首调用与第 2/3 次 warm 调用分开；2 nm warm math1/math4=1.047754、0.975515，未稳定受益，冻结 math1；8 线程未运行。math4 环境设置4、`openblas_get_num_threads()`=4、OS线程数6；报告字段`parallel_runtime=1`是`openblas_get_parallel()`的`OPENBLAS_THREAD`类型枚举，不是线程数。PC墙钟和factor numeric API墙钟/进程CPU单列；MUMPS共享内存能力unknown。详见[compact](records/v6_thread_selection.json) |
 
 源为 Review HEAD 上 WIP，精确文件 hash、patch、日志和组件指标见 [V6 component compact](records/v6_component_and_h6_only.json)。失败留证包括 fixture metadata None、坐标形状错误；合跑监督与 FE 命令为 23 passed/2 failed，其中 watchdog 在 MPI 初始化后已有子进程时正确拒绝专用父进程合同，p3 工厂被多传一个位置参数。分开纯监督与 FE 后通过，未弱化生产 guard。新增 donor 文件只做 import/lint 修整，不改变数值公式；正式 source SHA 在后续 clean-run manifest 记录。2 nm H6-only 已以 H6_ONLY_COMPLETED 自然结束并仅按该 scope 验收；它不构成完整 PDE 资格。完整 5 nm 与 16 步 pilot 仍 NOT_RUN；未跑全仓 pytest 或 CI。纯测试与 FE 曾有一条合并命令返回 22 passed/31.71 s，该命令包含 FE 用例，因此不计作纯测试结果。
 

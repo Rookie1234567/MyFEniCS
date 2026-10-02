@@ -1,0 +1,794 @@
+{
+  "authority_limits": [
+    "Four runs establish only these small fixed-workload FE comparisons, not production F5/P2 performance or PDE qualification.",
+    "No claim of system-wide exclusivity or zero background activity.",
+    "Do not use the 2 nm factor API metric as a substitute for stable full-PC benefit.",
+    "The OpenBLAS parallelization enum is not a worker-thread count; MUMPS shared-memory capability remains unknown."
+  ],
+  "comparisons": [
+    {
+      "file": {
+        "path": "tmp/review_v6_components/e3_math1_vs_math4_ab1_comparison_20261002.json",
+        "sha256": "a916056bcc0c6e03650349cd2eb45f8aff7d8791ec86d9a61d94439a013a7f02"
+      },
+      "models": [
+        {
+          "factor_api_timing_is_not_full_pc_metric": true,
+          "factor_counts_math1_then_math4": [
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            },
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            }
+          ],
+          "factor_numeric_api_process_cpu_seconds_math1_then_math4": [
+            0.1292977790000016,
+            0.496435052999999
+          ],
+          "factor_numeric_api_wall_seconds_math1_then_math4": [
+            0.12928992393426597,
+            0.15991481090895832
+          ],
+          "math1_pc_wall_seconds": {
+            "call1": 0.4483475360320881,
+            "call2": 0.44487794197630137,
+            "call3": 0.45426171901635826,
+            "warm_mean_calls2_3": 0.4495698304963298
+          },
+          "math4_pc_wall_seconds": {
+            "call1": 0.3217364960582927,
+            "call2": 0.3273259720299393,
+            "call3": 0.3219349399441853,
+            "warm_mean_calls2_3": 0.3246304559870623
+          },
+          "numerical_equivalence_passed": true,
+          "pc_output_relative_differences": [
+            4.390364743631533e-14,
+            4.390364743631533e-14,
+            4.390364743631533e-14
+          ],
+          "same_refinement_work": true,
+          "warm_math1_over_math4_ratio": 1.3848664603244951,
+          "wavelength_nm": 5
+        },
+        {
+          "factor_api_timing_is_not_full_pc_metric": true,
+          "factor_counts_math1_then_math4": [
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            },
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            }
+          ],
+          "factor_numeric_api_process_cpu_seconds_math1_then_math4": [
+            0.9522865389999993,
+            1.592372002000019
+          ],
+          "factor_numeric_api_wall_seconds_math1_then_math4": [
+            0.9522784909931943,
+            0.6239651960786432
+          ],
+          "math1_pc_wall_seconds": {
+            "call1": 6.210133804008365,
+            "call2": 6.213595506967977,
+            "call3": 6.118164788000286,
+            "warm_mean_calls2_3": 6.165880147484131
+          },
+          "math4_pc_wall_seconds": {
+            "call1": 5.896852649049833,
+            "call2": 5.870886394986883,
+            "call3": 5.898828177014366,
+            "warm_mean_calls2_3": 5.884857286000624
+          },
+          "numerical_equivalence_passed": true,
+          "pc_output_relative_differences": [
+            4.4525423916374397e-13,
+            4.4525423916374397e-13,
+            4.4525423916374397e-13
+          ],
+          "same_refinement_work": true,
+          "warm_math1_over_math4_ratio": 1.047753555919194,
+          "wavelength_nm": 2
+        }
+      ],
+      "order": "AB",
+      "status": "BOUNDED_COMPARISON_PASS"
+    },
+    {
+      "file": {
+        "path": "tmp/review_v6_components/e3_math1_vs_math4_ba1_comparison_20261002.json",
+        "sha256": "ee3e06a3e90a3a82832b78a6f6c296f4352e43f92e2252c085e848259da67c4e"
+      },
+      "models": [
+        {
+          "factor_api_timing_is_not_full_pc_metric": true,
+          "factor_counts_math1_then_math4": [
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            },
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            }
+          ],
+          "factor_numeric_api_process_cpu_seconds_math1_then_math4": [
+            0.14133318000000017,
+            0.4374546190000004
+          ],
+          "factor_numeric_api_wall_seconds_math1_then_math4": [
+            0.14132862200494856,
+            0.10936373902950436
+          ],
+          "math1_pc_wall_seconds": {
+            "call1": 0.49268468795344234,
+            "call2": 0.5510379959596321,
+            "call3": 0.583098701084964,
+            "warm_mean_calls2_3": 0.567068348522298
+          },
+          "math4_pc_wall_seconds": {
+            "call1": 0.33229670603759587,
+            "call2": 0.3366536539979279,
+            "call3": 0.3238430260680616,
+            "warm_mean_calls2_3": 0.33024834003299475
+          },
+          "numerical_equivalence_passed": true,
+          "pc_output_relative_differences": [
+            4.390364743631533e-14,
+            4.390364743631533e-14,
+            4.390364743631533e-14
+          ],
+          "same_refinement_work": true,
+          "warm_math1_over_math4_ratio": 1.7170967413966194,
+          "wavelength_nm": 5
+        },
+        {
+          "factor_api_timing_is_not_full_pc_metric": true,
+          "factor_counts_math1_then_math4": [
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            },
+            {
+              "logical_apply_calls": 7,
+              "numeric_calls": 1,
+              "solve_calls": 8,
+              "symbolic_calls": 1
+            }
+          ],
+          "factor_numeric_api_process_cpu_seconds_math1_then_math4": [
+            0.7437796229999947,
+            1.5714810510000348
+          ],
+          "factor_numeric_api_wall_seconds_math1_then_math4": [
+            0.7438719009514898,
+            0.5780427199788392
+          ],
+          "math1_pc_wall_seconds": {
+            "call1": 6.31699038494844,
+            "call2": 6.127005794085562,
+            "call3": 6.314273332012817,
+            "warm_mean_calls2_3": 6.22063956304919
+          },
+          "math4_pc_wall_seconds": {
+            "call1": 6.438120568054728,
+            "call2": 6.467249586014077,
+            "call3": 6.286300880950876,
+            "warm_mean_calls2_3": 6.376775233482476
+          },
+          "numerical_equivalence_passed": true,
+          "pc_output_relative_differences": [
+            4.4525423916374397e-13,
+            4.4525423916374397e-13,
+            4.4525423916374397e-13
+          ],
+          "same_refinement_work": true,
+          "warm_math1_over_math4_ratio": 0.9755149484313849,
+          "wavelength_nm": 2
+        }
+      ],
+      "order": "BA",
+      "status": "BOUNDED_COMPARISON_PASS"
+    }
+  ],
+  "component_test_sha256": "3f251f98646c9eeaf06ca730921bf690aa93df7646436f2995bf466bfdab13c5",
+  "created_utc": "2026-10-02T15:09:04.633739+00:00",
+  "detailed_review_package": {
+    "path": "tmp/review_v6_components/e3_thread_trials_review_20261002_v2.json",
+    "sha256": "15a7059f1e3dfbfaddf63e4d32918b3660a0363aa4c87f73dd9fa802a8a6322f"
+  },
+  "interpretation_correction": {
+    "corrected_observations": "math4 environment setting=4; openblas_get_num_threads()=4; parallel_runtime/openblas_get_parallel enum=1 (OPENBLAS_THREAD); actual worker OS threads=6. PC wall and factor numeric API wall/process CPU timing are kept separate.",
+    "correction": "Earlier review-package wording misread parallel_runtime=1 as a thread count. Local OpenBLAS cblas.h defines openblas_get_parallel() values 0=OPENBLAS_SEQUENTIAL, 1=OPENBLAS_THREAD, 2=OPENBLAS_OPENMP.",
+    "header": "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h",
+    "header_sha256": "78a4785df94a537a34a0d2fc1452698bfa9351a906746c81ae0136bd9c9e6063",
+    "original_run_json_npz_watchdog_records_modified": false,
+    "superseded_E3_review_package_sha256": "fee4ca909edf33486919247ec5fa9d81156ffe09c8d7d203bb7b0486877261f5"
+  },
+  "launcher": {
+    "path": "tmp/review_v6_components/run_thread_component.py",
+    "sha256": "bfd8a4f236c5ba96524c37ef9c68c0a3cff6dfd9482ab2b40f72c2a0043ae68b"
+  },
+  "next_gate": "F5 concrete package requires main review and fresh launch admission; do not launch from this record alone.",
+  "openblas_field_semantics": {
+    "environment_setting_math4": "4",
+    "get_num_threads_readback": "openblas_get_num_threads() result; 1 for math1 and 4 for math4",
+    "header": "/usr/include/x86_64-linux-gnu/openblas-pthread/cblas.h",
+    "header_sha256": "78a4785df94a537a34a0d2fc1452698bfa9351a906746c81ae0136bd9c9e6063",
+    "observed_worker_os_threads": {
+      "math1": 3,
+      "math4": 6
+    },
+    "parallel_runtime_field": "raw openblas_get_parallel() result; 1 means OPENBLAS_THREAD type enum, not a thread count",
+    "parallelization_type_enum": {
+      "meaning": "OPENBLAS_THREAD",
+      "not_a_thread_count": true,
+      "raw_value": 1
+    },
+    "reported_thread_count_math4": "4",
+    "timing_fields": "PC timings are wall seconds; factor numeric API wall and process CPU seconds are separate; per-PC process CPU seconds were not recorded."
+  },
+  "order": [
+    "AB1_math1",
+    "AB1_math4",
+    "BA1_math4",
+    "BA1_math1"
+  ],
+  "resource_policy": {
+    "PSS": "disabled",
+    "swap": "observe only",
+    "time_limit": "none",
+    "tree_rss_hard_bytes": 1300000000000,
+    "tree_rss_warning_bytes": 1170000000000
+  },
+  "schema_version": "task39extra.v6.thread-selection-compact.v1",
+  "scope": {
+    "PC_output_capture": "NPZ captured outside PC timer",
+    "fixture": "5 nm and 2 nm Si, 18 cells each, bounded FE only",
+    "full_PDE_qualification": false,
+    "per_fixture_configuration_work": {
+      "fixed_PC_calls": 3,
+      "logical_applies": 7,
+      "numeric_factorizations": 1,
+      "solves": 8,
+      "symbolic_factorizations": 1
+    }
+  },
+  "selection": {
+    "decision": "No stable math4 full-PC benefit on the 2 nm fixture; retain math1. Do not run an 8-thread trial.",
+    "five_nm_warm_math1_over_math4": {
+      "AB": 1.3848664603244951,
+      "BA": 1.7170967413966194
+    },
+    "formal_thread_count": 1,
+    "mpi_size": 1,
+    "mumps_shared_memory_capability": "unknown",
+    "numa_policy": "interleave nodes 0,1",
+    "parent_cpu": [
+      9
+    ],
+    "two_nm_warm_math1_over_math4": {
+      "AB": 1.047753555919194,
+      "BA": 0.9755149484313849
+    },
+    "worker_cpu": [
+      24
+    ]
+  },
+  "selector_validation": {
+    "checks": {
+      "duplicate_cpu_rejected": "PASS",
+      "math1_default_cpu24": "PASS",
+      "math4_explicit_valid": "PASS",
+      "mixed_numa_rejected": "PASS",
+      "no_FE_or_pytest_invoked": "PASS",
+      "no_static_field_name_assertion": "PASS",
+      "numactl_probe_policy_and_affinity": "PASS",
+      "outside_effective_cpuset_rejected": "PASS",
+      "wrong_length_rejected": "PASS"
+    },
+    "diagnostic_correction": {
+      "path": "tmp/review_v6_components/e3_admission_diagnostic_correction_20261002.json",
+      "sha256": "878cceb7664adaf44710565a28079168e920c3e99e1ae17ca98b7d05aabaad2b"
+    },
+    "path": "tmp/review_v6_components/e3_worker_cpu_selector_validation_fix_20261002.json",
+    "prior_diagnostic_archive_sha256": "878cceb7664adaf44710565a28079168e920c3e99e1ae17ca98b7d05aabaad2b",
+    "sha256": "36566a48ea07cd012a828a393be6af8eed22c5f84f050c0267afaaa6b1222632",
+    "status": "PASS_pure_entry_checks_only"
+  },
+  "source": {
+    "branch": "task39extra_para_workstation_capacity",
+    "clean_at_all_four_launches": true,
+    "sha": "41bd6afa0be4e6ff242025f3730a3e458d3717e7"
+  },
+  "stage": "E3",
+  "status": "E3_BOUNDED_COMPARISON_COMPLETED",
+  "trials": [
+    {
+      "actual_worker_affinity_readback": [
+        24
+      ],
+      "fixtures": {
+        "2nm": {
+          "actual_affinity_readback": [
+            24
+          ],
+          "actual_os_thread_count": 3,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 0.9522865389999993,
+          "factor_numeric_api_wall_seconds": 0.9522784909931943,
+          "fixture_cells": 18,
+          "mode_count": 3904,
+          "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+          "npz_sha256": "c4db1a902d4c8ecad49b15866abfa86dfa246d10f987d0d1848958d28f300ad0",
+          "npz_shape": [
+            3,
+            7900
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1"
+          },
+          "openblas_get_num_threads_readback": 1,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "7802e41992d073edeb11ce77bc6ef942fb06b1e25849cdb2e75473fc27103fda",
+          "status": "COMPONENT_PASS"
+        },
+        "5nm": {
+          "actual_affinity_readback": [
+            24
+          ],
+          "actual_os_thread_count": 3,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 0.1292977790000016,
+          "factor_numeric_api_wall_seconds": 0.12928992393426597,
+          "fixture_cells": 18,
+          "mode_count": 600,
+          "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+          "npz_sha256": "a2e9d3358de37bbe5c3f230a4f0092f49ec378429ff50bf0986306662477ca73",
+          "npz_shape": [
+            3,
+            4596
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1"
+          },
+          "openblas_get_num_threads_readback": 1,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "86fef41ab903c463c74a2471b45cc29b83f732bf6038e2d2350f8369b7d21fc0",
+          "status": "COMPONENT_PASS"
+        }
+      },
+      "identity_json_sha256": "a95ac9dfd6b0835d845af7a6e19ce4bb2ee305dc32d2114be827c3f551f83109",
+      "launcher_sha256": "bfd8a4f236c5ba96524c37ef9c68c0a3cff6dfd9482ab2b40f72c2a0043ae68b",
+      "order": "AB1_math1",
+      "parent_cpu_affinity_readback": [
+        9
+      ],
+      "root_process": {
+        "pid": 1290700,
+        "start_ticks": 87648311
+      },
+      "run_directory": "tmp/review_v6_components/e3_20261002T143128_ab1_math1_baseline",
+      "source_sha": "41bd6afa0be4e6ff242025f3730a3e458d3717e7",
+      "terminal": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 210.10670143202879,
+        "global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "pss_sampling_policy": "disabled_by_profile",
+        "remaining_child_pids": [],
+        "rss_hard_limit_bytes": 1300000000000,
+        "rss_warning_bytes": 1170000000000,
+        "samples": 527,
+        "task_swap_peak_bytes": 0,
+        "time_limit_mode": "none",
+        "tree_rss_peak_bytes": 2495651840,
+        "worker_exit": 0
+      },
+      "watchdog_resources_jsonl_sha256": "fc0b76303c4c086ea494c99f85259a4535f9079e091b957ca7653799b8872b65",
+      "watchdog_summary_sha256": "1e7d324c84fcd969f090a8601c5c9caf0239d7fcfcbe19288e1867907f8000cc",
+      "worker_affinity_requested": "24",
+      "worker_process": {
+        "pid": 1290727,
+        "start_ticks": 87648572
+      }
+    },
+    {
+      "actual_worker_affinity_readback": [
+        24,
+        28,
+        30,
+        47
+      ],
+      "fixtures": {
+        "2nm": {
+          "actual_affinity_readback": [
+            24,
+            28,
+            30,
+            47
+          ],
+          "actual_os_thread_count": 6,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 1.592372002000019,
+          "factor_numeric_api_wall_seconds": 0.6239651960786432,
+          "fixture_cells": 18,
+          "mode_count": 3904,
+          "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+          "npz_sha256": "c26d3b5a1d8da43027074c746eb9dea9c5de3a34cd79a86ac3f66489eb0f61c6",
+          "npz_shape": [
+            3,
+            7900
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "4",
+            "NUMEXPR_NUM_THREADS": "4",
+            "OMP_NUM_THREADS": "4",
+            "OPENBLAS_NUM_THREADS": "4"
+          },
+          "openblas_get_num_threads_readback": 4,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "2c907311c60cc2a9e9ef9e4970ad382562232efb9fe85daea564c8a3ed914428",
+          "status": "COMPONENT_PASS"
+        },
+        "5nm": {
+          "actual_affinity_readback": [
+            24,
+            28,
+            30,
+            47
+          ],
+          "actual_os_thread_count": 6,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 0.496435052999999,
+          "factor_numeric_api_wall_seconds": 0.15991481090895832,
+          "fixture_cells": 18,
+          "mode_count": 600,
+          "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+          "npz_sha256": "eb5796898be9b4866435ac6d3d9f01ff844f1094fa2f2c76bdd63b4a62186b18",
+          "npz_shape": [
+            3,
+            4596
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "4",
+            "NUMEXPR_NUM_THREADS": "4",
+            "OMP_NUM_THREADS": "4",
+            "OPENBLAS_NUM_THREADS": "4"
+          },
+          "openblas_get_num_threads_readback": 4,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "7457680c577d5af8b4d26a5f31262ea0481a640cd685da1f975513c0a230e03b",
+          "status": "COMPONENT_PASS"
+        }
+      },
+      "identity_json_sha256": "09071b3c3a7ce959f0870a1abd43c68cb0beb00080328781b98d569fe28e0577",
+      "launcher_sha256": "bfd8a4f236c5ba96524c37ef9c68c0a3cff6dfd9482ab2b40f72c2a0043ae68b",
+      "order": "AB1_math4",
+      "parent_cpu_affinity_readback": [
+        9
+      ],
+      "root_process": {
+        "pid": 1292464,
+        "start_ticks": 87696617
+      },
+      "run_directory": "tmp/review_v6_components/e3_20261002T143931_ab1_math4_candidate",
+      "source_sha": "41bd6afa0be4e6ff242025f3730a3e458d3717e7",
+      "terminal": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 205.40456689696293,
+        "global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "pss_sampling_policy": "disabled_by_profile",
+        "remaining_child_pids": [],
+        "rss_hard_limit_bytes": 1300000000000,
+        "rss_warning_bytes": 1170000000000,
+        "samples": 513,
+        "task_swap_peak_bytes": 0,
+        "time_limit_mode": "none",
+        "tree_rss_peak_bytes": 2521554944,
+        "worker_exit": 0
+      },
+      "watchdog_resources_jsonl_sha256": "bebcc9bbe3c7c43463d9c8732c729e8a64cbf1894701f67eac5330ee6cabef5b",
+      "watchdog_summary_sha256": "e073a7740eabbf215df7ce70dc647e2cd83b975809d3df1f2f52cde7befe15f6",
+      "worker_affinity_requested": "24,28,30,47",
+      "worker_process": {
+        "pid": 1292501,
+        "start_ticks": 87696656
+      }
+    },
+    {
+      "actual_worker_affinity_readback": [
+        24,
+        28,
+        30,
+        47
+      ],
+      "fixtures": {
+        "2nm": {
+          "actual_affinity_readback": [
+            24,
+            28,
+            30,
+            47
+          ],
+          "actual_os_thread_count": 6,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 1.5714810510000348,
+          "factor_numeric_api_wall_seconds": 0.5780427199788392,
+          "fixture_cells": 18,
+          "mode_count": 3904,
+          "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+          "npz_sha256": "c26d3b5a1d8da43027074c746eb9dea9c5de3a34cd79a86ac3f66489eb0f61c6",
+          "npz_shape": [
+            3,
+            7900
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "4",
+            "NUMEXPR_NUM_THREADS": "4",
+            "OMP_NUM_THREADS": "4",
+            "OPENBLAS_NUM_THREADS": "4"
+          },
+          "openblas_get_num_threads_readback": 4,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "3bb9a70ce661b81be32d5555845ce5b6ba4601c4f44f8aeb10725f4197ba305f",
+          "status": "COMPONENT_PASS"
+        },
+        "5nm": {
+          "actual_affinity_readback": [
+            24,
+            28,
+            30,
+            47
+          ],
+          "actual_os_thread_count": 6,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 0.4374546190000004,
+          "factor_numeric_api_wall_seconds": 0.10936373902950436,
+          "fixture_cells": 18,
+          "mode_count": 600,
+          "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+          "npz_sha256": "eb5796898be9b4866435ac6d3d9f01ff844f1094fa2f2c76bdd63b4a62186b18",
+          "npz_shape": [
+            3,
+            4596
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "4",
+            "NUMEXPR_NUM_THREADS": "4",
+            "OMP_NUM_THREADS": "4",
+            "OPENBLAS_NUM_THREADS": "4"
+          },
+          "openblas_get_num_threads_readback": 4,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "4364e6132a79aee449fc29c4f2e21d4d3380f2ce0859d07ef2a54707e80d7509",
+          "status": "COMPONENT_PASS"
+        }
+      },
+      "identity_json_sha256": "a9187a4adca2df9115b359db02d367657072dd93fd6f0803ba953f67da67b581",
+      "launcher_sha256": "bfd8a4f236c5ba96524c37ef9c68c0a3cff6dfd9482ab2b40f72c2a0043ae68b",
+      "order": "BA1_math4",
+      "parent_cpu_affinity_readback": [
+        9
+      ],
+      "root_process": {
+        "pid": 1294513,
+        "start_ticks": 87744044
+      },
+      "run_directory": "tmp/review_v6_components/e3_20261002T144725_ba1_math4_confirm",
+      "source_sha": "41bd6afa0be4e6ff242025f3730a3e458d3717e7",
+      "terminal": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 255.0278379850788,
+        "global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "pss_sampling_policy": "disabled_by_profile",
+        "remaining_child_pids": [],
+        "rss_hard_limit_bytes": 1300000000000,
+        "rss_warning_bytes": 1170000000000,
+        "samples": 627,
+        "task_swap_peak_bytes": 0,
+        "time_limit_mode": "none",
+        "tree_rss_peak_bytes": 2513944576,
+        "worker_exit": 0
+      },
+      "watchdog_resources_jsonl_sha256": "af7862e6fa4434d5a0bd4d63ea2ddc852c5bf4130259b5ed1f8714783b0a16a9",
+      "watchdog_summary_sha256": "474a85a80a13afa0911391c5871103518c68bea1cab3d808467ad2bbde6cf8ce",
+      "worker_affinity_requested": "24,28,30,47",
+      "worker_process": {
+        "pid": 1294550,
+        "start_ticks": 87744085
+      }
+    },
+    {
+      "actual_worker_affinity_readback": [
+        24
+      ],
+      "fixtures": {
+        "2nm": {
+          "actual_affinity_readback": [
+            24
+          ],
+          "actual_os_thread_count": 3,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 0.7437796229999947,
+          "factor_numeric_api_wall_seconds": 0.7438719009514898,
+          "fixture_cells": 18,
+          "mode_count": 3904,
+          "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+          "npz_sha256": "c4db1a902d4c8ecad49b15866abfa86dfa246d10f987d0d1848958d28f300ad0",
+          "npz_shape": [
+            3,
+            7900
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1"
+          },
+          "openblas_get_num_threads_readback": 1,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "e2468718306342ee6852249fbb51c4a01011bc4cccbc49b39bb3dd659a2f132f",
+          "status": "COMPONENT_PASS"
+        },
+        "5nm": {
+          "actual_affinity_readback": [
+            24
+          ],
+          "actual_os_thread_count": 3,
+          "factor_counts": {
+            "logical_apply_calls": 7,
+            "numeric_calls": 1,
+            "solve_calls": 8,
+            "symbolic_calls": 1
+          },
+          "factor_numeric_api_process_cpu_seconds": 0.14133318000000017,
+          "factor_numeric_api_wall_seconds": 0.14132862200494856,
+          "fixture_cells": 18,
+          "mode_count": 600,
+          "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+          "npz_sha256": "a2e9d3358de37bbe5c3f230a4f0092f49ec378429ff50bf0986306662477ca73",
+          "npz_shape": [
+            3,
+            4596
+          ],
+          "openblas_environment_thread_settings": {
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1"
+          },
+          "openblas_get_num_threads_readback": 1,
+          "openblas_parallel_runtime_openblas_get_parallel_enum_raw": 1,
+          "openblas_parallelization_type": "OPENBLAS_THREAD",
+          "per_PC_process_cpu_seconds": "not recorded",
+          "report_sha256": "59b967c6d2e4dfe2ba71a8eee7e365ecf3240524071ff00f83021485ce3053a0",
+          "status": "COMPONENT_PASS"
+        }
+      },
+      "identity_json_sha256": "3ffa2fb944994cfdb717851057ff5a53efbaa28f0eb19238c4d36535d887df4b",
+      "launcher_sha256": "bfd8a4f236c5ba96524c37ef9c68c0a3cff6dfd9482ab2b40f72c2a0043ae68b",
+      "order": "BA1_math1",
+      "parent_cpu_affinity_readback": [
+        9
+      ],
+      "root_process": {
+        "pid": 1295659,
+        "start_ticks": 87776833
+      },
+      "run_directory": "tmp/review_v6_components/e3_20261002T145253_ba1_math1_confirm",
+      "source_sha": "41bd6afa0be4e6ff242025f3730a3e458d3717e7",
+      "terminal": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 221.76563703792635,
+        "global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "pss_sampling_policy": "disabled_by_profile",
+        "remaining_child_pids": [],
+        "rss_hard_limit_bytes": 1300000000000,
+        "rss_warning_bytes": 1170000000000,
+        "samples": 556,
+        "task_swap_peak_bytes": 0,
+        "time_limit_mode": "none",
+        "tree_rss_peak_bytes": 2503221248,
+        "worker_exit": 0
+      },
+      "watchdog_resources_jsonl_sha256": "bd3b712f8f1443c0c6e33261755c9ffa21b73b3760303e1d2735db5a70902c7e",
+      "watchdog_summary_sha256": "a071dcd9752c2990747d0f13b97b7910c380ec914a1a862ca30cb26f8a9dd16f",
+      "worker_affinity_requested": "24",
+      "worker_process": {
+        "pid": 1295696,
+        "start_ticks": 87777092
+      }
+    }
+  ]
+}
