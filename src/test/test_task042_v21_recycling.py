@@ -213,3 +213,31 @@ def test_reader_counter_and_CU_contract_mutations():
     assert recycle_contract(row)
     for key,value in [('m',128),('CU_count',34),('CU_none_indices',[33]),('preconditioner','ILU'),('internal_Arnoldi_iterations',256)]:
         assert not recycle_contract(dict(row,**{key:value}))
+
+
+@pytest.mark.parametrize('legacy',[False,True])
+def test_fixed_parent_reader_does_not_decode_legacy_iterates_or_directions(tmp_path,monkeypatch,legacy):
+    from types import SimpleNamespace
+    from src.solvers import exact_action_recycle_study as study
+    from src.runners.orthonormal_trace_reprofile import atomic_arrays
+    artifact=tmp_path/'artifacts';artifact.mkdir()
+    trace=np.array([1+2j,3-.5j,2j]);port=np.arange(40,dtype=np.complex128)*(1+.2j)
+    physical=dict(trace=trace,port=port,z=np.r_[trace,port],residual=np.ones(43,complex))
+    state=atomic_arrays(artifact/'parent.npz',**physical,x=trace*77,
+        outer_directions=np.tile(trace,(3,1)),CU_c=trace[None,:],CU_u=trace[None,:],CU_none=np.array([True]))
+    stage=SimpleNamespace(io=SimpleNamespace(ARTIFACT_ROOT=artifact,ROOT=tmp_path),
+        packet=SimpleNamespace(nt=3,size=43))
+    original=np.load;decoded=[]
+    class PhysicalOnly:
+        def __enter__(self):
+            self.opened=original(state['path'],allow_pickle=False)
+            self.files=self.opened.files
+            return self
+        def __exit__(self,*args):self.opened.close()
+        def __getitem__(self,key):
+            if key not in physical:pytest.fail('forbidden legacy vector decoded: '+key)
+            decoded.append(key);return self.opened[key]
+    monkeypatch.setattr(study.np,'load',lambda *args,**kwargs:PhysicalOnly())
+    loaded=study.load_state(stage,dict(state=state),legacy=legacy)
+    assert set(decoded)==set(physical) and set(loaded)==set(physical)
+    for key,value in physical.items():np.testing.assert_array_equal(loaded[key],value)

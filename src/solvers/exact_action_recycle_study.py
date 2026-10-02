@@ -20,8 +20,9 @@ def load_state(stage,item,*,legacy=False):
     state=item['state'];path=Path(state['path']).resolve()
     if not (path.is_relative_to(stage.io.ARTIFACT_ROOT) or path.is_relative_to(stage.io.ROOT/'benchmarks/artifacts/task042/v19')) or file_hash(path)!=state['sha256']:
         raise ValueError('V21 fixed state ownership/file hash differs')
+    # Parent/verification reads physical state only; legacy Krylov vectors stay closed.
     with np.load(path,allow_pickle=False) as f:
-        arrays={k:np.array(f[k]) for k in ('trace','port','z','residual','x','outer_directions','CU_c','CU_u','CU_none') if k in f.files}
+        arrays={k:np.array(f[k]) for k in ('trace','port','z','residual') if k in f.files}
     for key,shape in [('trace',(stage.packet.nt,)),('port',(40,)),('z',(stage.packet.size,)),('residual',(stage.packet.size,))]:
         if key not in arrays or arrays[key].shape!=shape or not np.isfinite(arrays[key]).all():raise ValueError('V21 complete finite physical state missing')
         if key+'_sha256' in state and array_hash(arrays[key])!=state[key+'_sha256']:raise ValueError('V21 '+key+' array hash differs')
