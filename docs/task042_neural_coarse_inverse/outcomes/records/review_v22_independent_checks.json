@@ -1,0 +1,1051 @@
+{
+  "schema_version": 1,
+  "review_date_utc8": "2026-10-03",
+  "reviewed_remote_HEAD": "31ad54a9d774f384aa11699da8c14befbdc3b6e2",
+  "previous_review": "0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3",
+  "previous_inventory_sha256": "e9e8cacd727178f2d3daea78d75f364df32175bbc55cb4da0f6287b7c636509e",
+  "scope": "incremental semantic review and read-only raw checks; no new operator apply, PDE, NN training, factorization or full repository audit",
+  "task042_actor_observed": false,
+  "host_observation_utc": "2026-10-02T22:27Z",
+  "historical_inventory_changed_only": [
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md"
+  ],
+  "changed_files": [
+    {
+      "path": "benchmarks/check_task042_local_block_records.py",
+      "sha256": "cbfed498b4f9219aba38a93be5ae0c10776556daa773a284bb51b7a683ec631b",
+      "bytes": 5858
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "a94e257139cabd273e611b5c10aef2c7b1063a00bfdd9237ae16c3e8e44c953d",
+      "bytes": 247742
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "9f65f5c88e06612415c22955d91a66a44a0beddc8d0fd25c1d5c9a73102a8951",
+      "bytes": 213722
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "5d7c923d1dbad7f40220b8767487b6cfa5c0f19d7002bac46fa09231d6a2b9fd",
+      "bytes": 21311
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "e65277022e08e19bc4961124cb20383d7ce7ac79e55c5eca6f5c224f6e26a46e",
+      "bytes": 49282
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/local_block_coarse_pair_v24.md",
+      "sha256": "cf307096c4b2c68bba4b2fc1b2f0140b62b7b23885042c0763b8139d84bd819c",
+      "bytes": 10603
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/block_action_v24.json",
+      "sha256": "3f3b1786acfb9f45ed58c9ef4bd15973f8f9cf6c348018f07cab14fdc0d8ad4d",
+      "bytes": 9692
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v24.csv",
+      "sha256": "7461e4421b54347996eb8cb28a60abd739684823d5dd9a028fdf5e78527e6f42",
+      "bytes": 3924
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/checkpoint_inventory_v24.json",
+      "sha256": "c453582aaa5715e5502de6eae0da84e0110b33d54f522a2d77d9c42b2db1423a",
+      "bytes": 10231
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/composite_overlap_v24.json",
+      "sha256": "4e5d69990ce4456a80557a9f9d6e52722a63749c0d15ca4715bdd85518518069",
+      "bytes": 2777
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v24.csv",
+      "sha256": "025a6c264db5efd0b18eaebe36eb7b80b7e52e02ccfeb8b69f9859c23b856fb8",
+      "bytes": 6567
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/deadline_repair_v24.json",
+      "sha256": "63344fa0438deb2642a27fcecce0cc2b6bf5c647a05d2c43df8f7172edc29994",
+      "bytes": 2825
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/environment_identity_v24.json",
+      "sha256": "21601dc59608b67c15368b86aed2eb934362f04ae787d3b6dd98bd6505d1c89a",
+      "bytes": 7568
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_channels_v24.csv",
+      "sha256": "19777a516a1f87464aceeb7bf51df460cc997ea149fe7aa07996892127927703",
+      "bytes": 287753
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/field_checks_v24.json",
+      "sha256": "191e0843a3f139088573a2310ae1795fe857af31f7a223408eab9f74903a2d37",
+      "bytes": 62315
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/frozen_residual_image_coverage_v24.json",
+      "sha256": "e311b06caf2cbb71530be34b1448164e6fa7246f5a8c8e83021c7493ee0e259e",
+      "bytes": 1064
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/historical_control_identity_v24.json",
+      "sha256": "8b4751c077639c6e884aeb4326665765ba9a53e890baa27e8a94f693bfade933",
+      "bytes": 1112
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/historical_control_prefix_v24.csv",
+      "sha256": "ab4ba1fec00ccc387be16bd2b63572d92b9af4164a6243784ab007c9c096eabd",
+      "bytes": 7188
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/legacy_registry_check_v24.json",
+      "sha256": "764d7eff0ce81f86f5471cb0eb3f2528002b52ea370b030b4a2b9aace04eb65c",
+      "bytes": 4793
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/lineage_access_v24.json",
+      "sha256": "d453b8a71ea369a96afda9c91aab716a9ad796fc5a5f8e0867cc61f012f785bd",
+      "bytes": 1291
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/linearity_v24.json",
+      "sha256": "8ffb5d88b570ff369c484be954781585c5115a66ca3be5a4c5000db589883c95",
+      "bytes": 1664
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_capacity_v24.json",
+      "sha256": "b185d35fec4b77e48cb3f7fe3ec0c32cce419304909fd910fa6595b740e936f9",
+      "bytes": 422
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_delivery_receipt_v24.json",
+      "sha256": "729f228c74eeb7a7ecbcf1b5c5d733bdb7d03000bcb72f902165c0bb8cab5b0c",
+      "bytes": 5033
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_factor_safety_v24.json",
+      "sha256": "0d8eac7c7606d0c3ae3e7ee6b9377dbcf41082d2339314bac6b537057025de04",
+      "bytes": 15384
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/local_reload_v24.json",
+      "sha256": "388fef4111ba8d20e27c9e87b7efa86b5796d5e79341b738ce611a375fb069dd",
+      "bytes": 8668
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/not_run_v24.json",
+      "sha256": "5df9fc70b1d1b6673b411ffb3150825242886e347e7e23886880ec44d60afe05",
+      "bytes": 306
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/paired_prefix_v24.csv",
+      "sha256": "cad99b8b94617193767def2a76318715fab5e09784a7fda6444381b999951f44",
+      "bytes": 1110
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/partition_v24.json",
+      "sha256": "77f0207195148e21554f19fbcaab270137fdc133e48e711f46ea99f32540cb3b",
+      "bytes": 1713
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_check_v24.json",
+      "sha256": "ea6ef58cb9f13752ba1a531317d9d41086395508735a917f3c6b8c72875937bb",
+      "bytes": 3235
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/per_channel_power_v24.csv",
+      "sha256": "bb1a0e11cd54c5be5e8e4f2ff00eb7961593e33bf094a22e7494ea85ac6edb60",
+      "bytes": 28307
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/progress_journal_v24.jsonl",
+      "sha256": "7d5178a2555acbeee3ac8042d7fd974dd5eae1f29195bbaf4f7783f508a08ce6",
+      "bytes": 34528
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/qualification_and_dispatch_v24.json",
+      "sha256": "2e8c3cce3eba0aeedfa198da97bfb3d46b84e52326dcbecf6e52c31372c41d7e",
+      "bytes": 2251
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v24.json",
+      "sha256": "1edff103dabbacda0225e2ea7786ab58bd3ef1bd931f854c697896675bee6f38",
+      "bytes": 32863
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_render_check_v24.json",
+      "sha256": "c69c0f6de4187f45d4ab448107c111111c57211ecb73c3101795937d55c3d7db",
+      "bytes": 2798
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v24.json",
+      "sha256": "27624c9b457f6bb9f6e0434ecdb2ba4f075a24d95ad7e039f07108b14aa3a96f",
+      "bytes": 18239
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/section10_control_flow_v24.json",
+      "sha256": "715738e0806af544c8169941b11f48e9aeb918fed80d500a61a00fc9a45f5466",
+      "bytes": 2679
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v24.json",
+      "sha256": "0b11a0da22a79579271e820d54f42edc0c7605625cedfd055bed98fffc0d6ea6",
+      "bytes": 7207
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/static_checks_v24.json",
+      "sha256": "4d18bc8c380cc92fedea845573b2ed78c999657deb7f3581736c67b6927b6e7c",
+      "bytes": 3269
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/test_results_v24.json",
+      "sha256": "4c691fc57d74a34f8e277ae6c976aab63446a9f79a5fbeb77617fe7045758ac0",
+      "bytes": 10020
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "1e5d5efa7f7f36b0931796d79787d3c8e9b82c487db39dbb29bf3844eae8f2f7",
+      "bytes": 84001
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "5e390f5fd32743d4d170d4dcf5d6f01433ffedd775c1c458ef8533d2af579f31",
+      "bytes": 50650
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v24.md",
+      "sha256": "f23bcf79abbcbeb9f0f248f6865fc9273fdfa1a092c072f49669105d3145fcbb",
+      "bytes": 10962
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/local_block_coarse_v24.json",
+      "sha256": "97a0db71fee64af5f5a9a781eb8d60bf781d8973c268bcc40d651e0da9299de4",
+      "bytes": 6616
+    },
+    {
+      "path": "src/io/local_block_pair.py",
+      "sha256": "63309f96f004eb3cafafd45c1133ef8ff15838dce025ae8c85a46549c668014c",
+      "bytes": 6383
+    },
+    {
+      "path": "src/runners/local_block_queue.py",
+      "sha256": "529de94ffbbe04382ccebf67fec6e5260db7ae0bdbb90e8f3d95ec10c4a065e3",
+      "bytes": 6202
+    },
+    {
+      "path": "src/solvers/local_block_readiness.py",
+      "sha256": "0ab72dba4c194be21d9be4ba393746039c30bc45087a3d9868b77d8a26b8c431",
+      "bytes": 5189
+    },
+    {
+      "path": "src/solvers/local_block_study.py",
+      "sha256": "1424eedb02453e4b8b4010e42d552d384693132fb1a08207449484ff98461d64",
+      "bytes": 17805
+    },
+    {
+      "path": "src/test/test_task042_v24_admission.py",
+      "sha256": "ee0b1013f2a6b682ae39c9db7ac2f4ef4471fbbbcdab7f17ed130f2dbbc6e3ac",
+      "bytes": 5981
+    },
+    {
+      "path": "src/test/test_task042_v24_compact_qualification.py",
+      "sha256": "fbac43652d39dc51f852c0a793f681a9123bb5b102d953bc0c8d513c8ab0e3a3",
+      "bytes": 2027
+    },
+    {
+      "path": "src/test/test_task042_v24_local_coarse.py",
+      "sha256": "93f0240bb0eeca363a9d0cef8600baf26f750afa83802f37fa4553cf4e91ddbc",
+      "bytes": 12990
+    }
+  ],
+  "checker": {
+    "local_qualified": true,
+    "composite_qualified": true,
+    "states": 5,
+    "passed": 0,
+    "first_four_only": true,
+    "raw_fields_recomputed": true,
+    "neural_20percent_increment": "NOT_DEMONSTRATED",
+    "all_limits_pass": true
+  },
+  "targeted_tests": {
+    "command": "python -m pytest -q src/test/test_task042_v24_admission.py src/test/test_task042_v24_compact_qualification.py",
+    "passed": 16,
+    "pytest_seconds": 0.37,
+    "mode": "qualified native pure, numpy1.26.4/scipy1.11.4, math1"
+  },
+  "raw_bound_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_block_setup_20261002T144555294598Z/stage_result.json",
+      "sha256": "2bec45b6367274593e1ac040e8c1f9c829725adaf6aefbd3d9fdef778899d775",
+      "stage": "SETUP",
+      "name": "stage_result",
+      "bytes": 471940
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/input_original.dat",
+      "sha256": "d74c32b11847d5406e0d571e15cb3a4028b24d6c271bcc71b0da4ec9aab6e8c8",
+      "bytes": 222,
+      "stage": "SETUP",
+      "name": "input_original.dat"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/resolved_config.json",
+      "sha256": "9d51f0e895656000d48fc1d89393ee0dfede2c7b2822b324902dfbf998ca7f6e",
+      "bytes": 4043,
+      "stage": "SETUP",
+      "name": "resolved_config.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/run_manifest.json",
+      "sha256": "f6677597600aab9f1e9dd89c20f882d746a2db52ceab918977e3441d2a9092a6",
+      "bytes": 2338,
+      "stage": "SETUP",
+      "name": "run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/source_sha.txt",
+      "sha256": "c1bd42f06d7e444fa7d1fc33e7e976ebeb78ace26d71880b780cb4c5d4fff406",
+      "bytes": 41,
+      "stage": "SETUP",
+      "name": "source_sha.txt"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/run_summary.json",
+      "sha256": "e4cef0a9f03b82f10957904209ebe00477d5db2091cbcd3c200501c5c090de34",
+      "bytes": 6132,
+      "stage": "SETUP",
+      "name": "run_summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/resource_baseline.json",
+      "sha256": "bffc883ba7435d27f64e8270db2cc7a89972f7ecb2225e4b2e438917a4f3fb0d",
+      "bytes": 286263,
+      "stage": "SETUP",
+      "name": "resource_baseline.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/artifact_index.json",
+      "sha256": "0a57907680f81c115575fe1cc03de1ccaf7cdb454dd61100fba9e1783efb3e45",
+      "bytes": 229,
+      "stage": "SETUP",
+      "name": "artifact_index.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_block_setup_20261002T144555294598Z/supervision/resources.jsonl",
+      "sha256": "3dff314558254b0241158866c8f034c9a90207aa068c5b84db6d8c45ac4480e7",
+      "bytes": 786524,
+      "stage": "SETUP",
+      "name": "supervision/resources.jsonl"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_warm_20261002T144748771872Z/stage_result.json",
+      "sha256": "354c494238b608fff5caaaa9afc1d77f1d565ebeff3b1938455ab4a0c08327c4",
+      "stage": "LW",
+      "name": "stage_result",
+      "bytes": 249914
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/input_original.dat",
+      "sha256": "197f00ab17234afd76ff43cbee40b56f5e884f1a811312712a33564c9aab5c1b",
+      "bytes": 212,
+      "stage": "LW",
+      "name": "input_original.dat"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/resolved_config.json",
+      "sha256": "1596b0002dfb8c886c2adf7cb89528094f9408cac78c3229867ab4c4fedd22ca",
+      "bytes": 4023,
+      "stage": "LW",
+      "name": "resolved_config.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/run_manifest.json",
+      "sha256": "4b25387c9895aa987f89baa96ac8ed82de1a82349df4fb54e2535486b6c9efea",
+      "bytes": 2336,
+      "stage": "LW",
+      "name": "run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/source_sha.txt",
+      "sha256": "c1bd42f06d7e444fa7d1fc33e7e976ebeb78ace26d71880b780cb4c5d4fff406",
+      "bytes": 41,
+      "stage": "LW",
+      "name": "source_sha.txt"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/run_summary.json",
+      "sha256": "31aa8392f3491924e54f2ad3f254fa01a2bd795e5c0df0c1f53bc9dac542788b",
+      "bytes": 6114,
+      "stage": "LW",
+      "name": "run_summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/resource_baseline.json",
+      "sha256": "7f58c81a085b2cc294c460d40dfa844402f565200b3a0060a1c3d4ca5e152c59",
+      "bytes": 288777,
+      "stage": "LW",
+      "name": "resource_baseline.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/artifact_index.json",
+      "sha256": "2894185ecf87ea8a1f3b2e159f4d63c0ca17eceb24ccc54c93bf1abfb97fbcef",
+      "bytes": 222,
+      "stage": "LW",
+      "name": "artifact_index.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_warm_20261002T144748771872Z/supervision/resources.jsonl",
+      "sha256": "eb687f739e39ab75b96144243bd00625ad2da8171eddb01c35e771af3e304977",
+      "bytes": 2827358,
+      "stage": "LW",
+      "name": "supervision/resources.jsonl"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_warm_20261002T145746940540Z/stage_result.json",
+      "sha256": "cf0a0d35e2dd021d88f899640f02cce019cfc8c6e854f7b5b86d4e9b94085a5e",
+      "stage": "LCW",
+      "name": "stage_result",
+      "bytes": 250699
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/input_original.dat",
+      "sha256": "7cde436de4b407c4621243c8872e518e2092e65b63e5869915b4e026eacf086b",
+      "bytes": 220,
+      "stage": "LCW",
+      "name": "input_original.dat"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/resolved_config.json",
+      "sha256": "0b5e0d8011c2579a373ae972cd86b07991a8376831ede68bcdc548275d2efb83",
+      "bytes": 4039,
+      "stage": "LCW",
+      "name": "resolved_config.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/run_manifest.json",
+      "sha256": "e2a6f3364102d29ec931f254bfa22333c5866e7ff40db2d11feba9f59d53085f",
+      "bytes": 2339,
+      "stage": "LCW",
+      "name": "run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/source_sha.txt",
+      "sha256": "c1bd42f06d7e444fa7d1fc33e7e976ebeb78ace26d71880b780cb4c5d4fff406",
+      "bytes": 41,
+      "stage": "LCW",
+      "name": "source_sha.txt"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/run_summary.json",
+      "sha256": "7b53b9d63393f1d6d8bc84c03c511d3428ee68b07df3c9fad98c9dd408fa471f",
+      "bytes": 6137,
+      "stage": "LCW",
+      "name": "run_summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/resource_baseline.json",
+      "sha256": "79c0a6d79ef8273332e51ffd4c9da73f726ff5f7eef5b54456134856f983ad2c",
+      "bytes": 282924,
+      "stage": "LCW",
+      "name": "resource_baseline.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/artifact_index.json",
+      "sha256": "1db140baee5917dc825251cf5f83f1325f6f5cfcf9df11fe518a9a895fe74b3a",
+      "bytes": 229,
+      "stage": "LCW",
+      "name": "artifact_index.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_warm_20261002T145746940540Z/supervision/resources.jsonl",
+      "sha256": "35d48acd95f9f3c5253096e2ca717994b3498335bf3086d01dd9a9073fe05648",
+      "bytes": 3801387,
+      "stage": "LCW",
+      "name": "supervision/resources.jsonl"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_zero_20261002T150705305076Z/stage_result.json",
+      "sha256": "4971ba16d38f22bc81e0be8e5ccda1556d99fb7eb3e2f98afa48c2b91b67c479",
+      "stage": "LZ",
+      "name": "stage_result",
+      "bytes": 249275
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/input_original.dat",
+      "sha256": "bcca0c0122881e1712c89fcea0ce82b626ef846f2c5cc1c7a36f7001b2e844a3",
+      "bytes": 212,
+      "stage": "LZ",
+      "name": "input_original.dat"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/resolved_config.json",
+      "sha256": "df2abac9f1523cac030029342db860d5933e7c950c566a6ff69632e8bde8bb30",
+      "bytes": 4035,
+      "stage": "LZ",
+      "name": "resolved_config.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/run_manifest.json",
+      "sha256": "825edf158bd45a9a379b5ae5b58408ed7b7203ac73397db1f2edd51be4f2dedb",
+      "bytes": 2336,
+      "stage": "LZ",
+      "name": "run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/source_sha.txt",
+      "sha256": "c1bd42f06d7e444fa7d1fc33e7e976ebeb78ace26d71880b780cb4c5d4fff406",
+      "bytes": 41,
+      "stage": "LZ",
+      "name": "source_sha.txt"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/run_summary.json",
+      "sha256": "e6985c24aafdbe106e0b3fbfcf015a8ac2da24ada7140e0a908e50fd13a66404",
+      "bytes": 6122,
+      "stage": "LZ",
+      "name": "run_summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/resource_baseline.json",
+      "sha256": "508518d00bf42b17fc42a6b2ecdd205ef1a4bc92a3d1639560aa6830e5036868",
+      "bytes": 205247,
+      "stage": "LZ",
+      "name": "resource_baseline.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/artifact_index.json",
+      "sha256": "55573f0c843380010d092e785abdd1ee27ac48a1fd8dff38b66ae3bf8c94e07c",
+      "bytes": 222,
+      "stage": "LZ",
+      "name": "artifact_index.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_zero_20261002T150705305076Z/supervision/resources.jsonl",
+      "sha256": "9aae48fe8b5677050f4fe48638ade7344b3ce18dfe3aa6cf3531007e6ae6fe50",
+      "bytes": 2498586,
+      "stage": "LZ",
+      "name": "supervision/resources.jsonl"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_zero_20261002T151327920057Z/stage_result.json",
+      "sha256": "3051afc21e80bef0baf7b4ebedccbe0c57fd65de9f3aa20bccb71b6062ce13fa",
+      "stage": "LCZ",
+      "name": "stage_result",
+      "bytes": 249964
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/input_original.dat",
+      "sha256": "860461ffdfdfec842c1993ecadfbb8a170eafe7418eaa2d31aec1377d734c8ae",
+      "bytes": 220,
+      "stage": "LCZ",
+      "name": "input_original.dat"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/resolved_config.json",
+      "sha256": "8e3b2c513e95f56f5c33eca1ed353f425139bfb1488232ccbc9cace8da0a9f3f",
+      "bytes": 4050,
+      "stage": "LCZ",
+      "name": "resolved_config.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/run_manifest.json",
+      "sha256": "272a8669fbe818b9543180f25f799e3cdb28f129608383cb8ab73a83695827f8",
+      "bytes": 2337,
+      "stage": "LCZ",
+      "name": "run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/source_sha.txt",
+      "sha256": "c1bd42f06d7e444fa7d1fc33e7e976ebeb78ace26d71880b780cb4c5d4fff406",
+      "bytes": 41,
+      "stage": "LCZ",
+      "name": "source_sha.txt"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/run_summary.json",
+      "sha256": "2c2840ccf47b99c29ab2fec7baa2be609d34e93f48312d03d2ee5acde69c0364",
+      "bytes": 6152,
+      "stage": "LCZ",
+      "name": "run_summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/resource_baseline.json",
+      "sha256": "27ce5ab53f927902e23bd31c8bdb8a21ffe9b12928461cf7a36262c1104acbeb",
+      "bytes": 199912,
+      "stage": "LCZ",
+      "name": "resource_baseline.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/artifact_index.json",
+      "sha256": "ea94ec86c3df6f9fd622fba7085b1a99aeb4b200d12c5e07fd44d96939cd11e3",
+      "bytes": 229,
+      "stage": "LCZ",
+      "name": "artifact_index.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_local_coarse_zero_20261002T151327920057Z/supervision/resources.jsonl",
+      "sha256": "da92d2d9e2b987b5888b5cf99802b864a2b3a90a6ebe920f7fc3997b9e0fcb2d",
+      "bytes": 3407746,
+      "stage": "LCZ",
+      "name": "supervision/resources.jsonl"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_verify_20261002T152233746703Z/stage_result.json",
+      "sha256": "5407c8e1342560ba1a2a6ebb8f8020b0e41ce5fdfff4165e15e240c7c460ddd4",
+      "stage": "VERIFY",
+      "name": "stage_result",
+      "bytes": 341120
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/input_original.dat",
+      "sha256": "ffad9e65a622fd577fc63fe93e74a57746c1d99fd50098939438d634ca5a0373",
+      "bytes": 212,
+      "stage": "VERIFY",
+      "name": "input_original.dat"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/resolved_config.json",
+      "sha256": "2442a6fd47d96af746bf053f1f0d84f4dadf825fdebe5d15a780ae782a9b531d",
+      "bytes": 4020,
+      "stage": "VERIFY",
+      "name": "resolved_config.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/run_manifest.json",
+      "sha256": "2ea7685d04a1a421ea9cec19b917c3bcfaa1f67dd0cd007548e20333dd50c82d",
+      "bytes": 2339,
+      "stage": "VERIFY",
+      "name": "run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/source_sha.txt",
+      "sha256": "c1bd42f06d7e444fa7d1fc33e7e976ebeb78ace26d71880b780cb4c5d4fff406",
+      "bytes": 41,
+      "stage": "VERIFY",
+      "name": "source_sha.txt"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/run_summary.json",
+      "sha256": "2bd2ac03aae105fac14fb0d459dc5fe5ba9bc255a07a2fb3aad437caace31264",
+      "bytes": 6435,
+      "stage": "VERIFY",
+      "name": "run_summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/resource_baseline.json",
+      "sha256": "b7e58666f9b1c9d584cae7a6eb236bd67446bff7baf0a60618036f6d1b243575",
+      "bytes": 203494,
+      "stage": "VERIFY",
+      "name": "resource_baseline.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/artifact_index.json",
+      "sha256": "d94687739d0ac54bea583a54b3f906c90d178aace078bc5b6c962a342bbb26f4",
+      "bytes": 218,
+      "stage": "VERIFY",
+      "name": "artifact_index.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v24_verify_20261002T152233746703Z/supervision/resources.jsonl",
+      "sha256": "015b70b3a2bb39cc4f6fbdcec0df0a895e68f24f1ed1023d647845bf2faad1bb",
+      "bytes": 381627,
+      "stage": "VERIFY",
+      "name": "supervision/resources.jsonl"
+    }
+  ],
+  "raw_bound_bytes": 17060977,
+  "stages": [
+    {
+      "stage": "SETUP",
+      "source": "03fd7874190c33a837879d76312d9911223314e0",
+      "status": "LOCAL_BLOCK_SETUP_COMPLETE",
+      "reference_read": false,
+      "end_utc": "2026-10-02T14:47:46.891101+00:00",
+      "supervised_wall": 111.49998616299126,
+      "launch_wall": 112.90842760400847,
+      "tree_peak": 2525442048,
+      "swap": 0
+    },
+    {
+      "stage": "LW",
+      "source": "03fd7874190c33a837879d76312d9911223314e0",
+      "status": "ROUTE_COMPLETE",
+      "reference_read": false,
+      "end_utc": "2026-10-02T14:54:00.153965+00:00",
+      "supervised_wall": 371.30913999304175,
+      "launch_wall": 372.7960584049579,
+      "tree_peak": 1865379840,
+      "swap": 0
+    },
+    {
+      "stage": "LCW",
+      "source": "03fd7874190c33a837879d76312d9911223314e0",
+      "status": "ROUTE_COMPLETE",
+      "reference_read": false,
+      "end_utc": "2026-10-02T15:07:03.584057+00:00",
+      "supervised_wall": 556.5596261000028,
+      "launch_wall": 557.9410006029066,
+      "tree_peak": 2490769408,
+      "swap": 0
+    },
+    {
+      "stage": "LZ",
+      "source": "03fd7874190c33a837879d76312d9911223314e0",
+      "status": "ROUTE_COMPLETE",
+      "reference_read": false,
+      "end_utc": "2026-10-02T15:13:26.227780+00:00",
+      "supervised_wall": 380.8367197790649,
+      "launch_wall": 382.2744505919982,
+      "tree_peak": 1916489728,
+      "swap": 0
+    },
+    {
+      "stage": "LCZ",
+      "source": "03fd7874190c33a837879d76312d9911223314e0",
+      "status": "ROUTE_COMPLETE",
+      "reference_read": false,
+      "end_utc": "2026-10-02T15:21:55.145699+00:00",
+      "supervised_wall": 507.1633045070339,
+      "launch_wall": 508.5210938429227,
+      "tree_peak": 2490302464,
+      "swap": 0
+    },
+    {
+      "stage": "VERIFY",
+      "source": "03fd7874190c33a837879d76312d9911223314e0",
+      "status": "FROZEN_VALIDATION_COMPLETE",
+      "reference_read": true,
+      "end_utc": "2026-10-02T15:23:24.155485+00:00",
+      "supervised_wall": 50.3429195350036,
+      "launch_wall": 51.69745131593663,
+      "tree_peak": 734031872,
+      "swap": 0
+    }
+  ],
+  "cycle_arrays": [
+    {
+      "route": "LW",
+      "cycle": 1,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/cycles/CYCLE_0001/numeric/slot1.npz",
+      "sha256": "9b6a0313dfe89176517d5b5349987a9f802e71dbbe3e271474925146ad366e25",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.068955871167398e-07,
+      "full_residual_norm": 2.068955871167398e-07,
+      "rho": 2.5024177420336363e-06
+    },
+    {
+      "route": "LW",
+      "cycle": 2,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/cycles/CYCLE_0002/numeric/slot1.npz",
+      "sha256": "abb4dc182ef08849a5f99f868018eba845b70ccf00cc48b91265415c338e6886",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.068713193346778e-07,
+      "full_residual_norm": 2.068713193346778e-07,
+      "rho": 2.5021242213779374e-06
+    },
+    {
+      "route": "LW",
+      "cycle": 3,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/cycles/CYCLE_0003/numeric/slot1.npz",
+      "sha256": "b31abcecc745f13809e915f52b032798ede16494f33542530025c6bb9e113ac4",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.068708173392468e-07,
+      "full_residual_norm": 2.068708173392468e-07,
+      "rho": 2.5021181497053106e-06
+    },
+    {
+      "route": "LW",
+      "cycle": 4,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LW/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "5e00c8c9d4f8b802a740aa72e58d5ca9a6d44e1bf1b2bde06af18e084404bdc3",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.0687079723633122e-07,
+      "full_residual_norm": 2.0687079723633122e-07,
+      "rho": 2.502117906559029e-06
+    },
+    {
+      "route": "LCW",
+      "cycle": 1,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/cycles/CYCLE_0001/numeric/slot1.npz",
+      "sha256": "6b52b624e8235fd935856c8a65981c22bc0daeab60b8c211a5a9fc7c1c4cd698",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.0869398376667495e-07,
+      "full_residual_norm": 2.0869398376667495e-07,
+      "rho": 2.5241694852521724e-06
+    },
+    {
+      "route": "LCW",
+      "cycle": 2,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/cycles/CYCLE_0002/numeric/slot1.npz",
+      "sha256": "a826d85a208fa32854ed5c3989dfefe78cfd46281620e7275baff9ddbf28c608",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.086939686694628e-07,
+      "full_residual_norm": 2.086939686694628e-07,
+      "rho": 2.524169302650252e-06
+    },
+    {
+      "route": "LCW",
+      "cycle": 3,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/cycles/CYCLE_0003/numeric/slot1.npz",
+      "sha256": "8ca75537bc29f497c360f0edf85425074f70b8d36ddacce2d4d76f4bb8076eb8",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.0869396866234807e-07,
+      "full_residual_norm": 2.0869396866234807e-07,
+      "rho": 2.524169302564199e-06
+    },
+    {
+      "route": "LCW",
+      "cycle": 4,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCW/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "06a30ce4112ec17b795dd0642096ec06b05c0af5a20cce2bd02834f8b28d97eb",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 2.086939686602235e-07,
+      "full_residual_norm": 2.086939686602235e-07,
+      "rho": 2.524169302538502e-06
+    },
+    {
+      "route": "LZ",
+      "cycle": 1,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0001/numeric/slot1.npz",
+      "sha256": "d1f40e69d62e60355cc40161a5b48cce9d67bc95754090cc717bf80c93863fe9",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.018404222980126245,
+      "full_residual_norm": 0.018404222980126245,
+      "rho": 0.222600466040026
+    },
+    {
+      "route": "LZ",
+      "cycle": 2,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0002/numeric/slot1.npz",
+      "sha256": "03905b37368f23882b2938cd93576e47bbbbafdbfa65dac2796ffc5057fe0708",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.010265141971853287,
+      "full_residual_norm": 0.010265141971853287,
+      "rho": 0.1241576669316087
+    },
+    {
+      "route": "LZ",
+      "cycle": 3,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0003/numeric/slot1.npz",
+      "sha256": "4888a6db96edf836c3920eb681dd36cad0b7daa7f430934301acc1c5f456a8d6",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.00818710762016401,
+      "full_residual_norm": 0.00818710762016401,
+      "rho": 0.0990236846041438
+    },
+    {
+      "route": "LZ",
+      "cycle": 4,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "4062d5a83cce4eca86715eaee0a587a4e83fc7c54a7da5a654b1843eff6283d7",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.006728082686191037,
+      "full_residual_norm": 0.006728082686191037,
+      "rho": 0.08137666790492676
+    },
+    {
+      "route": "LCZ",
+      "cycle": 1,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0001/numeric/slot1.npz",
+      "sha256": "2b1d51940a097b7d3f10ff7209d9583cb257693ea9c0485320ed7f9e57a1c5f3",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.027292810616185544,
+      "full_residual_norm": 0.027292810616185544,
+      "rho": 0.3301086043820252
+    },
+    {
+      "route": "LCZ",
+      "cycle": 2,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0002/numeric/slot1.npz",
+      "sha256": "adf9d62f0fb1c3c9e49f0e74144747981e497a63beec56b8dab7609e5342c192",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.026972169873089168,
+      "full_residual_norm": 0.026972169873089168,
+      "rho": 0.3262304303932756
+    },
+    {
+      "route": "LCZ",
+      "cycle": 3,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0003/numeric/slot1.npz",
+      "sha256": "2321d6399c3554b7b01d114090cc6cb0e781cdcc49fc308c5edb1b91ae0dd1bb",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.02691816431937287,
+      "full_residual_norm": 0.02691816431937287,
+      "rho": 0.3255772291449002
+    },
+    {
+      "route": "LCZ",
+      "cycle": 4,
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "6daf6fc209c6515dfc2fef94a46cf16ee341009d84bbd8e78b479093364a14ad",
+      "member_hashes_pass": true,
+      "bytes": 1454896,
+      "trace_residual_norm": 0.02689212013281442,
+      "full_residual_norm": 0.02689212013281442,
+      "rho": 0.3252622227427389
+    }
+  ],
+  "cycle_arrays_bytes": 23278336,
+  "power_maxima": [
+    {
+      "state": "LW-FINAL",
+      "delta": 1.6669687167292224e-06,
+      "side": "bottom",
+      "m": "0",
+      "n": "0",
+      "polarization": "s",
+      "reference_plane_z": "-0.175"
+    },
+    {
+      "state": "LCW-FINAL",
+      "delta": 1.7088209636195728e-06,
+      "side": "bottom",
+      "m": "0",
+      "n": "0",
+      "polarization": "s",
+      "reference_plane_z": "-0.175"
+    },
+    {
+      "state": "LZ-FINAL",
+      "delta": 0.007245973616249901,
+      "side": "bottom",
+      "m": "0",
+      "n": "0",
+      "polarization": "s",
+      "reference_plane_z": "-0.175"
+    },
+    {
+      "state": "LCZ-FINAL",
+      "delta": 0.007757579435316908,
+      "side": "top",
+      "m": "0",
+      "n": "0",
+      "polarization": "s",
+      "reference_plane_z": "1.225"
+    },
+    {
+      "state": "V21-C-FINAL",
+      "delta": 1.7196446511213992e-06,
+      "side": "bottom",
+      "m": "0",
+      "n": "0",
+      "polarization": "s",
+      "reference_plane_z": "-0.175"
+    }
+  ],
+  "raw_required_field_inventories": "all five present",
+  "checker_missing_inventory_probes": {
+    "missing_selected_H": {
+      "observed_complete": true,
+      "expected_complete": false
+    },
+    "empty_fields": {
+      "observed_complete": true,
+      "expected_complete": false
+    },
+    "missing_A_volume": {
+      "observed_complete": true,
+      "expected_complete": false
+    },
+    "empty_powers": {
+      "observed_complete": true,
+      "expected_complete": false
+    }
+  },
+  "probe_scope": "synthetic scalar mutations in memory only; raw records unchanged",
+  "derived_existing_image_predictions": {
+    "LW": {
+      "squared_fraction": 0.004466895231062596,
+      "norm_reduction_fraction": 0.002235947345797906,
+      "predicted_rho_after_one_J": 2.496523302666985e-06,
+      "not_executed": true
+    },
+    "LZ": {
+      "squared_fraction": 0.22558105827008568,
+      "norm_reduction_fraction": 0.1199892377192684,
+      "predicted_rho_after_one_J": 0.07161234355488054,
+      "not_executed": true
+    }
+  },
+  "progress": {
+    "LW": {
+      "initial_rho": 2.5281170328038355e-06,
+      "final_rho": 2.502117906559029e-06,
+      "first4_reduction": 0.01028398840221878,
+      "last_cycle_reduction": 9.717617910354193e-08
+    },
+    "LCW": {
+      "initial_rho": 2.5281170328038355e-06,
+      "final_rho": 2.524169302538502e-06,
+      "first4_reduction": 0.0015615298714850567,
+      "last_cycle_reduction": 1.0180301046602835e-11
+    },
+    "LZ": {
+      "initial_rho": 1.0,
+      "final_rho": 0.08137666790492676,
+      "first4_reduction": 0.9186233320950732,
+      "last_cycle_reduction": 0.17821005923747035
+    },
+    "LCZ": {
+      "initial_rho": 1.0,
+      "final_rho": 0.3252622227427389,
+      "first4_reduction": 0.6747377772572611,
+      "last_cycle_reduction": 0.000967532044512609
+    }
+  },
+  "cost": {
+    "formal_supervised_wall": 1977.7116960771382,
+    "formal_launch_wall": 1986.1384823627304,
+    "tree_peak": 2782064640,
+    "charged": {
+      "actions": 6370,
+      "L8": 4159,
+      "local_lu_solve": 33352,
+      "local_triangular_pass": 66704,
+      "R_triangular": 2082,
+      "audits": 26,
+      "field_states": 5,
+      "block_assemblies": 1,
+      "local_factors": 8,
+      "DL_SVD": 1,
+      "factor_readers": 4
+    },
+    "factor_seconds": 7.40803378529381,
+    "gecon_seconds": 1.9928562302375212,
+    "factor_only_trace_upper_at_2TB_balanced_8": 707106.7811865475
+  },
+  "unchecked": [
+    "FE fields not recomputed from quadrature",
+    "large matrix/LU/U payload hashes not all re-read",
+    "no full GitHub visual",
+    "no CI, MPI or full pytest"
+  ],
+  "reviewer_script_sha256": "f2eceda5ee26b97353fbd245e7fe92fd18dc48c465f88540e5bce1139450cc11",
+  "reviewer_helper_repair": "First metadata-only attempt raised duplicate bytes keyword TypeError; fixed dict merge, no solver/operator ran or raw data changed.",
+  "reviewer_script_source": "\"\"\"Read-only V24 evidence audit; no operator application or field solve.\"\"\"\nfrom pathlib import Path\nfrom copy import deepcopy\nfrom datetime import datetime, timezone\nimport csv\nimport hashlib\nimport json\nimport subprocess\nimport numpy as np\nfrom benchmarks.check_task042_local_block_records import check, complete\n\nROOT=Path.cwd(); R=ROOT/'docs/task042_neural_coarse_inverse/outcomes/records'\nHEAD='31ad54a9d774f384aa11699da8c14befbdc3b6e2'\nPREV='0e0a9f49ae0310cd9b219d39f059f97f8a86bfa3'\ndef read(p): return json.loads(Path(p).read_text())\ndef sha(data): return hashlib.sha256(data).hexdigest()\ndef rows(p): return list(csv.DictReader(Path(p).open()))\ndef ah(a): return sha(np.ascontiguousarray(a).tobytes())\nassert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()==HEAD\nold=read(R/'independent_review_v21_20261002.json')\nchanged_old=[]\nfor item in old['task_inventory']['files']:\n    if sha(Path(item['path']).read_bytes())!=item['sha256']: changed_old.append(item['path'])\nassert set(changed_old)=={f'docs/task042_neural_coarse_inverse/{p}' for p in ['README.md','review_report_v21.md','outcomes/summary.md','outcomes/test_summary.md','outcomes/changed_files.md']}\nchanged=subprocess.check_output(['git','diff','--name-only',PREV,HEAD],text=True).splitlines()\ninventory=[dict(path=p,sha256=sha(Path(p).read_bytes()),bytes=Path(p).stat().st_size) for p in changed]\nbound_files=[]; stages=[]; raw={}\nfor run in read(R/'run_index_v24.json')['runs']:\n    for name,item in dict(stage_result=run['result'],**run['files']).items():\n        data=Path(item['path']).read_bytes()\n        assert sha(data)==item['sha256'],(run['stage'],name)\n        bound_files.append(dict(item,stage=run['stage'],name=name,bytes=len(data)))\n    result=read(run['result']['path']); raw[run['stage']]=result\n    summary=read(run['files']['run_summary.json']['path'])\n    assert Path(run['files']['source_sha.txt']['path']).read_text().strip()==run['source_sha']=='03fd7874190c33a837879d76312d9911223314e0'\n    assert summary['classification']=='COMPLETED' and summary['descendants_cleared'] and summary['leader_exit_code']==0\n    end=summary['clock_end']['utc_ns']/1e9\n    assert end<datetime(2026,10,2,15,34,23,502588,tzinfo=timezone.utc).timestamp()\n    stages.append(dict(stage=run['stage'],source=run['source_sha'],status=result['status'],\n        reference_read=result['reference_arrays_read'],end_utc=datetime.fromtimestamp(end,timezone.utc).isoformat(),\n        supervised_wall=summary.get('elapsed_seconds'),launch_wall=summary['launch_wall_seconds'],\n        tree_peak=summary['sampled_process_tree_rss_peak_bytes'],swap=summary['sampled_process_tree_swap_peak_bytes']))\n\nstates=[]\nfor name in ('LW','LCW','LZ','LCZ'):\n    result=raw[name]\n    assert len(result['cycles'])==4 and result['first_pass_cycle'] is None\n    for cycle in result['cycles']:\n        item=cycle['state'];data=Path(item['path']).read_bytes();assert sha(data)==item['sha256']\n        with np.load(item['path'],allow_pickle=False) as f:\n            for member in f.files: assert ah(f[member])==item[member+'_sha256'],(name,member)\n            assert np.array_equal(f['z'][:18144],f['trace']) and np.array_equal(f['z'][18144:],f['port'])\n            states.append(dict(route=name,cycle=cycle['cycle'],path=item['path'],sha256=item['sha256'],\n                member_hashes_pass=True,bytes=len(data),trace_residual_norm=float(np.linalg.norm(f['residual'][:18144])),\n                full_residual_norm=float(np.linalg.norm(f['residual'])),rho=cycle['audit']['schur_relative']))\ncost=read(R/'resource_costs_v24.json')\nassert abs(sum(r['supervised_wall'] for r in stages)-cost['formal_supervised_wall_seconds'])<1e-8\nassert abs(sum(r['launch_wall'] for r in stages)-cost['formal_launch_wall_seconds'])<1e-8\nfor item in cost['outer_supervision']+cost['auxiliary_runs']:\n    data=Path(item['file']['path']).read_bytes();assert sha(data)==item['file']['sha256']\n    summary=json.loads(data);assert summary['sampled_process_tree_rss_peak_bytes']==item['RSS_peak_bytes']\nassert max([r['tree_peak'] for r in stages]+[i['RSS_peak_bytes'] for i in cost['outer_supervision']+cost['auxiliary_runs']])==cost['simultaneous_sampled_tree_peak_bytes']\nsource=read(R/'source_inventory_v24.json')\nfor item in [source['collector'],source['helpers'],*source['orchestration']]:assert sha(Path(item['path']).read_bytes())==item['sha256']\n\npower=rows(R/'per_channel_power_v24.csv');candidates=rows(R/'candidate_comparison_v24.csv')\nfields=read(R/'field_checks_v24.json')\nfield_keys={'full_FE_L2_relative','full_FE_scaled_curl_relative','scattered_FE_L2_relative','scattered_scaled_curl_relative','selected_E_relative','selected_H_relative'}\npower_keys={'R_total','T_total','A_balance','A_volume'}\nmaxima=[]\nfor row in candidates:\n    f=fields['rows'][row['state']]\n    assert set(f['fields'])==field_keys and set(f['comparison']['power_absolute_differences'])==power_keys\n    p=[i for i in power if i['state']==row['state']]\n    assert len(p)==40 and len({(i['side'],i['m'],i['n'],i['polarization']) for i in p})==40\n    worst=max(p,key=lambda i:abs(float(i['power'])-float(i['reference_power'])))\n    delta=abs(float(worst['power'])-float(worst['reference_power']))\n    assert abs(delta-float(row['max_channel_power_difference']))<1e-14\n    maxima.append(dict(state=row['state'],delta=delta,side=worst['side'],m=worst['m'],n=worst['n'],polarization=worst['polarization'],reference_plane_z=worst['reference_plane_z']))\n\nprobes={}\nvalid=deepcopy(fields['rows']['LW-FINAL'])\nvalid['audit']['schur_relative']=5e-7\nvalid['comparison']['max_channel_power_difference']=5e-7\nassert complete(valid,True)\nfor label in ('missing_selected_H','empty_fields','missing_A_volume','empty_powers'):\n    obj=deepcopy(valid)\n    if label=='missing_selected_H':del obj['fields']['selected_H_relative']\n    elif label=='empty_fields':obj['fields']={}\n    elif label=='missing_A_volume':del obj['comparison']['power_absolute_differences']['A_volume']\n    else:obj['comparison']['power_absolute_differences']={}\n    probes[label]=dict(observed_complete=complete(obj,True),expected_complete=False)\n    assert probes[label]['observed_complete']\n\ncoverage=read(R/'frozen_residual_image_coverage_v24.json')['rows']\nderived={}\nfor name in ('LW','LZ'):\n    c=coverage[name];state=next(s for s in states if s['route']==name and s['cycle']==4)\n    assert abs(state['trace_residual_norm']-c['final_original_trace_residual_norm'])<1e-16\n    factor=np.sqrt(1-c['residual_squared_fraction_in_U'])\n    assert abs(factor-c['predicted_one_J_residual_norm_ratio'])<1e-15\n    derived[name]=dict(squared_fraction=c['residual_squared_fraction_in_U'],norm_reduction_fraction=float(1-factor),\n                      predicted_rho_after_one_J=float(state['rho']*factor),not_executed=True)\ncycle_rows=rows(R/'cycle_history_v24.csv')\nprogress={}\nfor name in ('LW','LCW','LZ','LCZ'):\n    c=[r for r in cycle_rows if r['route']==name]\n    start=raw[name]['start']['original_equation_gate']['rho']\n    progress[name]=dict(initial_rho=start,final_rho=float(c[-1]['rho']),\n      first4_reduction=1-float(c[-1]['rho'])/start,last_cycle_reduction=1-float(c[-1]['rho'])/float(c[-2]['rho']))\n\nout=dict(schema_version=1,review_date_utc8='2026-10-03',reviewed_remote_HEAD=HEAD,previous_review=PREV,\n previous_inventory_sha256=sha((R/'independent_review_v21_20261002.json').read_bytes()),\n scope='incremental semantic review and read-only raw checks; no new operator apply, PDE, NN training, factorization or full repository audit',\n task042_actor_observed=False,host_observation_utc='2026-10-02T22:27Z',\n historical_inventory_changed_only=changed_old,changed_files=inventory,\n checker=check(R),targeted_tests=dict(command='python -m pytest -q src/test/test_task042_v24_admission.py src/test/test_task042_v24_compact_qualification.py',passed=16,pytest_seconds=.37,mode='qualified native pure, numpy1.26.4/scipy1.11.4, math1'),\n raw_bound_files=bound_files,raw_bound_bytes=sum(i['bytes'] for i in bound_files),stages=stages,cycle_arrays=states,\n cycle_arrays_bytes=sum(s['bytes'] for s in states),power_maxima=maxima,raw_required_field_inventories='all five present',\n checker_missing_inventory_probes=probes,probe_scope='synthetic scalar mutations in memory only; raw records unchanged',\n derived_existing_image_predictions=derived,progress=progress,\n cost=dict(formal_supervised_wall=cost['formal_supervised_wall_seconds'],formal_launch_wall=cost['formal_launch_wall_seconds'],\n           tree_peak=cost['simultaneous_sampled_tree_peak_bytes'],charged=cost['charged'],\n           factor_seconds=sum(x['factor_seconds'] for x in cost['factor_safety']),gecon_seconds=sum(x['gecon_seconds'] for x in cost['factor_safety']),\n           factor_only_trace_upper_at_2TB_balanced_8=float(np.sqrt(2e12/4))),\n unchecked=['FE fields not recomputed from quadrature','large matrix/LU/U payload hashes not all re-read','no full GitHub visual','no CI, MPI or full pytest'],\n reviewer_script_sha256=sha(Path(__file__).read_bytes()),reviewer_helper_repair='First metadata-only attempt raised duplicate bytes keyword TypeError; fixed dict merge, no solver/operator ran or raw data changed.')\ndest=Path('/tmp/task042_review22_evidence.json');dest.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\\n')\nprint(json.dumps({k:out[k] for k in ['checker','raw_bound_bytes','cycle_arrays_bytes','power_maxima','checker_missing_inventory_probes','derived_existing_image_predictions','progress','cost']},ensure_ascii=False,indent=2))\n",
+  "reproduction": "At reviewed clean 31ad54a9d774f384aa11699da8c14befbdc3b6e2 with original ignored artifacts present, extract reviewer_script_source to /tmp/task042_review22_audit.py, activate scripts/activate_task042.sh pure with an independent cache namespace, then run python /tmp/task042_review22_audit.py. Writes only /tmp/task042_review22_evidence.json; no operator or PDE run."
+}
