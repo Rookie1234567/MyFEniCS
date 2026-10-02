@@ -2,6 +2,8 @@
 
 缓存省去同一网络参数处反复计算隐藏激活的工作，保持原参数方向导数、目标和接受规则。它改善执行时间，不改变GN曲率的条件数，也不保证多做更新就能求准PDE。GN仍更新完整8966实参数，并由完整Nédélec边/面/内部矩生成31968独立复FE系数及40端口；所有未知量保留，未退回冻结末层或trace。
 
+原残差是场不满足原方程的程度，相对值近1表示仍与完整载荷同量级。散射场是相对已知背景的变化，总场等于两者相加；curl度量场的空间旋转变化并对应磁场H。L2衡量幅值的整体误差，E_G同时包含幅值与curl能量，所有误差均与冻结的同p3参考比较；不是用p5解更换评分基准。
+
 C从各自V9完整GN final继续；D只从各自V9-D final继续。原参数、buffers、mu/h0、slow_streak、RNG、PC基/来源/构造次数保留，未重做Adam500、未重估h0、未刷新PC额度。新/继承/累计分账；追加研究不称仍在旧3h从零预算内。C不读D/参考/Phi/Q/p4/p5，D标签与权重不回流C或其他任务。
 
 | 同p3评分，dimensionless | V9 plain | V10 plain final | V9 phase | V10 phase资源保全边界 |
@@ -108,6 +110,10 @@ phase D在本批完成唯一rank32参数空间PC，64个K作用与建立约380.8
 | v10_phase_cached_fit_gn | 119.3106327 | 1.8184824372e-05 | NOT_RETAINED | 984.6107903 | NOT_APPLICABLE | 0 | 465 | 6784.3767812 |
 
 C plain的完整Gram setup/solve/释放为实测；phase两个中断的setup事件可读，完整Gsolve次数及释放子计时未留存，写NOT_RETAINED，全段wall仍完整计费。phase export没有新G因子不能推成整个phase训练无因子。D不建Gram因子、不逐步A/AH/Gsolve，仅G matvec和匹配JVP/VJP；稀疏native审核单列。导数内部计时与父墙钟嵌套，不相加收费。
+
+C plain的准确全局Riesz辅助因子明确为RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR：31968行、7336179个非零，CSR对象146851456B；建立139.650895333秒，其中symbolic 0.452118570秒、numeric 136.701111554秒。1446次Gsolve累计640.577962053秒，最大真残差8.86732570910e-13。CHOLMOD自身对象峰633592648B不是整树RSS；释放前后进程RSS为2761117696→2250014720B。正式C plain整树采样峰2817015808B，phase恢复段3031945216B；不能把这些对象/阶段峰相加称同时峰值。全部setup/solve已包含在对应launcher墙钟内，没有Maxwell训练因子。
+
+约1.10GiB缓存是B固定态resident_bytes实测1184152856B。C/D具有同样的缓存shape与分配前2GiB检查，但训练时独立缓存峰没有留存，单列NOT_RETAINED；不能把终态失效后的静态缓存字节或B的读数冒充C/D缓存峰。训练整树RSS与swap峰则有完整监督实测。
 
 完整total/scattered场、六点及四类40级通道、逐级功率、材料/界面区域的实际数值、绝对误差与分母由[对照JSON](records/comparison_v10.json)、PDE/FIT的channels/samples/regions CSV和hash绑定原比较packet给出。详见[内层聚合](records/inner_summary_v10.json)、[外层接受/拒绝](records/accepted_steps_v10.csv)、[run/source](records/run_index_v10.json)。
 

@@ -1,4 +1,97 @@
 {
-  "status": "PENDING_ACTUAL_GITHUB_BROWSER_AND_VISUAL_INSPECTION",
-  "local_structure_is_not_visual_pass": true
+  "schema": "task42extra.render-check.v10",
+  "status": "RENDERED_VIEW_BLOCKED",
+  "published_commit": "8805bac0667a4f35fd4a681c0108169fb2790afd",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic",
+  "raw_DOM_sha256": "8c6cb3c109ed2dbbfdc6de823cc92f89ea02942db15e4e7370453250b04f0f19",
+  "captured_pages": 1,
+  "reason": "Actual GitHub Unicorn server error page when visiting published Response V10; Review V9 itself visually inspected; remaining pages not promoted",
+  "review_visual": {
+    "status": "REVIEW_V9_SAMPLED_VISUAL_PASS_AFTER_IMAGE_INSPECTION",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/47317bb648d5e2237657f8b6c75c239ab5bf55c5/docs/task042extra_feinn_5nm/review_report_v9.md",
+    "inspected_screenshots": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_top.png",
+        "sha256": "994e52b67db82302b09cbe0158fb60a4ae7af7827c83a7cf18491a503f97714d"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_03.png",
+        "sha256": "b35a148a357d9c1cbdd802b1d24b3571d4ac78d6de4010bdb0d08e8a568145c2"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_math-renderer_00.png",
+        "sha256": "bad9268e191a1e8915e0a2018a46794dd45c91db36fef2e2fb15eaa29fbbf18e"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_math-renderer_01.png",
+        "sha256": "21fb3be2503f4bef0d86e3bcc77e987275bdb1db11851d707c47e91aa83ae832"
+      }
+    ],
+    "scope": "Actual model view_image inspection: title, admission table, both math displays; other tables DOM checked only; not a full four-page visual pass"
+  },
+  "review_blob_sha256": "a65da6b64febcb2229f432208a1a07b805de2beb5191302679ef91e294c39f13",
+  "captured_review_screenshots": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_top.png",
+      "sha256": "994e52b67db82302b09cbe0158fb60a4ae7af7827c83a7cf18491a503f97714d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_00.png",
+      "sha256": "05f4f2032b36bad2feefc45e7b2a32c4044e8490b05e754f3e0f6481a759904e"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_01.png",
+      "sha256": "1d18945a390aacb4f6f385bdae7afb98ca05e4ba1ec89d9d3696e4de63552097"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_02.png",
+      "sha256": "e893958fd22388a5d5626ae656a218f2a258efa747b09eb827db8b3992ad42d0"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_03.png",
+      "sha256": "b35a148a357d9c1cbdd802b1d24b3571d4ac78d6de4010bdb0d08e8a568145c2"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_04.png",
+      "sha256": "6df839f1d7ff9f13ec903f2ac70a3b32962137e1e8229399eb865961242c475a"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_table_05.png",
+      "sha256": "7bc80854dcfda649b122c553afd2eef146780f03ed728e997869b9e3e080f8bd"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_math-renderer_00.png",
+      "sha256": "bad9268e191a1e8915e0a2018a46794dd45c91db36fef2e2fb15eaa29fbbf18e"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/00_math-renderer_01.png",
+      "sha256": "21fb3be2503f4bef0d86e3bcc77e987275bdb1db11851d707c47e91aa83ae832"
+    }
+  ],
+  "failure": {
+    "title": "Unicorn! · GitHub",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/8805bac0667a4f35fd4a681c0108169fb2790afd/docs/task042extra_feinn_5nm/response_v10.md",
+    "articleCount": 0,
+    "bodyExcerpt": "We're having a really bad day.\n\nThe Unicorns have taken over. We're doing our best to get them under control and get GitHub back up and running.\n\nContact Support — GitHub Status — @githubstatus",
+    "screenshot": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002_diagnostic/failure_page.png",
+      "sha256": "a57e1edb6dd5352e51b548e2611756f9322b81cb89b32a9b5d3e665c70b4eac9"
+    }
+  },
+  "visual_inspection_sha256": "cd1cdc19f891cf876c6c0508768cea393f12e9fe624717ff6d93650e443ce416",
+  "actual_failure_screenshot_inspected": true,
+  "intended_new_pages": [
+    "response_v10.md",
+    "outcomes/derivative_reuse_v10.md",
+    "outcomes/cached_gn_v10.md"
+  ],
+  "new_pages_visual_qualified": false,
+  "not_reached_after_response_error": [
+    "outcomes/derivative_reuse_v10.md",
+    "outcomes/cached_gn_v10.md"
+  ],
+  "first_failed_attempt": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v10_published_20261002/render_failure.json",
+    "sha256": "4fc43811e5f0b6c8105f4bc3806b5b9f457ef47a907690f1f847c9d0e8a82352"
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "source_snapshot": "606ad7754c6d284300294ae9ddb0a1c41dc0471d",
+  "source_snapshot": "b8f24405823c4ac9a717acf95e323b08c57ffc90",
   "review_commit": "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
   "merge_approval": false,
   "files": [
@@ -21,12 +21,87 @@
     {
       "path": "benchmarks/render_task42extra.py",
       "group": "checker/benchmark/tests",
-      "sha256": "bac90eae45f5302efa6555ca0ad662463683e2749a3dab566890f4becf7e8fb3"
+      "sha256": "eb3df3fdf97aec05eaa168288c7ee32be15c5908aece9ac8afb40e01ac3d2647"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "group": "compact evidence/docs",
+      "sha256": "0964b088837afa31356dc1c08d3d2e556f71def604810fa1abc1e512b5e4e3c5"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "group": "compact evidence/docs",
+      "sha256": "4ccf89c2da6e0a1caf258ce05bb500532828bac5aa58280442f2f4899a2d31aa"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/cached_gn_v10.md",
+      "group": "compact evidence/docs",
+      "sha256": "1ca674bb96006a4f823fbb77b9dfab09f7937c2b0907cbb42d7fc568f290ea65"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "group": "compact evidence/docs",
+      "sha256": "e5527c3a7a2a97aeb1e97a94abe7e169570244546801907212ebaa8e47468308"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/derivative_reuse_v10.md",
+      "group": "compact evidence/docs",
+      "sha256": "56518de2ff459018e8ca1b8bd9faa732abf41668e1ab8cb6ba408205d4095116"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/accepted_steps_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "d156ef08cfdbee0e249778df37fbc7ef45195c58f563126ddbe32eea564a05a2"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/cache_checks_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "dbeed7189d31e630bfabe319dc9fa8f96504b59824ef3a52c2e4705c3e1947bb"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v10.json",
       "group": "compact evidence/docs",
       "sha256": "2ddee369c682530c14e523fd533fde6df4461b39b9c3994e73ab5dbd9a9ace00"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/comparison_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "f74c72b87ca22e7424a5dc71118f7e57a8841394db16c8997e0b96a0c3f12656"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/derivative_benchmark_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "da8118a9a4023c67eb0bfc6898ee3e263e79c329b056eb99f6c83a7ac1011625"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_channels_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "dbae97e868138b0df399936188a0e4d4ce3cc14a15f77373d3f46a7e49f67959"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_regions_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "eaffce6993c511fc6aaf88a47ca8410a8f5c36ac354d273b9d8be5b720617814"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_samples_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "d531805a4ece4e5ada70721d6cd8ac6e360b6a4b50ccf521167a793a512a4bf6"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "256d75f2ac892ce447c5d2d8dd5cfc915c57a44a78c0982631965c2585b72821"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "1fdd6e86e115e890f9ae2dc1611660337133ffdf0df2fe25bd801cbefe8dc556"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/inner_summary_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "50924651aada4a51035b81a38b671ad34aea4c743d1923e4ed82d186a988187b"
     },
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/linear_jvp_order_probe_v10.json",
@@ -39,6 +114,26 @@
       "sha256": "a86a9f3e37c3dc23adffdc922ced2a10fb633882b0e45331609a124bb1543a4d"
     },
     {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_channels_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "6aa4dcb40138ce6377dda78250b244f9c6446c343ffe6c4c200eff055e1a0802"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_regions_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "d2f5f1c4665f3735c0cfb1ca2edea08a88f5116ba0168fc49eb8a6561b89a760"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_samples_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "72870af98bc9a36bf3fc10ce5f2382db859c0553430e66ebf95e600bc44364ed"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "4a1d0f6b9e55e37c83a05e9e55adab9bad33c2e30fc42a0069e6d26ce89082f1"
+    },
+    {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/phase_jvp_order_probe_v10.json",
       "group": "compact evidence/docs",
       "sha256": "eceb90c84754235090bfde60cb5746331da32e593b84200759750d3bda134415"
@@ -46,12 +141,42 @@
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v10.json",
       "group": "compact evidence/docs",
-      "sha256": "9162ce2bfe9adc06e4a0cb4a2a80de815d9fc83f0578d92470ba09dd26cd56e1"
+      "sha256": "c2350cb801d8d249f8b9ea476f67732f2c4f0fe5a217b58031d077d612f3cb54"
     },
     {
-      "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v10.json",
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v10.json",
       "group": "compact evidence/docs",
-      "sha256": "905386d20bde49d70c78cc65d87868d6f327af3f0be3d1d43ea2b96f7bf4f61d"
+      "sha256": "82386cd2a7dcb124784f133c12230741a417ed83c01f97a8128a8afbfc37739e"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/state_identity_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "5bd1a202af9589de38fa06766c25d9211977f66b7406185b80347fd3e0bc94c3"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/training_v10.json",
+      "group": "compact evidence/docs",
+      "sha256": "6a1bf16a02c09f35ae976a2f83f385f73a229903614c2fceaffe1be1c329ca1f"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/v9_outer_summary_v10.csv",
+      "group": "compact evidence/docs",
+      "sha256": "1029a6beaf5e7c15270d600dd12df2944154c99f0e068db3ef87f52da2b86254"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "group": "compact evidence/docs",
+      "sha256": "57aad3a15f2d5f97c7b6ddb10c24fcdf6b2bd992d538b1fc7fa872820ff9b7eb"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "group": "compact evidence/docs",
+      "sha256": "349a06e0af13b5ccbc8985237fce4e021fefca148f3e9ed36487e22544cef5ec"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v10.md",
+      "group": "compact evidence/docs",
+      "sha256": "cd09c1a373d99102110d08b6d1bc76d61a2da3d127f43d7453a244d8987531a6"
     },
     {
       "path": "input/task042extra_feinn_5nm/v10_derivative_benchmark.dat",
@@ -226,5 +351,13 @@
     "task-local environments/cache/tmux socket/browser profile/screenshots",
     "supervised D weights or labels into C/Task042/0.7nm"
   ],
-  "production_default_changed": false
+  "production_default_changed": false,
+  "rolling_records_excluded_from_recursive_self_hashing": [
+    "git_delivery_v10.json",
+    "publication_manifest_v10.json",
+    "render_check_v10.json",
+    "resource_costs_v10.json",
+    "targeted_tests_v10.json"
+  ],
+  "scope": "Complete changed implementation, one-run, compact frozen arrays/CSV/JSON and new Markdown bytes; rolling final records supplied directly in final commit"
 }

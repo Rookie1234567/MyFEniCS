@@ -85,6 +85,18 @@
       "change": "Ruff format split statements; numerical data and Gates unchanged",
       "test": "Five checker negative fixtures plus Ruff pass",
       "retry": "one local targeted rerun; 2.060622434s failed cost retained"
+    },
+    {
+      "root": "GitHub render observation",
+      "failure": "No markdown article in initial browser capture",
+      "hypothesis": "Need actual page identity to distinguish access/service/selector failure",
+      "change": "Retain failure title/URL/body excerpt and screenshot; success requirements unchanged",
+      "test": "Ruff/compileall before clean diagnostic commit b8f24405823c4ac9a717acf95e323b08c57ffc90",
+      "retry": "One diagnostic rerun captured Review V9 correctly then Response V10 Unicorn error page; no blind further retry",
+      "numerical_work_affected": false,
+      "review_visual": "sampled pass",
+      "new_pages_visual": "BLOCKED",
+      "all_failed_costs_preserved": true
     }
   ],
   "maximum_evidenced_root_retries": 3,

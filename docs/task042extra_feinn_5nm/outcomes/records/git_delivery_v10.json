@@ -1,0 +1,21 @@
+{
+  "schema": "task42extra.git-delivery.v10",
+  "verification_scope": "Post-result-push exact tracking fetch and final premetadata-commit own-process proof; final release HEAD checked after push and reported in final reply",
+  "implementation_delivery_snapshot_head": "b8f24405823c4ac9a717acf95e323b08c57ffc90",
+  "first_published_evidence_commit": "8805bac0667a4f35fd4a681c0108169fb2790afd",
+  "explicit_tracking_ref": "refs/remotes/origin/task42extra_feinn_5nm",
+  "tracking_sha_at_verification": "8805bac0667a4f35fd4a681c0108169fb2790afd",
+  "ahead_behind_at_verification": "1\t0",
+  "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "canonical_common_git": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "numerical_lock": "FREE",
+  "active_task_runs": [],
+  "own_idle_tmux_management_processes": [],
+  "formal_descendants_cleared": true,
+  "old_summary_history_preserved": true,
+  "old_summary_sha256": "d51862740a6daed891505d9a461b38c04d2431bc936f2c4536879d9e9f500420",
+  "protected_contract_files_changed": [],
+  "only_push": "git push origin HEAD:refs/heads/task42extra_feinn_5nm",
+  "source_sha_is_not_final_document_HEAD": true
+}

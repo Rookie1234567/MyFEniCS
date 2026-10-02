@@ -555,6 +555,18 @@
       ]
     },
     {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_close_record_proofs_20261002T061941741373Z",
+      "summary_sha256": "78d45abfe02b1b20f2ddc6237e8c3bc9b08bd06beb6311e36d8e4624b1abd9bb",
+      "worker_log_sha256": "7d3d3cc148aa1b484d5018988700b23d46e6210fa00b0da7c4cce0b80ba54db9",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0757687330478802,
+      "sampled_process_tree_rss_peak_bytes": 64094208,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
       "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_compact_checker_20261002T060826559285Z",
       "summary_sha256": "76975eb39de6b37b6a33c13268bba79a388247ff0b8bf2a9ff87eca624c0316e",
       "worker_log_sha256": "96ce249e22cc66bae294f4941b8f0beaa01e46f3f8f9631151a3f356733005a0",
@@ -562,6 +574,66 @@
       "leader_exit_code": 0,
       "elapsed_seconds": 6.8542383920867,
       "sampled_process_tree_rss_peak_bytes": 104341504,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_final_markdown_release_20261002T061908562341Z",
+      "summary_sha256": "1ecb77bcecc6437351d434606200e438cbabe57547328b8fc447b13f1fd76719",
+      "worker_log_sha256": "89b060fafe3708e7876acb69bca1ddca6cb266d0fe5c902d9c6397333967d8cf",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.076432570000179,
+      "sampled_process_tree_rss_peak_bytes": 59895808,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_final_resource_ledger_20261002T062043545178Z",
+      "summary_sha256": "19ddc79375bf673ba974177f87889d28a97e53a04cc3745be105ea2132e8e8b1",
+      "worker_log_sha256": "920249c06e5e1d5f5864a7a2e6d8948f04e43d392bec7f631c9e610ad003b40b",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 4.919061967986636,
+      "sampled_process_tree_rss_peak_bytes": 90378240,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_final_static_and_markdown_20261002T061118823091Z",
+      "summary_sha256": "cbb6a0c1a72087cc11e031747f45089b487fb6f409cec7e28f01b1f8c06be350",
+      "worker_log_sha256": "919d75381be5a1618066a9ce8fd896079e14cd799fba0f57a87d49193059253a",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.1976621040375903,
+      "sampled_process_tree_rss_peak_bytes": 54423552,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_github_render_20261002T061312478116Z",
+      "summary_sha256": "e77b25911e4dfa6a22a9eebf0fd67e64e03321b74881436772b045a8d323b86a",
+      "worker_log_sha256": "887ee02387eb28f5159884b2353fdf3866dedd58d7ca446d02a658559c4202f7",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 36.254557835054584,
+      "sampled_process_tree_rss_peak_bytes": 1350819840,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_github_render_diagnostic_20261002T061508908682Z",
+      "summary_sha256": "4923fe93baeac36e4f8158b482457d258a9c258c115477aa6759ec96025bfecd",
+      "worker_log_sha256": "887ee02387eb28f5159884b2353fdf3866dedd58d7ca446d02a658559c4202f7",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 54.17213948897552,
+      "sampled_process_tree_rss_peak_bytes": 1802588160,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "pytest_summary_lines": []
@@ -579,6 +651,42 @@
       "pytest_summary_lines": []
     },
     {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_render_diagnostic_static_20261002T061451440196Z",
+      "summary_sha256": "f22e734f9c5e6cbe0a3412acdac36bb373d9442d53023a614006d9ac1834af6a",
+      "worker_log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.1940302749862894,
+      "sampled_process_tree_rss_peak_bytes": 52609024,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_render_finalize_20261002T061723915680Z",
+      "summary_sha256": "2d1ef9013f8ad5e049537e9d268aa21f8a44784af37965df0b97d99fac2084f1",
+      "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0762155109550804,
+      "sampled_process_tree_rss_peak_bytes": 63881216,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_scoped_markdown_final_20261002T061156521000Z",
+      "summary_sha256": "a6445b4fa0110cb687eb7a9b75c85f90e5ca257e30aa38d133b53ba9614e67b9",
+      "worker_log_sha256": "89b060fafe3708e7876acb69bca1ddca6cb266d0fe5c902d9c6397333967d8cf",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0966445188969374,
+      "sampled_process_tree_rss_peak_bytes": 59805696,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
       "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_tables_20261002T060859077127Z",
       "summary_sha256": "e15069c9a594dce51ce4676ea4934f0a4cb667091fdbecbef61b5320f7c6799d",
       "worker_log_sha256": "3e43a551b15b6ac461e0228bff0bc0d6496decda4feb43753e317675410f6935",
@@ -586,6 +694,18 @@
       "leader_exit_code": 0,
       "elapsed_seconds": 2.2378894690191373,
       "sampled_process_tree_rss_peak_bytes": 39505920,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "pytest_summary_lines": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v10_E_test_manifest_docs_20261002T061054135632Z",
+      "summary_sha256": "14345be49851f1defdb7b5ca321598e780fd465d467b4f30b3e87d9b0da4548f",
+      "worker_log_sha256": "b0a6a5d4b2ef91fa172ee4da447c6e58af043b102f898d32d21c44e298bab96c",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0300948719959706,
+      "sampled_process_tree_rss_peak_bytes": 39120896,
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "pytest_summary_lines": []
@@ -619,5 +739,10 @@
     "src/test/test_feinn_gn_runner_ml.py": "a342855b53de7df664824f23f1aaa52800b699c76d13427bba2592549f903185",
     "src/test/test_feinn_v10_checker.py": "bb0cce4e46e358804ce875804be1bd08324878ae5538936085ebec0822273397",
     "src/test/test_feinn_v9_fe_dispatch.py": "6a057796da32222979a6d116fc9efd2c9a3da49019a67296842382cad1c043d2"
-  }
+  },
+  "markdown_v10_local_check": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v10.json",
+    "sha256": "a40264b932339f5892e4da8d02c489f1d91634843a545628f1954a7a038f6cfe"
+  },
+  "release_auxiliary_scope": "Final metadata/resources refresh itself and small direct Git/read-only tail are bounded by the 120-second ledger allowance; no more numerical training"
 }
