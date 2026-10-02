@@ -1,0 +1,304 @@
+{
+  "artifacts": [
+    {
+      "bytes": 5404,
+      "path": "/tmp/review_v6_e0_execution/e0_draft.json",
+      "sha256": "c03137e4137a08f175b057fa3795a570ed3fd351c417b1506c0b3d40fcf32b84"
+    },
+    {
+      "bytes": 2652,
+      "path": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_kernel_oom_20261002_excerpt.txt",
+      "sha256": "633cd98d456f8c440565cbf2cd1b55333f8d80e2da97801f2c885879559df6ea"
+    },
+    {
+      "bytes": 6897,
+      "path": "tmp/review_v6_components/interleave_admission_probe_attempt2.json",
+      "sha256": "2488f4bfc6d2e3e77c5de0bab2703d9f027c3db7a06ba31f904424ed8b573568"
+    }
+  ],
+  "captured_utc": "2026-10-02T06:04:15Z",
+  "checkpoint_224": {
+    "iteration": 224,
+    "large_array_read_or_rehashed": false,
+    "manifest_bytes": 905,
+    "manifest_exists": true,
+    "manifest_path": "results/euv_grazing1_phi0/v5_node1_2nm_p6h1p5_q4__full3d_iterative__mpi1__Mna/20260924T104936.107285Z/full_solution_checkpoint_manifests/iteration_000224/manifest.json",
+    "residual": 9.758316562442362e-05,
+    "solution_file": "solution_rank0.npy",
+    "solution_file_bytes": 569516768,
+    "solution_file_exists": true,
+    "solution_only": true
+  },
+  "execution_scope": "E0 read-only only; no PDE, factorization, operator-pairing, performance test, signal, or source change",
+  "historical_f2": {
+    "classification": "CONSTRAINT_MEMORY_POLICY; nodemask=1; cpuset=/; mems_allowed=0-1; global_oom",
+    "event_utc": "2026-10-02T03:52:46.095318Z",
+    "invoker": {
+      "comm_at_event": "python",
+      "cpu_at_event": 30,
+      "current_proc_present": false,
+      "exact_time_journal_pid_query": "no records",
+      "pid": 1172428,
+      "project_command_and_memory_policy": "unknown; no PID reuse attribution"
+    },
+    "kernel_excerpt": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_kernel_oom_20261002_excerpt.txt",
+    "numa_policy_evidence": {
+      "preferred_node": 1,
+      "recorded_worker_prefix": "taskset -c 24 numactl --preferred=1 mpiexec -n 1",
+      "root_and_mpi_individual_mems_allowed": "unknown from preserved per-PID records",
+      "strict_task_or_vma_restriction": "unknown; no preserved numa_maps/task-policy capture sufficient to establish one",
+      "trigger_nodemask_proves_worker_policy_cause": false,
+      "worker_allowed_nodes": "0-1 at kernel event; preferred placement can fall back across allowed nodes"
+    },
+    "other_historical_pids": {
+      "mpi_341830_start_ticks_17197099": "not present in current /proc",
+      "observer_341987_start_ticks_17219061": "not present in current /proc",
+      "root_341799_start_ticks_17196977": "not present in current /proc"
+    },
+    "resource_context": {
+      "conclusion": "kernel OOM, not watchdog RSS stop",
+      "global_free_bytes_derived": 887976013824,
+      "node1_normal_free_kib": 459396,
+      "node1_normal_min_kib": 462820,
+      "rss_hard_gate_bytes": 1300000000000,
+      "swap_free_kib": 0,
+      "tree_rss_peak_bytes": 1154381864960
+    },
+    "victim": {
+      "current_proc_present": false,
+      "mems_allowed_at_event": "0-1",
+      "pid": 341839,
+      "role": "F2 worker",
+      "start_ticks": 17197130
+    }
+  },
+  "host_snapshot": {
+    "cpu_topology": {
+      "candidate_allowed_by_cgroup": true,
+      "candidate_four_physical_cores": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "candidate_idle_status": "not claimed",
+      "cpu24": "online, node1",
+      "cpu48": "absent",
+      "online_logical_cpus": 48,
+      "physical_cores": 48,
+      "smt_siblings_observed": false
+    },
+    "disk_repo_free_bytes": 3410889146368,
+    "effective_cgroup": {
+      "cpus": "0-47",
+      "mems": "0-1",
+      "session_memory_current_bytes": 58134294528,
+      "session_memory_high": "max",
+      "session_memory_max": "max",
+      "user_slice_memory_max": "max"
+    },
+    "hostname": "fenics-ws01",
+    "large_processes": [
+      {
+        "comm": "python",
+        "cpu_affinity": "28",
+        "cwd": "/home/fenics/Projects/Metrology",
+        "interpretation": "snapshot-visible Metrology process on CPU28, RSS 42,544,324,608 B; untouched; later disappearance is not attributed",
+        "pid": 1188839,
+        "rss_bytes": 42544324608,
+        "rss_kib": 41547192,
+        "state": "running"
+      }
+    ],
+    "memory": {
+      "effective_available_gate_bytes": 1437438953472,
+      "gate_margin_bytes": 619635726336,
+      "gate_pass_at_snapshot": true,
+      "memavailable_bytes": 2057074679808,
+      "memtotal_bytes": 2163100385280,
+      "swapfree_bytes": 8567103488,
+      "swaptotal_bytes": 8589930496
+    },
+    "numa_nodes": {
+      "node0": {
+        "cpus": "0-23",
+        "memfree_kib": 956900484,
+        "memtotal_kib": 1055500072
+      },
+      "node1": {
+        "cpus": "24-47",
+        "memfree_kib": 1004242816,
+        "memtotal_kib": 1056902648
+      }
+    },
+    "process_scan_scope": "host-visible /proc metadata (comm/status/cwd only); no command lines or environments read; no other process at or above 10 GiB RSS was visible"
+  },
+  "locks": {
+    "heavy_lock_named_in_task_worktree_tmp": false,
+    "heavy_lock_named_in_tmp_or_projects_scan": false,
+    "host_kernel_locks_visible": 0,
+    "note": "A zero-byte uv cache lock was present in /tmp; no task heavy-lock meaning established. User coordination was separately confirmed."
+  },
+  "low_memory_p4_inverse_trials": 0,
+  "repository": {
+    "branch": "task39extra_para_workstation_capacity",
+    "head": "da7ab7edee87a8665936c2ac592062d3b109f1f1",
+    "task_agents_file": "docs/task39extra_para_workstation_capacity/AGENTS.md absent",
+    "working_tree": "clean",
+    "worktree": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity"
+  },
+  "schema": "task39extra.review_v6.e0-resource-numa-policy.v1",
+  "startup_interleave_probe": {
+    "allowed_cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "allowed_mems": [
+      0,
+      1
+    ],
+    "captured_utc": "2026-10-02T07:03:47.219196+00:00",
+    "conflicting_resident_process_threshold_bytes": 100000000000,
+    "distinct_physical_cores": 1,
+    "effective_available_required_bytes": 1437438953472,
+    "interleave_probe_maps": [
+      "00400000 interleave:0-1 file=/usr/bin/python3.12 mapped=32 mapmax=3 active=0 N0=32 kernelpagesize_kB=4",
+      "00420000 interleave:0-1 file=/usr/bin/python3.12 mapped=643 mapmax=13 active=0 N0=629 N1=14 kernelpagesize_kB=4",
+      "00703000 interleave:0-1 file=/usr/bin/python3.12 mapped=327 mapmax=13 active=0 N0=327 kernelpagesize_kB=4",
+      "00a28000 interleave:0-1 file=/usr/bin/python3.12 anon=1 dirty=1 active=0 N1=1 kernelpagesize_kB=4",
+      "00a29000 interleave:0-1 file=/usr/bin/python3.12 anon=296 dirty=296 mapped=334 mapmax=15 active=0 N0=184 N1=150 kernelpagesize_kB=4",
+      "00ba7000 interleave:0-1 anon=1 dirty=1 active=0 N1=1 kernelpagesize_kB=4",
+      "0fd70000 interleave:0-1 heap anon=316 dirty=316 active=0 N0=158 N1=158 kernelpagesize_kB=4",
+      "7a65d70ff000 interleave:0-1 anon=1582 dirty=1582 active=13 N0=799 N1=783 kernelpagesize_kB=4",
+      "7a65d7800000 interleave:0-1 file=/usr/lib/locale/locale-archive mapped=16 mapmax=25 active=0 N0=16 kernelpagesize_kB=4",
+      "7a65d7e00000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libc.so.6 mapped=39 mapmax=10 active=0 N0=39 kernelpagesize_kB=4",
+      "7a65d7e28000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libc.so.6 mapped=312 mapmax=38 active=0 N0=304 N1=8 kernelpagesize_kB=4",
+      "7a65d7fb1000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libc.so.6 mapped=46 mapmax=31 active=0 N0=46 kernelpagesize_kB=4",
+      "7a65d8000000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libc.so.6 anon=4 dirty=4 active=0 N0=2 N1=2 kernelpagesize_kB=4",
+      "7a65d8004000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libc.so.6 anon=2 dirty=2 active=0 N0=1 N1=1 kernelpagesize_kB=4",
+      "7a65d8006000 interleave:0-1 anon=5 dirty=5 active=0 N0=4 N1=1 kernelpagesize_kB=4",
+      "7a65d807b000 interleave:0-1 file=/usr/lib/python3.12/lib-dynload/_json.cpython-312-x86_64-linux-gnu.so mapped=2 mapmax=3 active=0 N0=2 kernelpagesize_kB=4",
+      "7a65d807d000 interleave:0-1 file=/usr/lib/python3.12/lib-dynload/_json.cpython-312-x86_64-linux-gnu.so mapped=7 mapmax=13 active=0 N0=7 kernelpagesize_kB=4",
+      "7a65d8084000 interleave:0-1 file=/usr/lib/python3.12/lib-dynload/_json.cpython-312-x86_64-linux-gnu.so mapped=2 mapmax=6 active=0 N0=2 kernelpagesize_kB=4",
+      "7a65d8086000 interleave:0-1 file=/usr/lib/python3.12/lib-dynload/_json.cpython-312-x86_64-linux-gnu.so anon=1 dirty=1 active=0 N0=1 kernelpagesize_kB=4",
+      "7a65d8087000 interleave:0-1 file=/usr/lib/python3.12/lib-dynload/_json.cpython-312-x86_64-linux-gnu.so anon=1 dirty=1 active=0 N1=1 kernelpagesize_kB=4",
+      "7a65d8088000 interleave:0-1 anon=4 dirty=4 active=0 N0=3 N1=1 kernelpagesize_kB=4",
+      "7a65d80ea000 interleave:0-1 file=/usr/lib/locale/C.utf8/LC_CTYPE mapped=40 mapmax=7 active=0 N0=40 kernelpagesize_kB=4",
+      "7a65d8143000 interleave:0-1 anon=3 dirty=3 active=0 N0=2 N1=1 kernelpagesize_kB=4",
+      "7a65d8148000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libexpat.so.1.9.1 mapped=4 mapmax=3 active=0 N0=4 kernelpagesize_kB=4",
+      "7a65d814c000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libexpat.so.1.9.1 mapped=16 mapmax=3 active=0 N0=16 kernelpagesize_kB=4",
+      "7a65d816b000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libexpat.so.1.9.1",
+      "7a65d8173000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libexpat.so.1.9.1 anon=2 dirty=2 active=0 N0=1 N1=1 kernelpagesize_kB=4",
+      "7a65d8175000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libexpat.so.1.9.1 anon=1 dirty=1 active=0 N1=1 kernelpagesize_kB=4",
+      "7a65d8176000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libz.so.1.3 mapped=2 mapmax=30 active=0 N0=2 kernelpagesize_kB=4",
+      "7a65d8178000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libz.so.1.3 mapped=16 mapmax=30 active=0 N0=16 kernelpagesize_kB=4",
+      "7a65d818a000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libz.so.1.3",
+      "7a65d8190000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libz.so.1.3 anon=1 dirty=1 active=0 N0=1 kernelpagesize_kB=4",
+      "7a65d8191000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libz.so.1.3 anon=1 dirty=1 active=0 N1=1 kernelpagesize_kB=4",
+      "7a65d8192000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libm.so.6 mapped=16 mapmax=6 active=0 N0=16 kernelpagesize_kB=4",
+      "7a65d81a2000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libm.so.6 mapped=74 mapmax=20 active=0 N0=68 N1=6 kernelpagesize_kB=4",
+      "7a65d8221000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libm.so.6 mapped=32 mapmax=18 active=0 N0=32 kernelpagesize_kB=4",
+      "7a65d8279000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libm.so.6 anon=1 dirty=1 active=0 N1=1 kernelpagesize_kB=4",
+      "7a65d827a000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/libm.so.6 anon=1 dirty=1 active=0 N0=1 kernelpagesize_kB=4",
+      "7a65d8286000 interleave:0-1 anon=2 dirty=2 active=0 N0=1 N1=1 kernelpagesize_kB=4",
+      "7a65d828a000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/gconv/gconv-modules.cache mapped=7 mapmax=8 active=0 N0=7 kernelpagesize_kB=4",
+      "7a65d8291000 interleave:0-1 anon=2 dirty=2 active=0 N0=1 N1=1 kernelpagesize_kB=4",
+      "7a65d8293000 interleave:0-1",
+      "7a65d8297000 interleave:0-1",
+      "7a65d8299000 interleave:0-1",
+      "7a65d829b000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 mapped=1 mapmax=9 active=0 N0=1 kernelpagesize_kB=4",
+      "7a65d829c000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 mapped=43 mapmax=21 active=0 N0=43 kernelpagesize_kB=4",
+      "7a65d82c7000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 mapped=10 mapmax=11 active=0 N0=10 kernelpagesize_kB=4",
+      "7a65d82d1000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 anon=2 dirty=2 active=0 N0=1 N1=1 kernelpagesize_kB=4",
+      "7a65d82d3000 interleave:0-1 file=/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 anon=2 dirty=2 active=0 N0=1 N1=1 kernelpagesize_kB=4",
+      "7ffff35c8000 interleave:0-1 stack anon=20 dirty=20 active=0 N0=10 N1=10 kernelpagesize_kB=4"
+    ],
+    "large_process_scan_threshold_bytes": 10000000000,
+    "large_visible_processes": [],
+    "launch_envelope": {
+      "cgroup_limits": [],
+      "effective_available_bytes": 2099642327040,
+      "effective_total_bytes": 2163100385280,
+      "launch_cap_bytes": 1300000000000,
+      "mem_available_bytes": 2099642327040,
+      "mem_total_bytes": 2163100385280,
+      "planning_cap_bytes": 1300000000000,
+      "reserve_bytes": 324465057792
+    },
+    "neighbors_modified": false,
+    "nodes": {
+      "0": {
+        "MemFree_bytes": 978423808000,
+        "MemTotal_bytes": 1080832073728,
+        "cpus": "0-23"
+      },
+      "1": {
+        "MemFree_bytes": 1070735032320,
+        "MemTotal_bytes": 1082268311552,
+        "cpus": "24-47"
+      }
+    },
+    "policy": "interleave_nodes0_1",
+    "scope": "4 MiB policy/read-back probe; not a performance trial or TB guarantee",
+    "user_exclusive_window_confirmation": true,
+    "worker_cpus": [
+      24
+    ]
+  },
+  "unknowns": [
+    "Historical invoker PID 1172428 project, full command, and allocation policy",
+    "Historical root and MPI per-PID Mems_allowed and strict task/VMA policy",
+    "Whether current Metrology process is categorized by its owner as a heavy run; it was not interrupted"
+  ],
+  "user_authorization": "exclusive heavy window coordinated; launch only after fresh admission",
+  "window_coordination": {
+    "host_gate_still_required": true,
+    "user_confirmation_reported_by_controller": true
+  }
+}

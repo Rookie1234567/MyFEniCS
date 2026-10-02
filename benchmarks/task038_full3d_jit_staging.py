@@ -233,7 +233,12 @@ def _status_text_from(path: Path) -> dict[str, str]:
 
 
 def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | None:
+    # The inherited profile applies to JIT, worker, observer and checker callers.
+    if os.environ.get("PHYSICAL_WATCHDOG_PSS_POLICY") == "disabled_by_profile":
+        include_pss = False
     try:
+        stat_path = Path(f"/proc/{pid}/stat")
+        start_ticks = int(stat_path.read_text().rsplit(")", 1)[1].split()[19])
         values = _status_text(pid)
         ppid_text = values.get("PPid")
         state = values.get("State", "").split(maxsplit=1)[0]
@@ -250,8 +255,11 @@ def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | N
         comm = values.get("Name", "")
         if not comm:
             return None
+        if int(stat_path.read_text().rsplit(")", 1)[1].split()[19]) != start_ticks:
+            return None
         return {
             "pid": pid,
+            "start_ticks": start_ticks,
             "ppid": int(ppid_text),
             "comm": comm,
             "state": state,
@@ -263,7 +271,7 @@ def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | N
             "timestamp_ns": time.time_ns(),
             "exit_code": None,
         }
-    except (OSError, UnicodeError, ValueError):
+    except (OSError, UnicodeError, ValueError, IndexError):
         return None
 
 
@@ -310,7 +318,12 @@ def _is_compiler(fact: dict) -> bool:
 
 
 def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = None,
-                          *, include_pss: bool = True) -> dict:
+                          *, include_pss: bool = True,
+                          pss_sampling_policy: str | None = None) -> dict:
+    policy = pss_sampling_policy or os.environ.get("PHYSICAL_WATCHDOG_PSS_POLICY", "sampled")
+    if policy not in {"sampled", "disabled_by_profile"}:
+        raise ValueError(f"unsupported PSS sampling policy: {policy!r}")
+    include_pss = include_pss and policy != "disabled_by_profile"
     from functools import partial
     process_fact = _process_fact if include_pss else partial(_process_fact, include_pss=False)
     parents = _live_parent_map()
@@ -344,8 +357,11 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         if fact is not None:
             members.append(fact)
     readable = not unreadable
-    pss_all_readable = readable and all(fact["pss_bytes"] is not None for fact in members)
-    return {
+    pss_all_readable = (
+        readable and all(fact["pss_bytes"] is not None for fact in members)
+        if include_pss else None
+    )
+    sample = {
         "schema": SAMPLE_SCHEMA,
         "root_pid": int(root_pid),
         "stage": stage,
@@ -365,6 +381,9 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         "pss_all_readable": pss_all_readable,
         "pss_bytes": sum(fact["pss_bytes"] for fact in members) if pss_all_readable else None,
     }
+    if policy == "disabled_by_profile":
+        sample.update(pss_sampling_policy=policy, pss_status="DISABLED_BY_PROFILE")
+    return sample
 
 
 def append_jsonl(path: Path | str, value: dict) -> Path:

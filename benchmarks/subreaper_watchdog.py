@@ -197,13 +197,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               resource_stop_policy: str = 'legacy',
               rss_hard_limit_bytes: int | None = None,
               rss_warning_bytes: int | None = None,
-              startup_headroom_bytes: int | None = None) -> dict:
+              startup_headroom_bytes: int | None = None,
+              pss_sampling_policy: str | None = None) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
     if (not command or interval <= 0 or grace_seconds <= 0 or
             (wall_seconds is not None and wall_seconds <= 0)):
         raise ValueError('command and positive monitoring budgets are required')
     if resource_stop_policy not in ('legacy', 'measured_tree_rss_only_v3'):
         raise ValueError(f'unsupported resource_stop_policy: {resource_stop_policy!r}')
+    pss_sampling_policy = pss_sampling_policy or os.environ.get('PHYSICAL_WATCHDOG_PSS_POLICY', 'legacy')
+    if pss_sampling_policy not in ('legacy', 'sampled', 'disabled_by_profile'):
+        raise ValueError(f'unsupported PSS sampling policy: {pss_sampling_policy!r}')
     if rss_hard_limit_bytes is not None and int(rss_hard_limit_bytes) <= 0:
         raise ValueError('rss_hard_limit_bytes must be positive')
     if rss_warning_bytes is not None and int(rss_warning_bytes) <= 0:
@@ -278,7 +282,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         summary.update(clock_info=clock_info(), clock_start=clock_start,
                        timebase_policy=timebase_policy, timebase_policy_version=POLICY_VERSION)
     stage = 'launch'
+    next_node_sample, node_snapshot = 0.0, None
     next_pss_sample = 0.0
+    diagnostic = None
+    if pss_sampling_policy == 'sampled':
+        from benchmarks.process_tree_pss_diagnostic import ProcessTreePSSDiagnostic
+        diagnostic = ProcessTreePSSDiagnostic(
+            lambda: process_tree_snapshot(os.getpid(), 'pss_diagnostic', include_pss=True))
+    summary.update(pss_sampling_policy=pss_sampling_policy,
+                   pss_status=('DISABLED_BY_PROFILE' if pss_sampling_policy == 'disabled_by_profile'
+                               else 'OPTIONAL_DIAGNOSTIC'),
+                   sampled_process_tree_pss_peak_bytes=None)
     swap_baseline = vmstat_swap_pages()
     unreadable_since = None
     unreadable_attempts = 0
@@ -286,6 +300,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         with (directory / 'worker.log').open('w') as output, (directory / 'resources.jsonl').open('w') as timeline:
             environment = os.environ.copy()
             environment.update(worker_environment or {})
+            if pss_sampling_policy == 'disabled_by_profile':
+                environment['PHYSICAL_WATCHDOG_PSS_POLICY'] = pss_sampling_policy
             if timebase_guard:
                 clock_budget.update(clock_start)
                 environment['PHYSICAL_TIMEBASE_GUARD'] = '1'
@@ -303,11 +319,38 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 observed.update(children)
                 stage = 'resource_sample'
                 sample_options = {}
-                if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
+                if pss_sampling_policy != 'legacy':
+                    sample_options.update(include_pss=False,
+                                          pss_sampling_policy=pss_sampling_policy)
+                elif os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
                     sample_options['include_pss'] = time.monotonic() >= next_pss_sample
-                    if sample_options['include_pss']:
-                        next_pss_sample = time.monotonic() + 5.0
+                rss_started, rss_cpu = time.monotonic(), time.thread_time()
                 sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code, **sample_options)
+                sample['resource_sample_cost'] = dict(wall_seconds=time.monotonic()-rss_started,
+                                                       cpu_seconds=time.thread_time()-rss_cpu)
+                if pss_sampling_policy == 'legacy' and sample_options.get('include_pss'):
+                    next_pss_sample = time.monotonic() + 5.0
+                if diagnostic is not None:
+                    sample['pss_diagnostic'] = diagnostic.poll()
+                if pss_sampling_policy == 'disabled_by_profile':
+                    if time.monotonic() >= next_node_sample:
+                        node_started = time.monotonic()
+                        node_snapshot = {}
+                        for node_path in sorted(Path('/sys/devices/system/node').glob('node[0-9]*')):
+                            try:
+                                fields = {}
+                                for line in (node_path/'meminfo').read_text().splitlines():
+                                    key, _, raw = line.partition(':')
+                                    if key.endswith(('MemTotal', 'MemFree')):
+                                        fields[key.split()[-1]+'_bytes'] = int(raw.split()[0])*1024
+                                node_snapshot[node_path.name] = fields
+                            except (OSError, ValueError):
+                                node_snapshot[node_path.name] = None
+                        node_snapshot.update(sampled_monotonic=time.monotonic(),
+                            wall_seconds=time.monotonic()-node_started, policy='observe_only')
+                        next_node_sample = time.monotonic()+5.0
+                    sample['node_memory_observation'] = node_snapshot
+
                 if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
                     for member in sample['members']:
                         try:
