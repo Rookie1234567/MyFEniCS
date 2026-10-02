@@ -1,0 +1,34 @@
+{
+  "plan_sha256": "9f1813df0ee76587f6a15b8af504ef946960cad345be1c37a4212f793e92db2f",
+  "warm_state_sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+  "old_control_files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv",
+      "sha256": "e933286f7175fbfe97b1e94131ed01c54399b3b5d6eae8fc7953c0710b1a69ed",
+      "mode": "hash-bound historical control; not rerun"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv",
+      "sha256": "fd7fbeecc630c31d687ba0f1093c5761c9ed409dc721fc1d2e84745a79d0af19",
+      "mode": "hash-bound historical control; not rerun"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v23.csv",
+      "sha256": "c04da9f071b5488084d3b7d72e3270bf8d592a9f6d6e4369df9c3ecd9c42f498",
+      "mode": "hash-bound historical control; not rerun"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v23.csv",
+      "sha256": "ea2132377b836e6c281f77549b3600ffbc86c7a475bf21233be8d30f94c09dca",
+      "mode": "hash-bound historical control; not rerun"
+    }
+  ],
+  "no_V24_warm_NPZ_arrays_decoded": true,
+  "no_REF7_arrays_decoded": true,
+  "no_V15_neural_features_or_weights_decoded": true,
+  "local_factor_status_actual": "NOT_CONSTRUCTED",
+  "local_factor_status_if_built": "LOCAL8_DENSE_LU_PRESENT",
+  "composite_factor_status_if_built": "GLOBAL_TALL_IMAGE_QR_PRESENT",
+  "no_global_fine_K_A_or_p4_factor_constructed": true,
+  "thin_QR_reused_not_rebuilt": true
+}

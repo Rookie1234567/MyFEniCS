@@ -1,0 +1,24 @@
+{
+  "action": "V24 supervised solve queue retry; later commit/push dependency",
+  "command": "python scripts/task042_v17_queue_watchdog.py solve --batch v24 --directory tmp/task042/v24/solve_supervision_retry1",
+  "code": "AUTOMATIC_APPROVAL_REVIEW_FAILURE",
+  "executed": false,
+  "reason": "Failed to refresh token: 403 Forbidden: Country, region, or territory not supported",
+  "safety_rejection": false,
+  "user_authorization_present": true,
+  "permission_bypass": false,
+  "independent_followup": {
+    "tool": "web",
+    "code": "401 token_expired",
+    "executed": false,
+    "reason": "Provided authentication token is expired. Please try signing in again."
+  },
+  "suggested_user_action": "Reauthenticate/restart the Codex client; retain this immutable campaign window.",
+  "subsequent_recovery": {
+    "utc": "2026-10-02T14:08:39.964582+00:00",
+    "read_only_account_usage_allowed": true,
+    "host_readonly_escalation_succeeded": true,
+    "credits_balance_allowed": true,
+    "reset_card_used": false
+  }
+}

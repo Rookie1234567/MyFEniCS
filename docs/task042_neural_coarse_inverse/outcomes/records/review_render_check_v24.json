@@ -1,0 +1,8 @@
+{
+  "exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/c3370061c6693eab70e20c34965ec7d640b978bd/docs/task042_neural_coarse_inverse/review_report_v21.md",
+  "review_sha": "c3370061c6693eab70e20c34965ec7d640b978bd",
+  "github_visual": "NOT_VERIFIED",
+  "reason": "Exact page cache miss; subsequent web tool returns 401 token_expired",
+  "local_markdown_structure_is_not_visual_proof": true,
+  "review_modified": false
+}

@@ -1,0 +1,59 @@
+{
+  "formal_runs": [],
+  "formal_run_count": 0,
+  "implementation_source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc",
+  "source_is_not_run_source_until_actual_actor": true,
+  "input_validation_records": [
+    {
+      "status": "valid",
+      "profile": "task042_v24_setup",
+      "stage": "V24-SETUP",
+      "input_sha256": "d74c32b11847d5406e0d571e15cb3a4028b24d6c271bcc71b0da4ec9aab6e8c8",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de"
+    },
+    {
+      "status": "valid",
+      "profile": "task042_v24_lw",
+      "stage": "V24-LW",
+      "input_sha256": "197f00ab17234afd76ff43cbee40b56f5e884f1a811312712a33564c9aab5c1b",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de"
+    },
+    {
+      "status": "valid",
+      "profile": "task042_v24_lcw",
+      "stage": "V24-LCW",
+      "input_sha256": "7cde436de4b407c4621243c8872e518e2092e65b63e5869915b4e026eacf086b",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de"
+    },
+    {
+      "status": "valid",
+      "profile": "task042_v24_lz",
+      "stage": "V24-LZ",
+      "input_sha256": "bcca0c0122881e1712c89fcea0ce82b626ef846f2c5cc1c7a36f7001b2e844a3",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de"
+    },
+    {
+      "status": "valid",
+      "profile": "task042_v24_lcz",
+      "stage": "V24-LCZ",
+      "input_sha256": "860461ffdfdfec842c1993ecadfbb8a170eafe7418eaa2d31aec1377d734c8ae",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de"
+    },
+    {
+      "status": "valid",
+      "profile": "task042_v24_verify",
+      "stage": "V24-VERIFY",
+      "input_sha256": "ffad9e65a622fd577fc63fe93e74a57746c1d99fd50098939438d634ca5a0373",
+      "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de"
+    }
+  ],
+  "preactor_queue": {
+    "path": "tmp/task042/v24/solve_supervision/summary.json",
+    "sha256": "e8d873e58483bc4395f27d0a612037ba63337dec671eecb9b23a51d602002df7",
+    "semantic_status": "ADMISSION_BLOCKED",
+    "wall_seconds": 3.774212901946157
+  },
+  "blocked_retry_executed": false,
+  "field_verify": "not_run",
+  "reference_opened": false
+}

@@ -1,3 +1,16 @@
+# V24续行记录：账户接口及执行审批已恢复
+
+2026-10-02T14:07Z之后实际只读主机核验通过：新候选核CPU15、PSI full avg10=0、原系统/邻增长余量和磁盘Gate通过。周额度用尽时允许使用现有余额；明确禁止使用重置卡，未调用重置功能。以下认证阻塞是早先真实历史，保留原始失败；本批现继续原Review V21队列，原heavy-stop15:34:23.502588Z、deadline16:04:23.502588Z保持。当前真实数值仍未运行，后续来源与计数由正式run绑定。
+
+# 最新导航：V24 / Review V21：实现已提交，正式数值执行受认证阻塞
+
+本轮已实现固定八块局部完整LU与同规格粗层配对的数值核、角色reader、有限队列和六个one-run入口。最终小模型定向回归28 passed，六入口均validate；正式SETUP和LW/LCW/LZ/LCZ/VERIFY均NOT_RUN。首次队列未通过空闲物理核准入，数值actor未创建；有界复核找到核后，启动重试因自动审批服务令牌刷新403而未执行。这不是方法的数值负结果；没有新的原方程/场/功率资格或神经增量。
+
+[正式Review](review_report_v21.md)、[本地待提交Response](response_v24.md)、[结果](outcomes/local_block_coarse_pair_v24.md)、[分流](outcomes/records/qualification_and_dispatch_v24.json)、[源码/入口](outcomes/records/run_index_v24.json)、[审批故障](outcomes/records/approval_block_v24.json)。没有正式actor，旧导航不授权重跑历史campaign。
+
+唯一下一建议：恢复Codex客户端认证后，原窗口仍有效且fresh资源准入通过时继续已验证的原队列；窗口耗尽则等待下一review明确新的时间窗口，不扩大数值范围。
+以下历史正文逐字保留；旧“当前”只指其当时阶段。
+
 # 最新导航：V23 / Review V20 已收口
 
 [Review](review_report_v20.md)、[Response](response_v23.md)、[结果](outcomes/p1_image_minres_comparison_v23.md)、[Gate](outcomes/records/qualification_and_dispatch_v23.json)、[source/run](outcomes/records/run_index_v23.json)。S/D/M/Z/V完成，六状态0/6完整资格；同T原作用像QR可信但未突破暖平台，零trace散射未求出。数值已清场等待review，不merge。

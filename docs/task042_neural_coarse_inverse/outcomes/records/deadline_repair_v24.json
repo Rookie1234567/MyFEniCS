@@ -1,0 +1,44 @@
+{
+  "clock": {
+    "schema": "task042.campaign-window.v24",
+    "start_utc": "2026-10-02T12:04:23.502588+00:00",
+    "start_monotonic": 867658.363474344,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 12600,
+    "total_limit_seconds": 14400,
+    "heavy_stop_utc": "2026-10-02T15:34:23.502588+00:00",
+    "deadline_utc": "2026-10-02T16:04:23.502588+00:00",
+    "review_expected_commit": "c3370061c6693eab70e20c34965ec7d640b978bd",
+    "prior_HEAD": "dfaf983c2f6de28f59ee3271fb071c5b97210d2d",
+    "scope": "first real clock; all implementation/tests/wait/setup/solve/verify/delivery included",
+    "observed_utc": "2026-10-02T12:49:55.363876+00:00",
+    "observed_monotonic": 870390.224788919,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 2731.861703,
+    "heavy_remaining_seconds": 9868.138297,
+    "total_remaining_seconds": 11668.138297
+  },
+  "repairs": [
+    {
+      "root": "R01",
+      "failure_directory": "tmp/task042/v24/initial_focused",
+      "cause": "readonly mmap pivot passed to f2py GETRS",
+      "minimal_fix": "private small writable pivot ABI workspace; shared readonly LU/matrix unchanged",
+      "test": "focused_repair_02: 28 passed; no formal replay",
+      "conservative_seconds_upper": 600
+    },
+    {
+      "root": "R02",
+      "failure_directory": "tmp/task042/v24/focused_repair_01",
+      "cause": "rank ratio alone can qualify 1x1 exact-zero overlap with roundoff remnant",
+      "minimal_fix": "separate whole-overlap operation-resolution guard; 1e-12 ratio unchanged",
+      "test": "fixed Review 2x2 counterexample passes",
+      "conservative_seconds_upper": 180
+    }
+  ],
+  "resource_reentries": 0,
+  "formal_replays": 0,
+  "no_window_refresh": true,
+  "stop_reason": "automatic approval authentication unavailable after bounded live admission recheck",
+  "pending_restart_must_not_refresh_window": true
+}

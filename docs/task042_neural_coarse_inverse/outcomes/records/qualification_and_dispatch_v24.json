@@ -1,0 +1,39 @@
+{
+  "classification": "EXECUTION_RESUMED_NUMERICAL_GATE_PENDING",
+  "implementation_and_focused_tests": "COMPLETE",
+  "entrypoint_validate": "6/6 valid",
+  "first_queue_semantic_status": "ADMISSION_BLOCKED_NO_FREE_PHYSICAL_CORE",
+  "outer_queue_exit_code": 0,
+  "outer_exit_is_not_numerical_success": true,
+  "second_queue_status": "AUTOMATIC_APPROVAL_REVIEW_FAILURE",
+  "second_queue_executed": false,
+  "formal_setup": "NOT_RUN",
+  "formal_routes": {
+    "LW": "NOT_RUN",
+    "LCW": "NOT_RUN",
+    "LZ": "NOT_RUN",
+    "LCZ": "NOT_RUN"
+  },
+  "reference_validation": "NOT_RUN",
+  "reference_read": false,
+  "physical_pass_count": null,
+  "no_new_numerical_negative_or_success": true,
+  "charged": {
+    "actions": 0,
+    "L8": 0,
+    "local_lu_solve": 0,
+    "local_triangular_pass": 0,
+    "R_triangular": 0,
+    "audits": 0,
+    "field_states": 0,
+    "block_assemblies": 0,
+    "local_factors": 0,
+    "DL_SVD": 0,
+    "factor_readers": 0
+  },
+  "execution_recovered_utc": "2026-10-02T14:08:39.964582+00:00",
+  "prior_approval_failure_preserved": true,
+  "numerical_gate_still_pending": true,
+  "reset_card_used": false,
+  "credits_balance_allowed": true
+}

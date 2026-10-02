@@ -1,0 +1,6 @@
+{
+  "status": "NOT_RUN",
+  "scope": "actual V24 operator/physics",
+  "reason": "No numerical actor launched; synthetic regression is separately recorded",
+  "source_sha": "370b7bbe2455448b320ca4272eb62950e4715ecc"
+}

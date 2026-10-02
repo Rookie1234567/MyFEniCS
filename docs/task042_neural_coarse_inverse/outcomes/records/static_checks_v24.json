@@ -1,0 +1,48 @@
+{
+  "stdlib_AST_parsed": [
+    "scripts/run_case.py",
+    "scripts/task042_v17_campaign.py",
+    "scripts/task042_v17_queue_watchdog.py",
+    "src/io/local_block_pair.py",
+    "src/io/task042_profile.py",
+    "src/runners/local_block_pair.py",
+    "src/runners/local_block_queue.py",
+    "src/runners/task042_shared.py",
+    "src/solvers/local_block_coarse.py",
+    "src/solvers/local_block_study.py",
+    "src/solvers/local_block_window.py",
+    "src/test/test_task042_v24_local_coarse.py"
+  ],
+  "changed_python_count": 12,
+  "protected_old_task_files_checked": 543,
+  "protected_old_task_bytes_unchanged": true,
+  "git_diff_check": "",
+  "fresh_numeric_claims_prohibited": true,
+  "arrays_loaded_during_evidence_collection": 0,
+  "final_local_markdown": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v24.md",
+      "table_groups": 2,
+      "existing_local_links": 8
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/local_block_coarse_pair_v24.md",
+      "table_groups": 1,
+      "existing_local_links": 5
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v21.md",
+      "table_groups": 3,
+      "existing_local_links": 8
+    }
+  ],
+  "compact_JSON_valid": true,
+  "formal_zero_counters_recomputed": true,
+  "source_content_unchanged": true,
+  "old_task_files_final_checked": 543,
+  "old_navigation_ledger_suffixes_final_checked": 6,
+  "descendant_cleanup_all_supervised_intervals": true,
+  "nonew_actor_from_approval_rejection": true,
+  "final_observed_utc": "2026-10-02T12:49:55.363876+00:00",
+  "final_observed_monotonic": 870390.224788919
+}

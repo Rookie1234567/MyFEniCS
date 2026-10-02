@@ -1,3 +1,19 @@
+# V24 targeted测试与实际停止边界
+
+| 检查 | 实际结果 |
+|---|---|
+| 复数/非互伴40port、共享cell/Floquet主块、L8/LC恒等式、奇异反例 | 最终小模型通过；不冒称真实FE资格 |
+| dat→stage→右PC→GMRES→close→原子保存→旧oracle | 四新角色fixture均运行 |
+| readonly重载/hash/返回补审/角色白名单/截止清场 | 最终28 passed（合并相关旧fixture），2已消费旧用例deselected |
+| 六dat真实validate-only | 提交clean source后6/6 valid |
+| 真实SETUP/rcond/D_L/四求解/独立场 | NOT_RUN；CPU准入后审批服务认证阻塞 |
+| AST/历史保护/Markdown | 只作低成本静态核验；详见static_checks |
+| full pytest/MPI2/4/CI/新昂贵测试 | not_run，未重装环境或宣称CI通过 |
+| 精确GitHub公式/表格视觉 | NOT_VERIFIED；cache miss后网页接口token_expired401 |
+
+首次SIGSEGV和后续二维反例失败保持；最小修复2/4。已消耗所有测试/失败费用保留。[测试](records/test_results_v24.json)、[静态](records/static_checks_v24.json)、[成本](records/resource_costs_v24.json)。
+以下历史正文逐字保留；旧“当前”只指其当时阶段。
+
 # V23测试／Review V20
 
 最终相关pure-array/真实dat接线/事务/读取白名单/奇异反例/截止清场回归及记录篡改反例见[测试](records/test_results_v23.json)。五实际dat已实现并validate，正式S/D/M/Z/V均实际one-run。Ruff模块未安装，不改环境；full pytest/MPI2/4/CI/旧campaign not_run。原代码ActionPacket/recover/uncondensed/audit的数学实现未重定向到class64；共享IO/Stage只加保留原默认的显式参数，并有旧pure回归。本地GFM表格/围栏/链接/compile/diff与旧历史字节保护见[静态](records/static_checks_v23.json)，旧总账checker问题与review起点逐项相同，不做全仓清理。GitHub精确review/结果页无视觉证据，**NOT_VERIFIED**；本地结构不替代视觉。

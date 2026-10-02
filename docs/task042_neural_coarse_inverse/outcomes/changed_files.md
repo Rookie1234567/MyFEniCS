@@ -1,3 +1,17 @@
+# V24变更／research-only，正式数值未准入
+
+| 依赖组 | 内容／资格／建议顺序 |
+|---|---|
+| production numerical/core | 本批无production或merge批准；普通默认不变 |
+| research-only numerical | local_block_coarse/local_block_study：固定L8/LC、全cell主块、D_L和原作用审核；仅pure小模型资格 |
+| reusable runner/watchdog | local_block_pair IO/薄adapter/有限queue/window；既有driver仅追加显式v24参数；先依赖原事务/监督 |
+| checker/benchmark/tests | test_task042_v24_local_coarse及既有相关pure fixture，28通过；无真实FE替代证据 |
+| compact evidence/docs | 6dat、唯一计划、V24停止/费用/权限/原身份/新导航；按任务授权本地保存、待提交 |
+| do-not-merge | ignored TMP、失败日志、环境与draft；未来局部矩阵/LU不进Git；未经正式资格的配置不升默认 |
+
+已提交实现精确文件清单见[source_inventory](records/source_inventory_v24.json)。源码HEAD370b7bbe2455448b320ca4272eb62950e4715ecc，formal run source不存在。旧task/review/response/raw逐字保留，无p4强逆/参考重建或大模型。
+以下历史正文逐字保留；旧“当前”只指其当时阶段。
+
 # V23变更／显式research opt-in
 
 | 依赖组 | 内容与资格 |

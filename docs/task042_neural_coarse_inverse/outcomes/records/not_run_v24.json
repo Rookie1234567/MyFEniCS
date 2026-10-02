@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "stage": "SETUP",
+      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
+      "numerical_status": "NOT_RUN"
+    },
+    {
+      "stage": "LW",
+      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
+      "numerical_status": "NOT_RUN"
+    },
+    {
+      "stage": "LCW",
+      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
+      "numerical_status": "NOT_RUN"
+    },
+    {
+      "stage": "LZ",
+      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
+      "numerical_status": "NOT_RUN"
+    },
+    {
+      "stage": "LCZ",
+      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
+      "numerical_status": "NOT_RUN"
+    },
+    {
+      "stage": "VERIFY",
+      "reason": "SETUP never admitted; subsequent retry blocked by automatic approval authentication",
+      "numerical_status": "NOT_RUN"
+    }
+  ],
+  "actual_implementation_and_schema_valid": true,
+  "parameter_scans_not_run": true,
+  "new_p4_reference_not_run": true,
+  "p4_global_factor_constructed": false,
+  "actual_local_factor_constructed": false
+}
