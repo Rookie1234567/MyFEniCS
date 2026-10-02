@@ -168,7 +168,7 @@ lint失败两个未使用名称已局部修复，成本保留。以上是本地�
 两次phase系统压力停止是执行安全原因；自身swap0/树内存合规，不写OOM、正常预算不收敛或网络不可表达。所有测试失败、保存fixture/metadata问题和对应局部修复见[repair log](records/repair_log_v10.json)，全部费用见[资源](records/resource_costs_v10.json)。[测试原日志/source/hash](records/targeted_tests_v10.json)、[原字段Gate](records/gate_decisions_v10.json)与[实际GitHub渲染](records/render_check_v10.json)均单列。
 # Review V10 后续 V11 定向资格
 
-本节只记录本批新增路径，不重跑旧四态缓存 benchmark、参考求解或 full pytest。小型模型测试证明接口和状态保全；实际 M5 的独立审核另见 [Gate](records/gate_decisions_v11.json)，不能用测试通过代替物理精度。
+本节只记录本批新增路径，不重跑旧四态缓存 benchmark、参考求解或 full pytest。最终本地8页26表解析、Ruff/compileall与原字段checker通过；GitHub视觉为已目视确认的Unicorn服务错误页，记BLOCKED。小型模型测试证明接口和状态保全；实际 M5 的独立审核另见 [Gate](records/gate_decisions_v11.json)，不能用测试通过代替物理精度。
 
 | 检查 | 实际结果 | 证据 |
 |---|---|---|

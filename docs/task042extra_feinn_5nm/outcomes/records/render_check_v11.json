@@ -1,6 +1,39 @@
 {
   "schema": "task42extra.render-check.v11",
-  "status": "NOT_RUN",
-  "reason": "browser attempts pending; numerical audit complete",
-  "attempts_used": 0
+  "status": "RENDERED_VIEW_BLOCKED",
+  "published_commit": "62c93c9f543d7d82e70ef16f4656c51890c2e3d9",
+  "raw_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v11_key_pages_attempt2_actual",
+  "failure": {
+    "status": "RENDERED_VIEW_BLOCKED",
+    "error": "actual GitHub markdown article not available",
+    "completed_records": [],
+    "failure_page": {
+      "title": "Unicorn! · GitHub",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/62c93c9f543d7d82e70ef16f4656c51890c2e3d9/docs/task042extra_feinn_5nm/review_report_v10.md",
+      "articleCount": 0,
+      "bodyExcerpt": "We're having a really bad day.\n\nThe Unicorns have taken over. We're doing our best to get them under control and get GitHub back up and running.\n\nContact Support — GitHub Status — @githubstatus",
+      "screenshot": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v11_key_pages_attempt2_actual/failure_page.png",
+        "sha256": "d1746f8b26a8f2c37ac262929fa18967b485f49802923b80ce2e4cbfc0994843"
+      }
+    }
+  },
+  "attempts_used": 2,
+  "browser_started_attempts": 1,
+  "first_attempt": {
+    "status": "FAILED_BEFORE_BROWSER_START",
+    "reason": "precreated output directory conflicts with renderer new-directory contract",
+    "directory": "tmp/task42extra/render/v11_review_attempt1"
+  },
+  "second_attempt": {
+    "status": "RENDERED_VIEW_BLOCKED",
+    "reason": "actual GitHub Unicorn service error; articleCount0",
+    "screenshot": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v11_key_pages_attempt2_actual/failure_page.png",
+      "sha256": "d1746f8b26a8f2c37ac262929fa18967b485f49802923b80ce2e4cbfc0994843"
+    },
+    "visual_inspection_sha256": "fc1e3490da69df68262747b980dee92f78c424c1287a14a2cce6bd7826dbc1b4"
+  },
+  "critical_pages_status": "NOT_REACHED_AFTER_REVIEW_GITHUB_SERVICE_ERROR",
+  "no_visual_PASS_claim": true
 }

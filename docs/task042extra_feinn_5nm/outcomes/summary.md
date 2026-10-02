@@ -17,6 +17,8 @@ A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度�
 
 [Response V11](../response_v11.md)、[完整度量诊断](parameter_metric_v11.md)、[原字段Gate](records/gate_decisions_v11.json)、[完整资源账](records/resource_costs_v11.json)、[source/模型/hash](records/run_index_v11.json)、[实际渲染](records/render_check_v11.json)。
 
+本批最终保守新增16916.218990236s（上限21600s），项目累计154319.25454593s。GitHub视觉为实际Unicorn服务错误，BLOCKED；本地新页合同通过。自身数值树与锁已清场。
+
 旧V1–V10结果、负结果、两次PSI停止及失联3284s费用全部保留；下方历史正文原样保留。
 
 # Task42extra Review V9 后续：V10 当前结果导航

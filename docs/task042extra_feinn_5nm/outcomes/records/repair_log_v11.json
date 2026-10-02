@@ -64,6 +64,14 @@
       "change": "future metric_pilot exports now record1, ordinary default2 unchanged",
       "test": "small reused-runner checkpoint test asserts1 and matching model/optimizer; 4 targeted tests passed",
       "retry": "old C files retained unchanged; actual recoveries0; no repeated C start"
+    },
+    {
+      "component": "browser output directory",
+      "failure": "first renderer startup FileExistsError before browser",
+      "hypothesis": "expected URL directory incorrectly reused as new output directory",
+      "change": "configuration input and output paths separated; no mkdir before renderer",
+      "test": "second and final supervised browser process launched, CPU-only peak1.238GiB/swap0; screenshot visually confirmed GitHub service error",
+      "retry": "exactly two startup attempts; no third attempt; no visual PASS"
     }
   ]
 }

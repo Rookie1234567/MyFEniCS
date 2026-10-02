@@ -1,0 +1,27 @@
+{
+  "schema": "task42extra.verification-receipt.v11",
+  "checker_Git_HEAD": "62c93c9f543d7d82e70ef16f4656c51890c2e3d9",
+  "checker_code_sha256": "1215568f2cf234b14a8caaa7362e3bf721be05abbdb8ecacb5372c8df86aa27d",
+  "checker_run_summary": {
+    "path": "tmp/task42extra/checks/v11_E_final_raw_ledger_check_20261002T152801904463Z/summary.json",
+    "sha256": "8e02fdc44284d18dfb53baa376665a44631bddce504c8f126f035bba3128ee54"
+  },
+  "formal_training_source": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+  "independent_ML_FE_source": "fe652cb6db6e9c8ca4ad5f7c27b6f814f5be8413",
+  "published_render_attempt_commit": "62c93c9f543d7d82e70ef16f4656c51890c2e3d9",
+  "record_policy": "hash-bound raw numeric sources; final docs HEAD is separate",
+  "retained_state_not_selected_by_reference_error": true,
+  "physical_status": "PDE_OPTIMIZATION_NEGATIVE",
+  "research_status": "NO_USEFUL_METRIC_GAIN",
+  "network_parameter_reconstruction_relative": {
+    "identity": 0.0,
+    "block": 0.0
+  },
+  "new_PSI_stops": 0,
+  "numerical_CPU_readmissions": 1,
+  "light_CPU_preflight_stops": 2,
+  "reference_recomputed": false,
+  "full_pytest_run": false,
+  "production_initialization_allowed": false,
+  "merge_approved": false
+}
