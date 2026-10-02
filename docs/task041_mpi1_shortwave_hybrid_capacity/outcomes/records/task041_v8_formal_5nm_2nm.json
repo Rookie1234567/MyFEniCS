@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-02T07:35:11Z",
+  "observed_utc": "2026-10-02T08:09:38Z",
   "progress": {
-    "phase": "modal_full_build_bottom_modal_action_batch_29_of_30_logical_896_of_960",
+    "phase": "modal_full_build_bottom_modal_action_batch_30_of_30_logical_928_of_960",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -939,19 +939,19 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 92636.0152167799,
-      "authority_bytes": 43236859904,
-      "process_tree_rss_bytes": 43236859904,
-      "cgroup_memory_current_bytes": 41139490816,
+      "elapsed_seconds": 94702.86264615797,
+      "authority_bytes": 43236937728,
+      "process_tree_rss_bytes": 43236937728,
+      "cgroup_memory_current_bytes": 41192267776,
       "cgroup_memory_peak_bytes": 42709970944,
       "job_swap_bytes": 0,
       "global_swap_used_bytes": 22827008,
       "global_swap_used_bytes_delta": 0,
       "global_pswpin_pages_delta": 1480885,
       "global_pswpout_pages_delta": 2781714,
-      "host_memavailable_bytes": 2102766108672,
+      "host_memavailable_bytes": 2098668773376,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-02T07:35:11Z"
+      "retrieved_utc": "2026-10-02T08:09:38Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -962,7 +962,7 @@
     "mpi8_abi_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/mpi8_abi_prelaunch_attempt.json",
     "mpi_launcher_pid": 1026232,
     "numa_policy": "fresh MPI8 ABI passed bind node0; each worker /proc/numa_maps showed bind:0",
-    "numerical_setup_marker": "modal_full_build active; latest markers.jsonl records bottom modal_action batch 29/30 in progress, index=896 and logical_completed=896/960, stage_wall_seconds=85714.28511425504 at elapsed 91405.827339674 s; this is modal setup work, not formal RHS completion. At 2026-10-02T07:35:11Z, worker run_summary.json and consumer_summary.json are still absent. Authority/tree is 43236859904 B, dedicated cgroup current 41139490816 B, cgroup peak 42709970944 B, and job/cgroup swap 0. Global swap used is 22827008 B with existing clamped nonnegative delta field 0; pswpin delta is 1480885 pages and pswpout delta is 2781714 pages. Global values remain observe-only and unattributed. The 86400s target has been missed (time_target_met=false); the run remains active with time_stop_enforced=false. Final elapsed wall and numerical outputs remain pending.",
+    "numerical_setup_marker": "modal_full_build active; latest markers.jsonl records bottom modal_action batch 30/30 begun, index=928 and logical_completed=928/960, stage_wall_seconds=88845.9707892841 at elapsed 94537.51233985298 s; this is modal setup work, not formal RHS completion. At 2026-10-02T08:09:38Z, worker run_summary.json and consumer_summary.json are still absent. Authority/tree is 43236937728 B, dedicated cgroup current 41192267776 B, cgroup peak 42709970944 B, and job/cgroup swap 0. Global swap used is 22827008 B with existing clamped nonnegative delta field 0; pswpin delta is 1480885 pages and pswpout delta is 2781714 pages. Global values remain observe-only and unattributed. The 86400s target has been missed (time_target_met=false); the run remains active with time_stop_enforced=false. Final elapsed wall and numerical outputs remain pending.",
     "packet_manifest_sha256": "306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f",
     "performance_isolation": "not_isolated; neighbor processes untouched",
     "preparation_path": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z",
@@ -995,7 +995,7 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "modal_full_build_bottom_modal_action_batch_29_of_30_logical_896_of_960",
+    "stage_marker": "modal_full_build_bottom_modal_action_batch_30_of_30_logical_928_of_960",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
     "status": "running_modal_full_build_bottom_modal_action",
@@ -1064,6 +1064,6 @@
         "physical_action_source": "build_side_balanced_inverse"
       }
     },
-    "stage_marker_wall_seconds": 85714.28511425504
+    "stage_marker_wall_seconds": 88845.9707892841
   }
 }
