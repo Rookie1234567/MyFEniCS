@@ -1,6 +1,7 @@
 """Bounded, unlabelled phase75 probes and fixed-metric qualification."""
 
 from pathlib import Path
+from copy import deepcopy
 from time import perf_counter
 import numpy as np
 from scipy import sparse
@@ -515,6 +516,104 @@ def qualify(design, native, qualification, diagnostic, artifact, marker, manifes
             metric_sha256=metric.sha256,
             anchor_mu=saved["optimizer"]["mu"],
             identity_short_proposal=proposal,
+            **finish(p, factor, proof),
+        ), {}
+    finally:
+        assign(p.model, theta0)
+        p.jac.invalidate()
+        factor.close()
+
+
+def qualify_fd_tail(
+    design, native, qualification, diagnostic, previous, artifact, marker, manifest
+):
+    """One extra small-step witness; retain qualified chains, do not replay K."""
+    old = previous["result"]
+    if (
+        old["status"] != "PARAMETER_METRIC_INTERFACE_FAILED"
+        or old["actual_g_y"]["relative"] > 1e-9
+    ):
+        raise ValueError("FD_TAIL_REQUIRES_OTHER_CHAINS_QUALIFIED")
+    if any(
+        old["identity_short_proposal"][k]["relative"] > 1e-9
+        for k in ("step_pair", "pred_pair", "ared_pair")
+    ):
+        raise ValueError("FD_TAIL_CANNOT_REPAIR_PROPOSAL_OR_OPERATOR")
+    p, factor, _, proof = setup(
+        design,
+        native,
+        qualification,
+        artifact,
+        marker,
+        manifest,
+        0,
+        [diagnostic["files"]["metric"]["path"]],
+    )
+    theta0 = parameters(p.model).copy()
+    try:
+        for k in ("parameter_sha256", "complete_c_sha256", "d_G"):
+            if proof[k] != old["identity"][k]:
+                raise ValueError("FD_WITNESS_BASE_IDENTITY_CHANGED")
+        with np.load(diagnostic["files"]["metric"]["path"], allow_pickle=False) as data:
+            metric = ParameterMetric(data["M"])
+        _, g, _ = p.value_gradient()
+        rng = np.random.default_rng(4211102)
+        rows = deepcopy(old["directions"])
+        witnesses = []
+        for row in rows:
+            v = rng.normal(size=len(g))
+            v /= np.linalg.norm(v)
+            if row["transformed_K_pair"]["relative"] > 1e-9:
+                raise ValueError("FD_TAIL_CANNOT_REPAIR_K")
+            if sum(d["relative"] <= 1e-5 for d in row["finite_difference"]) >= 2:
+                continue
+            expected = float(np.dot(metric.S * g, v))
+            prior_expected = row["finite_difference"][-1]["expected"]
+            if abs(expected - prior_expected) > 1e-10 * max(abs(expected), 1e-12):
+                raise ValueError("FD_WITNESS_GRADIENT_BASE_CHANGED")
+            eps = 1e-8
+            try:
+                plus, minus = (
+                    p.value(theta0 + eps * metric.S * v),
+                    p.value(theta0 - eps * metric.S * v),
+                )
+            finally:
+                p.value(theta0, restore_only=True)
+            actual = (plus - minus) / (2 * eps)
+            witness = dict(
+                epsilon=eps,
+                actual=actual,
+                expected=expected,
+                relative=abs(actual - expected)
+                / max(abs(actual), abs(expected), 1e-12),
+            )
+            row["finite_difference"].append(witness)
+            witnesses.append(dict(direction=row["direction"], **witness))
+            marker("metric_fd_small_step_witness", witnesses[-1])
+        restored = np.array_equal(theta0, parameters(p.model))
+        passed = restored and all(
+            sum(d["relative"] <= 1e-5 for d in row["finite_difference"]) >= 2
+            for row in rows
+        )
+        return dict(
+            status="PARAMETER_METRIC_INTERFACE_PASS"
+            if passed
+            else "PARAMETER_METRIC_INTERFACE_FAILED",
+            passed=passed,
+            actual_g_y=old["actual_g_y"],
+            directions=rows,
+            identity_short_proposal=old["identity_short_proposal"],
+            metric_sha256=metric.sha256,
+            reference_loaded=False,
+            theta0_restored=restored,
+            real_K_actions_including_independent_chains=old[
+                "real_K_actions_including_independent_chains"
+            ],
+            inherited_qualification_source_sha=previous["source_sha"],
+            inherited_qualification_result=previous["files"]["result"],
+            inherited_qualification_counts=old["counts"],
+            new_witnesses=witnesses,
+            change="add only h=1e-8 witness where larger-step truncation prevented two stable FD samples; no optimizer/metric/math change",
             **finish(p, factor, proof),
         ), {}
     finally:

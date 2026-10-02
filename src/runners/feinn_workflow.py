@@ -739,6 +739,10 @@ def launch(spec):
             prerequisite_stages = DEPENDENCIES[stage]
         if v9:
             prerequisite_stages = gn_campaign.DEPENDENCIES[stage]
+            if v11 and gn_campaign.STAGES[stage][2] == "C":
+                prerequisite_stages = prerequisite_stages + [
+                    gn_campaign.qualified_checks_stage()
+                ]
             if v11 and stage in ("v11_metric_reconstruct", "v11_metric_compare"):
                 prerequisite_stages = prerequisite_stages + list(
                     gn_campaign.selected_routes(load_index)

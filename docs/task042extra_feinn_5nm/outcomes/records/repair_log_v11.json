@@ -17,6 +17,15 @@
       "test": "six new input parser identities pass",
       "retry": 1,
       "costs_retained": true
+    },
+    {
+      "root_cause": "FD probe step too large for transformed nonlinear direction0",
+      "failure": "h1e-6 rel1.53754e-5; only h1e-7 rel2.5875e-7 passed; B interface FAILED retained",
+      "hypothesis": "central-difference truncation; error reduces approximately100x when step shrinks10x; all independent g/K and S=I pairs exactly0",
+      "change": "one predeclared h1e-8 witness only for deficient direction; no K-chain/proposal replay and no mathematical or optimizer change",
+      "test": "targeted small tests before clean repair commit",
+      "retry": 1,
+      "costs_retained": true
     }
   ],
   "normal_stagnation_is_bug": false,

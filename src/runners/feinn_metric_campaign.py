@@ -10,6 +10,7 @@ LIMITS = dict(A=1800, B=5400, C=10800, E=3600)
 STAGES = {
     "v11_parameter_scale_diagnostic": ("ml", 1200, "A"),
     "v11_parameter_metric_checks": ("ml", 2400, "B"),
+    "v11_parameter_metric_checks_repair": ("ml", 900, "B"),
     "v11_phase_identity_metric": ("ml", 5400, "C"),
     "v11_phase_block_metric": ("ml", 5400, "C"),
     "v11_metric_reconstruct": ("ml", 900, "E"),
@@ -19,6 +20,10 @@ AUTHORITY, SUPERVISED = set(), set()
 BASE = ["e1_fe", "v8_phase_checks", "v10_phase_resource_freeze"]
 DEPENDENCIES = {stage: BASE.copy() for stage in STAGES}
 DEPENDENCIES["v11_parameter_metric_checks"] += ["v11_parameter_scale_diagnostic"]
+DEPENDENCIES["v11_parameter_metric_checks_repair"] += [
+    "v11_parameter_scale_diagnostic",
+    "v11_parameter_metric_checks",
+]
 for stage in ("v11_phase_identity_metric", "v11_phase_block_metric"):
     DEPENDENCIES[stage] += [
         "v11_parameter_scale_diagnostic",
@@ -82,6 +87,13 @@ def selected_routes(load_index):
     return routes
 
 
+def qualified_checks_stage():
+    from src.runners.feinn_workflow import index_path
+
+    repair = "v11_parameter_metric_checks_repair"
+    return repair if index_path(repair).exists() else "v11_parameter_metric_checks"
+
+
 def dispatch(stage, design, artifact, marker, manifest, load_index):
     if stage == "v11_metric_reconstruct":
         from src.solvers.feinn_phase_verification import reconstruct
@@ -138,13 +150,24 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
             marker,
             manifest,
         )
+    if stage == "v11_parameter_metric_checks_repair":
+        return diagnostic.qualify_fd_tail(
+            design,
+            load_index("e1_fe"),
+            load_index("v8_phase_checks"),
+            load_index("v11_parameter_scale_diagnostic"),
+            load_index("v11_parameter_metric_checks"),
+            artifact,
+            marker,
+            manifest,
+        )
     from src.solvers.feinn_gn_training import run
 
     return run(
         design,
         load_index("e1_fe"),
         load_index("v8_phase_checks"),
-        load_index("v11_parameter_metric_checks"),
+        load_index(qualified_checks_stage()),
         artifact,
         marker,
         manifest,
