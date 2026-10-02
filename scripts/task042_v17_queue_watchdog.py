@@ -12,9 +12,11 @@ from src.solvers.resumable_trace_window import snapshot,journal
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('mode',choices=('solve','verify'));parser.add_argument('--directory',type=Path,required=True)
-    parser.add_argument('--batch',choices=('v17','v18','v19','v20','v21','v22'),default='v17')
+    parser.add_argument('--batch',choices=('v17','v18','v19','v20','v21','v22','v23'),default='v17')
     args=parser.parse_args();directory=args.directory.resolve()
-    if args.batch=='v22':
+    if args.batch=='v23':
+        from src.solvers.p1_image_window import snapshot as selected_snapshot,journal as selected_journal
+    elif args.batch=='v22':
         from src.solvers.p1_trace_window import snapshot as selected_snapshot,journal as selected_journal
     elif args.batch=='v21':
         from src.solvers.exact_recycle_window import snapshot as selected_snapshot,journal as selected_journal

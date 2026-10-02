@@ -57,11 +57,11 @@ def read_result(name):
     if result['plan_sha256']!=file_hash(PLAN_PATH) or (result['reference_arrays_read'] and name!='VERIFY'):raise ValueError('V22 plan/reference role')
     return result,path
 
-def physical_state(item,*,role,nt,np_,size):
+def physical_state(item,*,role,nt,np_,size,allowed_versions=('v19','v21','v22'),allowed_root=None):
     import numpy as np
     if role=='ZERO':raise ValueError('cold role forbids all parent-state decoding')
-    state=item['state'];path=Path(state['path']).resolve();allowed=ROOT/'benchmarks/artifacts/task042'
-    if not any(path.is_relative_to(allowed/name) for name in ('v19','v21','v22')) or file_hash(path)!=state['sha256']:raise ValueError('V22 physical parent ownership/hash')
+    state=item['state'];path=Path(state['path']).resolve();allowed=(ROOT if allowed_root is None else allowed_root)/'benchmarks/artifacts/task042'
+    if not any(path.is_relative_to(allowed/name) for name in allowed_versions) or file_hash(path)!=state['sha256']:raise ValueError('V22 physical parent ownership/hash')
     with np.load(path,allow_pickle=False) as f:
         arrays={key:np.array(f[key]) for key in ('trace','port','z','residual') if key in f.files}
     for key,shape in [('trace',(nt,)),('port',(np_,)),('z',(size,)),('residual',(size,))]:

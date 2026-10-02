@@ -1,0 +1,89 @@
+{
+  "batch": "V23_P1_IMAGE_MINRES_COMPARISON",
+  "review_sha": "5c91a8101644f09d6e6e1b45043ae5581394c0e9",
+  "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+  "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "reference_sha256": "a0610a5a55e7508196b17277e706595c33e4398ace82b245f70b656e6b9ed355",
+  "initial_states": {
+    "GPOLY": {
+      "name": "V21-C-FINAL",
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v21/C/cycles/CALL_0112/physical.npz",
+        "sha256": "680f58e5e58704fc69f0b539c8c411131ce697b7811445eb9643bbf92a736072",
+        "x_sha256": "bd1e676989c95e77753bd477d863e32d8ff84ca93bbc0a5ab11a79afe565cb4b",
+        "trace_sha256": "b292dcec6ff464e30697189c71ad7159240332f567bee3f8b6555b6753275f7c",
+        "port_sha256": "c122d9b06451d732abd0949f3e91f99cd23dbe9352271f69e5644a17a1f8d014",
+        "z_sha256": "3751e1cacb2b160a7425cdb8f0bbe58ffbfdcafdb533504f392686ca5840f6d1",
+        "residual_sha256": "2b660e34c74dc63123467ceeea51043d5ce277e6cf6267fbe6fa880e09e19600"
+      }
+    }
+  },
+  "T": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/T.npz",
+    "sha256": "22e21cd840efb51d2dc66e556d85587088f406dce3221f564109a27b7b096fd8",
+    "shape": [
+      18144,
+      1248
+    ],
+    "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a"
+  },
+  "Ac": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/Ac.npy",
+    "sha256": "d03304fba540afd66d63a00975b655158696d88301e4dd989cdf9e442674b6fc",
+    "array_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+    "shape": [
+      1248,
+      1248
+    ],
+    "capacity": {
+      "n1": 1248,
+      "matrix_and_LU_explicit_upper_bytes": 49850112,
+      "new_workspace_upper_bytes": 204711936,
+      "simultaneous_planned_bytes": 3613375308,
+      "qualified": true,
+      "memory_values_are_derived_not_RSS": true,
+      "assembly_seconds": 1.7258447259664536,
+      "max_local_p1_support": 102,
+      "duplicate_contributions_merged": true,
+      "coarse_formula": "T^H K T - T^H C Hhat^-1 F T",
+      "Ac_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd",
+      "Cc_sha256": "6ee128df3b839677bb84378ec328d0efaa9b8123a57a0a090ebe76b43f0f1e3c",
+      "Fc_sha256": "9384ddcf64568851ef3e4d7ddda20538e8f9a92d35bdaf691035bcab70694952",
+      "global_fine_matrix_constructed": false,
+      "separate_curl_mass_condensation": false
+    }
+  },
+  "coarse_LU_identity": {
+    "LU_sha256": "55d08ff142084c33eaec061180a3dc71b8121bebc076e7197654614a647fd164",
+    "pivot_sha256": "ec6c4ba524f507a9d0a4b7111424c679f10778d0297b54a4d00054a84074841d",
+    "rcond1_estimate": 0.000269972629637312,
+    "Ac_sha256": "fc36fbd1d1e74e05922d8a849273f4a03861c06439d972f52dcfba42ad2dcddd"
+  },
+  "tau": 0.13558083643793006,
+  "upstream_SETUP_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v22/task042_v22_p1_trace_setup_20261002T043332305991Z/stage_result.json",
+    "sha256": "a841d106c7ec7b451764617f93bf018c33aab0f1b627cd8e0661d097a00b07d7"
+  },
+  "witness_seeds": [
+    422301,
+    422302,
+    422303,
+    422304,
+    422305,
+    422306,
+    422307,
+    422308
+  ],
+  "backend": "EXACT_CLASS_BATCH64",
+  "roles": {
+    "SETUP": "packet/T/Ac only; no parent NPZ decode",
+    "COMPARE": "two RHS; four-array warm whitelist",
+    "M": "fixed V21-C-FINAL",
+    "Z": "zero trace; no old parent or correction",
+    "VERIFY": "REF7 only after frozen solve queue"
+  },
+  "history_control_files": [
+    "docs/task042_neural_coarse_inverse/outcomes/records/cycle_history_v22.csv",
+    "docs/task042_neural_coarse_inverse/outcomes/records/candidate_comparison_v22.csv"
+  ]
+}

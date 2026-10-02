@@ -6,9 +6,10 @@ from src.solvers import p1_trace_window as w
 from src.runners.task042_shared import write_json
 
 
-def cool():
+def cool(window_module=w):
     # Reuse the original finite PSI policy, with this campaign's own ledger.
     from src.runners.task042_shared import pressure,audit
+    w=window_module
     row=w.ledger()
     if row['reentries']>=2 or row['cooldown_seconds']>=1200:return False
     begin=time.monotonic();stable=None;safe=False

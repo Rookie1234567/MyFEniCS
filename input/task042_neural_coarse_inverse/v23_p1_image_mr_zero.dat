@@ -1,0 +1,7 @@
+schema_version = 1
+
+[task042_v23]
+stage = "Z"
+run_id = "task042_v23_p1_image_mr_zero"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "P1_IMAGE_MINRES_COMPARISON"
