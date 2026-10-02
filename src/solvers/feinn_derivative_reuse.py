@@ -30,6 +30,8 @@ from src.solvers.optimization_checkpoint import (
     atomic_write,
     digest,
     restore,
+    load_checkpoint,
+    parameter_order,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -87,6 +89,70 @@ def load_final(design, entry):
         if key not in gn:
             raise ValueError("V9_FINAL_RECOVERY_STATE_NOT_RETAINED:" + key)
     return model, c, state
+
+
+def load_recovery(design, entry, recovery):
+    """Restore the newest complete own V10 state, never an uncommitted trial."""
+    model, _, original = load_final(design, entry)
+    for key in (
+        "checkpoint_pointer",
+        "durable_final",
+        "history",
+        "prior_manifest",
+        "prior_summary",
+    ):
+        if digest(recovery[key]["path"]) != recovery[key]["sha256"]:
+            raise ValueError("OWN_RECOVERY_BYTES_CHANGED:" + key)
+    saved = load_checkpoint(
+        recovery["durable_final"]["path"], recovery["durable_final"]["sha256"]
+    )
+    meta = saved["metadata"]
+    if (
+        meta != recovery["committed_metadata"]
+        or saved["optimizer_class"] != "DampedGNState"
+    ):
+        raise ValueError("OWN_RECOVERY_METADATA_MISMATCH")
+    if saved["parameter_order"] != parameter_order(model):
+        raise ValueError("OWN_RECOVERY_PARAMETER_ORDER_CHANGED")
+    if meta["prefix_sha256"] != entry["durable_final"]["sha256"]:
+        raise ValueError("OWN_RECOVERY_ORIGINAL_V9_IDENTITY_CHANGED")
+    if (
+        abs(
+            recovery["original_V9_logical_prefix_seconds"]
+            - original["metadata"]["logical_path_seconds"]
+        )
+        > 1e-6
+    ):
+        raise ValueError("OWN_RECOVERY_ORIGINAL_PATH_COST_CHANGED")
+    for key in ("native_sha256", "Gram_sha256", "moments_sha256", "buffers_sha256"):
+        if meta[key] != original["metadata"][key]:
+            raise ValueError("OWN_RECOVERY_PHYSICAL_IDENTITY_CHANGED:" + key)
+    for key, expected in policy(entry["supervised"]).items():
+        if meta[key] is not expected:
+            raise ValueError("OWN_RECOVERY_LABEL_BOUNDARY_CHANGED")
+    for key in ("torch_rng", "numpy_rng", "python_rng", "complete_c"):
+        if key not in saved:
+            raise ValueError("OWN_RECOVERY_STATE_NOT_RETAINED:" + key)
+    gn = saved["optimizer"]
+    if (
+        gn["h0"] != original["optimizer"]["h0"]
+        or gn["mu"] != meta["mu"]
+        or gn["accepted"] != meta["accepted_outer"]
+    ):
+        raise ValueError("OWN_RECOVERY_GN_SCALE_OR_STATE_CHANGED")
+    if len(gn["pc_builds"]) > (1 if entry["supervised"] else 2):
+        raise ValueError("OWN_RECOVERY_PC_LIFETIME_EXCEEDED")
+    model.load_state_dict(saved["model"], strict=True)
+    if {n: array_hash(b.detach().numpy()) for n, b in model.named_buffers()} != meta[
+        "buffers_sha256"
+    ]:
+        raise ValueError("OWN_RECOVERY_COORDINATE_OR_PHASE_BUFFERS_CHANGED")
+    if (
+        array_hash(parameters(model)) != meta["parameter_sha256"]
+        or array_hash(saved["complete_c"]) != meta["complete_c_sha256"]
+    ):
+        raise ValueError("OWN_RECOVERY_PARAMETER_OR_FIELD_HASH_CHANGED")
+    return model, saved["complete_c"], saved
 
 
 def distribution(values):

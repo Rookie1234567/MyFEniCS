@@ -13,7 +13,7 @@ from src.solvers.damped_gauss_newton import DampedGNState
 from src.test.test_feinn_jvp_ml import fixture
 
 
-@pytest.mark.parametrize("continued", [False, True])
+@pytest.mark.parametrize("continued", [False, True, "recovered"])
 def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
     tmp_path, monkeypatch, continued
 ):
@@ -32,6 +32,7 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
     ref = mapping.forward(model)
     assign(model, p0)
     continuation = None
+    recovery = None
     if continued:
         optimizer = DampedGNState(1000, pc_max_builds=1)
         optimizer.accepted = 5
@@ -56,6 +57,44 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
         monkeypatch.setattr(
             feinn_derivative_reuse, "load_final", lambda *args: (model, None, state)
         )
+        if continued == "recovered":
+            optimizer.accepted = 7
+            state = capture(
+                model,
+                optimizer,
+                dict(
+                    logical_path_seconds=19.0,
+                    inherited_prefix_seconds=11.0,
+                    inherited_accepted_outer=5,
+                    inherited_counts=state["metadata"]["counts"],
+                    inherited_JVP_VJP_counts=state["metadata"]["JVP_VJP_counts"],
+                    d_ref=float(np.vdot(ref, ref).real),
+                ),
+            )
+            state["complete_c"] = anchor
+            monkeypatch.setattr(
+                feinn_derivative_reuse,
+                "load_recovery",
+                lambda *args: (model, anchor, state),
+            )
+            recovery = dict(
+                original_V9_logical_prefix_seconds=11.0,
+                spent_counts_lower_bound=dict(
+                    K=11, full_loss_gradient=3, trial_loss=4, G_matvec=0
+                ),
+                spent_JVP_VJP_lower_bound=dict(JVP=11, VJP=14),
+                incomplete_work_quota_reserve=dict(K=1, JVP_VJP=2, trial=0),
+                **{
+                    k: dict(path=str(tmp_path / (k + ".dat")), sha256="test-only")
+                    for k in (
+                        "checkpoint_pointer",
+                        "durable_final",
+                        "history",
+                        "prior_manifest",
+                        "prior_summary",
+                    )
+                },
+            )
     entry = dict(
         path=str(tmp_path / "toy_Adam500.pt"),
         sha256="test-only",
@@ -121,6 +160,7 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
         supervised=True,
         reference=refs,
         continuation=continuation,
+        recovery=recovery,
     )
     assert result["failure"] is None
     assert (
@@ -134,9 +174,10 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
     )
     assert saved["optimizer_class"] == "DampedGNState"
     if continued:
-        assert (
-            saved["metadata"]["initialization_kind"]
-            == "V9_FULL_COMMITTED_GN_CONTINUATION"
+        assert saved["metadata"]["initialization_kind"] == (
+            "V10_FULL_COMMITTED_GN_FAULT_RECOVERY"
+            if recovery
+            else "V9_FULL_COMMITTED_GN_CONTINUATION"
         )
         assert (
             result["old_optimizer_history_loaded"] and not result["scale_reestimated"]
@@ -144,6 +185,17 @@ def test_real_fit_GN_runner_reconstructs_committed_model_and_optimizer(
         assert result["inherited_accepted_outer"] == 5 and result["h0"] == 1000
         assert result["inherited_prefix_seconds"] == 28.0
         assert result["cumulative_accepted_outer"] == 5 + result["new_accepted_outer"]
+        assert result["inherited_V10_accepted_outer"] == (2 if recovery else 0)
+        assert result["accepted_updates_this_attempt"] == len(
+            result["accepted_history"]
+        )
+        assert result["new_accepted_outer"] == result[
+            "accepted_updates_this_attempt"
+        ] + (2 if recovery else 0)
+        if recovery:
+            assert result["counts"]["K"] >= 11
+            assert saved["metadata"]["limits"]["K"] == 999
+            assert saved["metadata"]["limits"]["JVP_VJP"] == 2498
     restored = make_model(design, True)
     restored.load_state_dict(saved["model"])
     np.testing.assert_array_equal(fixture().forward(restored), saved["complete_c"])

@@ -217,4 +217,5 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
         supervised=supervised,
         reference=load_index("e3_reference") if supervised else None,
         continuation=reuse.frozen_entries()[key],
+        recovery=manifest.get("V10_fault_recovery"),
     )

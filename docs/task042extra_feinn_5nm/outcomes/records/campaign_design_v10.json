@@ -206,5 +206,53 @@
     "remaining_plain_seconds": 8442.84020357998,
     "all_previous_costs_preserved": true,
     "full_future_GN_fault_state_requires_own_V10_recovery": true
+  },
+  "full_state_fault_recovery": {
+    "selection": "LATEST_OWN_DURABLE_NOT_BEST_OR_TRIAL",
+    "stage": "v10_phase_cached_gn",
+    "own_durable_checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T021129560832Z/durable_checkpoints/committed_000006.pt",
+      "sha256": "a7238e9587426d316c61416190a55c55fcb3f3e80e04b05e5244125d7148027d"
+    },
+    "own_failed_source": "acdd853e592923f6a21f5f165964d63f73c60c77",
+    "own_failed_summary": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v10_phase_cached_gn_20261002T021129560832Z/run_summary.json",
+      "sha256": "2206fa7dad6076e84ea532c7029de38a1f7d647e5005916a13b15d5a9d4d1caa"
+    },
+    "own_failed_history": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T021129560832Z/history.jsonl",
+      "sha256": "1a0875b32c8c64a886c2376c12e5809cae4a2b429e21ad3a5120c28b4a1d7c10"
+    },
+    "saved_new_accepted": 6,
+    "saved_cumulative_accepted": 60,
+    "spent_counts_lower_bound": {
+      "K": 257,
+      "full_loss_gradient": 7,
+      "trial_loss": 9,
+      "G_matvec": 0
+    },
+    "spent_JVP_VJP_lower_bound": {
+      "JVP": 257,
+      "VJP": 264
+    },
+    "incomplete_work_quota_reserve": {
+      "K": 1,
+      "JVP_VJP": 2,
+      "trial": 0
+    },
+    "original_V9_logical_prefix_seconds": 10626.52353629109,
+    "whole_failed_attempt_seconds": 1617.5801926479908,
+    "remaining_same_route_seconds": 6982.419807352009,
+    "fresh_cache_and_factor_costs_charged": true,
+    "qualification": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/phase_fault_recovery_qualified_v10.json",
+      "sha256": "7130113e4f50e1a6f43ffdbffc58782371d146bae41781833f50750a0aa52924"
+    },
+    "resource_window_probe": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/resource_reopen_phase_v10.json",
+      "sha256": "40da60f573e512434ebb770d1b863b49d6236d7d6b5e3f477d7616ff5a1e3ec2"
+    },
+    "no_policy_change": true,
+    "maximum_recoveries_per_route": 2
   }
 }

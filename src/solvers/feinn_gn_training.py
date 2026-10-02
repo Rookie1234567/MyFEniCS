@@ -362,6 +362,7 @@ def run(
     supervised,
     reference=None,
     continuation=None,
+    recovery=None,
 ):
     configure()
     if continuation is None and checks["result"]["status"] != "GN_INTERFACE_PASS":
@@ -388,9 +389,25 @@ def run(
     ]
     if supervised:
         allowed.append(reference["files"]["reference"]["path"])
+    if recovery is not None:
+        allowed.extend(
+            recovery[k]["path"]
+            for k in (
+                "checkpoint_pointer",
+                "durable_final",
+                "history",
+                "prior_manifest",
+                "prior_summary",
+            )
+        )
     reads = install_data_guard(allowed, artifact, supervised=supervised)
     if continuation is not None:
-        model, _, old = load_final(design, entry)
+        if recovery is None:
+            model, _, old = load_final(design, entry)
+        else:
+            from src.solvers.feinn_derivative_reuse import load_recovery
+
+            model, _, old = load_recovery(design, entry, recovery)
     else:
         model, old = load_boundary(design, entry, phase=phase, supervised=supervised)
     initial = parameters(model)
@@ -418,6 +435,9 @@ def run(
         JVP_VJP=2500 if supervised else 8000,
         trial=256 if supervised else 512,
     )
+    if recovery is not None:
+        for key, reserved in recovery["incomplete_work_quota_reserve"].items():
+            caps[key] -= reserved
     requested = False
 
     def stop_signal(*_):
@@ -448,6 +468,9 @@ def run(
         from src.solvers.feinn_cached_derivatives import CachedMomentJacobian
 
         problem.jac = CachedMomentJacobian(mapping)
+    if recovery is not None:
+        problem.counts.update(recovery["spent_counts_lower_bound"])
+        problem.jac.counts.update(recovery["spent_JVP_VJP_lower_bound"])
     anchor_c = mapping.forward(model)
     if paired(anchor_c, old["complete_c"])["relative"] > 1e-10:
         raise ValueError("OWN_COMPLETE_BOUNDARY_RECONSTRUCTION_FAILED")
@@ -510,17 +533,38 @@ def run(
         n: array_hash(b.detach().numpy()) for n, b in model.named_buffers()
     }
     prefix_seconds = (
-        old["metadata"]["logical_path_seconds"]
+        (
+            recovery["original_V9_logical_prefix_seconds"]
+            if recovery is not None
+            else old["metadata"]["logical_path_seconds"]
+        )
         + manifest.get("route_inherited_failed_attempt_seconds", 0)
         if continuation is not None
         else entry["metadata"]["elapsed_charged_seconds"]
     )
-    inherited_accepted = optimizer.accepted
+    inherited_accepted = (
+        old["metadata"]["inherited_accepted_outer"]
+        if recovery is not None
+        else optimizer.accepted
+    )
+    attempt_initial_accepted = optimizer.accepted
     inherited_counts = (
-        deepcopy(old["metadata"]["counts"]) if continuation is not None else {}
+        deepcopy(
+            old["metadata"]["inherited_counts"]
+            if recovery is not None
+            else old["metadata"]["counts"]
+        )
+        if continuation is not None
+        else {}
     )
     inherited_jac_counts = (
-        deepcopy(old["metadata"]["JVP_VJP_counts"]) if continuation is not None else {}
+        deepcopy(
+            old["metadata"]["inherited_JVP_VJP_counts"]
+            if recovery is not None
+            else old["metadata"]["JVP_VJP_counts"]
+        )
+        if continuation is not None
+        else {}
     )
     frontier = None
     if continuation is not None:
@@ -545,7 +589,9 @@ def run(
             accepted_outer=optimizer.accepted,
             inherited_Adam_updates=500,
             new_Adam_updates=0,
-            initialization_kind="V9_FULL_COMMITTED_GN_CONTINUATION"
+            initialization_kind="V10_FULL_COMMITTED_GN_FAULT_RECOVERY"
+            if recovery is not None
+            else "V9_FULL_COMMITTED_GN_CONTINUATION"
             if continuation is not None
             else "REFERENCE_FIT_ADAM500_PREFIX_REUSE"
             if supervised
@@ -572,6 +618,7 @@ def run(
             buffers_sha256=frozen_buffers,
             limits=caps,
             PC_provenance=optimizer.pc_builds,
+            fault_recovery=recovery,
             **flags,
             **(
                 dict(
@@ -579,6 +626,10 @@ def run(
                     inherited_JVP_VJP_counts=inherited_jac_counts,
                     inherited_accepted_outer=inherited_accepted,
                     new_accepted_outer=optimizer.accepted - inherited_accepted,
+                    accepted_updates_this_attempt=optimizer.accepted
+                    - attempt_initial_accepted,
+                    inherited_V10_accepted_outer=attempt_initial_accepted
+                    - inherited_accepted,
                     cumulative_counts={
                         k: inherited_counts.get(k, 0) + v
                         for k, v in problem.counts.items()
@@ -626,7 +677,9 @@ def run(
         return value
 
     initial_tag = (
-        "V10_initial_full_GN_boundary"
+        "V10_recovered_full_GN_boundary"
+        if recovery is not None
+        else "V10_initial_full_GN_boundary"
         if continuation is not None
         else "GN_initial_Adam500_boundary"
     )
@@ -855,9 +908,13 @@ def run(
             status="V10_GN_CONTINUATION_FROZEN"
             if failure is None
             else "V10_GN_RETAINED_FAILURE",
-            initialization_kind="V9_FULL_COMMITTED_GN_CONTINUATION",
+            initialization_kind="V10_FULL_COMMITTED_GN_FAULT_RECOVERY"
+            if recovery is not None
+            else "V9_FULL_COMMITTED_GN_CONTINUATION",
             inherited_accepted_outer=inherited_accepted,
             new_accepted_outer=optimizer.accepted - inherited_accepted,
+            accepted_updates_this_attempt=optimizer.accepted - attempt_initial_accepted,
+            inherited_V10_accepted_outer=attempt_initial_accepted - inherited_accepted,
             cumulative_accepted_outer=optimizer.accepted,
             inherited_counts=inherited_counts,
             inherited_JVP_VJP_counts=inherited_jac_counts,
@@ -876,6 +933,10 @@ def run(
             inherited_prior_attempt_seconds=manifest.get(
                 "route_inherited_failed_attempt_seconds", 0
             ),
+            fault_recovery=recovery,
+            costs_scope="current attempt only; prior attempt wall and retained timer lower bounds in recovery provenance"
+            if recovery is not None
+            else "current attempt",
         )
     marker(
         "GN_route_frozen",
