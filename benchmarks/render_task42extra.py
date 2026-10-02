@@ -230,12 +230,24 @@ return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
         )
     print(json.dumps(dict(output=str(OUT), pages=len(records))))
 except Exception as error:
+    failure_page = None
+    if session is not None:
+        try:
+            failure_page = script(
+                "return {title:document.title,url:location.href.split('?')[0],"
+                "articleCount:document.querySelectorAll('article').length,"
+                "bodyExcerpt:document.body?.innerText?.slice(0,1000)||''};"
+            )
+            failure_page["screenshot"] = screenshot("failure_page")
+        except Exception as diagnostic_error:
+            failure_page = {"diagnostic_error": str(diagnostic_error)}
     (OUT / "render_failure.json").write_text(
         json.dumps(
             dict(
                 status="RENDERED_VIEW_BLOCKED",
                 error=str(error),
                 completed_records=records,
+                failure_page=failure_page,
             ),
             indent=2,
         )
