@@ -16,7 +16,8 @@ def file_identity(path):
 
 def recovery_boundary(root, stage, prior):
     """Use the latest own fsynced boundary; spent incomplete work stays charged."""
-    if len(prior) > 2:
+    metric_pilot = stage.startswith("v11_")
+    if len(prior) > (1 if metric_pilot else 2):
         raise RuntimeError("V10_ROUTE_FAULT_RECOVERY_LIMIT")
     candidates = []
     for row in prior:
@@ -41,6 +42,10 @@ def recovery_boundary(root, stage, prior):
     route = ("V10-PHASE" if phase else "V10-PLAIN") + (
         "-CACHED-FIT-GN-CONTINUE" if supervised else "-CACHED-GN-CONTINUE"
     )
+    if metric_pilot:
+        route = "V11-PHASE-" + (
+            "IDENTITY-METRIC-CONTROL" if "identity" in stage else "BLOCK-METRIC"
+        )
     if meta["route"] != route or meta["stage"] != "DAMPED_GN":
         raise RuntimeError("RECOVERY_NETWORK_OR_OPTIMIZER_STAGE_CHANGED")
     if manifest["stage"] != stage or meta["run_id"] != run.name:
@@ -110,7 +115,9 @@ def recovery_boundary(root, stage, prior):
         for key, value in earlier["incomplete_work_quota_reserve"].items():
             reserve[key] += value
     return dict(
-        schema="task42extra.gn-fault-recovery.v10",
+        schema="task42extra.gn-fault-recovery.v11"
+        if metric_pilot
+        else "task42extra.gn-fault-recovery.v10",
         stage=stage,
         phase=phase,
         supervised=supervised,

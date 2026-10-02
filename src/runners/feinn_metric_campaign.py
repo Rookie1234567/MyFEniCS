@@ -85,25 +85,33 @@ def selected_routes(load_index):
 def dispatch(stage, design, artifact, marker, manifest, load_index):
     if stage == "v11_metric_reconstruct":
         from src.solvers.feinn_phase_verification import reconstruct
+        from src.solvers.feinn_metric_verification import time_routes
 
-        return reconstruct(
+        routes, time_index = time_routes(design, selected_routes(load_index), artifact)
+        result, files = reconstruct(
             design,
             load_index("v8_phase_checks"),
-            selected_routes(load_index),
+            routes,
             artifact,
             marker,
             manifest,
             retain_initial=False,
         )
+        files["time_route_index"] = time_index
+        return result, files
     if stage == "v11_metric_compare":
         from src.solvers.feinn_phase_compare import compare
 
+        reconstructed = load_index("v11_metric_reconstruct")
+        routes = json.loads(
+            Path(reconstructed["files"]["time_route_index"]["path"]).read_text()
+        )
         return compare(
             design,
             load_index("e1_fe"),
             load_index("e3_reference"),
-            selected_routes(load_index),
-            load_index("v11_metric_reconstruct"),
+            routes,
+            reconstructed,
             artifact,
             marker,
             manifest,
@@ -144,4 +152,5 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
         supervised=False,
         continuation=anchor(),
         metric_pilot=load_index("v11_parameter_scale_diagnostic"),
+        recovery=manifest.get("V11_fault_recovery"),
     )

@@ -20,7 +20,12 @@ from src.solvers.feinn_validation import load_moments, parameters, paired, assig
 from src.solvers.feinn_native import load_native, ResidualMetric
 from src.solvers.feinn_riesz import SparseRiesz
 from src.solvers.neural_fe_action_packet import array_hash
-from src.solvers.optimization_checkpoint import atomic_write, digest
+from src.solvers.optimization_checkpoint import (
+    atomic_write,
+    digest,
+    load_checkpoint,
+    parameter_order,
+)
 
 
 def load_anchor(design, entry):
@@ -66,6 +71,54 @@ def load_anchor(design, entry):
     return model, c, saved
 
 
+def load_metric_recovery(design, entry, recovery):
+    model, _, anchor_state = load_anchor(design, entry)
+    for k in (
+        "checkpoint_pointer",
+        "durable_final",
+        "history",
+        "prior_manifest",
+        "prior_summary",
+    ):
+        if digest(recovery[k]["path"]) != recovery[k]["sha256"]:
+            raise ValueError("METRIC_RECOVERY_BYTES_CHANGED:" + k)
+    state = load_checkpoint(
+        recovery["durable_final"]["path"], recovery["durable_final"]["sha256"]
+    )
+    meta = state["metadata"]
+    if (
+        state["optimizer_class"] != "MetricDampedGNState"
+        or state["parameter_order"] != parameter_order(model)
+        or meta != recovery["committed_metadata"]
+        or meta["prefix_sha256"] != entry["durable_final"]["sha256"]
+    ):
+        raise ValueError("NOT_SAME_OWN_METRIC_FORK_BOUNDARY")
+    if (
+        state["optimizer"]["parameter_metric"]["sha256"]
+        != meta["parameter_metric_sha256"]
+    ):
+        raise ValueError("METRIC_RECOVERY_SCALE_CHANGED")
+    for k in ("native_sha256", "Gram_sha256", "moments_sha256", "buffers_sha256"):
+        if meta[k] != anchor_state["metadata"][k]:
+            raise ValueError("METRIC_RECOVERY_PHYSICAL_IDENTITY_CHANGED:" + k)
+    for k, v in policy(False).items():
+        if meta[k] is not v:
+            raise ValueError("METRIC_RECOVERY_LABEL_CHANGED")
+    if (
+        state["optimizer"]["pc_builds"]
+        or state["optimizer"]["V"] is not None
+        or state["optimizer"]["h0"] != anchor_state["optimizer"]["h0"]
+    ):
+        raise ValueError("METRIC_RECOVERY_PC_OR_H0_CHANGED")
+    model.load_state_dict(state["model"], strict=True)
+    if (
+        array_hash(parameters(model)) != meta["parameter_sha256"]
+        or array_hash(state["complete_c"]) != meta["complete_c_sha256"]
+    ):
+        raise ValueError("METRIC_RECOVERY_PARAMETER_OR_C_CHANGED")
+    return model, state["complete_c"], state
+
+
 def setup(
     design, native, qualification, artifact, marker, manifest, cap, extra_allowed=()
 ):
@@ -100,6 +153,9 @@ def setup(
         sparse.load_npz(native["files"]["gram"]["path"]), design, marker
     )
     metric = ResidualMetric(packet, factor)
+    if abs(metric.denominator - saved["metadata"]["d_G"]) > 1e-10 * metric.denominator:
+        factor.close()
+        raise ValueError("PHASE75_ORIGINAL_RIESZ_DENOMINATOR_CHANGED")
     cutoff = (
         manifest["supervision_budget_origin_monotonic"]
         + manifest["supervised_limit_seconds"]
@@ -144,6 +200,7 @@ def setup(
         PC_present=False,
         RNG_retained=True,
         parameter_only=False,
+        d_G=metric.denominator,
         actual_artifact_reads=reads,
         allowed_artifact_paths=allowed,
         source_sha=manifest["source_sha"],

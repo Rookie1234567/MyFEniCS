@@ -419,8 +419,12 @@ def run(
         if recovery is None:
             model, _, old = load_final(design, entry)
         else:
-            from src.solvers.feinn_derivative_reuse import load_recovery
-
+            if metric_pilot is not None:
+                from src.solvers.feinn_metric_diagnostic import (
+                    load_metric_recovery as load_recovery,
+                )
+            else:
+                from src.solvers.feinn_derivative_reuse import load_recovery
             model, _, old = load_recovery(design, entry, recovery)
     else:
         model, old = load_boundary(design, entry, phase=phase, supervised=supervised)
@@ -541,14 +545,6 @@ def run(
             scale_trace.append(dict(norm=h0, quadratic=float(v @ Kv)))
             v = Kv / h0
     optimizer = DampedGNState(h0, pc_max_builds=1 if supervised else 2)
-    if continuation is not None:
-        restore(model, optimizer, old)
-        denominator_key = "d_ref" if supervised else "d_G"
-        if (
-            abs(metric.denominator - old["metadata"][denominator_key])
-            > 1e-10 * metric.denominator
-        ):
-            raise ValueError("CONTINUATION_ORIGINAL_DENOMINATOR_CHANGED")
     if metric_pilot is not None:
         from src.solvers.feinn_parameter_metric import (
             ParameterMetric,
@@ -564,9 +560,22 @@ def run(
                 fixed_metric = ParameterMetric(item["M"])
             if fixed_metric.sha256 != metric_pilot["result"]["metric_sha256"]:
                 raise ValueError("FIXED_BLOCK_METRIC_CHANGED")
-        previous_gn = optimizer.state_dict()
         optimizer = MetricDampedGNState(h0, fixed_metric)
-        optimizer.load_state_dict(previous_gn)
+        if old["optimizer_class"] == "DampedGNState":
+            original_optimizer = DampedGNState(h0)
+            restore(model, original_optimizer, old)
+            optimizer.load_state_dict(original_optimizer.state_dict())
+        else:
+            restore(model, optimizer, old)
+    elif continuation is not None:
+        restore(model, optimizer, old)
+    if continuation is not None:
+        denominator_key = "d_ref" if supervised else "d_G"
+        if (
+            abs(metric.denominator - old["metadata"][denominator_key])
+            > 1e-10 * metric.denominator
+        ):
+            raise ValueError("CONTINUATION_ORIGINAL_DENOMINATOR_CHANGED")
     store = CheckpointStore(artifact / "durable_checkpoints")
     flags = policy(supervised)
     frozen_buffers = {
@@ -768,6 +777,19 @@ def run(
                         np.linalg.norm(delta) / max(np.linalg.norm(theta), 1e-30)
                     ),
                 )
+                if metric_pilot is not None:
+                    from src.solvers.feinn_parameter_metric import GROUP_SIZES
+
+                    starts = np.cumsum((0,) + GROUP_SIZES)
+                    update["group_update_norms"] = [
+                        float(np.linalg.norm(delta[starts[i] : starts[i + 1]]))
+                        for i in range(8)
+                    ]
+                    update["group_update_RMS"] = [
+                        v / np.sqrt(n)
+                        for v, n in zip(update["group_update_norms"], GROUP_SIZES)
+                    ]
+                    update["mu_over_h0"] = optimizer.mu / h0
                 c = mapping.forward(model)
                 if frontier is not None:
                     frontier.event("COMMIT", "begin", accepted_outer=optimizer.accepted)
@@ -785,6 +807,8 @@ def run(
                         row,
                         accepted_outer=optimizer.accepted,
                         checkpoint=record,
+                        committed_elapsed_seconds=perf_counter()
+                        - manifest["supervision_budget_origin_monotonic"],
                         **update,
                     )
                 )
@@ -1002,16 +1026,26 @@ def run(
         )
     if metric_pilot is not None:
         fixed_times = {}
-        boundaries = [initial_audit] + audits[1:]
         elapsed = perf_counter() - manifest["supervision_budget_origin_monotonic"]
         for t in (0, 1800, 3600, 5400):
-            choices = [r for r in boundaries if r["elapsed_charged_seconds"] <= t]
-            selected = (
-                initial_audit
-                if t == 0
-                else max(choices, key=lambda r: r["elapsed_charged_seconds"])
+            choices = [r for r in accepted_rows if r["committed_elapsed_seconds"] <= t]
+            selected_row = (
+                max(choices, key=lambda r: r["committed_elapsed_seconds"])
                 if choices
                 else None
+            )
+            selected = (
+                next(
+                    (
+                        a
+                        for a in audits
+                        if a["checkpoint"]["sha256"]
+                        == selected_row["checkpoint"]["sha256"]
+                    ),
+                    None,
+                )
+                if selected_row
+                else initial_audit
             )
             fixed_times[str(t)] = (
                 dict(status="NOT_RUN")
@@ -1019,9 +1053,12 @@ def run(
                 else dict(
                     status="RETAINED" if selected else "NOT_RETAINED",
                     target_seconds=t,
-                    actual_seconds=selected["elapsed_charged_seconds"]
-                    if selected
-                    else None,
+                    actual_seconds=selected_row["committed_elapsed_seconds"]
+                    if selected_row
+                    else 0.0,
+                    state_origin="already frozen shared phase75"
+                    if selected_row is None
+                    else "fsynced complete accepted boundary",
                     audit=selected,
                 )
             )

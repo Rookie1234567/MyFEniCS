@@ -951,6 +951,25 @@ def launch(spec):
         if v9:
             group = gn_campaign.STAGES[stage][2]
             limit = min(limit, ledger[gn_version]["groups_remaining_seconds"][group])
+            if v11 and group == "C":
+                prior = [
+                    r
+                    for r in ledger["entries"]
+                    if Path(r["path"]).parent.name.startswith(
+                        "task42extra_" + stage + "_"
+                    )
+                ]
+                prior_seconds = sum(r["seconds"] for r in prior)
+                limit = min(limit, 5400 - prior_seconds)
+                state["route_inherited_failed_attempt_seconds"] = prior_seconds
+                if prior:
+                    from src.runners.feinn_gn_recovery import recovery_boundary
+
+                    state["V11_fault_recovery"] = recovery_boundary(ROOT, stage, prior)
+                    if state["V11_fault_recovery"] is None:
+                        raise RuntimeError(
+                            "V11_COMPLETE_RECOVERY_BOUNDARY_NOT_RETAINED"
+                        )
             if v10 and stage == "v10_phase_resource_freeze":
                 from src.runners.feinn_gn_recovery import recovery_boundary
 
