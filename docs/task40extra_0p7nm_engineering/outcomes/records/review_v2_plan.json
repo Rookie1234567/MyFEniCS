@@ -38,16 +38,56 @@
     "source_vs_head": "Review V2 is documentation-only above prior accepted source; every new attempt will bind its actual clean HEAD"
   },
   "p1": {
-    "status": "planned_offline_only",
-    "common_volume_partition": "union of both meshes' axis split points, separately within each frozen material region",
-    "integrands": ["total E/H", "scattered E/H", "curl(E) evaluated directly from FE derivatives"],
-    "constraints": ["stream bounded quadrature", "no third solve mesh/factor", "keep sampled and volume evidence separate", "no phase fit"]
+    "status": "complete_engineering_h_gate_failed",
+    "scope": "Review V2 P1: original G0/G1 M0 saved-field common-subcell volume comparison and independent curl(E); distinct from both historical R5 fixed-coordinate sample comparison and P4 M2 comparison",
+    "record": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/p1_m0_volume_h_agreement_v2.json",
+      "sha256": "9d72efd7f21771c7fd0cc779b7cfb0f9272734fe9cbe1757a014d127e4422925"
+    },
+    "execution": {
+      "duration_s": 436.5178109759581,
+      "self_RSS_peak_B": 620851200,
+      "pde_operator_factor_ksp_started": false
+    },
+    "common_subcell_count": 1344,
+    "physical_domain_relative_to_g1": {
+      "E_total": 0.0037501429392500715,
+      "E_scattered": 0.026112726659272563,
+      "H_total": 0.003949001092228872,
+      "H_scattered": 0.027497769856085694,
+      "scaled_curl_E_total": 0.003949001092228871,
+      "scaled_curl_E_scattered": 0.027497769856085694
+    },
+    "field_limit": 0.01,
+    "global_field_scaled_curl_h_gate_pass": false,
+    "official_power": {
+      "G0_M0": {
+        "R_total": 0.07565196449717393,
+        "T_total": 0.9062068564432124,
+        "A_volume": 0.01814125705170932
+      },
+      "G1_M0": {
+        "R_total": 0.07612406206792088,
+        "T_total": 0.905769220572286,
+        "A_volume": 0.018106712729780598
+      },
+      "absolute_deltas": {
+        "R_total": 0.00047209757074695435,
+        "T_total": 0.00043763587092637835,
+        "A_volume": 3.454432192872073e-05
+      },
+      "limit": 0.001,
+      "pass": true
+    },
+    "status_reason": "scattered E 2.61127% and scattered H/scaled-curl 2.74978% exceed 1%; total fields are about0.3750% and0.3949%.",
+    "continuum_convergence": false
   },
   "p2": {
-    "status": "planned_component_qualification",
-    "candidate": "share six real reference curl/mass tensors; compose each exact cell metric; retain complex128 physical tensors and existing condensation/recovery",
-    "qualification": "FFCx matrix/action, Schur and nonzero-RHS recovery; exact identity; bounded true G0/G1 cell-type inventory; count init/composition/orientation/scratch and unique backing bytes",
-    "adoption_rule": "adopt only reproducible end-to-end benefit with acceptable resident/transient memory; otherwise record negative and use original exact path"
+    "status": "F1_QUALIFIED_ADOPTED_FOR_REMAINING_CAMPAIGN",
+    "G0_original_pair": "NOT_QUALIFIED preserved; closure reaudit only qualified G1 M0 trial eligibility",
+    "G1_component": "qualified for G1 M0 watchdog trial",
+    "F1": "same-discrete G1 M0 passed and was adopted",
+    "equations_changed": false
   },
   "conditional_formal_stages": {
     "F1": "G1 M0 only if P2 is adopted",
@@ -61,5 +101,113 @@
     "total_R_T_A_A_volume_absolute": 0.0001,
     "significant_common_propagating_mode_amplitude_relative": 0.01
   },
-  "nonnegotiable": ["p6/q4 double condensation", "MUMPS and BAL_H unchanged", "full A6 <= 1e-6", "strict identity <= 1e-10", "full A4 checks and at most two same-factor refinements", "MPI1/math_threads1", "all formal runs via user-service plus independent watchdog", "zero task swap", "PSS disabled recorded null", "workstation untouched", "no master merge"]
+  "nonnegotiable": [
+    "p6/q4 double condensation",
+    "MUMPS and BAL_H unchanged",
+    "full A6 <= 1e-6",
+    "strict identity <= 1e-10",
+    "full A4 checks and at most two same-factor refinements",
+    "MPI1/math_threads1",
+    "all formal runs via user-service plus independent watchdog",
+    "zero task swap",
+    "PSS disabled recorded null",
+    "workstation untouched",
+    "no master merge"
+  ],
+  "review_v2_closeout": {
+    "status": "P1_P7_COMPLETE_WITH_NEGATIVE_AND_UNKNOWN_FIELDS_PRESERVED",
+    "formal_solver_source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+    "P6_source_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+    "phase_status": {
+      "P1": "complete; engineering field/curl gate failed; official power gate passed",
+      "P2": "complete; F1 same-discrete G1 M0 qualified and adopted",
+      "P3": "complete; M2 selected with posthoc significance-rule disclosure",
+      "P4": "complete; field/curl/significant-mode gates failed; power gate passed",
+      "P5": "E1 diagnostic pass; E2 original worker failed; v3 saved-field recovery complete",
+      "P6": "bounded real local-cell and synthetic resampled-mode diagnostic complete",
+      "P7": "design only; no implementation or PDE"
+    },
+    "frozen_gates_unchanged": true,
+    "new_PDE_after_E2": false,
+    "new_global_factor_after_E2": false,
+    "master_merge": false
+  },
+  "p3": {
+    "status": "complete_M2_selected",
+    "finite_M1_to_M2_stability": true,
+    "significance_rule": "M0 power_ratio >= 1e-8",
+    "rule_timing": "exploratory all-80 deltas inspected before rule was fixed; posthoc disclosure retained",
+    "M3": "not run; condition not met",
+    "continuum_convergence": false
+  },
+  "p4": {
+    "status": "complete_mixed_gates",
+    "same_340_keys": true,
+    "significant_mode_max_relative": 0.015556051597989255,
+    "significant_mode_limit": 0.01,
+    "fixed_sample_max_relative": 0.02743612317076494,
+    "global_scaled_curl_max_relative": 0.027503736215652615,
+    "field_limit": 0.01,
+    "official_power_gate_pass": true,
+    "scope": "Review V2 P4: F3 G0 versus F5 G1 saved fields using the same ordered M2 inventory; separate from P1 M0 volume/curl comparison and legacy fixed-coordinate sample record.",
+    "record": "docs/task40extra_0p7nm_engineering/outcomes/records/volume_h_agreement_v2.json",
+    "total_field_relative": {
+      "E_total": 0.0037510197604709783,
+      "H_total": 0.0039498576852184195
+    },
+    "scattered_field_relative": {
+      "E_scattered": 0.02611883370447432,
+      "H_scattered": 0.027503736215652615,
+      "scaled_curl_H_scattered": 0.027503736215652615
+    },
+    "physical_region_scattered_H_or_curl_relative_peaks": {
+      "physical_domain": 0.027503736215652615,
+      "void_box": 0.02789004,
+      "grating_silicon": 0.02787459,
+      "substrate": 0.02759137
+    },
+    "official_power_absolute_deltas": {
+      "R_total": 0.0004721692749268813,
+      "T_total": 0.0004376307053226558,
+      "A_volume_total": 3.455502024457546e-05
+    },
+    "PDE_factor_KSP_started": false
+  },
+  "p5": {
+    "status": "E1_DIAGNOSTIC_PASS_E2_ORIGINAL_WORKER_FAILED_RECOVERY_OFFLINE",
+    "E1_run_id": "task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1",
+    "E2_run_id": "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1",
+    "E2_original_failure_preserved": true,
+    "recovery_scope": "saved-field output only; no PDE/KSP/operator/factor"
+  },
+  "p6": {
+    "status": "complete_bounded_diagnostic",
+    "real_cells": 3,
+    "synthetic_mode_sizes": [
+      80,
+      340,
+      3904
+    ],
+    "batch": 16,
+    "global_factor": false,
+    "full_high_M_physical_model": false,
+    "tree_RSS_or_PSS_qualified": false
+  },
+  "p7": {
+    "status": "complete_design_only",
+    "candidate": "wave-aware bounded substructuring with recursive matrix-free interface coarse correction",
+    "implementation_or_PDE": false,
+    "caps_are_proposed_not_measured": true
+  },
+  "formal_solver_source_sha_F3": "a43f7f76a0df0f4440b77834846973b2de7ea3a8",
+  "formal_solver_source_sha_F5_E1_E2": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+  "p6_diagnostic_source_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+  "legacy_R5_fixed_sample_agreement": {
+    "record": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/h_agreement_v1.json",
+      "sha256": "27cc385f28cedf565687ca80f88e7f5123e2ec58d87eb5f0fd4cfd25de4fe158"
+    },
+    "status": "H_AGREEMENT_PASS_ENGINEERING_ONLY",
+    "scope": "historical fixed-coordinate M0 sample comparison; does not replace Review V2 P1 common-subcell volume/curl negative and is not P4"
+  }
 }

@@ -46899,5 +46899,18 @@
         "?? docs/task40extra_0p7nm_engineering/outcomes/records/g0_m1_offline_recheck_v1.json"
       ]
     }
+  },
+  "p4_same_M2_context": {
+    "record": "volume_h_agreement_v2.json",
+    "same_340_ordered_keys": true,
+    "P3_decision_unchanged": true,
+    "posthoc_significance_disclosure_retained": true,
+    "max_significant_amplitude_relative_change": 0.015556051597989255,
+    "significant_mode_limit": 0.01,
+    "significant_mode_gate_pass": false,
+    "fixed_sample_max_relative_change": 0.02743612317076494,
+    "global_scaled_curl_max_relative_change": 0.027503736215652615,
+    "official_power_gate_pass": true,
+    "interpretation": "P3比较固定G0网格M1到M2；P4跨网格同M2是单独工程h gate，不追溯修改P3选择。"
   }
 }

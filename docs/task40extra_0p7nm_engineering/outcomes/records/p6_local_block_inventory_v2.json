@@ -1,0 +1,1059 @@
+{
+  "bank_mode_count": 80,
+  "diagnostic_script_sha256": "660b0c7b651cffd394376781c1aceac5738dc5d98cba1db905eb65f412a1d914",
+  "fixed_column_batch": 16,
+  "form": {
+    "compile_wall_seconds": 0.007235193974338472,
+    "kernel_inventory": {
+      "1": 1,
+      "2": 1,
+      "3": 1
+    },
+    "quadrature_metadata": [
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      },
+      {
+        "quadrature_degree": 15,
+        "quadrature_rule": "default"
+      }
+    ],
+    "quadrature_records": [
+      {
+        "component": "curl",
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "component": "material_mass",
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          1
+        ]
+      },
+      {
+        "component": "material_mass",
+        "integral_type": "cell",
+        "quadrature_degree": 15,
+        "quadrature_rule": "default",
+        "subdomain_id": [
+          2,
+          3
+        ]
+      }
+    ],
+    "scope": "exact Task40 G0 p6 physical curl-plus-mass cell integrals",
+    "ufcx_signature": "0daccbb3ae568d9a28f36683a3141778428516019d6ab4082fcf8016f333c52e381a242cb7c9b30e928403db5a120141d834229b97dd4d0362009bdf8098d2d6"
+  },
+  "global_condensation_matrix_or_factor": false,
+  "input_path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/input_original.dat",
+  "input_sha256": "7421fef7bc7558cb875711d5693208340d14171a3d2215adc80f966537eb7d93",
+  "local_cells": [
+    {
+      "all_mode_growth_diagnostics_pass": true,
+      "assembly_wall_seconds": 18.554497971897945,
+      "canonical_cell_coordinates_sha256": "fd4d0c2a71dab505f81705d42aa567a0e60c1c470d559548f8a644c57a8344a4",
+      "cell_local_index": 3,
+      "cell_permutation_info": 0,
+      "cell_widths": [
+        0.42777777777777776,
+        0.32407407407407407,
+        0.5185185185185185
+      ],
+      "factor_warnings": [],
+      "interior_block_backing_bytes": 3240000,
+      "interior_block_shape": [
+        450,
+        450
+      ],
+      "interior_lu_backing_bytes": 3240000,
+      "interior_lu_pivot_backing_bytes": 1800,
+      "interior_lu_pivot_max": 449,
+      "interior_lu_pivot_min": 1,
+      "local_closure_limit": 1e-10,
+      "local_closure_pass": true,
+      "local_dof_map_count": 882,
+      "local_dof_map_sha256": "491ff19af6dd006b9f0d25d2b462ed1c5b849dccff2ceaa2aabe510b4af58d55",
+      "local_nonzero_rhs_recovery_relative_closure": 1.856186390334614e-11,
+      "local_schur_reduction_wall_seconds": 0.15515559003688395,
+      "local_tensor_backing_bytes": 12446784,
+      "local_tensor_dtype": "complex128",
+      "local_tensor_sha256": "b5bcf0ddf02188f958d999c1d4f90c950709d103a019f73a4f082595f176c91f",
+      "local_tensor_shape": [
+        882,
+        882
+      ],
+      "lu_factor_wall_seconds": 0.02981472306419164,
+      "material_tag": 1,
+      "mode_growth_runs": [
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 5,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.0012282030656933784,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40298120,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 0.029894068837165833,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "e669e292ba715051a5612dfefabdee1a44b24c5b71aa27e5d797a038b777466b",
+          "frozen_trace_vector_sha256": "c595e36d99277258f9bb41a3bf038c361dd98debe1a538a27ab3d4efe98983ee",
+          "known_live_numpy_backing_bytes_lower_bound": 38249352,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.470803789627337e-15,
+          "mode_count": 80,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 2.306166618787074,
+            "port_from_trace": 2.066932570080618,
+            "port_total": 3.012910314443517,
+            "trace_from_port": 41.32695013212262,
+            "w": 4.087108725655635
+          },
+          "output_vector_sha256": {
+            "port_feedback": "f38edea09f366a2f28888f542028649d7842f47d75caa2506f9dab42e28125b1",
+            "port_from_trace": "d5612d7d76f8ba3d61b7ebe635a3e11aafd36fd691624b5db784d1a9378f9366",
+            "port_total": "3d73c35d21ca0ab6ab6da944b27cadefdca8c97212429f5a23c3a651624b09ed",
+            "trace_from_port": "2cf3e74ec8879b1b3c3dd7a542e30af898c78257150d0fc07226b371964f4ec5",
+            "w": "5e9033e901cb85e7992646c56eb16028ed54907475cf0b9b147e82dc84fd2c56"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 0.08513239300000208,
+          "process_cpu_to_wall_ratio": 1.1111051901624105,
+          "processed_mode_columns_first_pass": 80,
+          "processed_mode_rows_second_pass": 80,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 0.0310101070208475,
+          "second_pass_port_action_seconds": 0.013379187206737697,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 0.0766195619944483
+        },
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 22,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.004859463078901172,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40314760,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 0.12682290689554065,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "a5de61cc2efe78d569df6a52d2c838d253e8595f9892ab20982aa38c66ba80e0",
+          "frozen_trace_vector_sha256": "468efb8a3987f090dca3f174bbc4ff7a1e6be7ae3576dbeed29d68856ba39251",
+          "known_live_numpy_backing_bytes_lower_bound": 38261832,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.7797338645676466e-15,
+          "mode_count": 340,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 18.025615516349546,
+            "port_from_trace": 4.485569617095972,
+            "port_total": 17.84066683268485,
+            "trace_from_port": 92.04017280005937,
+            "w": 13.831426464118701
+          },
+          "output_vector_sha256": {
+            "port_feedback": "81e1e83a4a7b34dbf1a40f4f45f3390a746893858e5a109d7763b6597971108f",
+            "port_from_trace": "d986d374b8e3ee162c2b7bb64448b4242d407a90f84d28f65303e4a390d65492",
+            "port_total": "b356d0307c2519a0b52c7ed82a457dd0a780e6efb264a2cdcad314003476ad3f",
+            "trace_from_port": "bf4d0125ecb3d3dac8a930ff228b3fb78e13cfdc909e15dd8b807dc556b8df64",
+            "w": "dd630b3daccdc7382cbe45a8a013af99113bb48515ae6dfb1c665fbe3d7a6dbd"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 0.3600302959999979,
+          "process_cpu_to_wall_ratio": 1.1111152481535647,
+          "processed_mode_columns_first_pass": 340,
+          "processed_mode_rows_second_pass": 340,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 0.13310775789432228,
+          "second_pass_port_action_seconds": 0.05588060291483998,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 0.32402605994138867
+        },
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 244,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.0550654293037951,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40542856,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 1.4862729259766638,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "7007274bf56ce4e0a775d53a2148c2abfdfb3fc603200ee2d2b5ddc55f9c2a9c",
+          "frozen_trace_vector_sha256": "7ecf29e3e2bf7fa452faf28bff45835d61d01b503592c4899ddcb9bb1dcb475b",
+          "known_live_numpy_backing_bytes_lower_bound": 38432904,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.7716513026248781e-15,
+          "mode_count": 3904,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 253.03612719980654,
+            "port_from_trace": 19.91651026587129,
+            "port_total": 253.10909088805244,
+            "trace_from_port": 467.25485635714176,
+            "w": 47.69588615635629
+          },
+          "output_vector_sha256": {
+            "port_feedback": "f693730963312ba9ae000af5e9d3daba106bddf30c7d0809687626728a1ea09f",
+            "port_from_trace": "f720c13d6b24c00c78c91f4ad79f34d5293ac50236a6ebfc718c30aac37385ad",
+            "port_total": "ef381499b3b98947851783ce79e0bf47b7dc43eb903ec82ba34f0141639a4e93",
+            "trace_from_port": "5ca19c40d3f26c5efdf80fd5ba36be4f86835c7958fdded8e86f3641eda82da0",
+            "w": "6cf3bf17cad83f9e934963828f0a15a66da3874fc63d12d0c0e238469b39af1f"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 4.154349577000001,
+          "process_cpu_to_wall_ratio": 1.1111009892240051,
+          "processed_mode_columns_first_pass": 3904,
+          "processed_mode_rows_second_pass": 3904,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 1.5224343162262812,
+          "second_pass_port_action_seconds": 0.6379782801959664,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 3.7389486799947917
+        }
+      ],
+      "nonzero_rhs_recovery_wall_seconds": 0.0008218899602070451,
+      "physical_geometry_coordinates": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.42777777777777776,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.32407407407407407,
+          0.0
+        ],
+        [
+          0.42777777777777776,
+          0.32407407407407407,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.5185185185185185
+        ],
+        [
+          0.42777777777777776,
+          0.0,
+          0.5185185185185185
+        ],
+        [
+          0.0,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          0.42777777777777776,
+          0.32407407407407407,
+          0.5185185185185185
+        ]
+      ],
+      "retained_block_backing_inventory": {
+        "unique_backing_bytes": 34267464,
+        "unique_backings": 14
+      },
+      "schur_backing_bytes": 2985984,
+      "schur_sha256": "49049d7440374ae785f40aa5bad1a2e1e3e3f9f3e97d2c7330da32e6a69c25ce",
+      "schur_shape": [
+        432,
+        432
+      ],
+      "synthetic_resampled_bank": {
+        "array_backing_bytes": {
+          "Bi": 576000,
+          "Bt": 552960,
+          "Di": 576000,
+          "Dt": 552960,
+          "trace_modes": 552960
+        },
+        "array_shapes": {
+          "Bi": [
+            450,
+            80
+          ],
+          "Bt": [
+            432,
+            80
+          ],
+          "Di": [
+            80,
+            450
+          ],
+          "Dt": [
+            80,
+            432
+          ],
+          "trace_modes": [
+            432,
+            80
+          ]
+        },
+        "meaning": "deterministic synthetic coupling vectors used only for bounded dimension/action stress, not derived from a complete physical port model",
+        "seed": 40073026,
+        "total_unique_backing_bytes": 2810880
+      },
+      "trace_block_shape": [
+        432,
+        432
+      ]
+    },
+    {
+      "all_mode_growth_diagnostics_pass": true,
+      "assembly_wall_seconds": 18.304961748071946,
+      "canonical_cell_coordinates_sha256": "fd4d0c2a71dab505f81705d42aa567a0e60c1c470d559548f8a644c57a8344a4",
+      "cell_local_index": 0,
+      "cell_permutation_info": 0,
+      "cell_widths": [
+        0.42777777777777776,
+        0.32407407407407407,
+        0.5185185185185185
+      ],
+      "factor_warnings": [],
+      "interior_block_backing_bytes": 3240000,
+      "interior_block_shape": [
+        450,
+        450
+      ],
+      "interior_lu_backing_bytes": 3240000,
+      "interior_lu_pivot_backing_bytes": 1800,
+      "interior_lu_pivot_max": 449,
+      "interior_lu_pivot_min": 1,
+      "local_closure_limit": 1e-10,
+      "local_closure_pass": true,
+      "local_dof_map_count": 882,
+      "local_dof_map_sha256": "f480b6a786a149ef85b412c3f4ef042b8ec4b8c300368927c5f5dcb9b78ecd1f",
+      "local_nonzero_rhs_recovery_relative_closure": 2.354033864177915e-11,
+      "local_schur_reduction_wall_seconds": 0.15511868800967932,
+      "local_tensor_backing_bytes": 12446784,
+      "local_tensor_dtype": "complex128",
+      "local_tensor_sha256": "4ef6e08442085ee636665967d78112858ea4b53a163ba8fda454d50a73d71d8d",
+      "local_tensor_shape": [
+        882,
+        882
+      ],
+      "lu_factor_wall_seconds": 0.028382393065840006,
+      "material_tag": 2,
+      "mode_growth_runs": [
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 5,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.0009913790272548795,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40298120,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 0.029465324827469885,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "2b4738443a2b4c11a5bfafc152d48aadc7d38bc17e86de23dbbed2ae59efe252",
+          "frozen_trace_vector_sha256": "693dff00e51b832461dfa38f8b582dfee372c517d78f63696e4d1a0ad47c3abc",
+          "known_live_numpy_backing_bytes_lower_bound": 38249352,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.5066655215526908e-15,
+          "mode_count": 80,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 3.6545565067933596,
+            "port_from_trace": 2.149148565546288,
+            "port_total": 4.1416757542372284,
+            "trace_from_port": 49.152370079586994,
+            "w": 6.481326196359554
+          },
+          "output_vector_sha256": {
+            "port_feedback": "567ebd178cc295b2b85919ad84ece2594027f668d75f4e5777a2c9674c9a1279",
+            "port_from_trace": "a2b5f3d4daba2678debac7970e40d06e1b42e0945e1311ab7f1017884765a0d1",
+            "port_total": "6a433b1fd40702a66f83f8bea8da489e42dab27a96797afe07bf653af9e781bd",
+            "trace_from_port": "c2b910bd80765ad282bbc63ac9c5e3e80271f10314f4a8d87f23660582ec9af8",
+            "w": "d4dffc66c3f66a3448d011d4a0df5d86c999be438e4134c62529b73b640f3ef7"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 0.08520623500000113,
+          "process_cpu_to_wall_ratio": 1.1111282723765834,
+          "processed_mode_columns_first_pass": 80,
+          "processed_mode_rows_second_pass": 80,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 0.03158598893787712,
+          "second_pass_port_action_seconds": 0.013725508004426956,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 0.07668442709837109
+        },
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 22,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.004621732514351606,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40314760,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 0.12621102738194168,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "3b55d168185d6a937e40d5bc94e5133a5026de8e93ef8dc0f7edc48805849d88",
+          "frozen_trace_vector_sha256": "502c755685e1303b22258b4cfb4439bee231a0c19d97b18d0d525b258dd14207",
+          "known_live_numpy_backing_bytes_lower_bound": 38261832,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.800462877377025e-15,
+          "mode_count": 340,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 17.411389243992556,
+            "port_from_trace": 4.345553191222842,
+            "port_total": 18.425025075944852,
+            "trace_from_port": 94.04317417889064,
+            "w": 13.57631137365507
+          },
+          "output_vector_sha256": {
+            "port_feedback": "c61a65b904dfc381f61c53ed7e676b3c3af7ec4936371c39cc893a18a0ad4758",
+            "port_from_trace": "15b578c67defc528e24a44c36b345de81f7a0a50d80a803a88015ead9e5ffe7c",
+            "port_total": "8103b58aacd105839555ab479300e50da0a2af78e0ee4d5df54f09fbcb58d091",
+            "trace_from_port": "f9e7e1076267066b660fcc181af6e976897cd789d506644fd449c5c39e521cd8",
+            "w": "919fb05a37a6a7c3a09bdc554bb453cbcdef9c5f28c01d5dbc9bb23507b6c958"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 0.36457556200000596,
+          "process_cpu_to_wall_ratio": 1.1111142086087529,
+          "processed_mode_columns_first_pass": 340,
+          "processed_mode_rows_second_pass": 340,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 0.13631873612757772,
+          "second_pass_port_action_seconds": 0.05769619555212557,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 0.32811709109228104
+        },
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 244,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.054348137811757624,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40542856,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 1.4631129450863227,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "b9868d0de43e45ee5df62c2732756dc39fb16795225c095f1776c5681b65fd26",
+          "frozen_trace_vector_sha256": "16846e15239fd063511439bf8623e8f6a3a0388b39846a7a183752593a629851",
+          "known_live_numpy_backing_bytes_lower_bound": 38432904,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 2.0055563051879387e-15,
+          "mode_count": 3904,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 251.59337888768908,
+            "port_from_trace": 20.890020028526568,
+            "port_total": 250.6235407204199,
+            "trace_from_port": 393.79989176582995,
+            "w": 46.78855497904457
+          },
+          "output_vector_sha256": {
+            "port_feedback": "e8ecd73bafa73643a46ee6a07aa2c3d44ce1777bc6f1d19eff8fec9fa310d024",
+            "port_from_trace": "2b1165d3eeec4e956a8de1c22427f9068ea885351c28c16978f9fd7bee59490f",
+            "port_total": "0ca3311d648c0353a4c0c0cf5cacc82b62375fa4aea4c19e6b83f11cc467f490",
+            "trace_from_port": "173176ff153c071a7b032e4c5004267c080f9096f4d0354f61ce44d2bae9ec7a",
+            "w": "6504e7727e8ecec0c496eab35bdc49ace73d3c914a368a4e5c5536475f2eac35"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 4.166913621999996,
+          "process_cpu_to_wall_ratio": 1.111096513588232,
+          "processed_mode_columns_first_pass": 3904,
+          "processed_mode_rows_second_pass": 3904,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 1.546035173931159,
+          "second_pass_port_action_seconds": 0.6516058358829468,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 3.750271530007012
+        }
+      ],
+      "nonzero_rhs_recovery_wall_seconds": 0.0008280399488285184,
+      "physical_geometry_coordinates": [
+        [
+          0.0,
+          0.0,
+          -0.5185185185185185
+        ],
+        [
+          0.42777777777777776,
+          0.0,
+          -0.5185185185185185
+        ],
+        [
+          0.0,
+          0.32407407407407407,
+          -0.5185185185185185
+        ],
+        [
+          0.42777777777777776,
+          0.32407407407407407,
+          -0.5185185185185185
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.42777777777777776,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.32407407407407407,
+          0.0
+        ],
+        [
+          0.42777777777777776,
+          0.32407407407407407,
+          0.0
+        ]
+      ],
+      "retained_block_backing_inventory": {
+        "unique_backing_bytes": 34267464,
+        "unique_backings": 14
+      },
+      "schur_backing_bytes": 2985984,
+      "schur_sha256": "55d891badec5476197263b0214f6027c39689ef0a4d34cfa156424a6bd96cdb3",
+      "schur_shape": [
+        432,
+        432
+      ],
+      "synthetic_resampled_bank": {
+        "array_backing_bytes": {
+          "Bi": 576000,
+          "Bt": 552960,
+          "Di": 576000,
+          "Dt": 552960,
+          "trace_modes": 552960
+        },
+        "array_shapes": {
+          "Bi": [
+            450,
+            80
+          ],
+          "Bt": [
+            432,
+            80
+          ],
+          "Di": [
+            80,
+            450
+          ],
+          "Dt": [
+            80,
+            432
+          ],
+          "trace_modes": [
+            432,
+            80
+          ]
+        },
+        "meaning": "deterministic synthetic coupling vectors used only for bounded dimension/action stress, not derived from a complete physical port model",
+        "seed": 40073027,
+        "total_unique_backing_bytes": 2810880
+      },
+      "trace_block_shape": [
+        432,
+        432
+      ]
+    },
+    {
+      "all_mode_growth_diagnostics_pass": true,
+      "assembly_wall_seconds": 18.435069739003666,
+      "canonical_cell_coordinates_sha256": "6558ef05adc1e510010dc9f642b04afd4bf8d10ba95636ce8ce3d30eb7899c8f",
+      "cell_local_index": 12,
+      "cell_permutation_info": 32769,
+      "cell_widths": [
+        0.44074074074074077,
+        0.32407407407407407,
+        0.5185185185185185
+      ],
+      "factor_warnings": [],
+      "interior_block_backing_bytes": 3240000,
+      "interior_block_shape": [
+        450,
+        450
+      ],
+      "interior_lu_backing_bytes": 3240000,
+      "interior_lu_pivot_backing_bytes": 1800,
+      "interior_lu_pivot_max": 449,
+      "interior_lu_pivot_min": 1,
+      "local_closure_limit": 1e-10,
+      "local_closure_pass": true,
+      "local_dof_map_count": 882,
+      "local_dof_map_sha256": "695ea15639f6c2f52c22731dd54d8e476a670be62c36a627ca6b7c9a509f90e4",
+      "local_nonzero_rhs_recovery_relative_closure": 1.4256080951014885e-11,
+      "local_schur_reduction_wall_seconds": 0.15622179000638425,
+      "local_tensor_backing_bytes": 12446784,
+      "local_tensor_dtype": "complex128",
+      "local_tensor_sha256": "45b9e7a3eb718d7fe3e6d1deac5f9277f10017eb7ef7fa5c95707c00df6b106b",
+      "local_tensor_shape": [
+        882,
+        882
+      ],
+      "lu_factor_wall_seconds": 0.027355466969311237,
+      "material_tag": 3,
+      "mode_growth_runs": [
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 5,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.0012834689114242792,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40298120,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 0.030027577886357903,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "e5f060bec2b1377ed8d7111e112210bfec5c4caf310e9d93de422d053962b6dc",
+          "frozen_trace_vector_sha256": "08fdc92a620131734957ed72473a7c85996fdb1ee6a0c0f927620717eaba7fb7",
+          "known_live_numpy_backing_bytes_lower_bound": 38249352,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.4477276329146263e-15,
+          "mode_count": 80,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 4.041938463395063,
+            "port_from_trace": 2.2172994750393684,
+            "port_total": 4.671327258945998,
+            "trace_from_port": 47.95406651341498,
+            "w": 6.808419590823423
+          },
+          "output_vector_sha256": {
+            "port_feedback": "c23a5258eaff412f3d6c7d0ccba7c3e0ec7d3655bdd407422b80d6f3d0524791",
+            "port_from_trace": "9f8126ebae52971559537db71fe0061bf918a83c669ca845e275bdb7a1e785a7",
+            "port_total": "dbd0b6b506f6b7d0312bcf0a9ac1a72e9a724ae2056dd5e6929913598324b405",
+            "trace_from_port": "85b7fbf0c1431ab5b5e861c737eb9ec34f7a330b23f2cd0cc264e7ec2d56e58b",
+            "w": "97a907e8c4d923a06f83d6a5b16d1bd8f8aeb9826ff16fa968094f1e30d9c2cb"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 0.08700162399999556,
+          "process_cpu_to_wall_ratio": 1.1111071738628233,
+          "processed_mode_columns_first_pass": 80,
+          "processed_mode_rows_second_pass": 80,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 0.0326397679746151,
+          "second_pass_port_action_seconds": 0.01321639004163444,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 0.07830173906404525
+        },
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 22,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.005190721363760531,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40314760,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 0.1284792710794136,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "da32d1f7631cecece2013ba70ab2f33668681d341139826653dda12930b6db70",
+          "frozen_trace_vector_sha256": "92e30809a8bfb367ff695c5699c39d7d8dd715e51d59419685f626c012ac2dc0",
+          "known_live_numpy_backing_bytes_lower_bound": 38261832,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.490500149787551e-15,
+          "mode_count": 340,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 11.484402624713788,
+            "port_from_trace": 4.436175713894539,
+            "port_total": 12.75643287347035,
+            "trace_from_port": 98.12816917314375,
+            "w": 9.827203945661589
+          },
+          "output_vector_sha256": {
+            "port_feedback": "c0401c52daedafa0461b3b2d0e69ee5c47b49c9149013e6e529d882cbdcac217",
+            "port_from_trace": "47e3c41cf55ad00d5335b1545bf6c9a426f75751cd600cffe9d2f4b30b08e74d",
+            "port_total": "91a6c7544550fc374ff75373f493db1de7e90bd251f21954f830fea37a64eadf",
+            "trace_from_port": "306b8dd3494e3645a65b1f81935b04406f96774bab8c4ca491221bf0367dc755",
+            "w": "e5f4ee5c31f3e0da766ff67fe87da9b07096e45833b2978a9d3a3be259667f35"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 0.3660295170000012,
+          "process_cpu_to_wall_ratio": 1.1110760054197208,
+          "processed_mode_columns_first_pass": 340,
+          "processed_mode_rows_second_pass": 340,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 0.134736867970787,
+          "second_pass_port_action_seconds": 0.05723856762051582,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 0.32943697390146554
+        },
+        {
+          "all_outputs_finite": true,
+          "bank_mode_count": 80,
+          "base_bank_unique_backing_bytes": 2810880,
+          "batch_count_per_pass": 244,
+          "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
+          "closure_limit": 1e-10,
+          "coupling_regeneration_seconds": 0.05592085584066808,
+          "diagnostic_pass": true,
+          "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
+          "explicit_array_scenario_upper_bound_bytes": 40542856,
+          "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+          "first_pass_local_reduction_and_accumulation_seconds": 1.4713064668467268,
+          "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": 3179520,
+          "fixed_column_batch": 16,
+          "frozen_complete_alpha_sha256": "406e25e22837532711e1e0b5e791ffc2db6f928694801338a7df587b5372e7f0",
+          "frozen_trace_vector_sha256": "82c231a0f481cf24b8642e6d6291cc104bff9ce763e60cc305f65212103b4d36",
+          "known_live_numpy_backing_bytes_lower_bound": 38432904,
+          "known_live_numpy_backing_count_lower_bound": 41,
+          "largest_mode_square_scratch_bytes": 0,
+          "largest_mode_square_scratch_shape": [
+            0,
+            0
+          ],
+          "local_dimensions": {
+            "interior": 450,
+            "trace": 432
+          },
+          "max_batch_columns": 16,
+          "max_nonzero_rhs_local_recovery_relative_closure": 1.5780136021040872e-15,
+          "mode_count": 3904,
+          "no_mode_square_allocation": true,
+          "output_vector_norms": {
+            "port_feedback": 238.186385057418,
+            "port_from_trace": 18.88941330484707,
+            "port_total": 238.71674887057185,
+            "trace_from_port": 391.4043138011273,
+            "w": 44.972886967940546
+          },
+          "output_vector_sha256": {
+            "port_feedback": "f45eaed14504183179d9f850f7a56941df1abe6d0fd6f277290ea81e9989f0f7",
+            "port_from_trace": "d50bd8eebd798b60109721d8a1e9d9bf10bbd48da410d560069de1e3d07b2478",
+            "port_total": "051706a21abd603b864878951affb0d81dedf13efc901c9590ba9dcc44a41c03",
+            "trace_from_port": "61ab26075f44b3f328a79290a496c032183edd39aa9a8f44228d22ac393c070d",
+            "w": "7bf410f66955cd5bbbc3e4c88149653cbe90315f5753145e4b6183ec14658168"
+          },
+          "physical_model": false,
+          "process_cpu_seconds": 4.192102434999995,
+          "process_cpu_to_wall_ratio": 1.1110934507631727,
+          "processed_mode_columns_first_pass": 3904,
+          "processed_mode_rows_second_pass": 3904,
+          "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+          "same_alpha_and_trace_used_in_both_passes": true,
+          "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+          "second_pass_local_recovery_and_closure_seconds": 1.555522553389892,
+          "second_pass_port_action_seconds": 0.6538073387928307,
+          "two_pass_complete_cross_batch_feedback": true,
+          "wall_seconds": 3.772952159983106
+        }
+      ],
+      "nonzero_rhs_recovery_wall_seconds": 0.0007980780210345984,
+      "physical_geometry_coordinates": [
+        [
+          0.8555555555555555,
+          0.0,
+          0.0
+        ],
+        [
+          1.2962962962962963,
+          0.0,
+          0.0
+        ],
+        [
+          0.8555555555555555,
+          0.32407407407407407,
+          0.0
+        ],
+        [
+          1.2962962962962963,
+          0.32407407407407407,
+          0.0
+        ],
+        [
+          0.8555555555555555,
+          0.0,
+          0.5185185185185185
+        ],
+        [
+          1.2962962962962963,
+          0.0,
+          0.5185185185185185
+        ],
+        [
+          0.8555555555555555,
+          0.32407407407407407,
+          0.5185185185185185
+        ],
+        [
+          1.2962962962962963,
+          0.32407407407407407,
+          0.5185185185185185
+        ]
+      ],
+      "retained_block_backing_inventory": {
+        "unique_backing_bytes": 34267464,
+        "unique_backings": 14
+      },
+      "schur_backing_bytes": 2985984,
+      "schur_sha256": "6a8ed5f6c5315b2053c51c268b7ee43430d8dc29354a99a36757e175b6ebd9a0",
+      "schur_shape": [
+        432,
+        432
+      ],
+      "synthetic_resampled_bank": {
+        "array_backing_bytes": {
+          "Bi": 576000,
+          "Bt": 552960,
+          "Di": 576000,
+          "Dt": 552960,
+          "trace_modes": 552960
+        },
+        "array_shapes": {
+          "Bi": [
+            450,
+            80
+          ],
+          "Bt": [
+            432,
+            80
+          ],
+          "Di": [
+            80,
+            450
+          ],
+          "Dt": [
+            80,
+            432
+          ],
+          "trace_modes": [
+            432,
+            80
+          ]
+        },
+        "meaning": "deterministic synthetic coupling vectors used only for bounded dimension/action stress, not derived from a complete physical port model",
+        "seed": 40073028,
+        "total_unique_backing_bytes": 2810880
+      },
+      "trace_block_shape": [
+        432,
+        432
+      ]
+    }
+  ],
+  "local_tensor_assembly_sha256": "0edd5478ef5c08649c95c0d1ade16436b4833e169f4cc6835731bdf1bc0f1e26",
+  "mesh_and_space": {
+    "build_wall_seconds": 2.3570809800876305,
+    "mesh_cell_tags_histogram": {
+      "1": 224,
+      "2": 24,
+      "3": 88
+    },
+    "mesh_geometry_coordinate_sha256": "595af99b5e75430b059fd30d1c66b3ae6a5cdc45b4579ef2a15e722fa9ef7c50",
+    "owned_cells": 336,
+    "p6_global_space_dofs": 229680,
+    "space_element_dimension": 882
+  },
+  "mode_sizes": [
+    80,
+    340,
+    3904
+  ],
+  "official_pde": false,
+  "p6_cell_preparation_runner_sha256": "deb56b24a1467774667da632d5668ac1375f9b204c1930d3757f36a4d6cd6f49",
+  "production_action_source_sha256": "219080e5cc2273dfbbe95c55c24a212bb54a0ed9ea9c60adb7236c51c6149eb6",
+  "qualification": {
+    "all_real_local_closures_pass": true,
+    "all_streamed_mode_closures_and_finite_checks_pass": true,
+    "status_requires_both": true
+  },
+  "resolved_physical_model_sha256": "6ee8e976955c8e8f1e642c1c860a1fe77cec366801ddc7554d2d5d24a2a74ce2",
+  "resource_scope": {
+    "batch_size_fixed": 16,
+    "elapsed_wall_seconds": 70.8300992869772,
+    "global_condensation_matrix_or_factor": false,
+    "high_mode_synthetic_stress_allocated_full_mode_square": false,
+    "mode_square_oracle": false,
+    "p6_p4_global_factor": "not built; risk remains separately governed by measured Task40 global p4/MUMPS evidence",
+    "process_cpu_seconds": 79.09020809,
+    "process_peak_rss_bytes": 455610368,
+    "process_peak_rss_method": "Linux getrusage(RUSAGE_SELF).ru_maxrss converted from KiB; includes setup and all local-cell work",
+    "selected_real_cells": 3,
+    "task_swap_bytes": "not independently sampled by this bounded component script"
+  },
+  "schema": "task40extra.p6-local-block-inventory-v2",
+  "source": {
+    "head_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+    "tracked_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "status": "MEASURED_BOUNDED_LOCAL_BLOCK_AND_SYNTHETIC_MODE_ACTIONS",
+  "synthetic_channel_stress_warning": "Only channel-vector dimensions and local action formulas are stress-tested; no complete higher-M physical port model is asserted.",
+  "review_v2_provenance": {
+    "diagnostic_id": "task40extra_p6_local_block_inventory_v2_bounded_diagnostic",
+    "command": "source scripts/activate_myfenics_wsl.sh && export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 && python -m benchmarks.diagnose_task40_p6_local_growth_v2 --input results/...F3.../input_original.dat --output docs/task40extra_0p7nm_engineering/outcomes/records/p6_local_block_inventory_v2.json --mode-sizes 80,340,3904 --batch-size 16 --bank-modes 80 --max-tags 3 --seed 40072026",
+    "source_head_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+    "input_sha256": "7421fef7bc7558cb875711d5693208340d14171a3d2215adc80f966537eb7d93",
+    "environment": "qualified activation; PETSc complex128/int32; MPI1; math threads1",
+    "wall_s": 70.8300992869772,
+    "self_RSS_peak_B": 455610368,
+    "task_swap": "not independently sampled; monitor snapshots are not a peak qualification",
+    "monitor_samples": [
+      {
+        "elapsed": "00:08",
+        "VmRSS_KiB": 284684,
+        "VmSwap_KiB": 0
+      },
+      {
+        "elapsed": "00:53",
+        "VmRSS_KiB": 316612,
+        "VmSwap_KiB": 0
+      }
+    ],
+    "preflight_failure": "symlink resolution failed before numerical work; cost unknown",
+    "orientation_failure": {
+      "source_sha": "c1cf902be1f2cc1317c07caea3b6b326669bbd5e",
+      "failure": "IndexError before output record; no global factor or PDE",
+      "wall_RSS": "unknown"
+    },
+    "raw_stdout": "not asserted; compact JSON fields are authoritative"
+  }
+}

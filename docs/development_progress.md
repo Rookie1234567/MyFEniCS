@@ -3258,3 +3258,12 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 证据入口：[Response V28](task039_extra_physical_multilevel/response_v28.md)、[V27 outcome](task039_extra_physical_multilevel/outcomes/workingset_p6_setup_v27.md)、[combined pair](task039_extra_physical_multilevel/outcomes/records/workingset_p6_setup_v27_pair.json)、[run index](task039_extra_physical_multilevel/outcomes/records/run_index.json)。D1 实现提交为 `cefb47c6d2039f82f441854e5d1edd8642de0c95`；D2 文档证据在同一 `task39extra` 分支提交，使用已批准的任务专用 hooks。远端 tip 与 clean worktree 由最终 handoff 核实。
 
 ---
+
+
+## Task40extra Review V2：证据收口待审
+
+2026-10-02 在执行分支 `task40extra_0p7nm_engineering` 完成 Review V2 的 P1–P7 compact evidence 与文档整理。P1 是原 G0/G1 M0 公共子单元体积/curl 负结果：散射E 2.6113%、散射H/scaled-curl 2.7498%超过1%；旧 R5 固定坐标样本 PASS 是独立有限证据。P4 是 F3/F5 同 M2 跨网格负项：显著模式1.555605%、固定样本2.743612%、体积scaled-curl 2.750374%超过1%，官方功率绝对差仍低于0.001。P3 是固定G0上的模式包络分析，不是h收敛；M0→M1保留原80传播通道并扩展包络，且跨越reference-metric设置。F3/F5 native mode identity均为`7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253`；F1 G1 M0 identity为`c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a`，不得混作F3/F5 key-list hash。
+
+F1同离散G1 M0 reference通过；F2 residual通过但checker因80/180模式合同错误exit4、official_result=false；其原始DtN R/T/A_volume=`0.07565188084569026/0.9062068016471507/0.018141266883419625`已保留并用于P3离线比较；F3/F5为authority-limited正式结果；E1是电尺寸增长诊断；E2原worker输出sample合同失败、v3只恢复保存场。P6局部块/RHS闭合和合成M=3904动作不构成高M物理或目标内存资格。P7仅为文档设计：原增广算子与`Ĥ_ℓ`同维端口嵌入、Galerkin `R=P^H`、保留物理`D`与`B^H`独立；层/终层/外层上限均为待现场资格化提案。
+
+不改变ordinary default，不实施Phase II，不作master merge。本阶段完整模型SHA、R/T/A、资源分量、负结果和 selective-merge manifest 见 [Task40 Review V2 response](task40extra_0p7nm_engineering/response_v3.md)、[campaign](task40extra_0p7nm_engineering/outcomes/review_v2_campaign.md)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md) 与 [run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。执行分支上的文档证据待审；没有master merge。

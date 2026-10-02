@@ -1969,3 +1969,26 @@ R0 不改变旧 V16–V18 结果；R1/R2/R3、official E/H、near-field、R/T/A�
 0.7 nm/2 TiB scalable solve 均 not_run。p6 local object file 在最后 timeline 后才落盘，
 因此完整同期 process peak 与 cache closeout 仍是 unknown；不得把该条目登记为已通过的
 production model。
+
+
+## Task40extra Review V2：0.7 nm非可分Full3D证据登记
+
+P1/P4的体积场/curl对照是保存场离线后处理，官方R/T来自DtN端口模态功率，`A_volume`来自材料体积分。P3改变的是模式包络M，不是网格h；固定坐标R5旧样本不等于P1体积/curl结果。表中RSS为进程树峰值，swap为任务口径；MUMPS INFOG29是因子条目数，不是内存字节。
+
+| 模型 / run_id | source SHA | 网格 / M / residual及状态 | Rtotal / Ttotal / Avolume | R00 s / p / total | workflow / KSP (s)；tree RSS / swap (B) | p4 factor rows / NNZ / INFOG29 |
+|---|---|---|---|---|---|---|
+| F1 G1 M0 / `...g1_reference_metric_f1_v1` | `1d7d790088d6ea0f30aed2ef1073fb1b86e68155` | 880 / 80 / `8.648911990579289e-7`；same-discrete reference pass | `0.07612407122165808 / 0.9057692393459813 / 0.018106713007727038` | `0.07612359764215308 / 3.4597741445267834e-17 / 0.07612359764215311` | `2252.535 / 1674.835`；`6891311104 / 0` | `75280 / 28705330 / 182769024` |
+| F2 G0 M1 / `...g0_manual_m1_f2_v1` | `37635226002787beb26a24baba3a8da333027239` | 336 / 180 / `9.572475880327875e-7`；worker exit4，checker 80/180合同错，无official结果 | raw/offline `0.07565188084569026 / 0.9062068016471507 / 0.018141266883419625`；not official | `0.07565140676565715 / 2.0048467438900223e-17 / 0.07565140676565717` raw/offline | `1123.500 / 809.586`；`3867545600 / 0` | `29172 / 11033364 / 55305544` |
+| F3 G0 M2 / `...g0_manual_m2_f3_v1` | `a43f7f76a0df0f4440b77834846973b2de7ea3a8` | 336 / 340 / `7.593610432084708e-7`；discrete solve/consistency pass，authority-limited | `0.0756519019957502 / 0.9062068705222379 / 0.018141268088495303` | `0.07565142791421035 / 7.233241618502243e-17 / 0.07565142791421042` | `1174.947 / 823.922`；`4006539264 / 0` | `29332 / 11293034 / 56763048` |
+| F5 G1 M2 / `...g1_manual_m2_f5_v1` | `63dd2a7378153f2ab5094eb5e7a98d05758a39bf` | 880 / 340 / `8.735322490524255e-7`；discrete solve/consistency pass，authority-limited | `0.07612407127067708 / 0.9057692398169153 / 0.018106713068250728` | `0.076123597691134 / 3.5617837904198074e-17 / 0.07612359769113404` | `2448.071 / 1797.975`；`7754170368 / 0` | `75540 / 29765186 / 186881032` |
+| E1 q1.25 / `...e1_manual_m2_growth_v1` | `63dd2a7378153f2ab5094eb5e7a98d05758a39bf` | 760 / 588 / `9.781668525522113e-7`；fixed-wavelength electrical-size diagnostic | `0.06235653736791684 / 0.9159264755357902 / 0.021716951725654188` | `0.062356105023958414 / 6.083759436e-16 / 0.062356105023959024` | `4580.375 / 3722.193`；`10650341376 / 0` | `65708 / 26681978 / 164865416` |
+| E2 original q1.5 / `...e2_manual_m2_growth_v1` | `63dd2a7378153f2ab5094eb5e7a98d05758a39bf` | 880 / 700 / `9.793073227317083e-7`；original worker exit4、official false，v3仅保存场恢复 | original output unavailable；v3 `0.05116886160983426 / 0.9239410512847893 / 0.02489005360260621` | v3 `0.05116727309447169 / 7.978116094818559e-19 / 0.05116727309447169` | `7692.028 / 6776.587`；`11349196800 / 0` | `75900 / 31287060 / 182925800` |
+
+| 离线/诊断记录 | 方法与结果 | 状态与证据 |
+|---|---|---|
+| P1原M0 G0/G1 | 1344共同子单元；总场E/H `0.375014%/0.394900%`通过；散射E `2.611273%`、散射H/curl `2.749777%`失败；官方ΔR/ΔT/ΔAvol均<0.001；436.518 s、自身RSS620851200 B | `ENGINEERING_H_GATE_FAILED`；`records/p1_m0_volume_h_agreement_v2.json`，SHA `9d72efd7f21771c7fd0cc779b7cfb0f9272734fe9cbe1757a014d127e4422925` |
+| R5旧M0固定样本 | 固定坐标样本约0.4%且有限样本门通过 | `H_AGREEMENT_PASS_ENGINEERING_ONLY`；不替代P1，`records/h_agreement_v1.json` |
+| P4 F3/F5同M2 | 340 common keys；显著模式1.555605%、固定样本2.743612%、体积scaled-curl 2.750374%失败；官方ΔR/ΔT/ΔAvol均<0.001；597.979 s、自身RSS621101056 B | `ENGINEERING_H_GATE_FAILED`；`records/volume_h_agreement_v2.json` |
+| P6 local blocks | 3种真实tag，内部450/trace432；非零RHS closure `1.43e-11–2.35e-11`；M3904为16列合成重采样动作 | 不证明完整高M端口、全域因子或TB容量；`records/p6_local_block_inventory_v2.json` |
+
+E2 v3重建p6 mesh/space并做一次native matrix-free A6动作和streaming DtN恢复；不构造全局AIJ/H6、p4 factor、KSP或新solve，原worker失败分类不变。P7仅文档提案，`R=P^H`不意味着物理`D=B^H`；其资源/层数/终层/外层约束待下一阶段资格化。全模型raw identity、p4 factor字段定义及分阶段资源见 [Task40 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[资源组成](task40extra_0p7nm_engineering/outcomes/records/resource_components_v2.json)、[campaign](task40extra_0p7nm_engineering/outcomes/review_v2_campaign.md) 和 [总账](task40extra_0p7nm_engineering/outcomes/summary.md)。

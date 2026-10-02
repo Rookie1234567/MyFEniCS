@@ -9,7 +9,7 @@
 | ledger identity 与 G0/G1 capacity fixtures | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py::test_task40_worker_identity_opens_the_reserved_v14_runtime_ledger src/test/test_task40_nonseparable_geometry.py::test_task40_capacity_context_binds_frozen_axes_and_live_class_metadata` | `3 passed, 10 deselected in 0.76 s` | source `1ee85bc2133b783da419d31dbe429643eb2c1191`；一个 ledger fixture、G0/G1 两个 capacity fixture；不包含 PDE |
 | final mesh metadata fixture | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_nonseparable_geometry.py::test_task40_same_mesh_levels_preserve_air_void_audit_metadata` | `1 passed in 3.89 s` | source `59bad0d977f0e23555098d923a95afbf2e9f5bf4`；真实 G0 mesh/FE/MPC fixture，不装全局矩阵或因子 |
 | compileall / diff whitespace | compileall for modified solver modules；`git diff --check` | `PASS` | 在最终 source 修复后完成；不等于 full test suite |
-| full repository / MPI2/4 / Ruff / CI | 未运行 | `not_run` | 不声称 full pytest、Ruff 或 CI 通过 |
+| full repository pytest / MPI4 / Ruff / CI | 未运行 | `not_run` | 本行仅说明初始N0–N6阶段与R5收口；Review V2已有的targeted MPI2资格见下方，不得由此行误读为未做任何MPI2测试 |
 
 历史 focused regression suite 的原始命令（该运行早于 `1ee85bc2133b783da419d31dbe429643eb2c1191`）：
 
@@ -68,3 +68,17 @@ git diff --cached --check
 - R5 changed compact records and documentation only; no PDE, factorization, solver or new test suite was run for closeout. Final JSON parse, source/artifact identity checks and git diff checks are recorded after the last doc edit.
 - direct reference independent saved-array audit: reference_full_residual.npz SHA256 0e8c5b1fc8a8718d56e7b0ab0bc9b7407d941022addbb9b72ada5314c64da630; recomputed norm(b-Ax)/norm(b)=5.055376131651821e-11 and maxabs(r-(b-Ax))=0.
 - direct execution route deviation: user-service wrapper was not used; the observed cgroup was /init.scope. The independent process-tree watchdog completed with exit 0 and cleared descendants. No rerun was made.
+
+
+## Review V2累计测试与本轮文档检查
+
+| 范围 | 已有命令/输入 | 结果 | 身份与边界 |
+|---|---|---|---|
+| P4 same-M mode helper | `src/test/test_task40_p3_mode_staircase.py`定向fixture | `4 passed` | P3/P4保存场比较helper；P4不启动PDE。测试源代码由`benchmarks/postprocess_task40_p3_mode_staircase.py`所绑定的V2 commit `3f36014253525f5fc7e0e2ee56348bc3628e9024`识别 |
+| P6 bounded diagnostic fixtures | `src/test/test_task40_p6_local_growth_v2.py` | `2 passed` | P6 source `5f9efdbae1c668ffa4426731156ec4afe9325eb2`；serial targeted fixture，不创建完整高M全局factor |
+| Review V2 earlier serial/MPI2 qualification | V2实现阶段已运行的serial与MPI2 targeted tests及相关qualification | 已运行；本compact test summary未保留逐条命令、完整case count、耗时和每次source SHA，均记`unknown` | 不把未知写成未运行；不将MPI2结果扩展为MPI4或完整solver qualification。既有结果按原测试回执边界使用 |
+| source checks during V2 implementation | targeted `compileall`及和数值实现相关的focused regression，见各代码阶段记录 | 通过的范围见既有代码阶段回执 | 不把实现阶段测试回填成本文档收尾新测试；不等于全库pytest |
+| 本轮P7/文档收尾 | 10个compact JSON parse及身份/hash断言；234个Markdown表格列数、347个本地链接、7个编辑Markdown的围栏/尾空白；`git diff --check` | `PASS` | 只核对compact evidence与文档合同；没有新PDE、operator、factor、KSP或full test suite |
+| full repository pytest / MPI4 / Ruff / CI | 未运行 | `not_run` | 不声称full pytest、MPI4、Ruff或CI通过 |
+
+Review V2的正式F1/F2/F3/F5/E1/E2计算发生在此前campaign阶段，见run_index与各自raw run summaries；“本轮文档收尾没有新PDE”不等于整个Review V2没有正式运行。P1和P4都是保存场offline后处理。

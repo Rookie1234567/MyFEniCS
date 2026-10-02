@@ -1,0 +1,2843 @@
+{
+  "schema": "task40extra.p1.saved-field-common-subcells.v1",
+  "status": "ENGINEERING_H_GATE_FAILED",
+  "execution": {
+    "status": "OFFLINE_SAVED_FIELD_POSTPROCESS_ONLY",
+    "pde_started": false,
+    "physical_operator_built": false,
+    "factor_started": false,
+    "ksp_started": false,
+    "duration_seconds": 436.5178109759581,
+    "process_peak_rss_bytes": 620851200,
+    "abi": {
+      "activation": "1",
+      "python": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/.venv/bin/python",
+      "platform": "linux",
+      "petsc_scalar_type": "complex128",
+      "petsc_int_type": "int32",
+      "mpi_size": 1
+    }
+  },
+  "source": {
+    "checker_script": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/postprocess_task40_p1_saved_fields_common_subcells.py",
+    "checker_script_sha256": "297637ccc7eab585b706c5f78039e12dfc691cca49d757b40fb86d7f09bc6932",
+    "repository": {
+      "head": "4bc32cde270a660f5f282cf6c385e6d6436cdc80",
+      "status": []
+    }
+  },
+  "physical_configuration_identity": {
+    "sections_compared": [
+      "geometry",
+      "materials",
+      "incidence",
+      "boundary",
+      "derived physical values"
+    ],
+    "signature_sha256": "96eb35ac3b531680a8ef1c662fba35a4139b22ff86ae6ef74d6024f448aa7b3b",
+    "input_sha256_equal": false,
+    "G0_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "G1_input_sha256": "989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86",
+    "physical_model_sha256_equal": false,
+    "mesh_and_DoF_identities_may_differ": true
+  },
+  "field_semantics": {
+    "selected_by_production_contract": "total_field",
+    "evidence": "recover_p0_outputs names the Function E_total, records field_model=total_field, passes it directly to total-field volume absorption, and calls diffraction without E_scattered",
+    "samples_are_a_fixed_semantics_witness": true
+  },
+  "models": {
+    "G0": {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+      "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "physical_model_sha256": "51854af3fb60c7ffebb166e1f06ff0a89e2e184dcbd9ba06ab4beb321b920661",
+      "run_root": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T102148.356966Z",
+      "retained_packet_sha256": "0304cf62b98c266f6bf58f0e1d848ee3208408e8904f0af83d18c3d6768d7cc7",
+      "full_field_archive": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T102148.356966Z/x2_retained_final.npz",
+      "full_field_archive_sha256": "634178c0aef33f77ac6fe5c93e732a600fdaeac52643728ae3cdac3c7bf504df",
+      "full_field_vector_sha256": "7ce102e15f96365207f4574e84d16afc2846836a1a378dbdbed407c3d6cfc4f7",
+      "full_field_shape": [
+        229680
+      ],
+      "sample_archive": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T102148.356966Z/numerical_output/full3d_reference_samples.npz",
+      "sample_archive_sha256": "6dbac6769641427fb02d693a549058840bb39d81d0d6f8d5f561e09a6e74fbea",
+      "total_field_sample_witness": {
+        "field_model": "total_field",
+        "production_identity": {
+          "function_name": "E_total",
+          "recovery_facts_field_model": "total_field",
+          "volume_absorption_consumes_field_directly_as_total": true,
+          "diffraction_call_uses_E_scattered_argument": false
+        },
+        "sample_trace_sides": [
+          "positive_z",
+          "negative_z"
+        ],
+        "sample_z_nm": [
+          0.5185185185185185,
+          1.5555555555555556,
+          3.111111111111111,
+          4.666666666666667,
+          5.703703703703703
+        ],
+        "sample_shape": [
+          5,
+          20,
+          40,
+          3
+        ],
+        "electric_relative_l2": 0.0,
+        "magnetic_relative_l2_from_direct_fe_curl": 9.268982818451053e-16,
+        "limit_relative_l2": 0.0001,
+        "pass": true,
+        "curl_source": "direct UFL curl(E_FE), not archived H or analytic background"
+      },
+      "mesh_cell_count": 336,
+      "p6_dof_count": 229680,
+      "axis_point_counts": [
+        7,
+        5,
+        15
+      ],
+      "official_power": {
+        "role": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "R_total": 0.07565196449717393,
+        "T_total": 0.9062068564432124,
+        "A_balance": 0.018141179059613655,
+        "A_volume_total": 0.01814125705170932,
+        "A_volume_grating": 0.013925879883210604,
+        "A_volume_substrate": 0.004215377168498715,
+        "A_port_balance_minus_A_volume_total": -7.799209566367038e-08,
+        "volume_power_source": "volume_integral_Im_epsilon_E2",
+        "original_final_run_gate": {
+          "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+          "status": "finished",
+          "result_classification": "worker_exit0",
+          "exit_status": 0,
+          "task_process_tree_swap_status": "qualified_zero",
+          "task_process_tree_peak_swap_bytes": 0,
+          "task_process_tree_identity_coverage": "complete"
+        }
+      }
+    },
+    "G1": {
+      "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+      "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+      "input_sha256": "989a351fb27fe5320942ca2392d0e7e872909f0354509e5d59c8c25e43061c86",
+      "physical_model_sha256": "8fcb53abe4123e75599eed0ffae278e93fb0549f38b1f5235d0eac2f4cfc73fb",
+      "run_root": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T105500.302324Z",
+      "retained_packet_sha256": "5bcefc243b345c22b3141bdba61ebbe4d1010db9a3203b9d88042e05d9883ac3",
+      "full_field_archive": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T105500.302324Z/x2_retained_final.npz",
+      "full_field_archive_sha256": "0b6a66e700811b7c9ff678bf39dada44740ebb026294a1263fd2c41002d904ca",
+      "full_field_vector_sha256": "1977a7edc86802905234c5c62a8443f13fffeef70aa22819da936bfacd940a5d",
+      "full_field_shape": [
+        595512
+      ],
+      "sample_archive": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_iterative_review_v1__full3d_iterative__mpi1__Mna/20260930T105500.302324Z/numerical_output/full3d_reference_samples.npz",
+      "sample_archive_sha256": "bf788513da583dba8646929839c643ce8289f23389e064afdb6f2982cc88548c",
+      "total_field_sample_witness": {
+        "field_model": "total_field",
+        "production_identity": {
+          "function_name": "E_total",
+          "recovery_facts_field_model": "total_field",
+          "volume_absorption_consumes_field_directly_as_total": true,
+          "diffraction_call_uses_E_scattered_argument": false
+        },
+        "sample_trace_sides": [
+          "positive_z",
+          "negative_z"
+        ],
+        "sample_z_nm": [
+          0.5185185185185185,
+          1.5555555555555556,
+          3.111111111111111,
+          4.666666666666667,
+          5.703703703703703
+        ],
+        "sample_shape": [
+          5,
+          20,
+          40,
+          3
+        ],
+        "electric_relative_l2": 0.0,
+        "magnetic_relative_l2_from_direct_fe_curl": 6.438565165191568e-16,
+        "limit_relative_l2": 0.0001,
+        "pass": true,
+        "curl_source": "direct UFL curl(E_FE), not archived H or analytic background"
+      },
+      "mesh_cell_count": 880,
+      "p6_dof_count": 595512,
+      "axis_point_counts": [
+        11,
+        5,
+        23
+      ],
+      "official_power": {
+        "role": null,
+        "power_source": "dtn_port_modal_amplitudes",
+        "R_total": 0.07612406206792088,
+        "T_total": 0.905769220572286,
+        "A_balance": 0.01810671735979308,
+        "A_volume_total": 0.018106712729780598,
+        "A_volume_grating": 0.013893418210626729,
+        "A_volume_substrate": 0.0042132945191538694,
+        "A_port_balance_minus_A_volume_total": 4.630012481049439e-09,
+        "volume_power_source": "volume_integral_Im_epsilon_E2",
+        "original_final_run_gate": {
+          "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+          "status": "finished",
+          "result_classification": "worker_exit0",
+          "exit_status": 0,
+          "task_process_tree_swap_status": "qualified_zero",
+          "task_process_tree_peak_swap_bytes": 0,
+          "task_process_tree_identity_coverage": "complete"
+        }
+      }
+    }
+  },
+  "common_union_volume_comparison": {
+    "axis_union": [
+      {
+        "source_point_counts": [
+          7,
+          11
+        ],
+        "union_point_count": 13,
+        "exact_duplicate_count": 5,
+        "near_distinct_gap_count_below_diagnostic_tolerance": 0,
+        "diagnostic_tolerance_nm_not_used_for_merging": 1e-12,
+        "bounds_nm": [
+          0.0,
+          2.5925925925925926
+        ],
+        "minimum_union_interval_nm": 0.14259259259259238,
+        "axis": "x"
+      },
+      {
+        "source_point_counts": [
+          5,
+          5
+        ],
+        "union_point_count": 5,
+        "exact_duplicate_count": 5,
+        "near_distinct_gap_count_below_diagnostic_tolerance": 0,
+        "diagnostic_tolerance_nm_not_used_for_merging": 1e-12,
+        "bounds_nm": [
+          0.0,
+          1.2962962962962963
+        ],
+        "minimum_union_interval_nm": 0.32407407407407407,
+        "axis": "y"
+      },
+      {
+        "source_point_counts": [
+          15,
+          23
+        ],
+        "union_point_count": 29,
+        "exact_duplicate_count": 9,
+        "near_distinct_gap_count_below_diagnostic_tolerance": 0,
+        "diagnostic_tolerance_nm_not_used_for_merging": 1e-12,
+        "bounds_nm": [
+          -0.5185185185185185,
+          6.7407407407407405
+        ],
+        "minimum_union_interval_nm": 0.17283950617283939,
+        "axis": "z"
+      }
+    ],
+    "common_subcell_shape": [
+      12,
+      4,
+      28
+    ],
+    "common_subcell_count": 1344,
+    "material_tag_mismatch_count": 0,
+    "region_semantics": {
+      "physical_domain": "all tagged physical cells, excluding top/bottom PML tags",
+      "air_all_including_void": "air-tagged cells, including the explicit rectangular air void",
+      "air_outside_void_box": "air-tagged cells outside air_void_box_nm",
+      "void_box_air": "air-tagged subcells strictly inside air_void_box_nm",
+      "substrate": "substrate-tagged cells",
+      "grating_silicon": "grating-tagged cells"
+    },
+    "streaming": {
+      "subcell_batch": 16,
+      "quadrature_order_per_axis": 7,
+      "max_quadrature_points_per_batch": 5488,
+      "curl_source": "direct UFL curl(E_FE) into DG6; H derived afterward from curl"
+    },
+    "metrics": {
+      "physical_domain": {
+        "volume_nm3": 24.396687496824647,
+        "quantities": {
+          "E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 6.249621771718395,
+            "g1_l2_norm": 6.242158569811703,
+            "difference_l2_norm": 0.02340898688625868,
+            "relative_to_g1": 0.0037501429392500715
+          },
+          "E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.9197131808595339,
+            "g1_l2_norm": 0.8964589256306641,
+            "difference_l2_norm": 0.02340898688625868,
+            "relative_to_g1": 0.026112726659272563
+          },
+          "H_total": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.01658761024150861,
+            "g1_l2_norm": 0.016567796258327615,
+            "difference_l2_norm": 6.542624551996117e-05,
+            "relative_to_g1": 0.003949001092228872
+          },
+          "H_scattered": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.002441135203957789,
+            "g1_l2_norm": 0.002379329155141696,
+            "difference_l2_norm": 6.542624551996117e-05,
+            "relative_to_g1": 0.027497769856085694
+          },
+          "curl_E_total": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 56.091391982877724,
+            "g1_l2_norm": 56.0243905353415,
+            "difference_l2_norm": 0.22124037941552047,
+            "relative_to_g1": 0.003949001092228872
+          },
+          "curl_E_scattered": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 8.254755785481088,
+            "g1_l2_norm": 8.045757185888895,
+            "difference_l2_norm": 0.22124037941552047,
+            "relative_to_g1": 0.027497769856085687
+          },
+          "scaled_curl_E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 6.249055609286068,
+            "g1_l2_norm": 6.24159108118728,
+            "difference_l2_norm": 0.02464804999685455,
+            "relative_to_g1": 0.003949001092228871
+          },
+          "scaled_curl_E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.9196496310930152,
+            "g1_l2_norm": 0.8963654189359485,
+            "difference_l2_norm": 0.02464804999685455,
+            "relative_to_g1": 0.027497769856085694
+          }
+        }
+      },
+      "air_all_including_void": {
+        "volume_nm3": 16.136666158614037,
+        "quantities": {
+          "E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 5.034610692164746,
+            "g1_l2_norm": 5.027940275961988,
+            "difference_l2_norm": 0.018890561124944038,
+            "relative_to_g1": 0.003757117246451329
+          },
+          "E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.7427593799519515,
+            "g1_l2_norm": 0.7239867848303244,
+            "difference_l2_norm": 0.018890561124944034,
+            "relative_to_g1": 0.02609241152015127
+          },
+          "H_total": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.013363253854518375,
+            "g1_l2_norm": 0.013345545285732448,
+            "difference_l2_norm": 5.252833908573036e-05,
+            "relative_to_g1": 0.003936020444356645
+          },
+          "H_scattered": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.0019716501933419216,
+            "g1_l2_norm": 0.0019217615108666234,
+            "difference_l2_norm": 5.252833908573036e-05,
+            "relative_to_g1": 0.02733343278482176
+          },
+          "curl_E_total": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 45.188155448986514,
+            "g1_l2_norm": 45.12827350946869,
+            "difference_l2_norm": 0.17762580715178716,
+            "relative_to_g1": 0.0039360204443566445
+          },
+          "curl_E_scattered": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 6.667181241762779,
+            "g1_l2_norm": 6.498481495175488,
+            "difference_l2_norm": 0.17762580715178716,
+            "relative_to_g1": 0.02733343278482175
+          },
+          "scaled_curl_E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 5.034342816237817,
+            "g1_l2_norm": 5.027671461564484,
+            "difference_l2_norm": 0.019789017660226265,
+            "relative_to_g1": 0.003936020444356645
+          },
+          "scaled_curl_E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.742780395781275,
+            "g1_l2_norm": 0.7239858167838727,
+            "difference_l2_norm": 0.019789017660226265,
+            "relative_to_g1": 0.027333432784821757
+          }
+        }
+      },
+      "air_outside_void_box": {
+        "volume_nm3": 15.544175176548292,
+        "quantities": {
+          "E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 4.935490333435296,
+            "g1_l2_norm": 4.928899089043784,
+            "difference_l2_norm": 0.01852711966294087,
+            "relative_to_g1": 0.0037588758317499186
+          },
+          "E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.7285171087037587,
+            "g1_l2_norm": 0.7101051079874796,
+            "difference_l2_norm": 0.018527119662940867,
+            "relative_to_g1": 0.026090672288569896
+          },
+          "H_total": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.013100177211058816,
+            "g1_l2_norm": 0.01308267888224377,
+            "difference_l2_norm": 5.14799725499819e-05,
+            "relative_to_g1": 0.003934971806107094
+          },
+          "H_scattered": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.001933851122439207,
+            "g1_l2_norm": 0.0018849215802608777,
+            "difference_l2_norm": 5.14799725499819e-05,
+            "relative_to_g1": 0.02731146647642336
+          },
+          "curl_E_total": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 44.29855562628849,
+            "g1_l2_norm": 44.239384618149295,
+            "difference_l2_norm": 0.1740807311919453,
+            "relative_to_g1": 0.003934971806107094
+          },
+          "curl_E_scattered": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 6.539362799460151,
+            "g1_l2_norm": 6.373906408219443,
+            "difference_l2_norm": 0.1740807311919453,
+            "relative_to_g1": 0.027311466476423355
+          },
+          "scaled_curl_E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 4.935233869828573,
+            "g1_l2_norm": 4.928641718925415,
+            "difference_l2_norm": 0.01939406620637471,
+            "relative_to_g1": 0.003934971806107093
+          },
+          "scaled_curl_E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.7285403399437363,
+            "g1_l2_norm": 0.7101070981712628,
+            "difference_l2_norm": 0.019394066206374714,
+            "relative_to_g1": 0.027311466476423355
+          }
+        }
+      },
+      "void_box_air": {
+        "volume_nm3": 0.5924909820657418,
+        "quantities": {
+          "E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.9941026054821143,
+            "g1_l2_norm": 0.9930444041753925,
+            "difference_l2_norm": 0.0036877007213596863,
+            "relative_to_g1": 0.003713530538870406
+          },
+          "E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.1447560666518788,
+            "g1_l2_norm": 0.14109429548723929,
+            "difference_l2_norm": 0.0036877007213596863,
+            "relative_to_g1": 0.026136426767822133
+          },
+          "H_total": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.002638543275967915,
+            "g1_l2_norm": 0.002635733719029393,
+            "difference_l2_norm": 1.0442166123873813e-05,
+            "relative_to_g1": 0.003961768234963862
+          },
+          "H_scattered": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.00038421910564918004,
+            "g1_l2_norm": 0.0003744835656143051,
+            "difference_l2_norm": 1.044216612387381e-05,
+            "relative_to_g1": 0.02788417725820469
+          },
+          "curl_E_total": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 8.92229579796555,
+            "g1_l2_norm": 8.912795215467991,
+            "difference_l2_norm": 0.035310428969378964,
+            "relative_to_g1": 0.003961768234963861
+          },
+          "curl_E_scattered": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 1.2992458918735013,
+            "g1_l2_norm": 1.2663249355506507,
+            "difference_l2_norm": 0.035310428969378964,
+            "relative_to_g1": 0.027884177258204683
+          },
+          "scaled_curl_E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.9940192359819848,
+            "g1_l2_norm": 0.9929607907152673,
+            "difference_l2_norm": 0.003933880519220345,
+            "relative_to_g1": 0.003961768234963862
+          },
+          "scaled_curl_E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.14474698418845405,
+            "g1_l2_norm": 0.14107931113738822,
+            "difference_l2_norm": 0.0039338805192203445,
+            "relative_to_g1": 0.02788417725820469
+          }
+        }
+      },
+      "substrate": {
+        "volume_nm3": 1.7426205354874755,
+        "quantities": {
+          "E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 1.7848867362084675,
+            "g1_l2_norm": 1.784445761142871,
+            "difference_l2_norm": 0.006640290850128011,
+            "relative_to_g1": 0.003721206323399346
+          },
+          "E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.26025678818228365,
+            "g1_l2_norm": 0.25366539688583334,
+            "difference_l2_norm": 0.00664029085012801,
+            "relative_to_g1": 0.026177361720000746
+          },
+          "H_total": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.004737297567634882,
+            "g1_l2_norm": 0.0047361235359879,
+            "difference_l2_norm": 1.857141825508186e-05,
+            "relative_to_g1": 0.0039212275849574265
+          },
+          "H_scattered": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.000690776221311987,
+            "g1_l2_norm": 0.0006732571749063354,
+            "difference_l2_norm": 1.857141825508186e-05,
+            "relative_to_g1": 0.027584434221091733
+          },
+          "curl_E_total": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 16.01928252092657,
+            "g1_l2_norm": 16.015312505454027,
+            "difference_l2_norm": 0.06279968517809997,
+            "relative_to_g1": 0.003921227584957427
+          },
+          "curl_E_scattered": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 2.335875948248578,
+            "g1_l2_norm": 2.276634883092212,
+            "difference_l2_norm": 0.06279968517809997,
+            "relative_to_g1": 0.027584434221091726
+          },
+          "scaled_curl_E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 1.7846835985937428,
+            "g1_l2_norm": 1.784241305283119,
+            "difference_l2_norm": 0.006996416224496611,
+            "relative_to_g1": 0.0039212275849574265
+          },
+          "scaled_curl_E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.26023634252926064,
+            "g1_l2_norm": 0.25363638668169536,
+            "difference_l2_norm": 0.006996416224496611,
+            "relative_to_g1": 0.027584434221091723
+          }
+        }
+      },
+      "grating_silicon": {
+        "volume_nm3": 6.517400802723163,
+        "quantities": {
+          "E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 3.2441712049126035,
+            "g1_l2_norm": 3.2403878652982607,
+            "difference_l2_norm": 0.012125753784878282,
+            "relative_to_g1": 0.0037420686315778958
+          },
+          "E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.47586473156265313,
+            "g1_l2_norm": 0.4638271306819881,
+            "difference_l2_norm": 0.012125753784878282,
+            "relative_to_g1": 0.026142829909602705
+          },
+          "H_total": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.008609893826266484,
+            "g1_l2_norm": 0.008599850448454342,
+            "difference_l2_norm": 3.429970291019416e-05,
+            "relative_to_g1": 0.003988406904954826
+          },
+          "H_scattered": {
+            "unit": "A/m",
+            "g0_l2_norm": 0.0012627607893685704,
+            "g1_l2_norm": 0.0012307577748265758,
+            "difference_l2_norm": 3.4299702910194166e-05,
+            "relative_to_g1": 0.027868768015726967
+          },
+          "curl_E_total": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 29.11455734181452,
+            "g1_l2_norm": 29.080595424848127,
+            "difference_l2_norm": 0.11598524759266203,
+            "relative_to_g1": 0.003988406904954827
+          },
+          "curl_E_scattered": {
+            "unit": "V/m/nm",
+            "g0_l2_norm": 4.270055142713476,
+            "g1_l2_norm": 4.161836200552855,
+            "difference_l2_norm": 0.11598524759266204,
+            "relative_to_g1": 0.027868768015726963
+          },
+          "scaled_curl_E_total": {
+            "unit": "V/m",
+            "g0_l2_norm": 3.2436080018175493,
+            "g1_l2_norm": 3.2398243569440948,
+            "difference_l2_norm": 0.012921737836076658,
+            "relative_to_g1": 0.003988406904954826
+          },
+          "scaled_curl_E_scattered": {
+            "unit": "V/m",
+            "g0_l2_norm": 0.4757202682664729,
+            "g1_l2_norm": 0.4636637625597457,
+            "difference_l2_norm": 0.012921737836076658,
+            "relative_to_g1": 0.027868768015726957
+          }
+        }
+      }
+    },
+    "field_scaled_curl_h_gate": {
+      "metric_scope": "global physical-domain L2 norms on exact common subcells",
+      "quantities": [
+        "E_total",
+        "E_scattered",
+        "H_total",
+        "H_scattered",
+        "scaled_curl_E_total",
+        "scaled_curl_E_scattered"
+      ],
+      "limit_relative_l2": 0.01,
+      "max_relative_l2": 0.027497769856085694,
+      "pass": false,
+      "classification": "engineering h comparison only; not continuum convergence"
+    }
+  },
+  "same_side_material_interface_traces": {
+    "method": "same-side G0/G1 FE trace difference at exact configured rectangular faces",
+    "surfaces_checked": [
+      [
+        "grating_x_min"
+      ],
+      [
+        "grating_x_max",
+        "void_x_max"
+      ],
+      [
+        "substrate_top_grating_base",
+        "grating_z_min"
+      ],
+      [
+        "grating_z_max"
+      ],
+      [
+        "void_x_min"
+      ],
+      [
+        "void_y_min"
+      ],
+      [
+        "void_y_max"
+      ],
+      [
+        "void_z_min"
+      ],
+      [
+        "void_z_max"
+      ]
+    ],
+    "coverage": {
+      "configured_axis_aligned_grating_and_void_faces": true,
+      "includes_void_gap_x_y_sidewalls": true,
+      "candidate_face_tile_count": 1200,
+      "material_interface_face_tile_count": 296,
+      "maximum_source_mesh_face_coordinate_offset_nm": 1.1102230246251565e-16,
+      "axis_aligned_faces_only": true,
+      "surfaces_skipped_at_mesh_exterior": [
+        {
+          "plane_names": [
+            "grating_y_min"
+          ],
+          "axis": "y",
+          "coordinate_nm": 0.0,
+          "reason": "mesh exterior has no two-sided in-domain material trace"
+        },
+        {
+          "plane_names": [
+            "grating_y_max"
+          ],
+          "axis": "y",
+          "coordinate_nm": 1.2962962962962963,
+          "reason": "mesh exterior has no two-sided in-domain material trace"
+        }
+      ]
+    },
+    "traces": [
+      {
+        "plane_names": [
+          "grating_x_min"
+        ],
+        "axis": "x",
+        "coordinate_nm": 0.8555555555555556,
+        "normal_from_minus_to_plus": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "face_tile_count": 112,
+        "material_interface_tile_count": 96,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              1,
+              3
+            ],
+            "face_tile_count": 96,
+            "area_nm2": 8.065843621399178,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.614043072141853,
+                    "g1_l2_norm": 3.6098298426345625,
+                    "difference_l2_norm": 0.013456977534221171,
+                    "relative_to_g1": 0.003727870321001021
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.5288186594906168,
+                    "g1_l2_norm": 0.5154101818227659,
+                    "difference_l2_norm": 0.013456977534221171,
+                    "relative_to_g1": 0.026109258235120822
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.009583880261948,
+                    "g1_l2_norm": 0.009581853520697745,
+                    "difference_l2_norm": 6.851692647273556e-05,
+                    "relative_to_g1": 0.00715069650404614
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0014350005777237767,
+                    "g1_l2_norm": 0.0013715704196802967,
+                    "difference_l2_norm": 6.851692647273556e-05,
+                    "relative_to_g1": 0.04995509198040766
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 32.40811525367738,
+                    "g1_l2_norm": 32.40126178073829,
+                    "difference_l2_norm": 0.23169158934220851,
+                    "relative_to_g1": 0.007150696504046122
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 4.852488015382724,
+                    "g1_l2_norm": 4.637997452453443,
+                    "difference_l2_norm": 0.23169158934220851,
+                    "relative_to_g1": 0.04995509198040774
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.610538217240224,
+                    "g1_l2_norm": 3.609774682373292,
+                    "difference_l2_norm": 0.025812403201640962,
+                    "relative_to_g1": 0.00715069650404614
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.5406082177596399,
+                    "g1_l2_norm": 0.5167121544239087,
+                    "difference_l2_norm": 0.025812403201640983,
+                    "relative_to_g1": 0.04995509198040769
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.6140430685235887,
+                    "g1_l2_norm": 3.6098298390207577,
+                    "difference_l2_norm": 0.013456977513452569,
+                    "relative_to_g1": 0.0037278703189796494
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00016171941027960348,
+                    "g1_l2_norm": 0.00016152529835505717,
+                    "difference_l2_norm": 7.476397398145357e-07,
+                    "relative_to_g1": 0.004628623178092572
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.009583314212171052,
+                    "g1_l2_norm": 0.009581284659332317,
+                    "difference_l2_norm": 6.851625494545626e-05,
+                    "relative_to_g1": 0.007151050968798885
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.00010416134675079832,
+                    "g1_l2_norm": 0.0001044086632002939,
+                    "difference_l2_norm": 3.033504895137892e-07,
+                    "relative_to_g1": 0.002905414936036987
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.6140430721425516,
+                    "g1_l2_norm": 3.6098298426358393,
+                    "difference_l2_norm": 0.013456977578740887,
+                    "relative_to_g1": 0.003727870333332615
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.528818659495354,
+                    "g1_l2_norm": 0.515410181831716,
+                    "difference_l2_norm": 0.013456977578740887,
+                    "relative_to_g1": 0.026109258321044687
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.009580068314911875,
+                    "g1_l2_norm": 0.009580922324190012,
+                    "difference_l2_norm": 1.4281054339393871e-05,
+                    "relative_to_g1": 0.0014905719779542432
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0013588748217344682,
+                    "g1_l2_norm": 0.0013675192589258259,
+                    "difference_l2_norm": 1.4281054339393871e-05,
+                    "relative_to_g1": 0.0104430370879102
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 32.3952250656209,
+                    "g1_l2_norm": 32.39811291796843,
+                    "difference_l2_norm": 0.04829171925412113,
+                    "relative_to_g1": 0.0014905719779542434
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 4.595066991074834,
+                    "g1_l2_norm": 4.624298357613605,
+                    "difference_l2_norm": 0.04829171925412113,
+                    "relative_to_g1": 0.010443037087910206
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.609102141237619,
+                    "g1_l2_norm": 3.6094238724208467,
+                    "difference_l2_norm": 0.005380106080789606,
+                    "relative_to_g1": 0.0014905719779542434
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.5119293378275738,
+                    "g1_l2_norm": 0.5151859593621575,
+                    "difference_l2_norm": 0.0053801060807896085,
+                    "relative_to_g1": 0.0104430370879102
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.6140430685235927,
+                    "g1_l2_norm": 3.609829839020765,
+                    "difference_l2_norm": 0.01345697751345613,
+                    "relative_to_g1": 0.0037278703189806287
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00016173485558343626,
+                    "g1_l2_norm": 0.00016155382353957943,
+                    "difference_l2_norm": 1.32554569563183e-06,
+                    "relative_to_g1": 0.008204978790285837
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.009579502039888178,
+                    "g1_l2_norm": 0.009580353407532077,
+                    "difference_l2_norm": 1.4277832171770101e-05,
+                    "relative_to_g1": 0.0014903241628377575
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.00010416134675079491,
+                    "g1_l2_norm": 0.00010440866320028864,
+                    "difference_l2_norm": 3.033504895124876e-07,
+                    "relative_to_g1": 0.002905414936024667
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "grating_x_max",
+          "void_x_max"
+        ],
+        "axis": "x",
+        "coordinate_nm": 1.737037037037037,
+        "normal_from_minus_to_plus": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "face_tile_count": 112,
+        "material_interface_tile_count": 80,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              3,
+              1
+            ],
+            "face_tile_count": 80,
+            "area_nm2": 6.721536351165982,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.2890768998871307,
+                    "g1_l2_norm": 3.28517900061951,
+                    "difference_l2_norm": 0.01227047275215289,
+                    "relative_to_g1": 0.0037351002030144957
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.4837443119072574,
+                    "g1_l2_norm": 0.47151746752623036,
+                    "difference_l2_norm": 0.01227047275215289,
+                    "relative_to_g1": 0.026023368373877448
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.008718795319827643,
+                    "g1_l2_norm": 0.008719404173719567,
+                    "difference_l2_norm": 7.070297792478113e-05,
+                    "relative_to_g1": 0.008108693726789396
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0013158204819662474,
+                    "g1_l2_norm": 0.00125169305812675,
+                    "difference_l2_norm": 7.070297792478113e-05,
+                    "relative_to_g1": 0.05648587524372252
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 29.482810289280916,
+                    "g1_l2_norm": 29.484869142956352,
+                    "difference_l2_norm": 0.23908377345469667,
+                    "relative_to_g1": 0.008108693726789405
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 4.449477734193214,
+                    "g1_l2_norm": 4.232629350667039,
+                    "difference_l2_norm": 0.23908377345469667,
+                    "relative_to_g1": 0.05648587524372253
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.2846344956457583,
+                    "g1_l2_norm": 3.284863869363441,
+                    "difference_l2_norm": 0.026635955050864475,
+                    "relative_to_g1": 0.008108693726789396
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.49570946290192336,
+                    "g1_l2_norm": 0.47155071840414875,
+                    "difference_l2_norm": 0.026635955050864482,
+                    "relative_to_g1": 0.05648587524372253
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.2890768970442816,
+                    "g1_l2_norm": 3.28517899773425,
+                    "difference_l2_norm": 0.012270472377905437,
+                    "relative_to_g1": 0.0037351000923749483
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00013675045505333422,
+                    "g1_l2_norm": 0.00013768520492234612,
+                    "difference_l2_norm": 3.0305752438735132e-06,
+                    "relative_to_g1": 0.022010899759220645
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.008718270720574912,
+                    "g1_l2_norm": 0.008718877081193285,
+                    "difference_l2_norm": 7.070238864072532e-05,
+                    "relative_to_g1": 0.008109116344033702
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 9.564241639861652e-05,
+                    "g1_l2_norm": 9.5872768399614e-05,
+                    "difference_l2_norm": 2.886657719858831e-07,
+                    "relative_to_g1": 0.003010925592371288
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.289076899918754,
+                    "g1_l2_norm": 3.285179000614018,
+                    "difference_l2_norm": 0.012270472475648,
+                    "relative_to_g1": 0.0037351001188533654
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.48374431212228663,
+                    "g1_l2_norm": 0.471517467487924,
+                    "difference_l2_norm": 0.012270472475648,
+                    "relative_to_g1": 0.026023367789576656
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.008722265039716617,
+                    "g1_l2_norm": 0.008720251716106254,
+                    "difference_l2_norm": 8.71716152745827e-06,
+                    "relative_to_g1": 0.0009996456307972996
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.001249687654592086,
+                    "g1_l2_norm": 0.0012486957887998032,
+                    "difference_l2_norm": 8.71716152745827e-06,
+                    "relative_to_g1": 0.006981012994235257
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 29.494543228235337,
+                    "g1_l2_norm": 29.48773512735927,
+                    "difference_l2_norm": 0.029477285582172778,
+                    "relative_to_g1": 0.0009996456307973006
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 4.225848031712174,
+                    "g1_l2_norm": 4.222494014337796,
+                    "difference_l2_norm": 0.029477285582172778,
+                    "relative_to_g1": 0.006981012994235264
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.2859416443078717,
+                    "g1_l2_norm": 3.285183164272625,
+                    "difference_l2_norm": 0.003284018996533976,
+                    "relative_to_g1": 0.0009996456307972993
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.4707952221015039,
+                    "g1_l2_norm": 0.4704215561904606,
+                    "difference_l2_norm": 0.0032840189965339787,
+                    "relative_to_g1": 0.006981012994235262
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.2890768970442865,
+                    "g1_l2_norm": 3.285178997734253,
+                    "difference_l2_norm": 0.012270472377908383,
+                    "relative_to_g1": 0.0037351000923758412
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00013750895120653238,
+                    "g1_l2_norm": 0.00013755391778944395,
+                    "difference_l2_norm": 1.5487487001059434e-06,
+                    "relative_to_g1": 0.011259211842127526
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.008721740649162186,
+                    "g1_l2_norm": 0.008719724674812463,
+                    "difference_l2_norm": 8.71238068313614e-06,
+                    "relative_to_g1": 0.0009991577725272064
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 9.564241639860976e-05,
+                    "g1_l2_norm": 9.587276839960372e-05,
+                    "difference_l2_norm": 2.8866577198357753e-07,
+                    "relative_to_g1": 0.0030109255923475627
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "substrate_top_grating_base",
+          "grating_z_min"
+        ],
+        "axis": "z",
+        "coordinate_nm": 0.0,
+        "normal_from_minus_to_plus": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "face_tile_count": 48,
+        "material_interface_tile_count": 48,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              2,
+              1
+            ],
+            "face_tile_count": 32,
+            "area_nm2": 2.218106995884774,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.0161210590396044,
+                    "g1_l2_norm": 2.015599884493426,
+                    "difference_l2_norm": 0.007499211047853054,
+                    "relative_to_g1": 0.003720585174441904
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.2939925929044843,
+                    "g1_l2_norm": 0.2865444397101809,
+                    "difference_l2_norm": 0.007499211047853054,
+                    "relative_to_g1": 0.026171197233622705
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.005351078407457015,
+                    "g1_l2_norm": 0.0053496895664007825,
+                    "difference_l2_norm": 2.0659238489221464e-05,
+                    "relative_to_g1": 0.003861763983273667
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0007802983944637214,
+                    "g1_l2_norm": 0.0007605119911074802,
+                    "difference_l2_norm": 2.0659238489221464e-05,
+                    "relative_to_g1": 0.027164908286504287
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 18.094796785898357,
+                    "g1_l2_norm": 18.090100387384474,
+                    "difference_l2_norm": 0.0698596981298065,
+                    "relative_to_g1": 0.0038617639832736737
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 2.6385972705067666,
+                    "g1_l2_norm": 2.5716890847930145,
+                    "difference_l2_norm": 0.0698596981298065,
+                    "relative_to_g1": 0.02716490828650433
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.015913446903343,
+                    "g1_l2_norm": 2.0153902283765937,
+                    "difference_l2_norm": 0.00778296139618642,
+                    "relative_to_g1": 0.003861763983273667
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.29396205890095456,
+                    "g1_l2_norm": 0.28650792095819627,
+                    "difference_l2_norm": 0.007782961396186432,
+                    "relative_to_g1": 0.027164908286504325
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.016121058793997,
+                    "g1_l2_norm": 2.0155998842482963,
+                    "difference_l2_norm": 0.00749921104694722,
+                    "relative_to_g1": 0.0037205851744449756
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.146982095487665e-05,
+                    "g1_l2_norm": 3.14351790643365e-05,
+                    "difference_l2_norm": 1.1655998745947199e-07,
+                    "relative_to_g1": 0.003707947303908008
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 4.6458915619405526e-05,
+                    "g1_l2_norm": 4.6445678962702264e-05,
+                    "difference_l2_norm": 1.357751722967187e-07,
+                    "relative_to_g1": 0.0029233111740222723
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.005350876721801034,
+                    "g1_l2_norm": 0.005349487943323461,
+                    "difference_l2_norm": 2.0658792318456508e-05,
+                    "relative_to_g1": 0.0038618261294036827
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.0161210590394694,
+                    "g1_l2_norm": 2.0155998844933314,
+                    "difference_l2_norm": 0.007499211048921898,
+                    "relative_to_g1": 0.003720585174972364
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.29399259290354246,
+                    "g1_l2_norm": 0.2865444397094929,
+                    "difference_l2_norm": 0.007499211048921898,
+                    "relative_to_g1": 0.02617119723741566
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.005351078403243749,
+                    "g1_l2_norm": 0.005349689566004753,
+                    "difference_l2_norm": 2.0659239237575195e-05,
+                    "relative_to_g1": 0.003861764123446867
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0007802983974012337,
+                    "g1_l2_norm": 0.0007605119926629898,
+                    "difference_l2_norm": 2.0659239237575195e-05,
+                    "relative_to_g1": 0.027164909214955728
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 18.094796771651087,
+                    "g1_l2_norm": 18.09010038604528,
+                    "difference_l2_norm": 0.0698597006603821,
+                    "relative_to_g1": 0.003861764123446874
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 2.638597280440036,
+                    "g1_l2_norm": 2.571689090053004,
+                    "difference_l2_norm": 0.0698597006603821,
+                    "relative_to_g1": 0.027164909214955787
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.015913445316078,
+                    "g1_l2_norm": 2.0153902282273974,
+                    "difference_l2_norm": 0.007782961678113957,
+                    "relative_to_g1": 0.003861764123446867
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.2939620600076045,
+                    "g1_l2_norm": 0.28650792154420385,
+                    "difference_l2_norm": 0.007782961678113959,
+                    "relative_to_g1": 0.027164909214955738
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.016121058793998,
+                    "g1_l2_norm": 2.015599884248298,
+                    "difference_l2_norm": 0.00749921104694737,
+                    "relative_to_g1": 0.0037205851744450467
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.146101696860285e-05,
+                    "g1_l2_norm": 3.142890400732604e-05,
+                    "difference_l2_norm": 1.720895472608883e-07,
+                    "relative_to_g1": 0.005475518561537317
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 4.6458430338285326e-05,
+                    "g1_l2_norm": 4.6445633346868616e-05,
+                    "difference_l2_norm": 1.3588899244674914e-07,
+                    "relative_to_g1": 0.0029257646554605725
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.005350876721801032,
+                    "g1_l2_norm": 0.005349487943323466,
+                    "difference_l2_norm": 2.065879231845606e-05,
+                    "relative_to_g1": 0.003861826129403595
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "material_transition_minus_to_plus": [
+              2,
+              3
+            ],
+            "face_tile_count": 16,
+            "area_nm2": 1.1426611796982167,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4469772193467423,
+                    "g1_l2_norm": 1.4466056355378283,
+                    "difference_l2_norm": 0.005385609412246367,
+                    "relative_to_g1": 0.0037229285438557485
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.21095838041238457,
+                    "g1_l2_norm": 0.2056128705068202,
+                    "difference_l2_norm": 0.005385609412246368,
+                    "relative_to_g1": 0.02619295863615564
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.003840363105258624,
+                    "g1_l2_norm": 0.003839373767758349,
+                    "difference_l2_norm": 1.5215451771760287e-05,
+                    "relative_to_g1": 0.003963003524047088
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0005599444343858925,
+                    "g1_l2_norm": 0.000545733481802739,
+                    "difference_l2_norm": 1.5215451771760287e-05,
+                    "relative_to_g1": 0.027880737171372724
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 12.986277658887875,
+                    "g1_l2_norm": 12.982932190992056,
+                    "difference_l2_norm": 0.05145140602536591,
+                    "relative_to_g1": 0.003963003524047088
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.8934652008626751,
+                    "g1_l2_norm": 1.8454105323368202,
+                    "difference_l2_norm": 0.05145140602536591,
+                    "relative_to_g1": 0.027880737171372724
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.446781197243096,
+                    "g1_l2_norm": 1.4464084838162938,
+                    "difference_l2_norm": 0.005732121918575579,
+                    "relative_to_g1": 0.003963003524047088
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.21094804240284817,
+                    "g1_l2_norm": 0.20559434577867564,
+                    "difference_l2_norm": 0.00573212191857558,
+                    "relative_to_g1": 0.02788073717137273
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4469772191846955,
+                    "g1_l2_norm": 1.4466056353760335,
+                    "difference_l2_norm": 0.005385609411407456,
+                    "relative_to_g1": 0.003722928543692221
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.165543025426676e-05,
+                    "g1_l2_norm": 2.1635769870023592e-05,
+                    "difference_l2_norm": 9.505830783996006e-08,
+                    "relative_to_g1": 0.004393571775398829
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 3.339518445971085e-05,
+                    "g1_l2_norm": 3.338692157034799e-05,
+                    "difference_l2_norm": 9.639613473085515e-08,
+                    "relative_to_g1": 0.0028872423750642435
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0038402179029173016,
+                    "g1_l2_norm": 0.0038392285998646897,
+                    "difference_l2_norm": 1.521514641414838e-05,
+                    "relative_to_g1": 0.003963073835896259
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4469772193467902,
+                    "g1_l2_norm": 1.4466056355378423,
+                    "difference_l2_norm": 0.005385609412808462,
+                    "relative_to_g1": 0.003722928544244274
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.2109583804127042,
+                    "g1_l2_norm": 0.205612870506902,
+                    "difference_l2_norm": 0.0053856094128084606,
+                    "relative_to_g1": 0.026192958638878966
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0038403631111181467,
+                    "g1_l2_norm": 0.0038393737682977207,
+                    "difference_l2_norm": 1.5215450041357917e-05,
+                    "relative_to_g1": 0.003963003072791232
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0005599444309862626,
+                    "g1_l2_norm": 0.0005457334796748329,
+                    "difference_l2_norm": 1.5215450041357914e-05,
+                    "relative_to_g1": 0.027880734109301506
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 12.986277678701983,
+                    "g1_l2_norm": 12.98293219281595,
+                    "difference_l2_norm": 0.05145140017396984,
+                    "relative_to_g1": 0.003963003072791234
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.893465189366747,
+                    "g1_l2_norm": 1.845410525141256,
+                    "difference_l2_norm": 0.05145140017396984,
+                    "relative_to_g1": 0.027880734109301517
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4467811994505557,
+                    "g1_l2_norm": 1.4464084840194915,
+                    "difference_l2_norm": 0.0057321212666805515,
+                    "relative_to_g1": 0.003963003072791231
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.21094804112210452,
+                    "g1_l2_norm": 0.20559434497702891,
+                    "difference_l2_norm": 0.0057321212666805515,
+                    "relative_to_g1": 0.02788073410930151
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4469772191846968,
+                    "g1_l2_norm": 1.446605635376035,
+                    "difference_l2_norm": 0.005385609411407636,
+                    "relative_to_g1": 0.003722928543692341
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.165854145016683e-05,
+                    "g1_l2_norm": 2.1636547196153695e-05,
+                    "difference_l2_norm": 1.2283574189936652e-07,
+                    "relative_to_g1": 0.005677234023791139
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 3.339585828346863e-05,
+                    "g1_l2_norm": 3.338698359555881e-05,
+                    "difference_l2_norm": 9.612261494828792e-08,
+                    "relative_to_g1": 0.0028790446035105222
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0038402179029173016,
+                    "g1_l2_norm": 0.003839228599864695,
+                    "difference_l2_norm": 1.5215146414147783e-05,
+                    "relative_to_g1": 0.003963073835896098
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "grating_z_max"
+        ],
+        "axis": "z",
+        "coordinate_nm": 6.222222222222222,
+        "normal_from_minus_to_plus": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "face_tile_count": 48,
+        "material_interface_tile_count": 16,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              3,
+              1
+            ],
+            "face_tile_count": 16,
+            "area_nm2": 1.1426611796982167,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.170528289243361,
+                    "g1_l2_norm": 1.166923492044933,
+                    "difference_l2_norm": 0.004600137369096257,
+                    "relative_to_g1": 0.003942107087959051
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.18244454405014532,
+                    "g1_l2_norm": 0.17788105428309509,
+                    "difference_l2_norm": 0.004600137369096257,
+                    "relative_to_g1": 0.02586074940715837
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0031069218737395502,
+                    "g1_l2_norm": 0.003097356931772518,
+                    "difference_l2_norm": 1.291847137756807e-05,
+                    "relative_to_g1": 0.0041708048707758206
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0004842271408981168,
+                    "g1_l2_norm": 0.0004720965318023856,
+                    "difference_l2_norm": 1.2918471377568068e-05,
+                    "relative_to_g1": 0.0273640463492657
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 10.506128980774292,
+                    "g1_l2_norm": 10.473784905807792,
+                    "difference_l2_norm": 0.0436841131006014,
+                    "relative_to_g1": 0.00417080487077582
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.6374254020568426,
+                    "g1_l2_norm": 1.5964054636888043,
+                    "difference_l2_norm": 0.0436841131006014,
+                    "relative_to_g1": 0.02736404634926567
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.1704716520358711,
+                    "g1_l2_norm": 1.1668682484484147,
+                    "difference_l2_norm": 0.004866779774182299,
+                    "relative_to_g1": 0.0041708048707758206
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.1824230426771064,
+                    "g1_l2_norm": 0.1778530745074877,
+                    "difference_l2_norm": 0.004866779774182294,
+                    "relative_to_g1": 0.02736404634926567
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.1705282889817423,
+                    "g1_l2_norm": 1.1669234917829265,
+                    "difference_l2_norm": 0.0046001373675895775,
+                    "relative_to_g1": 0.003942107087553007
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.4748016026563415e-05,
+                    "g1_l2_norm": 2.47281798434485e-05,
+                    "difference_l2_norm": 1.1773634440247966e-07,
+                    "relative_to_g1": 0.004761221616303992
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 4.820650229048611e-05,
+                    "g1_l2_norm": 4.840520869641816e-05,
+                    "difference_l2_norm": 1.9952671146008746e-07,
+                    "relative_to_g1": 0.004122009114999474
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.003106547869043418,
+                    "g1_l2_norm": 0.0030969786726050114,
+                    "difference_l2_norm": 1.291693043352249e-05,
+                    "relative_to_g1": 0.004170816721400753
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.1705282892434095,
+                    "g1_l2_norm": 1.16692349204481,
+                    "difference_l2_norm": 0.004600137368367938,
+                    "relative_to_g1": 0.00394210708733533
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.1824445440504471,
+                    "g1_l2_norm": 0.17788105428228376,
+                    "difference_l2_norm": 0.0046001373683679375,
+                    "relative_to_g1": 0.025860749403181903
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0031069218657057,
+                    "g1_l2_norm": 0.0030973569301197346,
+                    "difference_l2_norm": 1.2918478977062552e-05,
+                    "relative_to_g1": 0.004170807326543138
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0004842271507859341,
+                    "g1_l2_norm": 0.00047209653386371693,
+                    "difference_l2_norm": 1.2918478977062552e-05,
+                    "relative_to_g1": 0.02736406232711679
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 10.506128953607634,
+                    "g1_l2_norm": 10.473784900218872,
+                    "difference_l2_norm": 0.04368413879846975,
+                    "relative_to_g1": 0.0041708073265431375
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.6374254354927287,
+                    "g1_l2_norm": 1.5964054706592445,
+                    "difference_l2_norm": 0.04368413879846975,
+                    "relative_to_g1": 0.027364062327116773
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.1704716490092761,
+                    "g1_l2_norm": 1.1668682478257613,
+                    "difference_l2_norm": 0.004866782637142239,
+                    "relative_to_g1": 0.004170807326543138
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.1824230464021469,
+                    "g1_l2_norm": 0.1778530752840537,
+                    "difference_l2_norm": 0.004866782637142237,
+                    "relative_to_g1": 0.02736406232711677
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.170528288981744,
+                    "g1_l2_norm": 1.1669234917829283,
+                    "difference_l2_norm": 0.0046001373675896105,
+                    "relative_to_g1": 0.003942107087553029
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 2.475023291834879e-05,
+                    "g1_l2_norm": 2.4722335234897193e-05,
+                    "difference_l2_norm": 8.462161715218198e-08,
+                    "relative_to_g1": 0.003422881226557151
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 4.820598450389229e-05,
+                    "g1_l2_norm": 4.840510293782585e-05,
+                    "difference_l2_norm": 2.000181402183612e-07,
+                    "relative_to_g1": 0.0041321705373765115
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0031065478690434165,
+                    "g1_l2_norm": 0.003096978672605017,
+                    "difference_l2_norm": 1.2916930433519835e-05,
+                    "relative_to_g1": 0.0041708167213998885
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "void_x_min"
+        ],
+        "axis": "x",
+        "coordinate_nm": 1.2962962962962963,
+        "normal_from_minus_to_plus": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "face_tile_count": 112,
+        "material_interface_tile_count": 16,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              3,
+              1
+            ],
+            "face_tile_count": 16,
+            "area_nm2": 1.3443072702331964,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.497509724954924,
+                    "g1_l2_norm": 1.4959030282249384,
+                    "difference_l2_norm": 0.0055378280131208255,
+                    "relative_to_g1": 0.0037019966592968913
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.21807856810903048,
+                    "g1_l2_norm": 0.21255911236457994,
+                    "difference_l2_norm": 0.0055378280131208255,
+                    "relative_to_g1": 0.02605311977226542
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0039694344894031265,
+                    "g1_l2_norm": 0.003970155337771874,
+                    "difference_l2_norm": 3.2465279225808594e-05,
+                    "relative_to_g1": 0.008177332236080394
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0005945590292252028,
+                    "g1_l2_norm": 0.000564563753915524,
+                    "difference_l2_norm": 3.2465279225808594e-05,
+                    "relative_to_g1": 0.057505071837584514
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 13.422735563095504,
+                    "g1_l2_norm": 13.425173128713642,
+                    "difference_l2_norm": 0.10978210100039024,
+                    "relative_to_g1": 0.008177332236080387
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 2.010515262878338,
+                    "g1_l2_norm": 1.9090855378888205,
+                    "difference_l2_norm": 0.10978210100039024,
+                    "relative_to_g1": 0.057505071837584486
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4954063002774174,
+                    "g1_l2_norm": 1.4956778657094827,
+                    "difference_l2_norm": 0.012230654826058075,
+                    "relative_to_g1": 0.008177332236080394
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.22398840957415228,
+                    "g1_l2_norm": 0.21268828009817892,
+                    "difference_l2_norm": 0.012230654826058071,
+                    "relative_to_g1": 0.05750507183758449
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.497509721340459,
+                    "g1_l2_norm": 1.4959030245829736,
+                    "difference_l2_norm": 0.00553782753626894,
+                    "relative_to_g1": 0.003701996349537946
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00010404514946639062,
+                    "g1_l2_norm": 0.0001043841677856383,
+                    "difference_l2_norm": 2.298139946230463e-06,
+                    "relative_to_g1": 0.022016173477091734
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0039692199582307295,
+                    "g1_l2_norm": 0.003969939906016494,
+                    "difference_l2_norm": 3.246513987973669e-05,
+                    "relative_to_g1": 0.008177740884826836
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 4.126849701545327e-05,
+                    "g1_l2_norm": 4.135877967565424e-05,
+                    "difference_l2_norm": 9.511991825301062e-08,
+                    "relative_to_g1": 0.0022998724575281114
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4975097248937927,
+                    "g1_l2_norm": 1.495903028223852,
+                    "difference_l2_norm": 0.005537828295763285,
+                    "relative_to_g1": 0.0037019968482439533
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.2180785676892493,
+                    "g1_l2_norm": 0.2125591123569278,
+                    "difference_l2_norm": 0.005537828295763285,
+                    "relative_to_g1": 0.02605312110291561
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.003969425838579311,
+                    "g1_l2_norm": 0.00397015543315691,
+                    "difference_l2_norm": 4.6265494321258024e-06,
+                    "relative_to_g1": 0.001165332065713849
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0005597810188277445,
+                    "g1_l2_norm": 0.0005640614295585627,
+                    "difference_l2_norm": 4.6265494321258024e-06,
+                    "relative_to_g1": 0.008202208464681875
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 13.422706310132451,
+                    "g1_l2_norm": 13.425173451260367,
+                    "difference_l2_norm": 0.0156447851105239,
+                    "relative_to_g1": 0.0011653320657138441
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.892912607330833,
+                    "g1_l2_norm": 1.9073869163273878,
+                    "difference_l2_norm": 0.0156447851105239,
+                    "relative_to_g1": 0.008202208464681844
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.495403041249848,
+                    "g1_l2_norm": 1.495677901643917,
+                    "difference_l2_norm": 0.0017429614187652609,
+                    "relative_to_g1": 0.001165332065713849
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.21088647880836886,
+                    "g1_l2_norm": 0.2124990392856178,
+                    "difference_l2_norm": 0.0017429614187652537,
+                    "relative_to_g1": 0.008202208464681842
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.4975097213404602,
+                    "g1_l2_norm": 1.4959030245829752,
+                    "difference_l2_norm": 0.005537827536270375,
+                    "relative_to_g1": 0.003701996349538901
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00010316151756468169,
+                    "g1_l2_norm": 0.00010436856951729304,
+                    "difference_l2_norm": 2.9003244831570128e-06,
+                    "relative_to_g1": 0.027789252037956236
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.003969211306939346,
+                    "g1_l2_norm": 0.003969940001406707,
+                    "difference_l2_norm": 4.625571515937821e-06,
+                    "relative_to_g1": 0.001165148973107603
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 4.1268497015451546e-05,
+                    "g1_l2_norm": 4.135877967565152e-05,
+                    "difference_l2_norm": 9.511991825219493e-08,
+                    "relative_to_g1": 0.0022998724575085403
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "void_y_min"
+        ],
+        "axis": "y",
+        "coordinate_nm": 0.32407407407407407,
+        "normal_from_minus_to_plus": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "face_tile_count": 336,
+        "material_interface_tile_count": 16,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              3,
+              1
+            ],
+            "face_tile_count": 16,
+            "area_nm2": 0.9141289437585733,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234972906851863,
+                    "g1_l2_norm": 1.2336594201381197,
+                    "difference_l2_norm": 0.004579264915794645,
+                    "relative_to_g1": 0.003711936083041423
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.17988563448386985,
+                    "g1_l2_norm": 0.17533743999033133,
+                    "difference_l2_norm": 0.004579264915794646,
+                    "relative_to_g1": 0.026116868799083422
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773187270359687,
+                    "g1_l2_norm": 0.003273828929688508,
+                    "difference_l2_norm": 1.294107151175736e-05,
+                    "relative_to_g1": 0.003952885685138304
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0004772403725086546,
+                    "g1_l2_norm": 0.00046514879167332767,
+                    "difference_l2_norm": 1.294107151175736e-05,
+                    "relative_to_g1": 0.0278213589789261
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 11.08232992543967,
+                    "g1_l2_norm": 11.07052909408981,
+                    "difference_l2_norm": 0.043760535982934695,
+                    "relative_to_g1": 0.003952885685138301
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.613799481341257,
+                    "g1_l2_norm": 1.5729115179485695,
+                    "difference_l2_norm": 0.0437605359829347,
+                    "relative_to_g1": 0.02782135897892609
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234665312026271,
+                    "g1_l2_norm": 1.2333505995769243,
+                    "difference_l2_norm": 0.00487529392982437,
+                    "relative_to_g1": 0.003952885685138305
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.17979091523021862,
+                    "g1_l2_norm": 0.17523565018938392,
+                    "difference_l2_norm": 0.00487529392982437,
+                    "relative_to_g1": 0.0278213589789261
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00012688595650973215,
+                    "g1_l2_norm": 0.00012745183040417324,
+                    "difference_l2_norm": 5.935115511332451e-06,
+                    "relative_to_g1": 0.04656751882268859
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234972900333483,
+                    "g1_l2_norm": 1.2336594135544667,
+                    "difference_l2_norm": 0.004579261069586621,
+                    "relative_to_g1": 0.003711932985128106
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773187270359687,
+                    "g1_l2_norm": 0.0032738289296885066,
+                    "difference_l2_norm": 1.2941071511560295e-05,
+                    "relative_to_g1": 0.003952885685078112
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 2.9076082201118947e-11,
+                    "g1_l2_norm": 8.221978874130707e-11,
+                    "difference_l2_norm": 7.141859414034589e-11,
+                    "relative_to_g1": 0.8686302316472058
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.2346978738555074,
+                    "g1_l2_norm": 1.2333826681525988,
+                    "difference_l2_norm": 0.004578223995192617,
+                    "relative_to_g1": 0.0037119250281423457
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.1797750268047454,
+                    "g1_l2_norm": 0.1752265265188202,
+                    "difference_l2_norm": 0.004578223995192616,
+                    "relative_to_g1": 0.02612745961554452
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773191882905623,
+                    "g1_l2_norm": 0.003273829454628212,
+                    "difference_l2_norm": 1.2941615041952155e-05,
+                    "relative_to_g1": 0.003953051074073696
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0004772405633119202,
+                    "g1_l2_norm": 0.0004651489836247405,
+                    "difference_l2_norm": 1.2941615041952155e-05,
+                    "relative_to_g1": 0.027822516005738106
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 11.082331485182857,
+                    "g1_l2_norm": 11.07053086918569,
+                    "difference_l2_norm": 0.043762373943000456,
+                    "relative_to_g1": 0.003953051074073692
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.6138001265469628,
+                    "g1_l2_norm": 1.5729121670367616,
+                    "difference_l2_norm": 0.043762373943000456,
+                    "relative_to_g1": 0.027822516005738072
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.2346654857948587,
+                    "g1_l2_norm": 1.2333507973376236,
+                    "difference_l2_norm": 0.004875498694125143,
+                    "relative_to_g1": 0.003953051074073696
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.17979098711159275,
+                    "g1_l2_norm": 0.17523572250329988,
+                    "difference_l2_norm": 0.004875498694125136,
+                    "relative_to_g1": 0.02782251600573807
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00012688595650970768,
+                    "g1_l2_norm": 0.00012745183040414822,
+                    "difference_l2_norm": 5.9351155112628066e-06,
+                    "relative_to_g1": 0.046567518822151294
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234697867335675,
+                    "g1_l2_norm": 1.2333826615674686,
+                    "difference_l2_norm": 0.004578220148110105,
+                    "relative_to_g1": 0.003711921928829277
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773191882905623,
+                    "g1_l2_norm": 0.003273829454628211,
+                    "difference_l2_norm": 1.2941615041755078e-05,
+                    "relative_to_g1": 0.003953051074013499
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 2.9076082113978317e-11,
+                    "g1_l2_norm": 8.221978825837085e-11,
+                    "difference_l2_norm": 7.141859396865035e-11,
+                    "relative_to_g1": 0.8686302346610479
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "void_y_max"
+        ],
+        "axis": "y",
+        "coordinate_nm": 0.9722222222222222,
+        "normal_from_minus_to_plus": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "face_tile_count": 336,
+        "material_interface_tile_count": 16,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              1,
+              3
+            ],
+            "face_tile_count": 16,
+            "area_nm2": 0.9141289437585733,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234697873855475,
+                    "g1_l2_norm": 1.233382668152673,
+                    "difference_l2_norm": 0.004578223995005166,
+                    "relative_to_g1": 0.0037119250279901415
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.17977502680475219,
+                    "g1_l2_norm": 0.17522652651897092,
+                    "difference_l2_norm": 0.004578223995005166,
+                    "relative_to_g1": 0.026127459614452293
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773191882901867,
+                    "g1_l2_norm": 0.0032738294546260363,
+                    "difference_l2_norm": 1.2941615041375428e-05,
+                    "relative_to_g1": 0.00395305107390016
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0004772405633120663,
+                    "g1_l2_norm": 0.0004651489836248216,
+                    "difference_l2_norm": 1.2941615041375431e-05,
+                    "relative_to_g1": 0.027822516004493387
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 11.08233148518159,
+                    "g1_l2_norm": 11.070530869178329,
+                    "difference_l2_norm": 0.04376237394105027,
+                    "relative_to_g1": 0.00395305107390016
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.6138001265474573,
+                    "g1_l2_norm": 1.5729121670370356,
+                    "difference_l2_norm": 0.04376237394105029,
+                    "relative_to_g1": 0.02782251600449338
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.2346654857947172,
+                    "g1_l2_norm": 1.233350797336804,
+                    "difference_l2_norm": 0.004875498693907872,
+                    "relative_to_g1": 0.00395305107390016
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.1797909871116478,
+                    "g1_l2_norm": 0.17523572250333047,
+                    "difference_l2_norm": 0.00487549869390787,
+                    "relative_to_g1": 0.027822516004493366
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.00012688594914061206,
+                    "g1_l2_norm": 0.00012745165368590618,
+                    "difference_l2_norm": 5.9351149614515995e-06,
+                    "relative_to_g1": 0.046567579076519386
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.2346978673356437,
+                    "g1_l2_norm": 1.233382661567562,
+                    "difference_l2_norm": 0.004578220147923368,
+                    "relative_to_g1": 0.003711921928677593
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773191882901867,
+                    "g1_l2_norm": 0.0032738294546260354,
+                    "difference_l2_norm": 1.2941615041178169e-05,
+                    "relative_to_g1": 0.003953051073839908
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 2.8850933300674723e-11,
+                    "g1_l2_norm": 7.693138619085061e-11,
+                    "difference_l2_norm": 7.145355824529023e-11,
+                    "relative_to_g1": 0.9287959282058036
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234972906851861,
+                    "g1_l2_norm": 1.2336594201379756,
+                    "difference_l2_norm": 0.004579264915867074,
+                    "relative_to_g1": 0.0037119360831005667
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.17988563448378547,
+                    "g1_l2_norm": 0.17533743998997553,
+                    "difference_l2_norm": 0.004579264915867074,
+                    "relative_to_g1": 0.026116868799549494
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773187270362675,
+                    "g1_l2_norm": 0.0032738289296908815,
+                    "difference_l2_norm": 1.2941071512237657e-05,
+                    "relative_to_g1": 0.003952885685282147
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0004772403725083505,
+                    "g1_l2_norm": 0.00046514879167322944,
+                    "difference_l2_norm": 1.2941071512237657e-05,
+                    "relative_to_g1": 0.02782135897996454
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 11.082329925440666,
+                    "g1_l2_norm": 11.070529094097836,
+                    "difference_l2_norm": 0.043760535984558896,
+                    "relative_to_g1": 0.003952885685282149
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 1.6137994813402292,
+                    "g1_l2_norm": 1.5729115179482378,
+                    "difference_l2_norm": 0.0437605359845589,
+                    "relative_to_g1": 0.027821358979964565
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.2346653120263835,
+                    "g1_l2_norm": 1.2333505995778185,
+                    "difference_l2_norm": 0.004875293930005312,
+                    "relative_to_g1": 0.003952885685282147
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.17979091523010407,
+                    "g1_l2_norm": 0.17523565018934695,
+                    "difference_l2_norm": 0.0048752939300053125,
+                    "relative_to_g1": 0.02782135897996454
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.0001268859491406713,
+                    "g1_l2_norm": 0.0001274516536860189,
+                    "difference_l2_norm": 5.935114961491249e-06,
+                    "relative_to_g1": 0.046567579076789295
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 1.234972900333482,
+                    "g1_l2_norm": 1.2336594135543415,
+                    "difference_l2_norm": 0.0045792610696597635,
+                    "relative_to_g1": 0.0037119329851877723
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0032773187270362667,
+                    "g1_l2_norm": 0.0032738289296908797,
+                    "difference_l2_norm": 1.2941071512040396e-05,
+                    "relative_to_g1": 0.0039528856852218954
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 2.8850933242157016e-11,
+                    "g1_l2_norm": 7.693138494718264e-11,
+                    "difference_l2_norm": 7.145355780856016e-11,
+                    "relative_to_g1": 0.9287959375437829
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "void_z_min"
+        ],
+        "axis": "z",
+        "coordinate_nm": 2.074074074074074,
+        "normal_from_minus_to_plus": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "face_tile_count": 48,
+        "material_interface_tile_count": 4,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              3,
+              1
+            ],
+            "face_tile_count": 4,
+            "area_nm2": 0.28566529492455417,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.711597852488132,
+                    "g1_l2_norm": 0.7111333581758683,
+                    "difference_l2_norm": 0.0026433451607223804,
+                    "relative_to_g1": 0.003717087843414965
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.10372296237235286,
+                    "g1_l2_norm": 0.10109626956266408,
+                    "difference_l2_norm": 0.0026433451607223804,
+                    "relative_to_g1": 0.026146812064948788
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0018886574025925892,
+                    "g1_l2_norm": 0.0018874233364018574,
+                    "difference_l2_norm": 7.469804256077667e-06,
+                    "relative_to_g1": 0.003957672935377571
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0002752843746483881,
+                    "g1_l2_norm": 0.0002683014117240013,
+                    "difference_l2_norm": 7.469804256077667e-06,
+                    "relative_to_g1": 0.027841091882743328
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 6.38653917880758,
+                    "g1_l2_norm": 6.382366155121265,
+                    "difference_l2_norm": 0.02525931779579328,
+                    "relative_to_g1": 0.003957672935377577
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 0.9308805512275992,
+                    "g1_l2_norm": 0.9072674987811687,
+                    "difference_l2_norm": 0.02525931779579328,
+                    "relative_to_g1": 0.02784109188274337
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.7115144956900963,
+                    "g1_l2_norm": 0.7110495855469748,
+                    "difference_l2_norm": 0.002814101700430701,
+                    "relative_to_g1": 0.003957672935377571
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.10370796880918651,
+                    "g1_l2_norm": 0.10107727499635023,
+                    "difference_l2_norm": 0.002814101700430704,
+                    "relative_to_g1": 0.027841091882743352
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.7115978518546516,
+                    "g1_l2_norm": 0.7111333575251436,
+                    "difference_l2_norm": 0.002643344964473246,
+                    "relative_to_g1": 0.0037170875708495855
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.0026102165281037e-05,
+                    "g1_l2_norm": 3.0422099831798005e-05,
+                    "difference_l2_norm": 1.018581544915635e-06,
+                    "relative_to_g1": 0.03348163179225998
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 1.744419228430996e-05,
+                    "g1_l2_norm": 1.7462209917189554e-05,
+                    "difference_l2_norm": 1.9013906524209428e-08,
+                    "relative_to_g1": 0.0010888602653603657
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.001888576841042835,
+                    "g1_l2_norm": 0.0018873425555577146,
+                    "difference_l2_norm": 7.469780056700111e-06,
+                    "relative_to_g1": 0.003957829507263334
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.711597852487652,
+                    "g1_l2_norm": 0.7111333581756537,
+                    "difference_l2_norm": 0.002643345161480497,
+                    "relative_to_g1": 0.003717087844482155
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.10372296236905222,
+                    "g1_l2_norm": 0.101096269561147,
+                    "difference_l2_norm": 0.002643345161480497,
+                    "relative_to_g1": 0.026146812072840114
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.001888657400492642,
+                    "g1_l2_norm": 0.0018874233361509363,
+                    "difference_l2_norm": 7.469804626497635e-06,
+                    "relative_to_g1": 0.003957673132160679
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.00027528437556241254,
+                    "g1_l2_norm": 0.0002683014118302819,
+                    "difference_l2_norm": 7.469804626497635e-06,
+                    "relative_to_g1": 0.02784109325232613
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 6.386539171706561,
+                    "g1_l2_norm": 6.382366154272771,
+                    "difference_l2_norm": 0.025259319048376996,
+                    "relative_to_g1": 0.003957673132160675
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 0.9308805543183943,
+                    "g1_l2_norm": 0.9072674991405594,
+                    "difference_l2_norm": 0.025259319048376996,
+                    "relative_to_g1": 0.02784109325232609
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.7115144948989826,
+                    "g1_l2_norm": 0.7110495854524452,
+                    "difference_l2_norm": 0.0028141018399791317,
+                    "relative_to_g1": 0.003957673132160679
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.10370796915352719,
+                    "g1_l2_norm": 0.10107727503638936,
+                    "difference_l2_norm": 0.0028141018399791278,
+                    "relative_to_g1": 0.027841093252326088
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.7115978518546525,
+                    "g1_l2_norm": 0.7111333575251446,
+                    "difference_l2_norm": 0.002643344964472657,
+                    "relative_to_g1": 0.003717087570848752
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.0014698628224086e-05,
+                    "g1_l2_norm": 3.0417056561762015e-05,
+                    "difference_l2_norm": 1.020548579260939e-06,
+                    "relative_to_g1": 0.03355185197452321
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 1.744396492450609e-05,
+                    "g1_l2_norm": 1.7462182795821397e-05,
+                    "difference_l2_norm": 1.915887752719878e-08,
+                    "relative_to_g1": 0.0010971639543129392
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0018885768410428357,
+                    "g1_l2_norm": 0.0018873425555577168,
+                    "difference_l2_norm": 7.469780056698948e-06,
+                    "relative_to_g1": 0.003957829507262713
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "plane_names": [
+          "void_z_max"
+        ],
+        "axis": "z",
+        "coordinate_nm": 4.148148148148148,
+        "normal_from_minus_to_plus": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "face_tile_count": 48,
+        "material_interface_tile_count": 4,
+        "material_tag_transition_groups": [
+          {
+            "material_transition_minus_to_plus": [
+              1,
+              3
+            ],
+            "face_tile_count": 4,
+            "area_nm2": 0.28566529492455417,
+            "same_side_cross_grid_traces": [
+              {
+                "side": "minus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.6624863649256747,
+                    "g1_l2_norm": 0.6614317538541092,
+                    "difference_l2_norm": 0.002459217593780991,
+                    "relative_to_g1": 0.003718021669584699
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.09653364542093722,
+                    "g1_l2_norm": 0.09409118775342949,
+                    "difference_l2_norm": 0.0024592175937809915,
+                    "relative_to_g1": 0.026136534701055
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0017583699776045913,
+                    "g1_l2_norm": 0.0017555706556325508,
+                    "difference_l2_norm": 6.95026202919167e-06,
+                    "relative_to_g1": 0.00395897596424988
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0002562031722436866,
+                    "g1_l2_norm": 0.0002497097896007579,
+                    "difference_l2_norm": 6.950262029191668e-06,
+                    "relative_to_g1": 0.02783335823679126
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 5.945969204046894,
+                    "g1_l2_norm": 5.936503231327864,
+                    "difference_l2_norm": 0.02350247360451879,
+                    "relative_to_g1": 0.003958975964249886
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 0.8663570190247226,
+                    "g1_l2_norm": 0.8443994937503523,
+                    "difference_l2_norm": 0.023502473604518792,
+                    "relative_to_g1": 0.027833358236791325
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.6624312732073718,
+                    "g1_l2_norm": 0.6613766837627872,
+                    "difference_l2_norm": 0.002618374394332168,
+                    "relative_to_g1": 0.00395897596424988
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.09651950144210068,
+                    "g1_l2_norm": 0.09407324736226381,
+                    "difference_l2_norm": 0.0026183743943321717,
+                    "relative_to_g1": 0.027833358236791308
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.6624863642186009,
+                    "g1_l2_norm": 0.6614317531306708,
+                    "difference_l2_norm": 0.002459217415215109,
+                    "relative_to_g1": 0.0037180214036825537
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.060806893107858e-05,
+                    "g1_l2_norm": 3.093558241157354e-05,
+                    "difference_l2_norm": 9.371577718071835e-07,
+                    "relative_to_g1": 0.030293846074692824
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 2.0837985518930173e-05,
+                    "g1_l2_norm": 2.090234575063751e-05,
+                    "difference_l2_norm": 6.552571410252279e-08,
+                    "relative_to_g1": 0.0031348497859635823
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.001758246500494366,
+                    "g1_l2_norm": 0.0017554462164533046,
+                    "difference_l2_norm": 6.949953140504968e-06,
+                    "relative_to_g1": 0.003959080645914987
+                  }
+                }
+              },
+              {
+                "side": "plus",
+                "fields": {
+                  "E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.6624863649258598,
+                    "g1_l2_norm": 0.6614317538542895,
+                    "difference_l2_norm": 0.0024592175947025707,
+                    "relative_to_g1": 0.003718021670976996
+                  },
+                  "E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.0965336454222005,
+                    "g1_l2_norm": 0.09409118775469036,
+                    "difference_l2_norm": 0.0024592175947025707,
+                    "relative_to_g1": 0.026136534710499294
+                  },
+                  "H_total": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.001758369969662817,
+                    "g1_l2_norm": 0.0017555706547694057,
+                    "difference_l2_norm": 6.950267774115222e-06,
+                    "relative_to_g1": 0.003958979238593015
+                  },
+                  "H_scattered": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0002562031787274802,
+                    "g1_l2_norm": 0.0002497097902920979,
+                    "difference_l2_norm": 6.9502677741152214e-06,
+                    "relative_to_g1": 0.02783338116613349
+                  },
+                  "curl_E_total": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 5.945969177191596,
+                    "g1_l2_norm": 5.9365032284091175,
+                    "difference_l2_norm": 0.023502493031112123,
+                    "relative_to_g1": 0.003958979238593018
+                  },
+                  "curl_E_scattered": {
+                    "unit": "V/m/nm",
+                    "g0_l2_norm": 0.8663570409498226,
+                    "g1_l2_norm": 0.8443994960881349,
+                    "difference_l2_norm": 0.023502493031112126,
+                    "relative_to_g1": 0.027833381166133517
+                  },
+                  "scaled_curl_E_total": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.6624312702154647,
+                    "g1_l2_norm": 0.6613766834376144,
+                    "difference_l2_norm": 0.00261837655861902,
+                    "relative_to_g1": 0.003958979238593015
+                  },
+                  "scaled_curl_E_scattered": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.09651950388474229,
+                    "g1_l2_norm": 0.09407324762271255,
+                    "difference_l2_norm": 0.002618376558619023,
+                    "relative_to_g1": 0.027833381166133528
+                  },
+                  "E_total_tangential": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 0.6624863642186016,
+                    "g1_l2_norm": 0.661431753130672,
+                    "difference_l2_norm": 0.0024592174152150434,
+                    "relative_to_g1": 0.0037180214036824475
+                  },
+                  "E_total_normal": {
+                    "unit": "V/m",
+                    "g0_l2_norm": 3.061205207748716e-05,
+                    "g1_l2_norm": 3.093941630223551e-05,
+                    "difference_l2_norm": 9.395731695646861e-07,
+                    "relative_to_g1": 0.03036816080776539
+                  },
+                  "H_total_tangential": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 2.083731535809043e-05,
+                    "g1_l2_norm": 2.090227325550629e-05,
+                    "difference_l2_norm": 6.613226674034376e-08,
+                    "relative_to_g1": 0.003163879159551343
+                  },
+                  "H_total_normal": {
+                    "unit": "A/m",
+                    "g0_l2_norm": 0.0017582465004943656,
+                    "g1_l2_norm": 0.001755446216453307,
+                    "difference_l2_norm": 6.949953140503924e-06,
+                    "relative_to_g1": 0.0039590806459143865
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "use": "interface-local h evidence; not included in the global field h gate"
+  },
+  "official_power_comparison": {
+    "source": "already-qualified official DtN-port R/T/A and volume_absorption A_volume; no flux or power recomputation",
+    "G0": {
+      "role": null,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R_total": 0.07565196449717393,
+      "T_total": 0.9062068564432124,
+      "A_balance": 0.018141179059613655,
+      "A_volume_total": 0.01814125705170932,
+      "A_volume_grating": 0.013925879883210604,
+      "A_volume_substrate": 0.004215377168498715,
+      "A_port_balance_minus_A_volume_total": -7.799209566367038e-08,
+      "volume_power_source": "volume_integral_Im_epsilon_E2",
+      "original_final_run_gate": {
+        "run_id": "task40extra_0p7nm_nonseparable_g0_iterative_review_v1",
+        "status": "finished",
+        "result_classification": "worker_exit0",
+        "exit_status": 0,
+        "task_process_tree_swap_status": "qualified_zero",
+        "task_process_tree_peak_swap_bytes": 0,
+        "task_process_tree_identity_coverage": "complete"
+      }
+    },
+    "G1": {
+      "role": null,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R_total": 0.07612406206792088,
+      "T_total": 0.905769220572286,
+      "A_balance": 0.01810671735979308,
+      "A_volume_total": 0.018106712729780598,
+      "A_volume_grating": 0.013893418210626729,
+      "A_volume_substrate": 0.0042132945191538694,
+      "A_port_balance_minus_A_volume_total": 4.630012481049439e-09,
+      "volume_power_source": "volume_integral_Im_epsilon_E2",
+      "original_final_run_gate": {
+        "run_id": "task40extra_0p7nm_nonseparable_g1_iterative_review_v1",
+        "status": "finished",
+        "result_classification": "worker_exit0",
+        "exit_status": 0,
+        "task_process_tree_swap_status": "qualified_zero",
+        "task_process_tree_peak_swap_bytes": 0,
+        "task_process_tree_identity_coverage": "complete"
+      }
+    },
+    "G1_minus_G0": {
+      "R_total": {
+        "g0": 0.07565196449717393,
+        "g1": 0.07612406206792088,
+        "g1_minus_g0": 0.00047209757074695435,
+        "absolute_difference": 0.00047209757074695435,
+        "limit_absolute": 0.001,
+        "pass": true
+      },
+      "T_total": {
+        "g0": 0.9062068564432124,
+        "g1": 0.905769220572286,
+        "g1_minus_g0": -0.00043763587092637835,
+        "absolute_difference": 0.00043763587092637835,
+        "limit_absolute": 0.001,
+        "pass": true
+      },
+      "A_balance": {
+        "g0": 0.018141179059613655,
+        "g1": 0.01810671735979308,
+        "g1_minus_g0": -3.446169982057601e-05,
+        "absolute_difference": 3.446169982057601e-05,
+        "limit_absolute": 0.001,
+        "pass": true
+      },
+      "A_volume_total": {
+        "g0": 0.01814125705170932,
+        "g1": 0.018106712729780598,
+        "g1_minus_g0": -3.454432192872073e-05,
+        "absolute_difference": 3.454432192872073e-05,
+        "limit_absolute": 0.001,
+        "pass": true
+      }
+    },
+    "gate": {
+      "limit_absolute": 0.001,
+      "pass": true,
+      "classification": "reviewed G0/G1 engineering h power gate"
+    }
+  },
+  "gates": {
+    "sample_witness_G0": true,
+    "sample_witness_G1": true,
+    "global_field_scaled_curl_h_gate": false,
+    "official_power_h_gate": true,
+    "overall": false,
+    "continuum_convergence_claim": false
+  },
+  "cleanup": {
+    "status": "COMPLETED",
+    "operation_stack": "p6 mesh/space/MPC only; no physical operator, factor, or KSP",
+    "direct_curl": "UFL derivative into DG6"
+  }
+}

@@ -1,0 +1,247 @@
+{
+  "schema": "task40extra.repair-ledger-v2",
+  "status": "FAILURES_AND_REPAIRS_HASH_BOUND; UNKNOWN_COSTS_NOT_ZERO_FILLED; ORIGINAL_NEGATIVES_PRESERVED",
+  "entries": [
+    {
+      "id": "P4 module invocation",
+      "failure": "direct script invocation raised ModuleNotFoundError: src before numerical work",
+      "fix": "run as python -m benchmarks.postprocess_task40_p1_saved_fields_common_subcells",
+      "PDE_or_factor": false,
+      "wall_s": "unknown",
+      "raw_evidence": "No run root was created; do not impute a duration."
+    },
+    {
+      "id": "shared Task000 hook rejection",
+      "failure": "root guard rejected the legitimate Task40 branch",
+      "deviation": "historical commit e174b91 used core.hooksPath=/dev/null; preserve it without amend/rewrite",
+      "correct_hook": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40extra_git_hooks",
+      "later_hooked_commits": [
+        "c1cf902be1f2cc1317c07caea3b6b326669bbd5e",
+        "5f9efdbae1c668ffa4426731156ec4afe9325eb2"
+      ]
+    },
+    {
+      "id": "F2a",
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T092831.073826Z",
+      "source_sha": "unknown_full_sha_not_retained",
+      "failure": "sparse DtN helper used max(1e-30,1e-13*global_max) and discarded legitimate tiny evanescent entries; implementation failure, not physics",
+      "fixed_source": "0a6d…",
+      "watchdog_s": 47.63260980503401,
+      "tree_RSS_B": 759554048,
+      "swap_B": 0,
+      "official_result": false,
+      "raw_evidence": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T092831.073826Z/run_manifest.json",
+          "sha256": "c1d13d44fd2ede6d7208ed43fd4264d059d967e7765c08d65089c7c300d29f09"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T092831.073826Z/run_summary.json",
+          "sha256": "cb75547872fc04e7f0af23a626d43dc458f1f8fc8865530f57151503a59d7c03"
+        }
+      ],
+      "source_sha_prefix_retained": "75e54e…",
+      "fixed_source_sha_prefix_retained": "0a6d…",
+      "fixed_source_sha": "unknown_full_sha_not_retained",
+      "implementation_bug_record_sha256": "8a99a71dc8fd3267ab4df0a4314f7a10fea00a3f75dbfc5656cd3382386d8c37"
+    },
+    {
+      "id": "F2b",
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T105605.992533Z",
+      "source_sha": "unknown_full_sha_not_retained",
+      "failure": "setup-only PC call-count check used a unit-amplitude mixed X1 vector; Hmin=8.12e-146 amplified rounding and produced owner-row disagreement before production KSP",
+      "fixed_source": "9e454…",
+      "watchdog_s": 253.9144538990222,
+      "tree_RSS_B": 3723247616,
+      "swap_B": 0,
+      "official_result": false,
+      "source_sha_prefix_retained": "0a6d…",
+      "fixed_source_sha_prefix_retained": "9e454…",
+      "fixed_source_sha": "unknown_full_sha_not_retained",
+      "replay_record_sha256": "9f16c137015f8bbb6e0fccc45d98cd06a4696cd299c4853928836123f2241538",
+      "replay_record_path": "not preserved in compact evidence; path unknown"
+    },
+    {
+      "id": "F2c",
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T122349.828571Z",
+      "source_sha": "unknown_full_sha_not_retained",
+      "failure": "pre-KSP first-Arnoldi check took an unweighted Euclidean norm over 68,256 FE trace plus 180 differently H_p-scaled modal coefficients; false 1e-9–4.46e-9 failure. FE and weighted-port checks were 3.51e-13–4.34e-13 / 1.38e-13–1.70e-13; KSP never started.",
+      "fixed_source": "37635226002787beb26a24baba3a8da333027239",
+      "watchdog_s": 298.95260448398767,
+      "workflow_s": 299.01011132699205,
+      "tree_RSS_B": 3767599104,
+      "swap_B": 0,
+      "official_result": false,
+      "source_sha_prefix_retained": "9e454…",
+      "fixed_source_sha": "37635226002787beb26a24baba3a8da333027239",
+      "replay_record_sha256": "1efca5b8a841490f0064cc4e5066c7bdb1d035189acacfaf9843a18b715a7130",
+      "replay_record_path": "not preserved in compact evidence; path unknown"
+    },
+    {
+      "id": "F2d final M1 worker",
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z",
+      "source_sha": "37635226002787beb26a24baba3a8da333027239",
+      "input_sha256": "d9a53689fbeee530ad7d72954d4665498a3994c3717535a11cd2fc335920322b",
+      "physical_sha256": "98b38bfca9f2af50b75682320fc20ec8560ee6401e6b7dfa5ffbc201060b4b",
+      "mode_sha256": "2624335d0004e6634f60e9003d9c66837cf571cd454c5d2ca36c6b5cdaef2675",
+      "failure": "actual M1 has 180 ordered modes; offline authority checker hardcoded 80, so it withheld official_result after the worker solve",
+      "worker_exit": 4,
+      "official_result": false,
+      "A6": 9.572475880327875e-07,
+      "KSP_s": 809.586202554,
+      "KSP_iterations": 156,
+      "converged_reason": 2,
+      "watchdog_s": 1123.4511613079812,
+      "workflow_s": 1123.499645303993,
+      "tree_RSS_B": 3867545600,
+      "swap_B": 0,
+      "p4_full_storage_rows": 69856,
+      "p4_factor_rows": 29172,
+      "p4_nnz": 11033364,
+      "INFOG29": 55305544,
+      "raw_evidence": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/run_manifest.json",
+          "sha256": "798e9909f8b163da76e282b078193f05d1ccb687ec558200b0ff07e9861d8559"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/run_summary.json",
+          "sha256": "a33e58693bddfb664493124adb5b075b8c198b8b0198705e1088f866d139d2b4"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "d161e0a119acec30152071c489a197e11760a3429ade1a78685c2b576c99a519"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/native_preconditioner/numeric_stage_facts.json",
+          "sha256": "ea045d14c1758bb6d22fb6ae70d097dedd65450cd884ecb86e8e2a0ac984d67e"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/native_preconditioner/numeric_stage_observations.json",
+          "sha256": "3313a30c472f1b1ca426e8211c8c895a634111ffdfd8abc7db30473ed11a4fba"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/native_preconditioner/inventory.json",
+          "sha256": "7238f1404f30a1dfc4714b5d18524e3fff696029feebf3d141cdb681e6a9fb00"
+        }
+      ]
+    },
+    {
+      "id": "F5 CLI validation stop",
+      "service_unit": "myfenics-case-20261001T231025-1570166.service",
+      "failure": "CLI exited 2 because required --v14-time-policy observe_only was absent; worker/watchdog and run root were never started",
+      "classification": "pre-worker validation stop; no numerical work",
+      "wall_s": "unknown; not counted as a formal attempt",
+      "resources": "unknown; no process-tree record"
+    },
+    {
+      "id": "F5 capacity-guard attempt",
+      "run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261001T231058.402305Z",
+      "source_sha": "fb9c1847ba0a87a0e17befcaf59b93d4ec4713ad",
+      "failure": "conservative p6 direct-term upper bound exceeded the configured 128 MiB p6-action workspace before numeric factorization/KSP; no OOM and no solver-failure claim",
+      "classification": "controlled capacity stop before factor/KSP",
+      "watchdog_s": 181.401740545989,
+      "charged_s": 199.0616238819469,
+      "tree_RSS_B": 3146706944,
+      "swap_B": 0,
+      "process_tree_samples": 715,
+      "identity_coverage": "complete",
+      "raw_evidence": [
+        {
+          "path": "docs/task40extra_0p7nm_engineering/outcomes/records/f5_capacity_guard_failure_v1.json",
+          "sha256": "5b4cee66cde8b0d407ed996ad2d49da3ffa8679120f3fab28a4ac5721bc34d46"
+        }
+      ]
+    },
+    {
+      "id": "F5 accounting snapshot",
+      "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000012.334130Z",
+      "classification": "accounting snapshot, not an independent solver run",
+      "review_v2_growth_elapsed_s": 199.10657512396972,
+      "accounting_note": "The ledger reflects the charged cost of the earlier capacity-guard attempt; do not count as another PDE or sum cumulative snapshots."
+    },
+    {
+      "id": "E2 original worker",
+      "run_id": "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1",
+      "failure": "post-solve output contract rejected 24x24 samples; required at least 25x7; worker exit4 and official_result=false though original A6 residual passed",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "original_input_sha256": "955bb5051e0cc466124b7fefe7402cdb7aa49618bc2f3eaa02ee5f11b3e6d09b",
+      "A6": 9.793073227317083e-07,
+      "workflow_s": 7692.028065770981,
+      "watchdog_s": 7691.032122245058,
+      "tree_RSS_B": 11349196800,
+      "swap_B": 0,
+      "PSS": null,
+      "fresh_recovery_does_not_reclassify_original": true
+    },
+    {
+      "id": "E2 recovery v1",
+      "failure": "preflight stopped before offline field recovery",
+      "classification": "saved-output recovery only; not PDE",
+      "wall_s": "unknown; no qualified watchdog record"
+    },
+    {
+      "id": "E2 recovery v2",
+      "failure": "KeyError at schema lookup before mesh; finalizer TypeError on integer process_tree_samples",
+      "classification": "saved-output recovery only; not PDE",
+      "watchdog_s": 2.2859579080250114,
+      "tree_RSS_B": 146374656,
+      "swap_B": 0
+    },
+    {
+      "id": "E2 recovery v3",
+      "status": "POSTPROCESS_REPAIR_COMPLETE_ORIGINAL_RUN_FAILED",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3",
+      "record_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3/repair_record.json",
+      "record_sha256": "cd303990783bae10618c8bf3ba674a4163db6909871d04c38945c6240fafae4b",
+      "recovery_input_sha256": "4c3b70a237d19325a46825526a85ea045e6d3f665a5a6ad4d43781e082461828",
+      "scope": "reconstructed p6 mesh/space and native matrix-free A6 action plus streaming DtN; one A6 verification; no global AIJ/H6, p4 factor, KSP or solve",
+      "watchdog_s": 75.609285229,
+      "process_s": 74.153920702,
+      "tree_RSS_B": 1518960640,
+      "swap_B": 0,
+      "native_A6_actions": 1,
+      "authority_checks_passed": "15/15",
+      "A_volume_delta": 0.0,
+      "original_worker_failure_preserved": true
+    },
+    {
+      "id": "P6 first preflight",
+      "failure": ".venv/bin/python symlink resolution failed before numerical work",
+      "later": "qualified activation confirmed complex128/int32 and MPI1",
+      "wall_s": "unknown; no qualified process record"
+    },
+    {
+      "id": "P6 orientation attempt",
+      "source_sha": "c1cf902be1f2cc1317c07caea3b6b326669bbd5e",
+      "failure": "scalar cell_info caused IndexError before compact record; no global factor or PDE",
+      "fix": "use space.element plus a one-element uint32 cell index",
+      "fixed_source_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+      "wall_s": "unknown",
+      "tree_RSS_B": "unknown",
+      "swap_B": "unknown; no peak claim"
+    },
+    {
+      "id": "P6 bounded diagnostic",
+      "source_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+      "status": "bounded real local-cell and synthetic resampled-mode actions complete",
+      "elapsed_s": 70.8300992869772,
+      "RUSAGE_SELF_peak_RSS_B": 455610368,
+      "process_tree_supervision": false,
+      "task_swap_peak": "not independently sampled; two VmSwap=0 snapshots are not a high-water value",
+      "global_p4_factor_or_PDE": false
+    }
+  ],
+  "legacy_accounting": {
+    "task40_N6_shared_ledger_cumulative_seconds": 530.8867869906425,
+    "source": "docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json#ledger",
+    "scope": "historical attempts1-4 aggregate; keep separate from Review V2 F2/F5/E2 entries and do not infer per-attempt values by subtraction",
+    "review_v2_accounting_snapshots": "snapshots are cumulative bookkeeping, not separate PDEs; historical unknown durations remain unknown"
+  },
+  "source_identity_note": "Where only an abbreviated historical source prefix survived, it is labelled as a prefix and the full SHA is marked unknown; no path or identity is fabricated."
+}

@@ -1,0 +1,66 @@
+{
+  "schema": "task40extra.reference-metric-tensor-v2",
+  "status": "QUALIFIED_ADOPTED_FOR_REMAINING_CAMPAIGN",
+  "plain_language": "复用真实单元的curl和质量参考张量，再按精确几何组合，可减少重复准备；不改Maxwell方程，也不保证所有网格都更快。",
+  "decision_chain": [
+    {
+      "stage": "G0 paired component",
+      "status": "NOT_QUALIFIED",
+      "scope": "原失败保留"
+    },
+    {
+      "stage": "G0 closure re-audit",
+      "status": "COMPONENT_QUALIFIED_FOR_G1_M0_WATCHDOG_TRIAL",
+      "scope": "仅符合进入G1 M0试验的条件"
+    },
+    {
+      "stage": "G1 paired component",
+      "status": "COMPONENT_QUALIFIED_FOR_G1_M0_WATCHDOG_TRIAL",
+      "raw_classes": 30,
+      "oriented_classes": 67,
+      "duration_s": 266.3155558530125,
+      "self_RSS_peak_B": 540602368,
+      "PDE_or_global_factor": false
+    },
+    {
+      "stage": "F1 same-discrete G1 M0",
+      "status": "QUALIFIED_ADOPTED_FOR_REMAINING_CAMPAIGN",
+      "run_id": "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z",
+      "source_sha": "1d7d790088d6ea0f30aed2ef1073fb1b86e68155",
+      "input_sha256": "518703cf4c28a57027e249d240be22491759b9ad8f8a9f17a13119209bdb2215",
+      "physical_model_sha256": "8fcb53abe4123e75599eed0ffae278e93fb0549f38b1f5235d0eac2f4cfc73fb",
+      "cells": 880,
+      "p4_rows": 180240,
+      "p6_rows": 595512,
+      "ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "gate_values": {
+        "A6": 8.648911990579289e-07,
+        "A6_limit": 1e-06,
+        "field_relative": 1.7690780395520253e-07,
+        "mode_relative": 3.279002091598612e-08,
+        "R_delta": 9.15e-09,
+        "T_delta": 1.88e-08,
+        "A_volume_delta": 2.78e-10,
+        "all_pass": true
+      },
+      "single_run_cost_context": {
+        "workflow_reduction_fraction": 0.450332,
+        "old_KSP_s": 3135.912814103,
+        "F1_KSP_s": 1674.834592916,
+        "old_iterations": 127,
+        "F1_iterations": 128,
+        "old_tree_RSS_B": 6855741440,
+        "F1_tree_RSS_B": 6891311104,
+        "swap_B": 0,
+        "PSS": null,
+        "causal_claim": false
+      }
+    }
+  ],
+  "interpretation": "F1资格只覆盖特定G1 M0身份。G0原始配对失败不改写，也不证明所有网格和模式合格。",
+  "evidence": [
+    "benchmarks/artifacts/task40extra_0p7nm_engineering/p2_reference_metric/",
+    "results/.../g1_reference_metric_f1_v1/20261001T071928.969765Z/"
+  ]
+}

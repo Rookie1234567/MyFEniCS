@@ -1,0 +1,212 @@
+{
+  "schema": "task40extra.electrical-size-v2",
+  "status": "E1_DIAGNOSTIC_PASS_E2_ORIGINAL_WORKER_FAILED_WITH_SAVED_OUTPUT_RECOVERY",
+  "interpretation": "固定0.7 nm波长而放大几何；E1和E2不是同一物理模型的网格收敛序列。",
+  "models": [
+    {
+      "name": "E1",
+      "run_id": "task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z",
+      "classification": "DIAGNOSTIC_ELECTRICAL_SIZE_GROWTH",
+      "q": 1.25,
+      "cells": 760,
+      "modes": 588,
+      "p6_rows": 514710,
+      "active_rows": 153360,
+      "interior_rows": 342000,
+      "trace_rows": 172710,
+      "local_interior_trace": [
+        450,
+        432
+      ],
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "A6_pre_post": 9.781668525522113e-07,
+      "A6_limit": 1e-06,
+      "A6_pass": true,
+      "workflow_s": 4580.375190779043,
+      "watchdog_s": 4579.634232348006,
+      "KSP_s": 3722.192948129,
+      "p6_build_s": 148.73774907301413,
+      "postprocess_s": 19.71188893,
+      "tree_RSS_peak_B": 10650341376,
+      "task_swap_peak_B": 0,
+      "PSS": null,
+      "setup_s": "unknown; no independently verified native boundary",
+      "power": {
+        "R_total": 0.06235653736791684,
+        "R00_s": 0.062356105023958414,
+        "R00_p": 6.083759436e-16,
+        "R00_total": 0.062356105023959024,
+        "T_total": 0.9159264755357902,
+        "A_balance": 0.021716987096292995,
+        "A_volume": 0.021716951725654188,
+        "A_port_minus_A_volume": 3.5370639e-08
+      },
+      "input_sha256": "5c0aa01d1bb327f1331b69cfe359c6f775961398d316c2f88d3aeaff978af8fd",
+      "physical_model_sha256": "6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d",
+      "ordered_mode_sha256": "d1ea3dadce6e546ac7fce32493edb0fab09d7de22208850aca0a139a23b1e52b",
+      "raw_evidence": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/run_manifest.json",
+          "sha256": "02aecdb075e79d47828d6c0ad984bc169ceae9f8f3896f0df268955852f35584",
+          "field_paths": [
+            "run_id",
+            "source_sha",
+            "input_sha256",
+            "physical_model_sha256"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/task40q4_ordered_mode_manifest.json",
+          "sha256": "d1ea3dadce6e546ac7fce32493edb0fab09d7de22208850aca0a139a23b1e52b",
+          "field_paths": [
+            "ordered_mode_manifest_sha256"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "cf9f2c731dec7a50830c518a3d70c421d642863aabdf5319f8ffad8ee6b28c10",
+          "field_paths": [
+            "solver.A6_pre_post",
+            "output.output.port_metrics.R_total",
+            "output.output.port_metrics.T_total",
+            "output.output.volume_metrics.A_volume_total"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/run_summary.json",
+          "sha256": "668c166eb22c5befc4efd5ca0ce7f06ae1b8c6fb4312d682d6eb749026b03089",
+          "field_paths": [
+            "full_workflow_monotonic_seconds",
+            "task40_swap_qualification.process_tree_peak_swap_bytes"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "E2",
+      "run_id": "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z",
+      "classification": "ORIGINAL_WORKER_FAILED",
+      "worker_exit": 4,
+      "official_result": false,
+      "failure": "24x24 diffraction samples failed the required minimum 25x7 after solve.",
+      "q": 1.5,
+      "cells": 880,
+      "modes": 700,
+      "p6_rows": 595512,
+      "active_rows": 177120,
+      "interior_rows": 396000,
+      "trace_rows": 199512,
+      "local_interior_trace": [
+        450,
+        432
+      ],
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "A6_original_pre_post": 9.793073227317083e-07,
+      "A6_limit": 1e-06,
+      "A6_residual_pass": true,
+      "workflow_s": 7692.028065770981,
+      "watchdog_s": 7691.032122245058,
+      "tree_RSS_peak_B": 11349196800,
+      "task_swap_peak_B": 0,
+      "PSS": null,
+      "p4_rows": 75900,
+      "p4_nnz": 31287060,
+      "MUMPS_INFOG29": "unknown",
+      "setup_KSP_postprocess_boundaries": "unknown",
+      "v2_recovery": {
+        "status": "failed_before_mesh",
+        "worker_error": "KeyError at schema lookup",
+        "finalizer_error": "TypeError on integer process_tree_samples",
+        "watchdog_s": 2.2859579,
+        "RSS_B": null,
+        "swap_B": null
+      },
+      "v3_saved_field_recovery": {
+        "status": "POSTPROCESS_REPAIR_COMPLETE_ORIGINAL_RUN_FAILED",
+        "classification": "SAVED_FIELD_OFFLINE_OUTPUT_RECOVERY; ORIGINAL_WORKER_FAILED_PRESERVED",
+        "record": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3/repair_record.json",
+        "fresh_PDE_KSP_factor": false,
+        "native_A6_actions": 1,
+        "native_A6": 9.793073227317083e-07,
+        "R_total": 0.05116886160983426,
+        "R00_s": 0.05116727309447169,
+        "R00_p": 7.978116094818559e-19,
+        "T_total": 0.9239410512847893,
+        "A_balance": 0.024890087105376435,
+        "A_volume": 0.02489005360260621,
+        "A_port_minus_A_volume": 3.350277e-08,
+        "A_volume_delta": 0.0,
+        "process_s": 74.153920702,
+        "watchdog_s": 75.609285229,
+        "tree_RSS_peak_B": 1518960640,
+        "swap_B": 0,
+        "PSS": null,
+        "samples": 299,
+        "authority_checks_passed": 15
+      },
+      "original_input_sha256": "955bb5051e0cc466124b7fefe7402cdb7aa49618bc2f3eaa02ee5f11b3e6d09b",
+      "recovery_input_sha256": "4c3b70a237d19325a46825526a85ea045e6d3f665a5a6ad4d43781e082461828",
+      "physical_model_sha256": "48814d5fe34ab0e73de345c2d98661a96ef93ebb9690be738d040edac7cd84a7",
+      "ordered_mode_sha256": "ca2e97c451d981d0182333381ca9179c2994b3b18916497e536083d2d825da29",
+      "recovery_input_change": "output-only sample grid x=24→25; y remains24; original formal input identity retained separately",
+      "raw_evidence": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/run_manifest.json",
+          "sha256": "18b6e6432c03510d7d6545a3d7ff3c5dda8738b980d3f0d99bbb3e635701ea7b",
+          "field_paths": [
+            "run_id",
+            "source_sha",
+            "input_sha256",
+            "physical_model_sha256"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/task40q4_ordered_mode_manifest.json",
+          "sha256": "ca2e97c451d981d0182333381ca9179c2994b3b18916497e536083d2d825da29",
+          "field_paths": [
+            "ordered_mode_manifest_sha256"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "881548995cd1e9a5db6ff91e4e3c966e81d2e61ce317dce738c171055cc730dd",
+          "field_paths": [
+            "original solver A6 residual",
+            "official_result",
+            "worker exit"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3/repair_record.json",
+          "sha256": "cd303990783bae10618c8bf3ba674a4163db6909871d04c38945c6240fafae4b",
+          "field_paths": [
+            "v3 recovered R_total/T_total/A_volume/R00_p",
+            "native A6 action count",
+            "authority check count"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/q4_operator_identity.json",
+          "sha256": "d99dba3191744d4e6cee8f64fe601d66fc8b33e24f904c4bad30b49860b582ec",
+          "field_paths": [
+            "condensed CSR SHA256",
+            "condensed values SHA256"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/q4_dual_operator_identity.json",
+          "sha256": "5f46cf00eaf5a89fdbd183c17b3e977110c66a9e87bb70444f970a2c69963060",
+          "field_paths": [
+            "condensed CSR SHA256",
+            "condensed values SHA256"
+          ]
+        }
+      ]
+    }
+  ],
+  "cross_physical_model_comparison": false,
+  "continuum_convergence": false,
+  "model_identity_contract": "Full formal source/input/physical/mode SHA256 values are stored for each model. Each evidence file entry identifies the raw path, SHA256, and fields it supports; E2 recovery input is explicitly distinct from its original formal input."
+}

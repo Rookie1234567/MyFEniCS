@@ -1,3 +1,77 @@
+# Task40extra Review V2 收口总账
+
+## 一级账：模型结果与campaign状态
+
+| 模型/阶段 | 正式身份 | full A6 residual / Gate | 官方量与比较 | workflow / KSP；同时树RSS / swap | p4 factor rows / NNZ / INFOG29 | 结论 |
+|---|---|---:|---|---|---|---|
+| F1 G1 M0 | `task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1`；880 cells；M80 | 8.648911990579289e-7；同离散G1 M0参考通过 | R/T=`0.07612407122165808/0.9057692393459813`；A_volume=`0.018106713007727038` | 2252.535 / 1674.835 s；6,891,311,104 B / 0 B | 75,280 / 28,705,330 / 182,769,024 | 仅资格化G1 M0；不能代替G0 M2 reference |
+| F2 G0 M1 | `task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1`；336 cells；M180 | 9.572475880327875e-7通过；worker exit4 | raw/offline R/T/A_volume=`0.07565188084569026/0.9062068016471507/0.018141266883419625`；worker `official_result=false` | 1123.500 / 809.586 s；3,867,545,600 B / 0 B | 29,172 / 11,033,364 / 55,305,544 | 保存DtN/体积值用于P3 offline比较；未重新发布official result |
+| F3 G0 M2 | `task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1`；336 cells；M340 | 7.593610432084708e-7通过 | R/T=`0.0756519019957502/0.9062068705222379`；A_volume=`0.018141268088495303` | 1174.947 / 823.922 s；4,006,539,264 B / 0 B | 29,332 / 11,293,034 / 56,763,048 | 离散与一致性通过，authority-limited |
+| F5 G1 M2 | `task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1`；880 cells；M340 | 8.735322490524255e-7通过 | R/T=`0.07612407127067708/0.9057692398169153`；A_volume=`0.018106713068250728` | 2448.071 / 1797.975 s；7,754,170,368 B / 0 B | 75,540 / 29,765,186 / 186,881,032 | 离散与一致性通过；M2跨网格场/curl工程门未通过 |
+| E1 q=1.25 | `task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1`；760 cells；M588 | 9.781668525522113e-7通过 | R/T=`0.06235653736791684/0.9159264755357902`；A_volume=`0.021716951725654188` | 4580.375 / 3722.193 s；10,650,341,376 B / 0 B | 65,708 / 26,681,978 / 164,865,416 | 固定波长的电尺寸增长诊断，不是h收敛序列 |
+| E2 q=1.5原run | `task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1`；880 cells；M700 | 9.793073227317083e-7通过；worker exit4，official false | 原worker无official output；v3保存场恢复R/T=`0.05116886160983426/0.9239410512847893`，A_volume=`0.02489005360260621` | 7692.028 / 6776.587 s；11,349,196,800 B / 0 B | 75,900 / 31,287,060 / 182,925,800 | 原失败保留；v3只做离线输出恢复 |
+| P1 G0/G1 M0体积/curl | 原G0/G1 M0保存场；1344共同子单元 | 不是新solve | 总场E/H=`0.3750%/0.3949%`通过；散射E=`2.6113%`、散射H/scaled-curl=`2.7498%`失败；官方ΔR/ΔT/ΔA_volume均过0.001 | offline 436.518 s；self RSS 620,851,200 B；无PDE/operator/factor/KSP | 不适用 | P1真实负结果；SHA-bound record在`records/p1_m0_volume_h_agreement_v2.json` |
+| P4 F3/F5 M2体积/curl | 共同340个M2 key；G0/G1保存场 | 不是新solve | 总场E/H约`0.3751%/0.3950%`通过；散射E=`2.6119%`、散射H/scaled-curl=`2.7504%`失败；official ΔR/ΔT/ΔA_volume=`0.0004721693/0.0004376307/0.0000345550`通过 | offline 597.979 s；RSS 621,101,056 B；无PDE/operator/factor/KSP | 不适用 | M2场/curl h工程门失败，不能由功率接近覆盖 |
+
+### 零级反射与p6空间维数
+
+| 模型/身份 | R00_s | R00_p | R00_total | 来源/状态 |
+|---|---:|---:|---:|---|
+| F1 G1 M0 | 0.07612359764215308 | 3.4597741445267834e-17 | 0.07612359764215311 | 正式DtN；F1同离散reference |
+| F2 G0 M1 | 0.07565140676565715 | 2.0048467438900223e-17 | 0.07565140676565717 | raw DtN/offline用于P3；worker official_result=false |
+| F3 G0 M2 | 0.07565142791421035 | 7.233241618502243e-17 | 0.07565142791421042 | 正式DtN |
+| F5 G1 M2 | 0.076123597691134 | 3.5617837904198074e-17 | 0.07612359769113404 | 正式DtN |
+| E1 q1.25 | 0.062356105023958414 | 6.083759436e-16 | 0.062356105023959024 | 正式DtN |
+| E2 q1.5 v3 output recovery | 0.05116727309447169 | 7.978116094818559e-19 | 0.05116727309447169 | saved-field recovery only；原worker仍失败 |
+
+F1/F3/F2的G0类p6空间为full229,680、active68,256、interior151,200、trace78,480；F1/F5的G1 p6空间为full595,512、active177,120、interior396,000、trace199,512。E1为full514,710、active153,360、interior342,000、trace172,710；E2为full595,512、active177,120、interior396,000、trace199,512。完整有序模式与各显著衍射级见run_index绑定的`dtn_port_diffraction_orders_3d.json`及hash，不把诊断Fourier值混入官方DtN结果。
+
+workflow、独立watchdog、KSP、p6 build和postprocess是不同边界，不相加。E2的KSP事实为已保存阶段记录；其原postprocess独立边界unknown。PSS为null。F1 p4完整存储行是180,240，而实际凝聚factor只有75,280。目录timestamp不是run_id。完整source/input/physical/native ordered-mode SHA及raw字段路径+SHA见`records/run_index.json`、`records/electrical_size_v2.json`和`records/resource_components_v2.json`。F3源码SHA=a43f7f76a0df0f4440b77834846973b2de7ea3a8；F5/E1/E2=63dd2a7378153f2ab5094eb5e7a98d05758a39bf。
+
+## 二级账：资源组成
+
+| 组件 | 证据 | 解释与限制 |
+|---|---|---|
+| mesh/MPC | G0 336 cells；p6全空间229,680 DOF；单元维数882 | P6构造真实mesh/space，没有构造全局物理operator |
+| p6局部LU/Schur/恢复 | 三种tag各取一个单元；内部450×450，trace432×432；非零RHS closure为1.43e-11至2.35e-11 | 真实局部闭合通过1e-10；不代表全域因子容量 |
+| p4矩阵/MUMPS | F1 full storage180,240、factor75,280/28,705,330 NNZ；F2 full storage69,856、factor29,172/11,033,364；F3 29,332/11,293,034；F5 75,540/29,765,186；E1 65,708/26,681,978；E2 75,900/31,287,060 | INFOG29依次182,769,024、55,305,544、56,763,048、186,881,032、164,865,416、182,925,800；INFOG16/17是symbolic估计最大/和，18/19是allocated最大/和，22是used进程和，均以decimal MB报告；INFOG29是条目数。matrix payload、ICNTL23受限工作内存限额记录与process-tree RSS另列；全局因子仍是目标尺寸风险 |
+| ports/Krylov P6压力 | M=80/340/3904，batch=16；M3904每真实tag双遍约3.739–3.773 s | synthetic/resampled压力，不是完整高M物理端口模型；无M×M矩阵 |
+| 同时进程树RSS | F3 4.007 GB；F5 7.754 GB；E1 10.650 GB；E2 11.349 GB | watchdog同时树峰值 |
+| inventory/workspace | F3 4.894/1.753 GB；F5 7.876/1.992 GB；E1 10.429/6.031 GB；E2 11.544/6.092 GB | 两者分别是对象账与workspace，不等于RSS，也不相加 |
+| JIT/postprocess | P6 form compile=0.00724 s；F3/F5/E1 post=7.176/19.152/19.712 s | E2原post边界unknown；E2 v3离线恢复单列 |
+
+P6知道的numpy backing下界38,432,904 B，显式数组情景上界40,542,856 B；后者不含不透明BLAS/LAPACK工作区。P6自身RUSAGE RSS峰455,610,368 B，task swap未独立采样，不能把两次VmSwap=0监控快照写成峰值零。本轮没有从小模型或对象账外推2 TB容量，也没有调整工作站cap。
+
+## 误差、负结果和下一步
+
+- P1是原G0/G1 M0公共子单元体积/curl比较：总场E/H为0.3750%/0.3949%（过1%），散射E=2.6113%、散射H与scaled-curl=2.7498%（未过1%）；official ΔR/ΔT/ΔA_volume均低于0.001。记录SHA `9d72efd7f21771c7fd0cc779b7cfb0f9272734fe9cbe1757a014d127e4422925`。这不同于R5旧固定坐标样本`h_agreement_v1.json`的`H_AGREEMENT_PASS_ENGINEERING_ONLY`。
+- P3显著规则M0 power_ratio≥1e-8是在查看探索性all-80差异后固定；报告保留此事后规则披露，不称预注册。按该有限规则选择M2，M3未触发。
+- P4是F3/F5 G0/G1同M2的保存场比较：340 keys相同；总场E/H变化约0.3751%/0.3950%过1%；散射E=2.6119%、散射H/curl=2.7504%、显著模式1.555605%、固定样本最大2.743612%超过1%。官方ΔR=0.0004721693、ΔT=0.0004376307、ΔA_volume=0.0000345550通过0.001。负结果是场/导数误差门未过，不是方程没有离散解。
+- E1是一次更大电尺寸诊断点；E2原worker因sample配置后处理检查失败，离线恢复保留其失败分类。
+- P6支持三种真实局部块闭合和固定批次synthetic动作可行性；不证明生产端口稀疏度、完整高M或TB容量。
+- P7只提出下一阶段设计。原端口块`H_p`经精确消去/trace映射后成为同维增广接口+port贡献`Ĥ_ℓ`并且只计一次；粗层选`R_ℓ=P_ℓ^H`，这不要求物理左右块`D=B^H`，也不把非Hermitian算子变成Hermitian。`ΣT_j^H W_jT_j=I`只约束近似PC patch组合。提案封顶4层、终层≤20,000维/≤200步、外层≤2,048步；见review_v2_campaign.md。
+- ordinary default不变；Phase II和master merge都未进行。
+
+## 选择性合并分组
+
+| 依赖组 | 全V2范围 / 数值行为 | 测试与fresh evidence | 建议顺序 |
+|---|---|---|---|
+| production numerical/core | Task40显式profile/reference-metric候选及其`src/common`、`src/geometry`、`src/io`、`src/postprocessing`、`src/runners`、`src/solvers`改动；部分可能影响数值行为 | reference-metric、M1 authority、geometry、P1/P3/P6 targeted tests；F1只资格化G1 M0；P1/P4保留负结果 | 第一组逐依赖review；不升级ordinary default |
+| reusable runner/watchdog | v29 p6 pair runner、subreaper watchdog、E2 saved-output recovery入口 | runner/watchdog/recovery targeted tests；E2 v3不是PDE/factor证据 | 第二组仅迁移经审查通用部分 |
+| checker/benchmark | Task40 P1/P3/P6/P2 checker和bounded diagnostic entrypoints | P1 M0与P4 M2已保存结果；P6 fixture2、P4 helper fixture4 | 第三组与相应schema/tests同行 |
+| compact evidence/docs | run index、P1/P4/P3/E1/E2/P6 records、summary、test_summary、README、response与项目登记 | JSON/doc/hash/link与diff检查 | 第四组保留到执行分支供review |
+| research-only | synthetic M3904压力、Task40显式profile以及P7未实现设计 | 不构成高M完整物理模型、TB容量或Phase II qualification | 保持research-only |
+| do-not-merge | e174b91历史`/dev/null`hook绕行、放宽冻结Gate、删除P1/P4 negative、把E2原worker失败改写为成功、普通默认切换 | `repair_ledger_v2.json`保留偏差 | 禁止 |
+
+## V2证据索引
+
+Review V2 campaign见review_v2_campaign.md；执行回应见response_v3.md。机器可读记录包括review_v2_plan.json、p1_m0_volume_h_agreement_v2.json、volume_h_agreement_v2.json、reference_metric_tensor_v2.json、channel_study_v2.json、electrical_size_v2.json、resource_components_v2.json、repair_ledger_v2.json、p6_local_block_inventory_v2.json与run_index.json。旧R5总结紧随本文之后保留，不覆盖。
+
+
+---
+
+# 历史结果摘要（V1 / R5；原文保留）
+
 # Task40extra B 线 N0–N6 结果总结：0.7 nm 非可分三维 Maxwell
 
 ## 当前结果（R5，2026-09-30）

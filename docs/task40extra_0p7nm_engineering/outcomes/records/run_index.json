@@ -314,6 +314,56 @@
         }
       },
       "MUMPS_INFOG_unit_note": "INFOG16-22 are decimal MB fields as defined by MUMPS/PETSc; INFOG29 is factor-matrix entry count. They are not process-tree RSS."
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1",
+      "stage": "P3_F3_G0_M2",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z",
+      "input_sha256": "7421fef7bc7558cb875711d5693208340d14171a3d2215adc80f966537eb7d93",
+      "physical_model_sha256": "6ee8e976955c8e8f1e642c1c860a1fe77cec366801ddc7554d2d5d24a2a74ce2",
+      "A6_pre_post": 7.593610432084708e-07,
+      "tree_RSS_peak_B": 4006539264,
+      "task_swap_B": 0
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
+      "stage": "P4_F5_G1_M2",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z",
+      "input_sha256": "3b0c7bc68cf1f991c1cd364eaf6079bbd4b745895315dcc85a7b2cfb39a8c5c7",
+      "physical_model_sha256_prefix": "ad9cb5ec",
+      "A6_pre_post": 8.735322490524255e-07,
+      "tree_RSS_peak_B": 7754170368,
+      "task_swap_B": 0
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1",
+      "stage": "P5_E1",
+      "classification": "DIAGNOSTIC_ELECTRICAL_SIZE_GROWTH",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z",
+      "A6_pre_post": 9.781668525522113e-07,
+      "watchdog_s": 4579.634232348006,
+      "tree_RSS_peak_B": 10650341376,
+      "task_swap_B": 0,
+      "PSS": null
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1",
+      "stage": "P5_E2",
+      "classification": "ORIGINAL_WORKER_FAILED_POSTPROCESS; V3_SAVED_FIELD_RECOVERY_COMPLETE",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z",
+      "original_worker_exit": 4,
+      "A6_pre_post": 9.793073227317083e-07,
+      "tree_RSS_peak_B": 11349196800,
+      "task_swap_B": 0,
+      "official_result": false,
+      "v3_record": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3/repair_record.json",
+      "fresh_PDE_recovery": false
     }
   ],
   "ledger": {
@@ -353,5 +403,488 @@
     "result_record": "docs/task40extra_0p7nm_engineering/outcomes/records/identity_recovery_v1_results.json",
     "h_agreement_record": "docs/task40extra_0p7nm_engineering/outcomes/records/h_agreement_v1.json",
     "status": "R5_COMPLETE_G0_G1_STRICT_PASS_H_AGREEMENT_AND_MATCHED_REFERENCE_PASS_AUTHORITY_LIMITED"
-  }
+  },
+  "review_v2_closeout": {
+    "review": "docs/task40extra_0p7nm_engineering/review_report_v2.md",
+    "formal_source_sha_F3": "a43f7f76a0df0f4440b77834846973b2de7ea3a8",
+    "formal_source_sha_F5_E1_E2": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+    "P6_source_sha": "5f9efdbae1c668ffa4426731156ec4afe9325eb2",
+    "P7": "design_only",
+    "master_merge": false,
+    "historical_R5_run_index_preserved": true,
+    "native_ordered_mode_identity_note": "F3/F5 native final_residual.identity.ordered_mode_sha256=7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253; F1 G1 M0 native identity is c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a. These are model-specific native identities; c3ff is not asserted to be an F3/F5 key-list digest."
+  },
+  "review_v2_runs": [
+    {
+      "model": "F1 G1 M0 reference metric",
+      "run_id": "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1",
+      "stage": "P2_F1",
+      "source_sha": "1d7d790088d6ea0f30aed2ef1073fb1b86e68155",
+      "input_sha256": "518703cf4c28a57027e249d240be22491759b9ad8f8a9f17a13119209bdb2215",
+      "physical_model_sha256": "8fcb53abe4123e75599eed0ffae278e93fb0549f38b1f5235d0eac2f4cfc73fb",
+      "native_ordered_mode_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z",
+      "classification": "same-discrete G1 M0 pass; adopted for remaining campaign",
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z/run_manifest.json",
+          "sha256": "5b532299fe8f0bc88c7595a5e6575c6b25c3a57e18cde85a81fcfb0645b7fd50",
+          "field_paths": [
+            "source_sha",
+            "input_sha256",
+            "physical_model_sha256",
+            "run_id"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z/run_summary.json",
+          "sha256": "d6b1257bf3dec34f55c33658b4670ffa749da57d321a69a4438f8415f4b653a5",
+          "field_paths": [
+            "watchdog",
+            "process_tree_peak_rss",
+            "workflow"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "51ff81a6a84848db814edff51a29e9b229b4d03df673ff83ee783dfc9df6eceb",
+          "field_paths": [
+            "solver.A6",
+            "official power/volume metrics"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z/native_preconditioner/numeric_stage_facts.json",
+          "sha256": "5fd234edfbbff4492875ea812caf3956d8ab6b750a03b217e7f80bba4569100f",
+          "field_paths": [
+            "MUMPS stage facts"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z/native_preconditioner/numeric_stage_observations.json",
+          "sha256": "8ce8bee819093aa045686c7024b438ef34a3e2bd1cbc91460eee25fb1ca1e95f",
+          "field_paths": [
+            "MUMPS observed stage memory"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1__full3d_iterative__mpi1__Mna/20261001T071928.969765Z/native_preconditioner/inventory.json",
+          "sha256": "a4c73debd45ecc7d8381aa3c7cd55b8a2925d0f5621d737ac42ff2ca9791516f",
+          "field_paths": [
+            "inventory ledger"
+          ]
+        }
+      ],
+      "facts": {
+        "p4_full_storage_rows": 180240,
+        "p4_condensed_factor_rows": 75280,
+        "p4_nnz": 28705330,
+        "INFOG29": 182769024,
+        "matrix_payload_B": 807494724,
+        "tree_RSS_B": 6891311104,
+        "swap_B": 0
+      }
+    },
+    {
+      "model": "F2 G0 M1 final",
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1",
+      "stage": "P3_F2_M1",
+      "source_sha": "37635226002787beb26a24baba3a8da333027239",
+      "input_sha256": "d9a53689fbeee530ad7d72954d4665498a3994c3717535a11cd2fc335920322b",
+      "physical_model_sha256": "98b38bfca9f2af50b75682320fc20ec8560ee6401e6b7dfa5ffbc201060b4b",
+      "native_ordered_mode_sha256": "2624335d0004e6634f60e9003d9c66837cf571cd454c5d2ca36c6b5cdaef2675",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z",
+      "classification": "WORKER_FAILED; residual passed but authority checker hardcoded 80 instead of actual 180 M1 modes",
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/run_manifest.json",
+          "sha256": "798e9909f8b163da76e282b078193f05d1ccb687ec558200b0ff07e9861d8559",
+          "field_paths": [
+            "identity"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/run_summary.json",
+          "sha256": "a33e58693bddfb664493124adb5b075b8c198b8b0198705e1088f866d139d2b4",
+          "field_paths": [
+            "watchdog",
+            "RSS",
+            "swap",
+            "workflow"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "d161e0a119acec30152071c489a197e11760a3429ade1a78685c2b576c99a519",
+          "field_paths": [
+            "solver.A6",
+            "worker exit",
+            "official_result"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/native_preconditioner/numeric_stage_facts.json",
+          "sha256": "ea045d14c1758bb6d22fb6ae70d097dedd65450cd884ecb86e8e2a0ac984d67e",
+          "field_paths": [
+            "MUMPS facts"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/native_preconditioner/numeric_stage_observations.json",
+          "sha256": "3313a30c472f1b1ca426e8211c8c895a634111ffdfd8abc7db30473ed11a4fba",
+          "field_paths": [
+            "MUMPS observations"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m1_f2_v1__full3d_iterative__mpi1__Mna/20261001T135923.003185Z/native_preconditioner/inventory.json",
+          "sha256": "7238f1404f30a1dfc4714b5d18524e3fff696029feebf3d141cdb681e6a9fb00",
+          "field_paths": [
+            "inventory"
+          ]
+        }
+      ],
+      "facts": {
+        "A6": 9.572475880327875e-07,
+        "official_result": false,
+        "worker_exit": 4,
+        "watchdog_s": 1123.4511613079812,
+        "KSP_s": 809.586202554,
+        "iterations": 156,
+        "p4_full_storage_rows": 69856,
+        "p4_factor_rows": 29172,
+        "p4_nnz": 11033364,
+        "tree_RSS_B": 3867545600,
+        "swap_B": 0
+      },
+      "saved_raw_offline_power": {
+        "official_result": false,
+        "scope": "raw saved DtN/volume outputs retained and used by P3 offline comparisons; not reissued as official result",
+        "R_total": 0.07565188084569026,
+        "R00_s": 0.07565140676565715,
+        "R00_p": 2.0048467438900223e-17,
+        "R00_total": 0.07565140676565717,
+        "T_total": 0.9062068016471507,
+        "A_balance": 0.01814131750715897,
+        "A_volume_total": 0.018141266883419625,
+        "raw_hashes": {
+          "dtn_port_power_metrics_3d.json": "74b35eb79aa2e6b6d481e688fa1a51cbf331b05739ea3d7d4e3e5419042a363a",
+          "volume_absorption.json": "8f0110fba4fde98f0fa3f3bf78506260c470282d2d9db6f2b781d333947b80a9"
+        }
+      }
+    },
+    {
+      "model": "F3 G0 M2",
+      "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1",
+      "stage": "P3_F3_G0_M2",
+      "source_sha": "a43f7f76a0df0f4440b77834846973b2de7ea3a8",
+      "input_sha256": "7421fef7bc7558cb875711d5693208340d14171a3d2215adc80f966537eb7d93",
+      "physical_model_sha256": "6ee8e976955c8e8f1e642c1c860a1fe77cec366801ddc7554d2d5d24a2a74ce2",
+      "native_ordered_mode_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/run_manifest.json",
+          "sha256": "f4050c6d49279cfcdaf63ff791de56651fc2cbe8c9d024bfe1a433077be681c4",
+          "field_paths": [
+            "identity"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/run_summary.json",
+          "sha256": "2b53aabffcac485acc0c20a65e1e7f35aea468726a22a1d50b850f2163e3a9a5",
+          "field_paths": [
+            "workflow",
+            "watchdog",
+            "RSS",
+            "swap"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "8745766c75ae558893c5b2ffa7aa96e86033bb292ffa5d5ebccab6494904729f",
+          "field_paths": [
+            "solver.A6",
+            "official_result",
+            "port/volume metrics"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/numerical_output/dtn_port_power_metrics_3d.json",
+          "sha256": "71ccab07b6c9c563f26b5d397cc109aee5b88b5ece203e79890cf5b5180bd3a3",
+          "field_paths": [
+            "R_total",
+            "T_total",
+            "A_balance; dtn_port_modal_amplitudes"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/numerical_output/volume_absorption.json",
+          "sha256": "9e8f3f019fb918567f71edb7a7eccb41ec0d97795f0ef462ea3e492714e6b606",
+          "field_paths": [
+            "A_volume_total"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/native_preconditioner/numeric_stage_facts.json",
+          "sha256": "778d919a45a4e1f87043aa527d7dc0d13309b6bcb565f782c947bcec529988e2",
+          "field_paths": [
+            "p4 numeric facts"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z/native_preconditioner/numeric_stage_observations.json",
+          "sha256": "ab3424e284713de948f8c1110680a431a0b2eb12ff92a9316e1ab99042fe06a4",
+          "field_paths": [
+            "p4 numeric observations"
+          ]
+        }
+      ],
+      "facts": {
+        "A6": 7.593610432084708e-07,
+        "workflow_s": 1174.9472391189774,
+        "watchdog_s": 1174.9063223,
+        "KSP_s": 823.92162911,
+        "p6_build_s": 31.915191112959292,
+        "p4_operator_s": 95.316767,
+        "post_s": 7.176019897,
+        "tree_RSS_B": 4006539264,
+        "swap_B": 0,
+        "PSS": null,
+        "R_total": 0.0756519019957502,
+        "T_total": 0.9062068705222379,
+        "A_volume": 0.018141268088495303
+      }
+    },
+    {
+      "model": "F5 G1 M2",
+      "run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
+      "stage": "P4_F5_G1_M2",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "input_sha256": "3b0c7bc68cf1f991c1cd364eaf6079bbd4b745895315dcc85a7b2cfb39a8c5c7",
+      "physical_model_sha256": "ad9cb5ec64636755fba5135bc44d9d49940c4ae1de624536f7233da912e83ae7",
+      "native_ordered_mode_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z/run_manifest.json",
+          "sha256": "e1fe3cc2123039db86a3501fb11357c3780cfbae56972f0fbf178f4a04fbdc9a",
+          "field_paths": [
+            "identity"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z/run_summary.json",
+          "sha256": "5f448eac670e416a38818e4ad8b0affcba9bffdaccf5a51b5524c3fb82d470f5",
+          "field_paths": [
+            "workflow",
+            "watchdog",
+            "RSS",
+            "swap"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "bc9d574b0d8f04a5241a4456c1068e315488b3ef5b6c5f9d966a153cf9478f57",
+          "field_paths": [
+            "solver.A6",
+            "official_result",
+            "port/volume metrics"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z/numerical_output/dtn_port_power_metrics_3d.json",
+          "sha256": "e6c3618fbd1415c50e8b38a1eac4a5ca36e121a2072d5d9eff5ca65e62e42c9b",
+          "field_paths": [
+            "R_total",
+            "T_total",
+            "A_balance; dtn_port_modal_amplitudes"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z/native_preconditioner/numeric_stage_facts.json",
+          "sha256": "84c429cd4ecbfd7b7c0fdfd16adc019bed7a7522055d4c8e8dd1cfecfff995e4",
+          "field_paths": [
+            "p4 numeric facts"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1__full3d_iterative__mpi1__Mna/20261002T000242.608221Z/native_preconditioner/numeric_stage_observations.json",
+          "sha256": "830dd5ff4eca72a683a3afcacb2c31e63cbd54c1742da471a7b250ba6a9d9697",
+          "field_paths": [
+            "p4 numeric observations"
+          ]
+        }
+      ],
+      "facts": {
+        "A6": 8.735322490524255e-07,
+        "workflow_s": 2448.070517799002,
+        "watchdog_s": 2447.270512918,
+        "KSP_s": 1797.974946916,
+        "p6_build_s": 31.736294723988976,
+        "p4_symbolic_s": 0.537917580048088,
+        "p4_numeric_s": 166.8562528929906,
+        "post_s": 19.1515825,
+        "tree_RSS_B": 7754170368,
+        "swap_B": 0,
+        "PSS": null,
+        "R_total": 0.07612407127067708,
+        "T_total": 0.9057692398169153,
+        "A_volume": 0.018106713068250728
+      }
+    },
+    {
+      "model": "E1 q=1.25",
+      "run_id": "task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1",
+      "stage": "P5_E1",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "input_sha256": "5c0aa01d1bb327f1331b69cfe359c6f775961398d316c2f88d3aeaff978af8fd",
+      "physical_model_sha256": "6ea7e95a9b415b3bcc97c67e3c4d3580c7a6999211fbfb3f15bc42fad2ce821d",
+      "native_ordered_mode_sha256": "d1ea3dadce6e546ac7fce32493edb0fab09d7de22208850aca0a139a23b1e52b",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z",
+      "classification": "DIAGNOSTIC_ELECTRICAL_SIZE_GROWTH; residual pass",
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/run_manifest.json",
+          "sha256": "02aecdb075e79d47828d6c0ad984bc169ceae9f8f3896f0df268955852f35584",
+          "field_paths": [
+            "identity"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/run_summary.json",
+          "sha256": "668c166eb22c5befc4efd5ca0ce7f06ae1b8c6fb4312d682d6eb749026b03089",
+          "field_paths": [
+            "workflow",
+            "watchdog",
+            "RSS",
+            "swap"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "cf9f2c731dec7a50830c518a3d70c421d642863aabdf5319f8ffad8ee6b28c10",
+          "field_paths": [
+            "solver.A6",
+            "port/volume metrics"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/numerical_output/dtn_port_power_metrics_3d.json",
+          "sha256": "8f0eec96b88d0be7302393084de37b98509f6b4f94afd2a36784b92ffcb87f2b",
+          "field_paths": [
+            "R_total",
+            "T_total",
+            "A_balance"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/numerical_output/volume_absorption.json",
+          "sha256": "d5d60120f9f3f308845496b549e13a44b2c11edd2a12db706fcff61be2b9c497",
+          "field_paths": [
+            "A_volume_total"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/native_preconditioner/numeric_stage_facts.json",
+          "sha256": "6403e57cc77f9b9b40cc939799621d4262e70f7354aae45964a9876538f924ac",
+          "field_paths": [
+            "p4 numeric facts"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T010726.057084Z/native_preconditioner/numeric_stage_observations.json",
+          "sha256": "4c230e4baa29c3df0d70f4c66543e90ff5c2441c33b69b9c7608708751c70300",
+          "field_paths": [
+            "p4 numeric observations"
+          ]
+        }
+      ],
+      "facts": {
+        "A6": 9.781668525522113e-07,
+        "workflow_s": 4580.375190779043,
+        "watchdog_s": 4579.634232348006,
+        "KSP_s": 3722.192948129,
+        "p6_build_s": 148.73774907301413,
+        "post_s": 19.71188893,
+        "tree_RSS_B": 10650341376,
+        "swap_B": 0,
+        "PSS": null,
+        "R_total": 0.06235653736791684,
+        "T_total": 0.9159264755357902,
+        "A_volume": 0.021716951725654188
+      }
+    },
+    {
+      "model": "E2 q=1.5 original formal worker",
+      "run_id": "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1",
+      "stage": "P5_E2",
+      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "input_sha256": "955bb5051e0cc466124b7fefe7402cdb7aa49618bc2f3eaa02ee5f11b3e6d09b",
+      "physical_model_sha256": "48814d5fe34ab0e73de345c2d98661a96ef93ebb9690be738d040edac7cd84a7",
+      "native_ordered_mode_sha256": "ca2e97c451d981d0182333381ca9179c2994b3b18916497e536083d2d825da29",
+      "run_dir": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z",
+      "classification": "ORIGINAL_WORKER_FAILED exit4; saved-field v3 recovery is a separate output-only artifact",
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/run_manifest.json",
+          "sha256": "18b6e6432c03510d7d6545a3d7ff3c5dda8738b980d3f0d99bbb3e635701ea7b",
+          "field_paths": [
+            "original identity"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/run_summary.json",
+          "sha256": "3f165be8028e7367e1a5db4b4dadb252cd7f9f5507f4c9ef73aabe5577dfe543",
+          "field_paths": [
+            "workflow",
+            "watchdog",
+            "RSS",
+            "swap"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "881548995cd1e9a5db6ff91e4e3c966e81d2e61ce317dce738c171055cc730dd",
+          "field_paths": [
+            "original residual",
+            "worker exit",
+            "official_result"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/numerical_output/dtn_port_power_metrics_3d.json",
+          "sha256": "e56d32a3f79a40e9b5ac30ac0c81105d23eb768b000ce653d8bdd853baae0a90",
+          "field_paths": [
+            "saved output modal data"
+          ]
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3/repair_record.json",
+          "sha256": "cd303990783bae10618c8bf3ba674a4163db6909871d04c38945c6240fafae4b",
+          "field_paths": [
+            "recovered output; 15 authority checks; one A6 action"
+          ]
+        }
+      ],
+      "facts": {
+        "A6": 9.793073227317083e-07,
+        "official_result": false,
+        "worker_exit": 4,
+        "workflow_s": 7692.028065770981,
+        "watchdog_s": 7691.032122245058,
+        "tree_RSS_B": 11349196800,
+        "swap_B": 0,
+        "PSS": null,
+        "recovery_input_sha256": "4c3b70a237d19325a46825526a85ea045e6d3f665a5a6ad4d43781e082461828",
+        "R_total": 0.05116886160983426,
+        "R00_p": 7.978116094818559e-19,
+        "T_total": 0.9239410512847893,
+        "A_volume": 0.02489005360260621,
+        "recovery_A_volume_delta": 0.0
+      }
+    }
+  ]
 }

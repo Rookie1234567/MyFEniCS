@@ -29,3 +29,19 @@
 | [结果总结](outcomes/summary.md) | 阶段矩阵、数据、资源、负结果和选择性合并边界 |
 | [精度与容量判断](outcomes/accuracy_and_capacity.md) | G0/G1/direct 状态、误差 Gate 与资源口径 |
 | [测试摘要](outcomes/test_summary.md) | N2、修复 fixture 与文档检查结果 |
+
+
+## Review V2 closeout
+
+| 文件 | 用途 |
+|---|---|
+| [Review V2 campaign与P7方案](outcomes/review_v2_campaign.md) | P1–P7完整过程、负结果、资源口径、下一阶段设计和全Review选择性合并manifest |
+| [Response V3](response_v3.md) | 对Review V2逐项回应与证据索引 |
+| [V2两级结果总账](outcomes/summary.md) | F1/F2/F3/F5/E1/E2、P1 M0体积/curl负结果、P4 M2体积/curl负结果及资源组成 |
+| [Review V2运行索引](outcomes/records/run_index.json) | 正式source/input/physical/native mode身份、run_id、raw路径/sha与状态 |
+| [P1原M0共同子单元体积/curl](outcomes/records/p1_m0_volume_h_agreement_v2.json) | M0跨网格散射场/curl超过1%的原始compact evidence |
+| [P4 F3/F5同M2体积/curl](outcomes/records/volume_h_agreement_v2.json) | 340个共同M2 key下的saved-field场、curl与官方功率比较 |
+| [历史R5固定坐标样本](outcomes/records/h_agreement_v1.json) | 独立的固定样本工程比较；其PASS不替代P1/P4共同体积/curl记录 |
+| [修复、停止和成本账](outcomes/records/repair_ledger_v2.json) | 保留F2/F5/E2实现失败、容量停止、E2恢复次数和未知成本 |
+
+Review V2的P1是M0共同子单元体积/curl负结果；P4是F3/F5的M2结果。旧R5 `h_agreement_v1.json`是另一项固定坐标样本比较，不能用它覆盖P1。F3使用源码SHA `a43f7f76a0df0f4440b77834846973b2de7ea3a8`；F5/E1/E2使用 `63dd2a7378153f2ab5094eb5e7a98d05758a39bf`。没有continuum-convergence或约2 TiB capacity结论，ordinary default未改变，未合并master。
