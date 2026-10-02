@@ -305,6 +305,17 @@ def balanced_output_classification(summary, errors, expected_errors=()):
     return 'NUMERICAL_OR_OUTPUT_FAIL'
 
 
+def _retained_full_reference_required(identity):
+    """Keep the full same-discrete reference gate for the 5 nm family."""
+    from src.io.native_capacity_profile import V6_BASE_PROFILES
+
+    base_identity = V6_BASE_PROFILES.get(identity, identity)
+    return base_identity in {
+        'dual_condensed_balh_native_5nm_v3',
+        'dual_condensed_balh_native_5nm_v5',
+    }
+
+
 def check_retained_v20(directory: Path, summary: dict) -> dict:
     """Check the opt-in retained V20 contract without legacy profile rules."""
 
@@ -643,10 +654,7 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
 
     matched_facts = summary.get('matched_reference', {})
     matched = matched_facts.get('status')
-    reference_required = (
-        identity == 'dual_condensed_balh_native_5nm_v3'
-        or identity == 'dual_condensed_balh_native_5nm_v5'
-    )
+    reference_required = _retained_full_reference_required(identity)
     if reference_required:
         require(matched == 'MATCHED_REFERENCE_PASS',
                 'retained 5 nm full reference comparison did not pass')

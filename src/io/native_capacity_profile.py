@@ -140,7 +140,8 @@ def native_profile_facts(identity):
             pss_interval_seconds=None, uss_sampling_policy='disabled_by_profile',
             concurrent_neighbor_authorized=False)
         facts['native_execution'].update(math_threads=threads,
-            worker_cpus=list(range(24, 24+threads)), memory_policy='interleave_nodes0_1')
+            worker_cpus=list(range(24, 24+threads)), memory_policy='interleave_nodes0_1',
+            native_memory_policy='interleave_nodes0_1')
         facts['component_options'] = dict(reference_metric_diagonal=True,
             direct_h6_backend=True, h6_natural_order=True,
             fused_a6=True, fast_complete_a4=True, blocked_gram=True,

@@ -168,11 +168,20 @@ def _base_manifest(
             material_authority = campaign.get('five_nm_material', {}).get('authority')
         if material_authority is None:
             material_authority = 'task-V5-input-identity'
+        screen_profile_enabled = bool(profile['outer']['screen'].get('enabled', True))
+        has_notch = bool(snapshot['geometry'].get('cell_notch'))
+        screen_enabled = screen_profile_enabled and not has_notch
+        if not screen_profile_enabled:
+            screen_policy = 'disabled_by_profile'
+        elif has_notch:
+            screen_policy = 'disabled_without_extra_screen'
+        else:
+            screen_policy = 'enabled'
         screen_contract = {
-            'enabled': not bool(snapshot['geometry'].get('cell_notch')),
+            'enabled': screen_enabled,
             'iterations': profile['outer']['screen']['iterations'],
             'solve_seconds': profile['outer']['screen']['solve_seconds'],
-            'notch_policy': 'disabled_without_extra_screen' if snapshot['geometry'].get('cell_notch') else 'enabled',
+            'notch_policy': screen_policy,
         }
         if profile['outer']['screen'].get('progress_only'):
             screen_contract.update(progress_only=True, stop_on_screen=False)

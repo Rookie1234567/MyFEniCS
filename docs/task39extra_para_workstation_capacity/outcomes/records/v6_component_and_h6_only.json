@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.review-v6.components-and-h6-only.v1",
-  "status": "E2_COMPONENTS_PASS_H6_ONLY_NOT_RUN",
+  "status": "E2_COMPONENTS_PASS_H6_ONLY_ACCEPTED_SCOPE",
   "component_source_identity": {
     "path": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/review_v6_components/actual_attempt3/source_identity.json",
     "sha256": "682acc2b387ea3caf50ef732480ea109ac123b25095b6d997fd332e326761916",
@@ -16,7 +16,99 @@
   "component_test_result": "2 passed in 872.14s",
   "formal_pde_qualification": false,
   "h6_only": {
-    "status": "NOT_RUN"
+    "status": "H6_ONLY_ACCEPTED_FOR_SCOPED_EVIDENCE",
+    "run_id": "v6_interleave_2nm_p6h1p5_h6_only",
+    "run_directory": "results/euv_grazing1_phi0/v6_interleave_2nm_p6h1p5_h6_only__full3d_iterative__mpi1__Mna/20261002T075953.824656Z",
+    "manifest_identity": {
+      "run_manifest_path": "results/euv_grazing1_phi0/v6_interleave_2nm_p6h1p5_h6_only__full3d_iterative__mpi1__Mna/20261002T075953.824656Z/run_manifest.json",
+      "run_manifest_sha256": "fe2a50b0daf0d5219736dfc2c407811b89984ad2a15f1f0f02952140e207acbd",
+      "run_id": "v6_interleave_2nm_p6h1p5_h6_only",
+      "source_sha": "06b6895f5b6efba7c7e75f2360ad7ebacf410595",
+      "input_sha256": "f6440d40dfa5a09a105f8948cc065ce6ec9653f4c12f072916a922b3e838d541",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "resolved_config_sha256": "cc828e259e132b691f5274a6e5846e675706b75ff1e8583dac4859b56930b445",
+      "source_after": {
+        "actual_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git/worktrees/task39extra_para_workstation_capacity",
+        "source_sha": "06b6895f5b6efba7c7e75f2360ad7ebacf410595",
+        "tracked_and_nonignored_untracked_clean": true
+      }
+    },
+    "main_review": {
+      "path": "tmp/review_v6_components/h6_only_20261002_main_review_v1.json",
+      "sha256": "6a64403c392102b29c68eb3650ad9cbf56973c1ebf28316c2400117f165d490d",
+      "decision": "accepted only for H6-only scope; not full PDE qualification"
+    },
+    "terminal_compacts": {
+      "v1_path": "tmp/review_v6_components/h6_only_20261002T075953.824656Z_terminal_compact_v1.json",
+      "v1_sha256": "c903d1bf8e4b09e985393e254af71b8ce7c098693c307f04761b6cc98d2cdbaf",
+      "v2_path": "tmp/review_v6_components/h6_only_20261002T075953.824656Z_terminal_compact_v2.json",
+      "v2_sha256": "a0480899b4f8ead3f2722063fbecfbbe54dfd869a3248e2001f5f343c34caa7a",
+      "v1_preserved_unchanged": true
+    },
+    "terminal": {
+      "run_status": "finished",
+      "worker_exit_status": 0,
+      "worker_result_classification": "worker_exit0",
+      "run_result_classification": "h6_only",
+      "scoped_terminal_status": "H6_ONLY_COMPLETED",
+      "complete_solve": false,
+      "watchdog_leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "root_cli_actual_exit_status": null,
+      "root_cli_source_inferred_exit_status": 3,
+      "root_cli_note": "actual detached-launcher root exit was not observed; source-only inference is not a measured result"
+    },
+    "timing_seconds": {
+      "worker_scope": 17516.854153680033,
+      "worker_scope_note": "includes mesh/space",
+      "h6_stage_parent": 17426.405945001985,
+      "b6_shell": 0.00021644809748977423,
+      "metric_diagonal": 15918.245316394023,
+      "positive_selected_action": 21.823432633071207,
+      "power10": 1375.127170006046,
+      "classified_children_sum": 17315.196135,
+      "parent_minus_classified_children_unattributed": 111.20981,
+      "unattributed_note": "unclassified; do not call Python overhead or assembly",
+      "power_matrix_mult_count": 20,
+      "power10_nested_action_timer": 1335.0378481227672,
+      "power_history_entry_count": 10,
+      "power_history_note": "10 history entries do not mean 10 power actions",
+      "full_workflow": 17521.132395819994,
+      "old_diagonal_reference": 118597.092899,
+      "old_to_new_engineering_ratio": 7.45,
+      "comparison_limit": "non-paired worksets/cache conditions; descriptive engineering ratio only, no causal attribution and no TB/P2 time extrapolation",
+      "nesting_note": "power10 and nested action timer overlap; do not add them or double count parent/child stages"
+    },
+    "resources": {
+      "tree_rss_peak_bytes": 11304841216,
+      "tree_rss_hard_limit_bytes": 1300000000000,
+      "tree_swap_peak_bytes": 0,
+      "global_pswpin_delta_pages": 83,
+      "global_pswpout_delta_pages": 0,
+      "global_swap_attribution": "unknown; global counters are not job-scoped",
+      "sample_count": 49978,
+      "unreadable_samples": 0,
+      "malformed_samples": 0,
+      "maximum_sample_gap_seconds": 0.6854264950379729,
+      "descendants_cleared": true
+    },
+    "supervision_cost_scope": {
+      "root_last_cpu_seconds": 5019.36,
+      "snapshot_timer_wall_sum_seconds": 1878.978063145536,
+      "snapshot_timer_cpu_sum_seconds": 1878.9141871039672,
+      "scope": "process-tree snapshot timers only; not the whole watchdog lifetime",
+      "limitation": "does not establish negligible supervision overhead"
+    },
+    "not_run": {
+      "outer_solve": "NOT_RUN",
+      "full_a6_recovery": "NOT_RUN",
+      "rta": "NOT_RUN",
+      "physical_checker": "NOT_RUN",
+      "p4_global_matrix": "NOT_CONSTRUCTED",
+      "p4_factor": "NOT_CONSTRUCTED"
+    },
+    "qualification_boundary": "H6-only setup evidence, not complete numerical or physical PDE qualification."
   },
   "components": [
     {

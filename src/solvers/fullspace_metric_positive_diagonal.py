@@ -13,6 +13,7 @@ from .fullspace_quadrature_diagonal import (
 from .fullspace_same_mesh_hcurl_pmg_p6 import (
     _cell_expansion_workspace,
     _fill_cell_expansion,
+    _mpc_expansion_metadata,
 )
 
 _METRIC_CACHE_LIMIT = 64
@@ -105,8 +106,9 @@ def build_reference_metric_positive_diagonal(
     index_map = work.dofmap.index_map
     owned = int(index_map.size_local)
     storage = owned + int(index_map.num_ghosts)
+    expansion_metadata = _mpc_expansion_metadata(mpc)
     slaves, mask, targets, coefficients = _cell_expansion_workspace(
-        mpc, storage, dimension
+        mpc, storage, dimension, expansion_metadata=expansion_metadata
     )
     work.mesh.topology.create_entity_permutations()
     permutations = work.mesh.topology.get_cell_permutation_info()
@@ -123,7 +125,10 @@ def build_reference_metric_positive_diagonal(
 
     for cell in range(cell_count):
         dofs = np.asarray(work.dofmap.cell_dofs(cell), dtype=np.int32)
-        _fill_cell_expansion(dofs, mpc, storage, mask, targets, coefficients)
+        _fill_cell_expansion(
+            dofs, mpc, storage, mask, targets, coefficients,
+            expansion_metadata=expansion_metadata,
+        )
         row_counts = np.count_nonzero(targets >= 0, axis=1)
         valid_targets = targets[targets >= 0]
         has_target_merge = bool(
@@ -278,6 +283,12 @@ def build_reference_metric_positive_diagonal(
                 retained_cache_ndarray_storage_bytes=int(
                     orientation_cache_bytes + metric_cache_bytes
                 ),
+                mpc_expansion_metadata_policy="borrowed_once_for_this_build",
+                mpc_coefficient_provider_calls=1,
+                mpc_offsets_dtype=str(expansion_metadata[1].dtype),
+                mpc_offsets_array_bytes=int(expansion_metadata[1].nbytes),
+                mpc_global_offset_conversion_copies=0,
+                mpc_expansion_metadata_retained_after_return=False,
                 owned_cells=cell_count,
                 cells_using_reference_metric=used_metric_cells,
                 target_merge_fallbacks=target_merge_fallbacks,

@@ -1,6 +1,6 @@
 {
   "schema": "task39extra.review-v6.selective-migration.v1",
-  "status": "COMPONENTS_QUALIFIED_READY_FOR_SINGLE_H6_ONLY",
+  "status": "H6_ONLY_ACCEPTED_SCOPE_E3_PENDING",
   "target_review_head": "da7ab7edee87a8665936c2ac592062d3b109f1f1",
   "donor_closeout_sha": "3804ede8acfd120d0d8d312415ec5e7a2c296cd7",
   "donor_measured_sha": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
@@ -42,7 +42,7 @@
       "donor_commit": null,
       "donor_path": null,
       "donor_blob": null,
-      "working_sha256": "ebc8f4828b2d645c8a1ac10d907ece897b053e69ec42655cce241beac1bf9d21",
+      "working_sha256": "87ed29f7fe1de88321a2cb5f81d962bf9f1857a291b1580b032155d2cccc1767",
       "adaptation": "target-specific integration/evidence; no default profile change"
     },
     {
@@ -82,7 +82,7 @@
       "donor_commit": null,
       "donor_path": null,
       "donor_blob": null,
-      "working_sha256": "cd3ffe2653a8ff3997b697855a12db8ef86cdf410b658e71bfb566a6f5e05dba",
+      "working_sha256": "9a3b2615f4a24b111b986e924db9f756325d605c426115c279ab3577c56be7fc",
       "adaptation": "target-specific integration/evidence; no default profile change"
     },
     {
@@ -93,7 +93,7 @@
       "donor_path": null,
       "donor_blob": null,
       "adaptation": "target-specific integration/evidence; no ordinary default profile change",
-      "working_sha256": "6dcb1539ac2690b5c006bcb6323134067635e53047ed8d47086645654a9a260e"
+      "working_sha256": "dc9e21d52b7dd820533f9a7f244ec869d637217f231c28a2f310f93de9d85d3a"
     },
     {
       "path": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_resource_numa_policy.json",
@@ -113,7 +113,7 @@
       "donor_path": null,
       "donor_blob": null,
       "adaptation": "target-specific integration/evidence; no ordinary default profile change",
-      "working_sha256": "2a02bb666b4830621d81304f1b8cec2e09b6f1f49c6de258fff9cb9f3ed5c6f0"
+      "working_sha256": "6c34c64dcc3df6c118001f399926e4a031ff65a99d3792ea7e171ad0d5bf7b16"
     },
     {
       "path": "input/task39extra_para_workstation_capacity/v6_2nm_h6_only.dat",
@@ -182,7 +182,7 @@
       "donor_commit": null,
       "donor_path": null,
       "donor_blob": null,
-      "working_sha256": "10610a3bd510e1ee9a5b64e9d63cba7bbdde58c2f76419dcf5d930ab3a28ed25",
+      "working_sha256": "098d017619593c75fcf2fb456f595a49caebf46b0c6ce736c2c93d732a57613d",
       "adaptation": "target-specific integration/evidence; no default profile change"
     },
     {
@@ -266,7 +266,7 @@
       "donor_commit": null,
       "donor_path": null,
       "donor_blob": null,
-      "working_sha256": "9da9cbdb3f656040202923f2955b4de1d9708dd0829f8be1b15ce1480fad3a31",
+      "working_sha256": "23863f50537dfe1e79379bb84bc4e047556ee0ca21cdd167a68da23d123e1d2a",
       "adaptation": "target-specific integration/evidence; no default profile change"
     },
     {
@@ -286,7 +286,7 @@
       "donor_commit": "d9b545e824296fce1b489c32a5d96e5e9303ff3c",
       "donor_path": "src/solvers/fullspace_metric_positive_diagonal.py",
       "donor_blob": "26d48a9ed03dbaa7f768b40133b47c51997fa3b5",
-      "working_sha256": "292a0ed741d0dacc2a8038fdcd9efe3836c19c57124cdcf1fb2ed648b38b0539",
+      "working_sha256": "ef80f78818e7562b00ef917d96cb6dc3dbd4efc5436f6395e6543b8871e204b2",
       "adaptation": "selective dependency implementation, target lifecycle and strict return policy preserved"
     },
     {
@@ -406,7 +406,7 @@
       "donor_commit": null,
       "donor_path": null,
       "donor_blob": null,
-      "working_sha256": "982b16bb83cbe5d0062fb5f971ff2b553f3e3d7c4a326d77af96f1906c897ff6",
+      "working_sha256": "3f251f98646c9eeaf06ca730921bf690aa93df7646436f2995bf466bfdab13c5",
       "adaptation": "target-specific integration/evidence; no default profile change"
     },
     {
@@ -459,7 +459,7 @@
   ],
   "qualification": {
     "fresh_full_5nm": "NOT_RUN",
-    "2nm_h6_only": "NOT_RUN",
+    "2nm_h6_only": "PASS_SCOPED_H6_ONLY_NOT_FULL_PDE",
     "2nm_setup_16_pilot": "NOT_RUN",
     "thread_selection": "NOT_RUN",
     "real_5nm_2nm_components": "2 passed / 872.14s",
@@ -473,5 +473,43 @@
     "changed_file_F821_F401_F811": "no introduced findings; baseline findings retained"
   },
   "supervision_commit": "3bda76479f78fe775a30de63ad20789ae66d881a",
-  "post_component_changes": "Unused imports/import ordering and scalar lint only; boundary library/factory metadata added; no numerical algorithm or Gate changed. E3 test can reuse E2 tensor witnesses without repeating native integration."
+  "post_component_changes": "After the H6-only run, the WIP adds exact per-owner MPC expansion-metadata reuse: borrow coefficients/offset/master metadata once, preserve provider int32/int64 offsets, and keep the legacy helper default path. Four narrow entry/evidence corrections align both V6 memory-policy fields, honor profile-disabled screens, retain the full same-discrete 5 nm reference gate through the V6 base-family map, and accept only real exit-0 allowed success classifications in the native CLI. No numerical formula, operator, or Gate was changed. The earlier H6-only run remains bound to clean source 06b6895f5b6efba7c7e75f2360ad7ebacf410595 and did not include or exercise the later metadata-reuse optimization.",
+  "h6_only_evidence": {
+    "record_path": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_component_and_h6_only.json",
+    "record_sha256": "dc9e21d52b7dd820533f9a7f244ec869d637217f231c28a2f310f93de9d85d3a",
+    "run_id": "v6_interleave_2nm_p6h1p5_h6_only",
+    "run_manifest_sha256": "fe2a50b0daf0d5219736dfc2c407811b89984ad2a15f1f0f02952140e207acbd",
+    "terminal_compact_v1_sha256": "c903d1bf8e4b09e985393e254af71b8ce7c098693c307f04761b6cc98d2cdbaf",
+    "terminal_compact_v2_sha256": "a0480899b4f8ead3f2722063fbecfbbe54dfd869a3248e2001f5f343c34caa7a",
+    "full_pde_qualification": false
+  },
+  "post_h6_metadata_fixes": {
+    "baseline_source_sha": "06b6895f5b6efba7c7e75f2360ad7ebacf410595",
+    "tracked_source_diff_sha256": "c62cefbb9e5773687d03115578684233faf384dbb0a550df57da020771363b3d",
+    "wip_identity_sha256": "7dfdbdd5dc8decc74f3cfbe97c55ad83a847c044bc31b887f1397fdd09262350",
+    "wip_identity_algorithm": "SHA256 of canonical JSON {baseline_head, tracked_diff_sha256, files}",
+    "files": {
+      "benchmarks/physical_intermediate_checker.py": "87ed29f7fe1de88321a2cb5f81d962bf9f1857a291b1580b032155d2cccc1767",
+      "scripts/run_case.py": "8a0a4fe5a1f7d33125d6d172d52cc1abf33dca857f6b07021510abbbcdca11ec",
+      "src/io/native_capacity_profile.py": "098d017619593c75fcf2fb456f595a49caebf46b0c6ce736c2c93d732a57613d",
+      "src/runners/task038_launcher.py": "23863f50537dfe1e79379bb84bc4e047556ee0ca21cdd167a68da23d123e1d2a",
+      "src/solvers/fullspace_metric_positive_diagonal.py": "ef80f78818e7562b00ef917d96cb6dc3dbd4efc5436f6395e6543b8871e204b2",
+      "src/solvers/fullspace_same_mesh_hcurl_pmg_p6.py": "e0a19384a5dedcf357dbff43e382ed54552b4e93d71e067ffc0ad62613187ec1",
+      "src/test/test_task39extra_v6_actual_components.py": "3f251f98646c9eeaf06ca730921bf690aa93df7646436f2995bf466bfdab13c5",
+      "src/test/test_task39extra_v6_entry_metadata.py": "6ba40259a10d42c3d5a1bc9aeab34eed29a30eea9e572d7cc50e076ef7354dd3",
+      "src/test/test_task39extra_v6_mpc_metadata.py": "4a981e5b3d720c4dd0a04047380e831107a47e772ec7003bb262b9005e803536"
+    },
+    "validation": {
+      "pure_metadata_and_entry_tests": "21 passed, 1 deselected / 0.87s",
+      "p3_fe_main_reviewed_witness": "1 passed / 64.25s",
+      "p3_fe_after_import_lint_only_cleanup": "1 passed / 31.78s",
+      "rss_supervision": "6 passed / 7.04s",
+      "mixed_pure_and_fe_command": "22 passed / 31.71s; contains FE and is not counted as pure-only",
+      "ruff_baseline_comparison": "HEAD 40 findings; WIP 40; zero new findings",
+      "py_compile": "PASS",
+      "git_diff_check": "PASS",
+      "full_h6_or_pde_rerun": "NOT_RUN"
+    },
+    "scope": "Exact metadata borrowing plus four approved metadata/entry/evidence fixes; no formula or numerical Gate change. H6-only evidence predates these changes and is not evidence that the reuse optimization was exercised."
+  }
 }

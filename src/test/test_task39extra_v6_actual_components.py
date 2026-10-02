@@ -218,6 +218,7 @@ def test_actual_material_full_ports_tensor_action_recovery_and_c(wavelength):
         length = runtime.p6_system.active_rows+runtime.mode_count
         source = np.sin(.019*(np.arange(length)+1))+1j*.13*np.cos(.029*(np.arange(length)+1))
         pcs = []
+        fixed_pc_outputs = []
         for repeat in range(3):
             started = perf_counter()
             value = bridge.apply(source)
@@ -225,7 +226,16 @@ def test_actual_material_full_ports_tensor_action_recovery_and_c(wavelength):
             pcs.append({'repeat': repeat, 'wall_seconds': perf_counter()-started,
                 'bal_h': runtime.bal_h.last_apply_facts,
                 'coarse_corrections': list(runtime.coarse_timings)})
+            fixed_pc_outputs.append(np.array(value, copy=True))
         report['fixed_rhs_pc_repeats'] = pcs
+        artifact = directory/f'pc_outputs_{wavelength}nm_math{os.environ.get("OPENBLAS_NUM_THREADS", "unknown")}.npz'
+        np.savez(artifact, outputs=np.stack(fixed_pc_outputs))
+        report['fixed_pc_output_artifact'] = {
+            'path': str(artifact.resolve()),
+            'sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
+            'shape': [3, int(length)],
+            'scope': 'bounded FE fixture only; capture and serialization outside PC timers',
+        }
         report['factor_counts'] = runtime.p4_ledger._factor_counts()
         assert report['factor_counts']['symbolic_calls'] == report['factor_counts']['numeric_calls'] == 1
         try:

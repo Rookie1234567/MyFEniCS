@@ -189,10 +189,28 @@ def _kernel_cell_tensor(
     )
 
 
+def _mpc_expansion_metadata(mpc: Any) -> tuple[np.ndarray, np.ndarray, Any]:
+    """Borrow immutable MPC arrays once for a bounded cell traversal.
+
+    Keep the provider's integral offset dtype: converting a global int32
+    array in every cell would create storage-sized temporary copies. The
+    existing per-row Python int conversion remains exact for int32/int64.
+    The caller retains the MPC owner for the lifetime of these views.
+    """
+    coefficients, offsets = mpc.coefficients()
+    coefficients = np.asarray(coefficients, dtype=np.complex128)
+    offsets = np.asarray(offsets)
+    if coefficients.ndim != 1 or offsets.ndim != 1 or offsets.dtype.kind not in "iu":
+        raise ValueError("invalid MPC coefficient/offset metadata")
+    return coefficients, offsets, mpc.masters
+
+
 def _cell_expansion_workspace(
     mpc: Any | None,
     storage: int,
     dimension: int,
+    *,
+    expansion_metadata: tuple[np.ndarray, np.ndarray, Any] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     storage = int(storage)
     if mpc is None:
@@ -204,8 +222,11 @@ def _cell_expansion_workspace(
             np.any(slaves < 0) or np.any(slaves >= storage)
         ):
             raise ValueError("MPC slave rows exceed local storage")
-        _, offsets = mpc.coefficients()
-        offsets = np.asarray(offsets, dtype=np.int64)
+        if expansion_metadata is None:
+            _, offsets = mpc.coefficients()
+            offsets = np.asarray(offsets, dtype=np.int64)
+        else:
+            _, offsets, _ = expansion_metadata
         max_links = 1
         for slave in slaves:
             row = int(slave)
@@ -233,6 +254,8 @@ def _fill_cell_expansion(
     slave_mask: np.ndarray,
     target_indices: np.ndarray,
     expansion_coefficients: np.ndarray,
+    *,
+    expansion_metadata: tuple[np.ndarray, np.ndarray, Any] | None = None,
 ) -> None:
     target_indices.fill(-1)
     expansion_coefficients.fill(0.0 + 0.0j)
@@ -242,9 +265,13 @@ def _fill_cell_expansion(
         target_indices[:, 0] = local_dofs
         expansion_coefficients[:, 0] = 1.0 + 0.0j
         return
-    coefficients, offsets = mpc.coefficients()
-    coefficients = np.asarray(coefficients, dtype=np.complex128)
-    offsets = np.asarray(offsets, dtype=np.int64)
+    if expansion_metadata is None:
+        coefficients, offsets = mpc.coefficients()
+        coefficients = np.asarray(coefficients, dtype=np.complex128)
+        offsets = np.asarray(offsets, dtype=np.int64)
+        masters_adjacency = None
+    else:
+        coefficients, offsets, masters_adjacency = expansion_metadata
     for position, local_row in enumerate(local_dofs.tolist()):
         row = int(local_row)
         if not slave_mask[row]:
@@ -253,7 +280,10 @@ def _fill_cell_expansion(
             continue
         start = int(offsets[row])
         stop = int(offsets[row + 1])
-        masters = np.asarray(mpc.masters.links(row), dtype=np.int64)
+        masters = np.asarray(
+            (mpc.masters if masters_adjacency is None else masters_adjacency).links(row),
+            dtype=np.int64,
+        )
         row_coefficients = coefficients[start:stop]
         if masters.size != row_coefficients.size:
             raise ValueError("MPC master/coefficient metadata do not close")

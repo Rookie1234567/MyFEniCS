@@ -108,7 +108,11 @@ def main(argv: list[str] | None = None) -> int:
                 from src.runners.native_capacity import launch_native_capacity
                 result = launch_native_capacity(specification)
                 print(json.dumps(result, sort_keys=True))
-                return 0 if result["result_classification"] == "worker_exit0" else 3
+                successful_classes = {"worker_exit0", "h6_only", "pilot_16"}
+                return 0 if (
+                    result.get("exit_status") == 0
+                    and result.get("result_classification") in successful_classes
+                ) else 3
             from src.io.physical_intermediate_profile import LIGHT_PROFILE, JOINT_PROFILE
             from src.io.physical_balanced_profile import BALANCED_PROFILES
             from src.io.physical_recursive_profile import RECURSIVE_PROFILES
