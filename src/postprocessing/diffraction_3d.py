@@ -426,6 +426,14 @@ def _validate_sample_counts(cfg: SimulationConfig3D, orders: list[DiffractionOrd
     return min_x, min_y
 
 
+def validate_diffraction_sample_counts(cfg: SimulationConfig3D) -> tuple[int, int]:
+    """Validate the configured sample grid against the requested fit catalog."""
+
+    power_orders = _power_orders_for_reporting(cfg)
+    fit_orders, _ = _orders_for_modal_fit(cfg, power_orders)
+    return _validate_sample_counts(cfg, fit_orders)
+
+
 def _plane_points(cfg: SimulationConfig3D, z: float) -> np.ndarray:
     nx = int(cfg.diffraction_sample_count_x)
     ny = int(cfg.diffraction_sample_count_y)

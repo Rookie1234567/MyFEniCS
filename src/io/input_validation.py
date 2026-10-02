@@ -2284,6 +2284,22 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
     i = config["incidence"]
     d = config["discretization"]
     cfg = simulation_config_3d_from_normalized(config)
+    preconditioner = str(config["solver"].get("preconditioner", ""))
+    task40_electrical_size_profile = preconditioner.startswith(
+        "task40extra_0p7nm_"
+    )
+    if (
+        task40_electrical_size_profile
+        and config["output"].get("export_diffraction_orders", False)
+    ):
+        from src.postprocessing.diffraction_3d import (
+            validate_diffraction_sample_counts,
+        )
+
+        try:
+            validate_diffraction_sample_counts(cfg)
+        except ValueError as exc:
+            raise _error("output", str(exc)) from exc
     theta = cfg.incident_theta_deg
     try:
         fixed_trace_contract = cfg.nedelec_fixed_trace_contract
