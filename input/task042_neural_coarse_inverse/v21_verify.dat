@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v21]
+stage = "VERIFY"
+run_id = "task042_v21_verify"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+decoder_family = "EXACT_ACTION_AND_RECYCLED_CORRECTION"
