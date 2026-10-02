@@ -95,7 +95,7 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-02T22:40:32Z",
+  "observed_utc": "2026-10-02T23:41:06Z",
   "progress": {
     "phase": "modal_full_build_top_modal_action_batch_16_of_30_logical_480_of_960",
     "formal_responses_completed": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-02T22:40:45Z",
+  "record_written_utc": "2026-10-02T23:41:19Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +241,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-02T23:40:45Z",
+  "next_progress_update_due_utc": "2026-10-03T00:41:19Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -939,19 +939,19 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 146956.57064663293,
-      "authority_bytes": 43246829568,
-      "process_tree_rss_bytes": 43246829568,
-      "cgroup_memory_current_bytes": 42540642304,
+      "elapsed_seconds": 150590.9687056879,
+      "authority_bytes": 43246903296,
+      "process_tree_rss_bytes": 43246903296,
+      "cgroup_memory_current_bytes": 42634211328,
       "cgroup_memory_peak_bytes": 42709970944,
       "job_swap_bytes": 0,
       "global_swap_used_bytes": 22151168,
       "global_swap_used_bytes_delta": 0,
       "global_pswpin_pages_delta": 1480998,
       "global_pswpout_pages_delta": 2781714,
-      "host_memavailable_bytes": 2087813304320,
+      "host_memavailable_bytes": 2076225646592,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-02T22:40:32Z"
+      "retrieved_utc": "2026-10-02T23:41:06Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
