@@ -126,7 +126,7 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
         routes = json.loads(
             Path(reconstructed["files"]["time_route_index"]["path"]).read_text()
         )
-        return compare(
+        result, files = compare(
             design,
             load_index("e1_fe"),
             load_index("e3_reference"),
@@ -137,6 +137,17 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
             manifest,
             supervised=False,
         )
+        result.update(
+            status="V11_METRIC_COMPARE_ONLY_COMPLETE",
+            conditional_D_required=False,
+            D_authorized_in_this_batch=False,
+            phase_strict_qualified=any(
+                r["pde_only_solver_qualified"]
+                for name, r in result["routes"].items()
+                if name.startswith("V11-PHASE-")
+            ),
+        )
+        return result, files
     from src.solvers import feinn_metric_diagnostic as diagnostic
 
     if stage == "v11_parameter_scale_diagnostic":

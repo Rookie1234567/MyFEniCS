@@ -20,7 +20,22 @@
     "source_sha": "5cda1c3995633c4f6c86f4b47d3163efb1cdc8c6",
     "export_source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
     "stage": "v10_phase_resource_freeze",
-    "logical_prefix_seconds": 15758.74009511806
+    "logical_prefix_seconds": 15758.74009511806,
+    "cumulative_counts": {
+      "K": 2757,
+      "full_loss_gradient": 78,
+      "trial_loss": 106,
+      "G_matvec": 0
+    },
+    "cumulative_JVP_VJP_counts": {
+      "JVP": 2757,
+      "VJP": 2835
+    },
+    "inherited_work_meaning": "V10 full spent lower bounds including uncommitted tail; model remains committed phase75; old costs counted once in project",
+    "inherited_work_result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_resource_freeze_20261002T040058739087Z/result.json",
+      "sha256": "40f5c11ea6548e96e44a2621aab5e7db0a049a6adea835d3279f7e472c20fab9"
+    }
   },
   "old_cumulative_seconds": 137403.03555569297,
   "new_limit_seconds": 21600,

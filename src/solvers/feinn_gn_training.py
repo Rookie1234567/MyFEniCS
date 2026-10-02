@@ -617,6 +617,11 @@ def run(
         if continuation is not None
         else {}
     )
+    if metric_pilot is not None and recovery is None:
+        inherited_counts = deepcopy(entry.get("cumulative_counts", inherited_counts))
+        inherited_jac_counts = deepcopy(
+            entry.get("cumulative_JVP_VJP_counts", inherited_jac_counts)
+        )
     frontier = None
     if continuation is not None:
         from src.solvers.feinn_gn_budget import GNWorkBudget
