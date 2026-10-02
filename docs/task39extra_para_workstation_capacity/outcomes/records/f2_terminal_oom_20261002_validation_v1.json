@@ -288,8 +288,14 @@
   ],
   "tests_or_new_computation": "NOT_RUN; stdlib document/evidence validation only",
   "github_render": {
-    "status": "API_UPLOAD_REJECTED_AUTO_REVIEW_NOT_EXECUTED",
-    "reason": "Approval review rejected uploading internal report content to a separate Markdown API destination; no retry or alternate upload was performed.",
-    "next_read_only_check": "Read the authorized repository blob page after normal push; no extra content upload."
+    "status": "GITHUB_REPOSITORY_RENDER_PASS",
+    "checked_publication_commit": "3f63f551d9456f10e833de998c54510c97683905",
+    "record": "docs/task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_github_render_v1.json",
+    "record_sha256": "670f574aa9e1d10b7848c1346dec6b251f7d7ed43731ee3bf470ef0eeb5138bf",
+    "rejected_optional_api_request": {
+      "status": "API_UPLOAD_REJECTED_AUTO_REVIEW_NOT_EXECUTED",
+      "reason": "Approval review rejected uploading internal report content to a separate Markdown API destination; no retry or alternate upload was performed.",
+      "next_read_only_check": "Read the authorized repository blob page after normal push; no extra content upload."
+    }
   }
 }

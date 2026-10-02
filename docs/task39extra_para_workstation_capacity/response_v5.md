@@ -67,3 +67,7 @@ H1 是合成负载，不是 FE 结果。CPU23/node0 与 CPU24/node1 的 60 秒�
 最后外层完成228步，Schur `9.373049823814199e-05`；最近独立原A6第224步 `9.758316562442362e-05`，未过1e-6，NOT_QUALIFIED_INTERRUPTED，无正式RTA/checker。第224步full/retained解manifest与文件存在/尺寸已核对，没有重读或重hash大型数组。完整workflow/setup/末次callback solve为 `666232.838509/184388.380644/479635.727603 s`；最终纯KSP内部timer unknown。最后PC sequence230含setup一次及outer229次，不称外层229/230步已完成；两次C `1607.683174 s`，ledger `1537.870988 s`，MatSolve/恢复/native A4分项仍unknown。
 
 本次没有源码、参数、CPU/NUMA、线程、资源、watchdog或swap策略改动，没有新计算、重启或master合并。文档提交在已有canonical detached文档worktree上，基线为 `ccd357885f7f9be84efe3be07868cc94f13d93fc`，向同一远端执行分支正常追加；运行工作树HEAD/clean保持64ca6048。远端最终SHA由提交后回读给出，不在文件内自引用伪造运行源码。
+
+文档提交 `3f63f551d9456f10e833de998c54510c97683905` 已正常推送并回读远端HEAD一致。本地11项轻量检查通过：固定source/input/physical身份、小文件与摘录hash、CSV行号/字节范围/重复callback、时间与平均值、checkpoint元数据/尺寸、历史记录保留、Markdown表格/链接及staged diff；未运行FEM、factor、pytest或性能测试，详见[校验记录](outcomes/records/f2_terminal_oom_20261002_validation_v1.json)。新CSV仅规范LF行尾，内核摘录只去行尾空白且保存转换说明与原摘录hash，原日志保持不变。
+
+自动审批拒绝将报告上传到独立Markdown API，未重试或另行上传。改为只读检查已授权仓库的已推送版本，5份Markdown的176张表格通过GitHub实际渲染核对，详见[渲染记录](outcomes/records/f2_terminal_oom_20261002_github_render_v1.json)。本段及回执为文档校验补记，后续remote HEAD仍不作为运行source SHA。
