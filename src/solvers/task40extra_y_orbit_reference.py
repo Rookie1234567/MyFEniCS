@@ -81,6 +81,16 @@ class YOrbitLayout:
     native_translation: sparse.csr_matrix
     phase_y: complex
     audit: dict[str, Any]
+    _transform_bank: Any = field(default=None, repr=False)
+    _borrowed_entities: Any = field(default=None, repr=False)
+
+    def named_backing_arrays(self, role):
+        arrays = {f"{role}.independent": self.independent}
+        for name in ("r", "r_inverse", "fourier", "q", "shift", "native_translation"):
+            matrix = getattr(self, name)
+            for member in ("data", "indices", "indptr"):
+                arrays[f"{role}.{name}.{member}"] = getattr(matrix, member)
+        return arrays
 
     def dual_to_modal(self, values):
         return np.asarray(self.q.conj().T @ values)
@@ -113,6 +123,34 @@ class YOrbitEntities:
     dimension_counts: dict
     y_widths: np.ndarray
     _inverses: dict = field(default_factory=dict)
+    _transform_bank: Any = field(default=None, repr=False)
+    _collection_identity: Any = field(default=None, repr=False)
+    _template_keys: dict = field(default_factory=dict, repr=False)
+    _actual_state_witnesses: dict = field(default_factory=dict, repr=False)
+
+    def actual_state_witness(self, record_key):
+        """Actual geometry/incidence witness, stored independently of bank keys."""
+        if self._transform_bank is None or record_key not in self._actual_state_witnesses:
+            raise ValueError("record has no banked actual geometry/orientation witness")
+        dimension, coordinates, cell, local_entity, positions, info = self._actual_state_witnesses[record_key]
+        return {"dimension": dimension, "native_coordinates": [list(point) for point in coordinates],
+                "cell": cell, "local_entity": local_entity, "positions": list(positions), "cell_info": info}
+
+    def transform_key(self, record_key):
+        if self._transform_bank is None or record_key not in self._template_keys:
+            raise ValueError("record has no shared actual orientation key")
+        return self._transform_bank.validate_borrow(self._template_keys[record_key], self.records[record_key][1])
+
+    def named_backing_arrays(self, role):
+        """Exact named borrowers for the optional run-local owner receipt."""
+        arrays = {f"{role}.independent": self.independent,
+                  f"{role}.y_widths": self.y_widths}
+        for index, (key, (rows, matrix)) in enumerate(self.records.items(), 1):
+            arrays[f"{role}.record.{index:06d}.rows"] = rows
+            arrays[f"{role}.record.{index:06d}.matrix"] = matrix
+            if key in self._inverses:
+                arrays[f"{role}.record.{index:06d}.inverse"] = self._inverses[key]
+        return arrays
 
     def transform(self, values, *, direction):
         values = np.asarray(values,dtype=np.complex128)
@@ -128,15 +166,23 @@ class YOrbitEntities:
         for orbit in range(self.ny):
             for base in self.bases:
                 rows,matrix=self.records[(orbit,base)]
+                if self._transform_bank is not None:
+                    self.transform_key((orbit,base))
                 first,size=self.slots[base]
                 canonical=slice(orbit*self.width+first,orbit*self.width+first+size)
                 if direction in ("primal_to_canonical","dual_from_canonical","functional_from_canonical"):
                     key=(orbit,base)
                     if key not in self._inverses:
-                        inverse=np.linalg.inv(matrix)
-                        if np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size)>LIMITS["mapping"]:
-                            raise ValueError("original entity moment inverse failed")
+                        if self._transform_bank is None:
+                            inverse=np.linalg.inv(matrix)
+                            if np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size)>LIMITS["mapping"]:
+                                raise ValueError("original entity moment inverse failed")
+                        else:
+                            inverse=self._transform_bank.inverse(matrix)
                         self._inverses[key]=inverse
+                    elif (self._transform_bank is not None and
+                          self._inverses[key] is not self._transform_bank.inverse(matrix)):
+                        raise ValueError("entity inverse is not the borrowed shared template")
                     matrix=self._inverses[key]
                 if direction=="primal_to_canonical":result[canonical]=matrix@values[rows]
                 elif direction=="primal_from_canonical":result[rows]=matrix@values[canonical]
@@ -147,11 +193,19 @@ class YOrbitEntities:
         return result
 
 
-def collect_y_orbit_entities(space, floquet, cfg, axes):
+def collect_y_orbit_entities(space, floquet, cfg, axes, *, transform_bank=None):
     """Full-FE canonical geometric orbit map; no raw-row spatial assumptions."""
     from src.solvers.hcurl_canonical_vector_dolfinx import (
         _entity_coordinates, _physical_entity_transform, _topology_data,
     )
+    if transform_bank is not None:
+        from src.solvers.hcurl_canonical_vector_dolfinx import _entity_canonical_order
+        from src.constraints.high_order_floquet_trace import quadrilateral_face_info
+        from src.solvers.y_orbit_transform_bank import TransformKey, YOrbitTransformBank
+
+        if not isinstance(transform_bank, YOrbitTransformBank) or transform_bank.mapping_limit != LIMITS["mapping"]:
+            raise ValueError("shared bank must retain the original mapping gate")
+        basis_identity = transform_bank.bind_space(space, cfg.nedelec_degree)
 
     if space.mesh.comm.size != 1 or space.dofmap.index_map_bs != 1:
         raise ValueError("probe is qualified only for serial scalar-blocked H(curl)")
@@ -163,6 +217,8 @@ def collect_y_orbit_entities(space, floquet, cfg, axes):
     ny = len(grid[1]) - 1
     tolerance = 1e-9
     records = {}
+    template_keys = {}
+    actual_state_witnesses = {}
     covered = set()
     dimension_counts = {}
 
@@ -182,7 +238,8 @@ def collect_y_orbit_entities(space, floquet, cfg, axes):
         base = (dimension, tuple(sorted((ix, iy - anchor, iz) for ix, iy, iz in indexed)))
         return anchor, base
 
-    def add_entity(ids, canonical_to_native, coordinates, dimension):
+    def add_entity(ids, canonical_to_native, coordinates, dimension, template_key=None, *,
+                   source_cell=None, source_local_entity=None, source_positions=None):
         active = [int(value) in row_of for value in ids]
         if not any(active):
             return
@@ -195,6 +252,14 @@ def collect_y_orbit_entities(space, floquet, cfg, axes):
         if (orbit, base) in records:
             raise ValueError("duplicate geometric entity orbit")
         records[(orbit, base)] = (np.asarray([row_of[int(v)] for v in ids]), canonical_to_native)
+        if transform_bank is not None:
+            template_keys[(orbit, base)] = transform_bank.validate_borrow(template_key, canonical_to_native)
+            # These values come from actual collection data, not TransformKey.
+            # Tuples retain exact float64 values without another ndarray owner.
+            actual_state_witnesses[(orbit, base)] = (
+                int(dimension), tuple(tuple(map(float, point)) for point in coordinates),
+                int(source_cell), None if source_local_entity is None else int(source_local_entity),
+                tuple(map(int, source_positions)), int(cell_info[source_cell]))
         dimension_counts[dimension] = dimension_counts.get(dimension, 0) + len(ids)
 
     dof_layout = space.dofmap.dof_layout
@@ -210,18 +275,66 @@ def collect_y_orbit_entities(space, floquet, cfg, axes):
             positions = np.asarray(dof_layout.entity_dofs(dimension, int(local_entity[0])))
             ids = np.asarray(space.dofmap.cell_dofs(cell))[positions]
             coords = _entity_coordinates(space, dimension, entity)
-            transform, _state = _physical_entity_transform(coords, dimension, cfg.nedelec_degree, tolerance)
-            add_entity(ids, transform, coords, dimension)
+            if transform_bank is None:
+                transform, _state = _physical_entity_transform(coords, dimension, cfg.nedelec_degree, tolerance)
+            else:
+                active = [int(value) in row_of for value in ids]
+                if not any(active):
+                    continue
+                if not all(active):
+                    raise ValueError("partly eliminated entity requires an explicit MPC block map")
+                _canonical_coords, permutation = _entity_canonical_order(coords, dimension, tolerance)
+                permutation = tuple(map(int, permutation))
+                if dimension == 1:
+                    if permutation not in ((0, 1), (1, 0)):
+                        raise ValueError("unknown actual edge reversal")
+                    state = ("edge_reversal", permutation != (0, 1))
+                    semantics = ("canonical_edge", "lexicographic_xyz", "basix_coefficient_v1")
+                else:
+                    state = ("face_D4", permutation, int(quadrilateral_face_info(permutation)))
+                    semantics = ("canonical_face", "axis_aligned_reference_q1", "basix_coefficient_v1")
+                key = TransformKey(basis_identity, dimension, (len(positions), len(positions)),
+                                   tuple(range(len(positions))), state, semantics)
+
+                def physical_builder():
+                    matrix, actual_semantics = _physical_entity_transform(
+                        coords, dimension, cfg.nedelec_degree, tolerance)
+                    if tuple(actual_semantics) != semantics:
+                        raise ValueError("physical coefficient semantics changed")
+                    return matrix
+
+                transform = transform_bank.matrix(key, physical_builder)
+            add_entity(ids, transform, coords, dimension,
+                       template_key=None if transform_bank is None else key,
+                       source_cell=cell, source_local_entity=int(local_entity[0]), source_positions=positions)
     interior = np.asarray(space.element.basix_element.entity_dofs[3][0], dtype=np.int32)
     cell_dim = int(space.element.space_dimension)
+    interior_channels = tuple(map(int, interior)) if transform_bank is not None else None
     for cell in range(int(owned[0])):
+        if transform_bank is not None:
+            active = [int(value) in row_of for value in np.asarray(space.dofmap.cell_dofs(cell))[interior]]
+            if not any(active):
+                continue
+            if not all(active):
+                raise ValueError("partly eliminated entity requires an explicit MPC block map")
         # Same canonical-cell Tt_apply semantics as the inherited full-FE adapter.
-        raw_to_canonical = np.eye(cell_dim, dtype=float).ravel()
-        space.element.Tt_apply(raw_to_canonical, np.asarray([cell_info[cell]], dtype=np.uint32), cell_dim)
-        raw_to_canonical = raw_to_canonical.reshape(cell_dim, cell_dim)[np.ix_(interior, interior)]
-        transform = np.linalg.inv(raw_to_canonical).astype(np.complex128)
+        def cell_builder():
+            raw_to_canonical = np.eye(cell_dim, dtype=float).ravel()
+            space.element.Tt_apply(raw_to_canonical, np.asarray([cell_info[cell]], dtype=np.uint32), cell_dim)
+            raw_to_canonical = raw_to_canonical.reshape(cell_dim, cell_dim)[np.ix_(interior, interior)]
+            return np.linalg.inv(raw_to_canonical).astype(np.complex128)
+
+        if transform_bank is None:
+            transform = cell_builder()
+        else:
+            key = TransformKey(basis_identity, 3, (len(interior), len(interior)),
+                               interior_channels, ("cell_info", int(cell_info[cell])),
+                               ("actual_element.Tt_apply", "cell_dim_block_size", "inverse_interior_block"))
+            transform = transform_bank.matrix(key, cell_builder)
+        cell_coordinates = _entity_coordinates(space, 3, cell)
         add_entity(np.asarray(space.dofmap.cell_dofs(cell))[interior], transform,
-                   _entity_coordinates(space, 3, cell), 3)
+                   cell_coordinates, 3, template_key=None if transform_bank is None else key,
+                   source_cell=cell, source_local_entity=None, source_positions=interior)
     if covered != set(map(int, independent)) or dimension_counts.get(3, 0) == 0:
         raise ValueError("full-FE map must cover every independent row and cell interior")
     bases = sorted(base for orbit, base in records if orbit == 0)
@@ -233,17 +346,36 @@ def collect_y_orbit_entities(space, floquet, cfg, axes):
         width += len(rows)
     if width * ny != len(independent) or len(records) != ny * len(bases):
         raise ValueError("y orbit multiplicities do not cover the complete FE space")
-    return YOrbitEntities(independent,full_rows,ny,width,tuple(bases),records,slots,
-                          dimension_counts,np.diff(grid[1]))
+    result = YOrbitEntities(independent,full_rows,ny,width,tuple(bases),records,slots,
+                            dimension_counts,np.diff(grid[1]), _transform_bank=transform_bank,
+                            _template_keys=template_keys, _actual_state_witnesses=actual_state_witnesses)
+    if transform_bank is not None:
+        # Object references are private, run-local provenance, never artifact IDs.
+        # Reusing a banked collection from another MPC/space/config fails closed.
+        result._collection_identity = (space, floquet, cfg,
+                                       tuple((name, tuple(map(float, axes[name]))) for name in ("x", "y", "z")))
+    return result
 
 
-def build_y_orbit_layout(space, floquet, cfg, axes, *, wrap_phase_y=None, cell_phase_y=None) -> YOrbitLayout:
+def build_y_orbit_layout(space, floquet, cfg, axes, *, wrap_phase_y=None, cell_phase_y=None,
+                         entities=None, transform_bank=None) -> YOrbitLayout:
     """Original full-map entry, plus explicit research-local wrap/eigenphase.
 
     The candidate only calls this for its two-cell local mesh. Full original
     outer transport calls collect_y_orbit_entities and never materializes R/F/Q.
     """
-    entities=collect_y_orbit_entities(space,floquet,cfg,axes)
+    borrowed_entities = entities
+    if entities is None:
+        entities=collect_y_orbit_entities(space,floquet,cfg,axes,transform_bank=transform_bank)
+    else:
+        if not isinstance(entities, YOrbitEntities):
+            raise ValueError("already-collected complete YOrbitEntities required")
+        identity = entities._collection_identity
+        if (identity is None or identity[0] is not space or identity[1] is not floquet or identity[2] is not cfg
+                or identity[3] != tuple((name, tuple(map(float, axes[name]))) for name in ("x", "y", "z"))):
+            raise ValueError("collected entities do not belong to this actual space/MPC/config/axes")
+        if transform_bank is not None and entities._transform_bank is not transform_bank:
+            raise ValueError("layout and collected entities must borrow the same run-local bank")
     independent,full_rows,ny,width=entities.independent,entities.full_rows,entities.ny,entities.width
     records,bases,slots=entities.records,entities.bases,entities.slots
     dimension_counts=entities.dimension_counts
@@ -256,7 +388,8 @@ def build_y_orbit_layout(space, floquet, cfg, axes, *, wrap_phase_y=None, cell_p
             first, size = slots[base]
             if len(native) != size or transform.shape != (size, size):
                 raise ValueError("translated entity channel dimensions disagree")
-            inverse = np.linalg.inv(transform)
+            inverse = (np.linalg.inv(transform) if entities._transform_bank is None else
+                       entities._transform_bank.inverse(transform))
             orientation_defect = max(orientation_defect, float(np.linalg.norm(transform.conj().T @ transform - np.eye(size))))
             canonical = np.arange(orbit * width + first, orbit * width + first + size)
             for i, row in enumerate(native):
@@ -333,7 +466,9 @@ def build_y_orbit_layout(space, floquet, cfg, axes, *, wrap_phase_y=None, cell_p
              "sparse_Q_payload_bytes": _sparse_payload(q), "dense_Q_created": False}
     if wrap_phase_y is not None or cell_phase_y is not None:
         audit.update(explicit_research_wrap=True,explicit_cell_eigenphases=[[v.real,v.imag] for v in eigenphases])
-    return YOrbitLayout(independent, full_rows, ny, width, r, r_inverse, fourier, q, shift, native_translation, phase, audit)
+    return YOrbitLayout(independent, full_rows, ny, width, r, r_inverse, fourier, q, shift,
+                        native_translation, phase, audit, _transform_bank=entities._transform_bank,
+                        _borrowed_entities=borrowed_entities)
 
 
 class FullOriginalAction:

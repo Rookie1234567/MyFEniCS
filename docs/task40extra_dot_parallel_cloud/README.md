@@ -42,3 +42,6 @@ real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_or
 
 
 [V11两胞元full3D p4完整恢复逆](response_v11.md)完成有界Q3–Q5：四fresh q CSR差0后建立并同时保留四因子，原80-cell/15872 FE/8640内部/532 aliases的四完整载荷与真实两cell三维缺口均通过；saved-only checker312/312。regular原残差最大5.26717490249291e-12，notch4/4/3/4步、最大7.966735639625955e-12，8个完整532-mode packets通过。首个checker历史old full_Q存储顺序失败保留，新checker仅显式private copy排序，不重跑PDE。原50×25×140nm/λ0.7nm/2TB/48h、本两cell路线p6、精度/截断/MPI/restart仍未资格。
+
+
+[V12共享完整实体变换](response_v12.md)通过同80-cell full3D原312＋38,881存储门。shared matrix/inverse owners为410,624B，完整记录逻辑体积69,435,392B；它们不是RSS，整树监督峰反而因资格证据重叠增大。本路线p6、原尺寸2TB/48h仍未资格，first X direct profile实施中、未运行。

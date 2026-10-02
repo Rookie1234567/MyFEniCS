@@ -1,0 +1,375 @@
+{
+  "schema": "task40extra.same80-shared-transform-independent-saved-review.v1",
+  "disposition": "PASS_SAVED_ARTIFACT_BINDINGS_AND_COMPLETE_PROOF_INVENTORIES",
+  "review_scope": "stdlib JSON/byte-hash/source-identity/inventory/event/supervision checks only; no project imports, scientific array decoding, math rerun, assembly, factorization or solve",
+  "source_head": "3570347cbd1faf7149611146b8f0f1bdd71f19e6",
+  "source_tree": "abdfa562ad231d86a3ad89363e54de8be8be81a3",
+  "source_dependency_count": 1281,
+  "pinned_run_file_sha256": {
+    "probe_report.json": "810681910e60419a0c8ab038a6bf3c77541e05cd969b0dfc00abcf8626cc9c9b",
+    "independent_checker.json": "5c83b79d55058bfd7b5b488c38cc840148eb13a15fdf97be61a312b53b794905",
+    "summary.json": "c01ea57e5b832bad45598433995d4ae92566022295b1e5b2bcd563a45502516e",
+    "checker_supervision/summary.json": "a8cb063a2b9c2d51cb5e8612e202d72d37cd5cf033dff696f14b6e74174f475f"
+  },
+  "verified_checks": [
+    {
+      "name": "pinned probe_report.json",
+      "passed": true
+    },
+    {
+      "name": "pinned independent_checker.json",
+      "passed": true
+    },
+    {
+      "name": "pinned summary.json",
+      "passed": true
+    },
+    {
+      "name": "pinned checker_supervision/summary.json",
+      "passed": true
+    },
+    {
+      "name": "source and ABI exact worker/checker/provenance",
+      "passed": true
+    },
+    {
+      "name": "actual source identity",
+      "passed": true
+    },
+    {
+      "name": "actual committed tree",
+      "passed": true
+    },
+    {
+      "name": "report and artifact metadata bindings",
+      "passed": true
+    },
+    {
+      "name": "receipt provenance.json",
+      "passed": true
+    },
+    {
+      "name": "receipt artifact_manifest.json",
+      "passed": true
+    },
+    {
+      "name": "checker provenance hash",
+      "passed": true
+    },
+    {
+      "name": "ABI receipt",
+      "passed": true
+    },
+    {
+      "name": "bounded command",
+      "passed": true
+    },
+    {
+      "name": "unchanged resource policy",
+      "passed": true
+    },
+    {
+      "name": "supervision summary.json",
+      "passed": true
+    },
+    {
+      "name": "supervision checker_supervision/summary.json",
+      "passed": true
+    },
+    {
+      "name": "combined bounded wall",
+      "passed": true
+    },
+    {
+      "name": "supervision path receipts",
+      "passed": true
+    },
+    {
+      "name": "complete pass status",
+      "passed": true
+    },
+    {
+      "name": "finite measured checks",
+      "passed": true
+    },
+    {
+      "name": "finite measured shared_storage_checks",
+      "passed": true
+    },
+    {
+      "name": "separate pass counts",
+      "passed": true
+    },
+    {
+      "name": "complete artifacts",
+      "passed": true
+    },
+    {
+      "name": "all 1335 artifact byte hashes",
+      "passed": true
+    },
+    {
+      "name": "immutable original worker report",
+      "passed": true
+    },
+    {
+      "name": "source bridge exact inventories",
+      "passed": true
+    },
+    {
+      "name": "only reviewed twelve paths changed",
+      "passed": true
+    },
+    {
+      "name": "unchanged numerical ABI",
+      "passed": true
+    },
+    {
+      "name": "all reviewed changed source bytes bound to commit",
+      "passed": true
+    },
+    {
+      "name": "q CSR identity equals prior worker",
+      "passed": true
+    },
+    {
+      "name": "factor input binding and retention",
+      "passed": true
+    },
+    {
+      "name": "one complete prefactor event",
+      "passed": true
+    },
+    {
+      "name": "complete proof event bound",
+      "passed": true
+    },
+    {
+      "name": "complete equivalence before factor",
+      "passed": true
+    },
+    {
+      "name": "all stage event hashes",
+      "passed": true
+    },
+    {
+      "name": "all named owner/alias/lazy ledgers independently summed",
+      "passed": true
+    },
+    {
+      "name": "empty-first-lazy-complete-cleanup lifecycle",
+      "passed": true
+    },
+    {
+      "name": "all role events bound",
+      "passed": true
+    },
+    {
+      "name": "all full/two-local roles",
+      "passed": true
+    },
+    {
+      "name": "every record matrix/inverse/six direction/state inventory complete",
+      "passed": true
+    },
+    {
+      "name": "exact bank and old default payload",
+      "passed": true
+    },
+    {
+      "name": "complete state array fingerprints bound to immutable raw context",
+      "passed": true
+    },
+    {
+      "name": "historical ports and fresh new mapping/volume identities separate",
+      "passed": true
+    },
+    {
+      "name": "all four original regular/notched full residuals and 532 outputs",
+      "passed": true
+    },
+    {
+      "name": "per-mode proof covers every load",
+      "passed": true
+    },
+    {
+      "name": "all per-mode actual comparisons cover532",
+      "passed": true
+    },
+    {
+      "name": "checker private validation arrays and preserved old raw_Q bytes",
+      "passed": true
+    }
+  ],
+  "artifact_count": 1335,
+  "artifact_file_bytes": 124635492,
+  "artifact_ledger_sha256": "eb6b4405ba43312973efd65c07b07358464355e81f045c3dcf72455cf9af7616",
+  "source_manifest_sha256": "81b1a3f526679d38e29a5e59124943a1f1dc4248356fec6ee8aa2b0e3ed28fce",
+  "ABI_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+  "original_checks": 312,
+  "shared_checks": 38881,
+  "proof_roles": [
+    {
+      "role": "full",
+      "records": 608,
+      "independent_rows": 15872,
+      "interior_rows": 8640,
+      "six_directions": 6
+    },
+    {
+      "role": "twist_0",
+      "records": 304,
+      "independent_rows": 7936,
+      "interior_rows": 4320,
+      "six_directions": 6
+    },
+    {
+      "role": "twist_1",
+      "records": 304,
+      "independent_rows": 7936,
+      "interior_rows": 4320,
+      "six_directions": 6
+    }
+  ],
+  "actual_state_count": 9,
+  "matrix_content_templates": 4,
+  "lazy_inverses": 4,
+  "bank_complete_matrix_inverse_owner_bytes": 410624,
+  "old_unshared_complete_matrix_inverse_roles": {
+    "full": {
+      "logical_view_bytes": 34717696,
+      "unique_owner_bytes": 34717696,
+      "unique_owner_count": 1216
+    },
+    "twist_0": {
+      "logical_view_bytes": 17358848,
+      "unique_owner_bytes": 17358848,
+      "unique_owner_count": 608
+    },
+    "twist_1": {
+      "logical_view_bytes": 17358848,
+      "unique_owner_bytes": 17358848,
+      "unique_owner_count": 608
+    }
+  },
+  "old_unshared_complete_matrix_inverse_bytes": 69435392,
+  "all_named_retained_owner_bytes": 46234084,
+  "all_named_retained_view_bytes_with_aliases": 115767892,
+  "owner_payload_is_RSS": false,
+  "cleanup_declared_live_owner_anchors": 0,
+  "q_CSR_hashes": [
+    "8f9253e2e65b4eb0500839523d0bf36a8466e4e7704aa2c069985934ee9909a3",
+    "60e9d226c2ad2478d3f19151eb0c80587adbbe31c4bb729bf4283829dc0f9978",
+    "616e7eb743f4d2e24cf7b8772681e412bbd2b681e5fadf8f8287c42dfda9a2e7",
+    "3605e30b87a9636bce35bd4fa8cc220d2cec05234600a3d38c29f2b9c53a8003"
+  ],
+  "q_differences": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ],
+  "regular_residual_max": 5.2675719230699435e-12,
+  "notch_residual_max": 7.96690203269436e-12,
+  "notch_iterations": {
+    "generic": 4,
+    "interior_only": 4,
+    "physical": 3,
+    "notch_supported": 4
+  },
+  "worker_supervision": {
+    "seconds": 170.03514251799788,
+    "tree_peak_RSS_bytes": 1065373696,
+    "swap_bytes": 0,
+    "descendants_cleared": true
+  },
+  "checker_supervision": {
+    "seconds": 43.12502518900146,
+    "tree_peak_RSS_bytes": 952623104,
+    "swap_bytes": 0,
+    "descendants_cleared": true
+  },
+  "prior_worker_comparison": {
+    "source_head": "5e0364cd2eebfffb63a5f3ee8bda8e21083b2495",
+    "seconds": 145.83506661900174,
+    "tree_peak_RSS_bytes": 788480000,
+    "new_peak_is_higher": true,
+    "qualification_contains_legacy_controls_and_evidence_overlap": true,
+    "RSS_saving_or_performance_claim": false
+  },
+  "preserved_old_worker_report_sha256": "32a9ee70f2641d2465b2b12431526b7f204bbc524b9ed18e12553734e6896352",
+  "old_failed_checkers": "preserved in place; no deletions, rewrites or relabeling",
+  "source_equality_claimed": false,
+  "static_source_review_repeated": false,
+  "numeric_recomputation": false,
+  "scientific_array_decoding": false,
+  "target_2TB_48h_qualification": false,
+  "elapsed_verification_seconds": 6.919473572997958,
+  "per_mode_actual_comparison_count": 80,
+  "all532_original_gate_count": 120,
+  "checker_validation_artifact_byte_hashes": [
+    {
+      "scope": "immutable historical raw full_Q",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p4_phi5_centered_attempt1/arrays/full_Q_data.npy",
+      "file_sha256": "b00c007208e34fb6a933b514f5470445ce6f1c05241f7737b1b4518fe7faee31"
+    },
+    {
+      "scope": "immutable historical raw full_Q",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p4_phi5_centered_attempt1/arrays/full_Q_indices.npy",
+      "file_sha256": "aaffda99f55cbe067dde40e45feee79342bf0f1a7020a72d25f29dd76b407712"
+    },
+    {
+      "scope": "immutable historical raw full_Q",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_sparse_p4_phi5_centered_attempt1/arrays/full_Q_indptr.npy",
+      "file_sha256": "767e1b2e7addc19dcdf6a8d737af5bcc3010803ab8e1dd4b15f5f8c6bcb9cedb"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_sorted_to_raw_entry_positions.npy",
+      "file_sha256": "709a2aca7d8ad09342f689c258540053ee7b3342ed8d48fc108e55c308505d70"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_a_probe.npy",
+      "file_sha256": "0133d51bf91480a75ecd3b5e25ab7d2a6f047924aae8b50740fd9c41c821c809"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_a_raw_action.npy",
+      "file_sha256": "8740c49552e0991ed825a4f690a3ef2a4fafe26c36e48f7741cebd64443ca931"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_a_sorted_action.npy",
+      "file_sha256": "ebbab7010fa491abeca615479c47d2ecc12344c825489f0d4e96ddf295cf4021"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_b_probe.npy",
+      "file_sha256": "87e688168aa95e84eee562700f6072c5149e299113cff66ac8d924be07830eaf"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_b_raw_action.npy",
+      "file_sha256": "b8333385b5efb0387366d05d3339da88296c471f39733661ca64c93dafd6e6b0"
+    },
+    {
+      "scope": "checker private historical validation",
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_shared_transform_attempt1/historical_full_Q_b_sorted_action.npy",
+      "file_sha256": "28259c4cb7c93fdb84d46e90f52d68223fa53fc9730ef9d6e9bcef197695d08e"
+    }
+  ],
+  "historical_context_binding_method": "immutable descriptor-file hashes + stored context/stream digest equality + exact geometry/orientation signature fields; project typed canonical codec not rerun"
+}

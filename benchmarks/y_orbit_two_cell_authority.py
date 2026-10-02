@@ -94,7 +94,7 @@ def validate_supervision(summary, source, *, maximum_wall=600):
     return True
 
 
-def validate_old_metadata(report, checker, provenance, *, new_source, new_environment):
+def validate_old_metadata(report, checker, provenance, *, new_source, new_environment, storage_source_bridge=None):
     source = report.get("source", {})
     if (source.get("head") != AUTHORITY_HEAD or source.get("dirty")
             or report.get("source_clean_unchanged") is not True
@@ -149,12 +149,21 @@ def validate_old_metadata(report, checker, provenance, *, new_source, new_enviro
         if (block.get("shape") != [Q_ROWS[q], Q_ROWS[q]] or block.get("nnz") != Q_NNZ[q]
                 or block.get("CSR_sha256") != Q_HASHES[q]):
             raise ValueError("old authority q identity differs")
+    if storage_source_bridge is not None:
+        from benchmarks.y_orbit_shared_storage_bridge import validate_loaded_storage_bridge
+        scoped = validate_loaded_storage_bridge(storage_source_bridge, new_source=new_source, new_environment=new_environment)
+        baseline = dependency_diff(source, storage_source_bridge["worker_source"])
+        if baseline != storage_source_bridge["worker_full_p4_source_bridge"]:
+            raise ValueError("historical full p4 to original worker source bridge changed")
+        return {"old_head": AUTHORITY_HEAD, "new_head": new_source["head"],
+                "historical_full_p4_to_worker_bridge": baseline, "same80_storage_source_bridge": scoped,
+                "source_equality_claimed": False, "complete_actual_pre_factor_equivalence_required": True}
     return dependency_diff(source, new_source)
 
 
 class SavedFullP4Authority:
     """Hash-verified mmap/CSR access to a fixed validation-only old authority."""
-    def __init__(self, directory, *, new_source, new_environment, allocation_gate=None):
+    def __init__(self, directory, *, new_source, new_environment, allocation_gate=None, storage_source_bridge=None):
         self.directory = Path(directory).resolve()
         if self.directory.name != AUTHORITY_RUN:
             raise ValueError("arbitrary stale authority directories are forbidden")
@@ -166,7 +175,8 @@ class SavedFullP4Authority:
         checker = json.loads((self.directory / "independent_checker.json").read_text())
         provenance = json.loads((self.directory / "provenance.json").read_text())
         difference = validate_old_metadata(self.report, checker, provenance,
-                                          new_source=new_source, new_environment=new_environment)
+                                          new_source=new_source, new_environment=new_environment,
+                                          storage_source_bridge=storage_source_bridge)
         summary = json.loads((self.directory / "summary.json").read_text())
         validate_supervision(summary, self.report["source"])
         watched = checker["checker_watchdog_receipt"]

@@ -297,7 +297,20 @@ class _FrozenRawReader:
                 _close_array(values)
 
 
-def _source_environment_gate(old_source, new_source, old_env, new_env):
+def _source_environment_gate(old_source, new_source, old_env, new_env, *, storage_source_bridge=None):
+    if storage_source_bridge is not None:
+        from benchmarks.y_orbit_shared_storage_bridge import validate_loaded_storage_bridge
+        scoped = validate_loaded_storage_bridge(storage_source_bridge, new_source=new_source, new_environment=new_env)
+        baseline = _source_environment_gate(old_source, storage_source_bridge["worker_source"],
+                                             old_env, storage_source_bridge["worker_environment"])
+        if _jsonable(baseline) != storage_source_bridge["worker_snapshot_source_bridge"]:
+            raise ValueError("historical snapshot to original worker bridge changed")
+        return {"old_head": old_source["head"], "new_head": new_source["head"],
+                "historical_snapshot_to_worker_bridge": baseline, "same80_storage_source_bridge": scoped,
+                "historical_restored_port_source": old_source,
+                "actual_new_mapping_volume_recovery_source": new_source,
+                "complete_actual_pre_factor_equivalence_required": True}
+
     if (old_source.get("head") != AUTHORITY_HEAD or old_source.get("dirty")
             or new_source.get("dirty") or new_source.get("branch") != "task40extra_dot_parallel_cloud"
             or old_source.get("branch") != new_source.get("branch") or not new_source.get("head")):
@@ -389,7 +402,7 @@ def _verify_historical_surface_files(context, allocation_gate):
 class SavedQuotientSnapshotAuthority:
     """Pinned finite snapshot metadata; no authority is granted to raw spools alone."""
 
-    def __init__(self, root, *, new_source, new_environment, allocation_gate):
+    def __init__(self, root, *, new_source, new_environment, allocation_gate, storage_source_bridge=None):
         self.root = Path(root).resolve()
         if self.root.name != AUTHORITY_RUN or not callable(allocation_gate):
             raise ValueError("fixed Q0--Q2 run and allocation gate required")
@@ -410,7 +423,8 @@ class SavedQuotientSnapshotAuthority:
                 or any(c.get("passed") is not True or not math.isfinite(c.get("measured", math.nan))
                        or c["measured"] > c["limit"] for c in checker["checks"])):
             raise ValueError("fixed complete Q0--Q2 report/checker qualification required")
-        bridge = _source_environment_gate(report["source"], new_source, report["environment"], new_environment)
+        bridge = _source_environment_gate(report["source"], new_source, report["environment"], new_environment,
+                                          storage_source_bridge=storage_source_bridge)
         supervision_hashes = {}
         for reference in (report["supervisor_receipt"], checker["checker_watchdog_receipt"]):
             summary = _read_json(self.root, reference["path"], allocation_gate, reference["sha256"])
@@ -421,6 +435,7 @@ class SavedQuotientSnapshotAuthority:
         self.report, self.checker, self.artifacts = map(_freeze, (report, checker, artifacts))
         self.saved_source, self.saved_environment = self.report["source"], self.report["environment"]
         self.new_source, self.new_environment = _freeze(new_source), _freeze(new_environment)
+        self.storage_source_bridge = storage_source_bridge
         self._readers, receipts = {}, {}
         for twist in (None, 0, 1):
             directory = "raw_global" if twist is None else f"raw_twist_{twist}"
@@ -664,6 +679,7 @@ class SavedQuotientSnapshotAuthority:
                 "expected_snapshot_identity": expected, "restored_public_carrier_identity": actual_identity,
                 "local_raw_receipt_sha256": None if twist is None else self.report["twists"][twist]["raw_port_receipt"]["sha256"],
                 "historical_raw_JIT_context_sha256": reader.identity["assembly_context_sha256"],
+                "historical_restored_port_source": self.saved_source,
                 "historical_primary_surface_file_verification": historical_files,
                 "new_volume_source": self.new_source, "new_volume_environment": self.new_environment,
                 "new_volume_audit": dict(volume_action.audit), "new_recovery_identity": "inverse owner must rebuild and compare fresh q blocks",

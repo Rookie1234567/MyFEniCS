@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import replace
 from types import SimpleNamespace
 from pathlib import Path
+import sys
 import numpy as np
 from scipy import sparse
 
@@ -107,7 +108,7 @@ def _recovery_identity_gate(condensed,setup,authority,b,*,event):
     return result
 
 
-def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,event,save_array,allocation_gate,run_directory,stage):
+def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,event,save_array,allocation_gate,run_directory,stage,shared_transforms=False):
     from mpi4py import MPI
     from petsc4py import PETSc
     from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -121,14 +122,28 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
     from .y_orbit_sparse_probe import _notch_supported_rhs
     from src.geometry.mesh_builder_3d import _mark_cells,_rectangular_air_void_audit
     if stage not in ('prefactor','solve'):raise ValueError('explicit bounded stage required')
+    if type(shared_transforms) is not bool:raise ValueError('shared transforms must be an explicit boolean opt-in')
+    if shared_transforms and getattr(authority,'storage_source_bridge',None) is None:
+        raise ValueError('shared live setup requires the actual new storage-only source bridge')
     cfg,axes,input_sha=pilot_config(input_path,azimuth_deg=5.)
     cfg=replace(cfg,nedelec_degree=4,visualization_degree=4,case_name='y_orbit_p4_algebra_regular')
     if input_sha!=authority.report['input_sha256']:raise ValueError('frozen input identity differs')
     inventory=build_dynamic_mode_inventory(cfg)
+    bank=evidence=None
+    if shared_transforms:
+        if tuple(len(axes[name])-1 for name in ('x','y','z'))!=(4,4,5):
+            raise ValueError('shared transforms are qualified only for the existing same80 p4 profile')
+        from .y_orbit_transform_bank import RunLocalTransformBank
+        from .y_orbit_shared_transform_evidence import SharedTransformEvidence
+        bank=RunLocalTransformBank(mapping_limit=LIMITS['mapping'])
+        evidence=SharedTransformEvidence(bank,save_array=save_array,event=event,
+            allocation_gate=allocation_gate,mapping_limit=LIMITS['mapping'])
+        evidence.snapshot('before_collect')
     _gate(allocation_gate,'full80_actual_mesh_space_MPC_constructor',payload=16<<20,workspace=128<<20)
     full_setup=_build_same_mesh_levels(cfg,MPI.COMM_SELF,(4,),include_positive_coefficients=False)
     original=notched=None;action0=action1=None;factors=None;sectors=[]
     restorations=[];blocks=[];matrices={};report={};recovery_bindings=[]
+    layout=full_entities=local_entities=local_layout=transport=coords=trace=inverse=provider=matrix=old=setup=bundle=value=condensed=ids=default_entities=None
     def output_save(name,value):
         if isinstance(value,(list,tuple)):
             if not name.endswith('_direct_plane_outgoing_power_diagnostic') or len(value)!=532:
@@ -141,8 +156,21 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
         restorations.append(restored)
         _gate(allocation_gate,'full_native_entity_records_and_inverse',payload=2*15872*108*16,
               workspace=128<<20,full_Ny_F_Q_created=False)
-        full_entities=collect_y_orbit_entities(full_setup['spaces'][4],full_setup['floquets'][4],cfg,axes)
+        if shared_transforms:
+            full_entities=collect_y_orbit_entities(full_setup['spaces'][4],full_setup['floquets'][4],cfg,axes,transform_bank=bank)
+            evidence.named.update(full_entities.named_backing_arrays('full'))
+            evidence.snapshot('full_after_collect')
+            _gate(allocation_gate,'shared_full_default_complete_control',payload=2*15872*108*16,workspace=128<<20)
+            default_entities=collect_y_orbit_entities(full_setup['spaces'][4],full_setup['floquets'][4],cfg,axes)
+            evidence.compare('full',full_entities,default_entities,
+                cell_info=full_setup['mesh'].topology.get_cell_permutation_info(),
+                geometry_x=full_setup['mesh'].geometry.x,frozen_context=authority.snapshot_context(None))
+            default_entities=None
+            evidence.snapshot('full_after_default_release')
+        else:
+            full_entities=collect_y_orbit_entities(full_setup['spaces'][4],full_setup['floquets'][4],cfg,axes)
         layout=StreamedFullYLayout(full_entities,cfg)
+        if shared_transforms:evidence.named['full.cell_dft']=layout.cell_dft
         if not np.array_equal(layout.independent,full_period_authority.load('independent_storage_rows')):
             raise ValueError('complete full original native row inventory differs')
         save_array('independent_storage_rows',layout.independent)
@@ -166,9 +194,25 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
             restorations.append(receipt)
             _gate(allocation_gate,'retained_local2_complete_maps',payload=64<<20,workspace=192<<20)
             local_axes=dict(zip(('x','y','z'),context.local_axes,strict=True))
-            local_layout=build_y_orbit_layout(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes,
-                                             wrap_phase_y=context.tau,cell_phase_y=context.eta)
-            local_entities=collect_y_orbit_entities(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes)
+            if shared_transforms:
+                role=f'twist_{b}'
+                local_entities=collect_y_orbit_entities(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes,transform_bank=bank)
+                evidence.named.update(local_entities.named_backing_arrays(role))
+                evidence.snapshot(role+'_after_collect')
+                _gate(allocation_gate,'shared_local_default_complete_control',payload=2*7936*108*16,workspace=128<<20)
+                default_entities=collect_y_orbit_entities(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes)
+                evidence.compare(role,local_entities,default_entities,
+                    cell_info=setup['mesh'].topology.get_cell_permutation_info(),
+                    geometry_x=setup['mesh'].geometry.x,frozen_context=authority.snapshot_context(b))
+                default_entities=None
+                evidence.snapshot(role+'_layout_before_build')
+                local_layout=build_y_orbit_layout(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes,
+                    wrap_phase_y=context.tau,cell_phase_y=context.eta,entities=local_entities,transform_bank=bank)
+                evidence.add_layout(role,local_layout,local_entities)
+            else:
+                local_layout=build_y_orbit_layout(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes,
+                                                 wrap_phase_y=context.tau,cell_phase_y=context.eta)
+                local_entities=collect_y_orbit_entities(setup['spaces'][4],setup['floquets'][4],local_cfg,local_axes)
             transport=TwoCellNativeTransport(full_entities,local_entities,twist_index=b,eta=context.eta,
                 global_phase=cfg.floquet_phase_y,global_ky=cfg.ky,global_period_y=cfg.period_y)
             condensed=build_quotient_condensed(bundle,global_mode_inventory=inventory,
@@ -179,6 +223,16 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
             coords=TwoCellBranchCoordinates(trace,condensed,context,global_original_H=full_period_authority.load('port_original_H'),
                                             allocation_gate=allocation_gate,index_dtype=PETSc.IntType)
             sector.update(layout=local_layout,transport=transport,condensed=condensed,coordinates=coords)
+            if shared_transforms:
+                for member in ('data','indices','indptr'):evidence.named[f'twist_{b}_Qt.{member}']=getattr(coords.qt,member)
+                for name,value in trace.items():
+                    if isinstance(value,np.ndarray):evidence.named[f'twist_{b}_trace.{name}']=value
+                    elif sparse.issparse(value):
+                        for member in ('data','indices','indptr'):evidence.named[f'twist_{b}_trace.{name}.{member}']=getattr(value,member)
+                for name in ('independent_original_rows','trace_original_rows','interior_original_rows'):
+                    evidence.named[f'twist_{b}_recovery.{name}']=getattr(condensed,name)
+                evidence.named[f'twist_{b}_ports.scale']=coords.scale
+                for branch,ids in enumerate(coords.aliases):evidence.named[f'twist_{b}_ports.alias_{branch}']=ids
             provider=TwoCellBlockProvider(condensed,coords,allocation_gate=allocation_gate)
             for branch in (0,1):
                 q=context.global_q_indices[branch];matrix=provider.block(branch,branch)
@@ -192,11 +246,18 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
                 blocks.append(item);event('rebuilt_q_block_compared_before_any_factor',item)
                 if not comparison['passed']:raise ValueError('restored ports/new volume q block differs before factor')
                 matrices[q]=matrix
+                if shared_transforms:
+                    for member in ('data','indices','indptr'):evidence.named[f'q_{q}_S.{member}']=getattr(matrix,member)
             for name,value in (('independent_storage_rows',condensed.independent_original_rows),
                                ('trace_original_rows',condensed.trace_original_rows),('interior_original_rows',condensed.interior_original_rows),
                                ('slave_storage_rows',np.asarray(setup['floquets'][4].mpc.slaves))):save_array(f'twist_{b}_'+name,value)
             save_array(f'twist_{b}_original_H',np.asarray([e.normalization_h for e in bundle['dtn_action'].carrier.entries]))
         blocks.sort(key=lambda x:x['q'])
+        if shared_transforms:
+            bank.seal()
+            evidence.snapshot('all_sectors_retained_before_factor')
+            shared_receipt=evidence.result()
+            event('shared_complete_equivalence_before_any_factor',shared_receipt)
         report={'schema':'task40extra.y-orbit-two-cell-quotient-probe.v1',
                 'stage':stage,'prefactor_only':stage=='prefactor','degree':4,'physical_mode_count':532,'input_sha256':input_sha,
                 'physical_generator_manifest_sha256':inventory[2],
@@ -206,6 +267,9 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
                 'candidate_full_Ny_CSR_created':False,'candidate_full_F_created':False,'candidate_full_Q_created':False,
                 'candidate_global_FE_square_matrix_created':False,'raw_port_reassembled':False,
                 'raw_literal_qualification_rerun':False,'performance_or_target_capacity_claim':False}}
+        if shared_transforms:
+            report['shared_transforms']=True
+            report['shared_transform_equivalence']=shared_receipt
         if stage=='prefactor':return {**report,'status':'QUOTIENT_PREFACTOR_COMPARE_PASS'}
         # All restore/rebuild/q comparison gates completed before any factor.
         for q in range(4):
@@ -282,6 +346,7 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
             if label=='physical' and packet['nonzero_q_primal_relative']<=1e-12:raise ValueError('physical notch must produce nonzero transverse q content')
             packet['outputs']=recovered_field_and_modes(notch_bundle,layout,x,physical=label=='physical',label=prefix,save=output_save)
             require_output_packet(packet['outputs'],label=prefix,event=event);notch[label]=packet
+        if shared_transforms:evidence.snapshot('apply_recovery_complete')
         return {**report,'status':'QUOTIENT_FULL3D_INVERSE_PROBE_PASS','factor_count':4,'PDE_solved':True,
                 'factor':factors.audit,'augmented_controls':[{'q':q,**manufactured[f'aug_q_{q}']} for q in range(4)],
                 'regular_sources':regular,'notched_sources':notch,'physical_rhs_facts':physical_facts,
@@ -300,3 +365,16 @@ def run_quotient_inverse_probe(input_path,*,authority,full_period_authority,even
             destroy_same_mesh_physical_action(sector['bundle'])
         if notched is not None:notched.destroy()
         if original is not None:destroy_same_mesh_physical_action(original)
+        if evidence is not None:
+            # Clear named borrower references after the entire solve/recovery stage.
+            # Payload accounting does not assert allocator or RSS reclamation.
+            anchors=evidence.owner_weak_anchors(default_entities.named_backing_arrays("cleanup_default") if default_entities is not None else None)
+            evidence.named.clear()
+            for retained_sector in sectors:retained_sector.clear()
+            sectors.clear();matrices.clear()
+            sector=retained_sector=None
+            layout=full_entities=local_entities=local_layout=transport=coords=trace=inverse=provider=matrix=old=setup=bundle=value=condensed=ids=default_entities=None
+            factors=action0=action1=None
+            active_error=sys.exc_info()[0]
+            if active_error is None:evidence.cleanup(anchors)
+            else:evidence.failure_cleanup(anchors,active_error.__name__)

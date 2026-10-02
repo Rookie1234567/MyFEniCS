@@ -1,0 +1,142 @@
+{
+  "schema": "task40extra.same80-shared-transform-source-review.v1",
+  "disposition": "PASS_SOURCE_REVIEW",
+  "source_gate_pass": true,
+  "remaining_source_blockers": [],
+  "scope": "仅审查获批 Step0 same80/p4 表示与证据源码；不授予数值或容量资格",
+  "approved_plan": {
+    "path": "experiments/quotient_scaling_capacity_plan/direct_two_cell_calibration_v2_storage_first_zh.md",
+    "sha256": "c3c1ed220af42839b8fdd9d9f29ddc916e0347d5d31b5add720e52513e1d2588"
+  },
+  "source_identities": {
+    "reviewed_canonical_base": "4b78f3f3edf37c84f2cecbff1ebd7abddea06ed5",
+    "immutable_executed_worker": "5e0364cd2eebfffb63a5f3ee8bda8e21083b2495",
+    "immutable_corrected_checker": "029a0cd883d5a95474d7e7278e28857e3f981cc6",
+    "historical_raw_snapshot": "35dd9e5c39939d14bbded98f288007aff4a08368",
+    "historical_full_p4_authority": "ad356715da86ab34fa6b10838cccc8629b3f6e8b",
+    "observed_parent_bank_integration_head": "d8ef67b767fd23a67567661dbbc1202d82579bda",
+    "observed_canonical_dirty": "",
+    "complete_pipeline_integrated_head": null,
+    "qualification": "完整新 HEAD 由父任务后续整合与 source_facts 精确绑定；不把新源码称为旧 5e 源码"
+  },
+  "frozen_packages": {
+    "bank": {
+      "manifest": "bank/hash_manifest.json",
+      "manifest_sha256": "2791a45ace7d718fdf933f445026049c7fe9ad90bafafcfabd6d1c5c5a5becb1",
+      "patch": "bank/shared_transform_bank.patch",
+      "patch_sha256": "1bdc48be2a2eefaa3e9fa440054399c0dbe21adc1385ee462b00291672d9e78e",
+      "files_sha256": {
+        "src/solvers/y_orbit_transform_bank.py": "9ece954f962dc6bab18a02f6b48b53998219fba3f611647a44404757f219b66f",
+        "src/solvers/task40extra_y_orbit_reference.py": "08112a377ecadb919b4222a794677103513036b015a1400e2bc904d6aa4d14c2",
+        "src/test/test_y_orbit_transform_bank.py": "cd7c7fedcce487d26337a3f413721fa50462dac096fd72cbee33f0677eda4c32"
+      }
+    },
+    "pipeline": {
+      "manifest": "pipeline/manifest.json",
+      "manifest_sha256": "13545a50b54c1b777b4e922b6b47cb1bf719abeb2530dbc0a69b51c568b3212a",
+      "patch": "pipeline/pipeline.patch",
+      "patch_sha256": "a1889ae36dc909f86e8f3c49bf0048ec4d119237565a2721b9ead4957e7ae48a",
+      "files_sha256": {
+        "benchmarks/check_y_orbit_quotient_probe.py": "f486c0d20e32d6edf427919c7607eae3b7eeae1e0a082c161809630929a3580c",
+        "benchmarks/run_y_orbit_quotient_probe.py": "a06ca585656ad4d5cb26a627d9dcbf3af6c313539033b5283c8ad6cf9a9e58c0",
+        "benchmarks/y_orbit_shared_storage_bridge.py": "a466af8376a58b865737accf195f9b0a50c4c265d484e74369984b15169903ed",
+        "benchmarks/y_orbit_two_cell_authority.py": "9e293667718ed54c7a3a120000e02803941ed9e4d1b08c798fcf7263adfe9d19",
+        "src/solvers/y_orbit_qualified_snapshot.py": "24b9769263ce6d71be0d46e7a3275482f94e87a071701b9ba961be5b2e1e2728",
+        "src/solvers/y_orbit_shared_transform_evidence.py": "29fe1f68bb95f2423fee3fffe7df941cb816b9505cff76600a77a793230a7e36",
+        "src/solvers/y_orbit_two_cell_inverse_probe.py": "e2d6dd4ed151c5cfdf1900e6c578fd5cbf351b4190c8cf4e8130a94f0053eec0",
+        "src/test/test_y_orbit_shared_storage_metadata.py": "4595e64471e75851bbabab56c54420e798cefb418eaca0fef67c7f5a3afaa22a"
+      }
+    }
+  },
+  "independently_verified_bindings": {
+    "worker_report_sha256": "32a9ee70f2641d2465b2b12431526b7f204bbc524b9ed18e12553734e6896352",
+    "worker_dependency_count": 1275,
+    "worker_dependency_manifest_sha256": "5a57a2b067541da0bde4cfc7060b77e21846ae794984873c3a2ac6c1275099b0",
+    "original_reference_sha256": "c01d86a4d58b369361d8cb65a19f30ca9ed7cfd471044b1ca965432e419b6065",
+    "corrected_checker_baseline_sha256": "5cd0a9140264596307896f6f79a1bf226111ef523a6089cb91387b9b641bc71a",
+    "unchanged_existing_checker_sort_test_sha256": "f9107b75802685c00322b097fadf205fa4b43012bac728ed82fe315720be1314",
+    "unchanged_orientation_helpers": {
+      "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+      "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c"
+    },
+    "unchanged_input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "physical_mode_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951"
+  },
+  "default_and_mathematical_source_proof": {
+    "collector_default": "transform_bank=None 保留旧实体选择/行序/轨道/slot/完整矩阵；cell_builder 保留 eye→实际 Tt_apply/cell_info→完整 ordered interior 块 inverse→complex128 的原计算",
+    "six_unchanged_formulas": {
+      "primal_to_canonical": "T^-1 v_native",
+      "primal_from_canonical": "T v_canonical",
+      "dual_to_canonical": "T^H v_native",
+      "dual_from_canonical": "T^-H v_canonical",
+      "functional_to_canonical": "T^T v_native",
+      "functional_from_canonical": "T^-T v_canonical"
+    },
+    "mapping_limit": 1e-12,
+    "inverse_implementation": "实际 np.linalg.inv；保留 inverse@matrix composition 门，不假定 inverse=adjoint 或所有 states identity",
+    "actual_key": "actual-space/Basix coefficients + ABI/Tt_apply identity + dimension/dtype/shape + ordered channel inventory + native edge/D4/cell_info + inherited semantics；相同内容只在同 basis/channel/semantics 中 intern",
+    "state_witness": "实际 native coordinates、source cell/local_entity、ordered positions、cell_info 独立于 TransformKey 保存；checker 从完整 saved geometry/cell_info 和旧 helper 重算 key",
+    "complete_pre_factor_roles": {
+      "full": {
+        "cells": 80,
+        "records": 608,
+        "independent_rows": 15872,
+        "interior_rows": 8640
+      },
+      "twist_0": {
+        "cells": 40,
+        "records": 304,
+        "independent_rows": 7936,
+        "interior_rows": 4320
+      },
+      "twist_1": {
+        "cells": 40,
+        "records": 304,
+        "independent_rows": 7936,
+        "interior_rows": 4320
+      }
+    },
+    "complete_equivalence": "逐 record 完整 default/shared matrix、inverse、row owner 与 partition；全部六方向 disjoint-record identity panels 覆盖所有列；重算 inverse composition、native primal-dual/functional pairing",
+    "old_gates": "四 q fresh CSR 与不可变旧 authority、原 full A4/A1、四 loads、532 modes、原 312 residual/output 数值代码与 limits 保持；新增 shared_storage_checks 独立"
+  },
+  "ownership_and_resource_source_proof": {
+    "lifecycle": "单 run-local bank；matrix/inverse 为 immutable bytes backing；同 complete content template 单 lazy inverse；每实体仅借用；局部 layout 借同已收集对象；seal 拒绝 unseen state",
+    "exact_owner_receipt": "追踪 ultimate ndarray/bytes backing，physical A/K owner bytes 与 C logical view hash 分开；保存 dtype/shape/strides/offset/span、所有 named borrowers、run-local owner IDs、aliases sum 与 unique backing bytes",
+    "independent_checker": "从完整 saved uint8 owner payload 重建每个 strided view、原/default record 和 bank template；逐阶段由实际 matrix/inverse views 重算 lazy inventory；非空 coverage 与 complete key/state 集合核验",
+    "cleanup": "清除实体/layout/transport/inverse/sector/coords/trace/q CSR/loop aliases；close 后要求无 live declared owner weak anchors；已有异常保留原 failure，并明确不授予 cleanup 资格",
+    "payload_is_RSS": false,
+    "whole_tree_cap_bytes": 1610612736,
+    "wall_seconds": 600,
+    "zero_swap": true,
+    "mpi": 1,
+    "math_threads": 1,
+    "evidence_reserve_bytes": 134217728,
+    "factor_allowance_bytes": 536870912,
+    "factor_policy": "保留现 current RSS + actual remaining factor allowance + evidence reserve admission；fill/workspace unknown；四因素同时保留；无 L/U 统计副本",
+    "forbidden_full_Ny": "候选 full Ny S/F/Q/global FE square matrix 禁止；所有物理 operators/ports/constraints/config/ABI 在完整 source bridge allowlist 外精确不变"
+  },
+  "API_and_source_bridge": {
+    "opt_in": "--shared-transforms / shared_transforms=False",
+    "collector": "collect_y_orbit_entities(..., transform_bank=bank)",
+    "local_layout": "build_y_orbit_layout(..., entities=local_entities, transform_bank=bank)",
+    "borrower_audit": "transform_key / actual_state_witness / named_backing_arrays",
+    "source_bridge": "两个 historical authority 沿不可变旧 snapshot/full-p4→执行 worker5e→实际新 clean HEAD 链；只允许列明 12 representation/checker/test paths，其余 complete numerical/config/input inventory 和 ABI 相等",
+    "historical_ports": "历史 raw-port provenance 独立保留；fresh mapping/volume/recovery 使用实际新 source；不声称 old/new source equality"
+  },
+  "reviewer_execution": {
+    "project_imports": 0,
+    "saved_project_numerical_arrays_read": 0,
+    "PDE_assembly": 0,
+    "factorization": 0,
+    "solves": 0,
+    "reruns": 0,
+    "canonical_edits": 0
+  },
+  "implementation_reported_static_checks": {
+    "bank_isolated_contracts": "13/13 PASS，实施者报告并由 frozen manifest 绑定，reviewer 未重跑",
+    "pipeline_metadata_contracts": "93/93 PASS，实施者报告并由 frozen static validation 绑定，reviewer 未重跑",
+    "AST_and_patch_apply": "PASS，实施者报告；reviewer 完成全文相关 source/diff 审阅及 exact hash readback"
+  },
+  "numerical_qualification": "NOT_RUN_BY_REVIEWER；父任务负责 qualified integration/tests/same80 GO 与完整新 HEAD/source/environment/artifact binding",
+  "measured_owner_RSS_or_target_capacity": "NOT_RUN；此 receipt 不声称 same80 数值 pass、资源 pass、target saving 或 2TB/48h 可行"
+}

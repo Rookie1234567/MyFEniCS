@@ -573,6 +573,383 @@ def validate_array_inventory(report, stage):
     return True
 
 
+def validate_shared_storage_metadata(evidence, descriptors):
+    """Nonvacuous complete same80 record, class, owner and lazy inventory."""
+    directions = ("primal_to_canonical", "primal_from_canonical", "dual_to_canonical",
+        "dual_from_canonical", "functional_to_canonical", "functional_from_canonical")
+    if (evidence.get("schema") != "task40extra.same80-shared-transform-equivalence.v1"
+            or evidence.get("shared_transforms") is not True or evidence.get("same80_p4_only") is not True
+            or evidence.get("complete_before_any_factor") is not True
+            or evidence.get("local_layout_borrows_existing_entities") is not True
+            or evidence.get("payload_is_RSS") is not False or evidence.get("target_savings_measured") is not False
+            or evidence.get("mapping_limit") != 1e-12):
+        raise ValueError("complete same80 storage-only equivalence required")
+    roles = evidence.get("roles", [])
+    if [item.get("role") for item in roles] != ["full", "twist_0", "twist_1"]:
+        raise ValueError("complete ordered full/two-local roles required")
+    for role, n, ny, total, expected_counts in zip(roles,(15872,7936,7936),(4,2,2),(608,304,304),
+            ({1:272,2:256,3:80},{1:136,2:128,3:40},{1:136,2:128,3:40}),strict=True):
+        records=role.get("records",[])
+        if (role.get("independent_rows")!=n or role.get("width")!=3968 or role.get("ny")!=ny
+                or role.get("record_count")!=total or len(records)!=total or role.get("base_count")!=152
+                or role.get("full_rows")!=(17204 if ny==4 else 8940)
+                or any(role.get(key) is not True for key in ("complete_native_independent_partition_equal",
+                    "complete_orbit_base_slot_partition_equal","every_actual_record_matrix_inverse_compared",
+                    "all_six_complete_operator_columns_compared","shared_bank_instance_equal"))
+                or role.get("mutable_transform_borrow_detected") is not False or role.get("key_collision_detected") is not False
+                or not role.get("references") or not role.get("record_rows_artifact")):
+            raise ValueError("complete actual same80 record coverage required")
+        counts={dimension:sum(item.get("dimension")==dimension for item in records) for dimension in (1,2,3)}
+        if counts!=expected_counts or sum(item.get("size",0) for item in records)!=n:
+            raise ValueError("complete edge/face/interior channel inventory differs")
+        if {item.get("borrower_record_index") for item in records}!=set(range(1,total+1)):
+            raise ValueError("exact insertion-order borrower inventory required")
+        for item in records:
+            if (type(item.get("orbit")) is not int or item["orbit"] not in range(ny)
+                    or type(item.get("dimension")) is not int or item["dimension"] not in (1,2,3)
+                    or item.get("size")!={1:4,2:24,3:108}[item["dimension"]]
+                    or item.get("rows_count")!=item["size"] or item.get("template_id") not in role["references"]
+                    or any(not isinstance(item.get(member+"_owner_id"),str) for member in ("rows","matrix","inverse"))):
+                raise ValueError("complete per-record template/owner identity differs")
+            for metric in ("matrix_difference","inverse_difference","inverse_composition","nonhermitian_pairing"):
+                finite_gate(item.get(metric),1e-12,"shared_record_"+metric)
+        if [item.get("direction") for item in role.get("directions",[])]!=list(directions):
+            raise ValueError("all six ordered complete operators required")
+        for item in role["directions"]:
+            if (item.get("complete_columns")!=108 or item.get("panel_columns_max")!=32
+                    or item.get("default_action_sha256")!=item.get("shared_action_sha256")
+                    or any(not re.fullmatch(r"[0-9a-f]{64}",item.get(key,"")) for key in
+                        ("input_sha256","default_action_sha256","shared_action_sha256"))):
+                raise ValueError("complete six-direction exhaustive action evidence differs")
+            finite_gate(item.get("relative_difference"),1e-12,"shared_direction")
+    stages=evidence.get("owner_stages",[])
+    names=[item.get("stage") for item in stages]
+    required=["before_collect"]
+    for role in ("full","twist_0","twist_1"):
+        required.extend([role+"_after_collect",role+"_unshared_overlap",role+"_after_first_inverse_request",
+                         role+"_after_first_inverse_direction",role+"_after_all_six_directions"])
+        if role!="full":required.append(role+"_layout_after_build")
+    required.extend(["all_sectors_retained_before_factor","cleanup"])
+    if len(names)!=len(set(names)) or any(name not in names for name in required):
+        raise ValueError("complete collect/layout/lazy/retention/cleanup owner lifecycle required")
+    if [names.index(name) for name in required]!=sorted(names.index(name) for name in required):
+        raise ValueError("owner lifecycle chronology differs")
+    if stages[0].get("matrix_template_count")!=0 or stages[0].get("lazy_inverse_count")!=0:
+        raise ValueError("bank must start empty")
+    sealed_seen=False;previous_inverse=0;previous_templates=0
+    union_owner_artifacts={key:value for receipt in stages for key,value in receipt.get("owner_artifacts",{}).items()}
+    if evidence.get("owner_artifacts")!=union_owner_artifacts:raise ValueError("complete global owner artifact inventory required")
+    if stages[names.index("full_after_collect")].get("lazy_inverse_count")!=0 or stages[names.index("full_after_first_inverse_request")].get("lazy_inverse_count")!=1:
+        raise ValueError("actual empty and first-class lazy inverse stages required")
+    for stage in stages:
+        owners,views=stage.get("owners",[]),stage.get("views",[])
+        ids=[item.get("owner_id") for item in owners];view_names=[item.get("name") for item in views]
+        if (len(ids)!=len(set(ids)) or len(view_names)!=len(set(view_names))
+                or stage.get("allocation_boundary")!="shared_owner_receipt_"+stage["stage"]
+                or stage.get("owner_count")!=len(owners) or stage.get("scope")!="named numerical backing allocations; not RSS"
+                or stage.get("sum_view_nbytes_with_aliases")!=sum(item.get("view_nbytes",-1) for item in views)
+                or stage.get("unique_backing_owner_nbytes")!=sum(item.get("allocation_nbytes",-1) for item in owners)):
+            raise ValueError("exact distinct-owner versus alias accounting failed")
+        templates=stage.get("templates",[])
+        if (stage.get("matrix_template_count")!=len(templates)
+                or stage.get("actual_state_count")!=sum(len(item.get("keys",[])) for item in templates)
+                or stage.get("lazy_inverse_count")!=sum(item.get("inverse_sha256") is not None for item in templates)):
+            raise ValueError("actual class/template/lazy inventory differs")
+        if stage["stage"]=="cleanup":
+            if (stage.get("closed") is not True or owners or views or templates
+                    or stage.get("cleanup_live_declared_owner_anchors")!=0
+                    or stage.get("cleanup_all_declared_borrowers_released") is not True):
+                raise ValueError("cleanup requires actual declared borrower release, not empty labels")
+            continue
+        if stage["stage"]!="before_collect" and (not owners or not views or not templates):
+            raise ValueError("nonempty actual owner/class inventory required")
+        if stage.get("lazy_inverse_count",-1)<previous_inverse or stage.get("matrix_template_count",-1)<previous_templates:
+            raise ValueError("run-local lazy templates cannot disappear before cleanup")
+        if sealed_seen and not stage.get("sealed"):raise ValueError("sealed bank cannot reopen")
+        sealed_seen=sealed_seen or stage.get("sealed") is True
+        previous_inverse=stage["lazy_inverse_count"];previous_templates=stage["matrix_template_count"]
+        named_views={item["name"]:item for item in views}
+        actual_inverse_count=0
+        for template in templates:
+            prefix="bank.template."+template["template_id"].split("-")[1]
+            matrix_view=named_views.get(prefix+".matrix")
+            inverse_view=named_views.get(prefix+".inverse")
+            if matrix_view is None or matrix_view.get("sha256")!=template.get("matrix_sha256"):
+                raise ValueError("every stage matrix template needs its exact saved owner view")
+            if template.get("inverse_sha256") is None:
+                if inverse_view is not None:raise ValueError("lazy-empty template cannot have inverse storage")
+            elif inverse_view is None or inverse_view.get("sha256")!=template["inverse_sha256"]:
+                raise ValueError("every stage lazy inverse needs its exact saved owner view")
+            else:actual_inverse_count+=1
+        if actual_inverse_count!=stage["lazy_inverse_count"]:raise ValueError("actual saved lazy inverse count differs")
+        owner_by_id={item["owner_id"]:item for item in owners}
+        for owner in owners:
+            borrowers=sorted(item["name"] for item in views if item.get("owner_id")==owner["owner_id"])
+            artifact=stage.get("owner_artifacts",{}).get(owner["owner_id"],{})
+            descriptor=descriptors.get(artifact.get("artifact"),{})
+            if (not borrowers or sorted(owner.get("borrowers",[]))!=borrowers
+                    or artifact.get("sha256")!=owner.get("sha256")
+                    or artifact.get("allocation_nbytes")!=owner.get("allocation_nbytes")
+                    or descriptor.get("dtype")!="uint8" or descriptor.get("shape")!=[owner["allocation_nbytes"]]
+                    or descriptor.get("payload_bytes")!=owner["allocation_nbytes"]):
+                raise ValueError("complete owner buffer artifacts and borrower edges required")
+        for view in views:
+            owner=owner_by_id.get(view.get("owner_id"))
+            if owner is None or not view.get("base_chain") or len(view.get("shape",[]))!=len(view.get("strides",[])):
+                raise ValueError("complete view to ultimate owner chain required")
+            low,high=view.get("backing_span",[-1,-1])
+            if not 0<=low<=high<=owner["allocation_nbytes"]:raise ValueError("view exceeds actual owner allocation")
+            if (view["name"].startswith("bank.template.") or
+                    view["name"].startswith(("full.record.","twist_0.record.","twist_1.record.")) and
+                    view["name"].endswith((".matrix",".inverse"))):
+                if view.get("writeable") is not False or owner.get("owner_type")!="builtins.bytes":
+                    raise ValueError("shared borrowed transform must have immutable byte backing")
+    retained=stages[names.index("all_sectors_retained_before_factor")]
+    if (retained.get("sealed") is not True or retained.get("lazy_inverse_count")!=retained.get("matrix_template_count")
+            or not retained.get("basis_fingerprints")):
+        raise ValueError("all actual classes/inverses retained in the sealed pre-factor bank")
+    final_templates={item["template_id"]:item for item in retained["templates"]}
+    final_basis={item["basis_id"]:item["descriptor"] for item in retained["basis_fingerprints"]}
+    def identity(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
+    for receipt in stages:
+        for template in receipt.get("templates",[]):
+            final=final_templates.get(template["template_id"])
+            if (final is None or template["matrix_sha256"]!=final["matrix_sha256"]
+                    or template["inverse_sha256"] is not None and template["inverse_sha256"]!=final["inverse_sha256"]
+                    or not {identity(key) for key in template["keys"]}.issubset({identity(key) for key in final["keys"]})):
+                raise ValueError("earlier actual class/template state detached from complete retained proof")
+        for descriptor in receipt.get("basis_fingerprints",[]):
+            if final_basis.get(descriptor["basis_id"])!=descriptor["descriptor"]:
+                raise ValueError("earlier actual basis descriptor changed")
+    return True
+
+
+def validate_shared_record_key(key,witness,*,dimension,size,basis_descriptor,actual_cell_info,expected_state):
+    positions=basis_descriptor["actual_entity_positions"]
+    if (set(key)!={"basis","dimension","shape","channels","state","semantics","dtype"}
+            or type(dimension) is not int or dimension not in (1,2,3) or key.get("dimension")!=dimension
+            or type(key.get("dimension")) is not int or key.get("shape")!=[size,size]
+            or any(type(value) is not int for value in key["shape"])
+            or key.get("dtype")!=basis_descriptor["matrix_dtype"]
+            or witness.get("dimension")!=dimension or type(witness.get("dimension")) is not int
+            or type(witness.get("cell_info")) is not int or witness["cell_info"]!=actual_cell_info):
+        raise ValueError("complete actual record coefficient identity differs")
+    if dimension in (1,2):
+        local=witness.get("local_entity")
+        if type(local) is not int or local not in range(len(positions[dimension])):raise ValueError("actual local subentity missing")
+        expected_positions=positions[dimension][local];expected_channels=list(range(size))
+        semantics=(["canonical_edge","lexicographic_xyz","basix_coefficient_v1"] if dimension==1 else
+                   ["canonical_face","axis_aligned_reference_q1","basix_coefficient_v1"])
+    else:
+        if witness.get("local_entity") is not None:raise ValueError("cell interior subentity relabeled")
+        expected_positions=positions[3][0];expected_channels=expected_positions
+        semantics=["actual_element.Tt_apply","cell_dim_block_size","inverse_interior_block"]
+    if (not isinstance(key.get("channels"),list) or any(type(value) is not int for value in key["channels"])
+            or key["channels"]!=expected_channels or witness.get("positions")!=expected_positions
+            or any(type(value) is not int for value in witness["positions"]) or key.get("semantics")!=semantics):
+        raise ValueError("ordered actual channels or inherited coefficient semantics differ")
+    state=key.get("state")
+    if not isinstance(state,list) or state!=expected_state:raise ValueError("actual orientation state relabeled")
+    if dimension==1:
+        valid=len(state)==2 and state[0]=="edge_reversal" and type(state[1]) is bool
+    elif dimension==2:
+        valid=(len(state)==3 and state[0]=="face_D4" and isinstance(state[1],list) and len(state[1])==4
+               and all(type(value) is int for value in state[1]) and sorted(state[1])==[0,1,2,3]
+               and type(state[2]) is int and state[2] in range(8))
+    else:
+        valid=len(state)==2 and state[0]=="cell_info" and type(state[1]) is int and 0<=state[1]<2**30
+    if not valid:raise ValueError("strict actual finite orientation class required")
+    return True
+
+
+def check_shared_storage_evidence(evidence, *, load, descriptors, allocation_gate, native_inventories, snapshot_contexts):
+    """Independently rebuild logical views and all six complete record actions."""
+    import numpy as np
+    from src.solvers.hcurl_canonical_vector_dolfinx import _entity_canonical_order
+    from src.constraints.high_order_floquet_trace import quadrilateral_face_info
+    validate_shared_storage_metadata(evidence,descriptors)
+    checks=[];owner_hashes={};view_hashes={};known_owner_facts={};raw_buffers={}
+    unique_artifacts={item['artifact'] for stage in evidence['owner_stages'] for item in stage['owner_artifacts'].values()}
+    allocation_gate('checker_shared_owner_payloads',{'matrix_payload_bytes':sum(descriptors[name]['payload_bytes'] for name in unique_artifacts),
+                                                  'workspace_bytes':16<<20})
+    def raw_load(name):
+        if name not in raw_buffers:raw_buffers[name]=load(name)
+        return raw_buffers[name]
+    def add(name,measured,limit=1e-12):
+        measured=float(measured)
+        if not math.isfinite(measured) or measured>limit:raise ValueError("shared storage numerical proof failed: "+name)
+        checks.append({"name":name,"measured":measured,"limit":float(limit),"passed":True})
+    def raw_hash(value):return hashlib.sha256(value.tobytes(order="C")).hexdigest()
+    for stage in evidence["owner_stages"]:
+        allocations={item["owner_id"]:item for item in stage["owners"]}
+        for owner in stage["owners"]:
+            token=owner["owner_id"];facts={k:v for k,v in owner.items() if k!="borrowers"}
+            if token in known_owner_facts and known_owner_facts[token]!=facts:raise ValueError("same owner ID changed allocation/content")
+            known_owner_facts[token]=facts
+            ref=stage["owner_artifacts"][token];raw=raw_load(ref["artifact"])
+            if raw.dtype!=np.dtype(np.uint8) or raw.ndim!=1 or raw_hash(raw)!=owner["sha256"]:
+                raise ValueError("actual saved backing byte hash differs")
+            owner_hashes[token]=owner["sha256"]
+            for view in (item for item in stage["views"] if item["owner_id"]==token):
+                dtype=np.dtype(view["dtype"]);shape=tuple(view["shape"]);strides=tuple(view["strides"])
+                if dtype.hasobject or any(type(size) is not int or size<0 for size in shape):raise ValueError("invalid numerical view shape/dtype")
+                size=math.prod(shape);offset=view["byte_offset"]
+                low=offset+sum(min(0,(count-1)*stride) for count,stride in zip(shape,strides)) if size else offset
+                high=offset+sum(max(0,(count-1)*stride) for count,stride in zip(shape,strides))+dtype.itemsize if size else offset
+                if [low,high]!=view["backing_span"] or size*dtype.itemsize!=view["view_nbytes"]:
+                    raise ValueError("exact saved strided byte span differs")
+                array=np.ndarray(shape=shape,dtype=dtype,buffer=raw,offset=offset,strides=strides)
+                if array.dtype.kind in "fc" and not np.isfinite(array).all():
+                    raise ValueError("nonfinite backing view cannot qualify shared storage")
+                value_hash=raw_hash(array)
+                if value_hash!=view["sha256"]:raise ValueError("saved alias logical numerical hash differs")
+                view_hashes[(stage["stage"],view["name"])]=value_hash
+            add(stage["stage"]+"_"+token+"_raw_owner_hash",0.,0.)
+    retained=next(item for item in evidence["owner_stages"] if item["stage"]=="all_sectors_retained_before_factor")
+    templates={item["template_id"]:item for item in retained["templates"]}
+    basis={item["basis_id"]:item["descriptor"] for item in retained["basis_fingerprints"]}
+    if len(basis)!=retained["basis_count"] or any(digest_json(desc)!=token for token,desc in basis.items()):
+        raise ValueError("actual basis coefficient/ABI fingerprints differ")
+    template_keys={digest_json(key) for item in templates.values() for key in item["keys"]};record_keys=set()
+    views={item["name"]:item for item in retained["views"]}
+    def borrowed(name, selected_stage=None):
+        selected_stage=retained if selected_stage is None else selected_stage
+        selected_views={item["name"]:item for item in selected_stage["views"]}
+        view=selected_views[name];raw=raw_load(selected_stage["owner_artifacts"][view["owner_id"]]["artifact"])
+        return np.ndarray(tuple(view["shape"]),dtype=np.dtype(view["dtype"]),buffer=raw,
+                          offset=view["byte_offset"],strides=tuple(view["strides"]))
+    directions=("primal_to_canonical","primal_from_canonical","dual_to_canonical","dual_from_canonical","functional_to_canonical","functional_from_canonical")
+    for role in evidence["roles"]:
+        name=role["role"];records=role["records"];n=role["independent_rows"]
+        context=snapshot_contexts[name]
+        actual_arrays={}
+        for member,expected in (("cell_info",context["orientation"]),("geometry_x",context["mesh"]["geometry_x"])):
+            reference=role.get("actual_arrays",{}).get(member,{})
+            actual=load(reference["artifact"])
+            signature={"shape":list(actual.shape),"dtype":str(actual.dtype),"sha256":raw_hash(actual)}
+            if signature!=reference.get("signature") or signature!=expected:
+                raise ValueError("complete actual orientation/geometry not bound to historical immutable topology")
+            actual_arrays[member]=actual
+        rows=load(role["record_rows_artifact"])
+        default_stage=next(item for item in evidence["owner_stages"] if item["stage"]==name+"_after_all_six_directions")
+        default_views={item["name"]:item for item in default_stage["views"]}
+        default_native=borrowed("default_"+name+".independent",default_stage)
+        native=load(native_inventories[name]);saved_independent=borrowed(name+".independent")
+        if not np.array_equal(native,saved_independent) or not np.array_equal(native,default_native) or native.shape!=(n,):raise ValueError("complete actual native inventory differs")
+        if rows.dtype!=np.dtype(np.int64) or rows.shape!=(n,) or not np.array_equal(np.sort(rows),np.arange(n)):
+            raise ValueError("every native independent channel must occur exactly once")
+        canonical=[];operators={};bases={};offset_cursor=0;seen_record_keys=set()
+        allocation_gate("checker_shared_complete_record_operators_"+name,{"matrix_payload_bytes":0,"workspace_bytes":8<<20})
+        for item in records:
+            key=item["actual_key"];record_keys.add(digest_json(key));template=templates[item["template_id"]]
+            if key not in template["keys"] or key.get("basis") not in basis or key.get("dimension")!=item["dimension"]:
+                raise ValueError("actual record state not represented by exact qualified template key")
+            size=item["size"];start=item["orbit"]*role["width"]+item["first"]
+            witness=item.get("actual_state_witness",{})
+            dimension=item["dimension"];cell=witness.get("cell")
+            if (witness.get("dimension")!=dimension or type(cell) is not int
+                    or cell not in range(len(actual_arrays["cell_info"]))
+                    or witness.get("cell_info")!=int(actual_arrays["cell_info"][cell])
+                    or key.get("shape")!=[size,size] or key.get("dtype")!=np.dtype(np.complex128).str):
+                raise ValueError("actual basis shape/dtype/cell orientation identity differs")
+            coords=np.asarray(witness.get("native_coordinates"),dtype=float)
+            if coords.shape!=({1:2,2:4,3:8}[dimension],3) or not np.isfinite(coords).all():
+                raise ValueError("complete original native entity coordinates required")
+            if any(not np.any(np.all(actual_arrays["geometry_x"]==point,axis=1)) for point in coords):
+                raise ValueError("actual entity coordinates absent from immutable full geometry")
+            descriptor=basis[key["basis"]]
+            positions=descriptor["actual_entity_positions"]
+            if dimension in (1,2):
+                local_entity=witness.get("local_entity")
+                if type(local_entity) is not int or local_entity not in range(len(positions[dimension])):
+                    raise ValueError("actual local entity channel inventory required")
+                expected_positions=positions[dimension][local_entity]
+                _,permutation=_entity_canonical_order(coords,dimension,1e-9)
+                permutation=list(map(int,permutation))
+                expected_state=(["edge_reversal",permutation!=[0,1]] if dimension==1 else
+                                ["face_D4",permutation,int(quadrilateral_face_info(tuple(permutation)))])
+                expected_channels=list(range(size))
+                expected_semantics=(["canonical_edge","lexicographic_xyz","basix_coefficient_v1"] if dimension==1 else
+                                    ["canonical_face","axis_aligned_reference_q1","basix_coefficient_v1"])
+            else:
+                if witness.get("local_entity") is not None:raise ValueError("cell witness cannot relabel a subentity")
+                expected_positions=positions[3][0]
+                expected_state=["cell_info",int(actual_arrays["cell_info"][cell])]
+                expected_channels=expected_positions
+                expected_semantics=["actual_element.Tt_apply","cell_dim_block_size","inverse_interior_block"]
+            validate_shared_record_key(key,witness,dimension=dimension,size=size,basis_descriptor=descriptor,
+                actual_cell_info=int(actual_arrays["cell_info"][cell]),expected_state=expected_state)
+            if item["rows_offset"]!=offset_cursor:raise ValueError("complete sequential record row offsets required")
+            offset_cursor+=size
+            record_id=(item["orbit"],digest_json(item["base"]))
+            if record_id in seen_record_keys:raise ValueError("duplicate actual orbit/base record")
+            seen_record_keys.add(record_id)
+            canonical.extend(range(start,start+size));base=digest_json(item["base"])
+            if base in bases and bases[base]!=(item["first"],size):raise ValueError("translated slot/base dimensions changed")
+            bases[base]=(item["first"],size)
+            prefix=name+".record."+format(item["borrower_record_index"],"06d")
+            matrix=borrowed(prefix+".matrix");inverse=borrowed(prefix+".inverse")
+            record_rows=borrowed(prefix+".rows")
+            default_prefix="default_"+prefix
+            default_rows=borrowed(default_prefix+".rows",default_stage)
+            if (views[prefix+".rows"]["owner_id"]!=item["rows_owner_id"]
+                    or not np.array_equal(record_rows,rows[item["rows_offset"]:item["rows_offset"]+size])
+                    or not np.array_equal(record_rows,default_rows)):
+                raise ValueError("complete actual/default record row owner differs")
+            for member,value in (("matrix",matrix),("inverse",inverse)):
+                view=views[prefix+"."+member]
+                bank_index=item["template_id"].split("-")[1]
+                bank_view=views["bank.template."+bank_index+"."+member]
+                if (view["owner_id"]!=item[member+"_owner_id"] or view["owner_id"]!=bank_view["owner_id"]
+                        or view["byte_offset"]!=bank_view["byte_offset"] or view["strides"]!=bank_view["strides"]
+                        or value.shape!=(size,size) or value.dtype!=np.dtype(np.complex128)
+                        or raw_hash(value)!=item[member+"_sha256"] or raw_hash(value)!=template[member+"_sha256"]):
+                    raise ValueError("complete per-entity immutable template/owner alias differs")
+                reference=borrowed(default_prefix+"."+member,default_stage)
+                saved_reference=load(role["references"][item["template_id"]][member+"_artifact"])
+                if (reference.tobytes(order="C")!=saved_reference.tobytes(order="C")
+                        or raw_hash(reference)!=role["references"][item["template_id"]][member+"_sha256"]):
+                    raise ValueError("per-template default control detached from complete per-record original owner")
+                difference=float(np.linalg.norm(value-reference)/max(np.linalg.norm(reference),np.finfo(float).tiny))
+                if value.tobytes(order="C")!=reference.tobytes(order="C"):raise ValueError("complete default record transform changed")
+                add(name+"_record_"+str(item["borrower_record_index"])+"_"+member,difference)
+            composition=float(np.linalg.norm(inverse@matrix-np.eye(size))/np.sqrt(size));add(name+"_inverse_composition",composition)
+            j=np.arange(size);x=np.cos(.31*j)+1j*np.sin(.47*j);d=np.sin(.29*j)+1j*np.cos(.41*j);f=np.cos(.23*j)+1j*np.sin(.37*j)
+            scale=max(np.linalg.norm(d)*np.linalg.norm(x),np.linalg.norm(f)*np.linalg.norm(x),1.)
+            pairing=float(max(abs(np.vdot(inverse.conj().T@d,matrix@x)-np.vdot(d,x)),abs(np.dot(inverse.T@f,matrix@x)-np.dot(f,x)))/scale)
+            add(name+"_nonhermitian_pairing",pairing)
+            operators[item["borrower_record_index"]]=(matrix,inverse)
+        if len(bases)!=152 or sorted(canonical)!=list(range(n)):raise ValueError("all canonical/orbit/base/slot channels must occur exactly once")
+        interior=sum(item["size"] for item in records if item["dimension"]==3)
+        if interior!=(8640 if name=="full" else 4320):raise ValueError("complete original cell interior channels differ")
+        allocation_gate("checker_shared_six_direction_complete_panels_"+name,{"matrix_payload_bytes":2*n*32*16,"workspace_bytes":8<<20})
+        for direction,recorded in zip(directions,role["directions"],strict=True):
+            ih=hashlib.sha256();oh=hashlib.sha256()
+            for first in range(0,108,32):
+                count=min(32,108-first);source=np.zeros((n,count),complex);result=np.empty_like(source)
+                for item in records:
+                    size=item["size"];rr=rows[item["rows_offset"]:item["rows_offset"]+size]
+                    cr=np.arange(item["orbit"]*role["width"]+item["first"],item["orbit"]*role["width"]+item["first"]+size)
+                    source_rows=rr if direction.endswith("to_canonical") else cr
+                    if first<size:source[source_rows[first:first+min(count,size-first)],np.arange(min(count,size-first))]=1
+                for item in records:
+                    rr=rows[item["rows_offset"]:item["rows_offset"]+item["size"]]
+                    cr=np.arange(item["orbit"]*role["width"]+item["first"],item["orbit"]*role["width"]+item["first"]+item["size"])
+                    matrix,inverse=operators[item["borrower_record_index"]]
+                    if direction==directions[0]:result[cr]=inverse@source[rr]
+                    elif direction==directions[1]:result[rr]=matrix@source[cr]
+                    elif direction==directions[2]:result[cr]=matrix.conj().T@source[rr]
+                    elif direction==directions[3]:result[rr]=inverse.conj().T@source[cr]
+                    elif direction==directions[4]:result[cr]=matrix.T@source[rr]
+                    else:result[rr]=inverse.T@source[cr]
+                ih.update(source.tobytes(order="C"));oh.update(result.tobytes(order="C"))
+            if ih.hexdigest()!=recorded["input_sha256"] or oh.hexdigest()!=recorded["shared_action_sha256"]:
+                raise ValueError("all six complete operator/panel action hashes differ")
+            add(name+"_"+direction+"_complete_columns",0.,0.)
+    if template_keys!=record_keys:raise ValueError("every actual bank state must have complete default record proof")
+    return checks
+
+
 def check(directory, *, checker_source, checker_environment, stage, allocation_gate, checker_directory=None):
     import numpy as np
     from scipy import sparse
@@ -625,8 +1002,50 @@ def check(directory, *, checker_source, checker_environment, stage, allocation_g
     if file_sha(summary_path) != watched["sha256"]:
         raise ValueError("worker supervision receipt hash differs")
     validate_supervision(json.loads(summary_path.read_text()), worker_source)
+    storage_source_bridge = None
+    if report.get("shared_transforms") is True:
+        from benchmarks.y_orbit_shared_storage_bridge import load_storage_source_bridge
+        storage_source_bridge = load_storage_source_bridge(artifact_root,new_source=report["source"],
+            new_environment=checker_environment,allocation_gate=allocation_gate)
+        if (report.get("same80_storage_source_bridge")!=storage_source_bridge["receipt"]
+                or provenance.get("same80_storage_source_bridge")!=storage_source_bridge["receipt"]
+                or provenance.get("shared_transforms") is not True
+                or "--shared-transforms" not in provenance.get("command",[])):
+            raise ValueError("shared live representation detached from actual source/ABI/explicit command")
+        validate_shared_storage_metadata(report.get("shared_transform_equivalence",{}),manifest)
+        complete_events=[item for item in events if item.get("event")=="shared_complete_equivalence_before_any_factor"]
+        if len(complete_events)!=1:raise ValueError("exact complete shared equivalence event required")
+        event_index=events.index(complete_events[0])
+        factor_indices=[i for i,item in enumerate(events) if item.get("event")=="all_branch_factor_created" or
+                        item.get("event")=="allocation_admission" and item.get("boundary","").startswith("quotient_factor_q_")]
+        if any(i<=event_index for i in factor_indices):raise ValueError("shared proof must finish before any factor admission")
+        proof=report["shared_transform_equivalence"]
+        frozen_event={key:value for key,value in complete_events[0].items() if key not in ("event","worker_elapsed_seconds")}
+        boundary=next(i for i,item in enumerate(proof["owner_stages"]) if item["stage"]=="all_sectors_retained_before_factor")
+        expected_event={**proof,"owner_stages":proof["owner_stages"][:boundary+1],
+            "owner_artifacts":{key:value for stage_receipt in proof["owner_stages"][:boundary+1]
+                               for key,value in stage_receipt["owner_artifacts"].items()}}
+        if frozen_event!=expected_event:raise ValueError("complete shared proof report detached from pre-factor event")
+        role_events=[{key:value for key,value in item.items() if key not in ("event","worker_elapsed_seconds")}
+                     for item in events if item.get("event")=="shared_complete_role_equivalence_before_factor"]
+        if role_events!=proof["roles"]:raise ValueError("per-role complete equivalence events differ")
+        if stage=="solve" and not any(item["stage"]=="apply_recovery_complete" for item in proof["owner_stages"]):
+            raise ValueError("solve must record actual shared apply/recovery lifecycle")
+        owner_events=[item for item in events if item.get("event")=="shared_transform_owner_stage"]
+        if [item.get("stage") for item in owner_events]!=[item["stage"] for item in proof["owner_stages"]]:
+            raise ValueError("all actual owner lifecycle events required")
+        for item,stage_receipt in zip(owner_events,proof["owner_stages"],strict=True):
+            if item.get("receipt_sha256")!=digest_json(stage_receipt):raise ValueError("owner stage event/report digest differs")
+            allocations=[entry for entry in events if entry.get("event")=="allocation_admission"
+                         and entry.get("boundary")==stage_receipt["allocation_boundary"]]
+            if (len(allocations)!=1 or allocations[0].get("admitted") is not True
+                    or not 0<allocations[0].get("current_tree_rss_bytes",0)<TREE_CAP_BYTES
+                    or events.index(allocations[0])>=events.index(item)):
+                raise ValueError("each named owner receipt requires its actual prior whole-tree RSS admission")
+    elif report.get("shared_transforms") not in (None,False):
+        raise ValueError("shared-transform selection must be literal boolean")
     authority = SavedQuotientSnapshotAuthority(artifact_root / AUDIT_RUN, new_source=worker_source,
-        new_environment=checker_environment, allocation_gate=allocation_gate)
+        new_environment=checker_environment, allocation_gate=allocation_gate, storage_source_bridge=storage_source_bridge)
     authority_receipt = plain_metadata(authority.receipt)
     bindings = report.get("recovery_identity_bindings", [])
     validate_recovery_identity_bindings(bindings, [plain_metadata(authority.report["twists"][b]["condensation"]["condensation"])
@@ -639,7 +1058,7 @@ def check(directory, *, checker_source, checker_environment, stage, allocation_g
             or provenance.get("saved_quotient_snapshot_authority") != authority_receipt):
         raise ValueError("immutable audit to new source/ABI bridge differs")
     full_authority = SavedFullP4Authority(artifact_root / AUTHORITY_RUN, new_source=worker_source,
-        new_environment=checker_environment, allocation_gate=allocation_gate)
+        new_environment=checker_environment, allocation_gate=allocation_gate, storage_source_bridge=storage_source_bridge)
     if (report.get("saved_full_p4_authority") != full_authority.receipt
             or provenance.get("saved_full_p4_authority") != full_authority.receipt):
         raise ValueError("immutable full-period field/mode authority receipt differs")
@@ -1028,7 +1447,25 @@ def check(directory, *, checker_source, checker_environment, stage, allocation_g
                         bind_metric(label + "_nonzero_q", nonzero, packet["nonzero_q_primal_relative"])
     else:
         mode_checks = {}
-    return {"schema": CHECKER_SCHEMA, "gate_pass": bool(checks) and all(v["passed"] for v in checks),
+    if stage=="solve" and len(checks)!=312:raise ValueError("complete original312 residual/output gates required")
+    shared_checks=[]
+    if report.get("shared_transforms") is True:
+        shared_checks=check_shared_storage_evidence(report["shared_transform_equivalence"],load=load,
+            descriptors=descriptors,allocation_gate=allocation_gate,
+            native_inventories={"full":"independent_storage_rows","twist_0":"twist_0_independent_storage_rows",
+                                "twist_1":"twist_1_independent_storage_rows"},
+            snapshot_contexts={"full":plain_metadata(authority.snapshot_context(None)),
+                "twist_0":plain_metadata(authority.snapshot_context(0)),"twist_1":plain_metadata(authority.snapshot_context(1))})
+    return {"schema": CHECKER_SCHEMA, "gate_pass": bool(checks) and all(v["passed"] for v in checks)
+            and (report.get("shared_transforms") is not True or bool(shared_checks) and all(v["passed"] for v in shared_checks)),
+            "original_check_count":len(checks), "shared_storage_checks":shared_checks,
+            "shared_storage_check_count":len(shared_checks), "shared_transforms":report.get("shared_transforms",False),
+            "shared_owner_RSS_comparison":[{"stage":item["stage"],
+                "sum_view_nbytes_with_aliases":item["sum_view_nbytes_with_aliases"],
+                "unique_backing_owner_nbytes":item["unique_backing_owner_nbytes"],
+                "allocation_entry_tree_RSS_bytes":next(entry["current_tree_rss_bytes"] for entry in events
+                    if entry.get("event")=="allocation_admission" and entry.get("boundary")==item["allocation_boundary"]),
+                "named_payload_is_RSS":False} for item in report.get("shared_transform_equivalence",{}).get("owner_stages",[])],
             "evidence_valid": True, "checks": checks, "report_sha256": file_sha(report_path),
             "provenance_sha256": file_sha(provenance_path), "artifact_manifest_sha256": digest_json(descriptors),
             "source": worker_source, "checker_source": checker_source, "checker_source_bridge": source_binding,

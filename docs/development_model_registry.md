@@ -1,3 +1,13 @@
+# dot Task40extra V12 共享完整实体变换资格通过
+
+同80-cell共享变换在source `3570347c`通过资格：原312项数值门与新38,881项状态/存储/生命周期门全部通过，四q、8640内部及532端口保留。完整outer+local记录矩阵/inverse逻辑体积69,435,392B由4个矩阵内容模板与4个lazy inverse复用，实际8个template owners为410,624B；全部named owners另为46,234,084B，不能混称RSS。
+
+原regular/notch最大true residual为5.2675719230699435e-12/7.96690203269436e-12，notch generic/interior/physical/support为4/4/3/4步。worker170.035s/RSS1,065,373,696B，checker43.125s/RSS952,623,104B，分别swap0/清场、同1.5GiB/600s。因独立legacy/evidence重叠，整树峰高于V11，本轮不授予RSS或加速收益。p6、原尺寸准确网格/端口收敛/2TB/48h仍未资格；X direct profile正在实施且尚未运行。
+
+[Response V12](task40extra_dot_parallel_cloud/response_v12.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/shared_transform_v12/shared_transform_v12_compact.json)、[独立归档](task40extra_dot_parallel_cloud/outcomes/records/shared_transform_v12/independent_verification.json)。历史V11与所有失败范围保留。
+
+---
+
 # dot Task40extra V11 两胞元full3D p4完整恢复逆通过
 
 数值worker `5e0364cd` 与saved-only checker `029a0cd8` 独立绑定；仅checker和新增测试有差异，数值/配置/ABI依赖不变。prefactor19/19及完整inverse checker312/312、evidence_valid=true。两个40-cell三维空间覆盖原80-cell、15872独立FE/8640内部、四q/532 aliases；四fresh q CSR差0后才分解，四因子全部保留。

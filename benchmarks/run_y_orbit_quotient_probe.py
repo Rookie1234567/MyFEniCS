@@ -42,7 +42,7 @@ def plain_metadata(value):
     return value
 
 
-def plan_metadata(stage):
+def plan_metadata(stage, *, shared_transforms=False):
     if stage not in PASSES:
         raise ValueError("unknown quotient stage")
     return {"schema": SCHEMA, "status": "NOT_RUN_STAGED_PLAN_ONLY", "stage": stage,
@@ -53,7 +53,8 @@ def plan_metadata(stage):
             "tree_cap_bytes": TREE_CAP_BYTES, "wall_seconds": WALL_SECONDS,
             "mpi": 1, "math_threads": 1, "swap_bytes": 0,
             "evidence_reserve_bytes": RESERVE_BYTES,
-            "factor_workspace_allowance_bytes": 0 if stage == "prefactor" else FACTOR_ALLOWANCE_BYTES}
+            "factor_workspace_allowance_bytes": 0 if stage == "prefactor" else FACTOR_ALLOWANCE_BYTES,
+            "shared_transforms": shared_transforms, "shared_profile": "same80_p4_only" if shared_transforms else None}
 
 
 def allocation_request(stage, facts):
@@ -183,7 +184,7 @@ def _worker(args):
     environment = None
     descriptors = {}
     authority = full_period_authority = None
-    runtime_state = {"factor_count": 0}
+    runtime_state = {"factor_count": 0, "shared_equivalence_complete": False}
     report = {"schema": SCHEMA, "status": "STARTED", "degree": 4, "factor_count": 0,
               "stage": args.stage, "prefactor_only": args.stage == "prefactor", "PDE_solved": False, "official_results": False}
 
@@ -201,6 +202,11 @@ def _worker(args):
             runtime_state["factor_count"] = max(runtime_state["factor_count"], int(facts["factor_count"]))
         if "retained_factor_count" in facts:
             runtime_state["factor_count"] = max(runtime_state["factor_count"], int(facts["retained_factor_count"]))
+        if name == "shared_complete_equivalence_before_any_factor":
+            if (not args.shared_transforms or facts.get("complete_before_any_factor") is not True
+                    or [item.get("role") for item in facts.get("roles",[])] != ["full","twist_0","twist_1"]):
+                raise ValueError("complete actual shared-equivalence event required before factor")
+            runtime_state["shared_equivalence_complete"] = True
         payload = {"event": name, "worker_elapsed_seconds": time.monotonic() - started, **facts}
         append_jsonl(args.run_directory / "probe_events.jsonl", payload)
         write_json(args.run_directory / "phase.json", {"phase": name, "factor_count": runtime_state["factor_count"],
@@ -220,6 +226,8 @@ def _worker(args):
     swap_baseline = global_swap()
 
     def allocation_gate(name, facts):
+        if name.startswith("quotient_factor_q_") and args.shared_transforms and not runtime_state["shared_equivalence_complete"]:
+            raise ValueError("shared factor admission requires complete actual equivalence first")
         if name.startswith("quotient_factor_q_") and (args.stage != "solve"
                 or not facts.get("factor_workspace_allowance_bytes")):
             raise ValueError("q factor allocation requires the solve stage and remaining factor allowance")
@@ -301,10 +309,17 @@ def _worker(args):
                                                               "environment": environment})
         allocation_gate("authority_metadata_validation", {"matrix_payload_bytes": 4 << 20,
                                                           "workspace_bytes": 4 << 20})
+        storage_source_bridge = None
+        if args.shared_transforms:
+            from benchmarks.y_orbit_shared_storage_bridge import load_storage_source_bridge
+            storage_source_bridge = load_storage_source_bridge(ARTIFACT_ROOT,new_source=source,
+                new_environment=environment,allocation_gate=allocation_gate)
+            provenance["shared_transforms"] = True
+            provenance["same80_storage_source_bridge"] = storage_source_bridge["receipt"]
         authority = SavedQuotientSnapshotAuthority(ARTIFACT_ROOT / AUDIT_RUN, new_source=source,
-                                        new_environment=environment, allocation_gate=allocation_gate)
+                                        new_environment=environment, allocation_gate=allocation_gate, storage_source_bridge=storage_source_bridge)
         full_period_authority = SavedFullP4Authority(ARTIFACT_ROOT / AUTHORITY_RUN,
-            new_source=source, new_environment=environment, allocation_gate=allocation_gate)
+            new_source=source, new_environment=environment, allocation_gate=allocation_gate, storage_source_bridge=storage_source_bridge)
         provenance["saved_quotient_snapshot_authority"] = plain_metadata(authority.receipt)
         provenance["saved_full_p4_authority"] = full_period_authority.receipt
         write_json(args.run_directory / "provenance.json", provenance)
@@ -312,8 +327,12 @@ def _worker(args):
         report = _jsonable(run_quotient_inverse_probe(INPUT, authority=authority,
             full_period_authority=full_period_authority, event=event,
             save_array=save_array, allocation_gate=allocation_gate,
-            run_directory=args.run_directory, stage=args.stage))
+            run_directory=args.run_directory, stage=args.stage, shared_transforms=args.shared_transforms))
         validate_worker_result(report, args.stage)
+        if args.shared_transforms:
+            if report.get("shared_transforms") is not True or report.get("shared_transform_equivalence",{}).get("complete_before_any_factor") is not True:
+                raise ValueError("shared-transform command requires complete actual storage equivalence")
+            report["same80_storage_source_bridge"] = storage_source_bridge["receipt"]
         if source_facts(args.expected_head) != source:
             raise RuntimeError("source changed during quotient probe")
         report.update(schema=SCHEMA, source=source, environment=environment, source_clean_unchanged=True,
@@ -353,9 +372,10 @@ def main(argv=None):
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--expected-head")
     parser.add_argument("--run-directory", type=Path)
+    parser.add_argument("--shared-transforms", action="store_true", help="same80 p4 storage-only bank; all original gates retained")
     args = parser.parse_args(argv)
     if not args.run:
-        print(json.dumps(plan_metadata(args.stage), indent=2))
+        print(json.dumps(plan_metadata(args.stage, shared_transforms=args.shared_transforms), indent=2))
         return 0
     if not re.fullmatch(r"[0-9a-f]{40}", args.expected_head or "") or not args.run_directory:
         parser.error("quotient probe requires exact clean integrated HEAD and a fresh ignored run directory")
@@ -391,6 +411,7 @@ def main(argv=None):
         return 2
     command = [sys.executable, "-m", "benchmarks.run_y_orbit_quotient_probe", "--run", "--worker", "--stage", args.stage,
                "--expected-head", args.expected_head, "--run-directory", str(args.run_directory)]
+    if args.shared_transforms:command.append("--shared-transforms")
     try:
         summary = supervise(command, args.run_directory, wall_seconds=WALL_SECONDS - (time.monotonic() - started),
                             interval=.25, grace_seconds=2, source_state=source,

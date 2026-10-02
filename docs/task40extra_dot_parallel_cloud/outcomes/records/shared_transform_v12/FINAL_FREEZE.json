@@ -1,0 +1,36 @@
+{
+  "schema": "task40extra.shared-transform-independent-review-final-freeze.v1",
+  "status": "FINAL_FROZEN_BEFORE_ARCHIVE_COPIES",
+  "source_head": "3570347cbd1faf7149611146b8f0f1bdd71f19e6",
+  "source_tree": "abdfa562ad231d86a3ad89363e54de8be8be81a3",
+  "review_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/shared_transform_independent_review_3570347",
+  "review_files_sha256": {
+    "independent_review_receipt.json": "a7ab805b845ad668688fcb009e451cc355b6645fa94e67c8af06246af01e2e41",
+    "artifact_file_hashes.json": "c5003ab5935020cf306a78c065d2a0ab73616783764ee22947b7d78d4dccee15",
+    "verify_saved_metadata.py": "393819468ba73d665d7897918f421f6f2248c448a49bca0162e9becdaaaf7e7e"
+  },
+  "run_pins": {
+    "provenance.json": "26779fff21877fbd5c5261eda40e55b5ce04a70ead9e7b044a3f034cbdbdedf0",
+    "artifact_manifest.json": "bb2322be96e92537cebe951c8fd927774c70ce9678a949d16d32ce6157e44546",
+    "abi_manifest.json": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+    "probe_events.jsonl": "42387c7f48596237d44ca7394a06968bac50950d26b131f206a9e33ffa20d6bc",
+    "checker_events.jsonl": "dbf4cd851af0c394b26513f3784103b472d1fba4fa22a7300dbec387567159aa",
+    "resources.jsonl": "159f39af6c615a79d1b4ff7c29ae5f4a4fbcab911c5c89894671e2bd5ebae2b0",
+    "checker_supervision/resources.jsonl": "f47765c2cbbd2028d44728287faf9b96159fc2ff1ee29de6c741f0907dae14b2",
+    "probe_report.json": "810681910e60419a0c8ab038a6bf3c77541e05cd969b0dfc00abcf8626cc9c9b",
+    "independent_checker.json": "5c83b79d55058bfd7b5b488c38cc840148eb13a15fdf97be61a312b53b794905",
+    "summary.json": "c01ea57e5b832bad45598433995d4ae92566022295b1e5b2bcd563a45502516e",
+    "checker_supervision/summary.json": "a8cb063a2b9c2d51cb5e8612e202d72d37cd5cf033dff696f14b6e74174f475f"
+  },
+  "verification_disposition": "PASS_SAVED_ARTIFACT_BINDINGS_AND_COMPLETE_PROOF_INVENTORIES",
+  "verification_checks": 47,
+  "artifact_file_hash_count": 1335,
+  "additional_checker_validation_file_hash_count": 10,
+  "no_project_imports": true,
+  "no_scientific_array_decoding": true,
+  "no_numeric_rerun": true,
+  "no_static_source_review_repeat": true,
+  "archive_copy_authorization": "Copy only this final frozen review package and verify these exact hashes; no interim receipt is final",
+  "original_run_and_old_failed_checkers": "read-only and preserved; no overwrite/relabel/delete",
+  "will_not_modify_frozen_review_files": true
+}

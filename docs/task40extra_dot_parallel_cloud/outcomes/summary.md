@@ -193,3 +193,12 @@ regular四载荷最大原残差 `5.26717490249291e-12`；真实两cell三维notc
 worker145.83506661900174s/RSS788480000B，saved-only checker7.072437755996361s/RSS300224512B，分别swap0/清场、同1.5GiB/600s。首个checker因历史old full_Q行未排序失败，原失败保留；新checker只做被hash钉住的private row-sort copy及exact permutation/action等价门，无候选CSR放宽、算子改变或PDE重跑。只授予有界scaled full3D架构资格；本两cell路线p6、强对比、目标精度/32060模式收敛、跨ABI/MPI/restart、原尺寸λ0.7nm及2TB/48h仍未资格。
 
 [Response V11](../response_v11.md)、[compact](records/quotient_inverse_v11/quotient_inverse_v11_compact.json)、[配对归档核验](records/quotient_inverse_v11/independent_verification.json)。历史V9/V10范围及全部失败保持原身份。
+
+
+## V12 共享完整实体变换资格通过
+
+同80-cell共享变换在source `3570347c`通过资格：原312项数值门与新38,881项状态/存储/生命周期门全部通过，四q、8640内部及532端口保留。完整outer+local记录矩阵/inverse逻辑体积69,435,392B由4个矩阵内容模板与4个lazy inverse复用，实际8个template owners为410,624B；全部named owners另为46,234,084B，不能混称RSS。
+
+原regular/notch最大true residual为5.2675719230699435e-12/7.96690203269436e-12，notch generic/interior/physical/support为4/4/3/4步。worker170.035s/RSS1,065,373,696B，checker43.125s/RSS952,623,104B，分别swap0/清场、同1.5GiB/600s。因独立legacy/evidence重叠，整树峰高于V11，本轮不授予RSS或加速收益。p6、原尺寸准确网格/端口收敛/2TB/48h仍未资格；X direct profile正在实施且尚未运行。
+
+[Response V12](../response_v12.md)、[compact](records/shared_transform_v12/shared_transform_v12_compact.json)、[独立归档](records/shared_transform_v12/independent_verification.json)。历史V11与所有失败范围保留。
