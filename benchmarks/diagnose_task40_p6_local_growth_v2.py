@@ -119,6 +119,151 @@ def _select_rows(bank: np.ndarray, indices: np.ndarray, multiplier: np.ndarray) 
     return np.ascontiguousarray(values)
 
 
+def _streamed_modal_action(
+    *,
+    factor: tuple[np.ndarray, np.ndarray],
+    Aii: np.ndarray,
+    Ait: np.ndarray,
+    Ati: np.ndarray,
+    Xit: np.ndarray,
+    bank: dict[str, np.ndarray],
+    alpha: np.ndarray,
+    trace_vector: np.ndarray,
+    batch_size: int,
+    resident_arrays: list[np.ndarray] | None = None,
+) -> dict[str, Any]:
+    """Apply both directions with two fixed-batch passes and complete feedback."""
+    ni, nt = Aii.shape[0], Ait.shape[1]
+    mode_count = int(alpha.size)
+    bank_modes = int(bank["Bi"].shape[1])
+    resident_arrays = [] if resident_arrays is None else resident_arrays
+    w = np.zeros(ni, dtype=np.complex128)
+    trace_from_port = np.zeros(nt, dtype=np.complex128)
+    port_from_trace = np.zeros(mode_count, dtype=np.complex128)
+    port_feedback = np.zeros(mode_count, dtype=np.complex128)
+    local_trace_load = Ait @ trace_vector
+    generation_seconds = 0.0
+    first_pass_seconds = 0.0
+    second_pass_seconds = 0.0
+    recovery_seconds = 0.0
+    closure_max = 0.0
+    known_live_peak_bytes = 0
+    known_live_peak_backings = 0
+    processed_columns = 0
+
+    def remember(*arrays: np.ndarray) -> None:
+        nonlocal known_live_peak_bytes, known_live_peak_backings
+        inventory = _backing_inventory(
+            [*resident_arrays, *bank.values(), factor[0], factor[1], alpha,
+             trace_vector, w, trace_from_port, port_from_trace, port_feedback,
+             local_trace_load, *arrays]
+        )
+        known_live_peak_bytes = max(known_live_peak_bytes, inventory["unique_backing_bytes"])
+        known_live_peak_backings = max(known_live_peak_backings, inventory["unique_backings"])
+
+    # Pass 1 streams every port column into a single interior response and trace response.
+    for start in range(0, mode_count, batch_size):
+        stop = min(start + batch_size, mode_count)
+        indices = np.arange(start, stop, dtype=np.int64) % bank_modes
+        cycles = np.arange(start, stop, dtype=np.int64) // bank_modes
+        multiplier = (1.0 + 0.01 * cycles) * np.exp(0.13j * cycles)
+        generation_start = time.perf_counter()
+        Bi = _select_columns(bank["Bi"], indices, multiplier)
+        Bt = _select_columns(bank["Bt"], indices, multiplier)
+        generation_seconds += time.perf_counter() - generation_start
+        alpha_batch = alpha[start:stop]
+        reduction_start = time.perf_counter()
+        XiB = lu_solve(factor, Bi, check_finite=False)
+        Vti_XiB = Ati @ XiB
+        Bhat = Bt - Vti_XiB
+        w += XiB @ alpha_batch
+        trace_from_port += Bhat @ alpha_batch
+        first_pass_seconds += time.perf_counter() - reduction_start
+        processed_columns += stop - start
+        remember(indices, cycles, multiplier, Bi, Bt, alpha_batch, XiB, Vti_XiB, Bhat)
+        del indices, cycles, multiplier, Bi, Bt, alpha_batch, XiB, Vti_XiB, Bhat
+
+    # Pass 2 regenerates the same row blocks. The shared w contains all columns,
+    # including those in later batches, so Di @ w includes cross-batch feedback.
+    for start in range(0, mode_count, batch_size):
+        stop = min(start + batch_size, mode_count)
+        indices = np.arange(start, stop, dtype=np.int64) % bank_modes
+        cycles = np.arange(start, stop, dtype=np.int64) // bank_modes
+        multiplier = (1.0 + 0.01 * cycles) * np.exp(0.13j * cycles)
+        generation_start = time.perf_counter()
+        Bi = _select_columns(bank["Bi"], indices, multiplier)
+        Di = _select_rows(bank["Di"], indices, multiplier)
+        Dt = _select_rows(bank["Dt"], indices, multiplier)
+        generation_seconds += time.perf_counter() - generation_start
+        alpha_batch = alpha[start:stop]
+        action_start = time.perf_counter()
+        Di_Xit = Di @ Xit
+        Dhat = Dt - Di_Xit
+        port_from_trace[start:stop] = Dhat @ trace_vector
+        port_feedback[start:stop] = Di @ w
+        second_pass_seconds += time.perf_counter() - action_start
+
+        recovery_start = time.perf_counter()
+        Bi_alpha = Bi * alpha_batch[None, :]
+        local_load = local_trace_load[:, None] + Bi_alpha
+        recovered = lu_solve(factor, -local_load, check_finite=False)
+        applied = Aii @ recovered
+        closure_matrix = applied + local_load
+        denominators = np.maximum(np.linalg.norm(local_load, axis=0), np.finfo(float).tiny)
+        closure = np.linalg.norm(closure_matrix, axis=0) / denominators
+        closure_max = max(closure_max, float(np.max(closure)))
+        recovery_seconds += time.perf_counter() - recovery_start
+        remember(
+            indices, cycles, multiplier, Bi, Di, Dt, alpha_batch, Di_Xit,
+            Dhat, Bi_alpha, local_load, recovered, applied, closure_matrix,
+            denominators, closure,
+        )
+        del indices, cycles, multiplier, Bi, Di, Dt, alpha_batch, Di_Xit, Dhat
+        del Bi_alpha, local_load, recovered, applied, closure_matrix, denominators, closure
+
+    port_total = port_from_trace + port_feedback
+    remember(port_total)
+    finite = all(
+        np.isfinite(value).all()
+        for value in (alpha, trace_vector, w, trace_from_port, port_from_trace, port_feedback, port_total)
+    )
+    # Explicit-array upper bound includes all resident NumPy backings, O(M) input/
+    # outputs, and a deliberately padded fixed-batch scratch allowance. BLAS-private
+    # workspaces are excluded and separately captured by process RUSAGE high water.
+    resident = _backing_inventory(
+        [*resident_arrays, *bank.values(), factor[0], factor[1]]
+    )["unique_backing_bytes"]
+    vector_complex_entries = 4 * mode_count + 2 * ni + 3 * nt
+    vector_bytes = 16 * vector_complex_entries
+    max_batch = min(mode_count, batch_size)
+    batch_scratch_complex_entries = max_batch * (16 * ni + 12 * nt) + 4 * max_batch
+    fixed_batch_scratch_upper = 16 * batch_scratch_complex_entries + 8192
+    return {
+        "w": w,
+        "trace_from_port": trace_from_port,
+        "port_from_trace": port_from_trace,
+        "port_feedback": port_feedback,
+        "port_total": port_total,
+        "max_nonzero_rhs_local_recovery_relative_closure": float(closure_max),
+        "all_outputs_finite": bool(finite),
+        "processed_columns_first_pass": int(processed_columns),
+        "processed_rows_second_pass": int(mode_count),
+        "known_live_numpy_backing_bytes_lower_bound": int(known_live_peak_bytes),
+        "known_live_numpy_backing_count_lower_bound": int(known_live_peak_backings),
+        "resident_numpy_backing_bytes_in_upper_bound": int(resident),
+        "O_M_vector_backing_bytes": int(vector_bytes),
+        "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": int(fixed_batch_scratch_upper),
+        "explicit_array_scenario_upper_bound_bytes": int(resident + vector_bytes + fixed_batch_scratch_upper),
+        "scratch_bound_excludes": "opaque BLAS/LAPACK library workspace; process RUSAGE high-water includes it",
+        "timings": {
+            "coupling_regeneration_seconds": float(generation_seconds),
+            "first_pass_local_reduction_and_accumulation_seconds": float(first_pass_seconds),
+            "second_pass_port_action_seconds": float(second_pass_seconds),
+            "second_pass_local_recovery_and_closure_seconds": float(recovery_seconds),
+        },
+    }
+
+
 def _mode_stress(
     *,
     factor: tuple[np.ndarray, np.ndarray],
@@ -130,124 +275,75 @@ def _mode_stress(
     mode_sizes: list[int],
     batch_size: int,
     seed: int,
+    resident_arrays: list[np.ndarray] | None = None,
 ) -> list[dict[str, Any]]:
     ni, nt = Aii.shape[0], Ait.shape[1]
     bank_modes = int(bank["Bi"].shape[1])
     bank_bytes = _backing_inventory(list(bank.values()))["unique_backing_bytes"]
-    rng = np.random.default_rng(seed + 1)
     output: list[dict[str, Any]] = []
     for mode_count in mode_sizes:
+        rng = np.random.default_rng(seed + int(mode_count))
+        alpha = _complex_random(rng, (mode_count,), 1)
+        trace_vector = _complex_random(rng, (nt,), nt)
         wall_start = time.perf_counter()
         cpu_start = time.process_time()
-        generation_seconds = 0.0
-        reduction_seconds = 0.0
-        action_seconds = 0.0
-        recovery_seconds = 0.0
-        max_live_bytes = 0
-        max_live_backings = 0
-        max_batch_columns = 0
-        max_recovery_closure = 0.0
-        action_norm_sums = {"trace_from_port": 0.0, "port_from_trace": 0.0, "port_feedback": 0.0}
-        solved_columns = 0
-        schur_column_pairs = 0
-        generated_coefficients = 0
-        for start in range(0, mode_count, batch_size):
-            stop = min(start + batch_size, mode_count)
-            k = stop - start
-            max_batch_columns = max(max_batch_columns, k)
-            gen_start = time.perf_counter()
-            indices = np.arange(start, stop, dtype=np.int64) % bank_modes
-            cycles = np.arange(start, stop, dtype=np.int64) // bank_modes
-            multiplier = (1.0 + 0.01 * cycles) * np.exp(0.13j * cycles)
-            Bi = _select_columns(bank["Bi"], indices, multiplier)
-            Bt = _select_columns(bank["Bt"], indices, multiplier)
-            trace_modes = _select_columns(bank["trace_modes"], indices, multiplier)
-            Di = _select_rows(bank["Di"], indices, multiplier)
-            Dt = _select_rows(bank["Dt"], indices, multiplier)
-            generation_seconds += time.perf_counter() - gen_start
-
-            reduction_start = time.perf_counter()
-            XiB = lu_solve(factor, Bi, check_finite=False)
-            Bhat = Bt - Ati @ XiB
-            Dhat = Dt - Di @ Xit
-            Hcorr = Di @ XiB
-            reduction_seconds += time.perf_counter() - reduction_start
-
-            action_start = time.perf_counter()
-            alpha = _complex_random(rng, (k,), 1)
-            trace_from_port = Bhat @ alpha
-            trace_for_action = trace_modes @ alpha
-            port_from_trace = Dhat @ trace_for_action
-            port_feedback = Hcorr @ alpha
-            action_norm_sums["trace_from_port"] += float(np.linalg.norm(trace_from_port))
-            action_norm_sums["port_from_trace"] += float(np.linalg.norm(port_from_trace))
-            action_norm_sums["port_feedback"] += float(np.linalg.norm(port_feedback))
-            action_seconds += time.perf_counter() - action_start
-
-            recovery_start = time.perf_counter()
-            local_load = Ait @ trace_modes + Bi
-            recovered = lu_solve(factor, -local_load, check_finite=False)
-            closure_matrix = Aii @ recovered + local_load
-            per_column_denominator = np.maximum(
-                np.linalg.norm(local_load, axis=0), np.finfo(float).tiny
-            )
-            closure = np.linalg.norm(closure_matrix, axis=0) / per_column_denominator
-            max_recovery_closure = max(max_recovery_closure, float(np.max(closure)))
-            recovery_seconds += time.perf_counter() - recovery_start
-            solved_columns += k
-            schur_column_pairs += k * k
-            generated_coefficients += int(Bi.size + Di.size + Bt.size + Dt.size + trace_modes.size)
-
-            live = _backing_inventory(
-                [Aii, Ait, Ati, Xit, factor[0], factor[1], *bank.values(),
-                 Bi, Bt, trace_modes, Di, Dt, XiB, Bhat, Dhat, Hcorr,
-                 alpha, trace_from_port, trace_for_action, port_from_trace,
-                 port_feedback, local_load, recovered, closure_matrix, closure]
-            )
-            max_live_bytes = max(max_live_bytes, live["unique_backing_bytes"])
-            max_live_backings = max(max_live_backings, live["unique_backings"])
-            if Hcorr.shape != (k, k):
-                raise RuntimeError("bounded port feedback block changed shape")
-            if mode_count >= 3904 and Hcorr.shape[0] > batch_size:
-                raise RuntimeError("high-mode stress exceeded the fixed square scratch bound")
-            del Bi, Bt, trace_modes, Di, Dt, XiB, Bhat, Dhat, Hcorr
-            del alpha, trace_from_port, trace_for_action, port_from_trace, port_feedback
-            del local_load, recovered, closure_matrix, closure, per_column_denominator
+        action = _streamed_modal_action(
+            factor=factor, Aii=Aii, Ait=Ait, Ati=Ati, Xit=Xit, bank=bank,
+            alpha=alpha, trace_vector=trace_vector, batch_size=batch_size,
+            resident_arrays=resident_arrays,
+        )
         wall_seconds = time.perf_counter() - wall_start
         cpu_seconds = time.process_time() - cpu_start
-        output.append({
+        closure = action["max_nonzero_rhs_local_recovery_relative_closure"]
+        record = {
             "mode_count": int(mode_count),
             "classification": "MEASURED_SYNTHETIC_RESAMPLED_CHANNEL_STRESS",
             "physical_model": False,
             "bank_mode_count": bank_modes,
-            "resampling": "cycle modulo 80 with common per-column complex phase and 1% per-cycle amplitude ramp",
+            "resampling": "cycle modulo bank modes with common per-column complex phase and 1% per-cycle amplitude ramp",
+            "frozen_complete_alpha_sha256": _array_sha256(alpha),
+            "frozen_trace_vector_sha256": _array_sha256(trace_vector),
+            "same_alpha_and_trace_used_in_both_passes": True,
+            "two_pass_complete_cross_batch_feedback": True,
+            "feedback_definition": "pass 1 w=sum_j(Vii^-1 Bi_j alpha_j); pass 2 computes every output row Di_i w, so cross-batch pairs are included",
+            "direct_H_block": "zero in the synthetic stress; no dense M by M H block is formed",
             "fixed_column_batch": int(batch_size),
-            "batch_count": int(math.ceil(mode_count / batch_size)),
-            "max_batch_columns": int(max_batch_columns),
-            "processed_mode_columns": int(solved_columns),
-            "stream_generated_complex_coefficients": int(generated_coefficients),
-            "bounded_schur_feedback_column_pairs": int(schur_column_pairs),
+            "batch_count_per_pass": int(math.ceil(mode_count / batch_size)),
+            "max_batch_columns": int(min(mode_count, batch_size)),
+            "processed_mode_columns_first_pass": int(action["processed_columns_first_pass"]),
+            "processed_mode_rows_second_pass": int(action["processed_rows_second_pass"]),
             "no_mode_square_allocation": True,
-            "largest_square_scratch_shape": [int(max_batch_columns), int(max_batch_columns)],
-            "largest_square_scratch_bytes": int(16 * max_batch_columns * max_batch_columns),
+            "largest_mode_square_scratch_shape": [0, 0],
+            "largest_mode_square_scratch_bytes": 0,
             "base_bank_unique_backing_bytes": int(bank_bytes),
-            "peak_known_live_numpy_backing_bytes": int(max_live_bytes),
-            "peak_known_live_numpy_backing_count": int(max_live_backings),
+            "known_live_numpy_backing_bytes_lower_bound": int(action["known_live_numpy_backing_bytes_lower_bound"]),
+            "known_live_numpy_backing_count_lower_bound": int(action["known_live_numpy_backing_count_lower_bound"]),
+            "fixed_batch_explicit_numpy_scratch_upper_bound_bytes": int(action["fixed_batch_explicit_numpy_scratch_upper_bound_bytes"]),
+            "explicit_array_scenario_upper_bound_bytes": int(action["explicit_array_scenario_upper_bound_bytes"]),
+            "scratch_bound_excludes": action["scratch_bound_excludes"],
             "wall_seconds": float(wall_seconds),
             "process_cpu_seconds": float(cpu_seconds),
             "process_cpu_to_wall_ratio": float(cpu_seconds / max(wall_seconds, np.finfo(float).tiny)),
-            "generation_seconds": float(generation_seconds),
-            "local_reduction_seconds": float(reduction_seconds),
-            "action_seconds": float(action_seconds),
-            "recovery_seconds": float(recovery_seconds),
-            "max_nonzero_rhs_local_recovery_relative_closure": float(max_recovery_closure),
-            "action_norm_sums": action_norm_sums,
+            **action["timings"],
+            "max_nonzero_rhs_local_recovery_relative_closure": float(closure),
+            "all_outputs_finite": bool(action["all_outputs_finite"]),
+            "closure_limit": 1.0e-10,
+            "diagnostic_pass": bool(closure <= 1.0e-10 and action["all_outputs_finite"]),
+            "output_vector_sha256": {
+                name: _array_sha256(action[name])
+                for name in ("w", "trace_from_port", "port_from_trace", "port_feedback", "port_total")
+            },
+            "output_vector_norms": {
+                name: float(np.linalg.norm(action[name]))
+                for name in ("w", "trace_from_port", "port_from_trace", "port_feedback", "port_total")
+            },
             "local_dimensions": {"interior": ni, "trace": nt},
-        })
+        }
+        output.append(record)
         print(
-            f"P6_MODE_STRESS tag-cell mode_count={mode_count} batches={output[-1]['batch_count']} "
-            f"wall={wall_seconds:.3f}s cpu={cpu_seconds:.3f}s "
-            f"closure={max_recovery_closure:.3e}", flush=True,
+            f"P6_MODE_STRESS mode_count={mode_count} batches/pass={record['batch_count_per_pass']} "
+            f"wall={wall_seconds:.3f}s cpu={cpu_seconds:.3f}s closure={closure:.3e}",
+            flush=True,
         )
     return output
 
@@ -438,6 +534,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             factor=factor, Aii=Aii, Ait=Ait, Ati=Ati, Xit=Xit,
             bank=bank, mode_sizes=args.mode_sizes, batch_size=args.batch_size,
             seed=rng_seed_base + 2000 + tag_index,
+            resident_arrays=[native, Aii, Ait, Ati, Att, factor[0], factor[1],
+                             Xit, schur, trace_rhs, interior_rhs, local_rhs,
+                             recovered, residual],
+        )
+        cell_record["all_mode_growth_diagnostics_pass"] = bool(
+            all(item["diagnostic_pass"] for item in cell_record["mode_growth_runs"])
         )
         result["local_cells"].append(cell_record)
         print(
@@ -447,10 +549,21 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
         del bank, native, Aii, Ait, Ati, Att, factor, Xit, schur
         del trace_rhs, interior_rhs, local_rhs, recovered, residual
+    local_closures_pass = bool(result["local_cells"]) and all(
+        cell["local_closure_pass"] for cell in result["local_cells"]
+    )
+    streamed_actions_pass = bool(result["local_cells"]) and all(
+        cell["all_mode_growth_diagnostics_pass"] for cell in result["local_cells"]
+    )
+    result["qualification"] = {
+        "all_real_local_closures_pass": bool(local_closures_pass),
+        "all_streamed_mode_closures_and_finite_checks_pass": bool(streamed_actions_pass),
+        "status_requires_both": True,
+    }
     result["status"] = (
         "MEASURED_BOUNDED_LOCAL_BLOCK_AND_SYNTHETIC_MODE_ACTIONS"
-        if all(cell["local_closure_pass"] for cell in result["local_cells"])
-        else "LOCAL_BLOCK_CLOSURE_FAILED"
+        if local_closures_pass and streamed_actions_pass
+        else "LOCAL_OR_STREAMED_ACTION_DIAGNOSTIC_FAILED"
     )
     result["resource_scope"] = {
         "batch_size_fixed": int(args.batch_size),
