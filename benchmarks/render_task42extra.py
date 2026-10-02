@@ -172,7 +172,7 @@ height:e.getBoundingClientRect().height}))};
 document.documentElement.style.scrollBehavior='auto';
 document.body.style.scrollBehavior='auto';
 const h=window.__taskScopeHeading;
-if(h) document.scrollingElement.scrollTop+=h.getBoundingClientRect().top-180;
+if(h) {h.style.scrollMarginTop='180px';h.scrollIntoView({block:'start',inline:'nearest',behavior:'instant'});}
 else document.scrollingElement.scrollTop=0;
 return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
 """
@@ -185,7 +185,7 @@ return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
         ]:
             for index in range(count):
                 script(
-                    "const e=(arguments[0]==='table'?window.__taskTables:window.__taskMath)[arguments[1]]; document.scrollingElement.scrollTop+=e.getBoundingClientRect().top-160; return e.getBoundingClientRect().top;",
+                    "const e=(arguments[0]==='table'?window.__taskTables:window.__taskMath)[arguments[1]]; e.style.scrollMarginTop='160px';e.scrollIntoView({block:'start',inline:'nearest',behavior:'instant'}); return e.getBoundingClientRect().top;",
                     kind,
                     index,
                 )

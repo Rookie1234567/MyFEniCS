@@ -11,10 +11,10 @@ from benchmarks.check_task42extra_v2 import ROOT, sha, write
 def main():
     if len(sys.argv) not in (3, 4):
         raise SystemExit(
-            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6|7|8|9]"
+            "usage: finalize_task42extra_render_v3.py <raw-directory> <published-SHA> [3|4|5|6|7|8|9|10]"
         )
     version = int(sys.argv[3]) if len(sys.argv) == 4 else 3
-    if version not in (3, 4, 5, 6, 7, 8, 9):
+    if version not in (3, 4, 5, 6, 7, 8, 9, 10):
         raise ValueError("unsupported evidence version")
     review_name = f"review_report_v{version - 1}.md"
     review_commit = {
@@ -25,6 +25,7 @@ def main():
         7: "ecabef960cdf1ac194ef293ff83c65b14e8b7ba3",
         8: "cee68ef5e8219858e3a9b733ffe454334683836b",
         9: "678a1ef5ed5aba9334f05569a6dec04c80e21be4",
+        10: "47317bb648d5e2237657f8b6c75c239ab5bf55c5",
     }[version]
     record_name = f"render_check_v{version}.json"
     raw = (ROOT / "tmp/task42extra/render" / sys.argv[1]).resolve()
@@ -51,7 +52,7 @@ def main():
         print(json.dumps(dict(status=out["status"], pages=0)))
         return
     captured = json.loads(source.read_text())
-    if version in (4, 5, 6, 7, 8, 9):
+    if version in (4, 5, 6, 7, 8, 9, 10):
         expected = json.loads((raw / "expected_urls.json").read_text())
         actual = [entry["url"] for entry in captured["records"]]
         if (
@@ -71,6 +72,17 @@ def main():
                 ),
             )
             return
+    visual = None
+    if version == 10:
+        visual_path = raw / "visual_inspection_v10.json"
+        if not visual_path.exists():
+            raise ValueError("VISUAL_INSPECTION_NOT_RETAINED")
+        visual = json.loads(visual_path.read_text())
+        if visual["status"] != "SAMPLED_VISUAL_PASS_AFTER_IMAGE_INSPECTION":
+            raise ValueError("VISUAL_REVIEW_NOT_PASSED")
+        for item in visual["inspected_screenshots"]:
+            if sha(Path(item["path"])) != item["sha256"]:
+                raise ValueError("VISUAL_IMAGE_HASH_CHANGED")
     pages = []
     for entry in captured["records"]:
         url = entry["url"]
@@ -158,6 +170,10 @@ def main():
             if not path.is_relative_to(raw) or sha(path) != item["sha256"]:
                 raise ValueError("screenshot outside task cache or digest mismatch")
             shots.append(dict(name=path.name, sha256=item["sha256"]))
+        if version == 10 and not any(
+            image["url"] == url for image in visual["inspected_screenshots"]
+        ):
+            raise ValueError("PAGE_HAS_NO_ACTUAL_IMAGE_INSPECTION")
         pages.append(
             dict(
                 url=url,
@@ -179,6 +195,9 @@ def main():
         published_commit=commit,
         raw_directory=str(raw),
         raw_DOM_sha256=sha(source),
+        visual_inspection_sha256=sha(raw / "visual_inspection_v10.json")
+        if version == 10
+        else None,
         screenshots_hashed=sum(len(x["screenshots"]) for x in pages),
         pages=pages,
         scope=(
