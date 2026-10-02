@@ -24,6 +24,8 @@ TASK40_GEOMETRY_IDENTITY_BY_MESH = {
     "G1": TASK40_GEOMETRY_IDENTITY,
     "E1": TASK40_E1_GEOMETRY_IDENTITY,
     "E2": TASK40_E2_GEOMETRY_IDENTITY,
+    "GX560": TASK40_GEOMETRY_IDENTITY,
+    "GZ528": TASK40_GEOMETRY_IDENTITY,
 }
 TASK40_F1_REFERENCE_METRIC_RUN_ID = (
     "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1"
@@ -33,6 +35,8 @@ TASK40_F3_G0_M2_RUN_ID = "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1"
 TASK40_F5_G1_M2_RUN_ID = "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1"
 TASK40_E1_RUN_ID = "task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1"
 TASK40_E2_RUN_ID = "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1"
+TASK40_GX560_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1"
+TASK40_GZ528_RUN_ID = "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1"
 TASK40_REVIEW_V2_GROWTH_RUN_IDS = frozenset(
     {TASK40_F5_G1_M2_RUN_ID, TASK40_E1_RUN_ID, TASK40_E2_RUN_ID}
 )
@@ -42,6 +46,8 @@ TASK40_MANUAL_BOUNDS_BY_RUN_ID = {
     TASK40_F5_G1_M2_RUN_ID: (8, 2),
     TASK40_E1_RUN_ID: (10, 3),
     TASK40_E2_RUN_ID: (12, 3),
+    TASK40_GX560_RUN_ID: (8, 2),
+    TASK40_GZ528_RUN_ID: (8, 2),
 }
 TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH = {
     "E1": (9, 2),
@@ -58,6 +64,8 @@ TASK40_RUNS = {
     TASK40_F5_G1_M2_RUN_ID: "G1",
     TASK40_E1_RUN_ID: "E1",
     TASK40_E2_RUN_ID: "E2",
+    TASK40_GX560_RUN_ID: "GX560",
+    TASK40_GZ528_RUN_ID: "GZ528",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
 }
 TASK40_SI_N = complex(0.9998851703688496, 4.3236152269189515e-6)
@@ -96,6 +104,36 @@ def _to_nm(values: list[Fraction], shift: Fraction = Fraction(0)) -> list[float]
 
 
 def task40_mesh_plan(mesh_id: str) -> dict[str, Any]:
+    if mesh_id in {"GX560", "GZ528"}:
+        coarse = task40_mesh_plan("G0")
+        fine = task40_mesh_plan("G1")
+        axis_sources = (
+            {"x": fine, "y": coarse, "z": coarse}
+            if mesh_id == "GX560"
+            else {"x": coarse, "y": coarse, "z": fine}
+        )
+        axes = {
+            axis: list(axis_sources[axis]["axis_coordinates_nm"][axis])
+            for axis in ("x", "y", "z")
+        }
+        segment_counts = {
+            axis: list(axis_sources[axis]["axis_segment_interval_counts"][axis])
+            for axis in ("x", "y", "z")
+        }
+        counts = {axis: sum(values) for axis, values in segment_counts.items()}
+        payload = {
+            "mesh_id": mesh_id,
+            "target_h_nm": coarse["target_h_nm"],
+            "axis_segment_interval_counts": segment_counts,
+            "axis_interval_counts": counts,
+            "axis_coordinates_nm": axes,
+            "expected_hexahedra": math.prod(counts.values()),
+        }
+        return {
+            **payload,
+            "mesh_plan_id": f"task40extra.{mesh_id.lower()}.crossed_axes.v1",
+            "mesh_plan_sha256": _canonical_sha256(payload),
+        }
     if mesh_id not in {"G0", "G1", "E1", "E2"}:
         raise ValueError(f"Unknown Task40 mesh id: {mesh_id}")
     scale = ELECTRICAL_SIZE_SCALE.get(mesh_id, Fraction(1))

@@ -486,6 +486,21 @@ def _attribution_terms(
     }
 
 
+def four_corner_differences(
+    g00: np.ndarray, g10: np.ndarray, g01: np.ndarray, g11: np.ndarray
+) -> dict[str, np.ndarray]:
+    """Return x/z increments and the exact four-corner interaction vector."""
+
+    return {
+        "G00_to_G11": g11 - g00,
+        "x_increment_G10_minus_G00": g10 - g00,
+        "z_increment_G01_minus_G00": g01 - g00,
+        "x_to_G11_error_G10_minus_G11": g10 - g11,
+        "z_to_G11_error_G01_minus_G11": g01 - g11,
+        "interaction_G11_minus_G10_minus_G01_plus_G00": g11 - g10 - g01 + g00,
+    }
+
+
 def _format_attribution(
     terms: dict[str, float],
     field_scale: float,
@@ -884,6 +899,253 @@ def compare_paired_background_attribution(
         },
         "fixed_samples": fixed_samples,
         "volume": volume_results,
+    }
+
+
+def compare_four_corner_directional(
+    fields: dict[str, P6TotalField], *, progress: bool = True
+) -> dict[str, Any]:
+    """Measure the preregistered G00/G10/G01/G11 x/z mesh contrast."""
+
+    labels = ("G00", "G10", "G01", "G11")
+    if set(fields) != set(labels):
+        raise ValueError(f"four-corner fields must be exactly {labels}")
+    first, last = fields["G00"], fields["G11"]
+    for label in labels[1:]:
+        cfg = fields[label].cfg
+        if not np.isclose(cfg.k0, first.cfg.k0, rtol=0.0, atol=1.0e-14):
+            raise ValueError("four-corner fields have different wavenumbers")
+        if not np.isclose(cfg.mu_r, first.cfg.mu_r, rtol=0.0, atol=1.0e-14):
+            raise ValueError("four-corner fields have different relative permeability")
+        for scale_name in (
+            "electric_field_scale_V_per_m",
+            "magnetic_field_scale_A_per_m",
+        ):
+            if not np.isclose(
+                getattr(cfg, scale_name),
+                getattr(first.cfg, scale_name),
+                rtol=1.0e-13,
+                atol=0.0,
+            ):
+                raise ValueError(f"four-corner fields differ in {scale_name}")
+
+    axes, axis_facts = _exact_axis_union(first, last)
+    for axis_index, axis_name in enumerate(("x", "y", "z")):
+        for label in labels[1:-1]:
+            candidate = np.unique(
+                np.concatenate((axes[axis_index], fields[label].axes[axis_index]))
+            )
+            if not np.array_equal(candidate, axes[axis_index]):
+                raise ValueError(
+                    f"{label} {axis_name} axis is not a subset of the common four-grid union"
+                )
+    catalog = _cell_catalog(first, last, axes)
+    centers, widths, masks = catalog["centers"], catalog["widths"], catalog["masks"]
+    cell_maps = {
+        label: _locate_cells(fields[label], centers) for label in labels
+    }
+    reference_tags = first.tags_by_cell[catalog["cells_g0"]]
+    for label in labels[1:]:
+        tags = fields[label].tags_by_cell[cell_maps[label]]
+        if not np.array_equal(tags, reference_tags):
+            index = int(np.flatnonzero(tags != reference_tags)[0])
+            raise ValueError(
+                f"{label}: material tag differs at common cell center "
+                f"{centers[index].tolist()}"
+            )
+
+    legendre, one_d_weights = np.polynomial.legendre.leggauss(COMMON_QUADRATURE_ORDER)
+    qx, qy, qz = np.meshgrid(legendre, legendre, legendre, indexing="ij")
+    qref = np.column_stack((qx.ravel(), qy.ravel(), qz.ravel()))
+    qw_x, qw_y, qw_z = np.meshgrid(
+        one_d_weights, one_d_weights, one_d_weights, indexing="ij"
+    )
+    qweights_ref = (qw_x * qw_y * qw_z).ravel()
+    nq = len(qweights_ref)
+    direction_keys = (
+        "G00_to_G11",
+        "x_increment_G10_minus_G00",
+        "z_increment_G01_minus_G00",
+        "x_to_G11_error_G10_minus_G11",
+        "z_to_G11_error_G01_minus_G11",
+        "interaction_G11_minus_G10_minus_G01_plus_G00",
+    )
+
+    def new_region() -> dict[str, Any]:
+        return {
+            "volume_nm3": 0.0,
+            "corner_sq": {
+                label: {quantity: 0.0 for quantity in _QUANTITIES}
+                for label in labels
+            },
+            "direction_sq": {
+                quantity: {key: 0.0 for key in direction_keys}
+                for quantity in _QUANTITIES
+            },
+            "incident_E_sq": 0.0,
+            "incident_H_sq": 0.0,
+        }
+
+    stats = {region: new_region() for region in masks}
+    scale_e = float(first.cfg.electric_field_scale_V_per_m)
+    scale_h = float(first.cfg.magnetic_field_scale_A_per_m)
+    k0 = float(first.cfg.k0)
+    total = len(centers)
+    last_tenth = -1
+    for start in range(0, total, SUBCELL_BATCH):
+        stop = min(start + SUBCELL_BATCH, total)
+        half = 0.5 * widths[start:stop]
+        points = (
+            centers[start:stop, None, :]
+            + half[:, None, :] * qref[None, :, :]
+        ).reshape((-1, 3))
+        weights = (np.prod(half, axis=1)[:, None] * qweights_ref[None, :]).reshape(
+            (-1,)
+        )
+        incident_e, incident_h, _ = _background_code_fields(
+            first.cfg, points, "incident_plane_wave"
+        )
+        bg_e, bg_h, _ = _background_code_fields(
+            first.cfg, points, "layered_fresnel"
+        )
+        corner_values: dict[str, dict[str, np.ndarray]] = {}
+        for label in labels:
+            field = fields[label]
+            cells = np.repeat(cell_maps[label][start:stop], nq)
+            electric = _eval(field.electric, points, cells)
+            curl = _eval(field.curl, points, cells)
+            corner_values[label] = _quantities(field, electric, curl, bg_e, bg_h)
+
+        for region, mask in masks.items():
+            selected = np.repeat(mask[start:stop], nq)
+            if not np.any(selected):
+                continue
+            w = weights[selected]
+            state = stats[region]
+            state["volume_nm3"] += float(np.sum(w))
+            state["incident_E_sq"] += weighted_vector_squared_norm(incident_e[selected], w)
+            state["incident_H_sq"] += weighted_vector_squared_norm(incident_h[selected], w)
+            for quantity in _QUANTITIES:
+                for label in labels:
+                    state["corner_sq"][label][quantity] += weighted_vector_squared_norm(
+                        corner_values[label][quantity][selected], w
+                    )
+                directional = four_corner_differences(
+                    corner_values["G00"][quantity][selected],
+                    corner_values["G10"][quantity][selected],
+                    corner_values["G01"][quantity][selected],
+                    corner_values["G11"][quantity][selected],
+                )
+                for key, vector in directional.items():
+                    state["direction_sq"][quantity][key] += weighted_vector_squared_norm(
+                        vector, w
+                    )
+        tenth = int(10 * stop / total)
+        if progress and tenth > last_tenth:
+            print(
+                f"four-corner volume: {stop}/{total} common subcells "
+                f"({100 * stop / total:.0f}%)",
+                flush=True,
+            )
+            last_tenth = tenth
+
+    regions: dict[str, Any] = {}
+    for region, state in stats.items():
+        incident_e_norm = np.sqrt(state["incident_E_sq"]) * scale_e
+        incident_h_norm = np.sqrt(state["incident_H_sq"]) * scale_h
+        quantities: dict[str, Any] = {}
+        for quantity, (unit, factor_name) in _QUANTITIES.items():
+            factor = float(getattr(first.cfg, factor_name))
+            corner_norms = {
+                label: float(np.sqrt(state["corner_sq"][label][quantity]) * factor)
+                for label in labels
+            }
+            direction_norms = {
+                key: float(np.sqrt(value) * factor)
+                for key, value in state["direction_sq"][quantity].items()
+            }
+            g1_norm = corner_norms["G11"]
+            incident_norm = _incident_norm_for_quantity(quantity, incident_e_norm, incident_h_norm, k0)
+            quantities[quantity] = {
+                "unit": unit,
+                "l2_norm_unit": f"{unit}·nm^(3/2)",
+                "corner_l2_norms": corner_norms,
+                "Gx_to_G1_difference_l2_norm": direction_norms[
+                    "x_to_G11_error_G10_minus_G11"
+                ],
+                "Gx_relative_to_G1": direction_norms[
+                    "x_to_G11_error_G10_minus_G11"
+                ] / max(g1_norm, np.finfo(float).tiny),
+                "Gz_to_G1_difference_l2_norm": direction_norms[
+                    "z_to_G11_error_G01_minus_G11"
+                ],
+                "Gz_relative_to_G1": direction_norms[
+                    "z_to_G11_error_G01_minus_G11"
+                ] / max(g1_norm, np.finfo(float).tiny),
+                "G0_to_G1_difference_l2_norm": direction_norms["G00_to_G11"],
+                "G0_relative_to_G1": direction_norms["G00_to_G11"]
+                / max(g1_norm, np.finfo(float).tiny),
+                "x_increment_l2_norm": direction_norms[
+                    "x_increment_G10_minus_G00"
+                ],
+                "x_increment_relative_to_G1": direction_norms[
+                    "x_increment_G10_minus_G00"
+                ] / max(g1_norm, np.finfo(float).tiny),
+                "x_increment_over_incident_l2": direction_norms[
+                    "x_increment_G10_minus_G00"
+                ] / max(incident_norm, np.finfo(float).tiny),
+                "z_increment_l2_norm": direction_norms[
+                    "z_increment_G01_minus_G00"
+                ],
+                "z_increment_relative_to_G1": direction_norms[
+                    "z_increment_G01_minus_G00"
+                ] / max(g1_norm, np.finfo(float).tiny),
+                "z_increment_over_incident_l2": direction_norms[
+                    "z_increment_G01_minus_G00"
+                ] / max(incident_norm, np.finfo(float).tiny),
+                "interaction_l2_norm": direction_norms[
+                    "interaction_G11_minus_G10_minus_G01_plus_G00"
+                ],
+                "interaction_relative_to_G1": direction_norms[
+                    "interaction_G11_minus_G10_minus_G01_plus_G00"
+                ] / max(g1_norm, np.finfo(float).tiny),
+                "interaction_over_incident_l2": direction_norms[
+                    "interaction_G11_minus_G10_minus_G01_plus_G00"
+                ] / max(incident_norm, np.finfo(float).tiny),
+                "incident_normalizer_l2": float(incident_norm),
+                "Gx_to_G1_difference_over_incident_l2": direction_norms[
+                    "x_to_G11_error_G10_minus_G11"
+                ] / max(incident_norm, np.finfo(float).tiny),
+                "Gz_to_G1_difference_over_incident_l2": direction_norms[
+                    "z_to_G11_error_G01_minus_G11"
+                ] / max(incident_norm, np.finfo(float).tiny),
+            }
+        regions[region] = {
+            "volume_nm3": float(state["volume_nm3"]),
+            "quantities": quantities,
+        }
+    return {
+        "background": "layered_fresnel (official P1/P4 definition)",
+        "common_subcell_shape": catalog["shape"],
+        "common_subcell_count": int(total),
+        "axis_union": axis_facts,
+        "quadrature_order_per_axis": COMMON_QUADRATURE_ORDER,
+        "material_tag_mismatch_count": 0,
+        "curl_source": "direct UFL curl(E_FE) into DG6 for all four saved fields",
+        "directions": {
+            "x": "G10-G00",
+            "z": "G01-G00",
+            "interaction": "G11-G10-G01+G00",
+            "Gx_to_G1": "G10-G11",
+            "Gz_to_G1": "G01-G11",
+        },
+        "normalization": {
+            "Gx_and_Gz_error_denominator": "fixed G11/G1 L2 norm for the same quantity and region",
+            "incident_diagnostic_denominator": "same-region incident E, H, or k0-scaled E L2 norm according to quantity units",
+            "x_z_interaction": "G11-G10-G01+G00; reported as absolute, G1-relative, and incident-relative L2 norms",
+        },
+        "regions": regions,
+        "l2_measure": "volume in nm^3; each reported L2 norm has its field unit multiplied by nm^(3/2)",
     }
 
 

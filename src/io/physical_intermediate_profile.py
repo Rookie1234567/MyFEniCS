@@ -223,6 +223,8 @@ def profile_facts(identity=PROFILE) -> dict:
                 "G1": "task40extra_nonseparable_0p7nm_v1",
                 "E1": "task40extra_nonseparable_0p7nm_e1_q1p25_v1",
                 "E2": "task40extra_nonseparable_0p7nm_e2_q1p5_v1",
+                "GX560": "task40extra_nonseparable_0p7nm_v1",
+                "GZ528": "task40extra_nonseparable_0p7nm_v1",
             },
             task40_geometry_identity_source="resolved from the explicit run_id mesh mapping",
             task40_rectangular_air_void_box=True,
