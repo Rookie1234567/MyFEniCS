@@ -19,7 +19,7 @@
 | 固定工作量 | 5 nm 与 2 nm 各一个 18-cell FE fixture；math1→math4→math4→math1，共四场。每场每个 fixture 一个 p4 factor，三次固定 PC 输出；各场及 AB/BA 比较通过 | [线程选择 compact](records/v6_thread_selection.json)；全部运行绑定 clean source `41bd6afa0be4e6ff242025f3730a3e458d3717e7` 与 launcher SHA |
 | PC 对照 | 首次调用单列；warm 仅取第 2、3 次调用均值。5 nm math1/math4 warm 比值 AB/BA=`1.384866/1.717097`；2 nm=`1.047754/0.975515` | 2 nm 未显示稳定收益，不能以 factor API 单独耗时替代完整 PC 结论 |
 | 冻结配置 | MPI1、math1、worker CPU24、parent CPU9、NUMA interleave node0/1；不做 8 线程 | math4 数值等价与组件 PASS 证据保留；math4线程设置4、`openblas_get_num_threads()`=4、OS线程数6；报告`parallel_runtime=1`是`openblas_get_parallel()`返回的`OPENBLAS_THREAD`类型枚举，不是线程数。MUMPS共享内存能力 unknown |
-| 下一门 | 唯一 F5：5 nm Si p6/h4 q4，3780 cells、600 channels；当前仅有启动审阅包，未启动 | [F5 启动审阅包](../../../tmp/review_v6_components/f5_5nm_launch_review_package_20261002.json)；须主审批准并通过 fresh 现场准入后才运行 |
+| 下一门 | 唯一 F5：5 nm Si p6/h4 q4，3780 cells、600 channels；当前仅有启动审阅包，未启动 | [E3 线程选择 compact](records/v6_thread_selection.json)；ignored F5 审阅包路径为 `tmp/review_v6_components/f5_5nm_launch_review_package_20261002.json`，其 SHA256 在执行交接中报告；须主审批准并通过 fresh 现场准入后才运行 |
 
 此 E3 只证明限定小网格、固定工作量组件上的比较，不是完整场 PDE 资格，不替代 F5 的 A6、物理量、同离散参考与资源 Gate。邻近任务未被修改；CPU与背景进程快照不代表整机独占。
 
