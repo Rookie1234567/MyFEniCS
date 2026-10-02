@@ -1,0 +1,128 @@
+{
+  "schema": "task40extra.external-XZ-attempt2-small-evidence-manifest.v1",
+  "status": "STATIC_HASH_AND_METADATA_BINDINGS_PASS",
+  "base_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud",
+  "archive_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/direct_XZ_attempt2_failure_archive_ae6034fa",
+  "original_files_mutated": false,
+  "canonical_files_mutated": false,
+  "matrices_or_artifacts_copied": false,
+  "small_original_files": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/summary.json",
+      "sha256": "b9d97e2e4a129195681ca764f0ffefbc86e8eef2327ea6c41fe357d5f21e35dd",
+      "bytes": 176662
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/phase.json",
+      "sha256": "69e4b57e8a1c7e156ad035070e82c53e6bba2ca0b23e98ec1ed09e1d9880cf7c",
+      "bytes": 246
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/probe_traceback.txt",
+      "sha256": "25d75775a9f96c649974bd09535a9d5cd807ea2193c2bacd75e98cf849c991df",
+      "bytes": 1888
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/provenance.json",
+      "sha256": "55dc51718c0322fa741066bcec82b955465ccbe4684cdc27bc5752f993ce112c",
+      "bytes": 190829
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/direct_carrier_qualification.json",
+      "sha256": "365af3229a851d897887f7ba04f0b0d1d21b247a95c2ab7074f0ea4597d8dc74",
+      "bytes": 213803
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/abi_manifest.json",
+      "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "bytes": 8904
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_coverage_frozen_tests_attempt1/summary.json",
+      "sha256": "a934700cbd423fdbecef40249a131bbfa137dcd2c84b97a2bc11425b157e87ed",
+      "bytes": 176811
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_coverage_frozen_tests_attempt1/worker.log",
+      "sha256": "1b915db92d27879221e946ab6c8b8fa0738bc268a4357ba20ad1092acc41dcfa",
+      "bytes": 184
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_grid_orbit_coverage_source_review_v1.json",
+      "sha256": "255143b622b4724bb8ec34733d2bbf2e02b317942da8988dd92b7c9755772285",
+      "bytes": 4162
+    }
+  ],
+  "provided_metadata_packet": {
+    "path": "experiments/y_orbit_XZ_coverage_diagnostics/attempt2_complete_primitives.json",
+    "sha256": "04367fd97df210db0eba5b3dc5828bd2db8b838eaaec8fcc18cde138b759f960",
+    "bytes": 12155579,
+    "read_scope": "cell/grid JSON metadata and descriptor shapes only; no .npy payload or numerical recomputation"
+  },
+  "previous_attempt1_archive_files": [
+    {
+      "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/failure_zh.md",
+      "sha256": "c5fee7f6c8f2a72d8d68b81b5dca9c123b0654d3e61c56e836e5925d26656183",
+      "bytes": 5311
+    },
+    {
+      "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/compact_ledger.json",
+      "sha256": "884661dfbc533a539ec92f11ba406b8675c3ba46a6c6ed5886d29ff5a275ed9c",
+      "bytes": 27768
+    },
+    {
+      "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/hash_manifest.json",
+      "sha256": "e4ce575573ad6c2e496b51fa99526e04af141ff894ba09f4a3f6ee2d06ed3970",
+      "bytes": 6913
+    }
+  ],
+  "large_original_locator_only": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/probe_report.json",
+      "content_read": false,
+      "SHA_not_acquired": true
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/probe_events.jsonl",
+      "content_read": false,
+      "SHA_not_acquired": true
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/resources.jsonl",
+      "content_read": false,
+      "SHA_not_acquired": true
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/worker.log",
+      "content_read": false,
+      "SHA_not_acquired": true
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/artifact_manifest.json",
+      "content_read": false,
+      "SHA_not_acquired": true
+    }
+  ],
+  "package_files": [
+    {
+      "name": "compact_ledger.json",
+      "sha256": "3cf70bb57e4f085277b7600bfcad50c88e9a49fc10323928474dbec70a66721c",
+      "bytes": 19738
+    },
+    {
+      "name": "failure_zh.md",
+      "sha256": "19b6431d2287f5077fb97012c73b26b64dcb6a85c243519ab641fd66c022a761",
+      "bytes": 4120
+    }
+  ],
+  "validation": {
+    "immutable_worker_failure_factor_zero_preserved": true,
+    "provided_primitive_expected_hash_matches": true,
+    "actual_metadata_168_84_84_unique_IDs_and_complete_grids": true,
+    "42_xz_groups_and_complete_y_membership": true,
+    "source_review_and_clean_84_tests_bound": true,
+    "previous_attempt1_three_hashes_unchanged": true,
+    "full_saved_numerical_proof_pending": true,
+    "no_arrays_events_or_numerical_reruns": true
+  }
+}

@@ -1,3 +1,15 @@
+# dot Task40extra V14：XZ网格加密点通过
+
+XZ在X基础上加密z方向至p4/phi5/6×4×7=168 cells，同光学尺寸/manual532。两local空间各84 cells，完整33024独立行/18144内部、四q因子与8组532输出保留。fresh worker与saved-only checker同源ae6034fa，90095 passing entries；checker不重跑FE/JIT/factor/PDE。
+
+worker2392.338773393s/RSS1669115904B，checker754.005582511s/RSS1594347520B，各自3GiB/4500s、swap0/清场。最大原残差约7.60336e-11，notch约4.58254e-12、generic/interior/physical/support为4/4/4/5步。CSR73801544B不是factor内存，setup6.217330755s含controls/I/O；sampled PC defect0.0134233不是范数界。
+
+旧interior guard及coverage失败、attempt2独立saved-proof通过、attempt3自动checker资源准入失败各自保留。自动失败的精确host envelope未保存，后续checker独立重启通过不是对旧失败补写；PDE没有重跑。目标原尺寸/光学规模/AUTO32060/2TB48h仍未资格，后续Ny扩展须独立准入。
+
+[Response V14](task40extra_dot_parallel_cloud/response_v14.md)、[compact](task40extra_dot_parallel_cloud/outcomes/records/direct_XZ_v14/compact_record.json)。
+
+---
+
 # dot Task40extra V13：X网格加密点资格通过
 
 在V12共享变换基础上，本轮将同一光学尺寸/manual532的p4网格加密到6×4×5=120 cells。两胞元参考分块求逆恢复全部12960内部未知量，避免构造完整周期参考矩阵；四q因子及完整原三维action仍保留。worker816b7247与saved-only checker2a07d23分别绑定，75131项独立检查通过。

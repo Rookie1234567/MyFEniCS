@@ -48,3 +48,6 @@ real-ky phi5后续已通过：[完整三维y-wrap/参考逆资格](outcomes/y_or
 
 
 [V13 X网格加密资格](response_v13.md)已完成：p4/120 cells、同光学尺寸/manual532，worker816b7247与saved-only checker2a07d23独立绑定，75131项通过，全部12960内部、四q、8组532输出保留。X-only 2GiB/1800s；目标原尺寸/AUTO库存/2TB48h仍未资格，历史失败完整保留。
+
+
+[V14 XZ网格加密资格](response_v14.md)：同source ae6034fa的fresh worker与saved-only checker通过90095项，p4/168 cells、18144内部、四q、8组532输出完整。XZ-only 3GiB/4500s，原XZ1/2失败和自动checker admission失败保留；目标尺度/AUTO32060/2TB48h仍未资格。

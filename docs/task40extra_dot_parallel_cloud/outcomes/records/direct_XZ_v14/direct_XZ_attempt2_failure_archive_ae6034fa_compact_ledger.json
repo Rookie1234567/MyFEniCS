@@ -1,0 +1,455 @@
+{
+  "schema": "task40extra.external-XZ-attempt2-coverage-failure-archive.v1",
+  "status": "ORIGINAL_FAILED_XZ_ATTEMPT2_PRESERVED_PROFILE_COVERAGE_FIX_SOURCE_ONLY_SAVED_PROOF_PENDING",
+  "created_at_utc": "2026-10-02T14:28:59.200039+00:00",
+  "summary_zh": "XZ attempt2 已完成新鲜 532-mode carrier component 证明，但原始算子 contribution checker 的旧 6×ny×5 coverage 守卫失败；实际 global/local metadata 为 6×4×7 与 6×2×7，42 xz groups。原 worker factor0/PDE false。源 ae6034fa 修复采用已验证 profile nx/nz，84 tests PASS；full saved-only numerical proof 待定。",
+  "archive_scope": {
+    "external_only": true,
+    "canonical_writes": false,
+    "project_imports": false,
+    "array_values_decoded": false,
+    "bulk_events_resources_or_worker_log_reads": false,
+    "FE_JIT_factor_solve_PDE_rerun": false,
+    "saved_full_proof_replay": false,
+    "remote_publication": false,
+    "provided_extracted_metadata_packet_read": true,
+    "provided_packet_numeric_payload_read": false
+  },
+  "worker_attempt2": {
+    "run_directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2",
+    "source_head": "f7ad7e70b0a06148de9f416b44b6d455e1212bde",
+    "source_tree": "987cc3dd80f0b2550ce2b97e85f4c726f8a9fe78",
+    "source_dirty": "",
+    "summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/summary.json",
+      "sha256": "b9d97e2e4a129195681ca764f0ffefbc86e8eef2327ea6c41fe357d5f21e35dd",
+      "bytes": 176662
+    },
+    "supervisor": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 2,
+      "elapsed_seconds": 1853.206727511002,
+      "sampled_process_tree_rss_peak_bytes": 1101979648,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "source": {
+        "head": "f7ad7e70b0a06148de9f416b44b6d455e1212bde",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "tree_cap_bytes": 3221225472,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 1853.206758956003,
+        "limit_seconds": 4499.564872990988,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "phase": {
+      "phase": "probe_failure",
+      "factor_count": 0,
+      "worker_elapsed_seconds": 1850.9238432499988,
+      "research_wall_seconds": 4500,
+      "phase_wall_seconds": 4499.564872990988,
+      "research_memory_gib": 3,
+      "requested_tree_cap_bytes": 3221225472,
+      "receipt": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/phase.json",
+        "sha256": "69e4b57e8a1c7e156ad035070e82c53e6bba2ca0b23e98ec1ed09e1d9880cf7c",
+        "bytes": 246
+      }
+    },
+    "provenance": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/provenance.json",
+      "sha256": "55dc51718c0322fa741066bcec82b955465ccbe4684cdc27bc5752f993ce112c",
+      "bytes": 190829
+    },
+    "ABI_manifest": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/abi_manifest.json",
+      "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "bytes": 8904
+    },
+    "configuration_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "dependency_manifest_sha256": "186fcaf4d5a670eccef4d8a26651aa3c034b1ae465c9599e73df52cdefe81e49",
+    "historical_numerical_arrays_used": false,
+    "resource_contract": {
+      "tree_cap_bytes": 3221225472,
+      "wall_seconds": 4500,
+      "swap_bytes": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "evidence_reserve_bytes": 134217728,
+      "factor_workspace_allowance_bytes": 536870912,
+      "factor_fill_and_temporary_workspace_unknown": true,
+      "factor_L_U_statistics_copies_permitted": false,
+      "performance_or_target_capacity_claim": false
+    },
+    "failure": {
+      "class": "PROFILE_DERIVED_GRID_AND_ORBIT_COVERAGE_METADATA_FAILURE",
+      "exception_type": "ValueError",
+      "message": "complete actual cell/grid/interior coverage is not exhaustive",
+      "traceback": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/probe_traceback.txt",
+        "sha256": "25d75775a9f96c649974bd09535a9d5cd807ea2193c2bacd75e98cf849c991df",
+        "bytes": 1888
+      },
+      "call_path": [
+        "run_direct_quotient_probe",
+        "audit_direct_original_cell_contributions",
+        "check_direct_original_cell_contributions",
+        "_check_source"
+      ],
+      "full_worker_pass": false,
+      "factor_count": 0,
+      "PDE_solved": false,
+      "official_results": false,
+      "resource_time_limit_caused_failure": false,
+      "inverse_residual_recovery_output_qualification": false
+    },
+    "cost_phase_split": {
+      "supervisor_whole_failed_worker_seconds": 1853.206727511002,
+      "worker_to_exception_seconds": 1850.9238432499988,
+      "carrier_components_completed_before_exception": true,
+      "complete_primitives_saved_before_failure": true,
+      "complete_original_operator_checker_failed_at_source_coverage": true,
+      "factor_calls": 0,
+      "PDE_solved": false,
+      "separate_phase_timings_not_extracted": true
+    }
+  },
+  "completed_component_evidence": {
+    "receipt": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2/direct_carrier_qualification.json",
+      "sha256": "365af3229a851d897887f7ba04f0b0d1d21b247a95c2ab7074f0ea4597d8dc74",
+      "bytes": 213803
+    },
+    "status": "PASS_DIRECT_FRESH_CARRIER_COMPONENTS_ONLY",
+    "full_case_pass": false,
+    "factor_count": 0,
+    "PDE_solved": false,
+    "fresh_primary_and_literal_forms": true,
+    "snapshots_reused": false,
+    "original532_alias_union_exactly_once": true,
+    "global_carrier_identity_unchanged": true,
+    "actual_global_cell_count": 168,
+    "actual_local_cell_counts": [
+      84,
+      84
+    ],
+    "mode_count": 532,
+    "sector_mode_counts": [
+      228,
+      304
+    ],
+    "cell_metric_material_cover": [
+      {
+        "all_material_tags_equal": true,
+        "cell_cover_exactly_once": true,
+        "complete_actual_cell_count": 168,
+        "local_actual_cell_count": 84,
+        "maximum_actual_vertex_difference": 0.0,
+        "metric_tolerance": 1e-12,
+        "replication_count": 2
+      },
+      {
+        "all_material_tags_equal": true,
+        "cell_cover_exactly_once": true,
+        "complete_actual_cell_count": 168,
+        "local_actual_cell_count": 84,
+        "maximum_actual_vertex_difference": 0.0,
+        "metric_tolerance": 1e-12,
+        "replication_count": 2
+      }
+    ],
+    "complete_mode_fold_lift": [
+      {
+        "complete_DOF_fold_and_lift": true,
+        "maximum_complete_mode_relative_error": 9.717018849443186e-15,
+        "mode_count": 228,
+        "nonzero_lower_dual_rhs_sqrtK_identity": true,
+        "raw_and_both_actual_cutoffs_audited": true,
+        "single_D_conjugation": true,
+        "tolerance": 1e-10
+      },
+      {
+        "complete_DOF_fold_and_lift": true,
+        "maximum_complete_mode_relative_error": 9.512976300056905e-15,
+        "mode_count": 304,
+        "nonzero_lower_dual_rhs_sqrtK_identity": true,
+        "raw_and_both_actual_cutoffs_audited": true,
+        "single_D_conjugation": true,
+        "tolerance": 1e-10
+      }
+    ],
+    "deferred_gates": [
+      "complete original contribution/operator audit",
+      "all-q prefactor CSR and resources",
+      "q factors",
+      "full original solve/recovery/residual/output qualification"
+    ],
+    "component_PASS_does_not_grant_full_operator_or_solve_PASS": true
+  },
+  "saved_primitive_metadata_diagnosis": {
+    "receipt": {
+      "path": "experiments/y_orbit_XZ_coverage_diagnostics/attempt2_complete_primitives.json",
+      "sha256": "04367fd97df210db0eba5b3dc5828bd2db8b838eaaec8fcc18cde138b759f960",
+      "bytes": 12155579
+    },
+    "schema": "task40extra.direct-X-original-cell-contribution-proof.v1",
+    "original_status": "INCOMPLETE_NOT_QUALIFIED",
+    "numeric_factor_calls": 0,
+    "saved_named_payload_bytes_as_reported": 455485964,
+    "payload_is_not_whole_RSS": true,
+    "proof_scope_as_declared_not_completed": "all actual original300-column curl+mass cells, every finalized MPC/entity row, all4x4/global and2x2/local sums",
+    "source_coverage_metadata": [
+      {
+        "role": "original_global",
+        "cell_count": 168,
+        "cells_metadata_length": 168,
+        "exact_unique_cell_IDs": true,
+        "cell_ID_range": [
+          0,
+          167
+        ],
+        "mesh_axis_cell_counts": [
+          6,
+          4,
+          7
+        ],
+        "axis_lengths_minus_one": [
+          6,
+          4,
+          7
+        ],
+        "exact_unique_grid_cover": true,
+        "xz_group_count": 42,
+        "every_group_y_membership_exact": true,
+        "old_hardcoded_grid_count": 120,
+        "old_grid_equality_would_fail": true,
+        "actual_grid_tail_entries_omitted_by_old_expected": 48,
+        "old_hardcoded_orbit_count": 30,
+        "xz_tail_groups_omitted_by_old_loop": 12,
+        "all_300_column_cell_descriptor_shapes_present": true,
+        "array_values_decoded": false,
+        "numerical_tensor_sum_or_independent_interior_ownership_rechecked": false
+      },
+      {
+        "role": "original_local_0",
+        "cell_count": 84,
+        "cells_metadata_length": 84,
+        "exact_unique_cell_IDs": true,
+        "cell_ID_range": [
+          0,
+          83
+        ],
+        "mesh_axis_cell_counts": [
+          6,
+          2,
+          7
+        ],
+        "axis_lengths_minus_one": [
+          6,
+          2,
+          7
+        ],
+        "exact_unique_grid_cover": true,
+        "xz_group_count": 42,
+        "every_group_y_membership_exact": true,
+        "old_hardcoded_grid_count": 60,
+        "old_grid_equality_would_fail": true,
+        "actual_grid_tail_entries_omitted_by_old_expected": 24,
+        "old_hardcoded_orbit_count": 30,
+        "xz_tail_groups_omitted_by_old_loop": 12,
+        "all_300_column_cell_descriptor_shapes_present": true,
+        "array_values_decoded": false,
+        "numerical_tensor_sum_or_independent_interior_ownership_rechecked": false
+      },
+      {
+        "role": "original_local_1",
+        "cell_count": 84,
+        "cells_metadata_length": 84,
+        "exact_unique_cell_IDs": true,
+        "cell_ID_range": [
+          0,
+          83
+        ],
+        "mesh_axis_cell_counts": [
+          6,
+          2,
+          7
+        ],
+        "axis_lengths_minus_one": [
+          6,
+          2,
+          7
+        ],
+        "exact_unique_grid_cover": true,
+        "xz_group_count": 42,
+        "every_group_y_membership_exact": true,
+        "old_hardcoded_grid_count": 60,
+        "old_grid_equality_would_fail": true,
+        "actual_grid_tail_entries_omitted_by_old_expected": 24,
+        "old_hardcoded_orbit_count": 30,
+        "xz_tail_groups_omitted_by_old_loop": 12,
+        "all_300_column_cell_descriptor_shapes_present": true,
+        "array_values_decoded": false,
+        "numerical_tensor_sum_or_independent_interior_ownership_rechecked": false
+      }
+    ],
+    "checks_zh": "只核对 extracted packet 的 cell IDs、grid tuples、axis counts、42 组 y-membership 与 descriptor shape；未读取任何 .npy，未复算 tensor/q sums、independent interior ownership 或 provider 数值证明。",
+    "original_status_replaced_with_PASS": false
+  },
+  "reviewed_coverage_fix": {
+    "source_head": "ae6034fa13b4af62263409822fec1c6c4ba4a150",
+    "source_tree": "750c36f1434977ba9cf8a9d1a70665eff81897c4",
+    "base_head": "f7ad7e70b0a06148de9f416b44b6d455e1212bde",
+    "review": {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_grid_orbit_coverage_source_review_v1.json",
+      "sha256": "255143b622b4724bb8ec34733d2bbf2e02b317942da8988dd92b7c9755772285",
+      "bytes": 4162
+    },
+    "status": "PASS_XZ_PROFILE_DERIVED_COMPLETE_GRID_AND_ORBIT_COVERAGE_SOURCE_ONLY",
+    "changed_files": [
+      {
+        "path": "src/solvers/y_orbit_direct_operator_qualification.py",
+        "old_sha256": "ec8df77c71e2d489f0648c3b512f0c405872f177f59ced8780b716cf085f7021",
+        "new_sha256": "fab0b4fcab1fc3331f35966c41774b9c40e4884b3828eeded80bea7525d94554"
+      },
+      {
+        "path": "benchmarks/y_orbit_direct_source_contract.py",
+        "old_sha256": "8654d1c4e913ed0055231c4dda7144bcde9c826bbf4603396adc251b0b42f018",
+        "new_sha256": "710a99e5f89dccda4e410bcb40bca93ec944123d50079f9f7f08c51fd284133d"
+      },
+      {
+        "path": "src/test/test_y_orbit_direct_XZ_coverage_metadata.py",
+        "old_sha256": null,
+        "new_sha256": "39fd0bc288942c329e8751a12f44716f2712ad3a16603ccefc2d4e50660b133b"
+      }
+    ],
+    "manifest_sha256_as_stored": "df423b8da61fa8a44eb1b0ea1659fa4da3921af5dd4ff15b248de9b2bf09fecf",
+    "patch_sha256_as_stored": "7e2cf4ebf8ed10d757583998f755d207d1556ac38f08f1400eb14a44da7688c7",
+    "exact_operator_source_restoration_to_base": {
+      "range_metadata_nx_to_range6": 3,
+      "range_metadata_nz_to_range5": 3,
+      "orbit_helper_metadata_parameter": 1,
+      "orbit_result_nx_times_nz_to30": 1,
+      "selected_metadata_forwarding_call": 1,
+      "entire_restored_bytes_equal": true
+    },
+    "source_contract_scope": "Only one exact new test path added.",
+    "selected_profile_binding": "Public checker derives admitted _metadata(direct_profile), checks all sources first, and now forwards that same metadata into orbit audit. No dimensions inferred from unqualified partial source sets.",
+    "complete_coverage": "All actual cell IDs, native/grid witness uniqueness, independent interior ownership, exact complete grid equality, global four-y/local two-y membership, all16 global q pairs and both local2x2 branch pairs remain mandatory. X grid/orbits stay6x4x5/30; XZ6x4x7/42.",
+    "mathematical_gate_preservation": "All q sum arithmetic, relative tolerances, phase identities, off-branch and diagonal gates, material/width controls, complete support matching, source tensor projection, condensation, primary carrier/Hhat and provider proof bodies restore exactly.",
+    "focused_test_scope": [
+      "Production complete-coverage predicate executes on actual saved primitive metadata",
+      "Complete production orbit control flow visits42 groups/16global+8local pairs per group using clearly disclosed small sum stubs",
+      "Missing tail orbit, repeated cell ID, swapped grid, missing local orbit negatives",
+      "X30 subset branch and XZ-as-X rejection",
+      "Wrong axis order/profile rejected by actual source admission before numerical loads"
+    ],
+    "test_scope_limit": "Five owner-run cases were reported PASS; this reviewer did not execute tests. Stubbed sums test control-flow coverage only. Independent public full saved-only proof remains required for numerical sums.",
+    "reviewer_saved_numeric_array_decoding": false,
+    "reviewer_FE_JIT_factors_solves_PDE": false,
+    "numerical_admission": "No PDE or saved-proof admission by this source receipt. Parent owns clean commit, tests, source/resource/ABI preflight and bounded public saved-only proof.",
+    "archive_extra_read_only_check": "Immutable f7ad7e7-to-ae6034fa operator diff confirms metadata nx/nz loops/count and forwarding changes only; no project imports"
+  },
+  "formal_targeted_tests": {
+    "summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_coverage_frozen_tests_attempt1/summary.json",
+      "sha256": "a934700cbd423fdbecef40249a131bbfa137dcd2c84b97a2bc11425b157e87ed",
+      "bytes": 176811
+    },
+    "log": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_coverage_frozen_tests_attempt1/worker.log",
+      "sha256": "1b915db92d27879221e946ab6c8b8fa0738bc268a4357ba20ad1092acc41dcfa",
+      "bytes": 184
+    },
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 18.485763186996337,
+      "sampled_process_tree_rss_peak_bytes": 159997952,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "source": {
+        "head": "ae6034fa13b4af62263409822fec1c6c4ba4a150",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "tree_cap_bytes": 1610612736,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 18.48576429800596,
+        "limit_seconds": 600.0,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "test_count": 84,
+    "test_elapsed_seconds": 16.679,
+    "result": "PASS",
+    "small_sum_stubs_test_control_flow_not_original_numerical_sums": true,
+    "archive_reran_tests": false
+  },
+  "full_saved_only_proof": {
+    "status": "PENDING_AS_REPORTED_BY_PARENT",
+    "no_overall_independent_PASS_claimed": true,
+    "receipt_inspected_or_replayed_by_archive": false,
+    "later_proof_success_would_not_reclassify_original_failed_worker": true
+  },
+  "previous_attempt1_package": {
+    "files": [
+      {
+        "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/failure_zh.md",
+        "sha256": "c5fee7f6c8f2a72d8d68b81b5dca9c123b0654d3e61c56e836e5925d26656183",
+        "bytes": 5311
+      },
+      {
+        "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/compact_ledger.json",
+        "sha256": "884661dfbc533a539ec92f11ba406b8675c3ba46a6c6ed5886d29ff5a275ed9c",
+        "bytes": 27768
+      },
+      {
+        "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/hash_manifest.json",
+        "sha256": "e4ce575573ad6c2e496b51fa99526e04af141ff894ba09f4a3f6ee2d06ed3970",
+        "bytes": 6913
+      }
+    ],
+    "all_hashes_reverified_unchanged": true,
+    "original_pending_snapshot_preserved": true
+  },
+  "limits_zh": [
+    "原 attempt2 保留 WORKER_FAILED；actual saved coverage metadata 完整不等于原始 tensor/operator/projection 数值证明通过",
+    "source review 和 84 tests 只证明其明确范围，stubbed orbit sums 不构成 full numerical proof",
+    "profile nx/nz 由 admitted metadata 提供，coverage/count/membership 与所有原 numerical gates 保留；不从不完整 source 集推断尺寸",
+    "3GiB/4500s 是显式研究边界；ordinary defaults 与用户 2TB/48h 目标容量未在本档资格化",
+    "fixed manual532、既定光学尺寸的网格细化不代替 AUTO32060、原目标尺寸或目标几何精度；PDE/inverse/residual/recovery/output 仍未完成"
+  ]
+}

@@ -1,4 +1,4 @@
-"""Independent, saved-only checker for the reviewed fresh direct X profile.
+"""Independent, saved-only checker for the reviewed fresh direct X/XZ profiles.
 
 Importing this module is standard-library only. Numerical dependencies are
 loaded solely by the explicitly supervised checker entry point; the checker
@@ -64,8 +64,9 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def bind_direct_checker_source(worker_source, checker_source):
+def bind_direct_checker_source(worker_source, checker_source, *, direct_profile="X"):
     """Only the immutable816b X worker's two checkers and one test may differ."""
+    require(direct_profile in ("X", "XZ"), "only explicit direct X/XZ checker profiles are admitted")
     for source in (worker_source, checker_source):
         require(isinstance(source, dict) and source.get("dirty") == ""
             and isinstance(source.get("head"), str) and re.fullmatch(r"[0-9a-f]{40}", source["head"])
@@ -83,13 +84,13 @@ def bind_direct_checker_source(worker_source, checker_source):
     if worker_source["head"] == checker_source["head"]:
         require(same, "same-head direct checker requires exact complete source identity")
     else:
-        require(worker_source["head"] == DIRECT_EVENT_WORKER_HEAD
+        require(direct_profile == "X" and worker_source["head"] == DIRECT_EVENT_WORKER_HEAD
             and digest_json(old) == DIRECT_EVENT_WORKER_SOURCE_SHA
             and all(old.get(path) == sha for path, sha in DIRECT_EVENT_WORKER_CHECKERS.items())
             and set(changed) == DIRECT_EVENT_ALLOWED_PATHS and set(old).issubset(new)
             and "src/test/test_y_orbit_direct_event_stream_metadata.py" not in old,
             "cross-head direct recheck permits only the pinned816b checker/event-loader/test correction")
-    return {"schema": "task40extra.direct-X-checker-event-stream-source-bridge.v1",
+    return {"schema": f"task40extra.direct-{direct_profile}-checker-event-stream-source-bridge.v1",
         "worker_head": worker_source["head"], "checker_head": checker_source["head"],
         "same_head_exact_source_identity": same, "allowed_checker_test_paths": sorted(DIRECT_EVENT_ALLOWED_PATHS),
         "changed_paths": changed, "all_other_numerical_config_input_dependencies_equal": True,
@@ -99,8 +100,9 @@ def bind_direct_checker_source(worker_source, checker_source):
 
 
 
-def validate_context_source_role(role, context, worker_source, *, source_root=None):
+def validate_context_source_role(role, context, worker_source, *, source_root=None, direct_profile="X"):
     """Bind the exact ordinary/global or quotient/local source inventory."""
+    metadata = reviewed_direct_profile_metadata(direct_profile)
     base = {
         "dtn_boundary_phase_gauge.py": "src/solvers/dtn_boundary_phase_gauge.py",
         "dtn_port_3d.py": "src/solvers/dtn_port_3d.py",
@@ -131,14 +133,15 @@ def validate_context_source_role(role, context, worker_source, *, source_root=No
         twist = int(role[-1])
         require(contract.get("schema") == "task40extra.y-orbit-two-cell-context.research.v1"
             and type(contract.get("twist_index")) is int and contract["twist_index"] == twist
-            and contract.get("direct_profile") == "X"
+            and contract.get("direct_profile") == metadata.name
             and quotient.get("contract_sha256") == digest_json(contract)
             and contract.get("physical_generator_manifest_sha256") == PHYSICAL_MANIFEST
             and contract.get("global_y_cells") == 4 and contract.get("local_y_cells") == 2
             and contract.get("global_q_indices") == [twist, twist+2]
-            and contract.get("global_mode_count") == 532 and contract.get("sector_mode_count") == SECTOR_PORTS[twist]
+            and contract.get("global_mode_count") == 532 and contract.get("sector_mode_count") == metadata.sector_port_counts[twist]
             and contract.get("replication_count") == 2
-            and quotient.get("actual_local_cells") == 60 and quotient.get("actual_local_storage_rows") == 13236
+            and quotient.get("actual_local_cells") == metadata.local_cell_count
+            and quotient.get("actual_local_storage_rows") == metadata.local_storage_rows
             and quotient.get("twist_requires_global_dual_rhs_transport") is True,
             "local carrier role differs from its hash-bound actual quotient contract")
     sources = context.get("source_sha256")
@@ -292,30 +295,34 @@ def bound_path(root, relative):
     return path
 
 
+def reviewed_direct_profile_metadata(name):
+    """Only the existing X/XZ enumeration may supply shape/count invariants."""
+    require(name in ("X", "XZ"), "only explicit direct X/XZ saved profiles are admitted; Y remains held")
+    from src.solvers.y_orbit_direct_profile import direct_profile_metadata
+    return direct_profile_metadata(name)
+
+
 def validate_profile(profile):
-    scale = 7 / 135
-    axes = [[v * scale for v in axis] for axis in
-            ((0, 8.25, 16.5, 25, 33.5, 41.75, 50), (0, 6.25, 12.5, 18.75, 25), (-10, 0, 40, 80, 120, 130))]
-    expected = {"name": "X", "dimensions": [6, 4, 5], "global_axes": axes,
-        "local_axes": [axes[0], axes[1][:3], axes[2]], "replication_count": 2, "local_y_cells": 2,
-        "cell_count": 120, "storage_rows": 25468, "independent_rows": 23808,
-        "interior_rows": 12960, "trace_rows": 10848, "rows_per_q": 5952,
-        "trace_rows_per_q": 2712, "local_cell_count": 60, "local_storage_rows": 13236,
-        "local_independent_rows": 11904, "local_interior_rows": 6480, "local_trace_rows": 5424,
-        "q_port_counts": list(Q_PORTS), "sector_port_counts": list(SECTOR_PORTS),
-        "augmented_rows_per_q": list(Q_ROWS), "physical_mode_count": 532,
-        "complete_cell_dimension": 300, "complete_cell_interior_dimension": 108,
-        "factor_allowance_per_q_bytes": 128 * 1024**2,
-        "factor_allowance_aggregate_bytes": FACTOR_ALLOWANCE_BYTES, "evidence_reserve_bytes": RESERVE_BYTES}
-    require(isinstance(profile, dict) and all(profile.get(key) == value for key, value in expected.items()),
-            "complete unchanged X mesh/channel/alias/resource profile required")
+    require(isinstance(profile, dict), "complete reviewed direct profile metadata required")
+    metadata = reviewed_direct_profile_metadata(profile.get("name"))
+    fields = ("name", "dimensions", "global_axes", "local_axes", "replication_count", "local_y_cells",
+        "cell_count", "storage_rows", "independent_rows", "interior_rows", "trace_rows", "rows_per_q",
+        "trace_rows_per_q", "local_cell_count", "local_storage_rows", "local_independent_rows",
+        "local_interior_rows", "local_trace_rows", "q_port_counts", "sector_port_counts",
+        "augmented_rows_per_q", "physical_mode_count", "complete_cell_dimension", "complete_cell_interior_dimension",
+        "factor_allowance_per_q_bytes", "factor_allowance_aggregate_bytes", "evidence_reserve_bytes")
+    identity = json.loads(json.dumps(metadata.identity()))
+    require(all(profile.get(key) == identity[key] for key in fields),
+            "complete unchanged X/XZ mesh/channel/alias/resource profile required")
     return True
 
 
 def validate_scope(report, stage):
     validate_profile(report.get("profile"))
+    metadata = reviewed_direct_profile_metadata(report.get("direct_profile"))
+    require(report["profile"]["name"] == metadata.name, "report profile and metadata identity differ")
     require(stage in PASSES and report.get("schema") == SCHEMA and report.get("stage") == stage
-        and report.get("status") == PASSES[stage] and report.get("direct_profile") == "X"
+        and report.get("status") == PASSES[stage] and report.get("direct_profile") == metadata.name
         and report.get("degree") == 4 and report.get("physical_mode_count") == 532
         and report.get("source_clean_unchanged") is True and report.get("official_results") is False
         and report.get("prefactor_only") is (stage == "prefactor")
@@ -323,7 +330,7 @@ def validate_scope(report, stage):
         and report.get("factor_count") == (0 if stage == "prefactor" else 4)
         and report.get("input_sha256") == INPUT_SHA
         and report.get("physical_generator_manifest_sha256") == PHYSICAL_MANIFEST,
-        "fresh direct X stage/source/config identity differs")
+        "fresh direct X/XZ stage/source/config identity differs")
     flags = report.get("scope_flags", {})
     require(all(flags.get(key) is True for key in ("full_layout_entity_stream", "fresh_global_and_local_carriers"))
         and all(flags.get(key) is False for key in ("snapshots_reused", "candidate_full_Ny_CSR_created",
@@ -340,7 +347,7 @@ def validate_scope(report, stage):
                 and report.get("no_2TB_or_48h_claim") is True, "diagnostic/capacity scope differs")
         changed = report.get("changed_cells")
         require(isinstance(changed, list) and len(changed) == 2 and len(set(changed)) == 2
-                and all(type(v) is int and 0 <= v < 120 for v in changed), "actual exactly two changed cells required")
+                and all(type(v) is int and 0 <= v < metadata.cell_count for v in changed), "actual exactly two changed cells required")
         for name in SOURCES:
             finite_gate(report["sampled_right_PC_defect"][name], float("inf"), "PC_" + name)
         coupling = report.get("sampled_notch_off_q_delta_relative")
@@ -350,26 +357,39 @@ def validate_scope(report, stage):
 
 
 def direct_memory_cap(direct_profile, stage, research_wall_seconds, research_memory_gib=None):
-    """Select only the explicitly approved X solve memory envelope."""
+    """Select only the approved X/1800/2GiB or XZ/4500/3GiB solve pair."""
     if research_memory_gib is None:
+        require(not (direct_profile == "XZ" and research_wall_seconds == 4500),
+                "XZ wall4500 requires the explicit approved 3GiB memory request")
         return TREE_CAP_BYTES
-    require(type(research_memory_gib) is int and research_memory_gib == 2
-        and direct_profile == "X" and stage == "solve"
-        and type(research_wall_seconds) is int and research_wall_seconds == 1800,
-        "research memory2 requires literal direct X solve and wall1800")
+    require(type(research_memory_gib) is int and type(research_wall_seconds) is int
+        and stage == "solve"
+        and (direct_profile, research_wall_seconds, research_memory_gib) in (("X", 1800, 2), ("XZ", 4500, 3)),
+        "research memory requires literal X/solve/wall1800/2GiB or XZ/solve/wall4500/3GiB")
     return research_memory_gib * 1024**3
 
 
-def validate_direct_memory_launch(envelope, *, research_memory_gib=2, dynamic_cap_key="launch_cap_bytes"):
+def validate_direct_memory_launch(envelope, *, research_memory_gib=2, dynamic_cap_key="launch_cap_bytes",
+                                  direct_profile=None, research_wall_seconds=None):
     """Check the saved launch's available host and every finite cgroup budget."""
-    require(type(research_memory_gib) is int and research_memory_gib == 2 and isinstance(envelope, dict),
+    require(type(research_memory_gib) is int and research_memory_gib in (2, 3) and isinstance(envelope, dict),
             "literal approved memory launch metadata required")
-    required = 2 * 1024**3 + RESERVE_BYTES
+    if direct_profile is None and research_wall_seconds is None:
+        require(type(research_memory_gib) is int and research_memory_gib == 2,
+                "historical launch helper default admits only literal 2GiB")
+        selected_cap = 2 * 1024**3
+    else:
+        selected_cap = direct_memory_cap(direct_profile, "solve", research_wall_seconds, research_memory_gib)
+    required = selected_cap + RESERVE_BYTES
     require(all(type(envelope.get(key)) is int and envelope[key] >= required
         for key in (dynamic_cap_key, "effective_available_bytes", "effective_total_bytes"))
         and type(envelope.get("reserve_bytes")) is int and envelope["reserve_bytes"] >= 0
         and envelope["effective_available_bytes"] <= envelope["effective_total_bytes"],
-        "fresh dynamic launch must support 2GiB plus the evidence reserve")
+        "fresh dynamic launch must support the selected cap plus the evidence reserve")
+    if research_memory_gib == 3:
+        require(envelope["reserve_bytes"] >= 4 * 1024**3
+            and envelope[dynamic_cap_key] <= max(0, envelope["effective_available_bytes"] - envelope["reserve_bytes"]),
+            "XZ launch requires the actual 4GiB host reserve before the 3GiB plus evidence-reserve admission")
     groups = envelope.get("cgroup_limits")
     require(isinstance(groups, list) and all(isinstance(group, dict)
         and type(group.get("limit_bytes")) is int and type(group.get("current_bytes")) is int
@@ -378,16 +398,23 @@ def validate_direct_memory_launch(envelope, *, research_memory_gib=2, dynamic_ca
     return True
 
 
-def validate_direct_memory_admission(admission):
+def validate_direct_memory_admission(admission, *, direct_profile=None, research_wall_seconds=None):
+    memory = admission.get("requested_memory_gib") if isinstance(admission, dict) else None
+    if direct_profile is None and research_wall_seconds is None:
+        require(type(memory) is int and memory == 2, "historical admission helper default admits only literal 2GiB")
+        selected_cap = 2 * 1024**3
+    else:
+        selected_cap = direct_memory_cap(direct_profile, "solve", research_wall_seconds, memory)
     require(isinstance(admission, dict) and set(admission) == {"requested_memory_gib", "requested_tree_cap_bytes",
         "required_cap_plus_evidence_reserve_bytes", "fresh_memory_envelope", "launch_admission_passed"}
-        and type(admission.get("requested_memory_gib")) is int and admission["requested_memory_gib"] == 2
-        and type(admission.get("requested_tree_cap_bytes")) is int and admission["requested_tree_cap_bytes"] == 2 * 1024**3
+        and type(admission.get("requested_memory_gib")) is int and admission["requested_memory_gib"] == memory
+        and type(admission.get("requested_tree_cap_bytes")) is int and admission["requested_tree_cap_bytes"] == selected_cap
         and type(admission.get("required_cap_plus_evidence_reserve_bytes")) is int
-        and admission["required_cap_plus_evidence_reserve_bytes"] == 2 * 1024**3 + RESERVE_BYTES
+        and admission["required_cap_plus_evidence_reserve_bytes"] == selected_cap + RESERVE_BYTES
         and admission.get("launch_admission_passed") is True,
         "exact explicit research memory launch admission is required")
-    validate_direct_memory_launch(admission["fresh_memory_envelope"])
+    validate_direct_memory_launch(admission["fresh_memory_envelope"], research_memory_gib=memory,
+        direct_profile=direct_profile, research_wall_seconds=research_wall_seconds)
     return True
 
 
@@ -415,26 +442,29 @@ def validate_direct_supervision(summary, source, *, maximum_wall=600, direct_pro
         and type(launch.get("launch_cap_bytes")) is int and launch["launch_cap_bytes"] == selected_cap
         and type(launch.get("tree_cap_bytes")) is int and launch["tree_cap_bytes"] == selected_cap
         and launch.get("cap_policy") == "min(dynamic_memory_envelope, explicit_tree_cap)",
-        "literal whole-tree/time and explicit2GiB launch identity failed")
-    validate_direct_memory_launch(launch, dynamic_cap_key="dynamic_launch_cap_bytes")
+        "literal whole-tree/time and explicit selected launch identity failed")
+    validate_direct_memory_launch(launch, dynamic_cap_key="dynamic_launch_cap_bytes", research_memory_gib=research_memory_gib,
+        direct_profile=direct_profile, research_wall_seconds=research_wall_seconds)
     return True
 
 
 def validate_metadata_bindings(report, provenance, manifest, *, checker_source, checker_environment, stage,
                                research_wall_seconds=None, research_memory_gib=None):
     validate_scope(report, stage)
-    bind_direct_checker_source(report.get("source"), checker_source)
+    bind_direct_checker_source(report.get("source"), checker_source, direct_profile=report["direct_profile"])
     require(report.get("source") == provenance.get("source")
         and report.get("environment") == checker_environment == provenance.get("environment")
         and checker_source.get("dirty") == "" and re.fullmatch(r"[0-9a-f]{40}", checker_source.get("head", ""))
         and checker_source.get("files_sha256") and all(re.fullmatch(r"[0-9a-f]{64}", v)
             for v in checker_source["files_sha256"].values())
         and provenance.get("schema") == SCHEMA and provenance.get("stage") == stage
-        and provenance.get("direct_profile") == "X" and provenance.get("degree") == 4
+        and provenance.get("direct_profile") == report["direct_profile"] and provenance.get("degree") == 4
         and provenance.get("input_sha256") == INPUT_SHA and report.get("artifacts") == manifest and manifest,
         "exact immutable worker source/provenance/ABI/manifest and reviewed checker bridge required")
-    if research_wall_seconds is not None and (type(research_wall_seconds) is not int or research_wall_seconds != 1800):
-        raise ValueError("only the explicit X research wall1800 request is admitted")
+    if research_wall_seconds is not None:
+        require(type(research_wall_seconds) is int
+            and (report["direct_profile"], research_wall_seconds) in (("X", 1800), ("XZ", 4500)),
+            "only the explicit X/wall1800 or XZ/wall4500 research request is admitted")
     wall_seconds = 600 if research_wall_seconds is None else research_wall_seconds
     selected_cap = direct_memory_cap(report.get("direct_profile"), stage, research_wall_seconds, research_memory_gib)
     expected = {"stage": stage, "wall_seconds": wall_seconds, "swap_bytes": 0, "mpi": 1, "math_threads": 1,
@@ -446,15 +476,15 @@ def validate_metadata_bindings(report, provenance, manifest, *, checker_source, 
         and type(contract.get("tree_cap_bytes")) is int and 0 < contract["tree_cap_bytes"] <= selected_cap
         and checker_environment.get("petsc_scalar_type") == "complex128", "whole-tree/explicit-time/zeroSwap/MPI1/thread1/ABI policy differs")
     command = provenance.get("command", [])
-    require("--direct-profile" in command and command[command.index("--direct-profile") + 1] == "X",
-            "explicit X command required")
+    require(command.count("--direct-profile") == 1 and command[command.index("--direct-profile") + 1:]
+        and command[command.index("--direct-profile") + 1] == report["direct_profile"], "explicit reviewed profile command required")
     if research_wall_seconds is None:
         require("--research-wall-seconds" not in command and "research_wall_seconds" not in contract
             and "worker_phase_wall_seconds" not in contract, "ordinary600 contract cannot inherit a research override")
     else:
         phase = contract.get("worker_phase_wall_seconds")
         require(command.count("--research-wall-seconds") == 1
-            and command[command.index("--research-wall-seconds") + 1:] and command[command.index("--research-wall-seconds") + 1] == "1800"
+            and command[command.index("--research-wall-seconds") + 1:] and command[command.index("--research-wall-seconds") + 1] == str(research_wall_seconds)
             and contract.get("research_wall_seconds") == research_wall_seconds
             and type(phase) in (int, float) and math.isfinite(phase) and 0 < phase <= wall_seconds,
             "explicit worker argv/resource/remaining-phase timing differs")
@@ -465,21 +495,23 @@ def validate_metadata_bindings(report, provenance, manifest, *, checker_source, 
     else:
         require(command.count("--research-memory-gib") == 1
             and command[command.index("--research-memory-gib") + 1:]
-            and command[command.index("--research-memory-gib") + 1] == "2"
-            and type(contract.get("research_memory_gib")) is int and contract["research_memory_gib"] == 2
+            and command[command.index("--research-memory-gib") + 1] == str(research_memory_gib)
+            and type(contract.get("research_memory_gib")) is int and contract["research_memory_gib"] == research_memory_gib
             and type(contract.get("requested_tree_cap_bytes")) is int and contract["requested_tree_cap_bytes"] == selected_cap
             and contract["tree_cap_bytes"] == selected_cap,
             "explicit worker argv/resource memory cap differs")
-        validate_direct_memory_admission(contract.get("research_memory_launch_admission"))
+        validate_direct_memory_admission(contract.get("research_memory_launch_admission"),
+            direct_profile=report["direct_profile"], research_wall_seconds=research_wall_seconds)
     return True
 
 
-def validate_research_timing(provenance, supervision, events, phase, *, research_wall_seconds=None):
+def validate_research_timing(provenance, supervision, events, phase, *, research_wall_seconds=None, direct_profile="X"):
     """Join opt-in allocation/phase clocks to the actual worker watchdog cap."""
     if research_wall_seconds is None:
         return True
-    require(type(research_wall_seconds) is int and research_wall_seconds == 1800,
-            "research timing requires the explicit wall1800 request")
+    require(type(research_wall_seconds) is int
+        and (direct_profile, research_wall_seconds) in (("X", 1800), ("XZ", 4500)),
+        "research timing requires the exact explicit profile/wall request")
     seconds = provenance["resource_contract"]["worker_phase_wall_seconds"]
     require(supervision.get("time_reference_seconds", {}).get("workflow") == seconds
         and phase.get("research_wall_seconds") == research_wall_seconds
@@ -506,13 +538,14 @@ def validate_research_memory_resources(provenance, supervision, events, phase, *
             for packet in [phase, *allocations]), "default packets cannot inherit a research memory override")
         return True
     contract = provenance["resource_contract"]
-    validate_direct_memory_admission(contract.get("research_memory_launch_admission"))
+    validate_direct_memory_admission(contract.get("research_memory_launch_admission"),
+        direct_profile=direct_profile, research_wall_seconds=research_wall_seconds)
     require(contract.get("tree_cap_bytes") == supervision.get("launch_envelope", {}).get("launch_cap_bytes") == selected_cap
-        and type(phase.get("research_memory_gib")) is int and phase["research_memory_gib"] == 2
+        and type(phase.get("research_memory_gib")) is int and phase["research_memory_gib"] == research_memory_gib
         and type(phase.get("requested_tree_cap_bytes")) is int and phase["requested_tree_cap_bytes"] == selected_cap
         and allocations, "actual worker phase/resource/supervised launch cap differs")
     for event in allocations:
-        require(type(event.get("research_memory_gib")) is int and event["research_memory_gib"] == 2
+        require(type(event.get("research_memory_gib")) is int and event["research_memory_gib"] == research_memory_gib
             and type(event.get("requested_tree_cap_bytes")) is int and event["requested_tree_cap_bytes"] == selected_cap
             and type(event.get("launch_cap_bytes")) is int and event["launch_cap_bytes"] == selected_cap,
             "every actual allocation requires exact selected memory and launch identity")
@@ -533,15 +566,19 @@ def validate_research_memory_resources(provenance, supervision, events, phase, *
 
 
 def expected_array_shapes(report, stage):
+    validate_profile(report.get("profile"))
+    metadata = reviewed_direct_profile_metadata(report.get("direct_profile"))
+    require(report["profile"]["name"] == metadata.name, "array report profile and metadata identity differ")
+    q_rows, sector_ports = metadata.augmented_rows_per_q, metadata.sector_port_counts
     blocks = report.get("reformed_blocks", [])
     require(len(blocks) == 4 and [b.get("q") for b in blocks] == list(range(4)), "complete four q input inventory required")
     expected = {}
     for q, block in enumerate(blocks):
         nnz = block.get("nnz")
-        require(block.get("shape") == [Q_ROWS[q], Q_ROWS[q]] and block.get("csr_prefix") == f"q_{q}_S"
-            and type(nnz) is int and 0 < nnz <= Q_ROWS[q]**2
-            and re.fullmatch(r"[0-9a-f]{64}", block.get("CSR_sha256", "")), "X q CSR dimensions/hash/entries required")
-        expected.update({f"q_{q}_S_data": [nnz], f"q_{q}_S_indices": [nnz], f"q_{q}_S_indptr": [Q_ROWS[q] + 1]})
+        require(block.get("shape") == [q_rows[q], q_rows[q]] and block.get("csr_prefix") == f"q_{q}_S"
+            and type(nnz) is int and 0 < nnz <= q_rows[q]**2
+            and re.fullmatch(r"[0-9a-f]{64}", block.get("CSR_sha256", "")), "reviewed q CSR dimensions/hash/entries required")
+        expected.update({f"q_{q}_S_data": [nnz], f"q_{q}_S_indices": [nnz], f"q_{q}_S_indptr": [q_rows[q] + 1]})
     providers = report.get("direct_provider_blocks", [])
     require(len(providers) == 8 and [(b.get("twist"), b.get("p"), b.get("q")) for b in providers]
         == [(b, p, q) for b in range(2) for p in range(2) for q in range(2)], "all original local 2x2 blocks required")
@@ -550,22 +587,22 @@ def expected_array_shapes(report, stage):
         gp, gq = b + 2*p, b + 2*q
         nnz, prefix = block.get("nnz"), f"direct_twist_{b}_block_{p}_{q}"
         require(block.get("global_p") == gp and block.get("global_q") == gq
-            and block.get("shape") == [Q_ROWS[gp], Q_ROWS[gq]] and block.get("csr_prefix") == prefix
-            and type(nnz) is int and 0 <= nnz <= Q_ROWS[gp]*Q_ROWS[gq]
+            and block.get("shape") == [q_rows[gp], q_rows[gq]] and block.get("csr_prefix") == prefix
+            and type(nnz) is int and 0 <= nnz <= q_rows[gp]*q_rows[gq]
             and re.fullmatch(r"[0-9a-f]{64}", block.get("CSR_sha256", "")), "complete provider branch/alias/CSR identity differs")
-        expected.update({prefix + "_data": [nnz], prefix + "_indices": [nnz], prefix + "_indptr": [Q_ROWS[gp] + 1]})
-    expected.update({"independent_storage_rows": [23808], "actual_interior_positions": [12960],
-        "full_mpc_slaves": [1660], "full_mpc_offsets": [25469], "port_original_H": [532],
+        expected.update({prefix + "_data": [nnz], prefix + "_indices": [nnz], prefix + "_indptr": [q_rows[gp] + 1]})
+    expected.update({"independent_storage_rows": [metadata.independent_rows], "actual_interior_positions": [metadata.interior_rows],
+        "full_mpc_slaves": [metadata.storage_rows - metadata.independent_rows], "full_mpc_offsets": [metadata.storage_rows + 1], "port_original_H": [532],
         "port_q_labels": [532], "port_factor_coordinate_scale": [532], "original_mode_e_vectors": [532, 3],
         "original_mode_k_vectors": [532, 3], "original_mode_outward_signs": [532],
         "original_mode_magnetic_denominator": [], "original_mode_boundary_area": [],
         "original_mode_incident_projections": [532], "original_carrier_global_rows": [],
-        "original_carrier_ownership_range": [2], "original_carrier_slave_rows": [1660],
+        "original_carrier_ownership_range": [2], "original_carrier_slave_rows": [metadata.storage_rows - metadata.independent_rows],
         "original_port_C_indptr": [533], "original_port_D_indptr": [533]})
-    for b, ports in enumerate(SECTOR_PORTS):
+    for b, ports in enumerate(sector_ports):
         expected.update({f"twist_{b}_{name}": [size] for name, size in
-            (("independent_storage_rows", 11904), ("trace_original_rows", 5424), ("interior_original_rows", 6480),
-             ("slave_storage_rows", 1332), ("original_H", ports))})
+            (("independent_storage_rows", metadata.local_independent_rows), ("trace_original_rows", metadata.local_trace_rows), ("interior_original_rows", metadata.local_interior_rows),
+             ("slave_storage_rows", metadata.local_storage_rows - metadata.local_independent_rows), ("original_H", ports))})
     if stage == "solve":
         factor = report.get("factor", {})
         require([b.get("q") for b in factor.get("input_blocks", [])] == list(range(4))
@@ -576,20 +613,20 @@ def expected_array_shapes(report, stage):
             require(block.get("shape") == blocks[q]["shape"] and block.get("CSR_sha256") == blocks[q]["CSR_sha256"],
                     "factor detached from fresh original-proven input block")
             for name in ("rhs_a", "rhs_b", "solution_a", "solution_b", "solution_a_repeat", "solution_sum"):
-                expected[f"q_{q}_{name}"] = [Q_ROWS[q]]
+                expected[f"q_{q}_{name}"] = [q_rows[q]]
         for q in range(4):
             label = f"aug_q_{q}"
-            expected.update({label + "_" + key: [23808] for key in ("FE_rhs", "effective_rhs", "solution")})
+            expected.update({label + "_" + key: [metadata.independent_rows] for key in ("FE_rhs", "effective_rhs", "solution")})
             expected.update({label + "_" + key: [532] for key in
                 ("port_rhs", "port_operation_scale", "auxiliary_ports", "projection", "normalization_h", "augmented_port_residual")})
-            expected.update({label + "_" + key: [25468] for key in
+            expected.update({label + "_" + key: [metadata.storage_rows] for key in
                 ("rhs_storage", "solution_storage", "original_action", "volume_action", "coupling_action", "native_residual", "augmented_FE_residual")})
         for name in SOURCES:
-            expected[name + "_rhs"] = [23808]
+            expected[name + "_rhs"] = [metadata.independent_rows]
             for family in ("regular", "notch"):
                 label = family + "_" + name
-                expected[label + "_solution"] = [23808]
-                expected.update({label + "_" + key: [25468] for key in
+                expected[label + "_solution"] = [metadata.independent_rows]
+                expected.update({label + "_" + key: [metadata.storage_rows] for key in
                     ("rhs_storage", "solution_storage", "original_action", "volume_action", "coupling_action", "native_residual", "augmented_FE_residual", "recovered_field")})
                 expected.update({label + "_" + key: [532] for key in
                     ("auxiliary_ports", "projection", "normalization_h", "augmented_port_residual", "plane_total_auxiliary",
@@ -912,13 +949,14 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
         and receipt.get("full_Ny_reference_matrices_created") is False and receipt.get("factor_count") == 0
         and receipt.get("original532_alias_union_exactly_once") is True, "complete fresh component receipt required")
     validate_profile(receipt.get("profile"))
+    metadata = reviewed_direct_profile_metadata(receipt["profile"]["name"])
     require(receipt.get("qualification_source_sha256") == saved_source(saved, "src/solvers/y_orbit_direct_carrier_qualification.py"),
             "fresh carrier qualification source differs")
     inventory = receipt["global_inventory"]
     keys = [[i, m.side, int(m.m), int(m.n), m.polarization] for i, m in enumerate(physical_modes)]
     physical_rows, _, physical_digest = build_ordered_mode_manifest(physical_modes, cfg)
     require(physical_digest == PHYSICAL_MANIFEST, "original physical mode details differ from complete manifest")
-    require(inventory.get("ordered_mode_keys") == keys and inventory.get("q_port_counts") == list(Q_PORTS)
+    require(inventory.get("ordered_mode_keys") == keys and inventory.get("q_port_counts") == list(metadata.q_port_counts)
         and inventory.get("physical_generator_manifest_sha256") == PHYSICAL_MANIFEST, "physically regenerated complete alias inventory differs")
     controls = [saved.json(receipt["global_component_receipt"])] + [saved.json(item) for item in receipt["local_raw_receipts"]]
     raw_manifests = [saved.json(item) for item in receipt["raw_spool_manifests"]]
@@ -930,7 +968,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
         "both fresh local raw/fold/actual-cell qualification inventories are required")
     for twist, fold in enumerate(folds):
         indices = [i for i, mode in enumerate(physical_modes) if (int(mode.n)-twist)%2 == 0]
-        require(fold.get("mode_count") == SECTOR_PORTS[twist] and fold.get("original_mode_indices") == indices
+        require(fold.get("mode_count") == metadata.sector_port_counts[twist] and fold.get("original_mode_indices") == indices
             and fold.get("tolerance") == 1e-10 and all(fold.get(key) is True for key in
                 ("raw_and_both_actual_cutoffs_audited", "complete_DOF_fold_and_lift", "single_D_conjugation", "nonzero_lower_dual_rhs_sqrtK_identity")),
             "complete raw/after-component/stored fold ledger inventory differs")
@@ -965,8 +1003,8 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                 count += 1
         require(count == len(indices), "complete fold ledger cannot omit any actual physical alias")
     contexts, Hs = {}, []
-    saved.gate("direct_checker_literal_incident_rhs", {"matrix_payload_bytes": 3*25468*16, "workspace_bytes": 1 << 20})
-    raw_incident_rhs, incident_base = np.zeros(25468, complex), None
+    saved.gate("direct_checker_literal_incident_rhs", {"matrix_payload_bytes": 3*metadata.storage_rows*16, "workspace_bytes": 1 << 20})
+    raw_incident_rhs, incident_base = np.zeros(metadata.storage_rows, complex), None
 
     def dense(pair, n):
         rows, values = pair
@@ -1049,7 +1087,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
         return stages
 
     for role_index, (control, raw, lit) in enumerate(zip(controls, raw_manifests, literals, strict=True)):
-        twist, n = (None, 25468) if role_index == 0 else (role_index-1, 13236)
+        twist, n = (None, metadata.storage_rows) if role_index == 0 else (role_index-1, metadata.local_storage_rows)
         role = "full" if twist is None else f"twist_{twist}"
         indices = list(range(532)) if twist is None else [i for i, mode in enumerate(physical_modes) if (int(mode.n)-twist)%2 == 0]
         if twist is not None:
@@ -1078,7 +1116,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
         component_hashes = {}
         for index, original in enumerate(indices):
             saved.gate("direct_checker_complete_raw_literal_mode", {"matrix_payload_bytes": 24*n*16,
-                "workspace_bytes": 32*25468*16 + (4 << 20), "all_mode_dense_cache": False,
+                "workspace_bytes": 32*metadata.storage_rows*16 + (4 << 20), "all_mode_dense_cache": False,
                 "global_and_local_current_mode_fold_scratch_included": True})
             packet, pairs = primary(raw, index, n)
             literal_packet, literal_vectors = literal(lit, index, n)
@@ -1139,7 +1177,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                     vector = dense((saved.reference(entry[row_key]), saved.reference(entry[value_key])), n)
                     add(f"twist_{twist}_m{original}_same_live_stored_"+name,
                         relative(vector-stages["stored"][name], stages["stored"][name]), 1e-11)
-                gp, gpair = primary(raw_manifests[0], original, 25468)
+                gp, gpair = primary(raw_manifests[0], original, metadata.storage_rows)
                 global_stages = masks(gp, gpair, physical_modes[original], Hs[0][original], f"fold_m{original}")
                 global_rows = saved.reference(global_map.source["native"]["independent"])
                 tau = complex(*receipt_transport_eta(global_map.source, cfg, twist))**2
@@ -1148,8 +1186,8 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                     for name in ("C", "D"):
                         functional = name == "D"
                         direction = "functional" if functional else "dual"
-                        gc = global_map.apply(global_stages[stage][name][global_rows], direction+"_to_canonical").reshape(4, 5952)
-                        lc = local_maps[twist].apply(stages[stage][name][independent], direction+"_to_canonical").reshape(2, 5952)
+                        gc = global_map.apply(global_stages[stage][name][global_rows], direction+"_to_canonical").reshape(4, metadata.rows_per_q)
+                        lc = local_maps[twist].apply(stages[stage][name][independent], direction+"_to_canonical").reshape(2, metadata.rows_per_q)
                         phase = tau if functional else np.conjugate(tau)
                         folded = local_maps[twist].apply(((gc[:2]+phase*gc[2:])/2).reshape(-1), direction+"_from_canonical")
                         add(f"twist_{twist}_m{original}_{stage}_{name}_complete_fold", relative(folded-stages[stage][name][independent], stages[stage][name][independent]), 1e-10)
@@ -1164,7 +1202,7 @@ def check_raw_carriers(receipt, *, saved, global_map, local_maps, physical_modes
                 add(f"twist_{twist}_m{original}_H_over_K", abs(Hg/2-H)/H, 1e-10)
                 x = saved.load(f"direct_twist_{twist}_lower_rhs_local_state")
                 gx = saved.load(f"direct_twist_{twist}_lower_rhs_global_state")
-                lc = local_maps[twist].apply(x, "primal_to_canonical").reshape(2, 5952)
+                lc = local_maps[twist].apply(x, "primal_to_canonical").reshape(2, metadata.rows_per_q)
                 lift = global_map.apply(np.concatenate((lc, tau*lc)).reshape(-1)/math.sqrt(2), "primal_from_canonical")
                 add(f"twist_{twist}_m{original}_lower_primal_lift", relative(gx-lift, lift), 1e-11)
                 beta, g = complex(1+(original+1)/533, .25), complex(.7, -.13-(original+1)/533)
@@ -1211,13 +1249,14 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     provenance = json.loads((directory / "provenance.json").read_text())
     manifest = json.loads((directory / "artifact_manifest.json").read_text())
     worker_source = report["source"]
-    source_binding = bind_direct_checker_source(worker_source, checker_source)
+    source_binding = bind_direct_checker_source(worker_source, checker_source, direct_profile=report["direct_profile"])
     require(worker_source == checker_source or (checker_directory is not None and output != directory),
         "cross-head direct checker requires an explicit fresh separate checker directory")
     validate_metadata_bindings(report, provenance, manifest, checker_source=checker_source,
                                checker_environment=checker_environment, stage=stage,
                                research_wall_seconds=research_wall_seconds, research_memory_gib=research_memory_gib)
     selected_cap = direct_memory_cap(report.get("direct_profile"), stage, research_wall_seconds, research_memory_gib)
+    metadata = reviewed_direct_profile_metadata(report["direct_profile"])
     validate_array_inventory(report, stage)
     saved = SavedRun(directory, manifest, allocation_gate, checker_environment)
     saved.source = worker_source
@@ -1243,7 +1282,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
         else provenance["resource_contract"]["worker_phase_wall_seconds"], direct_profile=report["direct_profile"],
         stage=stage, research_wall_seconds=research_wall_seconds, research_memory_gib=research_memory_gib)
     source_contract = load_direct_source_contract(artifact_root, new_source=worker_source,
-        new_environment=checker_environment, allocation_gate=allocation_gate)
+        new_environment=checker_environment, allocation_gate=allocation_gate, direct_profile=metadata.name)
     require(report.get("direct_source_contract") == provenance.get("direct_source_contract") == source_contract
         and source_contract.get("historical_numerical_arrays_used") is False, "qualified Step0 metadata-only source bridge differs")
     events_path = directory / "probe_events.jsonl"
@@ -1251,7 +1290,8 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     phase = {}
     if research_wall_seconds is not None:
         phase = saved.json({"path": "phase.json", "file_sha256": file_sha(directory / "phase.json")})
-        validate_research_timing(provenance, supervision, events, phase, research_wall_seconds=research_wall_seconds)
+        validate_research_timing(provenance, supervision, events, phase, research_wall_seconds=research_wall_seconds,
+            direct_profile=metadata.name)
     validate_research_memory_resources(provenance, supervision, events, phase, direct_profile=report["direct_profile"],
         stage=stage, research_wall_seconds=research_wall_seconds, research_memory_gib=research_memory_gib)
     validate_direct_event_contract(events, report, stage, research_wall_seconds=research_wall_seconds,
@@ -1259,14 +1299,14 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     validate_same_live_carrier_chain(events, report)
     add("direct_exact_source_ABI_manifest_profile_and_prefactor_event_binding", 0., 0.)
     base_cfg, _, input_sha = pilot_config(root / "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat", azimuth_deg=5.)
-    cfg = build_direct_profile_config(base_cfg, "X")
-    require(input_sha == INPUT_SHA and _jsonable(cfg.as_jsonable()) == report["physical_config"], "fresh physical X config differs from unchanged input")
+    cfg = build_direct_profile_config(base_cfg, metadata.name)
+    require(input_sha == INPUT_SHA and _jsonable(cfg.as_jsonable()) == report["physical_config"], "fresh physical reviewed config differs from unchanged input")
     physical_modes = outgoing_port_modes_3d(cfg)
-    require(len(physical_modes) == 532 and tuple(sum(int(mode.n)%4 == q for mode in physical_modes) for q in range(4)) == Q_PORTS,
+    require(len(physical_modes) == 532 and tuple(sum(int(mode.n)%4 == q for mode in physical_modes) for q in range(4)) == metadata.q_port_counts,
             "all original physical aliases and q counts required")
     operator = report["original_operator_qualification"]
     proof = check_direct_original_cell_contributions(operator, load=saved.load, load_csr=saved.csr,
-        allocation_gate=allocation_gate, direct_profile="X")
+        allocation_gate=allocation_gate, direct_profile=metadata.name)
     require(proof.get("passed") is True and proof.get("numeric_factor_calls") == 0
         and proof.get("global_whole_Ny_matrix_created") is False, "complete original all-column operator proof required")
     groups = (("source", proof["sources"]), ("complete_xz_y_orbit", proof["complete_actual_xz_y_orbits"]),
@@ -1278,7 +1318,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
             operator_checks.append({"name": name+"_"+str(index), "passed": True, "recomputed": item})
     fresh = report["fresh_carrier_qualification"]
     require(fresh.get("resource_authority") == "external min(fresh dynamic cap,"
-        + ("1.5GiB" if research_memory_gib is None else "2GiB") + ")/"
+        + ("1.5GiB" if research_memory_gib is None else str(research_memory_gib)+"GiB") + ")/"
         + str(600 if research_wall_seconds is None else research_wall_seconds)
         + "s/zeroSwap/MPI1/thread1 supervision", "fresh carrier selected resource authority differs")
     require(fresh.get("arrays"), "complete fresh actual mesh/MPC/carrier controls must bind the current manifest")
@@ -1310,16 +1350,16 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
         add(role+"_complete_actual_mesh_MPC_volume_carrier_binding", 0., 0.)
     gx, gd, gt = (saved.load("direct_global_"+name) for name in ("geometry_x", "cell_geometry_dofmap", "cell_tag_values"))
     for twist, metric in enumerate(fresh["cell_metric_material_cover"]):
-        require(metric.get("complete_actual_cell_count") == 120 and metric.get("local_actual_cell_count") == 60
+        require(metric.get("complete_actual_cell_count") == metadata.cell_count and metric.get("local_actual_cell_count") == metadata.local_cell_count
             and metric.get("replication_count") == 2 and metric.get("metric_tolerance") == 1e-12
             and metric.get("all_material_tags_equal") is True and metric.get("cell_cover_exactly_once") is True,
             "actual complete local/global cell metric/material cover required")
         cover = saved.descriptor(metric["cover"])
         lx, ld, lt = (saved.load(f"direct_twist_{twist}_"+name) for name in ("geometry_x", "cell_geometry_dofmap", "cell_tag_values"))
-        require(cover.shape == (60, 2) and cover.dtype.kind in "iu" and np.array_equal(np.sort(cover.ravel()), np.arange(120)),
-                "actual original120-cell cover cannot duplicate or omit a cell")
+        require(cover.shape == (metadata.local_cell_count, 2) and cover.dtype.kind in "iu" and np.array_equal(np.sort(cover.ravel()), np.arange(metadata.cell_count)),
+                "actual original complete cell cover cannot duplicate or omit a cell")
         maximum = 0.
-        for cell in range(60):
+        for cell in range(metadata.local_cell_count):
             for replica in range(2):
                 old = gx[gd[int(cover[cell, replica])]]
                 translated = lx[ld[cell]]+np.asarray([0., replica*cfg.period_y/2, 0.])
@@ -1327,15 +1367,15 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
                 translated = translated[np.lexsort((translated[:, 2], translated[:, 1], translated[:, 0]))]
                 maximum = max(maximum, float(np.max(np.abs(old-translated))))
                 require(gt[int(cover[cell, replica])] == lt[cell], "actual local/global material tags differ")
-        add(f"twist_{twist}_all120_actual_vertex_translation", maximum, 1e-12)
+        add(f"twist_{twist}_all{metadata.cell_count}_actual_vertex_translation", maximum, 1e-12)
         finite_gate(metric.get("maximum_actual_vertex_difference"), 1e-12, "reported actual metric")
         add(f"twist_{twist}_actual_vertex_measurement_binding", abs(maximum-metric["maximum_actual_vertex_difference"]), 1e-12)
     global_map = EntityMap(operator["global_source"], saved)
     local_maps = [EntityMap(source, saved) for source in operator["local_sources"]]
-    require((global_map.ny, global_map.width) == (4, 5952) and all((item.ny, item.width) == (2, 5952) for item in local_maps),
+    require((global_map.ny, global_map.width) == (4, metadata.rows_per_q) and all((item.ny, item.width) == (2, metadata.rows_per_q) for item in local_maps),
             "complete original native entity/q profile differs")
-    original_c = saved.csr("original_port_C", (25468, 532), csc=True)
-    original_d = saved.csr("original_port_D", (532, 25468))
+    original_c = saved.csr("original_port_C", (metadata.storage_rows, 532), csc=True)
+    original_d = saved.csr("original_port_D", (532, metadata.storage_rows))
     contexts, literal_H, physical_rhs = check_raw_carriers(fresh, saved=saved, global_map=global_map, local_maps=local_maps,
         physical_modes=physical_modes, cfg=cfg, original_c=original_c, original_d=original_d, operator_receipt=operator, add=raw_add)
     require(fresh["global_carrier_identity_after"]["assembly_context_sha256"] == canonical_digest(contexts["full"])
@@ -1347,7 +1387,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
             and identity["physical_generator_manifest_sha256"] == PHYSICAL_MANIFEST,
             "original operator and qualified local carrier context/physical inventory differs")
     for role, context in contexts.items():
-        source_files = validate_context_source_role(role, context, worker_source)
+        source_files = validate_context_source_role(role, context, worker_source, direct_profile=metadata.name)
         for name, item in source_files.items():
             paths = [key for key in worker_source["files_sha256"] if Path(key).name == name]
             require(len(paths) == 1 and worker_source["files_sha256"][paths[0]] == item["sha256"], "fresh context differs from exact original worker source")
@@ -1359,7 +1399,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     carrier_rows = saved.load("original_carrier_global_rows")
     ownership = saved.load("original_carrier_ownership_range")
     carrier_slaves = saved.load("original_carrier_slave_rows")
-    require(int(carrier_rows) == 25468 and np.array_equal(ownership, [0, 25468])
+    require(int(carrier_rows) == metadata.storage_rows and np.array_equal(ownership, [0, metadata.storage_rows])
         and np.array_equal(np.sort(carrier_slaves), np.sort(saved.reference(operator["global_source"]["native"]["slaves"]))),
         "original global carrier complete storage/MPC ownership differs")
     numeric = hashlib.sha256()
@@ -1396,7 +1436,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     shared_checks = check_shared_storage_evidence(evidence, load=saved.load, descriptors=manifest,
         allocation_gate=allocation_gate, native_inventories={"full": "independent_storage_rows",
             "twist_0": "twist_0_independent_storage_rows", "twist_1": "twist_1_independent_storage_rows"},
-        snapshot_contexts=contexts, direct_profile="X")
+        snapshot_contexts=contexts, direct_profile=metadata.name)
     require(shared_checks and all(item["passed"] for item in shared_checks), "complete shared ownership/equivalence proof cannot be vacuous")
     owner_events = [event for event in events if event.get("event") == "shared_transform_owner_stage"]
     require([event["stage"] for event in owner_events] == [item["stage"] for item in evidence["owner_stages"]], "complete actual owner lifecycle event inventory differs")
@@ -1418,7 +1458,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
     collections = (checks, raw_checks, operator_checks, shared_checks)
     require(all(collection and all(item.get("passed") is True for item in collection) for collection in collections),
             "all independent direct/raw/operator/shared categories require nonempty finite checks")
-    return {"schema": CHECKER_SCHEMA, "gate_pass": True, "direct_profile": "X", "stage": stage,
+    return {"schema": CHECKER_SCHEMA, "gate_pass": True, "direct_profile": metadata.name, "stage": stage,
         "source": worker_source, "checker_source": checker_source, "environment": checker_environment,
         "direct_source_contract": source_contract, "source_binding": source_binding,
         "event_file_receipt": event_file_receipt,
@@ -1429,7 +1469,7 @@ def check_direct(directory, *, checker_source, checker_environment, stage, alloc
         "factor_count": 0 if stage == "prefactor" else 4, "PDE_solved": stage == "solve", "official_results": False,
         "historical_arrays_loaded": False, "numeric_factor_calls": 0, "global_Ny_reference_matrices_created": False,
         "report_sha256": file_sha(directory / "probe_report.json"), "artifact_manifest_sha256": file_sha(directory / "artifact_manifest.json"),
-        "qualification": "fresh X exhaustive carrier/operator/owner prefactor" if stage == "prefactor" else "fresh X complete full original inverse/FGMRES/residual/recovery/all532 output",
+        "qualification": f"fresh {metadata.name} exhaustive carrier/operator/owner prefactor" if stage == "prefactor" else f"fresh {metadata.name} complete full original inverse/FGMRES/residual/recovery/all532 output",
         **({"research_wall_seconds": research_wall_seconds,
             "worker_phase_wall_seconds": provenance["resource_contract"]["worker_phase_wall_seconds"]}
            if research_wall_seconds is not None else {}),
@@ -1502,30 +1542,31 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
     from src.solvers.dtn_boundary_phase_gauge import (solver_amplitudes_from_global,
         incident_projection_in_solver_coordinates, BOUNDARY_PLANE)
     from src.solvers.y_orbit_centered_evidence import compare_mode_evidence
+    metadata = reviewed_direct_profile_metadata(report["direct_profile"])
     independent, slaves = saved.load("independent_storage_rows"), saved.load("full_mpc_slaves")
     interiors = saved.load("actual_interior_positions")
     source = report["original_operator_qualification"]["global_source"]
     require(np.array_equal(independent, saved.reference(source["native"]["independent"]))
         and np.array_equal(np.sort(slaves), np.sort(saved.reference(source["native"]["slaves"])))
-        and len(interiors) == 12960 and len(np.unique(interiors)) == 12960
-        and np.all((interiors >= 0) & (interiors < 23808)), "all actual FE/interior/MPC channels differ")
+        and len(interiors) == metadata.interior_rows and len(np.unique(interiors)) == metadata.interior_rows
+        and np.all((interiors >= 0) & (interiors < metadata.independent_rows)), "all actual FE/interior/MPC channels differ")
     interior_storage = saved.load("direct_global_interior_storage_rows")
-    require(np.array_equal(np.sort(independent[interiors]), interior_storage), "every actual12960 interior load channel must be audited")
+    require(np.array_equal(np.sort(independent[interiors]), interior_storage), "every actual interior load channel must be audited")
     etas = [complex(*value) for value in report["original_operator_qualification"]["global_eta"]]
     check_notch_source(report, saved=saved, regular=source, add=add)
     add("physical_full_original_literal_RHS", relative(saved.load("physical_rhs")-physical_rhs[independent], physical_rhs[independent]), 1e-10)
     rng = np.random.default_rng(20261001)
-    generic = rng.standard_normal(23808)+1j*rng.standard_normal(23808)
+    generic = rng.standard_normal(metadata.independent_rows)+1j*rng.standard_normal(metadata.independent_rows)
     require(np.array_equal(saved.load("generic_rhs"), generic), "original direct generic load seed/complete channels differ")
     generic_norms = np.linalg.norm(global_map.modal(generic, dual=True, etas=etas), axis=1)
     require(np.min(generic_norms)/np.linalg.norm(generic_norms) >= 1e-3, "generic load must excite every actual q")
-    interior_rhs = np.zeros(23808, complex)
+    interior_rhs = np.zeros(metadata.independent_rows, complex)
     j = np.arange(len(interiors)); interior_rhs[interiors] = np.cos(.29*j)+1j*np.sin(.43*j)
     interior_rhs /= np.linalg.norm(interior_rhs)
     require(np.array_equal(saved.load("interior_only_rhs"), interior_rhs), "complete original actual-interior source formula differs")
     changed_native = np.unique(np.concatenate([saved.reference(source["cells"][cell]["native_dofs"]) for cell in report["changed_cells"]]))
     supported = np.flatnonzero(np.isin(independent, changed_native))
-    expected_supported = np.zeros(23808, complex); j = np.arange(len(supported))
+    expected_supported = np.zeros(metadata.independent_rows, complex); j = np.arange(len(supported))
     expected_supported[supported] = np.cos(.31*j)+1j*np.sin(.47*j); expected_supported /= np.linalg.norm(expected_supported)
     require(np.array_equal(saved.load("notch_supported_rhs"), expected_supported)
         and report["notch_supported_RHS"] == {"support_actual_changed_cells": report["changed_cells"],
@@ -1535,10 +1576,10 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
     require([item.get("source_q") for item in samples] == list(range(4)), "all four original notch coupling diagnostic states required")
     total_norms, off_norms = [], []
     for q in range(4):
-        j = np.arange(5952); modal = np.cos(.37*j)+1j*np.sin(.23*j)
+        j = np.arange(metadata.rows_per_q); modal = np.cos(.37*j)+1j*np.sin(.23*j)
         canonical = np.concatenate([etas[q]**orbit*modal/2 for orbit in range(4)])
         sample = global_map.apply(canonical, "primal_from_canonical")
-        storage = np.zeros(25468, complex); storage[independent] = sample
+        storage = np.zeros(metadata.storage_rows, complex); storage[independent] = sample
         a0 = saved_direct_volume_action(report["original_operator_qualification"], storage, load=saved.load, allocation_gate=saved.gate)
         a1 = saved_direct_volume_action(report["notch_original_volume_source"], storage, load=saved.load, allocation_gate=saved.gate)
         delta = global_map.modal((a1-a0)[independent], dual=True, etas=etas)
@@ -1551,7 +1592,7 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
     require(coupling >= 1e-8, "actual two-cell material tensors must genuinely couple original q channels")
     add("notch_original_volume_sampled_coupling_record", abs(coupling-report["sampled_notch_off_q_delta_relative"])/coupling, 1e-10)
     for q in range(4):
-        matrix = saved.csr(f"q_{q}_S", (Q_ROWS[q], Q_ROWS[q]))
+        matrix = saved.csr(f"q_{q}_S", (metadata.augmented_rows_per_q[q], metadata.augmented_rows_per_q[q]))
         a, b, xa, xb, repeat, total = (saved.load(f"q_{q}_"+key) for key in
             ("rhs_a", "rhs_b", "solution_a", "solution_b", "solution_a_repeat", "solution_sum"))
         require(all(value.dtype == np.dtype("complex128") for value in (a, b, xa, xb, repeat, total))
@@ -1575,7 +1616,7 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
         "all physically regenerated original modes/incident/normalization differ")
     coefficients, offsets, masters = (saved.load("full_mpc_"+name) for name in ("coefficients", "offsets", "masters"))
     require(offsets[0] == 0 and offsets[-1] == len(coefficients) == len(masters) and np.all(np.diff(offsets) >= 0)
-        and len(np.intersect1d(slaves, masters)) == 0 and np.array_equal(np.sort(slaves), np.setdiff1d(np.arange(25468), independent)),
+        and len(np.intersect1d(slaves, masters)) == 0 and np.array_equal(np.sort(slaves), np.setdiff1d(np.arange(metadata.storage_rows), independent)),
         "actual finalized full original MPC partition differs")
     d_norms = np.sqrt(np.asarray(original_d.multiply(original_d.conj()).sum(axis=1)).real.ravel())
     q_labels = saved.load("port_q_labels")
@@ -1592,13 +1633,13 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
             and np.array_equal(rhs_storage[independent], f) and np.all(rhs_storage[slaves] == 0), "original storage/source/slave-zero binding differs")
         if source_name is None:
             q = packet["q"]; modal = global_map.modal(f, dual=True, etas=etas)
-            require(np.count_nonzero(modal[q]) == 5952 and np.count_nonzero(f[interiors]) == 12960
-                and np.count_nonzero(g[q_labels == q]) == Q_PORTS[q] and np.all(g[q_labels != q] == 0),
+            require(np.count_nonzero(modal[q]) == metadata.rows_per_q and np.count_nonzero(f[interiors]) == metadata.interior_rows
+                and np.count_nonzero(g[q_labels == q]) == metadata.q_port_counts[q] and np.all(g[q_labels != q] == 0),
                 "complete q FE/interior/nonzero port manufactured loads cannot be vacuous")
             add(label+"_complete_single_q_dual_load", relative(np.delete(modal, q, axis=0), modal[q]), 1e-11)
         elif source_name == "interior_only":
-            outside = np.setdiff1d(np.arange(23808), interiors)
-            require(np.count_nonzero(f[interiors]) == 12960 and np.all(f[outside] == 0), "all actual cell-interior load channels required")
+            outside = np.setdiff1d(np.arange(metadata.independent_rows), interiors)
+            require(np.count_nonzero(f[interiors]) == metadata.interior_rows and np.all(f[outside] == 0), "all actual cell-interior load channels required")
         volume_source = report["original_operator_qualification"] if family == "regular" else report["notch_original_volume_source"]
         volume = saved_direct_volume_action(volume_source, field, load=saved.load, allocation_gate=saved.gate)
         projection = np.asarray(original_d@field)
@@ -1700,10 +1741,10 @@ def check_solve(report, *, saved, global_map, physical_modes, cfg, original_c, o
 def check_notch_source(report, *, saved, regular, add):
     """Same full topology/MPC/maps; exactly two box-derived material tensors."""
     from src.solvers.y_orbit_direct_operator_qualification import _check_source
-    from src.solvers.y_orbit_direct_profile import direct_profile_metadata
+    metadata = reviewed_direct_profile_metadata(report["direct_profile"])
     notch = report["notch_original_volume_source"]
-    check = _check_source(notch, load=saved.load, gate=saved.gate, metadata=direct_profile_metadata("X"))
-    require(check.get("cell_count") == 120 and notch.get("role") == "notch"
+    check = _check_source(notch, load=saved.load, gate=saved.gate, metadata=metadata)
+    require(check.get("cell_count") == metadata.cell_count and notch.get("role") == "notch"
         and notch.get("explicit_shared_entity_config_for_changed_material") is True,
         "complete independently verified original notch source required")
 
@@ -1728,7 +1769,12 @@ def check_notch_source(report, *, saved, regular, add):
             and all(numeric_identity(old[key]) == numeric_identity(new[key]) for key in
                 ("native_dofs", "native_coordinates", "canonical_ids", "canonical_map")),
             "changed material cannot change actual original geometry/dofs/MPC/orientation/maps")
-        if old["grid"] in ([3, 1, 2], [3, 2, 2]): expected.add(index)
+        axes = metadata.global_axes
+        grid = old["grid"]
+        lower = (25, 6.25, 40); upper = (33.5, 18.75, 80)
+        if all(lower[d]*(7/135) <= axes[d][grid[d]] and axes[d][grid[d]+1] <= upper[d]*(7/135)
+               for d in range(3)):
+            expected.add(index)
         if old["tag"] != new["tag"]: changed_tags.add(index)
         if old["oriented_tensor"]["numeric_sha256"] != new["oriented_tensor"]["numeric_sha256"]: changed_tensors.add(index)
         if index not in expected:
@@ -1743,7 +1789,7 @@ def check_notch_source(report, *, saved, regular, add):
             "actual physical-box cells must be exactly the two changed material tags and complete tensors")
     cfg = report["notch_config"]
     box = [value*(7/135) for value in (25, 33.5, 6.25, 18.75, 40, 80)]
-    require(cfg.get("air_void_box_nm") == box, "notch physical geometry differs from approved X box")
+    require(cfg.get("air_void_box_nm") == box, "notch physical geometry differs from approved X/XZ box")
     regular_cfg = report["physical_config"]
     require({key: value for key, value in cfg.items() if key not in ("case_name", "geometry_identity", "air_void_box_nm")}
         == {key: value for key, value in regular_cfg.items() if key not in ("case_name", "geometry_identity", "air_void_box_nm")},

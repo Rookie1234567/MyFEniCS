@@ -217,3 +217,21 @@ X在同光学尺寸、manual532下将网格加密至p4/6×4×5=120 cells；两lo
 | 明确限制 | X-only 2GiB/1800s；非普通1.5GiB/600s；目标尺寸/AUTO32060/2TB48h、official RTA未资格 |
 
 worker816b7247与checker2a07d23分别绑定。原startup/resource/source-role/residual定义失败、成功后launcher KeyError及首supplemental唯一label断言失败均保留；当前checker只消费保存证据，factor calls0。CSR54078536B不是factor fill/RSS；sampled PC defect0.013423不是算子范数。详见[Response V13](../response_v13.md)、[compact及失败索引](records/direct_X_v13/compact_record.json)、[最终独立核验](records/direct_X_v13/independent_final_X_evidence_linkage_review_v1.json)。下一步须审查后再准入XZ/Ny扩展，尚不推出目标可行性。
+
+
+## V14：XZ同光学尺寸网格加密资格
+
+在X之后加密z方向，XZ为p4/phi5/6×4×7，同manual532，168 global cells、local84/84，保留33024独立行及全部18144内部自由度。source ae6034fa的fresh worker与saved-only checker通过完整原三维求逆/恢复与输出门。
+
+| 项目 | measured结果与边界 |
+|---|---|
+| 保存证据核验 | 358 direct＋33519 raw＋49 operator＋56169 shared＝90095 passing entries；不是unique-label数量 |
+| worker / checker | 2392.338773393s / 754.005582511s；整树RSS1669115904B / 1594347520B；swap0、完整身份、清场 |
+| 四q与输出 | 因子行3796/3872/3872/3872；8组各532有限可表示模式 |
+| true residual / notch | 最大原残差约7.60336e-11；notch约4.58254e-12，generic/interior/physical/support为4/4/4/5步 |
+| 成本限制 | CSR73801544B不是factor内存；setup6.217330755s含controls/I/O，非纯LU/per-PC时间 |
+| 资格范围 | XZ-only 3GiB/4500s；同光学尺寸/manual532；目标原尺寸、AUTO32060、2TB48h未资格 |
+
+XZ1的X-only interior guard失败、XZ2的固定nz=5 coverage失败都在factor0前停止；各自692.81699s/675598336B及1853.20673s/1101979648B保留。attempt2后续saved-proof通过单独记录。attempt3自动checker memory-admission失败也保留，其精确失败host envelope未保存；后续fresh headroom单独启动checker通过，没有PDE重跑。sampled physical PC defect约0.0134233不是范数界。
+
+[Response V14](../response_v14.md)、[compact](records/direct_XZ_v14/compact_record.json)、[原始hash manifest](records/direct_XZ_v14/manifest.json)。完整目标精度/光学规模/强缺陷性能仍未证明，后续Ny扩展须独立准入。

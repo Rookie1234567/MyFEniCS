@@ -31,6 +31,12 @@ ALLOWED_PATHS=frozenset({
  'src/test/test_y_orbit_direct_budget_metadata.py','src/test/test_y_orbit_direct_descriptor_metadata.py',
  'src/solvers/fullspace_dtn_action.py','src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py',
  'src/solvers/dtn_boundary_phase_gauge.py',
+ 'src/test/test_y_orbit_direct_event_stream_metadata.py',
+ 'src/test/test_y_orbit_direct_XZ_budget_metadata.py',
+ 'src/test/test_y_orbit_direct_XZ_checker_metadata.py',
+ 'src/test/test_y_orbit_direct_XZ_solver_metadata.py',
+ 'src/test/test_y_orbit_direct_XZ_interior_metadata.py',
+ 'src/test/test_y_orbit_direct_XZ_coverage_metadata.py',
 })
 ENV_FIELDS=('python','prefix','modules','petsc_scalar_type','petsc_int_type','petsc_version',
             'mpi_library','qualification_manifest_sha256','qualification_scope')
@@ -156,7 +162,8 @@ def digest(value):
  return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
 
 
-def validate_direct_source(old,new,old_env,new_env):
+def validate_direct_source(old,new,old_env,new_env,*,direct_profile="X"):
+ if direct_profile not in ("X","XZ"):raise ValueError("only explicit X/XZ source profiles are admitted")
  if (old.get('head')!=STEP0_HEAD or old.get('dirty') or new.get('dirty') or new.get('head')==STEP0_HEAD
      or not re.fullmatch('[0-9a-f]{40}',new.get('head','')) or old.get('branch')!='task40extra_dot_parallel_cloud'
      or new.get('branch')!=old.get('branch') or digest(old.get('files_sha256',{}))!=STEP0_SOURCE_SHA):
@@ -177,7 +184,7 @@ def validate_direct_source(old,new,old_env,new_env):
    'changed_dependencies':[{'path':name,'old_sha256':before.get(name),'new_sha256':after.get(name)} for name in changed],
    'all_other_physical_volume_DtN_config_mode_dependencies_equal':True,'source_equality_claimed':False,
    'explicit_metadata_API_module_exceptions':ast_seams,
-   'numerical_environment_fields_equal':list(ENV_FIELDS),'scope':'fresh directX profile; no historical arrays reused'}
+   'numerical_environment_fields_equal':list(ENV_FIELDS),'scope':f'fresh direct{direct_profile} profile; no historical arrays reused'}
 
 
 def file_sha(path):
@@ -187,7 +194,7 @@ def file_sha(path):
  return result.hexdigest()
 
 
-def load_direct_source_contract(root,*,new_source,new_environment,allocation_gate):
+def load_direct_source_contract(root,*,new_source,new_environment,allocation_gate,direct_profile="X"):
  directory=Path(root).resolve()/STEP0_RUN
  provenance_path=directory/'provenance.json'
  allocation_gate('direct_step0_source_metadata',{'matrix_payload_bytes':0,
@@ -199,7 +206,7 @@ def load_direct_source_contract(root,*,new_source,new_environment,allocation_gat
   if file_sha(directory/name)!=sha:raise ValueError('immutable qualified Step0 metadata changed')
  provenance=json.loads(provenance_path.read_text())
  allocation_gate('direct_raw_observer_AST_metadata',{'matrix_payload_bytes':0,'workspace_bytes':16<<20})
- receipt=validate_direct_source(provenance['source'],new_source,provenance['environment'],new_environment)
+ receipt=validate_direct_source(provenance['source'],new_source,provenance['environment'],new_environment,direct_profile=direct_profile)
  receipt['step0_provenance_sha256']=STEP0_PROVENANCE_SHA
  receipt['qualified_step0_original_check_count']=312
  receipt['qualified_step0_shared_storage_check_count']=38881

@@ -112,6 +112,8 @@ def _qualification_degree_profile(bundle, *, direct_profile=None):
     if direct_profile is not None:
         from .y_orbit_direct_profile import validate_direct_physical_config
         direct = validate_direct_physical_config(bundle.get("physical_cfg", bundle["cfg"]), direct_profile)
+        if direct.name not in ("X", "XZ"):
+            raise ValueError("direct live numerical qualification admits only X/XZ")
         context = bundle.get("quotient_context")
         if context is not None:
             if (context.direct_profile_name != direct.name or context.global_axes != direct.global_axes

@@ -1,6 +1,6 @@
 """Fresh direct-profile primary/literal/raw component qualification before q factors.
 
-The numerical entry point is externally admitted and currently X-only. It uses
+The numerical entry point is externally admitted and limited to X/XZ. It uses
 existing full physical constructors, full finalized MPCs and raw observers.
 There is no snapshot restoration, full-Ny reference matrix, factor or solve.
 Importing this module uses only the standard library.
@@ -467,25 +467,31 @@ def _resource_authority(environment):
         if requested != "1800" or not 0 < float(environment.get("QUOTIENT_PHASE_WALL_SECONDS", "nan")) <= 1800:
             raise ValueError("fresh X carrier resource metadata requires the exact supervised research budget")
         return "external min(fresh dynamic cap,1.5GiB)/1800s/zeroSwap/MPI1/thread1 supervision"
-    expected = {"QUOTIENT_RESEARCH_MEMORY_GIB": "2", "QUOTIENT_RESEARCH_MEMORY_PROFILE": "X",
-        "QUOTIENT_RESEARCH_MEMORY_STAGE": "solve", "QUOTIENT_RESEARCH_WALL_SECONDS": "1800",
-        "QUOTIENT_RESEARCH_TREE_CAP_BYTES": str(2*1024**3), "PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES": str(2*1024**3)}
+    contracts = {"X": (2, 1800), "XZ": (3, 4500)}
+    selected = environment.get("QUOTIENT_RESEARCH_MEMORY_PROFILE")
+    if selected not in contracts:
+        raise ValueError("fresh resource metadata admits only X2GiB/1800s or XZ3GiB/4500s")
+    memory_gib, wall_seconds = contracts[selected]
+    cap_bytes = memory_gib*1024**3
+    expected = {"QUOTIENT_RESEARCH_MEMORY_GIB": str(memory_gib), "QUOTIENT_RESEARCH_MEMORY_PROFILE": selected,
+        "QUOTIENT_RESEARCH_MEMORY_STAGE": "solve", "QUOTIENT_RESEARCH_WALL_SECONDS": str(wall_seconds),
+        "QUOTIENT_RESEARCH_TREE_CAP_BYTES": str(cap_bytes), "PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES": str(cap_bytes)}
     if (any(environment.get(name) != value for name, value in expected.items())
-            or not 0 < float(environment.get("QUOTIENT_PHASE_WALL_SECONDS", "nan")) <= 1800):
-        raise ValueError("fresh2GiB resource text requires its bound X/solve/wall1800 supervisor request")
+            or not 0 < float(environment.get("QUOTIENT_PHASE_WALL_SECONDS", "nan")) <= wall_seconds):
+        raise ValueError("fresh resource text requires its exact bound profile/solve/wall supervisor request")
     receipt = json.loads(environment.get("QUOTIENT_RESEARCH_MEMORY_LAUNCH_ADMISSION", "null"))
-    if (not isinstance(receipt, dict) or receipt.get("requested_memory_gib") != 2
-            or receipt.get("requested_tree_cap_bytes") != 2*1024**3
-            or receipt.get("required_cap_plus_evidence_reserve_bytes") != 2*1024**3 + 128*1024**2
+    if (not isinstance(receipt, dict) or receipt.get("requested_memory_gib") != memory_gib
+            or receipt.get("requested_tree_cap_bytes") != cap_bytes
+            or receipt.get("required_cap_plus_evidence_reserve_bytes") != cap_bytes + 128*1024**2
             or receipt.get("launch_admission_passed") is not True):
-        raise ValueError("fresh2GiB resource text requires the actual admitted launch packet")
-    return "external min(fresh dynamic cap,2GiB)/1800s/zeroSwap/MPI1/thread1 supervision"
+        raise ValueError("fresh resource text requires the actual admitted launch packet")
+    return f"external min(fresh dynamic cap,{memory_gib}GiB)/{wall_seconds}s/zeroSwap/MPI1/thread1 supervision"
 
 
 def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_array,
                                 allocation_gate, event=None, shared_template_bank,
                                 entity_callback=None, layout_callback=None):
-    """Externally supervised X fresh global120/two local60 setup and raw gates.
+    """Externally supervised X/XZ fresh full/two local setup and raw gates.
 
     The caller owns the admitted source/ABI/same80 storage bridge, resource
     watchdog, artifact writer and shared bank lifecycle. The returned actions
@@ -493,8 +499,8 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
     Failure preserves honest component evidence then releases action owners.
     """
     from .y_orbit_direct_profile import DirectTwoCellProfile, validate_direct_physical_config
-    if DirectTwoCellProfile(direct_profile) is not DirectTwoCellProfile.X:
-        raise ValueError("fresh direct numerical helper is currently X-only")
+    if DirectTwoCellProfile(direct_profile) not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ):
+        raise ValueError("fresh direct numerical helper admits only X/XZ")
     metadata = validate_direct_physical_config(cfg, direct_profile)
     if not callable(save_array) or not callable(allocation_gate):
         raise TypeError("caller artifact writer and current-resident allocation gate are required")
@@ -517,7 +523,7 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
                                       for b in range(metadata.replication_count)))):
         raise ValueError("fresh direct carriers require a new artifact directory")
     root.mkdir(parents=True, exist_ok=True)
-    _gate(allocation_gate, "direct_X_pre_import_and_inventory", workspace=128 << 20,
+    _gate(allocation_gate, "direct_"+metadata.name+"_pre_import_and_inventory", workspace=128 << 20,
           fresh_only=True, snapshots_reused=False, no_factors=True)
     import numpy as np
     from mpi4py import MPI
@@ -558,12 +564,12 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
                                 root_directory=root, direct_profile=direct_profile)
         result.global_spool = spool("raw_global")
         gate = "fresh original mesh/MPC/volume/carrier"
-        _gate(allocation_gate, "direct_global120_mesh_MPC_constructor", payload=16 << 20, workspace=128 << 20)
+        _gate(allocation_gate, "direct_global"+str(metadata.cell_count)+"_mesh_MPC_constructor", payload=16 << 20, workspace=128 << 20)
         setup = _build_same_mesh_levels(cfg, MPI.COMM_SELF, (4,), include_positive_coefficients=False)
-        _gate(allocation_gate, "direct_global120_physical_volume_carrier_constructor", payload=64 << 20, workspace=256 << 20)
+        _gate(allocation_gate, "direct_global"+str(metadata.cell_count)+"_physical_volume_carrier_constructor", payload=64 << 20, workspace=256 << 20)
         result.global_bundle = build_same_mesh_physical_action(setup, cfg, 4, mode_inventory=inventory,
             dtn_phase_gauge="boundary_plane", verify_dtn_quadrature=True, raw_mode_observer=result.global_spool.observe,
-            raw_observer_profile="X")
+            raw_observer_profile=metadata.name)
         global_identity = carrier_numeric_identity(result.global_bundle["dtn_action"].carrier)
         _actual_discrete_binding(result.global_bundle, result.global_bundle["dtn_action"].carrier)
         gate = "fresh global boundary-plane primary/literal component qualification"
@@ -573,7 +579,7 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
             ownership_rows=metadata.storage_rows, physical_manifest=manifest,
             context_sha=result.global_bundle["assembly_context_sha256"], quotient_context=None,
             save_array=save_array, allocation_gate=allocation_gate)
-        _gate(allocation_gate, "direct_global120_live_boundary_literal_oracle", payload=16 << 20,
+        _gate(allocation_gate, "direct_global"+str(metadata.cell_count)+"_live_boundary_literal_oracle", payload=16 << 20,
               workspace=128 << 20, original_Gauss23_144_required=True, no_factors=True)
         global_receipt = qualify_boundary_plane_bundle(result.global_bundle, record_path=global_record,
             expected_physical_manifest=manifest, expected_ordered_keys=keys, direct_profile=direct_profile,
@@ -581,7 +587,7 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
         literal_manifests.append(global_literals.require_complete())
         event("direct_fresh_global_component_complete", {"status": global_receipt["status"], **_reference(global_record, root)})
         axes = dict(zip(("x", "y", "z"), metadata.global_axes, strict=True))
-        _gate(allocation_gate, "direct_global120_shared_complete_entities", payload=16 << 20,
+        _gate(allocation_gate, "direct_global"+str(metadata.cell_count)+"_shared_complete_entities", payload=16 << 20,
               workspace=128 << 20, full_Ny_F_Q_created=False)
         result.global_entities = collect_y_orbit_entities(setup["spaces"][4], setup["floquets"][4], cfg, axes,
                                                          transform_bank=shared_template_bank)
@@ -591,11 +597,11 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
                           local=False, root=root, save_array=save_array, allocation_gate=allocation_gate, inventory=arrays)
         local_cfg = build_two_cell_assembly_config(cfg, direct_profile=direct_profile)
         for b in range(metadata.replication_count):
-            gate = "fresh local60 twist "+str(b)
+            gate = "fresh local"+str(metadata.local_cell_count)+" twist "+str(b)
             context = build_two_cell_quotient_context(cfg, local_cfg, inventory, twist_index=b, direct_profile=direct_profile)
             local_spool = spool("raw_twist_"+str(b))
             result.local_spools.append(local_spool)
-            _gate(allocation_gate, "direct_twist_"+str(b)+"_local60_MPC_constructor", payload=16 << 20, workspace=128 << 20,
+            _gate(allocation_gate, "direct_twist_"+str(b)+"_local"+str(metadata.local_cell_count)+"_MPC_constructor", payload=16 << 20, workspace=128 << 20,
                   explicit_x_y_corner_wrap=True)
             local_setup = _build_same_mesh_levels(local_cfg, MPI.COMM_SELF, (4,), include_positive_coefficients=False,
                                                  research_phase_override=context.phase_override)
@@ -603,7 +609,7 @@ def build_fresh_direct_carriers(cfg, *, direct_profile, run_directory, save_arra
                   workspace=256 << 20, no_local_incident_RHS=True)
             local = build_same_mesh_physical_action(local_setup, local_cfg, 4, mode_inventory=inventory,
                 physical_cfg=cfg, quotient_context=context, dtn_phase_gauge="boundary_plane",
-                verify_dtn_quadrature=True, raw_mode_observer=local_spool.observe, raw_observer_profile="X")
+                verify_dtn_quadrature=True, raw_mode_observer=local_spool.observe, raw_observer_profile=metadata.name)
             result.local_bundles.append(local)
             prefix = "direct_twist_"+str(b)
             cells.append(_actual_cells(setup, local_setup, metadata, root=root, prefix=prefix,

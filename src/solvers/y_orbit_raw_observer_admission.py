@@ -1,7 +1,7 @@
-"""Explicit X-only raw-observer admission; no assembly or numerical changes.
+"""Explicit X/XZ raw-observer admission; no assembly or numerical changes.
 
 The default observer remains bounded by its original carrier guard. This
-module verifies actual current metadata for the separately reviewed X profile.
+module verifies actual current metadata for the separately reviewed X/XZ profiles.
 Module loading uses only the standard library; runtime checks reuse the exact
 existing discrete identity codecs and profile validators.
 """
@@ -24,32 +24,35 @@ def _file_sha256(path):
 
 
 def direct_raw_observer_expected_local_cells(quotient_context, cfg):
-    """Only the explicit X context may replace the historical local40 bound."""
-    from .y_orbit_direct_profile import direct_profile_metadata, PHYSICAL_GENERATOR_SHA256
+    """Only an explicit X/XZ context may replace the historical local40 bound."""
+    from .y_orbit_direct_profile import DirectTwoCellProfile, direct_profile_metadata, PHYSICAL_GENERATOR_SHA256
     from .fullspace_dtn_action import _canonical_json_bytes
-    metadata = direct_profile_metadata("X")
-    if (quotient_context.direct_profile_name != "X"
+    selected = DirectTwoCellProfile(quotient_context.direct_profile_name)
+    if selected not in (DirectTwoCellProfile.X, DirectTwoCellProfile.XZ):
+        raise ValueError("only explicit frozen X/XZ local config/context is admitted")
+    metadata = direct_profile_metadata(selected)
+    if (quotient_context.direct_profile_name != metadata.name
             or quotient_context.global_axes != metadata.global_axes
             or quotient_context.local_axes != metadata.local_axes
-            or quotient_context.global_y_cells != 4 or quotient_context.replication_count != 2
-            or quotient_context.local_y_cells != 2
-            or type(quotient_context.twist_index) is not int or quotient_context.twist_index not in (0, 1)
+            or quotient_context.global_y_cells != metadata.ny or quotient_context.replication_count != metadata.replication_count
+            or quotient_context.local_y_cells != metadata.local_y_cells
+            or type(quotient_context.twist_index) is not int or quotient_context.twist_index not in range(metadata.replication_count)
             or quotient_context.physical_generator_manifest_sha256 != PHYSICAL_GENERATOR_SHA256
-            or tuple(cfg.mesh_axis_cell_counts) != (6, 2, 5)
+            or tuple(cfg.mesh_axis_cell_counts) != (metadata.nx, metadata.local_y_cells, metadata.nz)
             or tuple(tuple(getattr(cfg, f"mesh_axis_{name}_values")) for name in ("x", "y", "z")) != metadata.local_axes
             or int(cfg.nedelec_degree) != 4 or cfg.nedelec_trace_degree is not None
             or cfg.nedelec_interior_degree is not None
             or quotient_context.assembly_config_sha256 != hashlib.sha256(_canonical_json_bytes(cfg.as_jsonable())).hexdigest()):
-        raise ValueError("only the explicit frozen X local60 config/context is admitted")
+        raise ValueError("only the explicit frozen X/XZ local config/context is admitted")
     return metadata.local_cell_count
 
 
 def validate_direct_raw_observer_profile(profile, *, modes, mpc, cfg,
         assembly_context, physical_cfg, quotient_context, physical_manifest_sha,
         surface_assemblers):
-    """Admit only fresh actual X full120/local60 p4, without changing C/D/H."""
-    if type(profile) is not str or profile != "X":
-        raise ValueError("raw observer profile must be the explicit reviewed X string")
+    """Admit only fresh actual X/XZ full/local p4, without changing C/D/H."""
+    if type(profile) is not str or profile not in ("X", "XZ"):
+        raise ValueError("raw observer profile must be an explicit reviewed X/XZ string")
     if not isinstance(assembly_context, Mapping):
         raise ValueError("raw observer X requires the actual frozen discrete context")
     import numpy as np
@@ -62,15 +65,15 @@ def validate_direct_raw_observer_profile(profile, *, modes, mpc, cfg,
     from .y_orbit_direct_profile import validate_direct_physical_config, PHYSICAL_GENERATOR_SHA256
 
     physical = cfg if quotient_context is None else physical_cfg
-    metadata = validate_direct_physical_config(physical, "X")
+    metadata = validate_direct_physical_config(physical, profile)
     if quotient_context is None:
         cells, rows, independent, mode_count, axes = (metadata.cell_count, metadata.storage_rows,
             metadata.independent_rows, 532, metadata.global_axes)
     else:
-        if (quotient_context.direct_profile_name != "X"
+        if (quotient_context.direct_profile_name != metadata.name
                 or type(quotient_context.twist_index) is not int
-                or quotient_context.twist_index not in (0, 1)
-                or quotient_context.global_y_cells != 4 or quotient_context.replication_count != 2
+                or quotient_context.twist_index not in range(metadata.replication_count)
+                or quotient_context.global_y_cells != metadata.ny or quotient_context.replication_count != metadata.replication_count
                 or quotient_context.global_axes != metadata.global_axes
                 or quotient_context.local_axes != metadata.local_axes):
             raise ValueError("raw observer X requires its exact two-cell physical quotient context")
@@ -93,7 +96,7 @@ def validate_direct_raw_observer_profile(profile, *, modes, mpc, cfg,
             or tuple(cfg.mesh_axis_cell_counts) != tuple(len(axis)-1 for axis in axes)
             or not all(np.array_equal(np.unique(mesh.geometry.x[:, axis]), expected)
                        for axis, expected in enumerate(axes))):
-        raise ValueError("raw observer X requires actual MPI1 full120/25468 or local60/13236 complete p4")
+        raise ValueError("raw observer direct profile requires its exact actual MPI1 full/local complete p4 inventory")
     slaves = np.asarray(mpc.slaves)
     if (slaves.ndim != 1 or slaves.dtype.kind not in "iu" or len(slaves) != rows-independent
             or (slaves.size and (int(slaves.min()) < 0 or int(slaves.max()) >= rows))
@@ -163,12 +166,12 @@ def validate_direct_raw_observer_profile(profile, *, modes, mpc, cfg,
     keys = tuple((str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)) for mode in modes)
     if (len(modes) != mode_count or len(set(keys)) != mode_count
             or physical_manifest_sha != PHYSICAL_GENERATOR_SHA256
-            or (quotient_context is None and tuple(sum(int(mode.n) % 4 == q for mode in modes)
-                                                  for q in range(4)) != metadata.q_port_counts)
+            or (quotient_context is None and tuple(sum(int(mode.n) % metadata.ny == q for mode in modes)
+                                                  for q in range(metadata.ny)) != metadata.q_port_counts)
             or (quotient_context is not None and (keys != quotient_context.original_mode_keys
-                or any((int(mode.n)-quotient_context.twist_index) % 2 for mode in modes)))):
+                or any((int(mode.n)-quotient_context.twist_index) % metadata.replication_count for mode in modes)))):
         raise ValueError("raw observer X requires all actual unchanged original physical modes and sector aliases")
-    return {"schema": SCHEMA, "profile": "X", "actual_cells": cells, "actual_storage_rows": rows,
+    return {"schema": SCHEMA, "profile": metadata.name, "actual_cells": cells, "actual_storage_rows": rows,
         "actual_independent_rows": independent, "actual_mode_count": mode_count,
         "twist_index": None if quotient_context is None else quotient_context.twist_index,
         "physical_generator_manifest_sha256": physical_manifest_sha,

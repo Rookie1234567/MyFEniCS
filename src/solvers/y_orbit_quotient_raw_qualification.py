@@ -284,6 +284,7 @@ def qualify_quotient_raw_bundle(bundle, *, raw_mode_packets, record_path,
         if direct_profile is not None:
             from .y_orbit_direct_profile import validate_direct_physical_config
             direct = validate_direct_physical_config(physical_cfg, direct_profile)
+            require(direct.name in ("X", "XZ"), "direct raw numerical qualification admits only X/XZ")
             require(ctx.direct_profile_name == direct.name, "explicit direct profile/context identity required")
         else:
             require(getattr(ctx, "direct_profile_name", None) is None, "direct context requires explicit direct profile opt-in")

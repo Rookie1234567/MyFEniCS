@@ -1,0 +1,155 @@
+{
+  "schema": "task40extra.external-small-evidence-hash-manifest.v1",
+  "status": "STATIC_METADATA_HASH_BINDINGS_PASS",
+  "base_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud",
+  "archive_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/direct_XZ_attempt1_failure_archive_f7ad7e7",
+  "original_files_mutated": false,
+  "canonical_files_mutated": false,
+  "artifact_copies_created": false,
+  "source_evidence": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/summary.json",
+      "sha256": "73c938947d59d102aa55f04f87b0eda45cae7736f4ff380330b73befb4151864",
+      "bytes": 176528
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/phase.json",
+      "sha256": "85141461c4104327e19188b4c8fced01d332f7f020b3f09344ed6152a317ba3e",
+      "bytes": 246
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/probe_traceback.txt",
+      "sha256": "0b35a32cde04e5b61c4913d44430ed7b0d9c4d18cc7acf9b5ee97c184155aac2",
+      "bytes": 1019
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/provenance.json",
+      "sha256": "fd89e6341608bc344635193282e4f13eff13277c12a35dc0ff3c4c91790975e6",
+      "bytes": 190494
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/direct_carrier_qualification.json",
+      "sha256": "78a2ea6463dbeacd156e50a06b99499e21fe68c2003ecceb32a6b04f32826907",
+      "bytes": 213803
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/abi_manifest.json",
+      "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "bytes": 8904
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_interior_metadata_source_review_v1.json",
+      "sha256": "8200892124f003463f24cd4f30cf4a0afc87312ed86249d1cd544f59c13e5840",
+      "bytes": 3714
+    },
+    {
+      "path": "experiments/y_orbit_XZ_interior_fix/actual_saved_interior_smoke.json",
+      "sha256": "f7584a4625a25b3a079f7cdd0978bc8dc3ab2ab6cc0f5e1bceb65916742295de",
+      "bytes": 1286
+    },
+    {
+      "path": "experiments/y_orbit_XZ_interior_fix/actual_saved_interior_smoke_v2.json",
+      "sha256": "dd8f4475f5a94cb1b19b0a9b13cdb8a5497bf4b6577597292c14cab0a2cf9114",
+      "bytes": 1379
+    },
+    {
+      "path": "experiments/y_orbit_XZ_interior_fix/smoke_console_failure_attempt1.json",
+      "sha256": "3ebdaa98ee60aeb4dea5bb985b1bd974323198c27f61a128e5108b7d235f8b9e",
+      "bytes": 303
+    },
+    {
+      "path": "experiments/y_orbit_XZ_interior_fix/source_manifest.json",
+      "sha256": "bd39c67d53c5cdc04409f298d23eca04b158d3f80a1ba61a6402057865fb8fc9",
+      "bytes": 795
+    },
+    {
+      "path": "experiments/y_orbit_XZ_interior_fix/source_callgraph_receipt.json",
+      "sha256": "0b39bfc75a9b6646d03c855421139b0c8b8449fb06d09b92c58113d4dc7dbc90",
+      "bytes": 2615
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_interior_frozen_tests_attempt1/summary.json",
+      "sha256": "acc6fead2541cbf0731f4b9d5bbab52ea321b322d368ad317ffecfdf06bb59b9",
+      "bytes": 176597
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_interior_frozen_tests_attempt1/worker.log",
+      "sha256": "605f426cca60b58603ca8e5b33473c534c91493f1517b32ee6b8fe96e8e296f9",
+      "bytes": 12454
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_interior_frozen_preflight_attempt1/receipt.json",
+      "sha256": "5ae3b585be0205c291b36a629e33045557b7b4932300ec051a0e440c160435b3",
+      "bytes": 226401
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt1/summary.json",
+      "sha256": "43cdc55039c4c1acb531e48aee98678365751721b7515265cf589316d77c5a8b",
+      "bytes": 176475
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt1/worker.log",
+      "sha256": "0cd18c76ab902b9b3c16452f22aeeee5dc3304b59dc5ae8584c4a77df9f1d8c3",
+      "bytes": 12522
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt2/summary.json",
+      "sha256": "df29db6eb5a6ffb1d9825ed9c22b78e7e633ee5acfa5811c98b1d33fb4d74bf6",
+      "bytes": 176472
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt2/worker.log",
+      "sha256": "f1ec525d6b668b27d5fad6fdc3d4d1071b6432ab10cb611c51edcc61cf03a9ec",
+      "bytes": 11616
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_source_guard_test_correction_review_v1.json",
+      "sha256": "448db71a397cfd016a64883c550edc44acfa81356a010ec987ac92f3bbe32798",
+      "bytes": 1629
+    }
+  ],
+  "large_original_locator_only": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/probe_report.json",
+      "read_scope": "12,000-byte prefix only; whole-file SHA not acquired"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/probe_events.jsonl",
+      "read_scope": "not read"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/resources.jsonl",
+      "read_scope": "not read"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/worker.log",
+      "read_scope": "not read"
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/arrays/",
+      "read_scope": "no array values read"
+    }
+  ],
+  "package_files": [
+    {
+      "name": "compact_ledger.json",
+      "sha256": "884661dfbc533a539ec92f11ba406b8675c3ba46a6c6ed5886d29ff5a275ed9c",
+      "bytes": 27768
+    },
+    {
+      "name": "failure_zh.md",
+      "sha256": "c5fee7f6c8f2a72d8d68b81b5dca9c123b0654d3e61c56e836e5925d26656183",
+      "bytes": 5311
+    }
+  ],
+  "validation": {
+    "all_original_small_file_hashes_rechecked": true,
+    "immutable_attempt1_failed_factor_zero_bound": true,
+    "source_review_and_smoke_expected_hashes_match": true,
+    "formal_62_tests_receipt_and_log_join": true,
+    "prior_stale_58_test_failure_and_correction_preserved": true,
+    "clean_preflight_hash_and_source_bound": true,
+    "pending_attempt2_does_not_grant_success": true,
+    "no_numerical_rerun": true
+  }
+}

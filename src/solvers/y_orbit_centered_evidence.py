@@ -162,8 +162,8 @@ def fixture_interior_positions(space, layout, *, direct_profile=None):
     if direct_profile is not None:
         from .y_orbit_direct_profile import direct_profile_metadata
         profile=direct_profile_metadata(direct_profile)
-        if profile.name!='X' or degree!=4 or layout.full_rows!=profile.storage_rows:
-            raise ValueError('only the admitted directX full original interior inventory is enabled')
+        if profile.name not in ('X','XZ') or degree!=4 or layout.full_rows!=profile.storage_rows:
+            raise ValueError('only the admitted directX/XZ full original interior inventory is enabled')
         expected=profile.interior_rows
     if expected is None or len(positions) != expected or len(rows) != expected:
         raise ValueError("centered profile must retain every actual p2/p4 interior row")

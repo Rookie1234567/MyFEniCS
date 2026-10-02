@@ -43,7 +43,7 @@ class SharedTransformEvidence:
         self.direct_profile=direct_profile
         if direct_profile is not None:
             from .y_orbit_direct_profile import direct_profile_metadata
-            if direct_profile_metadata(direct_profile).name!='X':raise ValueError('only directX shared evidence is admitted')
+            if direct_profile_metadata(direct_profile).name not in ('X','XZ'):raise ValueError('only directX/XZ shared evidence is admitted')
         self.roles, self.stages, self.named, self.owner_artifacts = [], [], {}, {}
         self.reference_artifacts = {}
         self.payload_artifacts = {}
@@ -98,10 +98,10 @@ class SharedTransformEvidence:
         return receipt
 
     def compare_streamed(self, role, shared, *, space, floquet, axes, frozen_context, load_array):
-        """X actual records, one original-helper control at a time; no collector copy."""
+        """X/XZ actual records, one original-helper control at a time; no collector copy."""
         from .hcurl_canonical_vector_dolfinx import _physical_entity_transform
-        if self.direct_profile!='X' or role not in ROLES or shared._transform_bank is not self.bank:
-            raise ValueError('streamed controls require the exact directX run-local bank')
+        if self.direct_profile not in ('X','XZ') or role not in ROLES or shared._transform_bank is not self.bank:
+            raise ValueError('streamed controls require the exact directX/XZ run-local bank')
         if role in [item['role'] for item in self.roles]:raise ValueError('duplicate streamed role')
         n=len(shared.independent);cell_dim=int(space.element.space_dimension)
         self.gate('direct_streamed_native_partition_'+role,{'matrix_payload_bytes':3*shared.full_rows*8,'workspace_bytes':1<<20})

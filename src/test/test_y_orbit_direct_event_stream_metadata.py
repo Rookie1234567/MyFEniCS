@@ -192,7 +192,10 @@ class DirectContextSourceRoleTests(unittest.TestCase):
         self.assertNotIn("_source_binding",ast.unparse(fn))
         original=subprocess.run(["git","-C",str(REPO),"show",BASE+":src/solvers/y_orbit_quotient_raw_qualification.py"],
             check=True,capture_output=True).stdout
-        self.assertEqual(original,(REPO/"src/solvers/y_orbit_quotient_raw_qualification.py").read_bytes())
+        actual=(REPO/"src/solvers/y_orbit_quotient_raw_qualification.py").read_bytes()
+        approved_metadata_guard=b'            require(direct.name in ("X", "XZ"), "direct raw numerical qualification admits only X/XZ")\n'
+        self.assertEqual(actual.count(approved_metadata_guard),1)
+        self.assertEqual(original,actual.replace(approved_metadata_guard,b""))
 
 
 

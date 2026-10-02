@@ -1,0 +1,221 @@
+{
+  "schema": "task40extra.external-V14-XZ-success-hash-manifest.v1",
+  "status": "COMPACT_STATIC_METADATA_AND_HASH_LINKAGE_PASS",
+  "base_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud",
+  "archive_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud/staging/direct_XZ_V14_success_evidence_ae6034fa",
+  "original_small_evidence": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/summary.json",
+      "sha256": "5fc6312dcf8d92d29ebfa7e92ec15a2c6e5e8890466e010cbf5574faba81a1c1",
+      "bytes": 176788
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/phase.json",
+      "sha256": "ea059b62f23abcfbabb06121e78c1096279d9791625d817c8d5d6ef8966f8b1e",
+      "bytes": 247
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/provenance.json",
+      "sha256": "dea38d2e2f82377805c5003e78a0f9b65bbf3067deee71287c93ab506e8d9c68",
+      "bytes": 191165
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/abi_manifest.json",
+      "sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "bytes": 8904
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/direct_carrier_qualification.json",
+      "sha256": "33105145596466675119212fe9862d87e920e80a54c7035fa963aba3ce5ec2eb",
+      "bytes": 213803
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/checker_incomplete.json",
+      "sha256": "1a5540b46e8beed68709670ccf7aeff0b62225be90ba2b51eb22e23c1d13527d",
+      "bytes": 159
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/checker_supervision_failure.json",
+      "sha256": "e0c75774264974bebad535c25475c548d549546e0842c8df0ff8c09b9ca06dd6",
+      "bytes": 178620
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/checker_supervision_traceback.txt",
+      "sha256": "86ab9525b7edad526b4617ae3767cd49731eec02fbd2c344371e087d2c4aaf58",
+      "bytes": 731
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_attempt3_checker_attempt1/summary.json",
+      "sha256": "a25a6a4ee624cefde2d6c026143cb4db7e7350d3a06ef00d006da3acd5960548",
+      "bytes": 176763
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_attempt3_checker_attempt1/checker_phase.json",
+      "sha256": "df1256046159d6bc71e5e9cac9d1b35deec1faa8e53c2bb647e2a22dd0a63c24",
+      "bytes": 250
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_attempt3_checker_attempt1/launch_receipt.json",
+      "sha256": "8dcf5de081fc9929c5e382a97d70555c35a6379614551b59c6cfec008310a9cd",
+      "bytes": 1877
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_attempt3_checker_attempt1/worker.log",
+      "sha256": "764196472d3e33d777c98035e23268dc12aa2f9310b9485fe0bcaaa7c46f4bd6",
+      "bytes": 135
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_combined_source_review_v1.json",
+      "sha256": "0367b902b411affadc7cf57a29ce33a00a769fa0a34a48453f82fe4ba359f08e",
+      "bytes": 5607
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_interior_metadata_source_review_v1.json",
+      "sha256": "8200892124f003463f24cd4f30cf4a0afc87312ed86249d1cd544f59c13e5840",
+      "bytes": 3714
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_grid_orbit_coverage_source_review_v1.json",
+      "sha256": "255143b622b4724bb8ec34733d2bbf2e02b317942da8988dd92b7c9755772285",
+      "bytes": 4162
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_saved_full_proof_replay_source_review_v1.json",
+      "sha256": "58ba22798a32cdf657e9b1d4ec2b46a4ab474288b52d133e032f2871e214961a",
+      "bytes": 5077
+    }
+  ],
+  "large_hash_bindings": [
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt3/probe_report.json",
+      "sha256": "dfd38293d2a56afb57afed2c2bbc6d7fbf11756da3fb8d4e59ca1169f99165a7",
+      "bytes": 168915217,
+      "hash_binding_method": "Actual fresh independently hashed checker report_sha256 field and parent immutable report hash match; archive reads only430-byte report prefix, does not rescan huge report",
+      "status_parent_recorded": "QUOTIENT_FULL3D_INVERSE_PROBE_PASS",
+      "PDE_solved_observed_prefix": true,
+      "factor_count_confirmed_phase_and_checker": 4,
+      "official_results": false
+    },
+    {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_attempt3_checker_attempt1/independent_checker.json",
+      "sha256": "44cab5a51dd4a1063bfe509bef114cfbf3ffc10b720b3c6bca83dde5f3ddfd05",
+      "bytes": 13588906,
+      "archive_verification": "Byte SHA256 plus selected root scalar/source bridge/event receipt metadata only; numeric check-entry arrays not decoded"
+    }
+  ],
+  "event_hash_as_checker_receipt": "3af4884eb00a036729e0dfe3a7b2ce808414cfece57d61194f646f188d3ee613",
+  "historical_archives": [
+    {
+      "directory": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/",
+      "files": [
+        {
+          "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/failure_zh.md",
+          "sha256": "c5fee7f6c8f2a72d8d68b81b5dca9c123b0654d3e61c56e836e5925d26656183",
+          "bytes": 5311
+        },
+        {
+          "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/compact_ledger.json",
+          "sha256": "884661dfbc533a539ec92f11ba406b8675c3ba46a6c6ed5886d29ff5a275ed9c",
+          "bytes": 27768
+        },
+        {
+          "path": "staging/direct_XZ_attempt1_failure_archive_f7ad7e7/hash_manifest.json",
+          "sha256": "e4ce575573ad6c2e496b51fa99526e04af141ff894ba09f4a3f6ee2d06ed3970",
+          "bytes": 6913
+        }
+      ],
+      "unchanged": true,
+      "historical_pending_snapshot_not_rewritten": true
+    },
+    {
+      "directory": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/",
+      "files": [
+        {
+          "path": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/failure_zh.md",
+          "sha256": "19b6431d2287f5077fb97012c73b26b64dcb6a85c243519ab641fd66c022a761",
+          "bytes": 4120
+        },
+        {
+          "path": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/compact_ledger.json",
+          "sha256": "3cf70bb57e4f085277b7600bfcad50c88e9a49fc10323928474dbec70a66721c",
+          "bytes": 19738
+        },
+        {
+          "path": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/hash_manifest.json",
+          "sha256": "74ea96920ef4c5fc046d6cf4f6ee6875f7e156af2e69fdc5a227804c267566cd",
+          "bytes": 5610
+        }
+      ],
+      "unchanged": true,
+      "historical_pending_snapshot_not_rewritten": true
+    },
+    {
+      "directory": "staging/direct_XZ_attempt2_saved_proof_supplement_ae6034fa/",
+      "files": [
+        {
+          "path": "staging/direct_XZ_attempt2_saved_proof_supplement_ae6034fa/supplemental_zh.md",
+          "sha256": "cee5c024ec88ea954fe86cb824cf573fa17c1e08b3831b4858b2e4fe60f1dff3",
+          "bytes": 2526
+        },
+        {
+          "path": "staging/direct_XZ_attempt2_saved_proof_supplement_ae6034fa/supplemental_record.json",
+          "sha256": "6f2843eac8cf0d60235d66c3b6d87be46d49ba381d2436cde426496bbda1b4f9",
+          "bytes": 12993
+        },
+        {
+          "path": "staging/direct_XZ_attempt2_saved_proof_supplement_ae6034fa/hash_manifest.json",
+          "sha256": "88e6cf940007e134342795bd2ab7239163c9c1286f0dceba5b2016b41d07455c",
+          "bytes": 2851
+        }
+      ],
+      "unchanged": true,
+      "historical_pending_snapshot_not_rewritten": true
+    },
+    {
+      "directory": "staging/direct_X_V13_success_evidence_2a07d23/",
+      "files": [
+        {
+          "path": "staging/direct_X_V13_success_evidence_2a07d23/compact_record.json",
+          "sha256": "913064789949efb4ecf14fdbe699ead9678232ff0d7bd4d70554481b006b57b6",
+          "bytes": 23649
+        },
+        {
+          "path": "staging/direct_X_V13_success_evidence_2a07d23/manifest.json",
+          "sha256": "98aa8ada22d721ae7a690a350f6cd3eb8773ba4ad3ca4d05b8d79c90672314b4",
+          "bytes": 6838
+        }
+      ],
+      "unchanged": true,
+      "historical_pending_snapshot_not_rewritten": true
+    }
+  ],
+  "package_files": [
+    {
+      "name": "compact_record.json",
+      "sha256": "4b4bf2c446157e275d78949d7f9106ac91f3c5509540c7f57d1926ff3ecfcc6d",
+      "bytes": 21265
+    },
+    {
+      "name": "report_zh.md",
+      "sha256": "d81ae46bc41bc7339bd9fef907919904a7ad7febf279af6e9cf017c57f3414fc",
+      "bytes": 4065
+    },
+    {
+      "name": "integration_snippets.md",
+      "sha256": "c2560a6546d57714eb2870cbc6fe2cff62cf96f327095d74b9489821722b1d83",
+      "bytes": 1345
+    }
+  ],
+  "validation": {
+    "worker_and_checker_terminal_resources_bound": true,
+    "expected_checker_hash_verified": true,
+    "actual_checker_report_hash_matches_parent_expected": true,
+    "same_clean_source_and_ABI_bound": true,
+    "90095_count_scalars_and_gate_pass_bound": true,
+    "success_schema_no_evidence_valid": true,
+    "automatic_admission_failure_and_missing_envelope_preserved": true,
+    "historical_packages_unchanged": true,
+    "no_new_array_event_FE_JIT_factor_PDE_work": true,
+    "final_pair_linkage_review_parent_owned_pending": true
+  }
+}

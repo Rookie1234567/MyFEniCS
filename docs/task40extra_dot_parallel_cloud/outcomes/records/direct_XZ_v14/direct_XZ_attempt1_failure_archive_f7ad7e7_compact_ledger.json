@@ -1,0 +1,645 @@
+{
+  "schema": "task40extra.external-XZ-failure-and-metadata-fix-archive.v1",
+  "status": "XZ_ATTEMPT1_FAILED_PRESERVED_METADATA_FIX_REVIEWED_FRESH_ATTEMPT2_PENDING",
+  "created_at_utc": "2026-10-02T13:47:41.238556+00:00",
+  "summary_zh": "XZ attempt1 在完成新鲜 532-mode carrier component 证明后，被 interior inventory 的 X-only guard 拒绝；factor0、PDE false。元数据修复已有源码审查、62 tests、实际保存 interior smoke 和 clean preflight；attempt2 仍待完成。",
+  "archive_scope": {
+    "external_only": true,
+    "canonical_writes": false,
+    "project_imports": false,
+    "saved_array_values_read": false,
+    "event_or_resource_log_scan": false,
+    "FE_JIT_factor_solve_PDE_rerun": false,
+    "whole_operator_proof_replay": false,
+    "publication_priority": false,
+    "large_worker_report_read_scope": "12,000-byte prefix only; no whole report hash or content scan",
+    "running_attempt2_artifact_contents_read": false
+  },
+  "worker_attempt1": {
+    "run_directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1",
+    "source_head": "cb63d2a97865a4274dab54dfb8c6c6581ced0c8c",
+    "source_tree": "24028e490f69d2214055cd69c59db4f063e23d7f",
+    "source_dirty": "",
+    "source_and_config_binding": {
+      "provenance": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/provenance.json",
+        "sha256": "fd89e6341608bc344635193282e4f13eff13277c12a35dc0ff3c4c91790975e6",
+        "bytes": 190494
+      },
+      "input_configuration_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "dependency_manifest_sha256": "3819b0140c0c18a86ee8d0ed052866aeb9a6213a359cc58ad7c736fba3f0ca53",
+      "historical_numerical_arrays_used": false,
+      "whole_baseline_source_equality_claimed": false
+    },
+    "report_observed_prefix": {
+      "schema": "task40extra.y-orbit-direct-profile-probe.v1",
+      "direct_profile": "XZ",
+      "status": "QUOTIENT_INVERSE_PROBE_FAILED",
+      "degree": 4,
+      "factor_count": 0,
+      "PDE_solved": false,
+      "official_results": false,
+      "report_path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/probe_report.json",
+      "whole_report_hash_not_acquired": true
+    },
+    "supervisor": {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 2,
+      "elapsed_seconds": 692.816992883003,
+      "sampled_process_tree_rss_peak_bytes": 675598336,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "source": {
+        "head": "cb63d2a97865a4274dab54dfb8c6c6581ced0c8c",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "tree_cap_bytes": 3221225472,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 692.8170230100077,
+        "limit_seconds": 4499.6084970910015,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/summary.json",
+      "sha256": "73c938947d59d102aa55f04f87b0eda45cae7736f4ff380330b73befb4151864",
+      "bytes": 176528
+    },
+    "phase": {
+      "phase": "probe_failure",
+      "factor_count": 0,
+      "worker_elapsed_seconds": 690.9425846739905,
+      "research_wall_seconds": 4500,
+      "phase_wall_seconds": 4499.6084970910015,
+      "research_memory_gib": 3,
+      "requested_tree_cap_bytes": 3221225472,
+      "receipt": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/phase.json",
+        "sha256": "85141461c4104327e19188b4c8fced01d332f7f020b3f09344ed6152a317ba3e",
+        "bytes": 246
+      }
+    },
+    "failure": {
+      "class": "METADATA_PROFILE_ENUM_GUARD_FAILURE",
+      "exception_type": "ValueError",
+      "message": "only the admitted directX full original interior inventory is enabled",
+      "call_path": [
+        "run_y_orbit_quotient_probe._worker",
+        "run_direct_quotient_probe",
+        "fixture_interior_positions"
+      ],
+      "traceback": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/probe_traceback.txt",
+        "sha256": "0b35a32cde04e5b61c4913d44430ed7b0d9c4d18cc7acf9b5ee97c184155aac2",
+        "bytes": 1019
+      },
+      "resource_time_limit_caused_failure": false,
+      "factor_count": 0,
+      "PDE_solved": false,
+      "full_worker_pass": false,
+      "whole_inverse_residual_recovery_output_qualified": false
+    },
+    "resource_contract": {
+      "tree_cap_bytes": 3221225472,
+      "wall_seconds": 4500,
+      "swap_bytes": 0,
+      "mpi": 1,
+      "math_threads": 1,
+      "evidence_reserve_bytes": 134217728,
+      "factor_workspace_allowance_bytes": 536870912,
+      "factor_fill_and_temporary_workspace_unknown": true,
+      "factor_L_U_statistics_copies_permitted": false,
+      "performance_or_target_capacity_claim": false,
+      "worker_phase_wall_seconds": 4499.6084970910015
+    },
+    "cost_phase_split": {
+      "whole_supervised_failed_worker_seconds": 692.816992883003,
+      "worker_to_exception_seconds": 690.9425846739905,
+      "last_observed_phase": "probe_failure",
+      "carrier_components_receipt_completed_before_exception": true,
+      "separate_carrier_stage_seconds_not_extracted": true,
+      "original_operator_audit_factors_solve_recovery_output_deferred": [
+        "complete original contribution/operator audit",
+        "all-q prefactor CSR and resources",
+        "q factors",
+        "full original solve/recovery/residual/output qualification"
+      ]
+    }
+  },
+  "completed_component_evidence": {
+    "receipt": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt1/direct_carrier_qualification.json",
+      "sha256": "78a2ea6463dbeacd156e50a06b99499e21fe68c2003ecceb32a6b04f32826907",
+      "bytes": 213803
+    },
+    "status": "PASS_DIRECT_FRESH_CARRIER_COMPONENTS_ONLY",
+    "full_case_pass": false,
+    "factor_count": 0,
+    "PDE_solved": false,
+    "official_results": false,
+    "snapshots_reused": false,
+    "fresh_primary_and_literal_forms": true,
+    "full_Ny_reference_matrices_created": false,
+    "original532_alias_union_exactly_once": true,
+    "tolerance": 1e-10,
+    "profile": {
+      "name": "XZ",
+      "dimensions": [
+        6,
+        4,
+        7
+      ],
+      "cell_count": 168,
+      "local_cell_count": 84,
+      "complete_cell_dimension": 300,
+      "complete_cell_interior_dimension": 108,
+      "interior_rows": 18144,
+      "local_interior_rows": 9072,
+      "independent_rows": 33024,
+      "local_independent_rows": 16512,
+      "storage_rows": 35332,
+      "local_storage_rows": 18364,
+      "trace_rows": 14880,
+      "local_trace_rows": 7440,
+      "rows_per_q": 8256,
+      "augmented_rows_per_q": [
+        3796,
+        3872,
+        3872,
+        3872
+      ],
+      "q_port_counts": [
+        76,
+        152,
+        152,
+        152
+      ],
+      "sector_port_counts": [
+        228,
+        304
+      ],
+      "physical_mode_count": 532,
+      "ordinary_defaults_changed": false
+    },
+    "global_carrier_identity_before_equals_after": true,
+    "global_carrier_identity": {
+      "assembly_context_sha256": "c99605a4086dcadccf7c663aed89ef2107054f41f0bc01b4b26f97c4e17c6768",
+      "assembly_mode_manifest_sha256": "a9b5a66dd2b9b34514b355438798eae964faefb077a2448ccdefd8e885336483",
+      "carrier_numeric_sha256": "08a4251de1497690e9496f3e73e70b5d8664c9aa1702d3e452e8958fd9bc7a85",
+      "mode_count": 532,
+      "physical_generator_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951"
+    },
+    "cell_metric_material_cover": [
+      {
+        "all_material_tags_equal": true,
+        "cell_cover_exactly_once": true,
+        "complete_actual_cell_count": 168,
+        "local_actual_cell_count": 84,
+        "maximum_actual_vertex_difference": 0.0,
+        "metric_tolerance": 1e-12,
+        "replication_count": 2
+      },
+      {
+        "all_material_tags_equal": true,
+        "cell_cover_exactly_once": true,
+        "complete_actual_cell_count": 168,
+        "local_actual_cell_count": 84,
+        "maximum_actual_vertex_difference": 0.0,
+        "metric_tolerance": 1e-12,
+        "replication_count": 2
+      }
+    ],
+    "complete_mode_fold_lift": [
+      {
+        "complete_DOF_fold_and_lift": true,
+        "maximum_complete_mode_relative_error": 9.717018849443186e-15,
+        "mode_count": 228,
+        "nonzero_lower_dual_rhs_sqrtK_identity": true,
+        "raw_and_both_actual_cutoffs_audited": true,
+        "single_D_conjugation": true,
+        "tolerance": 1e-10
+      },
+      {
+        "complete_DOF_fold_and_lift": true,
+        "maximum_complete_mode_relative_error": 9.512976300056905e-15,
+        "mode_count": 304,
+        "nonzero_lower_dual_rhs_sqrtK_identity": true,
+        "raw_and_both_actual_cutoffs_audited": true,
+        "single_D_conjugation": true,
+        "tolerance": 1e-10
+      }
+    ],
+    "global_component_receipt_hash_as_stored": {
+      "file_sha256": "9a6e3d08925526efac8b7afeee424aa510e81783b9696f08389a98495ac54c8d",
+      "path": "global_components/live_component_receipt.json"
+    },
+    "local_raw_receipt_hashes_as_stored": [
+      {
+        "file_sha256": "c484d11941624f3f1f0de11b491bd786dc7488032547973ce64a0b4cd6524ee0",
+        "path": "raw_twist_0/raw_port_receipt.json",
+        "status": "PASS_QUOTIENT_RAW_PORT_AUDIT_ONLY",
+        "twist_index": 0
+      },
+      {
+        "file_sha256": "536c8e62afbf63ebcb221717b8d1a566dba3fce04ec625266e6f11681d0ab997",
+        "path": "raw_twist_1/raw_port_receipt.json",
+        "status": "PASS_QUOTIENT_RAW_PORT_AUDIT_ONLY",
+        "twist_index": 1
+      }
+    ],
+    "deferred_gates": [
+      "complete original contribution/operator audit",
+      "all-q prefactor CSR and resources",
+      "q factors",
+      "full original solve/recovery/residual/output qualification"
+    ],
+    "subordinate_receipt_hashes_not_replayed": true
+  },
+  "reviewed_metadata_fix": {
+    "review": {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_interior_metadata_source_review_v1.json",
+      "sha256": "8200892124f003463f24cd4f30cf4a0afc87312ed86249d1cd544f59c13e5840",
+      "bytes": 3714
+    },
+    "status": "PASS_XZ_INTERIOR_METADATA_GUARD_SOURCE_ONLY",
+    "base_head": "cb63d2a97865a4274dab54dfb8c6c6581ced0c8c",
+    "production_scope": "fixture_interior_positions changes only X enum to X/XZ and error label; every other byte restores to cb63d2a. Count, gather, independent-row membership, RHS construction and normalization remain unchanged.",
+    "changed_files_sha256": {
+      "src/solvers/y_orbit_centered_evidence.py": "e3116e5c1d19bcf91130dcaa086b19434418a4fc31c0f338aaf560408f872ccb",
+      "benchmarks/y_orbit_direct_source_contract.py": "8654d1c4e913ed0055231c4dda7144bcde9c826bbf4603396adc251b0b42f018",
+      "src/test/test_y_orbit_direct_XZ_interior_metadata.py": "13f2210b1fa26347915c955c577c836d88c39cf52a3d6233f9640e2c0d5e7137"
+    },
+    "source_exact_guard_restoration_to_base": true,
+    "source_contract_exact_test_path_restoration_to_base": true,
+    "preserved_branches": {
+      "None_p2": 480,
+      "None_p4": 8640,
+      "X_p4": 12960
+    },
+    "XZ_p4_interior_rows": 18144,
+    "guarded_inventory": [
+      "degree must be 4",
+      "full_rows must equal selected profile storage_rows",
+      "actual unique interior storage rows count must equal profile interior_rows",
+      "actual independent positions count must equal profile interior_rows",
+      "Y and unknown profiles rejected"
+    ],
+    "caller_join": [
+      {
+        "name": "fixture_interior_positions",
+        "line": 86,
+        "selected_direct_profile_forwarded": true
+      },
+      {
+        "name": "interior_only_rhs",
+        "line": 190,
+        "selected_direct_profile_forwarded": true
+      }
+    ],
+    "bounded_named_direct_calls_reviewed": 65,
+    "profile_sensitive_helpers_reviewed": 18,
+    "remaining_X_only_guard_in_reviewed_paths": false,
+    "callgraph_limit": "Bounded direct named-call/profile-helper review, not a proof of all dynamic or transitive execution paths. Unused legacy sparse/p2 entrypoints are outside the direct-XZ call path.",
+    "source_manifest": {
+      "path": "experiments/y_orbit_XZ_interior_fix/source_manifest.json",
+      "sha256": "bd39c67d53c5cdc04409f298d23eca04b158d3f80a1ba61a6402057865fb8fc9",
+      "bytes": 795
+    },
+    "source_callgraph": {
+      "path": "experiments/y_orbit_XZ_interior_fix/source_callgraph_receipt.json",
+      "sha256": "0b39bfc75a9b6646d03c855421139b0c8b8449fb06d09b92c58113d4dc7dbc90",
+      "bytes": 2615
+    },
+    "numerical_gates_changed": false
+  },
+  "saved_interior_smoke": {
+    "receipt": {
+      "path": "experiments/y_orbit_XZ_interior_fix/actual_saved_interior_smoke_v2.json",
+      "sha256": "dd8f4475f5a94cb1b19b0a9b13cdb8a5497bf4b6577597292c14cab0a2cf9114",
+      "bytes": 1379
+    },
+    "result": {
+      "schema": "task40extra.XZ-production-interior-metadata-smoke.v1",
+      "passed": true,
+      "source_base_head": "cb63d2a97865a4274dab54dfb8c6c6581ced0c8c",
+      "helper_source_state": "staged metadata guard; current helper hash explicitly bound",
+      "actual_saved_interior_rows": 18144,
+      "actual_saved_independent_rows": 33024,
+      "actual_saved_full_rows": 35332,
+      "production_helper_branches_executed": [
+        "fixture_interior_positions",
+        "interior_only_rhs"
+      ],
+      "view_scope": "only hash-bound actual interior gather and layout; no live FE space/full cell topology claim",
+      "actual_basix_coefficients_match_qualified_context": true,
+      "actual_interior_union_and_nonzero_load_complete": true,
+      "RHS_norm": 0.9999999999999998,
+      "input_manifest_sha256": "51e60ed42ef1e70fdfffeefdf67514580334065153689966ac1a0b4cdc3e6f7b",
+      "global_component_receipt_sha256": "9a6e3d08925526efac8b7afeee424aa510e81783b9696f08389a98495ac54c8d",
+      "inputs": {
+        "direct_global_interior_storage_rows": "cd281ca4f3c28e0990ef1fd77bc419c813774c3b47df5b362fa9246977835bb8",
+        "independent_storage_rows": "f1ed502d265cb0cb931e05af4ce8a9b8c761e77d20df6832b62dbbc46e2a6d0f"
+      },
+      "no_FE_JIT_factor_PDE_calls": true,
+      "helper_source_sha256": "e3116e5c1d19bcf91130dcaa086b19434418a4fc31c0f338aaf560408f872ccb",
+      "script_sha256": "8389adc9826544b33128e83c8a13220a3a001d5ed1cae463203571e4ddb995b9"
+    },
+    "scope_zh": "只使用原保存、哈希绑定的实际 interior gather/layout，调用生产 helper；不重建 live FE space 或完整未保存拓扑，不构成完整 PDE/算子/解资格。归档未解码数组。",
+    "initial_valid_receipt_preserved": {
+      "path": "experiments/y_orbit_XZ_interior_fix/actual_saved_interior_smoke.json",
+      "sha256": "f7584a4625a25b3a079f7cdd0978bc8dc3ab2ab6cc0f5e1bceb65916742295de",
+      "bytes": 1286
+    },
+    "console_failure_preserved": {
+      "receipt": {
+        "path": "experiments/y_orbit_XZ_interior_fix/smoke_console_failure_attempt1.json",
+        "sha256": "3ebdaa98ee60aeb4dea5bb985b1bd974323198c27f61a128e5108b7d235f8b9e",
+        "bytes": 303
+      },
+      "result": {
+        "error_type": "TypeError",
+        "stage": "console summary after valid smoke receipt was written",
+        "reason": "np.count_nonzero returns numpy.int64; native JSON console expects int",
+        "original_script_sha256": "dd36109faa6829c805a8ca0b46e02142e87e093fd2cf436950d215c18f354c98",
+        "PDE_rerun": false
+      },
+      "valid_receipt_written_before_console_error": true,
+      "correction_scope": "console scalar numpy.int64 to native int and explicit staged-source labeling"
+    }
+  },
+  "formal_tests_after_fix": {
+    "summary": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_interior_frozen_tests_attempt1/summary.json",
+      "sha256": "acc6fead2541cbf0731f4b9d5bbab52ea321b322d368ad317ffecfdf06bb59b9",
+      "bytes": 176597
+    },
+    "log": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_interior_frozen_tests_attempt1/worker.log",
+      "sha256": "605f426cca60b58603ca8e5b33473c534c91493f1517b32ee6b8fe96e8e296f9",
+      "bytes": 12454
+    },
+    "supervisor": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 9.091129507010919,
+      "sampled_process_tree_rss_peak_bytes": 136466432,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "process_tree_all_status_readable": true,
+      "process_tree_all_identity_complete": true,
+      "process_tree_identity_coverage": "complete",
+      "observed_child_identity_coverage": "complete",
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "global_swap_delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "source": {
+        "head": "f7ad7e70b0a06148de9f416b44b6d455e1212bde",
+        "branch": "task40extra_dot_parallel_cloud",
+        "dirty": ""
+      },
+      "tree_cap_bytes": 1610612736,
+      "time_end_observation": {
+        "time_policy": "enforce",
+        "time_gate_evaluated": true,
+        "time_gate_action": "enforce",
+        "observed_seconds": 9.09113182000874,
+        "limit_seconds": 600.0,
+        "inclusive": true,
+        "exceeded": false,
+        "passed": true
+      }
+    },
+    "test_count": 62,
+    "test_elapsed_seconds": 7.717,
+    "result": "PASS",
+    "new_production_branch_test_count": 4,
+    "new_production_tests": [
+      "test_Y_unknown_wrong_degree_rows_missing_or_duplicate_interior_rejected (test_y_orbit_direct_XZ_interior_metadata.ProductionInteriorProfileTests.test_Y_unknown_wrong_degree_rows_missing_or_duplicate_interior_rejected) ... ok",
+      "test_actual_X_and_XZ_Basix_interior_branches_and_complete_load (test_y_orbit_direct_XZ_interior_metadata.ProductionInteriorProfileTests.test_actual_X_and_XZ_Basix_interior_branches_and_complete_load) ... ok",
+      "test_ordinary_p2_p4_None_metadata_branches_unchanged (test_y_orbit_direct_XZ_interior_metadata.ProductionInteriorProfileTests.test_ordinary_p2_p4_None_metadata_branches_unchanged) ... ok",
+      "test_production_source_change_is_exact_profile_enum_and_message_only (test_y_orbit_direct_XZ_interior_metadata.ProductionInteriorProfileTests.test_production_source_change_is_exact_profile_enum_and_message_only) ... ok"
+    ],
+    "archive_did_not_rerun_tests": true
+  },
+  "earlier_58_test_failure_and_correction": {
+    "failed_session": {
+      "summary": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt1/summary.json",
+        "sha256": "43cdc55039c4c1acb531e48aee98678365751721b7515265cf589316d77c5a8b",
+        "bytes": 176475
+      },
+      "log": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt1/worker.log",
+        "sha256": "0cd18c76ab902b9b3c16452f22aeeee5dc3304b59dc5ae8584c4a77df9f1d8c3",
+        "bytes": 12522
+      },
+      "supervisor": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 2,
+        "elapsed_seconds": 8.394387861000723,
+        "sampled_process_tree_rss_peak_bytes": 83525632,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "process_tree_all_status_readable": true,
+        "process_tree_all_identity_complete": true,
+        "process_tree_identity_coverage": "complete",
+        "observed_child_identity_coverage": "complete",
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "source": {
+          "head": "8f766546460e0598497fc5fe4ccc95121034686c",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": ""
+        },
+        "tree_cap_bytes": 1610612736,
+        "time_end_observation": {
+          "time_policy": "enforce",
+          "time_gate_evaluated": true,
+          "time_gate_action": "enforce",
+          "observed_seconds": 8.39439069700893,
+          "limit_seconds": 600.0,
+          "inclusive": true,
+          "exceeded": false,
+          "passed": true
+        }
+      },
+      "test_count": 58,
+      "test_elapsed_seconds": 6.955,
+      "failures": 1,
+      "failed_test": "test_direct_dispatch_uses_role_validator_and_preserves_numeric_helper",
+      "failure_reason": "stale whole-file byte equality assertion rejects previously approved exact X/XZ held-Y raw metadata guard",
+      "production_numerical_failure_claimed": false
+    },
+    "test_only_review": {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_source_guard_test_correction_review_v1.json",
+      "sha256": "448db71a397cfd016a64883c550edc44acfa81356a010ec987ac92f3bbe32798",
+      "bytes": 1629
+    },
+    "review_status": "PASS_TEST_ONLY_EXACT_APPROVED_GUARD_NORMALIZATION",
+    "approved_guard_bytes_removed_for_exact_baseline_comparison": 103,
+    "all_remaining_bytes_equal": true,
+    "correction_did_not_change_production": true,
+    "corrected_session": {
+      "summary": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt2/summary.json",
+        "sha256": "df29db6eb5a6ffb1d9825ed9c22b78e7e633ee5acfa5811c98b1d33fb4d74bf6",
+        "bytes": 176472
+      },
+      "log": {
+        "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_frozen_tests_attempt2/worker.log",
+        "sha256": "f1ec525d6b668b27d5fad6fdc3d4d1071b6432ab10cb611c51edcc61cf03a9ec",
+        "bytes": 11616
+      },
+      "supervisor": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 10.08761465799762,
+        "sampled_process_tree_rss_peak_bytes": 75575296,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "process_tree_all_status_readable": true,
+        "process_tree_all_identity_complete": true,
+        "process_tree_identity_coverage": "complete",
+        "observed_child_identity_coverage": "complete",
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "global_swap_delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "source": {
+          "head": "cb63d2a97865a4274dab54dfb8c6c6581ced0c8c",
+          "branch": "task40extra_dot_parallel_cloud",
+          "dirty": ""
+        },
+        "tree_cap_bytes": 1610612736,
+        "time_end_observation": {
+          "time_policy": "enforce",
+          "time_gate_evaluated": true,
+          "time_gate_action": "enforce",
+          "observed_seconds": 10.0876170440024,
+          "limit_seconds": 600.0,
+          "inclusive": true,
+          "exceeded": false,
+          "passed": true
+        }
+      },
+      "test_count": 58,
+      "test_elapsed_seconds": 8.785,
+      "result": "PASS"
+    }
+  },
+  "clean_source_preflight_after_fix": {
+    "receipt": {
+      "path": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/direct_XZ_interior_frozen_preflight_attempt1/receipt.json",
+      "sha256": "5ae3b585be0205c291b36a629e33045557b7b4932300ec051a0e440c160435b3",
+      "bytes": 226401
+    },
+    "source_head": "f7ad7e70b0a06148de9f416b44b6d455e1212bde",
+    "source_tree": "987cc3dd80f0b2550ce2b97e85f4c726f8a9fe78",
+    "source_dirty": "",
+    "input_configuration_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "new_dependency_manifest_sha256": "186fcaf4d5a670eccef4d8a26651aa3c034b1ae465c9599e73df52cdefe81e49",
+    "physical_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+    "all_other_physical_volume_DtN_config_mode_dependencies_equal": true,
+    "numerical_environment_fields_equal": [
+      "python",
+      "prefix",
+      "modules",
+      "petsc_scalar_type",
+      "petsc_int_type",
+      "petsc_version",
+      "mpi_library",
+      "qualification_manifest_sha256",
+      "qualification_scope"
+    ],
+    "historical_numerical_arrays_used": false,
+    "actual_mode_counts": {
+      "mode_count": 532,
+      "q_port_counts": [
+        76,
+        152,
+        152,
+        152
+      ],
+      "sector_port_counts": [
+        228,
+        304
+      ],
+      "source": "src.common.modes_3d.outgoing_port_modes_3d(full_physical_cfg)",
+      "FE_assembly_performed": false,
+      "manifest_digest_qualification": "external_complete_manifest_gate"
+    },
+    "memory_admission": {
+      "requested_memory_gib": 3,
+      "requested_tree_cap_bytes": 3221225472,
+      "required_cap_plus_evidence_reserve_bytes": 3355443200,
+      "fresh_memory_envelope": {
+        "mem_total_bytes": 10451460096,
+        "mem_available_bytes": 7928881152,
+        "effective_total_bytes": 10451460096,
+        "effective_available_bytes": 7928881152,
+        "reserve_bytes": 4294967296,
+        "launch_cap_bytes": 3633913856,
+        "memory_policy": "LEGACY_STATIC_MEMORY_ENVELOPE",
+        "reserve_reason": "legacy max(4GiB,0.15*effective_total) reserve",
+        "static_tree_cap_bytes": 12000000000,
+        "cgroup_limits": []
+      },
+      "launch_admission_passed": true
+    },
+    "ABI": {
+      "petsc_scalar_type": "complex128",
+      "petsc_int_type": "int32",
+      "petsc_version": [
+        3,
+        25,
+        6
+      ],
+      "qualification_manifest_sha256": "007a5f794c3b1f4f7431917f15700cd1cfef5606f3601b07c429135ec5270e96",
+      "qualification_scope": "separate_serial_cloud_ABI_not_historical_WSL_equivalence"
+    },
+    "FE_mesh_space_assembly_JIT_factor_PDE_calls": 0,
+    "preflight_is_not_numerical_certification": true
+  },
+  "attempt2_parent_reported_pending": {
+    "status": "RUNNING_AS_REPORTED_BY_PARENT_NOT_ARCHIVALLY_VERIFIED",
+    "source_head": "f7ad7e70b0a06148de9f416b44b6d455e1212bde",
+    "research_tree_cap_bytes": 3221225472,
+    "research_wall_seconds": 4500,
+    "run_directory": "repo/benchmarks/artifacts/task40extra_dot_parallel_cloud/y_orbit_quotient_p4_phi5_direct_XZ_attempt2",
+    "numerical_outcome": "PENDING",
+    "success_claimed": false,
+    "artifact_contents_read_by_archive": false
+  },
+  "qualification_limits_zh": [
+    "本档保留 XZ attempt1 的真实 worker 失败；component PASS 不授予完整原始算子、inverse、FGMRES、残差、recovery 或 532 输出资格",
+    "X/XZ 元数据枚举修复不改 numerical kernel、normalization、cutoff 或方程门；源码/测试/smoke/preflight 分别按自身范围解释",
+    "XZ 点沿 x/z 细化离散网格，光学尺寸与 fixed manual 532 保持既定研究设定；AUTO32060、目标原始尺寸与几何精度仍未资格化",
+    "3GiB/4500s 是显式 XZ 研究边界，不修改 ordinary defaults，也不证明用户 2TB/48h 目标容量",
+    "attempt2 待定；本档不新增数值认证，不从 source review 或 preflight 推断成功"
+  ]
+}

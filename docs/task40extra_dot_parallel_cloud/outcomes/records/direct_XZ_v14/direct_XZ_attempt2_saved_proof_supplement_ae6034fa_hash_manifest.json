@@ -1,0 +1,76 @@
+{
+  "schema": "task40extra.external-XZ-saved-proof-supplement-manifest.v1",
+  "status": "COMPACT_METADATA_LINKAGE_PASS",
+  "base_directory": "/workspace/scratch/9c465670b46b/task40extra_cloud",
+  "original_sources": [
+    {
+      "path": "staging/direct_XZ_full_proof_replay_f7ad7e7/replay_attempt1/proof_packet.json",
+      "sha256": "116f1f4f2d0fe253a9df77be6ee26f25d5cfdf3c270f736a959c97db1bd8a12a",
+      "bytes": 256441
+    },
+    {
+      "path": "staging/direct_XZ_full_proof_replay_f7ad7e7/replay_attempt1/summary.json",
+      "sha256": "98a48e791abdb2caf92f41ed904f77b853e5ccef66c54cd54be64d20e975c93e",
+      "bytes": 5371
+    },
+    {
+      "path": "staging/direct_XZ_full_proof_replay_f7ad7e7/replay_attempt1/phase.json",
+      "sha256": "e64594e2917fc8f2c9b9e9cd60f66acc61881a0ae400c1d3d73af159d2804f21",
+      "bytes": 64
+    },
+    {
+      "path": "experiments/y_orbit_direct_calibration_staging/review/independent_XZ_grid_orbit_coverage_source_review_v1.json",
+      "sha256": "255143b622b4724bb8ec34733d2bbf2e02b317942da8988dd92b7c9755772285",
+      "bytes": 4162
+    }
+  ],
+  "preserved_historical_files": [
+    {
+      "path": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/failure_zh.md",
+      "sha256": "19b6431d2287f5077fb97012c73b26b64dcb6a85c243519ab641fd66c022a761",
+      "bytes": 4120
+    },
+    {
+      "path": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/compact_ledger.json",
+      "sha256": "3cf70bb57e4f085277b7600bfcad50c88e9a49fc10323928474dbec70a66721c",
+      "bytes": 19738
+    },
+    {
+      "path": "staging/direct_XZ_attempt2_failure_archive_ae6034fa/hash_manifest.json",
+      "sha256": "74ea96920ef4c5fc046d6cf4f6ee6875f7e156af2e69fdc5a227804c267566cd",
+      "bytes": 5610
+    }
+  ],
+  "large_locator_only": {
+    "path": "staging/direct_XZ_full_proof_replay_f7ad7e7/replay_attempt1/consumed_arrays.json",
+    "entries_as_reported": 6993,
+    "read_or_copied": false
+  },
+  "package_files": [
+    {
+      "name": "supplemental_record.json",
+      "sha256": "6f2843eac8cf0d60235d66c3b6d87be46d49ba381d2436cde426496bbda1b4f9",
+      "bytes": 12993
+    },
+    {
+      "name": "supplemental_zh.md",
+      "sha256": "cee5c024ec88ea954fe86cb824cf573fa17c1e08b3831b4858b2e4fe60f1dff3",
+      "bytes": 2526
+    },
+    {
+      "name": "supervisor_summary.json",
+      "sha256": "98a48e791abdb2caf92f41ed904f77b853e5ccef66c54cd54be64d20e975c93e",
+      "bytes": 5371
+    }
+  ],
+  "validation": {
+    "expected_proof_and_summary_hashes_match": true,
+    "embedded_supervisor_exactly_equals_actual_summary": true,
+    "original_worker_failure_and_checker_heads_explicit": true,
+    "source_review_manifest_join": true,
+    "complete_saved_scalar_coverage_counts_bound": true,
+    "historical_pending_bytes_unchanged": true,
+    "no_array_or_proof_rerun": true,
+    "no_fresh_PDE_PASS_inferred": true
+  }
+}

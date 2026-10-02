@@ -72,6 +72,8 @@ class FourBranchFactors:
         else:
             from .y_orbit_direct_profile import direct_profile_metadata
             profile = direct_profile_metadata(direct_profile)
+            if profile.name not in ("X", "XZ"):
+                raise ValueError("direct factors admit only X/XZ with the unchanged512MiB aggregate policy")
             self.nq, self.row_counts, self.per_q_allowance = profile.ny, profile.augmented_rows_per_q, profile.factor_allowance_per_q_bytes
             self.direct_profile_name = profile.name
         if set(matrices)!=set(range(self.nq)):raise ValueError('all actual q branches required before factors')

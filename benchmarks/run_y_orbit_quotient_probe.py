@@ -35,46 +35,50 @@ DIRECT_SCHEMA = "task40extra.y-orbit-direct-profile-probe.v1"
 
 
 def research_wall_budget(direct_profile, requested=None):
-    """Only the explicit X research command may extend the ordinary600 cap."""
+    """Only the exact approved X/XZ research requests extend the600 default."""
     if requested is None:
         return WALL_SECONDS
-    if direct_profile != "X" or type(requested) is not int or requested != 1800:
-        raise ValueError("research wall1800 requires the explicit direct X profile")
+    if type(requested) is not int or (direct_profile, requested) not in (("X", 1800), ("XZ", 4500)):
+        raise ValueError("research wall requires exact X1800 or XZ4500")
     return requested
 
-
 def research_memory_budget(direct_profile, stage, research_wall_seconds, requested=None):
-    """The reviewed2GiB cap belongs only to one explicit X/solve/wall1800 route."""
+    """Exact X2GiB/1800 or XZ3GiB/4500; ordinary1.5GiB is unchanged."""
     if requested is None:
+        if direct_profile == "XZ" and research_wall_seconds == 4500:
+            raise ValueError("XZ4500 research workflow requires its explicit3GiB cap")
         return TREE_CAP_BYTES
-    if (type(requested) is not int or requested != 2 or direct_profile != "X" or stage != "solve"
-            or type(research_wall_seconds) is not int or research_wall_seconds != 1800):
-        raise ValueError("research memory2GiB requires explicit X solve and wall1800")
-    return 2 * 1024**3
+    if (type(requested) is not int or stage != "solve" or type(research_wall_seconds) is not int
+            or (direct_profile, research_wall_seconds, requested) not in (("X", 1800, 2), ("XZ", 4500, 3))):
+        raise ValueError("research memory requires exact X/solve/1800/2 or XZ/solve/4500/3")
+    return requested * 1024**3
 
-
-def validate_research_memory_launch(envelope, requested=None):
-    """Check fresh host/cgroup/dynamic headroom before either supervised launch."""
+def validate_research_memory_launch(envelope, requested=None, *, direct_profile=None, research_wall_seconds=None):
+    """Fresh physical/cgroup/dynamic headroom before either research launch."""
     if requested is None:
         return None
-    if type(requested) is not int or requested != 2:
-        raise ValueError("only the reviewed research memory2GiB enum is admitted")
-    selected = 2 * 1024**3
+    if (type(requested) is not int or requested not in (2, 3)
+            or (requested == 2 and (direct_profile not in (None, "X") or research_wall_seconds not in (None, 1800)))
+            or (requested == 3 and (direct_profile != "XZ" or type(research_wall_seconds) is not int or research_wall_seconds != 4500))):
+        raise ValueError("research launch requires the exact approved profile/time/memory tuple")
+    selected = requested * 1024**3
     required = selected + RESERVE_BYTES
     fields = ("launch_cap_bytes", "effective_available_bytes", "effective_total_bytes")
     if (not isinstance(envelope, dict) or any(type(envelope.get(name)) is not int or envelope[name] < required for name in fields)
             or type(envelope.get("reserve_bytes")) is not int or envelope["reserve_bytes"] < 0
             or envelope["effective_available_bytes"] > envelope["effective_total_bytes"]):
-        raise MemoryError("fresh dynamic/host envelope cannot support2GiB plus the existing128MiB reserve")
+        raise MemoryError("fresh dynamic/host envelope cannot support requested cap plus128MiB reserve")
+    if requested == 3 and (envelope["reserve_bytes"] < 4*1024**3
+            or envelope["launch_cap_bytes"] > max(0, envelope["effective_available_bytes"]-envelope["reserve_bytes"])):
+        raise MemoryError("XZ launch must retain the actual4GiB host reserve before3GiB+128MiB admission")
     groups = envelope.get("cgroup_limits")
     if not isinstance(groups, list) or any(not isinstance(group, dict) or type(group.get("limit_bytes")) is not int
             or type(group.get("current_bytes")) is not int or group["current_bytes"] < 0
             or group["limit_bytes"] - group["current_bytes"] < required for group in groups):
-        raise MemoryError("fresh cgroup headroom cannot support2GiB plus the existing128MiB reserve")
-    return {"requested_memory_gib": 2, "requested_tree_cap_bytes": selected,
+        raise MemoryError("fresh cgroup headroom cannot support requested cap plus128MiB reserve")
+    return {"requested_memory_gib": requested, "requested_tree_cap_bytes": selected,
         "required_cap_plus_evidence_reserve_bytes": required, "fresh_memory_envelope": envelope,
         "launch_admission_passed": True}
-
 
 def research_memory_child_budget(direct_profile, stage, research_wall_seconds, requested, environment, actual_launch_cap):
     selected = research_memory_budget(direct_profile, stage, research_wall_seconds, requested)
@@ -83,16 +87,16 @@ def research_memory_child_budget(direct_profile, stage, research_wall_seconds, r
                 "QUOTIENT_RESEARCH_MEMORY_PROFILE", "QUOTIENT_RESEARCH_MEMORY_STAGE", "QUOTIENT_RESEARCH_MEMORY_LAUNCH_ADMISSION")):
             raise ValueError("default memory cap cannot inherit an unrequested research environment")
         return selected, None
-    expected = {"QUOTIENT_RESEARCH_MEMORY_GIB": "2", "QUOTIENT_RESEARCH_TREE_CAP_BYTES": str(selected),
-                "QUOTIENT_RESEARCH_MEMORY_PROFILE": "X", "QUOTIENT_RESEARCH_MEMORY_STAGE": "solve"}
+    expected = {"QUOTIENT_RESEARCH_MEMORY_GIB": str(requested), "QUOTIENT_RESEARCH_TREE_CAP_BYTES": str(selected),
+                "QUOTIENT_RESEARCH_MEMORY_PROFILE": direct_profile, "QUOTIENT_RESEARCH_MEMORY_STAGE": "solve"}
     if any(environment.get(name) != value for name, value in expected.items()) or type(actual_launch_cap) is not int or actual_launch_cap != selected:
         raise ValueError("research memory argv/profile/stage and actual supervised cap differ")
     receipt = json.loads(environment.get("QUOTIENT_RESEARCH_MEMORY_LAUNCH_ADMISSION", "null"))
     if (not isinstance(receipt, dict) or json.dumps(receipt, sort_keys=True, allow_nan=False)
-            != json.dumps(validate_research_memory_launch(receipt.get("fresh_memory_envelope", {}), requested), sort_keys=True, allow_nan=False)):
+            != json.dumps(validate_research_memory_launch(receipt.get("fresh_memory_envelope", {}), requested,
+                direct_profile=direct_profile, research_wall_seconds=research_wall_seconds), sort_keys=True, allow_nan=False)):
         raise ValueError("research memory launch receipt differs from its exact admitted envelope")
     return selected, receipt
-
 
 def research_phase_budget(direct_profile, requested, environment):
     """Bind the child's allocation clock to its actual watchdog allowance."""
@@ -107,25 +111,28 @@ def research_phase_budget(direct_profile, requested, environment):
     return phase_seconds
 
 
-def research_watchdog_environment(requested, phase_seconds, research_memory_gib=None, memory_launch_admission=None):
+def research_watchdog_environment(requested, phase_seconds, research_memory_gib=None, memory_launch_admission=None, *, direct_profile=None):
     if requested is None:
         if research_memory_gib is not None:
-            raise ValueError("research memory2GiB requires explicit wall1800")
+            raise ValueError("research memory requires its explicit research wall tuple")
         return {}
-    if type(requested) is not int or requested != 1800 or not math.isfinite(phase_seconds) or not 0 < phase_seconds <= requested:
+    profile = "X" if direct_profile is None else direct_profile
+    research_wall_budget(profile, requested)
+    if not math.isfinite(phase_seconds) or not 0 < phase_seconds <= requested:
         raise ValueError("invalid explicit research watchdog timing")
     environment = {"QUOTIENT_RESEARCH_WALL_SECONDS": str(requested), "QUOTIENT_PHASE_WALL_SECONDS": str(phase_seconds)}
     if research_memory_gib is not None:
-        if (type(research_memory_gib) is not int or research_memory_gib != 2
-                or not isinstance(memory_launch_admission, dict)
-                or json.dumps(memory_launch_admission, sort_keys=True, allow_nan=False)
-                    != json.dumps(validate_research_memory_launch(memory_launch_admission.get("fresh_memory_envelope", {}), 2), sort_keys=True, allow_nan=False)):
+        selected = research_memory_budget(profile, "solve", requested, research_memory_gib)
+        expected = validate_research_memory_launch(memory_launch_admission.get("fresh_memory_envelope", {})
+            if isinstance(memory_launch_admission, dict) else {}, research_memory_gib,
+            direct_profile=profile, research_wall_seconds=requested)
+        if (not isinstance(memory_launch_admission, dict) or json.dumps(memory_launch_admission, sort_keys=True, allow_nan=False)
+                != json.dumps(expected, sort_keys=True, allow_nan=False)):
             raise ValueError("research memory environment requires its exact fresh admitted launch packet")
-        environment.update(QUOTIENT_RESEARCH_MEMORY_GIB="2", QUOTIENT_RESEARCH_TREE_CAP_BYTES=str(2*1024**3),
-            QUOTIENT_RESEARCH_MEMORY_PROFILE="X", QUOTIENT_RESEARCH_MEMORY_STAGE="solve",
+        environment.update(QUOTIENT_RESEARCH_MEMORY_GIB=str(research_memory_gib), QUOTIENT_RESEARCH_TREE_CAP_BYTES=str(selected),
+            QUOTIENT_RESEARCH_MEMORY_PROFILE=profile, QUOTIENT_RESEARCH_MEMORY_STAGE="solve",
             QUOTIENT_RESEARCH_MEMORY_LAUNCH_ADMISSION=json.dumps(memory_launch_admission, sort_keys=True, allow_nan=False))
     return {"worker_environment": environment}
-
 
 def plain_metadata(value):
     """Detach immutable authority metadata for canonical JSON serialization."""
@@ -147,16 +154,18 @@ def plan_metadata(stage, *, shared_transforms=False, direct_profile=None, resear
     if stage not in PASSES:
         raise ValueError("unknown quotient stage")
     if direct_profile is not None:
-        if direct_profile!="X":raise ValueError("only directX calibration is enabled; XZ/Y remain held")
+        if direct_profile not in ("X", "XZ"):raise ValueError("only explicit X/XZ calibration is enabled; Y remains held")
+        from src.solvers.y_orbit_direct_profile import direct_profile_metadata
+        metadata = direct_profile_metadata(direct_profile)
         return {"schema":DIRECT_SCHEMA,"status":"NOT_RUN_STAGED_PLAN_ONLY","stage":stage,
-            "direct_profile":"X","dimensions":[6,4,5],"degree":4,"physical_mode_count":532,
-            "global_cells":120,"global_storage_rows":25468,"global_independent_rows":23808,
-            "global_interiors":12960,"local_cells":60,"local_storage_rows":13236,"local_independent_rows":11904,
-            "local_interiors":6480,"q_augmented_rows":[2788,2864,2864,2864],"q_port_counts":[76,152,152,152],
+            "direct_profile":direct_profile,"dimensions":list(metadata.dimensions),"degree":4,"physical_mode_count":532,
+            "global_cells":metadata.cell_count,"global_storage_rows":metadata.storage_rows,"global_independent_rows":metadata.independent_rows,
+            "global_interiors":metadata.interior_rows,"local_cells":metadata.local_cell_count,"local_storage_rows":metadata.local_storage_rows,"local_independent_rows":metadata.local_independent_rows,
+            "local_interiors":metadata.local_interior_rows,"q_augmented_rows":list(metadata.augmented_rows_per_q),"q_port_counts":list(metadata.q_port_counts),
             "factor_count":0,"PDE_solved":False,"official_results":False,"shared_transforms":True,
             "tree_cap_bytes":tree_cap,"wall_seconds":wall_seconds,"swap_bytes":0,"mpi":1,"math_threads":1,
             "evidence_reserve_bytes":RESERVE_BYTES,"factor_workspace_allowance_bytes":0 if stage=="prefactor" else FACTOR_ALLOWANCE_BYTES,
-            "source_of_counts":"derived X profile metadata; fresh actual counts must pass before factors",
+            "source_of_counts":f"derived {direct_profile} profile metadata; fresh actual counts must pass before factors",
             "fresh_carrier_and_complete_operator_qualification":"NOT_RUN","fill_time_and_RSS_prediction":None}
     return {"schema": SCHEMA, "status": "NOT_RUN_STAGED_PLAN_ONLY", "stage": stage,
             "degree": 4, "physical_mode_count": 532, "factor_count": 0,
@@ -203,6 +212,8 @@ def allocation_request(stage, facts):
 
 
 def validate_worker_result(report, stage, *, direct_profile=None):
+    if direct_profile is not None and (direct_profile not in ("X", "XZ") or report.get("direct_profile") != direct_profile):
+        raise ValueError("worker direct profile must match its exact approved CLI profile")
     if (stage not in PASSES or report.get("schema") != (SCHEMA if direct_profile is None else DIRECT_SCHEMA)
             or report.get("stage") != stage or report.get("status") != PASSES[stage]
             or report.get("degree") != 4 or report.get("physical_mode_count") != 532
@@ -326,7 +337,7 @@ def _worker(args):
                 raise ValueError("complete actual shared-equivalence event required before factor")
             runtime_state["shared_equivalence_complete"] = True
         if name=="direct_complete_original_qualification_before_any_factor":
-            if args.direct_profile!="X" or facts.get("factor_count")!=0 or len(facts.get("input_blocks",[]))!=4:
+            if args.direct_profile not in ("X", "XZ") or facts.get("factor_count")!=0 or len(facts.get("input_blocks",[]))!=4:
                 raise ValueError("direct complete original qualification event must precede factors")
             runtime_state["direct_original_qualified"]=True
         payload = {"event": name, "worker_elapsed_seconds": time.monotonic() - started, **facts}
@@ -335,7 +346,7 @@ def _worker(args):
             "worker_elapsed_seconds": payload["worker_elapsed_seconds"],
             **({"research_wall_seconds": wall_seconds, "phase_wall_seconds": phase_seconds}
                if args.research_wall_seconds is not None else {}),
-            **({"research_memory_gib": 2, "requested_tree_cap_bytes": tree_cap}
+            **({"research_memory_gib": args.research_memory_gib, "requested_tree_cap_bytes": tree_cap}
                if args.research_memory_gib is not None else {})})
         print(json.dumps(payload, allow_nan=False), flush=True)
 
@@ -378,7 +389,7 @@ def _worker(args):
               "global_swap_counters": swap_baseline, "facts": facts,
               **({"research_wall_seconds": wall_seconds, "phase_wall_seconds": phase_seconds}
                  if args.research_wall_seconds is not None else {}),
-              **({"research_memory_gib": 2, "requested_tree_cap_bytes": tree_cap}
+              **({"research_memory_gib": args.research_memory_gib, "requested_tree_cap_bytes": tree_cap}
                  if args.research_memory_gib is not None else {})})
         if projected >= effective_cap:
             raise MemoryError("fresh measured whole-tree allocation plus evidence reserve exceeds cap")
@@ -434,7 +445,7 @@ def _worker(args):
                     "performance_or_target_capacity_claim": False,
                     **({"research_wall_seconds": wall_seconds, "worker_phase_wall_seconds": phase_seconds}
                        if args.research_wall_seconds is not None else {}),
-                    **({"research_memory_gib": 2, "requested_tree_cap_bytes": tree_cap,
+                    **({"research_memory_gib": args.research_memory_gib, "requested_tree_cap_bytes": tree_cap,
                         "research_memory_launch_admission": memory_launch_admission}
                        if args.research_memory_gib is not None else {})}
         provenance = {"source": source, "environment": environment, "command": sys.argv,
@@ -448,7 +459,7 @@ def _worker(args):
                                                           "workspace_bytes": 4 << 20})
         if args.direct_profile:
             from benchmarks.y_orbit_direct_source_contract import load_direct_source_contract
-            source_contract=load_direct_source_contract(ARTIFACT_ROOT,new_source=source,new_environment=environment,allocation_gate=allocation_gate)
+            source_contract=load_direct_source_contract(ARTIFACT_ROOT,new_source=source,new_environment=environment,allocation_gate=allocation_gate,direct_profile=args.direct_profile)
             provenance["direct_source_contract"]=source_contract
             write_json(args.run_directory/"provenance.json",provenance)
             from src.solvers.y_orbit_direct_probe import run_direct_quotient_probe
@@ -522,11 +533,11 @@ def main(argv=None):
     parser.add_argument("--expected-head")
     parser.add_argument("--run-directory", type=Path)
     parser.add_argument("--shared-transforms", action="store_true", help="same80 p4 storage-only bank; all original gates retained")
-    parser.add_argument("--direct-profile", choices=("X",), help="fresh directX calibration; XZ/Y remain held")
-    parser.add_argument("--research-wall-seconds", type=int, choices=(1800,),
-        help="explicit X-only research workflow allowance; ordinary default is600 seconds")
-    parser.add_argument("--research-memory-gib", type=int, choices=(2,),
-        help="explicit X/solve/wall1800 research cap; ordinary default is1.5GiB")
+    parser.add_argument("--direct-profile", choices=("X", "XZ"), help="fresh direct X/XZ calibration; Y remains held")
+    parser.add_argument("--research-wall-seconds", type=int, choices=(1800, 4500),
+        help="explicit X1800/XZ4500 research workflow allowance; ordinary default is600 seconds")
+    parser.add_argument("--research-memory-gib", type=int, choices=(2, 3),
+        help="explicit X2GiB/1800 or XZ3GiB/4500 solve cap; ordinary default is1.5GiB")
     args = parser.parse_args(argv)
     try:
         wall_seconds = research_wall_budget(args.direct_profile, args.research_wall_seconds)
@@ -562,7 +573,8 @@ def main(argv=None):
             raise ValueError("frozen input hash differs")
         if shutil.disk_usage(ROOT).free < 2 * 1024**3:
             raise RuntimeError("quotient evidence requires at least 2GiB free disk")
-        memory_launch_admission = (validate_research_memory_launch(memory_envelope(), args.research_memory_gib)
+        memory_launch_admission = (validate_research_memory_launch(memory_envelope(), args.research_memory_gib,
+            direct_profile=args.direct_profile, research_wall_seconds=args.research_wall_seconds)
                                    if args.research_memory_gib is not None else None)
     except Exception as exc:
         args.run_directory.mkdir(parents=True, exist_ok=False)
@@ -587,7 +599,7 @@ def main(argv=None):
                             hard_stop_immediate=True, timebase_guard=True, stop_on_global_swap=True,
                             pss_sampling_policy="disabled_by_profile",
                             **research_watchdog_environment(args.research_wall_seconds, worker_seconds,
-                                args.research_memory_gib, memory_launch_admission))
+                                args.research_memory_gib, memory_launch_admission, direct_profile=args.direct_profile))
     except Exception as exc:
         preserve_supervisor_failure(args.run_directory, stage=args.stage, source=source,
                                     environment=environment, command=command, exc=exc)
@@ -621,7 +633,8 @@ def main(argv=None):
     if args.research_wall_seconds is not None:checker_command.extend(["--research-wall-seconds",str(args.research_wall_seconds)])
     if args.research_memory_gib is not None:checker_command.extend(["--research-memory-gib",str(args.research_memory_gib)])
     try:
-        checker_memory_launch_admission = (validate_research_memory_launch(memory_envelope(), args.research_memory_gib)
+        checker_memory_launch_admission = (validate_research_memory_launch(memory_envelope(), args.research_memory_gib,
+            direct_profile=args.direct_profile, research_wall_seconds=args.research_wall_seconds)
                                            if args.research_memory_gib is not None else None)
         if args.research_memory_gib is not None:
             remaining = wall_seconds - (time.monotonic() - started)
@@ -631,7 +644,7 @@ def main(argv=None):
                             hard_stop_immediate=True, timebase_guard=True, stop_on_global_swap=True,
                             pss_sampling_policy="disabled_by_profile",
                             **research_watchdog_environment(args.research_wall_seconds, remaining,
-                                args.research_memory_gib, checker_memory_launch_admission))
+                                args.research_memory_gib, checker_memory_launch_admission, direct_profile=args.direct_profile))
     except Exception as exc:
         preserve_supervisor_failure(args.run_directory, stage="checker", source=source,
                                     environment=environment, command=checker_command, exc=exc)

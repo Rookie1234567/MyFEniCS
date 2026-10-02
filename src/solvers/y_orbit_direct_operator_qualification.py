@@ -1,4 +1,4 @@
-"""Exhaustive original-cell qualification for the reviewed direct X profile.
+"""Exhaustive original-cell qualification for the reviewed direct X/XZ profiles.
 
 This is an opt-in, pre-factor witness producer and an array-only verifier.
 It uses the original FFCx curl+mass tensor source, the finalized native MPC,
@@ -177,15 +177,21 @@ def _read(reference, load):
 
 
 def _metadata(direct_profile):
-    from .y_orbit_direct_profile import direct_profile_metadata
-    metadata = direct_profile_metadata(direct_profile)
-    _require(metadata.name == "X" and metadata.dimensions == (6, 4, 5),
-             "this qualification is authorized only for direct X Nx6/Ny4/Nz5")
+    from .y_orbit_direct_profile import DirectTwoCellProfile, direct_profile_metadata
+    selected = DirectTwoCellProfile(direct_profile)
+    inventories = {
+        DirectTwoCellProfile.X: ((6, 4, 5), (120, 25468, 23808, 12960, 60, 13236, 11904, 6480)),
+        DirectTwoCellProfile.XZ: ((6, 4, 7), (168, 35332, 33024, 18144, 84, 18364, 16512, 9072)),
+    }
+    _require(selected in inventories, "this qualification is authorized only for direct X/XZ")
+    metadata = direct_profile_metadata(selected)
+    dimensions, inventory = inventories[selected]
+    _require(metadata.name == selected.value and metadata.dimensions == dimensions,
+             "reviewed direct profile dimensions changed")
     _require((metadata.cell_count, metadata.storage_rows, metadata.independent_rows,
               metadata.interior_rows, metadata.local_cell_count, metadata.local_storage_rows,
-              metadata.local_independent_rows, metadata.local_interior_rows)
-             == (120, 25468, 23808, 12960, 60, 13236, 11904, 6480),
-             "reviewed X complete inventory changed")
+              metadata.local_independent_rows, metadata.local_interior_rows) == inventory,
+             "reviewed X/XZ complete inventory changed")
     return metadata
 
 
@@ -817,7 +823,7 @@ def _check_source(source, *, load, gate, metadata):
             del tensor, projected, recomputed
         del rebuilt, saved_map, dofs, coordinates
     _require(seen_cells == set(range(expected_cells))
-             and seen_grid == {(ix, iy, iz) for ix in range(6) for iy in range(ny) for iz in range(5)}
+             and seen_grid == {(ix, iy, iz) for ix in range(metadata.nx) for iy in range(ny) for iz in range(metadata.nz)}
              and len(seen_interiors) == expected_cells * INTERIOR_DIMENSION,
              "complete actual cell/grid/interior coverage is not exhaustive")
     # Actual entity incidence connects controls to independently saved native
@@ -876,7 +882,7 @@ def _orbit_pair_sums(source, cells, etas, *, load, gate, label):
     return support, sums
 
 
-def _check_orbits(receipt, *, load, gate):
+def _check_orbits(receipt, *, load, gate, metadata):
     sources = [receipt["global_source"], *receipt["local_sources"]]
     global_eta = [_uncomplex(value) for value in receipt["global_eta"]]
     _require(len(global_eta) == 4, "all four original q eigenphases required")
@@ -885,10 +891,10 @@ def _check_orbits(receipt, *, load, gate):
                  and abs(eta / global_eta[0] - np.exp(2j * np.pi * q / 4)) <= 1e-12,
                  "original all-q/full-cycle Fourier covariance controls fail")
     grouped = [{(ix, iz): [cell for cell in source["cells"] if cell["grid"][0] == ix and cell["grid"][2] == iz]
-                for ix in range(6) for iz in range(5)} for source in sources]
+                for ix in range(metadata.nx) for iz in range(metadata.nz)} for source in sources]
     results = []
-    for ix in range(6):
-        for iz in range(5):
+    for ix in range(metadata.nx):
+        for iz in range(metadata.nz):
             actual = grouped[0][(ix, iz)]
             _require({cell["grid"][1] for cell in actual} == set(range(4)), "global orbit omits an actual translated cell")
             support, global_sums = _orbit_pair_sums(sources[0], actual, global_eta,
@@ -937,7 +943,7 @@ def _check_orbits(receipt, *, load, gate):
                 del local_sums
             results.append(item)
             del global_sums
-    _require(len(results) == 30, "not all actual x-z translation groups were audited")
+    _require(len(results) == metadata.nx * metadata.nz, "not all actual x-z translation groups were audited")
     return results
 
 
@@ -1161,7 +1167,7 @@ def _check_condensation(source, record, *, load, gate, global_eta, twist):
     trace_slots = sorted({int(record_entity["first"]) + j for record_entity in source["entities"]["records"]
                           if record_entity["orbit"] == 0 and record_entity["actual_state"]["dimension"] < 3
                           for j in range(int(record_entity["size"]))})
-    _require(len(trace_slots) == 2712, "complete p4 X trace slots omitted")
+    _require(len(trace_slots) == _metadata(source["profile"]["name"]).trace_rows_per_q, "complete p4 direct trace slots omitted")
     trace_slot_position = {value: index for index, value in enumerate(trace_slots)}
     independent_position = {int(original): position for position, original in enumerate(independent)}
     H, mode_n = _read(record["port_H"], load), _read(record["port_n"], load)
@@ -1363,7 +1369,7 @@ def audit_direct_original_cell_contributions(global_bundle, local_condensed_by_t
     receipt["worker_recomputed_checks"] = checks
     receipt["status"] = "PASS_COMPLETE_ORIGINAL_CONTRIBUTION_PROOF_PREFACTOR"
     event("direct_complete_original_operator_qualification", {"status": receipt["status"],
-          "global_actual_cells": 120, "local_actual_cells_per_twist": 60,
+          "global_actual_cells": metadata.cell_count, "local_actual_cells_per_twist": metadata.local_cell_count,
           "full_original_columns_per_cell": CELL_DIMENSION, "all_q_pairs": 16,
           "all_local_pairs_per_twist": 4, "numeric_factor_calls": 0})
     return receipt
@@ -1385,7 +1391,7 @@ def check_direct_original_cell_contributions(receipt, *, load, allocation_gate,
              "all actual twists required")
     source_checks = [_check_source(source, load=load, gate=allocation_gate, metadata=metadata)
                      for source in (receipt["global_source"], *receipt["local_sources"])]
-    orbits = _check_orbits(receipt, load=load, gate=allocation_gate)
+    orbits = _check_orbits(receipt, load=load, gate=allocation_gate, metadata=metadata)
     etas = [_uncomplex(value) for value in receipt["global_eta"]]
     condensation, provider = [], []
     for b in (0, 1):
