@@ -1,6 +1,7 @@
 {
   "groups": {
     "checker/benchmark": {
+      "browser_change": "Only refresh current live DOM before scroll; no numerical behavior",
       "dependencies": [
         "src/solvers/feinn_common_descent.py",
         "src/runners/feinn_common_descent_arrays.py"
@@ -8,7 +9,8 @@
       "eligible": "RESEARCH_REVIEW_ONLY",
       "files": [
         "benchmarks/check_feinn_common_descent.py",
-        "benchmarks/run_feinn_common_descent.py"
+        "benchmarks/run_feinn_common_descent.py",
+        "benchmarks/render_task42extra.py"
       ],
       "fresh_PDE": false,
       "tests": "87 targeted + independent saved-array checker"

@@ -2,6 +2,7 @@
   "artifact_directory": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z",
   "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
   "branch": "task42extra_feinn_5nm",
+  "browser_repair_source": "988d5af5476032ca29f95ad03536a858487c28f0",
   "candidates": {
     "M3600_1e-10": {
       "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-10_candidate.json",
@@ -22,6 +23,7 @@
   },
   "canonical_common_git": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
   "clean_implementation_run": true,
+  "document_publication_for_actual_render": "2ca3cfc41219fee6dd60df73675bd8c6c33338c4",
   "environment": {
     "activation": "pure",
     "affinity": [

@@ -1,19 +1,26 @@
 {
-  "scope": "pure-array new/related diagnostics only; no FE/full pytest/CI",
-  "passed": 87,
   "Ruff": "PASS",
+  "browser_helper_qualification": {
+    "Ruff": "PASS",
+    "compileall": "PASS",
+    "numerical_source_and_87_tests_unchanged": true,
+    "source": "988d5af5476032ca29f95ad03536a858487c28f0",
+    "targeted_visual_retry": "PASS"
+  },
   "compileall": "PASS",
-  "test_source_kind": "final implementation file hashes before clean freeze commit",
   "files_sha256": {
-    "src/solvers/feinn_common_descent.py": "85c58fdcc25c2ad2f74a71046654224a64462a453a9a9399ee8436d1f5af0ee7",
-    "src/runners/feinn_common_descent_arrays.py": "16c4889a5ef03d92ff71d41c9ba50f2311d3d84d607aad46ace1bdf29cea9132",
-    "benchmarks/run_feinn_common_descent.py": "a363cd54690875b22212b9804fdaae08954a90601ee00ec1976f4b9b776f7672",
     "benchmarks/check_feinn_common_descent.py": "d2333d33684dd052c136c27b04060ed4e7fd617f342ff8aa089799597d5ca446",
+    "benchmarks/run_feinn_common_descent.py": "a363cd54690875b22212b9804fdaae08954a90601ee00ec1976f4b9b776f7672",
+    "src/runners/feinn_common_descent_arrays.py": "16c4889a5ef03d92ff71d41c9ba50f2311d3d84d607aad46ace1bdf29cea9132",
+    "src/solvers/feinn_common_descent.py": "85c58fdcc25c2ad2f74a71046654224a64462a453a9a9399ee8436d1f5af0ee7",
     "src/test/test_feinn_common_descent.py": "99430ae5be59b1b8435e63c2e34f3e9b3fd8b21e6aecf5abf2a54da69a4b7462"
   },
-  "test_log": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_final_qualification_20261003T054027781959Z/supervision/worker.log",
-  "resource_summary": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_final_qualification_20261003T054027781959Z/summary.json",
-  "initial_failure": "1 near-correlated parameter inverse pullback orthogonality failure; 25 passed",
   "first_repair_retest": "26 passed",
-  "pipeline_qualification": "87 passed"
+  "initial_failure": "1 near-correlated parameter inverse pullback orthogonality failure; 25 passed",
+  "passed": 87,
+  "pipeline_qualification": "87 passed",
+  "resource_summary": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_final_qualification_20261003T054027781959Z/summary.json",
+  "scope": "pure-array new/related diagnostics only; no FE/full pytest/CI",
+  "test_log": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_final_qualification_20261003T054027781959Z/supervision/worker.log",
+  "test_source_kind": "final implementation file hashes before clean freeze commit"
 }

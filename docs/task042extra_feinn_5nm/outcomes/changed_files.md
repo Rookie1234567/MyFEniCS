@@ -234,3 +234,5 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 ## V15：研究用保存数组共同下降核及证据
 
 新增src/solvers/feinn_common_descent.py（参数球与小型二次式上下界）、src/runners/feinn_common_descent_arrays.py（白名单/先hash后评价）、benchmarks/run_feinn_common_descent.py薄入口、benchmarks/check_feinn_common_descent.py独立原数组checker和src/test/test_feinn_common_descent.py。新增冻结设计、权限/hash、结果/比较/独立checker、Gate/资源/repair/run/渲染/依赖组及response_v15/topic；summary/README/测试/进度/总账仅同步当前范围。普通训练器/PDE/MPC/端口/环境/历史review/结果均不改；大数组仍ignored。[六组依赖](records/selective_merge_manifest_v15.json)。
+
+V15额外最小修复benchmarks/render_task42extra.py：滚动时重取当前DOM并拒绝脱离页面的旧节点；仅影响可审阅截图，不影响数值源码或旧证据。原失败及修复source988d5af5476032ca29f95ad03536a858487c28f0单列render/repair记录。
