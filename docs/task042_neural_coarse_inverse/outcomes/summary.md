@@ -1,3 +1,32 @@
+# V32：两冷态真实回流负结果／固定局部序列关闭
+
+残差是原方程未平衡的量。本批一次J→外域→J反馈增加十方向中的一个响应，保持物理／完整40端口，使用已有七局部因子。独立checker验证输入、数值、完整消费，结果可信但收益很小，未取得物理解或神经增量。
+
+| 范围／数据身份 | 实际结果 | 资格／证据 |
+|---|---|---|
+| 原0.7nm micro／384hex/p3/q15、MPI1／Full3D，measured | 18144trace＋40port／18184；材料、背景、RHS、双Floquet不改 | 固定operator离线诊断，[run index](records/run_index_v32.json) |
+| LZ4，measured | eta9=.966205505618，eta10=.964843748003，g10=.998590612859 | rank10创新可分辨，额外范数下降0.14094% |
+| LCZ4，measured | eta9=.981968429990，eta10=.980700711250，g10=.998709002549 | rank10创新可分辨，额外范数下降0.12910% |
+| 判定／measured | CHECKED／FIXED_RETURN_DIRECTION_INSUFFICIENT，两态g≥.95 | 内部抵消合格但残差对准弱，[分析](records/direction_analysis_v32.json) |
+| 新完整场／功率 | NOT_RUN；不生成E/H、R/T/A/A_volume或official结果 | 旧V24完整0/5／V23 0/6保持，无新的p/h/M/MPI比较 |
+
+| shared-workstation成本／资源 | measured值与单位 | baseline／边界 |
+|---|---|---|
+| 前测／actor／checker | 11.147470285／83.140184552／4.521115911s | 本轮辅助15.668586196s；唯一actor、无重放 |
+| V27起累计 | 151.4889468078036s≤600s | carry52.68017605994828s不清零 |
+| 同时树采样峰／ownswap | 1,247,059,968B／0 | 各阶段取max；请求0.5s、实际0.582–1.021s，非kernel硬限 |
+| 因子／布局 | 既有J＋外块6，净A/LU1,591,420,032B；S34/SH2、reader7／solve28 | 新LU/装配/gecon/训练0，不称factor-free |
+| 完整成本 | 原formal研发下界77,161.557139s，上游完整N=1／旧aux unknown | 不把局部诊断wall当成功单解时间，[费用](records/resource_costs_v32.json) |
+
+| 未运行／停止／下一步 | 原因与决定 |
+|---|---|
+| 额外回流、第三状态、B_full／迭代／训练 | 无授权；两态弱增量触发固定提案关闭，不追信号 |
+| 新FE／参考／完整物理资格 | 本批只保存方向，旧未合格模型不升级 |
+| NN20%／原尺寸2TB/48h | NOT_DEMONSTRATED／NOT_QUALIFIED；无合格非神经完整配对 |
+| 唯一建议 | 等待dot身份匹配参考与规模费用，先只读对照不同全空间信息传播机制；不自动实施或merge |
+
+[response](../response_v32.md)／[详细表](return_direction_execution_v32.md)／[测试](records/tests_v32.json)／[原始索引](records/raw_evidence_index_v32.json)。首次存储预留停止保留stderr，仅允许未引用bytecode清理，统一128MiB守卫不降；窗口closed／active=null、后代清空。以下历史逐字保留。
+
 # V31最新结果：前测错误收口，真实方向尚未运行
 
 完整接线测试让两个指定样本实际经过study、写出、结算及独立审核，避免仅用手工包自证；成本是一次有界前测。前测109通过／1失败，失败在新增拒绝路径fixture缺三个窗口接口。已最小修正，但本轮不再准入重测或启动actor。

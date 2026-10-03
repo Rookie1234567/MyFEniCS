@@ -1,0 +1,90 @@
+{
+  "status": "EXACT_COMPLETE",
+  "expected": {
+    "actions": 36,
+    "factor_readers": 7,
+    "outer_lu_solve": 24,
+    "joint_lu_solve": 4,
+    "explicit_triangular_pass": 56,
+    "thin_decompositions": 2,
+    "port_factors": 1,
+    "port_solves": 35,
+    "port_rhs_columns": 35,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "ledger_charged": {
+    "actions": 36,
+    "factor_readers": 7,
+    "outer_lu_solve": 24,
+    "joint_lu_solve": 4,
+    "explicit_triangular_pass": 56,
+    "thin_decompositions": 2,
+    "port_factors": 1,
+    "port_solves": 35,
+    "port_rhs_columns": 35,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "manifest_completed": {
+    "actions": 36,
+    "factor_readers": 7,
+    "outer_lu_solve": 24,
+    "joint_lu_solve": 4,
+    "explicit_triangular_pass": 56,
+    "thin_decompositions": 2,
+    "port_factors": 1,
+    "port_solves": 35,
+    "port_rhs_columns": 35,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "action_counts": {
+    "S": 34,
+    "SH": 2,
+    "audit": 0
+  },
+  "actor_count": 1,
+  "fresh_admissions": {
+    "pre": 1,
+    "actor": 1,
+    "checker": 1
+  },
+  "auxiliary_worker_count": 2,
+  "pre_actor_repairs": 0,
+  "post_actor_replays": 0,
+  "post_checker_before_admission_storage_stop": 1,
+  "witness": {
+    "original_S": 14,
+    "original_SH": 2,
+    "joint_solves": 2,
+    "outer_solves": 12
+  },
+  "states": {
+    "original_S": 8
+  },
+  "actual_direction": {
+    "original_S": 8,
+    "joint_solves": 2,
+    "outer_solves": 12
+  },
+  "thin_recombination": {
+    "original_S": 4,
+    "thin_decompositions": 2
+  },
+  "actual_factor_readers": 7,
+  "read_only_factors_present": true,
+  "new_LU": 0,
+  "new_assembly": 0,
+  "new_gecon": 0,
+  "new_PDE": 0,
+  "new_FE_recovery": 0,
+  "new_training": 0,
+  "reference_reads": 0,
+  "independent_checker_new_actions": 0,
+  "independent_checker_factor_reads": 0,
+  "independent_checker_QR_SVD": 0
+}

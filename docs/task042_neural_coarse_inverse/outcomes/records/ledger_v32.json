@@ -1,0 +1,76 @@
+{
+  "charged": {
+    "actions": 36,
+    "factor_readers": 7,
+    "outer_lu_solve": 24,
+    "joint_lu_solve": 4,
+    "explicit_triangular_pass": 56,
+    "thin_decompositions": 2,
+    "port_factors": 1,
+    "port_solves": 35,
+    "port_rhs_columns": 35,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "runs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v32_return_direction_diagnostic_20261003T105243161712Z",
+      "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+      "classification": "COMPLETED",
+      "counts": {
+        "actions": 36,
+        "factor_readers": 7,
+        "outer_lu_solve": 24,
+        "joint_lu_solve": 4,
+        "explicit_triangular_pass": 56,
+        "thin_decompositions": 2,
+        "port_factors": 1,
+        "port_solves": 35,
+        "port_rhs_columns": 35,
+        "new_assemblies": 0,
+        "new_LU_attempts": 0,
+        "new_gecon": 0
+      },
+      "completed": {
+        "actions": 36,
+        "factor_readers": 7,
+        "outer_lu_solve": 24,
+        "joint_lu_solve": 4,
+        "explicit_triangular_pass": 56,
+        "thin_decompositions": 2,
+        "port_factors": 1,
+        "port_solves": 35,
+        "port_rhs_columns": 35,
+        "new_assemblies": 0,
+        "new_LU_attempts": 0,
+        "new_gecon": 0
+      },
+      "upper": {
+        "actions": 36,
+        "factor_readers": 7,
+        "outer_lu_solve": 24,
+        "joint_lu_solve": 4,
+        "explicit_triangular_pass": 56,
+        "thin_decompositions": 2,
+        "port_factors": 1,
+        "port_solves": 35,
+        "port_rhs_columns": 35,
+        "new_assemblies": 0,
+        "new_LU_attempts": 0,
+        "new_gecon": 0
+      },
+      "exact_counts": true,
+      "actor_wall_seconds": 83.1401845519431,
+      "launch_wall_seconds": 86.87157245806884,
+      "rss_peak_bytes": 1247059968,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "active": null,
+  "closed": true,
+  "actor_wall_seconds": 83.1401845519431,
+  "closed_utc": "2026-10-03T10:58:45.583814+00:00",
+  "closed_reason": "unique actor and independent checker complete; FIXED_RETURN_DIRECTION_INSUFFICIENT; no additional math authorized"
+}

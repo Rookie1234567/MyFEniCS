@@ -1,0 +1,9 @@
+{
+  "start_utc": "2026-10-03T10:42:27.034377+00:00",
+  "start_monotonic": 949141.895272811,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "heavy_limit_seconds": 4500,
+  "total_limit_seconds": 5400,
+  "review_commit": "5c8dc23a3be85075c54eb6f13e5b1c93a026448d",
+  "carried_seconds": 52.68017605994828
+}

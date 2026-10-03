@@ -1,0 +1,118 @@
+{
+  "workflow_deadline_seconds": 18,
+  "solve_deadline_seconds": null,
+  "time_limit_mode": "bounded",
+  "resource_stop_policy": "legacy",
+  "rss_hard_limit_bytes": 2147483648,
+  "rss_warning_bytes": 1073741824,
+  "startup_headroom_bytes": null,
+  "swap_policy": "legacy_stop",
+  "global_swap_delta_policy": "observe_only",
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 949996.49979689,
+    "boottime": 949996.499803869,
+    "utc_ns": 1791025001638939568
+  },
+  "timebase_policy": "strict",
+  "timebase_policy_version": 1,
+  "cache_metadata_stable": true,
+  "classification": "COMPLETED",
+  "leader_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    1441815
+  ],
+  "sampled_process_tree_rss_peak_bytes": 137129984,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 3139039,
+      "pswpout_pages": 5146004
+    },
+    "end": {
+      "pswpin_pages": 3139039,
+      "pswpout_pages": 5146004
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 1280700694528,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 1280700694528,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "samples": 7,
+  "elapsed_seconds": 4.521115910960361,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": {
+    "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+    "role": "V32 check auxiliary",
+    "attempt": "002"
+  },
+  "clock_end": {
+    "monotonic": 950001.020926486,
+    "boottime": 950001.020927872,
+    "utc_ns": 1791025006160061547
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 4.521129596047103,
+      "boottime": 4.5211240029893816,
+      "utc": 4.521121979
+    },
+    "budget_seconds": 4.521129596047103,
+    "discrepancy_seconds": 7.617047103281038e-06,
+    "tolerance_seconds": 5.0,
+    "policy": "strict",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": -7.617047103281038e-06,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.043782155960798264,
+        "boottime": 0.04378149309195578,
+        "utc": 0.043781519
+      },
+      "budget_seconds": 0.043782155960798264,
+      "discrepancy_seconds": 6.628688424825668e-07,
+      "tolerance_seconds": 5.0,
+      "policy": "strict",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -6.3696079826564e-07
+    },
+    "utc_positive_excess_seconds": 2.92981950256177e-07
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "status": "PASS",
+  "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "total": 12,
+  "passed": 12,
+  "failed": 0,
+  "skipped": 0,
+  "cases": [
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_storage_scope_and_boundary",
+      "time": "0.035"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_v32_actual_workflow_through_independent_checker",
+      "time": "1.868"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_attempt_accounting_is_deduplicated_and_not_reset",
+      "time": "0.002"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_v32_namespace_and_closed_rejection[True-None-runs0]",
+      "time": "0.010"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_v32_namespace_and_closed_rejection[False-active1-runs1]",
+      "time": "0.007"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_v32_namespace_and_closed_rejection[False-None-runs2]",
+      "time": "0.007"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_actor_budget_reserves_checker_and_cleanup",
+      "time": "0.000"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_current_code_qualification_not_arbitrary_old_pass",
+      "time": "0.002"
+    },
+    {
+      "classname": "src.test.test_task042_v32_workflow",
+      "name": "test_v32_registered_timeout_and_single_admission",
+      "time": "0.013"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_failed_prequalification_stops_formal_route",
+      "time": "0.007"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_actual_study_two_states_through_collector",
+      "time": "1.668"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_actual_workflow_reader_failure_preserves_partial_accounting",
+      "time": "0.470"
+    }
+  ],
+  "pytest_seconds": 5.29,
+  "scope": "V32 storage/namespace/accounting + actual synthetic study to collector; three directly affected V31 cases",
+  "historical": "V31 109/1 preserved; Review V29 repaired fixture 1 pass independently. V31 and V30 full suites not mechanically replayed.",
+  "caveat": "synthetic active16 action with 18144/40 interface; fake factor receipts, stage.guard stub. Real seven factor reloads and resource guards qualified only by the unique actor.",
+  "raw": {
+    "junit.xml": {
+      "original_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/junit.xml",
+      "original_sha256": "5d2f97e74f16d38f64a815774197a681c1d1d4286ddd6f9ff74b15f518c5e795",
+      "original_bytes": 1796,
+      "archive": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_junit_xml_v32.gz",
+        "sha256": "c1a158d37ca30008b760d04b360941d682d92dadf48ecc01f7ace80d5a1d4154",
+        "bytes": 552
+      },
+      "lossless": true
+    },
+    "stdout.txt": {
+      "original_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/stdout.txt",
+      "original_sha256": "3580a98c8c704ae5bb90b419e8e13d720723bb88f91577f9e02db3fa47c66e8c",
+      "original_bytes": 196,
+      "archive": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_stdout_txt_v32.gz",
+        "sha256": "1802017946d5238aafa4e5a89f7aeb58c3becc67fc94d4db17d7d5cf01182e78",
+        "bytes": 140
+      },
+      "lossless": true
+    },
+    "stderr.txt": {
+      "original_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/stderr.txt",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "archive": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_stderr_txt_v32.gz",
+        "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+        "bytes": 20
+      },
+      "lossless": true
+    },
+    "entry_result.json": {
+      "original_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/entry_result.json",
+      "original_sha256": "4bc2dcc872bee0238661d2713263391b11f3ba18bd4463a504333b95f5b47b50",
+      "original_bytes": 1636,
+      "archive": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_entry_result_json_v32.gz",
+        "sha256": "e8fd7509a651230ea1434744d0525dced622b6d2ad55d204351ef7a058bf9a3b",
+        "bytes": 617
+      },
+      "lossless": true
+    }
+  },
+  "qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/qualification_v32.json",
+    "sha256": "22b561c11b69cf3cd01e7a6ee164f6f63a818badbe2a79ddb60042478838417a",
+    "bytes": 2912
+  },
+  "CI": false,
+  "full_repository": false
+}

@@ -1,0 +1,51 @@
+{
+  "status": "CHECKED",
+  "decision": "FIXED_RETURN_DIRECTION_INSUFFICIENT",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "trustworthy": true,
+      "new_direction_resolved": true,
+      "eta9": 0.9662055056183673,
+      "eta10": 0.9648437480030249,
+      "g10": 0.9985906128588339,
+      "beta": {
+        "real": -0.039781166420271276,
+        "imag": -0.043584398463418786
+      },
+      "baseline_stationarity": 4.1085552163655674e-17,
+      "stationarity": 1.4941502482297732e-16,
+      "QR_relative": 2.5938845556636406e-16,
+      "orthogonality_relative": 3.4137867785286466e-16,
+      "beta_zero_legal": false,
+      "classification": "RESOLVED"
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "trustworthy": true,
+      "new_direction_resolved": true,
+      "eta9": 0.9819684299899415,
+      "eta10": 0.9807007112496798,
+      "g10": 0.9987090025488145,
+      "beta": {
+        "real": -0.03896598598322423,
+        "imag": 0.009441752093496033
+      },
+      "baseline_stationarity": 3.020564175485192e-17,
+      "stationarity": 4.0322017848501684e-17,
+      "QR_relative": 2.521495598647626e-16,
+      "orthogonality_relative": 4.584851257628388e-16,
+      "beta_zero_legal": false,
+      "classification": "RESOLVED"
+    }
+  ],
+  "actual_numeric_source": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v32/task042_v32_return_direction_diagnostic_20261003T105243161712Z/stage_result.json",
+    "sha256": "673fd7c588dfb0b9cc11a85061e6e5d2f8c228ed9efffd94bbc1f0440414908e"
+  },
+  "no_new_actions": true,
+  "no_factor_reads": true,
+  "no_QR_SVD": true,
+  "checker_source_sha256": "fdfa7754f509bcad3fc54f16cfd627b025e3c2c4aadfbd3de9ced5a7eab8cd2d"
+}

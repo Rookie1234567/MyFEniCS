@@ -1,3 +1,17 @@
+# Task042 V32：固定两冷态回流可信负结果（2026-10-03）
+
+用已有联合与六个外域块的局部解检验一个新增残差方向，原物理和完整40端口不变；好处是可能改善跨块信息传递，代价是七套因子读取和原作用。未形成新有限元场，不提升旧模型资格。
+
+| 模型／方法／数据身份 | 实际值 | 资格／费用与证据 |
+|---|---|---|
+| 0.7nm micro／384hex/p3/q15、MPI1、18144trace/40port；measured诊断 | LZ4 eta10=.964843748003/g=.998590612859；LCZ4 .980700711250/.998709002549 | 两态rank10创新可分辨，但额外下降仅.14094%/.12910%，关闭固定回流，[response](task042_neural_coarse_inverse/response_v32.md) |
+| 完整原作用及checker；measured | S34/SH2，reader7，J4/外域24，pass56，薄流程2，port factor1/solve35；CHECKED | 新LU/assembly/gecon/FE/训练0；保留既有local LU，非factor-free |
+| 资源／shared-workstation；measured | actor83.140185s、辅助15.668586s、累计151.488947s，树采样峰1,247,059,968B/ownswap0 | 未取得kernel cgroup权限；实际采样.582–1.021s；旧成本/unknown不免费化，[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v32.json) |
+| E/H、R00_s/p/total、R/T/A/A_volume及功率 | 新值NOT_RUN；旧V24 0/5、V23 0/6保持 | 不把方向改进当完整物理合格或official结果 |
+| 神经／原尺寸目标 | NN20% NOT_DEMONSTRATED；原尺寸/2TB/48h NOT_QUALIFIED | 本批无NN训练、最佳合格非神经N=1配对或扩模 |
+
+以下历史逐字保留；唯一建议等待dot身份匹配参考/规模证据，不修改其分支、不自动实验或merge。
+
 # Task042 V31：前測实现失败，未新增物理解（2026-10-03）
 
 | 模型／方法／数据身份 | 实际值 | 资格边界／证据 |

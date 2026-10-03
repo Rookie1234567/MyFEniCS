@@ -1,0 +1,549 @@
+{
+  "observations": [
+    {
+      "phase": "pre",
+      "pid": 5608,
+      "start_ticks": 74422,
+      "cpu_ticks_delta": 1138,
+      "CPU_before": 15,
+      "CPU_after": 26,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 5699,
+      "start_ticks": 74444,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 19,
+      "CPU_after": 19,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 6469,
+      "start_ticks": 74633,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 42,
+      "CPU_after": 42,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026209,
+      "start_ticks": 75886958,
+      "cpu_ticks_delta": 215,
+      "CPU_before": 46,
+      "CPU_after": 46,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026214,
+      "start_ticks": 75887002,
+      "cpu_ticks_delta": 182,
+      "CPU_before": 42,
+      "CPU_after": 42,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026216,
+      "start_ticks": 75887026,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 47,
+      "CPU_after": 47,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026232,
+      "start_ticks": 75887216,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 47,
+      "CPU_after": 47,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026235,
+      "start_ticks": 75887252,
+      "cpu_ticks_delta": 1073,
+      "CPU_before": 1,
+      "CPU_after": 1,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026236,
+      "start_ticks": 75887253,
+      "cpu_ticks_delta": 1073,
+      "CPU_before": 2,
+      "CPU_after": 2,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026237,
+      "start_ticks": 75887253,
+      "cpu_ticks_delta": 1073,
+      "CPU_before": 3,
+      "CPU_after": 3,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026238,
+      "start_ticks": 75887254,
+      "cpu_ticks_delta": 1073,
+      "CPU_before": 4,
+      "CPU_after": 4,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026239,
+      "start_ticks": 75887254,
+      "cpu_ticks_delta": 1072,
+      "CPU_before": 5,
+      "CPU_after": 5,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026240,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 1073,
+      "CPU_before": 6,
+      "CPU_after": 6,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026241,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 1072,
+      "CPU_before": 7,
+      "CPU_after": 7,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1026242,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 1073,
+      "CPU_before": 8,
+      "CPU_after": 8,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1320655,
+      "start_ticks": 89532355,
+      "cpu_ticks_delta": 328,
+      "CPU_before": 9,
+      "CPU_after": 9,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "pre",
+      "pid": 1320701,
+      "start_ticks": 89532732,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 24,
+      "CPU_after": 24,
+      "phase_before": "reference_budget_evaluated",
+      "phase_after": "reference_budget_evaluated"
+    },
+    {
+      "phase": "pre",
+      "pid": 1320704,
+      "start_ticks": 89532750,
+      "cpu_ticks_delta": 1072,
+      "CPU_before": 24,
+      "CPU_after": 24,
+      "phase_before": "reference_budget_evaluated",
+      "phase_after": "reference_budget_evaluated"
+    },
+    {
+      "phase": "actor",
+      "pid": 5608,
+      "start_ticks": 74422,
+      "cpu_ticks_delta": 8217,
+      "CPU_before": 46,
+      "CPU_after": 46,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 5699,
+      "start_ticks": 74444,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 19,
+      "CPU_after": 19,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 6469,
+      "start_ticks": 74633,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 42,
+      "CPU_after": 42,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026209,
+      "start_ticks": 75886958,
+      "cpu_ticks_delta": 1399,
+      "CPU_before": 43,
+      "CPU_after": 41,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026214,
+      "start_ticks": 75887002,
+      "cpu_ticks_delta": 1400,
+      "CPU_before": 42,
+      "CPU_after": 31,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026216,
+      "start_ticks": 75887026,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 47,
+      "CPU_after": 47,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026232,
+      "start_ticks": 75887216,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 47,
+      "CPU_after": 47,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026235,
+      "start_ticks": 75887252,
+      "cpu_ticks_delta": 7799,
+      "CPU_before": 1,
+      "CPU_after": 1,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026236,
+      "start_ticks": 75887253,
+      "cpu_ticks_delta": 7803,
+      "CPU_before": 2,
+      "CPU_after": 2,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026237,
+      "start_ticks": 75887253,
+      "cpu_ticks_delta": 7802,
+      "CPU_before": 3,
+      "CPU_after": 3,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026238,
+      "start_ticks": 75887254,
+      "cpu_ticks_delta": 7802,
+      "CPU_before": 4,
+      "CPU_after": 4,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026239,
+      "start_ticks": 75887254,
+      "cpu_ticks_delta": 7802,
+      "CPU_before": 5,
+      "CPU_after": 5,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026240,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 7802,
+      "CPU_before": 6,
+      "CPU_after": 6,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026241,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 7801,
+      "CPU_before": 7,
+      "CPU_after": 7,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1026242,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 7801,
+      "CPU_before": 8,
+      "CPU_after": 8,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1320655,
+      "start_ticks": 89532355,
+      "cpu_ticks_delta": 2319,
+      "CPU_before": 9,
+      "CPU_after": 9,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "actor",
+      "pid": 1320701,
+      "start_ticks": 89532732,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 24,
+      "CPU_after": 24,
+      "phase_before": "reference_budget_evaluated",
+      "phase_after": "reference_budget_evaluated"
+    },
+    {
+      "phase": "actor",
+      "pid": 1320704,
+      "start_ticks": 89532750,
+      "cpu_ticks_delta": 7800,
+      "CPU_before": 24,
+      "CPU_after": 24,
+      "phase_before": "reference_budget_evaluated",
+      "phase_after": "reference_budget_evaluated"
+    },
+    {
+      "phase": "checker",
+      "pid": 5608,
+      "start_ticks": 74422,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 33,
+      "CPU_after": 33,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 5699,
+      "start_ticks": 74444,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 19,
+      "CPU_after": 19,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 6469,
+      "start_ticks": 74633,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 42,
+      "CPU_after": 42,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026209,
+      "start_ticks": 75886958,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 28,
+      "CPU_after": 28,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026214,
+      "start_ticks": 75887002,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 32,
+      "CPU_after": 32,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026216,
+      "start_ticks": 75887026,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 47,
+      "CPU_after": 47,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026232,
+      "start_ticks": 75887216,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 47,
+      "CPU_after": 47,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026235,
+      "start_ticks": 75887252,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 1,
+      "CPU_after": 1,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026236,
+      "start_ticks": 75887253,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 2,
+      "CPU_after": 2,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026237,
+      "start_ticks": 75887253,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 3,
+      "CPU_after": 3,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026238,
+      "start_ticks": 75887254,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 4,
+      "CPU_after": 4,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026239,
+      "start_ticks": 75887254,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 5,
+      "CPU_after": 5,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026240,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 6,
+      "CPU_after": 6,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026241,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 7,
+      "CPU_after": 7,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1026242,
+      "start_ticks": 75887255,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 8,
+      "CPU_after": 8,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1320655,
+      "start_ticks": 89532355,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 9,
+      "CPU_after": 9,
+      "phase_before": null,
+      "phase_after": null
+    },
+    {
+      "phase": "checker",
+      "pid": 1320701,
+      "start_ticks": 89532732,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 24,
+      "CPU_after": 24,
+      "phase_before": "reference_budget_evaluated",
+      "phase_after": "reference_budget_evaluated"
+    },
+    {
+      "phase": "checker",
+      "pid": 1320704,
+      "start_ticks": 89532750,
+      "cpu_ticks_delta": 0,
+      "CPU_before": 24,
+      "CPU_after": 24,
+      "phase_before": "reference_budget_evaluated",
+      "phase_after": "reference_budget_evaluated"
+    }
+  ],
+  "PSI_memory_pressure_stop": false,
+  "comparable_neighbor_stage_wall_available": false,
+  "causal_interference": "INCONCLUSIVE",
+  "performance_identity": "shared-workstation",
+  "comment": "No sustained PSI / reserve violation observed. Wide neighbors may migrate; no claim of absolute zero interference or contention-free speed."
+}

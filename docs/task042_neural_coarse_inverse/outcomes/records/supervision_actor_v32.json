@@ -1,0 +1,204 @@
+{
+  "workflow_deadline_seconds": 480.0,
+  "solve_deadline_seconds": null,
+  "time_limit_mode": "bounded",
+  "resource_stop_policy": "legacy",
+  "rss_hard_limit_bytes": 17179869184,
+  "rss_warning_bytes": 12884901888,
+  "startup_headroom_bytes": null,
+  "swap_policy": "legacy_stop",
+  "global_swap_delta_policy": "observe_only",
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 949758.088170212,
+    "boottime": 949758.088174537,
+    "utc_ns": 1791024763227308665
+  },
+  "timebase_policy": "strict",
+  "timebase_policy_version": 1,
+  "cache_metadata_stable": true,
+  "classification": "COMPLETED",
+  "leader_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    1440722
+  ],
+  "sampled_process_tree_rss_peak_bytes": 1247059968,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 3139039,
+      "pswpout_pages": 5146004
+    },
+    "end": {
+      "pswpin_pages": 3139039,
+      "pswpout_pages": 5146004
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 1280677883904,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 1280677883904,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "samples": 113,
+  "elapsed_seconds": 83.1401845519431,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": {
+    "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+    "git_status": "",
+    "stage": "V32-DIAGNOSTIC",
+    "formal_pde": false,
+    "formal_fe_stage": false,
+    "input_sha256": "e6d7f663e72f258d03e8a9eddea72cfa5f6002970a6afaeb30642bd394f9d369",
+    "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "shared_workstation": true,
+    "cpu": 0,
+    "mpi_size": 1,
+    "math_threads": 1,
+    "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+    "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+    "nice": 10,
+    "io_priority": "idle",
+    "physical_model_complete": true,
+    "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "physical_hash_meaning": "original S/b; two frozen cold residuals; one J-O-J direction; rank<=3888; not a full-space PC",
+    "material_status": "MATERIAL_READY_USER_SUPPLIED",
+    "plan_sha256": "2370c59e403309a9e1667061050d4bf4c20b2afb646b1c1f8d7ae1bfc22dd5f2",
+    "batch_window": {
+      "start_utc": "2026-10-03T10:42:27.034377+00:00",
+      "start_monotonic": 949141.895272811,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "heavy_limit_seconds": 4500,
+      "total_limit_seconds": 5400,
+      "review_commit": "5c8dc23a3be85075c54eb6f13e5b1c93a026448d",
+      "carried_seconds": 52.68017605994828,
+      "observed_utc": "2026-10-03T10:52:43.189635+00:00",
+      "observed_monotonic": 949758.050503155,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 616.1552579402924,
+      "heavy_remaining_seconds": 3883.8447420597076,
+      "total_remaining_seconds": 4783.844742059708
+    },
+    "window_sha256": "e6b7df17dcdb96508e1c9f69d2906455c8ebfaef51dfb09027aadbcd7360c3b7",
+    "review_authorization": "Review V29 5c8dc23a3be85075c54eb6f13e5b1c93a026448d",
+    "pre_qualification": {
+      "status": "PASSED",
+      "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+      "implementation_hashes": {
+        "src/runners/diagnostic_storage.py": "e6de8e041e241c938248cdb788e8da740f23773c719480d92e3c290931a4c53c",
+        "src/solvers/return_block_v32_window.py": "1bc0e1f55ef09fc68c5c63dffcdb7903effd95c25e9dfcdebbcc0660b39fcece",
+        "src/io/return_block_v32.py": "71eff44c10a00f50442a68569cf2fa35664e7af01a52cc1ca6bf60fdbeca1612",
+        "src/io/return_block_diagnostic.py": "e1f80e2304d8b5790ebf2c5bd50221ca7487057f5aa85d33ed76aed746b4a475",
+        "src/io/task042_profile.py": "0cb8f61dd9ff9e0b79eda3a34d123dfc92443e6be1503286ea66141ab7e2bd23",
+        "scripts/run_case.py": "f78be0bdd4361a5bed2d65d84583e4c37d4b0a1cea03b95630f27038c0510da2",
+        "src/runners/return_block_diagnostic.py": "03dc0a0df299226fa19ae1d88dc4c7a56b1642130bea74c7aa0ff6d914eb7e23",
+        "src/runners/task042_shared.py": "a1e6ba086a6e4817b4f5304f2c466fbb6dc264fa8590eff204daeb662820e0ef",
+        "src/solvers/return_block_study.py": "72df82279ceedc24a82b897567cd4437613fb814bb31a76209c2c650b5f510bc",
+        "src/solvers/return_block_direction.py": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+        "src/solvers/bounded_diagnostic_window.py": "f3f9d2934ae979b212c6d91ca46f6ea112666fbf02c5c8b6a243ff3061faf473",
+        "benchmarks/task042_diagnostic_auxiliary.py": "75b0561dbda1a445e497dcc31186763dd7964503487c9089aab479a4869cb9f5",
+        "benchmarks/task042_v31_checks.py": "2ac60002995025876e3e16f82eb00aa11e7b3ee33f33272078a1d34362011d40",
+        "benchmarks/collect_task042_return_direction.py": "fdfa7754f509bcad3fc54f16cfd627b025e3c2c4aadfbd3de9ced5a7eab8cd2d",
+        "src/test/task042_v31_workflow_fixture.py": "c90428c9d1bf986d58ec6e90b377cc16e3be68ac568eeeb2e50505669f24f3c8",
+        "src/test/test_task042_v32_workflow.py": "a4ee5ed1da41e2065fc3a19c20629e30724fd0dee58b9e495ef018eb49452719",
+        "input/task042_neural_coarse_inverse/return_block_direction_v32.json": "2370c59e403309a9e1667061050d4bf4c20b2afb646b1c1f8d7ae1bfc22dd5f2",
+        "input/task042_neural_coarse_inverse/v32_return_direction_diagnostic.dat": "e6d7f663e72f258d03e8a9eddea72cfa5f6002970a6afaeb30642bd394f9d369"
+      },
+      "coverage": [
+        "storage_scope",
+        "actual_study_workflow",
+        "namespace",
+        "accounting",
+        "closed_rejection",
+        "former_fixture"
+      ],
+      "scope": [
+        "src/test/test_task042_v32_workflow.py",
+        "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route",
+        "src/test/test_task042_v31_workflow.py::test_actual_study_two_states_through_collector",
+        "src/test/test_task042_v31_workflow.py::test_actual_workflow_reader_failure_preserves_partial_accounting"
+      ],
+      "test_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/entry_result.json",
+        "sha256": "4bc2dcc872bee0238661d2713263391b11f3ba18bd4463a504333b95f5b47b50"
+      },
+      "previous_failures": []
+    },
+    "factor_contract": "readonly J and six outer bundles; rank<=3888; no full-space PC",
+    "offline_diagnostic": true,
+    "new_solver_result": false,
+    "global_p4_factor_constructed": false
+  },
+  "clock_end": {
+    "monotonic": 949841.228376203,
+    "boottime": 949841.228380079,
+    "utc_ns": 1791024846367514031
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 83.14020599098876,
+      "boottime": 83.14020554197486,
+      "utc": 83.140205366
+    },
+    "budget_seconds": 83.14020599098876,
+    "discrepancy_seconds": 6.24988757635947e-07,
+    "tolerance_seconds": 5.0,
+    "policy": "strict",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": -6.24988757635947e-07,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.06589462503325194,
+        "boottime": 0.06589328206609935,
+        "utc": 0.065893562
+      },
+      "budget_seconds": 0.06589462503325194,
+      "discrepancy_seconds": 1.34296715259552e-06,
+      "tolerance_seconds": 5.0,
+      "policy": "strict",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -1.063033251938461e-06
+    },
+    "utc_positive_excess_seconds": 1.0511992623585265e-05
+  },
+  "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v32_return_direction_diagnostic_20261003T105243161712Z",
+  "stage": "V32-DIAGNOSTIC",
+  "shared_workstation": true,
+  "launch_wall_seconds": 86.87157245806884
+}

@@ -1,0 +1,132 @@
+{
+  "status": "PENDING_DELIVERY_METADATA_ONLY",
+  "local_structure": {
+    "status": "PASS",
+    "documents": [
+      {
+        "path": "docs/development_model_registry.md",
+        "tables": 1,
+        "links": 2,
+        "math_blocks": 0,
+        "checked_scope": "new prefix only"
+      },
+      {
+        "path": "docs/development_progress.md",
+        "tables": 0,
+        "links": 3,
+        "math_blocks": 0,
+        "checked_scope": "new prefix only"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/README.md",
+        "tables": 0,
+        "links": 4,
+        "math_blocks": 0,
+        "checked_scope": "new prefix only"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+        "tables": 3,
+        "links": 7,
+        "math_blocks": 0,
+        "checked_scope": "new prefix only"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+        "tables": 0,
+        "links": 3,
+        "math_blocks": 0,
+        "checked_scope": "new prefix only"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+        "tables": 0,
+        "links": 2,
+        "math_blocks": 0,
+        "checked_scope": "new prefix only"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/response_v32.md",
+        "tables": 4,
+        "links": 15,
+        "math_blocks": 0,
+        "checked_scope": "complete file"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/return_direction_execution_v32.md",
+        "tables": 5,
+        "links": 9,
+        "math_blocks": 1,
+        "checked_scope": "complete file"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/review_report_v29.md",
+        "tables": 8,
+        "links": 15,
+        "math_blocks": 1,
+        "checked_scope": "complete file"
+      }
+    ],
+    "checks": [
+      "balanced fenced math",
+      "balanced math braces",
+      "consistent table widths",
+      "local target existence",
+      "no control characters"
+    ],
+    "limitations": "No local/GitHub visual rendering or remote anchor verification"
+  },
+  "history_suffix_checks": [
+    {
+      "path": "docs/development_model_registry.md",
+      "historical_sha256": "093019c146f3a7623b94ebe163bc7d79ecb78b59e9e27f3bcc59c152dccff0b5",
+      "prefix_bytes": 1663,
+      "preserved": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "historical_sha256": "efb1f601016188d25150282ce3d8789e47a7fea406814996448670a32e61b497",
+      "prefix_bytes": 1659,
+      "preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "historical_sha256": "26698228ccb1745fd134e9567fe5ac565e5d105143f029e4f6d90738fe308c4c",
+      "prefix_bytes": 938,
+      "preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "historical_sha256": "733b8f3afb573a92a93ed6f9308d91eb5837cceca21adc20638122a7d7adedba",
+      "prefix_bytes": 2843,
+      "preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "historical_sha256": "fde5ee6eca85da9316c5db30c09bac371e140205bf8ef650563f303628d41fce",
+      "prefix_bytes": 1356,
+      "preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "historical_sha256": "ddaf5eb3b645023af6455b6d7a8cc0da7e5d56d26b8acc10a5663ef050ae6ab1",
+      "prefix_bytes": 884,
+      "preserved": true
+    }
+  ],
+  "review_visual": {
+    "status": "NOT_VERIFIED",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5c8dc23a3be85075c54eb6f13e5b1c93a026448d/docs/task042_neural_coarse_inverse/review_report_v29.md",
+    "observed_error": "web open: Cache miss; no visual evidence"
+  },
+  "qualified_source_unchanged": true,
+  "checked_clock": {
+    "utc": "2026-10-03T11:14:34.267680+00:00",
+    "monotonic": 951069.128587758,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "result_visual": {
+    "status": "NOT_VERIFIED",
+    "reason": "Exact committed result page is checked after publication"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "numpy": "1.26.4",
+  "scipy": "1.11.4",
+  "BLAS": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "affinity": [
+    11
+  ],
+  "MPI": 1,
+  "math_threads": 1,
+  "DataLoader0": true,
+  "torch_imported": false,
+  "FE_imported": false,
+  "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "command": [
+    "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "src/test/test_task042_v32_workflow.py",
+    "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route",
+    "src/test/test_task042_v31_workflow.py::test_actual_study_two_states_through_collector",
+    "src/test/test_task042_v31_workflow.py::test_actual_workflow_reader_failure_preserves_partial_accounting",
+    "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/fixtures",
+    "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/junit.xml"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "status": "PASSED",
+  "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "implementation_hashes": {
+    "src/runners/diagnostic_storage.py": "e6de8e041e241c938248cdb788e8da740f23773c719480d92e3c290931a4c53c",
+    "src/solvers/return_block_v32_window.py": "1bc0e1f55ef09fc68c5c63dffcdb7903effd95c25e9dfcdebbcc0660b39fcece",
+    "src/io/return_block_v32.py": "71eff44c10a00f50442a68569cf2fa35664e7af01a52cc1ca6bf60fdbeca1612",
+    "src/io/return_block_diagnostic.py": "e1f80e2304d8b5790ebf2c5bd50221ca7487057f5aa85d33ed76aed746b4a475",
+    "src/io/task042_profile.py": "0cb8f61dd9ff9e0b79eda3a34d123dfc92443e6be1503286ea66141ab7e2bd23",
+    "scripts/run_case.py": "f78be0bdd4361a5bed2d65d84583e4c37d4b0a1cea03b95630f27038c0510da2",
+    "src/runners/return_block_diagnostic.py": "03dc0a0df299226fa19ae1d88dc4c7a56b1642130bea74c7aa0ff6d914eb7e23",
+    "src/runners/task042_shared.py": "a1e6ba086a6e4817b4f5304f2c466fbb6dc264fa8590eff204daeb662820e0ef",
+    "src/solvers/return_block_study.py": "72df82279ceedc24a82b897567cd4437613fb814bb31a76209c2c650b5f510bc",
+    "src/solvers/return_block_direction.py": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+    "src/solvers/bounded_diagnostic_window.py": "f3f9d2934ae979b212c6d91ca46f6ea112666fbf02c5c8b6a243ff3061faf473",
+    "benchmarks/task042_diagnostic_auxiliary.py": "75b0561dbda1a445e497dcc31186763dd7964503487c9089aab479a4869cb9f5",
+    "benchmarks/task042_v31_checks.py": "2ac60002995025876e3e16f82eb00aa11e7b3ee33f33272078a1d34362011d40",
+    "benchmarks/collect_task042_return_direction.py": "fdfa7754f509bcad3fc54f16cfd627b025e3c2c4aadfbd3de9ced5a7eab8cd2d",
+    "src/test/task042_v31_workflow_fixture.py": "c90428c9d1bf986d58ec6e90b377cc16e3be68ac568eeeb2e50505669f24f3c8",
+    "src/test/test_task042_v32_workflow.py": "a4ee5ed1da41e2065fc3a19c20629e30724fd0dee58b9e495ef018eb49452719",
+    "input/task042_neural_coarse_inverse/return_block_direction_v32.json": "2370c59e403309a9e1667061050d4bf4c20b2afb646b1c1f8d7ae1bfc22dd5f2",
+    "input/task042_neural_coarse_inverse/v32_return_direction_diagnostic.dat": "e6d7f663e72f258d03e8a9eddea72cfa5f6002970a6afaeb30642bd394f9d369"
+  },
+  "coverage": [
+    "storage_scope",
+    "actual_study_workflow",
+    "namespace",
+    "accounting",
+    "closed_rejection",
+    "former_fixture"
+  ],
+  "scope": [
+    "src/test/test_task042_v32_workflow.py",
+    "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route",
+    "src/test/test_task042_v31_workflow.py::test_actual_study_two_states_through_collector",
+    "src/test/test_task042_v31_workflow.py::test_actual_workflow_reader_failure_preserves_partial_accounting"
+  ],
+  "test_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/aux_pre_001/tests/entry_result.json",
+    "sha256": "4bc2dcc872bee0238661d2713263391b11f3ba18bd4463a504333b95f5b47b50"
+  },
+  "previous_failures": []
+}

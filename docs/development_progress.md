@@ -1,3 +1,13 @@
+# Task042 V32：回流方向真实弱增量，固定序列关闭（2026-10-03）
+
+背景是V27–V31因软件或准入问题尚未取得两冷态真实回流结果。Review V29关闭fixture问题，并授权同窗口修复后直接推进。V32将review目录、records/results/TMP纳入同一存储范围，用当前实现hash与独立辅助attempt保持资格和费用；12定点通过后，只执行一次J联合块→六外块→J回流，用旧九方向为基线。
+
+真实eta10=.964843748003／.980700711250，g10=.998590612859／.998709002549，rank10且抵消/重组/因子/消费及独立checker合格。新增方向并不重复旧空间，但与剩余残差相关仅.05307／.05080，只额外降低范数.14094%／.12910%；按预登记关闭固定反馈序列。不是新的有限元解：V24 0/5、V23 0/6、原尺寸/2TB/48h及NN20%资格均不变。
+
+source1fe058e3…，shared-workstation actor83.140185s、辅助15.668586s，累计151.488947s；树采样峰1,247,059,968B/ownswap0。首个后审核入口被存储预留拒绝，按允许清理未引用bytecode10,722,813B后，另一ID缓存checker通过，没有actor重启或Gate放宽。历史上游N=1成本unknown保留，closed/active=null、后代清空。
+
+唯一下一步建议是等待dot身份匹配参考与规模费用，先只读评估不同的全空间信息传播机制，不自动训练或迭代。证据：[response](task042_neural_coarse_inverse/response_v32.md)、[结果](task042_neural_coarse_inverse/outcomes/return_direction_execution_v32.md)、[原始索引](task042_neural_coarse_inverse/outcomes/records/run_index_v32.json)。以下历史逐字保留，不merge。
+
 # Task042 V31：接线修复后按前测停止合同收口（2026-10-03）
 
 此前真实study在构造抵消证书时缺relative导入。V31补齐导入和独立路由，新增实际study→写出→结算→collector的18144/40合成接线，两个状态和七合成reader通过；唯一前测总109/1，失败在我新增的拒绝fixture缺三个窗口接口。最小修复已提交但修后runtime未重跑，依Review V28停止链路，没有正式准入／actor／后checker。

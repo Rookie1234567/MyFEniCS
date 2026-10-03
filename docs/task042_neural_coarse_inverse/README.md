@@ -1,3 +1,9 @@
+# V32：真实回流诊断已完成，固定提案关闭
+
+[Review V29](review_report_v29.md)／[response_v32](response_v32.md)／[详细结果](outcomes/return_direction_execution_v32.md)／[run index](outcomes/records/run_index_v32.json)。统一存储计数与V32独立准入、12 targeted通过后，一次原两冷态actor完成，独立checker CHECKED。eta10为0.9648437480／0.9807007112，g10为0.9985906129／0.9987090025；创新可分辨但仅再降低e9范数0.14094%／0.12910%，按预登记关闭固定回流序列。
+
+source1fe058e3…；actor83.140185s、辅助15.668586s、V27起累计151.488947s，树采样峰1,247,059,968B／自身swap0，closed且后代清空。后审核首次存储预留停止后仅清理未引用bytecode、同门限另ID通过，没有重跑actor。无新FE／NN训练／完整物理解；旧0/5、0/6和NN20%／原尺寸未资格化保持。以下历史逐字保留，不授权下一实验。
+
 # 最新审阅：Review V29／同轮修复复验后推进真实诊断
 
 [Review V29](review_report_v29.md)接受V31合成study接线；本次独立定点复验已修复的拒绝fixture，1 passed，关闭该软件缺口。按用户新指令替换“一次前测错误即等待review”：V32应在同一窗口和累计预算内定位、修复、定点复验并继续一次原两冷态真实回流诊断，不以测试准备完成作为交付终点。存储守卫漏计路径也在同轮直接修复。

@@ -1,0 +1,185 @@
+{
+  "batch": "V32_FIXED_J_OUTER_J_RETURN_DIAGNOSTIC",
+  "review_commit": "5c8dc23a3be85075c54eb6f13e5b1c93a026448d",
+  "base_SHA": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "source_sha": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "actual_actor_source": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "pre_test_source": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "independent_checker_source": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "final_document_HEAD": "reported separately in delivery terminal; never substitutes run source",
+  "command": "source scripts/activate_task042.sh pure; python scripts/run_case.py input/task042_neural_coarse_inverse/v32_return_direction_diagnostic.dat",
+  "original_input": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v32_return_direction_diagnostic_20261003T105243161712Z/input_original.dat",
+    "sha256": "e6d7f663e72f258d03e8a9eddea72cfa5f6002970a6afaeb30642bd394f9d369",
+    "bytes": 232
+  },
+  "resolved": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v32_return_direction_diagnostic_20261003T105243161712Z/resolved_config.json",
+    "sha256": "436f50ae2fdc64f816d31d207a9c594339444fd08942d8d315d6fa0462bc7143",
+    "bytes": 4073
+  },
+  "manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v32_return_direction_diagnostic_20261003T105243161712Z/run_manifest.json",
+    "sha256": "e6c488ff36fcea018fe8d5a6551f155de344e5cec18c8ce8a7b916d191c5002a",
+    "bytes": 5530
+  },
+  "parent_plan": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/return_block_direction_v32.json",
+    "sha256": "2370c59e403309a9e1667061050d4bf4c20b2afb646b1c1f8d7ae1bfc22dd5f2",
+    "bytes": 11070
+  },
+  "raw_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v32/task042_v32_return_direction_diagnostic_20261003T105243161712Z/stage_result.json",
+    "sha256": "673fd7c588dfb0b9cc11a85061e6e5d2f8c228ed9efffd94bbc1f0440414908e"
+  },
+  "states": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "parent": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_zero_20261002T150705305076Z/stage_result.json",
+        "sha256": "4971ba16d38f22bc81e0be8e5ccda1556d99fb7eb3e2f98afa48c2b91b67c479"
+      },
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "4062d5a83cce4eca86715eaee0a587a4e83fc7c54a7da5a654b1843eff6283d7",
+        "trace_sha256": "db3906e8dfca78628cc38aae57556ac6e66806a3793a0d45818858cec3ba350d",
+        "port_sha256": "6e24b9260d2a6ded1530a7d774887d39402d70762f82eb5a0f79a5fb57998357",
+        "z_sha256": "1352294a4b71cd70ea8f307739acd25a0d3edad1ed6e916359d88268ef088e73",
+        "residual_sha256": "0337b6acc75576bab2d697cbaedc37fef0a113e6fa7d247f38b9dedd57f99d3a",
+        "y_sha256": "f7e5167ba5a5d97a7a9d1fec5317f29a5e4bef447cbe1b0cead9c9c44d5af576",
+        "By_sha256": "a63fbdeb9a461b923199fc3773716be607094c74315ad08de928e73cae78fa86"
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v32/task042_v32_return_direction_diagnostic_20261003T105243161712Z/V24-LZ-CYCLE4.npz",
+        "sha256": "a855f3d8d1479389dfd6d9fb56a800ccd02eaa23c9e7eb71827e508661807bf0",
+        "direction_sha256": "e3f99bec2af533eeccdfa5e3cc7a27a1f87a245163a5667bd8fb9af1861c5920",
+        "image_sha256": "165e7c922c095fcf9d78dcd7bfa866f243a2a50aeb774b799f5a94880fd349ea",
+        "innovation_sha256": "887df75010488d993afe4d18b028b51a057a9e98fd2044c329d74fa6d910b0d1",
+        "projection_coefficients_sha256": "39eebcde2462706868804a31fec8426c4196c27110169a66889e1733862db7ab",
+        "coefficients_sha256": "be4622e9394db6d310ccb0f1f77212183b3b1bebfeeacd8f9a2285f1c8e19463",
+        "baseline_coefficients_sha256": "9dac5e5bb6f34dc1b235278be3f64b93f26d868be0fa72b57edb371f48318a49",
+        "old_e9_sha256": "138d23b88d7f3dc23467f356884c7b81aaa0239b911acb95f6f8e5f3afca673b",
+        "diagnostic_residual_sha256": "819458857557b38ee6fc6e93b7f48ecef25f92d0feaa5f36ade203c15b4cf7ac",
+        "original_combination_image_sha256": "25baea50d28f9dd9b1c84725a12b98214c444bcc08b2b2ac08f2f84120f63824",
+        "original_baseline_image_sha256": "340905b06974d88070ca15ca97978815a2a6c57aa596712dc129a926c8c8517c",
+        "thin_Q_sha256": "b289fd99ed0ce2a2c061d8cd57b8277cb345273ce625a9f2871610101dd6e604",
+        "thin_R_sha256": "b3cfdeaeff6c846a6608fdec3bdd32526b922310497f5121c0a4ae1062fd562a",
+        "input_residual_sha256": "0005af9b2f3806f545519f3c2e55ac35bf51f8623712f6a9531121e36aa6580f",
+        "w_sha256": "2bd75cd1164f1a6d1cdc3b77c6432d8aed14ae5a982852f9e69e144dc39a30bd",
+        "aw_sha256": "29bea7f939778ddcdd097a9c274ff06571077a3de0d9e73267ea2a7ebc46bc9f",
+        "feedback_sha256": "26c99944c4c8c13611ef232802524e608145d7ec43327347f4a02a3deadc6e05",
+        "feedback_image_sha256": "f668a114b54123d7e6d8eb58fd059c5386b68e826b21b5e76adbbcc08ffc667c",
+        "return_direction_sha256": "1bec2396d491de2fda1469974ff8fed36f6e70e01c55e8c503142ff28d809a96",
+        "return_image_sha256": "e76e288994a77bca73ddde7741aae9714864dd65f8b803cd9e327abfb07732d1",
+        "audited_full_residual_sha256": "0337b6acc75576bab2d697cbaedc37fef0a113e6fa7d247f38b9dedd57f99d3a",
+        "reclosed_port_sha256": "6e24b9260d2a6ded1530a7d774887d39402d70762f82eb5a0f79a5fb57998357",
+        "cached_joint_image_sha256": "e42a03fb62adc21b07abc3961c22f1eed212da53387414c86bac5f95384511c2",
+        "cached_joint_inner_image_sha256": "96cdf96d3b454884be6e7dc2b6114bdd4fdad94ad0552cbccb4e20abfb5479bd"
+      }
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "parent": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_zero_20261002T151327920057Z/stage_result.json",
+        "sha256": "3051afc21e80bef0baf7b4ebedccbe0c57fd65de9f3aa20bccb71b6062ce13fa"
+      },
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "6daf6fc209c6515dfc2fef94a46cf16ee341009d84bbd8e78b479093364a14ad",
+        "trace_sha256": "e97287164f9f92b941f335692aee061413434bbf59d25ddf7a313c89907e9180",
+        "port_sha256": "326991c559503be277d1f73816d77dbbac33d6963be305312f40e52d7161bc90",
+        "z_sha256": "2f30747bb00602d5a62fd5a94a5e7bf507beffb9ef73716f03b3430e70ac7c48",
+        "residual_sha256": "6876c978b19aafb13ce71a38a32c81f1e7b3c8b17f892232d0add1d2ffd693c2",
+        "y_sha256": "9473a1f9dfb277b0fd096253621f30c578756f0c4c607cf5e42b82210ce2d672",
+        "By_sha256": "47368b617dbf34c35451eea6f2822fc179e4da7472b6c0be21169d82b5f6affc"
+      },
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v32/task042_v32_return_direction_diagnostic_20261003T105243161712Z/V24-LCZ-CYCLE4.npz",
+        "sha256": "3330ba8f9f3f88e765ed43bbffe6738257d026ca835361fbe3abcd95bd72a875",
+        "direction_sha256": "dd0c217e3571da3f67849a27db8e0c728a20e17d2c210154bf9993c9c790637c",
+        "image_sha256": "5c6dca4132edf31d528ef0ffef71a72084550694f9f649a65254599db29d80fd",
+        "innovation_sha256": "a4eb253363d08dc42388c165d7e9e47396e322424b47734905e959b01d7533c3",
+        "projection_coefficients_sha256": "1d012c132d544034a7cff41f00a6789f6da869bb660deb250d758be7584b7a6b",
+        "coefficients_sha256": "f550d487955fab0abc6ea636e95f0c4ffdb61fe93b2ff3ddaf1eef9fea5782ef",
+        "baseline_coefficients_sha256": "12631c630d865a217ad6e74bae1190515a7d243917b5a6f8ceaa9845e0cec53e",
+        "old_e9_sha256": "2e26a621d03198dfbc0c3c5919ada75ed3b027c15c8873cad2f7ccaeecfb5988",
+        "diagnostic_residual_sha256": "976bddc1e2e13ad1ed011824280b338f576afaaaf704e8dd7ea44f7d1514e08b",
+        "original_combination_image_sha256": "70c8b0ac27edaa97b4d74195e643884889f923aa2b12960f26ea46de2c85aa2f",
+        "original_baseline_image_sha256": "c299b0cbb616a7dfe35ae0512da24b6783fd19162cf7230137aa0a48aa4f846f",
+        "thin_Q_sha256": "3925bfe707cb8e5f07aab6da40f85dc9e4c6e3ea4e2659538c2409b92d6140e5",
+        "thin_R_sha256": "ca4a8ec2b17f58cde793bda6962c6b59cf028dc5599c60c197783567636c6b7a",
+        "input_residual_sha256": "09bdd1490e7b12a435d44f325d234110f1c98509beafa1392d479c07d1e6e710",
+        "w_sha256": "d4e3503564459abf0197a57381a98cfd8f09038a756e706458b47eb7d90a377c",
+        "aw_sha256": "42c58f10f1097fd9580436f498ff4fd4ce6ea52ab7479bb415a252e2252eadc9",
+        "feedback_sha256": "ecc83dae21a87faabe9181e0d868376999b11c643d4d34d45753b3f0c294803d",
+        "feedback_image_sha256": "a6873035b08103e303d3f98944514ebe1938fc399aa95d4756485774d1310b88",
+        "return_direction_sha256": "19cbfe96f1fc33632b2c5c30de92bd79913e0193984c6119f86959b8e4b9d478",
+        "return_image_sha256": "8b0bc8cc7d18fa8cd46942098591b80505da05d2d81f4741ac751dd82e91ae07",
+        "audited_full_residual_sha256": "6876c978b19aafb13ce71a38a32c81f1e7b3c8b17f892232d0add1d2ffd693c2",
+        "reclosed_port_sha256": "326991c559503be277d1f73816d77dbbac33d6963be305312f40e52d7161bc90",
+        "cached_joint_image_sha256": "227975edf0499d13b563ce3848295bc19be34388fd1e4d8dc208cd48af441550",
+        "cached_joint_inner_image_sha256": "5af6ef033d3ce27af2716d70db3027744893fbff944b0ffcae6e29dcbddc0348"
+      }
+    }
+  ],
+  "qualification": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/qualification_v32.json",
+    "sha256": "22b561c11b69cf3cd01e7a6ee164f6f63a818badbe2a79ddb60042478838417a",
+    "bytes": 2912
+  },
+  "tests": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_v32.json",
+    "sha256": "6425e3b4f9ece8f500809e495879dd902ccbfda7032a078cfa053a189d195ef1",
+    "bytes": 5015
+  },
+  "checker": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/return_direction_checker_v32.json",
+    "sha256": "db9e743a5cfbd5347aec92d057f41599b88dc7c67af43149021b010777ebf4c4",
+    "bytes": 1750
+  },
+  "consumption": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/actual_consumption_v32.json",
+    "sha256": "d0cdfbd09c4a7a0cdb33b909cf98e86af7e35d821f02bc258f8fa085c3473901",
+    "bytes": 1973
+  },
+  "cost": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v32.json",
+    "sha256": "3e7973c1ccb5e781d0204dd7c39eb712ee65e459e725ff8d5543545cac6f578f",
+    "bytes": 5083
+  },
+  "analysis": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/direction_analysis_v32.json",
+    "sha256": "319214d100a3f7712a0d03a333e3a8c3f6b8daec3b0908b82a3b2f3341497a76",
+    "bytes": 19913
+  },
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_evidence_index_v32.json",
+    "sha256": "4c1e7211c562cfb0e5139a673ec0cb4e49fc8b9e0443e5c13b6dc377f2f57483",
+    "bytes": 14290
+  },
+  "window": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/window_v32.json",
+    "sha256": "e6b7df17dcdb96508e1c9f69d2906455c8ebfaef51dfb09027aadbcd7360c3b7",
+    "bytes": 311
+  },
+  "ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/ledger_v32.json",
+    "sha256": "17b580078958114c255870bbd8cb83fc83e13963fc7bccab650b2de58041b4a2",
+    "bytes": 2216
+  },
+  "process_clear": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/final_process_check_v32.json",
+    "sha256": "c8c0a62d512369f01d266bfcdafe356ff8ddd1b402d205792e0df1452691eae7",
+    "bytes": 157
+  },
+  "completed": [
+    "storage scope fix",
+    "focused prequalification",
+    "unique original two-state actor",
+    "independent cached checker"
+  ],
+  "closed_reason": "unique actor and independent checker complete; FIXED_RETURN_DIRECTION_INSUFFICIENT; no additional math authorized",
+  "full_physical_qualification": "NO_NEW_SOLUTION; old V24 0/5 and V23 0/6 unchanged",
+  "NN20percent": "NOT_DEMONSTRATED",
+  "original_size": "NOT_QUALIFIED"
+}

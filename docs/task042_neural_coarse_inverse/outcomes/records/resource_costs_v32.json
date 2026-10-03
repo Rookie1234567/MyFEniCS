@@ -1,0 +1,135 @@
+{
+  "schema": "task042.V32.cost.v1",
+  "shared_workstation": true,
+  "carry_seconds": 52.68017605994828,
+  "pre_seconds": 11.14747028495185,
+  "actor_seconds": 83.1401845519431,
+  "checker_seconds": 4.521115910960361,
+  "auxiliary_total_seconds": 15.668586195912212,
+  "actor_launch_wall_seconds": 86.87157245806884,
+  "cumulative_seconds": 151.4889468078036,
+  "cumulative_cap_seconds": 600.0,
+  "remaining_seconds": 448.5110531921964,
+  "total_batch_elapsed_at_pack_seconds": 1206.4173158730846,
+  "observed_UTC": "2026-10-03T11:02:33.451792+00:00",
+  "worker_after_packet_load_seconds": 77.6760526529979,
+  "worker_seconds": 77.92100937792566,
+  "nested_timers": {
+    "reader_cold_invocation_including_hash_mmap_norm_guards_seconds": 38.16857800108846,
+    "joint_solve_seconds": 0.544566588010639,
+    "outer_solve_seconds": 1.2816191759193316,
+    "port_setup_including_guard_seconds": 3.054193731979467,
+    "port_solve_seconds": 0.008150430861860514,
+    "original_action_seconds": {
+      "S": 5.540363412932493,
+      "SH": 0.7935414919629693,
+      "audit": 0.0
+    },
+    "thin_QR_GELSD_seconds": 0.023845748975872993,
+    "direction_and_witness_separate_wall_seconds": null,
+    "IO_separate_wall_seconds": null,
+    "unattributed_worker_seconds": "not partitioned; do not subtract overlapping timers"
+  },
+  "IO_accounting": {
+    "seven_matrix_LU_net_payload_bytes": 1591420032,
+    "mmap_hash_scans_and_LAPACK_workspace_charged_in_actor_wall": true,
+    "cold_OS_file_cache_proven": false,
+    "receipt_archive": {
+      "original_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v32/task042_v32_return_direction_diagnostic_20261003T105243161712Z/stage_result.json",
+      "original_sha256": "673fd7c588dfb0b9cc11a85061e6e5d2f8c228ed9efffd94bbc1f0440414908e",
+      "original_bytes": 505460,
+      "archive": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_result_v32.json.gz",
+        "sha256": "56d61cca71f745d5d9be43f8b23a3cb969e3d199c5421ccdd6487d28877e23af",
+        "bytes": 55818
+      },
+      "lossless": true
+    }
+  },
+  "resource": [
+    {
+      "phase": "pre",
+      "CPU": 11,
+      "cpu_siblings": [
+        11
+      ],
+      "RSS_bytes": 278028288,
+      "own_swap_bytes": 0,
+      "samples": 16,
+      "requested_interval_seconds": 0.5,
+      "actual_interval_min_seconds": 0.609228472,
+      "actual_interval_max_seconds": 0.898271831,
+      "effective_available_bytes": 1280730071040,
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "cgroup_delegated_writable": false,
+      "kernel_cgroup_limit_claimed": false,
+      "PSI_full_avg10_max": 0.0,
+      "stop_reasons": [],
+      "disk_free_min_bytes": 3386302779392,
+      "legacy_artifact_path_sum_max_bytes": 18024901709
+    },
+    {
+      "phase": "actor",
+      "CPU": 0,
+      "cpu_siblings": [
+        0
+      ],
+      "RSS_bytes": 1247059968,
+      "own_swap_bytes": 0,
+      "samples": 113,
+      "requested_interval_seconds": 0.5,
+      "actual_interval_min_seconds": 0.604270129,
+      "actual_interval_max_seconds": 1.021164811,
+      "effective_available_bytes": 1280687730688,
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "cgroup_delegated_writable": false,
+      "kernel_cgroup_limit_claimed": false,
+      "PSI_full_avg10_max": 0.0,
+      "stop_reasons": [],
+      "disk_free_min_bytes": 3386290335744,
+      "legacy_artifact_path_sum_max_bytes": 18024931366
+    },
+    {
+      "phase": "checker",
+      "CPU": 0,
+      "cpu_siblings": [
+        0
+      ],
+      "RSS_bytes": 137129984,
+      "own_swap_bytes": 0,
+      "samples": 7,
+      "requested_interval_seconds": 0.5,
+      "actual_interval_min_seconds": 0.581976726,
+      "actual_interval_max_seconds": 1.006061617,
+      "effective_available_bytes": 1280698261504,
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "cgroup_delegated_writable": false,
+      "kernel_cgroup_limit_claimed": false,
+      "PSI_full_avg10_max": 0.0,
+      "stop_reasons": [],
+      "disk_free_min_bytes": 3386275459072,
+      "legacy_artifact_path_sum_max_bytes": 18040915233
+    }
+  ],
+  "simultaneous_process_tree_sampled_peak_bytes": 1247059968,
+  "own_swap_peak_bytes": 0,
+  "VRAM_bytes": 0,
+  "GPU_used": false,
+  "planned_simultaneous_bytes": 4807239744,
+  "history_formal_lower_bound_seconds": 77161.55713859801,
+  "history_auxiliary_seconds": "unknown retained",
+  "complete_N1_cost_seconds": "unknown retained",
+  "cpu_admission_or_cleanup_wall_seconds": "included in batch elapsed / launch wall; not falsely charged as numeric actor seconds",
+  "earlier_storage_rejection_before_admission_and_worker": {
+    "actual_worker_seconds": 0.0,
+    "counted_in_batch_elapsed": true
+  },
+  "process_clear": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/final_process_check.json",
+    "sha256": "c8c0a62d512369f01d266bfcdafe356ff8ddd1b402d205792e0df1452691eae7",
+    "bytes": 157
+  }
+}

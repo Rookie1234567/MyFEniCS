@@ -1,3 +1,9 @@
+# V32：显式路由／资格收费／统一存储及真实负结果
+
+复用V31数值study、fixture和watchdog，新增薄V32 IO/window／单dat/plan、collector后缀及最小dispatcher注册；辅助按独立attempt记账，当前文件hash证明通过覆盖，失败不覆盖。一个stat-only库存模块同时供pre/live/final使用，修复review/records/results漏计；原数学、EXPECTED、门限、普通默认不变。
+
+12 focused、一次真实actor和独立checker绑定source1fe058e3…；无大runner复制、新LU/PDE或训练。后checker的存储预留停止与允许cache清理独立保存。新compact records绑定hash和费用，不重复嵌套旧JSON；大数组ignored。分组及完整文件见[源码库存](records/source_inventory_v32.json)，[回应](../response_v32.md)。旧task/review/response/raw与closed文件保持，以下历史逐字保留。
+
 # V31改动与证据边界
 
 源99739709…添加relative显式导入、V31 IO/window/profile/run_case/worker/父监督/结算、collector显式后缀、固定aux summary计费及合成workflow fixture；普通默认和数学阈值不变。后续4734b22d…仅补拒绝fixture三个接口。数值核心复用原模块，没有新全局矩阵、LU、训练、迭代或大型runner复制。

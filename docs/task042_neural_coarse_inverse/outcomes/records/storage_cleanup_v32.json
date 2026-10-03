@@ -1,0 +1,2546 @@
+{
+  "status": "PERMITTED_UNREFERENCED_BYTECODE_CLEANUP",
+  "UTC": "2026-10-03T10:56:18.923004+00:00",
+  "elapsed_seconds": 2.2228229329921305,
+  "root": "/home/fenics/Projects/NN-Lab/tmp/task042/review_v24/pure/pycache",
+  "files": [
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/_distutils_hack/__init__.cpython-312.pyc",
+      "bytes": 10601,
+      "sha256": "54c073be4f9bfa9792a573e3a935ad43865be0edb044c5f3693ecec11ca472e1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/platformdirs/__init__.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 35077,
+      "sha256": "106e36d59d67e6316fc5c35e5ac96c237ccb694ccef2bd80e69f3322e98cf968"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/platformdirs/_xdg.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 12993,
+      "sha256": "71975a2ab771a7f399a1a2a808c02dc49f33aaa61e3901686c7e6720c40016b9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/platformdirs/api.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 37504,
+      "sha256": "68c6ccb70daaff0630745d8446864ebeb39adc1cdb53d1f22b69ac1c957d2ebf"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/platformdirs/pytest_plugin.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 1214,
+      "sha256": "fb7f5af9c2317c1a39c8bceaea80641742edaf1cd16227df8462c3e1a1e06ec2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/platformdirs/unix.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 26823,
+      "sha256": "f1978eabc978bc4a102d490b08eb69a7789c2643e0e88e78e15030a75d56e6e3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/.venv/lib/python3.12/site-packages/platformdirs/version.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 753,
+      "sha256": "4d98b0261afb8ecd5ebb67a1d2efd5f4b27362fafebd1a4126709255187519c7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/__init__.cpython-312.pyc",
+      "bytes": 223,
+      "sha256": "e91451a08756d4bcd92faf97eda6e2483e17281e47bd1b518b899e0e1cfbb7a6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/check_development_model_registry.cpython-312.pyc",
+      "bytes": 6744,
+      "sha256": "8d6f72df636c169aac981acc44ead46d07bf024092fd9b33a65e0799a2ea8815"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/check_task042_local_block_records.cpython-312.pyc",
+      "bytes": 13584,
+      "sha256": "a48f1428552f4885bf8c870ff03ac2660908c9ff32c9044c60c607d2881da4f4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_block_direction.cpython-312.pyc",
+      "bytes": 20154,
+      "sha256": "fc9e8946fd0471137bb7acd179224d06ce84bb7afc9819a0c1ab57448a0aa951"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_joint_direction.cpython-312.pyc",
+      "bytes": 19210,
+      "sha256": "b4de9b89dc6082a7894c0c741aa2826d2e71ca82db57abc841d0a680a178e261"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/subreaper_watchdog.cpython-312.pyc",
+      "bytes": 36115,
+      "sha256": "9397d40a89a3c747cd9e15ce33460931446789456931e73d0ed0d611b3291c9f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/task034_wsl_resources.cpython-312.pyc",
+      "bytes": 14494,
+      "sha256": "7cddb1e6f01887b8b591c7f5dd3a72229275590e28bc75ab0cd6edb25bfa58eb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/benchmarks/task038_full3d_jit_staging.cpython-312.pyc",
+      "bytes": 21553,
+      "sha256": "19647eeb61a5e1f779b4d340d9b2c851f29e4be0f36382879f219f76b8c11b87"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/__init__.cpython-312.pyc",
+      "bytes": 216,
+      "sha256": "8e8262be1ff0d990dba7ca4d8cea61df9a52ad596f1a88d2e0383fdfd359e33a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/common/__init__.cpython-312.pyc",
+      "bytes": 148,
+      "sha256": "bbf2a4572a75bc0a1829cecf5f156f3257119ecd40a03029a0a1bebac143e093"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/common/optical_material_table.cpython-312.pyc",
+      "bytes": 5252,
+      "sha256": "b8b91d2bf8ab32b8de8b0d8a9f20fb2f8488853c7298fa37ba4ff1401f459f0a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/geometry/__init__.cpython-312.pyc",
+      "bytes": 150,
+      "sha256": "17046fe7ee8cdc71374ea17731045cffec6b3746729c438581dfb3a0dedeb47b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/geometry/neural_micro_pilot.cpython-312.pyc",
+      "bytes": 7822,
+      "sha256": "feaba9caedea12e88297a1e8d4f3d093b0cddbe27e68afd055a5e0307591b78c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/__init__.cpython-312.pyc",
+      "bytes": 841,
+      "sha256": "a7c2f189591d32945c738c1c67d56f7d98581754be5e4cbffa845a24afd2b767"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/autonomous_neural_head.cpython-312.pyc",
+      "bytes": 6675,
+      "sha256": "e70772a2f785ad54c55574135465f2f4be73d740849a8fcdf05d3c045cf56eab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/block_direction_diagnostic.cpython-312.pyc",
+      "bytes": 6898,
+      "sha256": "2c23ca5c019954e8f41ac565caa37420207ba33af7f0d119d740fa9f20e694d4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/execution_plan.cpython-312.pyc",
+      "bytes": 9722,
+      "sha256": "d7a037169664b59aa51551c4ef262b60e15cb7d627fda57ccb9b5dab44cf1dc2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/input_loader.cpython-312.pyc",
+      "bytes": 3356,
+      "sha256": "955b177957c0848f0611a94fb3d887b7d6a6af9e93c52f51f99fbb8e8e760fd7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/input_schema.cpython-312.pyc",
+      "bytes": 30794,
+      "sha256": "5982de1b9ba318317b2cb2cbc1c21cf453acf439f250842592935074bdc3cf46"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/input_validation.cpython-312.pyc",
+      "bytes": 66942,
+      "sha256": "b88c2a558b92e7a51bc7fef93bf228ba2a56b4db5dfa4932c84444509c6caacf"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/joint_block_diagnostic.cpython-312.pyc",
+      "bytes": 6094,
+      "sha256": "fc78b8c957816795c1b7453043c832691cdf11bd2b6271a1cca9ab842ea48319"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/native_capacity_profile.cpython-312.pyc",
+      "bytes": 16661,
+      "sha256": "a1016491813454c8035515a1293a2d39183b3917e8df0f8658931399870c5602"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/neural_fe_calibration.cpython-312.pyc",
+      "bytes": 8755,
+      "sha256": "9771d666171237898900e0f758424fe57575994b5b6d0f7f3f63135934465ab0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/neural_fe_continuation.cpython-312.pyc",
+      "bytes": 6105,
+      "sha256": "2826fdac60d6895c7575fd61b95163e82fb3482928e0a2493fcbc47d004282dc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/orthonormal_trace_reprofile.cpython-312.pyc",
+      "bytes": 7597,
+      "sha256": "8563fc2aedf2e119d9444bb00c8d40cf3ead0cddab414600d08513372fd454f2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/p1_trace_galerkin.cpython-312.pyc",
+      "bytes": 9687,
+      "sha256": "770d3e91e93ddcf8ec1be167b619db720f2aeeec5a390440898a3d0daa4258d8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/resolved_config.cpython-312.pyc",
+      "bytes": 1947,
+      "sha256": "1593c04efdea1a690924d1eeea2e4093099f5b078808f7e421d6bd266f810286"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/run_specification.cpython-312.pyc",
+      "bytes": 4106,
+      "sha256": "770f48eb3eae6cc0701e3963414b9d31110f5713571c649a7e972ad5ad9d577d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/io/task042_profile.cpython-312.pyc",
+      "bytes": 7544,
+      "sha256": "fa0564e19f7aeec3ae4e4a4a5623e5a08adbf68742396c8a433106066136fb16"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/runners/__init__.cpython-312.pyc",
+      "bytes": 149,
+      "sha256": "f99979b8fb3976d368b87c95e9753f0a8194b6d2a45dcb7536ec83aa92657734"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/runners/autonomous_neural_head.cpython-312.pyc",
+      "bytes": 56698,
+      "sha256": "39d3002eda35327afa3cc85cbe1001ac1adb4d77a56bbcdfaf6febed5eea2af6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/runners/block_direction_diagnostic.cpython-312.pyc",
+      "bytes": 9032,
+      "sha256": "bdead6fdb35224f69b1df063d0512c6f079a5c8df8baadbf31e729fb69210610"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/runners/orthonormal_trace_reprofile.cpython-312.pyc",
+      "bytes": 22488,
+      "sha256": "0c96fc8adc5f784b2f25796d15f79a8ce2dcfa6a7040d11b292ee78467b9e72a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/runners/task042_shared.cpython-312.pyc",
+      "bytes": 51598,
+      "sha256": "ea124a26962577163826787da680fad129884e0c493d36362485c877edb2783d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/runners/workflow_timebase.cpython-312.pyc",
+      "bytes": 5985,
+      "sha256": "143085c66a16f4658bc3a7f612b3631535babbb0db618875a66a86cdccef8974"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/__init__.cpython-312.pyc",
+      "bytes": 149,
+      "sha256": "25f24c6177bc8ec32660aaa9b690e30e4dab99a5ddbcca3edca6eaed7c31444b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/actual_loss_block_descent.cpython-312.pyc",
+      "bytes": 9358,
+      "sha256": "f4f749ffc9a39663c8770a927b25f3fabb3241cf851f254a33964cb512669ebd"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/augmented_trace_lsqr.cpython-312.pyc",
+      "bytes": 18599,
+      "sha256": "b511f2a63e11832c51f40c643da3139a834cc7d59213f059e0caa0008decbaa0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/autonomous_batch_window.cpython-312.pyc",
+      "bytes": 4002,
+      "sha256": "cb7afadadaf370177ac66e1fe10d237b3d1a19d6cc8a17d488becccd28e6fa45"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/block_direction_window.cpython-312.pyc",
+      "bytes": 5903,
+      "sha256": "560c4b95df4359ae7d4e1721047d7d28a80d392490cf532eb7df7ff390ccdb59"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/block_residual_direction.cpython-312.pyc",
+      "bytes": 15516,
+      "sha256": "a190d412c538fb3496988980dea6a96e860c7dcbc69715ae8d973a7d917b4612"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/exact_recycle_window.cpython-312.pyc",
+      "bytes": 6873,
+      "sha256": "37820535b7f58c5fef93127662c5b2d945c0567b00bd4a4ac673317a4b7e7d94"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/fixed_p3_ilu0.cpython-312.pyc",
+      "bytes": 22040,
+      "sha256": "86b028a21acc873886eb3c2b4ec2878d08e6532fa0d85985863343f4797dbfe3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/gmres_cycle_commit.cpython-312.pyc",
+      "bytes": 10459,
+      "sha256": "c7565798a3612f93b8d63d0df163714a2812b9131df7fe3fb36bc3da3d61649b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/joint_block_direction.cpython-312.pyc",
+      "bytes": 26959,
+      "sha256": "0cdc378d0d35b64cabda26dc1868fed3703a6fd25cce5ed5de2f751495349bab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/joint_block_study.cpython-312.pyc",
+      "bytes": 19952,
+      "sha256": "37b273cbdee856a8bdbc6e3fb3f4d5dd93818b999ef99d53060d1f629ab632dd"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/joint_block_window.cpython-312.pyc",
+      "bytes": 6561,
+      "sha256": "2f724600b43607096bf2e1c6b509d19fb35eea907b87844a8f734f5879c92de9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/local_block_coarse.cpython-312.pyc",
+      "bytes": 16604,
+      "sha256": "e362468eb75132050891f5f6402f55b0732e99ae2f64e5a0e5063511c696a080"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/local_block_readiness.cpython-312.pyc",
+      "bytes": 8300,
+      "sha256": "c5e18bb57e6b94a03644c67e2f72b91ea010f34a1c3ceb4a7ba333497c3fdcf6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/local_block_study.cpython-312.pyc",
+      "bytes": 32456,
+      "sha256": "3bc174253ea5f875b3917e15149c45f3648c77c5b62065a97da246c6fefdcfb7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/neural_fe_action_packet.cpython-312.pyc",
+      "bytes": 24160,
+      "sha256": "561084b8c4d21ba2c58245cad003160b1278b8147462d7fa1d73f33486b89c64"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/orthonormal_trace_reprofile.cpython-312.pyc",
+      "bytes": 20260,
+      "sha256": "9cdee570a3848c43b67ad37e725a465db3dbc05c80afc602879e1652c95a8933"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/orthonormal_trace_window.cpython-312.pyc",
+      "bytes": 3206,
+      "sha256": "b8ce543664fa26ade637f2967d85f76c4ab673bd198eb417be5a5a1664ba5ddb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/p1_image_minres.cpython-312.pyc",
+      "bytes": 13013,
+      "sha256": "3f4cf4eb1cd64dce0dbaa766107909e86b7ebb8f540dbf170e678c40c9ceb9da"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/p1_image_study.cpython-312.pyc",
+      "bytes": 28116,
+      "sha256": "92b577c50123f884dd40e89db8287c51699b20bc259e555e1ce60d012c728fda"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/p1_trace_galerkin.cpython-312.pyc",
+      "bytes": 15443,
+      "sha256": "ed5cc547381429d2eca4c069288add036d67f1a142942e86210751c23ab34a42"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/p1_trace_study.cpython-312.pyc",
+      "bytes": 25303,
+      "sha256": "e99ff2d41fa951856888f3242fc996c5430ff72a3d591460ed18fbb5bc5458f8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/resumable_lsqr_checkpoint.cpython-312.pyc",
+      "bytes": 7690,
+      "sha256": "84baa3f0d6e90efc76463aad094b761d1d95a22b52a36f9e31a4ae240a34bb41"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/resumable_trace_gmres.cpython-312.pyc",
+      "bytes": 3703,
+      "sha256": "7102eb5910f760d12ae12dc66c225dd3bac7dc5481a44b717beb02f061fa2c71"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/stable_head_varpro.cpython-312.pyc",
+      "bytes": 21436,
+      "sha256": "9e1ae25dc2e6615aafe495623dd66b61df74ad376bced02aaabf90bdd86380fd"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/solvers/tangent_head_model.cpython-312.pyc",
+      "bytes": 14027,
+      "sha256": "edc031292649c13c24bf0cc92cca5e30041aa090794fb5fa2a38d65e063f57bf"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/__init__.cpython-312.pyc",
+      "bytes": 217,
+      "sha256": "2e9f82f6eb8645f3b123c9edef630af63bcb682cf02c69a16b34ebd2d90a723f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_183_development_model_registry_markdown.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 7946,
+      "sha256": "3d37141c0f735a1693940dc5fe622036c9caa129d71eaca07e27cc275e48d81b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_183_development_model_registry_markdown.cpython-312.pyc",
+      "bytes": 7833,
+      "sha256": "b1e6e34a220a89cfd3028d1124584a22045d8846f99fefc7fb8bd1a57ce9c095"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_24_repository_work_principles.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 7905,
+      "sha256": "b4bb649ffa08884af43843252eb57f8b3fa97d7868815c647c720f0898544f9d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_development_model_registry_contract.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 1843,
+      "sha256": "7b346cf6ae26c2f10ae9c70b0fddf1505bc8ff7840362599dc8eab136413d5af"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_neural_fe_action_packet.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 13576,
+      "sha256": "9903739533af71ef6ba0828556f7e2a1366877d7e0fe77a2ad4177398a7bfb98"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_task042_v18_completion.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 57799,
+      "sha256": "b4360f371e3acd1f6759cc5225a231c842c114bbe6746be25ddf45de333b57f6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_task042_v22_p1_trace.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 63736,
+      "sha256": "a2a8a6e5d28b4ce78ffa1a9074af4e74819c10122549f5761b2119e70fcbc65e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_cached_evidence.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 12334,
+      "sha256": "efc28dd67a2a7b42a42015fcb4df69d7949ef7ec274b6590540fb9a1a735e392"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_inventory.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 10704,
+      "sha256": "3f470f20b6921f471b7129a60fa8e14f15fe3c2a69d96367490b82df95468b35"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_joint_direction.cpython-312-pytest-7.4.4.pyc",
+      "bytes": 39263,
+      "sha256": "8383f397477d1d58432033a021cbb23f987907b728bdc375a9e8b81ee7b267f9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/__init__.cpython-312.pyc",
+      "bytes": 382,
+      "sha256": "ea9709602807f87854c39a5d8ac00abe5eb33343980ece2924c38c399ce0e43b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_argcomplete.cpython-312.pyc",
+      "bytes": 4919,
+      "sha256": "4b63e90fb9b4c82ed450aa3aec42a5f274634714fabeafb22685af6d8c894273"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_code/__init__.cpython-312.pyc",
+      "bytes": 600,
+      "sha256": "b2b1e404f3d8f8ea0b658a81fa14f1df5caddd4c990be790214f24e9f93d71b7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_code/code.cpython-312.pyc",
+      "bytes": 60101,
+      "sha256": "5bf2fd5d186c6e803d9e34928159d661668097e78bc2c9e88fad6196d28de150"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_code/source.cpython-312.pyc",
+      "bytes": 11383,
+      "sha256": "47138123af7f91a5dcde8aec6b780eec11285649275bd4eea6fbc5cbd9e5f1b2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_io/__init__.cpython-312.pyc",
+      "bytes": 291,
+      "sha256": "42eea0462994bf9c1cff831d69057741616c1f97dbe7b91d8f86aced5e02c5a4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_io/saferepr.cpython-312.pyc",
+      "bytes": 7514,
+      "sha256": "8f726399fb83a5ebd1ed652b8a548f1793986f5775b7a4abae5c70828b0b79c4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_io/terminalwriter.cpython-312.pyc",
+      "bytes": 10054,
+      "sha256": "f25f2feafcf34aae2006eca9c3a4f2ac701873ac70b76e5ab66d43fa975a939e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_io/wcwidth.cpython-312.pyc",
+      "bytes": 1632,
+      "sha256": "22e1c8d3a68daac4943c4904f6b620d1392acc2d4d0fb93052def450f32b2e8d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_py/__init__.cpython-312.pyc",
+      "bytes": 151,
+      "sha256": "e60f2cf2a002c1cf869136250025c102bce6fcb78b8de3d4c6637ee10081ea10"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_py/error.cpython-312.pyc",
+      "bytes": 4755,
+      "sha256": "6c1b2d7ac59f00e000327de0663fd06d80d76abaa7d0bd471f8b7c566ed54136"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_py/path.cpython-312.pyc",
+      "bytes": 68739,
+      "sha256": "dc201c485875e302e5cccfc7c75578aa52f4f8601e63441fb2c6fbc11ba5e3bc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/_version.cpython-312.pyc",
+      "bytes": 549,
+      "sha256": "19ac56b7382482fe3380ee306451133f475ea82dcbe35ad6dad23eae5ca01562"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/assertion/__init__.cpython-312.pyc",
+      "bytes": 9146,
+      "sha256": "9fc690ca83968fcc8659d615e1dec9e3990c2191f6ab3a86d8f58facf216383f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/assertion/rewrite.cpython-312.pyc",
+      "bytes": 62774,
+      "sha256": "47f5e560961905a5acd4164b50dbfab8a8e04cc1119b9e28f97d0af156b4a1b3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/assertion/truncate.cpython-312.pyc",
+      "bytes": 3620,
+      "sha256": "243f8d4e6f65a85acf8619dbbb98b63ee61c6d5abb04f43fe05e09fae9b311a9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/assertion/util.cpython-312.pyc",
+      "bytes": 21186,
+      "sha256": "ee91c207ab36276ac2c149e22a251bfe097c63e79f132469cfe8784e47af7e4e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/cacheprovider.cpython-312.pyc",
+      "bytes": 30552,
+      "sha256": "d3f18cf8d0b4e31550d290aaa46aead2040dcf14b636b4b0696ef95ae4345d46"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/capture.cpython-312.pyc",
+      "bytes": 53910,
+      "sha256": "b19e6e13cf82217f0e19d00df4cd10325ac9f2832f19e4339520533e9d19f8d0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/compat.cpython-312.pyc",
+      "bytes": 15244,
+      "sha256": "878dc12353a2e7b9a06e39cc2c1b7b1cb8aa56ae7a58895f44031f00aaf3fc02"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/config/__init__.cpython-312.pyc",
+      "bytes": 76062,
+      "sha256": "f7a1b935f139dc2462b060e3d53857400a89d7867da69854fd991ad79d4c238b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/config/argparsing.cpython-312.pyc",
+      "bytes": 26837,
+      "sha256": "05f373ac650d253f81d14e7f7b396db9d528115627fa82e83812ebe422401443"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/config/compat.cpython-312.pyc",
+      "bytes": 2871,
+      "sha256": "9f03e2f21749adf56d4532310b6eb9444e24d92eb304d389f196a984676f02c8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/config/exceptions.cpython-312.pyc",
+      "bytes": 723,
+      "sha256": "a0c76925a1a8b8e78aba8dea423333b2213b6254d4fb609111d1482ffa450971"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/config/findpaths.cpython-312.pyc",
+      "bytes": 9165,
+      "sha256": "f13c534816f06dc64df7d26aa1f0f3b0bfc4290249c047df6964b4b89e57181e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/debugging.cpython-312.pyc",
+      "bytes": 18067,
+      "sha256": "1dce4a86c596452957d3573123201a382ae830e2b06e065332ad36f341e6ddf5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/deprecated.cpython-312.pyc",
+      "bytes": 4656,
+      "sha256": "a6670ed9a3868243eb2523e701065a7ac4e6b28560a113afec02ecebe5bad3c9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/doctest.cpython-312.pyc",
+      "bytes": 34131,
+      "sha256": "a9a174a40194075736fec0f242494828005f51549a591cceb847ec5e5b143e82"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/faulthandler.cpython-312.pyc",
+      "bytes": 4333,
+      "sha256": "c7b465399f1bd7c51e27148b78dd3e274fdfbce38fc3c96c09c61eda803ca256"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/fixtures.cpython-312.pyc",
+      "bytes": 71876,
+      "sha256": "caa76419ca1727fad6a74d631a03041cd9005b1083b9e724e1d5e48b6f9eadf4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/freeze_support.cpython-312.pyc",
+      "bytes": 1830,
+      "sha256": "42fa72f215d26cea58dfc8ca50b3d6664e1db5cb507737384a5f01168270822f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/helpconfig.cpython-312.pyc",
+      "bytes": 12124,
+      "sha256": "8219f3263ce8228da17e2256da3bf2f5c3d743ad777572a9dcdb8b82715bafb7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/hookspec.cpython-312.pyc",
+      "bytes": 35079,
+      "sha256": "2c00b0613cc2ab6c06c7190aef7e9d3ab9b0fc6ec43ac2bfc6b888e1674d9be2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/junitxml.cpython-312.pyc",
+      "bytes": 34374,
+      "sha256": "cf1cbb7ae5d085065a7bd2f60967364d957dab3627ba821f5a4e457c1022c350"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/legacypath.cpython-312.pyc",
+      "bytes": 24983,
+      "sha256": "75377f5c4c20ff644cfd0830b413df3e2d726ac33b6915a0f39a00b1686f97c2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/logging.cpython-312.pyc",
+      "bytes": 45193,
+      "sha256": "6de7ba65040a1b7f3f549105f03a516483d22a3e8967760bb6eadc71a5b3ef68"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/main.cpython-312.pyc",
+      "bytes": 39724,
+      "sha256": "d69baaafa685ffc9e9452af244368375462c6826134d37d3c877b8460a0afb91"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/mark/__init__.cpython-312.pyc",
+      "bytes": 11561,
+      "sha256": "d4929a9090ac8a7a7e8812d140096aa05342a1e3bc592934e66bff4faa5e3def"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/mark/expression.cpython-312.pyc",
+      "bytes": 11446,
+      "sha256": "f32cfa76a685bc288067b6b06b2e63db058800011f5d34698d7d7b32ff50942f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/mark/structures.cpython-312.pyc",
+      "bytes": 26294,
+      "sha256": "05c1acdc16012c4d3cd9dfc0c92df0b14a28841b8c0b506340add8e343cc56d7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/monkeypatch.cpython-312.pyc",
+      "bytes": 16762,
+      "sha256": "e00aa81758e9dcd7ba71a3ad0f2b45602cbed9ce5af600c81a23dd27ad31b9f9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/nodes.cpython-312.pyc",
+      "bytes": 31224,
+      "sha256": "b571e52195c98bb6460a36ca3ae97ada1eb4bc18ebd190c75ba7e20e4f2dd9e3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/nose.cpython-312.pyc",
+      "bytes": 1975,
+      "sha256": "c6edd749a5118fbbdf729b40dd7917f3003090903f6be78617880d11b1e0aeeb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/outcomes.cpython-312.pyc",
+      "bytes": 12204,
+      "sha256": "a344cd85e7dcd45adbd5456e97fd6a846b95b1cb053e7918faed9e5be5e7454d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/pastebin.cpython-312.pyc",
+      "bytes": 5672,
+      "sha256": "b77edcbc0c3259ce83bf184877048c768d22355aae3189441aced9abc191dd22"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/pathlib.cpython-312.pyc",
+      "bytes": 33878,
+      "sha256": "d99e29e50403bce44d68afc5d028bf7722bf425bebb74578270df0f1353668f4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/pytester.cpython-312.pyc",
+      "bytes": 85195,
+      "sha256": "ca6409f573f3eb85d21d078005eca41b39b30a6df0c7af4fcd33214ab3b07f09"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/python.cpython-312.pyc",
+      "bytes": 82030,
+      "sha256": "60ca0996c0609edfa433e26085cd85f47357e1e4486edffad89b32c7e93227b6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/python_api.cpython-312.pyc",
+      "bytes": 43167,
+      "sha256": "28a1a1afdb28780b778c979eab92406b5b6ec656f63646fd6063b3196ebbdf6b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/python_path.cpython-312.pyc",
+      "bytes": 1544,
+      "sha256": "c2c3418f3455d964d4ed0861b377773a08565215104e5e711cebb9603ea7b15c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/recwarn.cpython-312.pyc",
+      "bytes": 13845,
+      "sha256": "7bafbd271e17be0bcc57f200ce296ea4daf0675a51ff1e1ef16f0565012bafc2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/reports.cpython-312.pyc",
+      "bytes": 24993,
+      "sha256": "7cefadbae85093d5631584c340d7813b890e7d4c7be99854685b716d2dcd4ea7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/runner.cpython-312.pyc",
+      "bytes": 23016,
+      "sha256": "ec81987fc155c4304308229ac50a75e0c2f5c9902a1c248847624d2a076a6cf7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/scope.cpython-312.pyc",
+      "bytes": 3710,
+      "sha256": "53bc753794247e7840b36fcc6448ec05b4478b1730a8eb5ff6d9d1729b3dab36"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/setuponly.cpython-312.pyc",
+      "bytes": 4899,
+      "sha256": "a6bb06c4652bfc8b884ad14a30aed3aaa7b452159f2e8236e17faff412606017"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/setupplan.cpython-312.pyc",
+      "bytes": 1907,
+      "sha256": "97f874006b88668bdeef4e3a91484ad0971e920252b73d6b0a12c66a3aedd7e4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/skipping.cpython-312.pyc",
+      "bytes": 13460,
+      "sha256": "90515e3356ca2af7b0847767a0fce8e9f20e301bd8d675359be2915966f1c6aa"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/stash.cpython-312.pyc",
+      "bytes": 4405,
+      "sha256": "2781860af81cfe8a589da08de9b54177183696688a60da31ccec52ee007ad2f6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/terminal.cpython-312.pyc",
+      "bytes": 72287,
+      "sha256": "1c53c4ddaecc175a130ab7ef1d66b383c1431ebef06308a027e9c72c306e9851"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/threadexception.cpython-312.pyc",
+      "bytes": 4494,
+      "sha256": "bed590a20dfcfe52cf36ed14b60dad98a87b78b0eff6265f6665d3105cb56836"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/timing.cpython-312.pyc",
+      "bytes": 549,
+      "sha256": "c7270a1453d9c3816539a71f5a24d1c7fecfe21e653500f8b47cbca17fafcefc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/tmpdir.cpython-312.pyc",
+      "bytes": 13123,
+      "sha256": "dd6ac0cf3c5e49c88f376f0b355a7d1e8d1a3bfbacd79baf75d40366934f8c8a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/unittest.cpython-312.pyc",
+      "bytes": 18223,
+      "sha256": "aca105d1999bc23b455f07623a0c02c0dc97b1dbc090e7e0e8914502f008d112"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/unraisableexception.cpython-312.pyc",
+      "bytes": 4524,
+      "sha256": "a11cfe8b4e7c7440cc4ae2e23736dc2bf2a0f530a5610bdab722d31cdedf047e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/warning_types.cpython-312.pyc",
+      "bytes": 6888,
+      "sha256": "5ba6305a51132a7635d08a63121f5a4ccb1226e3144d742d6e4b07f2d8b3fb73"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/_pytest/warnings.cpython-312.pyc",
+      "bytes": 6613,
+      "sha256": "4dfe7bf6cd05dd3f53d9f557b7b2f1eb146a600ffed882085015f95dfd744dfd"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/apport_python_hook.cpython-312.pyc",
+      "bytes": 8876,
+      "sha256": "e68cd9c0d2787551c83fe39d26331340d5b2696909ee49b5b094e043098d6ac4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/iniconfig/__init__.cpython-312.pyc",
+      "bytes": 8338,
+      "sha256": "1ec68a1ba9631d296e50ff80ec4b3f63c2b22d653e360b409ec6699096225371"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/__config__.cpython-312.pyc",
+      "bytes": 5366,
+      "sha256": "56dafae1b4b025a2eb8fc6bce486ad7adb872eaeba62b5fcd905812103a21314"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/__init__.cpython-312.pyc",
+      "bytes": 15033,
+      "sha256": "6f366e0a0edaca63cbc7480e285cef7a698e1eb7361cf30564a1d3ccfe7b50e8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_distributor_init.cpython-312.pyc",
+      "bytes": 623,
+      "sha256": "14b03e10c6035a19439bae04fb5521f0ec1d4f047f89b4c2a8cb514b76d081ad"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_globals.cpython-312.pyc",
+      "bytes": 3860,
+      "sha256": "ade94b9ca491432a7c08f1b4575e736d190bdad78668eccc208680d89adcfda8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_pytesttester.cpython-312.pyc",
+      "bytes": 7050,
+      "sha256": "80da0525325d6aeeb7e48868a31892e2b6c001c24311f3e3e38f9498c0208a5a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/__init__.cpython-312.pyc",
+      "bytes": 6655,
+      "sha256": "6805dbfc1a18bac59524aa0231094ff0c18af64aa67be083ec37010242b6a055"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_array_like.cpython-312.pyc",
+      "bytes": 4510,
+      "sha256": "4b27e66f2aa294e389a6d583250e02d5cc5c4b7d8532c453cede703be434801c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_char_codes.cpython-312.pyc",
+      "bytes": 5514,
+      "sha256": "9e106f905dcf8e90afc875cc336d5753e3e14028aa5f3db725f4108123bb110d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_dtype_like.cpython-312.pyc",
+      "bytes": 6015,
+      "sha256": "5f2a23dbf802ab13aa0fa741933f899e0ea7068bcb9aff8609d459994e3f9341"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_nbit.cpython-312.pyc",
+      "bytes": 488,
+      "sha256": "389d29a9b3ee150b027e678819aea51a40b7b4d36a91fa240a7eeaf49e73dea8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_nested_sequence.cpython-312.pyc",
+      "bytes": 3377,
+      "sha256": "1f8224e4e996d00604873c93681641c2d77979fb350f99c323a24afbd77e44e1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_scalars.cpython-312.pyc",
+      "bytes": 1185,
+      "sha256": "966179060c649adb97f6c620d0bb6f0e7dc4a001c37434e56059d78285dbac69"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_typing/_shape.cpython-312.pyc",
+      "bytes": 365,
+      "sha256": "04faabba31192b98fc207e5717159cb78dd4d275df5f5858ccd8eee621059def"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_utils/__init__.cpython-312.pyc",
+      "bytes": 1057,
+      "sha256": "331834a216eb03e4e4bc422602feabee0226c82cf6f2003f14b58109f9300a27"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_utils/_convertions.cpython-312.pyc",
+      "bytes": 799,
+      "sha256": "17793571d72fa6d9cf33ddf8b9404a98e7f47c7ded17bd9c8f52a83f9c60ba60"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/_utils/_inspect.cpython-312.pyc",
+      "bytes": 9408,
+      "sha256": "160af4b0df60b1b82bb90ae9859bcb939b9d30fe5c70cbb3e218e551a789546f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/compat/__init__.cpython-312.pyc",
+      "bytes": 751,
+      "sha256": "4d233c5bb7d5d9e91e5ffb946cf34626b9a6274067a22e93b372c022e4fa0b5d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/compat/py3k.cpython-312.pyc",
+      "bytes": 5681,
+      "sha256": "973f9a970a7832eaa07c6ed08e067ef69fbdf9a6214a0a377557e37c8b48b741"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/__init__.cpython-312.pyc",
+      "bytes": 5371,
+      "sha256": "c2911bff3a238cafb03bdd2779c0bc87cb39e6535f5a276192f06452bd95385f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_add_newdocs.cpython-312.pyc",
+      "bytes": 200159,
+      "sha256": "612f7b4c1d1e59f25d23f46b8167814298bf919a355d06c5c0beb5426b171f47"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_add_newdocs_scalars.cpython-312.pyc",
+      "bytes": 12892,
+      "sha256": "6de84f4c56a3ff2a199b0f091ed5b892871ccb49310a9f4716a153b51dbb9be7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_asarray.cpython-312.pyc",
+      "bytes": 4215,
+      "sha256": "a08a6108f4e4e0fb48f83709357293c72fe047dbcb5c3307100e88ecaac1e392"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_dtype.cpython-312.pyc",
+      "bytes": 13373,
+      "sha256": "8b5b4782cc13e04123cf023a5b00b9ecfc589ee4c2f2e70b87d841b142870363"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_dtype_ctypes.cpython-312.pyc",
+      "bytes": 4885,
+      "sha256": "ab481f8e8a4edddd002804c9beeb8b690c0d75ae4c878041b9634e1e09d7a132"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_exceptions.cpython-312.pyc",
+      "bytes": 8515,
+      "sha256": "6dd239fc1a7f24aeba8e166acb46661a76b7b238f0f189bf4fd579a81f4292b1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_internal.cpython-312.pyc",
+      "bytes": 34290,
+      "sha256": "f26a4b50aad32f4c2195fe969befbebc92977ed747ee649d3e33c83eaee05cb0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_machar.cpython-312.pyc",
+      "bytes": 11694,
+      "sha256": "878a1db526b0d4abc4df232bab8cfea9305d8c3d2ff9880c5216919742ffa94c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_methods.cpython-312.pyc",
+      "bytes": 10814,
+      "sha256": "99a4762ea2e228401a1e8a2a52689684df78524235fff7db0834e6b7015bba56"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_string_helpers.cpython-312.pyc",
+      "bytes": 3337,
+      "sha256": "b301e555191d59b29534b7a61f39c70581ff2e7d2495add7055265fb4af71166"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_type_aliases.cpython-312.pyc",
+      "bytes": 8325,
+      "sha256": "a46086c78743d6049254c46c554565049ea1aa004f366e42c85f70fdf616de22"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/_ufunc_config.cpython-312.pyc",
+      "bytes": 16535,
+      "sha256": "d9ad9b51bf4e175a80290438dacd9c0c504913d2582513c610e1a255e9a460ac"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/arrayprint.cpython-312.pyc",
+      "bytes": 70265,
+      "sha256": "4c9754966f4440f1efca39d370057b945ffc367bb4b8adb4aebc751bb0c59f3d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/defchararray.cpython-312.pyc",
+      "bytes": 83564,
+      "sha256": "6a1081c53b8cc5ab442fa06145786b9187a1fe6f30a3cddff66e15e5819a3151"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/einsumfunc.cpython-312.pyc",
+      "bytes": 49636,
+      "sha256": "6756d9c5dfafdc29625e922ed6c56455ad8e95e9f7969ab075a5abfdf6f5e71c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/fromnumeric.cpython-312.pyc",
+      "bytes": 135247,
+      "sha256": "921b0d37963150f1f9bae0272c7d49119d0dca71a2f37f3c0d3bcf0275508636"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/function_base.cpython-312.pyc",
+      "bytes": 21271,
+      "sha256": "33c2f22fd7d6fae7b979f5f0007b4b9dd41fd0db3d2e7cb8daa91a98c1acf309"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/getlimits.cpython-312.pyc",
+      "bytes": 28153,
+      "sha256": "b6b1bbcea8f018cd70aa776eb2d91d70c8c5f47600685e0769d6c894733666b9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/memmap.cpython-312.pyc",
+      "bytes": 12725,
+      "sha256": "95e87a59ab1670fb70548493b234637068446af0e2d6dcb565a37badf69b291d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/multiarray.cpython-312.pyc",
+      "bytes": 56740,
+      "sha256": "6c182aec46bf41b07c45cb7dfe053b131dced4adc4c046ae873160934d1173bc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/numeric.cpython-312.pyc",
+      "bytes": 84009,
+      "sha256": "9e63a8b31a97bd9e08db4edf0bbe3aad6018c71bc6ff5fb3d6a19c43487c597b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/numerictypes.cpython-312.pyc",
+      "bytes": 20000,
+      "sha256": "74105e3cd5b7c680cb176e376178b690f6060d8eeed1d50257484477e319b7fd"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/overrides.cpython-312.pyc",
+      "bytes": 7621,
+      "sha256": "946b086ec68ca9d7637dd829e79e40ba69c1a5d2e67f89fadeaf7aebfd78c39a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/records.cpython-312.pyc",
+      "bytes": 40215,
+      "sha256": "157967ddf6e61defc4b9f9e400746727145eb893d30d7763f825f1675b29c3e3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/shape_base.cpython-312.pyc",
+      "bytes": 31041,
+      "sha256": "7141dde7c9113b5c2c76d1754204756338e2fad4810f8924f7005e8c9d9236f8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/core/umath.cpython-312.pyc",
+      "bytes": 1725,
+      "sha256": "031683c053cfb4778c0fb15af227eefab0898a533e53fd27c3644ab6395f71f4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/ctypeslib.cpython-312.pyc",
+      "bytes": 20223,
+      "sha256": "412bff2b176daef8e63d97037af5336c394d14426bc841801fb7380aa5938735"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/dtypes.cpython-312.pyc",
+      "bytes": 2492,
+      "sha256": "d01076ff12d071123fa6ba217caf059aae21bf4d3ef16d35dcaf2ccd68ffbea6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/exceptions.cpython-312.pyc",
+      "bytes": 8164,
+      "sha256": "74fa42ba67bd29a43c1dbbc8cbfd3b7895cd55f8d762717594611ec1d0335a82"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/fft/__init__.cpython-312.pyc",
+      "bytes": 8387,
+      "sha256": "c8e9c3a5166a37d1047404c5c5307848d74d8167444ce867cbcf3a5c18d30e5e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/fft/_pocketfft.cpython-312.pyc",
+      "bytes": 55502,
+      "sha256": "8fa7f6096ef9632735a087a2f013c5912cdba453aa6401b31e919e7b89846b7d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/fft/helper.cpython-312.pyc",
+      "bytes": 7465,
+      "sha256": "8b63eae382ea2195f7030f5f90fa1b9b70997d7a2617f3d67874a1d3fb478aab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/__init__.cpython-312.pyc",
+      "bytes": 2978,
+      "sha256": "92d02310e9527914be338898d10bb58baf93ffc593fa5a5a9b966db4d73b5314"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/_datasource.cpython-312.pyc",
+      "bytes": 25283,
+      "sha256": "55673fdb6cc51c72da54cea158e9fbddd89acd4688b8a0272a2c4edade14f561"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/_iotools.cpython-312.pyc",
+      "bytes": 34902,
+      "sha256": "b3cab860df69ede601252553b9a0e4d16d7495367ac545b1eafcb7e2ab9edf70"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/_version.cpython-312.pyc",
+      "bytes": 6609,
+      "sha256": "a4dc921e17774ca47cbe69b2c9e82b26634c4fbf818f918ecda73ff5f9d23ad7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/arraypad.cpython-312.pyc",
+      "bytes": 28851,
+      "sha256": "1bf727e623faa1630e7b5ba8a033864077806f845ce1aed24aef28b1487e54a0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/arraysetops.cpython-312.pyc",
+      "bytes": 35405,
+      "sha256": "cf51c1c7e4ea1a81c3e4254eaaec3743dce89a8afb18799913d6e1ba2db2b4ce"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/arrayterator.cpython-312.pyc",
+      "bytes": 9485,
+      "sha256": "9d5631487ee1aac670ed53535a668c5bd7ad4bd33ff48f37bb82af4a31ecd95f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/format.cpython-312.pyc",
+      "bytes": 34195,
+      "sha256": "f3937ccc1af8767dfb5b2208e255dd4c67934cace5c19570649fefc7b7581b09"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/function_base.cpython-312.pyc",
+      "bytes": 201893,
+      "sha256": "25440a487862d894aaeab55704241dfc463c44e5689a82194e74e164a8e936ea"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/histograms.cpython-312.pyc",
+      "bytes": 40157,
+      "sha256": "d9bb533a29cdf7f66fb13f866962fbda3e576790704c2ae6b827cfa9427c421e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/index_tricks.cpython-312.pyc",
+      "bytes": 35602,
+      "sha256": "89cabe573e266ee91ed0cd210c27dd5ae7b8aed2257bb30fb1ad94a19b394d27"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/mixins.cpython-312.pyc",
+      "bytes": 8835,
+      "sha256": "14cd8fda18838774444569dec7e0586b213cd88155c52e4ca6f23006a4af6db6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/nanfunctions.cpython-312.pyc",
+      "bytes": 69406,
+      "sha256": "5c5546cbb29b7f1c8c575ee09c7484b952d8c4d594f3023dcd13c118b53aa83a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/npyio.cpython-312.pyc",
+      "bytes": 94356,
+      "sha256": "18efa97baafacebaa7b0ae7452627ea34fb575b5831f676e1ec3e3b28ef443ed"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/polynomial.cpython-312.pyc",
+      "bytes": 53554,
+      "sha256": "58f6cd790539d68c29196c2c1a39c77c48d3ca60f6b94e87fabe3c3a111e8df7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/scimath.cpython-312.pyc",
+      "bytes": 17583,
+      "sha256": "6e4e08498047c28813be28629199d876168f0795bff4cd541879e6027a027648"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/shape_base.cpython-312.pyc",
+      "bytes": 43299,
+      "sha256": "35a653e370a88eedffd4f34aaa41d72c9aa8f569aa12a6f8a92723ba3711e9a5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/stride_tricks.cpython-312.pyc",
+      "bytes": 19528,
+      "sha256": "5c6d8b483bc2b9cb048130e6e8939637727fa9f65374212c1f5c734d537c2944"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/twodim_base.cpython-312.pyc",
+      "bytes": 37538,
+      "sha256": "50a888747b08e5f7e6129f09e54ec7e5b59c18eb41fa9872c0c4b1f7bc432f80"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/type_check.cpython-312.pyc",
+      "bytes": 23318,
+      "sha256": "954b1737228afacb6f3824fb3feaa7f9ee7745496e98f02ff87edb714735f4e1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/ufunclike.cpython-312.pyc",
+      "bytes": 7252,
+      "sha256": "e9ec3bd445da2dd9daedbdcc52cf34bd48a45dd1e633a957eaaad3ff25605b61"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/lib/utils.cpython-312.pyc",
+      "bytes": 41437,
+      "sha256": "6ac805a6f7d7d8fcf852270d39e13c239b1651d3491723646f3e3aebaa5560cb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/linalg/__init__.cpython-312.pyc",
+      "bytes": 2041,
+      "sha256": "7a176154af54113e33dc84ed6cfdac43ee3abcd46855b05bafb81b81ec033851"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/linalg/linalg.cpython-312.pyc",
+      "bytes": 100444,
+      "sha256": "c64ee01a72fc46923307bd8590ade1abe328fc754bde8645416470b905740071"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/ma/__init__.cpython-312.pyc",
+      "bytes": 1642,
+      "sha256": "8f29722ee7e6ee7c778d24a9b64e3f4db4d0f6c028792b495870452faedb6ece"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/ma/core.cpython-312.pyc",
+      "bytes": 301560,
+      "sha256": "b23a0bf1c2b876d7ca813705b8e48c936c92970f821ebd1d7129287c051babb5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/ma/extras.cpython-312.pyc",
+      "bytes": 76632,
+      "sha256": "53b12261064a081bcc29ef855dddd06fa662cb7f042967cefc92839ab0d1afd4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/matrixlib/__init__.cpython-312.pyc",
+      "bytes": 449,
+      "sha256": "6945005921ee8207055a7e4764fbb52f6fe24effbc55b7b57be7ea1022a64a80"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/matrixlib/defmatrix.cpython-312.pyc",
+      "bytes": 35852,
+      "sha256": "031af2c802f66ac0b0f02753499a37d68d9577d6afcf85025b8aaa423ca1b7be"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/__init__.cpython-312.pyc",
+      "bytes": 6969,
+      "sha256": "d5854326760d365c2791b42080913dc62751b3738dd475934872cca120fde500"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/_polybase.cpython-312.pyc",
+      "bytes": 48844,
+      "sha256": "fe0d45bad2ff7e00076dc3521170a5b4f761c4aabf816ef02ef55c47d9924a1b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/chebyshev.cpython-312.pyc",
+      "bytes": 72448,
+      "sha256": "54b2406e3149f30a8407357a361c50c54dc279a95f29e50ac0e436747dbba449"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/hermite.cpython-312.pyc",
+      "bytes": 60544,
+      "sha256": "9304b1b41facce77b3a2e58df9ed62bad4acb86ba1b64ad837910a0f20bbc33d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/hermite_e.cpython-312.pyc",
+      "bytes": 60313,
+      "sha256": "c78e18d48a40f4cb5e838d3d4a5bad208bec2d08560960ef91fdb01680d5ae0a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/laguerre.cpython-312.pyc",
+      "bytes": 58128,
+      "sha256": "dad19631b0b48dff69dbdbb013e2d26b33b44c1756500d1218fe76708a0e0021"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/legendre.cpython-312.pyc",
+      "bytes": 58757,
+      "sha256": "4610230e11b3a4870bd59d85c85dd8e72b6f22666f6c7bb0cc78a688c32da0a9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/polynomial.cpython-312.pyc",
+      "bytes": 55162,
+      "sha256": "172e9db501714ada6f342cdd3a7e21abc671ad6dc6993a496763f4d412649bc8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/polynomial/polyutils.cpython-312.pyc",
+      "bytes": 30037,
+      "sha256": "10c80a33ec25f46f0eb5717f177c05d823158371b70571577ac8e7abcadf3de3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/random/__init__.cpython-312.pyc",
+      "bytes": 7493,
+      "sha256": "c1e1f3967dbe4f134cc3627f50926798379c67c07f5a2aee30ec6c2faff44d6e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/random/_pickle.cpython-312.pyc",
+      "bytes": 2447,
+      "sha256": "e7600ddff168794d7e198812e1372d82080129b476b5580913001f01152e3f5b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/testing/__init__.cpython-312.pyc",
+      "bytes": 861,
+      "sha256": "f00f9f1906deaae3cc49714de2b2dadbfe41104e7e49aae06603c47b26989e6a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/testing/_private/__init__.cpython-312.pyc",
+      "bytes": 162,
+      "sha256": "29a744833710a7970e53851dc215c1e761d38668e969c7e75de336742f05cbbc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/testing/_private/extbuild.cpython-312.pyc",
+      "bytes": 9845,
+      "sha256": "41c5cc9d475e08c8b5d74e9deaf73b9f1f7369e440a85c18c4c966a64db8400c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/testing/_private/utils.cpython-312.pyc",
+      "bytes": 96248,
+      "sha256": "1d36879864ed54152674db61b7d901e8a261bc6451fae7ee3273e2dd73269ca2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/testing/overrides.cpython-312.pyc",
+      "bytes": 2709,
+      "sha256": "77524f63b545bdf1a4920587836d5a8ccdb4f2c32036c78dedb4ea5c673f0ce5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/numpy/version.cpython-312.pyc",
+      "bytes": 420,
+      "sha256": "49e4190daf7cf93edd20957fc0add27dcdff737009d94c1acc25c23b79f496fb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/__init__.cpython-312.pyc",
+      "bytes": 819,
+      "sha256": "12722816fd98b1399daef190ca036a56cffcd694cec4d03ab8a714c18ffb5870"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_callers.cpython-312.pyc",
+      "bytes": 8121,
+      "sha256": "93266c2f80ed4f072dad576190d023b379c9176b1c67d6b1d156d5b218127f10"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_hooks.cpython-312.pyc",
+      "bytes": 26931,
+      "sha256": "e9f9da6ff419c6e62e528b3ffc97a11211ebc9162c9d907cbf9fb30c90699afe"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_manager.cpython-312.pyc",
+      "bytes": 25027,
+      "sha256": "0ef585db575e369340f2f7b6e16e02c3d85b1b53493e136b2e5a62988261ebc0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_result.cpython-312.pyc",
+      "bytes": 3931,
+      "sha256": "c1aa575c807b1a9014effb1b0940cc1245327137b21a6a2d3c95a06237acef57"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_tracing.cpython-312.pyc",
+      "bytes": 3993,
+      "sha256": "bd98c700c4ee98dba91402306efcfb0a76530bfdfb092adc2abf36d10eaecc47"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_version.cpython-312.pyc",
+      "bytes": 548,
+      "sha256": "0149580e20a3fe41eccf1cc3017b68182ddee75b52705fb53ceeb53eae4bb5c9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pluggy/_warnings.cpython-312.pyc",
+      "bytes": 1260,
+      "sha256": "b420e1651661fa512518a3f3a76fcdeb7fc496197d3d4c39ec3475378bf29740"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/py.cpython-312.pyc",
+      "bytes": 372,
+      "sha256": "9d0f760d6c3199fd3c9a88f79fb8202dd93f6319a1bc40765ec0ff87dd6c9574"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pytest/__init__.cpython-312.pyc",
+      "bytes": 4345,
+      "sha256": "ca988b30a0af3cab76e7d327ce7a3532fe91db7299cf88b83597f3811efc7652"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/pytest/__main__.cpython-312.pyc",
+      "bytes": 346,
+      "sha256": "e66d7426862952ab5446fde78a9f588da1ccaf9696bc1ee4bbdea5917318c7b4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/__config__.cpython-312.pyc",
+      "bytes": 4307,
+      "sha256": "e1083f4705461e0d2d12372c923af22aa2ee7bc6bdc710b302b7c6ebc408cda6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/__init__.cpython-312.pyc",
+      "bytes": 6314,
+      "sha256": "3c36a3eff9f111daa80b5e85358de846a77fdb54042da7930275b17d345106dd"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_distributor_init.cpython-312.pyc",
+      "bytes": 498,
+      "sha256": "a7771d256f96eed83ad975017d8e53cb66f447a39dc6a711a8306a6b8e93ffe2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/__init__.cpython-312.pyc",
+      "bytes": 532,
+      "sha256": "4be378a27f9b163b3f6c325adfc1271528c95d77e57c362f6a53fc64fa06578b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/_ccallback.cpython-312.pyc",
+      "bytes": 9329,
+      "sha256": "04d5b1fed7de039ae399fb5ef3dacc6188fc6177ff511d2786744269608442ff"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/_pep440.cpython-312.pyc",
+      "bytes": 18795,
+      "sha256": "5dd6513ca378572a2901bac9ab7b855a74a111aae84c942729c184a99f23fcf8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/_testutils.cpython-312.pyc",
+      "bytes": 11098,
+      "sha256": "bca74db60b86f0c0b134383f10fd49a50bdba3119369dec2e0faa1a23e808fb6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/_threadsafety.cpython-312.pyc",
+      "bytes": 2936,
+      "sha256": "c083993c92f5d2065df1b6f3781d2f849006990a44a135996d09fd7de3664353"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/_util.cpython-312.pyc",
+      "bytes": 33022,
+      "sha256": "fd43ee7add2fead65c32e76873c909c953615e9d3fbc979a377531eef94d0e0f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/decorator.cpython-312.pyc",
+      "bytes": 17494,
+      "sha256": "2c054cd5dec956b652f1f30b0d3bf98220563b9012720b320178e2dc808007b7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/_lib/deprecation.cpython-312.pyc",
+      "bytes": 4164,
+      "sha256": "6410a1bf5585a04f3cda9eca7a9531ebb24f7d26fb10fcf370dcafcab58a7047"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/__init__.cpython-312.pyc",
+      "bytes": 8063,
+      "sha256": "9ae312cdd17fc0cc6b5ff2814c78ff0e26e90893a3e765c40b664ec8f3767bda"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_basic.cpython-312.pyc",
+      "bytes": 71611,
+      "sha256": "7d0033e8abfe099a2d2d8d25f9591056ef91589b75a0c9a92a93dc5a9db28d27"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp.cpython-312.pyc",
+      "bytes": 60826,
+      "sha256": "c695684603a16d1c29997543e682484024ac764228b0e0eefb6f78be5a431ff3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_cholesky.cpython-312.pyc",
+      "bytes": 12855,
+      "sha256": "f0bdddff1d8771cb186466b1da51f05239a8ac18aab189d759dcb70249be163e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_cossin.cpython-312.pyc",
+      "bytes": 11056,
+      "sha256": "a9815623904e57a61429bf8f999a25a05b6729a7e07453ecfd75db3a8620331b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_ldl.cpython-312.pyc",
+      "bytes": 12965,
+      "sha256": "8e303990df54bc4f8e4a58483e200ee5bf0473cb0edc78395d4740c38aca4387"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_lu.cpython-312.pyc",
+      "bytes": 13407,
+      "sha256": "c905f7ddfb517892d999293b2a08a1c3417e76f32972587b093f67db4f94669a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_polar.cpython-312.pyc",
+      "bytes": 4165,
+      "sha256": "4f0405353ffe5c9029c86140f13a598d8184159b96d75e58f8d0c626d872b880"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_qr.cpython-312.pyc",
+      "bytes": 15058,
+      "sha256": "746aed36687f738c18cb36134f3e6164b139374aacd14a49baaa26ff5f2c4407"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_qz.cpython-312.pyc",
+      "bytes": 17411,
+      "sha256": "ba3a96016964a0881ad35c9183804fa00aee1cb08274043dd75f320d31fe7300"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_schur.cpython-312.pyc",
+      "bytes": 13390,
+      "sha256": "911808ed3d8d3400ef65c8d04bca6f6d2137892f074d9908ef7dd7579b9c9974"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_decomp_svd.cpython-312.pyc",
+      "bytes": 16838,
+      "sha256": "898a675ffb036969185fd9115f07d8fedc093a380e84e8ddee1e8a5e85dced05"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_expm_frechet.cpython-312.pyc",
+      "bytes": 19022,
+      "sha256": "e65ad2627b521a3e0c8f677169b619c6aa307d26f1ed53de01b5f485d256f611"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_flinalg_py.cpython-312.pyc",
+      "bytes": 1688,
+      "sha256": "9e0c56915874e23cfe2bdeb7b6cc0101d15067f376bf793f5a4460cf7352da7b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_matfuncs.cpython-312.pyc",
+      "bytes": 30173,
+      "sha256": "d1db6497228e82de56a9ddbe89e611e73469dcb4182731466378f28263d7cd1e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_matfuncs_sqrtm.cpython-312.pyc",
+      "bytes": 8183,
+      "sha256": "cf5fe8c17bbc256b8a60b9534fca045b247a647e0ee060efb24fd72d15f7e97d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_misc.cpython-312.pyc",
+      "bytes": 6710,
+      "sha256": "a3906c6774cc8876b31b09ba0a5736b8565aaeadcbd4606258ef7f0928b723b0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_procrustes.cpython-312.pyc",
+      "bytes": 3482,
+      "sha256": "57a1f8fe85cd550232f2a62b3c92dc5668da282e99ef9a74e46c29c687f3da12"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_sketches.cpython-312.pyc",
+      "bytes": 6597,
+      "sha256": "1d535c70a673b6c8edc2541958cffcc26946cfb70c73e17ac4d8dddcc76dfe24"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_solvers.cpython-312.pyc",
+      "bytes": 33390,
+      "sha256": "1f111e6680fc879201b4bf07da6c0c064d4a9c93a42f1dbd160fb5e186b473f5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/_special_matrices.cpython-312.pyc",
+      "bytes": 47480,
+      "sha256": "f2f94e7add40f2c419910eeecb6e9cd1b5b2851a1bd2e6eae34c761d071c53f7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/basic.cpython-312.pyc",
+      "bytes": 1228,
+      "sha256": "509deae76e295a060b936a2571809a0c110acf01526914875474f9d110442573"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/blas.cpython-312.pyc",
+      "bytes": 11703,
+      "sha256": "62458c632f7fda82cc67c69c4af4a302e3523d8e7a40ece6819dab05730abb37"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/decomp.cpython-312.pyc",
+      "bytes": 1245,
+      "sha256": "2356166a347cd96b33246d70f1ac3448d0092ee0be93671a8604863434f68cc2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/decomp_cholesky.cpython-312.pyc",
+      "bytes": 1150,
+      "sha256": "4d34ff9f57b6905db6be3e53ba7e393e8181ca83b153d4555e3414d5e6127a7f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/decomp_lu.cpython-312.pyc",
+      "bytes": 1091,
+      "sha256": "40826e7d36ff14524bc6d639e278cdbaaf33ea698d40a2d19b83c83bf7146493"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/decomp_qr.cpython-312.pyc",
+      "bytes": 1044,
+      "sha256": "213743aef2bb18afdb2e20cf54a67d3a2ab1bc71e2de30b627cc37baaca9f43d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/decomp_schur.cpython-312.pyc",
+      "bytes": 1114,
+      "sha256": "6e8e250e19ec624b31bc2c16d7f6851f43fba42fe0e02059f2721188ba4af8ab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/decomp_svd.cpython-312.pyc",
+      "bytes": 1088,
+      "sha256": "7762f39435076f1747e27784d9a67e55b8d0e6a245cce3e31dac7c0cd67e1ec8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/flinalg.cpython-312.pyc",
+      "bytes": 1001,
+      "sha256": "13d9552c9007b06482d7c546db216ef198bcc10069ab40fb70ac5d4879a96667"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/lapack.cpython-312.pyc",
+      "bytes": 16512,
+      "sha256": "4d3981d00ea3c716a7b41ea089782293f232a9f54d7ec119acb28cb9a7b7a52d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/matfuncs.cpython-312.pyc",
+      "bytes": 1268,
+      "sha256": "61522e752b05f4c0f5a1ad9cc14faeeb8b8aae9c823652b17e2497c13f1b9847"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/misc.cpython-312.pyc",
+      "bytes": 1043,
+      "sha256": "243dac6419fe4a17d831664fcc6fd7122940bf3612f365a4a45dec58c625e8b6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/linalg/special_matrices.cpython-312.pyc",
+      "bytes": 1231,
+      "sha256": "dc30bc3587cc5a57bb1db2972a6109a3daa1bb7621393d3066529ebe9b22dd6e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/__init__.cpython-312.pyc",
+      "bytes": 8865,
+      "sha256": "f8b97a42157c3c07c169b73a899bfddb5a6a0a769baec931ebb97e8328a3dc71"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_base.cpython-312.pyc",
+      "bytes": 61224,
+      "sha256": "fa32c0df01259aec0d9618ffbcc99644bdf2c3281726f41f22d23892954034f8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_bsr.cpython-312.pyc",
+      "bytes": 33388,
+      "sha256": "0b19fe3a4ef710223ddc2d11bfee48245fab926ca74846e04428e8e5f44bcaf1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_compressed.cpython-312.pyc",
+      "bytes": 68277,
+      "sha256": "d2069e9326c787ff55d1900345dad02c0e87d98de211a3c7e6a9048ae4602ef6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_construct.cpython-312.pyc",
+      "bytes": 37933,
+      "sha256": "90dd6659f106115353e4815ec3015a3410ea1bd90f225edea0bf4d33b16e0e56"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_coo.cpython-312.pyc",
+      "bytes": 30589,
+      "sha256": "b96f7aade9608352073dfc62eca4abff4f17e58fdc256f30b2bfec60e8002f35"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_csc.cpython-312.pyc",
+      "bytes": 11168,
+      "sha256": "a4bb72c67fa5053a7757ba36930f0570b294a59d6fa067406f3155f9af247316"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_csr.cpython-312.pyc",
+      "bytes": 16330,
+      "sha256": "bdc7b932ed555eaeb6456a6b7552a2fc8411183910f149d8d4d2754e7ecfbe0e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_data.cpython-312.pyc",
+      "bytes": 21646,
+      "sha256": "a8e8fecfc6184850e3fcc0cac2af6a6e308e52534d078ddefbc58660f2457cc9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_dia.cpython-312.pyc",
+      "bytes": 22714,
+      "sha256": "230abb7ad924927233be5f31fe7e2946531bfa3e3424030613c8eb026b0f1a10"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_dok.cpython-312.pyc",
+      "bytes": 27228,
+      "sha256": "3fd5b3f225df08e2b7065878320140c94c58d5a1f1743240e51f225c9bcc83d5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_extract.cpython-312.pyc",
+      "bytes": 5468,
+      "sha256": "fc0efb24f2ec4909e37266f3015ad2966fa9cf4d51663a52f2840d5a5120a059"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_index.cpython-312.pyc",
+      "bytes": 17574,
+      "sha256": "51e3a5653f8bda414d8a80b3b12e6267849d6d7c013d2c063c2fa65f855b16d4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_lil.cpython-312.pyc",
+      "bytes": 27770,
+      "sha256": "f3b40ba02dc80af28450db6c4fba4e6acc530a1b7da8b6e55b8e44f7465f7b4e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_matrix.cpython-312.pyc",
+      "bytes": 6157,
+      "sha256": "60371d3d3cecef6f27654fe9804a32999900cb07ad7baaa722d06ed6e091bd58"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_matrix_io.cpython-312.pyc",
+      "bytes": 6311,
+      "sha256": "2b01d170d8f3909a90281aad7b85b312026d63aab7af92bb3ef98fc634221777"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/_sputils.cpython-312.pyc",
+      "bytes": 18392,
+      "sha256": "cff5cdeca9b701344c065d742dd9e85977ab96cf3cf3dab6911c0fa169153828"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/base.cpython-312.pyc",
+      "bytes": 1186,
+      "sha256": "ef04b724a63844ec6646930d077253670aa3dfb576fc2f3bdbee1457b72990c9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/bsr.cpython-312.pyc",
+      "bytes": 1203,
+      "sha256": "d73c6a7aee3b075bb72a93da63ef6f5ffaca6f8f678d80ce9985c5c94ceff661"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/compressed.cpython-312.pyc",
+      "bytes": 1383,
+      "sha256": "e8421e0e883a6559cbd6d7e62748fb363c0aff791dd52d77f254ac3dab2d5b2e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/construct.cpython-312.pyc",
+      "bytes": 1262,
+      "sha256": "af116204bddb8c14ea09e2e33ccdb47352e8e5040ab0baf1d57672b89792ff8b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/coo.cpython-312.pyc",
+      "bytes": 1230,
+      "sha256": "85b34e1ae0d72e4d58d6565eb673ff2b823a0a2d928da8ca2fd3d237cb6a59bb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/csc.cpython-312.pyc",
+      "bytes": 1056,
+      "sha256": "7da727d0efb33996cb1f36f6104b9499efc071da950b923804579cead4c0bdac"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/csgraph/__init__.cpython-312.pyc",
+      "bytes": 7514,
+      "sha256": "a6edb7736ce893dc6e64d957b9269400f7f3789c0d9cc827dec9210e7291944d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/csgraph/_laplacian.cpython-312.pyc",
+      "bytes": 21159,
+      "sha256": "26d568d8b029bfaa801ea7065acb26b1e3b4146d240b72c99596b069b48de4a7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/csgraph/_validation.cpython-312.pyc",
+      "bytes": 2225,
+      "sha256": "e8a0edfeb64c2cf3c15d02b2063e2fcf7d92494253c2fcf06bcc709d27128c40"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/csr.cpython-312.pyc",
+      "bytes": 1093,
+      "sha256": "af6f1bca86faf9ae4fcf2efacd5775d35c737339217e83dea3047e2777d9d966"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/data.cpython-312.pyc",
+      "bytes": 1034,
+      "sha256": "a47159b9ac796cf54057c6085ecdf825704c1e4545677ea8288d0e24544a4a31"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/dia.cpython-312.pyc",
+      "bytes": 1124,
+      "sha256": "5ecd47c54ecd5c148bf09f03cca923295f5b5b900758cd3aaccd74dee8a57bbc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/dok.cpython-312.pyc",
+      "bytes": 1150,
+      "sha256": "0d949e711f65493f86daabed1009c78d0f58778d517e8f514c27a00710cbe82b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/extract.cpython-312.pyc",
+      "bytes": 1017,
+      "sha256": "d772bd2dce61e255f1b9dea71ef4efff22067a2a5f00bb0a4d408ce85df6ad7e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/lil.cpython-312.pyc",
+      "bytes": 1157,
+      "sha256": "1113f87ff4f629b05f16f3e01985c9a6463dfeab8ae27ffd96967ac1c718056b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/__init__.cpython-312.pyc",
+      "bytes": 4024,
+      "sha256": "c8ec40dd3af8d7105c05fb51a71b17d246292c219a7ff6eb58cdb074973a7839"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_dsolve/__init__.cpython-312.pyc",
+      "bytes": 2117,
+      "sha256": "17193dab5c2a15f3b542ab6cd1db8911b6f378e68f80e5bb728476b5a013b1ed"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_dsolve/_add_newdocs.cpython-312.pyc",
+      "bytes": 3756,
+      "sha256": "46620cbf8b82cc8fe0ca9964b54e35e74bad96287bf682e52029eafd2d49ed3c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_dsolve/linsolve.cpython-312.pyc",
+      "bytes": 29106,
+      "sha256": "ef8f9251a0e2a560272f6d0d09339b5bad565ced5ceceb2cddd9436341ecdd2d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_eigen/__init__.cpython-312.pyc",
+      "bytes": 665,
+      "sha256": "737ac0cbbc29e315122b7c7be00ccf6a807fc9a9799b584982f7252bc985810e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_eigen/_svds.cpython-312.pyc",
+      "bytes": 20882,
+      "sha256": "b12494f00e917c685e07e16db8afec0c99f99ac116f5d688f917a30e3b47fafc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_eigen/arpack/__init__.cpython-312.pyc",
+      "bytes": 759,
+      "sha256": "ca82b0cb916a6ba03ea109b9a87e652a5395edc67bb8b731e91ddb17dec56b78"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_eigen/arpack/arpack.cpython-312.pyc",
+      "bytes": 67395,
+      "sha256": "222e8ee007dd5722d6f6a9738da054576f9bb72c752c5bbd6dccca0657f9a078"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_eigen/lobpcg/__init__.cpython-312.pyc",
+      "bytes": 738,
+      "sha256": "c9ff31d14fa6923190d283b8628e8347f28e682bc187fc3b85b1e7e1b500b8d8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_eigen/lobpcg/lobpcg.cpython-312.pyc",
+      "bytes": 38056,
+      "sha256": "fcb68f4ca61c8b971b0b96a7777c84d66058cba7eb0b86a41f7ad0c00186659c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_expm_multiply.cpython-312.pyc",
+      "bytes": 32151,
+      "sha256": "4fd0d896f6446c3e316f345e272a47ef9e6410745d3131a077a6ae2ee9aab57e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_interface.cpython-312.pyc",
+      "bytes": 42817,
+      "sha256": "1bfd67701f029bf32807659d45a5993ea837ea0068a276e03c13b74b99290739"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/__init__.cpython-312.pyc",
+      "bytes": 653,
+      "sha256": "66441ad8c995f631c3082d79ecdbf113c8a6440a12d5fd331f66ce512d50a0cf"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/_gcrotmk.cpython-312.pyc",
+      "bytes": 16448,
+      "sha256": "f04bf9b0f830170767e03cb597fdfeb9fe84b7263c2f5445906faccdb897e855"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/iterative.cpython-312.pyc",
+      "bytes": 32188,
+      "sha256": "5454aba8635ac7b2268f2a7d8d2f6055e5b40a9751e1aec1a701ce0220f81f0e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/lgmres.cpython-312.pyc",
+      "bytes": 8871,
+      "sha256": "e23a14c77b38e4114fe44afe9c279042101ded3ea159647c77644e12f9f523e4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/lsmr.cpython-312.pyc",
+      "bytes": 14571,
+      "sha256": "03e726a89d34e1da357c4452f02caf16eea8b48e241f598509529a959622b191"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/lsqr.cpython-312.pyc",
+      "bytes": 20464,
+      "sha256": "a41033df7ba8e3d1a2ef688f2da0cc540cfa81c63dab4d93df71b7f039e39341"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/minres.cpython-312.pyc",
+      "bytes": 9954,
+      "sha256": "10bdf4f4199f89322e19c592f67bd85e5efd815fb3105fa55aca18c6fedc3375"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/tfqmr.cpython-312.pyc",
+      "bytes": 7228,
+      "sha256": "c836e360939c32748fc850cc4ea1b7d35a600ac382a6b004f2a255fdad801f56"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_isolve/utils.cpython-312.pyc",
+      "bytes": 4941,
+      "sha256": "152c7b11b66f402fdfed994910d8d92f95ed0f7fabc7660a6b4cb498b3ed3821"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_matfuncs.cpython-312.pyc",
+      "bytes": 35511,
+      "sha256": "2dc9002dab1e073eb19bbe1bb7ca8f4b4bed6414f6b66f4c6e85725327090ac1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_norm.cpython-312.pyc",
+      "bytes": 7141,
+      "sha256": "ce8d7d9ecc0b29d02f4cf0f1de8039bedafa6f76bbd24c0c9b4a684aa13c45c2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/_onenormest.cpython-312.pyc",
+      "bytes": 17405,
+      "sha256": "ccebc85a6daf6d8751cf7cf21b5bcecf7436c9d826a0c39b0456b378076e679b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/dsolve.cpython-312.pyc",
+      "bytes": 1410,
+      "sha256": "21d50e5414641aee7fb7054092a0c6db7dc1db63b41f55b779fabb780a29990e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/eigen.cpython-312.pyc",
+      "bytes": 1370,
+      "sha256": "e8a3f68c3f2da497f438125f8c16632201b60daccc96357cbfd0ebd60a7d7eda"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/interface.cpython-312.pyc",
+      "bytes": 1169,
+      "sha256": "f08a6e2b4010cc0f6c472daa021aff814414227c5431279d6404c597625aca6c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/isolve.cpython-312.pyc",
+      "bytes": 1126,
+      "sha256": "f01aeb17d9d6e1a9f7e03ab151de125fc881a0e65da85bd6b0c2085041b8c9c7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/linalg/matfuncs.cpython-312.pyc",
+      "bytes": 1178,
+      "sha256": "5c0a423e019b226a0cb7e5df4bc2f24a867bbb33653f7a3fbde60b3c1047e0f5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/sparsetools.cpython-312.pyc",
+      "bytes": 2178,
+      "sha256": "28bb536ae7ed5b8e8b5fcac55e382caba2b5c841bb4310c8699a18468090daeb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/sparse/sputils.cpython-312.pyc",
+      "bytes": 1297,
+      "sha256": "46dd9f4b0e274ebd4a542727ce09b4247d67509f22e6ec66b381f1e7c97aa0e9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3/dist-packages/scipy/version.cpython-312.pyc",
+      "bytes": 313,
+      "sha256": "4ff1273bcebfa1add6deec5a16b1ccdf4d0d61d173dfe860fa35ed0cb523162f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/__future__.cpython-312.pyc",
+      "bytes": 4704,
+      "sha256": "1da1c55d05cc48a94e5dc515f1b8a27bd58ba2426abdee0e658aac03643b3c1d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/_compat_pickle.cpython-312.pyc",
+      "bytes": 7221,
+      "sha256": "961a47eb9035d66e845168b93b839204c0bcc4325ab87c8b169cc98f4d253e97"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/_compression.cpython-312.pyc",
+      "bytes": 7497,
+      "sha256": "fc09d120e985361378c4a62fea5fbbf4abc73b4622e872bc1a78271383cad8e6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/_sysconfigdata__x86_64-linux-gnu.cpython-312.pyc",
+      "bytes": 58645,
+      "sha256": "295ced8693693f94a5d12aadd8865ab583551cbf76f09909e6ea78b2bbc9a5a8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/_weakrefset.cpython-312.pyc",
+      "bytes": 11751,
+      "sha256": "df29445e1dc662eb6d6cfa4432ad8908e452bd29e8c54687d7103bf599d94a36"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/argparse.cpython-312.pyc",
+      "bytes": 101682,
+      "sha256": "d74f146320043e037c396187de9a254dff9f3655076c344ef1b7e74d573a99de"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/ast.cpython-312.pyc",
+      "bytes": 100279,
+      "sha256": "326bf9acecf3937bcbe587ea2846af5d911b6d9b28585dbcae7cc967e8336b82"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/base64.cpython-312.pyc",
+      "bytes": 24408,
+      "sha256": "94397a6e320709cde9e93b00bd626fe99b67899e1cf2ab4d3b020187029ecd5e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/bdb.cpython-312.pyc",
+      "bytes": 37359,
+      "sha256": "806dea5cb2deaab483559b47e6678a13d24c5cd6e516092db271acb136d71aa8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/bisect.cpython-312.pyc",
+      "bytes": 3641,
+      "sha256": "3d9e757cb04022cd9af59093f41e1a97d135f5c5eb09c2933dee11c609572596"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/bz2.cpython-312.pyc",
+      "bytes": 15133,
+      "sha256": "fe78f3c58f7774cbb407262fe60062c69bb6f0963753117b154d6293216f7594"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/calendar.cpython-312.pyc",
+      "bytes": 39621,
+      "sha256": "4c6a78ea3141dfdcafa16f2c47b503dff97ad7293d36fa9638fb1a9c7bf70a09"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/cmd.cpython-312.pyc",
+      "bytes": 18619,
+      "sha256": "ce06ea37c91988729a123f683fa3d253e40876a5e1e5193b0998b7a6a801ec72"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/code.cpython-312.pyc",
+      "bytes": 13051,
+      "sha256": "57a66bd3736dcfc051567a453fe2092a0b099c4beffa4948561890eecbd9d4a3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/codeop.cpython-312.pyc",
+      "bytes": 6916,
+      "sha256": "ee4f834cc56c304d89b03594054a825b0feb8c302a2a3e47edf5ff4746bc78e1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/collections/__init__.cpython-312.pyc",
+      "bytes": 73089,
+      "sha256": "efe104840c7b718e97185b155f875e330f6bc67687182e7322fae642d6f7f39e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/collections/abc.cpython-312.pyc",
+      "bytes": 249,
+      "sha256": "c7e98f4ddd778e38762c32b98aebde9d74586d9c508a1b61cf6e950b93cc7928"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/contextlib.cpython-312.pyc",
+      "bytes": 30376,
+      "sha256": "e29b80e8619204a18dd338fe80562b116d6ced5d42361f7255958c23a0bf08a9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/contextvars.cpython-312.pyc",
+      "bytes": 261,
+      "sha256": "e1e7ab2121334887a77b17091a1d31cbc99037d8e22eb852507b0fd5b9bed432"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/copy.cpython-312.pyc",
+      "bytes": 9800,
+      "sha256": "8f67ec7718038169977a4fb25f7aea1f939cb752bb5c5dcd46385324b963ecf0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/copyreg.cpython-312.pyc",
+      "bytes": 7414,
+      "sha256": "57d508d756385d7e5fd85b4cb31a7e5f92cace2a289789b18d5401999a639bf3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/csv.cpython-312.pyc",
+      "bytes": 17788,
+      "sha256": "f3637379e0ec62d90b8b0898abbee40d9e9c9e3997ed525af4a990ef47583543"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/ctypes/__init__.cpython-312.pyc",
+      "bytes": 23449,
+      "sha256": "32e41a1b3a44485da8bd026ea8b5b44cd2f963103f76f4093578d39471f04371"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/ctypes/_endian.cpython-312.pyc",
+      "bytes": 3380,
+      "sha256": "242c2cfc68dbd7404be9f5ad404c4fbdebf99a747cf2ade36694c2f362f332b1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/dataclasses.cpython-312.pyc",
+      "bytes": 44678,
+      "sha256": "3380a3f143a6e96727bb02ecbc42195d965f0d505caaa0741afb384815e00370"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/datetime.cpython-312.pyc",
+      "bytes": 409,
+      "sha256": "b576fb65d597039963b6c36ce4ddb751ddb5835f86e3735d5bf87a897598437c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/decimal.cpython-312.pyc",
+      "bytes": 406,
+      "sha256": "1122752c264af148a03d67ff91bb51bbbcf9c016125d22fcf757646086d0c1d5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/difflib.cpython-312.pyc",
+      "bytes": 75499,
+      "sha256": "92173a542056efd21d9d653f2970749702b2db7859e797794177aa897d0818ba"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/dis.cpython-312.pyc",
+      "bytes": 34560,
+      "sha256": "f24d6324222cedfbdc4c90c27eb6478061886d2c86aeae183009b5821405d331"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/__init__.cpython-312.pyc",
+      "bytes": 1919,
+      "sha256": "358a9d14d94449fe306afde9169dc7dad1d8a26a1cd8ecd9cea66cb7066fd63b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/_encoded_words.cpython-312.pyc",
+      "bytes": 8306,
+      "sha256": "4bf6fe6794527dc97e7aa4a5642e666978a0d39ab869bcd9bf9c223002cde803"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/_parseaddr.cpython-312.pyc",
+      "bytes": 23265,
+      "sha256": "941a591e5088676e6a66862b7ecbb68b440ef99f2ecdabf035f553d6e28a834a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/_policybase.cpython-312.pyc",
+      "bytes": 18654,
+      "sha256": "4ae0b02870fd55caeffe486425c8f257ec257438e1a8faf995dc57aa52f32aac"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/base64mime.cpython-312.pyc",
+      "bytes": 3950,
+      "sha256": "898fc0451f2a2ed58698385a628f357048399213f457412a4a0098a09e7249ca"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/charset.cpython-312.pyc",
+      "bytes": 15248,
+      "sha256": "e58de9382486e036496a76e516a881597ca7cddefffe0d6942e83bc4141b7003"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/encoders.cpython-312.pyc",
+      "bytes": 2089,
+      "sha256": "68c1325c170b2a4b60c6b422bce1b993793b7c5b3b3c516399798581f859f4d1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/errors.cpython-312.pyc",
+      "bytes": 7021,
+      "sha256": "29ff45ac5aa617022b83198cd75cd479098be4aa0e6fea9829147e2091c8a223"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/header.cpython-312.pyc",
+      "bytes": 24574,
+      "sha256": "05ef35292f4bd521e0ca330e75e455b572fe783529eba1eea2b7933db17bc24a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/iterators.cpython-312.pyc",
+      "bytes": 2819,
+      "sha256": "1eb2bc04d138c1c43ceae60d4b75cf63eabdf4e3f0f5dc0ec85005873b5dc85d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/message.cpython-312.pyc",
+      "bytes": 53034,
+      "sha256": "e74c2b97ca1d8c61e5f942d6c6571076209c9cacf0cda725689ec81b0ed71e06"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/quoprimime.cpython-312.pyc",
+      "bytes": 9968,
+      "sha256": "2db550f14753e772bf33b8eabcb250fed78912b1e13bbd7bdb894e87b2220add"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/email/utils.cpython-312.pyc",
+      "bytes": 16013,
+      "sha256": "e91cba065feb5f9dceef1c3575a768a4948eb9a827d54a8ec08fb8e99a19c1b8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/encodings/__init__.cpython-312.pyc",
+      "bytes": 5790,
+      "sha256": "a885411f939cf1980ade76b0cc021c3a3659d3e4cc8e905fdcaf7e3909ab94ca"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/encodings/aliases.cpython-312.pyc",
+      "bytes": 12408,
+      "sha256": "43acf0e938ff18d8a0c661a66176f7ee6fb92b148b8b5deabc629245eaaeff52"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/encodings/cp437.cpython-312.pyc",
+      "bytes": 13284,
+      "sha256": "474b7d05f33e4df16c120fe7e480de5ad9c6b169d8ad8ff73a532c28ceaeb8cc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/encodings/unicode_escape.cpython-312.pyc",
+      "bytes": 2562,
+      "sha256": "548b472eb538fb3297adb7ee30bc53c0adc18fd87e438187c7e57b5898407462"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/encodings/utf_8.cpython-312.pyc",
+      "bytes": 2147,
+      "sha256": "7ee12571aca7bbdad4c746390eb9bf97207b602be09cb8646a4421957e71f08a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/enum.cpython-312.pyc",
+      "bytes": 80708,
+      "sha256": "bc788b9ee5c315cce928b93f9893441babad4b516a989b8c4d009512d8e57b9b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/fnmatch.cpython-312.pyc",
+      "bytes": 6495,
+      "sha256": "9315c79ca0d436b91421752f16643eb381068c4ff7b85f6a513c646e03debdb7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/functools.cpython-312.pyc",
+      "bytes": 40506,
+      "sha256": "94518b56bf294cfe53c3aad9b0fffc00c9b4c552cccf324bd359e1c4997a82b2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/getpass.cpython-312.pyc",
+      "bytes": 6850,
+      "sha256": "120bc3a020bc211824a6941cb29df333337c01dfe2047cf5cd659774ccf3d728"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/gettext.cpython-312.pyc",
+      "bytes": 22151,
+      "sha256": "fb010ce78752aa46f0cf0b0a8d7204eabe0ed4079fbae55056ad70191a2398d4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/glob.cpython-312.pyc",
+      "bytes": 9841,
+      "sha256": "76661ab520503e7b2694170cae05bc0b7a5c3c82211d89e1ce40c95569e342cf"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/hashlib.cpython-312.pyc",
+      "bytes": 8087,
+      "sha256": "3dc801740aa60d230e0dc5763efb8e91641b1a65f6d6cd310fce63e41a583a13"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/heapq.cpython-312.pyc",
+      "bytes": 17956,
+      "sha256": "920bd230de19b9e2398d4494a2336fe0602be179137d0eb3b7700c0a95ef24a7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/hmac.cpython-312.pyc",
+      "bytes": 10698,
+      "sha256": "0273925109de28686b8891e4a52f152bcb2f5f759d468ce453908e45cf021455"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/__init__.cpython-312.pyc",
+      "bytes": 4565,
+      "sha256": "08641577ef0aa2920d00d1d4ea873210daf5da906da6bc524049cb8edd7474e7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/_abc.cpython-312.pyc",
+      "bytes": 1643,
+      "sha256": "52d4b7b94183fd0c818fde5af47b5dca6b3afed2c651f8acccdd477beeb7a44e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/abc.cpython-312.pyc",
+      "bytes": 10416,
+      "sha256": "fc838ec9d822dce5d83f38ad21d6b96e9b71eff86a4372ddd77491073a4a93eb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/__init__.cpython-312.pyc",
+      "bytes": 48484,
+      "sha256": "2c3d8ef0a48879a133cbae0e190d56ee4691aba45ff0e4a545950f5b89bbb371"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/_adapters.cpython-312.pyc",
+      "bytes": 3835,
+      "sha256": "46003811677e5a71d289a7dd87828c7cb2845f77e8f767d5aa1585b3c592c61f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/_collections.cpython-312.pyc",
+      "bytes": 1883,
+      "sha256": "bc8a06748eda6f847669c6126c0f254892559f9c3ed8bcd687aaf7f62fb3bdb9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/_functools.cpython-312.pyc",
+      "bytes": 3441,
+      "sha256": "ea77b514215fe87b40fea0cef6209be59316584d137993003f2f186018c54a54"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/_itertools.cpython-312.pyc",
+      "bytes": 2365,
+      "sha256": "31eb40ac04974479aa3fd461196d6450f7a305587556f0f15de263c23c7056ab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/_meta.cpython-312.pyc",
+      "bytes": 3281,
+      "sha256": "d668cd681842b26ccae04cd1bb6253461406d9a9e267de862eee41db997a7e84"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/metadata/_text.cpython-312.pyc",
+      "bytes": 3842,
+      "sha256": "81922c614d6e6d1a2c7bc01a139818f883cd57a2e26967449385f434bb98bf86"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/resources/__init__.cpython-312.pyc",
+      "bytes": 615,
+      "sha256": "fab999b6edabc7b2a681cbd5f84c3628e87c511b625bd7a6aac92fc6ff9410ba"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/resources/_adapters.cpython-312.pyc",
+      "bytes": 9626,
+      "sha256": "a11a81f32e2af92fcd517934d8dec079e8d4dbb53ddf48b098dd33c251b7d203"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/resources/_common.cpython-312.pyc",
+      "bytes": 8711,
+      "sha256": "166cbf22e235bff5ccff6570403c8db3dc6007661bfa80f194810a7c2ac72a63"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/resources/_legacy.cpython-312.pyc",
+      "bytes": 5743,
+      "sha256": "6bde3ff8bed630774bb1d15dd097192337d9bc4101ae949613823eb31b877dd8"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/importlib/resources/abc.cpython-312.pyc",
+      "bytes": 8921,
+      "sha256": "2735b5dbe79f587bf83720938c2df6caafb90b9002f9047408e4da5914903fa1"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/inspect.cpython-312.pyc",
+      "bytes": 133446,
+      "sha256": "0787d7f7e9f1aaff501d09d846aea875ea5096e58568f319fc4882d53e8d9b01"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/ipaddress.cpython-312.pyc",
+      "bytes": 90762,
+      "sha256": "6fda67f5b738c392c16745f54f08738c886f497dfdb828d5d69fa4052d04fcd4"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/json/__init__.cpython-312.pyc",
+      "bytes": 13620,
+      "sha256": "609186801a9f5bfcd98edc1f1889bcc09ea27c80bee5c05ba616a144a516386c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/json/decoder.cpython-312.pyc",
+      "bytes": 13825,
+      "sha256": "2a395b844d38720fa81e3bb9a2339216b0a73b1a953d77f60e268b54d2a1942b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/json/encoder.cpython-312.pyc",
+      "bytes": 15098,
+      "sha256": "624944282c63628b98740f780feb8c80313159d097b078397c7f48e0aaad7cef"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/json/scanner.cpython-312.pyc",
+      "bytes": 3321,
+      "sha256": "3022d00d435a2050180413b9e5545f8a4bc18b167c1d204d188d86da3ad3f598"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/keyword.cpython-312.pyc",
+      "bytes": 1041,
+      "sha256": "a7198c5b71ffd719308fe066b89cc98bbbc48bc6574ab879a5866626b184572b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/linecache.cpython-312.pyc",
+      "bytes": 6401,
+      "sha256": "1b4b4fed09c34b6773cb7bf23485822272ccec41116e3c6a054c381923c005ee"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/locale.cpython-312.pyc",
+      "bytes": 59536,
+      "sha256": "702676dd32e0438e9f26c82d2fdf34fa0008e9891b57c50345c448dc12946135"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/logging/__init__.cpython-312.pyc",
+      "bytes": 95463,
+      "sha256": "993be4bad7a7deed180f0fe585294a52f30eebbdc143456449f22d7e864bffd5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/lzma.cpython-312.pyc",
+      "bytes": 15855,
+      "sha256": "3d87e452ecb6698231bd8e793169dcfe855464385d655d5752889f0be212ea77"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/numbers.cpython-312.pyc",
+      "bytes": 13967,
+      "sha256": "7933f06f84dc73208a5de0f9ea274a22f9a5b726f62d287cc69471573610972e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/opcode.cpython-312.pyc",
+      "bytes": 14716,
+      "sha256": "94d2a39f9c22469f7754dcd293361bf2dbe7fc96b9d61385e12c1ee6ef2bd878"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/operator.cpython-312.pyc",
+      "bytes": 17364,
+      "sha256": "2d9b59f83698f6db890176d5b6a512a0fbcec615ab9beb25b40759711e706ea7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/pathlib.cpython-312.pyc",
+      "bytes": 62098,
+      "sha256": "36343243103f01defe27ace47b429b5f521b0099a548d6ec7f5ab6df7389f60a"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/pdb.cpython-312.pyc",
+      "bytes": 84919,
+      "sha256": "2eda134a080f09d5a7e43d508df909c5c03a8ec535e603aea08790a39482130e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/pickle.cpython-312.pyc",
+      "bytes": 76176,
+      "sha256": "e8afcdfbdede50633cbeb54affa33ef1e37ad1ad021c99591f58e731eeaa2c3c"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/platform.cpython-312.pyc",
+      "bytes": 41600,
+      "sha256": "ef152e74c5c1da54ae384c456ba2d71a603423892ec29ad91ffe7caf535bcf96"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/pprint.cpython-312.pyc",
+      "bytes": 29474,
+      "sha256": "cdb70e69cad9608e522dbdc0a3bad3e00c5ac8625bd1aa2cf6e5c4b17ac3881f"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/quopri.cpython-312.pyc",
+      "bytes": 9323,
+      "sha256": "80f2cf4beed8bffb29c9015c99d2dbde6de61c10f56f2a871fced6c37bdbacfc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/random.cpython-312.pyc",
+      "bytes": 33153,
+      "sha256": "18ac3259296573a543457628a299a859daf463e0bb0e4a09806c95892d821b19"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/re/__init__.cpython-312.pyc",
+      "bytes": 17938,
+      "sha256": "b232ef42dd5d80b09ab397af6404026058d8cc97cca5b365b3391d8d1ab7f403"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/re/_casefix.cpython-312.pyc",
+      "bytes": 1816,
+      "sha256": "85b48befe0a5e98154845fb0fb3b756725b93396d228de31a08a3114ebd67d98"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/re/_compiler.cpython-312.pyc",
+      "bytes": 26516,
+      "sha256": "e05c7e067749d8d0337f675399d00f65ecf7370c5379ef6673969233df211fab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/re/_constants.cpython-312.pyc",
+      "bytes": 5296,
+      "sha256": "62c9814158634a6fc6c59a3d20b27c2555ca18fea2ba79e0ffe6df89ac5beff3"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/re/_parser.cpython-312.pyc",
+      "bytes": 42007,
+      "sha256": "44a9d0f2b4cd55fcac2012c2c0fad2b5457fa0e56cd12b12276921ab85c05f59"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/reprlib.cpython-312.pyc",
+      "bytes": 9909,
+      "sha256": "58a389f9c7b10ec4d9a88283aa1e051f7ba1d8a6f5ca489cb7dee5d9adb2b6ff"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/secrets.cpython-312.pyc",
+      "bytes": 2556,
+      "sha256": "08cd4dd20cb98e58ed935d9353928e74a80b17ea3412a9d6009431249cefbff6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/selectors.cpython-312.pyc",
+      "bytes": 26128,
+      "sha256": "a1ad705b11f0540b41830144c712d84c416e35d84915fcc4d141aaca5d810a37"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/shlex.cpython-312.pyc",
+      "bytes": 14162,
+      "sha256": "d85e54f66fef4a91ebd89d6539bbc48f01ee4414a8dcd210df381621d9e92043"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/shutil.cpython-312.pyc",
+      "bytes": 68113,
+      "sha256": "ceb08a3f6bc41f55a48e1248a294ef62dae237b5045a3b9947c3d179753a7afc"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/signal.cpython-312.pyc",
+      "bytes": 4448,
+      "sha256": "54808b67661ce4f592ce2789288276808a30992932ab1a3674340831522eabeb"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/sitecustomize.cpython-312.pyc",
+      "bytes": 300,
+      "sha256": "5c10f62cbe458aa3b9b4184697435108070e9eaf514d27104c7692a03f4b8012"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/socket.cpython-312.pyc",
+      "bytes": 41817,
+      "sha256": "9ac67a444ab3a224d020cae3d4653938602af7e82fc66ee099ee13598f37b710"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/string.cpython-312.pyc",
+      "bytes": 11482,
+      "sha256": "62801eb870a1ea641e94782a2c04f9e3de16cdec392af27f5e99ed8e2631cd46"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/struct.cpython-312.pyc",
+      "bytes": 325,
+      "sha256": "f0cc87ea2a221b5316238b69404c430e5aa2ebe89dd68b7dc11474cce8158359"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/subprocess.cpython-312.pyc",
+      "bytes": 79187,
+      "sha256": "df3e4bcb2f74a25645e122c9e7ec654a2215b7d237ffb1405ce64654053253c9"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/sysconfig.cpython-312.pyc",
+      "bytes": 30001,
+      "sha256": "a3131b9e3af4e5be0e3f1d75ae5bca5a2e67b7cd562beff4fe4905021fc8b0aa"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/tempfile.cpython-312.pyc",
+      "bytes": 47339,
+      "sha256": "1f6720e5cac5cd6e2d2e9e2bb32d0c1ec47136c0f3fd3a67408633328b3c5197"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/textwrap.cpython-312.pyc",
+      "bytes": 18293,
+      "sha256": "c7790f86761f531daae3bf2bc64a9c6ffe75ba9c03fb85c74b2dfd1a9fadd011"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/threading.cpython-312.pyc",
+      "bytes": 65346,
+      "sha256": "8e8f323ad7643cb4671f460b77dafca43c243ad545a40bb6759314b504b8dc3b"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/token.cpython-312.pyc",
+      "bytes": 3557,
+      "sha256": "b0c328feaf27c1ebc20cc6768a0ed6fc4fc232ec6b3fe5995da4650ffabff855"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/tokenize.cpython-312.pyc",
+      "bytes": 24775,
+      "sha256": "cdf9b25f5d655aa3f32a1ea34371f875a0e05741e15d49565e60a2cd2f5e2bec"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/tomllib/__init__.cpython-312.pyc",
+      "bytes": 303,
+      "sha256": "84136aa07c44079f28cf1ab9d60729210feb8e13c004181fe7d5ea898fa4ffa2"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/tomllib/_parser.cpython-312.pyc",
+      "bytes": 26873,
+      "sha256": "628438a92e6349bc4605eca9ad054fab991d251885f140a6bbcc7c8ede87f249"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/tomllib/_re.cpython-312.pyc",
+      "bytes": 3856,
+      "sha256": "ddda7d95482b6bda7d886a8d7e192fe4737f8dbe11ceb5d5f32ae4836236b47e"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/tomllib/_types.cpython-312.pyc",
+      "bytes": 314,
+      "sha256": "8a9974520b75645147aecf3019d8ca6de0f3e70a77d61194af4def0485ee1bde"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/traceback.cpython-312.pyc",
+      "bytes": 51523,
+      "sha256": "4927d782f9b4df12ca0a6e353231fa90b204f5891c6db3b4cc198a5a34d9b074"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/types.cpython-312.pyc",
+      "bytes": 14939,
+      "sha256": "b7f2eb13f227d3731278f2e33fe5a3e447cb988852a43f053d5447485e199cab"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/typing.cpython-312.pyc",
+      "bytes": 141860,
+      "sha256": "c1a396cf2cb96ff33d6ef9cc7d1f89f9b2c6e02b086c48ca143443505e2fbe91"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/__init__.cpython-312.pyc",
+      "bytes": 3432,
+      "sha256": "33edda9a382e99fb093d094c9af059730a8f2501fd25c83c5e16bf6e5240628d"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/case.cpython-312.pyc",
+      "bytes": 69828,
+      "sha256": "f90245f698149e43df2c42e14ac59bcd7808d8c0ab708aa8670b7d684246ef93"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/loader.cpython-312.pyc",
+      "bytes": 23945,
+      "sha256": "a260e2620fdc9eb641066f925f4eba4c698fc0e99db571a46e0f5a5a6efb1501"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/main.cpython-312.pyc",
+      "bytes": 13565,
+      "sha256": "12f761003ccd5f30d18255b9ad000162c6444caf50be111dc9ff91df8c958f20"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/result.cpython-312.pyc",
+      "bytes": 12743,
+      "sha256": "2459c294dd6da36a2716a3bc39c8093ecd0711f521db63b10e6d36d290150d50"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/runner.cpython-312.pyc",
+      "bytes": 16487,
+      "sha256": "592938d9c95e82ec2b5ec54ddde885f0706cedc56cbdae7d182e4f420b2c6ad6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/signals.cpython-312.pyc",
+      "bytes": 3613,
+      "sha256": "ae4c251e5ea93ae181b75fcef7a508d6057a860c3e5f39deb154b6a80475d143"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/suite.cpython-312.pyc",
+      "bytes": 15462,
+      "sha256": "c1b5c910622b03790261e5037d0238f5da66c6cc62a310b6b518d4e726f8cd68"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/unittest/util.cpython-312.pyc",
+      "bytes": 7291,
+      "sha256": "387b00bfe4954ea0e5ded4df306543718df494ca9aceb9f94d4b55cfc0c6e4b5"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/urllib/__init__.cpython-312.pyc",
+      "bytes": 135,
+      "sha256": "26bd006e2ede1f41ad38e11ccf872f3dcb6176df7690fef59cc835337212e6a6"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/urllib/parse.cpython-312.pyc",
+      "bytes": 50619,
+      "sha256": "3b52f22720797fca18fabd57a95d19a373cf9e151052a833894a7bff1f3842e7"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/uuid.cpython-312.pyc",
+      "bytes": 33007,
+      "sha256": "b5f6f0a16e5e08ea1153aebf2dd5f6d4134188d493021b0916d938341cdbe7da"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/warnings.cpython-312.pyc",
+      "bytes": 23792,
+      "sha256": "38f38ecbad459a9652351455d9e19bf138ccbfc15c89c6fa3f028b10d6bac2df"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/weakref.cpython-312.pyc",
+      "bytes": 31348,
+      "sha256": "d960e9d74c9e0c179d7f8ddd0e7d842d0b863ed47b1cd1f9ee880b052798b402"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/xml/__init__.cpython-312.pyc",
+      "bytes": 707,
+      "sha256": "ab2b59a4c072ab9139877d18fce41c1a954d548d3d963d2e618ea59ab6b524a0"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/xml/etree/ElementPath.cpython-312.pyc",
+      "bytes": 14929,
+      "sha256": "492a556aa7876ffa60eff8f84be5749ff5c5f6de81b9438d3f1e8fa0ecf73999"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/xml/etree/ElementTree.cpython-312.pyc",
+      "bytes": 82389,
+      "sha256": "346694ff471c61eac87a09dfc0bb5a3a1dfadf9fc344cc34647ee19d660c9464"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/xml/etree/__init__.cpython-312.pyc",
+      "bytes": 138,
+      "sha256": "84b00e045523d7b689336e217b9c7023e8576dc8f18d20099b23ec5c075e7a13"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/zipfile/__init__.cpython-312.pyc",
+      "bytes": 100058,
+      "sha256": "a58b115c24ad5b1068ef8c72ff7951e468046aaccb67f1e4eb776cb1a1c7d556"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/zipfile/_path/__init__.cpython-312.pyc",
+      "bytes": 18838,
+      "sha256": "c330ca7979f9b966610bb6fa103131d433157b2234641c039e03dea6ed128242"
+    },
+    {
+      "path": "tmp/task042/review_v24/pure/pycache/usr/lib/python3.12/zipfile/_path/glob.cpython-312.pyc",
+      "bytes": 1532,
+      "sha256": "906e11ee826330ba2f3390453c3294428b53b961fe5a026c9dd1c906ad91d3a4"
+    }
+  ],
+  "removed_bytes": 10722813,
+  "protected": "all raw evidence, sources, window/ledger files, real factors/states untouched",
+  "failed_post_attempt": {
+    "stdout": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/check_001_stdout.txt",
+    "stderr": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/check_001_stderr.txt",
+    "actor_restart": false,
+    "admission_attempt_created": false
+  }
+}

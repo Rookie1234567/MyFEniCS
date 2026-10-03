@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-03T11:14:34.211412+00:00",
+  "monotonic": 951069.072329395,
+  "active_Task042": [],
+  "read_only_process_check": true,
+  "neighbors_modified": false,
+  "host_pid1_comm": "systemd",
+  "excluded_ancestor_pids": [
+    1,
+    1276332,
+    1445931,
+    1445977
+  ],
+  "wrapper_text_is_not_actor": true,
+  "process_identity_scanned": "python/MPI and qualified command targets",
+  "prior_metadata_check_failure": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_process_check_failure_v32.json",
+    "bytes": 42841,
+    "sha256": "da47830245da72c5b5ba58500558cc6a1e46b339826f8de59ccfc59f4c114432",
+    "reason": "sandbox PID1 launcher quoted the inspection source; substring-only false positive",
+    "actual_numeric_actor_started": false,
+    "extra_loaded_numeric_seconds": 0,
+    "repair": "include all ancestor PIDs and require Python/MPI executable identity; host read-only recheck",
+    "git_HEAD_during_failed_metadata_check": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+    "check_code": "delivery metadata inspection, not part of the numerical implementation",
+    "observed_stderr_excerpt": "Traceback (most recent call last):\n  File \"<stdin>\", line 26, in <module>\nAssertionError",
+    "production_source_changed": false
+  }
+}

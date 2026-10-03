@@ -1,3 +1,11 @@
+# V32：12定点通过，唯一真实actor与独立checker通过
+
+实际source1fe058e3d120c42d197531139fc62e02a1a2cd5f；13 Python compile／全局名称检查、12 targeted passed in5.29s。覆盖统一存储边界（review/records/results及去重）、namespace和closed／active／consumed拒绝、独立attempt计费、当前源码资格与deadline余量，以及实际study→保存→结算→collector。另覆盖三个直接受影响V31用例；没有机械复跑110／162项或声称full-repo／CI。
+
+合成fixture仍是16个活动维度、18144/40接口，IO/readiness/reader与guard为桩；真实七readonly reader、因子见证、原两冷态和资源守卫由唯一actor资格。实际完整S34/SH2及全部计数与manifest/ledger/result一致；独立cached checker CHECKED，未调用原作用、factor、QR/SVD。
+
+V31原109/1及Review V29独立fixture1 pass不改写。V32无新前测失败；后checker首次在worker／CPU准入前遇容量预留停止，stderr保持，清理未引用bytecode后另ID同门限通过。没有actor重跑。运行源码未再变化，文档改动只作局部静态公式／表格／链接检查；GitHub视觉NOT_VERIFIED。证据：[测试](records/tests_v32.json)、[raw](records/raw_evidence_index_v32.json)、[checker](records/return_direction_checker_v32.json)。以下旧测试逐字保留。
+
 # V31测试：109通过／1失败，修后只静态检查
 
 唯一受监督前测在clean source997397093f7061f7086b2088458d50c6ca773b7d执行110个不同测试：旧受影响102＋新V31 8，109 passed／1 failed，无skip。实际study两态／七合成bundle／保存／结算／collector及partial失败写出均通过。唯一失败test_failed_prequalification_stops_formal_route的window桩缺接口，AttributeError早于预期InputError，未误报通过。
