@@ -1,3 +1,9 @@
+# 最新审阅：Review V31／修复后同轮推进真实数值诊断
+
+[Review V31](review_report_v31.md)接受V33真实CPU停止，但独立合成复验为4 passed／2 failed：checker混用新旧残差并强求逐位相等，存储fixture误期望V32累计0B。前者最小修复方向在隔离审阅中通过两态及12个破坏性反例；生产源码未改、正式资格未授予。证据见[独立审阅记录](outcomes/records/review_v31_independent_checks.json)。
+
+V34直接授权修复、定点复验、原两冷态B_full诊断、缓存审核和归因连续执行；普通bug自行修复，暂时资源拒绝进入等待，不再设置测试后或一次拒绝后的新review审批。有限修复重入全部收费；旧closed及失败保留，600s累计预算不增，本次审阅辅助保守计入后carry161.205635980s。仅资源等待日历改为固定24h，数值门和现场资源门不放宽。原尺寸0.7nm／2TB／48h与神经20%仍未资格化。以下历史逐字保留，旧建议不覆盖最新合同。
+
 # V33最新交付：外域直接输入实现，唯一辅助CPU准入拒绝
 
 [Review V30](review_report_v30.md)授权新B_full固定两态诊断，旧V32 B_ret提案保持关闭。新数学／单dat／独立缓存checker和合成接线已提交；最终source a874498a1a8b854f394520627eaf09158b77fbf9只有16 Python静态编译／符号检查通过。前测唯一fresh准入在48候选CPU均被原忙碌／亲和性／SMT规则排除后拒绝，worker0，真实两态和checker NOT_RUN；RESOURCE_STOP不冒称机制负结果。
