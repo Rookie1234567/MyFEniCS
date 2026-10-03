@@ -175,14 +175,115 @@ def run(design_path, directory):
                           lambda_evaluations=sum(c["common"]["lambda_evaluations"] for c in configurations))))
 
 
-def check(result_path, output):
-    from benchmarks.check_feinn_common_descent import verify_configuration, same
+def frozen_evidence(result_path, result, design):
+    """Actual files and ledger, not vacuous 'all events precede reference'."""
+    from benchmarks.check_feinn_common_descent import diagnostic_policy, same
 
+    expected = {f"{state}_{rc:g}" for state in design["states"] for rc in design["rconds"]}
+    errors, loaded = [], {}
+    ledger_path = Path(result_path).parent / "candidate_freeze.json"
+    digest = None
+    try:
+        require(ledger_path.resolve().is_relative_to(ROOT), "LEDGER_PATH_ESCAPE")
+        digest = sha(ledger_path)
+        ledger = json.loads(ledger_path.read_text())
+        require(set(result["candidates"]) <= expected, "EXTRA_CANDIDATE_KEY")
+        require(ledger["candidates"] == result["candidates"], "ACTUAL_LEDGER_CANDIDATES")
+        events = result["events"]
+        require(all(e["event"] in ("UNLABELED_CANDIDATE_FSYNC_HASHED", "REFERENCE_ARRAY_EVALUATION_BEGINS") for e in events), "UNKNOWN_EVENT_TYPE")
+        reference = [e for e in events if e["event"] == "REFERENCE_ARRAY_EVALUATION_BEGINS"]
+        require(len(reference) == 1, "UNIQUE_REFERENCE_BEGIN_EVENT")
+        frozen = [e for e in events if e["event"] == "UNLABELED_CANDIDATE_FSYNC_HASHED"]
+        require(ledger["events"] == frozen, "ACTUAL_LEDGER_EVENTS")
+        require(len(frozen) == len(result["candidates"]) and len({e["key"] for e in frozen}) == len(frozen), "UNIQUE_FREEZE_EVENTS")
+        require({e["key"] for e in frozen} == set(result["candidates"]), "CANDIDATE_EVENT_BIJECTION")
+        times = [e["monotonic_since_start"] for e in events]
+        require(all(np.isfinite(t) and t >= 0 for t in times) and all(a < b for a, b in zip(times, times[1:])), "FINITE_ORDERED_EVENT_TIMES")
+        require(events[-1] == reference[0] and reference[0]["preceding_candidate_ledger_sha256"] == digest, "REFERENCE_LEDGER_HASH")
+        for event in frozen:
+            require(event["sha256"] == result["candidates"][event["key"]]["sha256"], "EVENT_CANDIDATE_HASH")
+    except (ValueError, KeyError, OSError, TypeError) as error:
+        errors.append(dict(phase="actual_ledger_and_events", reason=str(error)))
+    for state in design["states"]:
+        for rc in design["rconds"]:
+            key = f"{state}_{rc:g}"
+            try:
+                entry = result["candidates"][key]
+                candidate = json.loads(read_checked(entry).read_text())
+                require(candidate["source_sha"] == result["source_sha"], "CANDIDATE_NUMERICAL_SOURCE")
+                require(candidate["state"] == state and candidate["state_identity"] == metadata(state, design)["identity"], "CANDIDATE_STATE_IDENTITY")
+                require(candidate["array_sha256"] == design["inputs"]["vectors"]["sha256"], "CANDIDATE_ARRAY_IDENTITY")
+                columns = provenance_columns(design["states"][state]["directions"], 16, "PDE8")
+                require(candidate["columns"] == columns and len(columns) == 8, "CANDIDATE_PDE_COLUMNS")
+                require(candidate["construction_array_members"] == [state + "_" + k for k in ("P", "Y", "WY", "r", "qr", "theta")], "CANDIDATE_CONSTRUCTION_ALLOWLIST")
+                require(candidate["data_role"] == "UNLABELED_PDE8_RESIDUAL_CANDIDATE"
+                        and candidate["reference_used_for_construction"] is False
+                        and candidate["reference_members_accessed"] is False, "CANDIDATE_LABEL_ROLE")
+                # Optional solver flags are forbidden even in the candidate file.
+                diagnostic_policy(dict(candidate, data_role="REFERENCE_EXPOSED_LOCAL_ORACLE",
+                                       value_kind="DERIVED_LOCAL_LINEAR_MODEL",
+                                       main_solver="FEINN_MAIN_SOLVER_ON_HOLD", NN_increment="NO_VERIFIED_NN_INCREMENT"), top=True)
+                require(candidate["basis"]["rcond"] == rc, "CANDIDATE_RCOND")
+                same(candidate["rho"], 1e-3 * max(design["states"][state]["parameter_norm"], 1), 1e-12)
+                for config in [c for c in result["configurations"] if c["state"] == state and c["subset"] == "PDE8" and c["rcond"] == rc]:
+                    require(config["frozen_candidate"] == entry, "CONFIG_CANDIDATE_FILE_BINDING")
+                    same(config["points"]["residual"]["alpha"], candidate["alpha"], 1e-12)
+                    same(config["points"]["residual"]["u"], candidate["u"], 1e-10)
+                    same(config["T"], candidate["T"], 1e-10)
+                    require(config["basis"] == candidate["basis"], "CANDIDATE_BASIS_BINDING")
+                    for field in ("H", "a"):
+                        same(config["quadratic_R"][field], candidate[field + "_R"], 1e-10)
+                    same(config["common"]["endpoint_multipliers"]["R"], candidate["trust"]["mu"], 1e-10)
+                loaded[key] = candidate
+            except (ValueError, KeyError, OSError, TypeError) as error:
+                errors.append(dict(key=key, phase="candidate_file_and_binding", reason=str(error)))
+    for config in result["configurations"]:
+        if config["subset"] == "ALL16":
+            require(config["frozen_candidate"] is None, "ORACLE_CANNOT_BE_UNLABELED_CANDIDATE")
+    qualified = not errors and set(loaded) == expected
+    return dict(status="PASS" if qualified else "UNKNOWN", qualified=qualified,
+                actual_ledger=dict(path=str(ledger_path.resolve()), sha256=digest), errors=errors,
+                candidate_hashes={k: v["sha256"] for k, v in result["candidates"].items()},
+                code_and_execution_order_tests_also_required=True,
+                file_hash_alone_proves_no_label_access=False), loaded
+
+
+def check(result_path, output, *, run_index_path=None, expected_result_sha256=None,
+          native_attribution=False):
+    from benchmarks.check_feinn_common_descent import (
+        admission, configuration_coverage, diagnostic_policy, verify_configuration,
+    )
+    from src.solvers.feinn_diagnostic_algebra import frozen_direction_attribution
+
+    require(os.environ.get("TASK42EXTRA_ENV_MODE") == "pure", "PURE_ACTIVATION_REQUIRED")
+    checker_source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    if run_index_path is not None:
+        branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True).strip()
+        clean = subprocess.check_output(["git", "status", "--porcelain=v1"], cwd=ROOT, text=True)
+        require(branch == "task42extra_feinn_5nm" and not clean, "CLEAN_EXACT_CHECKER_SOURCE_REQUIRED")
     result_path = Path(result_path)
+    result_sha = sha(result_path)
+    if expected_result_sha256 is not None:
+        require(result_sha == expected_result_sha256, "AUTHORIZED_RESULT_HASH")
     result = json.loads(result_path.read_text())
     design_path = read_checked(result["design"])
     design = json.loads(design_path.read_text())
     require(result["inputs"] == design["inputs"], "RESULT_INPUT_BINDING")
+    require(result["original_C1_source"] == design["original_C1_source"]
+            and result["review_sha"] == design["review_sha"], "RESULT_SOURCE_REVIEW_BINDING")
+    diagnostic_policy(result, top=True)
+    require(set(result["new_actions"]) == {"FE", "A", "AH", "G", "Gsolve", "network_forward", "training", "factor", "reference_solve"}
+            and all(v == 0 for v in result["new_actions"].values()), "DIAGNOSTIC_ACTION_SCOPE")
+    index_entry = None
+    if run_index_path is not None:
+        index_path = Path(run_index_path)
+        index = json.loads(index_path.read_text())
+        require(read_checked(index["result"]).resolve() == result_path.resolve(), "RUN_INDEX_RESULT")
+        require(index["source"] == result["source_sha"] and index["candidates"] == result["candidates"]
+                and index["inputs"] == result["inputs"], "RUN_INDEX_SOURCE_CANDIDATES")
+        index_entry = dict(path=str(index_path.resolve()), sha256=sha(index_path))
+    expected, _, unknown = configuration_coverage(result, design)
+    freeze, candidates = frozen_evidence(result_path, result, design)
     checked, _ = inputs(design)
     rows = []
     with np.load(checked["vectors"], allow_pickle=False) as saved:
@@ -191,19 +292,49 @@ def check(result_path, output):
             m = metadata(state, design)
             require(array_sha(raw["c"]) == m["identity"]["complete_c_sha256"] and array_sha(raw["theta"]) == m["identity"]["parameter_sha256"], "RAW_STATE_HASH")
             for config in [c for c in result["configurations"] if c["state"] == state]:
-                if config["subset"] == "PDE8":
-                    candidate = json.loads(read_checked(config["frozen_candidate"]).read_text())
-                    require(candidate["state"] == state and not candidate["reference_members_accessed"], "CANDIDATE_LABEL_BOUNDARY")
-                    require(candidate["state_identity"] == m["identity"] and candidate["columns"] == config["columns"], "CANDIDATE_IDENTITY")
-                    same(config["points"]["residual"]["alpha"], candidate["alpha"], 1e-12)
-                    same(config["points"]["residual"]["u"], candidate["u"], 1e-10)
-                    same(config["T"], candidate["T"], 1e-10)
                 rows.append(verify_configuration(config, raw, m, design["states"][state]["parameter_norm"], design["native_denominator"]))
             del raw
-    frozen = [e for e in result["events"] if e["event"] == "UNLABELED_CANDIDATE_FSYNC_HASHED"]
-    first_reference = next(e for e in result["events"] if e["event"] == "REFERENCE_ARRAY_EVALUATION_BEGINS")
-    require(all(e["monotonic_since_start"] < first_reference["monotonic_since_start"] for e in frozen), "FREEZE_BEFORE_LABEL_EVALUATION")
-    atomic_json(output, dict(schema="feinn.saved-common-descent.checker.v1", result_sha256=sha(result_path),
-                             rows=rows, unknown=result["unknown"], status="RAW_ARRAY_CERTIFICATES_VERIFIED",
-                             optimize_calls=0, new_FE_or_network_actions=0, candidate_freeze_order_verified=True))
-    print(json.dumps(dict(status="RAW_ARRAY_CERTIFICATES_VERIFIED", configurations=len(rows))))
+    complete = not unknown and len(rows) == len(expected) and freeze["qualified"]
+    status = "COMPLETE_RECORDS_VERIFIED" if complete else "PARTIAL" if rows else "UNKNOWN"
+    attribution = []
+    if native_attribution and complete:
+        with np.load(checked["vectors"], allow_pickle=False) as saved:
+            for state in design["states"]:
+                raw = extract(saved, state, ("X", "GX", "Y", "WY", "e", "Ge", "r", "qr"), design)
+                candidate = candidates[f"{state}_1e-10"]
+                columns = candidate["columns"]
+                selected = {k: v[:, columns] if k in MATRICES else v for k, v in raw.items()}
+                attribution.append(dict(state=state, rcond=1e-10,
+                                        frozen_candidate=result["candidates"][f"{state}_1e-10"],
+                                        **frozen_direction_attribution(selected, candidate["alpha"], design["native_denominator"])))
+                del raw, selected
+    require(sha(result_path) == result_sha, "ORIGINAL_RESULT_CHANGED_DURING_CHECK")
+    require(subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() == checker_source, "CHECKER_SOURCE_CHANGED_DURING_CHECK")
+    record = dict(schema="feinn.saved-common-descent.checker.v2", result_sha256=result_sha,
+                  original_numerical_source=result["source_sha"], original_C1_source=result["original_C1_source"],
+                  checker_source=checker_source, design=result["design"], run_index=index_entry,
+                  environment=dict(python=sys.executable, activation=os.environ.get("TASK42EXTRA_ENV_MODE"),
+                                   affinity=sorted(os.sched_getaffinity(0)), mathematical_threads=1),
+                  inputs=result["inputs"], rows=rows, unknown=list(unknown.values()), status=status,
+                  configuration_and_comparison_coverage=dict(status="COMPLETE" if not unknown else "PARTIAL" if rows else "UNKNOWN",
+                      expected_configurations=len(expected), verified_configurations=len(rows), unknown_configurations=len(unknown),
+                      verified_comparison_points=4 * len(rows), expected_keys=[list(k) for k in sorted(expected)]),
+                  raw_vector_and_certificate_validity=dict(status="PASS" if not unknown else "PARTIAL" if rows else "UNKNOWN",
+                                                           verified_configurations=len(rows)),
+                  common_descent_threshold_evidence=[dict(state=r["state"], subset=r["subset"], rcond=r["rcond"],
+                      status=r["classification"], L=r["L"], margin=r["margin"], U=r["U"]) for r in rows],
+                  bound_width_qualification=[dict(state=r["state"], subset=r["subset"], rcond=r["rcond"],
+                      status=r["bound_width_qualification"], width=r["bound_width"], target=1e-8) for r in rows],
+                  unlabeled_two_state_admission=admission(rows, design["states"], design["rconds"], complete),
+                  frozen_evidence=freeze, candidate_freeze_order_verified=freeze["qualified"],
+                  native_direction_attribution=attribution,
+                  native_attribution_status="COMPLETED" if attribution else "NOT_RUN" if not native_attribution else "NOT_RUN_P0_NOT_QUALIFIED",
+                  optimize_calls=0, new_FE_or_network_actions=0, value_kind="DERIVED_LOCAL_LINEAR_MODEL",
+                  effective_usage_flags=dict(pde_only_solve=False, production_initialization_allowed=False,
+                      official_candidate_results=False, true_NN_increment=False),
+                  legacy_top_flags_checked_via_explicit_rows=True,
+                  main_solver="FEINN_MAIN_SOLVER_ON_HOLD", NN_increment="NO_VERIFIED_NN_INCREMENT")
+    atomic_json(output, record)
+    print(json.dumps(dict(status=status, configurations=len(rows), points=4 * len(rows),
+                         frozen_evidence=freeze["status"], unlabeled_admission=record["unlabeled_two_state_admission"]["status"])))
+    return record

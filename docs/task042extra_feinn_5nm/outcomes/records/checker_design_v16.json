@@ -1,0 +1,101 @@
+{
+  "schema": "feinn.saved-array-checker-design.v2",
+  "review_publication": "788ac4c174263321a8fff8f86d856a4e9ebe8075",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "batch_started_utc": "2026-10-03T06:37:20+00:00",
+  "complete_batch_hard_seconds": 7200,
+  "original_numerical_source": "99f2968be8d715a6f2e6985f5b032c53ca505950",
+  "original_C1_source": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+  "run_index": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/run_index_v15.json",
+    "sha256": "29468e50c5b9f60c3c90679e78b8b6c60b95694e2ff54e6ad31e8e9c8bc4df69"
+  },
+  "original_result": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/result.json",
+    "sha256": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c"
+  },
+  "original_design": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/common_descent_design_v15.json",
+    "sha256": "744064ab22522c4fd90619aedf55663594d551e8e9d4953bcfacd8d50de43740"
+  },
+  "original_vectors": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz",
+    "sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263"
+  },
+  "frozen_candidates": {
+    "M3600_1e-10": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-10_candidate.json",
+      "sha256": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0"
+    },
+    "M3600_1e-12": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-12_candidate.json",
+      "sha256": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb"
+    },
+    "Mfinal_1e-10": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-10_candidate.json",
+      "sha256": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19"
+    },
+    "Mfinal_1e-12": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-12_candidate.json",
+      "sha256": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56"
+    }
+  },
+  "original_ledger_expected_sha256": "763ede4c7c4012488058894e12bb505b9e6ea9f5a3f17ec0e7ea892f87a4ab20",
+  "expected_states": [
+    "M3600",
+    "Mfinal"
+  ],
+  "subsets": [
+    "PDE8",
+    "ALL16"
+  ],
+  "rconds": [
+    1e-10,
+    1e-12
+  ],
+  "expected_configurations": 8,
+  "expected_comparison_points": 32,
+  "expected_candidates": 4,
+  "main_attribution_rcond": 1e-10,
+  "native_denominator": 0.29104200262261154,
+  "execution": "ONE check of frozen original result, conditional two frozen directions in same invocation",
+  "producer_reexecution_allowed": false,
+  "common_optimization_allowed": false,
+  "checkpoint_or_candidate_mutation_allowed": false,
+  "new_FE_or_network_actions": 0,
+  "independent_decisions": [
+    "configuration_and_comparison_coverage",
+    "raw_vector_and_certificate_validity",
+    "common_descent_threshold_evidence",
+    "bound_width_qualification",
+    "unlabeled_two_state_admission"
+  ],
+  "threshold": 0.999,
+  "bound_width_target": 1e-08,
+  "margin_formula_changed": false,
+  "resource": {
+    "activation": "pure",
+    "physical_cores": 1,
+    "threads": 1,
+    "tree_hard_bytes": 2147483648,
+    "tree_warn_bytes": 1879048192,
+    "own_swap": 0,
+    "OOC": 0,
+    "neighbor_growth_reserve_bytes": 412316860416,
+    "system_reserve": "max(128GiB,effective_total*0.1)"
+  },
+  "retained_statuses": {
+    "main": "FEINN_MAIN_SOLVER_ON_HOLD",
+    "NN": "NO_VERIFIED_NN_INCREMENT",
+    "D0": "COST_VETO_CONFIRMED",
+    "D1": "NOT_RUN_COST_VETO"
+  },
+  "code_file_hashes": {
+    "benchmarks/check_feinn_common_descent.py": "b1700ee66e081cd2d6a0c0f062f7948b9d6c914b1ae5cdabafd886feb55534ea",
+    "benchmarks/run_feinn_common_descent.py": "a30f77dc1e662f5f30656ecd84f3f82f13d8c3c287b3f5153d7354efd18256ee",
+    "src/runners/feinn_common_descent_arrays.py": "5ddb4750cf85fae85840b1d9ff6bda14a4480820f158d8291b982b61dc8b7251",
+    "src/solvers/feinn_diagnostic_algebra.py": "543be365ba5badcb16b6df053614b9c6277296f1f42a88d9d94b3922ad61063f",
+    "src/test/test_feinn_common_descent.py": "333e2df34854ec8d91550f3fbdfc31bfd0d3958938f22e8804155864495945ae"
+  }
+}

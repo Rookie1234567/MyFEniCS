@@ -1,0 +1,20 @@
+{
+  "schema": "feinn.checker-repair-log.v1",
+  "unexpected_repairs_used": 1,
+  "unexpected_repairs_limit": 2,
+  "planned_checker_repairs_count_as_unexpected": false,
+  "repairs": [
+    {
+      "root_cause": "TEST_OBSERVER_OUTLIVED_PRODUCER",
+      "failure": "8 failed / 67 passed; fsync observer intercepted deliberately missing or damaged fixture candidate/ledger files",
+      "hypothesis": "producer-only extract observer remains installed during independent checker corruption tests",
+      "change": "restore runner.extract immediately after small producer fixture returns",
+      "test": "75 passed at v16_fixture_repair1; final two-state 75 and related 143 suites pass",
+      "retry": "one evidence-based repair, old log and resources retained",
+      "affected_code": "src/test/test_feinn_common_descent.py"
+    }
+  ],
+  "resource_refusals": 0,
+  "resource_readmissions": 0,
+  "historical_V15_repairs": "numerical pullback 1 + browser detached DOM 1 = 2, failures preserved"
+}

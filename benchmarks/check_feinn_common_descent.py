@@ -2,6 +2,12 @@
 
 import numpy as np
 
+POINTS = {"zero", "residual", "field", "common"}
+ORACLE_ROLE = "REFERENCE_EXPOSED_LOCAL_ORACLE"
+CANDIDATE_ROLE = "UNLABELED_PDE8_RESIDUAL_CANDIDATE"
+FALSE_FLAGS = ("pde_only_solve", "production_initialization_allowed",
+               "official_candidate_results", "true_NN_increment")
+
 
 def need(condition, message):
     if not condition:
@@ -24,9 +30,96 @@ def classify(F, R, lower, margin, valid):
     return "UNKNOWN_THRESHOLD_BRACKET"
 
 
+def diagnostic_policy(record, *, top=False):
+    """Old top-level v1 omitted flags: explicit row flags remain mandatory."""
+    if top:
+        need(record["value_kind"] == "DERIVED_LOCAL_LINEAR_MODEL", "TOP_VALUE_ROLE")
+        need(record["main_solver"] == "FEINN_MAIN_SOLVER_ON_HOLD"
+             and record["NN_increment"] == "NO_VERIFIED_NN_INCREMENT", "TOP_SOLVER_ROLE")
+        for key in ("status", "gate_status"):
+            if key in record:
+                need(record[key] in ("PARTIAL", "UNKNOWN", "COMPLETE_RECORDS_VERIFIED"), "FALSE_GLOBAL_PASS")
+    else:
+        need(record["reference_used_for_oracle"] is True, "REFERENCE_ORACLE_ROLE")
+        need(record["oracle_data_role"] == ORACLE_ROLE, "ORACLE_DATA_ROLE")
+        if "value_kind" in record:
+            need(record["value_kind"] == "DERIVED_LOCAL_LINEAR_MODEL", "ROW_VALUE_ROLE")
+    if "data_role" in record:
+        need(record["data_role"] == ORACLE_ROLE, "BATCH_OR_ROW_DATA_ROLE")
+    if "reference_used_for_training" in record:
+        need(record["reference_used_for_training"] is False, "NO_TRAINING_IN_ARRAY_DIAGNOSTIC")
+    for flag in FALSE_FLAGS:
+        if not top or flag in record:
+            need(record.get(flag) is False, "DIAGNOSTIC_POLICY_" + flag)
+    # Reject extra declarations that would promote a diagnostic to a solver.
+    for flag in ("pde_only_solver_qualified", "production_solver_qualified"):
+        if flag in record:
+            need(record[flag] is False, "DIAGNOSTIC_POLICY_" + flag)
+
+
+def configuration_coverage(result, design):
+    """Exactly one success or sourced UNKNOWN for every design key."""
+    rconds = design["rconds"]
+    need(len(rconds) == 2 and set(rconds) == {1e-10, 1e-12}, "FIXED_DESIGN_RCONDS")
+    expected = {(state, subset, rc) for state in design["states"]
+                for subset in ("PDE8", "ALL16") for rc in rconds}
+    need(expected, "EMPTY_EXPECTED_BATCH")
+    found, unknown = {}, {}
+    for row in result["configurations"]:
+        key = (row["state"], row["subset"], row["rcond"])
+        need(key in expected, "EXTRA_CONFIGURATION_KEY")
+        need(key not in found, "DUPLICATE_CONFIGURATION_KEY")
+        found[key] = row
+    for index, row in enumerate(result["unknown"]):
+        need(row.get("status") == "UNKNOWN" and row.get("phase") and row.get("reason"), "UNKNOWN_REASON_STAGE")
+        need(row["state"] in design["states"], "UNKNOWN_STATE")
+        source = row.get("source_sha", result["source_sha"])
+        need(source == result["source_sha"] and bool(source), "UNKNOWN_SOURCE")
+        subsets = (row["subset"],) if "subset" in row else ("PDE8", "ALL16")
+        values = (row["rcond"],) if "rcond" in row else rconds
+        for subset in subsets:
+            for rc in values:
+                key = (row["state"], subset, rc)
+                need(key in expected and key not in found and key not in unknown, "UNKNOWN_OVERLAP_OR_KEY")
+                unknown[key] = dict(state=key[0], subset=key[1], rcond=key[2], status="UNKNOWN",
+                                    phase=row["phase"], reason=row["reason"], source_sha=source,
+                                    expanded_from_unknown_index=index)
+    need(set(found) | set(unknown) == expected, "MISSING_CONFIGURATION_WITHOUT_UNKNOWN")
+    return expected, found, unknown
+
+
+def admission(rows, states, rconds, freeze_qualified):
+    """Only frozen PDE8 residual points, both states and both fixed rconds."""
+    per_candidate = []
+    for state in states:
+        for rc in rconds:
+            matches = [r for r in rows if (r["state"], r["subset"], r["rcond"]) == (state, "PDE8", rc)]
+            if not matches:
+                per_candidate.append(dict(state=state, rcond=rc, status="UNKNOWN", reason="NUMERICAL_RECORD_UNAVAILABLE"))
+                continue
+            row = matches[0]
+            point, zero = row["recomputed_points"]["residual"], row["recomputed_points"]["zero"]
+            tests = dict(F_energy=point["F"] <= .999 - 1e-10,
+                         R_energy=point["R"] <= .999 - 1e-10,
+                         native_nonincrease=point["native_linear"] <= zero["native_linear"] - 1e-10)
+            clear_failure = (point["F"] > .999 + 1e-10 or point["R"] > .999 + 1e-10
+                             or point["native_linear"] > zero["native_linear"] + 1e-10)
+            status = "PASS" if all(tests.values()) and freeze_qualified else "NOT_ADMITTED" if clear_failure else "UNKNOWN"
+            per_candidate.append(dict(state=state, rcond=rc, status=status, tests=tests,
+                                      F=point["F"], R=point["R"], native_before=zero["native_linear"],
+                                      native_after=point["native_linear"], freeze_qualified=freeze_qualified))
+    statuses = [r["status"] for r in per_candidate]
+    status = "ADMITTED" if statuses and all(s == "PASS" for s in statuses) else "NOT_ADMITTED" if "NOT_ADMITTED" in statuses else "UNKNOWN"
+    return dict(status=status, admitted=status == "ADMITTED", candidates=per_candidate,
+                scope="FROZEN_PDE8_ONLY_BOTH_STATES_BOTH_RCONDS", true_NN_increment=False)
+
+
 def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
     """Recompute physical steps, spectra/duality and provenance from raw arrays."""
     state, subset = record["state"], record["subset"]
+    diagnostic_policy(record)
+    need(set(record["points"]) == POINTS, "FOUR_COMPARISON_POINTS_REQUIRED")
+    need(np.isfinite(native_denominator) and native_denominator > 0, "RAW_NATIVE_DENOMINATOR")
     need(state == metadata["name"] and subset in ("PDE8", "ALL16"), "STATE_IDENTITY")
     need(record["state_identity"] == metadata["identity"], "STATE_HASH_IDENTITY")
     active = [d for d in metadata["directions"] if "column" in d]
@@ -34,12 +127,13 @@ def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
     need(all(d["kind"] in ("PDE", "reference_G") for d in active), "RAW_COLUMN_KIND")
     columns = sorted(d["column"] for d in active if subset == "ALL16" or d["kind"] == "PDE")
     need(record["columns"] == columns, "COLUMN_PROVENANCE")
-    need(record["residual_candidate_unlabeled"] == (subset == "PDE8"), "LABEL_ROLE")
+    need(record["residual_candidate_unlabeled"] is (subset == "PDE8"), "LABEL_ROLE")
     selected = {k: v[:, columns] if k in ("P", "X", "GX", "Y", "WY") else v for k, v in raw.items()}
     for value in selected.values():
         need(np.isfinite(value).all(), "RAW_NONFINITE")
-    P, T = selected["P"], np.asarray(record["T"], float)
+    P, T = selected["P"], np.asarray(record["T"])
     need(P.dtype == np.float64 and not np.iscomplexobj(T), "REAL_PARAMETER")
+    need(T.ndim == 2 and np.isfinite(T).all() and T.shape[1] <= 16, "BASIS_LAYOUT_FINITE")
     rho = 1e-3 * max(theta_norm, 1)
     same(record["rho"], rho, 1e-12)
     need(record["rcond"] in (1e-10, 1e-12), "RCOND_CONTRACT")
@@ -76,9 +170,27 @@ def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
         same(stored["eigenvalues"], np.linalg.eigvalsh(H), 1e-10)
         need(not len(a) or np.linalg.eigvalsh(H)[0] >= -256 * np.finfo(float).eps * np.linalg.norm(H, 2), "RAW_PSD")
         quadratics[key] = (H, a)
-    worst = 0.0
+    worst, recomputed = 0.0, {}
     for name, row in record["points"].items():
         u, alpha = np.asarray(row["u"]), np.asarray(row["alpha"])
+        need(u.shape == (T.shape[1],) and alpha.shape == (len(columns),)
+             and not np.iscomplexobj(u) and not np.iscomplexobj(alpha)
+             and np.isfinite(u).all() and np.isfinite(alpha).all(), "POINT_LAYOUT_FINITE")
+        need(row["value_kind"] == "DERIVED_LOCAL_LINEAR_MODEL", "POINT_VALUE_ROLE")
+        role = CANDIDATE_ROLE if subset == "PDE8" and name == "residual" else ORACLE_ROLE
+        if "data_role" in row:
+            need(row["data_role"] == role, "POINT_DATA_ROLE")
+        if "reference_used_for_construction" in row:
+            need(row["reference_used_for_construction"] is (role != CANDIDATE_ROLE), "POINT_LABEL_ROLE")
+        for flag in FALSE_FLAGS:
+            if flag in row:
+                need(row[flag] is False, "POINT_DIAGNOSTIC_POLICY_" + flag)
+        if name == "zero":
+            need(np.count_nonzero(u) == np.count_nonzero(alpha) == 0, "ZERO_STEP_REQUIRED")
+            same([row["F"], row["R"]], [1., 1.], 1e-12)
+        if name != "zero":
+            same(u, record["common"][{"residual": "u_R", "field": "u_F", "common": "u"}[name]], 1e-12)
+        recomputed[name] = dict(data_role=role, reference_used_for_construction=role != CANDIDATE_ROLE)
         need(np.linalg.norm(u) <= 1 + 1e-10, "BALL_FEASIBILITY")
         same(alpha, rho * T @ u, 1e-10)
         step = np.linalg.norm(P @ alpha)
@@ -91,6 +203,9 @@ def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
             after = np.vdot(x + delta, wx + wdelta).real
             cross, update = 2 * np.vdot(x, wdelta).real, np.vdot(delta, wdelta).real
             same(row[key], after / before, 1e-10)
+            recomputed[name][key] = float(after / before)
+            recomputed[name][key + "_energy"] = dict(before=float(before), after=float(after),
+                                                       signed_cross=float(cross), update=float(update))
             for field, value in (("before", before), ("after", after), ("signed_cross", cross), ("update", update)):
                 same(row[key + "_energy"][field], value, 1e-10)
             defect = abs(after - before - cross - update) / max(before, abs(cross) + abs(update))
@@ -98,7 +213,9 @@ def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
             worst = max(worst, defect)
             H, a = quadratics[key]
             same(row[key], 1 + 2 * a @ u + u @ H @ u, 1e-8)
-        same(row["native_linear"], np.linalg.norm(selected["r"] + selected["Y"] @ alpha) / native_denominator, 1e-10)
+        native = float(np.linalg.norm(selected["r"] + selected["Y"] @ alpha) / native_denominator)
+        same(row["native_linear"], native, 1e-10)
+        recomputed[name].update(native_linear=native, parameter_step_norm=float(step))
         if name in ("residual", "field"):
             key = "R" if name == "residual" else "F"
             H, a = quadratics[key]
@@ -109,7 +226,7 @@ def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
     common = record["common"]
     u = np.asarray(common["u"])
     same(u, record["points"]["common"]["u"], 1e-12)
-    upper = max(record["points"]["common"]["F"], record["points"]["common"]["R"])
+    upper = max(recomputed["common"]["F"], recomputed["common"]["R"])
     same(common["U"], upper, 1e-10)
     certificate = common["certificate"]
     weight, mu = certificate["lambda_"], certificate["mu"]
@@ -141,9 +258,15 @@ def verify_configuration(record, raw, metadata, theta_norm, native_denominator):
     same(certificate["complementarity"], abs(mu * (u @ u - 1)), 1e-10)
     need(common["lambda_evaluations"] <= 64 and common["root_iteration_max"] <= 80, "ITERATION_CAP")
     valid = reconstruction <= 1e-10 and worst <= 1e-8
-    result = classify(record["points"]["common"]["F"], record["points"]["common"]["R"], certificate["lower"], certificate["numerical_margin"], valid)
+    # Certificate inverse action is independently paired above; preserve the
+    # original margin formula and original certificate, never optimize it here.
+    result = classify(recomputed["common"]["F"], recomputed["common"]["R"], float(lower), float(margin), valid)
     need(record["classification"] == result, "FALSE_PRODUCER_CLASSIFICATION")
     need(record["bounds_closed"] == (common["gap"] + certificate["numerical_margin"] <= 1e-8), "BOUND_GAP_STATUS")
     need(not record["true_NN_increment"] and not record["official_candidate_results"], "DIAGNOSTIC_LABEL")
     return dict(state=state, subset=subset, rcond=record["rcond"], classification=result,
-                U=upper, L=float(lower), margin=float(certificate["numerical_margin"]), raw_cross_defect=worst)
+                U=upper, L=float(lower), margin=float(margin), raw_cross_defect=worst,
+                bound_width=float(upper - lower + margin),
+                bound_width_qualification="PASS" if upper - lower + margin <= 1e-8 else "UNKNOWN",
+                numerical_validity="PASS", recomputed_points=recomputed,
+                rank=int(keep.sum()), native_denominator=float(native_denominator))

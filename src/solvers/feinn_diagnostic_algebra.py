@@ -46,6 +46,52 @@ def quadratic_change(old, delta, wold, wdelta):
     )
 
 
+def frozen_direction_attribution(raw, alpha, native_denominator):
+    """Two endpoints of ONE already frozen direction; no new step selection."""
+    alpha = np.asarray(alpha)
+    if alpha.ndim != 1 or np.iscomplexobj(alpha) or not np.isfinite(alpha).all():
+        raise ValueError("FROZEN_REAL_ALPHA_REQUIRED")
+    if not np.isfinite(native_denominator) or native_denominator <= 0:
+        raise ValueError("ORIGINAL_NATIVE_DENOMINATOR_REQUIRED")
+    rows = {}
+    for name, old, delta, wold, wdelta in (
+        ("F", raw["e"], raw["X"] @ alpha, raw["Ge"], raw["GX"] @ alpha),
+        ("R", raw["r"], raw["Y"] @ alpha, raw["qr"], raw["WY"] @ alpha),
+        ("N", raw["r"], raw["Y"] @ alpha, raw["r"], raw["Y"] @ alpha),
+    ):
+        values = quadratic_change(old, delta, wold, wdelta)
+        scale = np.linalg.norm(old) * np.linalg.norm(wold)
+        if values["before"] <= 256 * np.finfo(float).eps * scale:
+            raise ValueError("UNRESOLVED_DIRECTION_DENOMINATOR")
+        b = values["cross"] / values["before"]
+        c = values["update_energy"] / values["before"]
+        at_one = values["after"] / values["before"]
+        b_error = 256 * np.finfo(float).eps * 2 * np.linalg.norm(old) * np.linalg.norm(wdelta) / values["before"]
+        c_error = 256 * np.finfo(float).eps * np.linalg.norm(delta) * np.linalg.norm(wdelta) / values["before"]
+        endpoint_defect = abs(at_one - (1 + b + c)) / max(1, abs(b) + abs(c), abs(at_one))
+        if values["defect"] > 1e-10 or endpoint_defect > 1e-10:
+            raise ValueError("DIRECTION_ENDPOINT_PAIRING")
+        rows[name] = dict(**values, b=float(b), c=float(c), b_roundoff=float(b_error),
+                          c_roundoff=float(c_error), at_zero=1., at_one=float(at_one),
+                          endpoint_reconstruction_defect=float(endpoint_defect))
+    native = rows["N"]
+    classification = "UNKNOWN"
+    intersection = None
+    if native["b"] > native["b_roundoff"] and native["c"] >= -native["c_roundoff"]:
+        classification = "DIRECTION_NATIVE_CONFLICT"
+    elif native["b"] < -native["b_roundoff"] and native["at_one"] > 1 + 1e-10:
+        classification = "LINEAR_STEP_OVERSHOOT"
+        if native["c"] > native["c_roundoff"]:
+            intersection = float(-native["b"] / native["c"])
+    return dict(norms=rows, classification=classification,
+                analytic_nonzero_intersection_diagnostic_only=intersection,
+                native_denominator=float(native_denominator),
+                native_before=float(np.sqrt(native["before"]) / native_denominator),
+                native_at_saved_step=float(np.sqrt(native["after"]) / native_denominator),
+                evaluated_s=[0, 1], new_candidate_generated=False,
+                value_kind="DERIVED_LOCAL_LINEAR_MODEL", true_NN_increment=False)
+
+
 def weighted_qr(columns, weighted_columns, *, real=True, qr_tol=1e-14):
     X, WX = np.asarray(columns), np.asarray(weighted_columns)
     if X.ndim != 2 or X.shape != WX.shape or X.shape[1] > 16:

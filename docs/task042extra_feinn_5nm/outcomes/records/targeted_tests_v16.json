@@ -1,0 +1,159 @@
+{
+  "schema": "feinn.checker-targeted-tests.v2",
+  "checks": [
+    {
+      "label": "v16_clean_commit_qualification_20261003T064907515085Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_clean_commit_qualification_20261003T064907515085Z/summary.json",
+        "sha256": "34ce66c296c090c068977f1243e60961adb3cea38cb1846f830a59e8bdfc57a1"
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_clean_commit_qualification_20261003T064907515085Z/supervision/worker.log",
+        "sha256": "741a3388c9ceb1ed6ddba5bf803bab004fab9d23c59f728ade588493817e8b97"
+      },
+      "measured": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 13.691818258957937,
+        "sampled_process_tree_rss_peak_bytes": 97083392,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "pytest_counts": [
+        [
+          "75",
+          "passed"
+        ]
+      ]
+    },
+    {
+      "label": "v16_final_source_checks_20261003T064813654086Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_final_source_checks_20261003T064813654086Z/summary.json",
+        "sha256": "e317d0b8b461554ba8b085c8d0307a35b13999f2d86a5c9620b8c547a577469f"
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_final_source_checks_20261003T064813654086Z/supervision/worker.log",
+        "sha256": "1d41b618f344c334203f2fa759e0c2dc7dc3b715640c23769d280746f83d2a84"
+      },
+      "measured": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 13.716992253088392,
+        "sampled_process_tree_rss_peak_bytes": 98795520,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "pytest_counts": [
+        [
+          "143",
+          "passed"
+        ]
+      ]
+    },
+    {
+      "label": "v16_fixture_20261003T064510873788Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_20261003T064510873788Z/summary.json",
+        "sha256": "c0971f4e68f3ad8fbd6adea7cb3f36d4ab27a2f3514fb1878f5ccb897bd5f230"
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_20261003T064510873788Z/supervision/worker.log",
+        "sha256": "f24751ef5cd3b6a1a0e535c77bb7c8986a64857713700fc5b5c4f8c09c98834b"
+      },
+      "measured": {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "elapsed_seconds": 9.27398495504167,
+        "sampled_process_tree_rss_peak_bytes": 98091008,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "pytest_counts": [
+        [
+          "8",
+          "failed"
+        ],
+        [
+          "67",
+          "passed"
+        ]
+      ]
+    },
+    {
+      "label": "v16_fixture_repair1_20261003T064559863121Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_repair1_20261003T064559863121Z/summary.json",
+        "sha256": "44fc16bcec5469810394f915442e9afa889c690cba1692046fab553e3f828791"
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_repair1_20261003T064559863121Z/supervision/worker.log",
+        "sha256": "2d70297ba0cab69baa25ce0a82d3140d89e4cfeeba6fbb76bd3639bacfd71e7a"
+      },
+      "measured": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 9.120679077110253,
+        "sampled_process_tree_rss_peak_bytes": 92622848,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "pytest_counts": [
+        [
+          "75",
+          "passed"
+        ]
+      ]
+    },
+    {
+      "label": "v16_targeted_final_20261003T064655870597Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_targeted_final_20261003T064655870597Z/summary.json",
+        "sha256": "fd3ccecab270e6c8eae27a1d9b1a01895f7f461404443cf876ea9e13f984a15b"
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_targeted_final_20261003T064655870597Z/supervision/worker.log",
+        "sha256": "e1ac6120e439108609a9e5f99a06004ce1e6fecbfb1807fb66a8777301e7ed3a"
+      },
+      "measured": {
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 13.695241576991975,
+        "sampled_process_tree_rss_peak_bytes": 98246656,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      "pytest_counts": [
+        [
+          "143",
+          "passed"
+        ]
+      ]
+    }
+  ],
+  "final_affected_checker_suite": "75 passed after final source change; Ruff and compileall passed",
+  "related_suite": "143 passed before pure/clean/source metadata guard; unaffected algebra/attribution files unchanged",
+  "local_tests_only": true,
+  "full_pytest_run": false,
+  "MPI_or_FE_run": false,
+  "code_file_hashes": {
+    "benchmarks/check_feinn_common_descent.py": "b1700ee66e081cd2d6a0c0f062f7948b9d6c914b1ae5cdabafd886feb55534ea",
+    "benchmarks/run_feinn_common_descent.py": "a30f77dc1e662f5f30656ecd84f3f82f13d8c3c287b3f5153d7354efd18256ee",
+    "src/runners/feinn_common_descent_arrays.py": "5ddb4750cf85fae85840b1d9ff6bda14a4480820f158d8291b982b61dc8b7251",
+    "src/solvers/feinn_diagnostic_algebra.py": "543be365ba5badcb16b6df053614b9c6277296f1f42a88d9d94b3922ad61063f",
+    "src/test/test_feinn_common_descent.py": "333e2df34854ec8d91550f3fbdfc31bfd0d3958938f22e8804155864495945ae"
+  },
+  "environment": {
+    "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "pure": "pure",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    },
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "intentional_negative_controls": "empty/duplicate/missing/extra/unknown keys; missing four points; ledger/event/candidate corruption; role/global-pass flags; threshold brackets; legal partial and state UNKNOWN",
+  "fixture_only_producer_calls": true,
+  "no_M5_producer_or_optimization": true
+}
