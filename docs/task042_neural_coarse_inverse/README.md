@@ -1,3 +1,9 @@
+# 最新审阅：Review V23／V25弱方向证据已接受
+
+[Review V23](review_report_v23.md)关闭六场／四功率库存修复，接受V25两冷终态的八方向弱增量结论；旧V24完整资格仍0/5。下一轮V26仅补齐诊断样本库存，再对固定块5／7的一套联合主块、两个保存终态做新增方向资格诊断，总elapsed上限2小时；不续旧迭代、不训练NN。
+
+[独立核验记录](outcomes/records/review_v23_independent_checks.json)包含原始hash、缓存重算和空／缺／重复样本反例。原尺寸0.7nm／2TB／48小时与NN20%尚未资格化，无merge approval。以下历史原文保留，旧“下一建议”不覆盖最新review。
+
 # 最新交付：V25／Review V22已执行
 
 [V25回应](response_v25.md)及[三残差八方向结果](outcomes/block_residual_direction_diagnostic_v25.md)：checker必需库存修复，93 focused通过；V24仍0/5。两个末态eta8=0.9832369898／0.9899246286，数值可信但当前八方向削减能力弱，无新物理解或NN20%收益。25.665227s actor、S39、整树峰约1.707GiB、ownswap0，已冻结清场，等待review。

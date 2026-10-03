@@ -1,0 +1,660 @@
+{
+  "schema_version": 1,
+  "reviewed_HEAD": "f1c970ec0d96992ee2a9d098f7d3d2a8b4a5a786",
+  "review_base": "8e23b9f4620510c5f578c334faa63a06b4c410a3",
+  "review_date_utc8": "2026-10-03",
+  "actual_run_source": "bc88fe5a81d086059dec705db333b9cf9bf2921e",
+  "changed_files": [
+    {
+      "path": "benchmarks/check_task042_local_block_records.py",
+      "bytes": 7341,
+      "sha256": "deafa71a6b7a94ba1dfabbc1ad0c33b2b56a6e281db861d9a342b4c4dbce94b2"
+    },
+    {
+      "path": "benchmarks/collect_task042_block_direction.py",
+      "bytes": 9436,
+      "sha256": "71a0266f189154d4467b58c631d122a92a129afccc94dc9c8549cbfec5abd54f"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 248732,
+      "sha256": "4c30358e442dae2b016adb61706a913346015f44dd7c6006a930b6fce7a0cff1"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 214691,
+      "sha256": "c2bba4ebd106e871b0b83fb60c9c3009b85568e5a5dc8b6285ced4b97be87e97"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "bytes": 22539,
+      "sha256": "658d2c49a8a2b6f1eb9aef239200fa8c77a72bff4ad91bd076551b1b1f6241ba"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/block_residual_direction_diagnostic_v25.md",
+      "bytes": 7302,
+      "sha256": "2c0d9d9b5b47a1b35b401fa993dcfd3d602946bd48e596689ec5f6464bbe7825"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "bytes": 50754,
+      "sha256": "c0446045d4b8cb9a29b46cb027c8266872ba6a305b447d33e99e0a73c018c02a"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/block_response_v25.csv",
+      "bytes": 18986,
+      "sha256": "e852337115d65748a87fe3b8e26e7206d6db3182f9fba73bbd53b3565506f0de"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/cached_array_checker_v25.json",
+      "bytes": 1403,
+      "sha256": "10baee232275625b6ef4cd81f8ce7d56b3b63a0f48ee6ea8c12ef2f0800b1592"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/checker_inventory_v25.json",
+      "bytes": 3330,
+      "sha256": "f7fd6198c4991250032863b44a415f120ded9a7fdfb031274ecdfc7628af3f16"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/complex_cross_terms_v25.csv",
+      "bytes": 51307,
+      "sha256": "c8c44e7ec28e41a1c456eee45015690fb58da69a20a83ec03f0787013820c703"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_receipt_v25.json",
+      "bytes": 3092,
+      "sha256": "1b7de93c33903cf9bbd2104f52dbd612471710cb495a320f7819c025f8a9444b"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/direction_metrics_v25.csv",
+      "bytes": 1275,
+      "sha256": "40ee815a9305f2839166f31790d24094af9a21178125ee0a1b93f84f2d0f8b20"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/failures_and_not_run_v25.json",
+      "bytes": 4411,
+      "sha256": "52bc7df069af776c113cb90c0f541511191885f9b24dbd881ed6b810618fd397"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/input_inventory_v25.json",
+      "bytes": 18606,
+      "sha256": "10f952f237862230b153e7b15be6216abc26aacb2dcbfb9cfa832a0b15a880ad"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/numerical_gates_v25.json",
+      "bytes": 19731,
+      "sha256": "62328a0b65096d39f18443c3c56abdda44ff39e62c77165ead00a11880ec9861"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/render_check_v25.json",
+      "bytes": 2843,
+      "sha256": "fb91df133367e568062491ed32ba21fd1ccb6408459bf9667ee2a0e5b883cd14"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v25.json",
+      "bytes": 12892,
+      "sha256": "4037e7a3eff4ff9307e9f0a51ac7d28c32f45c164ead9d55b641a6b010e1d103"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v25.json",
+      "bytes": 6911,
+      "sha256": "58726fcf9ec3a1952072d70b35159eb5e9fddfc387a63905bd9c2c160ada8907"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v25.json",
+      "bytes": 4591,
+      "sha256": "a1513c017638ce3c0fa2dff8446076e1fe7c6381c2a3fbb90300d9032f1da561"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/target_coherence_v25.csv",
+      "bytes": 3616,
+      "sha256": "a67c0741465507ec690d03347765a2c11f4e932890f091414391d1934869d279"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "bytes": 86186,
+      "sha256": "6e588cb11ae25a582c9fce791662a0e5ca44037a006ff7f4a7b04a69d67c8179"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "bytes": 52186,
+      "sha256": "562e93921984477ee82233015395f40e5d072d53b84d80beb11fe6464200dc08"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v25.md",
+      "bytes": 9992,
+      "sha256": "592dbd57dc2ac8ba41c83a747e666de714ac6e55f5b4aa229a90e709d23ff4a0"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/block_residual_direction_v25.json",
+      "bytes": 6173,
+      "sha256": "e92a162e87411d95e94702b753ba2971d5d54b9f3811381e5ca238ff443f319c"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v25_block_residual_diagnostic.dat",
+      "bytes": 230,
+      "sha256": "6403cf3a2d2150f97ca886cd0860bb08c894a907e724711fd1d55f55d8666014"
+    },
+    {
+      "path": "scripts/run_case.py",
+      "bytes": 11120,
+      "sha256": "de7d72158679cfc48f2849f1e57accc43aaf21558d1eb9b209c277b257ff1499"
+    },
+    {
+      "path": "src/io/block_direction_diagnostic.py",
+      "bytes": 4209,
+      "sha256": "194ede9cfe481e0bda527c5957681e934b6266ac7f8968b409a11d9f977efd43"
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "bytes": 5525,
+      "sha256": "4559e9d243a3ac16a6e62038d2cc0b94bf14c9f93f6ad17c0ed7171faf47b079"
+    },
+    {
+      "path": "src/runners/block_direction_diagnostic.py",
+      "bytes": 3827,
+      "sha256": "fd8062ce30139a91ef2474b2340679ae0a4c031bff1a76a790c3ca091700fff4"
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "bytes": 48022,
+      "sha256": "a3f0ba136b0c5d5ce7875683af53835c83e019b10cd760bbba35adcfe2683701"
+    },
+    {
+      "path": "src/solvers/block_direction_study.py",
+      "bytes": 6886,
+      "sha256": "6c3cca4e3c5dd6a2f57b8a7d025967cdc00789f9401a0486d02b8f3cc3fe8c51"
+    },
+    {
+      "path": "src/solvers/block_direction_window.py",
+      "bytes": 3304,
+      "sha256": "6603778b9627c9f18ccc114c34b152dcde1a53924bdf929043117cfac60278c4"
+    },
+    {
+      "path": "src/solvers/block_residual_direction.py",
+      "bytes": 8067,
+      "sha256": "3aefdc2d7ea08090170efb7f317fc511c1df54d1cc6fe929025bd7ccd49069e7"
+    },
+    {
+      "path": "src/solvers/local_block_study.py",
+      "bytes": 17991,
+      "sha256": "143962d38e0888e051252f5f7d1cec4613218d6dc3039f05ff21a31deb0f7a67"
+    },
+    {
+      "path": "src/test/test_task042_v24_compact_qualification.py",
+      "bytes": 4006,
+      "sha256": "9e6f7bcc821690af7cab752db6f3bbfb759d5cbe2773f8f1fbad785859d9ab1d"
+    },
+    {
+      "path": "src/test/test_task042_v25_block_direction.py",
+      "bytes": 7659,
+      "sha256": "135e310fc34d4d07f599bf074616d85c27d6835dd84e764f0896c6fae542d7d8"
+    }
+  ],
+  "prior_full_inventory_files": 547,
+  "historical_changes_since_first_index": [
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md"
+  ],
+  "prior_reviews_responses_unchanged": true,
+  "verified_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/stage_result.json",
+      "sha256": "eb2445654d50c14f813a645f37cfae4f8feafb2f47126b96a3c56972196b4eb3",
+      "bytes": 427114
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/source_sha.txt",
+      "sha256": "6a1abd0c4187793b65922a15a2d78eb18c4048dcf7aaed958af7ad7bbbdad62c",
+      "bytes": 41
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/input_original.dat",
+      "sha256": "6403cf3a2d2150f97ca886cd0860bb08c894a907e724711fd1d55f55d8666014",
+      "bytes": 230
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/input_sha256.txt",
+      "sha256": "fc7d5cd70c90f9ddf58e4156aac529d9d6279031f3bc72cf957a06a4a567bd40",
+      "bytes": 65
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/physical_model_sha256.txt",
+      "sha256": "721af8efb669ea6f038d9cf9bf74bda9f60f2db533540ef75495b4a3eda80460",
+      "bytes": 65
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/resolved_config.json",
+      "sha256": "f6e6298eb0aeab35ef72cdee5f0dc37db30b32d689d3015f780b994c379a1bda",
+      "bytes": 4094
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/run_manifest.json",
+      "sha256": "b4e2e92c679de2e3ef3c69bc7442eac8e6dc3fa500cab8193dcf72d1e0bb0719",
+      "bytes": 2659
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/run_summary.json",
+      "sha256": "d7669a5735d50c440be48a725ab29afd7487c8462efebd9580e28c3612f5eec4",
+      "bytes": 6473
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/resource_baseline.json",
+      "sha256": "fe15d7e55c223a39d7522d1077f06f590ebafd13bad1a510b4c65d49aa793b81",
+      "bytes": 202414
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/supervision/summary.json",
+      "sha256": "180a35e8bb763bd4624aaeca73665248c346f98f19502357a2d35c7de5b6d31c",
+      "bytes": 6249
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/supervision/resources.jsonl",
+      "sha256": "a035a22f8e4afef950b0a4d16d86287eb218f6ac9cb9f90d1409de68b256b555",
+      "bytes": 377154
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v25_block_residual_diagnostic_20261002T232018300004Z/supervision/worker.log",
+      "sha256": "70762f772ae3933643ec9cce9064775c33748e57207bc9764a3c0b24c704d6a8",
+      "bytes": 6621
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/check_task042_local_block_records.py",
+      "sha256": "deafa71a6b7a94ba1dfabbc1ad0c33b2b56a6e281db861d9a342b4c4dbce94b2",
+      "bytes": 7341
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/block_residual_direction_v25.json",
+      "sha256": "e92a162e87411d95e94702b753ba2971d5d54b9f3811381e5ca238ff443f319c",
+      "bytes": 6173
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v25_block_residual_diagnostic.dat",
+      "sha256": "6403cf3a2d2150f97ca886cd0860bb08c894a907e724711fd1d55f55d8666014",
+      "bytes": 230
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "sha256": "de7d72158679cfc48f2849f1e57accc43aaf21558d1eb9b209c277b257ff1499",
+      "bytes": 11120
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/block_direction_diagnostic.py",
+      "sha256": "194ede9cfe481e0bda527c5957681e934b6266ac7f8968b409a11d9f977efd43",
+      "bytes": 4209
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/task042_profile.py",
+      "sha256": "4559e9d243a3ac16a6e62038d2cc0b94bf14c9f93f6ad17c0ed7171faf47b079",
+      "bytes": 5525
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/block_direction_diagnostic.py",
+      "sha256": "fd8062ce30139a91ef2474b2340679ae0a4c031bff1a76a790c3ca091700fff4",
+      "bytes": 3827
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+      "sha256": "a3f0ba136b0c5d5ce7875683af53835c83e019b10cd760bbba35adcfe2683701",
+      "bytes": 48022
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/block_direction_study.py",
+      "sha256": "6c3cca4e3c5dd6a2f57b8a7d025967cdc00789f9401a0486d02b8f3cc3fe8c51",
+      "bytes": 6886
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/block_direction_window.py",
+      "sha256": "6603778b9627c9f18ccc114c34b152dcde1a53924bdf929043117cfac60278c4",
+      "bytes": 3304
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/block_residual_direction.py",
+      "sha256": "3aefdc2d7ea08090170efb7f317fc511c1df54d1cc6fe929025bd7ccd49069e7",
+      "bytes": 8067
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/local_block_study.py",
+      "sha256": "143962d38e0888e051252f5f7d1cec4613218d6dc3039f05ff21a31deb0f7a67",
+      "bytes": 17991
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v24_compact_qualification.py",
+      "sha256": "9e6f7bcc821690af7cab752db6f3bbfb759d5cbe2773f8f1fbad785859d9ab1d",
+      "bytes": 4006
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v25_block_direction.py",
+      "sha256": "135e310fc34d4d07f599bf074616d85c27d6835dd84e764f0896c6fae542d7d8",
+      "bytes": 7659
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_block_direction.py",
+      "sha256": "71a0266f189154d4467b58c631d122a92a129afccc94dc9c8549cbfec5abd54f",
+      "bytes": 9436
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/finalize_records.py",
+      "sha256": "a84795d41e8d59492166a331f7377fcb7e28f92157e53414a8fbf23d8d9605eb",
+      "bytes": 9235
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/window.json",
+      "sha256": "9b9afff010ab473b6c6ccbbb14ac519b3b03bd2be9a399db795fd4f27480fea7",
+      "bytes": 880
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/progress_journal.jsonl",
+      "sha256": "00109c25d8cbb322f82af3c3c631919d3939a03e0cb5890b74c1f6c180e1ede4",
+      "bytes": 15580
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/minimum_result_cost.json",
+      "sha256": "19aad37a15b39e5a6068155618c658a08527ac03c0ce4f3a45500a117832f234",
+      "bytes": 3988
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/review_v22_independent_checks.json",
+      "sha256": "f7c7c18ec3b3db27a68d153c84fe8d5bdd7eb64d438337853af8ae85f9b89295",
+      "bytes": 51552
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_block_setup_20261002T144555294598Z/stage_result.json",
+      "sha256": "2bec45b6367274593e1ac040e8c1f9c829725adaf6aefbd3d9fdef778899d775",
+      "bytes": 471940
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v15/task042_v15_setup_20260930T093204740955Z/canonical_entity_map.npz",
+      "sha256": "bd40a9cc9d9040cf1efdd17d2e3682a7cad84ff10402b2110d8945e74e9b32a9",
+      "bytes": 2180758
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_zero_20261002T150705305076Z/stage_result.json",
+      "sha256": "4971ba16d38f22bc81e0be8e5ccda1556d99fb7eb3e2f98afa48c2b91b67c479",
+      "bytes": 249275
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/INITIAL.npz",
+      "sha256": "27a6b306669f93953d96eb7655c74c4c8601b974278e3107f565434e4a6b0058",
+      "bytes": 873818
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "4062d5a83cce4eca86715eaee0a587a4e83fc7c54a7da5a654b1843eff6283d7",
+      "bytes": 1454896
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_zero_20261002T151327920057Z/stage_result.json",
+      "sha256": "3051afc21e80bef0baf7b4ebedccbe0c57fd65de9f3aa20bccb71b6062ce13fa",
+      "bytes": 249964
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+      "sha256": "6daf6fc209c6515dfc2fef94a46cf16ee341009d84bbd8e78b479093364a14ad",
+      "bytes": 1454896
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-INITIAL.json",
+      "sha256": "f07736161453b68c9d9f120c93d711765ee876029e09d7018ef7a7f7e8d075d3",
+      "bytes": 69585
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-INITIAL.npz",
+      "sha256": "7977b5860619eb1875f04d5dcfccfd93fae46cd988542795a5164126ee2bd7e5",
+      "bytes": 5226890
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-CYCLE4.json",
+      "sha256": "2a27e8dd91938a3240afb1ab736b42b810239f074b76fd9826809b28f000e501",
+      "bytes": 69963
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-CYCLE4.npz",
+      "sha256": "3a84a0ca2b0f9a4b7121226d670141b85e5d6585f195c249c650cb7bc4a67df2",
+      "bytes": 5226890
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LCZ-CYCLE4.json",
+      "sha256": "c41fd78a922685d16f68286bd751743fcf888899830336d2dcdf3ba328eeae9f",
+      "bytes": 69951
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LCZ-CYCLE4.npz",
+      "sha256": "ff50538db9161c25a545825cfcb31f6746732c23304b02ef74dd7506ca559bf2",
+      "bytes": 5226890
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231053620156/summary.json",
+      "sha256": "fb1ea9ecbd7ee832d7da3dd487a148c44d7de613d4b3f1eb149b382717ff6bc9",
+      "bytes": 3524
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231053620156/supervision/worker.log",
+      "sha256": "d25a1eb367a7f98e8cabad6813401bab38c4107eac2cadb0dc5754b073030944",
+      "bytes": 855
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231643469398/summary.json",
+      "sha256": "006dbbd9cb54f584cc0fd40795acf5748509d5f86c1a51d5feb74522c08f076b",
+      "bytes": 3593
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231643469398/supervision/worker.log",
+      "sha256": "9ddc0474ba70a8e14c59ad23414f589e9b3c4a06d0db6797178ffaf4e5dd5bed",
+      "bytes": 652
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231800454222/summary.json",
+      "sha256": "bff20b264eac95152e76019609a3119965eebe656f7f986d6dae1b9529ae8f05",
+      "bytes": 3566
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231800454222/supervision/worker.log",
+      "sha256": "cb2a5c88a14390d028eb40f63584bed2fc596302d00ac9a9ca9cd0b1d2857e00",
+      "bytes": 5996
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231841512088/summary.json",
+      "sha256": "cc67255e383b270a977261c36c30916033bda343daec6d702aa1c964ec9bff04",
+      "bytes": 3624
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_231841512088/supervision/worker.log",
+      "sha256": "5294d6624e5c648bb25ba05a7c80031f1d5cd9a9c8a5def23d743c7a0973c75e",
+      "bytes": 459
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_232602980538/summary.json",
+      "sha256": "611154defe6808921d9dadf20204f8e5ced1ec594f17aa6629c21a50a5d23354",
+      "bytes": 3525
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v25/aux_232602980538/supervision/worker.log",
+      "sha256": "b8fb63300e40a71105d3138ef8bd06920de6d206d05a76928cc5a45d065ba2a0",
+      "bytes": 2027
+    }
+  ],
+  "verified_bytes": 24111747,
+  "original_checker": {
+    "local_qualified": true,
+    "composite_qualified": true,
+    "states": 5,
+    "passed": 0,
+    "first_four_only": true,
+    "raw_fields_recomputed": true,
+    "neural_20percent_increment": "NOT_DEMONSTRATED",
+    "all_limits_pass": true
+  },
+  "cached_checker": {
+    "status": "CHECKED",
+    "rows": [
+      {
+        "name": "V24-LZ-INITIAL",
+        "eta_unit": 2.0283184652527066,
+        "eta1": 0.8776402574908276,
+        "eta8": 0.8641444185948797,
+        "stationarity_recomputed": 7.399519791224457e-17,
+        "true_vs_thin_saved_difference_full_b_relative": 7.168070447787024e-16,
+        "independent_cached_array_checks": true,
+        "no_new_action": true,
+        "no_new_decomposition": true
+      },
+      {
+        "name": "V24-LZ-CYCLE4",
+        "eta_unit": 2.817691154398203,
+        "eta1": 0.9999995996358376,
+        "eta8": 0.9832369898096153,
+        "stationarity_recomputed": 5.0522641990486036e-17,
+        "true_vs_thin_saved_difference_full_b_relative": 6.373085593375437e-17,
+        "independent_cached_array_checks": true,
+        "no_new_action": true,
+        "no_new_decomposition": true
+      },
+      {
+        "name": "V24-LCZ-CYCLE4",
+        "eta_unit": 3.924761015443438,
+        "eta1": 0.999997827272363,
+        "eta8": 0.9899246285850263,
+        "stationarity_recomputed": 3.5446273218964225e-17,
+        "true_vs_thin_saved_difference_full_b_relative": 8.797028643218226e-17,
+        "independent_cached_array_checks": true,
+        "no_new_action": true,
+        "no_new_decomposition": true
+      }
+    ],
+    "decision": "EIGHT_DIRECTIONS_WEAK",
+    "raw_flags_not_sufficient": true,
+    "scope": "cached directions/images/scalars only; no new S, QR, SVD, factor or field integration"
+  },
+  "independent_cached_analysis": [
+    {
+      "name": "V24-LZ-INITIAL",
+      "eta8": 0.8641444185948797,
+      "norm_decrease": 0.13585558140512033,
+      "squared_fraction_removed": 0.25325442381131735,
+      "residual_norm": 0.0826782769485171,
+      "stationarity": 7.399519791224457e-17,
+      "gram_gershgorin_lower": 0.4819679950879603,
+      "gram_gershgorin_upper": 1.5180320049120402,
+      "derived_singular_ratio_lower": 0.5634671943456347,
+      "no_new_QR_SVD": true,
+      "source5_target7_ratio": 0.7643128524323067,
+      "source5_target7_rank": 1,
+      "largest_offdiagonal_response_ratio": {
+        "source": 5,
+        "target": 7,
+        "ratio": 0.7643128524323067
+      },
+      "residual_squared_fraction_in_blocks5and7": 0.21480262644058323
+    },
+    {
+      "name": "V24-LZ-CYCLE4",
+      "eta8": 0.9832369898096153,
+      "norm_decrease": 0.01676301019038473,
+      "squared_fraction_removed": 0.03324502187012657,
+      "residual_norm": 0.006728082686191037,
+      "stationarity": 5.0522641990486036e-17,
+      "gram_gershgorin_lower": 0.32444747739754365,
+      "gram_gershgorin_upper": 1.6755525226024561,
+      "derived_singular_ratio_lower": 0.44004103544639206,
+      "no_new_QR_SVD": true,
+      "source5_target7_ratio": 0.7621033383711675,
+      "source5_target7_rank": 1,
+      "largest_offdiagonal_response_ratio": {
+        "source": 5,
+        "target": 7,
+        "ratio": 0.7621033383711675
+      },
+      "residual_squared_fraction_in_blocks5and7": 0.25766109875509924
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "eta8": 0.9899246285850263,
+      "norm_decrease": 0.010075371414973722,
+      "squared_fraction_removed": 0.020049229720797812,
+      "residual_norm": 0.02689212013281442,
+      "stationarity": 3.5446273218964225e-17,
+      "gram_gershgorin_lower": 0.49813635341522633,
+      "gram_gershgorin_upper": 1.5018636465847741,
+      "derived_singular_ratio_lower": 0.5759156311624521,
+      "no_new_QR_SVD": true,
+      "source5_target7_ratio": 0.7782704440922621,
+      "source5_target7_rank": 2,
+      "largest_offdiagonal_response_ratio": {
+        "source": 4,
+        "target": 6,
+        "ratio": 0.7790735177765113
+      },
+      "residual_squared_fraction_in_blocks5and7": 0.3146793863156799
+    }
+  ],
+  "collector_inventory_probes": [
+    {
+      "mutation": "empty",
+      "rows": 0,
+      "observed_status": "CHECKED",
+      "observed_decision": "EIGHT_DIRECTIONS_WEAK",
+      "expected": "reject incomplete/duplicate frozen inventory"
+    },
+    {
+      "mutation": "one_final",
+      "rows": 1,
+      "observed_status": "CHECKED",
+      "observed_decision": "EIGHT_DIRECTIONS_WEAK",
+      "expected": "reject incomplete/duplicate frozen inventory"
+    },
+    {
+      "mutation": "duplicate_final",
+      "rows": 2,
+      "observed_status": "CHECKED",
+      "observed_decision": "EIGHT_DIRECTIONS_WEAK",
+      "expected": "reject incomplete/duplicate frozen inventory"
+    }
+  ],
+  "probe_scope": "in-memory metadata only; no records changed; cached arrays read; no fine action or decomposition",
+  "focused_tests": {
+    "passed": 78,
+    "seconds": 3.33,
+    "command": "python -m pytest -q src/test/test_task042_v24_compact_qualification.py src/test/test_task042_v25_block_direction.py src/test/test_task042_v24_admission.py",
+    "mode": "qualified pure numpy1.26.4 scipy1.11.4 math1"
+  },
+  "cost": {
+    "actor_wall": 25.665227008983493,
+    "launch_wall": 27.057487629936077,
+    "auxiliary_wall": 26.429975512088276,
+    "tree_peak": 1832550400,
+    "counts": {
+      "actions": 39,
+      "L8": 3,
+      "local_lu_solve": 40,
+      "local_triangular_pass": 80,
+      "factor_readers": 1,
+      "thin_decompositions": 3,
+      "port_factors": 1,
+      "port_solves": 37
+    }
+  },
+  "candidate_joint_block": {
+    "zero_based_blocks": [
+      5,
+      7
+    ],
+    "rows": 3888,
+    "matrix_and_LU_bytes": 483729408,
+    "not_run": true
+  },
+  "scope_limits": [
+    "no new original operator applications",
+    "no LU/QR/SVD in raw audit",
+    "no FE integration, new PDE or training",
+    "large LU and action packet payloads not all rehashed",
+    "not every repository file audited line by line",
+    "GitHub precise rendered page Cache miss; NOT_VERIFIED"
+  ],
+  "script_sha256": "2fa46ce97d7d79b45041ed0d56fc8d28b27ab5a135f2397ea17f5b756177d3a1",
+  "script_source": "\"\"\"Read-only V25 audit: cached arrays and records, no PDE/operator/LU/QR/SVD.\"\"\"\nfrom pathlib import Path\nfrom copy import deepcopy\nimport csv, hashlib, json, subprocess\nimport numpy as np\nfrom benchmarks.collect_task042_block_direction import check_arrays\nfrom benchmarks.check_task042_local_block_records import check\n\nROOT=Path.cwd(); D=ROOT/'docs/task042_neural_coarse_inverse'; R=D/'outcomes/records'\nHEAD='f1c970ec0d96992ee2a9d098f7d3d2a8b4a5a786'\nBASE='8e23b9f4620510c5f578c334faa63a06b4c410a3'\nread=lambda p:json.loads(Path(p).read_text())\nsha=lambda b:hashlib.sha256(b).hexdigest()\nah=lambda a:sha(np.ascontiguousarray(a).tobytes())\nassert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()==HEAD\nverified={}\ndef verify(item):\n    p=Path(item['path']); data=p.read_bytes()\n    assert sha(data)==item['sha256'],p\n    verified[str(p)]=dict(path=str(p),sha256=item['sha256'],bytes=len(data))\n    return data\nindex=read(R/'run_index_v25.json'); result=json.loads(verify(index['result']))\nfor item in index['files'].values():verify(item)\nsource=read(R/'source_inventory_v25.json')\nfor item in source['source_files']:verify(item)\nfor key in ('collector','metadata_closer','window','journal','minimum_result','historical_review_evidence'):verify(source[key])\nassert result['source_sha']==index['actual_source_sha']==source['actual_run_source_sha']=='bc88fe5a81d086059dec705db333b9cf9bf2921e'\nsummary=read(index['files']['run_summary.json']['path'])\nassert summary['classification']=='COMPLETED' and summary['descendants_cleared'] and not summary['remaining_child_pids']\nmanifest=read(index['files']['run_manifest.json']['path'])\nassert not manifest['formal_pde'] and manifest['offline_diagnostic'] and not manifest['new_solver_result']\nplan=read(ROOT/'input/task042_neural_coarse_inverse/block_residual_direction_v25.json')\nsetup=json.loads(verify(plan['local_setup'])); verify(plan['map'])\ngroups=[np.asarray(b['rows']) for b in setup['block_inventory']]\nnames=['V24-LZ-INITIAL','V24-LZ-CYCLE4','V24-LCZ-CYCLE4']\nassert [row['name'] for row in result['rows']]==names\nfor item in plan['states']:\n    verify(item['parent_result']);verify(item['state'])\n    with np.load(item['state']['path'],allow_pickle=False) as f:\n        a={key:f[key] for key in ('trace','port','z','residual')}\n    for key,value in a.items():assert ah(value)==item['state'][key+'_sha256']\n    assert np.array_equal(a['z'][:18144],a['trace']) and np.array_equal(a['z'][18144:],a['port'])\nfor item in index['row_artifacts']:\n    verify(item['metadata']);verify(item['arrays'])\ncached=check_arrays(result)\ncost=read(R/'resource_costs_v25.json')\nfor item in cost['auxiliary_runs']:\n    verify(item['file']);verify(item['log'])\n    a=read(item['file']['path'])\n    assert a['elapsed_seconds']==item['elapsed_seconds'] and a['sampled_process_tree_rss_peak_bytes']==item['RSS_peak_bytes']\n    assert a['descendants_cleared'] and not a['sampled_process_tree_swap_peak_bytes']\nassert abs(sum(x['elapsed_seconds'] for x in cost['auxiliary_runs'])-cost['auxiliary_supervised_wall_seconds'])<1e-10\nassert summary['elapsed_seconds']==cost['actor_supervised_wall_seconds']\nassert max([summary['sampled_process_tree_rss_peak_bytes']]+[i['RSS_peak_bytes'] for i in cost['auxiliary_runs']])==cost['simultaneous_sampled_tree_peak_bytes']\nassert result['budget_counts']==cost['mathematical_counts']==cost['ledger']['charged']\nassert cost['ledger']['closed'] and cost['ledger']['active'] is None and len(cost['ledger']['runs'])==1\nassert summary['clock_end']['utc_ns']/1e9 < 1790986575 # 2026-10-03T00:16:15Z\nmetrics=[]\nfor row in result['rows']:\n    with np.load(row['input_state']['path'],allow_pickle=False) as f:r=f['residual'][:18144]\n    with np.load(row['diagnostic_arrays']['path'],allow_pickle=False) as f:\n        V=f['images'];c=f['coefficients'];q=f['directions']\n    nr=np.linalg.norm(r); W=V/np.linalg.norm(V,axis=0); G=W.conj().T@W\n    radii=np.sum(np.abs(G),axis=1)-np.abs(np.diag(G))\n    lower=float(np.min(np.real(np.diag(G))-radii)); upper=float(np.max(np.real(np.diag(G))+radii))\n    assert lower>0 # independent full-rank certificate, not a normal-equation solve\n    cross=next(x for x in row['block_response'] if x['target_block']==7)\n    coupling=cross['response_norms'][5]/row['response_column_norms'][5]\n    offdiag=sorted([(x['response_norms'][j]/row['response_column_norms'][j],j,x['target_block']) for x in row['block_response'] for j in range(8) if j!=x['target_block']],reverse=True)\n    pair_fraction=float((np.linalg.norm(r[groups[5]])**2+np.linalg.norm(r[groups[7]])**2)/nr**2)\n    station=float(np.linalg.norm(W.conj().T@(r-V@c))/(np.linalg.norm(W)*(nr+np.linalg.norm(V@c))))\n    ratio=float(np.linalg.norm(r-V@c)/nr)\n    assert abs(ratio-row['eta8'])<1e-11\n    assert station<1e-8\n    metrics.append(dict(name=row['name'],eta8=ratio,norm_decrease=1-ratio,squared_fraction_removed=1-ratio**2,\n        residual_norm=float(nr),stationarity=station,gram_gershgorin_lower=lower,gram_gershgorin_upper=upper,\n        derived_singular_ratio_lower=float(np.sqrt(lower/upper)),no_new_QR_SVD=True,\n        source5_target7_ratio=coupling,source5_target7_rank=[(j,i) for _,j,i in offdiag].index((5,7))+1,\n        largest_offdiagonal_response_ratio=dict(source=offdiag[0][1],target=offdiag[0][2],ratio=offdiag[0][0]),\n        residual_squared_fraction_in_blocks5and7=pair_fraction))\n\n# Mutations of in-memory metadata only, to test the evidence-checker's contract.\nprobes=[]\nfor label,rows in [('empty',[]),('one_final',[result['rows'][1]]),('duplicate_final',[result['rows'][1],result['rows'][1]])]:\n    mutation=deepcopy(result);mutation['rows']=rows\n    checked=check_arrays(mutation)\n    probes.append(dict(mutation=label,rows=len(rows),observed_status=checked['status'],observed_decision=checked['decision'],expected='reject incomplete/duplicate frozen inventory'))\n    assert checked['status']=='CHECKED'\n\nchanges=subprocess.check_output(['git','diff','--name-only',BASE,HEAD],text=True).splitlines()\nassert len(changes)==37\nold_inventory=read(R/'independent_review_v21_20261002.json')['task_inventory']['files']\nallowed={str(D.relative_to(ROOT)/p) for p in ('README.md','review_report_v21.md','outcomes/summary.md','outcomes/test_summary.md','outcomes/changed_files.md')}\nold_different=[x['path'] for x in old_inventory if sha(Path(x['path']).read_bytes())!=x['sha256']]\nassert set(old_different)==allowed\nfor pattern in ('review_report_v*.md','response_v*.md'):\n    for p in D.glob(pattern):\n        if p.name=='response_v25.md':continue\n        rel=str(p.relative_to(ROOT)); assert subprocess.check_output(['git','show',BASE+':'+rel])==p.read_bytes()\nrows=sum(1 for _ in csv.DictReader((R/'complex_cross_terms_v25.csv').open()))\nassert rows==864\nout=dict(schema_version=1,reviewed_HEAD=HEAD,review_base=BASE,review_date_utc8='2026-10-03',\n    actual_run_source=result['source_sha'],changed_files=[dict(path=p,bytes=Path(p).stat().st_size,sha256=sha(Path(p).read_bytes())) for p in changes],\n    prior_full_inventory_files=len(old_inventory),historical_changes_since_first_index=old_different,\n    prior_reviews_responses_unchanged=True,verified_files=list(verified.values()),verified_bytes=sum(x['bytes'] for x in verified.values()),\n    original_checker=check(R),cached_checker=cached,independent_cached_analysis=metrics,\n    collector_inventory_probes=probes,probe_scope='in-memory metadata only; no records changed; cached arrays read; no fine action or decomposition',\n    focused_tests=dict(passed=78,seconds=3.33,command='python -m pytest -q src/test/test_task042_v24_compact_qualification.py src/test/test_task042_v25_block_direction.py src/test/test_task042_v24_admission.py',mode='qualified pure numpy1.26.4 scipy1.11.4 math1'),\n    cost=dict(actor_wall=cost['actor_supervised_wall_seconds'],launch_wall=cost['actor_launch_wall_seconds'],auxiliary_wall=cost['auxiliary_supervised_wall_seconds'],tree_peak=cost['simultaneous_sampled_tree_peak_bytes'],counts=cost['mathematical_counts']),\n    candidate_joint_block=dict(zero_based_blocks=[5,7],rows=len(groups[5])+len(groups[7]),matrix_and_LU_bytes=32*(len(groups[5])+len(groups[7]))**2,not_run=True),\n    scope_limits=['no new original operator applications','no LU/QR/SVD in raw audit','no FE integration, new PDE or training','large LU and action packet payloads not all rehashed','not every repository file audited line by line','GitHub precise rendered page Cache miss; NOT_VERIFIED'],\n    script_sha256=sha(Path(__file__).read_bytes()))\nPath('/tmp/task042_review23_evidence.json').write_text(json.dumps(out,ensure_ascii=False,indent=2,allow_nan=False)+'\\n')\nprint(json.dumps({k:out[k] for k in ('verified_bytes','original_checker','independent_cached_analysis','collector_inventory_probes','cost','candidate_joint_block')},ensure_ascii=False,indent=2))\n",
+  "reproduction": "At clean reviewed f1c970ec0d96992ee2a9d098f7d3d2a8b4a5a786 with original ignored artifacts present, extract script_source to /tmp/task042_review23_audit.py, source scripts/activate_task042.sh pure with separate TASK042_CACHE_NAMESPACE, and run python /tmp/task042_review23_audit.py. This writes only /tmp/task042_review23_evidence.json and performs no fine action, LU, QR, SVD or FE integration."
+}
