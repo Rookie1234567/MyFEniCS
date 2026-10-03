@@ -93,12 +93,21 @@ def run(stage):
         original_C_sha256=array_hash(C),Hhat_sha256=array_hash(bar.ports.H))
     a=packet.a;e_bound=np.bincount(a['erows']//packet.lt,weights=np.abs(a['evals']),minlength=packet.nc)
     s_norm=np.linalg.norm(a['S'],axis=(1,2))[a['classes']];Cnorm=float(np.linalg.norm(C))
-    def scale(x):return float(np.dot(e_bound*s_norm,np.linalg.norm(packet._expand(x),axis=1))+Cnorm*np.linalg.norm(last_port[0]))
+    scale_certificates={}
+    def scale(x):
+        # Persist already-computed norm operands, without another original action
+        # or expansion. Cached checker can recompute the reported bound.
+        weights=e_bound*s_norm;expanded_norms=np.linalg.norm(packet._expand(x),axis=1)
+        portnorm=float(np.linalg.norm(last_port[0]));value=float(np.dot(weights,expanded_norms)+Cnorm*portnorm)
+        scale_certificates[array_hash(x)]=dict(input_array_sha256=array_hash(x),weights=weights.tolist(),
+            expanded_cell_norms=expanded_norms.tolist(),C_norm=Cnorm,closed_port_norm=portnorm,value=value)
+        return value
     joint_item=dict(rows=ids.tolist(),matrix=prior['matrix'],**prior['factor_inventory'])
     joint=SelectedBundle(joint_item,io.ROOT/'benchmarks/artifacts/task042/v26',kind='joint',count=stage.pc_count,guard=stage.guard)
     try:
         reload=joint.witnesses((422601,422602),bar.apply,bar.adjoint,packet.nt)
-        result['factor_reloads'].append(dict(block='J',**reload))
+        result['factor_reloads'].append(dict(block='J',source_sha=own['v26_source_sha'],
+            rows_sha256=array_hash(ids),row_count=len(ids),**reload))
         write_json(stage.artifact/'reload_progress.json',result)
         if not reload['qualified']:return dict(result,status='JOINT_RELOAD_UNSAFE',decision='NUMERICALLY_UNRESOLVED',dependent_samples='NOT_RUN')
         rhs=a['b'];barb=bar.reduced_rhs(rhs);samples=[]
@@ -121,8 +130,9 @@ def run(stage):
             if not identity['exact_trace_port_z_concat'] or max(identity[k] for k in ('saved_trace_residual_full_b_relative','saved_full_residual_full_b_relative'))>1e-11 or max(identity[k] for k in ('port_reclosure_operation_relative','port_residual_full_b_relative'))>1e-10:
                 raise ValueError('V27 original state/port identity')
             data=cached_directions(item['v25_arrays'],packet.nt);cached=prior_arrays(item['v26_arrays'],packet.nt)
-            qj,vj=cached['joint_direction'],cached['joint_image'];check=pair(bar.apply(qj),vj);qj_scale=scale(qj)
-            local_pair=pair(joint.A@qj[ids],r[ids])
+            qj,vj=cached['joint_direction'],cached['joint_image'];cached_joint_image=bar.apply(qj)
+            check=pair(cached_joint_image,vj);qj_scale=scale(qj)
+            cached_joint_inner_image=joint.A@qj[ids];local_pair=pair(cached_joint_inner_image,r[ids])
             if np.count_nonzero(qj[(groups!=5)&(groups!=7)]) or check['operation_relative']>1e-10 or local_pair['operation_relative']>1e-10:
                 raise ValueError('cached J direction or original response')
             Q9=np.column_stack((data['directions'],qj));W9=np.column_stack((data['images'],vj))
@@ -130,7 +140,9 @@ def run(stage):
             if np.linalg.norm(r-W9@c9-e9)/packet.bnorm>1e-11:raise ValueError('cached actual e9 differs from nine response')
             samples.append(dict(name=name,item=item,r=r,qj=qj,vj=vj,Q9=Q9,W9=W9,c9=c9,e9=e9,
                 old_scales=np.r_[v25['operation_scales'],qj_scale],w=np.zeros(packet.nt,complex),
-                identity=identity,cache_original_pair=check,cached_joint_inner_pair=local_pair))
+                identity=identity,cache_original_pair=check,cached_joint_inner_pair=local_pair,
+                audited_full_residual=full_r,reclosed_port=closed[packet.nt:],qj_scale_certificate=scale_certificates[array_hash(qj)],
+                cached_joint_image=cached_joint_image,cached_joint_inner_image=cached_joint_inner_image))
         # Bundle outer loop is intentional: exactly one load per block, two
         # actual RHS vectors plus two reload witnesses before releasing it.
         for b in OUTER_BLOCKS:
@@ -141,7 +153,8 @@ def run(stage):
                 reload=bundle.witnesses((422401+2*b,422402+2*b),bar.apply,n=packet.nt)
                 if not reload['qualified']:raise ValueError('outer readonly solve/action unsafe')
                 for sample in samples:sample['w'][bundle.rows]=bundle.solve(sample['vj'][bundle.rows])
-                reload.update(block=b,solve_calls=bundle.calls,RHS_columns=bundle.RHS_columns,
+                reload.update(block=b,source_sha=own['upstream_source_sha'],rows_sha256=array_hash(bundle.rows),
+                    row_count=len(bundle.rows),triangular_passes=2*bundle.calls,solve_calls=bundle.calls,RHS_columns=bundle.RHS_columns,
                     solve_seconds=bundle.seconds,process_RSS_before_load=before,process_RSS_before_close=process_rss())
                 result['factor_reloads'].append(reload)
             finally:bundle.close()
@@ -173,13 +186,21 @@ def run(stage):
                 new_e10_norm=float(np.linalg.norm(arrays['diagnostic_residual'][mask]))) for label,mask in [('inside_J',support),('outside_J',~support)]}
             receipt=atomic_arrays(stage.artifact/(sample['name']+'.npz'),**arrays,
                 w=w,aw=flow['aw'],feedback=flow['feedback'],feedback_image=flow['feedback_image'],
-                return_direction=flow['return_direction'],return_image=flow['return_image'])
+                return_direction=flow['return_direction'],return_image=flow['return_image'],
+                audited_full_residual=sample['audited_full_residual'],reclosed_port=sample['reclosed_port'],
+                cached_joint_image=sample['cached_joint_image'],cached_joint_inner_image=sample['cached_joint_inner_image'])
             row=dict(name=sample['name'],parent_result=sample['item']['parent_result'],input_state=sample['item']['state'],v25_arrays=sample['item']['v25_arrays'],v26_arrays=sample['item']['v26_arrays'],
                 old_operation_scales=sample['old_scales'].tolist(),
                 identity=sample['identity'],cached_original_pair=sample['cache_original_pair'],cached_joint_inner_pair=sample['cached_joint_inner_pair'],
-                cancellation=cancellation,action_operation_scales=scales,regions=regions,**metrics,diagnostic_arrays=receipt)
+                cancellation=cancellation,action_operation_scales=scales,operator_action_sha256=own['action_sha256'],
+                scale_provenance=dict(method='cell_S_expand_plus_C_port_bound',action_sha256=own['action_sha256'],
+                    scales=scales,old_scales=sample['old_scales'].tolist(),qj=sample['qj_scale_certificate'],
+                    operands={key:scale_certificates[array_hash(flow[member])] for key,member in
+                        [('w','w'),('d','direction'),('feedback','feedback'),('qret','return_direction')]}),
+                regions=regions,**metrics,diagnostic_arrays=receipt)
             result['rows'].append(row);write_json(stage.artifact/(sample['name']+'.json'),row)
             stage.event('return_direction_diagnosed',name=row['name'],eta9=row['eta9'],eta10=row['eta10'],g10=row['g10'])
+        result['factor_reloads'][0].update(solve_calls=joint.calls,RHS_columns=joint.RHS_columns,triangular_passes=2*joint.calls)
         result.update(status='DIAGNOSTIC_COMPLETE' if all(x['trustworthy'] for x in result['rows']) else 'NUMERICALLY_UNRESOLVED',
             decision=decision(result['rows']),joint_solve_calls=joint.calls,joint_RHS_columns=joint.RHS_columns,joint_solve_seconds=joint.seconds,
             port_seconds=bar.costs,port_rhs_inventory=port_inventory,worker_wall_after_packet_load_seconds=perf_counter()-began,

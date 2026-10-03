@@ -12,7 +12,7 @@ RECORDS=ROOT/'docs/task042_neural_coarse_inverse/outcomes/records'
 ARTIFACT=ROOT/'benchmarks/artifacts/task042/v25'
 
 
-def fixed_inventory(result,plan=None):
+def fixed_inventory(result,plan=None,*,root=ROOT):
     """Reject an incomplete, mislabeled or unbound inventory before any arrays."""
     from src.io.block_direction_diagnostic import NAMES,PLAN_PATH,checked_json
     plan=json.loads(PLAN_PATH.read_text()) if plan is None else plan
@@ -25,7 +25,7 @@ def fixed_inventory(result,plan=None):
         row=by_name[item['name']]
         if row['input_state']!=item['state']:
             raise ValueError('fixed state path/container/member identity differs')
-        parent=checked_json(item['parent_result'],ROOT/'benchmarks/artifacts/task042/v24')
+        parent=checked_json(item['parent_result'],root/'benchmarks/artifacts/task042/v24')
         if (parent['source_sha']!=plan['upstream_source_sha']
                 or parent['operator_packet']['sha256']!=plan['action_sha256']):
             raise ValueError('fixed parent source/operator identity differs')

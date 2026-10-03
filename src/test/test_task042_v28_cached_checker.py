@@ -4,12 +4,20 @@ import json
 from types import SimpleNamespace
 import numpy as np
 import pytest
-from benchmarks.collect_task042_return_direction import numeric,inventory,compact_inputs
+from benchmarks.collect_task042_return_direction import numeric as checked_numeric,inventory as checked_inventory,compact_inputs
 from benchmarks.task042_admission_receipt import replay
 from src.solvers.return_block_direction import extend_nine
 from src.solvers.return_block_window import CAPS
 from src.solvers.bounded_diagnostic_window import DiagnosticWindow
 from src.runners import task042_shared as shared
+
+
+def numeric(row,a,r,W9,cached_c9,cached_e9,ids):
+    return checked_numeric(row,a,r,W9,cached_c9,cached_e9,ids,qj=W9[:,-1])
+
+
+def inventory(result,plan):
+    return checked_inventory(result,plan,sources=plan['fixture_sources'],ledger=result['fixture_ledger'],manifest=result['fixture_manifest'])
 
 
 def fixture(kind='positive'):
@@ -32,6 +40,8 @@ def fixture(kind='positive'):
     ids=np.array([8]) if kind!='duplicate' else np.array([8])
     inside=np.isin(np.arange(n),ids)
     row['regions']={label:{key:float(np.linalg.norm(v[mask])) for key,v in [('qj_response_norm',W[:,-1]),('d_response_norm',d),('return_response_norm',qj+d),('old_e9_norm',a0['old_e9']),('new_e10_norm',a0['diagnostic_residual'])]} for label,mask in [('inside_J',inside),('outside_J',~inside)]}
+    from src.test.task042_return_fixture import certify_flow
+    certify_flow(row,a0,r,W,ids)
     return row,a0,r,W,old_c,r-W@old_c,ids
 
 
@@ -64,6 +74,8 @@ def inventory_fixture():
         for key in ('state','v25_arrays','v26_arrays'):x[key]={'sha256':'c'*64,'path':'/'+key+x['name']}
     counts=dict.fromkeys(CAPS,0);counts.update(actions=36,factor_readers=7,outer_lu_solve=24,joint_lu_solve=4,explicit_triangular_pass=56,thin_decompositions=2,port_factors=1,port_solves=35,port_rhs_columns=35)
     result=dict(rows=[dict(name=x['name'],parent_result=x['parent_result'],input_state=x['state'],v25_arrays=x['v25_arrays'],v26_arrays=x['v26_arrays']) for x in plan['states']],budget_counts=counts,action_counts=dict(S=34,SH=2,audit=0),status='DIAGNOSTIC_COMPLETE',reference_arrays_read=False,Q_U_R_D_L_loaded=False,new_solver_states=0,global_p4_factor_constructed=False,operator_identity={k:plan[k] for k in IDENTITIES},operator_packet={'sha256':plan['action_sha256']},complete_ports=40,source_sha='d'*40)
+    from src.test.task042_return_fixture import certify_inventory
+    certify_inventory(result,plan)
     return result,plan
 
 

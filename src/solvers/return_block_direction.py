@@ -62,8 +62,10 @@ class SelectedBundle:
         for seed in seeds:
             rng=np.random.default_rng(seed);r=rng.standard_normal(len(self.rows))+1j*rng.standard_normal(len(self.rows))
             x=self.solve(r);err=float(np.linalg.norm(self.A@x-r))
-            row=dict(seed=seed,solve_relative=err/np.linalg.norm(r),
-                solve_operation_relative=relative(err,self.A1*np.linalg.norm(x,1)+np.linalg.norm(r,1)))
+            operand=self.A1*np.linalg.norm(x,1)+np.linalg.norm(r,1)
+            row=dict(seed=seed,solve_relative=err/np.linalg.norm(r),solve_error_norm=err,
+                rhs_norm=float(np.linalg.norm(r)),solve_operand_scale=float(operand),
+                solve_operation_relative=relative(err,operand))
             if action is not None:
                 full=np.zeros(n,complex);full[self.rows]=r
                 row['original_principal_action']=pair(self.A@r,action(full)[self.rows])

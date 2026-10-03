@@ -1,0 +1,73 @@
+{
+  "batch": "V29_CHECKER_FULL_SPACE_COST",
+  "review_commit": "5f78fb831e8b1b243f8d8865286dce54bb0d631f",
+  "window": {
+    "start_utc": "2026-10-03T05:29:16.937526+00:00",
+    "start_monotonic": 930351.798415932,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "schema": "task042.campaign-window.v29",
+    "heavy_limit_seconds": 2700,
+    "total_limit_seconds": 3600,
+    "heavy_stop_utc": "2026-10-03T06:14:16.937526+00:00",
+    "deadline_utc": "2026-10-03T06:29:16.937526+00:00",
+    "review_expected_commit": "5f78fb831e8b1b243f8d8865286dce54bb0d631f",
+    "closed": false
+  },
+  "carried_seconds": 21.163846769952215,
+  "new_light_limit_seconds": 120,
+  "single_auxiliary_admission": true,
+  "real_actor_authorized": false,
+  "small_matrices": [
+    {
+      "name": "NON_HERMITIAN_8",
+      "n": 8,
+      "seed": 422901,
+      "J": [
+        0,
+        1
+      ],
+      "outer_singletons": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "name": "NON_CONTRACTION_2",
+      "matrix": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "J": [
+        0
+      ]
+    },
+    {
+      "name": "SINGULAR_LOCAL_2",
+      "matrix": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "J": [
+        0
+      ]
+    }
+  ],
+  "neural_gain_threshold": 0.2,
+  "no_subagents": true
+}

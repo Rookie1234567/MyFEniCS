@@ -1,5 +1,5 @@
 """One bounded V28 auxiliary invocation, reusing the established watchdog."""
-import argparse,json,os,subprocess,sys,time
+import argparse,json,os,subprocess,sys,time,fcntl
 from datetime import datetime,timezone
 from benchmarks.subreaper_watchdog import supervise
 from src.runners.task042_shared import audit,SharedHealth,shared_envelope,write_json
@@ -7,7 +7,10 @@ from src.solvers import return_block_continuation_window as window
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('command',nargs=argparse.REMAINDER);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--v29',action='store_true')
+    parser.add_argument('command',nargs=argparse.REMAINDER);args=parser.parse_args()
+    if args.command and args.command[0]=='--':args.command=args.command[1:]
+    if args.v29:return v29(args.command)
     clock=window.require_live(margin=900);used=window.auxiliary_wall()+window.ledger()['actor_wall_seconds']
     if used>=590:raise RuntimeError('V27+V28 bounded auxiliary cap/cleanup')
     folder=window.TMP/('aux_'+datetime.now(timezone.utc).strftime('%H%M%S%f'));folder.mkdir()
@@ -22,6 +25,39 @@ def main():
     write_json(folder/'summary.json',result)
     print(json.dumps(dict(directory=str(folder),classification=result['classification'],elapsed_seconds=result['elapsed_seconds'],leader_exit_code=result['leader_exit_code'])))
     return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 1
+
+
+def v29(command):
+    """One new light admission, using the same deadline and tree supervisor.
+
+    This is an auxiliary profile only; no new official numerical runner/dat.
+    """
+    from src.io.task042_profile import ROOT
+    from src.solvers.bounded_diagnostic_window import DiagnosticWindow
+    carried=21.163846769952215;folder=ROOT/'tmp/task042/v29'
+    w=DiagnosticWindow(folder,{},'V29',carried_auxiliary_seconds=carried)
+    clock=w.require_live(margin=30)
+    if w.ledger()['closed']:raise RuntimeError('V29 window already closed')
+    lock_path=ROOT/'tmp/task042/task042_shared.lock'
+    with lock_path.open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        marker=folder/'auxiliary_admission_attempt.json'
+        # Exclusive creation consumes the single attempt even on early failure.
+        with marker.open('x') as stream:json.dump(dict(command=command,clock=clock),stream)
+        baseline=audit(observed_activity=True,receipt_path=folder/'admission.json',input_path=' '.join(command))
+        os.sched_setaffinity(0,{baseline['cpu']});os.nice(10)
+        subprocess.run(['ionice','-c','3','-p',str(os.getpid())],check=True)
+        write_json(folder/'baseline.json',baseline)
+        source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        result=supervise(command,folder/'supervision',wall_seconds=min(115,clock['heavy_remaining_seconds']-10),
+            interval=.5,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=2*2**30,
+            rss_warning_bytes=2**30,memory_envelope_provider=shared_envelope,
+            source_state=dict(source_sha=source,role='V29 auxiliary; no real actor'),
+            health_check=SharedHealth(folder,baseline['neighbor_processes']),include_pss=False,stop_on_global_swap=False)
+        write_json(folder/'auxiliary_summary.json',result)
+        w.journal('single_auxiliary_finished',classification=result['classification'],seconds=result['elapsed_seconds'])
+        if result['elapsed_seconds']>120:raise RuntimeError('V29 auxiliary cumulative cap exceeded')
+        return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 1
 
 
 if __name__=='__main__':sys.exit(main())

@@ -7,6 +7,19 @@ from src.runners.block_direction_diagnostic import DirectionStage
 
 
 class ReturnStage(DirectionStage):
+    def finish(self,result):
+        # Metadata seal only. No new physical action, factor, or decomposition.
+        from src.solvers.neural_fe_action_packet import file_hash
+        from src.runners.task042_shared import write_json
+        import json
+        path=self.directory/'run_manifest.json';manifest=json.loads(path.read_text())
+        manifest.update(completed_budget_counts=self.counts.copy(),completed_action_counts=self.packet.counts.copy(),
+            plan_sha256=self.meta['plan_sha256'])
+        write_json(path,manifest)
+        result.update(run_directory=str(self.directory),run_manifest=dict(path=str(path),sha256=file_hash(path)),
+            ledger_path=str(self.window.LEDGER_PATH))
+        super().finish(result)
+
     def guard(self,**kwargs):
         super().guard(**kwargs)
         now=time.monotonic()
