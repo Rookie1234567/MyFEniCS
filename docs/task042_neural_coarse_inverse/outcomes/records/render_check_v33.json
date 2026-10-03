@@ -1,0 +1,269 @@
+{
+  "local_static_status": "PASSED",
+  "runtime_document_pytest": "NOT_RUN_RESOURCE_GATE",
+  "rendered_view": "NOT_VERIFIED",
+  "web_attempt": {
+    "exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/bcd00052d45dd542830a64e182d5c480049dea23/docs/task042_neural_coarse_inverse/review_report_v30.md",
+    "result": "Cache miss",
+    "visual_evidence": false
+  },
+  "no_review_changes": true,
+  "CI": "NOT_CLAIMED",
+  "static_checks": [
+    {
+      "path": "docs/development_model_registry.md",
+      "scope": "new prefix; protected historical suffix byte-identical",
+      "math_blocks": 0,
+      "tables": [
+        {
+          "start_line": 5,
+          "columns": 3
+        }
+      ],
+      "local_links": [
+        "task042_neural_coarse_inverse/response_v33.md",
+        "task042_neural_coarse_inverse/outcomes/records/resource_costs_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/development_progress.md",
+      "scope": "new prefix; protected historical suffix byte-identical",
+      "math_blocks": 0,
+      "tables": [],
+      "local_links": [
+        "task042_neural_coarse_inverse/response_v33.md",
+        "task042_neural_coarse_inverse/outcomes/full_input_block_correction_v33.md",
+        "task042_neural_coarse_inverse/outcomes/records/run_index_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "scope": "new prefix; protected historical suffix byte-identical",
+      "math_blocks": 0,
+      "tables": [],
+      "local_links": [
+        "review_report_v30.md",
+        "response_v33.md",
+        "outcomes/full_input_block_correction_v33.md",
+        "outcomes/records/run_index_v33.json",
+        "outcomes/records/raw_evidence_index_v33.json",
+        "outcomes/records/resource_costs_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "scope": "new prefix; protected historical suffix byte-identical",
+      "math_blocks": 0,
+      "tables": [
+        {
+          "start_line": 5,
+          "columns": 3
+        }
+      ],
+      "local_links": [
+        "records/source_inventory_v33.json",
+        "records/tests_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "scope": "new prefix; protected historical suffix byte-identical",
+      "math_blocks": 0,
+      "tables": [
+        {
+          "start_line": 5,
+          "columns": 3
+        }
+      ],
+      "local_links": [
+        "records/run_index_v33.json",
+        "records/tests_v33.json",
+        "records/cpu_exclusions_v33.csv",
+        "records/resource_costs_v33.json",
+        "../response_v33.md",
+        "full_input_block_correction_v33.md"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "scope": "new prefix; protected historical suffix byte-identical",
+      "math_blocks": 0,
+      "tables": [],
+      "local_links": [
+        "records/tests_v33.json",
+        "records/compilation_final_v33.json",
+        "records/raw_evidence_index_v33.json",
+        "records/render_check_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v33.md",
+      "scope": "complete file",
+      "math_blocks": 0,
+      "tables": [
+        {
+          "start_line": 7,
+          "columns": 2
+        },
+        {
+          "start_line": 19,
+          "columns": 3
+        },
+        {
+          "start_line": 31,
+          "columns": 5
+        },
+        {
+          "start_line": 40,
+          "columns": 3
+        }
+      ],
+      "local_links": [
+        "review_report_v30.md",
+        "outcomes/records/source_inventory_v33.json",
+        "outcomes/records/repairs_v33.json",
+        "outcomes/records/tests_v33.json",
+        "outcomes/records/raw_evidence_index_v33.json",
+        "outcomes/records/cpu_exclusions_v33.csv",
+        "outcomes/records/cpu_exclusions_v33.json",
+        "outcomes/records/resource_costs_v33.json",
+        "outcomes/records/actual_consumption_v33.json",
+        "outcomes/records/full_input_checker_v33.json",
+        "outcomes/records/storage_cleanup_v33.json",
+        "outcomes/records/storage_v33.json",
+        "outcomes/records/resource_costs_v33.json",
+        "outcomes/records/dot_identity_gap_v33.json",
+        "outcomes/records/neural_cost_assessment_v33.json",
+        "outcomes/full_input_block_correction_v33.md",
+        "outcomes/records/run_index_v33.json",
+        "outcomes/records/raw_evidence_index_v33.json",
+        "outcomes/records/evidence_integrity_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/full_input_block_correction_v33.md",
+      "scope": "complete file",
+      "math_blocks": 3,
+      "tables": [
+        {
+          "start_line": 7,
+          "columns": 3
+        },
+        {
+          "start_line": 33,
+          "columns": 2
+        },
+        {
+          "start_line": 45,
+          "columns": 3
+        },
+        {
+          "start_line": 65,
+          "columns": 3
+        },
+        {
+          "start_line": 79,
+          "columns": 4
+        }
+      ],
+      "local_links": [
+        "records/input_inventory_v33.json",
+        "records/tests_v33.json",
+        "records/raw_evidence_index_v33.json",
+        "records/failure_analysis_v33.json",
+        "records/resource_costs_v33.json",
+        "records/storage_v33.json",
+        "records/storage_cleanup_v33.json",
+        "records/evidence_integrity_v33.json",
+        "records/repairs_v33.json",
+        "records/dot_identity_gap_v33.json",
+        "records/neural_cost_assessment_v33.json",
+        "records/run_index_v33.json",
+        "records/raw_evidence_index_v33.json"
+      ],
+      "errors": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v30.md",
+      "scope": "complete file",
+      "math_blocks": 3,
+      "tables": [
+        {
+          "start_line": 9,
+          "columns": 2
+        },
+        {
+          "start_line": 26,
+          "columns": 5
+        },
+        {
+          "start_line": 33,
+          "columns": 2
+        },
+        {
+          "start_line": 46,
+          "columns": 2
+        },
+        {
+          "start_line": 101,
+          "columns": 2
+        },
+        {
+          "start_line": 113,
+          "columns": 2
+        },
+        {
+          "start_line": 126,
+          "columns": 2
+        },
+        {
+          "start_line": 139,
+          "columns": 2
+        },
+        {
+          "start_line": 158,
+          "columns": 2
+        },
+        {
+          "start_line": 170,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        "response_v32.md",
+        "review_report_v29.md",
+        "outcomes/records/review_v30_independent_checks.json",
+        "outcomes/records/review_v30_admission.json.gz",
+        "outcomes/records/raw_result_v32.json.gz",
+        "outcomes/records/return_direction_checker_v32.json",
+        "outcomes/records/direction_analysis_v32.json",
+        "outcomes/records/actual_consumption_v32.json",
+        "outcomes/records/resource_costs_v32.json",
+        "outcomes/records/storage_v32.json",
+        "outcomes/records/storage_cleanup_v32.json",
+        "outcomes/records/evidence_integrity_v32.json",
+        "review_report_v21.md#102-历史去重什么已经尝试什么仍没有运行",
+        "outcomes/records/independent_review_v21_20261002.json"
+      ],
+      "errors": []
+    }
+  ],
+  "deferred_links": [
+    "docs/task042_neural_coarse_inverse/outcomes/records/render_check_v33.json"
+  ],
+  "clock": {
+    "UTC": "2026-10-03T12:10:13.206482+00:00",
+    "monotonic": 954408.067381667,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 1750.2065001769224
+  },
+  "delivery_receipt_link_verified": true,
+  "post_process_note_static_review": "contains no formulas/table changes; delivery receipt link exists"
+}

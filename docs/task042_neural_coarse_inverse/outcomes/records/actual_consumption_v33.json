@@ -1,0 +1,42 @@
+{
+  "status": "NO_WORKER_ZERO_NUMERICAL_CONSUMPTION",
+  "actual": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "S": 0,
+  "SH": 0,
+  "actor_attempts": 0,
+  "pre_worker_starts": 0,
+  "checker_worker_starts": 0,
+  "formal_admissions": 0,
+  "fresh_auxiliary_admissions": 1,
+  "pre_tests_executed": 0,
+  "new_FE": 0,
+  "training": 0,
+  "GPU_used": false,
+  "preregistered_expected": {
+    "actions": 22,
+    "S": 20,
+    "SH": 2,
+    "factor_readers": 1,
+    "joint_lu_solve": 4,
+    "outer_lu_solve": 0,
+    "explicit_triangular_pass": 8,
+    "thin_decompositions": 0,
+    "port_factors": 1,
+    "port_solves": 21,
+    "port_rhs_columns": 21
+  },
+  "expected_is_not_measured": true
+}

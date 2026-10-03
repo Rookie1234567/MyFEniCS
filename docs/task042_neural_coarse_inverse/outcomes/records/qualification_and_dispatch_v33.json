@@ -1,0 +1,42 @@
+{
+  "status": "RESOURCE_STOP",
+  "auxiliary_fresh_admissions": 1,
+  "resource_gate": "CPU_SMT",
+  "candidate_cpus": [],
+  "pre_tests": {
+    "status": "NOT_RUN",
+    "count": 0
+  },
+  "formal_admission": {
+    "status": "NOT_RUN",
+    "count": 0
+  },
+  "actor": {
+    "status": "NOT_RUN",
+    "count": 0
+  },
+  "checker": {
+    "status": "NOT_RUN",
+    "count": 0
+  },
+  "stop_rule": "Review V30 §4.4 fresh resource rejection; no repeated admission",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "rho_full": null,
+      "rho0": null,
+      "rho_ret": null,
+      "status": "NOT_RUN_BY_CPU_ADMISSION"
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "rho_full": null,
+      "rho0": null,
+      "rho_ret": null,
+      "status": "NOT_RUN_BY_CPU_ADMISSION"
+    }
+  ],
+  "no_method_failure_claim": true,
+  "closed": true,
+  "active": null
+}

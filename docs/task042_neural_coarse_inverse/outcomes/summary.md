@@ -1,3 +1,20 @@
+# V33：固定外域输入补齐，CPU资源停止
+
+给原回流增加外域残差入口，尝试补上只读J=[5,7]内输入的缺口；传统块校正不代表神经学习或完整求解。唯一辅助CPU/SMT准入拒绝后，数值队列关闭，完成静态、费用和dot对照；未继续找核。
+
+| 范围／数据身份 | 实际值／单位与分母 | 结果／证据 |
+|---|---|---|
+| 固定micro／not_run | .7nm、384hex/p3/q15、双Floquet、MPI1、18144trace/40port | 原材料/RHS不变，非正式新场；[run index](records/run_index_v33.json) |
+| 两冷态单位系数q_full/q0／not_run | rho_full/rho0/rho_ret／外域隔离比全null | CPU早期拒绝，无actor或cached checker，不写数值负结果 |
+| 软件／static | source a874498a…，16 compile／全局名称检查；6新测试函数执行0 | IMPLEMENTED_NOT_QUALIFIED；[测试](records/tests_v33.json) |
+| fresh准入／measured | 48候选无合格核，probe1.240282989s；memory/PSI等NOT_CHECKED | RESOURCE_STOP；[逐核原因](records/cpu_exclusions_v33.csv) |
+| shared-workstation费用 | 新监督worker0s，V27起累计151.4889468078036s | 全launcher独占time/RSS/swap unknown，峰不填0；[账](records/resource_costs_v33.json) |
+| 载荷／容量／derived | J A+LU483,729,408B；同时规划4,246,745,088B≤8GiB，未加载 | 非RSS／非factor-free部署，新LU／reader／原作用全0 |
+| 新E/H／R00_s/p/total／R/T/A／A_volume／功率 | 全NOT_RUN | V23完整0/6、V24 0/5及全部负结果保持，p/h/M/MPI对比没有新数据 |
+| dot／神经20%／原尺寸 | dot p4/120cell/532port不同；合格N=1基线unknown | NN20% NOT_DEMONSTRATED，原尺寸/2TB/48h NOT_QUALIFIED |
+
+唯一下一建议：先独立资格化冻结的V33合成study／checker，任何后续真实两态须新明确资源／窗口授权，不重开closed账本。[response](../response_v33.md)／[详细表](full_input_block_correction_v33.md)。以下历史逐字保留，无merge。
+
 # V32：两冷态真实回流负结果／固定局部序列关闭
 
 残差是原方程未平衡的量。本批一次J→外域→J反馈增加十方向中的一个响应，保持物理／完整40端口，使用已有七局部因子。独立checker验证输入、数值、完整消费，结果可信但收益很小，未取得物理解或神经增量。

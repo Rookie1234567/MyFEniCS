@@ -1,0 +1,914 @@
+{
+  "status": "FROZEN_CPU_RECEIPT_RECOMPUTED_STDLIB_ONLY",
+  "snapshot": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/aux_pre_001/admission.json",
+    "sha256": "6d35c50aec9379721b921411093f6661a6dd3952b1a459fbf81773e1c6af30b2",
+    "bytes": 269674
+  },
+  "candidate_cpus": [],
+  "cpu_count": 48,
+  "busy_fraction_limit": 0.05,
+  "narrow_affinity_limit": 16,
+  "no_fresh_probe": true,
+  "rows": [
+    {
+      "cpu": 0,
+      "core": 0,
+      "socket": 0,
+      "siblings": [
+        0
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "0": [
+          "active_wide_thread:5657"
+        ]
+      }
+    },
+    {
+      "cpu": 1,
+      "core": 1,
+      "socket": 0,
+      "siblings": [
+        1
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "1": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026235",
+          "narrow_thread_affinity:1026243",
+          "narrow_thread_affinity:1026245"
+        ]
+      }
+    },
+    {
+      "cpu": 2,
+      "core": 2,
+      "socket": 0,
+      "siblings": [
+        2
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "2": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026236",
+          "narrow_thread_affinity:1026244",
+          "narrow_thread_affinity:1026246"
+        ]
+      }
+    },
+    {
+      "cpu": 3,
+      "core": 3,
+      "socket": 0,
+      "siblings": [
+        3
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "3": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026237",
+          "narrow_thread_affinity:1026247",
+          "narrow_thread_affinity:1026248"
+        ]
+      }
+    },
+    {
+      "cpu": 4,
+      "core": 4,
+      "socket": 0,
+      "siblings": [
+        4
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "4": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026238",
+          "narrow_thread_affinity:1026250",
+          "narrow_thread_affinity:1026251"
+        ]
+      }
+    },
+    {
+      "cpu": 5,
+      "core": 5,
+      "socket": 0,
+      "siblings": [
+        5
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "5": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026239",
+          "narrow_thread_affinity:1026249",
+          "narrow_thread_affinity:1026252"
+        ]
+      }
+    },
+    {
+      "cpu": 6,
+      "core": 6,
+      "socket": 0,
+      "siblings": [
+        6
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "6": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026240",
+          "narrow_thread_affinity:1026255",
+          "narrow_thread_affinity:1026256"
+        ]
+      }
+    },
+    {
+      "cpu": 7,
+      "core": 9,
+      "socket": 0,
+      "siblings": [
+        7
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "7": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026241",
+          "narrow_thread_affinity:1026253",
+          "narrow_thread_affinity:1026254"
+        ]
+      }
+    },
+    {
+      "cpu": 8,
+      "core": 10,
+      "socket": 0,
+      "siblings": [
+        8
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "8": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1026242",
+          "narrow_thread_affinity:1026257",
+          "narrow_thread_affinity:1026258"
+        ]
+      }
+    },
+    {
+      "cpu": 9,
+      "core": 11,
+      "socket": 0,
+      "siblings": [
+        9
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "9": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1320655"
+        ]
+      }
+    },
+    {
+      "cpu": 10,
+      "core": 12,
+      "socket": 0,
+      "siblings": [
+        10
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "10": [
+          "active_wide_thread:5651"
+        ]
+      }
+    },
+    {
+      "cpu": 11,
+      "core": 13,
+      "socket": 0,
+      "siblings": [
+        11
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "11": [
+          "active_wide_thread:5647"
+        ]
+      }
+    },
+    {
+      "cpu": 12,
+      "core": 16,
+      "socket": 0,
+      "siblings": [
+        12
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "12": [
+          "active_wide_thread:5659"
+        ]
+      }
+    },
+    {
+      "cpu": 13,
+      "core": 17,
+      "socket": 0,
+      "siblings": [
+        13
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "13": [
+          "active_wide_thread:5663"
+        ]
+      }
+    },
+    {
+      "cpu": 14,
+      "core": 18,
+      "socket": 0,
+      "siblings": [
+        14
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "14": [
+          "active_wide_thread:5642"
+        ]
+      }
+    },
+    {
+      "cpu": 15,
+      "core": 19,
+      "socket": 0,
+      "siblings": [
+        15
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "15": [
+          "active_wide_thread:5662"
+        ]
+      }
+    },
+    {
+      "cpu": 16,
+      "core": 20,
+      "socket": 0,
+      "siblings": [
+        16
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "16": [
+          "active_wide_thread:5640"
+        ]
+      }
+    },
+    {
+      "cpu": 17,
+      "core": 21,
+      "socket": 0,
+      "siblings": [
+        17
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "17": [
+          "sample_busy_fraction_gt_0.05",
+          "active_wide_thread:5608"
+        ]
+      }
+    },
+    {
+      "cpu": 18,
+      "core": 24,
+      "socket": 0,
+      "siblings": [
+        18
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "18": [
+          "active_wide_thread:5646"
+        ]
+      }
+    },
+    {
+      "cpu": 19,
+      "core": 25,
+      "socket": 0,
+      "siblings": [
+        19
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "19": [
+          "active_wide_thread:5643"
+        ]
+      }
+    },
+    {
+      "cpu": 20,
+      "core": 26,
+      "socket": 0,
+      "siblings": [
+        20
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "20": [
+          "active_wide_thread:5634"
+        ]
+      }
+    },
+    {
+      "cpu": 21,
+      "core": 27,
+      "socket": 0,
+      "siblings": [
+        21
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "21": [
+          "active_wide_thread:5636"
+        ]
+      }
+    },
+    {
+      "cpu": 22,
+      "core": 28,
+      "socket": 0,
+      "siblings": [
+        22
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "22": [
+          "active_wide_thread:5637"
+        ]
+      }
+    },
+    {
+      "cpu": 23,
+      "core": 29,
+      "socket": 0,
+      "siblings": [
+        23
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "23": [
+          "active_wide_thread:5654"
+        ]
+      }
+    },
+    {
+      "cpu": 24,
+      "core": 0,
+      "socket": 1,
+      "siblings": [
+        24
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "24": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1320701",
+          "narrow_thread_affinity:1320702",
+          "narrow_thread_affinity:1320703",
+          "narrow_thread_affinity:1320704",
+          "narrow_thread_affinity:1320705",
+          "narrow_thread_affinity:1320706"
+        ]
+      }
+    },
+    {
+      "cpu": 25,
+      "core": 1,
+      "socket": 1,
+      "siblings": [
+        25
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "25": [
+          "active_wide_thread:5648",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 26,
+      "core": 2,
+      "socket": 1,
+      "siblings": [
+        26
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "26": [
+          "active_wide_thread:5665",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 27,
+      "core": 3,
+      "socket": 1,
+      "siblings": [
+        27
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "27": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 28,
+      "core": 4,
+      "socket": 1,
+      "siblings": [
+        28
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "28": [
+          "sample_busy_fraction_gt_0.05",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 29,
+      "core": 5,
+      "socket": 1,
+      "siblings": [
+        29
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "29": [
+          "active_wide_thread:5645",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 30,
+      "core": 6,
+      "socket": 1,
+      "siblings": [
+        30
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "30": [
+          "sample_busy_fraction_gt_0.05",
+          "active_wide_thread:5649",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 31,
+      "core": 9,
+      "socket": 1,
+      "siblings": [
+        31
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "31": [
+          "active_wide_thread:5652",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 32,
+      "core": 10,
+      "socket": 1,
+      "siblings": [
+        32
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "32": [
+          "active_wide_thread:5650",
+          "narrow_thread_affinity:1450823",
+          "narrow_thread_affinity:1450865",
+          "narrow_thread_affinity:1450866",
+          "narrow_thread_affinity:1450867",
+          "narrow_thread_affinity:1450868",
+          "narrow_thread_affinity:1450869",
+          "narrow_thread_affinity:1450906",
+          "narrow_thread_affinity:1450909",
+          "narrow_thread_affinity:1450913",
+          "narrow_thread_affinity:1450914",
+          "narrow_thread_affinity:1450916",
+          "narrow_thread_affinity:1450918",
+          "narrow_thread_affinity:1450919",
+          "narrow_thread_affinity:1450920",
+          "narrow_thread_affinity:1450870",
+          "narrow_thread_affinity:1450907",
+          "narrow_thread_affinity:1450910",
+          "narrow_thread_affinity:1450911",
+          "narrow_thread_affinity:1450912",
+          "narrow_thread_affinity:1450915",
+          "narrow_thread_affinity:1450917",
+          "narrow_thread_affinity:1450921",
+          "narrow_thread_affinity:1450922"
+        ]
+      }
+    },
+    {
+      "cpu": 33,
+      "core": 11,
+      "socket": 1,
+      "siblings": [
+        33
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "33": [
+          "active_wide_thread:5653"
+        ]
+      }
+    },
+    {
+      "cpu": 34,
+      "core": 12,
+      "socket": 1,
+      "siblings": [
+        34
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "34": [
+          "active_wide_thread:5655"
+        ]
+      }
+    },
+    {
+      "cpu": 35,
+      "core": 13,
+      "socket": 1,
+      "siblings": [
+        35
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "35": [
+          "active_wide_thread:5656"
+        ]
+      }
+    },
+    {
+      "cpu": 36,
+      "core": 16,
+      "socket": 1,
+      "siblings": [
+        36
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "36": [
+          "active_wide_thread:5664"
+        ]
+      }
+    },
+    {
+      "cpu": 37,
+      "core": 17,
+      "socket": 1,
+      "siblings": [
+        37
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "37": [
+          "active_wide_thread:5658"
+        ]
+      }
+    },
+    {
+      "cpu": 38,
+      "core": 18,
+      "socket": 1,
+      "siblings": [
+        38
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "38": [
+          "active_wide_thread:5638"
+        ]
+      }
+    },
+    {
+      "cpu": 39,
+      "core": 19,
+      "socket": 1,
+      "siblings": [
+        39
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "39": [
+          "active_wide_thread:5644"
+        ]
+      }
+    },
+    {
+      "cpu": 40,
+      "core": 20,
+      "socket": 1,
+      "siblings": [
+        40
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "40": [
+          "sample_busy_fraction_gt_0.05",
+          "active_wide_thread:1026214"
+        ]
+      }
+    },
+    {
+      "cpu": 41,
+      "core": 21,
+      "socket": 1,
+      "siblings": [
+        41
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "41": [
+          "active_wide_thread:5635"
+        ]
+      }
+    },
+    {
+      "cpu": 42,
+      "core": 24,
+      "socket": 1,
+      "siblings": [
+        42
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "42": [
+          "sample_busy_fraction_gt_0.05",
+          "active_wide_thread:1026209"
+        ]
+      }
+    },
+    {
+      "cpu": 43,
+      "core": 25,
+      "socket": 1,
+      "siblings": [
+        43
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "43": [
+          "active_wide_thread:5639"
+        ]
+      }
+    },
+    {
+      "cpu": 44,
+      "core": 26,
+      "socket": 1,
+      "siblings": [
+        44
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "44": [
+          "active_wide_thread:5660"
+        ]
+      }
+    },
+    {
+      "cpu": 45,
+      "core": 27,
+      "socket": 1,
+      "siblings": [
+        45
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "45": [
+          "active_wide_thread:5661"
+        ]
+      }
+    },
+    {
+      "cpu": 46,
+      "core": 28,
+      "socket": 1,
+      "siblings": [
+        46
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "46": [
+          "sample_busy_fraction_gt_0.05"
+        ]
+      }
+    },
+    {
+      "cpu": 47,
+      "core": 29,
+      "socket": 1,
+      "siblings": [
+        47
+      ],
+      "eligible": false,
+      "excluded_siblings": {
+        "47": [
+          "active_wide_thread:5641"
+        ]
+      }
+    }
+  ],
+  "other_gates": {
+    "CPU_SMT": "FAIL",
+    "MEMORY": "NOT_CHECKED",
+    "DISK": "NOT_CHECKED",
+    "PSI": "NOT_CHECKED",
+    "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+  },
+  "numeric_qualification": false
+}

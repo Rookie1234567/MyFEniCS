@@ -1,0 +1,34 @@
+{
+  "classification": "RESOURCE_STOP_NOT_NUMERICAL_NEGATIVE",
+  "primary_cause": "no audited unoccupied physical CPU/SMT under unchanged policy",
+  "candidate_cpus": [],
+  "diagnostic_gain_known": false,
+  "questions": [
+    {
+      "question": "J内是否消除",
+      "answer": "UNKNOWN/NOT_RUN; implementation identity preregistered, no true action"
+    },
+    {
+      "question": "外域u/k/qret抵消或放大",
+      "answer": "UNKNOWN/NOT_RUN; no new vector read or action after resource rejection"
+    },
+    {
+      "question": "q_full是否优于单位权重q0",
+      "answer": "UNKNOWN/NOT_RUN; rho null, not replaced by eta10"
+    },
+    {
+      "question": "缓存省略费用部署时如何回来",
+      "answer": "native apply J2 + outer6 + A2 plus audit/port/recovery; old factor construction and fullN1 unknown, no wall extrapolation"
+    }
+  ],
+  "unaffected_work_completed": [
+    "source/compile/symbol checks",
+    "frozen CPU receipt recompute and cause CSV",
+    "preregistered capacity/calls/identities",
+    "dot missing identities",
+    "20percent NN cost necessary conditions",
+    "history preservation/raw receipts"
+  ],
+  "not_evidence_against_all_Bfull_Krylov": true,
+  "next_single_suggestion": "independently qualify the frozen V33 synthetic workflow/checker first; any later true two-state attempt requires a new explicit resource/window authorization, not reopening this closed ledger"
+}

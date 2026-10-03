@@ -1,0 +1,23 @@
+{
+  "clock": {
+    "UTC": "2026-10-03T12:10:13.206482+00:00",
+    "monotonic": 954408.067381667,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 1750.2065001769224
+  },
+  "host_pid1_comm": "codex",
+  "self_and_ancestors_excluded": [
+    1,
+    2,
+    3
+  ],
+  "matching_Task042_actors": [],
+  "actor_pattern": "actual run_case/task042 runner/auxiliary/watchdog argv, not strings in documentation; no numeric inspection",
+  "closed": true,
+  "active": null,
+  "no_neighbor_mutation": true,
+  "no_new_admission": true,
+  "no_process_killed": true,
+  "status": "SANDBOX_NAMESPACE_ONLY_NOT_HOST_VERIFICATION",
+  "valid_host_actor_absence": false
+}

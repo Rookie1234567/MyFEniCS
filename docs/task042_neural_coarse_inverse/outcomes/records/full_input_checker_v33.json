@@ -1,0 +1,29 @@
+{
+  "status": "NOT_RUN_BY_CPU_ADMISSION",
+  "cached_checker_implemented": true,
+  "runtime_qualified": false,
+  "actual_numeric_source": null,
+  "decision": "RESOURCE_STOP",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "rho_full": null,
+      "rho0": null,
+      "rho_ret": null,
+      "outer_isolated_ratio": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "rho_full": null,
+      "rho0": null,
+      "rho_ret": null,
+      "outer_isolated_ratio": null,
+      "status": "NOT_RUN"
+    }
+  ],
+  "no_factor_reads": true,
+  "no_new_actions": true,
+  "checker_source_sha256": "276be0e3e205c497ea2281d657d03a27a3ad2ebf24cb08a16b2685b0b6a748f0",
+  "record_created_by": "stdlib delivery transcription, not checker execution"
+}

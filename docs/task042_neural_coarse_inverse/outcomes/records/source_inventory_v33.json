@@ -1,0 +1,107 @@
+{
+  "final_implementation_source": "a874498a1a8b854f394520627eaf09158b77fbf9",
+  "admission_source": "45d34165ea1208830edc7de1c71360a57c5b9dba",
+  "actual_numeric_source": null,
+  "tracked_implementation_files": [
+    {
+      "path": "benchmarks/task042_diagnostic_auxiliary.py",
+      "sha256": "b077a33fec451e7f955982efc8d4c86805da7dd3c07bcf7849816fc44a281a89",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "benchmarks/task042_full_input_checker.py",
+      "sha256": "276be0e3e205c497ea2281d657d03a27a3ad2ebf24cb08a16b2685b0b6a748f0",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "benchmarks/task042_return_certificates.py",
+      "sha256": "c1d46cb701047ad75c3dad2766b26a67daee8e66017e8b8a91b5c6f7075e3c7f",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "benchmarks/task042_v31_checks.py",
+      "sha256": "5aba82f49d669e31c46698f2ab261c34ee2a551b5a50eff1e6a48bece1d302d9",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "scripts/run_case.py",
+      "sha256": "dd8d22036d6116347eb98c8934864d5f94b884f869bff60f3d476f7b3137e75d",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/io/full_input_block_v33.py",
+      "sha256": "5011c9d433f2062c70dca6e9165685a054b047dccb6173135f686f0b5861b533",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/io/return_block_diagnostic.py",
+      "sha256": "c72ae5907632d42e578769e2ad65efeae1a0cb22c32a3f9875d5af9f0dd1a5c4",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "sha256": "ab8b1c655180101e3ae79ddb1a546922f30c174f987f7af6ef1b3b09720d36c8",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/runners/diagnostic_storage.py",
+      "sha256": "c0154da00340f65903fc7a16c77bd4360aeb2fba6b769baaca131340e92c8d97",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/runners/return_block_diagnostic.py",
+      "sha256": "a6d792a184a1d16236a1228fd2d27868e20eba1c67b71c0b8ed1a7f0b94fdc20",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "sha256": "15476e057a92c12b8f404ac1f688ca56e137e70788ef16b9d9d1f3aa6543445f",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/solvers/full_input_block_correction.py",
+      "sha256": "dbb957dd212e6c22249192271789ce2d6c908e752a551a051a392f7e59d5265c",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/solvers/full_input_block_study.py",
+      "sha256": "9dc94a6a678401dda6ad75aa2ffd2c802f870adf055c91f094fc7786d14b1dac",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/solvers/full_input_block_v33_window.py",
+      "sha256": "d9901621a957275b2e3e2adb8c200660d241c3e5a8786d00eba941e46f1d7beb",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/test/task042_v31_workflow_fixture.py",
+      "sha256": "9f6d4c81f0a6f13f19c84fe738807a43b38f708ec5967b85a4f8f2bda4305da3",
+      "status": "COMPILED_IN_MEMORY"
+    },
+    {
+      "path": "src/test/test_task042_v33_workflow.py",
+      "sha256": "be2e8c9b6ae11cf99330abe6ab9b6cae98d3365dd2d79e2d10b64b932ebff6c3",
+      "status": "COMPILED_IN_MEMORY"
+    }
+  ],
+  "raw_admission_bound_to_prior_clean_source": true,
+  "final_source_runtime_tests": "NOT_RUN_RESOURCE_GATE",
+  "physical_and_mode": {
+    "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+    "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+    "mode_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+    "b_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b",
+    "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a"
+  },
+  "new_dat": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v33_full_input_diagnostic.dat",
+    "sha256": "67fa428bc01c0daa6a6e1d0fe92db0df3c90408b720a17e87dd4bf5d102de6ed",
+    "bytes": 226
+  },
+  "material": {
+    "path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "bytes": 5236
+  },
+  "unqualified_research_only": true
+}

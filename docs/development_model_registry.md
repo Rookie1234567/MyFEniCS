@@ -1,3 +1,18 @@
+# Task042 V33：固定外域输入补齐实现，资源停止／未新增物理解（2026-10-03）
+
+传统块校正给旧回流漏掉的外域残差一个直接入口，可能改善信息传递但不保证收敛；此轮数学／缓存checker已实现，唯一辅助CPU/SMT准入拒绝后没有真实诊断，不能把未运行记为负数值或神经增量。
+
+| 模型／方法／数据身份 | 实际值／单位与成本 | 资格／证据 |
+|---|---|---|
+| 原.7nm micro、384hex/p3/q15、18144trace/40port、双Floquet | 两冷态rho_full/rho0/rho_ret／外域隔离比全null；actor／原作用／reader／solve0 | RESOURCE_STOP，旧V23 0/6／V24 0/5不提升；[response](task042_neural_coarse_inverse/response_v33.md) |
+| B_full固定单位系数／static研究 | final source a874498a…16 compile通过，合成测试／cached checker NOT_RUN | IMPLEMENTED_NOT_QUALIFIED，不作production；无新NN/训练 |
+| shared-workstation准入／measured | 48候选为空，probe1.240283s；新监督worker0，累计151.4889468078036s | 内存/PSI等未查；实际tree峰／ownswap／BLAS getterunknown，[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v33.json) |
+| 因子／derived容量 | 计划只重载J，A+LU483,729,408B、同时规划4,246,745,088B≤8GiB | 未加载；原生部署仍J2＋外solve6＋A2，非factor-free，不删历史因子 |
+| E/H／R00_s/p/total／R/T/A／A_volume／功率 | 本轮全部NOT_RUN，无新official结果 | 小模型／单步诊断不替代最终精度／尺度资格 |
+| NN20%／原尺寸2TB48h | 完整合格N=1对照unknown，NOT_DEMONSTRATED／NOT_QUALIFIED | dot p4/120/532不同，不作同正确性分母 |
+
+唯一建议先独立资格化冻结合成可信链；任何真实诊断需新明确窗口与资源授权。历史后缀逐字保留，无merge或自动扩模。
+
 # Task042 V32：固定两冷态回流可信负结果（2026-10-03）
 
 用已有联合与六个外域块的局部解检验一个新增残差方向，原物理和完整40端口不变；好处是可能改善跨块信息传递，代价是七套因子读取和原作用。未形成新有限元场，不提升旧模型资格。

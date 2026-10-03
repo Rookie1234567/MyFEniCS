@@ -1,0 +1,13 @@
+{
+  "first_observed_tool_UTC": "2026-10-03T11:41:03+00:00",
+  "paired_observation_UTC": "2026-10-03T11:41:47.462188+00:00",
+  "paired_observation_monotonic": 952702.32306949,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "start_utc": "2026-10-03T11:41:03+00:00",
+  "start_monotonic": 952657.86088149,
+  "start_monotonic_origin": "conservative back-projection from paired observation to first UTC tool read; initial checks included",
+  "total_limit_seconds": 5400,
+  "heavy_limit_seconds": 4500,
+  "carried_seconds": 151.4889468078036,
+  "review_commit": "bcd00052d45dd542830a64e182d5c480049dea23"
+}

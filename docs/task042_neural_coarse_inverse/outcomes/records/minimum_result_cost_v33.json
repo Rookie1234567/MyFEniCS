@@ -1,0 +1,39 @@
+{
+  "clock": {
+    "UTC": "2026-10-03T11:59:14.792939+00:00",
+    "monotonic": 953749.65383879,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 1091.792957299971
+  },
+  "status": "RESOURCE_STOP",
+  "implementation_source_at_admission": "45d34165ea1208830edc7de1c71360a57c5b9dba",
+  "actual_numeric_source": null,
+  "cumulative_supervised_seconds": 151.4889468078036,
+  "new_supervised_auxiliary_seconds": 0.0,
+  "new_actor_seconds": 0.0,
+  "counts": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "rho_full": [
+    null,
+    null
+  ],
+  "rho0": [
+    null,
+    null
+  ],
+  "closed": true,
+  "heavy_queue_reentry": false,
+  "evidence": "raw_evidence_index_v33.json"
+}

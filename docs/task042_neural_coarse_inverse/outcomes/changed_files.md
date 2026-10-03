@@ -1,3 +1,18 @@
+# V33变更／依赖组：外域直接入口与完整交付
+
+只新增opt-in研究路径，不修改旧task/review/response/raw或默认V32数学。准入source45d34165…；静态防护后的最终实现a874498a…未运行资格化，不作production default。
+
+| selective merge依赖组 | 文件／用途 | 数值行为与验证／建议顺序 |
+|---|---|---|
+| research-only numerical/core | src/solvers/full_input_block_correction.py、full_input_block_study.py、full_input_block_v33_window.py | 新固定B_full缓存诊断；无11方向LS、迭代或训练；新测试NOT_RUN，仅编译，暂不提升production |
+| reusable runner/watchdog | diagnostic_storage、原return runner、task042_shared、diagnostic_auxiliary | 显式batch33、统一库存／资源停止标记／计费；沿用原监督，没有本轮有效worker，需新定点资格 |
+| checker/benchmark | task042_full_input_checker、return_certificates共享见证、v31_checks、实际workflow fixture／新6函数 | 原数组独立重算与计数／资格；NOT_RUN，不信status自证；依赖新core和runner |
+| input／thin入口 | io/full_input_block_v33、io/profile/dat-loader、run_case、full_input_block_v33.json及v33 dat | 当前单阶段输入已创建；未dynamic validate，旧默认保留 |
+| compact evidence/docs | response_v33、full_input_block_correction_v33、records、README/summary/tests/changed_files、两总账 | 原资源拒绝、static／not_run、费用与dot/NN边界；原始gzip可还原；可独立审阅 |
+| do-not-merge | tmp窗口／ledger／失败stderr、历史及真实大数组／factor（ignored） | 仅原索引引用；不复制或删除，无merge approval |
+
+新数值接口先资格化core／writer／checker，再由新合同判断真实准入；静态16 compile不替代fresh PDE或数组证据。本轮没有production numerical/core可升级项。完整清单和hash见[源码库存](records/source_inventory_v33.json)、[测试](records/tests_v33.json)，历史后缀逐字保留。
+
 # V32：显式路由／资格收费／统一存储及真实负结果
 
 复用V31数值study、fixture和watchdog，新增薄V32 IO/window／单dat/plan、collector后缀及最小dispatcher注册；辅助按独立attempt记账，当前文件hash证明通过覆盖，失败不覆盖。一个stat-only库存模块同时供pre/live/final使用，修复review/records/results漏计；原数学、EXPECTED、门限、普通默认不变。

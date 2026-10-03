@@ -1,3 +1,9 @@
+# V33最新交付：外域直接输入实现，唯一辅助CPU准入拒绝
+
+[Review V30](review_report_v30.md)授权新B_full固定两态诊断，旧V32 B_ret提案保持关闭。新数学／单dat／独立缓存checker和合成接线已提交；最终source a874498a1a8b854f394520627eaf09158b77fbf9只有16 Python静态编译／符号检查通过。前测唯一fresh准入在48候选CPU均被原忙碌／亲和性／SMT规则排除后拒绝，worker0，真实两态和checker NOT_RUN；RESOURCE_STOP不冒称机制负结果。
+
+[response_v33](response_v33.md)／[详细交付](outcomes/full_input_block_correction_v33.md)／[run index](outcomes/records/run_index_v33.json)／[原始准入](outcomes/records/raw_evidence_index_v33.json)／[费用](outcomes/records/resource_costs_v33.json)。累计监督151.4889468078036s不清零；probe1.240283s计总elapsed。dot14项身份缺口和NN20%必要条件已完成，未等待或修改dot。账本closed／active=null，数值及原尺寸资格不提升；只建议先独立验收冻结合成可信链，随后任何真实诊断需新授权窗口。以下历史逐字保留。
+
 # 最新审阅：Review V30／接受V32负结果，执行外域输入补齐诊断
 
 [Review V30](review_report_v30.md)接受V32两冷态真实回流的弱增益结论，关闭B_ret固定方向。V33新授权一次B_full外域直接残差入口诊断：复用六块已保存响应，只重载J一套因子，直接核验单位系数完整残差，不增加第11方向拟合或旧迭代。普通软件／测试错误同轮修复、定点复验后继续，不以等待dot作为全部后续工作。

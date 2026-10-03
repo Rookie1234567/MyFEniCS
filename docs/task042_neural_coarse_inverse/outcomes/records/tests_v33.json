@@ -1,0 +1,25 @@
+{
+  "status": "IMPLEMENTED_NOT_QUALIFIED",
+  "final_source": "a874498a1a8b854f394520627eaf09158b77fbf9",
+  "admission_source": "45d34165ea1208830edc7de1c71360a57c5b9dba",
+  "compile_files": 16,
+  "compile_record": "compilation_final_v33.json",
+  "new_test_functions": [
+    "test_actual_study_saved_arrays_accounting_and_independent_checker",
+    "test_fixed_small_matrices_difference_external_only_zero_and_singular",
+    "test_qualified_negative_and_zero_control_do_not_fabricate_neural_gain",
+    "test_storage_v33_extends_scope_without_changing_v32",
+    "test_namespace_closed_and_zero_consumption_repair_boundary",
+    "test_column_support_inventory_rejects_swap"
+  ],
+  "new_test_functions_count": 6,
+  "new_tests_executed": 0,
+  "affected_historical_scope_executed": 0,
+  "synthetic_study_and_cached_checker": "NOT_RUN_BY_CPU_ADMISSION",
+  "dat_created": true,
+  "dynamic_dat_validate": "NOT_RUN_RESOURCE_GATE",
+  "full_repository_MPI_Ruff_FE_CI": "NOT_RUN",
+  "frozen_CPU_recompute": "STDLIB_ONLY_NO_NEW_ADMISSION",
+  "doc_checks": "LOCAL_STATIC_ONLY_NOT_PYTEST_OR_RENDERED",
+  "static_TOML_syntax": "PASSED_STDLIB_ONLY"
+}

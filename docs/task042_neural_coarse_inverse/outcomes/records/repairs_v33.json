@@ -1,0 +1,35 @@
+{
+  "failed_numerical_or_test_attempts": [],
+  "resource_rejection_attempt": "pre_001",
+  "after_stop_static_corrections": [
+    {
+      "reason": "port factor attempt charged before constructor so partially failed setup cannot allow zero-consumption retry",
+      "affected": "full_input_block_study"
+    },
+    {
+      "reason": "feedback solve operation bound uses explicit matrix 1norm times solution 1norm + RHS1norm; independently recomputed cached certificate",
+      "affected": "full_input_block_study/checker"
+    },
+    {
+      "reason": "explicit reject formal V33 entry after auxiliary resource stop",
+      "affected": "shared dat loader"
+    }
+  ],
+  "after_stop_runtime_replay": "NOT_RUN_RESOURCE_STOP",
+  "thresholds_relaxed": false,
+  "old_evidence_overwritten": false,
+  "final_source": "a874498a1a8b854f394520627eaf09158b77fbf9",
+  "source_before_rejection": "45d34165ea1208830edc7de1c71360a57c5b9dba",
+  "classification": "STATIC_HARDENING_NO_RUNTIME_FAILURE_REPLAY",
+  "resource_stop_not_a_code_repair": true,
+  "delivery_only_static_repair": {
+    "cause": "overbroad task042 prefix misidentified neighbor task042extra_feinn_5nm; first sandbox proc namespace also insufficient",
+    "fix": "host proc view, canonical cwd and exact current task input/module namespace; neighbor never modified",
+    "evidence": [
+      "delivery_process_check_failure_v33.json",
+      "delivery_process_check_sandbox_v33.json",
+      "delivery_process_check_v33.json"
+    ],
+    "no_numeric_replay_or_budget_reset": true
+  }
+}

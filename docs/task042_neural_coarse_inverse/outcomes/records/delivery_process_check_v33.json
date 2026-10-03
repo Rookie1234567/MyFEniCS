@@ -1,0 +1,24 @@
+{
+  "status": "HOST_READ_ONLY_VERIFICATION",
+  "valid_host_actor_absence": true,
+  "clock": {
+    "UTC": "2026-10-03T12:15:20.794728+00:00",
+    "monotonic": 954715.655631229,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 2057.794749738998
+  },
+  "host_pid1_comm": "systemd",
+  "excluded_self_and_ancestors": [
+    1,
+    1276332,
+    1462907,
+    1462909
+  ],
+  "matching_Task042_actors": [],
+  "excluded_distinct_task_namespaces": [],
+  "closed": true,
+  "active": null,
+  "no_process_killed": true,
+  "no_neighbor_mutation": true,
+  "no_new_admission": true
+}

@@ -1,3 +1,13 @@
+# Task042 V33：补齐外域残差入口，真实资源停止后完整收口（2026-10-03）
+
+旧B_ret方向只读取联合块J内残差，V32真实弱增量已关闭。本轮新B_full给六外块残差直接入口，用已有缓存和一个J反馈构造固定单位系数，不训练神经网络，不追加薄方向拟合或迭代。新数学／入口／独立checker与合成接线已提交，最终source a874498a…16 Python静态编译通过；runtime尚未资格化。
+
+唯一前测准入11:55:16.937154 UTC因48 CPU候选均被忙线程／亲和性／SMT规则拒绝，worker0；依资源硬停止不再找核，memory/PSI等后续门未查。新actor、因子载荷、原作用、solve、FE和训练全0；两态rho_full/rho0/null，RESOURCE_STOP不写成数值失败。冻结CPU原因复算、存储清理、14项dot身份缺口和神经20%成本必要条件完成，历史失败及V26–V32 closed保留。
+
+shared-workstation累计监督151.4889468078036s不清零；probe1.240283s计总elapsed，完整launcher RSS/CPU未知。规划J A+LU483,729,408B、同时4,246,745,088B≤8GiB不是实测峰。NN20%与原尺寸/2TB/48h仍不合格；暖上游与缓存生成不免费。
+
+唯一下一建议先独立资格化冻结V33合成可信链，后续真实两态必须新明确窗口／fresh准入，不重开本轮closed。证据：[response](task042_neural_coarse_inverse/response_v33.md)、[详细表](task042_neural_coarse_inverse/outcomes/full_input_block_correction_v33.md)、[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v33.json)。不修改dot／其他分支，不merge。以下历史逐字保留。
+
 # Task042 V32：回流方向真实弱增量，固定序列关闭（2026-10-03）
 
 背景是V27–V31因软件或准入问题尚未取得两冷态真实回流结果。Review V29关闭fixture问题，并授权同窗口修复后直接推进。V32将review目录、records/results/TMP纳入同一存储范围，用当前实现hash与独立辅助attempt保持资格和费用；12定点通过后，只执行一次J联合块→六外块→J回流，用旧九方向为基线。

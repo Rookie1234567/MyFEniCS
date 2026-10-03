@@ -1,3 +1,9 @@
+# V33测试：最终静态通过，runtime因CPU准入未执行
+
+最终clean实现source a874498a1a8b854f394520627eaf09158b77fbf9的16 Python文件在内存中compile和全局符号检查通过，无科学库导入／pyc。准入发生在前一clean实现45d34165…；worker前被CPU/SMT拒绝。新6测试函数涵盖实际study→保存→结算→cached checker、非互伴port、差式／反馈抵消、外域-only／零输入、奇异块／错库存／wrong vector／zero-consumption／closed和V33存储边界，但本轮执行0，不借用旧12 passed作当前source资格。
+
+runtime pytest、dynamic dat validate、Ruff、MPI/FE、full-repository与CI均NOT_RUN；拒绝后不重试。冻结CPU JSON／CSV算术重放和本地Markdown结构为stdlib静态核验，不是数学回归、fresh资源准入或GitHub视觉通过。网页Cache miss，视觉NOT_VERIFIED。证据：[tests](records/tests_v33.json)、[最终compile](records/compilation_final_v33.json)、[raw](records/raw_evidence_index_v33.json)、[render](records/render_check_v33.json)。以下旧测试原样保留。
+
 # V32：12定点通过，唯一真实actor与独立checker通过
 
 实际source1fe058e3d120c42d197531139fc62e02a1a2cd5f；13 Python compile／全局名称检查、12 targeted passed in5.29s。覆盖统一存储边界（review/records/results及去重）、namespace和closed／active／consumed拒绝、独立attempt计费、当前源码资格与deadline余量，以及实际study→保存→结算→collector。另覆盖三个直接受影响V31用例；没有机械复跑110／162项或声称full-repo／CI。

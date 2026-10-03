@@ -1,0 +1,18 @@
+{
+  "classification": "DERIVED_CSV_LINE_ENDINGS_ONLY",
+  "original_failure": {
+    "command": "git diff --cached --check",
+    "returncode": 2,
+    "raw_gzip": "docs/task042_neural_coarse_inverse/outcomes/records/raw_delivery_diff_check_before_v33.gz",
+    "raw_original_sha256": "e4f9d46be112c1cd206a321a8415811a0dd7fca84874b0c8bd0f539277143310"
+  },
+  "old_csv_sha256": "bc74c3ae2ef4455f95a0dc7f43e47c6d717cac6887b4fb6c4360b04b8b0fc536",
+  "old_csv_raw_gzip": "docs/task042_neural_coarse_inverse/outcomes/records/raw_cpu_exclusions_before_lf_v33.gz",
+  "new_csv_sha256": "7a6e5d344b2451b0ab84864ce3736166515878a19cc795819a4d2334eaeab371",
+  "before_rows": 48,
+  "after_rows": 48,
+  "all_field_values_identical": true,
+  "no_raw_admission_change": true,
+  "no_numeric_reentry": true,
+  "final_source_unchanged": "a874498a1a8b854f394520627eaf09158b77fbf9"
+}

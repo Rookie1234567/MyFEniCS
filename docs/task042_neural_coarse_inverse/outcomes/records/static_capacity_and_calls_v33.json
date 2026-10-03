@@ -1,0 +1,51 @@
+{
+  "data_identity": "DERIVED_NOT_MEASURED",
+  "J_rows": 3888,
+  "A_bytes": 241864704,
+  "LU_bytes": 241864704,
+  "matrix_plus_LU_bytes": 483729408,
+  "private_pivots_upper_bytes": 31104,
+  "matrix_hash_LAPACK_workspace_allowance_bytes": 483729408,
+  "packet_libraries_workspace_allowance_bytes": 3221225472,
+  "vectors_ports_cache_allowance_bytes": 58060800,
+  "simultaneous_planned_bytes": 4246745088,
+  "cap_bytes": 8589934592,
+  "RSS_actual": null,
+  "new_arrays_net_bytes": 10577920,
+  "storage_launch_reserve_bytes": 14680064,
+  "net_not_RSS": true,
+  "calls": {
+    "J_witnesses": {
+      "S": 2,
+      "SH": 2,
+      "port_solves": 4,
+      "J_solves": 2
+    },
+    "reduced_rhs": {
+      "port_solves": 1
+    },
+    "per_state_input": {
+      "S": 3,
+      "port_solves": 2
+    },
+    "per_state_direct_input": {
+      "S": 6,
+      "port_solves": 6,
+      "J_solves": 1
+    },
+    "states": 2
+  },
+  "expected_counts": "src.solvers.full_input_block_correction.EXPECTED",
+  "only_one_J_reload": true,
+  "outer_factor_reload": 0,
+  "QR_SVD_LS_iterations": 0,
+  "old_factor_construction_cost": "unknown retained",
+  "arbitrary_RHS_Bfull_deployment": {
+    "J_solves": 2,
+    "outer_solves_each": 1,
+    "outer_blocks": 6,
+    "A_propagations": 2,
+    "true_residual_port_audit_IO": "additional; unknown cost"
+  },
+  "cached_V33_actor_time_is_not_deployment_time": true
+}

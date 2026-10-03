@@ -1,0 +1,37 @@
+{
+  "UTC": "2026-10-03T11:59:59.444195+00:00",
+  "role": "post-stop stdlib metadata only; no ABI/numerical qualification",
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.11.4",
+    "pytest": "7.4.4"
+  },
+  "activation": {
+    "TASK042_ACTIVATION": "1",
+    "TASK042_ENV_MODE": "pure",
+    "TASK042_CACHE_NAMESPACE": "v33",
+    "OMP_NUM_THREADS": "1",
+    "OMP_THREAD_LIMIT": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "NUMEXPR_MAX_THREADS": "1",
+    "CUDA_VISIBLE_DEVICES": "",
+    "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/tmp",
+    "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/pycache",
+    "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/xdg",
+    "TORCH_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/torch",
+    "HF_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/huggingface",
+    "FFCX_CACHE_DIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/xdg/fenics",
+    "PYTHONPATH": "/home/fenics/Projects/NN-Lab"
+  },
+  "bytecode_disabled": true,
+  "math_getters": "NOT_RUN_RESOURCE_GATE",
+  "FE_ABI_check": "NOT_RUN_NO_FE_STAGE",
+  "Torch_FE_MPI_imports": false,
+  "DataLoader_workers": 0,
+  "activation_source_sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a"
+}
