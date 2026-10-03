@@ -3204,3 +3204,11 @@ A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度�
 V12发布后有限GitHub视觉抽查已取得新Review V11及Response V12的实际DOM和截图；18表列数一致，三组review公式和关键结果/资源宽表可读。本轮`GITHUB_VISUAL_SPOTCHECK_PASS`单列，旧渲染失败不改写。
 
 [Response V12](task042extra_feinn_5nm/response_v12.md)、[诊断](task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md)、[成本](task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md)、[新账](task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json)；旧V1–V11失败/PSI/失联/重放全部保留。
+
+## 2026-10-03 Task42extra V13：背景与保存分类收口，暂停数值探索
+
+C1自动分类改为保存向量独立重算去除比例/全部交叉字段，两态有限方向目标分歧仍成立；八个原见证直接复用审阅的系数/G/对偶范数，对偶最大5.003%。D0已完成成本否决，D1未运行；旧JSON不追改。唯一背景转换复用p3/p4与C2：2次A4、无新G/factor/reference/网络；同总场p3参考p4残差3.55236→5.20557，没有消除基线；候选减参考的误差像不变。完整77.4765s/304291840B树峰/swap0，原单核/PSI/邻增长门保留。
+
+73项定向资格（含此前54）和独立原向量checker通过，无full pytest/环境重装/传统求解器复制。M3600散射E误差9.33%与Mfinal退化12.29%仍保留，原残差/精度门失败不改变；新邻层/交叉积分未运行、旧缺optimizer/RNG未保留。
+
+[Response V13](task042extra_feinn_5nm/response_v13.md)、[证据收口](task042extra_feinn_5nm/outcomes/evidence_closure_v13.md)、[新完整账](task042extra_feinn_5nm/outcomes/records/resource_costs_v13.json)。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；原尺寸0.7nm、十进制2TB整机/48h完整三维FE仍未资格化。暂停FEINN数值探索，只推本支线等待review，不合并master。

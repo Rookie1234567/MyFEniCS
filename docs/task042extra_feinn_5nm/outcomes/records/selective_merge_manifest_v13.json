@@ -1,0 +1,219 @@
+{
+  "schema": "task42extra.dependency-groups.v13",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "production_qualified": false,
+      "dependencies": [
+        "existing reviewed task-local activation/resource/durable interfaces and saved records"
+      ],
+      "tests": [
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+      ],
+      "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
+      "numerical_behavior_changed": false,
+      "admission": "NONE"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        {
+          "path": "scripts/launch_task42extra_durable.py",
+          "sha256": "9274b56948bb32707130bd41521927cde5b74bda010b4a93983b4572ceff52d2"
+        },
+        {
+          "path": "src/runners/feinn_attribution_campaign.py",
+          "sha256": "0392ff077bc5238c759f372939e5bb867eadbc524faa1b46fc527fd9a2f3a198"
+        },
+        {
+          "path": "src/runners/feinn_workflow.py",
+          "sha256": "77ec4b059d5283afa81dac99193544dbfaecfefb1938fcc259d17b26f8253d18"
+        }
+      ],
+      "production_qualified": false,
+      "dependencies": [
+        "existing reviewed task-local activation/resource/durable interfaces and saved records"
+      ],
+      "tests": [
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+      ],
+      "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
+      "numerical_behavior_changed": false,
+      "admission": "RESEARCH_ONLY_REVIEW_REQUIRED"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        {
+          "path": "benchmarks/check_task42extra_docs_v3.py",
+          "sha256": "5daf3d2621b500ba792b9295a52e42a9b14da5d52ee3dc8aaebb6cfaf74f17af"
+        },
+        {
+          "path": "benchmarks/check_task42extra_v12.py",
+          "sha256": "a26075ff5d8e7b411ed48ebada0678f887c80e94f72dac9b4211b57834311a2a"
+        },
+        {
+          "path": "src/test/test_feinn_attribution_checker.py",
+          "sha256": "09b35e61e6b828dd74d6f68dcd8f509b9b8948f0b7a2a35c3d1a2f24be175cad"
+        },
+        {
+          "path": "src/test/test_feinn_background_closure.py",
+          "sha256": "76bdb02e3ded848f3af7053df7b64550a2d3032d9eb163a5c38633fed6ceed40"
+        },
+        {
+          "path": "src/test/test_feinn_background_closure_fe.py",
+          "sha256": "09d4c6244a0f835aa3fb2ca99f1313a96b1282e42c1802a1c081a9c521589aca"
+        }
+      ],
+      "production_qualified": false,
+      "dependencies": [
+        "existing reviewed task-local activation/resource/durable interfaces and saved records"
+      ],
+      "tests": [
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+      ],
+      "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
+      "numerical_behavior_changed": false,
+      "admission": "RESEARCH_ONLY_REVIEW_REQUIRED"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        {
+          "path": "docs/development_model_registry.md",
+          "sha256": "473e86f9fb9cac9eee17e68a5af426173ca584729e9fbd64d925aef5a8e0bea8"
+        },
+        {
+          "path": "docs/development_progress.md",
+          "sha256": "31b9a5459dfb42a5d9d0bd67d74cceef6ed842c8608170616fde814c9268b40a"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "sha256": "5cc34555403ae17a6373f2065fcad559865edbf4e64c8be7214a19c65c8cc5bf"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md",
+          "sha256": "3b54ddd388e50fe71a49ea81bd0ea6d44875bea42cb12cbb9fb6cbbd72f45caf"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/background_conversion_v13.json",
+          "sha256": "f3fe39ff716e9de78f2717facca1bd89b8efd31e66023e16ac644f5cf4490306"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/closure_design_v13.json",
+          "sha256": "24781be710a16d272fe0334810e2b892133038e2b0df358719c37ed8cf2a571d"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v13.json",
+          "sha256": "05606dbd88e1a39e74d1f21b4aa1944d1be8f14e6338abf320f59b32f1522bf9"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v13.json",
+          "sha256": "d10d05badc1203b9b7ef4eeaf6711ef8763e0a54ce3ab52c1dd3e97811d8eaf6"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v13.json",
+          "sha256": "7a9f7f72bb55cf344139df606128611024022dda696f3bf6eac9224f16b2d6e5"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v13.json",
+          "sha256": "ae2186dd30a94c3ee99bd9c16aa5178b06437b15ae20644f9282e84d6ff85d18"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v13.json",
+          "sha256": "56fff3dd7bc8a06f38cb2e307c6437f345a583837e81d1fe639bb7842807e298"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v13.json",
+          "sha256": "1382ae7e0cf039aac0b486ea8a88df7ef5fdafaa94fa4449259e12369d46e9a7"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/status_mapping_v13.json",
+          "sha256": "5bf2cfe41051e2fa7fbbca3b5097b9379867bbac1c6f464e8bad2072e33121ea"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v13.json",
+          "sha256": "937960a0d1ad24a713ea94df81b6e8c9ac347f672d47b8cff42c158a8ed61ffa"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/witness_norm_reuse_v13.json",
+          "sha256": "aa3109c56dd0fe6e0e24f1cddfdc2e4a71b259ea9fb76e046c17db7638df28c0"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "83cab0ad9f0335127be902c9d46014334a8d349b80110baa1b4607166257aaeb"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "sha256": "53d5b42fa8112445b38b699ce8d5d4f846b0077467cf51f95ffb195c9ac4440f"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/response_v13.md",
+          "sha256": "101f63d85b46a6f5a20ed841d46caea88f7e91b12bee8e1bb9766106a0a92bc3"
+        }
+      ],
+      "production_qualified": false,
+      "dependencies": [
+        "existing reviewed task-local activation/resource/durable interfaces and saved records"
+      ],
+      "tests": [
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+      ],
+      "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
+      "numerical_behavior_changed": false,
+      "admission": "RESEARCH_ONLY_REVIEW_REQUIRED"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        {
+          "path": "input/task042extra_feinn_5nm/v13_background_transfer.dat",
+          "sha256": "73a29c904887635e5bff07b7ec0e11073e60a1efae9ea6a985900118d56a0dee"
+        },
+        {
+          "path": "src/solvers/feinn_saved_field_diagnostics.py",
+          "sha256": "3a3e97cea1b5acb81678d89c5a8f0fae8a63f65963f7228182cc42adc5c10319"
+        }
+      ],
+      "production_qualified": false,
+      "dependencies": [
+        "existing qualified native packets, full P34/MPC restore, BoundedFieldIntegrals; immutable V12 data"
+      ],
+      "tests": [
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+      ],
+      "fresh_evidence": "v13_background_transfer:2A4/noPDEsolve/nofactor/noNN",
+      "numerical_behavior_changed": true,
+      "admission": "RESEARCH_ONLY_REVIEW_REQUIRED"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [],
+      "production_qualified": false,
+      "dependencies": [
+        "existing reviewed task-local activation/resource/durable interfaces and saved records"
+      ],
+      "tests": [
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+      ],
+      "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
+      "numerical_behavior_changed": false,
+      "admission": "DO_NOT_MERGE",
+      "retained_objects": [
+        "all unqualified neural trainers/weights including supervised C1/D and all historical negative results",
+        "ignored large arrays/checkpoints/raw histories; not production defaults or initialization",
+        "no task40extra/dot solver/storage copy"
+      ]
+    }
+  ],
+  "selective_order": [
+    "reusable runner/watchdog",
+    "checker/benchmark",
+    "compact evidence/docs"
+  ],
+  "production_numerical_promotion": false,
+  "master_merge_authorized": false,
+  "actual_run_source": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+  "manifest_self_hash_excluded": true
+}

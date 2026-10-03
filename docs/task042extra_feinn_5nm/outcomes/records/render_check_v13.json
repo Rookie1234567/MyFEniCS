@@ -1,0 +1,18 @@
+{
+  "schema": "task42extra.limited-render-check.v13",
+  "review_v12_visual": "REUSED_GITHUB_VISUAL_SPOTCHECK_PASS",
+  "review_evidence": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v12_evidence_audit.json",
+    "sha256": "cd3e5ac5af873d7ae6ffbd7cf76eb12f738835567fdbc6471d591b99035d90c5"
+  },
+  "new_pages_visual_status": "PENDING_FIRST_PUSH_AND_FINITE_BROWSER_CHECK",
+  "old_historical_pages_not_rerendered": true,
+  "local_parser_is_not_browser_visual": true,
+  "local_parser": {
+    "status": "LOCAL_MARKDOWN_PASS",
+    "pages": 8,
+    "tables": 26
+  },
+  "review_visual_scope": "reused Review V12 first publication f8374e69fc19a9ba00b65be76dbb08bff4fd4d18; final text differs only review evidence metadata and has local parser qualification",
+  "current_review_file_sha256": "cde278b3d86c74ccc9d5846232a959889cb71a8f3fe7625be125aa0dabe17ed3"
+}

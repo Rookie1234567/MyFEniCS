@@ -1,0 +1,50 @@
+{
+  "schema": "task42extra.immutable-run-index.v13",
+  "received_head": "db4611c4092cd8a0ba4c68a391f58964685f945c",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "actual_numeric_source": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+  "formal_stages": [
+    {
+      "index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v13_background_transfer.json",
+        "sha256": "0e6eb9a81d663d0037e9e7640e08a8188a61304335021457540f746b0bbe2520"
+      },
+      "run_directory": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z",
+      "source_sha": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+      "input": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/input_original.dat",
+        "sha256": "73a29c904887635e5bff07b7ec0e11073e60a1efae9ea6a985900118d56a0dee"
+      },
+      "manifest": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/run_manifest.json",
+        "sha256": "9e419f8d9cd3824c3e6a521e3c8c6dc11c52f4da302e4289d305f9e74aabb6bc"
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/run_summary.json",
+        "sha256": "7c176f50bad250dadc9bda98e352ee23e75384677cfb55673831a4f75536830f"
+      },
+      "files": {
+        "vectors": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/background_vectors.npz",
+          "sha256": "3b62c6cf03b0b2ecd9003ecbc61f02629933675a5c11447b69a063b723de3dc6"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/result.json",
+          "sha256": "5845de4565d7570c8e835b876aaff16dc14adf00e9960c440aaf17f292772352"
+        }
+      },
+      "actual_p3_native": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "actual_p4_native": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad",
+      "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mesh": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "mode": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "cpu": 10,
+      "mpi": 1,
+      "math_threads": 1,
+      "network_forward": 0,
+      "A4": 2
+    }
+  ],
+  "old_indices_overwritten": false,
+  "documentation_HEAD_is_numeric_source": false
+}

@@ -209,3 +209,16 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | ignored PT/NPZ/native/G因子/缓存/全history/资源采样/tmux/browserprofile与截图 | 仅hash留Git，标签/权重不反馈Task042或.7nm，不以诊断投影作初始化 |
 
 建议依赖审阅顺序：小代数/冻结与接口tests→研究诊断→opt-in runner/inputs→checker→compact证据。每阶段真实source另记；本轮没有merge授权。
+
+# Review V12 后续 V13 文件级边界
+
+| 依赖组 | 文件 / 改动 | 数值与合入边界 |
+| --- | --- | --- |
+| production numerical/core | 无晋级项 | ordinary solver不变，无合并授权 |
+| reusable runner/watchdog | 现有feinn_attribution_campaign、feinn_workflow与durable launcher的v13显式入口 | 复用通用编排、单独dat、无新重启循环；原监督门未放宽 |
+| checker/benchmark | check_task42extra_v12、docs_v3；对应checker/background/inventory测试 | C1原向量分类、D0/D1映射、背景算术独立Gate、新页选择；不能称新求解器 |
+| compact evidence/docs | response_v13、evidence_closure_v13、records、summary/测试/文件表与本任务总账 | 保留历史，实际数值source与文档HEAD分开 |
+| research-only | feinn_saved_field_diagnostics的新背景见证、累计A4保全与v13输入 | 无新矩阵/因子/NN；完整P34和原作用复用，仅M5诊断资格 |
+| do-not-merge | 所有旧失败/未资格化NN、监督权重、ignored大型场/模型/timeline | 不作production默认或初始化，不复制别任务求解器/存储 |
+
+逐文件hash、依赖、测试及fresh诊断来源见[六组manifest](records/selective_merge_manifest_v13.json)。实际Bsource为8000ee893a42e2f3cef288fe4652ee1052d511e7；后续只有checker选择/文档/证据收口，不重跑数值。

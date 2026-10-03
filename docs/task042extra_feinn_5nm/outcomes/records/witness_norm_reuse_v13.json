@@ -1,0 +1,145 @@
+{
+  "schema": "task42extra.retained-witness-norms.v13",
+  "audit": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v12_evidence_audit.json",
+    "sha256": "cd3e5ac5af873d7ae6ffbd7cf76eb12f738835567fdbc6471d591b99035d90c5"
+  },
+  "original_review_head": "db4611c4092cd8a0ba4c68a391f58964685f945c",
+  "same_saved_vectors_verified_by_checker": true,
+  "existing_eight_forward_witnesses_repeated": false,
+  "new_operator_or_forward_actions": 0,
+  "states": {
+    "M3600": {
+      "projections": {
+        "field": {
+          "field_energy_removed": 0.974072726506221,
+          "residual_energy_removed": -5115.953591595407
+        },
+        "residual": {
+          "field_energy_removed": -0.1945511589317035,
+          "residual_energy_removed": 0.0016111430468324084
+        }
+      },
+      "witnesses": [
+        {
+          "projection": "field",
+          "cap": 0.001,
+          "scale": 0.030070951084463532,
+          "coefficient_nonlinearity": 0.001031938234666728,
+          "G_nonlinearity": 0.0010463134532563297,
+          "dual_nonlinearity": 0.0007461297345409487,
+          "native_nonlinearity": 0.0007584620773945619,
+          "predicted_EG": 0.09079690205514654,
+          "actual_EG": 0.09079411027726189,
+          "predicted_loss": 0.530611938933916,
+          "actual_loss": 0.5312567084336098
+        },
+        {
+          "projection": "field",
+          "cap": 0.01,
+          "scale": 0.30070951084463526,
+          "coefficient_nonlinearity": 0.010209696794411003,
+          "G_nonlinearity": 0.010353112406902175,
+          "dual_nonlinearity": 0.007340077360207986,
+          "native_nonlinearity": 0.00746396050948617,
+          "predicted_EG": 0.06628867527797326,
+          "actual_EG": 0.0660158703388416,
+          "predicted_loss": 43.72569032766266,
+          "actual_loss": 44.362265826363135
+        },
+        {
+          "projection": "residual",
+          "cap": 0.001,
+          "scale": 0.3716837054976774,
+          "coefficient_nonlinearity": 0.00058657993701624,
+          "G_nonlinearity": 0.0005913635129990336,
+          "dual_nonlinearity": 0.018581846050349207,
+          "native_nonlinearity": 0.003281576194896366,
+          "predicted_EG": 0.09675102829370326,
+          "actual_EG": 0.09674901902462155,
+          "predicted_loss": 0.09422270592506755,
+          "actual_loss": 0.09422276567473038
+        },
+        {
+          "projection": "residual",
+          "cap": 0.01,
+          "scale": 1.0,
+          "coefficient_nonlinearity": 0.001578487060176058,
+          "G_nonlinearity": 0.001591352894797378,
+          "dual_nonlinearity": 0.05002595665362034,
+          "native_nonlinearity": 0.008831360514701861,
+          "predicted_EG": 0.10223020227003872,
+          "actual_EG": 0.10221562014072133,
+          "predicted_loss": 0.09416271714868842,
+          "actual_loss": 0.09416341356296282
+        }
+      ]
+    },
+    "Mfinal": {
+      "projections": {
+        "field": {
+          "field_energy_removed": 0.9874183663877463,
+          "residual_energy_removed": -327.85353101518353
+        },
+        "residual": {
+          "field_energy_removed": -0.11552596424950168,
+          "residual_energy_removed": 0.005757344628513961
+        }
+      },
+      "witnesses": [
+        {
+          "projection": "field",
+          "cap": 0.001,
+          "scale": 0.028873420512944583,
+          "coefficient_nonlinearity": 0.0005297579506707099,
+          "G_nonlinearity": 0.0005893086022386394,
+          "dual_nonlinearity": 0.0025066726448782707,
+          "native_nonlinearity": 0.005267104950270601,
+          "predicted_EG": 0.11952963606543099,
+          "actual_EG": 0.11952966996733261,
+          "predicted_loss": 0.1111542797643409,
+          "actual_loss": 0.11105444829691179
+        },
+        {
+          "projection": "field",
+          "cap": 0.01,
+          "scale": 0.2887342051294458,
+          "coefficient_nonlinearity": 0.005278409388302444,
+          "G_nonlinearity": 0.005863581825087123,
+          "dual_nonlinearity": 0.025101132414549948,
+          "native_nonlinearity": 0.05221727508930383,
+          "predicted_EG": 0.0880478913571494,
+          "actual_EG": 0.08805082857662244,
+          "predicted_loss": 2.471575555661223,
+          "actual_loss": 2.3727071375986304
+        },
+        {
+          "projection": "residual",
+          "cap": 0.001,
+          "scale": 0.38145024258930854,
+          "coefficient_nonlinearity": 0.0034662068860937217,
+          "G_nonlinearity": 0.0035581135348084006,
+          "dual_nonlinearity": 0.017993088616879382,
+          "native_nonlinearity": 0.024256261028183967,
+          "predicted_EG": 0.1256530634394727,
+          "actual_EG": 0.12564232877315204,
+          "predicted_loss": 0.08689609893750674,
+          "actual_loss": 0.08689599494186213
+        },
+        {
+          "projection": "residual",
+          "cap": 0.01,
+          "scale": 1.0,
+          "coefficient_nonlinearity": 0.009081026791025446,
+          "G_nonlinearity": 0.009322187948908609,
+          "dual_nonlinearity": 0.047213319740841135,
+          "native_nonlinearity": 0.06356769767704673,
+          "predicted_EG": 0.12994955193605537,
+          "actual_EG": 0.1298758379829493,
+          "predicted_loss": 0.08670400296235642,
+          "actual_loss": 0.08670410238465122
+        }
+      ]
+    }
+  }
+}

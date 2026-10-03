@@ -2027,3 +2027,15 @@ Mfinal R/T/A_balance/A_volume=0.795461317421/0.025047081096/0.179491601483/0.130
 A冻结12+6；B/C1各一次研究用G因子，A52/Gsolve52和A42/AH2/Gsolve43、JVP36/VJP8；参考投影97.41%/98.74%与残差投影0.161%/0.576%目标分歧。无新G4或Maxwell因子。C2的p3参考p4欧氏测试基线3.55236，候选3.91639/4.04011，6A4、嵌入≤7.92e-15；不能把基线全部归因于NN。新E/curl交叉/固定邻层积分资源未运行，局部schema修复/费用保留。完整资源/峰值/source/hash见[run](task042extra_feinn_5nm/outcomes/records/run_index_v12.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json)。
 
 NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_VERIFIED_NN_INCREMENT`。最终原尺寸.7nm、十进制2TB整机和48h完整工作流不由M5或p5替代，h/端口精度边界仍在。[Response](task042extra_feinn_5nm/response_v12.md)、[归因](task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md)、[辅助裁决](task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md)；无master合并。
+
+### 3.44.12 Task42extra Review V12 后续：V13 背景与证据闭环
+
+| 模型 / 方法 | 新增实测与边界 | 来源 |
+| --- | --- | --- |
+| 原M5 p3 NN保存场 | M3600 native.885852/E L2.0933003，Mfinal native.846542/E L2.122945；旧场不改，未过原精度门 | V11/V12保存物理，Response V13 |
+| 单一p3→p4同总场背景见证 | d_b=P34b3−b4，共享2次A4（1修正+1直接见证）；原p3参考p4 residual3.55236→5.20557 | source8000ee893a42e2f3cef288fe4652ee1052d511e7；background_conversion_v13.json |
+| 完整费用/资源 | B77.4764841361s/304291840B同时树采样峰/swap0；全批和历史保守账另列 | resource_costs_v13.json；不以worker时间替代完整账 |
+| 分类与角色 | 有限局部目标分歧支持 / 全球表达未知；D0 COST_VETO_CONFIRMED，D1 NOT_RUN_COST_VETO | 原向量checker和状态对照，不改旧失败/JSON |
+| 最终目标与晋级 | 原尺寸0.7nm、十进制2TB整机、172800s完整三维FE仍NOT_RUN/NOT_QUALIFIED；无神经增量、无production晋级 | FEINN_MAIN_SOLVER_ON_HOLD，暂停并待review |
+
+不新训练/初始化对照、p/h/端口扩展或参考重求。task40extra/dot按各自合同推进精度/存储，FEINN不复制其实现。[回执](task042extra_feinn_5nm/response_v13.md)、[专题](task042extra_feinn_5nm/outcomes/evidence_closure_v13.md)、[运行hash](task042extra_feinn_5nm/outcomes/records/run_index_v13.json)。

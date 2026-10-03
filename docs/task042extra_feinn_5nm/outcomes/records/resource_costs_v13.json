@@ -1,0 +1,158 @@
+{
+  "schema": "task42extra.complete-resource-costs.v13",
+  "batch_started_utc": "2026-10-03T02:16:33+00:00",
+  "snapshot_utc": "2026-10-03T02:42:41.397393+00:00",
+  "batch_limit_seconds": 7200,
+  "old_conservative_seconds": 158041.7009986502,
+  "old_cost_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json",
+    "sha256": "2e8e64948c01404fc7b624623d84d34ba3188a80eb0887e18a99e9b9d8acb1d6"
+  },
+  "known_post_v12_review_worker_seconds": 34.72595566883683,
+  "review_evidence": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v12_evidence_audit.json",
+    "sha256": "cd3e5ac5af873d7ae6ffbd7cf76eb12f738835567fdbc6471d591b99035d90c5"
+  },
+  "unitemized_review_tail_seconds": "NOT_RETAINED_NOT_ZERO",
+  "measured_nested_worker_and_B_launcher_seconds": 93.45802166406065,
+  "worker_fees_are_not_added_again_to_complete_batch_wall": true,
+  "complete_batch_wall_upper_seconds": 1568.397393,
+  "bounded_final_publication_reserve_seconds": 120,
+  "publication_reserve_kind": "DERIVED_CONSERVATIVE_UPPER_ALLOWANCE_NOT_MEASURED_WORKER_TIME",
+  "new_conservative_charged_seconds": 1688.397393,
+  "cumulative_conservative_seconds": 159764.82434731902,
+  "B_full_launcher_seconds": 77.47648413607385,
+  "B_supervised_worker_seconds": 15.64831093000248,
+  "B_summary": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/run_summary.json",
+    "sha256": "7c176f50bad250dadc9bda98e352ee23e75384677cfb55673831a4f75536830f"
+  },
+  "B_tree_peak_bytes": 304291840,
+  "B_tree_swap_peak_bytes": 0,
+  "B_cpu": 10,
+  "memory_scope": "sampled simultaneous own launcher/watchdog/worker tree; unrelated tasks/app not included; native tmux server management outside numerical tree separately identified",
+  "tmux_management_identity": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/durable/v13_background_transfer/terminal_identity.json",
+    "sha256": "293b6c24bb16498c4f781de2ed768424b2159e30c79a1000977aa3ffa3e89a42"
+  },
+  "tmux_server_starter_RSS_bytes": "NOT_RETAINED_IN_SCALAR_FIELD; original status VmRSS retained",
+  "tmux_server_peak": "NOT_SEPARATELY_SAMPLED",
+  "B_actions": 2,
+  "B_cumulative_action_reservations": 2,
+  "B_AH_G_Gsolve_factors_newreferences_network_forwards": 0,
+  "light_checks": [
+    {
+      "label": "v13_A_checker_fixtures_20261003T022141873654Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_A_checker_fixtures_20261003T022141873654Z/summary.json",
+        "sha256": "94e9b849e5ff6cfdc2f76c2d221360cb5f399f7b64bae149f648bd6e512af7fe"
+      },
+      "worker_elapsed_seconds": 2.039162274915725,
+      "tree_peak_bytes": 60567552,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_A_raw_closure_20261003T022213109216Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_A_raw_closure_20261003T022213109216Z/summary.json",
+        "sha256": "18083457fbca60ba0c0353d3e5d10cc8887ad6987f1577f3692a9a1699e90b03"
+      },
+      "worker_elapsed_seconds": 4.20405393303372,
+      "tree_peak_bytes": 185085952,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_E_markdown_initial_20261003T024109209709Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_markdown_initial_20261003T024109209709Z/summary.json",
+        "sha256": "60a0f8f932de85fba1b4a185c187bad793170e41a555246df36930a07f5d8719"
+      },
+      "worker_elapsed_seconds": 2.2469494490651414,
+      "tree_peak_bytes": 59863040,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_E_qualified_tests_20261003T022857558197Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_qualified_tests_20261003T022857558197Z/summary.json",
+        "sha256": "64c04bd455e43b919ecdcc1445a9e735a69ac05c3dc9b97beae838c70b51b1ee"
+      },
+      "worker_elapsed_seconds": 3.4533605789765716,
+      "tree_peak_bytes": 208031744,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_E_raw_final_20261003T023212494150Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_raw_final_20261003T023212494150Z/summary.json",
+        "sha256": "a4757c1094ca112057d74bc08d1d4bdbee15b0f1aaa309ad4c7d51dc15b13a5f"
+      },
+      "worker_elapsed_seconds": 4.038011291995645,
+      "tree_peak_bytes": 185360384,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true
+    }
+  ],
+  "unique_resource_readmission": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_readmission_result.json",
+    "sha256": "9a66af78fa6342080f0f58fa2563862b08e564193e4ce5d9ae6f39eb6fc4c47d"
+  },
+  "resource_probe": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_resource_probe.json",
+    "sha256": "459e2c890e768ced24b535fc929b80eb676bddbcf92e845b290b0e85890e10ab"
+  },
+  "failed_light_admission_elapsed_seconds": "NOT_RETAINED; contained in complete wall",
+  "failed_light_worker_started": false,
+  "accounting": "entire batch upper wall includes read/implementation/metadata/hash/import/setup/tests/failures/IO/docs/publication; exclusive phase windows below are part of, not added to, wall",
+  "exclusive_coarse_windows": [
+    {
+      "phase": "A saved-vector checker and qualification",
+      "start": "2026-10-03T02:16:33+00:00",
+      "end": "2026-10-03T02:22:54+00:00",
+      "upper_seconds": 381,
+      "limit_seconds": 900
+    },
+    {
+      "phase": "B input/adapter/implementation and bounded qualification plus full launcher (light checks included, not added)",
+      "start": "2026-10-03T02:22:54+00:00",
+      "end": "2026-10-03T02:31:16+00:00",
+      "upper_seconds": 502,
+      "limit_seconds": 1500
+    },
+    {
+      "phase": "E arithmetic closure/docs/publish",
+      "start": "2026-10-03T02:31:16+00:00",
+      "end": "2026-10-03T02:42:41.397393+00:00",
+      "upper_seconds": 805.397393,
+      "limit_seconds": 2400
+    }
+  ],
+  "local_repairs_used": 1,
+  "local_repairs_cap": 2,
+  "old_lost_3284s_and_all_replays_or_PSI_not_removed": true,
+  "new_Gram_cost_seconds": 0,
+  "new_Maxwell_factor_cost_seconds": 0,
+  "individual_background_restore_integral_action_save_mutually_exclusive_timers": "NOT_RETAINED; all included in full launcher",
+  "deferred_independent_FE_neighbor_or_cross_integrals": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "missing_optimizer_RNG": "NOT_RETAINED_V2_V6",
+  "source_vs_documentation": {
+    "numeric": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+    "current_documentation_parent_HEAD": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+    "doc_parent_not_claimed_as_run_source": true
+  },
+  "final_publication_must_end_before_snapshot_plus_reserve": true
+}

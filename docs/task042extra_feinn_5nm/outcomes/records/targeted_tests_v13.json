@@ -1,0 +1,100 @@
+{
+  "schema": "task42extra.targeted-local-tests.v13",
+  "junit": [
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_A_checker_fixtures.xml",
+        "sha256": "3edc62389ea53d5e205fc89868100915114fc9d6035bda429a5beaec59f7d6cb"
+      },
+      "tests": 54,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_E_qualified_tests.xml",
+        "sha256": "ec56ffbd89dfd0f305988bb6f62b02e618b1b2e178ecf51c06f9b14af090fb80"
+      },
+      "tests": 73,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "unique_targeted_tests": 73,
+  "earlier_54_tests_overlap": true,
+  "formal_source_qualified_by_same_implementation_file_bytes": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+  "checks": [
+    {
+      "label": "v13_A_checker_fixtures_20261003T022141873654Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_A_checker_fixtures_20261003T022141873654Z/summary.json",
+        "sha256": "94e9b849e5ff6cfdc2f76c2d221360cb5f399f7b64bae149f648bd6e512af7fe"
+      },
+      "elapsed_seconds": 2.039162274915725,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "tree_peak_bytes": 60567552,
+      "tree_swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_A_raw_closure_20261003T022213109216Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_A_raw_closure_20261003T022213109216Z/summary.json",
+        "sha256": "18083457fbca60ba0c0353d3e5d10cc8887ad6987f1577f3692a9a1699e90b03"
+      },
+      "elapsed_seconds": 4.20405393303372,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "tree_peak_bytes": 185085952,
+      "tree_swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_E_qualified_tests_20261003T022857558197Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_qualified_tests_20261003T022857558197Z/summary.json",
+        "sha256": "64c04bd455e43b919ecdcc1445a9e735a69ac05c3dc9b97beae838c70b51b1ee"
+      },
+      "elapsed_seconds": 3.4533605789765716,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "tree_peak_bytes": 208031744,
+      "tree_swap_peak_bytes": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_E_raw_final_20261003T023212494150Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_raw_final_20261003T023212494150Z/summary.json",
+        "sha256": "a4757c1094ca112057d74bc08d1d4bdbee15b0f1aaa309ad4c7d51dc15b13a5f"
+      },
+      "elapsed_seconds": 4.038011291995645,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "tree_peak_bytes": 185360384,
+      "tree_swap_peak_bytes": 0,
+      "cleared": true
+    }
+  ],
+  "ABI": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/abi_v13.json",
+    "sha256": "851b8d461b77552bb7e7300aaabf16d1bd4fc3861df29d4b3bb2671ef6fa472c"
+  },
+  "full_pytest": false,
+  "old_full_suite_repeated": false,
+  "CI_claim": false,
+  "Ruff_compileall": "PASS_8_IMPLEMENTATION_PYTHON_FILES_LOCAL",
+  "final_documentation_checks": {
+    "status": "LOCAL_MARKDOWN_PASS",
+    "pages": 8,
+    "tables": 26,
+    "record": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v13.json",
+      "sha256": "c534162abb57577f24258ef8637041dcb8afedcfba23d32c9fa6ff019d3ea75d"
+    },
+    "doc_checker_Ruff_compileall": "PASS_LOCAL"
+  }
+}

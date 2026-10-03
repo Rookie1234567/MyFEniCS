@@ -1,0 +1,160 @@
+{
+  "schema": "task42extra.evidence-closure-gates.v13",
+  "raw_checker": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v13.json",
+    "sha256": "d10d05badc1203b9b7ef4eeaf6711ef8763e0a54ce3ab52c1dd3e97811d8eaf6"
+  },
+  "A_raw_classification_pairing": "PASS",
+  "classification": {
+    "M3600": {
+      "field_energy_removed": 0.974072726506221,
+      "residual_projection_field_energy_removed": -0.1945511589317035,
+      "residual_energy_removed": 0.0016111430468324062,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH",
+      "raw_projections": {
+        "field": {
+          "field": {
+            "before": 8.614265977037046,
+            "after": 0.22334442993479436,
+            "cross": -16.781843094204465,
+            "update_energy": 8.39092154710222,
+            "change": -8.390921547102252,
+            "reconstructed_change": -8.390921547102245,
+            "operation_scale": 25.172764641306685,
+            "defect": 2.822664677022209e-16,
+            "removed_energy_fraction": 0.974072726506221,
+            "near_zero_before": false,
+            "absolute_energy_removed": 8.390921547102252
+          },
+          "residual": {
+            "before": 0.00022600254389021148,
+            "after": 1.1564445286687162,
+            "cross": -1.4599704339110866e-06,
+            "update_energy": 1.1562199860952598,
+            "change": 1.156218526124826,
+            "reconstructed_change": 1.156218526124826,
+            "operation_scale": 1.1564445286687162,
+            "defect": 0.0,
+            "removed_energy_fraction": -5115.953591595407,
+            "near_zero_before": false,
+            "absolute_energy_removed": -1.156218526124826
+          }
+        },
+        "residual": {
+          "field": {
+            "before": 8.614265977037046,
+            "after": 10.290181406215547,
+            "cross": 1.5882639614164722,
+            "update_energy": 0.08765146776202304,
+            "change": 1.6759154291785006,
+            "reconstructed_change": 1.6759154291784952,
+            "operation_scale": 10.290181406215547,
+            "defect": 5.1787916148707045e-16,
+            "removed_energy_fraction": -0.1945511589317035,
+            "near_zero_before": false,
+            "absolute_energy_removed": -1.6759154291785006
+          },
+          "residual": {
+            "before": 0.00022600254389021148,
+            "after": 0.00022563842146305633,
+            "cross": -7.282448543102145e-07,
+            "update_energy": 3.6412242715521537e-07,
+            "change": -3.6412242715514994e-07,
+            "reconstructed_change": -3.6412242715499916e-07,
+            "operation_scale": 0.00022600254389021148,
+            "defect": 6.671246350417546e-16,
+            "removed_energy_fraction": 0.0016111430468324062,
+            "near_zero_before": false,
+            "absolute_energy_removed": 3.6412242715514994e-07
+          }
+        }
+      }
+    },
+    "Mfinal": {
+      "field_energy_removed": 0.9874183663877463,
+      "residual_projection_field_energy_removed": -0.11552596424950178,
+      "residual_energy_removed": 0.00575734462851398,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH",
+      "raw_projections": {
+        "field": {
+          "field": {
+            "before": 14.905085807664646,
+            "after": 0.18753032859123986,
+            "cross": -29.4351109581468,
+            "update_energy": 14.717555479073397,
+            "change": -14.717555479073406,
+            "reconstructed_change": -14.717555479073404,
+            "operation_scale": 44.1526664372202,
+            "defect": 4.0232153179831555e-17,
+            "removed_energy_fraction": 0.9874183663877463,
+            "near_zero_before": false,
+            "absolute_energy_removed": 14.717555479073406
+          },
+          "residual": {
+            "before": 0.0002089685012298772,
+            "after": 0.06872002950039584,
+            "cross": 9.636891532319582e-06,
+            "update_energy": 0.06850142410763367,
+            "change": 0.06851106099916596,
+            "reconstructed_change": 0.06851106099916598,
+            "operation_scale": 0.06872002950039584,
+            "defect": 4.038935346421677e-16,
+            "removed_energy_fraction": -327.8535310151835,
+            "near_zero_before": false,
+            "absolute_energy_removed": -0.06851106099916596
+          }
+        },
+        "residual": {
+          "field": {
+            "before": 14.905085807664646,
+            "after": 16.627010217816668,
+            "cross": 1.653275479981184,
+            "update_energy": 0.06864893017084292,
+            "change": 1.7219244101520221,
+            "reconstructed_change": 1.7219244101520268,
+            "operation_scale": 16.627010217816668,
+            "defect": 2.8545140515922406e-16,
+            "removed_energy_fraction": -0.11552596424950178,
+            "near_zero_before": false,
+            "absolute_energy_removed": -1.7219244101520221
+          },
+          "residual": {
+            "before": 0.0002089685012298772,
+            "after": 0.00020776539755179276,
+            "cross": -2.406207356168844e-06,
+            "update_energy": 1.2031036780845356e-06,
+            "change": -1.2031036780844504e-06,
+            "reconstructed_change": -1.2031036780843085e-06,
+            "operation_scale": 0.0002089685012298772,
+            "defect": 6.789445195332163e-16,
+            "removed_energy_fraction": 0.00575734462851398,
+            "near_zero_before": false,
+            "absolute_energy_removed": 1.2031036780844504e-06
+          }
+        }
+      }
+    }
+  },
+  "D": {
+    "D0": "COST_VETO_CONFIRMED",
+    "D1": "NOT_RUN_COST_VETO"
+  },
+  "background_arithmetic_pairing": "PASS",
+  "background_case": "BACKGROUND_AFFINE_CONVERSION_COMPLETE",
+  "background_effect": "ORIGINAL_P3_REFERENCE_P4_RESIDUAL_INCREASED_AFTER_SAME_TOTAL_SHIFT",
+  "finite_space_vs_global_expressivity": {
+    "same_p3_NN_solve": "FAIL",
+    "tested_local_objective_direction_mismatch": "SUPPORTED_FINITE_DIRECTIONS",
+    "global_network_expressivity": "UNKNOWN"
+  },
+  "same_p3_candidate_strict_pass": false,
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false,
+  "production_initialization_allowed": false,
+  "neural_increment": "NO_VERIFIED_NN_INCREMENT",
+  "decision": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "next_action": "PAUSE_FEINN_NUMERIC_EXPLORATION_AND_WAIT_REVIEW",
+  "final_original_0p7nm_full3D_decimal_2TB_172800s": "NOT_RUN_NOT_QUALIFIED",
+  "deferred_FE_cross_and_neighbors": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "old_all_failures_preserved": true
+}

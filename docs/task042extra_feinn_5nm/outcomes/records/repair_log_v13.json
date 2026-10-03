@@ -1,0 +1,37 @@
+{
+  "schema": "task42extra.closure-failures-and-readmission.v13",
+  "local_repairs_used": 1,
+  "local_repairs_max": 2,
+  "numeric_retries": 0,
+  "formal_numeric_starts": 1,
+  "failures": [
+    {
+      "label": "v13_E_targeted_closure",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_targeted_closure_20261003T022655848556Z",
+      "failure": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "worker_started": false,
+      "root_cause": "RESOURCE_WINDOW_UNAVAILABLE",
+      "precise_elapsed_seconds": "NOT_RETAINED",
+      "charged_in_complete_batch_wall": true
+    }
+  ],
+  "fresh_probe": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_resource_probe.json",
+    "sha256": "459e2c890e768ced24b535fc929b80eb676bddbcf92e845b290b0e85890e10ab"
+  },
+  "unique_resource_readmission": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_readmission_result.json",
+    "sha256": "9a66af78fa6342080f0f58fa2563862b08e564193e4ce5d9ae6f39eb6fc4c47d"
+  },
+  "thresholds_or_neighbor_processes_modified": false,
+  "local_repairs": [
+    {
+      "failure": "Generated Markdown LaTeX string contained Python escape control/row separator",
+      "hypothesis": "non-raw Python multiline string transformed backslash-b and backslash pairs",
+      "change": "replace only new topic math fence with explicit raw text",
+      "test": "control character scan and selected Markdown parser; actual rendered MathML checked separately",
+      "retry": "document-only, zero numerical/forward/operator restart",
+      "charged_in_complete_batch_wall": true
+    }
+  ]
+}

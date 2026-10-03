@@ -209,3 +209,19 @@ lint失败两个未使用名称已局部修复，成本保留。以上是本地�
 V12收口实测：16个本批Python源文件Ruff和compileall均通过；9个选定新页/新增节本地parser通过（30表格）。GitHub真实DOM/截图资格另以render记录为准。
 
 V12实际GitHub检查：发布cad9fe635199d5c22e83a0698b7412e349449aaf的Review V11与Response V12取得DOM/截图，18表列数一致，review三组公式及关键结果/宽表左右/Gram成本截图实际可读，`GITHUB_VISUAL_SPOTCHECK_PASS`。单次42.048241s/1800376320B树峰/swap0/清场；没有重渲染历史，也没有把本地parser当视觉证据。后续只改费用/hash/此条文本，最终本地parser另绑定。
+
+# Review V12 后续 V13 定向资格
+
+本批只测试新增C1自动分类、背景仿射加法/累计计数及最小FE接线，不重复旧8见证、训练/参考/缓存benchmark或full pytest。
+
+| 检查 | 实际结果 | 范围 / 证据 |
+| --- | --- | --- |
+| C1小复非Hermitian实参数正/损坏fixture | 54通过 | 独立白化小例；两类比例、before/after及所有cross字段损坏、8类非有限原向量均拒绝 |
+| 最终pure+FE定向资格 | 73通过（包含前54，不相加） | 新背景复杂数加法、分母/相位损坏、失败预算保全、新dat政策及一个8-cell完整P34/MPC/公共积分fixture |
+| ABI | complex128/int64/MPI1，FE未import Torch | 同一已资格化stack，未重装；abi_v13.json及测试记录绑定 |
+| 真保存B/C1向量checker | 通过；新增算子/网络0 | 八个范数直接复用review核验，不重生成见证 |
+| 唯一真实背景B / 冻结后独立checker | 2 A4，公共E/curl/MPC、加法/能量/差分恒等式过原门 | 新source8000ee893a42e2f3cef288fe4652ee1052d511e7；原p3负结果不变 |
+| Ruff/compileall | 实现8个Python文件通过；新文档checker另外检查 | 本地证据，无CI声明 |
+| 新页parser / GitHub实际视觉 | 独立有限检查记录 | 不重渲染全部历史，不把发布端结构检查当视觉通过 |
+
+一次轻测试调用因无空闲物理核未启动；原Gate的新只读窗口准入一次后，73测试通过。数值修复0次，文档转义修复1次，B数值重试0次，所有费用计入完整墙钟账。[定向原日志/JUnit](records/targeted_tests_v13.json)、[独立checker](records/independent_checker_v13.json)、[失败/准入](records/repair_log_v13.json)、[渲染](records/render_check_v13.json)。旧V12合并24项未启动及新增FE邻层积分未运行不改标。

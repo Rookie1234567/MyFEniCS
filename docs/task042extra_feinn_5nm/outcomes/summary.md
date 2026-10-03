@@ -1,3 +1,26 @@
+# Task42extra Review V12 后续：V13 当前收口导航
+
+A原向量分类、八个见证范数复用、D0/D1状态纠正及唯一B背景转换已完成；停止FEINN数值探索。没有训练、网络前向、新G/factor/reference或传统求解器复制。同 p3 NN 求解失败、有限已测局部方向的目标分歧成立、网络全局表达极限未知，三者分开。原 native/增广门1e-6、场/复通道1e-4、功率/能量1e-5、逐级功率1e-6均不改变。较好中间态M3600、最终退化Mfinal、全部失败/失联/PSI/重放费用与未验证项保留。
+
+| 保存态（沿用 V12/V11，非新求解） | native 原残差 | 散射 E L2 相对误差 | curl/H 相对误差 | E_G | 原 Riesz loss |
+| --- | --- | --- | --- | --- | --- |
+| M3600 | 0.885852183253 | 0.0933002764708 | 0.0935415151962 | 0.0935355798945 | 0.094314671576 |
+| Mfinal | 0.846541904928 | 0.122944519716 | 0.123039105854 | 0.123036776653 | 0.0872060784095 |
+
+上表为同M5/p3、5nm/384hex/31968独立复FE/40端口的旧measured证据，均无量纲、越低越好；仍未过原1e-6残差与1e-4场门。下方所有历史原样保留，包含较好中间态与最终退化。
+
+| V13项目 | measured / derived结果 | 边界 / 证据 |
+| --- | --- | --- |
+| 保存向量C1分类 | 两态LOCAL_OBJECTIVE_DIRECTION_MISMATCH；所有交叉字段重算 | [checker](records/independent_checker_v13.json)，不是全参数/全局表达上界 |
+| 八个既有试探 | 三种范数分开；对偶最大5.003%，原前向不重复 | [全8行](evidence_closure_v13.md)、[hash核验复用](records/witness_norm_reuse_v13.json) |
+| 背景同总场修正 | p3参考3.55236349556→5.20557219228；M3600 3.91639216676→5.03123428018；Mfinal 4.04010800106→4.89083794134 | 原f4分母不改，不支持消除大基线；[原向量/交叉项](records/background_conversion_v13.json) |
+| 共享背景差的误差像 | 两候选.325782556578/.330392025659不变，defect≤1.82e-17 | 与同p3失败分开，不称G4/连续收敛 |
+| D0 / D1 | COST_VETO_CONFIRMED / NOT_RUN_COST_VETO | 旧JSON不追改；[新映射](records/status_mapping_v13.json) |
+| 正式B资源/操作 | 77.4764841361s，304291840B树峰，swap0；2 A4，其余禁止作用0 | [完整新增及历史账](records/resource_costs_v13.json)，自身已清场 |
+| 测试 / 渲染 / 合并 | 73定向通过；新页parser/实际视觉单列；无production晋级 | [测试](records/targeted_tests_v13.json)、[渲染](records/render_check_v13.json)、[六组清单](records/selective_merge_manifest_v13.json) |
+
+[Response V13](../response_v13.md)、[专题与完整8见证表](evidence_closure_v13.md)、[source/index](records/run_index_v13.json)、[Gate](records/gate_decisions_v13.json)。新邻层/交叉FE积分仍NOT_RUN，历史optimizer/RNG仍NOT_RETAINED。原尺寸0.7nm/十进制2TB/48h完整流程未资格化，原精度门不放宽。无NN净增益，暂停并等review；不合并master。
+
 # Task42extra Review V11 后续：V12 当前结果导航
 
 本轮停止神经主求解器晋级：`FEINN_MAIN_SOLVER_ON_HOLD`、`NO_VERIFIED_NN_INCREMENT`。没有新训练、监督拟合、权重/尺度扫描、传统求解器复制或参考重求。已冻结18个指定保存场，重算退化段，完成两态局部参数诊断；所有前向见证立即恢复原参数。中间改善、最终退化与未运行项均保留。参考场只在标记为 `REFERENCE_EXPOSED_DIAGNOSTIC_ONLY` 的分析中使用，未形成新PDE-only候选。

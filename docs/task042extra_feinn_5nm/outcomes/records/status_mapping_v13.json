@@ -1,0 +1,24 @@
+{
+  "schema": "task42extra.corrected-state-mapping.v13",
+  "original_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v12.json",
+    "sha256": "c2fe05b6ad087602f53bf9bbca0b7d6ce9d2523fe382c36c8949ddde5ac3c0de"
+  },
+  "cost_evidence": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/auxiliary_cost_v12.json",
+    "sha256": "8d975fbef4ffdc4541c036c63a2046b561082c37b670f6080bbe244ce8cadbb0"
+  },
+  "new_mapping": {
+    "D0": "COST_VETO_CONFIRMED",
+    "D1": "NOT_RUN_COST_VETO"
+  },
+  "historical_original_record_modified": false,
+  "new_cost_gate_or_completer_run": false,
+  "independent_E_curl_cross_and_neighbor_integrals": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "V2_V6_missing_optimizer_and_RNG": "NOT_RETAINED",
+  "boundaries": {
+    "same_p3_NN_solve": "FAIL",
+    "tested_local_objective_direction_mismatch": "SUPPORTED_FINITE_DIRECTIONS",
+    "global_network_expressivity": "UNKNOWN"
+  }
+}

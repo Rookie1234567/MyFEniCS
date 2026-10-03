@@ -21,7 +21,21 @@ PAGES = [
 
 def main():
     version = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    if version == 12:
+    if version == 13:
+        pages = [
+            (TASK / "review_report_v12.md", None),
+            (TASK / "response_v13.md", None),
+            (TASK / "outcomes/evidence_closure_v13.md", None),
+            (TASK / "outcomes/summary.md", "Task42extra Review V12 后续：V13"),
+            (TASK / "outcomes/test_summary.md", "Review V12 后续 V13 定向资格"),
+            (TASK / "outcomes/changed_files.md", "Review V12 后续 V13 文件级边界"),
+            (ROOT / "docs/development_progress.md", "2026-10-03 Task42extra V13"),
+            (
+                ROOT / "docs/development_model_registry.md",
+                "3.44.12 Task42extra Review V12 后续",
+            ),
+        ]
+    elif version == 12:
         pages = [
             (TASK / "review_report_v11.md", None),
             (TASK / "response_v12.md", None),
