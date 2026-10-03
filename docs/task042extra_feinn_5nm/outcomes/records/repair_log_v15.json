@@ -1,0 +1,16 @@
+{
+  "local_repairs_used": 1,
+  "maximum": 2,
+  "resource_readmission_used": 0,
+  "entries": [
+    {
+      "failure": "near-correlated fixture T=V/sigma caused cancellation and parameter orthogonality gate rejected",
+      "hypothesis": "spectral inverse pullback amplifies subtraction at cond~1e11",
+      "change": "parameter QR then smallR-SVD; full-rank inverse action solved through R, no explicit inverse",
+      "test": "26 passed; final pipeline and related checker combination 87 passed",
+      "initial_failure_resource": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_fixtures_initial_20261003T053631428021Z/summary.json",
+      "repair_retest_resource": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_fixture_repair1_20261003T053703339703Z/summary.json"
+    }
+  ],
+  "normal_numerical_stagnation_not_bug": true
+}
