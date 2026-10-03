@@ -1,0 +1,58 @@
+{
+  "review": "docs/task042extra_feinn_5nm/review_report_v17.md",
+  "authority": "section 4.C sole explicitly identified bug replay",
+  "failed_source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+  "failure": "IMMUTABLE_OUTPUT_EXISTS after second-state array write; final immutable JSON missing",
+  "hypothesis": "Repeated partial/final save reuses an immutable JSON pathname; finally masks original exception with the same error",
+  "change": "Unique numbered matched NPZ/JSON boundaries; final return reuses already persisted final boundary; previous versions retained",
+  "input": {
+    "path": "input/task042extra_feinn_5nm/v18_native_network_witness.dat",
+    "sha256": "b558ad9723bbb411e05118d1f248a684539fe5273363a8468099a90a322646ae"
+  },
+  "supervision_summary": {
+    "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/supervision/summary.json",
+    "sha256": "369d55b38524449232a71c67d152be75d70c46634bb8b0943adf28e807b4668c"
+  },
+  "worker_failure": {
+    "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/worker_failure.json",
+    "sha256": "8a26bced074e85d754687cebba6c0aa4bc1a6639f79aa4168a450053928080f6"
+  },
+  "partial_record": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/partial_network_witness.json",
+    "sha256": "c19b54bd40bd5693e41b0fc2ed9998996803ef8a16ae7aa5812922f018da49f9"
+  },
+  "arrays": {
+    "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/nonlinear_witness_arrays.npz",
+    "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+  },
+  "measured_partial_operation_lower_bound": {
+    "A": 3,
+    "AH": 0,
+    "Gsolve": 2,
+    "G_matvec": 4,
+    "network_forward": 2,
+    "JVP": 0,
+    "VJP": 0,
+    "Gram_factor": 1
+  },
+  "operation_upper_bound": {
+    "A": 6,
+    "AH": 0,
+    "Gsolve": 4,
+    "G_matvec": 8,
+    "network_forward": 4,
+    "JVP": 0,
+    "VJP": 0,
+    "Gram_factor": 1
+  },
+  "terminal_operation_record": "NOT_RETAINED",
+  "count_evidence": "Measured first-state JSON lower bound; conservative full two-state allocation upper bound derived from saved 38 arrays and fixed source loop. No actions replayed to reconstruct logs.",
+  "test_requirements": [
+    "repeated matched partial/final snapshots",
+    "exception snapshot retains previous boundary",
+    "corrupt/over-cap replay account rejected"
+  ],
+  "replay_limit": 1,
+  "numerical_parameters_changed": false,
+  "failed_costs_deleted": false
+}

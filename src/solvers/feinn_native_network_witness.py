@@ -12,6 +12,81 @@ from src.solvers.feinn_saved_state import checked_entry
 from src.solvers.neural_fe_action_packet import array_hash
 
 
+class WitnessBoundaryWriter:
+    """Immutable, matched snapshots; a later boundary never overwrites an earlier one."""
+
+    def __init__(self, directory):
+        self.directory = Path(directory)
+        self.sequence = 0
+
+    def save(self, arrays, record):
+        from src.runners.feinn_common_descent_arrays import sha
+        from src.solvers.feinn_common_descent import atomic_json, require
+
+        sequence = self.sequence + 1
+        vectors = self.directory / f"witness_arrays_{sequence:04d}.npz"
+        boundary = self.directory / f"witness_boundary_{sequence:04d}.json"
+        require(
+            not vectors.exists() and not boundary.exists(), "IMMUTABLE_BOUNDARY_EXISTS"
+        )
+        atomic_npz(vectors, **arrays)
+        snapshot = dict(
+            **record,
+            boundary_sequence=sequence,
+            vectors=dict(path=str(vectors), sha256=sha(vectors)),
+            write_order="arrays_fsync_then_record_fsync_then_committed_marker",
+        )
+        atomic_json(boundary, snapshot)
+        self.sequence = sequence
+        return snapshot, vectors
+
+
+def prior_failed_attempt():
+    """Charge the sole authorized bug replay; never re-execute the lost record."""
+    from src.io.feinn_pilot import ROOT
+    from src.runners.feinn_common_descent_arrays import read_checked
+    from src.solvers.feinn_common_descent import require
+
+    path = (
+        ROOT
+        / "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json"
+    )
+    receipt = json.loads(path.read_text())
+    summary = json.loads(read_checked(receipt["supervision_summary"]).read_text())
+    partial = json.loads(read_checked(receipt["partial_record"]).read_text())
+    require(
+        summary["classification"] == "WORKER_FAILED"
+        and summary["descendants_cleared"] is True,
+        "BUG_REPLAY_PRIOR_TREE_NOT_CLEARED",
+    )
+    require(
+        partial["source_sha"] == receipt["failed_source_sha"]
+        and partial["complete_network_forwards"] == 2
+        and partial["actions"] == dict(A=3, AH=0, Gsolve=2, G_matvec=4),
+        "BUG_REPLAY_PRIOR_MEASURED_BOUNDARY",
+    )
+    with np.load(read_checked(receipt["arrays"]), allow_pickle=False) as arrays:
+        require(
+            all(state + "_theta_restored" in arrays for state in ("M3600", "Mfinal")),
+            "BUG_REPLAY_PRIOR_TWO_STATE_ARRAYS",
+        )
+    require(
+        receipt["operation_upper_bound"]
+        == dict(
+            A=6,
+            AH=0,
+            Gsolve=4,
+            G_matvec=8,
+            network_forward=4,
+            JVP=0,
+            VJP=0,
+            Gram_factor=1,
+        ),
+        "FIXED_PRIOR_CONSERVATIVE_OPERATION_ACCOUNT",
+    )
+    return dict(receipt_path=str(path), **receipt)
+
+
 def two_forwards(
     theta, delta, assign, forward, parameters, snapshot, restore, expected
 ):
@@ -64,7 +139,6 @@ def witness_gate():
 
 def run(stage, design, pre, artifact, marker, manifest, load_index):
     from src.runners.feinn_native_constraint_arrays import POLICY
-    from src.solvers.feinn_common_descent import atomic_json
 
     frozen, _ = witness_gate()
     cutoff = (
@@ -141,10 +215,10 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
     ops = None
     arrays = {}
     rows = {}
-    path = Path(artifact) / "nonlinear_witness_arrays.npz"
+    writer = WitnessBoundaryWriter(artifact)
+    failed_attempt = prior_failed_attempt()
 
     def persist(status):
-        atomic_npz(path, **arrays)
         record = dict(
             status=status,
             source_sha=manifest["source_sha"],
@@ -165,11 +239,12 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
             d_G_new_solves=0,
             native_denominator=packet.bnorm,
             original_reference_scoring_only=True,
+            prior_failed_attempt=failed_attempt,
             **POLICY,
         )
-        atomic_json(Path(artifact) / "partial_network_witness.json", record)
-        return record
+        return writer.save(arrays, record)
 
+    completed = False
     try:
         guard()
         factor = SparseRiesz(G, design, marker)
@@ -315,10 +390,11 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
                 )
                 model = None
                 del saved, raw
+        completed = True
     finally:
         if factor is not None:
             factor.close()
-        persist(
-            "NETWORK_WITNESS_FROZEN" if len(rows) == 2 else "NETWORK_WITNESS_PARTIAL"
+        final_record, path = persist(
+            "NETWORK_WITNESS_FROZEN" if completed else "NETWORK_WITNESS_PARTIAL"
         )
-    return persist("NETWORK_WITNESS_FROZEN"), dict(vectors=path)
+    return final_record, dict(vectors=path)

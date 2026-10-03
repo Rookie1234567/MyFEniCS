@@ -25,6 +25,29 @@ def relative(a, b):
     )
 
 
+def replay_operation_account(actions, result):
+    prior = result["prior_failed_attempt"]["operation_upper_bound"]
+    combined = {
+        key: actions[key] + prior[key] for key in ("A", "AH", "Gsolve", "G_matvec")
+    }
+    combined.update(
+        network_forward=result["complete_network_forwards"] + prior["network_forward"],
+        Gram_factor=result["Gram_factor_lifecycles"] + prior["Gram_factor"],
+        JVP=result["JVP"] + prior["JVP"],
+        VJP=result["VJP"] + prior["VJP"],
+    )
+    require(
+        combined["A"] <= 16
+        and combined["Gsolve"] <= 8
+        and combined["G_matvec"] <= 24
+        and combined["network_forward"] <= 8
+        and combined["Gram_factor"] <= 2
+        and combined["AH"] == combined["JVP"] == combined["VJP"] == 0,
+        "INCLUDING_FAILED_ATTEMPT_OPERATION_CAPS",
+    )
+    return combined
+
+
 def evaluate(arrays, state, predicted, metadata):
     data = {
         key: np.asarray(arrays[state + "_" + key])
@@ -142,7 +165,10 @@ def main():
     from src.runners.feinn_native_constraint_arrays import source
     from src.runners.feinn_common_descent_arrays import extract, read_checked
     from src.solvers.feinn_native import load_native
-    from src.solvers.feinn_native_network_witness import witness_gate
+    from src.solvers.feinn_native_network_witness import (
+        witness_gate,
+        prior_failed_attempt,
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument("output")
@@ -154,6 +180,10 @@ def main():
     packet = load_native(native["files"]["native"]["path"])
     G = sparse.load_npz(native["files"]["gram"]["path"])
     result = witness["result"]
+    require(
+        result["prior_failed_attempt"] == prior_failed_attempt(),
+        "FAILED_ATTEMPT_CHARGE_BINDING",
+    )
     require(
         result["status"] == "NETWORK_WITNESS_FROZEN"
         and result["A_checker"] == pre["A_checker"],
@@ -235,11 +265,14 @@ def main():
         and actions["G_matvec"] <= 12,
         "WHOLE_C_OPERATION_CAPS",
     )
+    combined = replay_operation_account(actions, result)
     output = dict(
         status="INDEPENDENT_VECTOR_AUDIT_COMPLETE",
         source_sha=head,
         rows=rows,
         actions=actions,
+        actions_including_failed_attempt_conservative_upper=combined,
+        prior_failed_attempt=result["prior_failed_attempt"],
         FE_restore_required=True,
         local_mechanism="PENDING_INDEPENDENT_FE",
         vectors=witness["files"]["vectors"],

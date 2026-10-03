@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.solvers.feinn_native_network_witness import two_forwards
+from src.solvers.feinn_native_network_witness import two_forwards, WitnessBoundaryWriter
 
 
 @pytest.mark.parametrize("failure", [None, "original", "trial"])
@@ -161,3 +161,84 @@ def test_independent_witness_classification_and_count_contract():
     assert ops.record()["G_matvec"] == 8
     with pytest.raises(RuntimeError, match="CAP_G_matvec"):
         ops.gm(np.ones(2))
+
+
+def test_multiple_partial_and_final_boundaries_are_matched_and_immutable(tmp_path):
+    import json
+    from src.runners.feinn_common_descent_arrays import sha
+
+    writer = WitnessBoundaryWriter(tmp_path)
+    first, first_path = writer.save({"M_c": np.array([1j])}, {"status": "PARTIAL"})
+    original_bytes = first_path.read_bytes()
+    writer.save({"M_c": np.array([2j]), "F_c": np.array([3j])}, {"status": "PARTIAL"})
+    final, path = writer.save(
+        {"M_c": np.array([2j]), "F_c": np.array([3j])}, {"status": "FROZEN"}
+    )
+    assert final["boundary_sequence"] == 3 and first_path.read_bytes() == original_bytes
+    for number in (1, 2, 3):
+        boundary = json.loads(
+            (tmp_path / f"witness_boundary_{number:04d}.json").read_text()
+        )
+        assert boundary["vectors"]["sha256"] == sha(boundary["vectors"]["path"])
+    with np.load(path) as data:
+        assert np.array_equal(data["M_c"], np.array([2j]))
+    assert first["boundary_sequence"] == 1
+    with pytest.raises(ValueError, match="IMMUTABLE_BOUNDARY"):
+        WitnessBoundaryWriter(tmp_path).save({"M_c": np.ones(1)}, {"status": "PARTIAL"})
+
+
+def test_exception_boundary_keeps_successful_previous_snapshot(tmp_path):
+    import json
+
+    writer = WitnessBoundaryWriter(tmp_path)
+    try:
+        writer.save({"M_c": np.ones(2)}, {"status": "PARTIAL"})
+        raise RuntimeError("retained original worker error")
+    except RuntimeError:
+        writer.save({"M_c": np.ones(2)}, {"status": "PARTIAL_ERROR"})
+    assert (
+        json.loads((tmp_path / "witness_boundary_0001.json").read_text())["status"]
+        == "PARTIAL"
+    )
+    assert (
+        json.loads((tmp_path / "witness_boundary_0002.json").read_text())["status"]
+        == "PARTIAL_ERROR"
+    )
+
+
+def test_failed_attempt_counts_cannot_disappear_from_replay_caps():
+    from benchmarks.check_feinn_native_witness import replay_operation_account
+
+    actions = dict(A=8, AH=0, Gsolve=4, G_matvec=12)
+    result = dict(
+        complete_network_forwards=4,
+        Gram_factor_lifecycles=1,
+        JVP=0,
+        VJP=0,
+        prior_failed_attempt=dict(
+            operation_upper_bound=dict(
+                A=6,
+                AH=0,
+                Gsolve=4,
+                G_matvec=8,
+                network_forward=4,
+                Gram_factor=1,
+                JVP=0,
+                VJP=0,
+            )
+        ),
+    )
+    combined = replay_operation_account(actions, result)
+    assert combined == dict(
+        A=14,
+        AH=0,
+        Gsolve=8,
+        G_matvec=20,
+        network_forward=8,
+        Gram_factor=2,
+        JVP=0,
+        VJP=0,
+    )
+    actions["A"] = 11
+    with pytest.raises(ValueError, match="INCLUDING_FAILED"):
+        replay_operation_account(actions, result)
