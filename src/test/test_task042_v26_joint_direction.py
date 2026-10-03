@@ -9,6 +9,7 @@ from scipy.linalg import lu_factor,lu_solve,lstsq
 from src.solvers.joint_block_direction import (assemble_selected,JointSolve,
     factor_once,qualification,extra_direction,selected_rows,capacity,decision)
 from src.solvers.joint_block_window import CAPS,validate_increment
+from src.test.task042_campaign_fixture import isolated_v26_schema
 from src.test.test_task042_v22_p1_trace import dense_case
 from src.solvers.neural_fe_action_packet import array_hash,file_hash
 from src.solvers.joint_block_study import checked_array
@@ -113,7 +114,7 @@ def test_readonly_factor_reload_has_private_pivots_and_rejects_bad_hash(tmp_path
     with pytest.raises(ValueError):checked_array(dict(receipts[0],path=str(path)),tmp_path)
 
 
-def test_actual_one_run_schema_stage_registration_and_no_old_default_change(tmp_path):
+def test_actual_one_run_schema_stage_registration_and_no_old_default_change(tmp_path,isolated_v26_schema):
     from pathlib import Path
     from src.io.joint_block_diagnostic import load_joint_diagnostic
     from src.io.input_loader import InputError
@@ -132,3 +133,19 @@ def test_actual_one_run_schema_stage_registration_and_no_old_default_change(tmp_
     assert load_joint_diagnostic(root/'input/task042_neural_coarse_inverse/v25_block_residual_diagnostic.dat') is None
     signature=inspect.signature(DirectionStage)
     assert signature.parameters['actor_limit'].default==600 and signature.parameters['artifact_limit'].default==128*2**20
+
+
+@pytest.mark.parametrize('kind',['active','consumed','closed','expired'])
+def test_v26_one_run_rejects_isolated_campaign_state(kind,isolated_v26_schema):
+    from pathlib import Path
+    from src.io.joint_block_diagnostic import load_joint_diagnostic
+    from src.io.input_loader import InputError
+    fixture=isolated_v26_schema
+    if kind=='active':fixture.book['active']={'directory':'fixture'}
+    elif kind=='consumed':fixture.book['runs']=[{'directory':'fixture'}]
+    elif kind=='closed':fixture.book['closed']=True
+    else:fixture.clock.update(utc=1767225600.+8000,monotonic=100.+8000)
+    fixture.save()
+    root=Path(__file__).resolve().parents[2]
+    with pytest.raises(InputError,match='deadline' if kind=='expired' else 'closed/active/already consumed'):
+        load_joint_diagnostic(root/'input/task042_neural_coarse_inverse/v26_joint_block_diagnostic.dat')

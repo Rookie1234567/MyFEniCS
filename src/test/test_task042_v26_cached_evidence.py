@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from benchmarks.collect_task042_joint_direction import read_result,verify_cached,compact_physical_identity
+from src.test.task042_campaign_fixture import isolated_v26_schema
 
 
 @pytest.fixture
@@ -37,9 +38,11 @@ def test_actual_saved_vectors_recompute_negative_decision_without_raw_status(act
     assert all(x['g']>=.95 for x in checked['rows'])
 
 
-def test_one_run_loader_refuses_a_closed_campaign():
+def test_one_run_loader_refuses_a_closed_campaign(isolated_v26_schema):
     from src.io.joint_block_diagnostic import load_joint_diagnostic
     from src.io.input_loader import InputError
+    isolated_v26_schema.book['closed']=True
+    isolated_v26_schema.save()
     path=Path(__file__).resolve().parents[2]/'input/task042_neural_coarse_inverse/v26_joint_block_diagnostic.dat'
     with pytest.raises(InputError,match='closed'):load_joint_diagnostic(path)
 
