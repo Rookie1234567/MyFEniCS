@@ -95,21 +95,37 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-03T13:12:25Z",
+  "observed_utc": "2026-10-03T13:45:37Z",
   "progress": {
-    "phase": "outer_phase_bottom_inner_ksp_audit_986_converged_105iter",
+    "phase": "outer_solve_iteration_4_iterating",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
     "outer_fgmres_converged_reason": "not_yet_emitted",
-    "five_true_residuals": "not_yet_emitted",
+    "five_true_residuals": {
+      "scope": "outer_solve_progress_iteration; not final convergence or final physics-gate result",
+      "status": "ITERATING",
+      "iteration": 4,
+      "global_true_relative_residual": 5.1638240192184944e-09,
+      "bottom_true_relative_residual": 6.9567035301528845e-09,
+      "top_true_relative_residual": 4.783445539109879e-09,
+      "modal_true_relative_residual": 9.558526349804133e-11,
+      "reported_relative_residual": 5.163823476302633e-09,
+      "multimetric_max_true_residual": 6.9567035301528845e-09,
+      "multimetric_reason": 0,
+      "wall_seconds": 200107.89157978306,
+      "source": "solve_hybrid_block_ldu_iterative",
+      "sequence_index": 23,
+      "evidence_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/markers.jsonl#sequence_index=23"
+    },
     "official_R_T_A_A_volume": "not_yet_emitted",
     "recovery_and_physics_gates_pass": true,
     "rta_eh_diffraction_completed": false,
     "time_target_seconds": 86400,
     "time_target_met": false,
     "time_stop_enforced": false,
-    "two_nm": "not_started"
+    "two_nm": "not_started",
+    "current_outer_iteration": 4
   },
   "qualification": {
     "numerical_and_physics_status": "pass",
@@ -122,7 +138,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-03T13:12:25Z",
+  "record_written_utc": "2026-10-03T13:45:37Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +257,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-03T14:12:25Z",
+  "next_progress_update_due_utc": "2026-10-03T14:45:37Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -938,20 +954,22 @@
     "hard_memory_cap_bytes": 53221163008,
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
+      "retrieved_utc": "2026-10-03T13:45:37Z",
+      "elapsed_seconds": 201261.73266916594,
       "phase": "public_command",
-      "elapsed_seconds": 199270.0805584559,
-      "authority_bytes": 43895054336,
-      "process_tree_rss_bytes": 43265662976,
-      "cgroup_memory_current_bytes": 43895054336,
-      "cgroup_memory_peak_bytes": 43895062528,
+      "authority_bytes": 43945730048,
+      "process_tree_rss_bytes": 43266600960,
+      "cgroup_memory_current_bytes": 43945730048,
+      "cgroup_memory_peak_bytes": 43945730048,
       "job_swap_bytes": 0,
+      "job_no_swap": true,
       "global_swap_used_bytes": 22118400,
       "global_swap_used_bytes_delta": 0,
-      "global_pswpin_pages_delta": 1481006,
+      "global_pswpin_pages_delta": 1481012,
       "global_pswpout_pages_delta": 2781714,
-      "host_memavailable_bytes": 1157526282240,
+      "host_memavailable_bytes": 1131192672256,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-03T13:12:25Z"
+      "source_path": "results/task041_v8_5nm_cellcond_a6_formal_run_20261001T053737Z/memory_stages.jsonl (mutable JSONL tail sample)"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -1064,6 +1082,34 @@
         "physical_action_source": "build_side_balanced_inverse"
       }
     },
-    "stage_marker_wall_seconds": 197182.47741119808
+    "stage_marker_wall_seconds": 197182.47741119808,
+    "latest_outer_solve_progress": {
+      "scope": "outer_solve_progress_iteration; not final convergence or final physics-gate result",
+      "status": "ITERATING",
+      "iteration": 4,
+      "global_true_relative_residual": 5.1638240192184944e-09,
+      "bottom_true_relative_residual": 6.9567035301528845e-09,
+      "top_true_relative_residual": 4.783445539109879e-09,
+      "modal_true_relative_residual": 9.558526349804133e-11,
+      "reported_relative_residual": 5.163823476302633e-09,
+      "multimetric_max_true_residual": 6.9567035301528845e-09,
+      "multimetric_reason": 0,
+      "wall_seconds": 200107.89157978306,
+      "source": "solve_hybrid_block_ldu_iterative",
+      "sequence_index": 23,
+      "evidence_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/markers.jsonl#sequence_index=23"
+    },
+    "latest_outer_solve_resource_sample": {
+      "observed_utc": "2026-10-03T13:45:37Z",
+      "wall_seconds": 200107.89157978306,
+      "phase": "outer_solve_progress",
+      "authority_bytes": 43918053376,
+      "cgroup_memory_current_bytes": 43918053376,
+      "job_swap_bytes": 0,
+      "global_swap_used_bytes": 22118400,
+      "global_swap_semantics": "V8 observe-only",
+      "worker_process_group_gone": false,
+      "source_path": "results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z/consumer/markers.jsonl#sequence_index=23"
+    }
   }
 }
