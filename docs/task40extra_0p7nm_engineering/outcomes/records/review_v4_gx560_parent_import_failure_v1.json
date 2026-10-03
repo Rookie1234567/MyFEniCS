@@ -1,0 +1,48 @@
+{
+  "schema": "task40extra.review-v4.parent-startup-failure.v1",
+  "status": "FAILED",
+  "result_classification": "PARENT_PREFLIGHT_OR_MONITORING_FAILURE",
+  "source_sha": "bc846a00d9a7d0c857e71a2eaa998378fba122ab",
+  "run_id": "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+  "stage": "Q4_ORIGINAL",
+  "worker_started": false,
+  "pde_started": false,
+  "factorization_started": false,
+  "descendants_cleared": true,
+  "cleanup_evidence": {
+    "service_properties": {
+      "MainPID": "0",
+      "ExecMainStartTimestampMonotonic": "594539212193",
+      "ExecMainExitTimestampMonotonic": "594540027670",
+      "ExecMainStatus": "1",
+      "ControlGroup": "",
+      "KillMode": "control-group",
+      "ActiveState": "failed"
+    },
+    "main_pid_absent": 1638016,
+    "reproduction_child_absent": 1638324,
+    "watchdog_directory_absent": true
+  },
+  "error": {
+    "type": "RuntimeError",
+    "message": "watchdog must be a dedicated parent with no existing children"
+  },
+  "service_log_path": "benchmarks/artifacts/user_services/myfenics-case-20261003T001145-1637989.log",
+  "service_log_sha256": "267df8191ca9e2b1c44359624c2cfd17d66a16b0a2637add8152c5357e775680",
+  "reproduction_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/review_v4/parent_import_reproduction.json",
+  "reproduction_sha256": "13de04fc2f9b3eb46d9b1e7fd92c65a6da156b242bf3001b77053b18c84b3b33",
+  "settled_ledger_sha256": "0734814de57e390bb56a061dca7901d4ba5d1ad820e62b026b3c475b7de1dc80",
+  "parent_workflow_seconds_measured": 0.024069007951766253,
+  "service_main_window_seconds_derived": 0.815477,
+  "time_scope_note": "The 0.024069 s settled parent-workflow interval and service main-process window have different boundaries; neither is PDE/factor or full-wrapper elapsed time.",
+  "raw_run_summary_preserved": {
+    "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T001145.945631Z/run_summary.json",
+    "sha256": "ca13c296a9b411f2e7f47418a59e2940b11fe4f4bc84bb71e51bd029525a83ad",
+    "status": "launching",
+    "classification": "not_run"
+  },
+  "root_cause": "Task40 input sampling validation imported diffraction_3d, whose top-level dolfinx import initialized singleton MPI/orted in the supervisor parent.",
+  "fix": "Delay dolfinx imports to the three functions that actually sample/reconstruct FE fields. The no-existing-children watchdog guard and sampling mathematics stay unchanged.",
+  "replay_policy": "Consumes the existing single Review V4 implementation-bug replay for GX560; no extra quota or historical reclassification.",
+  "old_nine_ledgers_unchanged": true
+}

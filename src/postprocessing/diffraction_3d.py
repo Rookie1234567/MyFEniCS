@@ -8,8 +8,6 @@ from typing import Any
 import numpy as np
 import ufl
 
-from dolfinx import fem, geometry
-
 from ..common.config_3d import SimulationConfig3D
 from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 from ..common.modes_3d import (
@@ -445,6 +443,8 @@ def _plane_points(cfg: SimulationConfig3D, z: float) -> np.ndarray:
 
 
 def _sample_field_at_points(function, points: np.ndarray) -> np.ndarray:
+    from dolfinx import geometry
+
     msh = function.function_space.mesh
     comm = msh.comm
     points = np.asarray(points, dtype=np.float64).reshape((-1, 3))
@@ -497,6 +497,8 @@ def _interpolation_points(V):
 
 
 def _h_from_curl_function(E_total, cfg: SimulationConfig3D, *, jit_options=None):
+    from dolfinx import fem
+
     msh = E_total.function_space.mesh
     V_dg = fem.functionspace(msh, ("DG", max(int(cfg.visualization_degree), 1), (3,)))
     h_expr = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_total)
@@ -585,6 +587,8 @@ def _modal_columns(
 
 
 def _mode_field(function_space, kvec: np.ndarray, e_vec: np.ndarray):
+    from dolfinx import fem
+
     field = fem.Function(function_space, name="diffraction_mode_calibration")
 
     def eval_field(x):

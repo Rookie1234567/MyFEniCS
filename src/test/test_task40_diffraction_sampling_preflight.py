@@ -1,5 +1,7 @@
 import builtins
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -63,3 +65,29 @@ def test_generic_full3d_profile_does_not_import_diffraction_postprocessor(
     specification = load_and_resolve(ROOT / "input/templates/full3d_iterative_example.dat")
     assert specification.solver["preconditioner"] == "full3d_scalable_v1"
     assert specification.output["export_diffraction_orders"] is True
+
+
+def test_task40_cross_inputs_leave_supervisor_free_of_mpi_children() -> None:
+    code = """
+import os
+import sys
+from pathlib import Path
+from src.io import load_and_resolve
+from src.runners import task038_launcher
+root = Path.cwd()
+for name in (
+    "nonseparable_gx560_p6_q4_manual_m2_v3.dat",
+    "nonseparable_gz528_p6_q4_manual_m2_v3.dat",
+):
+    spec = load_and_resolve(root / "input/task40extra_0p7nm_engineering" / name)
+    assert spec.output["export_diffraction_orders"] is True
+    assert "dolfinx" not in sys.modules
+    assert "mpi4py.MPI" not in sys.modules
+    assert "petsc4py.PETSc" not in sys.modules
+    for path in Path(f"/proc/{os.getpid()}/task").glob("*/children"):
+        assert not path.read_text().strip(), path.read_text()
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", code], cwd=ROOT, text=True, capture_output=True
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr

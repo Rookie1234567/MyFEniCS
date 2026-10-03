@@ -1249,7 +1249,24 @@ def _reserve_blr_stage_from_ledger(
         else:
             previous_run_directory = Path(str(previous.get("run_directory", "")))
             evidence_path = previous_run_directory / "implementation_bug_replay.json"
-            summary_path = previous_run_directory / summary_filename
+            # The two V4 cases also spend their one repair on a verified
+            # parent import bug, before any numerical worker exists.
+            task40_parent_bug = (
+                error_prefix == "Task40"
+                and ledger.get("batch_identity") in {
+                    "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+                    "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1",
+                }
+                and previous.get("status") == "PARENT_PREFLIGHT_OR_MONITORING_FAILURE"
+                and previous.get("watchdog_classification") is None
+            )
+            expected_failure = (
+                "PARENT_PREFLIGHT_OR_MONITORING_FAILURE"
+                if task40_parent_bug else "WORKER_FAILED"
+            )
+            summary_path = previous_run_directory / (
+                "parent_startup_failure.json" if task40_parent_bug else summary_filename
+            )
             try:
                 evidence_bytes = evidence_path.read_bytes()
                 evidence = json.loads(evidence_bytes.decode("utf-8"))
@@ -1257,31 +1274,58 @@ def _reserve_blr_stage_from_ledger(
                 previous_summary = json.loads(summary_bytes.decode("utf-8"))
             except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
                 raise InputError(f"{error_prefix} repair replay requires hash-bound bug evidence") from exc
+            if task40_parent_bug:
+                log_path = previous_run_directory / "parent_service_failure.log"
+                reproduction_path = previous_run_directory / "parent_import_reproduction.json"
+                expected_error = {
+                    "type": "RuntimeError",
+                    "message": "watchdog must be a dedicated parent with no existing children",
+                }
+                if (
+                    previous_summary.get("worker_started") is not False
+                    or previous_summary.get("descendants_cleared") is not True
+                    or not reproduction_path.is_file()
+                    or previous_summary.get("reproduction_sha256")
+                    != hashlib.sha256(reproduction_path.read_bytes()).hexdigest()
+                    or previous_summary.get("error") != expected_error
+                    or evidence.get("prior_ledger_sha256")
+                    != hashlib.sha256(path.read_bytes()).hexdigest()
+                    or not log_path.is_file()
+                    or previous_summary.get("service_log_sha256")
+                    != hashlib.sha256(log_path.read_bytes()).hexdigest()
+                    or (previous_run_directory / "watchdog").exists()
+                    or expected_error["message"] not in log_path.read_text(encoding="utf-8")
+                ):
+                    raise InputError("Task40 parent startup repair evidence changed")
             if (
                 evidence.get("classification") != "IMPLEMENTATION_BUG"
                 or evidence.get("stage") != stage
                 or evidence.get("failed_source_sha") != previous.get("source_sha")
                 or evidence.get("fixed_source_sha") != source_sha
                 or not evidence.get("bug_and_fix")
-                or previous.get("status") not in {"WORKER_FAILED", "FAILED"}
+                or previous.get("status") not in {expected_failure, "FAILED"}
                 or previous.get("watchdog_classification") not in {None, "WORKER_FAILED"}
                 or previous_summary.get("status") != "FAILED"
-                or previous_summary.get("result_classification") != "WORKER_FAILED"
+                or previous_summary.get("result_classification") != expected_failure
                 or not previous_summary.get("error")
                 or previous_summary.get("source_sha") != previous.get("source_sha")
             ):
                 raise InputError(
-                    f"{error_prefix} repair replay requires a genuine worker exception, changed source, and bound fix"
+                    f"{error_prefix} repair replay requires a genuine exception, changed source, and bound fix"
                 )
             replay = True
             replay_evidence = {
                 "path": str(evidence_path),
                 "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
-                "worker_summary_path": str(summary_path),
-                "worker_summary_sha256": hashlib.sha256(summary_bytes).hexdigest(),
-                "worker_summary_result_classification": previous_summary.get(
-                    "result_classification"
-                ),
+                **{
+                    ("parent_startup_summary" if task40_parent_bug else "worker_summary")
+                    + suffix: value
+                    for suffix, value in (
+                        ("_path", str(summary_path)),
+                        ("_sha256", hashlib.sha256(summary_bytes).hexdigest()),
+                        ("_result_classification", previous_summary.get("result_classification")),
+                    )
+                },
                 **evidence,
             }
     attempt = {

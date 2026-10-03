@@ -440,3 +440,63 @@ def test_task40_review_v4_unknown_run_is_rejected_without_ledger_mutation(tmp_pa
         reserve(tmp_path, "unknown", "b" * 40, TASK40_GX560_RUN_ID + "_unknown")
     assert ledger_path.read_bytes() == before
     assert not unknown_directory.exists()
+
+
+@pytest.mark.parametrize("tamper", [None, "ledger", "log", "worker_started", "clearance", "reproduction", "numerical", "resource"])
+def test_task40_v4_parent_import_bug_uses_the_same_single_repair(tmp_path, tamper):
+    first = reserve(tmp_path, "gx-parent-failure", "a" * 40, TASK40_GX560_RUN_ID)
+    launcher._settle_v14_shared_budget(
+        first, status="PARENT_PREFLIGHT_OR_MONITORING_FAILURE", authority=None,
+        parent_interval={"budget_seconds": 0.024}, parent_clock_end=CLOCK,
+    )
+    path = Path(first["path"])
+    before = path.read_bytes()
+    directory = tmp_path / "gx-parent-failure"
+    message = "watchdog must be a dedicated parent with no existing children"
+    log = ("RuntimeError: " + message + "\n").encode()
+    (directory / "parent_service_failure.log").write_bytes(log)
+    reproduction = b'{"child": "MPI singleton orted", "pde_started": false}'
+    (directory / "parent_import_reproduction.json").write_bytes(reproduction)
+    summary = {
+        "status": "FAILED",
+        "result_classification": "PARENT_PREFLIGHT_OR_MONITORING_FAILURE",
+        "source_sha": "a" * 40,
+        "worker_started": tamper == "worker_started",
+        "descendants_cleared": tamper != "clearance",
+        "reproduction_sha256": hashlib.sha256(reproduction).hexdigest(),
+        "error": {"type": "RuntimeError", "message": message},
+        "service_log_sha256": hashlib.sha256(log).hexdigest(),
+    }
+    if tamper in {"numerical", "resource"}:
+        summary["result_classification"] = tamper.upper() + "_CONTROLLED_STOP"
+    if tamper == "reproduction":
+        (directory / "parent_import_reproduction.json").write_text("changed")
+    (directory / "parent_startup_failure.json").write_text(json.dumps(summary))
+    evidence = {
+        "classification": "IMPLEMENTATION_BUG", "stage": "Q4_ORIGINAL",
+        "failed_source_sha": "a" * 40, "fixed_source_sha": "b" * 40,
+        "bug_and_fix": "Delay dolfinx import until FE sampling in the worker",
+        "prior_ledger_sha256": hashlib.sha256(before).hexdigest(),
+    }
+    if tamper == "ledger":
+        evidence["prior_ledger_sha256"] = "0" * 64
+    if tamper == "log":
+        (directory / "parent_service_failure.log").write_text("different error")
+    (directory / "implementation_bug_replay.json").write_text(json.dumps(evidence))
+    if tamper:
+        with pytest.raises(InputError, match="repair"):
+            reserve(tmp_path, "gx-parent-repair", "b" * 40, TASK40_GX560_RUN_ID)
+        assert path.read_bytes() == before
+        return
+    repair = reserve(tmp_path, "gx-parent-repair", "b" * 40, TASK40_GX560_RUN_ID)
+    assert repair["replay"] is True
+    assert "parent_startup_summary_path" in repair["replay_evidence"]
+    after = json.loads(path.read_bytes())
+    assert after["stages"]["Q4_ORIGINAL"]["attempts"][0] == json.loads(before)["stages"]["Q4_ORIGINAL"]["attempts"][0]
+    assert after["elapsed_seconds"] == 0.024
+    assert after["unique_bug_replay_count"] == 1
+    fail(repair, "c" * 40)
+    settled = path.read_bytes()
+    with pytest.raises(InputError, match="exhausted"):
+        reserve(tmp_path, "gx-second-repair", "c" * 40, TASK40_GX560_RUN_ID)
+    assert path.read_bytes() == settled
