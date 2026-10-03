@@ -156,5 +156,7 @@
   "next_action": "PAUSE_FEINN_NUMERIC_EXPLORATION_AND_WAIT_REVIEW",
   "final_original_0p7nm_full3D_decimal_2TB_172800s": "NOT_RUN_NOT_QUALIFIED",
   "deferred_FE_cross_and_neighbors": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
-  "old_all_failures_preserved": true
+  "old_all_failures_preserved": true,
+  "document_visual": "RESPONSE_SPOTCHECK_PASS_TOPIC_FIRST_FAIL_POST_FIX_UNVERIFIED_RESOURCE",
+  "numeric_decisions_do_not_depend_on_visual_pass": true
 }

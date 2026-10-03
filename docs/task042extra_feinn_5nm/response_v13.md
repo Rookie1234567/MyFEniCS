@@ -66,11 +66,11 @@ r_{4,\mathrm{same\ total}}=r_{4,\mathrm{saved}}+A_4d_b.
 | 冻结后独立原向量checker | 4.038011292s；峰185360384B，swap0，清场 |
 | 整批与历史账 | [resource_costs_v13.json](outcomes/records/resource_costs_v13.json)：完整墙钟上界收费含实现/阅读/IO/失败/发布，不仅上述worker；历史158041.7009986502s与已知审阅34.7259556688s均保留 |
 
-CPU现场选择10，物理核及SMT同胞避开邻worker；MPI1/数学及Torch线程1/CPU-only，原warn12/hard16GiB、轻任务2GiB、系统预留和384GiB邻增长、自身swap/OOC0均保留。一次轻测试先因无空闲核未启动；观察到新合格窗口后使用唯一重新准入并通过。没有阈值放宽、其他项目修改或自动轮询。局部文档转义修复1/2（不重跑数值），正式数值重试0。完整成本、未知单项与保留失败见[资源](outcomes/records/resource_costs_v13.json)、[repair](outcomes/records/repair_log_v13.json)；未知单项不写0。
+CPU现场选择10，物理核及SMT同胞避开邻worker；MPI1/数学及Torch线程1/CPU-only，原warn12/hard16GiB、轻任务2GiB、系统预留和384GiB邻增长、自身swap/OOC0均保留。一次轻测试先因无空闲核未启动；观察到新合格窗口后使用唯一重新准入并通过。没有阈值放宽、其他项目修改或自动轮询。局部文档修复2/2（转义及GitHub拒绝公式宏，不重跑数值），正式数值重试0。完整成本、未知单项与保留失败见[资源](outcomes/records/resource_costs_v13.json)、[repair](outcomes/records/repair_log_v13.json)；未知单项不写0。
 
 ## 收口、文档与后续
 
-Review V12实际GitHub视觉证据直接复用其hash绑定审阅记录；本回执/专题只有限检查新页，结果独立记在[render_check_v13.json](outcomes/records/render_check_v13.json)，不以结构解析代替浏览器。仅本地定向测试、Ruff/compileall及选定新页parser，无full pytest/CI或环境重装。原 task/review、历史JSON和其他分支未改。[六组依赖清单](outcomes/records/selective_merge_manifest_v13.json)无production晋级，数值诊断保持research-only。
+Review V12实际GitHub视觉证据直接复用其hash绑定审阅记录；首次新页检查中，本回执公式及结果表目视通过，专题的实部公式被GitHub拒绝，失败DOM/截图保留。专题已仅将实部宏改为 `\mathrm{Re}`；修正后parser/浏览器复查因CPU资源门拒绝而未启动，记NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE，不能宣布修正后视觉通过。首次8页26表本地parser通过与浏览器结果分别绑定[render_check_v13.json](outcomes/records/render_check_v13.json)。73项数值资格及Ruff/compileall不受文档宏修改影响；无full pytest/CI或环境重装。原 task/review、历史JSON和其他分支未改。[六组依赖清单](outcomes/records/selective_merge_manifest_v13.json)无production晋级，数值诊断保持research-only。
 
 交付后暂停FEINN数值探索，不继续hidden/范数/尺度/权重扫描、长训练、初始化对照或传统求解器复制。未来只能由新review明确授权一个无参考标签的具体干预、能区分解释的保存数据预检、同成本非NN对照、原全部精度Gate及完整预算；本轮不执行。task40extra/dot分别按自己的合同负责精度与存储/恢复，FEINN不复制其工作。最终目标仍是原尺寸50×25×140nm、17nm宽/120nm高Si线光栅、λ=0.7nm、非可分三维缺口的完整三维FE，十进制2,000,000,000,000B整机、swap0、172800s完整流程；仍NOT_RUN/NOT_QUALIFIED。
 

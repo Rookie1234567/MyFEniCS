@@ -9,7 +9,7 @@
         "existing reviewed task-local activation/resource/durable interfaces and saved records"
       ],
       "tests": [
-        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; unchanged implementation bytes"
       ],
       "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
       "numerical_behavior_changed": false,
@@ -36,7 +36,7 @@
         "existing reviewed task-local activation/resource/durable interfaces and saved records"
       ],
       "tests": [
-        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; unchanged implementation bytes"
       ],
       "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
       "numerical_behavior_changed": false,
@@ -71,7 +71,7 @@
         "existing reviewed task-local activation/resource/durable interfaces and saved records"
       ],
       "tests": [
-        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; unchanged implementation bytes"
       ],
       "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
       "numerical_behavior_changed": false,
@@ -82,7 +82,7 @@
       "files": [
         {
           "path": "docs/development_model_registry.md",
-          "sha256": "473e86f9fb9cac9eee17e68a5af426173ca584729e9fbd64d925aef5a8e0bea8"
+          "sha256": "fc0797b3beb75ba3a4bf18303c7e57bf457b159d823867e4a52cef657b21c717"
         },
         {
           "path": "docs/development_progress.md",
@@ -94,7 +94,7 @@
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md",
-          "sha256": "3b54ddd388e50fe71a49ea81bd0ea6d44875bea42cb12cbb9fb6cbbd72f45caf"
+          "sha256": "b1a7541ee4b7a4d746f4d80b6ddc6e7e9a703dcbae86369c1630a5eb65965dd1"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/background_conversion_v13.json",
@@ -106,7 +106,7 @@
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v13.json",
-          "sha256": "05606dbd88e1a39e74d1f21b4aa1944d1be8f14e6338abf320f59b32f1522bf9"
+          "sha256": "bc4f6a153e0280c63885150e2def28dea7ab4a7949d7a95a4bc9a41633ed6790"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v13.json",
@@ -114,15 +114,15 @@
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v13.json",
-          "sha256": "7a9f7f72bb55cf344139df606128611024022dda696f3bf6eac9224f16b2d6e5"
+          "sha256": "dfb18849205b56108755d8c9b95e9f8302414b290e2acec86688948a6232c045"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v13.json",
-          "sha256": "ae2186dd30a94c3ee99bd9c16aa5178b06437b15ae20644f9282e84d6ff85d18"
+          "sha256": "a9aeb7736fda870d81fda86e56cc319df0fc27884f57ffb8944c108935e9daa4"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v13.json",
-          "sha256": "56fff3dd7bc8a06f38cb2e307c6437f345a583837e81d1fe639bb7842807e298"
+          "sha256": "4e1d0de96cad5c25266845e16571a9d4259b09102400d78f83adf18f05958af6"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v13.json",
@@ -134,7 +134,7 @@
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v13.json",
-          "sha256": "937960a0d1ad24a713ea94df81b6e8c9ac347f672d47b8cff42c158a8ed61ffa"
+          "sha256": "519fe17f66a05e1d78638072f716f58db7d3a86c583a4c7132925ac5c07eb89d"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/records/witness_norm_reuse_v13.json",
@@ -142,15 +142,15 @@
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
-          "sha256": "83cab0ad9f0335127be902c9d46014334a8d349b80110baa1b4607166257aaeb"
+          "sha256": "7501357d7e554c45c66514ea94f5cfe7dddc95c60c9a0134c273402a138f3dfe"
         },
         {
           "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
-          "sha256": "53d5b42fa8112445b38b699ce8d5d4f846b0077467cf51f95ffb195c9ac4440f"
+          "sha256": "bc2d08eb18805140b10993709ba661e10c81a59b168a5460cf62c63a77bb0e38"
         },
         {
           "path": "docs/task042extra_feinn_5nm/response_v13.md",
-          "sha256": "101f63d85b46a6f5a20ed841d46caea88f7e91b12bee8e1bb9766106a0a92bc3"
+          "sha256": "7063a7ebfe6cd8455a99b89356d2f036c69174e2a08a0eafeb8cfef4cc08c558"
         }
       ],
       "production_qualified": false,
@@ -158,7 +158,7 @@
         "existing reviewed task-local activation/resource/durable interfaces and saved records"
       ],
       "tests": [
-        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+        "Initial 8-page/26-table parser PASS; post-macro final parser and actual visual NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE; original Response spotcheck PASS/topic formula FAIL retained"
       ],
       "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
       "numerical_behavior_changed": false,
@@ -181,7 +181,7 @@
         "existing qualified native packets, full P34/MPC restore, BoundedFieldIntegrals; immutable V12 data"
       ],
       "tests": [
-        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; unchanged implementation bytes"
       ],
       "fresh_evidence": "v13_background_transfer:2A4/noPDEsolve/nofactor/noNN",
       "numerical_behavior_changed": true,
@@ -195,7 +195,7 @@
         "existing reviewed task-local activation/resource/durable interfaces and saved records"
       ],
       "tests": [
-        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; selected Markdown for docs"
+        "73 targeted tests, source8000ee893a42e2f3cef288fe4652ee1052d511e7; raw checker; unchanged implementation bytes"
       ],
       "fresh_evidence": "independent_checker_v13 / targeted_tests_v13",
       "numerical_behavior_changed": false,

@@ -5,7 +5,7 @@
     "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v12_evidence_audit.json",
     "sha256": "cd3e5ac5af873d7ae6ffbd7cf76eb12f738835567fdbc6471d591b99035d90c5"
   },
-  "new_pages_visual_status": "PENDING_FIRST_PUSH_AND_FINITE_BROWSER_CHECK",
+  "new_pages_visual_status": "RESPONSE_SPOTCHECK_PASS_TOPIC_FIRST_FAIL_POST_FIX_UNVERIFIED_RESOURCE",
   "old_historical_pages_not_rerendered": true,
   "local_parser_is_not_browser_visual": true,
   "local_parser": {
@@ -14,5 +14,120 @@
     "tables": 26
   },
   "review_visual_scope": "reused Review V12 first publication f8374e69fc19a9ba00b65be76dbb08bff4fd4d18; final text differs only review evidence metadata and has local parser qualification",
-  "current_review_file_sha256": "cde278b3d86c74ccc9d5846232a959889cb71a8f3fe7625be125aa0dabe17ed3"
+  "current_review_file_sha256": "cde278b3d86c74ccc9d5846232a959889cb71a8f3fe7625be125aa0dabe17ed3",
+  "first_new_page_visit": {
+    "publication_sha": "bebd08f24d50f9791e03e7ca5ea5d0c2dcc7d4d9",
+    "raw_render_record": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/render_records.json",
+      "sha256": "6823e07877e1b0169373eb97c5c23b32cb5ba7d951188dd38cf727c20088d9db"
+    },
+    "supervision": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_github_visual_20261003T024328136201Z/summary.json",
+      "sha256": "b2e98575814c18c529ee3dabfb8b7a9e951581a7bea4c0fc2114cc786263eb99"
+    },
+    "elapsed_seconds": 25.759025915991515,
+    "tree_peak_bytes": 1810116608,
+    "own_swap_bytes": 0,
+    "descendants_cleared": true,
+    "pages": [
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/bebd08f24d50f9791e03e7ca5ea5d0c2dcc7d4d9/docs/task042extra_feinn_5nm/response_v13.md",
+        "tables": 5,
+        "math_blocks": 1,
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_top.png",
+            "sha256": "30f602a7a8080c01303d6bd2492aaf955890728aea1643fad846d4261ff7bada"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_table_00.png",
+            "sha256": "b1be777eb05c9913b63fa18a4b9a7e3732ebf11e72a6a8a8ec0c61652c8c8d36"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_table_01.png",
+            "sha256": "a311d3ed04e2abe8d10e0fd10e4135bd9e37d69e91e2e99bbc11b77bf569fbfb"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_table_02.png",
+            "sha256": "6f49060c097fd5327fa8fc766a4a112608bf407408242ea1960f3f9aa90dc711"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_table_03.png",
+            "sha256": "70edd5bb6fa786add79c58f1c8775eeb1a13b9a3ba91492511e500d3bd3c6e50"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_table_04.png",
+            "sha256": "eaf384bb05ab25baf355ea2bd8e9a915537a0d263845a85c58806fe4321ae5d4"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/00_math-renderer_00.png",
+            "sha256": "63bccf71045a835e1224f3fe9ff432271a6e0ddc3a205134e03e3bf89a1961bd"
+          }
+        ],
+        "viewed_screenshot_suffixes": [
+          "00_math-renderer_00.png",
+          "00_table_02.png"
+        ],
+        "failure": null
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/bebd08f24d50f9791e03e7ca5ea5d0c2dcc7d4d9/docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md",
+        "tables": 5,
+        "math_blocks": 1,
+        "status": "RENDERED_VIEW_FAIL_UNSUPPORTED_MATH_MACRO",
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_top.png",
+            "sha256": "4b1bba609d2f2e8c546098899075e048d785a52f898d07d12585d86c89ff16b2"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_table_00.png",
+            "sha256": "754256cc81e54038da9f224d210893041e15492cb4769850f928e1b7a4cb8647"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_table_01.png",
+            "sha256": "a19d61a2acb90abc9aa78ffbf60e442ad76d4f352539d0b632787f466557d64d"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_table_02.png",
+            "sha256": "b0f437b52861c12ff3233020605143070100f3d574cedb90fc119f569809710e"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_table_03.png",
+            "sha256": "9ea4022464df372ee5ce872f180794999ec3606c16f0f2814d49a40550c850dc"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_table_04.png",
+            "sha256": "e13901fcf7095d431dbd9751c2715af694c90f1c118c1cb1bb1a060e2cf8f6c5"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/01_math-renderer_00.png",
+            "sha256": "a8717e09e3e43c84a0acf1e1cce475c4c9df04f77a6ad61db87e8eae4afe170f"
+          }
+        ],
+        "viewed_screenshot_suffixes": [
+          "01_table_01.png",
+          "01_math-renderer_00.png"
+        ],
+        "failure": "The following macros are not allowed: operatorname"
+      }
+    ],
+    "supervisor_completion_does_not_imply_visual_pass": true
+  },
+  "localized_retry": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "formula_macro_correction": "operatorname{Re} to mathrm{Re}; same real-part identity",
+    "corrected_topic": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md",
+      "sha256": "b1a7541ee4b7a4d746f4d80b6ddc6e7e9a703dcbae86369c1630a5eb65965dd1"
+    },
+    "post_fix_local_parser": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "post_fix_actual_GitHub_visual": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "attempted_supervisor_directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_markdown_macro_fix_20261003T024842834924Z",
+    "worker_started": false,
+    "numeric_work_repeated": false,
+    "bounded_browser_retry_started": false,
+    "old_failure_not_overwritten": true
+  }
 }

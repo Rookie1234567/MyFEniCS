@@ -17,7 +17,7 @@ A原向量分类、八个见证范数复用、D0/D1状态纠正及唯一B背景�
 | 共享背景差的误差像 | 两候选.325782556578/.330392025659不变，defect≤1.82e-17 | 与同p3失败分开，不称G4/连续收敛 |
 | D0 / D1 | COST_VETO_CONFIRMED / NOT_RUN_COST_VETO | 旧JSON不追改；[新映射](records/status_mapping_v13.json) |
 | 正式B资源/操作 | 77.4764841361s，304291840B树峰，swap0；2 A4，其余禁止作用0 | [完整新增及历史账](records/resource_costs_v13.json)，自身已清场 |
-| 测试 / 渲染 / 合并 | 73定向通过；新页parser/实际视觉单列；无production晋级 | [测试](records/targeted_tests_v13.json)、[渲染](records/render_check_v13.json)、[六组清单](records/selective_merge_manifest_v13.json) |
+| 测试 / 渲染 / 合并 | 73定向通过；首次8页26表parser通过，回执目视通过、专题公式失败；宏修正后复查资源未运行；无production晋级 | [测试](records/targeted_tests_v13.json)、[渲染](records/render_check_v13.json)、[六组清单](records/selective_merge_manifest_v13.json) |
 
 [Response V13](../response_v13.md)、[专题与完整8见证表](evidence_closure_v13.md)、[source/index](records/run_index_v13.json)、[Gate](records/gate_decisions_v13.json)。新邻层/交叉FE积分仍NOT_RUN，历史optimizer/RNG仍NOT_RETAINED。原尺寸0.7nm/十进制2TB/48h完整流程未资格化，原精度门不放宽。无NN净增益，暂停并等review；不合并master。
 

@@ -224,4 +224,6 @@ V12实际GitHub检查：发布cad9fe635199d5c22e83a0698b7412e349449aaf的Review 
 | Ruff/compileall | 实现8个Python文件通过；新文档checker另外检查 | 本地证据，无CI声明 |
 | 新页parser / GitHub实际视觉 | 独立有限检查记录 | 不重渲染全部历史，不把发布端结构检查当视觉通过 |
 
-一次轻测试调用因无空闲物理核未启动；原Gate的新只读窗口准入一次后，73测试通过。数值修复0次，文档转义修复1次，B数值重试0次，所有费用计入完整墙钟账。[定向原日志/JUnit](records/targeted_tests_v13.json)、[独立checker](records/independent_checker_v13.json)、[失败/准入](records/repair_log_v13.json)、[渲染](records/render_check_v13.json)。旧V12合并24项未启动及新增FE邻层积分未运行不改标。
+一次轻测试调用因无空闲物理核未启动；原Gate的新只读窗口准入一次后，73测试通过。数值修复0次，文档修复2次（转义及GitHub拒绝公式宏），B数值重试0次，所有费用计入完整墙钟账。[定向原日志/JUnit](records/targeted_tests_v13.json)、[独立checker](records/independent_checker_v13.json)、[失败/准入](records/repair_log_v13.json)、[渲染](records/render_check_v13.json)。旧V12合并24项未启动及新增FE邻层积分未运行不改标。
+
+首次本地parser为8页26表通过；GitHub发布bebd08f24d50f9791e03e7ca5ea5d0c2dcc7d4d9的回执公式/结果表目视通过，专题公式报实部宏不允许，25.759025916s/1810116608B树峰/swap0/清场。专题宏已改为 `\mathrm{Re}`，数学不变；修正后的parser与浏览器复查资源未运行，不冒称最终视觉通过，也不在唯一资源重新准入用完后继续等待或重启。仅追加文档、记录与Git收口，未再运行数值测试或算子。

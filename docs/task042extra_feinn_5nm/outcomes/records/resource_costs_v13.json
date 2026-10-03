@@ -1,7 +1,7 @@
 {
   "schema": "task42extra.complete-resource-costs.v13",
   "batch_started_utc": "2026-10-03T02:16:33+00:00",
-  "snapshot_utc": "2026-10-03T02:42:41.397393+00:00",
+  "snapshot_utc": "2026-10-03T02:50:46.550703+00:00",
   "batch_limit_seconds": 7200,
   "old_conservative_seconds": 158041.7009986502,
   "old_cost_record": {
@@ -14,13 +14,13 @@
     "sha256": "cd3e5ac5af873d7ae6ffbd7cf76eb12f738835567fdbc6471d591b99035d90c5"
   },
   "unitemized_review_tail_seconds": "NOT_RETAINED_NOT_ZERO",
-  "measured_nested_worker_and_B_launcher_seconds": 93.45802166406065,
+  "measured_nested_worker_and_B_launcher_seconds": 119.21704758005217,
   "worker_fees_are_not_added_again_to_complete_batch_wall": true,
-  "complete_batch_wall_upper_seconds": 1568.397393,
+  "complete_batch_wall_upper_seconds": 2053.550703,
   "bounded_final_publication_reserve_seconds": 120,
   "publication_reserve_kind": "DERIVED_CONSERVATIVE_UPPER_ALLOWANCE_NOT_MEASURED_WORKER_TIME",
-  "new_conservative_charged_seconds": 1688.397393,
-  "cumulative_conservative_seconds": 159764.82434731902,
+  "new_conservative_charged_seconds": 2173.550703,
+  "cumulative_conservative_seconds": 160249.97765731902,
   "B_full_launcher_seconds": 77.47648413607385,
   "B_supervised_worker_seconds": 15.64831093000248,
   "B_summary": {
@@ -62,6 +62,19 @@
       },
       "worker_elapsed_seconds": 4.20405393303372,
       "tree_peak_bytes": 185085952,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "cleared": true
+    },
+    {
+      "label": "v13_E_github_visual_20261003T024328136201Z",
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_github_visual_20261003T024328136201Z/summary.json",
+        "sha256": "b2e98575814c18c529ee3dabfb8b7a9e951581a7bea4c0fc2114cc786263eb99"
+      },
+      "worker_elapsed_seconds": 25.759025915991515,
+      "tree_peak_bytes": 1810116608,
       "tree_swap_peak_bytes": 0,
       "classification": "COMPLETED",
       "exit_code": 0,
@@ -117,6 +130,15 @@
   },
   "failed_light_admission_elapsed_seconds": "NOT_RETAINED; contained in complete wall",
   "failed_light_worker_started": false,
+  "failed_admissions_and_repairs": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/repair_log_v13.json",
+    "sha256": "a9aeb7736fda870d81fda86e56cc319df0fc27884f57ffb8944c108935e9daa4"
+  },
+  "final_own_clearance": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/final_clearance_v13.json",
+    "sha256": "304c45c646fb49bc06802657222d81a5c34cf682d76aa4506f8b6ce9e24da287"
+  },
+  "post_macro_parser_and_visual": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE; unique fresh readmission already consumed",
   "accounting": "entire batch upper wall includes read/implementation/metadata/hash/import/setup/tests/failures/IO/docs/publication; exclusive phase windows below are part of, not added to, wall",
   "exclusive_coarse_windows": [
     {
@@ -136,12 +158,12 @@
     {
       "phase": "E arithmetic closure/docs/publish",
       "start": "2026-10-03T02:31:16+00:00",
-      "end": "2026-10-03T02:42:41.397393+00:00",
-      "upper_seconds": 805.397393,
+      "end": "2026-10-03T02:50:46.550703+00:00",
+      "upper_seconds": 1290.550703,
       "limit_seconds": 2400
     }
   ],
-  "local_repairs_used": 1,
+  "local_repairs_used": 2,
   "local_repairs_cap": 2,
   "old_lost_3284s_and_all_replays_or_PSI_not_removed": true,
   "new_Gram_cost_seconds": 0,
@@ -151,7 +173,7 @@
   "missing_optimizer_RNG": "NOT_RETAINED_V2_V6",
   "source_vs_documentation": {
     "numeric": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
-    "current_documentation_parent_HEAD": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+    "current_documentation_parent_HEAD": "bebd08f24d50f9791e03e7ca5ea5d0c2dcc7d4d9",
     "doc_parent_not_claimed_as_run_source": true
   },
   "final_publication_must_end_before_snapshot_plus_reserve": true

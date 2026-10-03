@@ -33,7 +33,7 @@ M89→95六步实际接受更新全部降低loss、增加G误差能量；总G能
 d_b&=P_{34}b_3-b_4,\\
 r'_4&=r_4+A_4d_b,\\
 \lVert r'_4\rVert^2-\lVert r_4\rVert^2
-&=2\operatorname{Re}(r_4^*A_4d_b)+\lVert A_4d_b\rVert^2.
+&=2\mathrm{Re}(r_4^*A_4d_b)+\lVert A_4d_b\rVert^2.
 \end{aligned}
 ```
 
@@ -65,9 +65,11 @@ r'_4&=r_4+A_4d_b,\\
 | 八个见证 | 已保存 / 复用审阅核验 | 不新增前向 |
 | 独立E/curl交叉及邻层积分 | NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE | 不以旧积分或P34配对冒称通过 |
 | V2/V6缺失optimizer/RNG | NOT_RETAINED | 不回放补历史 |
-| 原NN同p3 / 全球表达能力 | FAIL / UNKNOWN | 主求解器暂停，无production晋级 |
+| 原NN同p3 / 全局表达能力 | FAIL / UNKNOWN | 主求解器暂停，无production晋级 |
 
 B实测完整77.4764841361s，数值树峰304291840B/swap0；CPU10/MPI1/线程1，系统PSI60s窗口和原资源门均通过。全批保守成本计阅读、实现、IO、测试、资源拒绝、发布与清场，见[完整账](records/resource_costs_v13.json)。历史失联3284s、V3中断/边界重放、两次PSI与全部失败不删。研究累计账不是最终原尺寸单次48h流程的成功/失败证明。
+
+本页首次GitHub公式渲染失败，实部宏已作最小修正；修正后复查因CPU资源门拒绝而未运行。首次八个见证表目视可读，但不能据此将本页公式或最终全文视觉升级为PASS。原DOM、截图、失败与未验证状态见[有限渲染记录](records/render_check_v13.json)。
 
 唯一下一步是停止本FEINN数值链、等待review；重新开放需新具体假设和同成本原精度对照。原尺寸0.7nm、十进制2TB整机与48h完整三维FE目标不变，未运行，不复制其他任务传统求解器/存储工作。
 

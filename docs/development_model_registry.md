@@ -2035,7 +2035,7 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 原M5 p3 NN保存场 | M3600 native.885852/E L2.0933003，Mfinal native.846542/E L2.122945；旧场不改，未过原精度门 | V11/V12保存物理，Response V13 |
 | 单一p3→p4同总场背景见证 | d_b=P34b3−b4，共享2次A4（1修正+1直接见证）；原p3参考p4 residual3.55236→5.20557 | source8000ee893a42e2f3cef288fe4652ee1052d511e7；background_conversion_v13.json |
 | 完整费用/资源 | B77.4764841361s/304291840B同时树采样峰/swap0；全批和历史保守账另列 | resource_costs_v13.json；不以worker时间替代完整账 |
-| 分类与角色 | 有限局部目标分歧支持 / 全球表达未知；D0 COST_VETO_CONFIRMED，D1 NOT_RUN_COST_VETO | 原向量checker和状态对照，不改旧失败/JSON |
+| 分类与角色 | 有限局部目标分歧支持 / 全局表达未知；D0 COST_VETO_CONFIRMED，D1 NOT_RUN_COST_VETO | 原向量checker和状态对照，不改旧失败/JSON |
 | 最终目标与晋级 | 原尺寸0.7nm、十进制2TB整机、172800s完整三维FE仍NOT_RUN/NOT_QUALIFIED；无神经增量、无production晋级 | FEINN_MAIN_SOLVER_ON_HOLD，暂停并待review |
 
 不新训练/初始化对照、p/h/端口扩展或参考重求。task40extra/dot按各自合同推进精度/存储，FEINN不复制其实现。[回执](task042extra_feinn_5nm/response_v13.md)、[专题](task042extra_feinn_5nm/outcomes/evidence_closure_v13.md)、[运行hash](task042extra_feinn_5nm/outcomes/records/run_index_v13.json)。

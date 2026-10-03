@@ -95,6 +95,10 @@
       "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v13.json",
       "sha256": "c534162abb57577f24258ef8637041dcb8afedcfba23d32c9fa6ff019d3ea75d"
     },
-    "doc_checker_Ruff_compileall": "PASS_LOCAL"
-  }
+    "doc_checker_Ruff_compileall": "PASS_LOCAL",
+    "scope": "first publication selected 8 pages / 26 tables; final macro and metadata edits are not covered by that parser hash"
+  },
+  "post_macro_final_documentation_parser": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "numeric_test_source_unchanged_after_documentation_edits": true,
+  "new_post_macro_numeric_or_browser_runs": 0
 }

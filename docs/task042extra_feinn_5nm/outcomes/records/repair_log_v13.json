@@ -1,6 +1,6 @@
 {
   "schema": "task42extra.closure-failures-and-readmission.v13",
-  "local_repairs_used": 1,
+  "local_repairs_used": 2,
   "local_repairs_max": 2,
   "numeric_retries": 0,
   "formal_numeric_starts": 1,
@@ -13,6 +13,17 @@
       "root_cause": "RESOURCE_WINDOW_UNAVAILABLE",
       "precise_elapsed_seconds": "NOT_RETAINED",
       "charged_in_complete_batch_wall": true
+    },
+    {
+      "label": "v13_E_markdown_macro_fix_20261003T024842834924Z",
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_markdown_macro_fix_20261003T024842834924Z",
+      "failure": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "worker_started": false,
+      "root_cause": "RESOURCE_WINDOW_UNAVAILABLE",
+      "precise_elapsed_seconds": "NOT_RETAINED",
+      "charged_in_complete_batch_wall": true,
+      "unique_resource_readmission_already_used": true,
+      "disposition": "stop affected parser/browser follow-up; finish static evidence and Git; no polling or readmission"
     }
   ],
   "fresh_probe": {
@@ -32,6 +43,25 @@
       "test": "control character scan and selected Markdown parser; actual rendered MathML checked separately",
       "retry": "document-only, zero numerical/forward/operator restart",
       "charged_in_complete_batch_wall": true
+    },
+    {
+      "failure": "Actual GitHub topic formula failed: operatorname macro disallowed; local parser had passed",
+      "hypothesis": "GitHub math-renderer macro allow-list rejects operatorname; existing rendered task uses mathrm",
+      "change": "Only new evidence_closure_v13.md uses mathrm{Re}; same real-part formula and unchanged numerical source",
+      "test": "Selected local Markdown parser followed by one published fixed-topic-only visual visit",
+      "retry": "POST_FIX_PARSER_AND_VISUAL_NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+      "failure_evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v13_bebd08f2/render_records.json",
+        "sha256": "6823e07877e1b0169373eb97c5c23b32cb5ba7d951188dd38cf727c20088d9db"
+      },
+      "charged_in_complete_batch_wall": true,
+      "numerical_bytes_or_source_changed": false
     }
-  ]
+  ],
+  "metadata_helper_failure": {
+    "failure": "Ignored render-record aggregation helper initially used pages/dom instead of records/DOM",
+    "effect": "KeyError before writing tracked records; no worker or operator action",
+    "resolution": "read actual retained schema and aggregate existing capture",
+    "cost": "contained in full wall; no replay of browser or numeric work"
+  }
 }
