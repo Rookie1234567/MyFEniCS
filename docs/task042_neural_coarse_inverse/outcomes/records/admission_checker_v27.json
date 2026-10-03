@@ -1,0 +1,23 @@
+{
+  "schema": "task042.v27.cached-admission-checks",
+  "named_inventory_exact": true,
+  "no_new_numeric_arrays": true,
+  "ledger_runs_zero": true,
+  "ledger_active_null": true,
+  "ledger_all_counters_zero": true,
+  "ledger_closed": true,
+  "formal_result_inventory_absent": true,
+  "source_matches_commit": true,
+  "recheck_consumed_once": true,
+  "resource_rejected": true,
+  "derived_classification": "NOT_RUN_CPU_ADMISSION",
+  "scope": "JSON/source/inventory independent recomputation; no S/SH/LU/QR/FE",
+  "numeric_direction_gates": "NOT_RUN",
+  "V26_ledger_unchanged": true,
+  "V26_ledger_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json",
+    "sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853",
+    "bytes": 2209
+  },
+  "protected_task_review_response_unchanged": true
+}

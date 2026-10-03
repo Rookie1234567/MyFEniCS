@@ -1,3 +1,9 @@
+# V27最终测试与未运行边界
+
+67项focused pure测试通过（1.70s），包含旧V26的42项scope、4项临时ledger／时钟拒绝与21项V27回流fixture；46和早期67为相同scope子集／重复，不相加。源码与clean commit7b0e03f2逐文件绑定。compileall及真实新dat validate PASS。生产V26窗口／ledger未变。
+
+真实回流两态／factor重载／原S资格NOT_RUN：正式actor前CPU准入失败，一次复核额度已用完。没有新的CI、full pytest、MPI2/4、PDE或训练；Ruff未安装。旧跨任务总账合同失败由Review V24报告，本批不清理或声称全仓绿。[测试日志](records/tests_v27.json)／[零消费独立核验](records/admission_checker_v27.json)。以下历史保留。
+
 # V26本地测试与证据范围
 
 | 本地scope | measured结果／边界 |

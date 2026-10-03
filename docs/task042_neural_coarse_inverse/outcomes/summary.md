@@ -1,3 +1,19 @@
+# Task042 V27：修复测试后，回流诊断因CPU准入未运行
+
+固定J→外域→J只计划检验九个历史方向之外的一个方向，没有改变有限元方程。67项pure回归、compileall及新dat验证通过；正式入口未找到合格空闲物理核，已用完允许的一次只读复核，actor前以NOT_RUN_CPU_ADMISSION收口。两冷态eta10/g10均NOT_RUN，不把资源停止改成方向失败。
+
+| 数据身份／完成项 | 结果与具体边界 |
+|---|---|
+| 测试窗口修复／measured | 旧42scope+4拒绝+21新回流fixture=67通过；V26真实窗口仍closed，不重开、不重算 |
+| 唯一正式入口／not_run | source7b0e03f2fbfb504b13a5f5b4c46c52e0e96a5eb9已clean；actor0/S+SH0/reader0/新LU0，数值资格未测试 |
+| 两冷态历史基线 | LZ4 eta9=.966205505618、LCZ4 .981968429990；本轮回流抵消/创新/eta10/g10无实测 |
+| shared-workstation成本／measured | 辅助12.366657368s、采样整树峰134,275,072B、ownswap/VRAM0；总window自02:14:16.872215Z不刷新，准入读取独立费用unknown计总wall |
+| 原方程／NN | 新完整场资格NOT_RUN；V24 0/5、V23 0/6保持；无NN训练或合格配对，20%收益NOT_DEMONSTRATED |
+| 因子及容量／边界 | 原七bundle实际未读；计划rank≤3888<18144，不可独立全空间右PC；derived4,807,239,744B非RSS，不声称factor-free |
+| 停止／下一步 | CPU准入额度耗尽，ledger closed/active null；仅建议下一review判断是否重新授权未消费诊断，当前不重入，无merge approval |
+
+[Response V27](../response_v27.md)／[详细记录](return_direction_v27.md)／[成本](records/resource_costs_v27.json)／[原始索引](records/run_index_v27.json)。GitHub视觉NOT_VERIFIED，本地静态另查。以下历史逐字保留，旧建议不授权本轮继续。
+
 # Task042 V26：联合新方向可信但增量不足
 
 **V26已完成，数值资格通过，预登记决策为 `FIXED_JOINT_DIRECTION_INSUFFICIENT`。** 两终态g均≥0.95，未达到两者g≤0.75的继续研究信号。关闭本固定5／7联合方向提案，不新启动迭代、另一块对或训练。它产生了可分辨的新方向，但不能显著消除旧八方向留下的残差；不是新的有限元解，也不否定所有接口／神经方法。

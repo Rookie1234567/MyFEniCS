@@ -1,0 +1,116 @@
+{
+  "schema": "task042.v27.source",
+  "start_HEAD": "222aa0af9385d9cd38dd25b11f416ecd8b702957",
+  "candidate_entry_source_sha": "7b0e03f2fbfb504b13a5f5b4c46c52e0e96a5eb9",
+  "numeric_actor_source_sha": null,
+  "files": [
+    {
+      "file": "input/task042_neural_coarse_inverse/return_block_direction_v27.json",
+      "sha256": "7f9730ac2adcb61f50fd5221e468c04f420e8cebf415f9f8683e1f1f287dc389",
+      "bytes": 10371,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "input/task042_neural_coarse_inverse/v27_return_direction_diagnostic.dat",
+      "sha256": "2daf6fefe10ce22edfe490dd45d4fc7afe699783501f53c9950b6ceddd7db37a",
+      "bytes": 232,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "scripts/run_case.py",
+      "sha256": "cc651778b6377045ee738874c96fe3108a9f607b45dbcb645d424e3e01b8be8b",
+      "bytes": 11351,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/io/return_block_diagnostic.py",
+      "sha256": "5b270c82ab546cb7ec48cfb8577bcdd0f37daa68b8e1e0764ae513481c869f4d",
+      "bytes": 3832,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/io/task042_profile.py",
+      "sha256": "d31eb1a8671fcaab9bd6a860dd9e17fae7693d311cceac668dde505ec9df7d94",
+      "bytes": 5621,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/runners/return_block_diagnostic.py",
+      "sha256": "eb3237e86d6287a3d08b4d665db0ddecdbd847370cff22273d912a3955fb2b2a",
+      "bytes": 1560,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/runners/task042_shared.py",
+      "sha256": "8cf5b397bb04ee310dcb3ffc55deed4bcfd3b53c4588136cf5a024ddb277ff82",
+      "bytes": 50397,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/solvers/bounded_diagnostic_window.py",
+      "sha256": "0b15187f413ced272e9a4a721ca76fbeca211341ef41c037ab587114ee1c2de6",
+      "bytes": 3794,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/solvers/return_block_direction.py",
+      "sha256": "0e8595c030bb11030709f80df79b74aabe4cf14d5b0283d2422aa254882e26b5",
+      "bytes": 10094,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/solvers/return_block_study.py",
+      "sha256": "5fda9b1bdd5d4a9c20e0fa16f2f4593eabc3b7c052145d19c5e37604abfde48b",
+      "bytes": 14797,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/solvers/return_block_window.py",
+      "sha256": "87bfe3d3c2652b25b86ae6435ee6363986bd34b2cb208a824fea53cd389fa112",
+      "bytes": 851,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/test/task042_campaign_fixture.py",
+      "sha256": "790b04e82200f9b975f89874672461d5ed498b0e17bcdfa88451a51e52c46e84",
+      "bytes": 1974,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/test/test_task042_v26_cached_evidence.py",
+      "sha256": "28ae322b108aa30bd4d86fd2e121c41ba763a053a0c62e80fc382bd5bee18d7f",
+      "bytes": 3150,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/test/test_task042_v26_joint_direction.py",
+      "sha256": "f240f86bab30f250fb44e54da89167407c3a3ff8a0ed03049c84a11b4c7ed331",
+      "bytes": 9497,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    },
+    {
+      "file": "src/test/test_task042_v27_return_direction.py",
+      "sha256": "ec46013fef9151046ccf0bd059dd44e09500c315f9bcb61e7d0e16b434328fae",
+      "bytes": 10675,
+      "candidate_entry_source": true,
+      "numeric_actor_executed": false
+    }
+  ],
+  "source_role": "clean implementation for failed admission; not an executed numerical source",
+  "final_document_HEAD_role": "reported separately after commit/push",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc"
+}

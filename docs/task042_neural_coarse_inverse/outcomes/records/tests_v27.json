@@ -1,0 +1,29 @@
+{
+  "scope": "V26 inventory/joint/cache plus V27 return direction",
+  "passed": 67,
+  "failed": 0,
+  "seconds": 1.7,
+  "source_sha": "7b0e03f2fbfb504b13a5f5b4c46c52e0e96a5eb9",
+  "binding": "tested files identical to clean commit; tests were completed before committing",
+  "log": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_023024062742/supervision/worker.log",
+    "sha256": "2b524ba7c48495ad050b75a95e45c57204ab21ca9035e385a40f16043f775c33",
+    "bytes": 360
+  },
+  "tests": [
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_inventory.py",
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_joint_direction.py",
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_cached_evidence.py",
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v27_return_direction.py"
+  ],
+  "relationship_to_review_42": "same old42 plus4 isolated-window rejection cases and21 new V27 cases; repeated46/67 runs not added",
+  "compileall": "PASS",
+  "actual_dat_schema_validate": "PASS",
+  "production_V26_window": "closed, never modified",
+  "full_repository_pytest": "NOT_RUN (scope/resource)",
+  "MPI2_4": "NOT_RUN (pure MPI1)",
+  "CI": "NOT_RUN",
+  "Ruff": "NOT_RUN (not installed)",
+  "old_cross_task_registry_contract": "known review-reported 12/13 suite; not rerun or cleaned",
+  "rendering": "GitHub NOT_VERIFIED; exact SHA page Cache miss"
+}

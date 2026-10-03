@@ -1,0 +1,58 @@
+{
+  "failures": [
+    {
+      "id": "ADMISSION_AUX",
+      "kind": "resource_admission_rejected",
+      "cause": "No audited unoccupied physical core",
+      "test_worker_started": false,
+      "duration": "unknown; inside total window, no supervised worker"
+    },
+    {
+      "id": "READONLY_RECHECK",
+      "kind": "allowed_single_readonly_recheck",
+      "worker_started_after_gate": true,
+      "scope": "auxiliary pure-array regression",
+      "number": 1,
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_022923197699/baseline.json",
+        "sha256": "e7fe999d56039a4749c4a9edbd8ab987d01c183f588b4413b3e5d30da01a5e20",
+        "bytes": 280699
+      },
+      "wait_seconds": 0
+    },
+    {
+      "id": "ADMISSION_FORMAL",
+      "kind": "resource_admission_rejected",
+      "cause": "No audited unoccupied physical core",
+      "actor_started": false,
+      "formal_result_directory_created": false,
+      "source_sha": "7b0e03f2fbfb504b13a5f5b4c46c52e0e96a5eb9",
+      "exception_transcription": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v27/launch_rejection.txt",
+        "sha256": "48d312d03e5c3dc34f37476af0784872e2c38725576e9edd85512d732563f91b",
+        "bytes": 909
+      },
+      "recheck_allowance_remaining": 0
+    },
+    {
+      "id": "IDENTITY_PROBE",
+      "kind": "bounded_readonly_probe_false_match",
+      "cause": "Task042 prefix also matched neighboring Task042extra; refined to cwd and exact input path",
+      "HEAD_changed": false,
+      "neighbor_modified": false,
+      "root_code_repair": false
+    }
+  ],
+  "formal_numeric_repair_cycles": 0,
+  "formal_numeric_replays": 0,
+  "not_run": [
+    "seven factor reload witnesses",
+    "both actual J-O-J vectors",
+    "two 10-column workflows",
+    "original cancellation/recombination",
+    "new FE/official results",
+    "training/NN pairing",
+    "any iterative solver"
+  ],
+  "stop_reason": "CPU admission/recheck quota exhausted; no further load"
+}

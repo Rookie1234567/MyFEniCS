@@ -1,0 +1,355 @@
+{
+  "schema": "task042.v27.resource-costs",
+  "shared_workstation": true,
+  "formal_actor_runs": 0,
+  "formal_actor_wall_seconds": 0.0,
+  "supervised_auxiliary_wall_seconds": 12.366657367907465,
+  "numeric_plus_supervised_auxiliary_seconds": 12.366657367907465,
+  "cumulative_limit_seconds": 600,
+  "auxiliary_runs": [
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_021757574959/summary.json",
+        "sha256": "c486ecff933200473e51fd6c47ef542c2f83dc885edc89ccfca9951b87bcf468",
+        "bytes": 3523
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_021757574959/baseline.json",
+        "sha256": "dd5e97b6eac93530aeccfeeec6423914a73e7e801c9e22718fe08747b115d3ca",
+        "bytes": 283425
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_021757574959/supervision/worker.log",
+        "sha256": "b88688f5b5c3012c1117c4fcfb8d1b3ce478732786fe07af30aad275d59961e2",
+        "bytes": 99
+      },
+      "resources": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_021757574959/supervision/resources.jsonl",
+        "sha256": "604360622dc47d9ed2a033eb3d8f820557d83bfe4c4ce0f0597fa538f3edba5a",
+        "bytes": 77001
+      },
+      "elapsed_seconds": 4.255312402965501,
+      "RSS_peak_bytes": 132268032,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "classification": "COMPLETED",
+      "cpu": 40,
+      "selected_core": {
+        "cpu": 40,
+        "core": 20,
+        "socket": 1,
+        "siblings": [
+          40
+        ]
+      },
+      "memory": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1715870552064,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1715870552064,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "PSI": {
+        "some": {
+          "avg10": 0.0,
+          "avg60": 0.0,
+          "avg300": 0.0,
+          "total": 2594440.0
+        },
+        "full": {
+          "avg10": 0.0,
+          "avg60": 0.0,
+          "avg300": 0.0,
+          "total": 2587841.0
+        }
+      },
+      "disk_free_bytes": 3390469537792,
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+        "delegated_writable": false,
+        "ancestors": [
+          {
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+            "memory.max": "max",
+            "memory.current": "398974398464",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+            "memory.max": "max",
+            "memory.current": "507464171520",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup/user.slice",
+            "memory.max": "max",
+            "memory.current": "507599753216",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup"
+          }
+        ],
+        "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+      },
+      "GPU": "0, Quadro RTX 8000, Default, 95 %, 499 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 0 %, 517 MiB, 49152 MiB",
+      "scope": "supervised pure-array auxiliary, shared-workstation"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_022923197699/summary.json",
+        "sha256": "38c552d0fb0d4d141622a5b788535de0fc8ec814eb784b5bdb61dbf7194e0017",
+        "bytes": 3529
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_022923197699/baseline.json",
+        "sha256": "e7fe999d56039a4749c4a9edbd8ab987d01c183f588b4413b3e5d30da01a5e20",
+        "bytes": 280699
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_022923197699/supervision/worker.log",
+        "sha256": "1741bdb107349ce81ef1ac493f9fb2b3f7ac13239b070746e167a6df2ddd5394",
+        "bytes": 99
+      },
+      "resources": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_022923197699/supervision/resources.jsonl",
+        "sha256": "c52b7966a5196fe65831648a1659d9877877956863df1f89e5947e01b23de3ae",
+        "bytes": 65212
+      },
+      "elapsed_seconds": 3.5515179299982265,
+      "RSS_peak_bytes": 134275072,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "classification": "COMPLETED",
+      "cpu": 38,
+      "selected_core": {
+        "cpu": 38,
+        "core": 18,
+        "socket": 1,
+        "siblings": [
+          38
+        ]
+      },
+      "memory": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1713045209088,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1713045209088,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "PSI": {
+        "some": {
+          "avg10": 0.0,
+          "avg60": 0.0,
+          "avg300": 0.0,
+          "total": 2594445.0
+        },
+        "full": {
+          "avg10": 0.0,
+          "avg60": 0.0,
+          "avg300": 0.0,
+          "total": 2587846.0
+        }
+      },
+      "disk_free_bytes": 3390370062336,
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+        "delegated_writable": false,
+        "ancestors": [
+          {
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+            "memory.max": "max",
+            "memory.current": "401962283008",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+            "memory.max": "max",
+            "memory.current": "510472945664",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup/user.slice",
+            "memory.max": "max",
+            "memory.current": "510608527360",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup"
+          }
+        ],
+        "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+      },
+      "GPU": "0, Quadro RTX 8000, Default, 0 %, 9 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 0 %, 9 MiB, 49152 MiB",
+      "scope": "supervised pure-array auxiliary, shared-workstation"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_023024062742/summary.json",
+        "sha256": "e471eada58883cba798dfa865a47e5590ec1998a71e53c27e724b1b010ed87f6",
+        "bytes": 3535
+      },
+      "baseline": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_023024062742/baseline.json",
+        "sha256": "3fb9d9437524a8809cfb153bcdaab6db2c45e38bbaa41f4b81c0fdd24a0e57b6",
+        "bytes": 205865
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_023024062742/supervision/worker.log",
+        "sha256": "2b524ba7c48495ad050b75a95e45c57204ab21ca9035e385a40f16043f775c33",
+        "bytes": 360
+      },
+      "resources": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_023024062742/supervision/resources.jsonl",
+        "sha256": "3c9b1ba73f78e429a267fb02d5ea388905729d9e8de1d6766821bde45a4d52b3",
+        "bytes": 82351
+      },
+      "elapsed_seconds": 4.559827034943737,
+      "RSS_peak_bytes": 129933312,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "classification": "COMPLETED",
+      "cpu": 0,
+      "selected_core": {
+        "cpu": 0,
+        "core": 0,
+        "socket": 0,
+        "siblings": [
+          0
+        ]
+      },
+      "memory": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1710788988928,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1710788988928,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "PSI": {
+        "some": {
+          "avg10": 0.0,
+          "avg60": 0.0,
+          "avg300": 0.0,
+          "total": 2594445.0
+        },
+        "full": {
+          "avg10": 0.0,
+          "avg60": 0.0,
+          "avg300": 0.0,
+          "total": 2587846.0
+        }
+      },
+      "disk_free_bytes": 3390364844032,
+      "cgroup": {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+        "delegated_writable": false,
+        "ancestors": [
+          {
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+            "memory.max": "max",
+            "memory.current": "404100608000",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+            "memory.max": "max",
+            "memory.current": "512636313600",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup/user.slice",
+            "memory.max": "max",
+            "memory.current": "512771895296",
+            "memory.high": "max",
+            "memory.swap.max": "max"
+          },
+          {
+            "path": "/sys/fs/cgroup"
+          }
+        ],
+        "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+      },
+      "GPU": "0, Quadro RTX 8000, Default, 99 %, 1759 MiB, 46080 MiB\n1, Quadro RTX 8000, Default, 100 %, 1759 MiB, 49152 MiB",
+      "scope": "supervised pure-array auxiliary, shared-workstation"
+    }
+  ],
+  "RSS_peak_bytes": 134275072,
+  "memory_scope": "maximum simultaneous sampled auxiliary process-tree RSS; no actor exists",
+  "own_swap_peak_bytes": 0,
+  "Task042_VRAM_bytes": 0,
+  "OOC_bytes": 0,
+  "numeric_factor_readers": 0,
+  "new_factors": 0,
+  "S": 0,
+  "SH": 0,
+  "port_factors": 0,
+  "port_RHS_columns": 0,
+  "thin_decompositions": 0,
+  "unsupervised_readonly_admission_wall_seconds": null,
+  "unsupervised_cost_scope": "unknown, included in original total wall; not substituted by elapsed tool/approval time",
+  "simultaneous_numeric_prediction_bytes": 4807239744,
+  "prediction_role": "unallocated plan only; not RSS measurement",
+  "numeric_new_persistent_bytes": 3719,
+  "new_artifact_and_TMP_observed_bytes": 30405846,
+  "whole_Task042_artifact_observed_bytes": 18024892615,
+  "disk_free_bytes": 3390292815872,
+  "observation_utc": "2026-10-03T02:35:26.179643+00:00",
+  "whole_batch_window": {
+    "schema": "task042.campaign-window.v27",
+    "start_utc": "2026-10-03T02:14:16.872215+00:00",
+    "start_monotonic": 918651.7330821832,
+    "start_monotonic_role": "conservative UTC offset to first real observation; not a simultaneous start pair",
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap": {
+      "utc": "2026-10-03T02:15:38.743886+00:00",
+      "monotonic": 918733.604753383
+    },
+    "heavy_limit_seconds": 4500,
+    "total_limit_seconds": 5400,
+    "heavy_stop_utc": "2026-10-03T03:29:16.872215+00:00",
+    "deadline_utc": "2026-10-03T03:44:16.872215+00:00",
+    "review_expected_commit": "222aa0af9385d9cd38dd25b11f416ecd8b702957"
+  },
+  "historical_formal_lower_bound_seconds": 77161.55713859801,
+  "historical_auxiliary_and_complete_N1_lineage": "unknown retained; no claimed successful solve time",
+  "upstream_V26_cost": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v26.json",
+    "sha256": "2ea27dda1deb906aed191ef96218d61a70d89219642fd4d856b58c7a87974e11",
+    "bytes": 16057
+  },
+  "pressure_or_neighbor_impact": "INCONCLUSIVE; CPU launch admission denied; no neighbor intervention",
+  "resource_reentry": 0,
+  "new_cgroup_enforcement": false,
+  "sampling_interval_seconds": 0.5,
+  "root_implementation_repairs_after_clean_commit": 0,
+  "numeric_counter_scope": "original frozen pilot only; small synthetic fixtures separate",
+  "synthetic_fixture_LU": true,
+  "synthetic_cost_scope": "small required tests, included in supervised auxiliary wall/RSS, not new original local factors",
+  "first_start_to_delivery_scope": "total real elapsed includes implementation/reading/admission/costs/tests/publishing; not reset"
+}

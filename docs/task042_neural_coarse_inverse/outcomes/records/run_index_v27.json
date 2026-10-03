@@ -1,0 +1,58 @@
+{
+  "schema": "task042.v27.run-index",
+  "numeric_runs": [],
+  "formal_attempt": {
+    "command": "TASK042_CACHE_NAMESPACE=v27; source scripts/activate_task042.sh pure; python scripts/run_case.py input/task042_neural_coarse_inverse/v27_return_direction_diagnostic.dat",
+    "source_sha": "7b0e03f2fbfb504b13a5f5b4c46c52e0e96a5eb9",
+    "classification": "NOT_RUN_CPU_ADMISSION",
+    "manifest": null,
+    "resolved": null,
+    "supervision": null,
+    "reason": "launcher rejected before directory/worker"
+  },
+  "minimum_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v27/minimum_result.json",
+    "sha256": "c93d38489af40ebe7b511abadee3c853ef74b64709426718e6216f4cf4a91725",
+    "bytes": 2452
+  },
+  "minimum_cost": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v27/minimum_cost.json",
+    "sha256": "4d5c498ce2f045f9b4ddb9f7d732b2433f667e5d45681fb0a0a0beb3463b2566",
+    "bytes": 358
+  },
+  "window": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/window.json",
+    "sha256": "efe33d8b6273086f70f3fdef8c2a91bfad7cde3b0dfe73376d0a4495fcd7d1bc",
+    "bytes": 647
+  },
+  "ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json",
+    "sha256": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872",
+    "bytes": 507
+  },
+  "journal": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/progress_journal.jsonl",
+    "sha256": "aa110863d610bd9cbcd43db373e68a3a9da83ac3538694c18f47a5e3be9eeb70",
+    "bytes": 3769
+  },
+  "auxiliary_runs": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_021757574959/summary.json",
+      "sha256": "c486ecff933200473e51fd6c47ef542c2f83dc885edc89ccfca9951b87bcf468",
+      "bytes": 3523
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_022923197699/summary.json",
+      "sha256": "38c552d0fb0d4d141622a5b788535de0fc8ec814eb784b5bdb61dbf7194e0017",
+      "bytes": 3529
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/aux_023024062742/summary.json",
+      "sha256": "e471eada58883cba798dfa865a47e5590ec1998a71e53c27e724b1b010ed87f6",
+      "bytes": 3535
+    }
+  ],
+  "upstream_readonly": true,
+  "no_duplicate_run": true,
+  "no_active_actor": true
+}

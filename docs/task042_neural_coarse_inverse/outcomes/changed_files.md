@@ -1,3 +1,16 @@
+# V27变化与依赖分组
+
+| 依赖组 | 行为／证据／审阅边界 |
+|---|---|
+| production numerical/core | 无原方程/材料/MPC/恢复/普通默认变化；不提升任何生产求解资格 |
+| research-only数值 | return_block_direction/study：七bundle只读流式、固定J-O-J、一次十列QR/LS；21项小fixture，实际两态NOT_RUN，不能部署为全空间PC |
+| reusable runner/watchdog | DiagnosticWindow／V27薄io/adapter，原runner增显式profile；0.5s整树/自有锁/PSI原语义保持，新stage累计/reader/port-RHS计费；真实launch被CPU Gate拒绝 |
+| tests | 两旧V26测试临时时钟ledger fixture，4拒绝case；不改生产V26准入或真实window；67最终focused通过 |
+| compact evidence/docs | response_v27与输入/source/零消费/费用/失败/run索引；导航/summary/总账仅前缀，旧字节后缀保留 |
+| do-not-merge | ignored factor/raw/cache/TMP、未资格化研究实现；无新LU、无新FE证据；无merge approval |
+
+未来审查依赖顺序为隔离fixture→显式schema/监督→research核→紧凑证据；这是依赖索引，不是合并授权。最终文档HEAD与未执行actor/source分开。以下历史保留。
+
 # V26变化与依赖分组
 
 | 组 | 实际变化／资格／边界 |
