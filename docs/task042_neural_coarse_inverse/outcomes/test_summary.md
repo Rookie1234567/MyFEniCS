@@ -3,7 +3,7 @@
 | 本地scope | measured结果／边界 |
 |---|---|
 | clean数值实现前focused | 94 passed in3.89s；早期86是子集，不相加；包含新库存19和联合核8、V25与V24默认/准入回归 |
-| 冻结后新缓存checker | 14 passed in0.78s；两name库存/失败/错hash绑定、原向量eta/g与innovation证书、closed准入拒绝；无新S/LU/QR/SVD |
+| 冻结后新缓存checker | 15 passed in1.05s（早期14项为子集，不相加）；完整40模式紧凑引用、两name库存/失败/错hash绑定、原向量eta/g与innovation证书、closed准入拒绝；无新S/LU/QR/SVD |
 | 仓库治理/模型总账文档 | 12 passed in0.07s；与94/14分列，原历史表/保护规则保持 |
 | §3真实旧缓存 | 三状态CHECKED，EIGHT_DIRECTIONS_WEAK原样；empty/one/duplicate/label/parent/member/gates/nonfinite/missing rank/recombination拒绝 |
 | 唯一真实原算子actor | 两cold状态全资格见证通过；负结果g0.982678149/0.991962824；S14/SH2，不是PDE/场资格 |

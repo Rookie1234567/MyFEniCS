@@ -70,8 +70,8 @@ J内剩余残差下降，J外反而上升；同支撑旧q5+q7与qJ已由新原�
 | A_J+LU数组载荷／同时规划 | 483,729,408 B／4,621,269,504 B（约4.30GiB，derived非RSS）；pivot、oldA5/A7、packet/hash/LAPACK及薄阵另计 |
 | 整树同时采样峰／ownswap／VRAM/OOC | 1,625,231,360 B（1.513615GiB）／0／0；无Torch/GPU；0.5s采样，不冒充连续kernel硬限额 |
 | 初步CPU／正式CPU | 先probe CPU0，launch现场重选CPU16（socket0/core20/sibling16）；以实际命令／baseline为准，MPI1、实际BLAS1、Loader0、自身nice10/I/O idle |
-| 有监督辅助wall | 23.338665920 s；数值加辅助56.601288407 s≤900；最终以成本/交付回执观察为准，各stage不清零 |
-| 新artifact／含TMP等先期输出 | 486,889,685 B／500,265,882 B；最终库存另核，均受768MiB；全Task artifacts约18.025GB≤20GiB |
+| 有监督辅助wall | 27.636738837 s；数值加辅助60.899361324 s≤900；最终以成本/交付回执观察为准，各stage不清零 |
+| 新artifact／含TMP等先期输出 | 486,889,685 B／500,368,018 B；最终库存另核，均受768MiB；全Task artifacts约18.025GB≤20GiB |
 | 系统与存储 | 启动MemAvailable1,830,200,459,264B，系统reserve216,310,038,528B＋邻增长137,438,953,472B；磁盘余量约3.391TB≥50GiB；cgroup无delegation、PSI full avg10=0 |
 
 UTC start为2026-10-03T00:39:41Z，heavy-stop02:24:41Z、总deadline02:39:41Z；monotonic起点是首次UTC与随后配对读数的保守对齐，不冒称同时采样。未刷新窗口，求解队列01:00:28Z写minimum result/cost/response后closed，后代已清场；仅继续低负载证据收尾。新stage/提交/交付前重读实际钟，最终时刻见回执。
@@ -84,7 +84,7 @@ formal研发下界从77,128.294516增至77,161.557139 s，仅增加本actor；�
 
 两项辅助准备修复D01/D02均无正式actor或原作用重放：错误辅助window文件名改为本批固定window；缺失threadpoolctl改用既有ctypes BLAS getter，不安装环境。另有未提交预登记额外SHA清理、裸Python探针失败、收尾JSON脚本草稿语法纠正，全部原状／成本口径在[失败记录](records/failures_and_not_run_v26.json)单列；数值修复/重放0，未通过新分解重试救场。未知单项费用保持unknown并已进入总elapsed。
 
-正式源码前94 focused通过（3.89s），包含§3固定三样本19项库存／命名边界回归以及复数主块/贡献/非互伴40port/正反作用/秩亏零向量/只读pivot/容量/预算/默认/新dat注册等；早期86为其中子集，不相加。冻结后缓存checker14项（0.78s）通过，108为两个不重叠测试scope；actor source不因后继checker/文档变化重新计算。另外12项仓库治理/模型总账文档回归通过（0.07s），不与上述scope混淆。compileall及clean源码dat validate通过；Ruff未安装NOT_RUN，full pytest/MPI2/4/CI/PDE/训练按范围未运行，不声称CI。
+正式源码前94 focused通过（3.89s），包含§3固定三样本19项库存／命名边界回归以及复数主块/贡献/非互伴40port/正反作用/秩亏零向量/只读pivot/容量/预算/默认/新dat注册等；早期86为其中子集，不相加。冻结后缓存checker15项（1.05s）通过，含完整40模式的紧凑引用回归；早期14项为该scope子集，不相加；109为两个不重叠测试scope；actor source不因后继checker/文档变化重新计算。另外12项仓库治理/模型总账文档回归通过（0.07s），不与上述scope混淆。compileall及clean源码dat validate通过；Ruff未安装NOT_RUN，full pytest/MPI2/4/CI/PDE/训练按范围未运行，不声称CI。
 
 GitHub精确review页Cache miss，无视觉证据，NOT_VERIFIED；本地fenced math/表格列数/链接另检，不擅改review。全部授权路径完成已closed，只提交本执行分支；运行source与文档HEAD分开，发布/清场回执绑定最终Git观察。完成推送即等待review，不merge、不启动下一提案。
 

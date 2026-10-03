@@ -29,8 +29,8 @@
   ],
   "independent_checker_source": {
     "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_joint_direction.py",
-    "sha256": "adb3d9512098f080c95b0e78b892d018d21f32c1bc6de27476182891e2d8cca9",
-    "bytes": 9428
+    "sha256": "950afc5241d655f274fd8cf3d03b85fb1251b1e4b1f61914f611331f791fcc61",
+    "bytes": 10410
   },
   "no_new_solver_states": true
 }

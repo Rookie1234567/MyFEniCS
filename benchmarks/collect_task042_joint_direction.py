@@ -23,6 +23,20 @@ def read_result():
     return io.checked_json(item,io.ARTIFACT_ROOT),item
 
 
+def compact_physical_identity(result,index):
+    """Keep channel keys and refer to the full, immutable identity once."""
+    original=result['physical_identity'];recipe=original['recipe']
+    keys=('mode_index','side','m','n','polarization')
+    channels=[{k:row[k] for k in keys} for row in original['full_channel_inventory']]
+    require(len(channels)==40 and original['total_channels']==40,'full physical channel inventory')
+    return dict(source_record={**index,'json_pointer':'/physical_identity'},
+        **{k:original[k] for k in ('status','physical_model_sha256','mode_manifest_sha256',
+            'top_channels','bottom_channels','total_channels','material','derived_fe_inventory','capacity_before_allocation')},
+        channel_keys=channels,
+        recipe={k:recipe[k] for k in ('geometry','incidence','boundary','finite_element','nominal_wavelength_nm')},
+        full_mode_vectors='read hash-bound source_record; not duplicated in compact inventory')
+
+
 def verify_cached(result,plan=None):
     plan=json.loads(io.PLAN_PATH.read_text()) if plan is None else plan
     rows=result['rows'];names=io.NAMES
@@ -101,7 +115,7 @@ def collect():
     csv_write(RECORDS/'direction_metrics_v26.csv',metrics)
     write_json(RECORDS/'joint_numerical_gates_v26.json',{k:result[k] for k in ('status','decision','source_sha','matrix','factor_inventory','factor_status','factor_safety','joint_checks','readonly_reload','old_diagonal_checks','bidirectional_coupling','capacity','assembly')})
     write_json(RECORDS/'extra_direction_gates_v26.json',dict(source_sha=result['source_sha'],rows=[{k:v for k,v in x.items() if k not in ('input_state','old_direction_arrays')} for x in result['rows']]))
-    write_json(RECORDS/'input_inventory_v26.json',dict(pre_registration=pointer(io.PLAN_PATH),plan=json.loads(io.PLAN_PATH.read_text()),actual_input_sha256=result['input_sha256'],physical_identity=result['physical_identity'],operator_packet=result['operator_packet'],factor_receipts_bound_at_actor_reload=True,no_additional_factor_read=True))
+    write_json(RECORDS/'input_inventory_v26.json',dict(pre_registration=pointer(io.PLAN_PATH),plan=json.loads(io.PLAN_PATH.read_text()),actual_input_sha256=result['input_sha256'],physical_identity=compact_physical_identity(result,index),operator_packet=result['operator_packet'],factor_receipts_bound_at_actor_reload=True,no_additional_factor_read=True))
     write_json(RECORDS/'raw_index_v26.json',dict(source_sha=result['source_sha'],raw=index,
         parent_namespace_readonly=True,arrays=[x['diagnostic_arrays'] for x in result['rows']],
         independent_checker_source=pointer(Path(__file__)),no_new_solver_states=True))

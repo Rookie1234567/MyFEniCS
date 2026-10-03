@@ -5,7 +5,7 @@
   "actor_launch_wall_seconds": 34.69464923394844,
   "worker_after_packet_load_seconds": 28.356331391027197,
   "worker_wall_seconds": 28.537738903076388,
-  "auxiliary_supervised_wall_seconds": 23.338665919960476,
+  "auxiliary_supervised_wall_seconds": 27.636738836881705,
   "auxiliary_runs": [
     {
       "summary": {
@@ -114,9 +114,27 @@
       "own_swap_peak_bytes": 0,
       "descendants_cleared": true,
       "source_role": "bounded auxiliary; development/checker, not actor source"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_012309194092/summary.json",
+        "sha256": "4a7dac830c86ad38253f2f20b11983d306dc1c569bbed29d8668b0b9549cfadd",
+        "bytes": 3531
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_012309194092/supervision/worker.log",
+        "sha256": "1150e920fab5064d7e4d36e78986263ee7a9423899adb67fced1f934fb8515f6",
+        "bytes": 1679
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 4.298072916921228,
+      "tree_peak_bytes": 122490880,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
     }
   ],
-  "numerical_budget_with_auxiliary_seconds": 56.60128840699326,
+  "numerical_budget_with_auxiliary_seconds": 60.89936132391449,
   "actor_budget_seconds": 900,
   "simultaneous_sampled_tree_peak_bytes": 1625231360,
   "sample_interval_seconds": 0.5,
@@ -261,10 +279,10 @@
   "numpy_file_headers_separate": true,
   "simultaneous_planned_bytes": 4621269504,
   "planning_role": "derived simultaneous allowance, not RSS",
-  "new_persistent_output_including_TMP_before_compact_records_bytes": 500319961,
+  "new_persistent_output_including_TMP_before_compact_records_bytes": 500368018,
   "new_persistent_cap_bytes": 805306368,
   "disk_free_start_bytes": 3391381663744,
-  "disk_free_now_bytes": 3390848253952,
+  "disk_free_now_bytes": 3390804992000,
   "port_call_inventory": [
     {
       "adjoint": false,
@@ -442,18 +460,18 @@
     "heavy_stop_utc": "2026-10-03T02:24:41+00:00",
     "deadline_utc": "2026-10-03T02:39:41+00:00",
     "review_expected_commit": "867ab17c496b2e5dc57766da749eb1f6b42036a1",
-    "observed_utc": "2026-10-03T01:12:53.357433+00:00",
-    "observed_monotonic": 914968.218299927,
+    "observed_utc": "2026-10-03T01:23:33.772847+00:00",
+    "observed_monotonic": 915608.633715097,
     "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "monotonic_same_boot": true,
-    "elapsed_seconds": 1992.357432603836,
-    "heavy_remaining_seconds": 4307.642567396164,
-    "total_remaining_seconds": 5207.642567396164
+    "elapsed_seconds": 2632.772846698761,
+    "heavy_remaining_seconds": 3667.227153301239,
+    "total_remaining_seconds": 4567.227153301239
   },
   "implementation_read_wait_publish_cost": "in overall immutable elapsed; separate time/RSS not measured",
   "namespace_artifact_bytes": 486889685,
   "formal_results_bytes": 782925,
-  "new_TMP_including_caches_bytes": 12647351,
+  "new_TMP_including_caches_bytes": 12695408,
   "task042_artifact_total_bytes": 18024888896,
   "nonadditive_nested_timers": {
     "assembly_seconds": 1.592389774043113,
@@ -480,6 +498,7 @@
       0.004486829042434692
     ]
   },
-  "new_compact_records_bytes": 242263,
-  "all_new_persistent_bytes_observed_with_compact_records": 500562224
+  "new_compact_records_bytes": 73067,
+  "all_new_persistent_bytes_observed_with_compact_records": 500441085,
+  "storage_observation_role": "before final delivery receipt; every prior observation retained; final receipt adds its own timestamp"
 }

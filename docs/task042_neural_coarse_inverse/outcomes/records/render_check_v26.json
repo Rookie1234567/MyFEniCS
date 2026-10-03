@@ -11,7 +11,7 @@
     },
     {
       "path": "docs/task042_neural_coarse_inverse/response_v26.md",
-      "sha256": "8b236e48bb16d917c0989af44a80d0fc35861ea1a3779e93be35a490a3dd407a",
+      "sha256": "cb8b61bf6b4b69979e0dcf4e63d8e93e6e38e61ada8b361e6bec0a4c3bdff367",
       "scope": "entire new/review file",
       "table_columns": "PASS",
       "fences": "PASS",
@@ -20,7 +20,7 @@
     },
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/joint_block_direction_v26.md",
-      "sha256": "575694c3fbf355ff8de5180c9bf03d6beffbe540ee36bf238f13b04f3984770b",
+      "sha256": "60ab1d623d8d8aa278bc99aef14056d703950bab0e27870b92ef79fc2228d8a9",
       "scope": "entire new/review file",
       "table_columns": "PASS",
       "fences": "PASS",
@@ -47,7 +47,7 @@
     },
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
-      "sha256": "ddcd31977923ff601e0051bc1c40f433ca195f74af2c107329b1488504b84c24",
+      "sha256": "b78f947163c0c4e3b7a7cb88aa3a3875748f970c66a9107a08dd37b612cc4d7e",
       "scope": "new prefix only; historical suffix byte-preserved",
       "table_columns": "PASS",
       "fences": "PASS",
@@ -87,5 +87,5 @@
   "github_visual": "NOT_VERIFIED",
   "web_observation": "Cache miss; no visual evidence; local checks do not imply web rendering",
   "CI": "NOT_RUN",
-  "final_local_recheck": "PASS after final scalar/doc updates; no numerical replay"
+  "final_local_recheck": "PASS after compact physical identity and final cached checker15; historical suffixes byte-preserved; no numerical replay"
 }
