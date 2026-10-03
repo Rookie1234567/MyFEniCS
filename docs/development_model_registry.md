@@ -1770,6 +1770,17 @@ p4/p5散射L2/curl差2.15910e-4/1.17945e-3，六点total H差1.40896e-3；通道
 
 C plain14新增接受正常预算冻结，phase21新增接受后因第二次PSI停止保存第75完整状态；非OOM或确定方法停滞。strict/10倍研究资格未过；C功率diagnostic。D权重不反馈无标签路线或生产。后续source/doc SHA分离，完整R00/功率/复杂通道及区域见[详细结果](task042extra_feinn_5nm/outcomes/cached_gn_v10.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v10.json)、[全部资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v10.json)。本批不新增参考或p6/h/端口/目标尺寸；小模型结果不推广为0.7nm能力。
 
+## 3.44.14 Task42extra Review V15：V16保存证据复核
+
+同M5/p3/5nm/384hex/31968复FE/40端口，不产生新模型场。只修复检查器并从旧数组解释原残差增加；记录完整性与求解精度分开。
+
+| 保存态 / derived线性方向 | b_N / c_N | native原值→保存长度预测 | 资格 |
+| --- | --- | --- | --- |
+| M3600 PDE8主rcond | 0.00519171722 / 0.000417622224 | 0.885852183253→0.888333231652 | 方向native冲突；数值界宽UNKNOWN |
+| Mfinal PDE8主rcond | 0.00198117265 / 0.000341886407 | 0.846541904928→0.847524617952 | 方向native冲突；PDE未资格化 |
+
+8配置/32点/4候选及实际冻结账本完整核验；无标签NOT_ADMITTED，参考oracle不计NN增益。source a14dd6187336c866f0a327760f10c4ece0140a8d为新checker，旧99f2968数值来源保留。唯一checker4.950958552s、同时树194895872B、swap0，完整辅助/文档费用另账。最终75 affected /143相关pure测试通过，无FE/前向/训练/优化/参考重求。中期改善、最终退化和旧失败/未验证项保留，D0否决/D1未运行，主求解器及生产初值继续暂停，原目标与精度不变。[回执](task042extra_feinn_5nm/response_v16.md)、[checker](task042extra_feinn_5nm/outcomes/records/independent_checker_v16.json)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v16.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

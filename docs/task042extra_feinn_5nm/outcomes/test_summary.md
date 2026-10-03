@@ -239,3 +239,7 @@ V12实际GitHub检查：发布cad9fe635199d5c22e83a0698b7412e349449aaf的Review 
 87项pure定向测试通过，改动Python Ruff/compileall通过；新增共同可行/真实冲突、复数白化、近相关与标签隔离/损坏记录/先fsync候选后参考读取的端到端fixture。首次近相关拉回失稳25通过/1失败保留；QR后小R-SVD修复26通过，再最终组合87通过。独立实际数组checker复算8配置通过，M3600保守界宽目标UNKNOWN不冒充数学全资格。未运行FE/MPI/full pytest/旧73项或CI。[测试hash](records/targeted_tests_v15.json)、[checker](records/independent_checker_v15.json)、[repair](records/repair_log_v15.json)。
 
 V15浏览器补查：原实际截图的回执核心表仍停留页首，保留该失败；修复当前DOM重取后compileall/Ruff与唯一核心表定向视觉复验通过。数值核与浏览器合计2/2局部修复；四review公式、四专题公式/四表及回执身份/核心表通过，非全量旧历史或最终新增说明段视觉验收。
+
+## V16：完整记录checker与冻结方向归因
+
+最终受影响75项pure checker测试通过；相关143组合通过，未变代数组件按相同文件hash复用；Ruff/compileall通过。八配置/32点fixture覆盖本review漏检、合法PARTIAL/UNKNOWN、真实ledger/hash/事件、用途、阈值余量及不调用优化器。测试钩子生命周期1次意外修复，首轮8失败/67通过保留；V15原历史数值1+浏览器1=2。唯一原数组复验通过，M3600界宽UNKNOWN和无标签NOT_ADMITTED保留；只核验两条方向端点。[测试](records/targeted_tests_v16.json)、[checker](records/independent_checker_v16.json)、[GitHub实际视图](records/render_check_v16.json)。无full pytest/MPI/旧FE/重装或CI声明。

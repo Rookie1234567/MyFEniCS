@@ -3224,3 +3224,7 @@ M3600散射E误差9.33%及Mfinal退化12.29%、未过原方程门的结果全部
 ## 2026-10-03 Task42extra V15：固定保存方向共同下降诊断
 
 按Review V14完成A–D，实际source99f2968be8d715a6f2e6985f5b032c53ca505950，87定向测试/Ruff/compileall及独立原数组checker通过。PDE8两态仅弱共同能量改善，未达0.1%且native增加；ALL16仅终态有参考oracle可行点；M3600保守界宽1e-8资格UNKNOWN。无新FE/前向/训练/factor，维持主求解器暂停/无NN增益；D0否决/D1未运行、M3600中期与终态退化保留。不提出下一轮非线性见证，不重复已完成Gx/Gz主线或待FE资格dot。只推本支，等review。[Response V15](task042extra_feinn_5nm/response_v15.md)、[专题](task042extra_feinn_5nm/outcomes/common_descent_v15.md)。
+
+## 2026-10-03 Task42extra V16：原记录验收及方向冲突收口
+
+Review V15要求避免把漏行或冻结缺失误判完整实验，已补齐checker并从原数组独立给出五层决策。实际checker源码a14dd6187336c866f0a327760f10c4ece0140a8d；旧数值99f2968和8配置/32点/4候选不变。最终75 affected / 143相关pure、Ruff/compileall通过，一次测试观察钩子修复且原失败保留。唯一复验4.950958552s、树峰194895872B、swap0、已清场。M3600界宽UNKNOWN；无标签候选未准入。两条原方向b_N明确正、c_N非负，缩短正向步不能降native；仅线性方向归因，不证明全网络极限，不导出步或训练。M3600中期改善/Mfinal退化和D0否决/D1未运行保留，维持主求解器/生产暂停与无NN增益；0.7nm原尺寸/十进制2TB/172800s与原精度不变，不重复主线Gx784/AUTO和dot C1/storage。[Response V16](task042extra_feinn_5nm/response_v16.md)、[专题](task042extra_feinn_5nm/outcomes/checker_integrity_v16.md)。本批收口后等待审阅，无master合并。

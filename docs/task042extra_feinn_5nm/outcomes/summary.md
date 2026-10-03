@@ -1,3 +1,17 @@
+# Task42extra Review V15 后续：V16 当前验收导航
+
+原V15保存数组完整验收闭环，暂停FEINN数值探索。只有新checker/保存方向归因，没有新网络场、训练、FE或投影优化；下方所有中期改善、最终退化、失败、未知和未运行历史保留。
+
+| 本轮量 / derived、同M5-p3 | 实际值与独立状态 | 证据 |
+| --- | --- | --- |
+| 完整批次 / 用途 | 8唯一配置、32点、4候选及实际冻结账本闭环；记录COMPLETE，不是PDE成功 | [Response V16](../response_v16.md)、[checker/五层Gate](records/independent_checker_v16.json) |
+| 共同下降 / 界宽 | 有限阈值6排除/2参考oracle可行；M3600四配置界宽UNKNOWN，Mfinal四配置PASS | [专题](checker_integrity_v16.md)，保留原1e-8门与margin |
+| 两态无标签候选 | 双能量0.1%与native不增仍未通过：NOT_ADMITTED | [原四候选hash](records/run_index_v16.json)，无下一步非线性见证 |
+| native方向归因 | b_N=0.00519171722/0.00198117265，c_N≥0，DIRECTION_NATIVE_CONFLICT | [两行三范数系数](records/native_direction_attribution_v16.csv)，仅既有线性方向；不缩步重试 |
+| 测试/源码/资源 | 最终75 affected / 143相关pure、Ruff/compileall通过；checker源码a14dd6187336c866f0a327760f10c4ece0140a8d，旧数值99f2968不变 | [测试](records/targeted_tests_v16.json)、[完整成本](records/resource_costs_v16.json) |
+
+FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；D0成本否决/D1未运行不变。原0.7nm完整三维FE、十进制2TB/172800s目标与精度门未资格化；不承接主线Gx784/AUTO或dot C1/storage，不混入coarse_inverse/NN-V3。V15历史两次修复为数值1次+浏览器1次，旧失败不追改。本轮只推本支后等review，不合并master。
+
 # Task42extra Review V14 后续：V15 当前数组诊断导航
 
 本轮A–D保存数组诊断已完成，训练和PDE求解仍暂停：`FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`。只用已保存方向问两项能量能否在固定小步内一起降低0.1%；新值均为DERIVED_LOCAL_LINEAR_MODEL，不是真实网络场。

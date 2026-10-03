@@ -1,6 +1,6 @@
 {
   "schema": "feinn.checker-repair-log.v1",
-  "unexpected_repairs_used": 1,
+  "unexpected_repairs_used": 2,
   "unexpected_repairs_limit": 2,
   "planned_checker_repairs_count_as_unexpected": false,
   "repairs": [
@@ -12,9 +12,22 @@
       "test": "75 passed at v16_fixture_repair1; final two-state 75 and related 143 suites pass",
       "retry": "one evidence-based repair, old log and resources retained",
       "affected_code": "src/test/test_feinn_common_descent.py"
+    },
+    {
+      "root_cause": "DOCUMENT_CHECK_STARTED_BEFORE_DEPENDENCY_RECEIPT",
+      "failure": "Local document checker rejected missing outcomes/records/resource_costs_v16.json after resource snapshot worker was not admitted",
+      "hypothesis": "Document check was launched before the failed prerequisite was handled",
+      "change": "Complete real resource and NOT_RUN visual receipts as static documentation before targeted document rerun; do not restart denied snapshot worker",
+      "test": "v16_document_repair2 passed: 9 new/changed scopes,17 tables,2 math fences,69 links and source/old-record identity; no numerical checker reexecution",
+      "passed_summary_sha256": "7b72c888e33c78a0b2ed5bf2f64cff0eb4f577f86952bc00b1a0bb8fdfbdf38d",
+      "original_failed_summary_sha256": "f07dc642c1e9b2d56c65a2e6ff45d733b1a3d923ea49194d6d8faba416ff7af1",
+      "original_failed_log_sha256": "f4d0e98ad464563865d1e5aaa7c17c3e5211d0701fbaaa517cf804c94030ad72",
+      "affected_scope": "documentation dependency only; actual checker source and frozen data unchanged"
     }
   ],
-  "resource_refusals": 0,
-  "resource_readmissions": 0,
+  "pre_implementation_resource_refusals": 0,
+  "pre_implementation_resource_readmissions": 0,
+  "resource_refusals": 2,
+  "resource_readmissions": 1,
   "historical_V15_repairs": "numerical pullback 1 + browser detached DOM 1 = 2, failures preserved"
 }

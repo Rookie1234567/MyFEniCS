@@ -1,0 +1,88 @@
+{
+  "schema": "feinn.selective-dependency-groups.v1",
+  "master_merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "behavior_changed": false,
+      "fresh_PDE_evidence": "NOT_RUN_NOT_AUTHORIZED",
+      "recommendation": "no promotion"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [],
+      "behavior_changed": false,
+      "dependencies": [
+        "existing pure activation/subreaper/resource gates"
+      ],
+      "recommendation": "reuse unchanged"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_feinn_common_descent.py",
+        "benchmarks/run_feinn_common_descent.py",
+        "src/runners/feinn_common_descent_arrays.py"
+      ],
+      "behavior_changed": "saved-record rejection and layered decisions only",
+      "dependencies": [
+        "existing numerical kernel read-only",
+        "pure NumPy",
+        "frozen V15 design/index"
+      ],
+      "tests": "75 affected / 143 related",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "recommendation": "review before selective merge"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v16.md",
+        "docs/task042extra_feinn_5nm/outcomes/checker_integrity_v16.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/*_v16.*"
+      ],
+      "behavior_changed": false,
+      "dependencies": [
+        "new checker qualification",
+        "immutable V15 inputs"
+      ],
+      "tests": "local Markdown/GitHub selected view separately bound",
+      "recommendation": "preserve full positive/negative/UNKNOWN history"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/feinn_diagnostic_algebra.py",
+        "src/test/test_feinn_common_descent.py"
+      ],
+      "behavior_changed": "saved-direction polynomial diagnosis only; existing APIs unchanged",
+      "dependencies": [
+        "quadratic_change",
+        "saved r,Y,X,GX,WY,e,Ge,qr"
+      ],
+      "tests": "complex fixtures and original two endpoint pairings",
+      "fresh_PDE_evidence": "NOT_RUN",
+      "recommendation": "not a solver/update rule"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task42extra/",
+        "tmp/task42extra/",
+        ".venv/",
+        ".venv-ml/"
+      ],
+      "behavior_changed": false,
+      "recommendation": "ignored raw arrays/logs/screens/checkpoints; no cross-task transfers"
+    }
+  ],
+  "suggested_review_order": [
+    "checker/benchmark",
+    "research-only helper/tests",
+    "compact evidence/docs"
+  ],
+  "production_initialization_allowed": false,
+  "official_candidate_results": false,
+  "true_NN_increment": false
+}

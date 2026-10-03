@@ -1,0 +1,28 @@
+{
+  "schema": "feinn.github-render.v1",
+  "GitHub_actual_new_page_view": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "new_browser_launched": false,
+  "scope": ["Review V15 P1-C formula", "Response V16 two-direction table", "checker_integrity_v16 new formula/table"],
+  "reason": "Light-task admission failed again after the one measured readmission; no further resource retry or browser start",
+  "resource_refusals_preserved": ["tmp/task42extra/v16_delivery_admission_failure.json", "tmp/task42extra/v16_snapshot_admission_failure.json"],
+  "local_document_check": "LOCAL_CHANGED_SCOPE_MARKDOWN_LINK_AND_IDENTITY_PASS",
+  "local_check_receipt": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v16.json",
+    "sha256": "c66086837204197117f34f0381fd721ad5b2ef2ffc4f0525f03230114e470dde",
+    "new_or_changed_scopes": 9,
+    "tables": 17,
+    "math_fences": 2,
+    "links": 69
+  },
+  "checked_markdown_sha256": {
+    "review_report_v15.md": "24a47b1e7115eb2c14f511e53b968ab79742ecec06a9e8c95bb94bdab07572f6",
+    "response_v16.md": "39949633f262dd544cfcc9f4eddb4fecdd74a56b0d9af87ab45d056f9748dea2",
+    "outcomes/checker_integrity_v16.md": "b99c747d9cc6ab82e8d5b04d28bdd532ea89b9f32721bb01b50852b21d02d7b3"
+  },
+  "structural_check_is_not_visual_pass": true,
+  "historical_formula_and_render_qualifications_reused_only_for_unchanged_old_bytes": true,
+  "historical_failures_preserved": true,
+  "review_receipt": "docs/task042extra_feinn_5nm/outcomes/records/review_v15_evidence_audit.json",
+  "no_historical_bulk_rerender": true,
+  "review_or_new_page_visual_pass_claimed": false
+}
