@@ -1,0 +1,479 @@
+{
+  "schema": "feinn.static-diagnostic-dependencies.v17",
+  "status": "RESEARCH_ONLY_NOT_SELECTED_FOR_TRANSFER",
+  "inspected_source_sha": "06386339abf0ce1803f08d87ee50a29f9b0c24a4",
+  "original_numerical_source": "99f2968be8d715a6f2e6985f5b032c53ca505950",
+  "original_checker_source": "a14dd6187336c866f0a327760f10c4ece0140a8d",
+  "analysis_method": "ast.parse of source text plus explicit calls/import owners; NO project numerical imports",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "numerical_behavior_changed": false,
+      "recommendation": "NO_PROMOTION_NO_MERGE_APPROVAL",
+      "fresh_PDE_evidence": "NOT_RUN_NOT_AUTHORIZED"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "scripts/supervise_task42extra.py",
+        "src/runners/feinn_resources.py",
+        "src/runners/task042_shared.py",
+        "src/io/task042_profile.py",
+        "benchmarks/subreaper_watchdog.py",
+        "benchmarks/task034_wsl_resources.py",
+        "benchmarks/task038_full3d_jit_staging.py",
+        "src/runners/workflow_timebase.py",
+        "scripts/activate_task42extra.sh"
+      ],
+      "numerical_behavior_changed": false,
+      "source_change": false,
+      "recommendation": "REUSE_UNCHANGED_IN_REGISTERED_WORKTREE_ONLY",
+      "package_dependencies": [
+        "src/__init__.py",
+        "src/runners/__init__.py",
+        "src/io/__init__.py",
+        "benchmarks/__init__.py"
+      ],
+      "optional_inactive_imports": [
+        {
+          "importer": "src/runners/task042_shared.py",
+          "imported": "src/runners/neural_fe_continuation.py",
+          "owner": "launch",
+          "line": 437,
+          "disposition": "OUTSIDE_ACTIVE_PURE_PATH_NOT_SELECTED_FOR_TRANSFER"
+        },
+        {
+          "importer": "src/runners/task042_shared.py",
+          "imported": "src/io/task042_v4_gate.py",
+          "owner": "launch",
+          "line": 536,
+          "disposition": "OUTSIDE_ACTIVE_PURE_PATH_NOT_SELECTED_FOR_TRANSFER"
+        },
+        {
+          "importer": "src/runners/task042_shared.py",
+          "imported": "src/io/task042_v4_gate.py",
+          "owner": "launch",
+          "line": 540,
+          "disposition": "OUTSIDE_ACTIVE_PURE_PATH_NOT_SELECTED_FOR_TRANSFER"
+        },
+        {
+          "importer": "benchmarks/subreaper_watchdog.py",
+          "imported": "src/io/native_capacity_profile.py",
+          "owner": "memory_envelope",
+          "line": 50,
+          "disposition": "OUTSIDE_ACTIVE_PURE_PATH_NOT_SELECTED_FOR_TRANSFER"
+        }
+      ],
+      "eager_package_dependencies": [
+        "src/io/execution_plan.py",
+        "src/io/input_loader.py",
+        "src/io/input_schema.py",
+        "src/io/input_validation.py",
+        "src/io/native_capacity_profile.py",
+        "src/io/resolved_config.py",
+        "src/io/run_specification.py"
+      ],
+      "external_dependencies": [
+        "Linux /proc and /sys",
+        "fcntl/subreaper/affinity permissions",
+        "ionice",
+        "independent .venv"
+      ],
+      "limits": {
+        "hard_bytes": 2147483648,
+        "warn_bytes": 1879048192,
+        "neighbor_growth_bytes": 412316860416
+      },
+      "portability": "NOT_PORTABLE_AS_IS: exact ROOT and task-local activation; optional unrelated workflow paths excluded"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/run_feinn_common_descent.py",
+        "benchmarks/check_feinn_common_descent.py",
+        "src/runners/feinn_common_descent_arrays.py"
+      ],
+      "package_dependencies": [
+        "benchmarks/__init__.py",
+        "src/__init__.py",
+        "src/runners/__init__.py",
+        "src/solvers/__init__.py"
+      ],
+      "required_modules": [
+        "src/solvers/feinn_common_descent.py",
+        "src/solvers/feinn_diagnostic_algebra.py"
+      ],
+      "external_dependencies": [
+        "Python standard library",
+        "NumPy",
+        "git executable for source/clean guards"
+      ],
+      "recommendation": "RESEARCH_ONLY_NOT_SELECTED_FOR_TRANSFER",
+      "source_change": false,
+      "producer_entry_present": true,
+      "producer_permission": false,
+      "fresh_PDE_evidence": "NOT_RUN_NOT_AUTHORIZED"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v17.md",
+        "docs/task042extra_feinn_5nm/README.md",
+        "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/diagnostic_dependencies_v17.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/handoff_receipt_v17.json",
+        "docs/development_progress.md",
+        "docs/development_model_registry.md"
+      ],
+      "evidence_dependencies": [
+        "run_index_v16.json",
+        "independent_checker_v16.json",
+        "targeted_tests_v16.json",
+        "review_v16_evidence_audit.json",
+        "resource_costs_v16.json"
+      ],
+      "history_policy": "All original files/negatives/UNKNOWN/middle improvement/final degradation retained",
+      "recommendation": "DOCUMENTATION_ONLY_REVIEW_NO_CURRENT_MERGE_APPROVAL"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/feinn_common_descent.py",
+        "src/solvers/feinn_diagnostic_algebra.py",
+        "src/test/test_feinn_common_descent.py",
+        "src/test/test_feinn_diagnostic_algebra.py"
+      ],
+      "producer_functions": [
+        "parameter_basis",
+        "quadratic",
+        "trust_ball",
+        "lower_certificate",
+        "common_minimum",
+        "residual_candidate",
+        "evaluate_step",
+        "analyze_configuration"
+      ],
+      "checker_helper_functions": [
+        "require",
+        "provenance_columns",
+        "atomic_json",
+        "frozen_direction_attribution",
+        "quadratic_change",
+        "energy"
+      ],
+      "unused_algebra_functions": [
+        "weighted_qr",
+        "project_real"
+      ],
+      "recommendation": "RESEARCH_ONLY_NOT_SELECTED_FOR_TRANSFER",
+      "source_change": false,
+      "run_permission": false,
+      "production_initialization_allowed": false
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task42extra/",
+        "results/task42extra/",
+        "tmp/task42extra/",
+        ".venv/",
+        ".venv-ml/"
+      ],
+      "objects": [
+        "raw arrays",
+        "full fields",
+        "models/optimizer states",
+        "matrices/factors",
+        "cache/timelines",
+        "browser profiles/screenshots"
+      ],
+      "recommendation": "NO_RAW_OR_ENV_TRANSFER_NO_FAILED_NN_PRODUCTION_PROMOTION"
+    }
+  ],
+  "conditional_P1": "NOT_REQUESTED_NO_RUN",
+  "receiving_interface": null,
+  "existing_entry_modes": {
+    "check": "SAVED_ARRAY_RESEARCH_DIAGNOSTIC_ONLY; not executed this batch",
+    "analyze": "PRODUCER_AND_SMALL_OPTIMIZATION; not authorized this batch"
+  },
+  "check_call_boundary": {
+    "calls": [
+      "Path",
+      "admission",
+      "all",
+      "array_sha",
+      "atomic_json",
+      "attribution.append",
+      "configuration_coverage",
+      "design_path.read_text",
+      "diagnostic_policy",
+      "dict",
+      "extract",
+      "frozen_direction_attribution",
+      "frozen_evidence",
+      "index_path.read_text",
+      "index_path.resolve",
+      "inputs",
+      "json.dumps",
+      "json.loads",
+      "len",
+      "list",
+      "metadata",
+      "np.load",
+      "os.environ.get",
+      "os.sched_getaffinity",
+      "print",
+      "raw.items",
+      "read_checked",
+      "read_checked(index['result']).resolve",
+      "require",
+      "result['new_actions'].values",
+      "result_path.read_text",
+      "result_path.resolve",
+      "rows.append",
+      "set",
+      "sha",
+      "sorted",
+      "str",
+      "subprocess.check_output",
+      "subprocess.check_output(['git', 'branch', '--show-current'], cwd=ROOT, text=True).strip",
+      "subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip",
+      "unknown.values",
+      "verify_configuration"
+    ],
+    "forbidden_calls": [
+      "analyze_configuration",
+      "common_minimum",
+      "residual_candidate",
+      "run",
+      "trust_ball"
+    ],
+    "reached_core": [
+      "require",
+      "provenance_columns",
+      "atomic_json"
+    ],
+    "whole_core_module_imported_but_producer_definitions_not_executed": true,
+    "optional_attribution": [
+      "frozen_direction_attribution",
+      "quadratic_change",
+      "energy"
+    ]
+  },
+  "data_contract": {
+    "design": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/common_descent_design_v15.json",
+      "sha256": "744064ab22522c4fd90619aedf55663594d551e8e9d4953bcfacd8d50de43740"
+    },
+    "v16_index": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v16.json",
+      "sha256": "81f3de6f66d4b798cbd3087e0f0335d1d66bc23880bc93a70190af1c4bae5c03"
+    },
+    "original_inputs": {
+      "field_geometry": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json",
+        "sha256": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a"
+      },
+      "field_geometry_index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_saved_field_attribution.json",
+        "sha256": "2636a9409bd5b220bcb5c1c162a5232a0b20337854da42d8f64bfb1be12c8076"
+      },
+      "index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_local_parameter_diagnostic.json",
+        "sha256": "816a25856e9295a4866d28e193c464ae0087867a7e2645873a284f14a8433969"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json",
+        "sha256": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84"
+      },
+      "vectors": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz",
+        "sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263"
+      }
+    },
+    "original_result_sha256": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c",
+    "original_vector_sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263",
+    "array_members": [
+      "P",
+      "X",
+      "GX",
+      "Y",
+      "WY",
+      "e",
+      "Ge",
+      "r",
+      "qr",
+      "c",
+      "theta"
+    ],
+    "PDE8_construction_allowlist": [
+      "P",
+      "Y",
+      "WY",
+      "r",
+      "qr",
+      "theta"
+    ],
+    "checker_evaluation_reference_exposed": true,
+    "raw_arrays_opened_this_batch": false,
+    "original_8_configurations_32_points_4_candidates_reused": true,
+    "raw_hashes_inherited_not_recomputed": true,
+    "required_bindings": [
+      "parameter/c identity",
+      "state/column provenance",
+      "candidate_freeze ledger/events",
+      "physical/native denominator",
+      "rcond/rho/T",
+      "reference permissions"
+    ],
+    "portability": "Paths and design identities are M5/task-specific; no recipient ABI/data contract qualified",
+    "state_identity_from_design": {
+      "M3600": {
+        "parameter_sha256": "b7cbf54511f6507ae1b3bfac4848596b3cf72c28227f2284ef1b11634934258f",
+        "complete_c_sha256": "92cc2e774003286a0e9dc3d73ada568160feafffa6f0494a6faae09e74ffa402",
+        "parameter_norm": 8.553653337049637
+      },
+      "Mfinal": {
+        "parameter_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a",
+        "complete_c_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+        "parameter_norm": 8.560515209936437
+      }
+    }
+  },
+  "tests_reused": {
+    "source": "a14dd6187336c866f0a327760f10c4ece0140a8d",
+    "record": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v16.json",
+      "sha256": "8c529cff3fab3aad40a15a262b03baabd39c0669000b1d7581142b03c8fd4e6c"
+    },
+    "final_affected": "75 passed: saved-record/common-descent fixtures and metadata guards; not rerun",
+    "related": "143 passed before final pure/clean/source guard; reuse only unchanged hash-qualified algebra",
+    "related_full_command_line": "NOT_RETAINED_IN_COMPACT_TEST_RECORD; no inferred new coverage",
+    "code_file_hashes": {
+      "benchmarks/check_feinn_common_descent.py": "b1700ee66e081cd2d6a0c0f062f7948b9d6c914b1ae5cdabafd886feb55534ea",
+      "benchmarks/run_feinn_common_descent.py": "a30f77dc1e662f5f30656ecd84f3f82f13d8c3c287b3f5153d7354efd18256ee",
+      "src/runners/feinn_common_descent_arrays.py": "5ddb4750cf85fae85840b1d9ff6bda14a4480820f158d8291b982b61dc8b7251",
+      "src/solvers/feinn_diagnostic_algebra.py": "543be365ba5badcb16b6df053614b9c6277296f1f42a88d9d94b3922ad61063f",
+      "src/test/test_feinn_common_descent.py": "333e2df34854ec8d91550f3fbdfc31bfd0d3958938f22e8804155864495945ae"
+    },
+    "fixture_functions": {
+      "src/test/test_feinn_common_descent.py": [
+        "test_opposing_extremes_can_have_common_improvement",
+        "test_true_conflict_has_closed_numerical_bounds",
+        "test_complex_nonhermitian_chain_and_explicit_whitening",
+        "test_parameter_basis_physical_step_invariance_and_rank",
+        "test_rank_sensitivity_is_retained_not_selected",
+        "test_zero_gradient_and_minimum_norm",
+        "test_invalid_data_not_regularized",
+        "test_label_isolation_and_save_before_reference_evaluation",
+        "test_corrupted_records_rejected",
+        "test_complete_saved_array_pipeline_freezes_candidates_first",
+        "test_batch_and_usage_corruption_rejected",
+        "test_freeze_corruption_retains_numerics_but_never_qualifies",
+        "test_legal_partial_records_are_explicitly_partial_or_unknown",
+        "test_checker_never_calls_optimizer_and_binds_frozen_input",
+        "test_threshold_roundoff_brackets_preserve_unknown",
+        "test_unlabeled_admission_never_uses_oracle_common_point",
+        "test_frozen_native_attribution_separates_conflict_and_overshoot"
+      ],
+      "src/test/test_feinn_diagnostic_algebra.py": [
+        "test_nonhermitian_residual_quadratic_cross_terms",
+        "test_real_complex_projection_against_independent_whitened_svd",
+        "test_corrupt_energy_and_nonfinite_records_rejected"
+      ]
+    },
+    "no_new_pytest": true,
+    "no_fresh_PDE": true
+  },
+  "render_reuse": {
+    "receipt_path": "docs/task042extra_feinn_5nm/outcomes/records/review_v16_evidence_audit.json",
+    "receipt_sha256": "e2be617af0ca8abb4c5207586661251d2e4d5ae483967228e0f93002328d312f",
+    "pages": [
+      {
+        "path": "docs/task042extra_feinn_5nm/review_report_v16.md",
+        "sha256": "69aa3c5560fb7c1d5ee38dae0ad6b55ae6d4c4c8f519e04717bd71c1959c0411",
+        "received_sha256": "69aa3c5560fb7c1d5ee38dae0ad6b55ae6d4c4c8f519e04717bd71c1959c0411",
+        "unchanged": true,
+        "inherited_status": "ACTUAL_GITHUB_DOM_AND_SELECTED_IMAGE_INSPECTION_PASS",
+        "no_new_browser": true
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v16.md",
+        "sha256": "39949633f262dd544cfcc9f4eddb4fecdd74a56b0d9af87ab45d056f9748dea2",
+        "received_sha256": "39949633f262dd544cfcc9f4eddb4fecdd74a56b0d9af87ab45d056f9748dea2",
+        "unchanged": true,
+        "inherited_status": "ACTUAL_GITHUB_DOM_AND_SELECTED_IMAGE_INSPECTION_PASS",
+        "no_new_browser": true
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/checker_integrity_v16.md",
+        "sha256": "b99c747d9cc6ab82e8d5b04d28bdd532ea89b9f32721bb01b50852b21d02d7b3",
+        "received_sha256": "b99c747d9cc6ab82e8d5b04d28bdd532ea89b9f32721bb01b50852b21d02d7b3",
+        "unchanged": true,
+        "inherited_status": "ACTUAL_GITHUB_DOM_AND_SELECTED_IMAGE_INSPECTION_PASS",
+        "no_new_browser": true
+      }
+    ],
+    "old_V16_NOT_RUN_unchanged": true,
+    "all_selected_page_bytes_unchanged": true
+  },
+  "suggested_review_order": [
+    "Recipient request/data contract first; absent => no transfer",
+    "Inspect unchanged core IO/provenance helpers and research producer exclusion",
+    "Inspect independent checker + optional direction algebra + package initializers",
+    "Inspect coupled runner check/analyze boundary and exact ROOT/source guards",
+    "Reuse bounded complex/corruption/label-isolation fixture qualification by hash",
+    "Review preserved compact docs; any actual extraction/deployment needs a later review"
+  ],
+  "production_initialization_allowed": false,
+  "official_candidate_results": false,
+  "true_NN_increment": false,
+  "master_merge_approved": false,
+  "environment": {
+    "python": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "activation": "pure",
+    "affinity": [
+      0
+    ],
+    "mathematical_threads": 1,
+    "numpy_installed_version": "1.26.4"
+  },
+  "full_AST_ignored_receipt": {
+    "path": "tmp/task42extra/development/dependencies_v17_full_ast.json",
+    "sha256": "e4b0c2f794e563bba955cb83716b78d9511d71ae8ba1ef46a8b74db1804365c1"
+  },
+  "group_interpretation": "The supervisor also imports src.io exports/input_schema/native profile constants. Module import closure does not mean inactive validation/launch/native FE call paths execute.",
+  "module_inventory": [
+    {"path": "benchmarks/run_feinn_common_descent.py", "sha256": "a30f77dc1e662f5f30656ecd84f3f82f13d8c3c287b3f5153d7354efd18256ee", "repository_imports": [{"path": "src/runners/feinn_common_descent_arrays.py", "line": 5, "owner": "<module>", "symbols": ["run", "check"]}], "external_modules": ["argparse"]},
+    {"path": "benchmarks/check_feinn_common_descent.py", "sha256": "b1700ee66e081cd2d6a0c0f062f7948b9d6c914b1ae5cdabafd886feb55534ea", "repository_imports": [], "external_modules": ["numpy"]},
+    {"path": "src/runners/feinn_common_descent_arrays.py", "sha256": "5ddb4750cf85fae85840b1d9ff6bda14a4480820f158d8291b982b61dc8b7251", "repository_imports": [{"path": "src/solvers/feinn_common_descent.py", "line": 14, "owner": "<module>", "symbols": ["analyze_configuration", "atomic_json", "provenance_columns", "require", "residual_candidate"]}, {"path": "benchmarks/check_feinn_common_descent.py", "line": 180, "owner": "frozen_evidence", "symbols": ["diagnostic_policy", "same"]}, {"path": "benchmarks/check_feinn_common_descent.py", "line": 253, "owner": "check", "symbols": ["admission", "configuration_coverage", "diagnostic_policy", "verify_configuration"]}, {"path": "src/solvers/feinn_diagnostic_algebra.py", "line": 256, "owner": "check", "symbols": ["frozen_direction_attribution"]}], "external_modules": ["datetime", "hashlib", "json", "numpy", "os", "pathlib", "subprocess", "sys", "time"]},
+    {"path": "src/solvers/feinn_common_descent.py", "sha256": "85c58fdcc25c2ad2f74a71046654224a64462a453a9a9399ee8436d1f5af0ee7", "repository_imports": [], "external_modules": ["hashlib", "json", "numpy", "os", "pathlib"]},
+    {"path": "src/solvers/feinn_diagnostic_algebra.py", "sha256": "543be365ba5badcb16b6df053614b9c6277296f1f42a88d9d94b3922ad61063f", "repository_imports": [], "external_modules": ["numpy"]},
+    {"path": "src/test/test_feinn_common_descent.py", "sha256": "333e2df34854ec8d91550f3fbdfc31bfd0d3958938f22e8804155864495945ae", "repository_imports": [{"path": "src/solvers/feinn_common_descent.py", "line": 7, "owner": "<module>", "symbols": ["analyze_configuration", "atomic_json", "common_minimum", "parameter_basis", "provenance_columns", "quadratic", "residual_candidate", "trust_ball"]}, {"path": "benchmarks/check_feinn_common_descent.py", "line": 11, "owner": "<module>", "symbols": ["verify_configuration"]}, {"path": "src/runners/__init__.py", "line": 175, "owner": "saved_campaign", "symbols": ["feinn_common_descent_arrays"]}, {"path": "src/runners/feinn_common_descent_arrays.py", "line": 175, "owner": "saved_campaign", "symbols": ["feinn_common_descent_arrays"]}, {"path": "src/solvers/__init__.py", "line": 361, "owner": "test_checker_never_calls_optimizer_and_binds_frozen_input", "symbols": ["feinn_common_descent"]}, {"path": "src/solvers/feinn_common_descent.py", "line": 361, "owner": "test_checker_never_calls_optimizer_and_binds_frozen_input", "symbols": ["feinn_common_descent"]}, {"path": "benchmarks/check_feinn_common_descent.py", "line": 376, "owner": "test_threshold_roundoff_brackets_preserve_unknown", "symbols": ["classify"]}, {"path": "benchmarks/check_feinn_common_descent.py", "line": 381, "owner": "test_unlabeled_admission_never_uses_oracle_common_point", "symbols": ["admission"]}, {"path": "src/solvers/feinn_diagnostic_algebra.py", "line": 395, "owner": "test_frozen_native_attribution_separates_conflict_and_overshoot", "symbols": ["frozen_direction_attribution"]}], "external_modules": ["copy", "json", "numpy", "pytest"]},
+    {"path": "src/test/test_feinn_diagnostic_algebra.py", "sha256": "410b496c584f72792ed63796bde54e93f0d10b58d8e5c637008649899a2fdc88", "repository_imports": [{"path": "src/solvers/feinn_diagnostic_algebra.py", "line": 3, "owner": "<module>", "symbols": ["quadratic_change", "project_real", "energy"]}], "external_modules": ["numpy", "pytest"]},
+    {"path": "scripts/supervise_task42extra.py", "sha256": "6605eb099a6c7888d03b556c64e387c4d7302a20a8291c03667572c0c95db195", "repository_imports": [{"path": "benchmarks/subreaper_watchdog.py", "line": 13, "owner": "<module>", "symbols": ["supervise"]}, {"path": "src/runners/feinn_resources.py", "line": 14, "owner": "<module>", "symbols": ["ROOT", "Health", "admission", "envelope"]}], "external_modules": ["argparse", "datetime", "fcntl", "json", "os", "pathlib", "subprocess", "sys"]},
+    {"path": "src/runners/feinn_resources.py", "sha256": "c914afb0e2b92484613fec08c536f9d52a36eed44b75a2a7c51df25acbc07555", "repository_imports": [{"path": "benchmarks/subreaper_watchdog.py", "line": 8, "owner": "<module>", "symbols": ["memory_envelope"]}, {"path": "src/runners/task042_shared.py", "line": 9, "owner": "<module>", "symbols": ["audit", "pressure"]}], "external_modules": ["json", "pathlib", "shutil", "time"]},
+    {"path": "src/runners/task042_shared.py", "sha256": "17028a3fc1d8181a773e27f51a40899f1fda31da9445b464d1d6a852930eddc3", "repository_imports": [{"path": "benchmarks/subreaper_watchdog.py", "line": 17, "owner": "<module>", "symbols": ["memory_envelope", "supervise"]}, {"path": "src/io/task042_profile.py", "line": 18, "owner": "<module>", "symbols": ["ROOT", "TASK042_PROFILES"]}, {"path": "benchmarks/task034_wsl_resources.py", "line": 312, "owner": "audit", "symbols": ["current_cgroup_path"]}, {"path": "src/runners/neural_fe_continuation.py", "line": 437, "owner": "launch", "symbols": ["budget_snapshot"]}, {"path": "src/io/task042_v4_gate.py", "line": 536, "owner": "launch", "symbols": ["publish"]}, {"path": "src/io/task042_v4_gate.py", "line": 540, "owner": "launch", "symbols": ["publish"]}], "external_modules": ["datetime", "fcntl", "json", "os", "pathlib", "shutil", "subprocess", "sys", "time"]},
+    {"path": "src/io/task042_profile.py", "sha256": "a44f98c0cfcf46e7a3ec0238d3aa0459e41493aa8ccfa0b36bf76784fe672f45", "repository_imports": [], "external_modules": ["pathlib", "tomllib"]},
+    {"path": "benchmarks/subreaper_watchdog.py", "sha256": "800d1115518134a50c64fa37de7bd29e6c8b40dbe50958d4ca5528620e7ddace", "repository_imports": [{"path": "benchmarks/task034_wsl_resources.py", "line": 20, "owner": "<module>", "symbols": ["current_cgroup_path", "vmstat_swap_pages", "wsl_memory_snapshot"]}, {"path": "benchmarks/task038_full3d_jit_staging.py", "line": 21, "owner": "<module>", "symbols": ["process_tree_snapshot"]}, {"path": "src/runners/workflow_timebase.py", "line": 22, "owner": "<module>", "symbols": ["TimebaseInconsistency", "budget_elapsed", "clock_info", "clock_sample", "ClockBudget", "STRICT", "POLICY_VERSION"]}, {"path": "src/io/native_capacity_profile.py", "line": 50, "owner": "memory_envelope", "symbols": ["native_profile_facts"]}], "external_modules": ["__future__", "argparse", "ctypes", "hashlib", "json", "os", "pathlib", "signal", "subprocess", "time"]},
+    {"path": "benchmarks/task034_wsl_resources.py", "sha256": "bf6d9a7d337ef4d77721d5e260f986937db2f58c8d06ef4dc9344d8798563653", "repository_imports": [], "external_modules": ["__future__", "dataclasses", "pathlib", "typing"]},
+    {"path": "benchmarks/task038_full3d_jit_staging.py", "sha256": "07b236414f0833f1232a3c2adaa95e345ecc039129c601d34d34928d2a22857a", "repository_imports": [], "external_modules": ["__future__", "functools", "hashlib", "json", "os", "pathlib", "time", "typing"]},
+    {"path": "src/runners/workflow_timebase.py", "sha256": "1327f64adce91535c9e35a42b213a7cfba7bffe0896e5631a041747f9a876eac", "repository_imports": [], "external_modules": ["math", "time"]},
+    {"path": "src/__init__.py", "sha256": "03b698bbb1fa349e86a99e29ccc436cd73f4fa9dc57d79e39bcdd6dddac4c021", "repository_imports": [], "external_modules": []},
+    {"path": "src/solvers/__init__.py", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "repository_imports": [], "external_modules": []},
+    {"path": "src/runners/__init__.py", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "repository_imports": [], "external_modules": []},
+    {"path": "src/io/__init__.py", "sha256": "f527e4c988829c8724a19a084d65547479b0a019a8a973940679dc62b22bf5f8", "repository_imports": [{"path": "src/io/input_loader.py", "line": 3, "owner": "<module>", "symbols": ["InputError", "LoadedInput", "load_dat_input"]}, {"path": "src/io/input_validation.py", "line": 4, "owner": "<module>", "symbols": ["load_and_resolve", "resolve_loaded_input"]}, {"path": "src/io/execution_plan.py", "line": 8, "owner": "<module>", "symbols": ["ExecutionPlan", "build_execution_plan", "dry_run_payload"]}, {"path": "src/io/resolved_config.py", "line": 13, "owner": "<module>", "symbols": ["canonical_json_bytes", "resolved_config_bytes", "resolved_config_sha256", "write_resolved_config"]}, {"path": "src/io/run_specification.py", "line": 19, "owner": "<module>", "symbols": ["RunSpecification"]}], "external_modules": []},
+    {"path": "src/test/__init__.py", "sha256": "15d7dd22a4b3d1579eeb1ffe4d7109b2918f671e96734ef9857c069869910c85", "repository_imports": [], "external_modules": []},
+    {"path": "benchmarks/__init__.py", "sha256": "5678b6ce7ef13b9f82c7be455436f0e87d548acf436e13c7db995a2610142445", "repository_imports": [], "external_modules": []},
+    {"path": "src/io/input_loader.py", "sha256": "712abd5e55ee87991def45de59e7880fcf8927b9ecddc0b2c40109b4f8930042", "repository_imports": [], "external_modules": ["__future__", "dataclasses", "hashlib", "pathlib", "tomllib", "types", "typing"]},
+    {"path": "src/io/input_validation.py", "sha256": "33e564285b882ce8d62204d936dc040e28bdfbff815a391dd5637509900d8b15", "repository_imports": [{"path": "src/io/input_loader.py", "line": 15, "owner": "<module>", "symbols": ["InputError", "LoadedInput"]}, {"path": "src/io/resolved_config.py", "line": 16, "owner": "<module>", "symbols": ["canonical_json_bytes"]}, {"path": "src/io/run_specification.py", "line": 17, "owner": "<module>", "symbols": ["RunSpecification"]}, {"path": "src/io/input_schema.py", "line": 18, "owner": "<module>", "symbols": ["FIELD_SPECS_BY_KEY", "IDENTITY_KEYS", "METHOD_KINDS", "PUBLIC_FIELD_SPECS", "SECTION_NAMES"]}, {"path": "src/io/native_capacity_profile.py", "line": 390, "owner": "_validate_cross_fields", "symbols": ["NATIVE_NONE_TIME_PROFILES"]}, {"path": "src/io/native_capacity_profile.py", "line": 621, "owner": "_validate_cross_fields", "symbols": ["NATIVE_PROFILES", "validate_native_case"]}, {"path": "src/io/task042_profile.py", "line": 623, "owner": "_validate_cross_fields", "symbols": ["TASK042_PROFILES", "validate_task042_case"]}, {"path": "src/io/native_capacity_profile.py", "line": 624, "owner": "_validate_cross_fields", "symbols": ["V5_NATIVE_PROFILES", "V5_R13_PROFILES"]}, {"path": "src/common/config_3d.py", "line": 960, "owner": "_validate_cross_fields", "symbols": ["SimulationConfig3D"]}, {"path": "src/common/config.py", "line": 1286, "owner": "simulation_config_2d_from_normalized", "symbols": ["SimulationConfig"]}, {"path": "src/common/config_3d.py", "line": 1375, "owner": "simulation_config_3d_from_normalized", "symbols": ["SimulationConfig3D"]}, {"path": "src/common/config_3d.py", "line": 1496, "owner": "_build_3d_config", "symbols": ["qualify_stage4_full3d_assembly_backend", "resolve_stage4_full3d_assembly_backend"]}, {"path": "src/io/physical_intermediate_profile.py", "line": 1573, "owner": "_build_3d_config", "symbols": ["PROFILES", "profile_facts"]}, {"path": "src/io/input_loader.py", "line": 1641, "owner": "load_and_resolve", "symbols": ["load_dat_input"]}], "external_modules": ["__future__", "difflib", "hashlib", "math", "numpy", "pathlib", "re", "tomllib", "typing"]},
+    {"path": "src/io/execution_plan.py", "sha256": "f6882fd2bb24eef7804121c7d9e8a8371b4d0d46937bb1f96ac324e8320481cf", "repository_imports": [{"path": "src/io/input_loader.py", "line": 13, "owner": "<module>", "symbols": ["InputError"]}, {"path": "src/io/resolved_config.py", "line": 14, "owner": "<module>", "symbols": ["resolved_config_bytes"]}, {"path": "src/io/run_specification.py", "line": 15, "owner": "<module>", "symbols": ["RunSpecification"]}, {"path": "src/io/physical_intermediate_profile.py", "line": 70, "owner": "method_adapter_available", "symbols": ["PROFILES"]}, {"path": "src/io/native_capacity_profile.py", "line": 105, "owner": "build_execution_plan", "symbols": ["setup_only_5nm_identity_errors"]}, {"path": "src/io/native_capacity_profile.py", "line": 167, "owner": "build_execution_plan", "symbols": ["NATIVE_PROFILES", "native_profile_facts"]}], "external_modules": ["__future__", "dataclasses", "hashlib", "os", "pathlib", "shutil", "sys", "typing"]},
+    {"path": "src/io/resolved_config.py", "sha256": "859bbfa8b1322c2f86eeeae7bf1c0dd7922fb7aa7f9c28752367e5b94b7c573a", "repository_imports": [{"path": "src/io/run_specification.py", "line": 10, "owner": "<module>", "symbols": ["RunSpecification"]}], "external_modules": ["__future__", "hashlib", "json", "pathlib", "typing"]},
+    {"path": "src/io/run_specification.py", "sha256": "ea173086a0cf2695f5c79a8c626df3f028eb6e5c76d3fdc34167db37dca37556", "repository_imports": [], "external_modules": ["__future__", "dataclasses", "pathlib", "types", "typing"]},
+    {"path": "src/io/input_schema.py", "sha256": "b9c97ef3e6f77b7da9c013813374f6b2a5af8eec1c5800448aa15db2409e4393", "repository_imports": [{"path": "src/io/native_capacity_profile.py", "line": 12, "owner": "<module>", "symbols": ["NATIVE_PROFILES"]}], "external_modules": ["dataclasses", "types", "typing"]},
+    {"path": "src/io/native_capacity_profile.py", "sha256": "a9123f36ced98a82b368e4e6d30ad220b2a7b9a853e4035fbb11754679db9655", "repository_imports": [{"path": "src/io/physical_balanced_profile.py", "line": 122, "owner": "native_profile_facts", "symbols": ["balanced_profile_facts"]}, {"path": "src/io/input_loader.py", "line": 375, "owner": "validate_native_case", "symbols": ["InputError"]}, {"path": "src/geometry/task39extra_v5_r13_mesh_plan.py", "line": 417, "owner": "validate_native_case", "symbols": ["MESH_PLAN_ID", "MESH_PLAN_SHA256", "validate_frozen_r13_axes"]}], "external_modules": []}
+  ]
+}

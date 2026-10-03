@@ -243,3 +243,7 @@ V15浏览器补查：原实际截图的回执核心表仍停留页首，保留�
 ## V16：完整记录checker与冻结方向归因
 
 最终受影响75项pure checker测试通过；相关143组合通过，未变代数组件按相同文件hash复用；Ruff/compileall通过。八配置/32点fixture覆盖本review漏检、合法PARTIAL/UNKNOWN、真实ledger/hash/事件、用途、阈值余量及不调用优化器。测试钩子生命周期1次意外修复，首轮8失败/67通过保留；V15原历史数值1+浏览器1=2。唯一原数组复验通过，M3600界宽UNKNOWN和无标签NOT_ADMITTED保留；只核验两条方向端点。[测试](records/targeted_tests_v16.json)、[checker](records/independent_checker_v16.json)、[GitHub实际视图](records/render_check_v16.json)。无full pytest/MPI/旧FE/重装或CI声明。
+
+## V17：暂停交接的静态与文档检查
+
+只做源码文本/AST/相对import小fixture、源码资格hash复用、改变页Markdown/链接/JSON检查及有限新页实际渲染；已有75/143相关资格不重跑。静态脚本首次遗漏src.io包相对导入，一次有依据修复通过，原失败与费用保留。新数值/FE/producer/优化/前向/完成器及full pytest未运行，Ruff/compileall旧资格按未变source复用，不称CI。实际范围/资源/渲染见[交接收据](records/handoff_receipt_v17.json)，[依赖与原测试入口](records/diagnostic_dependencies_v17.json)。

@@ -240,3 +240,7 @@ V15额外最小修复benchmarks/render_task42extra.py：滚动时重取当前DOM
 ## V16：证据验收边界修复
 
 现有benchmarks/check_feinn_common_descent.py、src/runners/feinn_common_descent_arrays.py及薄入口新增完整覆盖/四点/实际冻结ledger/用途/独立五层Gate；不修改run producer或src/solvers/feinn_common_descent.py旧数值核。feinn_diagnostic_algebra.py只新增复用quadratic_change的冻结方向二次式解释；相关pure fixtures扩展。新response/专题/compact记录及README/summary/进度/总账仅追加本轮事实，原V15 result/checker/候选与所有历史不改。[六依赖组](records/selective_merge_manifest_v16.json)，无production默认或训练调度晋级。
+
+## V17：一次轻量交接，无数值源码改动
+
+只新增response_v17、diagnostic_dependencies_v17与handoff_receipt_v17；README当前边界、summary页首导航、本测试/文件节、项目进度及本任务模型总账同步暂停和最新并行分工。原task/review/response/数值kernel/runner/checker/tests及V15–V16结果候选均未改。[六类依赖manifest](records/diagnostic_dependencies_v17.json)列准确静态闭包，无producer/优化授权、无接收方/迁移部署或production晋级；raw/完整AST审计/cache仍ignored。

@@ -3228,3 +3228,7 @@ M3600散射E误差9.33%及Mfinal退化12.29%、未过原方程门的结果全部
 ## 2026-10-03 Task42extra V16：原记录验收及方向冲突收口
 
 Review V15要求避免把漏行或冻结缺失误判完整实验，已补齐checker并从原数组独立给出五层决策。实际checker源码a14dd6187336c866f0a327760f10c4ece0140a8d；旧数值99f2968和8配置/32点/4候选不变。最终75 affected / 143相关pure、Ruff/compileall通过，一次测试观察钩子修复且原失败保留。唯一复验4.950958552s、树峰194895872B、swap0、已清场。M3600界宽UNKNOWN；无标签候选未准入。两条原方向b_N明确正、c_N非负，缩短正向步不能降native；仅线性方向归因，不证明全网络极限，不导出步或训练。M3600中期改善/Mfinal退化和D0否决/D1未运行保留，维持主求解器/生产暂停与无NN增益；0.7nm原尺寸/十进制2TB/172800s与原精度不变，不重复主线Gx784/AUTO和dot C1/storage。[Response V16](task042extra_feinn_5nm/response_v16.md)、[专题](task042extra_feinn_5nm/outcomes/checker_integrity_v16.md)。本批收口后等待审阅，无master合并。
+
+## 2026-10-03 Task42extra V17：研究暂停交接及依赖闭环
+
+Review V16已接受保存记录checker和两方向冲突，触发本次轻量交接以避免历史建议重新成为执行任务。基线89d24fa253aa6d9c8109e1d8b1983d964388e826，安全同步06386339abf0ce1803f08d87ee50a29f9b0c24a4；旧数值99f2968、checker a14dd618来源不改。用源码文本AST核查研究check/analyze与包初始化，给28模块准确import/调用依赖、六类组及已有数据/测试合同，无接收方，RESEARCH_ONLY_NOT_SELECTED_FOR_TRANSFER。一次相对import遗漏已修复，旧失败费用保留；原75/143按hash复用而不重跑，文档/有限渲染另列收据。M3600场误差约9.33%到最终12.29%的退化、native约0.886/0.847、界宽UNKNOWN和全部旧负结果继续保留，未过1e-6/1e-4原门。D0成本否决/D1未运行，无NN增量或主解/初值资格。主线Gx784为FE前工程失败、AUTO仅库存，dot新C1待实际FE/持久资格，各自review授权，不复制两线工作。原尺寸0.7nm/十进制2TB/172800s未资格化，本批交接完成即暂停，不自动V18、不合并master。[Response V17](task042extra_feinn_5nm/response_v17.md)、[准确依赖](task042extra_feinn_5nm/outcomes/records/diagnostic_dependencies_v17.json)、[本批成本/检查](task042extra_feinn_5nm/outcomes/records/handoff_receipt_v17.json)。
