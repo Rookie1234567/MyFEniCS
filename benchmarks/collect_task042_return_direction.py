@@ -138,6 +138,9 @@ def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_pa
     root=Path(root).resolve();plan_path=Path(plan_path or io.PLAN_PATH).resolve()
     artifact_root=Path(artifact_root or io.ARTIFACT_ROOT).resolve();records=Path(records or RECORDS).resolve()
     plan=json.loads(plan_path.read_text());inputs=compact_inputs(plan)
+    # The collector owns the destination. The fixture deliberately supplies a
+    # fresh directory; the shared atomic writer retains its existing contract.
+    records.mkdir(parents=True,exist_ok=True)
     write_json(records/'input_inventory_v28.json',dict(pre_registration=dict(path=str(plan_path),sha256=file_hash(plan_path)),states=inputs,
         prior_V27_null_corrections=[dict(name=x['name'],old_parent=None,correct_parent_result=x['parent_result'],old_files=['input_inventory_v27.json','return_direction_results_v27.json']) for x in inputs]))
     pointer=artifact_root/'DIAGNOSTIC.json'

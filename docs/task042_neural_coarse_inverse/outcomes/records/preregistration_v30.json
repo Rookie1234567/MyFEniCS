@@ -1,0 +1,94 @@
+{
+  "schema": "task042.v30.light-preregistration.v1",
+  "batch": "V30_ENTRY_REPAIR_AND_LIGHT_ACCEPTANCE",
+  "review_commit": "0a0f03390247ef37b12a04cadc61d091320203c0",
+  "review_file": "docs/task042_neural_coarse_inverse/review_report_v27.md",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "first_clock": {
+    "utc": "2026-10-03T06:39:09.630103+00:00",
+    "monotonic": 934544.490998906,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_observation": "initial read-only worktree/clock probe",
+    "total_s": 3600,
+    "light_stop_s": 2700
+  },
+  "light_stop_utc": "2026-10-03T07:24:09.630103+00:00",
+  "deadline_utc": "2026-10-03T07:39:09.630103+00:00",
+  "one_new_admission": true,
+  "rejection_or_runtime_error": "stop; no retry; preserve raw",
+  "new_supervised_limit_seconds": 120,
+  "carry_supervised_seconds": 21.163846769952215,
+  "cumulative_limit_seconds": 600,
+  "compiled_python_files": 22,
+  "prior_scope_expected_tests": 155,
+  "new_precise_regressions": 7,
+  "supervised_sequence": [
+    "pure environment / BLAS getters",
+    "minimal 7 regressions",
+    "whole CPU replay / three fixed algebra / cost modules",
+    "original 155 + new 7 scope"
+  ],
+  "command": "python -m benchmarks.task042_diagnostic_auxiliary --v30 python -m benchmarks.task042_v29_light_checks --batch v30",
+  "real_payload_reads": false,
+  "real_counts_expected": {
+    "actor": 0,
+    "S": 0,
+    "SH": 0,
+    "factor_readers": 0,
+    "LU": 0,
+    "local_solve": 0,
+    "gecon": 0,
+    "QR_SVD": 0,
+    "FE": 0,
+    "iterations": 0,
+    "training": 0
+  },
+  "memory": {
+    "warning_bytes": 1073741824,
+    "hard_bytes": 2147483648,
+    "tree_interval_seconds": 0.5,
+    "own_swap_bytes": 0,
+    "kernel_cgroup_limit_claimed": false
+  },
+  "old_closed_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/window.json",
+      "sha256": "da23cf6111ad664c62540844d09b8a1f038014e69c7fbc942549792126587d2f"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json",
+      "sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/window.json",
+      "sha256": "efe33d8b6273086f70f3fdef8c2a91bfad7cde3b0dfe73376d0a4495fcd7d1bc"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json",
+      "sha256": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/window.json",
+      "sha256": "cf44902f535b392659c7fca6d95aab857df02f2a591f7ad6ff300f0a71e41403"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/ledger.json",
+      "sha256": "679ac1fd23be99441c9afd13a7e81fdf32442c261bea553f1f29d463787cec3d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/window.json",
+      "sha256": "65cd6cd7014bddbbe71ffc920587c47394615d6bc3ce38caedbc5b36db65718e"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/ledger.json",
+      "sha256": "69d2173f90f1e51cee05ab6b2cc91a1d14b33e1f212eb50cc55b221ba5a68202"
+    }
+  ],
+  "source_status": "commit clean after compile; execution binds resulting actual SHA",
+  "synthetic_consumption_expected": {
+    "actions": 36,
+    "port_single_rhs": 35,
+    "qualified_factor_readers": 7,
+    "not_real_consumption": true
+  }
+}

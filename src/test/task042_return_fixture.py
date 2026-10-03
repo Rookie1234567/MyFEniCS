@@ -72,7 +72,7 @@ def arrays_receipt(path,**arrays):
 
 
 def complete_packet(root,kind='positive'):
-    """Two distinct parents and hash-bound members, through the real collector."""
+    """Two synthetic parents; the collector creates the fresh records directory."""
     from src.test.test_task042_v28_cached_checker import fixture,inventory_fixture
     from src.io.block_direction_diagnostic import NAMES as OLD_NAMES
     from benchmarks.collect_task042_return_direction import classify

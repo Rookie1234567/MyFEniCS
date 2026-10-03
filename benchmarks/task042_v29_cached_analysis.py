@@ -9,7 +9,16 @@ from src.solvers.neural_fe_action_packet import file_hash
 RECORDS=ROOT/'docs/task042_neural_coarse_inverse/outcomes/records'
 
 
-def cpu_reasons(output):
+def checked_batch(batch):
+    if batch not in ('v29','v30'):
+        raise ValueError('only the authorized v29/v30 auxiliary namespaces')
+    return batch
+
+
+def cpu_reasons(output,*,batch='v29'):
+    batch=checked_batch(batch);output=Path(output)
+    # Analysis functions own their output directory; atomic write_json does not.
+    output.mkdir(parents=True,exist_ok=True)
     summaries=[]
     for suffix,expected in [('accepted',[11,22,26]),('rejected',[])]:
         path=RECORDS/f'admission_{suffix}_v28.json.gz'
@@ -31,24 +40,26 @@ def cpu_reasons(output):
             rows.append(dict(cpu=entry['cpu'],socket=entry['socket'],core=entry['core'],SMT_siblings=entry['siblings'],
                 busy_fraction=d['cpu_busy_fractions'][str(entry['cpu'])],eligible=entry['eligible'],exclusions=reasons))
         assert [x['cpu'] for x in rows if x['eligible']]==expected
-        out=output/f'cpu_exclusion_{suffix}_v29.json'
-        write_json(out,dict(schema='task042.v29.frozen-cpu-reasons',snapshot_utc=d['utc'],snapshot_sha256=file_hash(path),
+        out=output/f'cpu_exclusion_{suffix}_{batch}.json'
+        write_json(out,dict(schema=f'task042.{batch}.frozen-cpu-reasons',snapshot_label=suffix,snapshot_utc=d['utc'],snapshot_sha256=file_hash(path),
             no_live_sampling=True,candidates=expected,rows=rows))
-        csv_path=output/f'cpu_exclusion_{suffix}_v29.csv'
+        csv_path=output/f'cpu_exclusion_{suffix}_{batch}.csv'
         with csv_path.open('w',newline='') as f:
-            writer=csv.writer(f);writer.writerow(['cpu','socket','core','SMT','busy_fraction','eligible','excluded_peer','rule','pid','tid','process_start_ticks','thread_start_ticks'])
+            writer=csv.writer(f,lineterminator='\n');writer.writerow(['cpu','socket','core','SMT','busy_fraction','eligible','excluded_peer','rule','pid','tid','process_start_ticks','thread_start_ticks'])
             for row in rows:
                 for reason in row['exclusions'] or [{}]:
                     writer.writerow([row['cpu'],row['socket'],row['core'],'/'.join(map(str,row['SMT_siblings'])),row['busy_fraction'],row['eligible'],
                         *[reason.get(k,'') for k in ('excluded_cpu','rule','pid','tid','process_start_ticks','thread_start_ticks')]])
-        summaries.append(dict(snapshot=suffix,candidates=expected,allowed_cpus=len(rows),
+        summaries.append(dict(snapshot_label=suffix,candidates=expected,allowed_cpus=len(rows),
             snapshot=dict(path=str(path),sha256=file_hash(path)),table=dict(path=str(out),sha256=file_hash(out)),
             at_most_5_percent=sum(x['busy_fraction']<=.05 for x in rows),policy_unchanged=True))
-    write_json(output/'cpu_exclusions_v29.json',dict(status='FROZEN_SNAPSHOTS_RECOMPUTED',snapshots=summaries,
+    write_json(output/f'cpu_exclusions_{batch}.json',dict(status='FROZEN_SNAPSHOTS_RECOMPUTED',batch=batch,snapshots=summaries,
         interpretation='historical admission policy exclusion, not continuous full CPU utilization'))
 
 
-def cost_ledger(output):
+def cost_ledger(output,*,batch='v29'):
+    batch=checked_batch(batch);output=Path(output)
+    output.mkdir(parents=True,exist_ok=True)
     sources=[];stages=[]
     for version in range(24,29):
         p=RECORDS/f'resource_costs_v{version}.json';d=json.loads(p.read_text())
@@ -79,7 +90,7 @@ def cost_ledger(output):
         ('seven A+LU payload','derived',payload,'bytes','stored arrays, not RSS or simultaneous peak'),
         ('Bfull qualified deployment time/peak','unknown',None,'seconds/bytes','not authorized or measured'),
         ('best qualified non-neural complete N=1 baseline','unknown',None,'seconds/bytes','no fully qualified solve available')]]
-    write_json(output/'complete_cost_ledger_v29.json',dict(schema='task042.v29.cost-necessary-conditions',shared_workstation=True,
+    write_json(output/f'complete_cost_ledger_{batch}.json',dict(schema=f'task042.{batch}.cost-necessary-conditions',batch=batch,shared_workstation=True,
         sources=sources,historical_stages=stages,cost_table=table,nonadditive_nested_timers=True,
         historic_formal_research_lower_seconds=77161.55713859801,historical_other_auxiliary_and_single_solve_lineage='unknown retained',
         full_block_apply=dict(J_solves=2,outer_solves_each=1,outer_blocks=6,local_triangular_passes=16,original_A=2,
@@ -102,7 +113,10 @@ def cost_ledger(output):
 
 
 def main():
-    output=RECORDS;cpu_reasons(output);cost_ledger(output)
+    import argparse
+    parser=argparse.ArgumentParser();parser.add_argument('--batch',choices=('v29','v30'),default='v29')
+    batch=parser.parse_args().batch
+    output=RECORDS;cpu_reasons(output,batch=batch);cost_ledger(output,batch=batch)
 
 
 if __name__=='__main__':main()

@@ -1,11 +1,47 @@
 """End-to-end synthetic collector acceptance and review's four counterexamples."""
 from copy import deepcopy
 import json
+from re import escape
 import numpy as np
 import pytest
 from benchmarks.collect_task042_return_direction import collect,numeric,inventory
 from src.test.task042_return_fixture import complete_packet,republish,arrays_receipt,json_receipt
 from src.test.test_task042_v28_cached_checker import fixture,inventory_fixture
+
+EXPECTED_GATES={
+ 'zero_consumption':(ValueError,'complete fixed consumption differs'),
+ 'missing_factor':(ValueError,'missing/duplicate/wrong factor bundle'),
+ 'duplicate_factor':(ValueError,'missing/duplicate/wrong factor bundle'),
+ 'failed_factor':(ValueError,'unqualified factor or solve/RHS/pass inventory'),
+ 'wrong_factor_source':(ValueError,'factor source/rows identity'),
+ 'wrong_factor_rows':(ValueError,'factor source/rows identity'),
+ 'wrong_factor_hash':(ValueError,'factor hash/reader seal'),
+ 'wrong_seed':(ValueError,'factor witness seeds'),
+ 'bad_solve':(ValueError,'solve relative differs'),
+ 'missing_witness':(ValueError,'factor witness seeds'),
+ 'nan_witness':(ValueError,'finite nonnegative certificate: solve relative'),
+ 'port_shape':(ValueError,'complete 40-port single RHS shape'),
+ 'port_columns':(ValueError,'complete 40-port single RHS shape'),
+ 'ledger_counts':(ValueError,'durable counts disagree'),
+ 'ledger_source':(ValueError,'durable run/source identity'),
+ 'manifest_counts':(ValueError,'durable counts disagree'),
+ 'wrong_parent':(ValueError,'named parent/cache binding parent_result'),
+ 'wrong_member':(ValueError,'fixed state path/container/member identity differs'),
+ 'missing_arrays':(ValueError,'missing new raw arrays'),
+ 'return_vector':(ValueError,'qret != hash-bound qJ+d'),
+ 'residual_norm':(ValueError,'actual input residual norm differs'),
+ 'w_support':(ValueError,'J/outer support differs'),
+ 'feedback_support':(ValueError,'J/outer support differs'),
+ 'missing_identity':(KeyError,"'identity'"),
+ 'failed_identity':(ValueError,'state identity threshold port_reclosure_operation_relative'),
+ 'cancellation':(ValueError,'cancellation error differs'),
+ 'missing_scale':(KeyError,"'scale_provenance'"),
+ 'wrong_recombination':(ValueError,'recombination operation_relative differs'),
+ 'state_concat':(ValueError,'state concat/homogeneous recovery'),
+ 'state_port':(ValueError,'state port_reclosure_operation_relative differs'),
+ 'missing_state_audit':(KeyError,"'audited_full_residual'"),
+ 'nonfinite':(ValueError,'saved member hash/finite return_direction'),
+}
 
 
 @pytest.mark.parametrize('kind',['positive','weak','beta_zero','zero','duplicate','nearzero','solved'])
@@ -28,6 +64,8 @@ def test_complete_collector_and_legal_negatives(tmp_path,kind):
     'wrong_recombination','state_concat','state_port','missing_state_audit','nonfinite'])
 def test_full_chain_rejects_incomplete_or_inconsistent_evidence(tmp_path,bad):
     args,raw,result=complete_packet(tmp_path);row=result['rows'][0]
+    control=collect(**args)
+    assert control['status']=='CHECKED' and control['decision']=='RETURN_EXTRA_DIRECTION_SIGNAL'
     if bad=='zero_consumption':
         result['budget_counts'].update(actions=0,port_solves=0,port_rhs_columns=0);result['action_counts'].update(S=0,SH=0)
     elif bad=='missing_factor':result['factor_reloads'].pop()
@@ -96,7 +134,8 @@ def test_full_chain_rejects_incomplete_or_inconsistent_evidence(tmp_path,bad):
     # writer correctly disallows it; the reader must still reject imported data.
     raw.write_text(json.dumps(result,allow_nan=True))
     json_receipt(raw.parent/'DIAGNOSTIC.json',dict(path=str(raw),sha256=__import__('src.solvers.neural_fe_action_packet',fromlist=['file_hash']).file_hash(raw)))
-    with pytest.raises((ValueError,KeyError,OSError)):
+    exception,message=EXPECTED_GATES[bad]
+    with pytest.raises(exception,match='^'+escape(message)+'$'):
         collect(**args)
 
 
