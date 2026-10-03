@@ -1,3 +1,11 @@
+# 最新审阅：Review V25／接受V27零消费停止
+
+[Review V25](review_report_v25.md)接受V27的CPU准入停止，关闭真实窗口测试依赖问题；本次67项相关测试通过。真实回流方向仍未运行，不能称数值负结果。
+
+V28先补齐独立数值checker、非空parent映射及可重算的准入记录，再仅作一次新的正式准入；通过才执行原两冷态、相对九方向基线的唯一回流诊断。V27窗口保持closed；两轮actor和受监督辅助合计仍限600秒，旧12.366657368秒不清零。禁止新LU、迭代延长、训练或参数扫描。
+
+[独立核验记录](outcomes/records/review_v25_independent_checks.json)保留hash、零消费推导、辅助CPU候选重算和记录缺口。原尺寸0.7nm／2TB／48小时及神经20%均未资格化，无merge approval。下方历史逐字保留，不覆盖最新合同。
+
 # Task042 V27：修复测试后，回流诊断因CPU准入未运行
 
 固定J→外域→J只计划检验九个历史方向之外的一个方向，没有改变有限元方程。67项pure回归、compileall及新dat验证通过；正式入口未找到合格空闲物理核，已用完允许的一次只读复核，actor前以NOT_RUN_CPU_ADMISSION收口。两冷态eta10/g10均NOT_RUN，不把资源停止改成方向失败。
