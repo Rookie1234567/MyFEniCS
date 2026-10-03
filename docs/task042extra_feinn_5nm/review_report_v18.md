@@ -83,7 +83,7 @@ A 在原八个 PDE 参数方向、原半径内减小 native，同时约束原 R 
 审阅端用保存的实际场减去线性场，直接分解新增能量。记线性量为 xL、其 G 或 G 逆加权量为 wL，差量为 dx、dw，则能量差正好是两项交叉加差量平方；无需新的算子作用：
 
 ```math
-\Delta Q=\operatorname{Re}(x_L^*\delta w+\delta x^*w_L)+\operatorname{Re}(\delta x^*\delta w).
+\Delta Q=\Re(x_L^*\delta w+\delta x^*w_L)+\Re(\delta x^*\delta w).
 ```
 
 | 实际网络减线性对照；归一能量差 | M3600 | Mfinal |
