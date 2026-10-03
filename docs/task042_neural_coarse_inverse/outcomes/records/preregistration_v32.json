@@ -1,0 +1,48 @@
+{
+  "review_commit": "5c8dc23a3be85075c54eb6f13e5b1c93a026448d",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "first_clock": {
+    "utc": "2026-10-03T10:42:27.034377+00:00",
+    "monotonic": 949141.895272811,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "window": {
+    "start_utc": "2026-10-03T10:42:27.034377+00:00",
+    "start_monotonic": 949141.895272811,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 4500,
+    "total_limit_seconds": 5400,
+    "review_commit": "5c8dc23a3be85075c54eb6f13e5b1c93a026448d",
+    "carried_seconds": 52.68017605994828
+  },
+  "carry": 52.68017605994828,
+  "actor_count": 1,
+  "actor_timeout_formula": "min(480,600-carry-all_aux-20-10,heavy_remaining)",
+  "planned_peak_bytes": 4807239744,
+  "net_two_state_array_bytes": 15226880,
+  "array_log_json_reserve_bytes": 18372608,
+  "storage_source": "src/runners/diagnostic_storage.py",
+  "old_closed_hashes": {
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v26/window.json": "da23cf6111ad664c62540844d09b8a1f038014e69c7fbc942549792126587d2f",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27/window.json": "efe33d8b6273086f70f3fdef8c2a91bfad7cde3b0dfe73376d0a4495fcd7d1bc",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v28/window.json": "cf44902f535b392659c7fca6d95aab857df02f2a591f7ad6ff300f0a71e41403",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v28/ledger.json": "679ac1fd23be99441c9afd13a7e81fdf32442c261bea553f1f29d463787cec3d",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v29/window.json": "65cd6cd7014bddbbe71ffc920587c47394615d6bc3ce38caedbc5b36db65718e",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v29/ledger.json": "69d2173f90f1e51cee05ab6b2cc91a1d14b33e1f212eb50cc55b221ba5a68202",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v30/window.json": "d07554e1e843b0c030fc76df923093b6dbbca6e94433eddafd40849efa8e8413",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v30/ledger.json": "2e0c787d7ededfad76e8e1b95ee195a498abf896085851580235a52cf6679d6a",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v31/window.json": "9008d7e487f5798b06da8142f92a2b0f3acfd142064fa91b4ea316b2086a030e",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v31/ledger.json": "72205e683531ded77983d1952259efe53c70ceddef53b472d0f33841303e6626"
+  },
+  "decision_rule": {
+    "signal_both_g_le": 0.75,
+    "insufficient_both_g_ge": 0.95,
+    "mixed": "STATE_DEPENDENT_INCONCLUSIVE",
+    "unresolved": "REDUNDANT_OR_UNRESOLVED",
+    "neural_increment_threshold": 0.2,
+    "diagnostic_only": true
+  },
+  "initial_original_payload_reads": 0
+}

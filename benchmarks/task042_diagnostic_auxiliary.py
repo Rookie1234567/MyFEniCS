@@ -10,11 +10,14 @@ def main():
     parser=argparse.ArgumentParser();group=parser.add_mutually_exclusive_group()
     group.add_argument('--v29',action='store_true');group.add_argument('--v30',action='store_true')
     group.add_argument('--v31-phase',choices=('pre','check'))
+    group.add_argument('--v32-phase',choices=('pre','check'))
+    parser.add_argument('--attempt')
     parser.add_argument('command',nargs=argparse.REMAINDER);args=parser.parse_args()
     if args.command and args.command[0]=='--':args.command=args.command[1:]
     if args.v29:return v29(args.command)
     if args.v30:return v29(args.command,batch='v30')
     if args.v31_phase:return v31(args.command,phase=args.v31_phase)
+    if args.v32_phase:return v32(args.command,phase=args.v32_phase,attempt=args.attempt)
     clock=window.require_live(margin=900);used=window.auxiliary_wall()+window.ledger()['actor_wall_seconds']
     if used>=590:raise RuntimeError('V27+V28 bounded auxiliary cap/cleanup')
     folder=window.TMP/('aux_'+datetime.now(timezone.utc).strftime('%H%M%S%f'));folder.mkdir()
@@ -99,5 +102,66 @@ def v31(command,*,phase):
         if result['elapsed_seconds']>quota or w.auxiliary_wall()-w.CARRIED_SECONDS>60:
             raise RuntimeError('V31 auxiliary cumulative allocation exceeded')
         return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 1
+
+
+def v32(command,*,phase,attempt):
+    """Bounded, uniquely named repair attempts; a resource rejection stops retries."""
+    import re
+    from src.io.task042_profile import ROOT
+    from src.solvers import return_block_v32_window as w
+    from src.runners.diagnostic_storage import enforce
+    if phase not in ('pre','check') or not attempt or not re.fullmatch('[0-9]{3}',attempt):
+        raise ValueError('V32 phase and immutable three-digit attempt ID required')
+    clock=w.require_live(margin=30);book=w.ledger()
+    if book['closed'] or book['active'] is not None:raise RuntimeError('V32 closed/active auxiliary boundary')
+    if (w.TMP/'auxiliary_resource_rejection.json').exists():raise RuntimeError('V32 resource rejection; no retry')
+    if phase=='check' and len(book['runs'])!=1:raise RuntimeError('V32 checker requires settled actor')
+    if phase=='pre' and book['runs']:raise RuntimeError('V32 pre-test after actor forbidden')
+    used_phase=sum(json.loads(p.read_text())['elapsed_seconds'] for p in w.TMP.glob('aux_'+phase+'_*/summary.json'))
+    used=w.auxiliary_wall()-w.CARRIED_SECONDS
+    limit=70 if phase=='pre' else 20
+    seconds=min(limit-used_phase,90-used,600-w.auxiliary_wall()-book['actor_wall_seconds'],
+                clock['heavy_remaining_seconds'])-2
+    if seconds<=0:raise RuntimeError('V32 auxiliary / cumulative / deadline exhausted')
+    enforce(ROOT,reserve_bytes=2*2**20)
+    folder=w.TMP/('aux_'+phase+'_'+attempt);folder.mkdir(parents=True,exist_ok=False)
+    with (ROOT/'tmp/task042/task042_shared.lock').open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        with (folder/'admission_attempt.json').open('x') as stream:
+            json.dump(dict(command=command,phase=phase,attempt=attempt,clock=clock),stream)
+            stream.flush();os.fsync(stream.fileno())
+        try:
+            baseline=audit(observed_activity=True,receipt_path=folder/'admission.json',input_path=' '.join(command))
+        except Exception as error:
+            write_json(w.TMP/'auxiliary_resource_rejection.json',dict(phase=phase,attempt=attempt,error=repr(error),directory=str(folder)))
+            w.journal('auxiliary_admission_rejected',phase=phase,attempt=attempt,error=repr(error))
+            raise
+        os.sched_setaffinity(0,{baseline['cpu']});os.nice(10)
+        subprocess.run(['ionice','-c','3','-p',str(os.getpid())],check=True)
+        write_json(folder/'baseline.json',baseline)
+        source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        os.environ['TASK042_V32_AUX_DIRECTORY']=str(folder)
+        result=supervise(command,folder/'supervision',wall_seconds=seconds,
+            interval=.5,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=2*2**30,
+            rss_warning_bytes=2**30,memory_envelope_provider=shared_envelope,
+            source_state=dict(source_sha=source,role='V32 '+phase+' auxiliary',attempt=attempt),
+            health_check=SharedHealth(folder,baseline['neighbor_processes']),include_pss=False,stop_on_global_swap=False)
+        write_json(folder/'summary.json',result)
+        w.journal('auxiliary_settled',phase=phase,attempt=attempt,seconds=result['elapsed_seconds'],
+                  cumulative=w.auxiliary_wall()+book['actor_wall_seconds'])
+        clean=result['classification']=='COMPLETED' and result['leader_exit_code']==0
+        if phase=='pre' and clean:
+            proof=folder/'tests/qualification.json'
+            from src.solvers.neural_fe_action_packet import file_hash
+            write_json(w.TMP/'pre_qualification.json',dict(path=str(proof),sha256=file_hash(proof)))
+            w.require_qualification()
+        elif result['classification']!='WORKER_FAILED' and not clean:
+            write_json(w.TMP/'auxiliary_resource_rejection.json',dict(phase=phase,attempt=attempt,
+                classification=result['classification'],directory=str(folder)))
+        if used_phase+result['elapsed_seconds']>limit or w.auxiliary_wall()-w.CARRIED_SECONDS>90:
+            raise RuntimeError('V32 auxiliary allocation exceeded')
+        print(json.dumps(dict(directory=str(folder),classification=result['classification'],
+                              seconds=result['elapsed_seconds'],source_sha=source)))
+        return 0 if clean else 1
 
 if __name__=='__main__':sys.exit(main())

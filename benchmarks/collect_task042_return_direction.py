@@ -134,8 +134,10 @@ def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_pa
     Every complete result must bind independent durable files, not embedded labels.
     Neither this function nor its fixtures admit or reopen a numerical window.
     """
-    if batch not in ('v28','v31'):raise ValueError('unapproved return checker namespace')
-    if batch=='v31':
+    if batch not in ('v28','v31','v32'):raise ValueError('unapproved return checker namespace')
+    if batch=='v32':
+        from src.io import return_block_v32 as io
+    elif batch=='v31':
         from src.io import return_block_v31 as io
     else:
         from src.io import return_block_continuation as io
@@ -208,5 +210,5 @@ def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_pa
 
 if __name__=='__main__':
     import argparse
-    parser=argparse.ArgumentParser();parser.add_argument('--batch',choices=('v28','v31'),default='v28')
+    parser=argparse.ArgumentParser();parser.add_argument('--batch',choices=('v28','v31','v32'),default='v28')
     print(json.dumps(collect(batch=parser.parse_args().batch),ensure_ascii=False))

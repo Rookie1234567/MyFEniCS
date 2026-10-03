@@ -10,17 +10,29 @@ SCOPE=('src/test/test_task042_v31_workflow.py','src/test/test_task042_v28_cached
 
 
 def main():
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--batch',choices=('v31','v32'),default='v31')
+    parser.add_argument('tests',nargs='*')
+    args=parser.parse_args()
     from src.runners.actual_loss_block_descent import _pure_blas_threads
     import numpy as np,scipy
     if os.environ.get('TASK042_ACTIVATION')!='1' or os.environ.get('TASK042_ENV_MODE')!='pure':
         raise RuntimeError('qualified Task042 pure activation required')
-    folder=ROOT/'tmp/task042/v31/tests';folder.mkdir(parents=True,exist_ok=True)
+    folder=(Path(os.environ['TASK042_V32_AUX_DIRECTORY'])/'tests' if args.batch=='v32'
+            else ROOT/'tmp/task042/v31/tests')
+    folder.mkdir(parents=True,exist_ok=True)
+    scope=tuple(args.tests) if args.tests else (('src/test/test_task042_v32_workflow.py',
+        'src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route',
+        'src/test/test_task042_v31_workflow.py::test_actual_study_two_states_through_collector',
+        'src/test/test_task042_v31_workflow.py::test_actual_workflow_reader_failure_preserves_partial_accounting')
+        if args.batch=='v32' else SCOPE)
     getters=_pure_blas_threads()
     environment=dict(python=sys.executable,numpy=np.__version__,scipy=scipy.__version__,BLAS=getters,
         affinity=sorted(os.sched_getaffinity(0)),MPI=1,math_threads=1,DataLoader0=True,
         torch_imported='torch' in sys.modules,FE_imported='dolfinx' in sys.modules,
         source_sha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
-        command=[sys.executable,'-m','pytest','-q','-p','no:cacheprovider',*SCOPE,
+        command=[sys.executable,'-m','pytest','-q','-p','no:cacheprovider',*scope,
             '--basetemp='+str(folder/'fixtures'),'--junitxml='+str(folder/'junit.xml')])
     write_json(folder/'environment.json',environment)
     began=time.perf_counter()
@@ -28,6 +40,19 @@ def main():
         result=subprocess.run(environment['command'],stdout=out,stderr=err,check=False)
     write_json(folder/'entry_result.json',dict(exit_code=result.returncode,elapsed_seconds=time.perf_counter()-began,
         environment=environment,status='PASSED' if result.returncode==0 else 'FAILED'))
+    if args.batch=='v32' and result.returncode==0:
+        from src.solvers import return_block_v32_window as w
+        from src.solvers.neural_fe_action_packet import file_hash
+        # Only the complete focused scope confers formal qualification. Targeted
+        # repair replays remain evidence; they cannot pretend to cover omitted gates.
+        required=('src/test/test_task042_v32_workflow.py',
+                  'src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route')
+        if all(p in scope for p in required):
+            write_json(folder/'qualification.json',dict(status='PASSED',source_sha=environment['source_sha'],
+                implementation_hashes=w.implementation_hashes(),coverage=list(w.REQUIRED_COVERAGE),
+                scope=list(scope),test_receipt=dict(path=str(folder/'entry_result.json'),sha256=file_hash(folder/'entry_result.json')),
+                previous_failures=[str(p) for p in w.TMP.glob('aux_pre_*/summary.json')
+                                   if json.loads(p.read_text())['leader_exit_code']!=0]))
     print((folder/'stdout.txt').read_text());print((folder/'stderr.txt').read_text(),file=sys.stderr)
     return result.returncode
 

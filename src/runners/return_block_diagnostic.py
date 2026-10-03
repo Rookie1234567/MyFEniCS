@@ -7,6 +7,10 @@ from src.runners.block_direction_diagnostic import DirectionStage
 
 
 class ReturnStage(DirectionStage):
+    def __init__(self,specification,directory,**kwargs):
+        self.formal_actor_limit=specification.execution['timeout_seconds']
+        super().__init__(specification,directory,**kwargs)
+
     def finish(self,result):
         # Metadata seal only. No new physical action, factor, or decomposition.
         from src.solvers.neural_fe_action_packet import file_hash
@@ -24,6 +28,15 @@ class ReturnStage(DirectionStage):
         super().guard(**kwargs)
         if getattr(self.io,'LABEL','V27')=='V31' and time.monotonic()-self.run_started>=470:
             raise RuntimeError('V31 actor cutoff/cleanup margin')
+        if getattr(self.io,'LABEL','V27')=='V32':
+            if time.monotonic()-self.run_started>=self.formal_actor_limit-10:
+                raise RuntimeError('V32 unique actor cutoff/cleanup margin')
+            now=time.monotonic()
+            if now-getattr(self,'last_new_storage_check',0)>5:
+                from src.runners.diagnostic_storage import enforce
+                self.meta['storage_inventory']=enforce(self.io.ROOT)
+                self.last_new_storage_check=now
+            return
         now=time.monotonic()
         if now-getattr(self,'last_new_storage_check',0)>5:
             roots=[self.io.ARTIFACT_ROOT,self.directory,*((self.io.ROOT/'tmp/task042').glob('v27*'))]
@@ -42,7 +55,10 @@ class ReturnStage(DirectionStage):
 
 def main():
     global io,window
-    if b'[task042_v31]' in Path(sys.argv[1]).read_bytes():
+    if b'[task042_v32]' in Path(sys.argv[1]).read_bytes():
+        from src.io import return_block_v32 as io
+        from src.solvers import return_block_v32_window as window
+    elif b'[task042_v31]' in Path(sys.argv[1]).read_bytes():
         from src.io import return_block_v31 as io
         from src.solvers import return_block_v31_window as window
     elif b'[task042_v28]' in Path(sys.argv[1]).read_bytes():

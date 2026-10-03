@@ -22,7 +22,8 @@ def arrays_receipt(path,**arrays):
     return dict(path=str(path),sha256=file_hash(path),**{k+'_sha256':array_hash(v) for k,v in arrays.items()})
 
 
-def workflow(root,monkeypatch,*,reject_state=False):
+def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
+    if batch not in ('v31','v32'):raise ValueError('unapproved workflow namespace')
     from src.solvers import return_block_study as study,joint_block_study as oldstudy
     from src.solvers.return_block_direction import SelectedBundle,NAMES,FAMILY
     from src.solvers.return_block_window import CAPS
@@ -57,16 +58,16 @@ def workflow(root,monkeypatch,*,reject_state=False):
         a=dict(b=b,masters=np.arange(nt),Hhat=H,erows=np.array([0]),evals=np.ones(1),
             classes=np.array([0]),S=np.array([[[10+0j]]])),counts=dict(S=0,SH=0,audit=0),costs=dict(S=0.,SH=0.))
     packet._expand=lambda x:x[None,:]
-    window_dir=root/'tmp/task042/v31';window_dir.mkdir(parents=True)
+    window_dir=root/'tmp/task042'/batch;window_dir.mkdir(parents=True)
     json_receipt(window_dir/'window.json',dict(start_utc=time.time(),start_monotonic=time.monotonic(),
         boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),heavy_limit_seconds=4500,total_limit_seconds=5400))
-    w=DiagnosticWindow(window_dir,CAPS,'V31-fixture')
+    w=DiagnosticWindow(window_dir,CAPS,batch.upper()+'-fixture')
     # evaluate_window accepts ISO UTC; keep the real implementation here too.
     from datetime import datetime,timezone
     window=json.loads(w.WINDOW_PATH.read_text());window['start_utc']=datetime.now(timezone.utc).isoformat();write_json(w.WINDOW_PATH,window)
     stage=ReturnStage.__new__(ReturnStage);stage.window=w;stage.base=w.ledger();stage.counts=dict.fromkeys(CAPS,0)
     stage.source='d'*40;stage.directory=root/'results/task042/fixture';stage.directory.mkdir(parents=True)
-    stage.artifact=art/'v31/run';stage.artifact.mkdir(parents=True);stage.packet=packet
+    stage.artifact=art/batch/'run';stage.artifact.mkdir(parents=True);stage.packet=packet
     stage.name='DIAGNOSTIC';stage.family=FAMILY;stage.carry_actions=0;stage.historical_lower=0.
     stage.run_started=time.monotonic();stage.began=time.perf_counter();stage.actor_limit=600;stage.artifact_limit=32*2**20
     stage.guard=lambda **kw:None;stage.sample=lambda:dict(rss_bytes=0)
@@ -124,9 +125,9 @@ def workflow(root,monkeypatch,*,reject_state=False):
     stage.meta=dict(source_sha=stage.source,input_sha256='e'*64,plan_sha256=file_hash(plan_path),operator_packet=dict(sha256='a'*64),
         complete_ports=40,reference_arrays_read=False,Q_U_R_D_L_loaded=False,global_p4_factor_constructed=False)
     write_json(stage.directory/'run_manifest.json',dict(source_sha=stage.source,input_sha256='e'*64))
-    io=SimpleNamespace(ROOT=root,LABEL='V31',FAMILY=FAMILY,PLAN_PATH=plan_path,ARTIFACT_ROOT=art/'v31',checked_json=checked_json,
+    io=SimpleNamespace(ROOT=root,LABEL=batch.upper(),FAMILY=FAMILY,PLAN_PATH=plan_path,ARTIFACT_ROOT=art/batch,checked_json=checked_json,
         physical_state=lambda item,p:physical_state(item,role='WARM',nt=p.nt,np_=p.np,size=p.size,allowed_versions=('v24',),allowed_root=root),
-        publish=lambda name,path:json_receipt(art/'v31'/(name+'.json'),dict(path=str(path),sha256=file_hash(path))))
+        publish=lambda name,path:json_receipt(art/batch/(name+'.json'),dict(path=str(path),sha256=file_hash(path))))
     stage.io=io;monkeypatch.setattr(study,'io',io);monkeypatch.setattr(oldstudy,'io',io)
     monkeypatch.setattr(study,'mapping',lambda stage:(groups,{'fixture':True}))
     monkeypatch.setattr(study,'local_readiness',lambda *a,**k:dict(qualified=True,fixture=True))
@@ -168,6 +169,6 @@ def workflow(root,monkeypatch,*,reject_state=False):
     w.settle_run(stage.directory,dict(classification='FAILED' if reject_state else 'COMPLETED',leader_exit_code=1 if reject_state else 0,source_state=dict(source_sha=stage.source),
         elapsed_seconds=time.monotonic()-stage.run_started,sampled_process_tree_rss_peak_bytes=0,
         sampled_process_tree_swap_peak_bytes=0,descendants_cleared=True),0.)
-    out=collect(root=root,plan_path=plan_path,artifact_root=art/'v31',records=root/'records',
-        ledger_path=w.LEDGER_PATH,nt=nt,old_plan=oldplan,batch='v31')
+    out=collect(root=root,plan_path=plan_path,artifact_root=art/batch,records=root/'records',
+        ledger_path=w.LEDGER_PATH,nt=nt,old_plan=oldplan,batch=batch)
     return result,out,w.ledger()
