@@ -11,6 +11,7 @@ from scipy.linalg import lstsq, qr
 FAMILY = 'FROZEN_LOCAL8_RESIDUAL_DIRECTION_DIAGNOSTIC'
 EPS = np.finfo(np.float64).eps
 RANK_THRESHOLD = 1e-12
+FROZEN_NAMES = ('V24-LZ-INITIAL', 'V24-LZ-CYCLE4', 'V24-LCZ-CYCLE4')
 
 
 def relative(error, scale):
@@ -140,7 +141,10 @@ def diagnose(residual, local, action, *, bnorm, operation_scale=None,
 
 
 def decision(rows):
-    finals = rows[-2:]
+    if len(rows) != 3 or {r.get('name') for r in rows} != set(FROZEN_NAMES):
+        return 'NUMERICALLY_UNRESOLVED'
+    by_name = {r['name']: r for r in rows}
+    finals = [by_name[name] for name in FROZEN_NAMES[1:]]
     if len(finals)!=2 or not all(r['trustworthy'] for r in finals):return 'NUMERICALLY_UNRESOLVED'
     if all(r['eta8']<=.5 and r['eta8']<=.5*r['eta1'] for r in finals):return 'BLOCK_DIRECTION_COMBINATION_SIGNAL'
     if all(r['eta8']>=.9 for r in finals):return 'EIGHT_DIRECTIONS_WEAK'

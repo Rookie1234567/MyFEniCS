@@ -6,11 +6,11 @@ from src.io.input_loader import InputError
 from src.io.run_specification import RunSpecification
 from src.io.autonomous_neural_head import plan_and_operator
 from src.solvers.neural_fe_action_packet import file_hash
-from src.solvers.block_residual_direction import FAMILY
+from src.solvers.block_residual_direction import FAMILY,FROZEN_NAMES
 
 ARTIFACT_ROOT=ROOT/'benchmarks/artifacts/task042/v25'
 PLAN_PATH=ROOT/'input/task042_neural_coarse_inverse/block_residual_direction_v25.json'
-NAMES=('V24-LZ-INITIAL','V24-LZ-CYCLE4','V24-LCZ-CYCLE4')
+NAMES=FROZEN_NAMES
 
 
 def load_block_diagnostic(path):

@@ -83,7 +83,8 @@ def test_predeclared_decision_uses_only_both_fixed_final_states(which):
     choices=dict(signal=([a,a],'BLOCK_DIRECTION_COMBINATION_SIGNAL'),weak=([b,b],'EIGHT_DIRECTIONS_WEAK'),
         mixed=([a,b],'STATE_DEPENDENT_INCONCLUSIVE'),unresolved=([dict(a,trustworthy=False),a],'NUMERICALLY_UNRESOLVED'))
     rows,want=choices[which]
-    assert decision([dict(trustworthy=False),*rows])==want
+    named=[dict(trustworthy=False,name=io.NAMES[0]),*[dict(r,name=n) for r,n in zip(rows,io.NAMES[1:],strict=True)]]
+    assert decision(named)==want
 
 
 def test_budget_and_real_utc_cannot_be_refreshed_or_hidden_by_new_boot():

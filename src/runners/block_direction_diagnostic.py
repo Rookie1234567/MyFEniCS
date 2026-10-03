@@ -8,14 +8,16 @@ from src.runners.task042_shared import write_json
 
 
 class DirectionStage(Stage):
-    def __init__(self,specification,directory):
-        self.base=window.ledger();self.run_started=time.monotonic()
+    def __init__(self,specification,directory,*,io_module=io,window_module=window,
+                 actor_limit=600,artifact_limit=128*2**20,historical_lower=77102.629289102):
+        self.actor_limit,self.artifact_limit,self.historical_lower=actor_limit,artifact_limit,historical_lower
+        self.base=window_module.ledger();self.run_started=time.monotonic()
         if self.base['active'] is not None:raise RuntimeError('V25 duplicate actor')
-        super().__init__(specification,directory,io_module=io,window_module=window,
-            limits=window.CAPS,action_limit=64,family=io.FAMILY)
+        super().__init__(specification,directory,io_module=io_module,window_module=window_module,
+            limits=window_module.CAPS,action_limit=64,family=io_module.FAMILY)
         self.base['active']=dict(directory=str(directory),source_sha=self.source,
             completed=self.counts.copy(),upper=self.counts.copy())
-        write_json(window.LEDGER_PATH,self.base)
+        write_json(window_module.LEDGER_PATH,self.base)
         original=self.packet.apply
         def apply(x,adjoint=False):
             self.guard();self.reserve('actions')
@@ -29,33 +31,33 @@ class DirectionStage(Stage):
             new_solver_states=0,field_recovery_calls=0,FE_field_validation=False)
 
     def guard(self,**kwargs):
-        self.sample();window.require_live(margin=10)
-        if self.base['actor_wall_seconds']+time.monotonic()-self.run_started>=590:
+        self.sample();self.window.require_live(margin=10)
+        if self.base['actor_wall_seconds']+getattr(self.window,'auxiliary_wall',lambda:0.)()+time.monotonic()-self.run_started>=self.actor_limit-10:
             raise RuntimeError('V25 cumulative actor cutoff/cleanup margin')
-        if sum(p.stat().st_size for p in io.ARTIFACT_ROOT.rglob('*') if p.is_file())>128*2**20:
+        if sum(p.stat().st_size for p in self.io.ARTIFACT_ROOT.rglob('*') if p.is_file())>self.artifact_limit:
             raise MemoryError('V25 persistent artifact cap')
         now=time.monotonic()
         if now-getattr(self,'last_disk_check',0)>5:
-            if sum(p.stat().st_size for p in (io.ROOT/'benchmarks/artifacts/task042').rglob('*') if p.is_file())>20*2**30:
+            if sum(p.stat().st_size for p in (self.io.ROOT/'benchmarks/artifacts/task042').rglob('*') if p.is_file())>20*2**30:
                 raise MemoryError('Task042 global artifact cap')
             self.last_disk_check=now
 
     def reserve(self,key,n=1):
-        window.validate_increment(self.base['charged'],self.counts,key,n)
-        row=window.ledger();upper=self.counts.copy();upper[key]+=n
+        self.window.validate_increment(self.base['charged'],self.counts,key,n)
+        row=self.window.ledger();upper=self.counts.copy();upper[key]+=n
         row['active'].update(completed=self.counts.copy(),upper=upper)
-        write_json(window.LEDGER_PATH,row)
+        write_json(self.window.LEDGER_PATH,row)
 
     def durable(self):
-        row=window.ledger();row['active'].update(completed=self.counts.copy(),upper=self.counts.copy())
-        write_json(window.LEDGER_PATH,row)
+        row=self.window.ledger();row['active'].update(completed=self.counts.copy(),upper=self.counts.copy())
+        write_json(self.window.LEDGER_PATH,row)
 
     def pc_count(self,key,n=1):
         self.guard();self.reserve(key,n);self.counts[key]+=n;self.durable()
 
     def finish(self,result):
         result.update(charged_counter_role='completed counts for clean run; write-ahead upper on interruption',
-            historical_formal_lower_bound_seconds=77102.629289102,historical_auxiliary='unknown retained')
+            historical_formal_lower_bound_seconds=self.historical_lower,historical_auxiliary='unknown retained')
         super().finish(result)
 
 

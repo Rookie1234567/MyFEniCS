@@ -458,6 +458,9 @@ def launch(specification):
         raise RuntimeError("Formal Task042 stage requires clean committed source")
     profile = specification.solver["preconditioner"]
     stage = TASK042_PROFILES[profile]
+    if stage.startswith("V26-"):
+        from src.solvers.joint_block_window import snapshot, journal, require_live
+        remaining_budget = require_live(heavy=True,margin=1200)["heavy_remaining_seconds"]
     if stage.startswith("V25-"):
         from src.solvers.block_direction_window import snapshot, journal, require_live
         remaining_budget = require_live(heavy=True,margin=900)["heavy_remaining_seconds"]
@@ -534,7 +537,7 @@ def launch(specification):
         if remaining_budget <= 0:
             raise RuntimeError("V10 original heavy deadline reached")
     expected_mode = "ml" if stage in ("F3-train", "V6-ML-INTERFACE") else "fe"
-    if stage.startswith(("V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")):
+    if stage.startswith(("V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")):
         expected_mode = specification.derived["environment_mode"]
     if stage.startswith("V16-"):
         expected_mode = specification.derived["environment_mode"]
@@ -577,7 +580,7 @@ def launch(specification):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = audit(
             observed_activity=stage in ("V3-reuse", "V3-overlap")
-            or stage.startswith(("V4-", "V5-", "V6-", "V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-"))
+            or stage.startswith(("V4-", "V5-", "V6-", "V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-"))
         )
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
@@ -624,7 +627,7 @@ def launch(specification):
                          physical_hash_meaning=specification.derived["identity_hash_meaning"],
                          material_status="MATERIAL_READY_USER_SUPPLIED",
                          formal_pde=stage != "V7-M0")
-        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")):
+        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")):
             state.update(physical_model_complete=True,
                          physical_operator_sha256=specification.physical_model_sha256,
                          physical_hash_meaning=specification.derived["identity_hash_meaning"],
@@ -632,6 +635,14 @@ def launch(specification):
                          plan_sha256=specification.derived["plan_sha256"],
                          formal_pde=False, formal_fe_stage=expected_mode == "fe")
         write_json(directory / "run_manifest.json", state)
+        if stage.startswith("V26-"):
+            from src.solvers.joint_block_window import WINDOW_PATH
+            from src.solvers.neural_fe_action_packet import file_hash
+            state.update(batch_window=snapshot(),window_sha256=file_hash(WINDOW_PATH),
+                review_authorization="Review V23 867ab17c496b2e5dc57766da749eb1f6b42036a1",
+                factor_contract="one JOINT_5_7_DENSE_LU_PRESENT; old eight LU not loaded",
+                offline_diagnostic=True,new_solver_result=False)
+            write_json(directory / "run_manifest.json", state)
         if stage.startswith("V25-"):
             from src.solvers.block_direction_window import WINDOW_PATH
             from src.solvers.neural_fe_action_packet import file_hash
@@ -794,7 +805,9 @@ def launch(specification):
         command = [
             sys.executable,
             "-m",
-            "src.runners.block_direction_diagnostic"
+            "src.runners.joint_block_diagnostic"
+            if stage.startswith("V26-")
+            else "src.runners.block_direction_diagnostic"
             if stage.startswith("V25-")
             else "src.runners.local_block_pair"
             if stage.startswith("V24-")
@@ -842,10 +855,10 @@ def launch(specification):
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=min(specification.execution["timeout_seconds"], snapshot()["heavy_remaining_seconds"] if stage.startswith(("V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")) else window_snapshot()["heavy_remaining_seconds"] if stage.startswith("V10-") else remaining_budget) if stage.startswith(("V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")) else 600 if stage.startswith("V6-") else 10800,
-            timebase_guard=stage.startswith(("V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")),
+            wall_seconds=min(specification.execution["timeout_seconds"], snapshot()["heavy_remaining_seconds"] if stage.startswith(("V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")) else window_snapshot()["heavy_remaining_seconds"] if stage.startswith("V10-") else remaining_budget) if stage.startswith(("V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")) else 600 if stage.startswith("V6-") else 10800,
+            timebase_guard=stage.startswith(("V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")),
             interval=0.5,
-            source_state=_json_metadata(state) if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")) else state,
+            source_state=_json_metadata(state) if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")) else state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},
             hard_stop_immediate=True,
             rss_hard_limit_bytes=HARD,
@@ -857,9 +870,12 @@ def launch(specification):
             stop_on_global_swap=False,
         )
         result.update(directory=str(directory), stage=stage, shared_workstation=True)
-        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")):
+        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")):
             result["launch_wall_seconds"] = time.perf_counter() - launch_began
         write_json(directory / "run_summary.json", result)
+        if stage.startswith("V26-"):
+            from src.solvers.joint_block_window import settle_run
+            settle_run(directory,result,result["launch_wall_seconds"])
         if stage.startswith("V25-"):
             from src.solvers.block_direction_window import settle_run
             settle_run(directory,result,result["launch_wall_seconds"])
@@ -887,7 +903,7 @@ def launch(specification):
         if stage.startswith("V17-"):
             from src.solvers.resumable_trace_window import settle_run
             settle_run(directory,result,result["launch_wall_seconds"])
-        if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-")):
+        if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-")):
             journal("stage_end",stage=stage,directory=str(directory),classification=result["classification"],
                 descendants_cleared=result["descendants_cleared"],elapsed_seconds=result["elapsed_seconds"],
                 rss_peak_bytes=result["sampled_process_tree_rss_peak_bytes"])

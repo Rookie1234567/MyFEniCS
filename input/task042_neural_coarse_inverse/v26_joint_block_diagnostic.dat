@@ -1,0 +1,7 @@
+schema_version = 1
+
+[task042_v26]
+stage = "DIAGNOSTIC"
+run_id = "task042_v26_joint_block_diagnostic"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+diagnostic_family = "FROZEN_JOINT_5_7_EXTRA_DIRECTION_DIAGNOSTIC"

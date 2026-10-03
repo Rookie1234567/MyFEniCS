@@ -12,6 +12,45 @@ RECORDS=ROOT/'docs/task042_neural_coarse_inverse/outcomes/records'
 ARTIFACT=ROOT/'benchmarks/artifacts/task042/v25'
 
 
+def fixed_inventory(result,plan=None):
+    """Reject an incomplete, mislabeled or unbound inventory before any arrays."""
+    from src.io.block_direction_diagnostic import NAMES,PLAN_PATH,checked_json
+    plan=json.loads(PLAN_PATH.read_text()) if plan is None else plan
+    items=plan['states'];rows=result['rows']
+    if (len(items)!=3 or {x['name'] for x in items}!=set(NAMES)
+            or len(rows)!=3 or {x.get('name') for x in rows}!=set(NAMES)):
+        raise ValueError('fixed three-state inventory missing/duplicate/wrong name')
+    by_name={x['name']:x for x in rows}
+    for item in items:
+        row=by_name[item['name']]
+        if row['input_state']!=item['state']:
+            raise ValueError('fixed state path/container/member identity differs')
+        parent=checked_json(item['parent_result'],ROOT/'benchmarks/artifacts/task042/v24')
+        if (parent['source_sha']!=plan['upstream_source_sha']
+                or parent['operator_packet']['sha256']!=plan['action_sha256']):
+            raise ValueError('fixed parent source/operator identity differs')
+        selected=parent['start'] if item['name'].endswith('INITIAL') else parent['cycles'][3]
+        if selected['state']!=item['state']:
+            raise ValueError('fixed parent/state binding differs')
+        expected_gates={'diagonal','recombination','qr','stationarity','inequality',
+            'numerical_full_direction_rank','columns_resolved','whole_response_resolved'}
+        if (set(row['gates'])!=expected_gates or not all(x is True for x in row['gates'].values())
+                or row['rank']!=8 or row['status']!='DIAGNOSTIC_COMPLETE'):
+            raise ValueError('missing/failed numerical gates or rank')
+        scalar_keys=('eta_unit','eta1','eta8','residual_norm','full_physical_b_norm',
+            'QR_relative','orthogonality_relative','stationarity_operation_relative')
+        if any(not np.isfinite(row[k]) or row[k]<0 for k in scalar_keys):
+            raise ValueError('nonfinite/negative diagnostic metric')
+        if (row['QR_relative']>1e-10 or row['orthogonality_relative']>1e-10
+                or row['stationarity_operation_relative']>1e-8
+                or row['residual_norm']==0 or row['full_physical_b_norm']==0):
+            raise ValueError('numerical identity evidence unsafe')
+        if (set(row['independent_recombination'])!={'unit','best'}
+                or len(row['diagonal_witnesses'])!=8):
+            raise ValueError('missing recombination/diagonal evidence')
+    return [by_name[name] for name in NAMES]
+
+
 def pointer(path):
     path=Path(path).resolve()
     return dict(path=str(path),sha256=file_hash(path),bytes=path.stat().st_size)
@@ -22,14 +61,15 @@ def csv_write(path,rows):
         writer=csv.DictWriter(f,fieldnames=list(rows[0]),lineterminator='\n');writer.writeheader();writer.writerows(rows)
 
 
-def check_arrays(result):
+def check_arrays(result,plan=None):
     """Recompute eta and block cross identities without another QR/SVD or S."""
-    setup_item=json.loads((ROOT/'input/task042_neural_coarse_inverse/block_residual_direction_v25.json').read_text())['local_setup']
+    ordered=fixed_inventory(result,plan)
+    setup_item=(json.loads((ROOT/'input/task042_neural_coarse_inverse/block_residual_direction_v25.json').read_text()) if plan is None else plan)['local_setup']
     assert file_hash(setup_item['path'])==setup_item['sha256']
     setup=json.loads(Path(setup_item['path']).read_text())
     groups=[np.asarray(x['rows'],np.int64) for x in setup['block_inventory']]
     checks=[]
-    for row in result['rows']:
+    for row in ordered:
         item=row['input_state'];assert file_hash(item['path'])==item['sha256']
         with np.load(item['path'],allow_pickle=False) as f:rfull=np.array(f['residual'])
         assert array_hash(rfull)==item['residual_sha256']
@@ -65,7 +105,8 @@ def check_arrays(result):
         checks.append(dict(name=row['name'],**metrics,stationarity_recomputed=station,
             true_vs_thin_saved_difference_full_b_relative=float(error/row['full_physical_b_norm']),
             independent_cached_array_checks=True,no_new_action=True,no_new_decomposition=True))
-    finals=checks[-2:]
+    by_name={x['name']:x for x in checks}
+    finals=[by_name[name] for name in ('V24-LZ-CYCLE4','V24-LCZ-CYCLE4')]
     decision='EIGHT_DIRECTIONS_WEAK' if all(x['eta8']>=.9 for x in finals) else 'OTHER_PREDECLARED_BRANCH'
     assert decision==result['decision']
     assert result['action_counts']['S']+result['action_counts']['SH']==39<=64
