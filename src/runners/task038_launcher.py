@@ -63,6 +63,9 @@ V31_PROJECTION_LAYOUT_LEDGER_SCHEMA = (
 )
 V31_PROJECTION_LAYOUT_BATCH_IDENTITY = "review_v29_evidence_and_projection_v31"
 V31_WORKFLOW_BUDGET_SECONDS = 43200.0
+TASK40_V5_PRELEDGER_ORIGINAL_RECORD_SHA256 = (
+    "79acefeef2064ec738ba38f6158e2af9d3d050195068a8e86eb73b1ae7fd1da0"
+)
 
 
 def _now() -> str:
@@ -3078,6 +3081,7 @@ def _reserve_a4_tensor_h6_budget(
     require_user_service_cgroup: bool = True,
     bug_replay_limit: int = 1,
     user_bug_continuation: Mapping[str, Any] | None = None,
+    preledger_implementation_bug_replay: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve one fresh original-model attempt in an independent batch ledger."""
     from src.geometry.task40_nonseparable_plan import (
@@ -3203,6 +3207,23 @@ def _reserve_a4_tensor_h6_budget(
         if error_prefix != "Task40":
             raise InputError("Only Task40 accepts this continuation record")
         prerequisite["user_bug_continuation"] = dict(user_bug_continuation)
+    preledger_replay_entry = (
+        dict(preledger_implementation_bug_replay)
+        if preledger_implementation_bug_replay is not None
+        else None
+    )
+    if preledger_replay_entry is not None:
+        if (
+            not task40_v5_gx784
+            or bug_replay_limit != 0
+            or source_sha != preledger_replay_entry.get("fixed_source_sha")
+            or preledger_replay_entry.get("stage") != stage
+            or preledger_replay_entry.get("run_id") != batch_identity
+            or preledger_replay_entry.get("classification") != "IMPLEMENTATION_BUG"
+            or preledger_replay_entry.get("allowed_repeat_count") != 1
+        ):
+            raise InputError("Task40 V5 pre-ledger bug replay reservation changed")
+        prerequisite["preledger_implementation_bug_replay"] = preledger_replay_entry
     path.parent.mkdir(parents=True, exist_ok=True)
     if authorized_repeat is not None and not path.is_file():
         raise InputError("V31 completion rerun requires the preserved original ledger")
@@ -3220,18 +3241,31 @@ def _reserve_a4_tensor_h6_budget(
             )
         ):
             raise InputError(f"{error_prefix} shared ledger identity or budget changed")
+        if task40_v5_gx784 and ledger.get(
+            "preledger_implementation_bug_replays", []
+        ) != ([] if preledger_replay_entry is None else [preledger_replay_entry]):
+            raise InputError("Task40 V5 pre-ledger bug replay ledger evidence changed")
     else:
         ledger = {
             "schema": schema,
             "batch_identity": batch_identity,
             "total_budget_seconds": workflow_budget_seconds,
-            "elapsed_seconds": 0.0,
+            "elapsed_seconds": (
+                float(preledger_replay_entry["elapsed_charge_seconds"])
+                if preledger_replay_entry is not None
+                else 0.0
+            ),
             "conservative_allowance_seconds": 0.0,
             "policy_debits": [],
             "fresh_worker_count": 0,
             "source_attempts": [],
             "stages": {},
-            "unique_bug_replay_count": 0,
+            "unique_bug_replay_count": (
+                1 if preledger_replay_entry is not None else 0
+            ),
+            "preledger_implementation_bug_replays": (
+                [] if preledger_replay_entry is None else [preledger_replay_entry]
+            ),
             "allowed_stages": ["Q4_ORIGINAL"],
             "cross_case_recycling": False,
             "time_contract": (
@@ -3576,6 +3610,118 @@ def _task40_f1_outer_timebase_recovery_repeat(
     }
 
 
+def _load_task40_v5_preledger_bug_replay(
+    repo_root: Path,
+    *,
+    run_id: str,
+    stage: str,
+    source_sha: str,
+) -> dict[str, Any] | None:
+    """Load the single hash-bound launcher bug that failed before ledger creation."""
+
+    from src.geometry.task40_nonseparable_plan import TASK40_GX784_RUN_ID
+
+    if run_id != TASK40_GX784_RUN_ID:
+        return None
+    root = Path(repo_root).resolve()
+    evidence_path = (
+        root
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5"
+        / "preledger_implementation_bug_attempt_corrected.json"
+    )
+    if not evidence_path.is_file():
+        return None
+    original_path = evidence_path.with_name("preledger_implementation_bug_attempt.json")
+    try:
+        evidence_bytes = evidence_path.read_bytes()
+        evidence = json.loads(evidence_bytes.decode("utf-8"))
+        original_bytes = original_path.read_bytes()
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("Task40 V5 pre-ledger bug evidence is unreadable") from exc
+    evidence_sha256 = hashlib.sha256(evidence_bytes).hexdigest()
+    original_sha256 = hashlib.sha256(original_bytes).hexdigest()
+    input_path = (
+        root
+        / "input/task40extra_0p7nm_engineering/"
+        "nonseparable_gx784_p6_q4_review_v5.dat"
+    )
+    try:
+        log_path = Path(str(evidence.get("failure_log_path", ""))).resolve()
+        log_path.relative_to(root)
+        log_bytes = log_path.read_bytes()
+    except (OSError, ValueError) as exc:
+        raise InputError("Task40 V5 pre-ledger bug log is missing or outside the checkout") from exc
+    start_usec = evidence.get("service_exec_start_monotonic_usec")
+    exit_usec = evidence.get("service_exec_exit_monotonic_usec")
+    measured_seconds = (
+        (exit_usec - start_usec) / 1_000_000.0
+        if type(start_usec) is int and type(exit_usec) is int
+        else -1.0
+    )
+    charge_seconds = evidence.get("elapsed_charge_seconds")
+    valid = (
+        evidence.get("schema")
+        == "task40extra.review-v5.preledger-implementation-bug-attempt.v2"
+        and evidence.get("supersedes_original_path") == str(original_path)
+        and evidence.get("supersedes_original_sha256") == original_sha256
+        and original_sha256 == TASK40_V5_PRELEDGER_ORIGINAL_RECORD_SHA256
+        and evidence.get("classification") == "IMPLEMENTATION_BUG"
+        and evidence.get("run_id") == TASK40_GX784_RUN_ID
+        and evidence.get("stage") == stage == "Q4_ORIGINAL"
+        and evidence.get("allowed_repeat_count") == 1
+        and evidence.get("failed_source_sha") != source_sha
+        and evidence.get("fixed_source_sha") == source_sha
+        and evidence.get("input_path") == str(input_path)
+        and input_path.is_file()
+        and evidence.get("input_sha256")
+        == hashlib.sha256(input_path.read_bytes()).hexdigest()
+        and evidence.get("service_exit_status") == 1
+        and evidence.get("service_main_status") == "failed"
+        and evidence.get("failure_signature")
+        == "NameError: name 'CONSERVATIVE_REALTIME' is not defined"
+        and evidence.get("failure_log_sha256")
+        == hashlib.sha256(log_bytes).hexdigest()
+        and evidence["failure_signature"].encode("utf-8") in log_bytes
+        and evidence.get("numerical_worker_started") is False
+        and evidence.get("watchdog_started") is False
+        and evidence.get("fe_mesh_or_space_built") is False
+        and evidence.get("assembly_factorization_or_pde_calls") is False
+        and type(start_usec) is int
+        and type(exit_usec) is int
+        and exit_usec > start_usec
+        and isinstance(charge_seconds, (int, float))
+        and math.isclose(float(charge_seconds), measured_seconds, rel_tol=0.0, abs_tol=1e-12)
+        and "usec" in str(evidence.get("elapsed_charge_basis", ""))
+        and "not total preparation or PDE time"
+        in str(evidence.get("elapsed_charge_basis", ""))
+    )
+    if not valid:
+        raise InputError("Task40 V5 pre-ledger implementation-bug evidence changed")
+    return {
+        "evidence_path": str(evidence_path),
+        "evidence_sha256": evidence_sha256,
+        "original_evidence_path": str(original_path),
+        "original_evidence_sha256": original_sha256,
+        "classification": "IMPLEMENTATION_BUG",
+        "run_id": TASK40_GX784_RUN_ID,
+        "stage": "Q4_ORIGINAL",
+        "failed_source_sha": str(evidence["failed_source_sha"]),
+        "fixed_source_sha": str(source_sha),
+        "allowed_repeat_count": 1,
+        "elapsed_charge_seconds": float(charge_seconds),
+        "service_unit": str(evidence["service_unit"]),
+        "service_invocation_id": str(evidence["service_invocation_id"]),
+        "service_exec_start_monotonic_usec": start_usec,
+        "service_exec_exit_monotonic_usec": exit_usec,
+        "failure_log_path": str(log_path),
+        "failure_log_sha256": str(evidence["failure_log_sha256"]),
+        "scope": (
+            "pre-ledger launcher failure only; systemd monotonic service-leader "
+            "lifetime is charged as an upper bound, not preparation or PDE time"
+        ),
+    }
+
+
 def _reserve_task40_0p7nm_budget(
     repo_root: Path,
     run_directory: Path,
@@ -3778,6 +3924,44 @@ def _reserve_task40_0p7nm_budget(
     else:
         selected_batch = "legacy"
     selected_history = replay_accounting[selected_batch]
+    preledger_bug_replay = _load_task40_v5_preledger_bug_replay(
+        repo_root,
+        run_id=run_id,
+        stage=str(kwargs.get("stage")),
+        source_sha=str(kwargs["source_sha"]),
+    )
+    if preledger_bug_replay is not None:
+        preledger_ledger_path = (
+            run_ledger_root / run_id / "shared_workflow_ledger.json"
+        )
+        if preledger_ledger_path.is_file():
+            try:
+                preledger_ledger = json.loads(
+                    preledger_ledger_path.read_text(encoding="utf-8")
+                )
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise InputError("Task40 V5 pre-ledger shared budget is unreadable") from exc
+            if preledger_ledger.get("preledger_implementation_bug_replays") != [
+                preledger_bug_replay
+            ]:
+                raise InputError("Task40 V5 pre-ledger bug was not charged exactly once")
+            if (
+                int(selected_history["unique_bug_replay_count"]) < 1
+                or float(selected_history["elapsed_seconds"])
+                < preledger_bug_replay["elapsed_charge_seconds"]
+            ):
+                raise InputError("Task40 V5 pre-ledger cost is missing from its shared ledger")
+        else:
+            selected_history["unique_bug_replay_count"] = (
+                int(selected_history["unique_bug_replay_count"]) + 1
+            )
+            selected_history["elapsed_seconds"] = (
+                float(selected_history["elapsed_seconds"])
+                + preledger_bug_replay["elapsed_charge_seconds"]
+            )
+            selected_history["preledger_implementation_bug_replays"] = [
+                preledger_bug_replay
+            ]
     used_bug_replays = int(selected_history["unique_bug_replay_count"])
     replay_limit = (
         used_bug_replays + 1
@@ -3790,15 +3974,19 @@ def _reserve_task40_0p7nm_budget(
         # Review V4 permits one implementation-bug replay per new case.
         replay_limit = 1
     if run_id in review_v5_run_batches:
-        # V5 starts a fresh one-replay batch; all attempts debit its own clock.
-        replay_limit = 1
+        # A pre-ledger launcher bug consumes V5's only corrected-source repeat.
+        replay_limit = 0 if used_bug_replays >= 1 else 1
         if kwargs.get("time_policy") != V14_TIME_POLICY_ENFORCE:
             raise InputError("Task40 Review V5 requires the enforced 48-hour timer")
         kwargs["stage_budget"] = {
             "workflow_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
             "solve_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
         }
-        from .workflow_timebase import checked_interval, clock_sample
+        from .workflow_timebase import (
+            CONSERVATIVE_REALTIME,
+            checked_interval,
+            clock_sample,
+        )
 
         attempt_start = dict(kwargs["workflow_clock_start"])
         batch_start = prior_v5_batch_timer_start or attempt_start
@@ -3828,6 +4016,11 @@ def _reserve_task40_0p7nm_budget(
                 "unused time remains available for final output and V5 comparison"
             ),
             "retry_cost_is_cumulative": True,
+            **(
+                {"preledger_implementation_bug_replay": preledger_bug_replay}
+                if preledger_bug_replay is not None
+                else {}
+            ),
         }
     continuation = None
     record_path = repo_root / (
@@ -3912,6 +4105,7 @@ def _reserve_task40_0p7nm_budget(
         bug_replay_limit=replay_limit,
         authorized_performance_repeat=recovery_repeat,
         user_bug_continuation=continuation,
+        preledger_implementation_bug_replay=preledger_bug_replay,
     )
     reservation["task40_batch_replay_accounting_path"] = str(accounting_path)
     reservation["task40_batch_replay_accounting"] = replay_accounting

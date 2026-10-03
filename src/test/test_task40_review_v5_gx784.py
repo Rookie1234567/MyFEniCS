@@ -584,3 +584,195 @@ def test_v5_completed_negative_comparison_cannot_be_replayed_as_an_implementatio
             implementation_bug_replay=evidence,
         )
     assert ledger_path.read_bytes() == before
+
+
+def test_v5_first_launcher_reservation_resolves_clock_and_settles_real_elapsed(
+    tmp_path: Path,
+):
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+    )
+
+    start = workflow_timebase.clock_sample()
+    lease = launcher._reserve_task40_0p7nm_budget(
+        tmp_path,
+        tmp_path / "run-attempt1",
+        source_sha="a" * 40,
+        stage="Q4_ORIGINAL",
+        stage_budget={
+            "workflow_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+            "solve_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+        },
+        workflow_clock_start=start,
+        time_policy=launcher.V14_TIME_POLICY_ENFORCE,
+        run_id=TASK40_GX784_RUN_ID,
+        comparison_group=TASK40_COMPARISON_GROUP,
+        service_cgroup_path=Path(
+            "/user.slice/user-1000.slice/user@1000.service/app.slice/"
+            "myfenics-case-v5-reserve-test.service"
+        ),
+    )
+    ledger_path = Path(lease["path"])
+    reserved = json.loads(ledger_path.read_text(encoding="utf-8"))
+    attempt = reserved["stages"]["Q4_ORIGINAL"]["attempts"][0]
+    assert lease["replay"] is False
+    assert attempt["reserved_seconds"] <= TASK40_GX784_WORKFLOW_BUDGET_SECONDS
+    assert attempt["workflow_clock_start"] == start
+
+    end = workflow_timebase.clock_sample()
+    interval = workflow_timebase.checked_interval(
+        start, end, policy=workflow_timebase.CONSERVATIVE_REALTIME
+    )
+    launcher._settle_v14_shared_budget(
+        lease,
+        status="TEST_SETTLED",
+        authority=None,
+        parent_interval=interval,
+        parent_clock_end=end,
+    )
+    settled = json.loads(ledger_path.read_text(encoding="utf-8"))
+    settled_attempt = settled["stages"]["Q4_ORIGINAL"]["attempts"][0]
+    assert settled["stages"]["Q4_ORIGINAL"]["active_attempt"] is None
+    assert settled_attempt["settled_seconds"] == pytest.approx(
+        interval["budget_seconds"]
+    )
+    assert settled["elapsed_seconds"] == pytest.approx(
+        interval["budget_seconds"]
+    )
+
+
+def test_v5_preledger_bug_charge_seeds_shared_clock_and_spends_replay(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+    )
+
+    input_path = tmp_path / (
+        "input/task40extra_0p7nm_engineering/"
+        "nonseparable_gx784_p6_q4_review_v5.dat"
+    )
+    input_path.parent.mkdir(parents=True)
+    input_path.write_bytes(b"isolated Gx784 input identity")
+    log_path = tmp_path / "benchmarks/artifacts/user_services/preledger-failure.log"
+    log_path.parent.mkdir(parents=True)
+    failure_signature = "NameError: name 'CONSERVATIVE_REALTIME' is not defined"
+    log_path.write_text(f"Traceback\n{failure_signature}\n", encoding="utf-8")
+    evidence_dir = tmp_path / (
+        "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5"
+    )
+    evidence_dir.mkdir(parents=True)
+    original_path = evidence_dir / "preledger_implementation_bug_attempt.json"
+    original = {
+        "schema": "task40extra.review-v5.preledger-implementation-bug-attempt.v1",
+        "classification": "IMPLEMENTATION_BUG",
+        "run_id": TASK40_GX784_RUN_ID,
+        "stage": "Q4_ORIGINAL",
+        "failed_source_sha": "a" * 40,
+        "fixed_source_sha": None,
+        "input_path": str(input_path),
+        "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
+        "service_unit": "myfenics-case-v5-preledger-failure.service",
+        "service_invocation_id": "3" * 32,
+        "service_exit_status": 1,
+        "service_main_status": "failed",
+        "service_exec_start_monotonic_ns": 618257280235,
+        "service_exec_exit_monotonic_ns": 618257469280,
+        "elapsed_charge_seconds": 0.000189045,
+        "elapsed_charge_basis": "initial mistakenly labelled ns receipt",
+        "failure_signature": failure_signature,
+        "failure_log_path": str(log_path),
+        "failure_log_sha256": hashlib.sha256(log_path.read_bytes()).hexdigest(),
+        "numerical_worker_started": False,
+        "watchdog_started": False,
+        "fe_mesh_or_space_built": False,
+        "assembly_factorization_or_pde_calls": False,
+        "task_scope_swap": "no numerical worker existed",
+        "authorized_repeat_count": 1,
+        "preserved_utc": "2026-10-03T07:36:30Z",
+    }
+    original_bytes = (json.dumps(original, indent=2, sort_keys=True) + "\n").encode()
+    original_path.write_bytes(original_bytes)
+    monkeypatch.setattr(
+        launcher,
+        "TASK40_V5_PRELEDGER_ORIGINAL_RECORD_SHA256",
+        hashlib.sha256(original_bytes).hexdigest(),
+    )
+    corrected = dict(original)
+    corrected.update(
+        {
+            "schema": "task40extra.review-v5.preledger-implementation-bug-attempt.v2",
+            "supersedes_original_path": str(original_path),
+            "supersedes_original_sha256": hashlib.sha256(original_bytes).hexdigest(),
+            "service_exec_start_monotonic_usec": original.pop(
+                "service_exec_start_monotonic_ns"
+            ),
+            "service_exec_exit_monotonic_usec": original.pop(
+                "service_exec_exit_monotonic_ns"
+            ),
+            "superseded_elapsed_charge_seconds": 0.000189045,
+            "elapsed_charge_seconds": 0.189045,
+            "elapsed_charge_basis": (
+                "systemd Monotonic timestamp properties are usec; full service leader "
+                "lifetime is a conservative upper bound only, not total preparation or PDE time"
+            ),
+            "allowed_repeat_count": 1,
+            "timing_correction_utc": "2026-10-03T07:37:00Z",
+            "fixed_source_sha": "b" * 40,
+        }
+    )
+    corrected.pop("service_exec_start_monotonic_ns")
+    corrected.pop("service_exec_exit_monotonic_ns")
+    corrected_path = evidence_dir / "preledger_implementation_bug_attempt_corrected.json"
+    corrected_path.write_text(
+        json.dumps(corrected, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    start = workflow_timebase.clock_sample()
+    lease = launcher._reserve_task40_0p7nm_budget(
+        tmp_path,
+        tmp_path / "run-corrected-replay",
+        source_sha="b" * 40,
+        stage="Q4_ORIGINAL",
+        stage_budget={
+            "workflow_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+            "solve_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+        },
+        workflow_clock_start=start,
+        time_policy=launcher.V14_TIME_POLICY_ENFORCE,
+        run_id=TASK40_GX784_RUN_ID,
+        comparison_group=TASK40_COMPARISON_GROUP,
+        service_cgroup_path=Path(
+            "/user.slice/user-1000.slice/user@1000.service/app.slice/"
+            "myfenics-case-v5-corrected-replay.service"
+        ),
+    )
+    ledger_path = Path(lease["path"])
+    reserved = json.loads(ledger_path.read_text(encoding="utf-8"))
+    attempt = reserved["stages"]["Q4_ORIGINAL"]["attempts"][0]
+    assert reserved["elapsed_seconds"] == pytest.approx(0.189045)
+    assert reserved["unique_bug_replay_count"] == 1
+    assert reserved["preledger_implementation_bug_replays"][0][
+        "evidence_sha256"
+    ] == hashlib.sha256(corrected_path.read_bytes()).hexdigest()
+    assert attempt["bug_replay_count_before"] == 1
+    assert attempt["reserved_seconds"] <= TASK40_GX784_WORKFLOW_BUDGET_SECONDS - 0.189045
+    assert lease["task40_batch_replay_accounting"]["selected_bug_replay_limit"] == 0
+
+    end = workflow_timebase.clock_sample()
+    interval = workflow_timebase.checked_interval(
+        start, end, policy=workflow_timebase.CONSERVATIVE_REALTIME
+    )
+    launcher._settle_v14_shared_budget(
+        lease,
+        status="TEST_SETTLED",
+        authority=None,
+        parent_interval=interval,
+        parent_clock_end=end,
+    )
+    settled = json.loads(ledger_path.read_text(encoding="utf-8"))
+    assert settled["elapsed_seconds"] == pytest.approx(
+        0.189045 + interval["budget_seconds"]
+    )
+    assert settled["unique_bug_replay_count"] == 1
