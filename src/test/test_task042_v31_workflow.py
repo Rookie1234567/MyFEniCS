@@ -70,6 +70,10 @@ def test_failed_prequalification_stops_formal_route(tmp_path,monkeypatch):
     from src.io import return_block_v31 as io
     from src.io.input_loader import InputError
     (tmp_path/'aux_pre').mkdir();(tmp_path/'aux_pre/auxiliary_summary.json').write_text('{"classification":"COMPLETED","leader_exit_code":1}')
-    monkeypatch.setattr(io,'window',SimpleNamespace(TMP=tmp_path))
+    def forbidden_after_failed_precheck(*args,**kwargs):
+        raise AssertionError('failed pre-test must stop before live clock or ledger use')
+    monkeypatch.setattr(io,'window',SimpleNamespace(TMP=tmp_path,
+        require_live=forbidden_after_failed_precheck,ledger=forbidden_after_failed_precheck,
+        auxiliary_wall=forbidden_after_failed_precheck))
     with pytest.raises(InputError,match='pre-test qualification failed'):
         io.load_return_diagnostic('input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat')
