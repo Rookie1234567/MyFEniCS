@@ -124,7 +124,105 @@
       "old_V16_NOT_RUN_unchanged": true,
       "all_selected_page_bytes_unchanged": true
     },
-    "new_pages": "PENDING_BOUNDED_SELECTED_PAGE_CHECK",
+    "new_pages": {
+      "status": "ACTUAL_GITHUB_DOM_AND_SELECTED_IMAGE_INSPECTION_PASS",
+      "checked_utc": "2026-10-03T10:38:30.745338+00:00",
+      "checked_commit": "5fa3f892c399b504a8e529ce8696d76465e0228b",
+      "capture_receipt": "tmp/task42extra/render/v17_5fa3f892/render_records.json",
+      "capture_sha256": "f3ee15d3bfbfff23cbf38ef11d8a64c6b4bc694b9246c9c1fb33f592a49b1523",
+      "pages": [
+        {
+          "path": "docs/task042extra_feinn_5nm/response_v17.md",
+          "sha256": "e6e071d31e8e1c3e6e8c32d7c0c77e4ac91d13ef76259dbd83b5a6060fcb3aee",
+          "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5fa3f892c399b504a8e529ce8696d76465e0228b/docs/task042extra_feinn_5nm/response_v17.md",
+          "checked_scope": "entire page DOM / selected table images",
+          "tables": 4,
+          "columns": [
+            3,
+            2,
+            3,
+            6
+          ],
+          "new_math_blocks": 0,
+          "DOM_ready": "complete",
+          "fonts": "loaded",
+          "inspected_images": [
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/00_table_00.png",
+              "sha256": "fcd2c46bd852f2c0a87bc35ef5fdf4933318f393b79f1b5c95013e59f9fcd189",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            },
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/00_table_01.png",
+              "sha256": "30f037ce60954f40c9281b415c1cddc28a5479c57eb626ec47b6d6c66fda2acb",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            },
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/00_table_02.png",
+              "sha256": "2ed35d98dadf2ab67d0f2bb31417b356850061fb58c695ebe7ceaf8eb8f302a0",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            },
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/00_table_03.png",
+              "sha256": "dbd4aaffa0b9f4ed0c0629bbc5c8b802806e0d1840dd4a4e5c3b159a7af97da7",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            }
+          ]
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/README.md",
+          "sha256": "a07d437758d8d9f502b69a3fd97a3f55d58c1dc93fc435a81354e1d476dfed66",
+          "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5fa3f892c399b504a8e529ce8696d76465e0228b/docs/task042extra_feinn_5nm/README.md",
+          "checked_scope": "entire page DOM / selected table images",
+          "tables": 2,
+          "columns": [
+            2,
+            3
+          ],
+          "new_math_blocks": 0,
+          "DOM_ready": "complete",
+          "fonts": "loaded",
+          "inspected_images": [
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/01_table_00.png",
+              "sha256": "3a3d961e8a5d456af376b716ce27aab09f93bba019dca74eb9897a95a5fa9d6a",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            },
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/01_table_01.png",
+              "sha256": "6abf83db061a0e25119bf731c128cc7e249e5f30e438b1564bf11e16ad507959",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            }
+          ]
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "9ca663fba349ff33d446fe18dccc7c8765d7804f4a3eadf6518f9e537842f1bd",
+          "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5fa3f892c399b504a8e529ce8696d76465e0228b/docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "checked_scope": "Task42extra Review V16 后续：V17",
+          "tables": 1,
+          "columns": [
+            3
+          ],
+          "new_math_blocks": 0,
+          "DOM_ready": "complete",
+          "fonts": "loaded",
+          "inspected_images": [
+            {
+              "path": "tmp/task42extra/render/v17_5fa3f892/02_table_00.png",
+              "sha256": "13d6dc54e539478398edc7dbba5b3e28a972dfb6b80ea19847674f59c2a38015",
+              "visual_assessment": "Actually viewed by model: readable Chinese/text/links; aligned columns; no raw math or horizontal clipping"
+            }
+          ]
+        }
+      ],
+      "total_selected_images_actually_viewed": 7,
+      "tables": 7,
+      "scope_limit": "No new display math. Existing Review V16 math rendering reused by exact page hash; historical pages not rerendered.",
+      "original_capture_pending_status_preserved": true,
+      "ignored_receipt": "tmp/task42extra/development/render_qualified_v17.json",
+      "ignored_receipt_sha256": "d5a5a0a49df80dc538d9d8706437041a08a8ea53e5e6cd3ee40dc21baa7b2aed"
+    },
     "old_V16_NOT_RUN_unchanged": true
   },
   "local_document_check": {
@@ -206,7 +304,12 @@
     "manifest_sha256": "a06cec2417c5dd0e2b4f4804bf83c1a9c4aa343761629f2758c1195671cbffb2",
     "P1": "NOT_REQUESTED_NO_RUN",
     "ignored_receipt": "tmp/task42extra/development/document_check_v17.json",
-    "ignored_receipt_sha256": "8cb130caa05d4f8e30af97dac74f27bd0af171ceb4c4a142b8980f8d6180a7bc"
+    "ignored_receipt_sha256": "8cb130caa05d4f8e30af97dac74f27bd0af171ceb4c4a142b8980f8d6180a7bc",
+    "reused_structure_checker": {
+      "path": "benchmarks/check_task42extra_docs.py",
+      "sha256": "72ea26847de278b9d0513de0ace573f7730ef68a6169c67ce2c8b8ed995f6316",
+      "mode": "check_page on seven changed scopes only; no full historical main() call"
+    }
   },
   "repair": {
     "limit": 2,
@@ -227,8 +330,8 @@
     "full_batch_limit_seconds": 3600,
     "start_explicit_utc": "2026-10-03T10:21:36+00:00",
     "startup_unobserved_reserve_seconds": 60,
-    "snapshot_utc": "2026-10-03T10:36:05.434404+00:00",
-    "observed_wall_to_snapshot_seconds": 869.434404,
+    "snapshot_utc": "2026-10-03T10:38:54.939051+00:00",
+    "observed_wall_to_snapshot_seconds": 1038.939051,
     "publication_and_checks_reserve_seconds": 300,
     "accounting": "Full parent wall includes reading/failure/IO/waiting/publication; worker times nested, not added again",
     "activation": "pure",
@@ -302,6 +405,60 @@
         "descendants_cleared": true
       },
       {
+        "label": "v17_prepublication_receipt_20261003T103603913973Z",
+        "summary_path": "tmp/task42extra/checks/v17_prepublication_receipt_20261003T103603913973Z/summary.json",
+        "summary_sha256": "58201e6395cd3adba901a6d2d5dd3ba98424f9181a8d5fb6a39212be38eb7e38",
+        "worker_log_sha256": "6f447f42197d5c86e3ade2acaf16f29dd0cad402b59ef8dd27395737f7b20412",
+        "admission_sha256": "9b0287ccd8499221f949994ae37fbdb93bb907d3da7ee0d1c1403fc4a5f52b34",
+        "cpu": 18,
+        "memory_admission": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 1302422274048,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 1302422274048,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 2.0221426429925486,
+        "sampled_process_tree_rss_peak_bytes": 40144896,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
+        "label": "v17_selected_github_render_20261003T103657639656Z",
+        "summary_path": "tmp/task42extra/checks/v17_selected_github_render_20261003T103657639656Z/summary.json",
+        "summary_sha256": "ae1345975e9f02ec79946e7fa1e62a08f50d1e94448fa1ffc1ab897e1f5649d7",
+        "worker_log_sha256": "3fc783ecfa95a586b352dc07cc9ed8b143d593464618d8020d69342f48dd1b0e",
+        "admission_sha256": "37aabfe3b9283397d02f5fe9ad3bba8860fa6e2f6867a12a390a9615691ebd80",
+        "cpu": 32,
+        "memory_admission": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 1302443757568,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 1302443757568,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 27.031174232950434,
+        "sampled_process_tree_rss_peak_bytes": 1758789632,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
+      },
+      {
         "label": "v17_static_dependencies_20261003T102642258151Z",
         "summary_path": "tmp/task42extra/checks/v17_static_dependencies_20261003T102642258151Z/summary.json",
         "summary_sha256": "744ce0107ec0bae3de4d85320aa6a26d43ba09e4f2efe641269b6bea669b95d4",
@@ -354,14 +511,41 @@
         "sampled_process_tree_rss_peak_bytes": 66695168,
         "sampled_process_tree_swap_peak_bytes": 0,
         "descendants_cleared": true
+      },
+      {
+        "label": "v17_visual_evidence_20261003T103829277541Z",
+        "summary_path": "tmp/task42extra/checks/v17_visual_evidence_20261003T103829277541Z/summary.json",
+        "summary_sha256": "dae91aa12c3cbbe3d4c139775c60532046e92746cd509016ed50d4d7883f11c1",
+        "worker_log_sha256": "c1e850e76a5a9da1e4c5edad1bf8816cc93c02eea2f8a477a89a510d9ff950cc",
+        "admission_sha256": "38ed1f8619e3096a34b3e0f8b58faae924eb97a9cd0cacaa658b180d071b8016",
+        "cpu": 32,
+        "memory_admission": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 1302171799552,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 1302171799552,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "elapsed_seconds": 1.933149531017989,
+        "sampled_process_tree_rss_peak_bytes": 40341504,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "descendants_cleared": true
       }
     ],
     "tree_peak_scope": "Sampled simultaneous own supervisor + all descendants; no continuous cgroup claim",
-    "max_sampled_tree_peak_bytes": 66695168,
+    "max_sampled_tree_peak_bytes": 1758789632,
     "own_swap_peak_bytes": 0,
-    "conservative_full_batch_seconds": 1229.434404,
+    "conservative_full_batch_seconds": 1398.939051,
     "metadata_sealing_in_progress_paths": [
-      "tmp/task42extra/checks/v17_prepublication_receipt_20261003T103603913973Z"
+      "tmp/task42extra/checks/v17_final_receipt_20261003T103853359127Z"
     ],
     "metadata_sealing_cost_treatment": "All setup/reading/failed stages/checks/sealing/publication are nested in full wall time. The currently active short seal summary is not yet available; its supervisor enforces the same 2GiB/swap/PSI limits. No worker times added twice.",
     "measurement_scope": "Maximum of sampled simultaneous supervised process-tree RSS across actual stages; not a cgroup continuous maximum, not sum of stage peaks, not all desktop/LLM processes.",
@@ -404,9 +588,21 @@
     },
     {
       "path": "tmp/task42extra/v17_seal_receipt.py",
-      "sha256": "be8220e0bd15ece0d8b85439ec460bd5b173b4ccbeefa4967481ee4ed187445f",
+      "sha256": "9cb226ee03b68104eccbcb30213a1676385e4591da169a2a3e9dc60c5f9fcdf2",
+      "purpose": "IGNORED_METADATA_ONLY_NO_NUMERICAL_SOURCE_CHANGE"
+    },
+    {
+      "path": "tmp/task42extra/v17_visual_receipt.py",
+      "sha256": "f6d93c4e05eacc705c38f9275bda8e34ca3f3433b9379dfb7965b1b099bffb53",
       "purpose": "IGNORED_METADATA_ONLY_NO_NUMERICAL_SOURCE_CHANGE"
     }
   ],
-  "termination": "P0_A_AND_P0_B_COMPLETE; P1_NOT_REQUESTED; NUMERICAL_EXPLORATION_PAUSED"
+  "termination": "P0_A_AND_P0_B_COMPLETE; P1_NOT_REQUESTED; NUMERICAL_EXPLORATION_PAUSED",
+  "delivery": {
+    "documentation_commit": "5fa3f892c399b504a8e529ce8696d76465e0228b",
+    "final_record_commit": "REPORTED_FROM_GIT_AFTER_FINAL_PUSH; self SHA cannot be embedded in its own content",
+    "push_ref": "HEAD:refs/heads/task42extra_feinn_5nm",
+    "final_tracking_check": "EXPLICIT_REMOTE_REF_FETCH_AFTER_PUSH",
+    "final_clean_and_clear_check": "REPORTED_AFTER_FINAL_PUSH"
+  }
 }
