@@ -1,0 +1,478 @@
+{
+  "schema": "task42extra.review-v13.saved-evidence-audit",
+  "reviewed_head": "b8f06b2f15abd3ee54888b0ddb01e32b80587b62",
+  "actual_numeric_source": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
+  "timestamp_utc": "2026-10-03T03:25:51.868164+00:00",
+  "role": "RAW_ARRAY_ARITHMETIC_HASH_AND_RECEIPT_REVIEW_ONLY",
+  "checker_exact_structural_match": true,
+  "comparison_scope": "All raw output fields exact; three publication provenance fields verified separately",
+  "checker_output": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v13_raw_checker.json",
+    "sha256": "3fb06e9ca1f0dbed3a8e4a41400f822b25cf4550a266dc0a2e4c3b63dc9d28f3"
+  },
+  "verified_existing_files": {
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v13_background_transfer.json": "0e6eb9a81d663d0037e9e7640e08a8188a61304335021457540f746b0bbe2520",
+    "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/input_original.dat": "73a29c904887635e5bff07b7ec0e11073e60a1efae9ea6a985900118d56a0dee",
+    "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/run_manifest.json": "9e419f8d9cd3824c3e6a521e3c8c6dc11c52f4da302e4289d305f9e74aabb6bc",
+    "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/run_summary.json": "7c176f50bad250dadc9bda98e352ee23e75384677cfb55673831a4f75536830f",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/background_vectors.npz": "3b62c6cf03b0b2ecd9003ecbc61f02629933675a5c11447b69a063b723de3dc6",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v13_background_transfer_20261003T022958237481Z/result.json": "5845de4565d7570c8e835b876aaff16dc14adf00e9960c440aaf17f292772352",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_A_checker_fixtures.xml": "3edc62389ea53d5e205fc89868100915114fc9d6035bda429a5beaec59f7d6cb",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v13_E_qualified_tests.xml": "ec56ffbd89dfd0f305988bb6f62b02e618b1b2e178ecf51c06f9b14af090fb80",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_A_checker_fixtures_20261003T022141873654Z/summary.json": "94e9b849e5ff6cfdc2f76c2d221360cb5f399f7b64bae149f648bd6e512af7fe",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_A_raw_closure_20261003T022213109216Z/summary.json": "18083457fbca60ba0c0353d3e5d10cc8887ad6987f1577f3692a9a1699e90b03",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_qualified_tests_20261003T022857558197Z/summary.json": "64c04bd455e43b919ecdcc1445a9e735a69ac05c3dc9b97beae838c70b51b1ee",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v13_E_raw_final_20261003T023212494150Z/summary.json": "a4757c1094ca112057d74bc08d1d4bdbee15b0f1aaa309ad4c7d51dc15b13a5f",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/abi_v13.json": "851b8d461b77552bb7e7300aaabf16d1bd4fc3861df29d4b3bb2671ef6fa472c",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v13.json": "c534162abb57577f24258ef8637041dcb8afedcfba23d32c9fa6ff019d3ea75d",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_test_space_witness_20261003T002021620377Z/field_diagnostic_arrays.npz": "71701ffb090b4456d781db10d3a0c7450bf9c51989ce761101dd59922cc58808",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_test_space_witness_20261003T002021620377Z/result.json": "ac025f5e048a0fff2b38d593bea982b5bf50cb00f13f06b118fde696a6e5d65d",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/check_task42extra_v12.py": "a26075ff5d8e7b411ed48ebada0678f887c80e94f72dac9b4211b57834311a2a",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/raw_checker_v13_final.json": "3fb06e9ca1f0dbed3a8e4a41400f822b25cf4550a266dc0a2e4c3b63dc9d28f3"
+  },
+  "implementation_unchanged_from_run_source": {
+    "scripts/launch_task42extra_durable.py": "9274b56948bb32707130bd41521927cde5b74bda010b4a93983b4572ceff52d2",
+    "src/runners/feinn_attribution_campaign.py": "0392ff077bc5238c759f372939e5bb867eadbc524faa1b46fc527fd9a2f3a198",
+    "src/runners/feinn_workflow.py": "77ec4b059d5283afa81dac99193544dbfaecfefb1938fcc259d17b26f8253d18",
+    "benchmarks/check_task42extra_v12.py": "a26075ff5d8e7b411ed48ebada0678f887c80e94f72dac9b4211b57834311a2a",
+    "src/test/test_feinn_attribution_checker.py": "09b35e61e6b828dd74d6f68dcd8f509b9b8948f0b7a2a35c3d1a2f24be175cad",
+    "src/test/test_feinn_background_closure.py": "76bdb02e3ded848f3af7053df7b64550a2d3032d9eb163a5c38633fed6ceed40",
+    "src/test/test_feinn_background_closure_fe.py": "09d4c6244a0f835aa3fb2ca99f1313a96b1282e42c1802a1c081a9c521589aca",
+    "src/solvers/feinn_saved_field_diagnostics.py": "3a3e97cea1b5acb81678d89c5a8f0fae8a63f65963f7228182cc42adc5c10319"
+  },
+  "retained_junit_recomputed": [
+    {
+      "tests": 54,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "tests": 73,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "unique_qualified_tests": 73,
+  "tests_rerun_by_reviewer": false,
+  "original_f4_denominator": 0.36419483787438633,
+  "independent_background_arithmetic": {
+    "p3reference": {
+      "original_relative": 3.5523634955588412,
+      "corrected_relative": 5.2055721922783755,
+      "signed_cross": -8.122723794291204,
+      "correction_energy": 10.043147262257254,
+      "energy_change": 1.920423467966046,
+      "energy_closure_defect": 1.9557078588421523e-16
+    },
+    "M3600": {
+      "original_relative": 3.9163921667644845,
+      "corrected_relative": 5.031234280175673,
+      "signed_cross": -8.720059105506643,
+      "correction_energy": 10.043147262257254,
+      "energy_change": 1.3230881567506092,
+      "energy_closure_defect": 9.467234994825396e-17
+    },
+    "Mfinal": {
+      "original_relative": 4.040108001063766,
+      "corrected_relative": 4.8908379413386776,
+      "signed_cross": -9.035388113072244,
+      "correction_energy": 10.043147262257254,
+      "energy_change": 1.0077591491850146,
+      "energy_closure_defect": 2.793228313055826e-16
+    }
+  },
+  "C1_classification": {
+    "M3600": {
+      "field_energy_removed": 0.974072726506221,
+      "residual_projection_field_energy_removed": -0.1945511589317035,
+      "residual_energy_removed": 0.0016111430468324062,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH",
+      "raw_projections": {
+        "field": {
+          "field": {
+            "before": 8.614265977037046,
+            "after": 0.22334442993479436,
+            "cross": -16.781843094204465,
+            "update_energy": 8.39092154710222,
+            "change": -8.390921547102252,
+            "reconstructed_change": -8.390921547102245,
+            "operation_scale": 25.172764641306685,
+            "defect": 2.822664677022209e-16,
+            "removed_energy_fraction": 0.974072726506221,
+            "near_zero_before": false,
+            "absolute_energy_removed": 8.390921547102252
+          },
+          "residual": {
+            "before": 0.00022600254389021148,
+            "after": 1.1564445286687162,
+            "cross": -1.4599704339110866e-06,
+            "update_energy": 1.1562199860952598,
+            "change": 1.156218526124826,
+            "reconstructed_change": 1.156218526124826,
+            "operation_scale": 1.1564445286687162,
+            "defect": 0.0,
+            "removed_energy_fraction": -5115.953591595407,
+            "near_zero_before": false,
+            "absolute_energy_removed": -1.156218526124826
+          }
+        },
+        "residual": {
+          "field": {
+            "before": 8.614265977037046,
+            "after": 10.290181406215547,
+            "cross": 1.5882639614164722,
+            "update_energy": 0.08765146776202304,
+            "change": 1.6759154291785006,
+            "reconstructed_change": 1.6759154291784952,
+            "operation_scale": 10.290181406215547,
+            "defect": 5.1787916148707045e-16,
+            "removed_energy_fraction": -0.1945511589317035,
+            "near_zero_before": false,
+            "absolute_energy_removed": -1.6759154291785006
+          },
+          "residual": {
+            "before": 0.00022600254389021148,
+            "after": 0.00022563842146305633,
+            "cross": -7.282448543102145e-07,
+            "update_energy": 3.6412242715521537e-07,
+            "change": -3.6412242715514994e-07,
+            "reconstructed_change": -3.6412242715499916e-07,
+            "operation_scale": 0.00022600254389021148,
+            "defect": 6.671246350417546e-16,
+            "removed_energy_fraction": 0.0016111430468324062,
+            "near_zero_before": false,
+            "absolute_energy_removed": 3.6412242715514994e-07
+          }
+        }
+      }
+    },
+    "Mfinal": {
+      "field_energy_removed": 0.9874183663877463,
+      "residual_projection_field_energy_removed": -0.11552596424950178,
+      "residual_energy_removed": 0.00575734462851398,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH",
+      "raw_projections": {
+        "field": {
+          "field": {
+            "before": 14.905085807664646,
+            "after": 0.18753032859123986,
+            "cross": -29.4351109581468,
+            "update_energy": 14.717555479073397,
+            "change": -14.717555479073406,
+            "reconstructed_change": -14.717555479073404,
+            "operation_scale": 44.1526664372202,
+            "defect": 4.0232153179831555e-17,
+            "removed_energy_fraction": 0.9874183663877463,
+            "near_zero_before": false,
+            "absolute_energy_removed": 14.717555479073406
+          },
+          "residual": {
+            "before": 0.0002089685012298772,
+            "after": 0.06872002950039584,
+            "cross": 9.636891532319582e-06,
+            "update_energy": 0.06850142410763367,
+            "change": 0.06851106099916596,
+            "reconstructed_change": 0.06851106099916598,
+            "operation_scale": 0.06872002950039584,
+            "defect": 4.038935346421677e-16,
+            "removed_energy_fraction": -327.8535310151835,
+            "near_zero_before": false,
+            "absolute_energy_removed": -0.06851106099916596
+          }
+        },
+        "residual": {
+          "field": {
+            "before": 14.905085807664646,
+            "after": 16.627010217816668,
+            "cross": 1.653275479981184,
+            "update_energy": 0.06864893017084292,
+            "change": 1.7219244101520221,
+            "reconstructed_change": 1.7219244101520268,
+            "operation_scale": 16.627010217816668,
+            "defect": 2.8545140515922406e-16,
+            "removed_energy_fraction": -0.11552596424950178,
+            "near_zero_before": false,
+            "absolute_energy_removed": -1.7219244101520221
+          },
+          "residual": {
+            "before": 0.0002089685012298772,
+            "after": 0.00020776539755179276,
+            "cross": -2.406207356168844e-06,
+            "update_energy": 1.2031036780845356e-06,
+            "change": -1.2031036780844504e-06,
+            "reconstructed_change": -1.2031036780843085e-06,
+            "operation_scale": 0.0002089685012298772,
+            "defect": 6.789445195332163e-16,
+            "removed_energy_fraction": 0.00575734462851398,
+            "near_zero_before": false,
+            "absolute_energy_removed": 1.2031036780844504e-06
+          }
+        }
+      }
+    }
+  },
+  "D": {
+    "D0": "COST_VETO_CONFIRMED",
+    "D1": "NOT_RUN_COST_VETO"
+  },
+  "new_actions": {
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "FE_integrals": 0,
+    "network_forward": 0,
+    "training": 0
+  },
+  "verdict": "ACCEPT_V13_NUMERIC_CLOSURE_KEEP_FEINN_PAUSED_NO_VERIFIED_NN_INCREMENT",
+  "remote_heads": {
+    "FEINN": "b8f06b2f15abd3ee54888b0ddb01e32b80587b62",
+    "task40extra": "0dba5c509580e655a70ffa1ea400d253da5564cd",
+    "dot": "eb5b0ecc1afe593f626b44a6038f7f26651b3317"
+  },
+  "reviewer_resource_receipt": [
+    {
+      "label": "review_v13_saved_audit_20261003T032439228452Z",
+      "files": {
+        "summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v13_saved_audit_20261003T032439228452Z/summary.json",
+          "sha256": "63186680b679dd7d75e8a1982b4d8ec7beced536c9628db1517d3e121b438bb8"
+        },
+        "admission.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v13_saved_audit_20261003T032439228452Z/admission.json",
+          "sha256": "66a42fe39097d46a8cfc14889d32a4523ae68e14e76513ad3ccde55947feec54"
+        },
+        "supervision/worker.log": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v13_saved_audit_20261003T032439228452Z/supervision/worker.log",
+          "sha256": "08462188c892acec0969858d5b19fcd14f8a069f260680e1795cb2be52447ede"
+        }
+      },
+      "summary": {
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 193900544,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139039,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139039,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 1665333731328,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 1665333731328,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 8,
+        "elapsed_seconds": 3.5685767490649596,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "label": "review_v13_saved_audit_repair1_20261003T032547542883Z",
+      "files": {
+        "summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v13_saved_audit_repair1_20261003T032547542883Z/summary.json",
+          "sha256": "549a93d4f62882c7e4fbed0272a6efce9e46e2bd1f9687f80db50bb1c7de8ad0"
+        },
+        "admission.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v13_saved_audit_repair1_20261003T032547542883Z/admission.json",
+          "sha256": "906c9aa380d3552510a47ee34bfcee97fabead77c0690bd7c11c8a21078fc86d"
+        },
+        "supervision/worker.log": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v13_saved_audit_repair1_20261003T032547542883Z/supervision/worker.log",
+          "sha256": "4cc6f4812933db1e7eb1653ec869cf3f065cf67bdcab45510767403b083c7534"
+        }
+      },
+      "summary": {
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 183214080,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139039,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139039,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 1665311727616,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 1665311727616,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 10,
+        "elapsed_seconds": 4.583456762949936,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    }
+  ],
+  "reviewer_local_repairs": [
+    {
+      "classification": "REVIEW_SCRIPT_METADATA_COMPARISON_ERROR",
+      "description": "First run compared publisher provenance wrapper with raw checker output; no numerical discrepancy. Verify three provenance fields separately then compare every raw field exactly.",
+      "stage_repeated": "saved-array checker plus lightweight identity checks",
+      "source_or_historical_evidence_modified": false
+    }
+  ],
+  "final_byte_markdown_parser": {
+    "status": "PASS",
+    "pages": [
+      {
+        "path": "docs/task042extra_feinn_5nm/review_report_v13.md",
+        "sha256": "67518a9bd0472936f32bcb7e57c03083629b0d672c9f5d7e798d5b602457a739",
+        "checked_scope": "entire page",
+        "markdown_tables": 10,
+        "parsed_tables": 10,
+        "math_fences": 1,
+        "links": 19
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v13.md",
+        "sha256": "7063a7ebfe6cd8455a99b89356d2f036c69174e2a08a0eafeb8cfef4cc08c558",
+        "checked_scope": "entire page",
+        "markdown_tables": 5,
+        "parsed_tables": 5,
+        "math_fences": 1,
+        "links": 12
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md",
+        "sha256": "b1a7541ee4b7a4d746f4d80b6ddc6e7e9a703dcbae86369c1630a5eb65965dd1",
+        "checked_scope": "entire page",
+        "markdown_tables": 5,
+        "parsed_tables": 5,
+        "math_fences": 1,
+        "links": 9
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "sha256": "7501357d7e554c45c66514ea94f5cfe7dddc95c60c9a0134c273402a138f3dfe",
+        "checked_scope": "Task42extra Review V12 \u540e\u7eed\uff1aV13",
+        "markdown_tables": 2,
+        "parsed_tables": 2,
+        "math_fences": 0,
+        "links": 13
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "sha256": "bc2d08eb18805140b10993709ba661e10c81a59b168a5460cf62c63a77bb0e38",
+        "checked_scope": "Review V12 \u540e\u7eed V13 \u5b9a\u5411\u8d44\u683c",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 4
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "sha256": "5cc34555403ae17a6373f2065fcad559865edbf4e64c8be7214a19c65c8cc5bf",
+        "checked_scope": "Review V12 \u540e\u7eed V13 \u6587\u4ef6\u7ea7\u8fb9\u754c",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 1
+      },
+      {
+        "path": "docs/development_progress.md",
+        "sha256": "31b9a5459dfb42a5d9d0bd67d74cceef6ed842c8608170616fde814c9268b40a",
+        "checked_scope": "2026-10-03 Task42extra V13",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 3
+      },
+      {
+        "path": "docs/development_model_registry.md",
+        "sha256": "fc0797b3beb75ba3a4bf18303c7e57bf457b159d823867e4a52cef657b21c717",
+        "checked_scope": "3.44.12 Task42extra Review V12 \u540e\u7eed",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 3
+      }
+    ]
+  },
+  "actual_github_visual": {
+    "status": "PENDING_FIRST_PUBLICATION_CHECK",
+    "planned_pages": [
+      "review_report_v13.md",
+      "outcomes/evidence_closure_v13.md"
+    ],
+    "earlier_visual_failure_record_preserved": true
+  }
+}
