@@ -1,0 +1,69 @@
+{
+  "schema": "task042.v27.delivery-observation",
+  "utc": "2026-10-03T02:40:50.867103+00:00",
+  "monotonic": 920245.860784027,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "elapsed_from_first_start_seconds": 1593.994888,
+  "window_deadline": "2026-10-03T03:44:16.872215+00:00",
+  "window_unchanged": true,
+  "content_HEAD": "d8fa672a3a4c531994cbebddc073926c00d91111",
+  "candidate_entry_source": "7b0e03f2fbfb504b13a5f5b4c46c52e0e96a5eb9",
+  "numeric_actor_source": null,
+  "branch": "task42_neural_coarse_inverse",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "toplevel": "/home/fenics/Projects/NN-Lab",
+  "worktree_registration": "worktree /home/fenics/Projects/NN-Lab\nHEAD d8fa672a3a4c531994cbebddc073926c00d91111\nbranch refs/heads/task42_neural_coarse_inverse",
+  "tracked_and_nonignored_status_before_receipt": "",
+  "local_tracking_ahead_behind_before_publish": "2\t0",
+  "no_Task042_actor": true,
+  "own_lock_free": true,
+  "formal_runs": 0,
+  "classification": "NOT_RUN_CPU_ADMISSION",
+  "numeric_charges": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "supervised_auxiliary_seconds": 12.366657367907465,
+  "new_outputs_including_aux_TMP_docs_observed_bytes": 30460620,
+  "all_Task042_artifact_observed_bytes": 18024892615,
+  "disk_free_bytes": 3388899045376,
+  "storage_observation_role": "before writing this receipt; not a final absolute byte count",
+  "ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json",
+    "sha256": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872",
+    "bytes": 507
+  },
+  "response": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v27.md",
+    "sha256": "e38e43654ce29bc7b0638a16a63e73632b2d8e97d8a2fc801f46156279341b67",
+    "bytes": 6697
+  },
+  "costs": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v27.json",
+    "sha256": "2d6718a9de1778ec9eccb81cd0868a5c00ea295ac9dc8ea6e30967a0deb14609",
+    "bytes": 13087
+  },
+  "source_inventory": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v27.json",
+    "sha256": "a25c4052c0fb5c3a377fb5eec51d35b3f2504fabb4faccf860cfa0dbbe21953a",
+    "bytes": 4226
+  },
+  "publish_scope": "only HEAD:refs/heads/task42_neural_coarse_inverse",
+  "receipt_commit_HEAD": "returned by final publication; cannot self-embed commit hash",
+  "subagents": false,
+  "reset_card": false,
+  "other_branches_modified": false,
+  "merge": false
+}
