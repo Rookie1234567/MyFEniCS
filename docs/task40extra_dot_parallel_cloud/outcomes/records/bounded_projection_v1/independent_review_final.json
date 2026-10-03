@@ -1,0 +1,32 @@
+{
+  "verdict": "PASS_WITH_QUALIFICATIONS",
+  "scope": "Read-only independent review of explicit opt-in synthetic component; no production or target-scale qualification",
+  "base_HEAD": "7de238a4b6f74f2b90ec42156f64a71f54ce79e5",
+  "reviewed_source_sha256": {
+    "src/solvers/bounded_compact_q_projection.py": "ac7f73b51ce67e7a0655ab71af1136c56d70f86ca1c4e42a1634782b0672f925",
+    "src/solvers/y_orbit_two_cell_block_audit.py": "8dcfbf8278ce2de5a969aef1db97c8d42462e486e8813e60bb9599cc6a18f5bd",
+    "src/test/test_bounded_compact_q_projection.py": "10118471060f28f3b5f20f0eb6ba22a022e308e31f601a5dcc0146e46c1197eb"
+  },
+  "independent_targeted_tests": {
+    "passed": 53,
+    "seconds": 0.71
+  },
+  "independent_final_random_cases": {
+    "total": 100,
+    "dense_oracle_matches": 83,
+    "memory_budget_stops": 17
+  },
+  "resolved_findings": [
+    "unbudgeted provider vector validation masks",
+    "gate/accumulator reference cycle",
+    "growing-result scratch and merge admission false rejections",
+    "int32 CSR pointer arithmetic overflow before promotion"
+  ],
+  "final_docstring_only_hash_update_independently_verified": true,
+  "limits": [
+    "Owned explicit arrays only; no total RSS or internal NumPy/SciPy/native workspace hard bound",
+    "q-map and contribution-producer allocations/borrowed backing excluded from accumulator budget",
+    "no FE/JIT/PDE/raw scientific artifacts/target-scale performance qualification"
+  ],
+  "publication": "not committed or published"
+}

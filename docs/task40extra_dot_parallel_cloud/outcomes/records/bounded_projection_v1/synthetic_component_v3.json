@@ -1,0 +1,55 @@
+{
+  "schema": "compact-q-bounded-projection.synthetic-component.v3",
+  "status": "synthetic_algebra_pass",
+  "seed": 20261003,
+  "geometry_or_FE_claim": false,
+  "raw_scientific_artifacts_read": false,
+  "FE_JIT_factor_PDE_calls": 0,
+  "source_base_HEAD": "7de238a4b6f74f2b90ec42156f64a71f54ce79e5",
+  "working_tree_candidate": true,
+  "source_files_sha256": {
+    "src/solvers/bounded_compact_q_projection.py": "ac7f73b51ce67e7a0655ab71af1136c56d70f86ca1c4e42a1634782b0672f925",
+    "src/solvers/y_orbit_two_cell_block_audit.py": "8dcfbf8278ce2de5a969aef1db97c8d42462e486e8813e60bb9599cc6a18f5bd",
+    "src/test/test_bounded_compact_q_projection.py": "10118471060f28f3b5f20f0eb6ba22a022e308e31f601a5dcc0146e46c1197eb"
+  },
+  "script_sha256": "624af24accaee07a962754771d760b592e88631ed2f62a8d54ddc57a5e2820d0",
+  "python": "/workspace/scratch/9c465670b46b/task40extra_cloud/repo/../complex_env_recovery/bin/python",
+  "python_version": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "thread_count": 1,
+  "native_contribution_shape": [
+    64,
+    64
+  ],
+  "factor_inner_dimension": 9,
+  "q_shape": [
+    47,
+    53
+  ],
+  "actual_support_shape": [
+    39,
+    45
+  ],
+  "tile_width_upper": 8,
+  "named_array_budget_bytes": 160000,
+  "observed_declared_peak_owned_upper_bytes": 105956,
+  "final_CSR_arrays_bytes": 35292,
+  "final_CSR_nnz": 1755,
+  "largest_projection_scratch_bound_bytes": 19712,
+  "legacy_dense_projection_expression_bytes_upper": 166128,
+  "largest_CSR_merge_declared_owned_upper_bytes": 105956,
+  "max_relative_difference_to_dense_oracle": 0.0,
+  "tiled_component_seconds": 0.05588607800018508,
+  "dense_oracle_seconds": 7.525799992436077e-05,
+  "timing_comparability": "Dense oracle does not build CSR or run per-allocation checks; timings are not a like-for-like speedup comparison.",
+  "process_tree_RSS_peak_bytes": null,
+  "native_NumPy_SciPy_BLAS_packing_workspace_bound_bytes": null,
+  "budget_scope": "Owned explicit NumPy/CSR arrays, including old/new CSR and possible constructor copy; excludes q maps, contribution producers/recipes, Python objects and internal NumPy/SciPy/native packing/workspace. Fresh process-tree gate remains mandatory.",
+  "data_kinds": {
+    "timings_and_final_CSR_nbytes": "measured",
+    "named_array_bounds": "derived_from_allocations",
+    "process_tree_RSS_and_internal_workspace": "not_run_or_unknown"
+  },
+  "qualification": "Small synthetic exact-algebra/memory-accounting only; no speedup, FE, accuracy, production or 2TB/48h qualification"
+}

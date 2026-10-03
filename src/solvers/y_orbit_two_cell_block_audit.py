@@ -65,8 +65,18 @@ class TwoCellBlockProvider:
     Native reduced S is never materialized. There is no SuperLU constructor,
     factor callback, whole-Ny reference matrix or Fourier matrix here.
     """
-    def __init__(self, condensed, coordinates, *, allocation_gate):
+    def __init__(self, condensed, coordinates, *, allocation_gate,
+                 compact_projection_max_owned_bytes=None, compact_projection_tile_width=32):
         self.condensed,self.coordinates,self.gate=condensed,coordinates,allocation_gate
+        # Explicit research opt-in; None preserves the legacy projection path.
+        if compact_projection_max_owned_bytes is not None:
+            from .bounded_compact_q_projection import _positive_integer
+            _positive_integer(compact_projection_max_owned_bytes, 'compact_projection_max_owned_bytes')
+            _positive_integer(compact_projection_tile_width, 'compact_projection_tile_width')
+            if not getattr(getattr(condensed, 'action', None), 'uses_port_block_representation', False):
+                raise ValueError('bounded q projection requires explicit compact port layout')
+        self.compact_projection_max_owned_bytes = compact_projection_max_owned_bytes
+        self.compact_projection_tile_width = compact_projection_tile_width
         self.calls=0
 
     def block(self,p,q):
@@ -186,7 +196,11 @@ class TwoCellBlockProvider:
 
         left, right = c.q_map(p), c.q_map(q)
         for matrix in (left, right):
-            csr_audit(matrix, petsc_index_dtype=c.index_dtype)
+            if self.compact_projection_max_owned_bytes is None:
+                csr_audit(matrix, petsc_index_dtype=c.index_dtype)
+            else:
+                from .bounded_compact_q_projection import audit_csr_scalar
+                audit_csr_scalar(matrix, index_dtype=c.index_dtype)
             if matrix.shape[0] != c.rows:
                 raise ValueError('compact q map has the wrong native row inventory')
         shape = (left.shape[1], right.shape[1])
@@ -199,7 +213,8 @@ class TwoCellBlockProvider:
             _gate(self.gate, 'compact_provider/' + label, payload=payload,
                   workspace=workspace, borrowed_action_backing_bytes=borrowed_bytes,
                   current_q_map_bytes=maps_bytes,
-                  current_q_result_bytes=0 if result is None else sparse_bytes(result),
+                  current_q_result_bytes=facts.pop('bounded_current_result_bytes',
+                      0 if result is None else sparse_bytes(result)),
                   current_objects_in_fresh_RSS=True,
                   earlier_q_outputs_in_fresh_RSS=True,
                   native_index_itemsize_upper=ibytes,
@@ -208,10 +223,21 @@ class TwoCellBlockProvider:
                   numeric_factor_count=0, no_new_unprojected_port_square_created=True,
                   native_sparse_and_BLAS_workspace_unknown=True, **facts)
         result = None
-        gate('empty_q_result', payload=(shape[0] + 1) * ibytes)
-        result = sparse.csr_matrix(shape, dtype=np.complex128)
+        bounded = None
+        if self.compact_projection_max_owned_bytes is None:
+            gate('empty_q_result', payload=(shape[0] + 1) * ibytes)
+            result = sparse.csr_matrix(shape, dtype=np.complex128)
+        else:
+            from .bounded_compact_q_projection import BoundedCompactQAccumulator
+            bounded = BoundedCompactQAccumulator(
+                shape, max_owned_bytes=self.compact_projection_max_owned_bytes,
+                tile_width=self.compact_projection_tile_width,
+                index_dtype=c.index_dtype, gate=gate)
 
         def equal_ids(ids, expected_ids):
+            if bounded is not None:
+                return ids.shape == expected_ids.shape and all(
+                    int(a) == int(b) for a, b in zip(ids, expected_ids, strict=True))
             return np.array_equal(ids, expected_ids)
         def port_ids(ids, ports):
             return len(ids) == len(ports) and all(
@@ -221,10 +247,14 @@ class TwoCellBlockProvider:
                 raise ValueError('compact payload must borrow readonly NumPy arrays')
             if complex_values and array.dtype != np.dtype(np.complex128):
                 raise ValueError('compact numeric payload must be complex128')
-            # Row-wise masks never allocate a borrowed factor/matrix square.
-            for row in array:
-                if not np.isfinite(row).all():
+            if bounded is not None:
+                if any(not np.isfinite(value) for value in array.flat):
                     raise ValueError('compact contribution contains nonfinite values')
+            else:
+                # Legacy row-wise masks never allocate a factor/matrix square.
+                for row in array:
+                    if not np.isfinite(row).all():
+                        raise ValueError('compact contribution contains nonfinite values')
 
         for rows, cols, values, label in self.condensed.iter_contributions(allocation_gate=self.gate):
             if label not in expected or label in seen:
@@ -279,6 +309,11 @@ class TwoCellBlockProvider:
                     valid = port_ids(rows, (owner,)) and equal_ids(cols, action._direct_D_active[owner][0])
                 if not valid:
                     raise ValueError('compact contribution native row/column order differs: ' + label)
+
+            if bounded is not None:
+                bounded.add(left, right, rows, cols, values, label)
+                del rows, cols, values
+                continue
 
             # Upper bounds for row gathers, support discovery and sparse
             # column slicing include actual CSR/CSC index widths.
@@ -347,6 +382,8 @@ class TwoCellBlockProvider:
         if seen != set(expected):
             raise ValueError('compact contribution inventory is incomplete: ' + ','.join(sorted(set(expected) - seen)))
         self.calls += 1
+        if bounded is not None:
+            return bounded.finish()
         csr_audit(result, petsc_index_dtype=c.index_dtype)
         return result
 
