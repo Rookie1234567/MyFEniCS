@@ -1,4 +1,14 @@
-# Task40extra 当前进展：Review V4 x/z 交叉网格已完成，等待审阅
+# Task40extra 当前进展：Review V5 Gx784 工程尝试已收口，物理对照仍未运行
+
+Review V5 的唯一 Gx784 worker 在有限元和数值预检前因 time-policy 接口冲突退出；没有官方场、真残差或 R/T/A。源码修复提交为 969b4086320b844d44fb0b67092ffe5af2d760b1。修复后的安全后处理已对旧失败记录执行轻量 solver/recovery Gate，并生成 HELD 对照；未启动 worker、预算预留或 FE 导入。共享账本保守扣记 4.619253995631944 s 工程尝试预算（不称作实测求解时间），唯一 bug replay 已使用；没有再次正式运行。
+
+47 项实现相关定向测试通过，文档合同检查见 [Task40 测试摘要](task40extra_0p7nm_engineering/outcomes/test_summary.md)。full repository pytest、MPI4、Ruff、CI 与数值重试均未运行。original 与 repair AUTO 大清单均已有记录；本次 closeout 未重生成，两个历史生成成本 unknown。候选资源只是 derived counts/payloads，原尺寸容量仍 unknown。Dot 保持 HELD / NOT_RUN，云端结果未知；普通默认未改，master 未合并。
+
+详细负结果与哈希见 [Response V5](task40extra_0p7nm_engineering/response_v5.md)、[V5 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v5_execution_closeout_v1.json)、[Task40 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
+---
+
+# Task40extra 历史进展：Review V4 x/z 交叉网格已完成，等待审阅
 
 Task40 的早期 N0–N6 受限收口留下真实 0.7 nm Full3D 解，但 G0→G1 同时改变 x/z，无法判断后续网格投入的主方向；Review V3 的配对背景分析又显示功率接近不能排除散射场与复模态超门。本轮只执行 V4 已授权的两张交叉网格，复用四角 official saved fields，并按共同物理坐标离线比较。执行分支为 `task40extra_0p7nm_engineering`；本次 continuation 从 clean HEAD `9fd295624444cf16b6ba393a0a7c3522f0070f73` 开始，正式 V4 回执和证据仍待同分支审阅。
 

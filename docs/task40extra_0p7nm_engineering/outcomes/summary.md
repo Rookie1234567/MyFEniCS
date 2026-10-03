@@ -1,4 +1,19 @@
-# Task40extra Review V4 收口总账（V2/R5 历史保留）
+# Task40extra Review V5/V4 收口总账（V2/R5 历史保留）
+
+## Review V5：Gx784 工程失败与后处理安全预检
+
+Gx784 worker 在数值预检和有限元工作前因 enforce-time/旧 observe-only 合同冲突退出，官方场、真残差和 R/T/A 均未生成；这属于工程失败，不是数值失败。修复后的 V5 后处理先重算 solver/recovery Gate，当前旧记录未过 Gate，因此生成 held 对照并停止在 worker、预算预留与 FE 导入之前。唯一 bug replay 已使用，不据此启动第二次正式运行。
+
+| 结论项 | 当前证据 |
+|---|---|
+| worker 与 Gate | WORKER_FAILED_PRE_NUMERICAL_ENGINEERING_ERROR_NO_OFFICIAL_RESULT；field/residual evidence unavailable，paired field/mode/power HELD / NOT_RUN |
+| 记账 | 172800 s 上限；工程保守预算扣时 4.619253995631944 s；active attempt=null；bug replay=1；不是数值求解耗时 |
+| 修复与验证 | source 969b4086320b844d44fb0b67092ffe5af2d760b1；47 项相关测试通过；另有文档合同检查见 test summary |
+| 边界 | original 与 repair AUTO 清单/ledger 均已存在；本次 closeout 未重生成，旧生成成本 unknown；候选容量仍 unknown；dot HELD / NOT_RUN；master 未合并 |
+
+Held 对照、独立 checker、账本、双份 target/resource ledger hashes 及分项 known/unknown 见 [Response V5](../response_v5.md)、[紧凑 V5 closeout record](records/review_v5_execution_closeout_v1.json) 与 [run index](records/run_index.json)。32,060 通道的大清单保留在 ignored artifact；tracked 记录仅保留路径、SHA、计数和 unknown 容量结论。
+
+---
 
 ## Review V4：交叉网格与四角离线结果
 

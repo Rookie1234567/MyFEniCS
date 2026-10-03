@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "393e5c0dddb933848945ab2e18edb73cf69cc224",
+  "current_code_sha": "969b4086320b844d44fb0b67092ffe5af2d760b1",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -615,6 +615,33 @@
       },
       "review_v4_interface_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json",
       "authority_note": "Saved official result from an explicit full-system residual passing run; this remains a reduced-size discrete result and does not establish continuum convergence or target-size readiness."
+    },
+    {
+      "stage": "Review V5 Gx784 formal attempt",
+      "run_id": "task40extra_0p7nm_nonseparable_gx784_review_v5_v1",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T074956.168518Z",
+      "source_sha": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+      "input_sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+      "physical_model_sha256": "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8",
+      "classification": "WORKER_FAILED_PRE_NUMERICAL_ENGINEERING_ERROR_NO_OFFICIAL_RESULT",
+      "official_result": false,
+      "numerical_residual": "not sampled; evidence unavailable",
+      "R_T_A": "not_run",
+      "run_manifest_sha256": "49f4865a53b6bd65586557064e95792b137088c2289cbb12d87b11fbc83f4b95",
+      "run_summary_sha256": "c7ff83a0fbeed4f7ee7bf58e8d405f945f99c4063be44c5111686c6afcd7c568",
+      "watchdog_summary_sha256": "7e707b412d7d71eb99987cbd29996a767f1349fe9ea593f6328efccb67363771",
+      "budget_charge_seconds": 3.939768298688392,
+      "run_summary_full_workflow_monotonic_seconds": 3.939483341993764,
+      "watchdog_elapsed_seconds": 3.9084257329814136,
+      "pre_FE_process_tree": {
+        "rss_peak_bytes": 133492736,
+        "samples": 16,
+        "task_swap_peak_bytes": 0,
+        "pss_peak_bytes": null,
+        "pss_status": "DISABLED_BY_PROFILE",
+        "identity_coverage": "complete",
+        "descendants_cleared": true
+      }
     }
   ],
   "ledger": {
@@ -1196,5 +1223,32 @@
       "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py",
       "result": "13 passed in 0.03 s"
     }
+  },
+  "review_v5_closeout": {
+    "source_sha": "969b4086320b844d44fb0b67092ffe5af2d760b1",
+    "response": "docs/task40extra_0p7nm_engineering/response_v5.md",
+    "compact_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v5_execution_closeout_v1.json",
+    "offline_comparison_sha256": "2a64edae51d51a62379e4f11c978362d5654dd18d8e7ab81af4d2b377cf57006",
+    "independent_checker_sha256": "f14e52fdc3fae9d5fb955361dc1956972a9a6a0de58ff75ba518fac6ab766ca3",
+    "ledger_sha256": "67c086c9fa975c97a3a6980bfa5ac4fa9cb60c59e2fa2f5ea60f477e86c72c8d",
+    "formal_retry": "not_authorized_after_one_bug_replay",
+    "target_ledger_records": [
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json",
+        "sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_ledger.json",
+        "sha256": "92c6a0f458ffa2d84911744cd8d6138f93414e8b850dfae205093e9618e45ae2"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_resource_ledger.json",
+        "sha256": "619fe86652d836deb6591eb1ffc59be8346d33a6287adf57178a162aac226fe2"
+      }
+    ]
   }
 }

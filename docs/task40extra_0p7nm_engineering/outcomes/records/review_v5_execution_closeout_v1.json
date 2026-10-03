@@ -1,0 +1,229 @@
+{
+  "schema": "task40extra.review_v5_execution_closeout.v1",
+  "branch": "task40extra_0p7nm_engineering",
+  "review": "Review V5 Gx784 engineering closeout",
+  "source_commit": {
+    "sha": "969b4086320b844d44fb0b67092ffe5af2d760b1",
+    "parent_sha": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+    "message": "Gate Task40 V5 postprocessing before worker startup"
+  },
+  "formal_case": {
+    "run_id": "task40extra_0p7nm_nonseparable_gx784_review_v5_v1",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T074956.168518Z",
+    "source_sha": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+    "input_sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+    "physical_model_sha256": "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8",
+    "classification": "WORKER_FAILED_PRE_NUMERICAL_ENGINEERING_ERROR_NO_OFFICIAL_RESULT",
+    "worker_error": "V20 requires observe_only throughout the worker",
+    "solver_residual": "not sampled; evidence unavailable, not a residual failure",
+    "official_result": false,
+    "R_T_A": "not_run",
+    "paired_field_and_mode_comparisons": "held_not_run"
+  },
+  "engineering_failures": [
+    {
+      "stage": "pre-ledger startup",
+      "classification": "engineering_startup_error",
+      "detail": "NameError: CONSERVATIVE_REALTIME not defined; before watchdog, worker, mesh, or FE",
+      "service_log_sha256": "56115068129dcf60eb88e6b750e06219e2a05f97c924ecf2421c77acc38f3847",
+      "systemd_leader_lifetime_seconds_derived": 0.189045,
+      "systemd_leader_lifetime_basis": "(service_exec_exit_monotonic_usec - service_exec_start_monotonic_usec) / 1e6; upper-bound leader lifetime, not preparation/PDE time",
+      "service_exec_start_monotonic_usec": 618257280235,
+      "service_exec_exit_monotonic_usec": 618257469280,
+      "original_receipt_sha256": "79acefeef2064ec738ba38f6158e2af9d3d050195068a8e86eb73b1ae7fd1da0",
+      "corrected_receipt_sha256": "11f019b28297520424999816cdb86103e36caf0beae88093c262126456604b49"
+    },
+    {
+      "stage": "formal Gx784 worker",
+      "classification": "engineering_worker_failure",
+      "detail": "Old worker rejected enforce-time policy; failed before runtime preflight sample and FE/numerical operations; no official output.",
+      "run_manifest_sha256": "49f4865a53b6bd65586557064e95792b137088c2289cbb12d87b11fbc83f4b95",
+      "run_summary_sha256": "c7ff83a0fbeed4f7ee7bf58e8d405f945f99c4063be44c5111686c6afcd7c568",
+      "events_sha256": "2ba95af29852e5b6af2ec4f90eac48f2bf4d9889e53ff54b957373a06691a656",
+      "worker_resources_sha256": "d0bd99b96711ef1eeba1e51b825c45d3122b85ec0d36ff2dae842297a7d47719",
+      "watchdog_summary_sha256": "7e707b412d7d71eb99987cbd29996a767f1349fe9ea593f6328efccb67363771",
+      "budget_charge_seconds": 3.939768298688392,
+      "measured_clock_scopes": {
+        "run_summary_full_workflow_monotonic_seconds": 3.939483341993764,
+        "watchdog_elapsed_seconds": 3.9084257329814136,
+        "note": "different measured scopes; neither is numerical model solve time"
+      },
+      "watchdog_process_tree_observation": {
+        "rss_peak_bytes": 133492736,
+        "sample_count": 16,
+        "task_swap_peak_bytes": 0,
+        "pss_peak_bytes": null,
+        "pss_status": "DISABLED_BY_PROFILE",
+        "identity_coverage": "complete",
+        "identity_sample_count": 29,
+        "all_process_status_readable": true,
+        "descendants_cleared": true,
+        "scope": "simultaneous process-tree peak during pre-FE worker failure; not model setup/KSP/recovery memory"
+      },
+      "model_setup_seconds": "not_run",
+      "model_ksp_seconds": "not_run",
+      "model_recovery_seconds": "not_run"
+    },
+    {
+      "stage": "postprocess supervisor attempt 1",
+      "classification": "POSTPROCESS_PARENT_FAILED",
+      "detail": "RuntimeError: watchdog must be a dedicated parent with no existing children; no worker, watchdog, checker, or comparison launched.",
+      "supervisor_result_sha256": "7fae3a2d04c8fc4b134714f1d73fef95dafe8e7d511c3f1c209df8d5283f1ca3",
+      "budget_charge_seconds": 0.4904406969435513,
+      "charge_semantics": "conservative workflow-ledger charge; no numerical worker ran"
+    }
+  ],
+  "offline_held_comparison": {
+    "status": "POSTPROCESS_HELD_BEFORE_WORKER",
+    "classification": "solver_or_recovery_gate_not_passed_comparison_held",
+    "comparison_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T074956.168518Z/postprocess_v5/preflight_held_v1/gx784_pair_comparisons.json",
+    "comparison_sha256": "2a64edae51d51a62379e4f11c978362d5654dd18d8e7ab81af4d2b377cf57006",
+    "independent_checker_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T074956.168518Z/postprocess_v5/preflight_held_v1/gx784_independent_check.json",
+    "independent_checker_sha256": "f14e52fdc3fae9d5fb955361dc1956972a9a6a0de58ff75ba518fac6ab766ca3",
+    "method": "direct preflight and record-writing helpers on existing failed run; no service entrypoint, worker, budget reserve, watchdog, or FE import",
+    "field_checked": false
+  },
+  "workflow_ledger": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
+    "sha256": "67c086c9fa975c97a3a6980bfa5ac4fa9cb60c59e2fa2f5ea60f477e86c72c8d",
+    "budget_seconds": 172800.0,
+    "active_attempt": null,
+    "unique_bug_replay_count": 1,
+    "note": "engineering startup/failure accounting, not numerical compute time; no further retry authorized",
+    "cumulative_budget_charge_seconds": 4.619253995631944,
+    "remaining_budget_seconds": 172795.38074600438,
+    "accounting_scope": "recorded engineering startup/failure charges; not a numerical solve duration"
+  },
+  "tests": [
+    {
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v5_postprocess_preflight.py src/test/test_task40_review_v5_gx784.py src/test/test_task40_review_v4_volume_runner.py src/test/test_task40extra_v5_worker_time_policy.py src/test/test_physical_schur_v14_runtime_clock.py",
+      "result": "35 passed in 0.33 s"
+    },
+    {
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task39extra_v20_y1_lifecycle.py",
+      "result": "12 passed in 13.71 s"
+    },
+    {
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py",
+      "result": "13 passed in 0.02 s"
+    },
+    {
+      "result": "qualified WSL ABI preflight, compileall, and git diff --check passed; full pytest, MPI4, Ruff, and CI not_run"
+    }
+  ],
+  "target_inventory": {
+    "records": [
+      {
+        "stage": "original AUTO inventory",
+        "source_sha": "19acb46e468eaf5d8fa56e767d391fefbfab49a4",
+        "generated_utc": "2026-10-03T07:27:20Z",
+        "target_ledger_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "target_ledger_sha256": "8dd917dbb7252bfb0abca81213f3d3cba93cd1f35010a55cbf8c27e2f32ecd4a",
+        "resource_ledger_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_resource_ledger.json",
+        "resource_ledger_sha256": "885edd2fcb42ce1b7bd06782c596d99cec120834523e2284d428fe3fd7019aa4",
+        "mode_manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d"
+      },
+      {
+        "stage": "repair AUTO inventory",
+        "source_sha": "24a56962c733b9ae5454000cdae224dae6dda8f0",
+        "generated_utc": "2026-10-03T07:49:20Z",
+        "target_ledger_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_ledger.json",
+        "target_ledger_sha256": "92c6a0f458ffa2d84911744cd8d6138f93414e8b850dfae205093e9618e45ae2",
+        "resource_ledger_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_resource_ledger.json",
+        "resource_ledger_sha256": "619fe86652d836deb6591eb1ffc59be8346d33a6287adf57178a162aac226fe2",
+        "mode_manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+        "mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d"
+      }
+    ],
+    "inventory": {
+      "mode_count": 32060,
+      "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "mode_manifest_rows": 32060,
+      "mode_manifest_bytes": 36244923,
+      "maximum_absolute_mn": [
+        142,
+        35
+      ],
+      "identity_scope": "original-size external port/mode inventory only; internal notch geometry is excluded from AUTO mode generation",
+      "historical_legacy_comparison": "count match only; old ordered-key digest absent"
+    },
+    "derived_candidate_mesh": {
+      "status": "count_and_payload_estimates_only; no FE mesh generated",
+      "axis_cells": [
+        272,
+        4,
+        14
+      ],
+      "hexahedra": 15232,
+      "p6_full_storage_dofs": 10228620,
+      "p6_periodic_independent_dofs": 9948672,
+      "p6_interior_dofs": 6854400,
+      "p6_trace_plus_actual_auto_ports": 3126332,
+      "p4_interface_plus_actual_auto_ports": 1346364
+    },
+    "derived_object_payloads_bytes": {
+      "one_AUTO_H_diagonal": 512960,
+      "one_full_dense_AUTO_H": 16445497600,
+      "both_H_Hhat_lifecycle": "unknown",
+      "local_single_instance_dimensions": {
+        "tensor": 882,
+        "interior": 450,
+        "trace": 432
+      },
+      "one_raw_local_tensor_882_squared": 12446784,
+      "one_dense_450_block_plus_in_place_LU_shape": 3240000,
+      "one_432_schur_block": 2985984,
+      "one_450_by_432_coupling": 3110400,
+      "one_450_by_432_recovery_operator": 3110400,
+      "recovery_class_count_sharing_overlap": "unknown"
+    },
+    "outer_workspace_estimates_bytes": {
+      "fgmres_restart": 32,
+      "Krylov_basis_group_count": 33,
+      "Krylov_basis_group_bytes": 1650703296,
+      "preconditioned_basis_group_count": 33,
+      "preconditioned_basis_group_bytes": 1650703296,
+      "additional_work_vector_count": 8,
+      "additional_work_vector_bytes": 400170496,
+      "total_74_outer_vectors": 3701577088,
+      "retained_full_scratch": 4428003200,
+      "scope": "source-formula payload estimates; not simultaneous RSS and lifecycle overlap is unknown"
+    },
+    "unknowns": [
+      "cold JIT and quadrature",
+      "C/D, Di/XiB, and projection matrices",
+      "both H/Hhat ownership, reuse, and simultaneous residency",
+      "unique local geometry/material/orientation class count",
+      "all-q actual sparse factor fill and backend factor workspace",
+      "all-q simultaneous factor residency",
+      "full recovery/output objects and checker/validation cost",
+      "total simultaneous memory and complete workflow time",
+      "2e12-byte zero-swap capacity qualification"
+    ],
+    "acceptance_contract": {
+      "maximum_total_physical_memory_bytes": 2000000000000,
+      "swap_bytes": 0,
+      "complete_necessary_workflow_seconds": 172800.0,
+      "status": "not qualified; actual PDE not run; unknown costs are not zero"
+    },
+    "generation_cost": {
+      "original_inventory_seconds": "unknown; no measured duration persisted",
+      "repair_inventory_seconds": "unknown; no measured duration persisted",
+      "this_closeout": "existing records reused; no AUTO regeneration performed"
+    }
+  },
+  "dot_boundary": {
+    "public_head": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+    "raw_artifacts_durable": false,
+    "storage_approval_pending": true,
+    "cloud_execution_outcome": "unknown",
+    "status": "HELD_NOT_RUN",
+    "local_dot_run": false
+  },
+  "repository_boundary": {
+    "master_modified": false,
+    "master_merged": false,
+    "formal_service_relaunched_after_fix": false
+  }
+}

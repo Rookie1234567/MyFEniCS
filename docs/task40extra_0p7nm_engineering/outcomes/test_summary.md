@@ -1,5 +1,21 @@
 # Task40extra 测试与文档检查摘要
 
+## Review V5 Gx784 安全预检与定向回归
+
+实现 source 969b4086320b844d44fb0b67092ffe5af2d760b1，qualified WSL activation：
+
+| 检查 | 结果 |
+|---|---|
+| 后处理预检、V5/V4 review fixtures、worker time policy 与 clock | 35 passed in 0.33 s；命令：source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v5_postprocess_preflight.py src/test/test_task40_review_v5_gx784.py src/test/test_task40_review_v4_volume_runner.py src/test/test_task40extra_v5_worker_time_policy.py src/test/test_physical_schur_v14_runtime_clock.py |
+| 被本次改动触及的 V20 lifecycle | 12 passed in 13.71 s；source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task39extra_v20_y1_lifecycle.py |
+| 环境 / 静态检查 | qualified ABI preflight：complex128、int32、MPI1；compileall 与 git diff --check 通过 |
+| 文档合同 | source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py：13 passed in 0.02 s |
+| 未运行 | full repository pytest、MPI4、Ruff、CI；没有 formal service、worker 或 PDE 重跑 |
+
+两个测试命令分别报告，不将不同 fixture 集合合并为一次完整测试。通过单元测试只验证代码路径，不证明 Gx784 数值通过。
+
+---
+
 ## Review V4 交叉网格收口验证
 
 | 检查 | 命令 / source | 结果 | 证据边界 |
@@ -8,7 +24,7 @@
 | Python 编译、命令入口 | 三个新增/相关模块 `py_compile`；volume/modes runner `--help` | PASS | 静态语法和入口参数检查；不代表完整仓库编译 |
 | whitespace | `git diff --check` | PASS | V4 文档及 metadata 最终版检查 |
 | Ruff | qualified environment 中 `python -m ruff` | `not_run`：环境没有安装 ruff 模块 | 未安装或临时增加依赖 |
-| 项目文档合同测试 | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py`；source `55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2` | `13 passed in 0.03 s` | registry 表格结构与 retrospective 文档约定；不涉及 PDE |
+| 项目文档合同测试 | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py`；source `55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2` | `13 passed in 0.02 s` | registry 表格结构与 retrospective 文档约定；不涉及 PDE |
 | full repository pytest / MPI4 / CI | 未运行 | `not_run` | 本轮只运行 V4 focused 与两个文档合同测试；不声称 CI 通过 |
 | V4 保存场后处理 | 4-corner directional volume worker 和 all-340-mode/power pass | 已完成，非 pytest | volume 用一个受 subreaper 监督的离线 worker，退出码 0、后代清空；mode 分析读取保存记录。无新 PDE/网格/factorization |
 

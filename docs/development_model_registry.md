@@ -1,4 +1,17 @@
-# Task40extra 当前模型登记：Review V4 四角交叉网格与方向性结论
+# Task40extra 当前模型登记：Review V5 Gx784 工程失败收口
+
+## Review V5：Gx784 当前身份与数值状态
+
+| 模型 / 事件 | source SHA | 结果 / 指标 | 资格边界 |
+|---|---|---|---|
+| Gx784 Review V5 formal attempt | 24a56962c733b9ae5454000cdae224dae6dda8f0 | WORKER_FAILED：旧 guard 仍要求 observe_only，拒绝本次合法 enforce 策略；在有限元与数值预检前退出 | engineering failure；A6 residual、saved field、R/T/A 均无证据，不能写作数值 Gate fail |
+| V5 postprocess preflight | 修复 source 969b4086320b844d44fb0b67092ffe5af2d760b1 | solver/recovery Gate 未通过；独立 checker 保留 held classification | field/mode/power comparisons HELD / NOT_RUN；没有 worker、预算预留或 FE 导入 |
+
+源码修复只把 enforce-time 授权限定到确切 Gx784 identity，并让后处理先重算已有 solver/recovery Gate；只有 Gate 通过才核对保存场路径及 SHA 并进入原监督流程。测试通过不替代正式场。详细哈希与 attempt accounting 见 [V5 response](task40extra_0p7nm_engineering/response_v5.md) 和 [V5 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v5_execution_closeout_v1.json)。Dot 仍 HELD / NOT_RUN，master 未改。
+
+---
+
+# Task40extra 历史模型登记：Review V4 四角交叉网格与方向性结论
 
 本登记追加正式 Gx/Gz solves 和四角 postprocessing。`p6` 是产生正式电磁场的高阶离散；`p4` 是更低阶、可准确装配的校正系统，迭代过程中用它近似纠正 p6 的误差。这样可以保留完整 p6 输出，同时付出 p4 全局矩阵/因子成本。x/z 交叉网格把 F3→F5 中同时改变的两个方向拆开：Gx 仅用 G1 的 x 节点，Gz 仅用 G1 的 z 节点，y、物理模型和端口不动。保存场的离线比较使用精确公共坐标切分，在相同物理点做体积范数；复模式按完整 real/imag 对照，因为功率不含相位。所有结论只针对小尺寸 0.7 nm 离散模型。
 
