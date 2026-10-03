@@ -34,7 +34,28 @@ DEPENDENCIES["v12_saved_field_attribution"] = [
     "e1_fe",
     "e3_reference",
     "v12_saved_state_freeze",
+    "v11_phase_block_metric",
 ]
+
+# Hash only the actual read whitelist; the original immutable index is retained.
+FILE_KEYS = {
+    "e1_fe": ("native", "gram"),
+    "e3_reference": ("reference",),
+    "v8_phase_checks": ("moments",),
+    "v7_p_transfer_checks": ("native",),
+    "v8_p4_reference_recovery": ("reference",),
+    "v11_phase_block_metric": ("result",),
+    "v12_saved_state_freeze": ("fields",),
+    "v12_saved_field_attribution": ("vectors", "result"),
+}
+
+
+def selected_index(stage):
+    from src.runners.feinn_workflow import load_index
+
+    return load_index(stage, file_keys=FILE_KEYS.get(stage, ("result",)))
+
+
 DEPENDENCIES["v12_saved_field_integrals"] = [
     "e1_fe",
     "e3_reference",
@@ -104,4 +125,4 @@ def dispatch(stage, design, artifact, marker, manifest, load_index):
         from src.solvers.feinn_local_reachability import run
     else:
         from src.solvers.feinn_saved_field_diagnostics import run
-    return run(stage, design, pre, artifact, marker, manifest, load_index)
+    return run(stage, design, pre, artifact, marker, manifest, selected_index)

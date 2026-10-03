@@ -84,8 +84,10 @@ def index_path(stage):
     return ARTIFACTS / ("index_" + stage.lower().replace("-", "_") + ".json")
 
 
-def load_index(stage):
+def load_index(stage, *, file_keys=None):
     item = json.loads(index_path(stage).read_text())
+    if file_keys is not None:
+        item["files"] = {key: item["files"][key] for key in file_keys}
     for key, entry in item["files"].items():
         path = Path(entry["path"]).resolve()
         if not path.is_relative_to(ARTIFACTS.resolve()) or sha(path) != entry["sha256"]:
@@ -778,15 +780,16 @@ def launch(spec):
                     load_index, supervised="fit" in stage
                 )
                 prerequisite_stages = prerequisite_stages + list(actual)
+        dependency_loader = gn_campaign.selected_index if v12 else load_index
         for dependency in prerequisite_stages:
-            item = load_index(dependency)
+            item = dependency_loader(dependency)
             dependencies[dependency] = dict(
                 index_sha256=sha(index_path(dependency)),
                 source_sha=item["source_sha"],
                 files=item["files"],
             )
         if "e1_fe" in dependencies:
-            operator = load_index("e1_fe")
+            operator = dependency_loader("e1_fe")
             identity = operator["result"]["identity"]
             state.update(
                 physical_model_sha256=operator["files"]["native"]["sha256"],
