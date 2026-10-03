@@ -22,9 +22,17 @@ class ReturnStage(DirectionStage):
 
     def guard(self,**kwargs):
         super().guard(**kwargs)
+        if getattr(self.io,'LABEL','V27')=='V31' and time.monotonic()-self.run_started>=470:
+            raise RuntimeError('V31 actor cutoff/cleanup margin')
         now=time.monotonic()
         if now-getattr(self,'last_new_storage_check',0)>5:
             roots=[self.io.ARTIFACT_ROOT,self.directory,*((self.io.ROOT/'tmp/task042').glob('v27*'))]
+            if getattr(self.io,'LABEL','V27')=='V31':
+                roots=[self.io.ARTIFACT_ROOT,self.directory,self.window.TMP]
+                size=sum(p.stat().st_size for root in roots for p in root.rglob('*') if p.is_file())
+                if size>32*2**20:raise MemoryError('V31 new outputs including TMP cap')
+                roots=[*(self.io.ROOT/'tmp/task042').glob('v2[789]*'),*(self.io.ROOT/'tmp/task042').glob('v3[01]*'),
+                    *(self.io.ROOT/'benchmarks/artifacts/task042').glob('v2[789]'),*(self.io.ROOT/'benchmarks/artifacts/task042').glob('v3[01]')]
             if getattr(self.io,'LABEL','V27')=='V28':
                 roots.extend([self.io.ROOT/'benchmarks/artifacts/task042/v27',*((self.io.ROOT/'tmp/task042').glob('v28*'))])
             size=sum(p.stat().st_size for root in roots for p in root.rglob('*') if p.is_file())
@@ -34,7 +42,10 @@ class ReturnStage(DirectionStage):
 
 def main():
     global io,window
-    if b'[task042_v28]' in Path(sys.argv[1]).read_bytes():
+    if b'[task042_v31]' in Path(sys.argv[1]).read_bytes():
+        from src.io import return_block_v31 as io
+        from src.solvers import return_block_v31_window as window
+    elif b'[task042_v28]' in Path(sys.argv[1]).read_bytes():
         from src.io import return_block_continuation as io
         from src.solvers import return_block_continuation_window as window
     window.guard_worker_parent()

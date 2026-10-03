@@ -33,15 +33,22 @@ def load_return_diagnostic(path, *, namespace=None):
             raise ValueError('fixed two cold states and return path only')
         window=io.window if hasattr(io,"window") else __import__("src.solvers.return_block_window",fromlist=["ledger"])
         require_live,ledger,auxiliary_wall=window.require_live,window.ledger,window.auxiliary_wall
-        if label=="V28":
+        if label in ("V28","V31"):
             for row in own["states"]:
                 parent=row["parent_result"]
                 if not parent["path"] or not re.fullmatch("[0-9a-f]{64}",parent["sha256"]):raise ValueError("nonempty parent_result required")
             attempt=window.TMP/"formal_admission_attempt.json"
-            if attempt.exists() and not __import__("os").environ.get("TASK042_V28_ADMITTED_WORKER"):raise ValueError("V28 formal admission already consumed")
+            if attempt.exists() and not __import__("os").environ.get("TASK042_"+label+"_ADMITTED_WORKER"):raise ValueError(label+" formal admission already consumed")
+        if label=="V31":
+            pre=window.TMP/'aux_pre/auxiliary_summary.json'
+            if not pre.exists():raise ValueError('V31 pre-test qualification missing')
+            summary=json.loads(pre.read_text())
+            if summary['classification']!='COMPLETED' or summary['leader_exit_code']!=0:
+                raise ValueError('V31 pre-test qualification failed')
         clock=require_live(margin=900);book=ledger()
         if book['closed'] or book['active'] is not None or book['runs']:raise ValueError('V27 closed/active/already consumed')
         timeout=min(600-book['actor_wall_seconds']-auxiliary_wall(),clock['heavy_remaining_seconds'])
+        if label=="V31":timeout=min(timeout,480)
         if timeout<=0:raise ValueError('V27 cumulative actor plus auxiliary exhausted')
     except (OSError,ValueError,KeyError,RuntimeError,tomllib.TOMLDecodeError) as e:raise InputError(f'Task042 V27: {e}') from e
     return RunSpecification(identity=dict(model_id='task042_'+label.lower()+'_fixed_return_diagnostic',run_id=item['run_id'],batch=label+'_'+FAMILY),

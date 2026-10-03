@@ -5,6 +5,7 @@ import numpy as np
 from src.io import return_block_diagnostic as io
 from src.solvers.return_block_direction import (SelectedBundle,OUTER_BLOCKS,NAMES,
     return_direction,extend_nine,decision)
+from src.solvers.block_residual_direction import relative
 from src.solvers.joint_block_direction import selected_rows,pair
 from src.solvers.joint_block_study import cached_directions
 from src.solvers.local_block_study import mapping

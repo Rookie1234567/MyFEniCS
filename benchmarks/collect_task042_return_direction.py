@@ -128,20 +128,24 @@ def compact_inputs(plan):
     return [dict(name=x['name'],parent_result=x['parent_result'],state=x['state'],v25_arrays=x['v25_arrays'],v26_arrays=x['v26_arrays']) for x in plan['states']]
 
 
-def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_path=None,nt=18144,old_plan=None):
+def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_path=None,nt=18144,old_plan=None,batch='v28'):
     """Paths/dimensions are explicit for isolated fixtures; defaults stay V28.
 
     Every complete result must bind independent durable files, not embedded labels.
     Neither this function nor its fixtures admit or reopen a numerical window.
     """
-    from src.io import return_block_continuation as io
+    if batch not in ('v28','v31'):raise ValueError('unapproved return checker namespace')
+    if batch=='v31':
+        from src.io import return_block_v31 as io
+    else:
+        from src.io import return_block_continuation as io
     root=Path(root).resolve();plan_path=Path(plan_path or io.PLAN_PATH).resolve()
     artifact_root=Path(artifact_root or io.ARTIFACT_ROOT).resolve();records=Path(records or RECORDS).resolve()
     plan=json.loads(plan_path.read_text());inputs=compact_inputs(plan)
     # The collector owns the destination. The fixture deliberately supplies a
     # fresh directory; the shared atomic writer retains its existing contract.
     records.mkdir(parents=True,exist_ok=True)
-    write_json(records/'input_inventory_v28.json',dict(pre_registration=dict(path=str(plan_path),sha256=file_hash(plan_path)),states=inputs,
+    write_json(records/('input_inventory_'+batch+'.json'),dict(pre_registration=dict(path=str(plan_path),sha256=file_hash(plan_path)),states=inputs,
         prior_V27_null_corrections=[dict(name=x['name'],old_parent=None,correct_parent_result=x['parent_result'],old_files=['input_inventory_v27.json','return_direction_results_v27.json']) for x in inputs]))
     pointer=artifact_root/'DIAGNOSTIC.json'
     if not pointer.exists():
@@ -153,8 +157,8 @@ def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_pa
             out=dict(status='PARTIAL_UNRESOLVED',raw=idx,actual_numeric_source=result.get('source_sha'),
                 rows=[dict(name=x['name'],eta10=None,g10=None,status='NOT_QUALIFIED') for x in inputs],
                 reason='actor not complete; no numerical CHECKED classification')
-            write_json(records/'return_direction_checker_v28.json',out)
-            write_json(records/'return_direction_results_v28.json',out)
+            write_json(records/('return_direction_checker_'+batch+'.json'),out)
+            write_json(records/('return_direction_results_'+batch+'.json'),out)
             return out
         require(result['plan_sha256']==file_hash(plan_path),'actual pre-registration')
         prior=io.checked_json(plan['v26_result'],root/'benchmarks/artifacts/task042/v26')
@@ -197,9 +201,12 @@ def collect(*,root=ROOT,plan_path=None,artifact_root=None,records=None,ledger_pa
         out=dict(status='CHECKED',decision=classify(checked),rows=checked,actual_numeric_source=result['source_sha'],raw=idx,
             no_new_actions=True,no_factor_reads=True,no_QR_SVD=True,checker_source_sha256=file_hash(Path(__file__)))
         require(out['decision']==result['decision'],'independent decision differs')
-    write_json(records/'return_direction_checker_v28.json',out)
-    write_json(records/'return_direction_results_v28.json',out)
+    write_json(records/('return_direction_checker_'+batch+'.json'),out)
+    write_json(records/('return_direction_results_'+batch+'.json'),out)
     return out
 
 
-if __name__=='__main__':print(json.dumps(collect(),ensure_ascii=False))
+if __name__=='__main__':
+    import argparse
+    parser=argparse.ArgumentParser();parser.add_argument('--batch',choices=('v28','v31'),default='v28')
+    print(json.dumps(collect(batch=parser.parse_args().batch),ensure_ascii=False))
