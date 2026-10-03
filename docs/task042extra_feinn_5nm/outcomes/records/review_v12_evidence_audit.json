@@ -1,0 +1,308 @@
+{
+  "reviewed_head": "e47ac3eccbbed41002e6e479ef3f513d04041820",
+  "role": "REVIEW_SAVED_ARRAY_ARITHMETIC_ONLY",
+  "source_files": {
+    "v12_saved_field_attribution": {
+      "source_sha": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+      "files": {
+        "vectors": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/attribution_vectors.npz",
+          "sha256": "9ccb19ff160cdb4731b3492f5a22e9d31b44d2d65c585659c48eac7367f7db88"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json",
+          "sha256": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a"
+        }
+      },
+      "index_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_saved_field_attribution.json",
+      "index_sha256": "2636a9409bd5b220bcb5c1c162a5232a0b20337854da42d8f64bfb1be12c8076"
+    },
+    "v12_local_parameter_diagnostic": {
+      "source_sha": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+      "files": {
+        "vectors": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz",
+          "sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json",
+          "sha256": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84"
+        }
+      },
+      "index_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_local_parameter_diagnostic.json",
+      "index_sha256": "816a25856e9295a4866d28e193c464ae0087867a7e2645873a284f14a8433969"
+    },
+    "v12_test_space_witness": {
+      "source_sha": "6c8440e991ba1a960f0c0556319f3cc60148d0e1",
+      "files": {
+        "vectors": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_test_space_witness_20261003T002021620377Z/field_diagnostic_arrays.npz",
+          "sha256": "71701ffb090b4456d781db10d3a0c7450bf9c51989ce761101dd59922cc58808"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_test_space_witness_20261003T002021620377Z/result.json",
+          "sha256": "ac025f5e048a0fff2b38d593bea982b5bf50cb00f13f06b118fde696a6e5d65d"
+        }
+      },
+      "index_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_test_space_witness.json",
+      "index_sha256": "47d0e14f54ea89e248f0c79074eea1577eebbbb1c401bbbdf9adfa13018dd104"
+    }
+  },
+  "new_A_actions": 0,
+  "new_G_actions": 0,
+  "new_G_solves": 0,
+  "new_FE_or_network_forwards": 0,
+  "training_steps": 0,
+  "B_existing_checker": {
+    "identity_worst": 3.832790215082368e-13,
+    "steps": [
+      {
+        "start": "M3600",
+        "end": "M90",
+        "field_change": 2.0775803383689357,
+        "loss_change": -0.002793018869722406,
+        "eta": 0.9755705432065359
+      },
+      {
+        "start": "M90",
+        "end": "M91",
+        "field_change": 0.0017547208857902064,
+        "loss_change": -8.208606794199942e-05,
+        "eta": 0.9999998920261552
+      },
+      {
+        "start": "M91",
+        "end": "M92",
+        "field_change": 2.1479895911583995,
+        "loss_change": -0.002277090365415745,
+        "eta": 0.9839286572886572
+      },
+      {
+        "start": "M92",
+        "end": "M93",
+        "field_change": 0.0015522685519666624,
+        "loss_change": -4.60122330848993e-05,
+        "eta": 0.9999998946965004
+      },
+      {
+        "start": "M93",
+        "end": "M94",
+        "field_change": 2.060560768069246,
+        "loss_change": -0.001886565098138576,
+        "eta": 0.9907628541522
+      },
+      {
+        "start": "M94",
+        "end": "M95",
+        "field_change": 0.0013821435932488413,
+        "loss_change": -2.3820532259157815e-05,
+        "eta": 0.9999998757826574
+      }
+    ],
+    "effective_rank": 5,
+    "no_global_condition_claim": true
+  },
+  "C1_existing_checker": {
+    "M3600": {
+      "field_energy_removed": 0.974072726506221,
+      "residual_projection_field_energy_removed": -0.1945511589317035,
+      "residual_energy_removed": 0.0016111430468324062,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH"
+    },
+    "Mfinal": {
+      "field_energy_removed": 0.9874183663877463,
+      "residual_projection_field_energy_removed": -0.11552596424950168,
+      "residual_energy_removed": 0.00575734462851398,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH"
+    }
+  },
+  "C1_additional_raw_arithmetic": {
+    "M3600": {
+      "projections": {
+        "field": {
+          "field_energy_removed": 0.974072726506221,
+          "residual_energy_removed": -5115.953591595407
+        },
+        "residual": {
+          "field_energy_removed": -0.1945511589317035,
+          "residual_energy_removed": 0.0016111430468324084
+        }
+      },
+      "witnesses": [
+        {
+          "projection": "field",
+          "cap": 0.001,
+          "scale": 0.030070951084463532,
+          "coefficient_nonlinearity": 0.001031938234666728,
+          "G_nonlinearity": 0.0010463134532563297,
+          "dual_nonlinearity": 0.0007461297345409487,
+          "native_nonlinearity": 0.0007584620773945619,
+          "predicted_EG": 0.09079690205514654,
+          "actual_EG": 0.09079411027726189,
+          "predicted_loss": 0.530611938933916,
+          "actual_loss": 0.5312567084336098
+        },
+        {
+          "projection": "field",
+          "cap": 0.01,
+          "scale": 0.30070951084463526,
+          "coefficient_nonlinearity": 0.010209696794411003,
+          "G_nonlinearity": 0.010353112406902175,
+          "dual_nonlinearity": 0.007340077360207986,
+          "native_nonlinearity": 0.00746396050948617,
+          "predicted_EG": 0.06628867527797326,
+          "actual_EG": 0.0660158703388416,
+          "predicted_loss": 43.72569032766266,
+          "actual_loss": 44.362265826363135
+        },
+        {
+          "projection": "residual",
+          "cap": 0.001,
+          "scale": 0.3716837054976774,
+          "coefficient_nonlinearity": 0.00058657993701624,
+          "G_nonlinearity": 0.0005913635129990336,
+          "dual_nonlinearity": 0.018581846050349207,
+          "native_nonlinearity": 0.003281576194896366,
+          "predicted_EG": 0.09675102829370326,
+          "actual_EG": 0.09674901902462155,
+          "predicted_loss": 0.09422270592506755,
+          "actual_loss": 0.09422276567473038
+        },
+        {
+          "projection": "residual",
+          "cap": 0.01,
+          "scale": 1.0,
+          "coefficient_nonlinearity": 0.001578487060176058,
+          "G_nonlinearity": 0.001591352894797378,
+          "dual_nonlinearity": 0.05002595665362034,
+          "native_nonlinearity": 0.008831360514701861,
+          "predicted_EG": 0.10223020227003872,
+          "actual_EG": 0.10221562014072133,
+          "predicted_loss": 0.09416271714868842,
+          "actual_loss": 0.09416341356296282
+        }
+      ]
+    },
+    "Mfinal": {
+      "projections": {
+        "field": {
+          "field_energy_removed": 0.9874183663877463,
+          "residual_energy_removed": -327.85353101518353
+        },
+        "residual": {
+          "field_energy_removed": -0.11552596424950168,
+          "residual_energy_removed": 0.005757344628513961
+        }
+      },
+      "witnesses": [
+        {
+          "projection": "field",
+          "cap": 0.001,
+          "scale": 0.028873420512944583,
+          "coefficient_nonlinearity": 0.0005297579506707099,
+          "G_nonlinearity": 0.0005893086022386394,
+          "dual_nonlinearity": 0.0025066726448782707,
+          "native_nonlinearity": 0.005267104950270601,
+          "predicted_EG": 0.11952963606543099,
+          "actual_EG": 0.11952966996733261,
+          "predicted_loss": 0.1111542797643409,
+          "actual_loss": 0.11105444829691179
+        },
+        {
+          "projection": "field",
+          "cap": 0.01,
+          "scale": 0.2887342051294458,
+          "coefficient_nonlinearity": 0.005278409388302444,
+          "G_nonlinearity": 0.005863581825087123,
+          "dual_nonlinearity": 0.025101132414549948,
+          "native_nonlinearity": 0.05221727508930383,
+          "predicted_EG": 0.0880478913571494,
+          "actual_EG": 0.08805082857662244,
+          "predicted_loss": 2.471575555661223,
+          "actual_loss": 2.3727071375986304
+        },
+        {
+          "projection": "residual",
+          "cap": 0.001,
+          "scale": 0.38145024258930854,
+          "coefficient_nonlinearity": 0.0034662068860937217,
+          "G_nonlinearity": 0.0035581135348084006,
+          "dual_nonlinearity": 0.017993088616879382,
+          "native_nonlinearity": 0.024256261028183967,
+          "predicted_EG": 0.1256530634394727,
+          "actual_EG": 0.12564232877315204,
+          "predicted_loss": 0.08689609893750674,
+          "actual_loss": 0.08689599494186213
+        },
+        {
+          "projection": "residual",
+          "cap": 0.01,
+          "scale": 1.0,
+          "coefficient_nonlinearity": 0.009081026791025446,
+          "G_nonlinearity": 0.009322187948908609,
+          "dual_nonlinearity": 0.047213319740841135,
+          "native_nonlinearity": 0.06356769767704673,
+          "predicted_EG": 0.12994955193605537,
+          "actual_EG": 0.1298758379829493,
+          "predicted_loss": 0.08670400296235642,
+          "actual_loss": 0.08670410238465122
+        }
+      ]
+    }
+  },
+  "C2_native_scalar_recomputation": {
+    "p3reference": 3.5523634955588412,
+    "M3600": 3.9163921667644845,
+    "Mfinal": 4.040108001063766
+  },
+  "new_elapsed_seconds": 1.2642081590602174,
+  "audit_script_sha256": "f4a82fcd4298023619e013aaa657d49b06a3d0b9051fd24787ce0308e31c4693",
+  "schema": "task42extra.review-v12.saved-evidence-audit.v1",
+  "executed_script": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v12_saved_audit.py",
+    "sha256": "f4a82fcd4298023619e013aaa657d49b06a3d0b9051fd24787ce0308e31c4693"
+  },
+  "supervision": {
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "elapsed_seconds": 2.5664179689483717,
+    "sampled_process_tree_rss_peak_bytes": 169213952,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v12_saved_audit_20261003T015353460988Z/summary.json",
+    "summary_sha256": "e960f1c61a7e5d3a6cbfa566f225df8cc88777b4479741caabb796f125e8feee"
+  },
+  "scope_limits": [
+    "No new PDE, FE interpolation, network forward, A/G action, factor, or training.",
+    "Existing checker B/C1 rerun plus additional raw weighted-vector arithmetic; not a new independent operator implementation.",
+    "C2 absolute/relative scalar recomputation only; affine background transfer remains unmeasured.",
+    "C1 directions are label-exposed diagnostics and do not qualify any PDE-only candidate."
+  ],
+  "review_environment": {
+    "executable": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "activation": "1",
+    "mode": "pure",
+    "numpy_version": "1.26.4",
+    "blas_threads": "1",
+    "FE_ABI_used": false
+  },
+  "initial_local_markdown": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v12.md",
+    "sha256": "fee8626cf0548653789b9657a441b0c3ff01a7b2417f6ea351ce776e61aa8f40",
+    "checked_scope": "entire page",
+    "markdown_tables": 11,
+    "parsed_tables": 11,
+    "math_fences": 1,
+    "links": 24,
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.5593393329763785,
+      "sampled_process_tree_rss_peak_bytes": 38596608,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v12_markdown_20261003T020625623943Z/summary.json",
+    "summary_sha256": "f9eb2bfb999869442682c7cf58b27e9649b02dbb0f8874fd4b8078323838aa4c"
+  }
+}
