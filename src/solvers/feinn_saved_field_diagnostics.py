@@ -106,6 +106,17 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
     from dolfinx import fem
     from src.solvers.feinn_bounded_field_integrals import BoundedFieldIntegrals
 
+    if stage == "v18_saved_field_integrals":
+        from petsc4py import PETSc
+        from mpi4py import MPI
+
+        if (
+            PETSc.ScalarType != np.complex128
+            or PETSc.IntType != np.int64
+            or MPI.COMM_WORLD.size != 1
+        ):
+            raise RuntimeError("V18_FE_COMPLEX128_INT64_MPI1_REQUIRED")
+
     cutoff = (
         manifest["supervision_budget_origin_monotonic"]
         + manifest["supervised_limit_seconds"]

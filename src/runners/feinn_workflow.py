@@ -406,6 +406,12 @@ def launch(spec):
                 no_training=True,
                 optimizer_steps=0,
             )
+            if v18 and stage != "v18_saved_field_integrals":
+                from src.solvers.feinn_native_network_witness import witness_gate
+
+                witness, _ = witness_gate()
+                state["v18_witness_design_sha256"] = sha(gn_campaign.V18_WITNESS_RECORD)
+                state["v18_frozen_linear_admission"] = witness["A_checker"]
         if stage in GN_AUTHORITY:
             state.update(**POLICY)
         elif not (v12 or v13 or v18):
