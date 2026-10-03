@@ -85,11 +85,82 @@ def _raw_factor_inventory(report, directory, ny):
     return finite
 
 
+
+def _fresh_p6_check(directory,report,provenance,summary,checker_source,checker_environment):
+    from benchmarks.check_fresh_c1_p6_component import check_component
+    from src.solvers.fresh_c1_contract import (P6_WORKER_STATUS,P6_CHECKER_STATUS,
+        digest_json,TREE_CAP_BYTES,WALL_SECONDS,validate_resource_receipt)
+    from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
+    from src.solvers.real_p4_probe import file_sha256
+    if (report.get("status")!=P6_WORKER_STATUS or report.get("fresh_fixture_c1")!="p6-component"
+            or report.get("source_clean_unchanged") is not True
+            or report.get("source")!=provenance.get("source")
+            or report.get("environment")!=checker_environment
+            or provenance.get("environment")!=checker_environment
+            or summary.get("classification")!="COMPLETED"):
+        raise ValueError("fresh p6 source/run/ABI authority is incomplete")
+    binding=_bind_worker_dependencies(report["source"],checker_source)
+    resource=provenance["resource_contract"]
+    if resource["tree_cap_bytes"]!=TREE_CAP_BYTES or resource["wall_seconds"]!=WALL_SECONDS:
+        raise ValueError("fresh p6 whole-tree resource contract differs")
+    validate_resource_receipt(summary,resource,report["source"])
+    load_bound_live_receipt(directory,report["centered_identity"],
+        worker_source=report["source"],expected_degree=6,fresh_fixture_c1=True)
+    descriptors=report["artifacts"]
+    def load(reference):
+        name=reference["name"];descriptor=descriptors[name]
+        if reference.get("callback_reference")!=descriptor:
+            raise ValueError("fresh member reference detached from writer descriptor")
+        path=(directory/descriptor["path"]).resolve()
+        if not path.is_relative_to(directory) or file_sha256(path)!=descriptor["file_sha256"]:
+            raise ValueError("fresh component artifact path/hash differs")
+        value=np.load(path,allow_pickle=False,mmap_mode="r")
+        if list(value.shape)!=descriptor["shape"] or str(value.dtype)!=descriptor["dtype"]:
+            raise ValueError("fresh component saved shape/dtype differs")
+        return value
+    from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
+    parent=int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID","0"))
+    reserve=128*1024**2
+    def allocation_gate(name,facts):
+        sample=process_tree_snapshot(parent,name,None,pss_sampling_policy="disabled_by_profile")
+        payload=int(facts.get("matrix_payload_bytes",0));workspace=int(facts.get("workspace_bytes",0))
+        if (sample.get("all_status_readable") is not True or sample.get("identity_complete") is not True
+                or sample.get("swap_bytes")!=0 or min(payload,workspace)<0
+                or int(sample["rss_bytes"])+payload+workspace+reserve>=TREE_CAP_BYTES):
+            raise MemoryError("fresh p6 checker additional workspace is not admitted")
+    def checkpoint(name,facts):
+        from src.solvers.fullspace_dtn_action import _jsonable
+        with (directory/"component_checker_events.jsonl").open("a") as stream:
+            stream.write(json.dumps({"event":name,"facts":_jsonable(facts)},allow_nan=False)+"\n")
+    result=check_component(report["component"],load,allocation_gate=allocation_gate,checkpoint=checkpoint)
+    result["component_checker_status"]=result["status"]
+    result["checks"]=[{"name":name,**facts} for name,facts in result["metrics"].items()]
+    result["gate_pass"]=(result.get("independent_component_pass") is True
+        and result.get("all_saved_members_hash_checked") is True
+        and result.get("cells_checked")==list(range(80))
+        and result.get("q_alias_counts_recomputed")==[76,152,152,152]
+        and bool(result["checks"]) and all(x.get("passed") is True for x in result["checks"])
+        and set(result["negative_controls"])=={"omitted_correction","wrong_sign","wrong_conjugation",
+                                                "Hhat_substituted_for_original_H"}
+        and all(x.get("separated") is True for x in result["negative_controls"].values()))
+    result.update(status=P6_CHECKER_STATUS if result.get("gate_pass") is True else "FAILED",
+        evidence_valid=True,source=report["source"],checker_source=checker_source,
+        environment=checker_environment,worker_dependency_binding=binding,
+        fresh_fixture_c1="p6-component",degree=6,
+        report_sha256=file_sha256(directory/"probe_report.json"),
+        provenance_sha256=file_sha256(directory/"provenance.json"),
+        artifact_manifest_sha256=digest_json(descriptors),
+        mathematical_component_only=True,durable_archive_verified=False,
+        durability_required_before_qualification_claim=True)
+    return result
+
 def check(directory, *, checker_source, checker_environment):
     directory = Path(directory).resolve()
     report = json.loads((directory / "probe_report.json").read_text())
     provenance = json.loads((directory / "provenance.json").read_text())
     summary = json.loads((directory / "summary.json").read_text())
+    if report.get("fresh_fixture_c1")=="p6-component":
+        return _fresh_p6_check(directory,report,provenance,summary,checker_source,checker_environment)
     if (report.get("status") != "SPARSE_CONDENSED_FULL3D_PROBE_PASS"
             or report.get("source_clean_unchanged") is not True
             or report["source"] != provenance["source"]
@@ -111,12 +182,21 @@ def check(directory, *, checker_source, checker_environment):
                   live_component_oracle=report.get("live_component_oracle",False),
                   cross_head_authority=report.get("cross_head_centered_authority",False))
         elif report["degree"] == 4:
-            from benchmarks.run_y_orbit_sparse_probe import _validate_bridge
-            receipt = provenance["sparse_p2_bridge_receipt"]
-            actual = _validate_bridge(ROOT/receipt["report_path"],receipt["report_sha256"],
-                    report["source"]["head"],report["source"],centered_extension=True,environment=report["environment"])
+            if report.get("fresh_fixture_c1")=="p4-chain":
+                from benchmarks.run_y_orbit_sparse_probe import _validate_fresh_component
+                receipt=provenance["fresh_p6_component_receipt"]
+                actual=_validate_fresh_component(ROOT/receipt["report_path"],receipt["report_sha256"],
+                                                report["source"],report["environment"])
+            else:
+                from benchmarks.run_y_orbit_sparse_probe import _validate_bridge
+                receipt = provenance["sparse_p2_bridge_receipt"]
+                actual = _validate_bridge(ROOT/receipt["report_path"],receipt["report_sha256"],
+                        report["source"]["head"],report["source"],centered_extension=True,environment=report["environment"])
             if actual != receipt or report.get("live_component_oracle") is not True:
-                raise ValueError("p4 degree profile requires its exact checked sparse-p2 bridge and own live oracle")
+                raise ValueError("p4 degree profile requires its exact current qualification and own live oracle")
+            if report.get("fresh_fixture_c1")=="p4-chain":
+                from src.solvers.fresh_c1_contract import validate_shared_fixture
+                validate_shared_fixture(report,actual)
         if (report["degree"] not in (2,4) or report["auxiliary_gauge"] != "positive-h"
                 or set(report["regular_sources"]) != set(SOURCES) or set(report["notched_sources"]) != set(SOURCES)
                 or (not report.get("live_component_oracle",False) and (report["centered_identity"] != centered_authority.report["identity"]
@@ -124,7 +204,8 @@ def check(directory, *, checker_source, checker_environment):
             raise ValueError("centered sparse/authority/source/load representation identity differs")
         if report.get("live_component_oracle",False):
             from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
-            load_bound_live_receipt(directory,report["centered_identity"],worker_source=report["source"],expected_degree=report["degree"])
+            load_bound_live_receipt(directory,report["centered_identity"],worker_source=report["source"],expected_degree=report["degree"],
+                                    fresh_fixture_c1=report.get("fresh_fixture_c1") is not None)
             if centered_authority is not None:
                 if report.get("cross_head_centered_authority",False):
                     from src.solvers.y_orbit_centered_bridge import compare_bridge_discrete_contract
@@ -332,6 +413,16 @@ def check(directory, *, checker_source, checker_environment):
                         _require_operation_scale_binding(load(label+"_"+scale_name),
                                                          expected[label+"_"+scale_name],scale_name)
                     centered_mode_checks[label] = compare_mode_evidence(load,expected.__getitem__,label)
+                    if report.get("fresh_fixture_c1")=="p4-chain":
+                        from src.solvers.fresh_c1_contract import near_zero_output_check
+                        norm=float(abs(cfg.incident_amplitude))
+                        for output_name in ("plane_total_auxiliary","plane_outgoing_auxiliary",
+                                            "plane_electric","plane_magnetic",
+                                            "direct_plane_outgoing_power_diagnostic"):
+                            normalizer=norm*norm*float(area) if "power" in output_name else norm
+                            item=near_zero_output_check(load(label+"_"+output_name),
+                                  expected[label+"_"+output_name],normalization=normalizer,name=output_name)
+                            centered_mode_checks[label]["fresh_nearzero_"+output_name]=item
                 coefficients, offsets = load("full_mpc_coefficients"),load("full_mpc_offsets")
                 masters, saved_slaves = load("full_mpc_masters"),load("full_mpc_slaves")
                 if (offsets.shape != (len(field)+1,) or int(offsets[-1]) != len(coefficients)
@@ -432,7 +523,11 @@ def check(directory, *, checker_source, checker_environment):
                 and summary.get("process_tree_all_identity_complete") is True
                 and summary.get("descendants_cleared") is True
                 and 0 < summary["sampled_process_tree_rss_peak_bytes"] < provenance["resource_contract"]["tree_cap_bytes"]
-                and provenance["resource_contract"]["tree_cap_bytes"] <= 3 * 1024**3 // 2)
+                and provenance["resource_contract"]["tree_cap_bytes"] <= (3*1024**3
+                    if report.get("fresh_fixture_c1")=="p4-chain" else 3*1024**3//2))
+    if report.get("fresh_fixture_c1")=="p4-chain":
+        from src.solvers.fresh_c1_contract import validate_resource_receipt
+        validate_resource_receipt(summary,provenance["resource_contract"],report["source"])
     live_symmetry = max(report["full_form_covariance"]["full_original_covariance_action_relative_max"],
                         report["complete_RHS_covariance"]["complete_RHS_reduction_covariance_relative_max"]) <= 1e-11
     notch_coupling = report["sampled_notch_off_q_delta_relative"] >= 1e-8
@@ -472,6 +567,10 @@ def check(directory, *, checker_source, checker_environment):
             "original_FFCx_action_is_saved_live_authority": True,
             "full_p4_direct_control": "not_run_not_admitted" if report["degree"] == 4 else "saved_p2",
             "resource_requires_separate_whole_tree_review": True,
+            "fresh_fixture_c1":report.get("fresh_fixture_c1"),
+            "environment":report["environment"],
+            "durability_required_before_qualification_claim":report.get("fresh_fixture_c1") is not None,
+            "compact_p4_quotient_qualified":False,
             "qualification": "bounded full3D architecture/degree probe only"}
 
 
@@ -494,6 +593,11 @@ def main():
         from src.solvers.real_p4_probe import file_sha256
         report = json.loads((args.run_directory / "probe_report.json").read_text())
         source = source_facts(args.expected_checker_head)
+        fresh=report.get("fresh_fixture_c1") in ("p6-component","p4-chain")
+        cap=3*1024**3 if fresh else 3*1024**3//2
+        wall=4500 if fresh else 600
+        if fresh and (report["environment"]!=environment_facts()):
+            raise ValueError("fresh checker environment differs")
         _bind_worker_dependencies(report["source"], source)
         if environment_facts() != report["environment"]:
             raise RuntimeError("checker environment must match worker ABI exactly")
@@ -501,9 +605,9 @@ def main():
         checker_directory = args.run_directory / dirname
         command = [sys.executable, "-m", "benchmarks.check_y_orbit_sparse_probe", str(args.run_directory), "--worker",
                    "--expected-checker-head", args.expected_checker_head, "--checker-attempt", str(args.checker_attempt)]
-        summary = supervise(command, checker_directory, wall_seconds=600, interval=.25, grace_seconds=2,
+        summary = supervise(command, checker_directory, wall_seconds=wall, interval=.25, grace_seconds=2,
                             source_state=source, phase_path=checker_directory / "phase.json",
-                            tree_cap_bytes=3 * 1024**3 // 2, hard_stop_immediate=True,
+                            tree_cap_bytes=cap, hard_stop_immediate=True,
                             timebase_guard=True, stop_on_global_swap=True,
                             pss_sampling_policy="disabled_by_profile")
         path = args.run_directory / "independent_checker.json"
@@ -523,7 +627,9 @@ def main():
         return 0 if result["gate_pass"] else 2
     parent = int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID", "0"))
     cap = int(os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES", "0"))
-    if parent <= 0 or parent != os.getppid() or not 0 < cap <= 3 * 1024**3 // 2:
+    worker_report=json.loads((args.run_directory/"probe_report.json").read_text())
+    allowed_cap=3*1024**3 if worker_report.get("fresh_fixture_c1") in ("p6-component","p4-chain") else 3*1024**3//2
+    if parent <= 0 or parent != os.getppid() or not 0 < cap <= allowed_cap:
         raise RuntimeError("checker worker needs its separately admitted watchdog")
     try:
         from benchmarks.run_real_p4_probe import source_facts, environment_facts

@@ -30,16 +30,72 @@ def file_sha(path):
     return digest.hexdigest()
 
 
-def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=None, expected_degree=2):
+def validate_fresh_c1_receipt_profile(receipt, *, expected_degree):
+    """Verify explicit fresh profile/actual native inventories in a saved proof."""
+    from .dtn_boundary_plane_qualification import fresh_c1_degree_profile
+    expected = fresh_c1_degree_profile(expected_degree)
+    actual = receipt.get('fresh_c1_actual_inventory', {})
+    counts = ('cell_count','local_space_dimension','local_interior_rows','local_trace_rows',
+              'storage_rows','independent_rows','interior_rows','independent_trace_rows','native_slave_rows')
+    context = receipt['raw_discrete_context']
+    if (receipt.get('fresh_fixture_c1') is not True or receipt.get('fresh_c1_profile') != expected
+            or actual.get('classification') != 'actual_runtime_gated'
+            or any(actual.get(name) != expected[name] for name in counts)
+            or actual.get('actual_primary_compiled_gauss_verified') is not True
+            or actual.get('native_MPC') != context['MPC']
+            or receipt.get('element_degree') != expected_degree
+            or receipt.get('local_space_dimension') != expected['local_space_dimension']
+            or receipt.get('primary_facet_points') != expected['primary_facet_points']
+            or receipt.get('quadrature_degree') != expected['quadrature_degree']
+            or receipt.get('physical_generator_manifest_sha256') != expected['physical_generator_manifest_sha256']):
+        raise ValueError('fresh C1 saved actual FE/native MPC/physical profile is incomplete or detached')
+    native = context['MPC']
+    if (set(native) != {'slaves','masters','coefficients','offsets'}
+            or native['slaves']['shape'] != [expected['native_slave_rows']]
+            or native['slaves']['dtype'] != 'int32' or native['masters']['dtype'] != 'int32'
+            or native['offsets']['dtype'] != 'int32' or native['coefficients']['dtype'] != 'complex128'
+            or len(native['masters']['shape']) != 1 or native['masters']['shape'][0] <= 0
+            or native['masters']['shape'] != native['coefficients']['shape']
+            or len(native['offsets']['shape']) != 1
+            or native['offsets']['shape'][0] < expected['storage_rows']+1
+            or any(len(value.get('sha256','')) != 64 for value in native.values())):
+        raise ValueError('fresh C1 exact native MPC signature inventory differs')
+    abi = context['ABI']
+    if (not str(abi['dolfinx']).startswith('0.10.') or abi['dolfinx_mpc'] != '0.10.5'
+            or tuple(abi['PETSc']) != (3,25,6) or abi['scalar'] != 'complex128' or abi['integer'] != 'int32'):
+        raise ValueError('fresh C1 saved actual ABI differs from the admitted recovered runtime')
+    primary = receipt['primary_compiled_gauss']
+    if set(primary) != {'top/0','top/1','bottom/0','bottom/1'}:
+        raise ValueError('fresh C1 requires all four actual primary compiled Gauss records')
+    for record in primary.values():
+        if len(record['rules']) != 1:
+            raise ValueError('fresh C1 requires one actual compiled Gauss rule per component')
+        rule = record['rules'][0]
+        points = expected['primary_facet_points']
+        if (rule['degree'] != expected['quadrature_degree']
+                or rule['facet_cell'] != 'quadrilateral' or rule['integral_type'] != 'exterior_facet'
+                or rule['points']['shape'] != [points,2] or rule['weights']['shape'] != [points]
+                or rule['points']['dtype'] != 'float64' or rule['weights']['dtype'] != 'float64'):
+            raise ValueError('fresh C1 saved actual compiled Gauss nodes/weights differ from its degree profile')
+    return True
+
+
+def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=None, expected_degree=2,
+                          fresh_fixture_c1=False):
     from .fullspace_dtn_action import _jsonable, _canonical_json_bytes
     receipt=_jsonable(receipt)
     identity=_jsonable(identity) if identity is not None else None
+    if type(fresh_fixture_c1) is not bool:
+        raise TypeError('fresh C1 opt-in must be an explicit bool')
+    if fresh_fixture_c1:
+        validate_fresh_c1_receipt_profile(receipt,expected_degree=expected_degree)
     keys=[list(key) for key in ordered_keys]
     i=receipt['identity']
     if (receipt.get('status')!='PASS_COMPONENT_ONLY' or receipt.get('full_case_pass') is not True
         or receipt.get('PDE_solved') is not False or receipt.get('official_results') is not False
         or receipt.get('completed_gates')!=list(EXPECTED_GATES) or receipt.get('mode_count')!=532
-        or expected_degree not in (2,4) or receipt.get('degree')!=expected_degree or receipt.get('azimuth_deg')!=5.0
+        or (expected_degree not in (2,4) and not (fresh_fixture_c1 and expected_degree==6))
+        or receipt.get('degree')!=expected_degree or receipt.get('azimuth_deg')!=5.0
         or receipt.get('seed')!=4053202 or receipt.get('tolerance')!=1e-10
         or i['physical_generator_manifest_sha256']!=physical_manifest
         or i['mode_count']!=532 or [list(k) for k in i['ordered_mode_keys']]!=keys
@@ -53,8 +109,9 @@ def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=
     for field in ('physical_generator_manifest_sha256','assembly_mode_manifest_sha256','assembly_context_sha256'):
         if receipt.get(field)!=i[field]:raise ValueError('live receipt top-level raw identity detached')
     context=receipt['raw_discrete_context']
+    qdegree=27 if fresh_fixture_c1 and expected_degree==6 else {2:19,4:23}[expected_degree]
     if (context['element_degree']!=expected_degree
-            or context['gauss']['degree']!={2:19,4:23}[expected_degree]):
+            or context['gauss']['degree']!=qdegree):
         raise ValueError('live receipt actual degree/Gauss profile differs')
     context_sha=hashlib.sha256(_canonical_json_bytes(context)).hexdigest()
     if context_sha!=i['assembly_context_sha256']:
@@ -104,8 +161,8 @@ def validate_live_receipt(receipt, *, physical_manifest, ordered_keys, identity=
         if len(record['rules'])!=1:
             raise ValueError('one actual quadrilateral Gauss rule per component required')
         rule=record['rules'][0]
-        points={2:100,4:144}[expected_degree]
-        if (rule['degree']!={2:19,4:23}[expected_degree]
+        points=196 if fresh_fixture_c1 and expected_degree==6 else {2:100,4:144}[expected_degree]
+        if (rule['degree']!=qdegree
                 or rule['points']['shape']!=[points,2] or rule['weights']['shape']!=[points]):
             raise ValueError('actual compiled Gauss point/weight inventory differs from degree profile')
         kernel=record['loaded_kernel']
@@ -133,7 +190,7 @@ def shared_discrete_contract(raw_context):
     return result
 
 
-def qualify_live_identity(bundle, *, record_path, allocation_gate, event):
+def qualify_live_identity(bundle, *, record_path, allocation_gate, event, fresh_fixture_c1=False):
     from .fullspace_dtn_action import _jsonable
     from .dtn_boundary_plane_qualification import qualify_boundary_plane_bundle, carrier_numeric_identity
     from .y_orbit_centered_evidence import COMPONENT_IDENTITY
@@ -149,17 +206,17 @@ def qualify_live_identity(bundle, *, record_path, allocation_gate, event):
         'workspace_bytes':128<<20,'named_small_oracle_allowance_not_peak_bound':True,
         'no_factor_or_full_dense_matrix':True})
     receipt=qualify_boundary_plane_bundle(bundle,record_path=record_path,
-         expected_physical_manifest=physical,expected_ordered_keys=keys)
+         expected_physical_manifest=physical,expected_ordered_keys=keys,fresh_fixture_c1=fresh_fixture_c1)
     after=carrier_numeric_identity(carrier)
     if bundle['dtn_action'].carrier is not carrier or before!=after:
         raise ValueError('the qualified live carrier object or numeric state changed')
     validate_live_receipt(receipt,physical_manifest=physical,ordered_keys=keys,identity=after,
-                          expected_degree=int(bundle['degree']))
+                          expected_degree=int(bundle['degree']),fresh_fixture_c1=fresh_fixture_c1)
     if receipt['qualification_source_sha256'] != file_sha(Path(__file__).with_name('dtn_boundary_plane_qualification.py')):
         raise ValueError('same-process qualification numerical source identity differs')
     stored=json.loads(Path(record_path).read_text())
     validate_live_receipt(stored,physical_manifest=physical,ordered_keys=keys,identity=after,
-                          expected_degree=int(bundle['degree']))
+                          expected_degree=int(bundle['degree']),fresh_fixture_c1=fresh_fixture_c1)
     if _jsonable(receipt)!=stored:raise ValueError('written receipt differs from exact live transaction')
     context=_jsonable(carrier.assembly_context)
     shared=shared_discrete_contract(context)
@@ -183,7 +240,8 @@ def require_live_carrier_unchanged(bundle, identity, *, event, boundary, expecte
     event('qualified_live_carrier_unchanged',{'boundary':boundary,'carrier_numeric_sha256':actual['carrier_numeric_sha256']})
 
 
-def load_bound_live_receipt(directory, identity, *, worker_source=None, expected_degree=2):
+def load_bound_live_receipt(directory, identity, *, worker_source=None, expected_degree=2,
+                            fresh_fixture_c1=False):
     directory=Path(directory).resolve();descriptor=identity['live_component_receipt']
     path=(directory/descriptor['filename']).resolve()
     if not path.is_relative_to(directory) or file_sha(path)!=descriptor['sha256']:
@@ -203,7 +261,8 @@ def load_bound_live_receipt(directory, identity, *, worker_source=None, expected
                 raise ValueError('raw numerical context source differs from worker source: '+basename)
     expected={k:identity[k] for k in receipt['identity']}
     validate_live_receipt(receipt,physical_manifest=identity['physical_generator_manifest_sha256'],
-                          ordered_keys=identity['actual_mode_keys'],identity=expected,expected_degree=expected_degree)
+                          ordered_keys=identity['actual_mode_keys'],identity=expected,expected_degree=expected_degree,
+                          fresh_fixture_c1=fresh_fixture_c1)
     if receipt['raw_discrete_context']!=identity['actual_context']:
         raise ValueError('fresh raw context was replaced in the saved proof')
     if shared_discrete_contract(receipt['raw_discrete_context'])!=identity['shared_discrete_contract']:

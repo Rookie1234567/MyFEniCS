@@ -152,13 +152,23 @@ def centered_identity(bundle, *, event=None):
             "all_532_contributions_nonempty": True, "cutoffs_unchanged": True}
 
 
-def fixture_interior_positions(space, layout, *, direct_profile=None):
+def fixture_interior_positions(space, layout, *, direct_profile=None, fresh_fixture_c1=False):
     local = np.asarray(space.element.basix_element.entity_dofs[3][0], dtype=np.int64)
     rows = np.unique(np.concatenate([np.asarray(space.dofmap.cell_dofs(c))[local]
             for c in range(int(space.mesh.topology.index_map(3).size_local))]))
     positions = np.flatnonzero(np.isin(layout.independent, rows))
     degree = int(space.element.basix_element.degree)
     expected = {2:480,4:8640}.get(degree)
+    if type(fresh_fixture_c1) is not bool:
+        raise TypeError('fresh C1 opt-in must be an explicit bool')
+    if fresh_fixture_c1:
+        if (direct_profile is not None or degree != 6 or len(local) != 450
+                or int(space.element.space_dimension) != 882
+                or int(space.mesh.topology.index_map(3).size_local) != 80
+                or layout.full_rows != 55950 or len(layout.independent) != 52992
+                or len(np.unique(layout.independent)) != 52992):
+            raise ValueError('fresh C1 p6 requires its complete actual same80 native interior inventory')
+        expected = 36000
     if direct_profile is not None:
         from .y_orbit_direct_profile import direct_profile_metadata
         profile=direct_profile_metadata(direct_profile)

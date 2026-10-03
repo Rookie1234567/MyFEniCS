@@ -238,6 +238,48 @@ def _validate_bridge(path, digest, expected_head, source, *, centered_extension=
             "not_target_scale_qualification": True}
 
 
+
+def _validate_fresh_component(path,digest,source,environment):
+    """Current p6 component, independent checker and exact same source/ABI."""
+    from src.solvers.fresh_c1_contract import (validate_component_packets,digest_json,validate_resource_receipt)
+    path=Path(path).resolve()
+    if not path.is_relative_to(ARTIFACT_ROOT.resolve()) or file_sha256(path)!=digest:
+        raise ValueError("fresh p6 report path/hash mismatch")
+    report=json.loads(path.read_text());directory=path.parent
+    checker_path=directory/"independent_checker.json"
+    provenance_path=directory/"provenance.json"
+    checker=json.loads(checker_path.read_text());provenance=json.loads(provenance_path.read_text())
+    if provenance.get("source")!=source or provenance.get("environment")!=environment:
+        raise ValueError("fresh component provenance source/ABI differs")
+    receipt=validate_component_packets(report,checker,expected_source=source,
+        expected_environment=environment,report_sha256=digest,
+        provenance_sha256=file_sha256(provenance_path),
+        artifact_manifest_sha256=digest_json(report["artifacts"]))
+    for name in ("summary.json",checker["checker_watchdog_receipt"]["path"]):
+        q=(directory/name).resolve()
+        if not q.is_relative_to(directory): raise ValueError("component watchdog path escapes")
+        item=json.loads(q.read_text())
+        validate_resource_receipt(item,provenance["resource_contract"],source)
+        if name!="summary.json" and file_sha256(q)!=checker["checker_watchdog_receipt"]["sha256"]:
+            raise ValueError("fresh component checker watchdog hash differs")
+    return {**receipt,"report_path":str(path.relative_to(ROOT)),
+        "report_sha256":digest,"checker_sha256":file_sha256(checker_path),
+        "fixture_input_sha256":report["input_sha256"],"axes_nm":report["axes_nm"],
+        "physical_generator_manifest_sha256":report["physical_generator_manifest_sha256"],
+        "shared_fixture_configuration":report["shared_fixture_configuration"],
+        "mathematical_component_only":True,"durability_required_before_qualification_claim":True}
+
+
+def _fresh_resource(args):
+    if args.fresh_fixture_c1 is None:
+        if args.research_memory_gib is not None or args.research_wall_seconds is not None:
+            raise ValueError("fresh research budgets are unavailable to historical profiles")
+        return TREE_CAP_BYTES,WALL_SECONDS
+    from src.solvers.fresh_c1_contract import TREE_CAP_BYTES as cap,WALL_SECONDS as wall
+    if args.research_memory_gib!=3 or args.research_wall_seconds!=4500:
+        raise ValueError("fresh C1 requires explicit3GiB/4500s budget")
+    return cap,wall
+
 def _worker(args):
     import numpy as np
     from time import perf_counter
@@ -248,12 +290,15 @@ def _worker(args):
 
     parent = int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID", "0"))
     cap = int(os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES", "0"))
-    if parent <= 0 or parent != os.getppid() or not 0 < cap <= TREE_CAP_BYTES:
-        raise RuntimeError("worker requires its coordinated 1.5GiB whole-tree watchdog")
+    admitted_cap,admitted_wall=_fresh_resource(args)
+    if parent <= 0 or parent != os.getppid() or not 0 < cap <= admitted_cap:
+        raise RuntimeError("worker requires its coordinated profile whole-tree watchdog")
     source = source_facts(args.expected_head)
     environment = environment_facts()
     component_reuse = None
-    if args.dtn_phase_gauge == "boundary_plane":
+    if args.fresh_fixture_c1 is not None:
+        oracle=None
+    elif args.dtn_phase_gauge == "boundary_plane":
         from src.solvers.y_orbit_centered_evidence import verify_component_sources
         component_reuse = verify_component_sources(ROOT,require_current_bytes=not args.live_component_oracle)
         oracle = (SavedCenteredDenseP2Authority(args.dense_authority, args.dense_authority_report_sha256,
@@ -261,9 +306,11 @@ def _worker(args):
                   cross_head_authority=args.cross_head_centered_authority) if args.degree == 2 else None)
     else:
         oracle = SavedDenseP2Authority(environment) if args.degree == 2 else None
-    bridge = (_validate_bridge(args.bridge_report, args.bridge_report_sha256, args.expected_head, source,
-              centered_extension=args.dtn_phase_gauge == "boundary_plane", environment=environment)
-              if args.degree == 4 else None)
+    bridge = (_validate_fresh_component(args.component_report,args.component_report_sha256,source,environment)
+              if args.fresh_fixture_c1=="p4-chain" else
+              _validate_bridge(args.bridge_report,args.bridge_report_sha256,args.expected_head,source,
+                centered_extension=args.dtn_phase_gauge=="boundary_plane",environment=environment)
+              if args.degree==4 else None)
     events = args.run_directory / "probe_events.jsonl"
     arrays = args.run_directory / "arrays"
     arrays.mkdir()
@@ -282,10 +329,16 @@ def _worker(args):
         if values.dtype.hasobject or (values.dtype.kind in "fc" and not np.isfinite(values).all()):
             raise ValueError("invalid diagnostic artifact")
         path = arrays / (name + ".npy")
+        if args.fresh_fixture_c1 is not None:
+            if Path(name).is_absolute() or ".." in Path(name).parts:
+                raise ValueError("fresh artifact name escapes its directory")
+            path.parent.mkdir(parents=True,exist_ok=True)
         np.save(path, values, allow_pickle=False)
         descriptors[name] = {"path": str(path.relative_to(args.run_directory)), "shape": list(values.shape),
                              "dtype": str(values.dtype), "payload_bytes": int(values.nbytes),
                              "file_sha256": file_sha256(path)}
+        if args.fresh_fixture_c1 is not None:
+            return descriptors[name]
 
     def save_factor_diagnostic(name, values):
         """Bounded raw failure evidence, honestly retaining NaN/Inf if present."""
@@ -331,15 +384,18 @@ def _worker(args):
         if projected >= cap:
             raise MemoryError("declared additional working set exceeds measured tree policy")
 
-    provenance = {"source": source, "environment": environment, "command": sys.argv,
+    provenance = {"runtime_qualification_scope":os.environ.get("_MYFENICS_CLOUD_QUALIFICATION_SCOPE", "historical_activation"),
+                  "raw_remote_storage_verified":False,"source": source, "environment": environment, "command": sys.argv,
                   "input_sha256": INPUT_SHA, "degree": args.degree,
                   "auxiliary_gauge": args.auxiliary_gauge,
                   "dtn_phase_gauge": args.dtn_phase_gauge, "component_reuse": component_reuse,
                   "live_component_oracle":args.live_component_oracle,
                   "cross_head_centered_authority": args.cross_head_centered_authority,
                   "saved_dense_p2_authority": oracle.receipt if oracle is not None else None,
-                  "sparse_p2_bridge_receipt": bridge,
-                  "resource_contract": {"tree_cap_bytes": cap, "wall_seconds": WALL_SECONDS,
+                  "sparse_p2_bridge_receipt": bridge if args.fresh_fixture_c1 is None else None,
+                  "fresh_p6_component_receipt":bridge if args.fresh_fixture_c1=="p4-chain" else None,
+                  "fresh_fixture_c1":args.fresh_fixture_c1,
+                  "resource_contract": {"tree_cap_bytes": cap, "wall_seconds": admitted_wall,
                       "swap_bytes": 0, "mpi": 1, "math_threads": 1,
                       "declared_factor_workspace_allowance_bytes": 512 * 1024**2,
                       "evidence_reserve_bytes": RESERVE_BYTES, "unknown_fill": True,
@@ -348,19 +404,34 @@ def _worker(args):
     shutil.copyfile(environment["qualification_manifest"], args.run_directory / "abi_manifest.json")
     report = {"schema": "task40extra.y-orbit-sparse-condensed-reference.v1", "status": "STARTED"}
     try:
-        report = run_sparse_probe(INPUT, degree=args.degree, event=event, save_array=save_array,
+        if args.fresh_fixture_c1=="p6-component":
+            from src.solvers.y_orbit_sparse_probe import run_fresh_c1_p6_probe
+            from src.solvers.fresh_c1_contract import RAW_EXPORT_BYTES,P6_WORKER_STATUS
+            report=run_fresh_c1_p6_probe(INPUT,event=event,save_array=save_array,
+                allocation_gate=allocation_gate,
+                live_component_record_path=args.run_directory/"live_component_receipt.json",
+                raw_export_budget_bytes=RAW_EXPORT_BYTES)
+            report["status"]=P6_WORKER_STATUS
+        else:
+            report = run_sparse_probe(INPUT, degree=args.degree, event=event, save_array=save_array,
                                   allocation_gate=allocation_gate, saved_oracle=oracle,
                                   auxiliary_gauge=args.auxiliary_gauge,
                                   dtn_phase_gauge=args.dtn_phase_gauge,
                                   live_component_oracle=args.live_component_oracle,
                                   live_component_record_path=args.run_directory/"live_component_receipt.json",
-                                  save_factor_diagnostic=save_factor_diagnostic)
+                                  save_factor_diagnostic=save_factor_diagnostic,
+                                  fresh_fixture_c1=args.fresh_fixture_c1 is not None)
+        if args.fresh_fixture_c1=="p4-chain":
+            from src.solvers.fresh_c1_contract import validate_shared_fixture
+            validate_shared_fixture(report,bridge)
         if source_facts(args.expected_head) != source:
             raise RuntimeError("source identity changed during the sparse probe")
         report.update(source=source, environment=environment, source_clean_unchanged=True,
                       worker_elapsed_seconds=perf_counter() - started, artifacts=descriptors,
                       factor_raw_diagnostics=factor_diagnostics,
-                      sparse_p2_bridge_receipt=bridge,
+                      sparse_p2_bridge_receipt=bridge if args.fresh_fixture_c1 is None else None,
+                      fresh_fixture_c1=args.fresh_fixture_c1,
+                      fresh_p6_component_receipt=bridge if args.fresh_fixture_c1=="p4-chain" else None,
                       cross_head_centered_authority=args.cross_head_centered_authority)
         if oracle is not None:
             provenance["saved_dense_p2_authority"] = oracle.receipt
@@ -382,7 +453,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--degree", type=int, choices=(2, 4), default=2)
+    parser.add_argument("--degree", type=int, choices=(2, 4, 6), default=2)
     parser.add_argument("--auxiliary-gauge", choices=("raw", "positive-h"), default="raw")
     parser.add_argument("--live-component-oracle",action="store_true",help="qualify this exact loaded centered carrier before factors")
     parser.add_argument("--cross-head-centered-authority",action="store_true",
@@ -394,14 +465,48 @@ def main():
     parser.add_argument("--run-directory", type=Path)
     parser.add_argument("--bridge-report", type=Path)
     parser.add_argument("--bridge-report-sha256")
+    parser.add_argument("--fresh-fixture-c1",choices=("p6-component","p4-chain"))
+    parser.add_argument("--dry-admission",action="store_true",
+                        help="read source/ABI/memory/disk only; never create FE objects or launch workers")
+    parser.add_argument("--component-report",type=Path)
+    parser.add_argument("--component-report-sha256")
+    parser.add_argument("--research-memory-gib",type=int)
+    parser.add_argument("--research-wall-seconds",type=int)
     args = parser.parse_args()
+    if args.fresh_fixture_c1 is not None:
+        from src.solvers.fresh_c1_contract import validate_profile
+        validate_profile(args.fresh_fixture_c1,degree=args.degree,auxiliary_gauge=args.auxiliary_gauge,
+            dtn_phase_gauge=args.dtn_phase_gauge,live_component_oracle=args.live_component_oracle,
+            historical_authority_requested=any((args.dense_authority,args.dense_authority_report_sha256,
+                args.bridge_report,args.bridge_report_sha256,args.cross_head_centered_authority)))
+    elif args.degree==6 or args.component_report or args.component_report_sha256:
+        parser.error("degree6/component receipts require the named fresh-C1 admission")
+    admitted_cap,admitted_wall=_fresh_resource(args)
+    if args.dry_admission:
+        if args.run or args.worker or args.fresh_fixture_c1 is None or not args.expected_head:
+            parser.error("dry admission requires named fresh C1 and an exact HEAD, without run/worker")
+        from benchmarks.subreaper_watchdog import memory_envelope
+        source=source_facts(args.expected_head);environment=environment_facts()
+        envelope=memory_envelope()
+        enough=int(envelope["launch_cap_bytes"])>=admitted_cap+RESERVE_BYTES
+        disk=shutil.disk_usage(ROOT).free
+        print(json.dumps({"status":"DRY_READ_ONLY_NO_FE_JIT_FACTOR_OR_PDE",
+            "source":source,"environment":environment,"fresh_fixture_c1":args.fresh_fixture_c1,
+            "memory_envelope":envelope,"tree_cap_bytes":admitted_cap,
+            "evidence_reserve_bytes":RESERVE_BYTES,"wall_seconds":admitted_wall,
+            "disk_free_bytes":disk,"admitted":enough and disk>=2*1024**3,
+            "cold_JIT_and_actual_class_count_still_unmeasured":True,
+            "raw_storage_approval_and_numerical_GO_required":True},allow_nan=False,indent=2))
+        return 0 if enough and disk>=2*1024**3 else 2
     if not args.run:
         print(json.dumps({"status": "NOT_RUN_STAGED_PLAN_ONLY", "degree": args.degree,
                           "auxiliary_gauge": args.auxiliary_gauge,
                           "scope": "same 80-cell full3D exact condensation, all q and physical aliases",
-                          "tree_cap_bytes": TREE_CAP_BYTES, "wall_seconds": WALL_SECONDS,
+                          "tree_cap_bytes": admitted_cap, "wall_seconds": admitted_wall,
+                          "fresh_fixture_c1":args.fresh_fixture_c1,
                           "required": ["parent staged-source review", "clean own-branch integration commit",
-                                       "qualified tests and complex ABI", "p2 bridge then independent checker before p4"]}, indent=2))
+                                       "qualified tests and complex ABI",("fresh checked p6 component before p4"
+                                        if args.fresh_fixture_c1 else "p2 bridge then independent checker before p4")]}, indent=2))
         return 0
     if not args.expected_head or not args.run_directory:
         parser.error("run requires the exact clean integrated commit and a new ignored artifact directory")
@@ -426,7 +531,14 @@ def main():
     environment = environment_facts()
     if file_sha256(INPUT) != INPUT_SHA:
         raise RuntimeError("inherited input hash mismatch")
-    if args.degree == 4:
+    if args.fresh_fixture_c1 is not None:
+        if args.fresh_fixture_c1=="p4-chain":
+            if not args.component_report or not args.component_report_sha256:
+                parser.error("fresh p4 requires its current checked p6 component")
+            _validate_fresh_component(args.component_report,args.component_report_sha256,source,environment)
+        elif args.component_report or args.component_report_sha256:
+            parser.error("fresh p6 starts without another component authority")
+    elif args.degree == 4:
         if args.auxiliary_gauge == "positive-h" and args.dtn_phase_gauge != "boundary_plane":
             parser.error("same-discrete positive-H diagnostic is p2-only; p4 is held for boundary-gauge review")
         if not args.bridge_report or not args.bridge_report_sha256:
@@ -443,7 +555,10 @@ def main():
         return _worker(args)
     if shutil.disk_usage(ROOT).free < 2 * 1024**3:
         raise RuntimeError("bounded evidence run requires at least 2GiB free disk")
-    from benchmarks.subreaper_watchdog import supervise
+    from benchmarks.subreaper_watchdog import supervise,memory_envelope
+    if args.fresh_fixture_c1 is not None:
+        if int(memory_envelope()["launch_cap_bytes"])<admitted_cap+RESERVE_BYTES:
+            raise MemoryError("fresh C1 needs requested cap plus evidence reserve after existing dynamic reserve")
     command = [sys.executable, "-m", "benchmarks.run_y_orbit_sparse_probe", "--run", "--worker",
                "--degree", str(args.degree), "--expected-head", args.expected_head,
                "--run-directory", str(args.run_directory), "--auxiliary-gauge", args.auxiliary_gauge,
@@ -453,17 +568,24 @@ def main():
                     "--dense-authority-report-sha256",args.dense_authority_report_sha256]
     if args.live_component_oracle: command += ["--live-component-oracle"]
     if args.cross_head_centered_authority: command += ["--cross-head-centered-authority"]
-    if args.degree == 4:
+    if args.fresh_fixture_c1 is not None:
+        command += ["--fresh-fixture-c1",args.fresh_fixture_c1,"--research-memory-gib","3",
+                    "--research-wall-seconds","4500"]
+        if args.fresh_fixture_c1=="p4-chain":
+            command += ["--component-report",str(args.component_report),
+                        "--component-report-sha256",args.component_report_sha256]
+    elif args.degree == 4:
         command += ["--bridge-report", str(args.bridge_report),
                     "--bridge-report-sha256", args.bridge_report_sha256]
-    summary = supervise(command, args.run_directory, wall_seconds=WALL_SECONDS, interval=.25,
+    summary = supervise(command, args.run_directory, wall_seconds=admitted_wall, interval=.25,
                         grace_seconds=2, source_state=source, phase_path=args.run_directory / "phase.json",
-                        tree_cap_bytes=TREE_CAP_BYTES, hard_stop_immediate=True, timebase_guard=True,
+                        tree_cap_bytes=admitted_cap, hard_stop_immediate=True, timebase_guard=True,
                         stop_on_global_swap=True, pss_sampling_policy="disabled_by_profile")
     print(json.dumps(summary, allow_nan=False, indent=2), flush=True)
     report = args.run_directory / "probe_report.json"
     return 0 if (summary["classification"] == "COMPLETED" and report.is_file()
-                 and json.loads(report.read_text())["status"] == "SPARSE_CONDENSED_FULL3D_PROBE_PASS") else 2
+                 and json.loads(report.read_text())["status"] == ("FRESH_C1_P6_COMPONENT_WORKER_PASS"
+                    if args.fresh_fixture_c1=="p6-component" else "SPARSE_CONDENSED_FULL3D_PROBE_PASS")) else 2
 
 
 if __name__ == "__main__":

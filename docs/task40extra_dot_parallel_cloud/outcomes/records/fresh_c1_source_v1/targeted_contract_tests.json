@@ -1,0 +1,33 @@
+{
+  "status": "TARGETED_NON_FE_CONTRACT_PASS",
+  "tests": 79,
+  "failures": 0,
+  "errors": 0,
+  "seconds": 1.095,
+  "created_utc": "2026-10-03T02:04:14.775021+00:00",
+  "python_prefix": "task40extra_cloud/complex_env_recovery",
+  "pytest": "9.1.1",
+  "command": "UCX_TLS=self OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 timeout 60s ../complex_env_recovery/bin/python -m pytest -q src/test/test_fresh_c1_degree_profile.py src/test/test_fresh_c1_p6_component_contract.py src/test/test_fresh_c1_p6_saved_checker.py src/test/test_fresh_c1_pipeline_contract.py src/test/test_fresh_c1_activation_contract.py",
+  "FE_JIT_physical_component_PDE_NOT_RUN": true,
+  "numerical_qualification_inherited": false,
+  "log_sha256": "68f75f0f6b9bfd58029c23389f14b8f9388aea00597213276d9089801bc479e0",
+  "xml_sha256": "b30d2dc800a828d075f3dfdec22a4ea1cc167d3f5922eacb15fc602ffa88c54b",
+  "final_source_checked": true,
+  "tested_source_sha256": {
+    "src/solvers/fresh_c1_p6_component.py": "4240d4c11ba70ba67821eb1e0459841878a78faf6059f7eb85c4644eaf977765",
+    "src/test/test_fresh_c1_p6_component_contract.py": "7261c2782241cb90e49e17190001bf1dc2e14a4ba7e244e946380de67df229fe",
+    "benchmarks/check_fresh_c1_p6_component.py": "2bc202a2b6dfc65fce48c79d68b2938232454feda7390fb9fcafd37af608ab7c",
+    "src/test/test_fresh_c1_p6_saved_checker.py": "6febd0b94b6da7d43f3a64627d601b086f8bcd7333c285542295c2e77680e5bd",
+    "src/solvers/dtn_boundary_plane_qualification.py": "848a3efd902ebdfda282cab4b50ac908e020b5806533b0e4a955d45d4983143e",
+    "src/solvers/y_orbit_centered_evidence.py": "886b59fcf662c2198fbfb44bdf7cf640246c96e8be54b46d98bf135ef28e18aa",
+    "src/solvers/y_orbit_live_boundary_contract.py": "f8e9db9f9e19841eda03f5577e4682cdbf0d8f4b38d214a38e5b401cdedd2563",
+    "src/test/test_fresh_c1_degree_profile.py": "7983b86474cc5ed730ed861822f5ba8cf93f6ff476bbf690534fe9926901d86b",
+    "benchmarks/check_y_orbit_sparse_probe.py": "62376e998214f0192740534d4a0561b743e367a3bd22bee6e91ba38e158b8a66",
+    "benchmarks/run_y_orbit_sparse_probe.py": "e0034190e5488717ed21bca08c52ef30d993fc93954f0a6c2f6e858186d9b09a",
+    "scripts/task40extra_cloud_recovery/activate_fresh_cloud_complex.sh": "8a0cd91825100603a76e054443c4817cab92c892a2c1dbe3ee1d90357a8ffe10",
+    "src/solvers/fresh_c1_contract.py": "0792ed75c62ec87195847cfc0ea9dc36eb93e416c22732bbda10eda230905baf",
+    "src/solvers/y_orbit_sparse_probe.py": "70b8446cf371146b6d96f7b370e33e04d655da8644c9111acd798ec3748ea16e",
+    "src/test/test_fresh_c1_pipeline_contract.py": "dbe2ae892924e991d57ec77221a9dc05f4ecdccdfa87955051cceb51dd7db291",
+    "src/test/test_fresh_c1_activation_contract.py": "516c7a3599f1f1fe07338d6dd83c7ccfc7b0c69996f1abeba58d17a2129a472c"
+  }
+}

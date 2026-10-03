@@ -8,7 +8,7 @@ wavelength, two-cell nonseparable notch and all 532 physical port channels.
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import replace, asdict
 from types import SimpleNamespace
 
 import numpy as np
@@ -28,6 +28,12 @@ from src.solvers.y_orbit_sparse_reference import (
     audit_condensation_covariance, audit_full_form_covariance,
     build_augmented_coordinates, csr_audit, integer_admission, sampled_right_pc_defect,
 )
+
+
+def _fresh_shared_configuration(cfg):
+    from .fullspace_dtn_action import _jsonable
+    return _jsonable({k:v for k,v in asdict(cfg).items()
+                     if k not in ("nedelec_degree","visualization_degree","case_name")})
 
 
 def _save_csr(save_array, prefix, matrix):
@@ -75,7 +81,8 @@ def _notch_supported_rhs(space, layout, changed):
 
 def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                      saved_oracle=None, auxiliary_gauge="raw", save_factor_diagnostic=None,
-                     dtn_phase_gauge="global_z", live_component_oracle=False, live_component_record_path=None):
+                     dtn_phase_gauge="global_z", live_component_oracle=False, live_component_record_path=None,
+                     fresh_fixture_c1=False):
     from mpi4py import MPI
     from petsc4py import PETSc
     from src.geometry.mesh_builder_3d import _mark_cells, _rectangular_air_void_audit
@@ -144,7 +151,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
                 from .y_orbit_live_boundary_contract import qualify_live_identity, require_live_carrier_unchanged
                 if live_component_record_path is None: raise ValueError("same-live component record path required")
                 centered_facts = qualify_live_identity(base,record_path=live_component_record_path,
-                                                       allocation_gate=allocation_gate,event=event)
+                                                       allocation_gate=allocation_gate,event=event,
+                                                       fresh_fixture_c1=fresh_fixture_c1)
                 qualified_carrier = base["dtn_action"].carrier
             else:
                 centered_facts = centered_identity(base,event=event)
@@ -336,6 +344,8 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             require_live_carrier_unchanged(base,centered_facts,event=event,boundary="sparse_workflow_exit",expected_carrier=qualified_carrier)
         return {"schema": SCHEMA, "status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS",
                 "degree": degree, "azimuth_deg": 5.0, "cells": 80,
+                **({"shared_fixture_configuration":_fresh_shared_configuration(cfg)}
+                   if fresh_fixture_c1 else {}),
                 "auxiliary_gauge": auxiliary_gauge,
                 "reference_scope": ("fresh boundary-plane FE operator; original cutoffs and all physical contributions audited"
                                     if centered else "same frozen upstream-clipped FE operator; no lost functional restored"),
@@ -372,5 +382,58 @@ def run_sparse_probe(input_path, *, degree, event, save_array, allocation_gate,
             reference.destroy()
         if factor is not None:
             factor.destroy()
+        if base is not None:
+            destroy_same_mesh_physical_action(base)
+
+
+def run_fresh_c1_p6_probe(input_path, *, event, save_array, allocation_gate,
+                          live_component_record_path, raw_export_budget_bytes):
+    """Thin case assembly for the new component; no global p6 solve."""
+    from dataclasses import asdict
+    from mpi4py import MPI
+    from petsc4py import PETSc
+    from .fresh_c1_p6_component import run_fresh_p6_component
+    from .fullspace_dtn_action import _jsonable
+    from .fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
+    from .fullspace_same_mesh_hcurl_pmg_physical import (
+        build_same_mesh_physical_action, destroy_same_mesh_physical_action)
+    from .y_orbit_live_boundary_contract import (
+        qualify_live_identity, require_live_carrier_unchanged)
+    cfg, axes, input_sha = pilot_config(input_path, azimuth_deg=5.0)
+    cfg = replace(cfg, nedelec_degree=6, visualization_degree=6,
+                  case_name="fresh_c1_p6_component_regular")
+    integer_admission((55950,55950),80*882*882,index_dtype=PETSc.IntType)
+    event("fresh_p6_cold_setup_begin",{
+        "degree":6,"expected_cells":80,"requested_levels":[6],
+        "no_global_p6_matrix_or_factor":True,"cold_JIT_supervised":True})
+    levels = _build_same_mesh_levels(cfg,MPI.COMM_SELF,(6,),
+                                    include_positive_coefficients=False)
+    if set(levels["spaces"])!={6} or int(levels["mesh"].topology.index_map(3).size_local)!=80:
+        raise ValueError("fresh p6 requires same80 mesh and degree6-only original space")
+    base=None
+    try:
+        base=build_same_mesh_physical_action(levels,cfg,6,
+                                            dtn_phase_gauge="boundary_plane",
+                                            verify_dtn_quadrature=True)
+        identity=qualify_live_identity(base,record_path=live_component_record_path,
+                allocation_gate=allocation_gate,event=event,fresh_fixture_c1=True)
+        carrier=base["dtn_action"].carrier
+        event("fresh_p6_same_live_all532_before_component",identity)
+        component=run_fresh_p6_component(base,allocation_gate=allocation_gate,
+            save_array=save_array,checkpoint=event,
+            archive_payload_limit_bytes=int(raw_export_budget_bytes))
+        require_live_carrier_unchanged(base,identity,event=event,
+                boundary="fresh_p6_component_exit",expected_carrier=carrier)
+        shared=_fresh_shared_configuration(cfg)
+        return {"schema":"fresh-c1.p6-worker.v1","degree":6,"cells":80,
+            "component":component,"centered_identity":identity,
+            "input_sha256":input_sha,"axes_nm":{k:list(v) for k,v in axes.items()},
+            "physical_generator_manifest_sha256":base["mode_sha256"],
+            "shared_fixture_configuration":shared,
+            "live_component_oracle":True,"dtn_phase_gauge":"boundary_plane",
+            "auxiliary_gauge":"positive-h","C1_scope":"p6 compact component only",
+            "p6_full_chain_qualified":False,"official_results":False,
+            "target_geometry_accuracy":False,"no_2TB_or_48h_claim":True}
+    finally:
         if base is not None:
             destroy_same_mesh_physical_action(base)

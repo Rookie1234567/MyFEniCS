@@ -1,0 +1,15 @@
+{
+  "schema": "fresh-c1.import-only-dry-failure.v1",
+  "status": "FAILED_BEFORE_FE_JIT",
+  "source_head": "7247089643c0ef1721155ed9794263297c2c68dc",
+  "error_type": "RuntimeError",
+  "error": "cloud ABI receipt content/hash mismatch",
+  "actual_manifest_sha256": "31adaf2a1eacd08387fc3d73ba3da3eb56e04fcdfbf20712abd91108616756b6",
+  "captured_hash_string": "[1790992682.824703] [e99703a7ee50:10   :0]       tcp_iface.c:984  UCX  ERROR scandir(/sys/class/net) failed: No such file or directory\n31adaf2a1eacd08387fc3d73ba3da3eb56e04fcdfbf20712abd91108616756b6",
+  "manifest_bytes_changed": false,
+  "stderr_sha256": "33d18eb6f095b4c769c82f3c0a41b502c9f9f5a24a8f780e5a5d6e80c2f5f866",
+  "dry_stdout_bytes": 0,
+  "fix_scope": "activation stdout serialization and explicit failed-import return; assertions/runtime/math unchanged",
+  "FE_JIT_run": false,
+  "original_failure_preserved": true
+}

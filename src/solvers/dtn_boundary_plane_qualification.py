@@ -106,8 +106,175 @@ def _check_loaded_primary_provenance(primary_gauss):
             assert digest.hexdigest() == kernel[hash_key], (path_key, "loaded provenance artifact changed")
 
 
-def _qualification_degree_profile(bundle, *, direct_profile=None):
-    """Admit fixed p2/p4 metadata only; never substitute a live numerical proof."""
+def fresh_c1_degree_profile(degree=6):
+    """Derived same80 p4/p6 metadata; every inventory still needs a live gate."""
+    if type(degree) is not int or degree not in (4, 6):
+        raise ValueError("fresh C1 admits only integer degree 4 or 6")
+    counts = {
+        4: {"local_space_dimension": 300, "local_interior_rows": 108,
+            "local_trace_rows": 192, "storage_rows": 17204,
+            "independent_rows": 15872, "interior_rows": 8640,
+            "independent_trace_rows": 7232, "native_slave_rows": 1332,
+            "quadrature_degree": 23, "primary_facet_points": 144},
+        6: {"local_space_dimension": 882, "local_interior_rows": 450,
+            "local_trace_rows": 432, "storage_rows": 55950,
+            "independent_rows": 52992, "interior_rows": 36000,
+            "independent_trace_rows": 16992, "native_slave_rows": 2958,
+            "quadrature_degree": 27, "primary_facet_points": 196},
+    }[degree]
+    return {"schema": "task40extra.fresh-C1-same80-degree-profile.v1",
+            "degree": degree, "cell_count": 80, **counts,
+            "expected_inventory_classification": "derived_not_measured",
+            "nominal_gauss_points_require_actual_compiled_gate": True,
+            "mode_count": 532, "manual_M": 9, "manual_N": 3,
+            "physical_generator_manifest_sha256":
+                "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+            "action_recovery_limit": 1e-11, "original_residual_limit": 1e-10,
+            "pure_algebra_limit": 1e-12,
+            "p6_full_chain_qualified": False, "compact_p4_quotient_qualified": False}
+
+
+def validate_fresh_c1_bundle_profile(bundle):
+    """Fail closed on the actual MPI1 same80 FE/MPC/carrier/compiled profile.
+
+    This is metadata admission only. It neither assembles a form nor grants a
+    numerical PASS; the unchanged literal532 oracle must subsequently finish.
+    """
+    profile = fresh_c1_degree_profile(bundle["degree"])
+    degree = profile["degree"]
+    cfg, levels = bundle["cfg"], bundle["setup"]
+    if set(levels["spaces"]) != {degree} or set(levels["floquets"]) != {degree}:
+        raise ValueError("fresh C1 requires exactly one requested FE/MPC degree")
+    space, floquet = levels["spaces"][degree], levels["floquets"][degree]
+    mpc, mesh = floquet.mpc, levels["mesh_data"].mesh
+    element = space.element.basix_element
+    scale = 7.0 / 135.0
+    axes = {"x": tuple(v*scale for v in (0, 16.5, 25, 33.5, 50)),
+            "y": tuple(v*scale for v in (0, 6.25, 12.5, 18.75, 25)),
+            "z": tuple(v*scale for v in (-10, 0, 40, 80, 120, 130))}
+    if (int(mesh.comm.size) != 1 or space.mesh is not mesh
+            or int(mesh.topology.dim) != 3 or cfg.mesh_cell_type != "hexahedron"
+            or tuple(cfg.mesh_axis_cell_counts) != (4, 4, 5)
+            or any(tuple(getattr(cfg, "mesh_axis_"+axis+"_values")) != values
+                   for axis, values in axes.items())
+            or cfg.lambda0 != 0.7 or cfg.incident_phi_deg != 5.0
+            or cfg.nedelec_degree != degree or cfg.visualization_degree != degree
+            or cfg.nedelec_trace_degree is not None or cfg.nedelec_interior_degree is not None):
+        raise ValueError("fresh C1 actual mesh/config/degree differs from the same80 fixture")
+    if any(not np.array_equal(np.unique(mesh.geometry.x[:, column]), np.asarray(axes[axis]))
+           for column, axis in enumerate(("x", "y", "z"))):
+        raise ValueError("fresh C1 actual mesh coordinates differ from the frozen axes")
+    index_map = space.dofmap.index_map
+    cell_map = mesh.topology.index_map(3)
+    local_interior = np.asarray(element.entity_dofs[3][0], dtype=np.int64)
+    if (int(element.degree) != degree
+            or int(space.element.space_dimension) != profile["local_space_dimension"]
+            or int(mpc.function_space.element.basix_element.degree) != degree
+            or int(mpc.function_space.element.space_dimension) != profile["local_space_dimension"]
+            or int(space.dofmap.index_map_bs) != 1
+            or int(cell_map.size_local) != profile["cell_count"]
+            or int(cell_map.size_global) != profile["cell_count"]
+            or int(index_map.size_local) != profile["storage_rows"]
+            or int(index_map.size_global) != profile["storage_rows"]
+            or int(index_map.num_ghosts) != 0
+            or int(mpc.function_space.dofmap.index_map.size_global) != profile["storage_rows"]
+            or len(local_interior) != profile["local_interior_rows"]
+            or len(np.unique(local_interior)) != len(local_interior)
+            or np.any(local_interior < 0) or np.any(local_interior >= profile["local_space_dimension"])):
+        raise ValueError("fresh C1 actual complete local/global FE inventory differs")
+    cell_rows = [np.asarray(space.dofmap.cell_dofs(cell)) for cell in range(profile["cell_count"])]
+    if any(row.shape != (profile["local_space_dimension"],)
+           or len(np.unique(row)) != len(row) for row in cell_rows):
+        raise ValueError("fresh C1 lost a complete actual cell element")
+    all_rows = np.unique(np.concatenate(cell_rows))
+    interior_rows = np.unique(np.concatenate([row[local_interior] for row in cell_rows]))
+    slaves, masters = np.asarray(mpc.slaves), np.asarray(mpc.masters.array)
+    coefficients, offsets = (np.asarray(value) for value in mpc.coefficients())
+    if (slaves.dtype != np.dtype("int32") or masters.dtype != np.dtype("int32")
+            or offsets.dtype != np.dtype("int32") or coefficients.dtype != np.dtype("complex128")
+            or slaves.ndim != 1 or masters.ndim != 1 or coefficients.ndim != 1 or offsets.ndim != 1
+            or len(slaves) != profile["native_slave_rows"] or len(np.unique(slaves)) != len(slaves)
+            or np.any(slaves < 0) or np.any(slaves >= profile["storage_rows"])
+            or len(masters) != len(coefficients) or not np.isfinite(coefficients).all()
+            or np.any(masters < 0) or np.any(masters >= profile["storage_rows"])
+            or len(offsets) < profile["storage_rows"]+1 or offsets[0] != 0
+            or offsets[-1] != len(coefficients) or np.any(np.diff(offsets) < 0)
+            or any(offsets[int(row)+1] == offsets[int(row)] for row in slaves)):
+        raise ValueError("fresh C1 actual finalized native MPC inventory is invalid")
+    independent = np.setdiff1d(all_rows, slaves)
+    if (not np.array_equal(all_rows, np.arange(profile["storage_rows"]))
+            or len(interior_rows) != profile["interior_rows"]
+            or np.isin(interior_rows, slaves).any()
+            or len(independent) != profile["independent_rows"]
+            or len(independent)-len(interior_rows) != profile["independent_trace_rows"]
+            or profile["local_space_dimension"]-len(local_interior) != profile["local_trace_rows"]):
+        raise ValueError("fresh C1 actual complete interior/native trace partition differs")
+    carrier = bundle["dtn_action"].carrier
+    context = carrier.assembly_context
+    native = {name: _array_signature(value) for name, value in (
+        ("slaves", slaves), ("masters", masters), ("coefficients", coefficients), ("offsets", offsets))}
+    if native != context["MPC"] or not np.array_equal(carrier.slave_rows, slaves):
+        raise ValueError("fresh C1 actual native MPC is detached from the live carrier context")
+    abi = context["ABI"]
+    if (not str(abi["dolfinx"]).startswith("0.10.") or abi["dolfinx_mpc"] != "0.10.5"
+            or tuple(abi["PETSc"]) != (3, 25, 6)
+            or abi["scalar"] != "complex128" or abi["integer"] != "int32"):
+        raise ValueError("fresh C1 actual carrier ABI differs from the admitted recovered runtime")
+    semantic = tuple((j, mode.side, mode.m, mode.n, mode.polarization)
+                     for j, mode in enumerate(bundle["modes"]))
+    if (bundle["dtn_phase_gauge"] != BOUNDARY_PLANE or cfg.stage4_dtn_order_policy != "manual"
+            or cfg.diffraction_order_max_m != 9 or cfg.diffraction_order_max_n != 3
+            or cfg.diffraction_zero_order_only is not False
+            or len(semantic) != 532 or len(set(semantic)) != 532
+            or tuple(entry.mode_key for entry in carrier.entries) != semantic
+            or carrier.global_rows != profile["storage_rows"]
+            or carrier.ownership_range != (0, profile["storage_rows"])
+            or bundle["mode_sha256"] != profile["physical_generator_manifest_sha256"]
+            or carrier.physical_generator_manifest_sha256 != profile["physical_generator_manifest_sha256"]
+            or any(not len(entry.coupling_rows) or not len(entry.projection_rows) for entry in carrier.entries)):
+        raise ValueError("fresh C1 actual complete manual532 physical inventory differs")
+    qdegree, points = profile["quadrature_degree"], profile["primary_facet_points"]
+    primary = bundle["compiled_surface_gauss_identity"]
+    if (context["element_degree"] != degree or bundle["dtn_quadrature_degree"] != qdegree
+            or context["gauss"]["degree"] != qdegree
+            or primary != context["gauss"]["compiled_forms_verified"]
+            or set(primary) != {"top/0", "top/1", "bottom/0", "bottom/1"}):
+        raise ValueError("fresh C1 actual degree/primary compiled Gauss context differs")
+    for record in primary.values():
+        rules = record["rules"]
+        if len(rules) != 1:
+            raise ValueError("fresh C1 requires one actual compiled facet rule per primary form")
+        rule = rules[0]
+        if (rule["degree"] != qdegree or rule["facet_cell"] != "quadrilateral"
+                or rule["integral_type"] != "exterior_facet"
+                or tuple(rule["points"]["shape"]) != (points, 2)
+                or tuple(rule["weights"]["shape"]) != (points,)
+                or rule["points"]["dtype"] != "float64" or rule["weights"]["dtype"] != "float64"):
+            raise ValueError("fresh C1 nominal Gauss count differs from the actual compiled nodes/weights")
+    counts = {"cell_count": int(cell_map.size_local),
+              "local_space_dimension": int(space.element.space_dimension),
+              "local_interior_rows": len(local_interior),
+              "local_trace_rows": int(space.element.space_dimension)-len(local_interior),
+              "storage_rows": int(index_map.size_global), "independent_rows": len(independent),
+              "interior_rows": len(interior_rows),
+              "independent_trace_rows": len(independent)-len(interior_rows),
+              "native_slave_rows": len(slaves)}
+    return {"degree": degree, "element_degree": int(element.degree),
+            "local_space_dimension": int(space.element.space_dimension),
+            "quadrature_degree": qdegree, "primary_facet_points": points,
+            "fresh_fixture_c1": True, "fresh_c1_profile": profile,
+            "fresh_c1_actual_inventory": {"classification": "actual_runtime_gated",
+                **counts, "native_MPC": native, "actual_primary_compiled_gauss_verified": True}}
+
+
+def _qualification_degree_profile(bundle, *, direct_profile=None, fresh_fixture_c1=False):
+    """Admit legacy p2/p4 or explicit fresh p4/p6; metadata is never a proof."""
+    if type(fresh_fixture_c1) is not bool:
+        raise TypeError("fresh C1 opt-in must be an explicit bool")
+    if fresh_fixture_c1:
+        if direct_profile is not None:
+            raise ValueError("fresh same80 C1 cannot substitute for a direct X/XZ/Y profile")
+        return validate_fresh_c1_bundle_profile(bundle)
     direct = None
     if direct_profile is not None:
         from .y_orbit_direct_profile import validate_direct_physical_config
@@ -172,8 +339,8 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
                                    expected_physical_manifest, expected_ordered_keys,
                                    seed=4053202, tolerance=1e-10,
                                    optional_legacy_bundle=None, direct_profile=None,
-                                   literal_mode_observer=None):
-    """Qualify exactly this supplied live p2/p4/MPI1/532-mode carrier before factors.
+                                   literal_mode_observer=None, fresh_fixture_c1=False):
+    """Qualify this live legacy p2/p4 or explicit fresh p4/p6 MPI1/532 carrier.
 
     ``expected_ordered_keys`` uses complete carrier keys
     ``(index, side, m, n, polarization)``. The fixed physical contract is
@@ -200,6 +367,8 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
     if literal_mode_observer is not None and (direct_profile is None or not callable(literal_mode_observer)):
         raise ValueError("literal current-mode evidence observer requires explicit direct profile")
     new, old = bundle, optional_legacy_bundle
+    if fresh_fixture_c1 and old is not None:
+        raise ValueError("fresh C1 cannot reuse an optional historical bundle association")
     if direct_profile is not None and old is not None:
         raise ValueError("fresh direct profile cannot reuse a legacy bundle association")
     carrier = new["dtn_action"].carrier
@@ -231,7 +400,8 @@ def qualify_boundary_plane_bundle(bundle, *, record_path,
         assert MPI.COMM_WORLD.size == 1
         cfg, levels = new["cfg"], new["setup"]
         assert new["dtn_phase_gauge"] == BOUNDARY_PLANE
-        profile = _qualification_degree_profile(new, direct_profile=direct_profile)
+        profile = _qualification_degree_profile(new, direct_profile=direct_profile,
+                                                fresh_fixture_c1=fresh_fixture_c1)
         degree = profile["degree"]
         base_identity.update(profile)
         modes = tuple(new["modes"])

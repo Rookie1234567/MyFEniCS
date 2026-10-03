@@ -1,0 +1,102 @@
+{
+  "schema": "fresh-c1.source-only-checkpoint.v1",
+  "status": "REVIEWED_SOURCE_AND_79_NON_FE_CONTRACTS_PASS_FE_NOT_RUN",
+  "baseline": {
+    "local_head": "130dcbae2c5a3423117d100e420a55a772b3a620",
+    "remote_commit": "77520e2d9e3e6e1ef45b7693bd45ea5be621afe1",
+    "tree": "8abc60305f2c9d1b9b7b023c5491b252f7f510ae"
+  },
+  "files": {
+    "src/solvers/fresh_c1_p6_component.py": {
+      "sha256": "4240d4c11ba70ba67821eb1e0459841878a78faf6059f7eb85c4644eaf977765",
+      "bytes": 52232
+    },
+    "src/test/test_fresh_c1_p6_component_contract.py": {
+      "sha256": "7261c2782241cb90e49e17190001bf1dc2e14a4ba7e244e946380de67df229fe",
+      "bytes": 5283
+    },
+    "benchmarks/check_fresh_c1_p6_component.py": {
+      "sha256": "2bc202a2b6dfc65fce48c79d68b2938232454feda7390fb9fcafd37af608ab7c",
+      "bytes": 65890
+    },
+    "src/test/test_fresh_c1_p6_saved_checker.py": {
+      "sha256": "6febd0b94b6da7d43f3a64627d601b086f8bcd7333c285542295c2e77680e5bd",
+      "bytes": 12671
+    },
+    "src/solvers/dtn_boundary_plane_qualification.py": {
+      "sha256": "848a3efd902ebdfda282cab4b50ac908e020b5806533b0e4a955d45d4983143e",
+      "bytes": 52652
+    },
+    "src/solvers/y_orbit_centered_evidence.py": {
+      "sha256": "886b59fcf662c2198fbfb44bdf7cf640246c96e8be54b46d98bf135ef28e18aa",
+      "bytes": 21064
+    },
+    "src/solvers/y_orbit_live_boundary_contract.py": {
+      "sha256": "f8e9db9f9e19841eda03f5577e4682cdbf0d8f4b38d214a38e5b401cdedd2563",
+      "bytes": 17793
+    },
+    "src/test/test_fresh_c1_degree_profile.py": {
+      "sha256": "7983b86474cc5ed730ed861822f5ba8cf93f6ff476bbf690534fe9926901d86b",
+      "bytes": 7389
+    },
+    "benchmarks/check_y_orbit_sparse_probe.py": {
+      "sha256": "62376e998214f0192740534d4a0561b743e367a3bd22bee6e91ba38e158b8a66",
+      "bytes": 45434
+    },
+    "benchmarks/run_y_orbit_sparse_probe.py": {
+      "sha256": "e0034190e5488717ed21bca08c52ef30d993fc93954f0a6c2f6e858186d9b09a",
+      "bytes": 40542
+    },
+    "scripts/task40extra_cloud_recovery/activate_fresh_cloud_complex.sh": {
+      "sha256": "8a0cd91825100603a76e054443c4817cab92c892a2c1dbe3ee1d90357a8ffe10",
+      "bytes": 2078
+    },
+    "src/solvers/fresh_c1_contract.py": {
+      "sha256": "0792ed75c62ec87195847cfc0ea9dc36eb93e416c22732bbda10eda230905baf",
+      "bytes": 8830
+    },
+    "src/solvers/y_orbit_sparse_probe.py": {
+      "sha256": "70b8446cf371146b6d96f7b370e33e04d655da8644c9111acd798ec3748ea16e",
+      "bytes": 28258
+    },
+    "src/test/test_fresh_c1_pipeline_contract.py": {
+      "sha256": "dbe2ae892924e991d57ec77221a9dc05f4ecdccdfa87955051cceb51dd7db291",
+      "bytes": 6977
+    },
+    "src/test/test_fresh_c1_activation_contract.py": {
+      "sha256": "516c7a3599f1f1fe07338d6dd83c7ccfc7b0c69996f1abeba58d17a2129a472c",
+      "bytes": 1719
+    }
+  },
+  "source_review_disposition": "BOUNDED_SOURCE_ONLY_REVIEW_NO_BLOCKING_FINDINGS",
+  "source_review_receipt_sha256": "68a7640da17cb82489653d95033e343d5e7ee5cb555ddb8ddd3422d2dc7244b2",
+  "resolved_three_line_p4_resource_binding": [
+    {
+      "finding": "Fresh p4 saved worker resource receipt lacked source_state, wall and elapsed binding",
+      "resolution": "Fresh p4-chain alone invokes existing validate_resource_receipt immediately after the inherited resource boolean",
+      "changed_lines": [
+        528,
+        529,
+        530
+      ],
+      "previous_checker_sha256": "c052a7717117f1dadd784e9056b44e02869a8e387e03f0cd20f994ca11f1b352",
+      "updated_checker_sha256": "62376e998214f0192740534d4a0561b743e367a3bd22bee6e91ba38e158b8a66",
+      "exact_narrow_change_proof": "Removing only these three inserted lines from the updated staged checker reproduces the previous checker SHA256 exactly"
+    }
+  ],
+  "unchanged_mathematical_proof_sha256": {
+    "unchanged_literal532_math": "26a8bba81ad15c472e45d67095cc1836f2c226e0f34937c6dc9f659529a2225e",
+    "unchanged_existing_p2_p4_profile_body": "5b7f5f944dcce7c2f7ddd35851da6163b08b11ee6f6607cd40e04255806dd7d4",
+    "unchanged_all532_receipt_numerical_gates": "ba8d71a3eeeb32033c85d7c57a0efc93048912888d84d7fcb36e6409c14d86b0"
+  },
+  "tests_receipt_sha256": "8ddc6ec42ea4a1c93eac49783b8304bb4f8642c0906258b650fd190b6197ea41",
+  "FE_JIT_p6_component_p4_chain_NOT_RUN": true,
+  "p6_full_chain_qualified": false,
+  "compact_p4_quotient_qualified": false,
+  "raw_artifacts_durable": false,
+  "storage_approval_pending": true,
+  "numerical_admission_required": true,
+  "nearzero_checks_supplement_original_gates": true,
+  "target_capacity_accuracy_convergence_qualified": false,
+  "source_review_supplement_sha256": "988b90ce32a348bb1bf08b1101a9e591f8f5b97b2ff83d082a4020b4c27addee"
+}
