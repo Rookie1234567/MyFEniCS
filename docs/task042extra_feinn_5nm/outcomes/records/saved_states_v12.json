@@ -1,0 +1,2236 @@
+{
+  "status": "SAVED_STATE_FREEZE_COMPLETE",
+  "states": {
+    "phase75": {
+      "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_resource_freeze_20261002T040058739087Z/frozen_checkpoint.npz",
+          "sha256": "4b538b3f785902de369d5a0602b5d3267a08cc34fa8e68ab509ebc51c2652917"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_gn_20261002T025423030332Z/durable_checkpoints/committed_000015.pt",
+          "sha256": "cf6919a8ee86e32ad7f0f4b0d4ef8411061b149c564dd289237334f90b7d9e86"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "d79d1363c45aad4b215289a4bebd39be6430e1ca9fcb095e4224d493af857599",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "DampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 75,
+        "mu": 8.319921758282803,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "f07ddce6d89def040e63b5f9b4063348e933967aad0e1fa16156e7379bfe282e",
+        "parameter_sha256": "d79d1363c45aad4b215289a4bebd39be6430e1ca9fcb095e4224d493af857599",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "f07ddce6d89def040e63b5f9b4063348e933967aad0e1fa16156e7379bfe282e",
+      "independent_complex_FE": 31968
+    },
+    "Ifinal": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/frozen_checkpoint.npz",
+          "sha256": "0603ddb952bf604edcad742aeea7ac160f180e43ae8d680c789af6caf2fdc0f5"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000025.pt",
+          "sha256": "62703d221e29b5895924fdc5c1d675e7c45cb6c01a0e347bc5d49e6aaf081da4"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "88ca0f7545d8397c8f45d03f1bf1dcc30a7bf956cf3959bd06f5d18b3cd528f7",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "final_committed",
+        "accepted_outer": 99,
+        "mu": 0.8837519469755432,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "431effbac296bb0dd94c731a0e3220ff057963929464605c723e5b6b77799abc",
+        "parameter_sha256": "88ca0f7545d8397c8f45d03f1bf1dcc30a7bf956cf3959bd06f5d18b3cd528f7",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "431effbac296bb0dd94c731a0e3220ff057963929464605c723e5b6b77799abc",
+      "independent_complex_FE": 31968
+    },
+    "Mfinal": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/frozen_checkpoint.npz",
+          "sha256": "58fcaf697307a56204d4af960f37f42c86171c605c2fe97f016efe3e5148e28d"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000021.pt",
+          "sha256": "4c475bfba0eb816a4d62b6086f2e47006051b896ba442f09b7aab50c8b7c206d"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "final_committed",
+        "accepted_outer": 95,
+        "mu": 214.75172311505716,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+        "parameter_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+      "independent_complex_FE": 31968
+    },
+    "I1800": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_time_1800.npz",
+          "sha256": "46a2f209f9fdacf7c811d37c87bc90419d60daa5bcb09844a49b740835f7b8e9"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000006.pt",
+          "sha256": "c20c141dcede01c5ddbadbb2847c63b81386f5e1c1548bfaedcc87aa2ad42131"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "242aa92baa408926e284aec0a4fdf0e7bc7a53f2a6f7998bbfab0fac30cc5b1b",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 81,
+        "mu": 11.412787048398904,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "ed346b1adf95abb42522cdb9d23a21ac7c27d7490afef8b6e6ed5feec500b5b4",
+        "parameter_sha256": "242aa92baa408926e284aec0a4fdf0e7bc7a53f2a6f7998bbfab0fac30cc5b1b",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "ed346b1adf95abb42522cdb9d23a21ac7c27d7490afef8b6e6ed5feec500b5b4",
+      "independent_complex_FE": 31968
+    },
+    "M1800": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_1800.npz",
+          "sha256": "ae7786156a5842501be7bd24fe56dd6168c88cd5e569753fdeff76ab262e3b02"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000005.pt",
+          "sha256": "5745cc6c8be25ecddafc51ffa270d34f224286e704b0ab3beb5a5fda1e909a47"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "ba988c8a4f3a501398943658fd23e378b9cb03e246751415f6293aebdbc36960",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 80,
+        "mu": 102.71508343559016,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "51bb6cb8f5692902c5dfc721d1bbcd26f58e82d9f85e3b4effcba0c354c9c263",
+        "parameter_sha256": "ba988c8a4f3a501398943658fd23e378b9cb03e246751415f6293aebdbc36960",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "51bb6cb8f5692902c5dfc721d1bbcd26f58e82d9f85e3b4effcba0c354c9c263",
+      "independent_complex_FE": 31968
+    },
+    "I3600": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_identity_metric_time_3600.npz",
+          "sha256": "1629abc2ee89c3ce8ca0c1020bf90f65b82817a1c756370a5791240c9fcce051"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_identity_metric_20261002T113516196201Z/durable_checkpoints/committed_000015.pt",
+          "sha256": "84be541ec1854bc82ef118dcc9fa5ddc7bcfba84efa0a2218ae4b45527c94ba1"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "b234ec64139a857a774a58ff4ec45d6b4c7f9ab7c66fb9dd6a50dccdcd59e909",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 90,
+        "mu": 5.798296524106539,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "69a6a857270f740f64fc2a638e8cd9e785332b19b764fad51fcd87ccf621d428",
+        "parameter_sha256": "b234ec64139a857a774a58ff4ec45d6b4c7f9ab7c66fb9dd6a50dccdcd59e909",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "69a6a857270f740f64fc2a638e8cd9e785332b19b764fad51fcd87ccf621d428",
+      "independent_complex_FE": 31968
+    },
+    "M3600": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_3600.npz",
+          "sha256": "895b715509bec97c752623b4c82e09c41b85b052564c1a7eaa1f7f7e16753be5"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000014.pt",
+          "sha256": "f59d4d367312d24835278a81a0ad303ffaff6d53c1142d288489fa98b7a36616"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "b7cbf54511f6507ae1b3bfac4848596b3cf72c28227f2284ef1b11634934258f",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 89,
+        "mu": 156.55400615087663,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "92cc2e774003286a0e9dc3d73ada568160feafffa6f0494a6faae09e74ffa402",
+        "parameter_sha256": "b7cbf54511f6507ae1b3bfac4848596b3cf72c28227f2284ef1b11634934258f",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "92cc2e774003286a0e9dc3d73ada568160feafffa6f0494a6faae09e74ffa402",
+      "independent_complex_FE": 31968
+    },
+    "V8phase": {
+      "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+      "reference_exposed": false,
+      "selection": "historical final explanation control, not an initialization",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_dual_20260930T185704939802Z/frozen_checkpoint.npz",
+          "sha256": "5b39451155246cb26ad2a57640df331e3bf1c680bc44cdfd2fefac77f4048ade"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_phase_dual_20260930T185704939802Z/durable_checkpoints/committed_000652.pt",
+          "sha256": "9dc927c85c78f4e15baae7c0b09d029f7b2fd6e3598f1c4a8fdab49b6c27c499"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "c73f50aa6bae227993d2ba1331744bd315d0fc0d0d5b11193fcebb4a863a233e",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "LBFGS",
+      "optimizer_keys": [
+        "state",
+        "param_groups"
+      ],
+      "original_metadata": {
+        "stage": "LBFGS",
+        "state_kind": "final_committed",
+        "accepted_outer": "NOT_RETAINED",
+        "mu": "NOT_RETAINED",
+        "h0": "NOT_RETAINED",
+        "d_G": "NOT_RETAINED",
+        "d_ref": "NOT_RETAINED",
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "29f0061d2c60ace0b43348ce21966cfb837a888a032d80c63b8108e3fb78dc7f",
+        "parameter_sha256": "NOT_RETAINED",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "29f0061d2c60ace0b43348ce21966cfb837a888a032d80c63b8108e3fb78dc7f",
+      "independent_complex_FE": 31968
+    },
+    "V9phase": {
+      "source_sha": "ebff76949c78560187d836830483172faf0cfc9a",
+      "reference_exposed": false,
+      "selection": "historical final explanation control, not an initialization",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/frozen_checkpoint.npz",
+          "sha256": "b1aeef1e5cf28a9b4435b490147d4767d2f5ea9539e9707c66cdffe61432aef4"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v9_phase_gn_20261001T044907511599Z/durable_checkpoints/committed_000055.pt",
+          "sha256": "8f590ed900323368d13afab86b03c141a5a672951087371f3f25616a9d487062"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "9a96ed2ff57de9bcc5be97e4a0925f0e1b6707a5554555ff3644b5223db017e2",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "DampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "final_committed",
+        "accepted_outer": 54,
+        "mu": 8.702932021296286,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "e7eba864d34ef05178864640edd5b8501f1fcfb78dc6f242afd3e48e4e43315b",
+        "parameter_sha256": "9a96ed2ff57de9bcc5be97e4a0925f0e1b6707a5554555ff3644b5223db017e2",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "e7eba864d34ef05178864640edd5b8501f1fcfb78dc6f242afd3e48e4e43315b",
+      "independent_complex_FE": 31968
+    },
+    "V10phasefit": {
+      "source_sha": "ca0c48a96ef555f5b64c5fff17ea8ed5e13e17ef",
+      "reference_exposed": true,
+      "selection": "historical final explanation control, not an initialization",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_fit_gn_20261002T050305927664Z/frozen_checkpoint.npz",
+          "sha256": "0ea56d0babdaa402efe70bee8687d24baaec2e823db48e8f6b2472abac9a2f0d"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v10_phase_cached_fit_gn_20261002T050305927664Z/durable_checkpoints/committed_000008.pt",
+          "sha256": "7ac2e7ed27391d4d937886c891791ffc948d84a7fe0802c4188662f5ca79c56a"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "49363be8d3261b123a0707f5c5e4a1def195b03c910a00ca1d4140835f15edaa",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "DampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "final_committed",
+        "accepted_outer": 11,
+        "mu": 1.8184824371974175e-05,
+        "h0": 119.31063270452255,
+        "d_G": null,
+        "d_ref": 984.610790300809,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "71aca915bc7f65c41132c8997121d90b14955560f24acb259a6ba8c0e05fd4a3",
+        "parameter_sha256": "49363be8d3261b123a0707f5c5e4a1def195b03c910a00ca1d4140835f15edaa",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": true,
+        "features_reference_exposed": true,
+        "pde_only_solve": false
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "71aca915bc7f65c41132c8997121d90b14955560f24acb259a6ba8c0e05fd4a3",
+      "independent_complex_FE": 31968
+    },
+    "V6readout": {
+      "source_sha": "a2f6ea85a24cb5e7c233d266aaab9911fc695dcc",
+      "reference_exposed": true,
+      "selection": "historical final explanation control, not an initialization",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/frozen_checkpoint.npz",
+          "sha256": "ac78cb50e8f7525454e88555b9d510e243f461a0b3b40bda59321ee18ac18c68"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v6_frozen_feature_residual_20260930T100944546363Z/frozen_model_parameter_only.pt",
+          "sha256": "364e9986aa465e3e9253a91dd9111765150566fb672c27d4be8ec9e14d68edf6"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "NOT_RETAINED_PARAMETER_ONLY",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c"
+      },
+      "RNG": {
+        "torch_rng": "NOT_RETAINED",
+        "numpy_rng": "NOT_RETAINED",
+        "python_rng": "NOT_RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "39185b1d7d719be4a5106f9df3c9f7ab929ac48cee8b24eef5a7a7fc57c6919d",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "NOT_RETAINED",
+      "optimizer_keys": [],
+      "original_metadata": {
+        "stage": "NOT_RETAINED",
+        "state_kind": "parameter_only_reference_exposed_residual_readout",
+        "accepted_outer": "NOT_RETAINED",
+        "mu": "NOT_RETAINED",
+        "h0": "NOT_RETAINED",
+        "d_G": "NOT_RETAINED",
+        "d_ref": "NOT_RETAINED",
+        "native_sha256": "NOT_RETAINED",
+        "Gram_sha256": "NOT_RETAINED",
+        "moments_sha256": "NOT_RETAINED",
+        "complete_c_sha256": "NOT_RETAINED",
+        "parameter_sha256": "NOT_RETAINED",
+        "buffers_sha256": "NOT_RETAINED",
+        "reference_used_for_training": true,
+        "features_reference_exposed": true,
+        "pde_only_solve": false
+      },
+      "status": "RETAINED",
+      "c_sha256": "9930a5445cf490928b59576059d4a1a07808b32bb07cc4824f0e4401f975fb58",
+      "independent_complex_FE": 31968
+    },
+    "V2free": {
+      "source_sha": "19c725efd27ae5daedba8e77d2ad98375711bb71",
+      "reference_exposed": false,
+      "selection": "historical final explanation control, not an initialization",
+      "files": {
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v2_free_fe_dual_gram_diag_20260929T231238962991Z/frozen_checkpoint.npz",
+          "sha256": "baa58092c4a6fdf18420f0169f08042e323e26d5c1ef6d188ec622f20f500aab"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "NOT_RETAINED",
+      "buffers": "NOT_RETAINED",
+      "RNG": "NOT_RETAINED",
+      "parameters": "NOT_RETAINED",
+      "status": "RETAINED",
+      "c_sha256": "88815cee932e813af10f57561cdbc8e887e509000dcebef86ecf2f52e1916832",
+      "independent_complex_FE": 31968
+    },
+    "M90": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "files": {
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000015.pt",
+          "sha256": "f23895e78ea830e2b462a9ad3056e1c05223b4321f6a20126f6c872771de4f10"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "e5788bc53f66e433add19099932fabca8330dd86b5364e22b20024626a404a48",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 90,
+        "mu": 521.8466871695888,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "ad71f7a9fd741c53b246ed29d54302debe0251b10ee5d400871ba99e8f5517d9",
+        "parameter_sha256": "e5788bc53f66e433add19099932fabca8330dd86b5364e22b20024626a404a48",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "ad71f7a9fd741c53b246ed29d54302debe0251b10ee5d400871ba99e8f5517d9",
+      "independent_complex_FE": 31968
+    },
+    "M91": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "files": {
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000016.pt",
+          "sha256": "566fce51ab992eede9d8f71d651a518a7617335e1a7a74539251058c9ce5b488"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "204e8c2a9aa06ee9a2b4bf544ac98135f8ce600e73c131ba6c6595a958a71933",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 91,
+        "mu": 173.94889572319627,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "18e674147da9e0cb37db86577a931ce40a8bbb9bda144262e5f2b1e3321fde66",
+        "parameter_sha256": "204e8c2a9aa06ee9a2b4bf544ac98135f8ce600e73c131ba6c6595a958a71933",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "18e674147da9e0cb37db86577a931ce40a8bbb9bda144262e5f2b1e3321fde66",
+      "independent_complex_FE": 31968
+    },
+    "M92": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "files": {
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000017.pt",
+          "sha256": "66f37df841adea748788cdabe1fb124dc9c5bc6e5d5b95524533fed24aa693a7"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "62a5005796869e2638c4a268137c67fe456006a823caa15f3cc19c0617fc4c8f",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 92,
+        "mu": 579.8296524106543,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "99053cfea482a14c714a60ef59aaf59093a033388189875659245652a18aaf31",
+        "parameter_sha256": "62a5005796869e2638c4a268137c67fe456006a823caa15f3cc19c0617fc4c8f",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "99053cfea482a14c714a60ef59aaf59093a033388189875659245652a18aaf31",
+      "independent_complex_FE": 31968
+    },
+    "M93": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "files": {
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000018.pt",
+          "sha256": "b51f351bbfce25731f55995c1b3a0a370d5d39f0b94b6f2d95ce029df7ac8b06"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "12277fac54e50ad74f7eac66f6f7aaa762bd23052c3986b2be800a73c4e198d9",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 93,
+        "mu": 193.27655080355143,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "828c60844b5cfbc6ee71415d0d37545a33154ce6091f856d022d4c524acfffcc",
+        "parameter_sha256": "12277fac54e50ad74f7eac66f6f7aaa762bd23052c3986b2be800a73c4e198d9",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "828c60844b5cfbc6ee71415d0d37545a33154ce6091f856d022d4c524acfffcc",
+      "independent_complex_FE": 31968
+    },
+    "M94": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "files": {
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000019.pt",
+          "sha256": "b6357c67526b5e174b591624bfd435dddc335a35494c362e004eb814a13de70d"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "94c8588bf1ba5afb9c8cc0ad12d01ca6c1aeef34b5c59b9446ba7d604ff385e5",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 94,
+        "mu": 644.2551693451715,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "f6d56c77e63e0da75e0ecdacf62d331fb2083fb966cfeea9d9a33f13a97216e1",
+        "parameter_sha256": "94c8588bf1ba5afb9c8cc0ad12d01ca6c1aeef34b5c59b9446ba7d604ff385e5",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "f6d56c77e63e0da75e0ecdacf62d331fb2083fb966cfeea9d9a33f13a97216e1",
+      "independent_complex_FE": 31968
+    },
+    "M95": {
+      "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+      "reference_exposed": false,
+      "selection": "prespecified decline segment outer89->95, complete accepted step",
+      "files": {
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000020.pt",
+          "sha256": "12cfca530297a5e96eaca6c1e233454a54791105e35101c20ba90ff786e14983"
+        }
+      },
+      "retained_residual": "NOT_RETAINED",
+      "optimizer_state": "RETAINED",
+      "buffers": {
+        "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+        "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+        "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+        "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+      },
+      "RNG": {
+        "torch_rng": "RETAINED",
+        "numpy_rng": "RETAINED",
+        "python_rng": "RETAINED"
+      },
+      "parameters": "RETAINED",
+      "parameters_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a",
+      "parameter_order": [
+        {
+          "name": "envelopes.0.weight",
+          "shape": [
+            64,
+            3
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.0.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.2.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.weight",
+          "shape": [
+            64,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.4.bias",
+          "shape": [
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.weight",
+          "shape": [
+            6,
+            64
+          ],
+          "dtype": "torch.float64"
+        },
+        {
+          "name": "envelopes.6.bias",
+          "shape": [
+            6
+          ],
+          "dtype": "torch.float64"
+        }
+      ],
+      "optimizer_class": "MetricDampedGNState",
+      "optimizer_keys": [
+        "h0",
+        "mu",
+        "pc_max_builds",
+        "accepted",
+        "slow_streak",
+        "pc_builds",
+        "V",
+        "lam",
+        "last_pc_outer",
+        "parameter_metric"
+      ],
+      "original_metadata": {
+        "stage": "DAMPED_GN",
+        "state_kind": "accepted_outer",
+        "accepted_outer": 95,
+        "mu": 214.75172311505716,
+        "h0": 506073208.19371504,
+        "d_G": 0.0011981303656879406,
+        "d_ref": null,
+        "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+        "Gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+        "moments_sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e",
+        "complete_c_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+        "parameter_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a",
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "reference_used_for_training": false,
+        "features_reference_exposed": false,
+        "pde_only_solve": true
+      },
+      "torch_RNG_sha256": "cc5f3ee3a0068e6ba0f5040fea6a3223569ba46adf48d77a0d80f7caf649fa8a",
+      "status": "RETAINED",
+      "c_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+      "independent_complex_FE": 31968
+    }
+  },
+  "default_field_count": 12,
+  "extra_decline_field_reads": 6,
+  "source_sha": "521b9bd6efc387de0ba6ce414ea2bfd0abf3bb1a",
+  "no_training": true,
+  "optimizer_steps": 0,
+  "Gram_factor_created": false,
+  "Gsolve_count": 0,
+  "A_count": 0,
+  "AH_count": 0,
+  "ML_ABI": {
+    "torch": "2.7.1+cpu",
+    "dtype": "float64",
+    "CPU_only": true,
+    "threads": 1,
+    "interop_threads": 1
+  },
+  "reference_used_for_diagnostic": true,
+  "reference_used_for_training": false,
+  "pde_only_solve": false,
+  "production_initialization_allowed": false,
+  "official_candidate_results": false,
+  "worker_elapsed_seconds": 3.2019885029876605
+}

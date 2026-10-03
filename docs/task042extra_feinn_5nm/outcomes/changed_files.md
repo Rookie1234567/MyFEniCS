@@ -194,3 +194,18 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 
 建议依赖审阅顺序为 adapter及小测试→事务与runner→冻结复验/checker→证据；本轮没有合并授权。旧V1–V10正文在下方原样保留。
 
+
+# Review V11 后续 V12 文件级边界
+
+新增仅为保存态诊断，不提升普通solver默认或生产资格；所有旧task/review/response、参考和负结果不改。
+
+| 依赖组 | 组件/行为 | 验证与边界 |
+| --- | --- | --- |
+| production numerical/core | 无晋级项 | 原A/f/G、材料、完整FE/端口、q15及验收门不变 |
+| research-only | feinn_diagnostic_algebra/saved_state/saved_attribution/local_reachability/saved_field_diagnostics | 带符号二次型、稳定实投影、18保存场、两态16列与恢复见证；参考标签只分析，无optimizer/PDE新解 |
+| reusable runner/watchdog | attribution_campaign、workflow的opt-in stage/文件白名单、feinn_pilot与durable launcher | 5个独立dat、既有activation/60sPSI/树监督/原子保存；不改他人或共享配置，不循环资源重启 |
+| checker/benchmark | check_task42extra_v12、docs checker version12、5个新test模块 | 原向量/标量重算、非Hermitian/损坏记录、8-cell FE接线；合并24项未运行明确记录 |
+| compact evidence/docs | Response12、诊断/辅助角色、records、summary导航及总账/progress/tests/本页 | 新知识/限制/完整成本/真实source/hash；暂停NN主解，不复制传统求解器 |
+| do-not-merge | ignored PT/NPZ/native/G因子/缓存/全history/资源采样/tmux/browserprofile与截图 | 仅hash留Git，标签/权重不反馈Task042或.7nm，不以诊断投影作初始化 |
+
+建议依赖审阅顺序：小代数/冻结与接口tests→研究诊断→opt-in runner/inputs→checker→compact证据。每阶段真实source另记；本轮没有merge授权。

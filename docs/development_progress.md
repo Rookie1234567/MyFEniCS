@@ -3194,3 +3194,11 @@ A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度�
 
 [Response V11](task042extra_feinn_5nm/response_v11.md)与[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v11.json)。本批不新增参考、plain长训或监督拟合，停止同类尺度续扫，目标尺寸5nm/0.7nm和production/merge未授权。
 
+
+## 2026-10-03 Task42extra V12：保存退化归因与暂停裁决
+
+保持M5/p3/5nm/384hex、31968独立复FE和40端口，不新训练或重求参考。18保存场原恒等式最大3.83e-13；M89→95六次真实接受更新全部降低loss、增加G场误差，总G误差能量+6.29082，对偶残差能量−1.7034e-5。两态固定16列局部参考投影能去除97.41%/98.74% G误差能量，原残差投影仅0.161%/0.576%且使场更差；8见证参数立即恢复，标签不供求解。p4已有测试空间见证6A4，p3参考自身基线3.55236，候选3.91639/4.04011，不称G4资格。新交叉/邻层积分因无空闲核未运行。
+
+现有NN前缀15758.74s对完整direct672.46s的时间/峰值成本否决D1。`FEINN_MAIN_SOLVER_ON_HOLD`、`NO_VERIFIED_NN_INCREMENT`；原尺寸.7nm、十进制2TB/48h完整三维FE目标仍未资格化。只推本支线等review。
+
+[Response V12](task042extra_feinn_5nm/response_v12.md)、[诊断](task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md)、[成本](task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md)、[新账](task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json)；旧V1–V11失败/PSI/失联/重放全部保留。

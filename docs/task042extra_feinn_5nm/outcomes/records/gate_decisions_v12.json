@@ -1,0 +1,36 @@
+{
+  "schema": "task42extra.gates.v12",
+  "A": "SAVED_STATE_FREEZE_COMPLETE",
+  "B": "SAVED_FIELD_ATTRIBUTION_COMPLETE",
+  "B_identity_worst": 3.832790215082368e-13,
+  "B_limits": {
+    "A": 52,
+    "AH": 0,
+    "Gsolve": 52,
+    "G_matvec": 86
+  },
+  "C1": "FIXED_LOCAL_REACHABILITY_COMPLETE",
+  "C1_limits": {
+    "A": 42,
+    "AH": 2,
+    "Gsolve": 43,
+    "G_matvec": 86
+  },
+  "C1_reference_exposed_diagnostic_only": true,
+  "C2": "EXISTING_P4_TEST_SPACE_WITNESS_COMPLETE",
+  "new_FE_integrals": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "D0": "NOT_RUN_COST_VETO",
+  "D1": "NOT_RUN_COST_VETO",
+  "solver_decision": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "neural_increment": "NO_VERIFIED_NN_INCREMENT",
+  "pde_only_solver_qualified": false,
+  "official_candidate_results": false,
+  "production_initialization_allowed": false,
+  "training_steps": 0,
+  "new_reference_solves": 0,
+  "strict_original_residual_limit": 1e-06,
+  "field_complex_limit": 0.0001,
+  "power_energy_limit": 1e-05,
+  "channel_power_limit": 1e-06,
+  "benchmark_previously_seen": true
+}

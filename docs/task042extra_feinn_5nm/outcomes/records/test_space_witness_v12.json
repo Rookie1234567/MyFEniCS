@@ -1,0 +1,73 @@
+{
+  "no_training": true,
+  "no_parameter_updates": true,
+  "Gram_factor_created": false,
+  "Maxwell_factor_created": false,
+  "source_sha": "6c8440e991ba1a960f0c0556319f3cc60148d0e1",
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "official_candidate_results": false,
+  "production_initialization_allowed": false,
+  "status": "EXISTING_P4_TEST_SPACE_WITNESS_COMPLETE",
+  "rows": {
+    "p3reference": {
+      "native_absolute": 1.2937524473359405,
+      "native_denominator": 0.36419483787438633,
+      "native_relative": 3.5523634955588412
+    },
+    "M3600": {
+      "native_absolute": 1.426329810227308,
+      "native_denominator": 0.36419483787438633,
+      "native_relative": 3.9163921667644845,
+      "relative_to_p3_baseline_absolute": 0.32578255657845034,
+      "candidate_error_image_identity": 1.49440646525913e-13
+    },
+    "Mfinal": {
+      "native_absolute": 1.4713864784424293,
+      "native_denominator": 0.36419483787438633,
+      "native_relative": 4.040108001063766,
+      "relative_to_p3_baseline_absolute": 0.3303920256589549,
+      "candidate_error_image_identity": 1.5000660772136942e-13
+    }
+  },
+  "embedding": {
+    "p3reference": {
+      "MPC": 1.463756963538173e-16,
+      "common_field_relative": [
+        1.1905065367871495e-15,
+        7.859408156987916e-15
+      ],
+      "p3_MPC": 1.5819399948064589e-18
+    },
+    "M3600": {
+      "MPC": 1.412256877786324e-16,
+      "common_field_relative": [
+        1.1862672109027227e-15,
+        7.897022185293823e-15
+      ],
+      "p3_MPC": 1.321346694022172e-18
+    },
+    "Mfinal": {
+      "MPC": 1.4318984993893294e-16,
+      "common_field_relative": [
+        1.1872540171292318e-15,
+        7.918367618172594e-15
+      ],
+      "p3_MPC": 1.2577110976117624e-18
+    }
+  },
+  "adapter_seconds": 31.90438086807262,
+  "p4_reference_native": 4.2932621182862046e-12,
+  "A4": 6,
+  "AH4": 0,
+  "G4_created": false,
+  "p4_dual_norm_qualified": false,
+  "P34_source": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+  "trial_degree": 3,
+  "test_degree": 4,
+  "test_space_operator": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz",
+    "sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad"
+  },
+  "worker_elapsed_seconds": 34.1664450900862
+}

@@ -1,0 +1,100 @@
+{
+  "schema": "task42extra.independent-attribution-checker.v12",
+  "training_performed": false,
+  "official_candidate_results": false,
+  "B": {
+    "identity_worst": 3.832790215082368e-13,
+    "steps": [
+      {
+        "start": "M3600",
+        "end": "M90",
+        "field_change": 2.0775803383689357,
+        "loss_change": -0.002793018869722406,
+        "eta": 0.9755705432065359
+      },
+      {
+        "start": "M90",
+        "end": "M91",
+        "field_change": 0.0017547208857902064,
+        "loss_change": -8.208606794199942e-05,
+        "eta": 0.9999998920261552
+      },
+      {
+        "start": "M91",
+        "end": "M92",
+        "field_change": 2.1479895911583995,
+        "loss_change": -0.002277090365415745,
+        "eta": 0.9839286572886572
+      },
+      {
+        "start": "M92",
+        "end": "M93",
+        "field_change": 0.0015522685519666624,
+        "loss_change": -4.60122330848993e-05,
+        "eta": 0.9999998946965004
+      },
+      {
+        "start": "M93",
+        "end": "M94",
+        "field_change": 2.060560768069246,
+        "loss_change": -0.001886565098138576,
+        "eta": 0.9907628541522
+      },
+      {
+        "start": "M94",
+        "end": "M95",
+        "field_change": 0.0013821435932488413,
+        "loss_change": -2.3820532259157815e-05,
+        "eta": 0.9999998757826574
+      }
+    ],
+    "effective_rank": 5,
+    "no_global_condition_claim": true
+  },
+  "C1": {
+    "M3600": {
+      "field_energy_removed": 0.974072726506221,
+      "residual_projection_field_energy_removed": -0.1945511589317035,
+      "residual_energy_removed": 0.0016111430468324062,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH"
+    },
+    "Mfinal": {
+      "field_energy_removed": 0.9874183663877463,
+      "residual_projection_field_energy_removed": -0.11552596424950168,
+      "residual_energy_removed": 0.00575734462851398,
+      "classification": "LOCAL_OBJECTIVE_DIRECTION_MISMATCH"
+    }
+  },
+  "independent_FE_integrals": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "passed": false
+  },
+  "C2": {
+    "status": "RAW_SCALARS_RECOMPUTED",
+    "p3_baseline_relative": 3.5523634955588412,
+    "candidate_rows": {
+      "p3reference": {
+        "native_absolute": 1.2937524473359405,
+        "native_denominator": 0.36419483787438633,
+        "native_relative": 3.5523634955588412
+      },
+      "M3600": {
+        "native_absolute": 1.426329810227308,
+        "native_denominator": 0.36419483787438633,
+        "native_relative": 3.9163921667644845,
+        "relative_to_p3_baseline_absolute": 0.32578255657845034,
+        "candidate_error_image_identity": 1.49440646525913e-13
+      },
+      "Mfinal": {
+        "native_absolute": 1.4713864784424293,
+        "native_denominator": 0.36419483787438633,
+        "native_relative": 4.040108001063766,
+        "relative_to_p3_baseline_absolute": 0.3303920256589549,
+        "candidate_error_image_identity": 1.5000660772136942e-13
+      }
+    },
+    "not_qualified_dual_norm": true
+  },
+  "decision": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "neural_increment": "NO_VERIFIED_NN_INCREMENT"
+}

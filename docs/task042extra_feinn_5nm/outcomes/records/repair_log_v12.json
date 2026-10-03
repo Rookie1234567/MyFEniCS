@@ -1,0 +1,37 @@
+{
+  "local_repair_limit": 2,
+  "local_repairs_used": 2,
+  "rows": [
+    {
+      "failure": "small weighted QR falsely rejected cancellation remainder as non-Hermitian energy",
+      "hypothesis": "tiny post-cancellation denominator ignored original operation scale",
+      "change": "use original normalized-column operation bound for two-pass remainder and reconstruction; keep invalid input rejection",
+      "test": "13 targeted tests passed after repair; all original failed check costs retained",
+      "retry": "no training/PDE replay; algebra fixture only",
+      "cost_scope": "existing repair/test resource entries, never add twice"
+    },
+    {
+      "failure": "B initial worker NOT_STARTED: no audited idle physical core",
+      "hypothesis": "shared resource window changed; no numerical bug",
+      "change": "one bounded new original admission audit found qualified window; thresholds unchanged",
+      "test": "tmp/task42extra/v12_fresh_window.json",
+      "retry": "B attempt2 only, no source/numerics change; old61.42998897493817s retained"
+    },
+    {
+      "failure": "B FE integral worker NOT_STARTED: no audited idle physical core",
+      "hypothesis": "independent shared window unavailable",
+      "change": "none; no second resource readmission",
+      "test": "original run summary",
+      "retry": "NOT_RUN; continue independent C1/C2 and D0/E"
+    },
+    {
+      "failure": "C2 c is not a file in archive, worker exited before A4",
+      "hypothesis": "V8 qualified p4 schema has c_scattered, alpha_scattered and alpha_total",
+      "change": "explicit scattered-master loader, hash/order/dtype guards, preserve embedding record and enforce600s restore bound",
+      "test": "5 schema/whitelist/damaged-layout tests, junit source6c8440e9",
+      "retry": "C2 attempt2 complete,6 A4, no new solve/factor",
+      "failed_charged_seconds": 95.03645780205261,
+      "affected_old_evidence": "only first V12 C2 wrapper failure; V1-V11 unchanged"
+    }
+  ]
+}

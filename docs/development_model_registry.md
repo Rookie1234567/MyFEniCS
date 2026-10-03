@@ -2010,3 +2010,20 @@ A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度�
 
 M5/5nm/384hex/h1.25/p3q15，31968独立复FE+40端口，8966实参数；两条无标签同phase75分叉。完整代价见[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v11.json)，所有候选功率diagnostic；旧参考与其他Task结果保留。
 
+
+## 3.44.11 Task42extra Review V11 后续：V12保存场诊断
+
+模型仍为M5：5nm、384hex、p3/q15、31968独立复FE、40通道。没有新求解候选；表中E/curl与功率复用原独立验证，原native/G/loss新重算，都是diagnostic。局部参数投影只问“附近能生成怎样的场”，不输出可用新权重。
+
+| 保存状态 | native | 散射E | 散射curl/H | E_G | loss |
+| --- | --- | --- | --- | --- | --- |
+| phase75 | 0.978821198632 | 0.362017880269 | 0.362633734179 | 0.362618575540 | 0.234670761940 |
+| M3600（完整outer89） | 0.885852183253 | 0.093300276471 | 0.093541515196 | 0.093535579895 | 0.094314671576 |
+| Mfinal（完整outer95） | 0.846541904928 | 0.122944519716 | 0.123039105854 | 0.123036776653 | 0.087206078409 |
+| Ifinal | 0.984363547288 | 0.159601980920 | 0.160305545482 | 0.160288250677 | 原字段见专题 |
+
+Mfinal R/T/A_balance/A_volume=0.795461317421/0.025047081096/0.179491601483/0.130263369190；R00_s/p/total=0.795391017878/1.98764166035e-6/0.795393005520，独立能量差0.049228232293，全部非official。原方程1e-6、场/通道1e-4、功率/能量1e-5未过。阶段性场改善保留，六步退化未删。
+
+A冻结12+6；B/C1各一次研究用G因子，A52/Gsolve52和A42/AH2/Gsolve43、JVP36/VJP8；参考投影97.41%/98.74%与残差投影0.161%/0.576%目标分歧。无新G4或Maxwell因子。C2的p3参考p4欧氏测试基线3.55236，候选3.91639/4.04011，6A4、嵌入≤7.92e-15；不能把基线全部归因于NN。新E/curl交叉/固定邻层积分资源未运行，局部schema修复/费用保留。完整资源/峰值/source/hash见[run](task042extra_feinn_5nm/outcomes/records/run_index_v12.json)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json)。
+
+NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_VERIFIED_NN_INCREMENT`。最终原尺寸.7nm、十进制2TB整机和48h完整工作流不由M5或p5替代，h/端口精度边界仍在。[Response](task042extra_feinn_5nm/response_v12.md)、[归因](task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md)、[辅助裁决](task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md)；无master合并。

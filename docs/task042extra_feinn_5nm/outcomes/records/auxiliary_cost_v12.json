@@ -1,0 +1,44 @@
+{
+  "schema": "task42extra.auxiliary-cost-veto.v12",
+  "baseline_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_e3_reference_20260929T180549681297Z/run_summary.json",
+    "sha256": "223f8bae6248e7c19fe94da7495ff0eb3539e587fc7deac2e7a52d859f0c9eca",
+    "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9"
+  },
+  "baseline_complete_seconds": 672.4628952851053,
+  "baseline_peak_tree_RSS_bytes": 1245822976,
+  "nn_prefix_lower_bound_seconds": 15758.74009511806,
+  "nn_preparation_inference_completer_validation_output_additional_seconds": "NONNEGATIVE_NOT_MEASURED_AS_NEW_COMPLETE_PIPELINE",
+  "time_gain_threshold_seconds": 537.9703162280842,
+  "time_gain_veto": true,
+  "prefix_to_full_baseline_ratio": 23.43436374796084,
+  "D1_status": "NOT_RUN_COST_VETO",
+  "no_new_completer_or_solver_created": true,
+  "memory_lower_bound_from_historical_NN_workflow_bytes": 2576683008,
+  "memory_gain_threshold_bytes": 996658380.8000001,
+  "memory_gain_veto": true,
+  "supervised_saved_model": {
+    "reference_exposed": true,
+    "E_G": 0.010022747742,
+    "scattered_L2": 0.0095579252068,
+    "scaled_curl": 0.010034208799,
+    "field_gate": 0.0001,
+    "qualified": false
+  },
+  "storage_payload": {
+    "real_parameters_bytes": 71728,
+    "coordinate_and_phase_buffers_bytes": 96,
+    "independent_complex_FE_bytes": 511488,
+    "full_FE_storage_bytes": 544800,
+    "complex_ports_bytes": 640,
+    "weight_bytes_are_not_workflow_RSS": true
+  },
+  "amortization": {
+    "actual_validated_use_case": false,
+    "formula": "N_break_even=T_prefix/(T_baseline-T_infer-T_complete-T_validate) if denominator>0; a 20% gain needs T_prefix/(0.8*T_baseline-T_per_query) with positive denominator",
+    "best_impossible_zero_per_query_20percent_lower_bound_N": 29.292954684951056,
+    "new_dataset_or_queries_run": false
+  },
+  "decision": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "neural_increment": "NO_VERIFIED_NN_INCREMENT"
+}

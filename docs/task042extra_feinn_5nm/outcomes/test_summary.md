@@ -188,3 +188,22 @@ lint失败两个未使用名称已局部修复，成本保留。以上是本地�
 
 首次误选不存在的测试文件得到 exit4，随后改为存在的 targeted selector；不重装环境。两次轻量 checker 启动前 CPU Gate 拒绝，worker 未启动；带只读诊断的原 Gate 通过后，checker 定位并修复 compact JSON 排版体积问题。所有失败/准入/修复成本保留。仅本地测试，不声称 CI。
 
+
+# Review V11 后续 V12 定向资格
+
+本批新数学先过非Hermitian复数二次型交叉、实参数加权QR/SVD、重复/近相关/尺度列和损坏输入；两个保存态另以原torch.func JVP/AD VJP和两步有限差分配对。没有新训练、四态缓存benchmark、参考求解或full pytest。
+
+| 范围 | 实际结果 | 口径 |
+| --- | --- | --- |
+| 原代数+阶段/预算白名单 | 13通过 | source521b9，未变逻辑资格复用；首次取消余项错误及费用保留 |
+| 保存场接口+8-cell FE新接线 | 4+1通过 | sourcebc4c；独立常复场积分、固定区域/顺序、计数与损坏hash |
+| p4散射参考schema修复 | 5通过 | source6c844；明确c_scattered，拒绝错字段/端口代替master |
+| 原字段checker+损坏记录fixture | 真实B/C1/C2重算通过；6fixture通过 | 无训练/G逆/FE新求解；错误loss、identity、cap、spectrum均拒绝 |
+| 合并24项最后invocation | worker未启动，RESOURCE_WINDOW_UNAVAILABLE | 不称24/24通过；分组件资格及最终schema/checker测试分别绑定 |
+| 新E/curl交叉/邻层积分 | 资源未运行 | 不以旧区域或C2嵌入配对替代该新增积分 |
+| 两态局部导数/8个恢复见证 | JVP/VJP差0，实伴随≤7.87e-18，FD≤2.40e-9；参数/buffers恢复 | fixed real directions，reference exposed diagnostic only |
+| p4测试空间 | 6 A4，旧参考4.29e-12，映射≤7.92e-15 | c字段错误首尝试保留；无G4/装配/新solve |
+
+最终Ruff/compileall只覆盖本批改动源码，新Review/三新页与追加节的parser和实际GitHub视觉分列。原始source/日志与Junit见[tests](records/targeted_tests_v12.json)，真实vector重算见[checker](records/independent_checker_v12.json)，[资源](records/resource_costs_v12.json)和[render](records/render_check_v12.json)不合成PDE PASS；无CI声明。
+
+V12收口实测：16个本批Python源文件Ruff和compileall均通过；9个选定新页/新增节本地parser通过（30表格）。GitHub真实DOM/截图资格另以render记录为准。

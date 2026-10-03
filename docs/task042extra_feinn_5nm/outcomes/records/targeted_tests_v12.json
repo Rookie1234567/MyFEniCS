@@ -1,0 +1,251 @@
+{
+  "schema": "task42extra.targeted-tests.v12",
+  "whole24item_invocation": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "worker_started": false,
+    "reason": "No audited unoccupied physical core",
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v12_E_final_targeted_20261003T002306777776Z",
+    "elapsed_seconds": "NOT_RETAINED",
+    "included_in_conservative_batch_wall_bound": true
+  },
+  "components": {
+    "algebra_and_inventory": {
+      "passed": 13,
+      "source": "521b9bd6efc387de0ba6ce414ea2bfd0abf3bb1a",
+      "logic_reused_unchanged": true
+    },
+    "saved_field_interfaces": {
+      "passed": 4,
+      "source": "bc4c2026f8a9510c90424d24f1808a288413bba4"
+    },
+    "FE_eight_cell_fixture": {
+      "passed": 1,
+      "source": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+      "unchanged_mapping_integrator_reused": true
+    },
+    "p4_schema": {
+      "passed": 5,
+      "source": "6c8440e991ba1a960f0c0556319f3cc60148d0e1",
+      "junit": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v12_schema_final_junit.xml",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "sha256": "fab3fe33c2892a7e6fa3263d9b87aad9136e9ed0a820635c5dffb01dc7075e31"
+      }
+    },
+    "independent_checker_positive_and_corrupt": {
+      "passed": 6,
+      "source_file": "benchmarks/check_task42extra_v12.py",
+      "actual_component_source_file_sha256": "7d43bf4134a99d2580e2becb4132b11aa7961b28f52ae4956d856defb542b0d2",
+      "junit": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v12_checker_junit.xml",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "sha256": "054524de102cad55977329dd82c42792f5300801bc59a8078a493cf70d518673"
+      }
+    }
+  },
+  "full_pytest_run": false,
+  "old_four_state_benchmark_rerun": false,
+  "reference_resolved": false,
+  "CI_claimed": false,
+  "source_quality": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v12_source_quality.json",
+    "sha256": "7844fbb23086f9ae9cb4bab41de89a405abe517a63db94d12f50f82a8c662ce5",
+    "record": {
+      "scope": "only V12 changed and new Python sources",
+      "files": [
+        {
+          "path": "benchmarks/check_task42extra_docs_v3.py",
+          "sha256": "4c2461c7244d4c3f49a0469e56a2aefda5e4b4e985b4830bc79846cf251f962a"
+        },
+        {
+          "path": "benchmarks/check_task42extra_v12.py",
+          "sha256": "7d43bf4134a99d2580e2becb4132b11aa7961b28f52ae4956d856defb542b0d2"
+        },
+        {
+          "path": "scripts/launch_task42extra_durable.py",
+          "sha256": "a8c23c67d097434e0148165617f622dad97a9019cf3313a21ed858c49e9ffdff"
+        },
+        {
+          "path": "src/io/feinn_pilot.py",
+          "sha256": "e470bd7e465b9dd3535c172f79d2232891db8d8b980afde10efed76999db975d"
+        },
+        {
+          "path": "src/runners/feinn_attribution_campaign.py",
+          "sha256": "db3bcf74a0a0453f2c51f8d622e68cbec053717f1837ec49e552551943c9a50f"
+        },
+        {
+          "path": "src/runners/feinn_workflow.py",
+          "sha256": "0a82e43ca25d7c0be234ee11bdd5bacc53e5caba16ef3ba7ac7464283d02704b"
+        },
+        {
+          "path": "src/solvers/feinn_diagnostic_algebra.py",
+          "sha256": "96d660557104a6571dda8c9325324a699aab93c5ce6fedf5dc4661a9706c9712"
+        },
+        {
+          "path": "src/solvers/feinn_local_reachability.py",
+          "sha256": "7038e92d4d0202f1cd8a2da00b3147aacac4eac1e3885b2c43aeed6337d169de"
+        },
+        {
+          "path": "src/solvers/feinn_saved_attribution.py",
+          "sha256": "05ed6f62e62c1854e4a52919bb57aac7ae6d5cf7d10ba7f7ddff69ae39f9cedc"
+        },
+        {
+          "path": "src/solvers/feinn_saved_field_diagnostics.py",
+          "sha256": "5009a686462d61c0b613bc54d66a9800834d25fb9f9a5095e1a752cbb590d5a6"
+        },
+        {
+          "path": "src/solvers/feinn_saved_state.py",
+          "sha256": "12e8d81dbfe3fb68620dc2e5bfb3ab0c0b9fa531171375427e74a697dad8af45"
+        },
+        {
+          "path": "src/test/test_feinn_attribution_checker.py",
+          "sha256": "5567fb0b55da665c9767efe662cb764fb603868e50ed8529125cd90d00d11b57"
+        },
+        {
+          "path": "src/test/test_feinn_attribution_inventory.py",
+          "sha256": "35dab1578dbb6c292241d32628023cbcf977af0224a6eef8c66c0361f8dd3c04"
+        },
+        {
+          "path": "src/test/test_feinn_diagnostic_algebra.py",
+          "sha256": "410b496c584f72792ed63796bde54e93f0d10b58d8e5c637008649899a2fdc88"
+        },
+        {
+          "path": "src/test/test_feinn_saved_diagnostics.py",
+          "sha256": "92335d03f7e79b2ad7c4f29f60033340e393479f570fefb29496b9b2421967e6"
+        },
+        {
+          "path": "src/test/test_feinn_saved_diagnostics_fe.py",
+          "sha256": "b75e82f4c2a9fd12cdde7523f4d8a1d27765a5e1c1415078a91ce1288a5e137e"
+        }
+      ],
+      "records": [
+        {
+          "name": "ruff",
+          "returncode": 0,
+          "seconds": 0.044455357012338936,
+          "log": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v12_ruff.log",
+          "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+        },
+        {
+          "name": "compileall",
+          "returncode": 0,
+          "seconds": 0.06538016197737306,
+          "log": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v12_compileall.log",
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "passed": true
+    }
+  },
+  "local_markdown": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v12.json",
+    "sha256": "2b23ad1cef1a7010f49bc1b90d3e3dc50c6fb5bb324f05f40d6378a3bf6609ef",
+    "record": {
+      "schema": "task42extra.markdown-local-check.v12",
+      "status": "LOCAL_MARKDOWN_PASS",
+      "scope": "new Review V11 and only new V12 sections; historical Markdown contracts reused",
+      "pages": [
+        {
+          "path": "docs/task042extra_feinn_5nm/review_report_v11.md",
+          "sha256": "ed7dc18b345d56951529041af7eb29d17c41b8f6fffc289e2947eeb1a9cef175",
+          "checked_scope": "entire page",
+          "markdown_tables": 12,
+          "parsed_tables": 12,
+          "math_fences": 3,
+          "links": 56
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/response_v12.md",
+          "sha256": "c187a1feb0c4c5d8acbb7eaf8af7447ca53ef589179f858c039418f4f467f19b",
+          "checked_scope": "entire page",
+          "markdown_tables": 6,
+          "parsed_tables": 6,
+          "math_fences": 0,
+          "links": 10
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md",
+          "sha256": "fef913d1859832146bffd72c226ba5389ed0b720ed700ff96ad0d7795e12e4f9",
+          "checked_scope": "entire page",
+          "markdown_tables": 7,
+          "parsed_tables": 7,
+          "math_fences": 1,
+          "links": 13
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md",
+          "sha256": "9ad3c743a89d630ee14b355a2eb10bbf12a9b797ae7a2228f0061607c2111dc8",
+          "checked_scope": "entire page",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 3
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "b313b71e3d4bd4003df4629ac1b5a5af80a42d56185bbd9cd8c83e5b8bade0fe",
+          "checked_scope": "Task42extra Review V11 后续：V12",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 6
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "sha256": "9afdfb2db88e82fe3cf48230d7f56616f3e34816718249574269d2d5e257af0e",
+          "checked_scope": "Review V11 后续 V12 定向资格",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 4
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "sha256": "32b3cfe336305108e0101a1476444ce3166f41170f25645caeb70e616a5c095c",
+          "checked_scope": "Review V11 后续 V12 文件级边界",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 0
+        },
+        {
+          "path": "docs/development_progress.md",
+          "sha256": "48ea6ee234176bde8ee490e78cdc1e631fee63918be169f213304ccd5206c7ed",
+          "checked_scope": "2026-10-03 Task42extra V12",
+          "markdown_tables": 0,
+          "parsed_tables": 0,
+          "math_fences": 0,
+          "links": 4
+        },
+        {
+          "path": "docs/development_model_registry.md",
+          "sha256": "67f65a963487661f10d529bd85918d6fcc0c160997a2fbe0d17bb2c31af9efd1",
+          "checked_scope": "3.44.11 Task42extra Review V11 后续",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 5
+        }
+      ]
+    }
+  },
+  "documentation_aggregation_notes": [
+    {
+      "status": "draft CSV enrichment aborted before write",
+      "reason": "H_code source key differs from H error-summary key",
+      "change": "explicit documented alias for the same physical H_code field",
+      "no_new_numeric_stage_or_artifact_replay": true,
+      "cost": "inside whole batch wall bound"
+    },
+    {
+      "status": "precommit whitespace check caught default CSV CRLF before commit",
+      "change": "Linux LF only; all parsed fields verified identical",
+      "numeric_artifacts_changed": false,
+      "cost": "whole batch wall bound"
+    }
+  ]
+}
