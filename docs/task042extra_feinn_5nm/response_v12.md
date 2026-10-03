@@ -81,6 +81,8 @@ B/C1各一个RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR，完整setup/solve/release收费
 
 分组件已有绑定source/hash的通过证据；最后合并24项的调用因没有空闲物理核而未启动，明确`NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE`，没有把它写成24/24通过，也没有原样重跑。独立checker的新6项正/损坏记录测试及原向量重算分别完成。
 
+GitHub有限视觉检查在已发布`cad9fe635199d5c22e83a0698b7412e349449aaf`上取得Review V11和本页的真实DOM/截图：18表列数一致，review三组公式均实际可见，关键结果/资源/宽表右侧截图已检查，记录`GITHUB_VISUAL_SPOTCHECK_PASS`。浏览器完整收费42.048241s、整树峰1800376320B（低于2GiB）、自身swap0并清场；旧轮次渲染阻塞不改写。后续仅补费用/hash/本条证据文字，有限截图不冒称最终所有页面或历史的全量视觉通过。
+
 [run/source/hash](outcomes/records/run_index_v12.json)、[完整账](outcomes/records/resource_costs_v12.json)、[原字段Gate](outcomes/records/gate_decisions_v12.json)、[独立checker](outcomes/records/independent_checker_v12.json)、[修复](outcomes/records/repair_log_v12.json)、[依赖组manifest](outcomes/records/publication_manifest_v12.json)。同步summary、progress、模型总账、tests和changed_files；大数组/PT/optimizer/完整history留ignored。
 
 原尺寸.7nm、十进制2TB整机和48h完整工作流程目标不变，未资格化。下一步为暂停FEINN主解及当前初始化探索；新的无标签联合改进干预与非NN对照须由主控预登记，不把本次参考梯度接入训练。本批只推送精确FEINN分支，清场后等待审阅，不合并master。

@@ -5,15 +5,15 @@
   "review_optional_rejected_worker_started": false,
   "review_optional_rejected_charge_seconds": "NOT_RETAINED",
   "unknown_historical_tail_not_deleted": true,
-  "raw_stage_and_light_charged_seconds": 1017.2099986999528,
-  "new_batch_wall_elapsed_upper_bound_seconds": 3303.168151,
+  "raw_stage_and_light_charged_seconds": 1061.2622088929638,
+  "new_batch_wall_elapsed_upper_bound_seconds": 3599.66334,
   "wall_bound_includes_all_preparation_model_wait_IO_git_and_docs": true,
-  "unitemized_current_auxiliary_upper_bound_seconds": 2285.958152300047,
-  "new_conservative_seconds": 3303.168151,
+  "unitemized_current_auxiliary_upper_bound_seconds": 2538.4011311070362,
+  "new_conservative_seconds": 3719.66334,
   "limit_seconds": 21600,
   "saving_reserve_seconds": 1800,
-  "project_known_lower_bound_seconds": 155339.24765735015,
-  "project_conservative_accounted_seconds": 157625.2058096502,
+  "project_known_lower_bound_seconds": 155383.29986754316,
+  "project_conservative_accounted_seconds": 158041.7009986502,
   "unmeasured_historical_tail_status": "NOT_RETAINED_NOT_ERASED_FROM_LEDGER",
   "entries": [
     {
@@ -461,11 +461,39 @@
         "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v12_E_source_quality_20261003T003052732072Z/summary.json",
         "sha256": "d57a36af0a03701196fccc3a4b4cf55ac8899a2ecad40481b7da5b687a73f8fb"
       }
+    },
+    {
+      "run_id": "v12_E_markdown_final_20261003T003713747454Z",
+      "stage": "light",
+      "group": "E",
+      "charged_launcher_seconds": 2.003969311947003,
+      "classification": "COMPLETED",
+      "peak_tree_RSS_bytes": 61906944,
+      "self_swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v12_E_markdown_final_20261003T003713747454Z/summary.json",
+        "sha256": "be117b6c88facb4d18dadbf6be7f4083d635d69bb244a7f7df5c0d61e4d884fc"
+      }
+    },
+    {
+      "run_id": "v12_E_render_20261003T003452607895Z",
+      "stage": "light",
+      "group": "E",
+      "charged_launcher_seconds": 42.048240881063975,
+      "classification": "COMPLETED",
+      "peak_tree_RSS_bytes": 1800376320,
+      "self_swap_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v12_E_render_20261003T003452607895Z/summary.json",
+        "sha256": "23f8b6843575f8a593ab1b80d70dff9f338c0b9064a327dbace65aa1c65cb642"
+      }
     }
   ],
   "memory_scope": "simultaneous own process-tree sampled RSS; management tmux identities separate",
   "costs_scope": "parent launcher includes worker time; child/setup timers are not added again",
-  "budget_snapshot_UTC": "2026-10-03T00:34:12.168151+00:00",
+  "budget_snapshot_UTC": "2026-10-03T00:39:08.663340+00:00",
   "light_preflight_rejected_without_summary": [
     {
       "run_id": "v12_E_final_targeted_20261003T002306777776Z",
@@ -512,8 +540,8 @@
       {
         "phase": "D0 static cost analysis and E independent checks/docs/publication",
         "start": "2026-10-03T00:22:30Z",
-        "end": "2026-10-03T00:34:12.168151+00:00",
-        "upper_seconds": 702.168151,
+        "end": "2026-10-03T00:39:08.663340+00:00",
+        "upper_seconds": 998.66334,
         "limit_seconds": 2400
       }
     ],
@@ -552,5 +580,24 @@
       "rss_before_release_bytes": 3231465472,
       "rss_after_release_bytes": 2720362496
     }
-  }
+  },
+  "final_own_clearance": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v12_final_clearance.json",
+    "sha256": "4032f99270046934b183b711ec01aa06de6059e699c3286179ff0d4b049b84eb",
+    "own_active_launcher_watchdog_worker_browser": [],
+    "numerical_lock": "FREE",
+    "clearance_scope": "proc token identity and own nonblocking flock; no neighbour changes"
+  },
+  "source_vs_evidence_HEAD": {
+    "authority_release": "bafc9570110bbdcd28de455e9cd4552f3cd80215",
+    "numeric_sources": [
+      "521b9bd6efc387de0ba6ce414ea2bfd0abf3bb1a",
+      "bc4c2026f8a9510c90424d24f1808a288413bba4",
+      "6c8440e991ba1a960f0c0556319f3cc60148d0e1"
+    ],
+    "publication_first": "cad9fe635199d5c22e83a0698b7412e349449aaf"
+  },
+  "bounded_final_publication_reserve_seconds": 120,
+  "publication_reserve_kind": "conservative accounting allowance, NOT_MEASURED_WORKER_TIME; includes final commit/push/exact tracking/clearance and terminal delivery",
+  "finalization_must_end_before_snapshot_plus_reserve": true
 }

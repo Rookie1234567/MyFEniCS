@@ -3201,4 +3201,6 @@ A/B及唯一一对C已执行，实际终态已冻结并独立复验。分组度�
 
 现有NN前缀15758.74s对完整direct672.46s的时间/峰值成本否决D1。`FEINN_MAIN_SOLVER_ON_HOLD`、`NO_VERIFIED_NN_INCREMENT`；原尺寸.7nm、十进制2TB/48h完整三维FE目标仍未资格化。只推本支线等review。
 
+V12发布后有限GitHub视觉抽查已取得新Review V11及Response V12的实际DOM和截图；18表列数一致，三组review公式和关键结果/资源宽表可读。本轮`GITHUB_VISUAL_SPOTCHECK_PASS`单列，旧渲染失败不改写。
+
 [Response V12](task042extra_feinn_5nm/response_v12.md)、[诊断](task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md)、[成本](task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md)、[新账](task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json)；旧V1–V11失败/PSI/失联/重放全部保留。

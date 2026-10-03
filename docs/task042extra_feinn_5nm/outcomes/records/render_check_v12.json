@@ -1,6 +1,376 @@
 {
-  "status": "PENDING_FINITE_BROWSER_CHECK",
-  "local_markdown_parser": "PENDING",
-  "github_visual": "PENDING",
-  "not_visual_PASS": true
+  "schema": "task42extra.rendered-view.v12",
+  "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+  "checked_publication_commit": "cad9fe635199d5c22e83a0698b7412e349449aaf",
+  "browser": {
+    "name": "firefox",
+    "version": "157.0",
+    "platform": "linux",
+    "native_isolated_profile": true
+  },
+  "scope": "only new Review V11 and Response V12; selected actual screenshots visually inspected, all table columns checked from actual DOM; no historical rerender",
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/cad9fe635199d5c22e83a0698b7412e349449aaf/docs/task042extra_feinn_5nm/review_report_v11.md",
+      "reviewed_payload_sha256": "ed7dc18b345d56951529041af7eb29d17c41b8f6fffc289e2947eeb1a9cef175",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v11.md at cad9fe635199d5c22e83a0698b7412e349449aaf · Rookie1234567/MyFEniCS · GitHub",
+      "article_present": true,
+      "ready": "complete",
+      "fonts": "loaded",
+      "tables": 12,
+      "table_row_column_counts": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "all_table_columns_consistent": true,
+      "math_count": 3,
+      "visual_status": "VISUAL_SPOTCHECK_PASS",
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_top.png",
+          "sha256": "914a3d4e077b3de458848c8d7fa33b5f079e4607cfd46a3f5635f3267b5c0e53",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_00.png",
+          "sha256": "a28abaed829ac9a1769e7a1e1f9ba47da659035e871f14af34c425470d76b857",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_01.png",
+          "sha256": "42b94f3b6fd80c28bd291a2a7908411caaf3036a0f2b00fff33cd142d7b84940",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_02.png",
+          "sha256": "6ea1762edf3f415a77ac5bf8b7c3b2cd5182c07c6996c9c9b4e08f66965c16be",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_03.png",
+          "sha256": "0179707fea6436e5227630468607803652f815af042255d4b0f95b686060f3e7",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_04.png",
+          "sha256": "e083feb1e8bc8e1366f98144bd819a499d3084b93937f5357c7891d483329aed",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_05.png",
+          "sha256": "09870da66a6c3a1cafa4973e2e69764da20c78c3ae80cfb133cdccc0355930ce",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_06.png",
+          "sha256": "11785c9b654aad43c07bed1f0f5e2e042b4d4924bcfadabb421e3db489d7e5ae",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_07.png",
+          "sha256": "5c7825514bca3b53e502a9cb4c2627bf33deeb2f626b60d418396ea89450dbaf",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_08.png",
+          "sha256": "ca2b40fb9f3cf8968b1c82d128687ece55051e85a839862378f97dd882bf6087",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_09.png",
+          "sha256": "3d54822da549a3d362882682e99dca9d4a7cd27758e866d9df07357ff7701e12",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_10.png",
+          "sha256": "cf78918ff34fefa2c262f0a56c09945c95202c2d85545baf855604e8b43fd38c",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_table_11.png",
+          "sha256": "cce332ff87824d9eb3aa0f2a30df7972a1ee37b0841bd1515a10ef134428925b",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_math-renderer_00.png",
+          "sha256": "2cbdfbda5969acd9745c5bd7cb7b56f3b7f81733737d6b3d5cfc53e7dd405bb1",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_math-renderer_01.png",
+          "sha256": "18d467ea54cf11ef94bc9b013940ef987deb83d70782014ad6c3e4d7dd69bd9e",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/00_math-renderer_02.png",
+          "sha256": "8e7822d7f6a1454b452aabe364c64309a829d0ed835361e4a075521f05eace5b",
+          "visually_reviewed_by_model": true
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/cad9fe635199d5c22e83a0698b7412e349449aaf/docs/task042extra_feinn_5nm/response_v12.md",
+      "reviewed_payload_sha256": "c32af4843cb437a31a15bd72a0d07e7fed2f41a975b26041df2328102f449b1c",
+      "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v12.md at cad9fe635199d5c22e83a0698b7412e349449aaf · Rookie1234567/MyFEniCS · GitHub",
+      "article_present": true,
+      "ready": "complete",
+      "fonts": "loaded",
+      "tables": 6,
+      "table_row_column_counts": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          9,
+          9,
+          9,
+          9,
+          9,
+          9
+        ],
+        [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "all_table_columns_consistent": true,
+      "math_count": 0,
+      "visual_status": "VISUAL_SPOTCHECK_PASS",
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_top.png",
+          "sha256": "5391c2d0c6e18a1b83289181d3748af33bce18571567843065e2b4b02a98fc6e",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_00.png",
+          "sha256": "97fbbc0512bcb3a644d017e3c75496f8c72d055fa0ef1432ddd4ff420f11a992",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_01.png",
+          "sha256": "9dd238286d9dad57657f8d3945270688f867a77eee78b6594e97a0ae5afb5c04",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_02.png",
+          "sha256": "e4e4b8faed3162e883caa64b95ae1128e45836eea5bd5f4e90a44723b0f50b90",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_03.png",
+          "sha256": "61ac814b0736bf8f2b700c23d063284710ff4dcd5c6ab0cabb48e91658644b1c",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_03_right.png",
+          "sha256": "aacb60892bdae11ed578f28b97328dff0edef1991637f78c668d05b2f0f4014c",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_04.png",
+          "sha256": "b9799e8a6d506fffcd32c5f97f1411b8f45bf016bc79036412ac1818b3bb0b67",
+          "visually_reviewed_by_model": false
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_04_right.png",
+          "sha256": "57de1e32e987c90b732a9d3c48262fe6da176323c8f5d2b8e30a8ed6f74c3a84",
+          "visually_reviewed_by_model": true
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/01_table_05.png",
+          "sha256": "34b26863ec16cb422028972963fa0f37de8c782af7a6010ff673c8a274ce3fd1",
+          "visually_reviewed_by_model": true
+        }
+      ]
+    }
+  ],
+  "all_three_review_math_blocks_visually_seen": true,
+  "horizontal_wide_tables": "Response power and resource tables scroll; right-edge screenshots inspected, no lost columns",
+  "raw_DOM_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v12_critical_20261003/render_records.json",
+    "sha256": "3befffb7f47a7d78ccaa0e629431e6652e4beff1cd58c9c59f47ee3ba83888e7"
+  },
+  "resource": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v12_E_render_20261003T003452607895Z/summary.json",
+    "sha256": "23f8b6843575f8a593ab1b80d70dff9f338c0b9064a327dbace65aa1c65cb642",
+    "elapsed_seconds": 42.048240881063975,
+    "peak_tree_RSS_bytes": 1800376320,
+    "self_swap_bytes": 0,
+    "descendants_cleared": true,
+    "cap_bytes": 2147483648
+  },
+  "old_render_blocks_preserved": true,
+  "not_a_full_site_or_final_followup_HTML_claim": true,
+  "followup_changes": "subsequent numeric cost/hash/render evidence text only; structure and mathematical content preserved; local final parser separately recorded",
+  "local_markdown_final": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v12.json",
+    "sha256": "d87b95d88d96b59174b8bff0e0060cb6d2a5e2653098465bb67f9ad80e876fba",
+    "status": "LOCAL_MARKDOWN_PASS",
+    "pages": 9
+  }
 }

@@ -247,5 +247,103 @@
       "numeric_artifacts_changed": false,
       "cost": "whole batch wall bound"
     }
-  ]
+  ],
+  "local_markdown_final": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v12.json",
+    "sha256": "d87b95d88d96b59174b8bff0e0060cb6d2a5e2653098465bb67f9ad80e876fba",
+    "record": {
+      "schema": "task42extra.markdown-local-check.v12",
+      "status": "LOCAL_MARKDOWN_PASS",
+      "scope": "new Review V11 and only new V12 sections; historical Markdown contracts reused",
+      "pages": [
+        {
+          "path": "docs/task042extra_feinn_5nm/review_report_v11.md",
+          "sha256": "ed7dc18b345d56951529041af7eb29d17c41b8f6fffc289e2947eeb1a9cef175",
+          "checked_scope": "entire page",
+          "markdown_tables": 12,
+          "parsed_tables": 12,
+          "math_fences": 3,
+          "links": 56
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/response_v12.md",
+          "sha256": "9be199e22453fa814d8ac821d22e0428f1e6bbac8771060e44199f278436ae16",
+          "checked_scope": "entire page",
+          "markdown_tables": 6,
+          "parsed_tables": 6,
+          "math_fences": 0,
+          "links": 10
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md",
+          "sha256": "fef913d1859832146bffd72c226ba5389ed0b720ed700ff96ad0d7795e12e4f9",
+          "checked_scope": "entire page",
+          "markdown_tables": 7,
+          "parsed_tables": 7,
+          "math_fences": 1,
+          "links": 13
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md",
+          "sha256": "9ad3c743a89d630ee14b355a2eb10bbf12a9b797ae7a2228f0061607c2111dc8",
+          "checked_scope": "entire page",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 3
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "d619eca8048fc7783409186af5d92e3695264bbe04470e2b178ca96e7fd3be4f",
+          "checked_scope": "Task42extra Review V11 后续：V12",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 6
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "sha256": "8b1a49fe7019e05b1087c8f989a5dd2769e35214f5efb198338d6d1208e36ee9",
+          "checked_scope": "Review V11 后续 V12 定向资格",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 4
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "sha256": "32b3cfe336305108e0101a1476444ce3166f41170f25645caeb70e616a5c095c",
+          "checked_scope": "Review V11 后续 V12 文件级边界",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 0
+        },
+        {
+          "path": "docs/development_progress.md",
+          "sha256": "8925c9ccc9804456f9eafad4b7c458c7b83e810cafe58d168fb8e2d8b34df701",
+          "checked_scope": "2026-10-03 Task42extra V12",
+          "markdown_tables": 0,
+          "parsed_tables": 0,
+          "math_fences": 0,
+          "links": 4
+        },
+        {
+          "path": "docs/development_model_registry.md",
+          "sha256": "67f65a963487661f10d529bd85918d6fcc0c160997a2fbe0d17bb2c31af9efd1",
+          "checked_scope": "3.44.11 Task42extra Review V11 后续",
+          "markdown_tables": 1,
+          "parsed_tables": 1,
+          "math_fences": 0,
+          "links": 5
+        }
+      ]
+    }
+  },
+  "browser_render_final": {
+    "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+    "record": "render_check_v12.json",
+    "published_commit": "cad9fe635199d5c22e83a0698b7412e349449aaf",
+    "scope": "selected actual Review V11 and Response V12 screenshots only; subsequent cost/hash text not full-site claim"
+  }
 }

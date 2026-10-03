@@ -207,3 +207,5 @@ lint失败两个未使用名称已局部修复，成本保留。以上是本地�
 最终Ruff/compileall只覆盖本批改动源码，新Review/三新页与追加节的parser和实际GitHub视觉分列。原始source/日志与Junit见[tests](records/targeted_tests_v12.json)，真实vector重算见[checker](records/independent_checker_v12.json)，[资源](records/resource_costs_v12.json)和[render](records/render_check_v12.json)不合成PDE PASS；无CI声明。
 
 V12收口实测：16个本批Python源文件Ruff和compileall均通过；9个选定新页/新增节本地parser通过（30表格）。GitHub真实DOM/截图资格另以render记录为准。
+
+V12实际GitHub检查：发布cad9fe635199d5c22e83a0698b7412e349449aaf的Review V11与Response V12取得DOM/截图，18表列数一致，review三组公式及关键结果/宽表左右/Gram成本截图实际可读，`GITHUB_VISUAL_SPOTCHECK_PASS`。单次42.048241s/1800376320B树峰/swap0/清场；没有重渲染历史，也没有把本地parser当视觉证据。后续只改费用/hash/此条文本，最终本地parser另绑定。
