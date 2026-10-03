@@ -1,0 +1,379 @@
+{
+  "schema": "task42extra.review-v14.archive-and-input-inventory",
+  "reviewed_head": "2469fb6247f9c68fbe9ab067129655236df6d757",
+  "previous_review_head": "7df3986ff07ef21990e3037693ebbcea94b885c2",
+  "timestamp_utc": "2026-10-03T05:05:14.175716+00:00",
+  "changed_files": [
+    "docs/development_progress.md",
+    "docs/task042extra_feinn_5nm/README.md",
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+    "docs/task042extra_feinn_5nm/outcomes/records/archive_receipt_v14.json",
+    "docs/task042extra_feinn_5nm/outcomes/summary.md",
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+    "docs/task042extra_feinn_5nm/response_v14.md"
+  ],
+  "archive_verdict": "ACCEPT_V14_DOCUMENTATION_CLOSEOUT",
+  "verified_existing_files": {
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v13.json": "da8c9b9b71712194309d837d72b5af9a7e535540138eecb118ece6047059e60b",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v14.json": "d342ff4d3fcbf0881741a7bb4d56dde8d3e71402b59c7e878bbc0f6aaa045958",
+    "docs/task042extra_feinn_5nm/README.md": "3a8a21eefab707eda240bdb43213d572f877749c82dd169091f488884983d78d",
+    "docs/task042extra_feinn_5nm/response_v14.md": "e856ac404402a1c74878258e37fba09a711b2c70e6349f9480f899b8b056f6d5",
+    "docs/task042extra_feinn_5nm/outcomes/summary.md": "148c028241e59fc9c858ab911ea011142c99419ac68ce967300a76c5c635db43",
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md": "61de82bb775e22d6962d51dc2d24ccdf080a97a5067fdce187d896ee5fa09650",
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md": "9562270975c820af87f9f040762eb5949a8671984c506036f34df855baa6e10a",
+    "docs/development_progress.md": "526b8c1e008d7b3e0fffadb14ba6f78c6275fc753fafac021679ee9f91d38b11",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v14_document_checks_20261003T034713096613Z/summary.json": "486b64a863a0440ba46c761c80e8ae3b42c3a83916235ddeae55353e5d642853",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v14_document_checks_20261003T034713096613Z/admission.json": "e0c622835728793ea408220e7b4c2e66ca1440ebfc978279b2cfd6015f1ede62",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md": "b1a7541ee4b7a4d746f4d80b6ddc6e7e9a703dcbae86369c1630a5eb65965dd1",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v13_evidence_audit.json": "14a12a593d7c183aaef2a5c2c0b671300cab53af198eef7dd3112d12d411221b",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/render_check_v13.json": "dfb18849205b56108755d8c9b95e9f8302414b290e2acec86688948a6232c045",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/render_records.json": "b1ec18a5bf6223df0310d50ccd72e1628129ba89b61a5a416dff58b4dd1feaa1",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v14_github_visual_readmission_20261003T035108518407Z/summary.json": "069811388d045d4abcf54998a441d815338525ff28a01d58a19f5a22d761188b",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/README.md": "3a8a21eefab707eda240bdb43213d572f877749c82dd169091f488884983d78d",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_top.png": "03ab46c7b58f6473a9c242a54d80cb769487fba7273a4267bac2643eaa586136",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_table_00.png": "94eceb0d8e8498f04279f72423ca4a0794f16c52fc7ca8ecf676494e3872181b",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_table_01.png": "f2849cf9093e121e65d0b70e6267b00dcb552a07c3ee207b78206db7a1da5b63",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/response_v14.md": "e856ac404402a1c74878258e37fba09a711b2c70e6349f9480f899b8b056f6d5",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/01_top.png": "cbd54eaf6ce5b11f2da389db090a18a152aa5b8ffb77128903fdcd069979b18f",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/01_table_00.png": "9cbfddcc5b31975caa6f73f4c5ae598a93e1b804830468456c6dbc5d939e7c66",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/summary.md": "148c028241e59fc9c858ab911ea011142c99419ac68ce967300a76c5c635db43",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/02_top.png": "3d24ffb5172226fae2902964170ec5a13f54da9299a79742df3e27ef736c9afb",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/02_table_00.png": "55fbf3df7837aaf881a7f38044f8397693dbf254fd2f03e934e2dd1ec6359e5c",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/test_summary.md": "61de82bb775e22d6962d51dc2d24ccdf080a97a5067fdce187d896ee5fa09650",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/03_top.png": "76ff9ac9ad947ad6d883415685efd03fe7d75f0e95bf39aedfe707619b6273b5",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/changed_files.md": "9562270975c820af87f9f040762eb5949a8671984c506036f34df855baa6e10a",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/04_top.png": "8504fc2deaee240810743db6891cf17bde69fdc36e46d506e932a39c67c743ff",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/04_table_00.png": "8504fc2deaee240810743db6891cf17bde69fdc36e46d506e932a39c67c743ff",
+    "/home/fenics/Projects/NN-Lab-V2/docs/development_progress.md": "526b8c1e008d7b3e0fffadb14ba6f78c6275fc753fafac021679ee9f91d38b11",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/05_top.png": "dddddf50ffa087b5238a0a746fbf0e3280c9b93feea2ff91143960084639dbbb",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/final_clearance_v14.json": "304c45c646fb49bc06802657222d81a5c34cf682d76aa4506f8b6ce9e24da287",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v14_resource_probe.json": "c65e6d9f358f9f71cd188c29c3b56597b26a899a334d9010ff8515dbdebc05b7",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v14_readmission_result.json": "8166983608b32b051b138316bef70178027a84364409c4e2dd74f3de76ca0da8",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84"
+  },
+  "numeric_source_unchanged": true,
+  "numerical_tests_rerun": false,
+  "future_diagnostic_input": {
+    "index_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_local_parameter_diagnostic.json",
+    "index_sha256": "816a25856e9295a4866d28e193c464ae0087867a7e2645873a284f14a8433969",
+    "numeric_source": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+    "files": {
+      "vectors": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz",
+        "sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json",
+        "sha256": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84"
+      }
+    },
+    "states": {
+      "M3600": {
+        "PDE_columns": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "reference_G_columns": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "parameter_norm": 8.553653337049637,
+        "current_saved_scope": "Existing residual/field extreme projections use ALL16",
+        "verified_shapes": {
+          "P": {
+            "shape": [
+              8966,
+              16
+            ],
+            "dtype": "float64",
+            "fortran": false
+          },
+          "X": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "GX": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "Y": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "WY": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "theta": {
+            "shape": [
+              8966
+            ],
+            "dtype": "float64",
+            "fortran": false
+          },
+          "e": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "Ge": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "r": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "qr": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          }
+        }
+      },
+      "Mfinal": {
+        "PDE_columns": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "reference_G_columns": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "parameter_norm": 8.560515209936437,
+        "current_saved_scope": "Existing residual/field extreme projections use ALL16",
+        "verified_shapes": {
+          "P": {
+            "shape": [
+              8966,
+              16
+            ],
+            "dtype": "float64",
+            "fortran": false
+          },
+          "X": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "GX": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "Y": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "WY": {
+            "shape": [
+              31968,
+              16
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "theta": {
+            "shape": [
+              8966
+            ],
+            "dtype": "float64",
+            "fortran": false
+          },
+          "e": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "Ge": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "r": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          },
+          "qr": {
+            "shape": [
+              31968
+            ],
+            "dtype": "complex128",
+            "fortran": false
+          }
+        }
+      }
+    },
+    "inventory_only": true,
+    "no_feasibility_or_new_projection_computed": true
+  },
+  "V14_cost_recomputed": 162614.59359231903,
+  "remote_heads": {
+    "FEINN": "2469fb6247f9c68fbe9ab067129655236df6d757",
+    "task40extra": "ba7dec1d733bb5f4a0f775ae74b63730ed3c1205",
+    "dot": "eb5b0ecc1afe593f626b44a6038f7f26651b3317"
+  },
+  "new_actions": {
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "FE": 0,
+    "network_forward": 0,
+    "training": 0
+  },
+  "supervision": {
+    "summary": {
+      "workflow_deadline_seconds": 300.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        52
+      ],
+      "sampled_process_tree_rss_peak_bytes": 75091968,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1602865205248,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1602865205248,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 5,
+      "elapsed_seconds": 2.061669677030295,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    },
+    "files": {
+      "summary.json": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v14_inventory_20261003T050512590709Z/summary.json",
+        "sha256": "505fad240bf67a4c8900c022608ef1ecbb4a1e14cf82f0c0ab10d33c3b6e6ac1"
+      },
+      "admission.json": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v14_inventory_20261003T050512590709Z/admission.json",
+        "sha256": "c0ac88fb858b00f0e99d7af99eefc63db62fc37147ea1ebdce3c00360772071d"
+      },
+      "supervision/worker.log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v14_inventory_20261003T050512590709Z/supervision/worker.log",
+        "sha256": "2cfe9af819650a7a4f89400eaff936d15f5361f3ee0ea159bfe789f690384631"
+      }
+    }
+  },
+  "new_review_document_checks": {
+    "local_parser": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v14.md",
+      "sha256": "b1f90d1b767c32e4a6ec3a0abefc0fa3d1e3f8e2d0620f3e970969a3842bba9e",
+      "checked_scope": "entire page",
+      "markdown_tables": 7,
+      "parsed_tables": 7,
+      "math_fences": 4,
+      "links": 12
+    },
+    "status": "LOCAL_MARKDOWN_LINKS_PASS",
+    "actual_visual": "PENDING_FIRST_PUBLICATION",
+    "numeric_feasibility_not_executed": true
+  }
+}
