@@ -78,6 +78,10 @@ def numeric(row,a,state,cache25,cache26,cache32,groups,ids,nt):
         worst_b=max(worst_b,error/bn);worst_op=max(worst_op,error_ratio(error,op))
     js=row['joint_feedback_solve'];err=float(np.linalg.norm(a['joint_local_image']-a['au'][ids]))
     jn=float(np.linalg.norm(a['au'][ids]));scalar(err,js['error_norm'],'feedback solve error');scalar(jn,js['rhs_norm'],'feedback RHS')
+    scalar(float(np.linalg.norm(a['k'][ids],1)),js['solution_1norm'],'feedback solution 1norm')
+    scalar(float(np.linalg.norm(a['au'][ids],1)),js['rhs_1norm'],'feedback RHS 1norm')
+    scalar(finite(js['matrix_1norm'],'J matrix norm')*js['solution_1norm']+js['rhs_1norm'],
+           js['operand_scale'],'feedback operand scale')
     relative=error_ratio(err,jn);oper=error_ratio(err,finite(js['operand_scale'],'J operand'))
     scalar(relative,js['relative'],'feedback relative');scalar(oper,js['operation_relative'],'feedback operation')
     require(relative<=1e-8 and oper<=1e-12,'J feedback solve unsafe')
@@ -93,14 +97,16 @@ def numeric(row,a,state,cache25,cache26,cache32,groups,ids,nt):
 
 
 def consumption(result,plan,sources,ledger,manifest):
-    require(set(EXPECTED)==set(CAPS) and result['budget_counts']==EXPECTED,'complete fixed consumption')
+    require(set(EXPECTED)==set(CAPS) and result['budget_counts']==EXPECTED and
+        all(type(x) is int and 0<=x<=CAPS[k] for k,x in result['budget_counts'].items()),'complete fixed consumption')
     require(result['action_counts']==dict(S=20,SH=2,audit=0),'S/SH inventory')
     reload=result['factor_reloads'];require(len(reload)==1 and reload[0]['block']=='J','one J reader only')
     factor_reload_certificate(reload[0],sources['J'])
     ports=result['port_rhs_inventory']
     require(len(ports)==21 and sum(x['adjoint'] is True for x in ports)==2 and
         all(type(x['adjoint']) is bool and x['shape']==[40] and x['RHS_columns']==1 for x in ports),'complete port count/columns')
-    require(ledger['active'] is None,'unsettled actor')
+    require(ledger['active'] is None and len(result['source_sha'])==40 and
+        all(x in '0123456789abcdef' for x in result['source_sha']),'unsettled actor/source')
     consuming=[r for r in ledger['runs'] if any(r['counts'].values())]
     require(len(consuming)==1,'one real consuming actor')
     for r in ledger['runs']:

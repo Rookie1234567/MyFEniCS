@@ -46,6 +46,8 @@ def load_return_diagnostic(path, *, namespace=None):
             summary=json.loads(pre.read_text())
             if summary['classification']!='COMPLETED' or summary['leader_exit_code']!=0:
                 raise ValueError('V31 pre-test qualification failed')
+        if label=='V33' and (window.TMP/'auxiliary_resource_rejection.json').exists():
+            raise ValueError('V33 resource rejection; no formal actor admission')
         if label in ('V32','V33'):window.require_qualification()
         clock=require_live(margin=30 if label in ('V32','V33') else 900);book=ledger()
         if book['closed'] or book['active'] is not None or (book['runs'] and not (label=='V33' and window.allow_entry_repair())):raise ValueError('V27 closed/active/already consumed')

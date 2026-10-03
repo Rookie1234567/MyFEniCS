@@ -67,8 +67,11 @@ def run(stage):
         selected_old_outer_LU_blocks=[],decision='PENDING')
     stage.partial_result=result
     C=np.column_stack([direct_C(packet,np.eye(40,dtype=complex)[:,j]) for j in range(40)])
-    started=perf_counter(); bar=BarAction(PortBlocks(packet,np.vstack((C,packet.a['Hhat']))))
-    stage.pc_count('port_factors'); setup_seconds=perf_counter()-started
+    # Charge before attempting the real setup: a constructor error after LU
+    # cannot be misclassified as a zero-consumption entry failure.
+    stage.pc_count('port_factors'); started=perf_counter()
+    bar=BarAction(PortBlocks(packet,np.vstack((C,packet.a['Hhat']))))
+    setup_seconds=perf_counter()-started
     original_solve=bar.solve_port; last_port=[np.zeros(40,complex)]; ports=[]
     def port_solve(rhs,adjoint=False):
         columns=1 if np.ndim(rhs)==1 else np.shape(rhs)[1]
@@ -135,8 +138,10 @@ def run(stage):
             metrics=certificates(flow,r,ids,bn=packet.bnorm,scales=scales)
             # Independent J solve quality retains the stricter original witness limits.
             je=float(np.linalg.norm(flow['joint_local_image']-flow['au'][ids]));jn=float(np.linalg.norm(flow['au'][ids]))
-            jop=float(joint.A1*np.linalg.norm(flow['k'][ids])+jn)
+            kn1=float(np.linalg.norm(flow['k'][ids],1));an1=float(np.linalg.norm(flow['au'][ids],1))
+            jop=float(joint.A1*kn1+an1)
             solve_check=dict(error_norm=je,rhs_norm=jn,operand_scale=jop,
+                matrix_1norm=joint.A1,solution_1norm=kn1,rhs_1norm=an1,
                 relative=je/jn if jn else (0. if je==0 else None),operation_relative=je/jop if jop else (0. if je==0 else None))
             if solve_check['relative'] is None or solve_check['relative']>1e-8 or solve_check['operation_relative'] is None or solve_check['operation_relative']>1e-12:
                 metrics['trustworthy']=False
