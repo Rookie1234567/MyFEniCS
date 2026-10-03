@@ -1,3 +1,9 @@
+# 最新审阅：Review V29／同轮修复复验后推进真实诊断
+
+[Review V29](review_report_v29.md)接受V31合成study接线；本次独立定点复验已修复的拒绝fixture，1 passed，关闭该软件缺口。按用户新指令替换“一次前测错误即等待review”：V32应在同一窗口和累计预算内定位、修复、定点复验并继续一次原两冷态真实回流诊断，不以测试准备完成作为交付终点。存储守卫漏计路径也在同轮直接修复。
+
+[独立证据](outcomes/records/review_v29_independent_checks.json)核对69个文件hash及原109通过／1失败，历史不倒填。累计有载52.680176060s不清零，原尺寸0.7nm／2TB／48h和NN20%仍未资格化；旧closed与数学门限保持。以下历史逐字保留，旧停止建议不覆盖最新合同。
+
 # V31最新交付：真实接线通过，前测fixture错误停止正式运行
 
 [Review V28](review_report_v28.md)／[Response V31](response_v31.md)／[详细结果](outcomes/return_direction_workflow_v31.md)／[run index](outcomes/records/run_index_v31.json)。relative导入与V31独立namespace已实现，实际study→保存→结算→collector合成测试通过；唯一前测整体109 passed／1 failed，新拒绝fixture缺窗口接口。已最小补齐但修后runtime NOT_RUN；依合同停止，不作正式准入或actor／后checker。监督12.731163s、累计52.680176s、树RSS254,758,912B／ownswap0；真实S/SH/reader/FE/训练0，eta10/g10未运行。旧负结果与closed历史不变，NN20%及原尺寸资格未获得。以下历史逐字保留。

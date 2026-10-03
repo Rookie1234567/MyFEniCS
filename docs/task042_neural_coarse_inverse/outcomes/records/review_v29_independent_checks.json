@@ -1,0 +1,876 @@
+{
+  "schema": "task042.review29.independent-review.v1",
+  "utc": "2026-10-03T10:30:13.947361+00:00",
+  "reviewed_HEAD": "29278756f610c4ad1755fc82f37be17e06dc1699",
+  "actual_V31_test_source": "997397093f7061f7086b2088458d50c6ca773b7d",
+  "latest_implementation_source": "4734b22d1b9260b8500c32212e4e30b1c03f0507",
+  "previous_review": "a871cc1a0ef6c888f9fe8040e321dd25db9612ed",
+  "changed_files": [
+    "benchmarks/collect_task042_return_direction.py",
+    "benchmarks/task042_diagnostic_auxiliary.py",
+    "benchmarks/task042_v31_checks.py",
+    "docs/development_model_registry.md",
+    "docs/development_progress.md",
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/records/admission_v31.json.gz",
+    "docs/task042_neural_coarse_inverse/outcomes/records/compilation_after_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/compilation_before_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/delivery_receipt_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/environment_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/evidence_integrity_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/final_process_check_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/first_clock_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/input_inventory_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/launch_stderr_v31.txt",
+    "docs/task042_neural_coarse_inverse/outcomes/records/launch_stdout_v31.txt",
+    "docs/task042_neural_coarse_inverse/outcomes/records/ledger_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/preregistration_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/render_check_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resources_v31.jsonl.gz",
+    "docs/task042_neural_coarse_inverse/outcomes/records/return_direction_checker_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/return_direction_results_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/storage_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/supervision_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/test_entry_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_junit_v31.xml.gz",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_stderr_v31.txt",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_stdout_v31.txt.gz",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/window_v31.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/worker_stdout_v31.txt.gz",
+    "docs/task042_neural_coarse_inverse/outcomes/return_direction_workflow_v31.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/response_v31.md",
+    "input/task042_neural_coarse_inverse/return_block_direction_v31.json",
+    "input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat",
+    "scripts/run_case.py",
+    "src/io/return_block_diagnostic.py",
+    "src/io/return_block_v31.py",
+    "src/io/task042_profile.py",
+    "src/runners/return_block_diagnostic.py",
+    "src/runners/task042_shared.py",
+    "src/solvers/bounded_diagnostic_window.py",
+    "src/solvers/return_block_study.py",
+    "src/solvers/return_block_v31_window.py",
+    "src/test/task042_v31_workflow_fixture.py",
+    "src/test/test_task042_v31_workflow.py"
+  ],
+  "verified_files": {
+    "/home/fenics/Projects/NN-Lab/src/solvers/return_block_study.py": {
+      "sha256": "72df82279ceedc24a82b897567cd4437613fb814bb31a76209c2c650b5f510bc",
+      "bytes": 17362
+    },
+    "/home/fenics/Projects/NN-Lab/src/solvers/return_block_direction.py": {
+      "sha256": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+      "bytes": 10738
+    },
+    "/home/fenics/Projects/NN-Lab/src/solvers/bounded_diagnostic_window.py": {
+      "sha256": "f3f9d2934ae979b212c6d91ca46f6ea112666fbf02c5c8b6a243ff3061faf473",
+      "bytes": 4142
+    },
+    "/home/fenics/Projects/NN-Lab/src/solvers/return_block_v31_window.py": {
+      "sha256": "440ba72b9dadecfd0c4c2e21ff85abbbc643d60c299a70baeadb985026eaf45b",
+      "bytes": 858
+    },
+    "/home/fenics/Projects/NN-Lab/src/io/return_block_v31.py": {
+      "sha256": "78c58f9628d273159a4c10c3fe964d2c7c4d5954bbd3a1024de3391bdaf3eb86",
+      "bytes": 773
+    },
+    "/home/fenics/Projects/NN-Lab/src/io/return_block_diagnostic.py": {
+      "sha256": "206d4b904b38af895497bc611b4de7524061e8c86b3f60efcb6298c7261918b8",
+      "bytes": 5102
+    },
+    "/home/fenics/Projects/NN-Lab/src/io/task042_profile.py": {
+      "sha256": "a3f2be2355550eb0ccfd644da0b9fdb96480a8c90e88572bf447ee5375e258d5",
+      "bytes": 5717
+    },
+    "/home/fenics/Projects/NN-Lab/src/runners/return_block_diagnostic.py": {
+      "sha256": "5ae12cdd218e5f3f4b8e0c4162ccacdd1859046f523a730f99f2e69a214f4e08",
+      "bytes": 3613
+    },
+    "/home/fenics/Projects/NN-Lab/src/runners/block_direction_diagnostic.py": {
+      "sha256": "b39f42db1aa46cb738f60fccaa7655fedda934059a8e3ab7412718e2a0c4772b",
+      "bytes": 4230
+    },
+    "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py": {
+      "sha256": "9c454875977abfb5bafb2c210eda5f68111f25837afa8da00d904f9db21615fd",
+      "bytes": 57315
+    },
+    "/home/fenics/Projects/NN-Lab/scripts/run_case.py": {
+      "sha256": "ba815ff74b994949d7cd8819bcd66fa85e20060b8e3fdc39bedc5a89880fc8e1",
+      "bytes": 11622
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_return_direction.py": {
+      "sha256": "1c5dd2375a07c2b6f83b0b2847dc78fd1483f3d9d53f3b87213b5860449dad06",
+      "bytes": 16733
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/task042_return_certificates.py": {
+      "sha256": "6c44b6e4cd2afd0e4ebd8bd81b291c0cc67184a16ad23e7139f13c234c377e1f",
+      "bytes": 12736
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py": {
+      "sha256": "3eada9b927a43d02bf134c5e98458c69744232b034fd00b257cf1993819e110f",
+      "bytes": 7219
+    },
+    "/home/fenics/Projects/NN-Lab/src/test/task042_v31_workflow_fixture.py": {
+      "sha256": "e342caab7e6877911098d968edbb83bebf02f61200c303bdd0d47b084b1a663c",
+      "bytes": 12672
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/task042_v31_checks.py": {
+      "sha256": "cb9773f0601f8a94b869fd3179239c42ae9482b982c64654c047b89d3d421cdd",
+      "bytes": 2037
+    },
+    "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md": {
+      "sha256": "093019c146f3a7623b94ebe163bc7d79ecb78b59e9e27f3bcc59c152dccff0b5",
+      "bytes": 258455
+    },
+    "/home/fenics/Projects/NN-Lab/docs/development_progress.md": {
+      "sha256": "efb1f601016188d25150282ce3d8789e47a7fea406814996448670a32e61b497",
+      "bytes": 224895
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md": {
+      "sha256": "ff34183ac5de20c98a97fc256ed5858c321102b3433b42a9fd99c99ebea8e23a",
+      "bytes": 34352
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md": {
+      "sha256": "ddaf5eb3b645023af6455b6d7a8cc0da7e5d56d26b8acc10a5663ef050ae6ab1",
+      "bytes": 58026
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md": {
+      "sha256": "733b8f3afb573a92a93ed6f9308d91eb5837cceca21adc20638122a7d7adedba",
+      "bytes": 97708
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/test_summary.md": {
+      "sha256": "fde5ee6eca85da9316c5db30c09bac371e140205bf8ef650563f303628d41fce",
+      "bytes": 59128
+    },
+    "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/return_block_direction_v31.json": {
+      "sha256": "955ae660b5713a25c62bef4c7741ebe94ff2479f126c15ac3209546693804111",
+      "bytes": 10635
+    },
+    "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat": {
+      "sha256": "bd3a48d912c09990e26ac7af5231ca1da19d1caa7cec616dea3ebdaa1c91eace",
+      "bytes": 232
+    },
+    "/home/fenics/Projects/NN-Lab/src/test/test_task042_v31_workflow.py": {
+      "sha256": "82bab41b3ab3b360ed0ee0396294e99fb12423945d571384f79ba23f104e43bf",
+      "bytes": 5329
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_v31.json.gz": {
+      "sha256": "f78c702957b81ac31d17372d475bec47b3bfebf9406a7a7056e8a4c8f8a5f8c3",
+      "bytes": 26522
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/compilation_after_v31.json": {
+      "sha256": "e3788e0e73f9cef1ba142b106856efae73490ae0f6252efbb163dabaa55010f2",
+      "bytes": 3205
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/compilation_before_v31.json": {
+      "sha256": "f1edc61668f24f204bdb11e4056961f8910f365069e22fbb2f774732c95a1934",
+      "bytes": 3294
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/environment_v31.json": {
+      "sha256": "37bb87ba6897a2a4f27e8d3317ca427837fae1609f9efcbd044b8d16238b6eba",
+      "bytes": 1315
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/evidence_integrity_v31.json": {
+      "sha256": "c9d1d97af1a6ba61a9c3eec1dde31991f3b86c75089c8803d51112c32444f77d",
+      "bytes": 5750
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/final_process_check_v31.json": {
+      "sha256": "ca7c12fbb1a5f091c1d6c85d37174da64d135bf2f43e07cd61d6b1dafed46d7a",
+      "bytes": 170
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/first_clock_v31.json": {
+      "sha256": "ea87a0bbba686019a93a3ba2602a0fbb5ec41939f21019d11e38e91a741eeca8",
+      "bytes": 212
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/input_inventory_v31.json": {
+      "sha256": "01d04dec89af1073733f188503ee65e9c0016f9ce56a69ad950322e497b8a6f6",
+      "bytes": 5811
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/launch_stderr_v31.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/launch_stdout_v31.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/ledger_v31.json": {
+      "sha256": "72205e683531ded77983d1952259efe53c70ceddef53b472d0f33841303e6626",
+      "bytes": 959
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/preregistration_v31.json": {
+      "sha256": "6c9fe6276d1c9e0ad9d8b9a08f7e73f94f1acac679fdb4695cc0e7932fcccef6",
+      "bytes": 8683
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/render_check_v31.json": {
+      "sha256": "8f3bd9ccb91344eeda29b34ef66c81b79411164c74f74cbb86cfe056450cbb9f",
+      "bytes": 2690
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v31.json": {
+      "sha256": "822e257ff3fe25bd9e0663b54548718c677b1452125bf08fe85b49439e8b849d",
+      "bytes": 3045
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resources_v31.jsonl.gz": {
+      "sha256": "42d6f04e9fc00e85257d4ef63a0fa09ff95455e417eacb17ec2e65fae4b4e11a",
+      "bytes": 7489
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/return_direction_checker_v31.json": {
+      "sha256": "8bd7e857a938bfc7a4c6c0cef1db8b29ea9bfe57a1aa3f8424cc098cbb38c423",
+      "bytes": 1079
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/return_direction_results_v31.json": {
+      "sha256": "f6ed5666e7c2d6722bb36cba99d50d339cb16a42235b51a082883897eb1c82c3",
+      "bytes": 1184
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/run_index_v31.json": {
+      "sha256": "3b09577d8f3a17cdd927f21b62cf494273a9c772a2f55328a073a835e7032eda",
+      "bytes": 4708
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/storage_v31.json": {
+      "sha256": "3b3206ed0bfd5257fb1db4fefdccd8512f592c6b6e8e21a28677419bc0de1fef",
+      "bytes": 499
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/supervision_v31.json": {
+      "sha256": "467772bbd7b6c694a9f87a880f1a3329e567208f4fa84268b59118afb591c123",
+      "bytes": 3592
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/test_entry_v31.json": {
+      "sha256": "720fd853b2d43bb761f5b982a14b3e9912b9da5f65e7dcfba28fe94924f7f327",
+      "bytes": 1505
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_junit_v31.xml.gz": {
+      "sha256": "03d1edf022f39e0e2b921b770107e2f4de2422a60a0580250275b288013da52f",
+      "bytes": 3230
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_stderr_v31.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_stdout_v31.txt.gz": {
+      "sha256": "3b08a5450cfae41e3d18901822b96acf4dca44cd9897300039fc1c83072680bf",
+      "bytes": 1478
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/tests_v31.json": {
+      "sha256": "d90c49a46827eab4a6dd8a17eebcae4af0646c41d6a04d47a387eeb434074bec",
+      "bytes": 6070
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/window_v31.json": {
+      "sha256": "9008d7e487f5798b06da8142f92a2b0f3acfd142064fa91b4ea316b2086a030e",
+      "bytes": 520
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/worker_stdout_v31.txt.gz": {
+      "sha256": "5e414f9fb88babb7f185aa31b08786572bf2fc1c9e643496311e5903c70cf21b",
+      "bytes": 1480
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/return_direction_workflow_v31.md": {
+      "sha256": "32fe7ba2c3aaec58a831cb9401213284bf8d288ace64f810c4509a937676142e",
+      "bytes": 5324
+    },
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v31.md": {
+      "sha256": "b1d056f551f5a123a5d7021653b2c95473f00905783dd1672d73ffff9da6ad11",
+      "bytes": 5846
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v26/window.json": {
+      "sha256": "da23cf6111ad664c62540844d09b8a1f038014e69c7fbc942549792126587d2f",
+      "bytes": 710
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json": {
+      "sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853",
+      "bytes": 2209
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27/window.json": {
+      "sha256": "efe33d8b6273086f70f3fdef8c2a91bfad7cde3b0dfe73376d0a4495fcd7d1bc",
+      "bytes": 647
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json": {
+      "sha256": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872",
+      "bytes": 507
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v28/window.json": {
+      "sha256": "cf44902f535b392659c7fca6d95aab857df02f2a591f7ad6ff300f0a71e41403",
+      "bytes": 546
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v28/ledger.json": {
+      "sha256": "679ac1fd23be99441c9afd13a7e81fdf32442c261bea553f1f29d463787cec3d",
+      "bytes": 1447
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v29/window.json": {
+      "sha256": "65cd6cd7014bddbbe71ffc920587c47394615d6bc3ce38caedbc5b36db65718e",
+      "bytes": 676
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v29/ledger.json": {
+      "sha256": "69d2173f90f1e51cee05ab6b2cc91a1d14b33e1f212eb50cc55b221ba5a68202",
+      "bytes": 403
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v30/window.json": {
+      "sha256": "d07554e1e843b0c030fc76df923093b6dbbca6e94433eddafd40849efa8e8413",
+      "bytes": 437
+    },
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v30/ledger.json": {
+      "sha256": "2e0c787d7ededfad76e8e1b95ee195a498abf896085851580235a52cf6679d6a",
+      "bytes": 540
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_block_setup_20261002T144555294598Z/stage_result.json": {
+      "sha256": "2bec45b6367274593e1ac040e8c1f9c829725adaf6aefbd3d9fdef778899d775",
+      "bytes": 471940
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/stage_result.json": {
+      "sha256": "eb2445654d50c14f813a645f37cfae4f8feafb2f47126b96a3c56972196b4eb3",
+      "bytes": 427114
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/stage_result.json": {
+      "sha256": "a386f3847084b1a309a6f6a857766ddb940e1a841f2bc2139d9255ad31c96b88",
+      "bytes": 206897
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_zero_20261002T150705305076Z/stage_result.json": {
+      "sha256": "4971ba16d38f22bc81e0be8e5ccda1556d99fb7eb3e2f98afa48c2b91b67c479",
+      "bytes": 249275
+    },
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_zero_20261002T151327920057Z/stage_result.json": {
+      "sha256": "3051afc21e80bef0baf7b4ebedccbe0c57fd65de9f3aa20bccb71b6062ce13fa",
+      "bytes": 249964
+    }
+  },
+  "verified_bytes": 2640601,
+  "real_payloads_not_read": [
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LCZ-CYCLE4.npz",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v25/task042_v25_block_residual_diagnostic_20261002T232018300004Z/V24-LZ-CYCLE4.npz",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/V24-LCZ-CYCLE4.npz",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/V24-LZ-CYCLE4.npz"
+  ],
+  "historical_source_checks": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v31_workflow.py",
+      "source_sha": "997397093f7061f7086b2088458d50c6ca773b7d",
+      "sha256": "75001476906126268e261a6d8ec2f4ce0bd951ffda849ac6ff2bc79f11e738ab",
+      "bytes": 5033
+    }
+  ],
+  "compiled_and_symbol_checked": [
+    "src/solvers/return_block_study.py",
+    "src/solvers/return_block_direction.py",
+    "src/solvers/bounded_diagnostic_window.py",
+    "src/solvers/return_block_v31_window.py",
+    "src/io/return_block_v31.py",
+    "src/io/return_block_diagnostic.py",
+    "src/io/task042_profile.py",
+    "src/runners/return_block_diagnostic.py",
+    "src/runners/block_direction_diagnostic.py",
+    "src/runners/task042_shared.py",
+    "scripts/run_case.py",
+    "benchmarks/collect_task042_return_direction.py",
+    "benchmarks/task042_return_certificates.py",
+    "benchmarks/task042_diagnostic_auxiliary.py",
+    "src/test/task042_v31_workflow_fixture.py",
+    "src/test/test_task042_v31_workflow.py",
+    "benchmarks/task042_v31_checks.py"
+  ],
+  "implementation_repair_files": [
+    "src/test/test_task042_v31_workflow.py"
+  ],
+  "old_review_response_unchanged": [
+    "docs/task042_neural_coarse_inverse/response_v19.md",
+    "docs/task042_neural_coarse_inverse/review_report_v15.md",
+    "docs/task042_neural_coarse_inverse/review_report_v18.md",
+    "docs/task042_neural_coarse_inverse/review_report_v23.md",
+    "docs/task042_neural_coarse_inverse/response_v9.md",
+    "docs/task042_neural_coarse_inverse/review_report_v8.md",
+    "docs/task042_neural_coarse_inverse/review_report_v27.md",
+    "docs/task042_neural_coarse_inverse/review_report_v28.md",
+    "docs/task042_neural_coarse_inverse/response_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v24.md",
+    "docs/task042_neural_coarse_inverse/response_v6.md",
+    "docs/task042_neural_coarse_inverse/response_v17.md",
+    "docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "docs/task042_neural_coarse_inverse/response_v13.md",
+    "docs/task042_neural_coarse_inverse/response_v23.md",
+    "docs/task042_neural_coarse_inverse/response_v4.md",
+    "docs/task042_neural_coarse_inverse/review_report_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v9.md",
+    "docs/task042_neural_coarse_inverse/response_v10.md",
+    "docs/task042_neural_coarse_inverse/review_report_v4.md",
+    "docs/task042_neural_coarse_inverse/response_v5.md",
+    "docs/task042_neural_coarse_inverse/response_v27.md",
+    "docs/task042_neural_coarse_inverse/response_v22.md",
+    "docs/task042_neural_coarse_inverse/review_report_v3.md",
+    "docs/task042_neural_coarse_inverse/response_v14.md",
+    "docs/task042_neural_coarse_inverse/response_v16.md",
+    "docs/task042_neural_coarse_inverse/response_v20.md",
+    "docs/task042_neural_coarse_inverse/response_v29.md",
+    "docs/task042_neural_coarse_inverse/review_report_v12.md",
+    "docs/task042_neural_coarse_inverse/response_v7.md",
+    "docs/task042_neural_coarse_inverse/review_report_v13.md",
+    "docs/task042_neural_coarse_inverse/review_report_v10.md",
+    "docs/task042_neural_coarse_inverse/response_v8.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md",
+    "docs/task042_neural_coarse_inverse/response_v25.md",
+    "docs/task042_neural_coarse_inverse/review_report_v25.md",
+    "docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "docs/task042_neural_coarse_inverse/response_v12.md",
+    "docs/task042_neural_coarse_inverse/response_v21.md",
+    "docs/task042_neural_coarse_inverse/response_v28.md",
+    "docs/task042_neural_coarse_inverse/review_report_v7.md",
+    "docs/task042_neural_coarse_inverse/review_report_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v26.md",
+    "docs/task042_neural_coarse_inverse/review_report_v26.md",
+    "docs/task042_neural_coarse_inverse/response_v3.md",
+    "docs/task042_neural_coarse_inverse/review_report_v5.md",
+    "docs/task042_neural_coarse_inverse/review_report_v22.md",
+    "docs/task042_neural_coarse_inverse/review_report_v19.md",
+    "docs/task042_neural_coarse_inverse/response_v15.md",
+    "docs/task042_neural_coarse_inverse/response_v18.md",
+    "docs/task042_neural_coarse_inverse/review_report_v11.md",
+    "docs/task042_neural_coarse_inverse/response_v11.md",
+    "docs/task042_neural_coarse_inverse/response_v24.md",
+    "docs/task042_neural_coarse_inverse/review_report_v6.md",
+    "docs/task042_neural_coarse_inverse/review_report_v16.md",
+    "docs/task042_neural_coarse_inverse/review_report_v20.md",
+    "docs/task042_neural_coarse_inverse/response_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v30.md"
+  ],
+  "historical_suffixes_unchanged": [
+    "README.md",
+    "outcomes/summary.md",
+    "outcomes/test_summary.md",
+    "outcomes/changed_files.md"
+  ],
+  "V31_admission": {
+    "status": "ADMITTED",
+    "candidates": [
+      11,
+      14
+    ],
+    "selected_cpu": 11,
+    "gates": {
+      "CPU_SMT": "PASS",
+      "MEMORY": "PASS",
+      "DISK": "PASS",
+      "PSI": "PASS",
+      "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+    },
+    "static_replay_only": true
+  },
+  "V31_supervision": {
+    "workflow_deadline_seconds": 40,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 2147483648,
+    "rss_warning_bytes": 1073741824,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "clock_info": {
+      "monotonic": {
+        "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+        "monotonic": true,
+        "adjustable": false,
+        "resolution": 1e-09
+      },
+      "utc": {
+        "implementation": "clock_gettime(CLOCK_REALTIME)",
+        "monotonic": false,
+        "adjustable": true,
+        "resolution": 1e-09
+      },
+      "boottime": {
+        "available": true,
+        "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+        "resolution": 1e-09
+      }
+    },
+    "clock_start": {
+      "monotonic": 947291.379147303,
+      "boottime": 947291.379151199,
+      "utc_ns": 1791022296518286006
+    },
+    "timebase_policy": "strict",
+    "timebase_policy_version": 1,
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 1,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      1431846,
+      1431848
+    ],
+    "sampled_process_tree_rss_peak_bytes": 254758912,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "end": {
+        "pswpin_pages": 3139039,
+        "pswpout_pages": 5146004
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1323323027456,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1323323027456,
+      "reserve_bytes": 353748992000,
+      "launch_cap_bytes": 17179869184,
+      "planning_cap_bytes": 17179869184,
+      "cgroup_limits": [],
+      "system_reserve_bytes": 216310038528,
+      "neighbor_growth_allowance_bytes": 137438953472,
+      "shared_workstation": true
+    },
+    "samples": 18,
+    "elapsed_seconds": 12.731162693002261,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": {
+      "source_sha": "997397093f7061f7086b2088458d50c6ca773b7d",
+      "role": "V31 pre auxiliary"
+    },
+    "clock_end": {
+      "monotonic": 947304.11034031,
+      "boottime": 947304.110342966,
+      "utc_ns": 1791022309249477524
+    },
+    "workflow_clock_interval": {
+      "elapsed_seconds": {
+        "monotonic": 12.731193006969988,
+        "boottime": 12.731191767030396,
+        "utc": 12.731191518
+      },
+      "budget_seconds": 12.731193006969988,
+      "discrepancy_seconds": 1.4889699890829888e-06,
+      "tolerance_seconds": 5.0,
+      "policy": "strict",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -1.4889699890829888e-06,
+      "step": {
+        "elapsed_seconds": {
+          "monotonic": 0.05917319003492594,
+          "boottime": 0.05917443404905498,
+          "utc": 0.059175305
+        },
+        "budget_seconds": 0.05917443404905498,
+        "discrepancy_seconds": 2.114965074059838e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "strict",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 2.114965074059838e-06
+      },
+      "utc_positive_excess_seconds": 4.950988689453317e-06
+    }
+  },
+  "V31_ledger": {
+    "charged": {
+      "actions": 0,
+      "factor_readers": 0,
+      "outer_lu_solve": 0,
+      "joint_lu_solve": 0,
+      "explicit_triangular_pass": 0,
+      "thin_decompositions": 0,
+      "port_factors": 0,
+      "port_solves": 0,
+      "port_rhs_columns": 0,
+      "new_assemblies": 0,
+      "new_LU_attempts": 0,
+      "new_gecon": 0
+    },
+    "runs": [],
+    "active": null,
+    "closed": true,
+    "actor_wall_seconds": 0.0,
+    "carried_supervised_seconds": 39.94901336694602,
+    "auxiliary_supervised_seconds": 12.731162693002261,
+    "carried_plus_supervised_seconds": 52.68017605994828,
+    "auxiliary_runs": [
+      {
+        "phase": "pre",
+        "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v31/aux_pre/auxiliary_summary.json",
+        "source_sha": "997397093f7061f7086b2088458d50c6ca773b7d",
+        "classification": "WORKER_FAILED"
+      }
+    ],
+    "closure_reason": "PRETEST_FAILED: incomplete window stub in rejection test; no formal admission or actor; no second pre-test"
+  },
+  "V31_raw_gzip_matches": true,
+  "V31_test_counts": {
+    "total": 110,
+    "passed": 109,
+    "failed": 1,
+    "skipped": 0
+  },
+  "V31_failed_test": {
+    "classname": "src.test.test_task042_v31_workflow",
+    "name": "test_failed_prequalification_stops_formal_route",
+    "time": "0.024",
+    "trace": "tmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v31/tests/fixtures/test_failed_prequalification_s0')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x748e53fa2c00>\n\n    def test_failed_prequalification_stops_formal_route(tmp_path,monkeypatch):\n        from src.io import return_block_v31 as io\n        from src.io.input_loader import InputError\n        (tmp_path/'aux_pre').mkdir();(tmp_path/'aux_pre/auxiliary_summary.json').write_text('{\"classification\":\"COMPLETED\",\"leader_exit_code\":1}')\n        monkeypatch.setattr(io,'window',SimpleNamespace(TMP=tmp_path))\n        with pytest.raises(InputError,match='pre-test qualification failed'):\n>           io.load_return_diagnostic('input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat')\n\nsrc/test/test_task042_v31_workflow.py:75: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/io/return_block_v31.py:12: in load_return_diagnostic\n    def load_return_diagnostic(path):return _load(path,namespace=sys.modules[__name__])\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\npath = PosixPath('/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat')\n\n    def load_return_diagnostic(path, *, namespace=None):\n        import sys\n        io=sys.modules[__name__] if namespace is None else namespace\n        label=getattr(io,\"LABEL\",\"V27\"); section=\"task042_\"+label.lower()\n        path=Path(path).resolve()\n        try:raw=path.read_bytes()\n        except OSError:return None\n        if ('['+section+']').encode() not in raw:return None\n        try:\n            cfg=tomllib.loads(raw.decode());item=cfg[section]\n            if set(cfg)!={'schema_version',section} or cfg['schema_version']!=1 or set(item)!={'stage','run_id','material_table_id','diagnostic_family'}:\n                raise ValueError('explicit V27 schema required')\n            if item['stage']!='DIAGNOSTIC' or not re.fullmatch('task042_'+label.lower()+'_[a-z0-9_]+',item['run_id']):raise ValueError('V27 one diagnostic only')\n            plan,design,material,fe=plan_and_operator();own=json.loads(io.PLAN_PATH.read_text())\n            if own['action_sha256']!=fe['packet']['sha256'] or own['physical_sha256']!=plan['physical_model_sha256']:raise ValueError('V27 original operator identity')\n            if item['diagnostic_family']!=FAMILY or item['material_table_id']!=material.provenance['material_table_id']:raise ValueError('V27 material/family differs')\n            if tuple(x['name'] for x in own['states'])!=NAMES or own['outer_blocks']!=list(OUTER_BLOCKS) or own['joint_blocks']!=[5,7] or own['joint_rows']!=3888:\n                raise ValueError('fixed two cold states and return path only')\n            window=io.window if hasattr(io,\"window\") else __import__(\"src.solvers.return_block_window\",fromlist=[\"ledger\"])\n>           require_live,ledger,auxiliary_wall=window.require_live,window.ledger,window.auxiliary_wall\nE           AttributeError: 'types.SimpleNamespace' object has no attribute 'require_live'\n\nsrc/io/return_block_diagnostic.py:35: AttributeError"
+  },
+  "V31_workflow_test": {
+    "classname": "src.test.test_task042_v31_workflow",
+    "name": "test_actual_study_two_states_through_collector",
+    "time": "1.941",
+    "limitations": "synthetic 16-dimensional active action at 18144/40 interface; fake factor file receipts, readiness stub, stage.guard disabled; not actual factor/host gate qualification"
+  },
+  "review_targeted_test": {
+    "summary": {
+      "workflow_deadline_seconds": 30,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1073741824,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "clock_info": {
+        "monotonic": {
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "adjustable": false,
+          "resolution": 1e-09
+        },
+        "utc": {
+          "implementation": "clock_gettime(CLOCK_REALTIME)",
+          "monotonic": false,
+          "adjustable": true,
+          "resolution": 1e-09
+        },
+        "boottime": {
+          "available": true,
+          "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+          "resolution": 1e-09
+        }
+      },
+      "clock_start": {
+        "monotonic": 948120.173184141,
+        "boottime": 948120.173187762,
+        "utc_ns": 1791023125312322907
+      },
+      "timebase_policy": "strict",
+      "timebase_policy_version": 1,
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        1434117
+      ],
+      "sampled_process_tree_rss_peak_bytes": 114909184,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1307002736640,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1307002736640,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "samples": 7,
+      "elapsed_seconds": 4.368644834961742,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": {
+        "source_sha": "29278756f610c4ad1755fc82f37be17e06dc1699",
+        "role": "Review V29 one repaired fixture; no actual actor"
+      },
+      "clock_end": {
+        "monotonic": 948124.541841864,
+        "boottime": 948124.54184615,
+        "utc_ns": 1791023129680980501
+      },
+      "workflow_clock_interval": {
+        "elapsed_seconds": {
+          "monotonic": 4.368657722952776,
+          "boottime": 4.368658387917094,
+          "utc": 4.368657594
+        },
+        "budget_seconds": 4.368658387917094,
+        "discrepancy_seconds": 7.93917093844243e-07,
+        "tolerance_seconds": 5.0,
+        "policy": "strict",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -1.2895277556879137e-07,
+        "step": {
+          "elapsed_seconds": {
+            "monotonic": 0.05711967498064041,
+            "boottime": 0.05712106195278466,
+            "utc": 0.05712176
+          },
+          "budget_seconds": 0.05712106195278466,
+          "discrepancy_seconds": 2.085019359589213e-06,
+          "tolerance_seconds": 5.0,
+          "policy": "strict",
+          "policy_version": 1,
+          "utc_minus_monotonic_seconds": 2.085019359589213e-06
+        },
+        "utc_positive_excess_seconds": 7.180767035222524e-07
+      },
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/review_v29/fixture",
+        "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route"
+      ],
+      "selected_cpu": 10
+    },
+    "admission": {
+      "status": "ADMITTED",
+      "candidates": [
+        10,
+        42
+      ],
+      "selected_cpu": 10,
+      "gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      },
+      "static_replay_only": true
+    },
+    "log": ".                                                                        [100%]\n1 passed in 0.89s\n",
+    "script": "import json,os,subprocess,sys\nfrom pathlib import Path\nfrom src.runners.task042_shared import audit,shared_envelope,SharedHealth,write_json\nfrom benchmarks.subreaper_watchdog import supervise\n\nroot=Path('/home/fenics/Projects/NN-Lab')\nfolder=root/'tmp/task042/review_v29'\nfolder.mkdir(parents=True,exist_ok=True)\ncommand=[sys.executable,'-m','pytest','-q','--tb=short','-p','no:cacheprovider',\n    '--basetemp='+str(folder/'fixture'),\n    'src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route']\ntry:\n    baseline=audit(observed_activity=True,receipt_path=folder/'admission.json',input_path=' '.join(command))\nexcept Exception as e:\n    write_json(folder/'targeted_result.json',dict(status='NOT_RUN_ADMISSION_REJECTED',error=repr(e),command=command))\n    print('NOT_RUN_ADMISSION_REJECTED',repr(e));sys.exit(0)\nos.sched_setaffinity(0,{baseline['cpu']});os.nice(10)\nsubprocess.run(['ionice','-c','3','-p',str(os.getpid())],check=True)\nwrite_json(folder/'baseline.json',baseline)\nsource=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nresult=supervise(command,folder/'supervision',wall_seconds=30,interval=.5,\n    timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=2*2**30,rss_warning_bytes=2**30,\n    memory_envelope_provider=shared_envelope,include_pss=False,stop_on_global_swap=False,\n    health_check=SharedHealth(folder,baseline['neighbor_processes']),source_state=dict(source_sha=source,role='Review V29 one repaired fixture; no actual actor'))\nwrite_json(folder/'targeted_result.json',dict(result,command=command,selected_cpu=baseline['cpu']))\nprint(json.dumps({k:result[k] for k in ('classification','leader_exit_code','elapsed_seconds','sampled_process_tree_rss_peak_bytes','sampled_process_tree_swap_peak_bytes','descendants_cleared')}))\nprint((folder/'supervision/worker.log').read_text())\n",
+    "qualification": "one repaired fixture on reviewed HEAD; do not rewrite historical 109/1 or claim a fresh full 110/110 run"
+  },
+  "review_cost_separate_from_actor": true,
+  "carried_supervised_seconds": 52.68017605994828,
+  "remaining_from_600_seconds": 547.3198239400517,
+  "storage_guard_check": {
+    "code_guard_roots": [
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v28",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v28_auxiliary",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v27_auxiliary",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v27",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v29",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v27_identity",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v30",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v31",
+      "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v28",
+      "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v27"
+    ],
+    "code_guard_bytes": 58748742,
+    "omitted_review_roots": [
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v24",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v25",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v26",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v27",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v28",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v29"
+    ],
+    "omitted_review_bytes": 52621180,
+    "guard_includes_new_records": false,
+    "guard_includes_run_results": false,
+    "stat_only_no_numeric_payload_reads": true
+  },
+  "output_payload_estimate": {
+    "status": "DERIVED",
+    "two_states_complex128_bytes": 15226880,
+    "excludes": "npz headers, JSON, logs, tmp, directory/cache bookkeeping; no new numeric payload read or run"
+  },
+  "scope": "Independent source/raw/metadata review plus one repaired fixture. No actual actor, original operator action, factor payload, FE or training.",
+  "reproducer": "import ast,builtins,gzip,hashlib,json,math,subprocess,symtable\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nfrom xml.etree import ElementTree as ET\nROOT=Path('/home/fenics/Projects/NN-Lab');DOC=ROOT/'docs/task042_neural_coarse_inverse';REC=DOC/'outcomes/records'\nHEAD='29278756f610c4ad1755fc82f37be17e06dc1699';PREV='a871cc1a0ef6c888f9fe8040e321dd25db9612ed'\nRUN='997397093f7061f7086b2088458d50c6ca773b7d';FINAL='4734b22d1b9260b8500c32212e4e30b1c03f0507'\ndef git(*args):return subprocess.check_output(['git',*args],cwd=ROOT)\ndef sha(raw):return hashlib.sha256(raw).hexdigest()\ndef read(name):return json.loads((REC/name).read_text())\nassert git('rev-parse','HEAD').decode().strip()==HEAD\nverified={};not_read=[];historical_source_checks=[]\ndef verify(obj):\n if isinstance(obj,dict):\n  if isinstance(obj.get('path'),str) and isinstance(obj.get('sha256'),str):\n   p=Path(obj['path']);p=(p if p.is_absolute() else ROOT/p).resolve()\n   assert p.is_relative_to(ROOT)\n   if p.suffix in ('.npz','.npy','.h5','.bin'):\n    not_read.append(str(p));return\n   assert p.stat().st_size<8*2**20,p\n   raw=p.read_bytes()\n   if sha(raw)!=obj['sha256']:\n    assert p==ROOT/'src/test/test_task042_v31_workflow.py',p\n    old_raw=git('show',RUN+':'+str(p.relative_to(ROOT)))\n    assert sha(old_raw)==obj['sha256'],p\n    historical_source_checks.append(dict(path=str(p),source_sha=RUN,sha256=sha(old_raw),bytes=len(old_raw)))\n    return\n   if 'bytes' in obj:assert len(raw)==obj['bytes'],p\n   if 'uncompressed_sha256' in obj:\n    uncompressed=gzip.decompress(raw);assert sha(uncompressed)==obj['uncompressed_sha256'] and len(uncompressed)==obj['uncompressed_bytes']\n   verified[str(p)]=dict(sha256=sha(raw),bytes=len(raw))\n  for value in obj.values():verify(value)\n elif isinstance(obj,list):\n  for value in obj:verify(value)\nfor p in REC.glob('*v31.json'):verify(json.loads(p.read_text()))\ncomp=read('compilation_after_v31.json');static=[]\nfor row in comp['files']:\n p=ROOT/row['path'];assert git('show',FINAL+':'+row['path'])==p.read_bytes()\n compile(p.read_text(),str(p),'exec')\n st=symtable.symtable(p.read_text(),str(p),'exec')\n defined={s.get_name() for s in st.get_symbols() if s.is_assigned() or s.is_imported() or s.is_namespace()}|{'__file__','__name__','__package__','__spec__','__builtins__'}\n missing=[]\n def scan(scope):\n  for s in scope.get_symbols():\n   if s.is_referenced() and s.is_global() and s.get_name() not in defined and s.get_name() not in dir(builtins):missing.append(s.get_name())\n  for child in scope.get_children():scan(child)\n scan(st);assert not missing,(str(p),missing)\n static.append(row['path'])\nrepair_files=git('diff','--name-only',RUN,FINAL).decode().splitlines()\nassert repair_files==['src/test/test_task042_v31_workflow.py']\nold=[p for p in DOC.glob('*.md') if p.name.startswith(('response_v','review_report_v')) and p.name!='response_v31.md']\nfor p in old:assert git('show',PREV+':'+str(p.relative_to(ROOT)))==p.read_bytes()\nsuffixes=['README.md','outcomes/summary.md','outcomes/test_summary.md','outcomes/changed_files.md']\nfor name in suffixes:assert (DOC/name).read_bytes().endswith(git('show',PREV+':'+str((DOC/name).relative_to(ROOT))))\nindex=read('run_index_v31.json');cost=read('resource_costs_v31.json');ledger=read('ledger_v31.json')\nassert index['actual_numeric_source'] is None and index['admissions']==dict(pre=1,formal=0,checker=0)\nassert ledger['closed'] and ledger['active'] is None and ledger['runs']==[] and not any(ledger['charged'].values())\nassert (ROOT/'tmp/task042/v31/ledger.json').read_bytes()==(REC/'ledger_v31.json').read_bytes()\nassert (ROOT/'tmp/task042/v31/window.json').read_bytes()==(REC/'window_v31.json').read_bytes()\nassert not (ROOT/'tmp/task042/v31/formal_admission_attempt.json').exists()\nassert not (ROOT/'tmp/task042/v31/aux_check').exists()\nassert not (ROOT/'benchmarks/artifacts/task042/v31').exists() or not list((ROOT/'benchmarks/artifacts/task042/v31').rglob('*'))\nfor row in read('evidence_integrity_v31.json')['old_closed_files_unchanged']:\n verify(row)\n if Path(row['path']).name=='ledger.json':assert json.loads(Path(row['path']).read_text())['closed']\n\ndef replay(raw):\n d=json.loads(raw);fractions={int(k):v for k,v in d['cpu_busy_fractions'].items()}\n for key,b in d['cpu_ticks_before'].items():\n  a=d['cpu_ticks_after'][key];busy=1-(a[3]-b[3]+a[4]-b[4])/max(sum(a)-sum(b),1)\n  assert math.isfinite(busy) and abs(busy-fractions[int(key)])<1e-15\n for tid,a in d['thread_ticks_after'].items():\n  b=d['thread_ticks_before'].get(tid)\n  if b and a[0]==b[0]:assert d['thread_delta_ticks'][tid]==a[1]-b[1]\n reasons={}\n for cpu,value in fractions.items():\n  if value>.05:reasons.setdefault(cpu,[]).append('sample_busy_fraction_gt_0.05')\n for proc in d['neighbor_processes']:\n  for t in proc['threads']:\n   if len(t['affinity'])<=16:\n    for cpu in t['affinity']:reasons.setdefault(cpu,[]).append('narrow_thread_affinity:'+str(t['tid']))\n   elif d['thread_delta_ticks'].get(str(t['tid']),1)>0:reasons.setdefault(t['cpu'],[]).append('active_wide_thread:'+str(t['tid']))\n decisions=[dict(**t,eligible=not any(c in reasons for c in t['siblings']),excluded_siblings={str(c):reasons[c] for c in t['siblings'] if c in reasons}) for t in d['topology']]\n assert decisions==d['cpu_decisions'];candidates=[t['cpu'] for t in decisions if t['eligible']]\n assert candidates==d['candidate_cpus']\n return dict(status=d['status'],candidates=candidates,selected_cpu=d.get('selected_cpu'),gates=d['gates'],static_replay_only=True)\n\nraw_admission=gzip.decompress((REC/'admission_v31.json.gz').read_bytes())\nassert raw_admission==(ROOT/'tmp/task042/v31/aux_pre/admission.json').read_bytes()\nadmission=replay(raw_admission);assert admission['candidates']==[11,14]\nresources_raw=gzip.decompress((REC/'resources_v31.jsonl.gz').read_bytes())\nassert resources_raw==(ROOT/'tmp/task042/v31/aux_pre/supervision/resources.jsonl').read_bytes()\nsamples=[json.loads(x) for x in resources_raw.splitlines()];sup=read('supervision_v31.json')\nfor row in samples:\n assert row['rss_bytes']==sum(x['rss_bytes'] for x in row['members'])\n assert row['swap_bytes']==sum(x['swap_bytes'] for x in row['members'])\nassert len(samples)==sup['samples']==18\nassert max(x['rss_bytes'] for x in samples)==sup['sampled_process_tree_rss_peak_bytes']==254758912\nassert max(x['swap_bytes'] for x in samples)==0\nassert sup['classification']=='WORKER_FAILED' and sup['leader_exit_code']==1 and sup['descendants_cleared']\nassert sup['elapsed_seconds']==cost['auxiliary']['supervised_seconds']==12.731162693002261\nassert cost['cumulative']['total_seconds']==52.68017605994828\nfor original,saved in [('tests/stdout.txt','tests_stdout_v31.txt.gz'),('tests/junit.xml','tests_junit_v31.xml.gz'),('aux_pre/supervision/worker.log','worker_stdout_v31.txt.gz')]:\n assert (ROOT/'tmp/task042/v31'/original).read_bytes()==gzip.decompress((REC/saved).read_bytes())\ntree=ET.fromstring(gzip.decompress((REC/'tests_junit_v31.xml.gz').read_bytes()));cases=tree.findall('.//testcase')\nassert len(cases)==110\nfailed=[c for c in cases if c.find('failure') is not None];assert len(failed)==1\nassert failed[0].attrib['name']=='test_failed_prequalification_stops_formal_route'\nassert all(c.find('error') is None and c.find('skipped') is None for c in cases)\nassert len({(c.attrib['classname'],c.attrib['name']) for c in cases})==110\nworkflow_case=next(c for c in cases if c.attrib['name']=='test_actual_study_two_states_through_collector');assert len(workflow_case)==0\nreview=ROOT/'tmp/task042/review_v29';target=json.loads((review/'targeted_result.json').read_text())\nassert target['classification']=='COMPLETED' and target['leader_exit_code']==0 and target['descendants_cleared']\ntarget_log=(review/'supervision/worker.log').read_text();assert '1 passed in 0.89s' in target_log\nreview_replay=replay((review/'admission.json').read_bytes())\nstorage=json.loads(Path('/tmp/task042_review29_storage_check.json').read_text())\nreport=dict(schema='task042.review29.independent-review.v1',utc=datetime.now(timezone.utc).isoformat(),reviewed_HEAD=HEAD,\n actual_V31_test_source=RUN,latest_implementation_source=FINAL,previous_review=PREV,\n changed_files=git('diff','--name-only',PREV,HEAD).decode().splitlines(),verified_files=verified,verified_bytes=sum(v['bytes'] for v in verified.values()),\n real_payloads_not_read=sorted(set(not_read)),historical_source_checks=historical_source_checks,compiled_and_symbol_checked=static,implementation_repair_files=repair_files,\n old_review_response_unchanged=[str(p.relative_to(ROOT)) for p in old],historical_suffixes_unchanged=suffixes,\n V31_admission=admission,V31_supervision=sup,V31_ledger=ledger,V31_raw_gzip_matches=True,\n V31_test_counts=dict(total=110,passed=109,failed=1,skipped=0),V31_failed_test=dict(failed[0].attrib,trace=failed[0].find('failure').text),\n V31_workflow_test=dict(workflow_case.attrib,limitations='synthetic 16-dimensional active action at 18144/40 interface; fake factor file receipts, readiness stub, stage.guard disabled; not actual factor/host gate qualification'),\n review_targeted_test=dict(summary=target,admission=review_replay,log=target_log,script=Path('/tmp/task042_review29_targeted.py').read_text(),\n qualification='one repaired fixture on reviewed HEAD; do not rewrite historical 109/1 or claim a fresh full 110/110 run'),\n review_cost_separate_from_actor=True,carried_supervised_seconds=52.68017605994828,remaining_from_600_seconds=600-52.68017605994828,\n storage_guard_check=storage,output_payload_estimate=dict(status='DERIVED',two_states_complex128_bytes=2*(15*18144*16+(18144+40)*16+3888*16+40*16+18144*10*16+100*16+28*16),\n excludes='npz headers, JSON, logs, tmp, directory/cache bookkeeping; no new numeric payload read or run'),\n scope='Independent source/raw/metadata review plus one repaired fixture. No actual actor, original operator action, factor payload, FE or training.',\n reproducer=Path(__file__).read_text())\nPath('/tmp/task042_review29_evidence.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\\n')\nprint(json.dumps(dict(verified_files=len(verified),verified_bytes=report['verified_bytes'],changed_files=len(report['changed_files']),old_reviews_responses=len(old),compiled_files=len(static),\n repaired_fixture='PASS',carry=report['carried_supervised_seconds'],remaining=report['remaining_from_600_seconds'],output_payload_bytes=report['output_payload_estimate']['two_states_complex128_bytes']),ensure_ascii=False,indent=2))\n",
+  "host_process_check": {
+    "matching_Task042_actor_or_auxiliary_python_rows": 0,
+    "read_only": true,
+    "neighbors_modified": false,
+    "subagents_used": false,
+    "reset_card_used": false
+  },
+  "github_visual": {
+    "status": "NOT_VERIFIED",
+    "reason": "exact GitHub page returned Cache miss",
+    "attempted_url": "https://github.com/Rookie1234567/MyFEniCS/blob/29278756f610c4ad1755fc82f37be17e06dc1699/docs/task042_neural_coarse_inverse/response_v31.md"
+  },
+  "new_rule_authority": "User explicitly requested substantive progress and no waiting for review merely because a test failed. This review replaces that previous pre-test stopping clause; historical closed records and numerical/resource gates remain.",
+  "documentation_checks": {
+    "command": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/review_v29/doc_tests",
+      "src/test/test_24_repository_work_principles.py",
+      "src/test/test_183_development_model_registry_markdown.py"
+    ],
+    "exit_code": 0,
+    "wall_s": 0.8352477248990908,
+    "stdout": "............                                                             [100%]\n12 passed in 0.04s\n",
+    "stderr": "",
+    "log": "/home/fenics/Projects/NN-Lab/tmp/task042/review_v29/documentation_tests.log",
+    "log_sha256": "ebf302f1eb8a6cd74d7a77fe3ffd8012b525db1cd45cc9d82b753dc770614df0",
+    "report_sha256": "2c43296dd0146373c4d403b52b00e2f048ad52f9c34bd5a11542b2083b7d63d4",
+    "table_errors": [],
+    "fences_closed": true,
+    "utf8_no_replacement": true,
+    "local_link_targets_exist": [
+      "response_v31.md",
+      "review_report_v28.md",
+      "outcomes/records/review_v29_independent_checks.json",
+      "../../src/runners/return_block_diagnostic.py",
+      "review_report_v24.md#5-v27唯一任务验收与停止",
+      "review_report_v28.md#42-真实消费数值gate与成本",
+      "review_report_v21.md#102-历史去重什么已经尝试什么仍没有运行",
+      "review_report_v22.md",
+      "review_report_v23.md",
+      "review_report_v24.md",
+      "review_report_v25.md",
+      "review_report_v26.md",
+      "review_report_v27.md",
+      "review_report_v28.md",
+      "outcomes/records/independent_review_v21_20261002.json"
+    ],
+    "README_old_bytes_preserved_as_suffix": true,
+    "scope": "Documentation-only checks; no new solver/physical qualification",
+    "final_budget_wording_check": "PASS: loaded-work deadline is start+4500s; final 900s delivery reservation not available to actor"
+  }
+}
