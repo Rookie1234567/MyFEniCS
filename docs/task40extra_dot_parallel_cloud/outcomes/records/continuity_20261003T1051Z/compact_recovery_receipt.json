@@ -1,0 +1,204 @@
+{
+  "schema": "task40extra.cloud_continuity_recovery.v1",
+  "status": "SOURCE_EXACT_TREE_AND_FRESH_IMPORTS_API_PASS_NO_FE",
+  "completed_utc": "2026-10-03T11:10:06.138977+00:00",
+  "continuity_observation": {
+    "first_confirmed_missing_checkout_runtime_utc": "2026-10-03T10:49:31Z",
+    "platform_cause": "unknown; surviving files consistent with older workspace snapshot",
+    "scientific_C1_run_before_interruption": false,
+    "new_scientific_raw_lost": false,
+    "old_pre_reset_checker": "UNKNOWN; no oldraw restored",
+    "last_parent_clean_checkout_observation_utc_minute": "2026-10-03T09:54Z",
+    "last_observation_time_precision": "minute only, supplied by parent; exact second not recorded"
+  },
+  "source": {
+    "created_utc": "2026-10-03T10:59:26.551685+00:00",
+    "repository": "Rookie1234567/MyFEniCS",
+    "branch": "task40extra_dot_parallel_cloud",
+    "published_commit": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+    "published_tree": "89bdf899b5dedb7fbccd0eafcd99e6aeb508a5c2",
+    "local_head": "7de238a4b6f74f2b90ec42156f64a71f54ce79e5",
+    "local_tree": "89bdf899b5dedb7fbccd0eafcd99e6aeb508a5c2",
+    "history_note": "new local recovery root maps exactly to published tree; published commit and ancestors not restored",
+    "is_shallow": "false",
+    "file_count": 4597,
+    "directory_count": 501,
+    "path_mode_blob_comparison": "all 4597 blobs exact; all 501 directory trees exact",
+    "export_ignore_omissions": [],
+    "working_tree_status": "",
+    "source_archive": "/workspace/scratch/9c465670b46b/task40extra_cloud/pinned_restore_eb5b0ec/MyFEniCS-eb5b0ecc1afe593f626b44a6038f7f26651b3317.zip",
+    "source_archive_sha256": "24f7854a087cf3cf26d6eda1195419cef5377259d2757c29e307b20ce66279f0",
+    "original_recovery_evidence": "recovered_v15 and recovery_staging untouched",
+    "network_changes": [],
+    "remote_mutations": [],
+    "tests_or_numerical_runs": []
+  },
+  "runtime": {
+    "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery",
+    "packages": 139,
+    "archives_bytes": 402371362,
+    "archive_failures": 0,
+    "all_archive_size_sha256_pass": true,
+    "all_installed_name_version_build_filename_match": true,
+    "installer_version": "2.9.0",
+    "dependency_resolve_repeated": false,
+    "module_versions": {
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "mpi4py": "4.1.2",
+      "petsc4py": "3.25.6",
+      "basix": "0.10.0",
+      "ufl": "2025.2.1",
+      "ffcx": "0.10.0",
+      "dolfinx": "0.10.0",
+      "dolfinx_mpc": null,
+      "pytest": "9.1.1",
+      "psutil": "7.2.2"
+    },
+    "package_only_version_notes": {
+      "dolfinx_mpc": "0.10.5",
+      "fenics-ffcx": "0.10.1;module0.10.0",
+      "mumps": "5.8.2"
+    },
+    "PETSc": {
+      "version": [
+        3,
+        25,
+        6
+      ],
+      "version_info": {
+        "major": 3,
+        "minor": 25,
+        "subminor": 6,
+        "release": true,
+        "date": "Sep 28, 2026",
+        "authorinfo": [
+          "The PETSc Team",
+          "petsc-maint@mcs.anl.gov",
+          "https://petsc.org/"
+        ]
+      },
+      "scalar_dtype": "complex128",
+      "int_dtype": "int32",
+      "mumps_enabled": true,
+      "public_PC_methods": {
+        "setType": true,
+        "setOperators": true,
+        "setFactorSolverType": true,
+        "setFactorSetUpSolverType": true,
+        "getFactorMatrix": true,
+        "setUp": true
+      },
+      "public_Mat_methods": {
+        "solve": true,
+        "setMumpsIcntl": true,
+        "getMumpsIcntl": true,
+        "getMumpsInfo": true,
+        "getMumpsInfog": true
+      }
+    },
+    "MPI": {
+      "size": 1,
+      "rank": 0,
+      "vendor": "MPICH5.0.1",
+      "process_local_transport": "UCX_TLS=self"
+    },
+    "numerical_libraries_all_inside_isolated_prefix": true,
+    "imports_status": "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION",
+    "new_install_failures": 0,
+    "new_import_failures": 0,
+    "nonfatal_diagnostics_preserved": [
+      "UCX scandir(/sys/class/net) unavailable",
+      "hwloc sysfs cpu topology unavailable"
+    ]
+  },
+  "measured_costs": {
+    "offline_install_elapsed_seconds": 9.065153030999682,
+    "imports_elapsed_seconds": 0.5160971710001832,
+    "offline_install_individual_child_max_rss_bytes": 130842624,
+    "imports_individual_child_max_rss_bytes": 107388928,
+    "rss_scope": "maximum individual child rusage, not simultaneous tree or whole-machine RSS",
+    "full_source_and_package_transfer_elapsed_seconds": null,
+    "unmeasured_transfer_cost_note": "no complete monotonic interval persisted; do not sum phase costs as workflow time"
+  },
+  "state": {
+    "source_defaults_changed": false,
+    "new_tests_run": false,
+    "FE_action": "NOT_RUN",
+    "FFCx_JIT": "NOT_RUN",
+    "matrix_creation_calls": 0,
+    "factor_calls": 0,
+    "PDE_calls": 0,
+    "Library_uploads": 0,
+    "storage_approval_pending": true,
+    "C1": "HELD",
+    "target_scale": "UNQUALIFIED"
+  },
+  "records": {
+    "source_restoration": {
+      "path": "/workspace/scratch/9c465670b46b/task40extra_cloud/pinned_restore_eb5b0ec/restoration_receipt.json",
+      "bytes": 1145,
+      "sha256": "343e4c9a248efe7c49564d6c32c6ab943a9b413ac8292acbf2194367277ee26d"
+    },
+    "installer": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/fresh_installer_verified.json",
+      "bytes": 587,
+      "sha256": "24dc410352e0f466c12de7e78d2ce29c6f1fc1dcef45928f0f5ec97a7d0aac63"
+    },
+    "lock_derivation": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/lock_derivation.json",
+      "bytes": 939,
+      "sha256": "148c71e85139918338c08c6eb8b0dd5c831a838f45bdf5b2ade491891271e1a4"
+    },
+    "archive_transfer_complete": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/runtime_contract/archive_transfer_completion.json",
+      "bytes": 73830,
+      "sha256": "a074889e28189e88d7a664682fe16db583d27ff5d06e0125afb71eb1da0319c8"
+    },
+    "archive_transfer_log": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/runtime_contract/browser_archive_transfers.jsonl",
+      "bytes": 98125,
+      "sha256": "f4fe6cb47424bdd062b16d51ef2182af8030ed7b9b078720672712fdf9c910d7"
+    },
+    "installed_metadata": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/installed_exact139_metadata.json",
+      "bytes": 425,
+      "sha256": "b144d15ca5a6a4d32b680784e6958e04a672b6926dc8fcab5b4094cdb29f6550"
+    },
+    "offline_install_execution": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/offline_install_attempt1.json",
+      "bytes": 1112,
+      "sha256": "9c1111ec3d6b93424be4004276397909210cac6dfe6178b5abb1e422f2a8b66d"
+    },
+    "imports_full": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/fresh_imports_only_attempt1.json",
+      "bytes": 9143,
+      "sha256": "3d108aa1b2a50271495ab640cc6def790e85c8c805373482db45c3588889ab7f"
+    },
+    "imports_execution": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/fresh_imports_only_attempt1_execution.json",
+      "bytes": 971,
+      "sha256": "be7b52540bb4b13d53c17c3e0fd894619a757cfd7c78bc10bf2e1ad2078b5488"
+    },
+    "imports_stdout": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/fresh_imports_only_attempt1.stdout",
+      "bytes": 4556,
+      "sha256": "1e19c83eed8bd6f9fc2d38086cc3b6cae4bff5caf66b06ac1835803885718c55"
+    },
+    "imports_stderr": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/fresh_imports_only_attempt1.stderr",
+      "bytes": 84,
+      "sha256": "d84a8f6edd548536575c09062a5223f548c67f753be238589d44f2210121f646"
+    },
+    "install_stdout": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/offline_install_attempt1.stdout",
+      "bytes": 244678,
+      "sha256": "766b1b522dee572aeab47cb2376b9eb89c0894a1f435e371eac3d497edd9e4da"
+    },
+    "install_stderr": {
+      "path": "/workspace/scratch/9c465670b46b/recovery_staging/continuity_20261003T1051Z/offline_install_attempt1.stderr",
+      "bytes": 374,
+      "sha256": "155917c47e032a5de1bf5cae307f05ca2de85af0936db4ed56cd8449c4a5f428"
+    }
+  }
+}

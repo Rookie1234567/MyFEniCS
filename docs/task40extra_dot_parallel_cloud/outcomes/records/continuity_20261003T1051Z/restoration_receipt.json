@@ -1,0 +1,22 @@
+{
+  "created_utc": "2026-10-03T10:59:26.551685+00:00",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task40extra_dot_parallel_cloud",
+  "published_commit": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+  "published_tree": "89bdf899b5dedb7fbccd0eafcd99e6aeb508a5c2",
+  "local_head": "7de238a4b6f74f2b90ec42156f64a71f54ce79e5",
+  "local_tree": "89bdf899b5dedb7fbccd0eafcd99e6aeb508a5c2",
+  "history_note": "new local recovery root maps exactly to published tree; published commit and ancestors not restored",
+  "is_shallow": "false",
+  "file_count": 4597,
+  "directory_count": 501,
+  "path_mode_blob_comparison": "all 4597 blobs exact; all 501 directory trees exact",
+  "export_ignore_omissions": [],
+  "working_tree_status": "",
+  "source_archive": "/workspace/scratch/9c465670b46b/task40extra_cloud/pinned_restore_eb5b0ec/MyFEniCS-eb5b0ecc1afe593f626b44a6038f7f26651b3317.zip",
+  "source_archive_sha256": "24f7854a087cf3cf26d6eda1195419cef5377259d2757c29e307b20ce66279f0",
+  "original_recovery_evidence": "recovered_v15 and recovery_staging untouched",
+  "network_changes": [],
+  "remote_mutations": [],
+  "tests_or_numerical_runs": []
+}
