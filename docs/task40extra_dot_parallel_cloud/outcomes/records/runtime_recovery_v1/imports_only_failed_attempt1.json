@@ -1,0 +1,51 @@
+{
+  "schema": "fresh-runtime-imports-only.v1",
+  "status": "PARTIAL",
+  "started_utc": "2026-10-03T00:18:58Z",
+  "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "executable": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/bin/python",
+  "prefix": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "modules": {
+    "numpy": {
+      "version": "2.5.3",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/numpy/__init__.py"
+    },
+    "scipy": {
+      "version": "1.18.1",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/scipy/__init__.py"
+    },
+    "mpi4py": {
+      "version": "4.1.2",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/mpi4py/__init__.py"
+    },
+    "petsc4py": {
+      "version": "3.25.6",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/petsc4py/__init__.py"
+    },
+    "basix": {
+      "version": "0.10.0",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/basix/__init__.py"
+    },
+    "ufl": {
+      "version": "2025.2.1",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/ufl/__init__.py"
+    },
+    "ffcx": {
+      "version": "0.10.0",
+      "file": "/workspace/scratch/9c465670b46b/task40extra_cloud/complex_env_recovery/lib/python3.12/site-packages/ffcx/__init__.py"
+    }
+  },
+  "FE_action": "NOT_RUN",
+  "C1": "NOT_RUN",
+  "matrix_creation_calls": 0,
+  "factor_calls": 0,
+  "PDE_calls": 0,
+  "old_ABI_inherited": false,
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  }
+}

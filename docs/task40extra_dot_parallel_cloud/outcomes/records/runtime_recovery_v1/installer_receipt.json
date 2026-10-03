@@ -1,0 +1,26 @@
+{
+  "official_url": "https://micro.mamba.pm/api/micromamba/linux-64/latest",
+  "download_route": "parent-confirmed standard cloud browser download",
+  "archive_source_path": "/opt/codex/downloads/12ef7e52-d657-4070-90c3-b508de47f90d/d8893c34-fac8-46f6-ba0f-48176f915d24",
+  "archive_bytes": 6988090,
+  "archive_sha256": "8761c382127e6363bd9e0a2451aa3ef90d071a79133f736e2f759a3bf13040dd",
+  "package_index": {
+    "arch": "x86_64",
+    "build": "0",
+    "build_number": 0,
+    "depends": [
+      "__glibc >=2.17,<3.0.a0"
+    ],
+    "license": "BSD-3-Clause AND MIT AND OpenSSL",
+    "license_family": "BSD",
+    "name": "micromamba",
+    "platform": "linux",
+    "subdir": "linux-64",
+    "timestamp": 1786126242255,
+    "version": "2.9.0"
+  },
+  "binary_sha256": "366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3",
+  "all_archive_members_safe": true,
+  "dependency_packages_installed": false,
+  "FE_PETSc_qualified": false
+}

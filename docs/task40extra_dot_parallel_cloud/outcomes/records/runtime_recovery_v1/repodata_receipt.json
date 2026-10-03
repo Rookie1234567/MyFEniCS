@@ -1,0 +1,24 @@
+{
+  "download_route": "standard dot cloud browser download",
+  "records": [
+    {
+      "official_url": "https://conda.anaconda.org/conda-forge/linux-64/repodata.json.bz2",
+      "source_path": "/opt/codex/downloads/12ef7e52-d657-4070-90c3-b508de47f90d/cf60d8b0-8671-4229-9c12-a890effae011",
+      "archive_bytes": 60776404,
+      "archive_sha256": "be5b9021b01e93042182d282b866315448e6568b3f4e566df11b117f446fb821",
+      "repodata_bytes": 451995149,
+      "repodata_sha256": "4d18bfad52f3a318df8be26af70f410bac8760ed326f7c453067e9642192e48d",
+      "subdir": "linux-64"
+    },
+    {
+      "official_url": "https://conda.anaconda.org/conda-forge/noarch/repodata.json.bz2",
+      "source_path": "/opt/codex/downloads/12ef7e52-d657-4070-90c3-b508de47f90d/6c65004f-e8a9-414a-96f0-503192cb4a86",
+      "archive_bytes": 28891663,
+      "archive_sha256": "7b4975c77d5195102cf70056ec091093d53512b96959dc91c183c3ba7fd5b79d",
+      "repodata_bytes": 189481345,
+      "repodata_sha256": "61492459a55727c82f648827eb901e3a755ed1d99b7fc82573659e99e7b59968",
+      "subdir": "noarch"
+    }
+  ],
+  "dependency_packages_installed": false
+}

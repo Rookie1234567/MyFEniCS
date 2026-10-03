@@ -1,0 +1,711 @@
+{
+  "status": "ISOLATED139_PACKAGE_LINK_PASS_NO_ABI_QUALIFICATION",
+  "utc": "2026-10-03T00:18:57.953942+00:00",
+  "package_count": 139,
+  "manifest_sha256": "1d89188d73bd32032f3a6e4114559fae0df3cb85f186e08531c66eb619f619d6",
+  "installed_record_name_version_build_filename_all_equal": true,
+  "install_stdout_sha256": "8327c3613a370b83a1aeeb362e5dc81503de0a3829fa200491078f50765a2af5",
+  "install_stderr_sha256": "155917c47e032a5de1bf5cae307f05ca2de85af0936db4ed56cd8449c4a5f428",
+  "installer_exit_code": 0,
+  "first_create_exit_code": 1,
+  "first_create_preserved": true,
+  "registration_route": "existing empty conda prefix + normal offline install; HOME unchanged",
+  "FE_PETSc_qualified": false,
+  "installed_packages": [
+    {
+      "name": "tomli",
+      "version": "2.4.1",
+      "build": "pyhcf101f3_0"
+    },
+    {
+      "name": "libev",
+      "version": "4.33",
+      "build": "h280c20c_3"
+    },
+    {
+      "name": "python-gil",
+      "version": "3.12.14",
+      "build": "hd8ed1ab_3"
+    },
+    {
+      "name": "libadios2",
+      "version": "2.12.1",
+      "build": "mpi_mpich_h050f46b_5"
+    },
+    {
+      "name": "openssl",
+      "version": "3.6.4",
+      "build": "h781a0a9_0"
+    },
+    {
+      "name": "libcurl",
+      "version": "8.22.0",
+      "build": "ha042cf0_0"
+    },
+    {
+      "name": "fenics-basix-nanobind-abi",
+      "version": "2.16",
+      "build": "py312h8b13081_1"
+    },
+    {
+      "name": "libboost-devel",
+      "version": "1.90.0",
+      "build": "hdab9b82_3"
+    },
+    {
+      "name": "scalapack",
+      "version": "2.2.0",
+      "build": "h13b89aa_6"
+    },
+    {
+      "name": "kernel-headers_linux-64",
+      "version": "6.12.0",
+      "build": "he073ed8_6"
+    },
+    {
+      "name": "dolfinx_mpc",
+      "version": "0.10.5",
+      "build": "py312hdf92c3e_0"
+    },
+    {
+      "name": "pugixml",
+      "version": "1.15",
+      "build": "h3f63f65_0"
+    },
+    {
+      "name": "zlib-ng",
+      "version": "2.3.3",
+      "build": "hce19668_1"
+    },
+    {
+      "name": "parmetis",
+      "version": "4.0.3",
+      "build": "hbfcd2fd_1009"
+    },
+    {
+      "name": "libssh2",
+      "version": "1.11.1",
+      "build": "h6154650_1"
+    },
+    {
+      "name": "metis",
+      "version": "5.1.0",
+      "build": "h86e3903_1008"
+    },
+    {
+      "name": "_python_abi3_support",
+      "version": "1.0",
+      "build": "hd8ed1ab_3"
+    },
+    {
+      "name": "libcap",
+      "version": "2.78",
+      "build": "h084b8d7_1"
+    },
+    {
+      "name": "rdma-core",
+      "version": "65.0",
+      "build": "h7b4f2e6_0"
+    },
+    {
+      "name": "libgcc-devel_linux-64",
+      "version": "16.2.0",
+      "build": "he3ce08f_107"
+    },
+    {
+      "name": "mpi",
+      "version": "1.0.1",
+      "build": "mpich"
+    },
+    {
+      "name": "libnsl",
+      "version": "2.0.1",
+      "build": "hb9d3cd8_1"
+    },
+    {
+      "name": "libiconv",
+      "version": "1.18",
+      "build": "h0cb94f2_3"
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "build": "py312h1b36aeb_3"
+    },
+    {
+      "name": "libcamd",
+      "version": "3.3.3",
+      "build": "h32481e8_7100102"
+    },
+    {
+      "name": "libpng",
+      "version": "1.6.59",
+      "build": "h922cc85_0"
+    },
+    {
+      "name": "libaec",
+      "version": "1.1.5",
+      "build": "h088129d_0"
+    },
+    {
+      "name": "liblapack",
+      "version": "3.11.0",
+      "build": "11_h47877c9_openblas"
+    },
+    {
+      "name": "c-blosc2",
+      "version": "3.1.5",
+      "build": "hc31b594_0"
+    },
+    {
+      "name": "ucx",
+      "version": "1.20.1",
+      "build": "hbe80e26_0"
+    },
+    {
+      "name": "gcc_impl_linux-64",
+      "version": "16.2.0",
+      "build": "h9891192_7"
+    },
+    {
+      "name": "fenics-dolfinx",
+      "version": "0.10.0",
+      "build": "py312hf367bb2_7"
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0",
+      "build": "pyh332efcf_0"
+    },
+    {
+      "name": "libopenblas",
+      "version": "0.3.34",
+      "build": "openmp_h156ec52_2"
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1",
+      "build": "py312h460c074_0"
+    },
+    {
+      "name": "icu",
+      "version": "78.3",
+      "build": "py310h44b86e0_2"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "build": "pyhc364b38_0"
+    },
+    {
+      "name": "ncurses",
+      "version": "6.6",
+      "build": "hdb14827_1"
+    },
+    {
+      "name": "petsc",
+      "version": "3.25.6",
+      "build": "complex_h1b66200_0"
+    },
+    {
+      "name": "libnl",
+      "version": "3.11.0",
+      "build": "hb03c661_1"
+    },
+    {
+      "name": "libccolamd",
+      "version": "3.3.4",
+      "build": "h32481e8_7100102"
+    },
+    {
+      "name": "llvm-openmp",
+      "version": "23.1.2",
+      "build": "h7148c6a_0"
+    },
+    {
+      "name": "libblas",
+      "version": "3.11.0",
+      "build": "11_h4a7cf45_openblas"
+    },
+    {
+      "name": "libscotch",
+      "version": "7.0.11",
+      "build": "int32_hbb129e3_3"
+    },
+    {
+      "name": "mumps-include",
+      "version": "5.8.2",
+      "build": "h580308f_3"
+    },
+    {
+      "name": "libgfortran5",
+      "version": "16.2.0",
+      "build": "h6b99dfc_7"
+    },
+    {
+      "name": "pip",
+      "version": "26.2.1",
+      "build": "pyh8b19718_0"
+    },
+    {
+      "name": "libsuitesparseconfig",
+      "version": "7.10.1",
+      "build": "h92d6892_7100102"
+    },
+    {
+      "name": "libbtf",
+      "version": "2.3.2",
+      "build": "h32481e8_7100102"
+    },
+    {
+      "name": "libudev1",
+      "version": "262",
+      "build": "h26e0ef7_2"
+    },
+    {
+      "name": "exceptiongroup",
+      "version": "1.3.1",
+      "build": "pyhd8ed1ab_0"
+    },
+    {
+      "name": "libgfortran",
+      "version": "16.2.0",
+      "build": "h69a702a_7"
+    },
+    {
+      "name": "ld_impl_linux-64",
+      "version": "2.46.1",
+      "build": "default_hbd61a6d_102"
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.3",
+      "build": "py312he827f4e_0"
+    },
+    {
+      "name": "sysroot_linux-64",
+      "version": "2.39",
+      "build": "hc4b9eeb_6"
+    },
+    {
+      "name": "libxml2",
+      "version": "2.15.4",
+      "build": "h7df9aa5_0"
+    },
+    {
+      "name": "zstd",
+      "version": "1.5.7",
+      "build": "hb78ec9c_7"
+    },
+    {
+      "name": "_openmp_mutex",
+      "version": "4.5",
+      "build": "8_kmp_llvm"
+    },
+    {
+      "name": "mpich",
+      "version": "5.0.1",
+      "build": "h6f9170e_1"
+    },
+    {
+      "name": "slepc4py",
+      "version": "3.25.2",
+      "build": "np2py311hc778b8e_0"
+    },
+    {
+      "name": "kahip",
+      "version": "3.25",
+      "build": "py311h1f6f989_0"
+    },
+    {
+      "name": "fenics-basix",
+      "version": "0.10.0",
+      "build": "py312h31cd249_1"
+    },
+    {
+      "name": "libstdcxx",
+      "version": "16.2.0",
+      "build": "h934c35e_7"
+    },
+    {
+      "name": "lz4-c",
+      "version": "1.10.0",
+      "build": "hee9eb32_2"
+    },
+    {
+      "name": "libffi",
+      "version": "3.5.2",
+      "build": "h3435931_0"
+    },
+    {
+      "name": "libgcc",
+      "version": "16.2.0",
+      "build": "ha9f2e26_7"
+    },
+    {
+      "name": "zeromq",
+      "version": "4.3.5",
+      "build": "h901266b_12"
+    },
+    {
+      "name": "hdf5",
+      "version": "1.14.6",
+      "build": "mpi_mpich_hfe583f4_10"
+    },
+    {
+      "name": "libzlib",
+      "version": "1.3.2",
+      "build": "h25fd6f3_3"
+    },
+    {
+      "name": "libfabric1",
+      "version": "2.6.0",
+      "build": "h6b3ec72_0"
+    },
+    {
+      "name": "yaml",
+      "version": "0.2.5",
+      "build": "hebe6cf0_3"
+    },
+    {
+      "name": "libcblas",
+      "version": "3.11.0",
+      "build": "11_h0358290_openblas"
+    },
+    {
+      "name": "libklu",
+      "version": "2.3.5",
+      "build": "hf24d653_7100102"
+    },
+    {
+      "name": "libboost-headers",
+      "version": "1.90.0",
+      "build": "h707e725_3"
+    },
+    {
+      "name": "krb5",
+      "version": "1.22.2",
+      "build": "hbc21106_2"
+    },
+    {
+      "name": "fenics-ufcx",
+      "version": "0.10.1",
+      "build": "haec879b_1"
+    },
+    {
+      "name": "mumps-mpi",
+      "version": "5.8.2",
+      "build": "gfortran_h18beee2_3"
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.0",
+      "build": "pyhd8ed1ab_0"
+    },
+    {
+      "name": "gcc",
+      "version": "16.2.0",
+      "build": "hc6a0c74_7"
+    },
+    {
+      "name": "readline",
+      "version": "8.3",
+      "build": "hd6e31c0_1"
+    },
+    {
+      "name": "libspqr",
+      "version": "4.3.4",
+      "build": "h852d39f_7100102"
+    },
+    {
+      "name": "ca-certificates",
+      "version": "2026.7.22",
+      "build": "hbd8a1cb_0"
+    },
+    {
+      "name": "python",
+      "version": "3.12.13",
+      "build": "hd63d673_0_cpython"
+    },
+    {
+      "name": "slepc",
+      "version": "3.25.2",
+      "build": "complex_h9ee8adb_0"
+    },
+    {
+      "name": "wheel",
+      "version": "0.48.0",
+      "build": "pyhd8ed1ab_0"
+    },
+    {
+      "name": "libedit",
+      "version": "3.1.20250104",
+      "build": "pl5321h373387f_1"
+    },
+    {
+      "name": "libsystemd0",
+      "version": "262",
+      "build": "h26e0ef7_2"
+    },
+    {
+      "name": "libgomp",
+      "version": "16.2.0",
+      "build": "he0feb66_7"
+    },
+    {
+      "name": "libnghttp2",
+      "version": "1.68.1",
+      "build": "h74cf4be_1"
+    },
+    {
+      "name": "libsanitizer",
+      "version": "16.2.0",
+      "build": "h3048135_7"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "build": "pyhf9edf01_1"
+    },
+    {
+      "name": "libcholmod",
+      "version": "5.3.1",
+      "build": "h59ddab4_7100102"
+    },
+    {
+      "name": "tzdata",
+      "version": "2026c",
+      "build": "h151e31d_0"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0",
+      "build": "pyhcf101f3_0"
+    },
+    {
+      "name": "mpi4py",
+      "version": "4.1.2",
+      "build": "py312h5ecf655_101"
+    },
+    {
+      "name": "keyutils",
+      "version": "1.6.3",
+      "build": "h7cc23a3_1"
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1",
+      "build": "pyhc364b38_2"
+    },
+    {
+      "name": "fenics-ffcx",
+      "version": "0.10.1",
+      "build": "pyhbc3ee6d_1"
+    },
+    {
+      "name": "spdlog",
+      "version": "1.17.0",
+      "build": "hb6aa676_2"
+    },
+    {
+      "name": "pygments",
+      "version": "2.21.0",
+      "build": "pyhcf101f3_0"
+    },
+    {
+      "name": "fenics-libdolfinx",
+      "version": "0.10.0",
+      "build": "py312h90913e0_7"
+    },
+    {
+      "name": "nanobind-abi",
+      "version": "16",
+      "build": "hd8ed1ab_1"
+    },
+    {
+      "name": "fenics-ufl",
+      "version": "2025.2.1",
+      "build": "pyhcf101f3_0"
+    },
+    {
+      "name": "libboost",
+      "version": "1.90.0",
+      "build": "h1101c1b_3"
+    },
+    {
+      "name": "libxml2-16",
+      "version": "2.15.4",
+      "build": "hf3af7cc_0"
+    },
+    {
+      "name": "libxcrypt",
+      "version": "4.4.38",
+      "build": "h280c20c_0"
+    },
+    {
+      "name": "superlu_dist",
+      "version": "9.2.1",
+      "build": "h5edd517_2"
+    },
+    {
+      "name": "libcolamd",
+      "version": "3.3.4",
+      "build": "h32481e8_7100102"
+    },
+    {
+      "name": "fenics-libbasix",
+      "version": "0.10.0",
+      "build": "py312h2c41f56_1"
+    },
+    {
+      "name": "libhwloc",
+      "version": "2.13.0",
+      "build": "default_he001693_1000"
+    },
+    {
+      "name": "fmt",
+      "version": "12.1.0",
+      "build": "h76c4fd7_1"
+    },
+    {
+      "name": "pkg-config",
+      "version": "0.29.2",
+      "build": "h1114479_1013"
+    },
+    {
+      "name": "libumfpack",
+      "version": "6.3.5",
+      "build": "heb53515_7100102"
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "build": "py312h106c528_1"
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "build": "pyhd8ed1ab_1"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "build": "pyhcf101f3_0"
+    },
+    {
+      "name": "c-ares",
+      "version": "1.34.8",
+      "build": "hebe6cf0_2"
+    },
+    {
+      "name": "conda-gcc-specs",
+      "version": "16.2.0",
+      "build": "hf8037ed_7"
+    },
+    {
+      "name": "python_abi",
+      "version": "3.12",
+      "build": "9_cp312"
+    },
+    {
+      "name": "_x86_64-microarch-level",
+      "version": "4",
+      "build": "3_x86_64_v4"
+    },
+    {
+      "name": "superlu",
+      "version": "7.0.1",
+      "build": "h8f6e6c4_0"
+    },
+    {
+      "name": "libptscotch",
+      "version": "7.0.11",
+      "build": "int32_hf9c0034_3"
+    },
+    {
+      "name": "cpython",
+      "version": "3.12.14",
+      "build": "py312hd8ed1ab_3"
+    },
+    {
+      "name": "petsc4py",
+      "version": "3.25.6",
+      "build": "np2py311h5af2b71_0"
+    },
+    {
+      "name": "libpsl",
+      "version": "0.23.1",
+      "build": "hd9e3e90_1"
+    },
+    {
+      "name": "libstdcxx-devel_linux-64",
+      "version": "16.2.0",
+      "build": "h86e191b_107"
+    },
+    {
+      "name": "binutils_impl_linux-64",
+      "version": "2.46.1",
+      "build": "default_hfdba357_102"
+    },
+    {
+      "name": "libdolfinx_mpc",
+      "version": "0.10.5",
+      "build": "py312h0be1646_0"
+    },
+    {
+      "name": "bzip2",
+      "version": "1.0.8",
+      "build": "hda65f42_10"
+    },
+    {
+      "name": "fftw",
+      "version": "3.3.11",
+      "build": "mpi_mpich_h084ba78_0"
+    },
+    {
+      "name": "libsodium",
+      "version": "1.0.22",
+      "build": "hebe6cf0_3"
+    },
+    {
+      "name": "libfabric",
+      "version": "2.6.0",
+      "build": "ha770c72_0"
+    },
+    {
+      "name": "libexpat",
+      "version": "2.8.5",
+      "build": "hd2095e1_0"
+    },
+    {
+      "name": "zfp",
+      "version": "1.0.1",
+      "build": "h79e284d_6"
+    },
+    {
+      "name": "liblzma",
+      "version": "5.8.3",
+      "build": "hb03c661_1"
+    },
+    {
+      "name": "tk",
+      "version": "8.6.13",
+      "build": "noxft_h1df4ec4_4"
+    },
+    {
+      "name": "libamd",
+      "version": "3.3.3",
+      "build": "haaf9dc3_7100102"
+    },
+    {
+      "name": "libsqlite",
+      "version": "3.53.4",
+      "build": "h13e7031_1"
+    },
+    {
+      "name": "libuuid",
+      "version": "2.42.4",
+      "build": "hcfc3c73_0"
+    }
+  ]
+}

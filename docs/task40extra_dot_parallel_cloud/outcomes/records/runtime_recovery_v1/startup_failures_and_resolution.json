@@ -1,0 +1,39 @@
+{
+  "schema": "runtime-recovery-startup-failures.v1",
+  "failed_create": {
+    "exit_code": 1,
+    "success_field_not_authoritative": true,
+    "installed_package_count_at_failure": 0,
+    "python_present_at_failure": false,
+    "messages": [
+      {
+        "level": "warning",
+        "location": "/home/conda/feedstock_root/build_artifacts/micromamba_1786125696885/work/mamba/libmamba/src/core/transaction.cpp:1170:13 bool mamba::MTransaction::prompt(const mamba::Context&, mamba::ChannelContext&)",
+        "message": "Security Warning: This transaction includes executing package scripts (pre/post-link/unlink) if present. These scripts can contain arbitrary code. Please ensure you trust the package sources.",
+        "source": "libmamba"
+      },
+      {
+        "level": "critical",
+        "location": "/home/conda/feedstock_root/build_artifacts/micromamba_1786125696885/work/mamba/micromamba/src/main.cpp:235:9 int main(int, char**)",
+        "message": "failed to open /home/agent/.conda/environments.txt: No such file or directory",
+        "source": "libmamba"
+      }
+    ],
+    "raw_stdout_sha256": "2617b3e71fb87d826a3a9f0c4046eef25a6388e0e2188e723e49c365e3646e14",
+    "raw_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "failed_default_UCX_import": {
+    "exit_code": 143,
+    "partial_receipt_sha256": "47d50a1834ffb400157456c1d5f50291098997e5f4a1f6aa4992157ee0e46d05",
+    "stdout": "[1790986738.232531] [e99703a7ee50:7    :0]       tcp_iface.c:984  UCX  ERROR scandir(/sys/class/net) failed: No such file or directory\n[1790986738.233365] [e99703a7ee50:7    :0]        mm_iface.c:689  UCX  ERROR Failed to create unix domain socket for signal: Operation not permitted\n[1790986738.233447] [e99703a7ee50:7    :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(sysv/memory) failed: Input/output error\n",
+    "stderr": "hwloc/linux: failed to find sysfs cpu topology directory, aborting linux discovery.\nAbort(941770127): Fatal error in internal_Init_thread: Other MPI error, error stack:\ninternal_Init_thread(71).: MPI_Init_thread(argc=0x7fe20eabcf98, argv=0x7fe20eabcf90, required=1, provided=0x7fff81601f6c) failed\nMPII_Init_thread(261)....: \nMPID_Init(549)...........: \nMPIDI_UCX_init_local(234): \nMPIDI_UCX_init_worker(86):  ucx function returned with failed status(ucx_init.c 86 MPIDI_UCX_init_worker Input/output error)\n"
+  },
+  "successful_self_import": {
+    "exit_code": 0,
+    "UCX_TLS": "self",
+    "receipt_sha256": "31adaf2a1eacd08387fc3d73ba3da3eb56e04fcdfbf20712abd91108616756b6",
+    "stderr": "hwloc/linux: failed to find sysfs cpu topology directory, aborting linux discovery.\n"
+  },
+  "C1": "NOT_RUN",
+  "matrix_factor_PDE_calls": 0
+}
