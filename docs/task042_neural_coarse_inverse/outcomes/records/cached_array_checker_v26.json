@@ -1,0 +1,42 @@
+{
+  "status": "CHECKED",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "eta8": 0.9832369898096153,
+      "eta9": 0.9662055056183673,
+      "g": 0.982678149451491,
+      "h_e8_coherence": 0.18532041061521579,
+      "conditional_squared_fraction_removed": 0.034343654590593076,
+      "norm_reduction_relative_to_e8": 0.017321850548508988,
+      "innovation_orthogonal_operation_relative": 5.670096594034365e-17,
+      "innovation_span_identity_relative": 6.93854067973115e-16,
+      "stationarity_recomputed": 5.666811012843484e-17,
+      "actual_saved_response_thin_full_b_difference": 8.384570013588461e-17,
+      "rank_role": "old qualified eight plus independently certified nonzero orthogonal innovation",
+      "no_new_action": true,
+      "no_new_decomposition": true,
+      "no_factor_reader": true
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "eta8": 0.9899246285850263,
+      "eta9": 0.9819684299899415,
+      "g": 0.9919628238702808,
+      "h_e8_coherence": 0.12652966474032426,
+      "conditional_squared_fraction_removed": 0.01600975605929833,
+      "norm_reduction_relative_to_e8": 0.008037176129719215,
+      "innovation_orthogonal_operation_relative": 3.6753087851874006e-17,
+      "innovation_span_identity_relative": 1.1172089154616622e-15,
+      "stationarity_recomputed": 5.727544266044029e-17,
+      "actual_saved_response_thin_full_b_difference": 1.6777063399451155e-16,
+      "rank_role": "old qualified eight plus independently certified nonzero orthogonal innovation",
+      "no_new_action": true,
+      "no_new_decomposition": true,
+      "no_factor_reader": true
+    }
+  ],
+  "decision": "FIXED_JOINT_DIRECTION_INSUFFICIENT",
+  "raw_status_not_sufficient": true,
+  "scope": "fixed saved arrays/hash-bound original witnesses; no new S/SH/LU/QR/SVD/field"
+}

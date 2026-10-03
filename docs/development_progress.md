@@ -1,3 +1,22 @@
+# Task042 V26：联合新方向可信但增量不足
+
+**V26已完成，数值资格通过，预登记决策为 `FIXED_JOINT_DIRECTION_INSUFFICIENT`。** 两终态g均≥0.95，未达到两者g≤0.75的继续研究信号。关闭本固定5／7联合方向提案，不新启动迭代、另一块对或训练。它产生了可分辨的新方向，但不能显著消除旧八方向留下的残差；不是新的有限元解，也不否定所有接口／神经方法。
+
+把两个相邻局部块一起解，是让一次局部解考虑它们之间的双向耦合。本批把这个新向量的原方程响应，加入已有八个向量的响应集合，只检查多出的方向是否有用。代价是一套更大的稠密矩阵／LU、一次只读重载与有界原作用；不把诊断向量作为部署PC或求解终态。
+
+eta8／eta9是修正后原trace残差范数除以各自当前残差范数；g比较加入新方向前后剩余残差，分母不是物理b或参考场。范数下降与平方范数消除分别列出，均为measured／derived offline diagnostic。
+
+| 固定已消费冷终态 | eta8 | eta9 | g=eta9/eta8 | 相对e8范数下降 | 相对e8平方范数消除 | rank |
+|---|---:|---:|---:|---:|---:|---:|
+| V24-LZ-CYCLE4 | 0.983236989810 | 0.966205505618 | 0.982678149451 | 1.732185% | 3.434365% | 9 |
+| V24-LCZ-CYCLE4 | 0.989924628585 | 0.981968429990 | 0.991962823870 | 0.803718% | 1.600976% | 9 |
+
+
+两个状态不是fresh终测，均为V24已消费冷末态。旧V25数值和原始记录不改；本批没有调用REF7、teacher、NN权重、旧p1 T/U/R、D_L或Krylov库存。
+实际source `652cb206cd1ebeb1c4182ac2300c1dc23c57b48f`，actor33.262622s、采样峰1,625,231,360B、ownswap/VRAM0；S14/SH2、唯一joint LU1、solve9/显式pass18/gecon保守22；JOINT_5_7_DENSE_LU_PRESENT，无旧八LU读取。没有新物理解/参考/NN；神经20%仍未证实。
+
+唯一建议是另审“外域已有块处理泄漏后回到J补偿”的固定回流方向资格，不扩大块、不启动迭代。[回应](task042_neural_coarse_inverse/response_v26.md)／[详细结果](task042_neural_coarse_inverse/outcomes/joint_block_direction_v26.md)／[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v26.json)／[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v26.json)。以下原历史逐字保留，旧下一步不授权重跑。
+
 # Task042 V25：三残差八方向诊断已完成
 
 按Review V22修复完整性checker后，固定原0.7nm/384hex/p3/q15/40通道及材料，对V24三个冷状态做唯一诊断。两个终态最佳八方向eta8=0.9832369898／0.9899246286，rank8、原作用见证可信，EIGHT_DIRECTIONS_WEAK；关闭同八方向系数学习路线，没有新求解结果／神经20%收益，原V24仍0/5。

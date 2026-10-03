@@ -1,0 +1,297 @@
+{
+  "source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "identity": {
+        "saved_trace_residual_full_b_relative": 5.998198823756953e-17,
+        "saved_full_residual_full_b_relative": 0.0,
+        "port_reclosure_operation_relative": 0.0,
+        "port_residual_full_b_relative": 3.4603780908675205e-16,
+        "exact_trace_port_z_concat": true,
+        "internal_particular_solution_applied_to_directions": false
+      },
+      "status": "DIAGNOSTIC_COMPLETE",
+      "trustworthy": true,
+      "new_direction_resolved": true,
+      "gates": {
+        "cached_eta8_identity": true,
+        "control": true,
+        "QR": true,
+        "stationarity": true,
+        "recombination": true,
+        "local_solve": true,
+        "outside_J_zero": true,
+        "inequality": true
+      },
+      "eta8": 0.9832369898096153,
+      "eta9": 0.9662055056183675,
+      "g": 0.9826781494514912,
+      "rank": 9,
+      "singular_values": [
+        1.3409132735044729,
+        1.1772517516000023,
+        1.0895250198391484,
+        1.014056409145231,
+        0.9791983976828934,
+        0.9309921673109276,
+        0.8691160252183983,
+        0.8110036831142844,
+        0.6016553661148791
+      ],
+      "rank_threshold": 1e-12,
+      "driver": "gelsd",
+      "coefficients": [
+        {
+          "real": -0.1577824545665911,
+          "imag": -0.00212231702079714
+        },
+        {
+          "real": 0.11401541956169436,
+          "imag": -0.003428286024412667
+        },
+        {
+          "real": -0.0512316677571509,
+          "imag": -0.005457630530839797
+        },
+        {
+          "real": 0.05389057742011539,
+          "imag": -0.002535538118904059
+        },
+        {
+          "real": 0.0034552502392187403,
+          "imag": -0.006440651317051181
+        },
+        {
+          "real": 0.016846365708852656,
+          "imag": 0.0724571355142916
+        },
+        {
+          "real": 0.02202904149312063,
+          "imag": -0.02249437797055231
+        },
+        {
+          "real": -0.07777079657870055,
+          "imag": 0.01004345825101398
+        },
+        {
+          "real": 0.2599782568508062,
+          "imag": -0.03519122802787231
+        }
+      ],
+      "residual_norm": 0.006728082686191037,
+      "full_b_norm": 0.0826782769485171,
+      "h_norm": 0.004672970019136964,
+      "vj_norm": 0.006081816042617026,
+      "h_over_vj": 0.7683510955267515,
+      "h_operation_scale": 4352.8574040630765,
+      "h_roundoff_floor": 6.185782416513172e-11,
+      "h_e8_inner": {
+        "real": 5.67705389042301e-06,
+        "imag": -7.684584872766691e-07
+      },
+      "h_e8_coherence": 0.18532041061521576,
+      "conditional_squared_fraction_removed": 0.03434365459059263,
+      "additional_squared_fraction_of_original_r": 0.03320189904262827,
+      "norm_reduction_relative_to_e8": 0.017321850548508766,
+      "joint_response_leakage_outside_J": 0.827448039624136,
+      "old57_response_leakage_outside_J": 0.6398963551154107,
+      "same_support_direction_difference": {
+        "error_norm": 0.0009130074537307008,
+        "operation_scale": 0.0018461493709011154,
+        "operation_relative": 0.4945469029329176
+      },
+      "same_support_response_difference": {
+        "error_norm": 0.008624058600014294,
+        "operation_scale": 0.015622165944226794,
+        "operation_relative": 0.5520398791565349
+      },
+      "old57_original_action": {
+        "error_norm": 4.148067683089726e-18,
+        "operation_scale": 0.019080699803219536,
+        "operation_relative": 2.1739599311707695e-16
+      },
+      "regions": {
+        "inside_J": {
+          "old_e8_norm": 0.0034057523608809286,
+          "new_e9_norm": 0.002856574893061172,
+          "original_r_norm": 0.00341519689852752
+        },
+        "outside_J": {
+          "old_e8_norm": 0.005671246941462,
+          "new_e9_norm": 0.00583945351233185,
+          "original_r_norm": 0.00579685490386913
+        }
+      },
+      "QR_relative": 2.3625917904212507e-16,
+      "orthogonality_relative": 3.5546969755134187e-16,
+      "stationarity_operation_relative": 6.023658544961541e-17,
+      "old_cached_response_difference_full_b_relative": 1.2989324936248686e-17,
+      "local_solve_relative": 5.397233174976245e-14,
+      "independent_recombination": {
+        "full_b_relative": 5.81872920526607e-17,
+        "current_r_relative": 7.150365522540385e-16,
+        "operation_relative": 2.0893460400864643e-21
+      },
+      "decomposition_seconds": 0.004477262031286955,
+      "diagnostic_seconds": 0.5547512179473415,
+      "new_solver_state": false,
+      "diagnostic_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/V24-LZ-CYCLE4.npz",
+        "sha256": "1b1eaa7e542c2ee9bb82ed4206e9fdb3ced1393a3313ac75b053361a7c52ad73",
+        "joint_direction_sha256": "adb9b4ce83c1a64876d760c2f5e1ba6353a3a88271a764b9b46659154dbe0df3",
+        "joint_image_sha256": "e42a03fb62adc21b07abc3961c22f1eed212da53387414c86bac5f95384511c2",
+        "innovation_sha256": "b052b654c8f082c80c42908a785082e4e2bf142cfc2fd3d57a7b42e24ae4c08d",
+        "coefficients_sha256": "7ee63f08dd451095468bb896551e54b704200f57ddb47b9d61e236a9036b5937",
+        "old_e8_sha256": "8bef2a62d4d191a97b4e51d56a9e1ed4963a44560f47f8fa4675f730463c4c46",
+        "diagnostic_residual_sha256": "c3416d5ddb22533b268aa4ab9fcb44340b2ec04ed55bf0bf0d9802935dbc0514"
+      }
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "identity": {
+        "saved_trace_residual_full_b_relative": 3.171320502736413e-17,
+        "saved_full_residual_full_b_relative": 0.0,
+        "port_reclosure_operation_relative": 0.0,
+        "port_residual_full_b_relative": 8.458629236595614e-17,
+        "exact_trace_port_z_concat": true,
+        "internal_particular_solution_applied_to_directions": false
+      },
+      "status": "DIAGNOSTIC_COMPLETE",
+      "trustworthy": true,
+      "new_direction_resolved": true,
+      "gates": {
+        "cached_eta8_identity": true,
+        "control": true,
+        "QR": true,
+        "stationarity": true,
+        "recombination": true,
+        "local_solve": true,
+        "outside_J_zero": true,
+        "inequality": true
+      },
+      "eta8": 0.9899246285850263,
+      "eta9": 0.9819684299899415,
+      "g": 0.9919628238702808,
+      "rank": 9,
+      "singular_values": [
+        1.328472223219609,
+        1.1517475543953877,
+        1.0720703513956718,
+        0.992749775077577,
+        0.9658037013142897,
+        0.9414012128824247,
+        0.9125679126310117,
+        0.8693795665442757,
+        0.6050934719881338
+      ],
+      "rank_threshold": 1e-12,
+      "driver": "gelsd",
+      "coefficients": [
+        {
+          "real": -0.022926456465999823,
+          "imag": 0.0011120324416468296
+        },
+        {
+          "real": 0.0042361518595199505,
+          "imag": -0.02413973538928505
+        },
+        {
+          "real": -0.004838181729106909,
+          "imag": 0.011619115442335192
+        },
+        {
+          "real": 0.019728171413015805,
+          "imag": 0.012595449553975832
+        },
+        {
+          "real": -0.011910498048810215,
+          "imag": -0.001663931045669425
+        },
+        {
+          "real": -0.027774142243830312,
+          "imag": 0.024739452256365056
+        },
+        {
+          "real": 0.044432934940168506,
+          "imag": 0.011866063840584385
+        },
+        {
+          "real": 0.06782717210524233,
+          "imag": 0.021440529670900557
+        },
+        {
+          "real": 0.13994818477247792,
+          "imag": -0.01252750094241662
+        }
+      ],
+      "residual_norm": 0.02689212013281442,
+      "full_b_norm": 0.0826782769485171,
+      "h_norm": 0.02397282395644748,
+      "vj_norm": 0.031162175077982253,
+      "h_over_vj": 0.7692923840026034,
+      "h_operation_scale": 25550.0383329729,
+      "h_roundoff_floor": 3.630878827177199e-10,
+      "h_e8_inner": {
+        "real": 8.042770236361305e-05,
+        "imag": -7.199508295120905e-06
+      },
+      "h_e8_coherence": 0.12652966474032426,
+      "conditional_squared_fraction_removed": 0.01600975605929833,
+      "additional_squared_fraction_of_original_r": 0.015688772782291527,
+      "norm_reduction_relative_to_e8": 0.008037176129719215,
+      "joint_response_leakage_outside_J": 0.87501493448413,
+      "old57_response_leakage_outside_J": 0.6482366370461825,
+      "same_support_direction_difference": {
+        "error_norm": 0.00442223361944349,
+        "operation_scale": 0.010889381545284717,
+        "operation_relative": 0.40610512186143305
+      },
+      "same_support_response_difference": {
+        "error_norm": 0.05006398895413377,
+        "operation_scale": 0.0880467461872585,
+        "operation_relative": 0.5686069175987184
+      },
+      "old57_original_action": {
+        "error_norm": 2.4078744464278993e-17,
+        "operation_scale": 0.11376914221855249,
+        "operation_relative": 2.1164565359931526e-16
+      },
+      "regions": {
+        "inside_J": {
+          "old_e8_norm": 0.014286037515871784,
+          "new_e9_norm": 0.012998445953546241,
+          "original_r_norm": 0.015085481963855882
+        },
+        "outside_J": {
+          "old_e8_norm": 0.022463212872985073,
+          "new_e9_norm": 0.022986546075400602,
+          "original_r_norm": 0.022262397875249237
+        }
+      },
+      "QR_relative": 2.39295451049119e-16,
+      "orthogonality_relative": 4.89339641896757e-16,
+      "stationarity_operation_relative": 5.561834813586913e-17,
+      "old_cached_response_difference_full_b_relative": 2.4511854167555373e-17,
+      "local_solve_relative": 6.985062688471057e-14,
+      "independent_recombination": {
+        "full_b_relative": 1.6400770743163928e-16,
+        "current_r_relative": 5.04232265427758e-16,
+        "operation_relative": 2.0157927183895866e-21
+      },
+      "decomposition_seconds": 0.004486829042434692,
+      "diagnostic_seconds": 0.7757248739944771,
+      "new_solver_state": false,
+      "diagnostic_arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/V24-LCZ-CYCLE4.npz",
+        "sha256": "53368245a0d220520d37aa5cc6b5137acb6be4e3f87337e0906d8e1fa8487c34",
+        "joint_direction_sha256": "41aa1c7d6fce4f3abbf6f594116d7d1d11544879ab8c30f9fa1e63f2f38ab3aa",
+        "joint_image_sha256": "227975edf0499d13b563ce3848295bc19be34388fd1e4d8dc208cd48af441550",
+        "innovation_sha256": "a3fb887803436049f0db2d8a03666c0075a50c1bdb69630ea6f72c8d1e05ed01",
+        "coefficients_sha256": "81d5db76deb83e5e69c4b86bce5a24183d71a205c8eb712172c9594e67736ef6",
+        "old_e8_sha256": "035221cad3fd48332f7205573160043697d4553a14fc37b238ff60be2b2de2b9",
+        "diagnostic_residual_sha256": "f952caaa1a6afa2e1cdfc93652475f31de27fc86e4935ab57f8236acd9bb2cdb"
+      }
+    }
+  ]
+}

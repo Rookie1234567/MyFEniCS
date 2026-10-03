@@ -1,3 +1,18 @@
+# V26本地测试与证据范围
+
+| 本地scope | measured结果／边界 |
+|---|---|
+| clean数值实现前focused | 94 passed in3.89s；早期86是子集，不相加；包含新库存19和联合核8、V25与V24默认/准入回归 |
+| 冻结后新缓存checker | 14 passed in0.78s；两name库存/失败/错hash绑定、原向量eta/g与innovation证书、closed准入拒绝；无新S/LU/QR/SVD |
+| 仓库治理/模型总账文档 | 12 passed in0.07s；与94/14分列，原历史表/保护规则保持 |
+| §3真实旧缓存 | 三状态CHECKED，EIGHT_DIRECTIONS_WEAK原样；empty/one/duplicate/label/parent/member/gates/nonfinite/missing rank/recombination拒绝 |
+| 唯一真实原算子actor | 两cold状态全资格见证通过；负结果g0.982678149/0.991962824；S14/SH2，不是PDE/场资格 |
+| compileall／one-run注册 | PASS；DIAGNOSTIC dat clean source validate，结束ledger closed拒绝新运行 |
+| full/MPI2/4/FE/NN/CI/Ruff | 超范围NOT_RUN；Ruff未安装，不升级环境，不声明CI |
+| GitHub视觉 | 精确页Cache miss，NOT_VERIFIED；本地渲染结构/链接另记 |
+
+实际actor source `652cb206cd1ebeb1c4182ac2300c1dc23c57b48f`；后继checker仅审核保存数组。辅助准备D01/D02及草稿失败保留，正式重放0。[run index](records/run_index_v26.json)／[缓存](records/cached_array_checker_v26.json)／[费用](records/resource_costs_v26.json)。以下历史字节保留。
+
 # V25最终测试与边界
 
 | 本地检查 | 实际结果／口径 |

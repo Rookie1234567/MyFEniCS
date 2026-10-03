@@ -1,0 +1,118 @@
+{
+  "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f",
+  "initial_HEAD": "867ab17c496b2e5dc57766da749eb1f6b42036a1",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "initial_identity": {
+    "start_utc": "2026-10-03T00:39:41+00:00",
+    "start_monotonic": 912975.860883855,
+    "start_monotonic_role": "conservative offset from paired bootstrap clock to first real UTC observation, not a simultaneous start sample",
+    "bootstrap": {
+      "utc": "2026-10-03T00:40:04.029709+00:00",
+      "monotonic": 912998.890592855,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "branch": "task42_neural_coarse_inverse",
+    "HEAD": "867ab17c496b2e5dc57766da749eb1f6b42036a1",
+    "upstream": "origin/task42_neural_coarse_inverse",
+    "common_git": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+    "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+    "working_tree": "",
+    "actors": []
+  },
+  "clean_before_actor": true,
+  "all_run_input_hashes_bound_in_index": true,
+  "source_files": [
+    {
+      "path": "benchmarks/collect_task042_block_direction.py",
+      "sha256": "dcb3845ade64b694da907b0cf6a2c9fe5d81a64e6326d70739b41d417f405ec3",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/joint_block_direction_v26.json",
+      "sha256": "89bc1ba7c42182ae285f6b844828a6904e6151cf28ef354bdeea7d7bae47c8e5",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v26_joint_block_diagnostic.dat",
+      "sha256": "ef804f7dd321d3ec64f6ea07e2cda2ed602ec4cf065ed83f37ecf8cc1b40ac0d",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "scripts/run_case.py",
+      "sha256": "d9830c49e135209f1645bcb85c5f0c2c0df3402ebb12bd18fd30d7666cbed54d",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/io/block_direction_diagnostic.py",
+      "sha256": "e7c1b5c05d1d5a0e1444a55fdb6ebf35a0245afbedec132cf8d4930f1d8eec85",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/io/joint_block_diagnostic.py",
+      "sha256": "8c36ee57015b25142d64ad1a0484ca5165ff328248f6a4885080dc3c271c7bdb",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "sha256": "84e749fb51bf28df2c7a5baa5fcfb8a8925923175f5ee23a898520c2231383d6",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/runners/block_direction_diagnostic.py",
+      "sha256": "b39f42db1aa46cb738f60fccaa7655fedda934059a8e3ab7412718e2a0c4772b",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/runners/joint_block_diagnostic.py",
+      "sha256": "a65d6f03e309b9caacdf779eb0edba40e953d4a0f04984a2c151b9eba7064af3",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "sha256": "6a418774561731318ec6ef5b099d8b86a6cc3d33b7d52593795916a4595aef3d",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/solvers/block_residual_direction.py",
+      "sha256": "f079e517ac0f7c6e64aff3cbb15b3c7ffd86cfa8a3ccc97e5f56f1f2b249a8b7",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/solvers/joint_block_direction.py",
+      "sha256": "7b91099fbbc298137ad04084ae5bd98623e10ac66a035297301fe589aad2bc88",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/solvers/joint_block_study.py",
+      "sha256": "7555c17d7d28133be6a7e094ac29c97c7a39ccbbc9a8f01739a97d0493cb4b49",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/solvers/joint_block_window.py",
+      "sha256": "46e4c88298651bdef2bfc96b498801d1e8ee9eccb63b0f3c3ca5f739907a4213",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/test/test_task042_v25_block_direction.py",
+      "sha256": "65db1e705e4498e35e978a777fc9941199b3cf9773770cb2b838fd4279a4cbb7",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/test/test_task042_v26_inventory.py",
+      "sha256": "d2b1aedf3c330fccfe65d9e29e1f18bba42032c34c13b527f438ff4dbfedb93f",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    },
+    {
+      "path": "src/test/test_task042_v26_joint_direction.py",
+      "sha256": "321472bb23c2606372a93014f7600cbdee16fd3b90a97774dd3e953d13190b07",
+      "actor_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f"
+    }
+  ],
+  "evidence_checker_source": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_joint_direction.py",
+    "sha256": "adb3d9512098f080c95b0e78b892d018d21f32c1bc6de27476182891e2d8cca9",
+    "bytes": 9428
+  },
+  "historical_files": "old task/review/response/raw unchanged; later metadata source is not actor source"
+}

@@ -1,0 +1,485 @@
+{
+  "schema": "task042.v26.resource-costs.v1",
+  "shared_workstation": true,
+  "actor_supervised_wall_seconds": 33.262622487032786,
+  "actor_launch_wall_seconds": 34.69464923394844,
+  "worker_after_packet_load_seconds": 28.356331391027197,
+  "worker_wall_seconds": 28.537738903076388,
+  "auxiliary_supervised_wall_seconds": 23.338665919960476,
+  "auxiliary_runs": [
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_004531332342/summary.json",
+        "sha256": "4a9730b5112d0ea1b207e3023073bded9f09171a3ec97a307a68744e8121d42f",
+        "bytes": 3541
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_004531332342/supervision/worker.log",
+        "sha256": "32e833a7ddd8dcfcde8b7189cce2aa66600d11791af8116f24503469116b32a4",
+        "bytes": 179
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 7.109180495957844,
+      "tree_peak_bytes": 143630336,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_005700745403/summary.json",
+        "sha256": "d95e25e2cf3883c75525b2d91cfe6c507fa2300d4e214d093b28bdb1f3e85df8",
+        "bytes": 3543
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_005700745403/supervision/worker.log",
+        "sha256": "15d9a2de86b514fb52ce4fe2afbb3e220e77c9178bbf7662fec67c02dc8bf9a7",
+        "bytes": 179
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 6.517893715994433,
+      "tree_peak_bytes": 141033472,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_005828841836/summary.json",
+        "sha256": "45263462e07b695c297a24e2c94fef0501814313c09d1a4f0e98e0d051bf717c",
+        "bytes": 3521
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_005828841836/supervision/worker.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 1.7995905199786648,
+      "tree_peak_bytes": 39358464,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_010326655505/summary.json",
+        "sha256": "da46b0087f35593751ba2eb8c399a36eeed9f711a692133b89aa18274dc3751d",
+        "bytes": 3530
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_010326655505/supervision/worker.log",
+        "sha256": "9101b0018710611af1656b4a40da8fd955886f56e14ea72d85b91015dc3c8e16",
+        "bytes": 99
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.7574295100057498,
+      "tree_peak_bytes": 114081792,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_010330656536/summary.json",
+        "sha256": "50267d7ccad9c4ef9ce4b4f6f5826c8b360311affcb566b476330978914aa772",
+        "bytes": 3525
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_010330656536/supervision/worker.log",
+        "sha256": "98044078797f80c068ac41087ae55d79e8cbc43518babbeba34fbd8405a08b75",
+        "bytes": 1580
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.813075877027586,
+      "tree_peak_bytes": 117043200,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
+    },
+    {
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_011250411775/summary.json",
+        "sha256": "8aa0a1fefff194c4993f8ae8a88f9a3fce8628148bc587084007ce3f26af0ee2",
+        "bytes": 3524
+      },
+      "log": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/aux_011250411775/supervision/worker.log",
+        "sha256": "ba56007400fa5292f01fa84ee89753d8713c5eaf824f5bc044e66f837f4f6d17",
+        "bytes": 99
+      },
+      "classification": "COMPLETED",
+      "elapsed_seconds": 2.3414958009961993,
+      "tree_peak_bytes": 65392640,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "source_role": "bounded auxiliary; development/checker, not actor source"
+    }
+  ],
+  "numerical_budget_with_auxiliary_seconds": 56.60128840699326,
+  "actor_budget_seconds": 900,
+  "simultaneous_sampled_tree_peak_bytes": 1625231360,
+  "sample_interval_seconds": 0.5,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "continuous_kernel_cgroup_limit": false,
+  "cpu": 16,
+  "cpu_topology": [
+    {
+      "cpu": 16,
+      "core": 20,
+      "socket": 0,
+      "siblings": [
+        16
+      ]
+    }
+  ],
+  "preliminary_probe_cpu": 0,
+  "preliminary_CPU_not_frozen_for_actor": true,
+  "system_memory": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 1830200459264,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 1830200459264,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "cgroup": {
+    "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+    "delegated_writable": false,
+    "ancestors": [
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/session-2035.scope",
+        "memory.max": "max",
+        "memory.current": "283723882496",
+        "memory.high": "max",
+        "memory.swap.max": "max"
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+        "memory.max": "max",
+        "memory.current": "392095797248",
+        "memory.high": "max",
+        "memory.swap.max": "max"
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice",
+        "memory.max": "max",
+        "memory.current": "392231378944",
+        "memory.high": "max",
+        "memory.swap.max": "max"
+      },
+      {
+        "path": "/sys/fs/cgroup"
+      }
+    ],
+    "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed"
+  },
+  "GPU_used": false,
+  "VRAM_bytes": 0,
+  "own_swap_peak_bytes": 0,
+  "OOC_bytes": 0,
+  "PSI_start": {
+    "some": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 2594438.0
+    },
+    "full": {
+      "avg10": 0.0,
+      "avg60": 0.0,
+      "avg300": 0.0,
+      "total": 2587839.0
+    }
+  },
+  "neighbor_impact": "INCONCLUSIVE: no comparable neighboring stage interval; own protection remained clear",
+  "descendants_cleared": true,
+  "resource_reentries": 0,
+  "source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f",
+  "source_executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "actual_BLAS_pools": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "MPI": 1,
+  "Torch_loaded": false,
+  "DataLoader_workers": 0,
+  "mathematical_counts": {
+    "actions": 16,
+    "joint_assemblies": 1,
+    "joint_LU_attempts": 1,
+    "joint_lu_solve": 9,
+    "explicit_triangular_pass": 18,
+    "gecon_calls": 1,
+    "gecon_triangular_pass_upper": 22,
+    "total_triangular_pass_upper": 40,
+    "factor_readers": 1,
+    "thin_decompositions": 2,
+    "port_factors": 1,
+    "port_solves": 16
+  },
+  "actual_action_counts": {
+    "S": 14,
+    "SH": 2,
+    "audit": 0
+  },
+  "limits": {
+    "actions": 64,
+    "joint_assemblies": 1,
+    "joint_LU_attempts": 1,
+    "joint_lu_solve": 16,
+    "explicit_triangular_pass": 32,
+    "gecon_calls": 1,
+    "gecon_triangular_pass_upper": 22,
+    "total_triangular_pass_upper": 54,
+    "factor_readers": 2,
+    "thin_decompositions": 2,
+    "port_factors": 2,
+    "port_solves": 128
+  },
+  "matrix_LU_explicit_bytes": 483729408,
+  "matrix_numpy_file_bytes": 241864704,
+  "LU_numpy_file_bytes": 241864704,
+  "numpy_file_headers_separate": true,
+  "simultaneous_planned_bytes": 4621269504,
+  "planning_role": "derived simultaneous allowance, not RSS",
+  "new_persistent_output_including_TMP_before_compact_records_bytes": 500319961,
+  "new_persistent_cap_bytes": 805306368,
+  "disk_free_start_bytes": 3391381663744,
+  "disk_free_now_bytes": 3390848253952,
+  "port_call_inventory": [
+    {
+      "adjoint": false,
+      "shape": [
+        40,
+        3888
+      ],
+      "RHS_columns": 3888
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": true,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": true,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    },
+    {
+      "adjoint": false,
+      "shape": [
+        40
+      ],
+      "RHS_columns": 1
+    }
+  ],
+  "port_LAPACK_solve_calls": 16,
+  "port_RHS_column_equivalents": 3903,
+  "historical_formal_R_and_D_lower_before_seconds": 77128.29451611098,
+  "historical_formal_R_and_D_lower_after_seconds": 77161.55713859801,
+  "historical_auxiliary_and_per_solution_lineage_cost": "unknown retained; not a solved N=1 cost",
+  "immutable_window": {
+    "start_utc": "2026-10-03T00:39:41+00:00",
+    "start_monotonic": 912975.860883855,
+    "start_monotonic_role": "conservative offset from paired bootstrap clock to first real UTC observation, not a simultaneous start sample",
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap": {
+      "utc": "2026-10-03T00:40:04.029709+00:00",
+      "monotonic": 912998.890592855,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "schema": "task042.campaign-window.v26",
+    "heavy_limit_seconds": 6300,
+    "total_limit_seconds": 7200,
+    "heavy_stop_utc": "2026-10-03T02:24:41+00:00",
+    "deadline_utc": "2026-10-03T02:39:41+00:00",
+    "review_expected_commit": "867ab17c496b2e5dc57766da749eb1f6b42036a1"
+  },
+  "minimum_package_saved_clock": {
+    "start_utc": "2026-10-03T00:39:41+00:00",
+    "start_monotonic": 912975.860883855,
+    "start_monotonic_role": "conservative offset from paired bootstrap clock to first real UTC observation, not a simultaneous start sample",
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap": {
+      "utc": "2026-10-03T00:40:04.029709+00:00",
+      "monotonic": 912998.890592855,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "schema": "task042.campaign-window.v26",
+    "heavy_limit_seconds": 6300,
+    "total_limit_seconds": 7200,
+    "heavy_stop_utc": "2026-10-03T02:24:41+00:00",
+    "deadline_utc": "2026-10-03T02:39:41+00:00",
+    "review_expected_commit": "867ab17c496b2e5dc57766da749eb1f6b42036a1",
+    "observed_utc": "2026-10-03T01:00:28.430924+00:00",
+    "observed_monotonic": 914223.291791287,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 1247.4309239387512,
+    "heavy_remaining_seconds": 5052.569076061249,
+    "total_remaining_seconds": 5952.569076061249
+  },
+  "observation_clock": {
+    "start_utc": "2026-10-03T00:39:41+00:00",
+    "start_monotonic": 912975.860883855,
+    "start_monotonic_role": "conservative offset from paired bootstrap clock to first real UTC observation, not a simultaneous start sample",
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap": {
+      "utc": "2026-10-03T00:40:04.029709+00:00",
+      "monotonic": 912998.890592855,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+    },
+    "schema": "task042.campaign-window.v26",
+    "heavy_limit_seconds": 6300,
+    "total_limit_seconds": 7200,
+    "heavy_stop_utc": "2026-10-03T02:24:41+00:00",
+    "deadline_utc": "2026-10-03T02:39:41+00:00",
+    "review_expected_commit": "867ab17c496b2e5dc57766da749eb1f6b42036a1",
+    "observed_utc": "2026-10-03T01:12:53.357433+00:00",
+    "observed_monotonic": 914968.218299927,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 1992.357432603836,
+    "heavy_remaining_seconds": 4307.642567396164,
+    "total_remaining_seconds": 5207.642567396164
+  },
+  "implementation_read_wait_publish_cost": "in overall immutable elapsed; separate time/RSS not measured",
+  "namespace_artifact_bytes": 486889685,
+  "formal_results_bytes": 782925,
+  "new_TMP_including_caches_bytes": 12647351,
+  "task042_artifact_total_bytes": 18024888896,
+  "nonadditive_nested_timers": {
+    "assembly_seconds": 1.592389774043113,
+    "factor_seconds": 3.324998308904469,
+    "gecon_seconds": 0.5376470510382205,
+    "readonly_factor_hash_reload_seconds": 5.8352755040396005,
+    "joint_solve_seconds": 0.9674002305837348,
+    "original_actions": {
+      "S": 0.8745200139237568,
+      "SH": 0.6038451209897175,
+      "audit": 0.0
+    },
+    "port_chain": {
+      "S": 0.5919409731868654,
+      "SH": 0.6162860728800297,
+      "port_solve": 0.010746879037469625
+    },
+    "diagnostic_seconds": [
+      0.5547512179473415,
+      0.7757248739944771
+    ],
+    "thin_decomposition_seconds": [
+      0.004477262031286955,
+      0.004486829042434692
+    ]
+  },
+  "new_compact_records_bytes": 242263,
+  "all_new_persistent_bytes_observed_with_compact_records": 500562224
+}

@@ -1,0 +1,41 @@
+{
+  "status": "CHECKED",
+  "rows": [
+    {
+      "name": "V24-LZ-INITIAL",
+      "eta_unit": 2.0283184652527066,
+      "eta1": 0.8776402574908276,
+      "eta8": 0.8641444185948797,
+      "stationarity_recomputed": 7.399519791224457e-17,
+      "true_vs_thin_saved_difference_full_b_relative": 7.168070447787024e-16,
+      "independent_cached_array_checks": true,
+      "no_new_action": true,
+      "no_new_decomposition": true
+    },
+    {
+      "name": "V24-LZ-CYCLE4",
+      "eta_unit": 2.817691154398203,
+      "eta1": 0.9999995996358376,
+      "eta8": 0.9832369898096153,
+      "stationarity_recomputed": 5.0522641990486036e-17,
+      "true_vs_thin_saved_difference_full_b_relative": 6.373085593375437e-17,
+      "independent_cached_array_checks": true,
+      "no_new_action": true,
+      "no_new_decomposition": true
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "eta_unit": 3.924761015443438,
+      "eta1": 0.999997827272363,
+      "eta8": 0.9899246285850263,
+      "stationarity_recomputed": 3.5446273218964225e-17,
+      "true_vs_thin_saved_difference_full_b_relative": 8.797028643218226e-17,
+      "independent_cached_array_checks": true,
+      "no_new_action": true,
+      "no_new_decomposition": true
+    }
+  ],
+  "decision": "EIGHT_DIRECTIONS_WEAK",
+  "raw_flags_not_sufficient": true,
+  "scope": "cached directions/images/scalars only; no new S, QR, SVD, factor or field integration"
+}

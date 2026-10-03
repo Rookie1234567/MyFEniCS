@@ -1,0 +1,36 @@
+{
+  "source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/stage_result.json",
+    "sha256": "a386f3847084b1a309a6f6a857766ddb940e1a841f2bc2139d9255ad31c96b88"
+  },
+  "parent_namespace_readonly": true,
+  "arrays": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/V24-LZ-CYCLE4.npz",
+      "sha256": "1b1eaa7e542c2ee9bb82ed4206e9fdb3ced1393a3313ac75b053361a7c52ad73",
+      "joint_direction_sha256": "adb9b4ce83c1a64876d760c2f5e1ba6353a3a88271a764b9b46659154dbe0df3",
+      "joint_image_sha256": "e42a03fb62adc21b07abc3961c22f1eed212da53387414c86bac5f95384511c2",
+      "innovation_sha256": "b052b654c8f082c80c42908a785082e4e2bf142cfc2fd3d57a7b42e24ae4c08d",
+      "coefficients_sha256": "7ee63f08dd451095468bb896551e54b704200f57ddb47b9d61e236a9036b5937",
+      "old_e8_sha256": "8bef2a62d4d191a97b4e51d56a9e1ed4963a44560f47f8fa4675f730463c4c46",
+      "diagnostic_residual_sha256": "c3416d5ddb22533b268aa4ab9fcb44340b2ec04ed55bf0bf0d9802935dbc0514"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/V24-LCZ-CYCLE4.npz",
+      "sha256": "53368245a0d220520d37aa5cc6b5137acb6be4e3f87337e0906d8e1fa8487c34",
+      "joint_direction_sha256": "41aa1c7d6fce4f3abbf6f594116d7d1d11544879ab8c30f9fa1e63f2f38ab3aa",
+      "joint_image_sha256": "227975edf0499d13b563ce3848295bc19be34388fd1e4d8dc208cd48af441550",
+      "innovation_sha256": "a3fb887803436049f0db2d8a03666c0075a50c1bdb69630ea6f72c8d1e05ed01",
+      "coefficients_sha256": "81d5db76deb83e5e69c4b86bce5a24183d71a205c8eb712172c9594e67736ef6",
+      "old_e8_sha256": "035221cad3fd48332f7205573160043697d4553a14fc37b238ff60be2b2de2b9",
+      "diagnostic_residual_sha256": "f952caaa1a6afa2e1cdfc93652475f31de27fc86e4935ab57f8236acd9bb2cdb"
+    }
+  ],
+  "independent_checker_source": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_joint_direction.py",
+    "sha256": "adb3d9512098f080c95b0e78b892d018d21f32c1bc6de27476182891e2d8cca9",
+    "bytes": 9428
+  },
+  "no_new_solver_states": true
+}

@@ -1,3 +1,16 @@
+# V26变化与依赖分组
+
+| 组 | 实际变化／资格／边界 |
+|---|---|
+| production numerical/core | 无原物理/材料/方程/恢复/普通默认改变；新诊断不升级production |
+| research-only数值 | joint_block_direction/study：选定主子块全cell pullback、唯一LU、独立正反作用、两冷残差新增方向；8个纯复数fixture与真实两态资格，非部署PC |
+| reusable runner/watchdog | DirectionStage参数化，新joint io/window与28行adapter、显式one-run注册；默认V25保留，原0.5s整树/deadline/PSI/自有锁复用 |
+| checker/benchmark | 固定三状态库存与decision命名保护；新两态cached checker重算eta/正交创新/驻点，不读factor、不调用S、不重新分解 |
+| compact evidence/docs | response_v26、结果/CSV/JSON、输入/source/matrix/LU/状态hash与全成本；6项导航/总账只前缀更新 |
+| do-not-merge | ignored3888矩阵/LU/pivot、方向/raw/缓存/tmp、旧所有factor；不复制上游大结果；无merge approval |
+
+未来审查依赖顺序：库存checker/测试→opt-in schema/监督→research诊断核→compact证据；不是合并授权。运行source独立，旧task/review/response/raw逐字保持。以下原历史保留。
+
 # V25变化与依赖组
 
 | selective merge组 | 变化／证据／边界 |

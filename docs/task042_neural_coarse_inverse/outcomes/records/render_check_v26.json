@@ -1,0 +1,91 @@
+{
+  "local_checks": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v23.md",
+      "sha256": "a0bb8973c5f7c9f88fd44fb86b6b5916c47ccb47717ed43e6e5b21b2e8598baa",
+      "scope": "entire new/review file",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v26.md",
+      "sha256": "8b236e48bb16d917c0989af44a80d0fc35861ea1a3779e93be35a490a3dd407a",
+      "scope": "entire new/review file",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/joint_block_direction_v26.md",
+      "sha256": "575694c3fbf355ff8de5180c9bf03d6beffbe540ee36bf238f13b04f3984770b",
+      "scope": "entire new/review file",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "e56e6fd1c19c891a88b16b02323479f13a8358ee9ea616f565677145fed34c95",
+      "scope": "new prefix only; historical suffix byte-preserved",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "317406caa43c878e074a9a63093ff3856b065d66c608ccb836a8e0785c73847d",
+      "scope": "new prefix only; historical suffix byte-preserved",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "ddcd31977923ff601e0051bc1c40f433ca195f74af2c107329b1488504b84c24",
+      "scope": "new prefix only; historical suffix byte-preserved",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "75687647051aeccde3503e37e6aa3f0cc803f2c1674c23e1bb2b62c9e479f611",
+      "scope": "new prefix only; historical suffix byte-preserved",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "19e4734c4af14175abdf2ed8d97b001eef291533da297d1b85cc37dbcbe46af6",
+      "scope": "new prefix only; historical suffix byte-preserved",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "ff46312896826697a81a8a4e366486a9742cc713e5fad3e48ff2205cf83c00fd",
+      "scope": "new prefix only; historical suffix byte-preserved",
+      "table_columns": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "github_visual": "NOT_VERIFIED"
+    }
+  ],
+  "review_changed": false,
+  "github_exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/867ab17c496b2e5dc57766da749eb1f6b42036a1/docs/task042_neural_coarse_inverse/review_report_v23.md",
+  "github_visual": "NOT_VERIFIED",
+  "web_observation": "Cache miss; no visual evidence; local checks do not imply web rendering",
+  "CI": "NOT_RUN",
+  "final_local_recheck": "PASS after final scalar/doc updates; no numerical replay"
+}

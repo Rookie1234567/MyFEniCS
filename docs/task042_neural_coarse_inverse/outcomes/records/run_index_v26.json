@@ -1,0 +1,83 @@
+{
+  "run_source_sha": "652cb206cd1ebeb1c4182ac2300c1dc23c57b48f",
+  "review_commit": "867ab17c496b2e5dc57766da749eb1f6b42036a1",
+  "one_run_input": "input/task042_neural_coarse_inverse/v26_joint_block_diagnostic.dat",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v26/task042_v26_joint_block_diagnostic_20261003T005942057997Z/stage_result.json",
+    "sha256": "a386f3847084b1a309a6f6a857766ddb940e1a841f2bc2139d9255ad31c96b88"
+  },
+  "formal_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/run_manifest.json",
+    "sha256": "780bbd23ed5fe5feea9000af0a8e152387d553deb26314a925f2de27fd5778f8",
+    "bytes": 2451
+  },
+  "formal_input": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/input_original.dat",
+    "sha256": "ef804f7dd321d3ec64f6ea07e2cda2ed602ec4cf065ed83f37ecf8cc1b40ac0d",
+    "bytes": 227
+  },
+  "resolved": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/resolved_config.json",
+    "sha256": "55c5fe107801d072c3bf87efaa69c8d4733b1e589d28fc98c5188a106d2df9a1",
+    "bytes": 4075
+  },
+  "formal_summary": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/run_summary.json",
+    "sha256": "b2b4e42700f64c1c89e11588999245b69eac67fbd8640166da080474638e8955",
+    "bytes": 6267
+  },
+  "baseline": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/resource_baseline.json",
+    "sha256": "908887f0e31622f422497185e0632bd8a33c178d35495dcf111adf51c66a0931",
+    "bytes": 202456
+  },
+  "watchdog_timeline": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/supervision/resources.jsonl",
+    "sha256": "b7c0e01918c69a2f5f7b24962607975d1d642b6a40a2dad4072036830b7c3468",
+    "bytes": 492647
+  },
+  "watchdog_worker_log": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/supervision/worker.log",
+    "sha256": "aef28821a91076d96b8ac8486e67cb6050f61fd7f81176c81a496efc2a4364f2",
+    "bytes": 13673
+  },
+  "shared_health": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v26_joint_block_diagnostic_20261003T005942057997Z/shared_health.jsonl",
+    "sha256": "51f0e33fa3a653db2f00407e8a8f1be0b8df1f53635a863ccc649ac50aa8cb4e",
+    "bytes": 54677
+  },
+  "batch_ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json",
+    "sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853",
+    "bytes": 2209
+  },
+  "batch_journal": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/progress_journal.jsonl",
+    "sha256": "1752a4dd066ef4771d064b28f410db8106fffb481d98fadb5109e2c244d380c5",
+    "bytes": 20936
+  },
+  "minimum_package": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/minimum_result_cost_response.json",
+    "sha256": "29f422e4fe376e640333e056fe058373bd82871c93107371895c52fb1de1113c",
+    "bytes": 6738
+  },
+  "namespace_role": "one offline diagnostic; no new PDE final",
+  "replays": 0,
+  "review_reading_index": {
+    "review": {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v23.md",
+      "sha256": "a0bb8973c5f7c9f88fd44fb86b6b5916c47ccb47717ed43e6e5b21b2e8598baa",
+      "commit": "867ab17c496b2e5dc57766da749eb1f6b42036a1"
+    },
+    "evidence": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v23_independent_checks.json",
+      "sha256": "704b54aa37646c434145c10a5915153abc110a9bbaefd742e918d52b5dc0d148"
+    },
+    "current_authority_sections": [
+      "3",
+      "5",
+      "6"
+    ],
+    "old_contract_scope_superseded_only_here": true
+  }
+}

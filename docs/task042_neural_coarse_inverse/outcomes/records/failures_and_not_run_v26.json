@@ -1,0 +1,96 @@
+{
+  "development": {
+    "repair_limit": 2,
+    "repairs": [
+      {
+        "id": "D01",
+        "root": "auxiliary helper retained expired V25 window filename",
+        "launched_actor": false,
+        "original_actions": 0,
+        "LU_attempts": 0,
+        "minimum_fix": "read V26/window.json",
+        "elapsed_bound_seconds": 120,
+        "exact_elapsed": "unknown; charged inside immutable overall elapsed"
+      },
+      {
+        "id": "D02",
+        "root": "optional threadpoolctl import absent in independent pure preflight",
+        "launched_actor": false,
+        "original_actions": 0,
+        "LU_attempts": 0,
+        "minimum_fix": "use already qualified ctypes OpenBLAS getter; no dependency installation",
+        "elapsed_bound_seconds": 120,
+        "exact_elapsed": "unknown; charged inside immutable overall elapsed"
+      }
+    ],
+    "drafting_validation": {
+      "unverified_extra_review_SHA": "removed from uncommitted plan; authority uses verified 867ab17 only",
+      "no_numeric_replay": true
+    },
+    "unavailable_tools": {
+      "ruff": "NOT_RUN; not installed",
+      "threadpoolctl": "unused; existing qualified OpenBLAS probe retained"
+    },
+    "costs_not_reset": true
+  },
+  "resource_failures": 0,
+  "identity_failures_in_formal_actor": 0,
+  "numerical_replay": 0,
+  "numerical_stop": "both g >=0.95: fixed joint direction insufficient",
+  "additional_draft_tool_failures": [
+    {
+      "item": "bare Python clock probe",
+      "result": "python not found; no numerical child",
+      "resolution": "explicit qualified activation for subsequent Python"
+    },
+    {
+      "item": "uncommitted extra review SHA",
+      "result": "git show bad object",
+      "resolution": "discarded field before tests/commit; verified867ab17 retained"
+    },
+    {
+      "item": "post-run inline compact packager draft",
+      "result": "SyntaxError unmatched parenthesis; no writes or actor",
+      "resolution": "one corrected low-load packaging script; no numerical replay"
+    }
+  ],
+  "old_V24_complete_qualifications": "0/5 unchanged",
+  "old_V23_complete_qualifications": "0/6 unchanged",
+  "neural20": "NOT_DEMONSTRATED",
+  "reset_card_used": false,
+  "dot_or_master_modified": false,
+  "not_run": [
+    {
+      "item": "new iterations or V24/V25 continuation",
+      "reason": "expressly forbidden"
+    },
+    {
+      "item": "NN/hidden training/20percent benefit",
+      "reason": "no authorized qualified comparison"
+    },
+    {
+      "item": "p1/oldspace/T/U/R/teacher/reference",
+      "reason": "forbidden input"
+    },
+    {
+      "item": "FE recovery/native/E/H/RTA/new p4 reference",
+      "reason": "direction-only scope"
+    },
+    {
+      "item": "another joint block/LU attempt",
+      "reason": "one consumed; numerical negative is not a bug"
+    },
+    {
+      "item": "Ruff",
+      "reason": "not installed; no environment upgrade"
+    },
+    {
+      "item": "full pytest/MPI2/4/GPU/target-size model",
+      "reason": "outside bounded pure-array scope"
+    },
+    {
+      "item": "GitHub visual",
+      "reason": "Cache miss; no visual evidence"
+    }
+  ]
+}
