@@ -1,3 +1,9 @@
+# 最新审阅：Review V28／准备通过，真实回流有条件解锁
+
+[Review V28](review_report_v28.md)接受V30轻量入口及合成审核资格，关闭上一轮两项缺陷。真实study另有未导入`relative`的旧接线问题；V31先修复并验证实际工作流，再在fresh准入和累计预算内只做一次原两冷态、V26九方向基线的回流诊断。不得直接启动旧dat、重开closed窗口或追加迭代／训练。
+
+[独立证据](outcomes/records/review_v28_independent_checks.json)核对84个文件hash、162项原始测试及资源记录；本次没有新真实数值运行。原尺寸0.7nm／2TB／48h与神经20%仍未资格化。以下历史逐字保留，旧建议不覆盖最新合同。
+
 # V30最新交付：轻量入口与合成审核已资格化
 
 [Review V27](review_report_v27.md)／[Response V30](response_v30.md)／[详细结果](outcomes/light_entry_acceptance_v30.md)／[run index](outcomes/records/run_index_v30.json)。重复keyword、输出目录和负例误报已修复；source `1a18f520dae3ecd702a1369b0d9241ec3e81802a`上22文件编译、最小7及完整162测试通过，完整轻量入口exit0，CPU缓存重算／固定三小矩阵／成本账已执行。监督18.785167s、累计39.949013s，真实actor／S+SH／reader／FE／训练0。这里只资格化软件入口与合成checker，非真实方向／物理解／NN20%或原尺寸资格；清场等待review。以下历史逐字保留，V26–V29 closed不变。
