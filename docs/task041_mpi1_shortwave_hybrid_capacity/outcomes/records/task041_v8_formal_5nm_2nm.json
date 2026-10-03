@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-03T12:10:51Z",
+  "observed_utc": "2026-10-03T12:11:54Z",
   "progress": {
-    "phase": "outer_first_bottom_ksp_audit_981_converged_7iter_target_reached",
+    "phase": "outer_phase_bottom_inner_ksp_audit_981_converged_7iter",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-03T12:10:51Z",
+  "record_written_utc": "2026-10-03T12:11:54Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +241,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-03T13:10:51Z",
+  "next_progress_update_due_utc": "2026-10-03T13:11:54Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -995,10 +995,10 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "outer_first_bottom_ksp_audit_981_converged_7iter_target_reached",
+    "stage_marker": "outer_phase_bottom_inner_ksp_audit_981_converged_7iter",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
-    "status": "running_outer_first_ksp_converged",
+    "status": "running_outer_phase_inner_ksp",
     "target_tolerance": 5e-13,
     "threads_per_rank": 1,
     "time_stop_enforced": false,
