@@ -1,0 +1,456 @@
+{
+  "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+  "result": {
+    "status": "NETWORK_WITNESS_FROZEN",
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "A_checker": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/checker.json",
+      "sha256": "547a133c7856ad3330e908ffb03bf8897e3463691c539e46be61c63263410571"
+    },
+    "candidates": {
+      "M3600": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-10_native_candidate.json",
+        "sha256": "047462da20e49b32837880a7d670a1737def55b064a62e37a0664f9d250398bb"
+      },
+      "Mfinal": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-10_native_candidate.json",
+        "sha256": "310a48cc84acaab949ce118aa2f7ea12e316840a2a1fb9708f23506149650cd6"
+      }
+    },
+    "rows": {
+      "M3600": {
+        "original_c_identity_relative": 0.0,
+        "theta_restored": true,
+        "buffers_restored": true,
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "original_PT": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000014.pt",
+          "sha256": "f59d4d367312d24835278a81a0ad303ffaff6d53c1142d288489fa98b7a36616"
+        },
+        "original_source": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "theta_zero_sha256": "b7cbf54511f6507ae1b3bfac4848596b3cf72c28227f2284ef1b11634934258f",
+        "theta_trial_sha256": "167f6635d08fc49f79555f807013ddaa6293098366f278cc0fa4f80169bac98e",
+        "c_zero_sha256": "92cc2e774003286a0e9dc3d73ada568160feafffa6f0494a6faae09e74ffa402",
+        "c_actual_sha256": "4a21744189ee4e0563952982774f5a0d3e7aa9049d0c8860668c9ce6561582f0",
+        "operator_pairings": {
+          "original_r": 0.0,
+          "original_qr": 0.0,
+          "original_Ge": 0.0,
+          "linear_r": 2.5616839077721864e-13
+        },
+        "nonlinear_defect": 0.0002878567548602914
+      },
+      "Mfinal": {
+        "original_c_identity_relative": 0.0,
+        "theta_restored": true,
+        "buffers_restored": true,
+        "buffers_sha256": {
+          "center": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31",
+          "half_width": "d23b07791f5a4df60c744998c2945ecf7093ae10ef05cab8a2bb7bc00a1e044c",
+          "phase_k_inc": "35e0069a1ca88953238c60241c3e462437bc6588bfb85d438bef868f0a5e4879",
+          "phase_origin": "299dc1528417fc095c30be0d130212eb02d7ccad9dfb441a02140ad3de665b31"
+        },
+        "original_PT": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000021.pt",
+          "sha256": "4c475bfba0eb816a4d62b6086f2e47006051b896ba442f09b7aab50c8b7c206d"
+        },
+        "original_source": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "theta_zero_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a",
+        "theta_trial_sha256": "49faf49f7b33e3384e8e068ec947a8265fc596e6d52dc26c0a776ad898f1b8a4",
+        "c_zero_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+        "c_actual_sha256": "b4ce6e86f035cc9a9a2761542e4b9b4947ff16b678f3ffaafa2451a88aa9f2d1",
+        "operator_pairings": {
+          "original_r": 0.0,
+          "original_qr": 0.0,
+          "original_Ge": 0.0,
+          "linear_r": 2.735485844053026e-13
+        },
+        "nonlinear_defect": 0.0010830631208472146
+      }
+    },
+    "actions": {
+      "A": 6,
+      "AH": 0,
+      "Gsolve": 4,
+      "G_matvec": 8
+    },
+    "complete_network_forwards": 4,
+    "JVP": 0,
+    "VJP": 0,
+    "Gram_factor_lifecycles": 1,
+    "Gram_factor": {
+      "label": "RESEARCH_ONLY_GLOBAL_RIESZ_FACTOR",
+      "c_source_sha256": "f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5",
+      "library_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/ml/cholmod/f885039b8880b5cc088c1a843e5027af9e5021f97668f4f5b025459d6d1033a5.so",
+      "library_sha256": "6ac17fbb78b7a1009e06bf625cc44979fcf186500fa73de29a2d5ab0eb1a1d47",
+      "backend": "installed CHOLMOD int64 complex FP64 simplicial LLH/AMD",
+      "rows": 31968,
+      "nnz": 7336179,
+      "hermitian_relative": 8.087084937051904e-17,
+      "csr_payload_bytes": 146851456,
+      "rss_before_symbolic_bytes": 601759744,
+      "symbolic_seconds": 0.22399305296130478,
+      "symbolic": {
+        "symbolic_l_nnz": 18839705.0,
+        "symbolic_flops": 27589531225.0,
+        "cholmod_current_bytes": 91231456.0,
+        "cholmod_peak_bytes": 180160984.0,
+        "factor_allocated_nnz": 0.0,
+        "positive_pivots": 31968.0,
+        "status": 0.0
+      },
+      "factor_workspace_budget_bytes": 747384196,
+      "rss_after_symbolic_bytes": 660996096,
+      "prediction_kind": "symbolic fill plus conservative workspace reserve",
+      "numeric_seconds": 153.5917844059877,
+      "numeric": {
+        "symbolic_l_nnz": 18839705.0,
+        "symbolic_flops": 27589531225.0,
+        "cholmod_current_bytes": 544918864.0,
+        "cholmod_peak_bytes": 633592648.0,
+        "factor_allocated_nnz": 18839705.0,
+        "positive_pivots": 31968.0,
+        "status": 0.0
+      },
+      "rss_after_numeric_bytes": 1142689792,
+      "setup_seconds": 156.50002191902604,
+      "rss_before_release_bytes": 1034551296,
+      "rss_after_release_bytes": 523448320,
+      "solve_count": 4,
+      "solve_seconds": 1.1529377510305494,
+      "max_solve_true_relative": 1.0289583142617318e-13
+    },
+    "detached_cache_bytes": 17736960,
+    "no_training": true,
+    "no_optimizer": true,
+    "no_Maxwell_factor": true,
+    "d_G": 0.0011981303656879406,
+    "d_G_new_solves": 0,
+    "native_denominator": 0.29104200262261154,
+    "original_reference_scoring_only": true,
+    "prior_failed_attempt": {
+      "receipt_path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+      "review": "docs/task042extra_feinn_5nm/review_report_v17.md",
+      "authority": "section 4.C sole explicitly identified bug replay",
+      "failed_source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+      "failure": "IMMUTABLE_OUTPUT_EXISTS after second-state array write; final immutable JSON missing",
+      "hypothesis": "Repeated partial/final save reuses an immutable JSON pathname; finally masks original exception with the same error",
+      "change": "Unique numbered matched NPZ/JSON boundaries; final return reuses already persisted final boundary; previous versions retained",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v18_native_network_witness.dat",
+        "sha256": "b558ad9723bbb411e05118d1f248a684539fe5273363a8468099a90a322646ae"
+      },
+      "supervision_summary": {
+        "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/supervision/summary.json",
+        "sha256": "369d55b38524449232a71c67d152be75d70c46634bb8b0943adf28e807b4668c"
+      },
+      "worker_failure": {
+        "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/worker_failure.json",
+        "sha256": "8a26bced074e85d754687cebba6c0aa4bc1a6639f79aa4168a450053928080f6"
+      },
+      "partial_record": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/partial_network_witness.json",
+        "sha256": "c19b54bd40bd5693e41b0fc2ed9998996803ef8a16ae7aa5812922f018da49f9"
+      },
+      "arrays": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/nonlinear_witness_arrays.npz",
+        "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+      },
+      "measured_partial_operation_lower_bound": {
+        "A": 3,
+        "AH": 0,
+        "Gsolve": 2,
+        "G_matvec": 4,
+        "network_forward": 2,
+        "JVP": 0,
+        "VJP": 0,
+        "Gram_factor": 1
+      },
+      "operation_upper_bound": {
+        "A": 6,
+        "AH": 0,
+        "Gsolve": 4,
+        "G_matvec": 8,
+        "network_forward": 4,
+        "JVP": 0,
+        "VJP": 0,
+        "Gram_factor": 1
+      },
+      "terminal_operation_record": "NOT_RETAINED",
+      "count_evidence": "Measured first-state JSON lower bound; conservative full two-state allocation upper bound derived from saved 38 arrays and fixed source loop. No actions replayed to reconstruct logs.",
+      "test_requirements": [
+        "repeated matched partial/final snapshots",
+        "exception snapshot retains previous boundary",
+        "corrupt/over-cap replay account rejected"
+      ],
+      "replay_limit": 1,
+      "numerical_parameters_changed": false,
+      "failed_costs_deleted": false
+    },
+    "reference_used_for_training": false,
+    "reference_used_for_diagnostic": true,
+    "features_reference_exposed": true,
+    "pde_only_solve": false,
+    "benchmark_previously_seen": true,
+    "production_initialization_allowed": false,
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false,
+    "diagnostic_only": true,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC",
+    "boundary_sequence": 3,
+    "vectors": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/witness_arrays_0003.npz",
+      "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+    },
+    "write_order": "arrays_fsync_then_record_fsync_then_committed_marker",
+    "worker_elapsed_seconds": 168.69183665607125
+  },
+  "checker": {
+    "status": "INDEPENDENT_VECTOR_AUDIT_COMPLETE",
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "rows": {
+      "M3600": {
+        "points": {
+          "zero": {
+            "N": 1.0,
+            "R": 1.0,
+            "F": 1.0,
+            "native": 0.885852183252661,
+            "dual_loss": 0.0943146715760124,
+            "G_error_energy": 8.614265977037046
+          },
+          "linear": {
+            "N": 0.9938335826426441,
+            "R": 0.9999999999999265,
+            "F": 0.9960399553337048,
+            "native": 0.8831166925477544,
+            "dual_loss": 0.09431467157600545,
+            "G_error_energy": 8.580153099000633
+          },
+          "actual": {
+            "N": 0.9938326023262704,
+            "R": 1.0000001007948258,
+            "F": 0.9960369059102125,
+            "native": 0.8831162569949708,
+            "dual_loss": 0.09431468108244329,
+            "G_error_energy": 8.580126830455594
+          }
+        },
+        "nonlinear_defect": 0.0002878567548602914,
+        "checks": {
+          "retains_half_native_drop": true,
+          "field_energy": true,
+          "dual_nonincrease": false,
+          "nonlinear_model": true,
+          "original_identity": true,
+          "operator_pairings": true
+        },
+        "local_pre_FE_support": false,
+        "failure_quantities": [
+          "dual_nonincrease"
+        ],
+        "independent_pairings": {
+          "A": 0.0,
+          "Gsolve_true": 1.0092854576505092e-13,
+          "Ge": 9.113168500809639e-15
+        }
+      },
+      "Mfinal": {
+        "points": {
+          "zero": {
+            "N": 1.0,
+            "R": 1.0,
+            "F": 1.0,
+            "native": 0.8465419049282757,
+            "dual_loss": 0.0872060784094609,
+            "G_error_energy": 14.905085807664646
+          },
+          "linear": {
+            "N": 0.9808472139968202,
+            "R": 0.999999999999886,
+            "F": 0.998407317821731,
+            "native": 0.8383958936794215,
+            "dual_loss": 0.08720607840945095,
+            "G_error_energy": 14.881346743133207
+          },
+          "actual": {
+            "N": 0.9808525820337267,
+            "R": 1.000000179017932,
+            "F": 0.9984005401617119,
+            "native": 0.8383981878868568,
+            "dual_loss": 0.08720609402091271,
+            "G_error_energy": 14.881245721529048
+          }
+        },
+        "nonlinear_defect": 0.0010830631208472146,
+        "checks": {
+          "retains_half_native_drop": true,
+          "field_energy": true,
+          "dual_nonincrease": false,
+          "nonlinear_model": true,
+          "original_identity": true,
+          "operator_pairings": true
+        },
+        "local_pre_FE_support": false,
+        "failure_quantities": [
+          "dual_nonincrease"
+        ],
+        "independent_pairings": {
+          "A": 0.0,
+          "Gsolve_true": 1.0159807120893115e-13,
+          "Ge": 7.476868147618996e-15
+        }
+      }
+    },
+    "actions": {
+      "A": 8,
+      "AH": 0,
+      "Gsolve": 4,
+      "G_matvec": 12
+    },
+    "actions_including_failed_attempt_conservative_upper": {
+      "A": 14,
+      "AH": 0,
+      "Gsolve": 8,
+      "G_matvec": 20,
+      "network_forward": 8,
+      "Gram_factor": 2,
+      "JVP": 0,
+      "VJP": 0
+    },
+    "prior_failed_attempt": {
+      "receipt_path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+      "review": "docs/task042extra_feinn_5nm/review_report_v17.md",
+      "authority": "section 4.C sole explicitly identified bug replay",
+      "failed_source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+      "failure": "IMMUTABLE_OUTPUT_EXISTS after second-state array write; final immutable JSON missing",
+      "hypothesis": "Repeated partial/final save reuses an immutable JSON pathname; finally masks original exception with the same error",
+      "change": "Unique numbered matched NPZ/JSON boundaries; final return reuses already persisted final boundary; previous versions retained",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v18_native_network_witness.dat",
+        "sha256": "b558ad9723bbb411e05118d1f248a684539fe5273363a8468099a90a322646ae"
+      },
+      "supervision_summary": {
+        "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/supervision/summary.json",
+        "sha256": "369d55b38524449232a71c67d152be75d70c46634bb8b0943adf28e807b4668c"
+      },
+      "worker_failure": {
+        "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/worker_failure.json",
+        "sha256": "8a26bced074e85d754687cebba6c0aa4bc1a6639f79aa4168a450053928080f6"
+      },
+      "partial_record": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/partial_network_witness.json",
+        "sha256": "c19b54bd40bd5693e41b0fc2ed9998996803ef8a16ae7aa5812922f018da49f9"
+      },
+      "arrays": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/nonlinear_witness_arrays.npz",
+        "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+      },
+      "measured_partial_operation_lower_bound": {
+        "A": 3,
+        "AH": 0,
+        "Gsolve": 2,
+        "G_matvec": 4,
+        "network_forward": 2,
+        "JVP": 0,
+        "VJP": 0,
+        "Gram_factor": 1
+      },
+      "operation_upper_bound": {
+        "A": 6,
+        "AH": 0,
+        "Gsolve": 4,
+        "G_matvec": 8,
+        "network_forward": 4,
+        "JVP": 0,
+        "VJP": 0,
+        "Gram_factor": 1
+      },
+      "terminal_operation_record": "NOT_RETAINED",
+      "count_evidence": "Measured first-state JSON lower bound; conservative full two-state allocation upper bound derived from saved 38 arrays and fixed source loop. No actions replayed to reconstruct logs.",
+      "test_requirements": [
+        "repeated matched partial/final snapshots",
+        "exception snapshot retains previous boundary",
+        "corrupt/over-cap replay account rejected"
+      ],
+      "replay_limit": 1,
+      "numerical_parameters_changed": false,
+      "failed_costs_deleted": false
+    },
+    "FE_restore_required": true,
+    "local_mechanism": "PENDING_INDEPENDENT_FE",
+    "vectors": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/witness_arrays_0003.npz",
+      "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+    },
+    "original_result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/result.json",
+      "sha256": "b5579b0f220c6ee548ee6c163d24b3ce791e95d2b782e4fc506696426d74e282"
+    },
+    "A_checker": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/checker.json",
+      "sha256": "547a133c7856ad3330e908ffb03bf8897e3463691c539e46be61c63263410571"
+    },
+    "checker_source_sha256": "c2be5030d788d74c76bafcef275bad93228978ce0b80ee8e84efe25e8d9ea5fe",
+    "new_network_forward": 0,
+    "new_Gsolve": 0,
+    "new_Gram_factor": 0,
+    "reference_used_for_training": false,
+    "pde_only_solve": false,
+    "official_candidate_results": false,
+    "production_initialization_allowed": false
+  },
+  "FE_restore": {
+    "status": "INDEPENDENT_ACTUAL_NETWORK_FE_RESTORATION_COMPLETE",
+    "rows": {
+      "M3600": {
+        "MPC_relative": 1.1506299999878469e-18,
+        "c_sha256": "4a21744189ee4e0563952982774f5a0d3e7aa9049d0c8860668c9ce6561582f0"
+      },
+      "Mfinal": {
+        "MPC_relative": 1.5318620263251886e-18,
+        "c_sha256": "b4ce6e86f035cc9a9a2761542e4b9b4947ff16b678f3ffaafa2451a88aa9f2d1"
+      }
+    },
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "original_witness": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/witness_arrays_0003.npz",
+      "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+    },
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "network_forward": 0,
+    "reference_used_for_training": false,
+    "reference_used_for_diagnostic": true,
+    "features_reference_exposed": true,
+    "pde_only_solve": false,
+    "benchmark_previously_seen": true,
+    "production_initialization_allowed": false,
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false,
+    "diagnostic_only": true,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC",
+    "worker_elapsed_seconds": 1.4547547239344567
+  },
+  "result_kind": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+  "no_production_checkpoint": true,
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "production_initialization_allowed": false,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solver_qualified": false
+}

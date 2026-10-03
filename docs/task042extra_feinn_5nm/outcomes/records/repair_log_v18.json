@@ -1,0 +1,203 @@
+{
+  "initial_qualification_failures": [
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.5596751869888976,
+      "sampled_process_tree_rss_peak_bytes": 40120320,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "label": "v18_A_quality_new_window_20261003T112830349538Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/v18_A_quality_new_window_20261003T112830349538Z/summary.json",
+        "sha256": "7bb182f71be66fdb887e052e511d92f95484abe702bdcdd7628ff92f21710585"
+      },
+      "cost_relation": "NESTED_IN_BATCH_WALL_DO_NOT_ADD_AGAIN",
+      "cpu": 12,
+      "admission": {
+        "path": "tmp/task42extra/checks/v18_A_quality_new_window_20261003T112830349538Z/admission.json",
+        "sha256": "8bd48b6204b38b2bd1e4c9d5ac28f31cb074729016f0736506c6cf2e2f925cc7"
+      },
+      "reason": "Ruff unused import os; removed before initial A freeze",
+      "category": "INITIAL_QUALIFICATION_OR_ENVIRONMENT_PROBE"
+    },
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.5633329920237884,
+      "sampled_process_tree_rss_peak_bytes": 40370176,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "label": "v18_B_FE_ABI_preflight_20261003T113751503441Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/v18_B_FE_ABI_preflight_20261003T113751503441Z/summary.json",
+        "sha256": "a11e8725fc2b247c0b6ce21e073dd1c543a4a693c1f59e0a53628ac5148f2904"
+      },
+      "cost_relation": "NESTED_IN_BATCH_WALL_DO_NOT_ADD_AGAIN",
+      "cpu": 12,
+      "admission": {
+        "path": "tmp/task42extra/checks/v18_B_FE_ABI_preflight_20261003T113751503441Z/admission.json",
+        "sha256": "0a4f6328005f40234b145231b1b309c7679f434154b91ce6483a1672aa3a82d8"
+      },
+      "reason": "Sandbox MPI socket permission denied before any field work; same qualified native FE activation later succeeded",
+      "category": "INITIAL_QUALIFICATION_OR_ENVIRONMENT_PROBE"
+    },
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 5.127647547982633,
+      "sampled_process_tree_rss_peak_bytes": 108949504,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "label": "v18_B_quality_repair2_20261003T113503050675Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/v18_B_quality_repair2_20261003T113503050675Z/summary.json",
+        "sha256": "1610e551834f23168c4a492cbf388bc7b39e9d3ce099f6b0ff692512ec521d1a"
+      },
+      "cost_relation": "NESTED_IN_BATCH_WALL_DO_NOT_ADD_AGAIN",
+      "cpu": 12,
+      "admission": {
+        "path": "tmp/task42extra/checks/v18_B_quality_repair2_20261003T113503050675Z/admission.json",
+        "sha256": "10c63c467233072740322632e74e16036d8c980ea69fd99c7e7e7c71a2ca6155"
+      },
+      "reason": "Near-zero E floor corruption hidden by combined vector scale; checker changed to elementwise relative comparison and fixture passed",
+      "category": "INITIAL_QUALIFICATION_OR_ENVIRONMENT_PROBE"
+    },
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.5631107880035415,
+      "sampled_process_tree_rss_peak_bytes": 38916096,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "label": "v18_B_targeted_qualification_20261003T113435992990Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/v18_B_targeted_qualification_20261003T113435992990Z/summary.json",
+        "sha256": "37a004180c5f5b2d8d4b2772e348a90c2051d915406a61b802b9ffd869e42aa7"
+      },
+      "cost_relation": "NESTED_IN_BATCH_WALL_DO_NOT_ADD_AGAIN",
+      "cpu": 12,
+      "admission": {
+        "path": "tmp/task42extra/checks/v18_B_targeted_qualification_20261003T113435992990Z/admission.json",
+        "sha256": "34c935f69f3b05e3b3dd547eb054cac4e6899819e221a6b4564110b3ab7d14b1"
+      },
+      "reason": "Ruff E731 assigned lambda in new launch fixture; changed to def",
+      "category": "INITIAL_QUALIFICATION_OR_ENVIRONMENT_PROBE"
+    },
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 2,
+      "elapsed_seconds": 2.197394458926283,
+      "sampled_process_tree_rss_peak_bytes": 65380352,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "label": "v18_C_initial_qualification_20261003T114734970790Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/v18_C_initial_qualification_20261003T114734970790Z/summary.json",
+        "sha256": "934eb0c80b2b6025536b36432dd2318d706d2be4f05fd9d0a336f10e04e381ae"
+      },
+      "cost_relation": "NESTED_IN_BATCH_WALL_DO_NOT_ADD_AGAIN",
+      "cpu": 14,
+      "admission": {
+        "path": "tmp/task42extra/checks/v18_C_initial_qualification_20261003T114734970790Z/admission.json",
+        "sha256": "bb558cdb2738824f174f5533b51c4f4cfae15f1ae2dbb4cb6adad47b33968c8a"
+      },
+      "reason": "Invalid dictionary unpack field syntax; corrected before first formal worker",
+      "category": "INITIAL_QUALIFICATION_OR_ENVIRONMENT_PROBE"
+    },
+    {
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 2.0579757050145417,
+      "sampled_process_tree_rss_peak_bytes": 40165376,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "label": "v18_E_initial_source_qualification_20261003T115211592910Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/v18_E_initial_source_qualification_20261003T115211592910Z/summary.json",
+        "sha256": "946a1163572e63d7ed5d7f5bef3ff02dd70a9691704c7f57673d297a0c3f203d"
+      },
+      "cost_relation": "NESTED_IN_BATCH_WALL_DO_NOT_ADD_AGAIN",
+      "cpu": 11,
+      "admission": {
+        "path": "tmp/task42extra/checks/v18_E_initial_source_qualification_20261003T115211592910Z/admission.json",
+        "sha256": "04ecf2f462e5ed945f72037892078f12ee91bd8c4f9b982b1602920b5ada55be"
+      },
+      "reason": "Ruff F821 closure scope after del model; model=None preserves correct closure binding",
+      "category": "INITIAL_QUALIFICATION_OR_ENVIRONMENT_PROBE"
+    }
+  ],
+  "pre_freeze_failures_not_deleted_or_merged": true,
+  "formal_numerical_bug": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+    "sha256": "7631065a22e1311cbd122436ff74bc2d7ac52d3ce2686a514c3fda6a7b6eb99f"
+  },
+  "formal_bug_repair_source": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+  "formal_bug_replays": 1,
+  "same_direction_and_input": true,
+  "formal_numerical_replay_completed": true,
+  "numerical_negative_not_repaired": [
+    "M3600 actual R nonincrease",
+    "Mfinal actual R nonincrease"
+  ],
+  "repair_count_scope": "Five initial implementation lint/fixture/syntax/scope failures are enumerated separately from one post-freeze worker bug; no blanket claim that all these failure/fix iterations total <=3.",
+  "phase_repair_pool_use": "One formal numerical root cause and its sole identical-input replay; initial implementation qualification is charged to 5400s implementation stage",
+  "pre_freeze_iteration_count_qualification": "Audit separately if the three-round cap is interpreted to include every initial qualification iteration; all iterations/costs retained",
+  "resource_refusals": [
+    {
+      "label": "v18_A_quality_20261003T112749206583Z",
+      "status": "NO_WORKER_SUMMARY",
+      "reason": "Admission rejected before worker or outer inspection; per-probe exact wall/peak NOT_RETAINED, included in batch wall",
+      "seconds": "NOT_RETAINED",
+      "peak_bytes": "NOT_MEASURED"
+    },
+    {
+      "label": "v18_B_FE_ABI_fresh_window_20261003T114003135543Z",
+      "status": "NO_WORKER_SUMMARY",
+      "reason": "Admission rejected before worker or outer inspection; per-probe exact wall/peak NOT_RETAINED, included in batch wall",
+      "seconds": "NOT_RETAINED",
+      "peak_bytes": "NOT_MEASURED"
+    },
+    {
+      "label": "v18_B_FE_ABI_native_socket_20261003T113821806611Z",
+      "status": "NO_WORKER_SUMMARY",
+      "reason": "Admission rejected before worker or outer inspection; per-probe exact wall/peak NOT_RETAINED, included in batch wall",
+      "seconds": "NOT_RETAINED",
+      "peak_bytes": "NOT_MEASURED"
+    },
+    {
+      "label": "v18_B_independent_integral_check_20261003T115655723076Z",
+      "status": "NO_WORKER_SUMMARY",
+      "reason": "Admission rejected before worker or outer inspection; per-probe exact wall/peak NOT_RETAINED, included in batch wall",
+      "seconds": "NOT_RETAINED",
+      "peak_bytes": "NOT_MEASURED"
+    },
+    {
+      "label": "v18_C_parser_local_fix_20261003T114907794480Z",
+      "status": "NO_WORKER_SUMMARY",
+      "reason": "Admission rejected before worker or outer inspection; per-probe exact wall/peak NOT_RETAINED, included in batch wall",
+      "seconds": "NOT_RETAINED",
+      "peak_bytes": "NOT_MEASURED"
+    },
+    {
+      "label": "v18_E_compact_records_20261003T121415761621Z",
+      "status": "NO_WORKER_SUMMARY",
+      "reason": "Admission rejected before worker or outer inspection; per-probe exact wall/peak NOT_RETAINED, included in batch wall",
+      "seconds": "NOT_RETAINED",
+      "peak_bytes": "NOT_MEASURED"
+    }
+  ],
+  "explicit_resource_observations": [
+    {
+      "path": "tmp/task42extra/v18_native_window_952555.json",
+      "sha256": "db657293cf58907b9d29215598b95525efdb8b4a949bc2ed956cf0ee61133771"
+    },
+    {
+      "path": "tmp/task42extra/v18_native_window_954731.json",
+      "sha256": "4546b684c91a5af098de6ae05abddca88afe33d41fa9c9a54e1ba3d6f448294f"
+    }
+  ],
+  "no_idle_core_policy_not_weakened": true,
+  "no_automatic_background_restart": true,
+  "new_engineering_retries_after_formal_bug": 0
+}

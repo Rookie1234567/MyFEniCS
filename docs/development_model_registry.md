@@ -1785,6 +1785,17 @@ C plain14新增接受正常预算冻结，phase21新增接受后因第二次PSI�
 
 仅继承M5/p3/5nm/384hex/31968复FE/40端口的已验收记录。新增准确研究诊断依赖清单和当前暂停导航，无FE/网络/优化/新参考。原M3600散射E/curl约0.0933003/0.0935415、Mfinal约0.122945/0.123039及native0.885852/0.846542、M3600界宽UNKNOWN均保留，不能用完整记录通过提升有效解。D0 COST_VETO_CONFIRMED、D1 NOT_RUN_COST_VETO，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT及生产初值禁止不变。工具的check资格不授权analyze/producer，六类静态依赖未迁移部署；没有实际接收需求，P1 NOT_REQUESTED_NO_RUN。复用75/143未变源码证据，静态修复/文档/渲染与完整费用见[回执](task042extra_feinn_5nm/response_v17.md)和[交接收据](task042extra_feinn_5nm/outcomes/records/handoff_receipt_v17.json)。主线Gx784 FE前工程失败/AUTO库存和dot新C1待验不作FEINN数值结果；原尺寸0.7nm/十进制2TB/172800s及原门仍未资格化。完成本批即暂停，无master合并。
 
+## 3.44.16 Task42extra Review V17：V18局部诊断（非新有效解）
+
+同M5/p3/5nm/384hex/31968独立复FE/40端口、8966实参数，原两态/背景/参考不变。用原八方向直接减小原方程不平衡并限制原加权残差，先冻结后评分；仅两态实际临时完整矩前向，不训练或保存生产权重。
+
+| measured/derived对象 | native原值→实际新值 | 事后F / 实际R−1 | 分类 |
+| --- | --- | --- | --- |
+| M3600 / 原中期较好态 | 0.885852183253→0.883116256995 | 0.996036905910 / 1.00794826e-7 | R不增门1e-8失败；局部诊断，严格解仍FAIL |
+| Mfinal / 原最终退化态 | 0.846541904928→0.838398187887 | 0.998400540162 / 1.79017932e-7 | 同上；不改选best |
+
+B独立保存场积分说明旧退化约77%来自正E交叉项，周期/界面邻层浓集约1；G/MPC配对通过。新最优界宽UNKNOWN；首C保存协议失败及唯一修复重放费用保留。A source33fe1bc05c89eeef50de1fb44ae64cc96e868852、B b42f042064fcef431e2e7d64eddcbfd43b2bf65a、C及独立审核/恢复 ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb。没有official R/T/A、完整E/H/通道资格或NN净增益，原有效解门和目标不变；D0否决/D1未运行。FEINN主解/生产初值继续暂停，production numerical/core为空，不自动扩大实验或合并master。[回执](task042extra_feinn_5nm/response_v18.md)、[比较](task042extra_feinn_5nm/outcomes/records/network_witness_results_v18.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

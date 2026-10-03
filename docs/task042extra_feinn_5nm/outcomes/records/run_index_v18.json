@@ -1,0 +1,130 @@
+{
+  "review_publication": "c12049f4ed8e5117ee69495c8f9c576b75ba0027",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "numerical_sources": {
+    "A": "33fe1bc05c89eeef50de1fb44ae64cc96e868852",
+    "A_checker": "33fe1bc05c89eeef50de1fb44ae64cc96e868852",
+    "B": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+    "C": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "independent_check": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "FE_restore": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb"
+  },
+  "final_document_HEAD": "REPORTED_AFTER_FINAL_COMMIT; not substituted for numerical source",
+  "design": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v18.json",
+    "sha256": "e4f618623be01ff80228f48f10ce85b65c0927c531b10840664513bb600367d8"
+  },
+  "nonlinear_design": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_design_v18.json",
+    "sha256": "c7b73d36fafa158e8f5e718935ecb7080cd213135cb6ee399a0183022497a641"
+  },
+  "A": {
+    "directory": "benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z",
+    "checker": {
+      "path": "benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/checker.json",
+      "sha256": "547a133c7856ad3330e908ffb03bf8897e3463691c539e46be61c63263410571"
+    },
+    "candidates": {
+      "M3600_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-10_native_candidate.json",
+        "sha256": "047462da20e49b32837880a7d670a1737def55b064a62e37a0664f9d250398bb"
+      },
+      "M3600_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-12_native_candidate.json",
+        "sha256": "1c2a388a7f034a6eb02a0929d9b68091af7e83acbc2ce76efbd2052581b23f1c"
+      },
+      "Mfinal_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-10_native_candidate.json",
+        "sha256": "310a48cc84acaab949ce118aa2f7ea12e316840a2a1fb9708f23506149650cd6"
+      },
+      "Mfinal_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-12_native_candidate.json",
+        "sha256": "eeab3d2c2d521e12b42c416a6cda2c50df0b3ddcbfbb0bb0a762f2a80d020e1a"
+      }
+    },
+    "constructor_source_sha": "33fe1bc05c89eeef50de1fb44ae64cc96e868852"
+  },
+  "B": {
+    "files": {
+      "vectors": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_saved_field_integrals_20261003T115456579435Z/field_diagnostic_arrays.npz",
+        "sha256": "93cbe3d83d44e1acf0eacd9ad200c1457665703cc492e7c2847f1651418679f8"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_saved_field_integrals_20261003T115456579435Z/result.json",
+        "sha256": "7a8f33e5d2bc7484d55f9389c193fe90a056314d673dd9224760a914203fdace"
+      }
+    },
+    "source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+    "stage": "v18_saved_field_integrals"
+  },
+  "C": {
+    "files": {
+      "vectors": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/witness_arrays_0003.npz",
+        "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/result.json",
+        "sha256": "b5579b0f220c6ee548ee6c163d24b3ce791e95d2b782e4fc506696426d74e282"
+      }
+    },
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "stage": "v18_native_network_witness"
+  },
+  "FE_restore": {
+    "files": {
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_restore_20261003T121232311291Z/result.json",
+        "sha256": "ffcb0a437a0f15850ffa22e45ea46c5ac62dc5259d5ff5c3b69ba34471b9023e"
+      }
+    },
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "stage": "v18_native_network_restore"
+  },
+  "B_checker": {
+    "path": "benchmarks/artifacts/task42extra/v18_integrals_checker.json",
+    "sha256": "273cd3a5737b8eb5696e10b7d011e20ae50906956ff524b43ba62567b57e3d86"
+  },
+  "C_checker": {
+    "path": "benchmarks/artifacts/task42extra/v18_network_checker.json",
+    "sha256": "f0d2803340a673eb0af55d327774886f283c242f43f623357faf313122792194"
+  },
+  "original_inputs": {
+    "A_original_vectors": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz",
+      "sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263"
+    },
+    "C": {
+      "M3600": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-10_native_candidate.json",
+        "sha256": "047462da20e49b32837880a7d670a1737def55b064a62e37a0664f9d250398bb"
+      },
+      "Mfinal": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-10_native_candidate.json",
+        "sha256": "310a48cc84acaab949ce118aa2f7ea12e316840a2a1fb9708f23506149650cd6"
+      }
+    }
+  },
+  "failed_attempt": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+    "sha256": "7631065a22e1311cbd122436ff74bc2d7ac52d3ce2686a514c3fda6a7b6eb99f"
+  },
+  "metadata_collector": {
+    "path": "tmp/task42extra/v18_collect_evidence.py",
+    "sha256": "bdb6a8c3a0540e6e0d828ba7f4ecac0d447765d19850556c1769b0b1d6a3f85d"
+  },
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "production_initialization_allowed": false,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solver_qualified": false
+}

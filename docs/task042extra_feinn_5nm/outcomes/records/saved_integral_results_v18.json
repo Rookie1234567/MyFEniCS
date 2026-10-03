@@ -1,0 +1,643 @@
+{
+  "source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+  "integrals": {
+    "no_training": true,
+    "no_parameter_updates": true,
+    "Gram_factor_created": false,
+    "Maxwell_factor_created": false,
+    "source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+    "reference_used_for_training": false,
+    "reference_used_for_diagnostic": true,
+    "official_candidate_results": false,
+    "production_initialization_allowed": false,
+    "status": "SAVED_FIELD_INTEGRALS_COMPLETE",
+    "energy_terms": {
+      "E_L2": {
+        "before": 0.21114112073261582,
+        "after": 0.36662773058180737,
+        "cross": 0.11958103135806322,
+        "update_energy": 0.03590557849112811,
+        "change": 0.15548660984919155,
+        "reconstructed_change": 0.15548660984919133,
+        "operation_scale": 0.36662773058180737,
+        "defect": 5.867142419362807e-16,
+        "reference_energy": 24.25531734603165
+      },
+      "scaled_curl_L2": {
+        "before": 0.21285363918379205,
+        "after": 0.36826344517615694,
+        "cross": 0.11936277193233624,
+        "update_energy": 0.03604703406002907,
+        "change": 0.1554098059923649,
+        "reconstructed_change": 0.1554098059923653,
+        "operation_scale": 0.36826344517615694,
+        "defect": 1.1305320679745518e-15,
+        "reference_energy": 24.32608830929524
+      }
+    },
+    "energies": {
+      "before": [
+        0.21114112073261582,
+        0.21285363918379205
+      ],
+      "after": [
+        0.36662773058180737,
+        0.36826344517615694
+      ],
+      "delta": [
+        0.03590557849112811,
+        0.03604703406002907
+      ],
+      "minus": [
+        0.12746566786568092,
+        0.12953790131148446
+      ],
+      "reference": [
+        24.25531734603165,
+        24.32608830929524
+      ],
+      "reference_total": [
+        51.578664144996985,
+        52.026625168570604
+      ]
+    },
+    "G_norm_identity": {
+      "before": {
+        "integrated_G_energy": 8.614265977037578,
+        "sparse_G_energy": 8.614265977037046,
+        "relative": 6.16571042032489e-14
+      },
+      "after": {
+        "integrated_G_energy": 14.90508580766552,
+        "sparse_G_energy": 14.905085807664646,
+        "relative": 5.863552724637805e-14
+      }
+    },
+    "MPC": {
+      "before": 1.7184783646699592e-18,
+      "after": 1.2276821344915036e-18,
+      "delta": 3.841348961173141e-18,
+      "minus": 4.6106404783701984e-18,
+      "reference": 1.5819399948064589e-18,
+      "reference_total": 2.032007539911652e-18
+    },
+    "regions": {
+      "air_notch": {
+        "cells": 8,
+        "cell_ids_sha256": "ec7cb0a0e2296ffd6c0537a6daa8383b614dabd1f10bb8d59771b68bc01989b1",
+        "volume_nm3": 15.624999999999998,
+        "reference_energy": [
+          0.5384092407181605,
+          0.5405409348924602
+        ],
+        "overlaps_other_regions": true,
+        "states": {
+          "M3600": {
+            "absolute": [
+              0.07465592681109025,
+              0.07733257689469301
+            ],
+            "error_energy": [
+              0.005573507408022863,
+              0.005980327449173609
+            ],
+            "actual_denominator": [
+              0.7337637499346507,
+              0.7352148902820591
+            ],
+            "relative": [
+              0.10174381988445073,
+              0.10518363803135844
+            ],
+            "incident_floor": 3.952847075210474e-12,
+            "MPC_relative": 1.7184783646699592e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.020833333333333336,
+            "error_energy_fraction": [
+              0.02639707219836643,
+              0.02809596054878721
+            ],
+            "concentration": [
+              1.2670594655215885,
+              1.348606106341786
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          },
+          "Mfinal": {
+            "absolute": [
+              0.09873027878723274,
+              0.10081578020220146
+            ],
+            "error_energy": [
+              0.0097476679494047,
+              0.010163821537778596
+            ],
+            "actual_denominator": [
+              0.7337637499346507,
+              0.7352148902820591
+            ],
+            "relative": [
+              0.13455322478934903,
+              0.13712423610398358
+            ],
+            "incident_floor": 3.952847075210474e-12,
+            "MPC_relative": 1.2276821344915036e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.020833333333333336,
+            "error_energy_fraction": [
+              0.026587372247963818,
+              0.02759932236260046
+            ],
+            "concentration": [
+              1.276193867902263,
+              1.3247674734048218
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          }
+        },
+        "increment": {
+          "error_energy": [
+            0.0041741605413818375,
+            0.004183494088604987
+          ],
+          "concentration": [
+            0.009134402380674533,
+            -0.0238386329369642
+          ]
+        }
+      },
+      "air_other": {
+        "cells": 192,
+        "cell_ids_sha256": "7923341188fcc7ed27aa8c95fd925ed8ad4c28b1e4c1cbff98c580cd8649e57b",
+        "volume_nm3": 374.99999999999994,
+        "reference_energy": [
+          13.558942638200008,
+          13.520507262254148
+        ],
+        "overlaps_other_regions": true,
+        "states": {
+          "M3600": {
+            "absolute": [
+              0.32690603248283007,
+              0.3322281299444768
+            ],
+            "error_energy": [
+              0.10686755407366515,
+              0.11037553032640417
+            ],
+            "actual_denominator": [
+              3.6822469550805534,
+              3.677024240096079
+            ],
+            "relative": [
+              0.08877895384821592,
+              0.09035244487150726
+            ],
+            "incident_floor": 1.9364916731037083e-11,
+            "MPC_relative": 1.7184783646699592e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.5,
+            "error_energy_fraction": [
+              0.5061427812017713,
+              0.5185512953861153
+            ],
+            "concentration": [
+              1.0122855624035425,
+              1.0371025907722307
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          },
+          "Mfinal": {
+            "absolute": [
+              0.4335797179951845,
+              0.43795881056632113
+            ],
+            "error_energy": [
+              0.18799137185678372,
+              0.19180791975266678
+            ],
+            "actual_denominator": [
+              3.6822469550805534,
+              3.677024240096079
+            ],
+            "relative": [
+              0.11774867989148746,
+              0.11910685977824217
+            ],
+            "incident_floor": 1.9364916731037083e-11,
+            "MPC_relative": 1.2276821344915036e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.5,
+            "error_energy_fraction": [
+              0.5127581908724068,
+              0.5208443093256688
+            ],
+            "concentration": [
+              1.0255163817448136,
+              1.0416886186513377
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          }
+        },
+        "increment": {
+          "error_energy": [
+            0.08112381778311857,
+            0.08143238942626262
+          ],
+          "concentration": [
+            0.013230819341271127,
+            0.004586027879107002
+          ]
+        }
+      },
+      "periodic_boundary_neighbor": {
+        "cells": 192,
+        "cell_ids_sha256": "db00c2ab938eb2411d331045497f98495d8de7d875eedf1f539b03b4b19b89fe",
+        "volume_nm3": 374.99999999999994,
+        "reference_energy": [
+          12.14629469707563,
+          12.158499861758488
+        ],
+        "overlaps_other_regions": true,
+        "states": {
+          "M3600": {
+            "absolute": [
+              0.32203024167320216,
+              0.3239964628727477
+            ],
+            "error_energy": [
+              0.10370347655210099,
+              0.10497370795405178
+            ],
+            "actual_denominator": [
+              3.485153468224266,
+              3.4869040511259395
+            ],
+            "relative": [
+              0.09240059142568578,
+              0.09291808954941778
+            ],
+            "incident_floor": 1.9364916731037083e-11,
+            "MPC_relative": 1.7184783646699592e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.5,
+            "error_energy_fraction": [
+              0.4911571757896874,
+              0.4931731886595111
+            ],
+            "concentration": [
+              0.9823143515793747,
+              0.9863463773190222
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          },
+          "Mfinal": {
+            "absolute": [
+              0.42519602725321215,
+              0.4264959655475632
+            ],
+            "error_energy": [
+              0.18079166159191432,
+              0.1818988086283482
+            ],
+            "actual_denominator": [
+              3.485153468224266,
+              3.4869040511259395
+            ],
+            "relative": [
+              0.12200209578427988,
+              0.12231365110543992
+            ],
+            "incident_floor": 1.9364916731037083e-11,
+            "MPC_relative": 1.2276821344915036e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.5,
+            "error_energy_fraction": [
+              0.49312053211308693,
+              0.49393663968287116
+            ],
+            "concentration": [
+              0.9862410642261739,
+              0.9878732793657423
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          }
+        },
+        "increment": {
+          "error_energy": [
+            0.07708818503981332,
+            0.07692510067429642
+          ],
+          "concentration": [
+            0.003926712646799113,
+            0.0015269020467201244
+          ]
+        }
+      },
+      "material_interface_neighbor": {
+        "cells": 264,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "volume_nm3": 515.6249999999999,
+        "reference_energy": [
+          15.528797519743232,
+          15.612694634103583
+        ],
+        "overlaps_other_regions": true,
+        "states": {
+          "M3600": {
+            "absolute": [
+              0.377525834727899,
+              0.3784075448732646
+            ],
+            "error_energy": [
+              0.14252575588699692,
+              0.14319227001701176
+            ],
+            "actual_denominator": [
+              3.940659528523523,
+              3.9512902492861217
+            ],
+            "relative": [
+              0.09580270307426167,
+              0.09576809624188741
+            ],
+            "incident_floor": 2.2707377655731187e-11,
+            "MPC_relative": 1.7184783646699592e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.6875,
+            "error_energy_fraction": [
+              0.6750260460513905,
+              0.6727264357146837
+            ],
+            "concentration": [
+              0.9818560669838408,
+              0.9785111792213581
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          },
+          "Mfinal": {
+            "absolute": [
+              0.49541309262309496,
+              0.49585777378538304
+            ],
+            "error_energy": [
+              0.2454341323423793,
+              0.24587493182339612
+            ],
+            "actual_denominator": [
+              3.940659528523523,
+              3.9512902492861217
+            ],
+            "relative": [
+              0.12571831924000682,
+              0.12549262203022657
+            ],
+            "incident_floor": 2.2707377655731187e-11,
+            "MPC_relative": 1.2276821344915036e-18,
+            "near_zero_reference": [
+              false,
+              false
+            ],
+            "volume_fraction": 0.6875,
+            "error_energy_fraction": [
+              0.6694369025302477,
+              0.6676604345179661
+            ],
+            "concentration": [
+              0.9737264036803602,
+              0.9711424502079506
+            ],
+            "global_zero_error": [
+              false,
+              false
+            ]
+          }
+        },
+        "increment": {
+          "error_energy": [
+            0.10290837645538237,
+            0.10268266180638436
+          ],
+          "concentration": [
+            -0.008129663303480528,
+            -0.00736872901340746
+          ]
+        }
+      }
+    },
+    "units": "E integral nm^3; curl/k0 same units; G ell=5nm",
+    "A_actions": 0,
+    "Gsolve_count": 0,
+    "total_volume_nm3": 749.9999999999999,
+    "k0_per_nm": 1.2566370614359172,
+    "ell_nm": 5.0,
+    "regions_are_overlapping_not_additive": true,
+    "parameter_states": [
+      "M3600",
+      "Mfinal"
+    ],
+    "pde_only_solve": false,
+    "pde_only_solver_qualified": false,
+    "features_reference_exposed": true,
+    "diagnostic_only": true,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC",
+    "scattering_and_total_error_numerator_identical": true,
+    "global_denominators": {
+      "scattered": {
+        "reference_energy": [
+          24.25531734603165,
+          24.32608830929524
+        ],
+        "actual_denominator": [
+          4.9249687659955415,
+          4.932148447613397
+        ],
+        "incident_floor": 2.7386127875258303e-11
+      },
+      "total": {
+        "reference_energy": [
+          51.578664144996985,
+          52.026625168570604
+        ],
+        "actual_denominator": [
+          7.181828746565667,
+          7.212948437953138
+        ],
+        "incident_floor": 2.7386127875258303e-11
+      }
+    },
+    "field_identity": {
+      "M3600": "92cc2e774003286a0e9dc3d73ada568160feafffa6f0494a6faae09e74ffa402",
+      "Mfinal": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f"
+    },
+    "reference_identity": "b0840a6a73255a6a85611e6002ac620ab16db2e375832704dac211b5e80bb38e",
+    "G_actions": 0,
+    "AH_actions": 0,
+    "worker_elapsed_seconds": 22.49498061905615
+  },
+  "checker": {
+    "status": "PASS",
+    "raw_energy_checked": true,
+    "fixed_regions_checked": true,
+    "regions_not_summed": true,
+    "terms": {
+      "E_L2": {
+        "before": 0.21114112073261582,
+        "after": 0.36662773058180737,
+        "cross": 0.11958103135806322,
+        "change": 0.15548660984919155,
+        "update_energy": 0.03590557849112811,
+        "reconstructed_change": 0.15548660984919133,
+        "operation_scale": 0.36662773058180737,
+        "defect": 5.867142419362807e-16,
+        "reference_energy": 24.25531734603165
+      },
+      "scaled_curl_L2": {
+        "before": 0.21285363918379205,
+        "after": 0.36826344517615694,
+        "cross": 0.11936277193233624,
+        "change": 0.1554098059923649,
+        "update_energy": 0.03604703406002907,
+        "reconstructed_change": 0.1554098059923653,
+        "operation_scale": 0.36826344517615694,
+        "defect": 1.1305320679745518e-15,
+        "reference_energy": 24.32608830929524
+      }
+    },
+    "G_norm_identity": {
+      "before": {
+        "relative": 6.16571042032489e-14,
+        "integrated": 8.614265977037578,
+        "original": 8.614265977037046
+      },
+      "after": {
+        "relative": 5.863552724637805e-14,
+        "integrated": 14.90508580766552,
+        "original": 14.905085807664646
+      }
+    },
+    "regions": {
+      "air_notch": {
+        "volume_nm3": 15.624999999999998,
+        "cell_ids_sha256": "ec7cb0a0e2296ffd6c0537a6daa8383b614dabd1f10bb8d59771b68bc01989b1",
+        "before_concentration": [
+          1.2670594655215885,
+          1.348606106341786
+        ],
+        "after_concentration": [
+          1.276193867902263,
+          1.3247674734048218
+        ]
+      },
+      "air_other": {
+        "volume_nm3": 374.99999999999994,
+        "cell_ids_sha256": "7923341188fcc7ed27aa8c95fd925ed8ad4c28b1e4c1cbff98c580cd8649e57b",
+        "before_concentration": [
+          1.0122855624035425,
+          1.0371025907722307
+        ],
+        "after_concentration": [
+          1.0255163817448136,
+          1.0416886186513377
+        ]
+      },
+      "periodic_boundary_neighbor": {
+        "volume_nm3": 374.99999999999994,
+        "cell_ids_sha256": "db00c2ab938eb2411d331045497f98495d8de7d875eedf1f539b03b4b19b89fe",
+        "before_concentration": [
+          0.9823143515793747,
+          0.9863463773190222
+        ],
+        "after_concentration": [
+          0.9862410642261739,
+          0.9878732793657423
+        ]
+      },
+      "material_interface_neighbor": {
+        "volume_nm3": 515.6249999999999,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "before_concentration": [
+          0.9818560669838408,
+          0.9785111792213581
+        ],
+        "after_concentration": [
+          0.9737264036803602,
+          0.9711424502079506
+        ]
+      }
+    },
+    "new_FE_or_operator_actions": 0,
+    "producer_or_optimizer_calls": 0,
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_saved_field_integrals_20261003T115456579435Z/result.json",
+      "sha256": "7a8f33e5d2bc7484d55f9389c193fe90a056314d673dd9224760a914203fdace"
+    },
+    "vectors": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_saved_field_integrals_20261003T115456579435Z/field_diagnostic_arrays.npz",
+      "sha256": "93cbe3d83d44e1acf0eacd9ad200c1457665703cc492e7c2847f1651418679f8"
+    },
+    "original_G_record": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json",
+      "sha256": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a"
+    },
+    "checker_file_sha256": "69bae39ee60c8afa2095641b3b8ae55a5378c9fa811da8138daf8ca57d1d78ab"
+  },
+  "original_not_run_preserved": true,
+  "new_stage": "v18_saved_field_integrals",
+  "interpretation": "Saved M3600 to Mfinal signed cross/region attribution; no new solve",
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "production_initialization_allowed": false,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solver_qualified": false
+}

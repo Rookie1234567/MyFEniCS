@@ -247,3 +247,9 @@ V15浏览器补查：原实际截图的回执核心表仍停留页首，保留�
 ## V17：暂停交接的静态与文档检查
 
 只做源码文本/AST/相对import小fixture、源码资格hash复用、改变页Markdown/链接/JSON检查及有限新页实际渲染；已有75/143相关资格不重跑。静态脚本首次遗漏src.io包相对导入，一次有依据修复通过，原失败与费用保留。新数值/FE/producer/优化/前向/完成器及full pytest未运行，Ruff/compileall旧资格按未变source复用，不称CI。实际范围/资源/渲染见[交接收据](records/handoff_receipt_v17.json)，[依赖与原测试入口](records/diagnostic_dependencies_v17.json)。
+
+## V18：受约束方向、区域积分及持久真实网络见证
+
+只做受影响pure fixture与真实父监督接线，没有full pytest、无关MPI或旧数值全量复验。最终A/B/C组合、Ruff/compileall、改动文档合同及原记录hash检查见[测试收据](records/targeted_tests_v18.json)。开发时lint、近零分母损坏fixture、语法/作用域错误，以及正式C重复不可覆盖记录错误的失败证据和费用均留[修复账](records/repair_log_v18.json)。
+
+A独立从原数组重算四配置、冻结顺序、实PID、N/R/F及保守证书，不调用优化器；B检查原能量/四区域/体积/近零分母/G恒等式，不执行FE或算子；C独立2A/4G检查实际场和原保存向量，后独立FE恢复两个c。全部真实性通过；实际R不增门两態FAIL，不因checker通过声称solver通过。新页结构与有限GitHub实际渲染分开，[render](records/render_check_v18.json)保留未测尾段及旧失败。

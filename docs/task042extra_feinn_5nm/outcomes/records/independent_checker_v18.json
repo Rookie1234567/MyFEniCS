@@ -1,0 +1,933 @@
+{
+  "A": {
+    "C_admitted": true,
+    "C_gate": "BOTH_STATES_LINEAR_ADMITTED",
+    "benchmark_previously_seen": true,
+    "candidates": {
+      "M3600_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-10_native_candidate.json",
+        "sha256": "047462da20e49b32837880a7d670a1737def55b064a62e37a0664f9d250398bb"
+      },
+      "M3600_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-12_native_candidate.json",
+        "sha256": "1c2a388a7f034a6eb02a0929d9b68091af7e83acbc2ce76efbd2052581b23f1c"
+      },
+      "Mfinal_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-10_native_candidate.json",
+        "sha256": "310a48cc84acaab949ce118aa2f7ea12e316840a2a1fb9708f23506149650cd6"
+      },
+      "Mfinal_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-12_native_candidate.json",
+        "sha256": "eeab3d2c2d521e12b42c416a6cda2c50df0b3ddcbfbb0bb0a762f2a80d020e1a"
+      }
+    },
+    "checker_source_sha": "33fe1bc05c89eeef50de1fb44ae64cc96e868852",
+    "configurations": {
+      "M3600_1e-10": {
+        "bound_width": 3.891076854692469e-06,
+        "checked": true,
+        "conservative_lower": 0.9938296915657902,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 8.671119018262734e-16,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.9960399553337048,
+            "F_energy": {
+              "after": 8.580153099000633,
+              "before": 8.614265977037046,
+              "closure_defect": 5.964438164421285e-16,
+              "signed_cross": -0.034468072252166984,
+              "update": 0.00035519421574812767
+            },
+            "N": 0.9938335826426449,
+            "N_energy": {
+              "after": 0.0660613626631961,
+              "before": 0.06647125214619552,
+              "closure_defect": 3.7718824949444394e-16,
+              "signed_cross": -0.0004343152384111594,
+              "update": 2.442575541170561e-05
+            },
+            "R": 0.9999999999999815,
+            "R_energy": {
+              "after": 0.00022600254389020728,
+              "before": 0.00022600254389021148,
+              "closure_defect": 2.6065412136331193e-16,
+              "signed_cross": -5.05091272568322e-08,
+              "update": 5.0509127252689823e-08
+            },
+            "alpha": [
+              0.0007079770854536329,
+              -0.0007425173636836266,
+              -0.00018837527231290919,
+              0.0037502408176572576,
+              1.6909035511065422e-05,
+              -0.0024824114232641875,
+              4.905746992967019e-07,
+              3.820766995304214e-06
+            ],
+            "native": 0.8831166925477549,
+            "parameter_step_norm": 0.004616819495204361
+          },
+          "original_R_minimum": {
+            "F": 0.9961511446527399,
+            "F_energy": {
+              "after": 8.581110913368606,
+              "before": 8.614265977037046,
+              "closure_defect": 2.7819109233831407e-16,
+              "signed_cross": -0.033645410582107405,
+              "update": 0.0004903469136648869
+            },
+            "N": 1.0056093394395171,
+            "N_energy": {
+              "after": 0.06684411196245327,
+              "before": 0.06647125214619552,
+              "closure_defect": 2.860777898875277e-16,
+              "signed_cross": 0.0003450999441084151,
+              "update": 2.7759872149349122e-05
+            },
+            "R": 0.9997825940691222,
+            "R_energy": {
+              "after": 0.00022595340959677627,
+              "before": 0.00022600254389021148,
+              "closure_defect": 3.311613247156884e-16,
+              "signed_cross": -9.826858625997421e-08,
+              "update": 4.913429282468211e-08
+            },
+            "alpha": [
+              0.0009698462671325911,
+              -0.0011204932513162395,
+              -0.00026568227026500406,
+              0.004102109398891497,
+              0.00014394865734575232,
+              -0.00256976039964738,
+              -4.524371596231382e-06,
+              5.1576460181014214e-06
+            ],
+            "native": 0.8883332316520046,
+            "parameter_step_norm": 0.005071334370372523
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 8.614265977037046,
+              "before": 8.614265977037046,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.06647125214619552,
+              "before": 0.06647125214619552,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.00022600254389021148,
+              "before": 0.00022600254389021148,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.885852183252661,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 7.51002298455519e-08,
+        "threshold_candidate": true,
+        "upper": 0.9938335826426449
+      },
+      "M3600_1e-12": {
+        "bound_width": 3.891076854692469e-06,
+        "checked": true,
+        "conservative_lower": 0.9938296915657902,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 8.671119018262734e-16,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.9960399553337048,
+            "F_energy": {
+              "after": 8.580153099000633,
+              "before": 8.614265977037046,
+              "closure_defect": 5.964438164421285e-16,
+              "signed_cross": -0.034468072252166984,
+              "update": 0.00035519421574812767
+            },
+            "N": 0.9938335826426449,
+            "N_energy": {
+              "after": 0.0660613626631961,
+              "before": 0.06647125214619552,
+              "closure_defect": 3.7718824949444394e-16,
+              "signed_cross": -0.0004343152384111594,
+              "update": 2.442575541170561e-05
+            },
+            "R": 0.9999999999999815,
+            "R_energy": {
+              "after": 0.00022600254389020728,
+              "before": 0.00022600254389021148,
+              "closure_defect": 2.6065412136331193e-16,
+              "signed_cross": -5.05091272568322e-08,
+              "update": 5.0509127252689823e-08
+            },
+            "alpha": [
+              0.0007079770854536329,
+              -0.0007425173636836266,
+              -0.00018837527231290919,
+              0.0037502408176572576,
+              1.6909035511065422e-05,
+              -0.0024824114232641875,
+              4.905746992967019e-07,
+              3.820766995304214e-06
+            ],
+            "native": 0.8831166925477549,
+            "parameter_step_norm": 0.004616819495204361
+          },
+          "original_R_minimum": {
+            "F": 0.9961511446527399,
+            "F_energy": {
+              "after": 8.581110913368606,
+              "before": 8.614265977037046,
+              "closure_defect": 2.7819109233831407e-16,
+              "signed_cross": -0.033645410582107405,
+              "update": 0.0004903469136648869
+            },
+            "N": 1.0056093394395171,
+            "N_energy": {
+              "after": 0.06684411196245327,
+              "before": 0.06647125214619552,
+              "closure_defect": 2.860777898875277e-16,
+              "signed_cross": 0.0003450999441084151,
+              "update": 2.7759872149349122e-05
+            },
+            "R": 0.9997825940691222,
+            "R_energy": {
+              "after": 0.00022595340959677627,
+              "before": 0.00022600254389021148,
+              "closure_defect": 3.311613247156884e-16,
+              "signed_cross": -9.826858625997421e-08,
+              "update": 4.913429282468211e-08
+            },
+            "alpha": [
+              0.0009698462671325911,
+              -0.0011204932513162395,
+              -0.00026568227026500406,
+              0.004102109398891497,
+              0.00014394865734575232,
+              -0.00256976039964738,
+              -4.524371596231382e-06,
+              5.1576460181014214e-06
+            ],
+            "native": 0.8883332316520046,
+            "parameter_step_norm": 0.005071334370372523
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 8.614265977037046,
+              "before": 8.614265977037046,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.06647125214619552,
+              "before": 0.06647125214619552,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.00022600254389021148,
+              "before": 0.00022600254389021148,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.885852183252661,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 7.51002298455519e-08,
+        "threshold_candidate": true,
+        "upper": 0.9938335826426449
+      },
+      "Mfinal_1e-10": {
+        "bound_width": 1.6078310474052175e-07,
+        "checked": true,
+        "conservative_lower": 0.980847053213708,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 1.0990647210786425e-15,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.998407317821731,
+            "F_energy": {
+              "after": 14.881346743133207,
+              "before": 14.905085807664646,
+              "closure_defect": 2.0162552772816357e-16,
+              "signed_cross": -0.023948722795449837,
+              "update": 0.0002096582640080176
+            },
+            "N": 0.9808472139968127,
+            "N_energy": {
+              "after": 0.059540108975766136,
+              "before": 0.060702735478187955,
+              "closure_defect": 2.7304767373832564e-16,
+              "signed_cross": -0.0012448762077259248,
+              "update": 8.224970530408886e-05
+            },
+            "R": 1.0000000000000009,
+            "R_energy": {
+              "after": 0.0002089685012298774,
+              "before": 0.0002089685012298772,
+              "closure_defect": 1.0209501543727087e-16,
+              "signed_cross": -1.541011664500351e-07,
+              "update": 1.5410116645024616e-07
+            },
+            "alpha": [
+              0.0009197007425139939,
+              0.0028445774937425165,
+              -1.806002433552138e-05,
+              0.0028632245516194846,
+              -0.00023414338760444647,
+              -0.004480940170942496,
+              3.4377447086422078e-06,
+              0.00019288176751682746
+            ],
+            "native": 0.8383958936794181,
+            "parameter_step_norm": 0.006107922290518848
+          },
+          "original_R_minimum": {
+            "F": 0.9975258891510597,
+            "F_energy": {
+              "after": 14.868208973163517,
+              "before": 14.905085807664646,
+              "closure_defect": 4.896357574033206e-16,
+              "signed_cross": -0.037080777735083226,
+              "update": 0.00020394323396152715
+            },
+            "N": 1.002323059052865,
+            "N_energy": {
+              "after": 0.06084375151737423,
+              "before": 0.060702735478187955,
+              "closure_defect": 1.618785637808755e-16,
+              "signed_cross": 0.0001202625990702014,
+              "update": 2.0753440116061786e-05
+            },
+            "R": 0.9995883526124486,
+            "R_energy": {
+              "after": 0.0002088824798922654,
+              "before": 0.0002089685012298772,
+              "closure_defect": 2.0279667458445511e-16,
+              "signed_cross": -1.7204267526025255e-07,
+              "update": 8.602133764841235e-08
+            },
+            "alpha": [
+              0.001221752007177174,
+              0.0029585465580583077,
+              -0.0001631467774494656,
+              0.0028190275157323626,
+              -0.00020341918034207516,
+              -0.004366777541756133,
+              3.0459570361961234e-06,
+              0.0001888397982738399
+            ],
+            "native": 0.8475246179521886,
+            "parameter_step_norm": 0.006112692035271496
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 14.905085807664646,
+              "before": 14.905085807664646,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.060702735478187955,
+              "before": 0.060702735478187955,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.0002089685012298772,
+              "before": 0.0002089685012298772,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.8465419049282757,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 4.077331217829342e-07,
+        "threshold_candidate": true,
+        "upper": 0.9808472139968127
+      },
+      "Mfinal_1e-12": {
+        "bound_width": 1.6078310474052175e-07,
+        "checked": true,
+        "conservative_lower": 0.980847053213708,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 1.0990647210786425e-15,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.998407317821731,
+            "F_energy": {
+              "after": 14.881346743133207,
+              "before": 14.905085807664646,
+              "closure_defect": 2.0162552772816357e-16,
+              "signed_cross": -0.023948722795449837,
+              "update": 0.0002096582640080176
+            },
+            "N": 0.9808472139968127,
+            "N_energy": {
+              "after": 0.059540108975766136,
+              "before": 0.060702735478187955,
+              "closure_defect": 2.7304767373832564e-16,
+              "signed_cross": -0.0012448762077259248,
+              "update": 8.224970530408886e-05
+            },
+            "R": 1.0000000000000009,
+            "R_energy": {
+              "after": 0.0002089685012298774,
+              "before": 0.0002089685012298772,
+              "closure_defect": 1.0209501543727087e-16,
+              "signed_cross": -1.541011664500351e-07,
+              "update": 1.5410116645024616e-07
+            },
+            "alpha": [
+              0.0009197007425139939,
+              0.0028445774937425165,
+              -1.806002433552138e-05,
+              0.0028632245516194846,
+              -0.00023414338760444647,
+              -0.004480940170942496,
+              3.4377447086422078e-06,
+              0.00019288176751682746
+            ],
+            "native": 0.8383958936794181,
+            "parameter_step_norm": 0.006107922290518848
+          },
+          "original_R_minimum": {
+            "F": 0.9975258891510597,
+            "F_energy": {
+              "after": 14.868208973163517,
+              "before": 14.905085807664646,
+              "closure_defect": 4.896357574033206e-16,
+              "signed_cross": -0.037080777735083226,
+              "update": 0.00020394323396152715
+            },
+            "N": 1.002323059052865,
+            "N_energy": {
+              "after": 0.06084375151737423,
+              "before": 0.060702735478187955,
+              "closure_defect": 1.618785637808755e-16,
+              "signed_cross": 0.0001202625990702014,
+              "update": 2.0753440116061786e-05
+            },
+            "R": 0.9995883526124486,
+            "R_energy": {
+              "after": 0.0002088824798922654,
+              "before": 0.0002089685012298772,
+              "closure_defect": 2.0279667458445511e-16,
+              "signed_cross": -1.7204267526025255e-07,
+              "update": 8.602133764841235e-08
+            },
+            "alpha": [
+              0.001221752007177174,
+              0.0029585465580583077,
+              -0.0001631467774494656,
+              0.0028190275157323626,
+              -0.00020341918034207516,
+              -0.004366777541756133,
+              3.0459570361961234e-06,
+              0.0001888397982738399
+            ],
+            "native": 0.8475246179521886,
+            "parameter_step_norm": 0.006112692035271496
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 14.905085807664646,
+              "before": 14.905085807664646,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.060702735478187955,
+              "before": 0.060702735478187955,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.0002089685012298772,
+              "before": 0.0002089685012298772,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.8465419049282757,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 4.077331217829342e-07,
+        "threshold_candidate": true,
+        "upper": 0.9808472139968127
+      }
+    },
+    "construction_sha256": "ddb48feececfa34b17acf0c19a923eb3b0e49d0a915efbd76f70781e65f4be4a",
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC",
+    "diagnostic_only": true,
+    "features_reference_exposed": true,
+    "ledger": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/candidate_freeze.json",
+      "sha256": "707ecd26e910a8e8334a2cd70b8195300bf6e83a6ee6da5d03f6f123b968f899"
+    },
+    "official_candidate_results": false,
+    "optimize_calls": 0,
+    "pde_only_solve": false,
+    "pde_only_solver_qualified": false,
+    "production_initialization_allowed": false,
+    "reference_used_for_diagnostic": true,
+    "reference_used_for_training": false,
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/result.json",
+      "sha256": "0da6f5c29753c37a916b36b31b7acdeeca8fc63035de83fa34cc3af6f2a34ea5"
+    },
+    "sensitivity": {
+      "M3600": {
+        "admitted": true,
+        "physical_step_relative": 0.0,
+        "rank_main": 8,
+        "rank_sensitivity": 8,
+        "status": "PASS"
+      },
+      "Mfinal": {
+        "admitted": true,
+        "physical_step_relative": 0.0,
+        "rank_main": 8,
+        "rank_sensitivity": 8,
+        "status": "PASS"
+      }
+    },
+    "status": "COMPLETE"
+  },
+  "B": {
+    "status": "PASS",
+    "raw_energy_checked": true,
+    "fixed_regions_checked": true,
+    "regions_not_summed": true,
+    "terms": {
+      "E_L2": {
+        "before": 0.21114112073261582,
+        "after": 0.36662773058180737,
+        "cross": 0.11958103135806322,
+        "change": 0.15548660984919155,
+        "update_energy": 0.03590557849112811,
+        "reconstructed_change": 0.15548660984919133,
+        "operation_scale": 0.36662773058180737,
+        "defect": 5.867142419362807e-16,
+        "reference_energy": 24.25531734603165
+      },
+      "scaled_curl_L2": {
+        "before": 0.21285363918379205,
+        "after": 0.36826344517615694,
+        "cross": 0.11936277193233624,
+        "change": 0.1554098059923649,
+        "update_energy": 0.03604703406002907,
+        "reconstructed_change": 0.1554098059923653,
+        "operation_scale": 0.36826344517615694,
+        "defect": 1.1305320679745518e-15,
+        "reference_energy": 24.32608830929524
+      }
+    },
+    "G_norm_identity": {
+      "before": {
+        "relative": 6.16571042032489e-14,
+        "integrated": 8.614265977037578,
+        "original": 8.614265977037046
+      },
+      "after": {
+        "relative": 5.863552724637805e-14,
+        "integrated": 14.90508580766552,
+        "original": 14.905085807664646
+      }
+    },
+    "regions": {
+      "air_notch": {
+        "volume_nm3": 15.624999999999998,
+        "cell_ids_sha256": "ec7cb0a0e2296ffd6c0537a6daa8383b614dabd1f10bb8d59771b68bc01989b1",
+        "before_concentration": [
+          1.2670594655215885,
+          1.348606106341786
+        ],
+        "after_concentration": [
+          1.276193867902263,
+          1.3247674734048218
+        ]
+      },
+      "air_other": {
+        "volume_nm3": 374.99999999999994,
+        "cell_ids_sha256": "7923341188fcc7ed27aa8c95fd925ed8ad4c28b1e4c1cbff98c580cd8649e57b",
+        "before_concentration": [
+          1.0122855624035425,
+          1.0371025907722307
+        ],
+        "after_concentration": [
+          1.0255163817448136,
+          1.0416886186513377
+        ]
+      },
+      "periodic_boundary_neighbor": {
+        "volume_nm3": 374.99999999999994,
+        "cell_ids_sha256": "db00c2ab938eb2411d331045497f98495d8de7d875eedf1f539b03b4b19b89fe",
+        "before_concentration": [
+          0.9823143515793747,
+          0.9863463773190222
+        ],
+        "after_concentration": [
+          0.9862410642261739,
+          0.9878732793657423
+        ]
+      },
+      "material_interface_neighbor": {
+        "volume_nm3": 515.6249999999999,
+        "cell_ids_sha256": "539e5a5f5922e7752d5ed7904b7e879fe77f7bb9430ce581789929bd3cf10777",
+        "before_concentration": [
+          0.9818560669838408,
+          0.9785111792213581
+        ],
+        "after_concentration": [
+          0.9737264036803602,
+          0.9711424502079506
+        ]
+      }
+    },
+    "new_FE_or_operator_actions": 0,
+    "producer_or_optimizer_calls": 0,
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_saved_field_integrals_20261003T115456579435Z/result.json",
+      "sha256": "7a8f33e5d2bc7484d55f9389c193fe90a056314d673dd9224760a914203fdace"
+    },
+    "vectors": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_saved_field_integrals_20261003T115456579435Z/field_diagnostic_arrays.npz",
+      "sha256": "93cbe3d83d44e1acf0eacd9ad200c1457665703cc492e7c2847f1651418679f8"
+    },
+    "original_G_record": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json",
+      "sha256": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a"
+    },
+    "checker_file_sha256": "69bae39ee60c8afa2095641b3b8ae55a5378c9fa811da8138daf8ca57d1d78ab"
+  },
+  "C": {
+    "status": "INDEPENDENT_VECTOR_AUDIT_COMPLETE",
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "rows": {
+      "M3600": {
+        "points": {
+          "zero": {
+            "N": 1.0,
+            "R": 1.0,
+            "F": 1.0,
+            "native": 0.885852183252661,
+            "dual_loss": 0.0943146715760124,
+            "G_error_energy": 8.614265977037046
+          },
+          "linear": {
+            "N": 0.9938335826426441,
+            "R": 0.9999999999999265,
+            "F": 0.9960399553337048,
+            "native": 0.8831166925477544,
+            "dual_loss": 0.09431467157600545,
+            "G_error_energy": 8.580153099000633
+          },
+          "actual": {
+            "N": 0.9938326023262704,
+            "R": 1.0000001007948258,
+            "F": 0.9960369059102125,
+            "native": 0.8831162569949708,
+            "dual_loss": 0.09431468108244329,
+            "G_error_energy": 8.580126830455594
+          }
+        },
+        "nonlinear_defect": 0.0002878567548602914,
+        "checks": {
+          "retains_half_native_drop": true,
+          "field_energy": true,
+          "dual_nonincrease": false,
+          "nonlinear_model": true,
+          "original_identity": true,
+          "operator_pairings": true
+        },
+        "local_pre_FE_support": false,
+        "failure_quantities": [
+          "dual_nonincrease"
+        ],
+        "independent_pairings": {
+          "A": 0.0,
+          "Gsolve_true": 1.0092854576505092e-13,
+          "Ge": 9.113168500809639e-15
+        }
+      },
+      "Mfinal": {
+        "points": {
+          "zero": {
+            "N": 1.0,
+            "R": 1.0,
+            "F": 1.0,
+            "native": 0.8465419049282757,
+            "dual_loss": 0.0872060784094609,
+            "G_error_energy": 14.905085807664646
+          },
+          "linear": {
+            "N": 0.9808472139968202,
+            "R": 0.999999999999886,
+            "F": 0.998407317821731,
+            "native": 0.8383958936794215,
+            "dual_loss": 0.08720607840945095,
+            "G_error_energy": 14.881346743133207
+          },
+          "actual": {
+            "N": 0.9808525820337267,
+            "R": 1.000000179017932,
+            "F": 0.9984005401617119,
+            "native": 0.8383981878868568,
+            "dual_loss": 0.08720609402091271,
+            "G_error_energy": 14.881245721529048
+          }
+        },
+        "nonlinear_defect": 0.0010830631208472146,
+        "checks": {
+          "retains_half_native_drop": true,
+          "field_energy": true,
+          "dual_nonincrease": false,
+          "nonlinear_model": true,
+          "original_identity": true,
+          "operator_pairings": true
+        },
+        "local_pre_FE_support": false,
+        "failure_quantities": [
+          "dual_nonincrease"
+        ],
+        "independent_pairings": {
+          "A": 0.0,
+          "Gsolve_true": 1.0159807120893115e-13,
+          "Ge": 7.476868147618996e-15
+        }
+      }
+    },
+    "actions": {
+      "A": 8,
+      "AH": 0,
+      "Gsolve": 4,
+      "G_matvec": 12
+    },
+    "actions_including_failed_attempt_conservative_upper": {
+      "A": 14,
+      "AH": 0,
+      "Gsolve": 8,
+      "G_matvec": 20,
+      "network_forward": 8,
+      "Gram_factor": 2,
+      "JVP": 0,
+      "VJP": 0
+    },
+    "prior_failed_attempt": {
+      "receipt_path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+      "review": "docs/task042extra_feinn_5nm/review_report_v17.md",
+      "authority": "section 4.C sole explicitly identified bug replay",
+      "failed_source_sha": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+      "failure": "IMMUTABLE_OUTPUT_EXISTS after second-state array write; final immutable JSON missing",
+      "hypothesis": "Repeated partial/final save reuses an immutable JSON pathname; finally masks original exception with the same error",
+      "change": "Unique numbered matched NPZ/JSON boundaries; final return reuses already persisted final boundary; previous versions retained",
+      "input": {
+        "path": "input/task042extra_feinn_5nm/v18_native_network_witness.dat",
+        "sha256": "b558ad9723bbb411e05118d1f248a684539fe5273363a8468099a90a322646ae"
+      },
+      "supervision_summary": {
+        "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/supervision/summary.json",
+        "sha256": "369d55b38524449232a71c67d152be75d70c46634bb8b0943adf28e807b4668c"
+      },
+      "worker_failure": {
+        "path": "results/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/worker_failure.json",
+        "sha256": "8a26bced074e85d754687cebba6c0aa4bc1a6639f79aa4168a450053928080f6"
+      },
+      "partial_record": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/partial_network_witness.json",
+        "sha256": "c19b54bd40bd5693e41b0fc2ed9998996803ef8a16ae7aa5812922f018da49f9"
+      },
+      "arrays": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T115725697771Z/nonlinear_witness_arrays.npz",
+        "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+      },
+      "measured_partial_operation_lower_bound": {
+        "A": 3,
+        "AH": 0,
+        "Gsolve": 2,
+        "G_matvec": 4,
+        "network_forward": 2,
+        "JVP": 0,
+        "VJP": 0,
+        "Gram_factor": 1
+      },
+      "operation_upper_bound": {
+        "A": 6,
+        "AH": 0,
+        "Gsolve": 4,
+        "G_matvec": 8,
+        "network_forward": 4,
+        "JVP": 0,
+        "VJP": 0,
+        "Gram_factor": 1
+      },
+      "terminal_operation_record": "NOT_RETAINED",
+      "count_evidence": "Measured first-state JSON lower bound; conservative full two-state allocation upper bound derived from saved 38 arrays and fixed source loop. No actions replayed to reconstruct logs.",
+      "test_requirements": [
+        "repeated matched partial/final snapshots",
+        "exception snapshot retains previous boundary",
+        "corrupt/over-cap replay account rejected"
+      ],
+      "replay_limit": 1,
+      "numerical_parameters_changed": false,
+      "failed_costs_deleted": false
+    },
+    "FE_restore_required": true,
+    "local_mechanism": "PENDING_INDEPENDENT_FE",
+    "vectors": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/witness_arrays_0003.npz",
+      "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+    },
+    "original_result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/result.json",
+      "sha256": "b5579b0f220c6ee548ee6c163d24b3ce791e95d2b782e4fc506696426d74e282"
+    },
+    "A_checker": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/checker.json",
+      "sha256": "547a133c7856ad3330e908ffb03bf8897e3463691c539e46be61c63263410571"
+    },
+    "checker_source_sha256": "c2be5030d788d74c76bafcef275bad93228978ce0b80ee8e84efe25e8d9ea5fe",
+    "new_network_forward": 0,
+    "new_Gsolve": 0,
+    "new_Gram_factor": 0,
+    "reference_used_for_training": false,
+    "pde_only_solve": false,
+    "official_candidate_results": false,
+    "production_initialization_allowed": false
+  },
+  "FE_restore": {
+    "status": "INDEPENDENT_ACTUAL_NETWORK_FE_RESTORATION_COMPLETE",
+    "rows": {
+      "M3600": {
+        "MPC_relative": 1.1506299999878469e-18,
+        "c_sha256": "4a21744189ee4e0563952982774f5a0d3e7aa9049d0c8860668c9ce6561582f0"
+      },
+      "Mfinal": {
+        "MPC_relative": 1.5318620263251886e-18,
+        "c_sha256": "b4ce6e86f035cc9a9a2761542e4b9b4947ff16b678f3ffaafa2451a88aa9f2d1"
+      }
+    },
+    "source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "original_witness": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v18_native_network_witness_20261003T120746935055Z/witness_arrays_0003.npz",
+      "sha256": "85e2e57f6038340611e4f72b159e16be3e72a6d32ca712fa9ead7b643ca33c67"
+    },
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "network_forward": 0,
+    "reference_used_for_training": false,
+    "reference_used_for_diagnostic": true,
+    "features_reference_exposed": true,
+    "pde_only_solve": false,
+    "benchmark_previously_seen": true,
+    "production_initialization_allowed": false,
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false,
+    "diagnostic_only": true,
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC",
+    "worker_elapsed_seconds": 1.4547547239344567
+  },
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "production_initialization_allowed": false,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solver_qualified": false
+}

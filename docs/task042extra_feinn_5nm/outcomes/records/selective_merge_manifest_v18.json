@@ -1,0 +1,320 @@
+{
+  "schema": "feinn.v18.dependency-groups",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "numerical_behavior_changed": false,
+      "recommendation": "NONE; strict solver and net NN increment not qualified"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        {
+          "path": "input/task042extra_feinn_5nm/v18_native_network_restore.dat",
+          "sha256": "24e8fbb8005d34395ee6b0015a80185516674fb4cccb928d685ec5aa80098cd6"
+        },
+        {
+          "path": "input/task042extra_feinn_5nm/v18_native_network_witness.dat",
+          "sha256": "b558ad9723bbb411e05118d1f248a684539fe5273363a8468099a90a322646ae"
+        },
+        {
+          "path": "input/task042extra_feinn_5nm/v18_saved_field_integrals.dat",
+          "sha256": "01b09a265bd1f766b7fea82358380b9212b63f80f187d0f044d09dce5b027ac7"
+        },
+        {
+          "path": "scripts/launch_task42extra_durable.py",
+          "sha256": "09e345261a5df447c3859c9c7d9f304439a1799a9446f445c9569c1d025902c6"
+        }
+      ],
+      "dependencies": [
+        "src/runners/feinn_workflow.py",
+        "src/runners/feinn_attribution_campaign.py"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": [
+        "real parent supervision/activation/hash/budget fixture"
+      ],
+      "recommendation": "Explicit research opt-in only; not selected for transfer"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        {
+          "path": "benchmarks/check_feinn_native_constraint.py",
+          "sha256": "119da065e428e74dc1fd28cf1d5b9ae0aa50f17699fb05b7ef435b030784e740"
+        },
+        {
+          "path": "benchmarks/check_feinn_native_witness.py",
+          "sha256": "c2be5030d788d74c76bafcef275bad93228978ce0b80ee8e84efe25e8d9ea5fe"
+        },
+        {
+          "path": "benchmarks/check_feinn_saved_integrals.py",
+          "sha256": "69bae39ee60c8afa2095641b3b8ae55a5378c9fa811da8138daf8ca57d1d78ab"
+        },
+        {
+          "path": "benchmarks/run_feinn_common_descent.py",
+          "sha256": "20c16a02c57dd5558196a713676dc5861f5ac0720552487b14653865e05842a2"
+        }
+      ],
+      "dependencies": [
+        "src/runners/feinn_attribution_campaign.py",
+        "src/runners/feinn_native_constraint_arrays.py",
+        "src/runners/feinn_workflow.py",
+        "src/solvers/feinn_native_constraint.py",
+        "src/solvers/feinn_native_network_witness.py",
+        "src/solvers/feinn_saved_attribution.py",
+        "src/solvers/feinn_saved_field_diagnostics.py",
+        "src/test/test_feinn_native_constraint.py",
+        "src/test/test_feinn_v18_integrals.py",
+        "src/test/test_feinn_v18_launch.py",
+        "src/test/test_feinn_v18_witness.py"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": [
+        "native certificates and corruption",
+        "raw region/denominator corruption",
+        "witness identity/rollback/caps"
+      ],
+      "fresh_PDE_evidence": "No new PDE solve; saved-vector/FE restoration only",
+      "recommendation": "Review pure checker dependency set before any future selective transfer"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        {
+          "path": "docs/development_model_registry.md",
+          "sha256": "da47206c24585ad32a25001d46c3a743b7287d802a58a828223bfa1ab386aa29"
+        },
+        {
+          "path": "docs/development_progress.md",
+          "sha256": "b7e86da6f8573638bdd9abca4bce0d37f78cb1a9715e3992517a680219295a47"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/README.md",
+          "sha256": "680392eef8d0a0080e0af5444fbe33986d5264d20e17fc471d17579a34c84841"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "sha256": "f343dad74c6e1d322c37a04b778330b99c5c8b67f08bd13dfb42cf8c1b5cc5ca"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md",
+          "sha256": "c8084b847bc94038ca8d5a613d610646ff1bb0123daffebcbd6b4692de47ca8a"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v18.json",
+          "sha256": "e4f618623be01ff80228f48f10ce85b65c0927c531b10840664513bb600367d8"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/fixed_regions_v18.csv",
+          "sha256": "b555ae600f6a5276f4fda3328f3395bef84488bf2e0f953baea083f9f266f75d"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v18.json",
+          "sha256": "7befc52c6e15a4baa3e516f882800c87c4fcf9cd1eb2ba3f96d3172718818aac"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v18.json",
+          "sha256": "de377ee8eb7cce3f325cf58cdeb8704b7b481737d03875165a5f893a7f99d656"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/native_constraint_comparison_v18.csv",
+          "sha256": "598b80472160a8597ce4d5ef126782e06a031d048bbb3089a84286eea6704da6"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/native_constraint_results_v18.json",
+          "sha256": "e5441cffdf79fc20b4f263356587fd202732a9e87958b2010515e27d65c73420"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/network_witness_results_v18.json",
+          "sha256": "5c71ac808ec313245bbdfc2604e519f0d68211c989ce817d694458d9900dac7f"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_design_v18.json",
+          "sha256": "c7b73d36fafa158e8f5e718935ecb7080cd213135cb6ee399a0183022497a641"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+          "sha256": "7631065a22e1311cbd122436ff74bc2d7ac52d3ce2686a514c3fda6a7b6eb99f"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v18.json",
+          "sha256": "8c91c3807bc90438a6b66e8d517f3e387ea5de7356946857b14f7b42058aa7ce"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json",
+          "sha256": "42dc142ae0672294ed744c89a11799899cfeb8a3fd1bba7dee4266622dd28405"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v18.json",
+          "sha256": "0dc757f500871a5523d18d973780b3c60101260cf4c85b06625254ce6d3ebaed"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/saved_integral_results_v18.json",
+          "sha256": "418002d07a17f2a7bc23405bcefb376073105c74f481f63cdc0924c90d7acbac"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "61c82c9b648cfca128bb99449d393e449bd0068b80b6b1660b76b4fade210434"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "sha256": "65a977883532118ba653cd2e25a0d799b7e2d0b31707590a81945db262167bcc"
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/response_v18.md",
+          "sha256": "1df441301ea4af568217f93bd2434a502c89da3ce10c49846ff0d8dc336bca45"
+        }
+      ],
+      "dependencies": [
+        "V18 frozen run indices and old C1/PT/native/Gram/reference identities"
+      ],
+      "numerical_behavior_changed": false,
+      "tests": [
+        "changed Markdown/link/history/JSON contract"
+      ],
+      "recommendation": "Evidence only after review; no merge approval"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        {
+          "path": "src/runners/feinn_attribution_campaign.py",
+          "sha256": "5a8b6bdf2832d57e003520f8d47b980131c20036626712ca7829f5f8a9830805"
+        },
+        {
+          "path": "src/runners/feinn_native_constraint_arrays.py",
+          "sha256": "952eac4ad52f93d3443bca81e7c01f9372cb806be6604162640e8fff979f4ae0"
+        },
+        {
+          "path": "src/runners/feinn_workflow.py",
+          "sha256": "cf8980f83687465b20b1148f1237430a14ca5751fef9757ff300dfb4ed4890a6"
+        },
+        {
+          "path": "src/solvers/feinn_native_constraint.py",
+          "sha256": "8cd40b519104455ff063970264a617421b90ea29d2a7c1afffbcbeeac202d068"
+        },
+        {
+          "path": "src/solvers/feinn_native_network_witness.py",
+          "sha256": "ab7abb0d9850624a7a6e899393d5690361b5e095e3f7ebb4743d7f47d56253b4"
+        },
+        {
+          "path": "src/solvers/feinn_saved_attribution.py",
+          "sha256": "7497ed73b9dbcfc5a00e2cdc7e83871b8e8a3cd8b054e17502dee552f2743a0b"
+        },
+        {
+          "path": "src/solvers/feinn_saved_field_diagnostics.py",
+          "sha256": "82de948ed1db4a12d84f1dc038150f6e2d6aca115093ae2a2245ecbe4e524f75"
+        },
+        {
+          "path": "src/test/test_feinn_native_constraint.py",
+          "sha256": "d97b1739e9f105dede4f624d9a2d9277ce6732b8d57fafd11a75f35b79457773"
+        },
+        {
+          "path": "src/test/test_feinn_v18_integrals.py",
+          "sha256": "5734b699516e847945900c5a33ede08bca04613e1df4ecc0f76fea19d5dbb1a9"
+        },
+        {
+          "path": "src/test/test_feinn_v18_launch.py",
+          "sha256": "e137703e49b6f54a3284bde93685afd97f730d02df31376703a628f1eb1bc3c8"
+        },
+        {
+          "path": "src/test/test_feinn_v18_witness.py",
+          "sha256": "bf3219f1679e397e072645f50539dab79e1bd0322613b8daed485f37ff400532"
+        }
+      ],
+      "numerical_behavior_changed": true,
+      "ordinary_default_changed": false,
+      "tests": [
+        "targeted V18 fixtures",
+        "independent A/B/C/FE restoration"
+      ],
+      "recommendation": "Keep on FEINN research branch; no production qualification"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task42extra/",
+        "results/task42extra/",
+        "tmp/task42extra/",
+        ".venv/",
+        ".venv-ml/"
+      ],
+      "dependencies": [],
+      "numerical_behavior_changed": false,
+      "recommendation": "Large raw fields, factors, models and caches remain ignored; hashes in compact records"
+    }
+  ],
+  "file_inventory": [
+    "benchmarks/check_feinn_native_constraint.py",
+    "benchmarks/check_feinn_native_witness.py",
+    "benchmarks/check_feinn_saved_integrals.py",
+    "benchmarks/run_feinn_common_descent.py",
+    "docs/development_model_registry.md",
+    "docs/development_progress.md",
+    "docs/task042extra_feinn_5nm/README.md",
+    "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+    "docs/task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md",
+    "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/fixed_regions_v18.csv",
+    "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/native_constraint_comparison_v18.csv",
+    "docs/task042extra_feinn_5nm/outcomes/records/native_constraint_results_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/network_witness_results_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_design_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/publication_gate_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/render_check_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/run_index_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/saved_integral_results_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/summary.md",
+    "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+    "docs/task042extra_feinn_5nm/response_v18.md",
+    "input/task042extra_feinn_5nm/v18_native_network_restore.dat",
+    "input/task042extra_feinn_5nm/v18_native_network_witness.dat",
+    "input/task042extra_feinn_5nm/v18_saved_field_integrals.dat",
+    "scripts/launch_task42extra_durable.py",
+    "src/runners/feinn_attribution_campaign.py",
+    "src/runners/feinn_native_constraint_arrays.py",
+    "src/runners/feinn_workflow.py",
+    "src/solvers/feinn_native_constraint.py",
+    "src/solvers/feinn_native_network_witness.py",
+    "src/solvers/feinn_saved_attribution.py",
+    "src/solvers/feinn_saved_field_diagnostics.py",
+    "src/test/test_feinn_native_constraint.py",
+    "src/test/test_feinn_v18_integrals.py",
+    "src/test/test_feinn_v18_launch.py",
+    "src/test/test_feinn_v18_witness.py"
+  ],
+  "recommendation": "NO_MERGE_APPROVAL",
+  "implementation_sources": [
+    "33fe1bc05c89eeef50de1fb44ae64cc96e868852",
+    "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+    "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb"
+  ],
+  "order_if_reviewed": [
+    "research dependencies and targeted qualification",
+    "checker-only dependencies",
+    "compact evidence/docs"
+  ],
+  "source_HEAD_not_documentation_HEAD": true,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solve": false,
+  "pde_only_solver_qualified": false,
+  "production_initialization_allowed": false,
+  "official_candidate_results": false,
+  "self_referential_or_final_tail_records_bound_by_path_only": [
+    "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v18.json",
+    "docs/task042extra_feinn_5nm/outcomes/records/render_check_v18.json"
+  ]
+}

@@ -1,0 +1,602 @@
+{
+  "result_kind": "DERIVED_LOCAL_LINEAR_MODEL",
+  "checker": {
+    "C_admitted": true,
+    "C_gate": "BOTH_STATES_LINEAR_ADMITTED",
+    "benchmark_previously_seen": true,
+    "candidates": {
+      "M3600_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-10_native_candidate.json",
+        "sha256": "047462da20e49b32837880a7d670a1737def55b064a62e37a0664f9d250398bb"
+      },
+      "M3600_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/M3600_1e-12_native_candidate.json",
+        "sha256": "1c2a388a7f034a6eb02a0929d9b68091af7e83acbc2ce76efbd2052581b23f1c"
+      },
+      "Mfinal_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-10_native_candidate.json",
+        "sha256": "310a48cc84acaab949ce118aa2f7ea12e316840a2a1fb9708f23506149650cd6"
+      },
+      "Mfinal_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/Mfinal_1e-12_native_candidate.json",
+        "sha256": "eeab3d2c2d521e12b42c416a6cda2c50df0b3ddcbfbb0bb0a762f2a80d020e1a"
+      }
+    },
+    "checker_source_sha": "33fe1bc05c89eeef50de1fb44ae64cc96e868852",
+    "configurations": {
+      "M3600_1e-10": {
+        "bound_width": 3.891076854692469e-06,
+        "checked": true,
+        "conservative_lower": 0.9938296915657902,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 8.671119018262734e-16,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.9960399553337048,
+            "F_energy": {
+              "after": 8.580153099000633,
+              "before": 8.614265977037046,
+              "closure_defect": 5.964438164421285e-16,
+              "signed_cross": -0.034468072252166984,
+              "update": 0.00035519421574812767
+            },
+            "N": 0.9938335826426449,
+            "N_energy": {
+              "after": 0.0660613626631961,
+              "before": 0.06647125214619552,
+              "closure_defect": 3.7718824949444394e-16,
+              "signed_cross": -0.0004343152384111594,
+              "update": 2.442575541170561e-05
+            },
+            "R": 0.9999999999999815,
+            "R_energy": {
+              "after": 0.00022600254389020728,
+              "before": 0.00022600254389021148,
+              "closure_defect": 2.6065412136331193e-16,
+              "signed_cross": -5.05091272568322e-08,
+              "update": 5.0509127252689823e-08
+            },
+            "alpha": [
+              0.0007079770854536329,
+              -0.0007425173636836266,
+              -0.00018837527231290919,
+              0.0037502408176572576,
+              1.6909035511065422e-05,
+              -0.0024824114232641875,
+              4.905746992967019e-07,
+              3.820766995304214e-06
+            ],
+            "native": 0.8831166925477549,
+            "parameter_step_norm": 0.004616819495204361
+          },
+          "original_R_minimum": {
+            "F": 0.9961511446527399,
+            "F_energy": {
+              "after": 8.581110913368606,
+              "before": 8.614265977037046,
+              "closure_defect": 2.7819109233831407e-16,
+              "signed_cross": -0.033645410582107405,
+              "update": 0.0004903469136648869
+            },
+            "N": 1.0056093394395171,
+            "N_energy": {
+              "after": 0.06684411196245327,
+              "before": 0.06647125214619552,
+              "closure_defect": 2.860777898875277e-16,
+              "signed_cross": 0.0003450999441084151,
+              "update": 2.7759872149349122e-05
+            },
+            "R": 0.9997825940691222,
+            "R_energy": {
+              "after": 0.00022595340959677627,
+              "before": 0.00022600254389021148,
+              "closure_defect": 3.311613247156884e-16,
+              "signed_cross": -9.826858625997421e-08,
+              "update": 4.913429282468211e-08
+            },
+            "alpha": [
+              0.0009698462671325911,
+              -0.0011204932513162395,
+              -0.00026568227026500406,
+              0.004102109398891497,
+              0.00014394865734575232,
+              -0.00256976039964738,
+              -4.524371596231382e-06,
+              5.1576460181014214e-06
+            ],
+            "native": 0.8883332316520046,
+            "parameter_step_norm": 0.005071334370372523
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 8.614265977037046,
+              "before": 8.614265977037046,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.06647125214619552,
+              "before": 0.06647125214619552,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.00022600254389021148,
+              "before": 0.00022600254389021148,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.885852183252661,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 7.51002298455519e-08,
+        "threshold_candidate": true,
+        "upper": 0.9938335826426449
+      },
+      "M3600_1e-12": {
+        "bound_width": 3.891076854692469e-06,
+        "checked": true,
+        "conservative_lower": 0.9938296915657902,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 8.671119018262734e-16,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.9960399553337048,
+            "F_energy": {
+              "after": 8.580153099000633,
+              "before": 8.614265977037046,
+              "closure_defect": 5.964438164421285e-16,
+              "signed_cross": -0.034468072252166984,
+              "update": 0.00035519421574812767
+            },
+            "N": 0.9938335826426449,
+            "N_energy": {
+              "after": 0.0660613626631961,
+              "before": 0.06647125214619552,
+              "closure_defect": 3.7718824949444394e-16,
+              "signed_cross": -0.0004343152384111594,
+              "update": 2.442575541170561e-05
+            },
+            "R": 0.9999999999999815,
+            "R_energy": {
+              "after": 0.00022600254389020728,
+              "before": 0.00022600254389021148,
+              "closure_defect": 2.6065412136331193e-16,
+              "signed_cross": -5.05091272568322e-08,
+              "update": 5.0509127252689823e-08
+            },
+            "alpha": [
+              0.0007079770854536329,
+              -0.0007425173636836266,
+              -0.00018837527231290919,
+              0.0037502408176572576,
+              1.6909035511065422e-05,
+              -0.0024824114232641875,
+              4.905746992967019e-07,
+              3.820766995304214e-06
+            ],
+            "native": 0.8831166925477549,
+            "parameter_step_norm": 0.004616819495204361
+          },
+          "original_R_minimum": {
+            "F": 0.9961511446527399,
+            "F_energy": {
+              "after": 8.581110913368606,
+              "before": 8.614265977037046,
+              "closure_defect": 2.7819109233831407e-16,
+              "signed_cross": -0.033645410582107405,
+              "update": 0.0004903469136648869
+            },
+            "N": 1.0056093394395171,
+            "N_energy": {
+              "after": 0.06684411196245327,
+              "before": 0.06647125214619552,
+              "closure_defect": 2.860777898875277e-16,
+              "signed_cross": 0.0003450999441084151,
+              "update": 2.7759872149349122e-05
+            },
+            "R": 0.9997825940691222,
+            "R_energy": {
+              "after": 0.00022595340959677627,
+              "before": 0.00022600254389021148,
+              "closure_defect": 3.311613247156884e-16,
+              "signed_cross": -9.826858625997421e-08,
+              "update": 4.913429282468211e-08
+            },
+            "alpha": [
+              0.0009698462671325911,
+              -0.0011204932513162395,
+              -0.00026568227026500406,
+              0.004102109398891497,
+              0.00014394865734575232,
+              -0.00256976039964738,
+              -4.524371596231382e-06,
+              5.1576460181014214e-06
+            ],
+            "native": 0.8883332316520046,
+            "parameter_step_norm": 0.005071334370372523
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 8.614265977037046,
+              "before": 8.614265977037046,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.06647125214619552,
+              "before": 0.06647125214619552,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.00022600254389021148,
+              "before": 0.00022600254389021148,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.885852183252661,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 7.51002298455519e-08,
+        "threshold_candidate": true,
+        "upper": 0.9938335826426449
+      },
+      "Mfinal_1e-10": {
+        "bound_width": 1.6078310474052175e-07,
+        "checked": true,
+        "conservative_lower": 0.980847053213708,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 1.0990647210786425e-15,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.998407317821731,
+            "F_energy": {
+              "after": 14.881346743133207,
+              "before": 14.905085807664646,
+              "closure_defect": 2.0162552772816357e-16,
+              "signed_cross": -0.023948722795449837,
+              "update": 0.0002096582640080176
+            },
+            "N": 0.9808472139968127,
+            "N_energy": {
+              "after": 0.059540108975766136,
+              "before": 0.060702735478187955,
+              "closure_defect": 2.7304767373832564e-16,
+              "signed_cross": -0.0012448762077259248,
+              "update": 8.224970530408886e-05
+            },
+            "R": 1.0000000000000009,
+            "R_energy": {
+              "after": 0.0002089685012298774,
+              "before": 0.0002089685012298772,
+              "closure_defect": 1.0209501543727087e-16,
+              "signed_cross": -1.541011664500351e-07,
+              "update": 1.5410116645024616e-07
+            },
+            "alpha": [
+              0.0009197007425139939,
+              0.0028445774937425165,
+              -1.806002433552138e-05,
+              0.0028632245516194846,
+              -0.00023414338760444647,
+              -0.004480940170942496,
+              3.4377447086422078e-06,
+              0.00019288176751682746
+            ],
+            "native": 0.8383958936794181,
+            "parameter_step_norm": 0.006107922290518848
+          },
+          "original_R_minimum": {
+            "F": 0.9975258891510597,
+            "F_energy": {
+              "after": 14.868208973163517,
+              "before": 14.905085807664646,
+              "closure_defect": 4.896357574033206e-16,
+              "signed_cross": -0.037080777735083226,
+              "update": 0.00020394323396152715
+            },
+            "N": 1.002323059052865,
+            "N_energy": {
+              "after": 0.06084375151737423,
+              "before": 0.060702735478187955,
+              "closure_defect": 1.618785637808755e-16,
+              "signed_cross": 0.0001202625990702014,
+              "update": 2.0753440116061786e-05
+            },
+            "R": 0.9995883526124486,
+            "R_energy": {
+              "after": 0.0002088824798922654,
+              "before": 0.0002089685012298772,
+              "closure_defect": 2.0279667458445511e-16,
+              "signed_cross": -1.7204267526025255e-07,
+              "update": 8.602133764841235e-08
+            },
+            "alpha": [
+              0.001221752007177174,
+              0.0029585465580583077,
+              -0.0001631467774494656,
+              0.0028190275157323626,
+              -0.00020341918034207516,
+              -0.004366777541756133,
+              3.0459570361961234e-06,
+              0.0001888397982738399
+            ],
+            "native": 0.8475246179521886,
+            "parameter_step_norm": 0.006112692035271496
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 14.905085807664646,
+              "before": 14.905085807664646,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.060702735478187955,
+              "before": 0.060702735478187955,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.0002089685012298772,
+              "before": 0.0002089685012298772,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.8465419049282757,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 4.077331217829342e-07,
+        "threshold_candidate": true,
+        "upper": 0.9808472139968127
+      },
+      "Mfinal_1e-12": {
+        "bound_width": 1.6078310474052175e-07,
+        "checked": true,
+        "conservative_lower": 0.980847053213708,
+        "feasible": true,
+        "native_target_excluded": false,
+        "optimality": "UNKNOWN",
+        "parameter_orthogonality": 1.0990647210786425e-15,
+        "producer_or_optimizer_calls": 0,
+        "rank": 8,
+        "raw_points": {
+          "native_constrained": {
+            "F": 0.998407317821731,
+            "F_energy": {
+              "after": 14.881346743133207,
+              "before": 14.905085807664646,
+              "closure_defect": 2.0162552772816357e-16,
+              "signed_cross": -0.023948722795449837,
+              "update": 0.0002096582640080176
+            },
+            "N": 0.9808472139968127,
+            "N_energy": {
+              "after": 0.059540108975766136,
+              "before": 0.060702735478187955,
+              "closure_defect": 2.7304767373832564e-16,
+              "signed_cross": -0.0012448762077259248,
+              "update": 8.224970530408886e-05
+            },
+            "R": 1.0000000000000009,
+            "R_energy": {
+              "after": 0.0002089685012298774,
+              "before": 0.0002089685012298772,
+              "closure_defect": 1.0209501543727087e-16,
+              "signed_cross": -1.541011664500351e-07,
+              "update": 1.5410116645024616e-07
+            },
+            "alpha": [
+              0.0009197007425139939,
+              0.0028445774937425165,
+              -1.806002433552138e-05,
+              0.0028632245516194846,
+              -0.00023414338760444647,
+              -0.004480940170942496,
+              3.4377447086422078e-06,
+              0.00019288176751682746
+            ],
+            "native": 0.8383958936794181,
+            "parameter_step_norm": 0.006107922290518848
+          },
+          "original_R_minimum": {
+            "F": 0.9975258891510597,
+            "F_energy": {
+              "after": 14.868208973163517,
+              "before": 14.905085807664646,
+              "closure_defect": 4.896357574033206e-16,
+              "signed_cross": -0.037080777735083226,
+              "update": 0.00020394323396152715
+            },
+            "N": 1.002323059052865,
+            "N_energy": {
+              "after": 0.06084375151737423,
+              "before": 0.060702735478187955,
+              "closure_defect": 1.618785637808755e-16,
+              "signed_cross": 0.0001202625990702014,
+              "update": 2.0753440116061786e-05
+            },
+            "R": 0.9995883526124486,
+            "R_energy": {
+              "after": 0.0002088824798922654,
+              "before": 0.0002089685012298772,
+              "closure_defect": 2.0279667458445511e-16,
+              "signed_cross": -1.7204267526025255e-07,
+              "update": 8.602133764841235e-08
+            },
+            "alpha": [
+              0.001221752007177174,
+              0.0029585465580583077,
+              -0.0001631467774494656,
+              0.0028190275157323626,
+              -0.00020341918034207516,
+              -0.004366777541756133,
+              3.0459570361961234e-06,
+              0.0001888397982738399
+            ],
+            "native": 0.8475246179521886,
+            "parameter_step_norm": 0.006112692035271496
+          },
+          "zero": {
+            "F": 1.0,
+            "F_energy": {
+              "after": 14.905085807664646,
+              "before": 14.905085807664646,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "N": 1.0,
+            "N_energy": {
+              "after": 0.060702735478187955,
+              "before": 0.060702735478187955,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "R": 1.0,
+            "R_energy": {
+              "after": 0.0002089685012298772,
+              "before": 0.0002089685012298772,
+              "closure_defect": 0.0,
+              "signed_cross": 0.0,
+              "update": 0.0
+            },
+            "alpha": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "native": 0.8465419049282757,
+            "parameter_step_norm": 0.0
+          }
+        },
+        "stationarity": 4.077331217829342e-07,
+        "threshold_candidate": true,
+        "upper": 0.9808472139968127
+      }
+    },
+    "construction_sha256": "ddb48feececfa34b17acf0c19a923eb3b0e49d0a915efbd76f70781e65f4be4a",
+    "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC",
+    "diagnostic_only": true,
+    "features_reference_exposed": true,
+    "ledger": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/candidate_freeze.json",
+      "sha256": "707ecd26e910a8e8334a2cd70b8195300bf6e83a6ee6da5d03f6f123b968f899"
+    },
+    "official_candidate_results": false,
+    "optimize_calls": 0,
+    "pde_only_solve": false,
+    "pde_only_solver_qualified": false,
+    "production_initialization_allowed": false,
+    "reference_used_for_diagnostic": true,
+    "reference_used_for_training": false,
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v18_native_constraint_20261003T113000Z/result.json",
+      "sha256": "0da6f5c29753c37a916b36b31b7acdeeca8fc63035de83fa34cc3af6f2a34ea5"
+    },
+    "sensitivity": {
+      "M3600": {
+        "admitted": true,
+        "physical_step_relative": 0.0,
+        "rank_main": 8,
+        "rank_sensitivity": 8,
+        "status": "PASS"
+      },
+      "Mfinal": {
+        "admitted": true,
+        "physical_step_relative": 0.0,
+        "rank_main": 8,
+        "rank_sensitivity": 8,
+        "status": "PASS"
+      }
+    },
+    "status": "COMPLETE"
+  },
+  "design": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v18.json",
+    "sha256": "e4f618623be01ff80228f48f10ce85b65c0927c531b10840664513bb600367d8"
+  },
+  "original_common_descent_decision_unchanged": true,
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "production_initialization_allowed": false,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solver_qualified": false
+}

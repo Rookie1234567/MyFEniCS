@@ -1,0 +1,143 @@
+{
+  "old_review": {
+    "status": "REUSED_UNCHANGED_ACTUAL_GITHUB_DOM_AND_VISUAL_PASS",
+    "source": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v17_evidence_audit.json",
+      "sha256": "be747acfc88e86a3ea90503cdc86e6c39c7f31f6a19ed4a80a7cd25d7f64276b"
+    },
+    "page": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v17.md",
+      "sha256": "2c52eb8b0f7e2d382a1652e61c7336f1302d8eb57f36dfab27483a9c45c2a7f2",
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/60ccc7b7953c141d53d008cb18b455d333f52c43/docs/task042extra_feinn_5nm/review_report_v17.md",
+      "tables": 6,
+      "math": 1,
+      "uniform_table_columns": true,
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_top.png",
+          "sha256": "041a89328186f1824d5df3da175043cc4fb8ff2234eb1b131c79801ea68ccb7d"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_table_00.png",
+          "sha256": "e604dab85835a58d0d84976c633bdf48f3066bdbf5571633f4b9042c06553e28"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_table_01.png",
+          "sha256": "a25061bf28eca2527805d463cee19341c9b81a41141fa0cfe7328a504ffe73ad"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_table_02.png",
+          "sha256": "876cf608ca0f86e8ad7726f643f317e300ac19e4351cba359a1b66886034b885"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_table_03.png",
+          "sha256": "cb569b72f0b061bf89de75a7b1784b7831a2623e1a46d83c0da4e68f852c76dc"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_table_04.png",
+          "sha256": "1dbf2cdc5e10f9674d273500821662c5414c8834a43db424fe69af8994bf4a73"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_table_05.png",
+          "sha256": "b364d7762483e8cdd5134af0a3d6db20fff875906b857c0892cbfc8fc81b04f9"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v17_60ccc7b7/00_math-renderer_00.png",
+          "sha256": "d344f8d586d370ded0ca3bdb2571bf29538662885bc32603847aac4e3179b43c"
+        }
+      ]
+    },
+    "capture_hashes_verified": true
+  },
+  "old_failed_render_records_preserved": true,
+  "new_pages": {
+    "status": "LOCAL_STRUCTURE_PASS_POST_PUBLICATION_VISUAL_PENDING",
+    "paths": [
+      "docs/task042extra_feinn_5nm/response_v18.md",
+      "docs/task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md"
+    ],
+    "no_new_display_math": true,
+    "actual_visual_pass": false,
+    "immutable_post_push_receipt": "tmp/task42extra/v18_publication_render_receipt.json",
+    "accounting": "Final GitHub DOM/image inspection after single authorized push; result and full source HEAD reported in delivery, no premature PASS"
+  },
+  "local_contract": {
+    "path": "tmp/task42extra/v18_local_document_contract.json",
+    "sha256": "c08a4fc4b5713d4f5c4a7b5fa9a592b0b350fa11f253fafc681b0b5cc0b9d33b"
+  },
+  "local_pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "sha256": "680392eef8d0a0080e0af5444fbe33986d5264d20e17fc471d17579a34c84841",
+      "checked_scope": "entire page",
+      "markdown_tables": 2,
+      "parsed_tables": 2,
+      "math_fences": 0,
+      "links": 24
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v18.md",
+      "sha256": "1df441301ea4af568217f93bd2434a502c89da3ce10c49846ff0d8dc336bca45",
+      "checked_scope": "entire page",
+      "markdown_tables": 3,
+      "parsed_tables": 3,
+      "math_fences": 0,
+      "links": 15
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md",
+      "sha256": "c8084b847bc94038ca8d5a613d610646ff1bb0123daffebcbd6b4692de47ca8a",
+      "checked_scope": "entire page",
+      "markdown_tables": 6,
+      "parsed_tables": 6,
+      "math_fences": 0,
+      "links": 8
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "61c82c9b648cfca128bb99449d393e449bd0068b80b6b1660b76b4fade210434",
+      "checked_scope": "Task42extra Review V17 后续：V18",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 12
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "sha256": "65a977883532118ba653cd2e25a0d799b7e2d0b31707590a81945db262167bcc",
+      "checked_scope": "V18：",
+      "markdown_tables": 0,
+      "parsed_tables": 0,
+      "math_fences": 0,
+      "links": 3
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "sha256": "f343dad74c6e1d322c37a04b778330b99c5c8b67f08bd13dfb42cf8c1b5cc5ca",
+      "checked_scope": "V18：",
+      "markdown_tables": 0,
+      "parsed_tables": 0,
+      "math_fences": 0,
+      "links": 1
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "b7e86da6f8573638bdd9abca4bce0d37f78cb1a9715e3992517a680219295a47",
+      "checked_scope": "2026-10-03 Task42extra V18",
+      "markdown_tables": 0,
+      "parsed_tables": 0,
+      "math_fences": 0,
+      "links": 4
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "da47206c24585ad32a25001d46c3a743b7287d802a58a828223bfa1ab386aa29",
+      "checked_scope": "3.44.16 Task42extra Review V17：V18",
+      "markdown_tables": 1,
+      "parsed_tables": 1,
+      "math_fences": 0,
+      "links": 3
+    }
+  ],
+  "local_status": "CHANGED_SCOPES_AND_RECORD_BINDINGS_LOCAL_PASS"
+}

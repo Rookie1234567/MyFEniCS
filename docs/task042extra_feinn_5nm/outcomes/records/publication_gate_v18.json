@@ -1,0 +1,34 @@
+{
+  "schema": "feinn.v18.publication-tail-gate",
+  "review_publication": "c12049f4ed8e5117ee69495c8f9c576b75ba0027",
+  "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "numerical_source_sha": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+  "A_B_C_and_independent_FE_restore": "COMPLETE_WITH_NUMERICAL_NEGATIVES",
+  "final_affected_tests": "52 passed in 5.63s; Ruff and compileall pass",
+  "final_local_document_and_record_check": "PASS: 8 changed scopes, 13 tables, 139 bound files; historical bytes and frozen numerical source preserved",
+  "publication_metadata_seal": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "publication_metadata_seal_directory": "tmp/task42extra/checks/v18_E_publication_seal_20261003T123645443272Z",
+  "failure": "No audited unoccupied physical core; rejected before worker. No code, array or resource record was modified by this refused worker.",
+  "retained_snapshot": "resource_costs_v18.json retains the already completed final local-check monotonic snapshot; later publication tail is not filled with zero",
+  "E_readmission_evidence": [
+    "tmp/task42extra/v18_native_window_954731.json",
+    "tmp/task42extra/v18_native_window_955665.json"
+  ],
+  "E_completed_after_these_observations": [
+    "v18_E_compact_records_new_window_20261003T121549486768Z",
+    "v18_E_document_contract_new_window_20261003T123121332007Z"
+  ],
+  "further_resource_readmission_or_background_restart": false,
+  "prepublication_remote_exact_ref": "c12049f4ed8e5117ee69495c8f9c576b75ba0027",
+  "prepublication_source_ahead_behind": "4/0 before final documentation commit",
+  "post_push_actual_browser_check": "A distinct bounded light stage; only its initial resource admission, no retry. Result retained in ignored immutable delivery receipt; no prewritten visual PASS.",
+  "post_push_delivery_receipt": "tmp/task42extra/v18_delivery_receipt.json",
+  "own_numeric_trees_cleared_before_docs": true,
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "pde_only_solver_qualified": false,
+  "production_initialization_allowed": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false
+}

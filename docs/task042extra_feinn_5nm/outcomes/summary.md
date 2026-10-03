@@ -1,3 +1,19 @@
+# Task42extra Review V17 后续：V18 当前诊断导航
+
+A/B/C及独立检查完成，无训练或新参考。实际网络原残差和G场误差略改善，但原对偶能量不增门两态均失败；主求解器及生产初值继续暂停：FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT。N/R/F为相对各态旧场的能量比，不能等同完整解精度。
+
+| 工作包 / M5-p3身份及单位 | 实际完成、结果和边界 | 证据 |
+| --- | --- | --- |
+| A，derived固定PDE8/原半径 | 四配置、先无标签冻结再评分；rank8/两rcond步差0；N≈0.993834/0.980847，F≈0.996040/0.998407，R≈1；两态C准入，最优性界宽均UNKNOWN | [原数组/证书](records/native_constraint_results_v18.json)、[14行对照](records/native_constraint_comparison_v18.csv) |
+| B，measured保存场积分 | E能量0.211141→0.366628；正交叉项0.119581占增量约76.91%；curl同向退化。周期/界面邻层浓集约1，缺口约1.3 | [完整归因](native_constraint_and_field_attribution_v18.md)、[8行区域原量](records/fixed_regions_v18.csv) |
+| C，measured实际网络 | native 0.885852→0.883116、0.846542→0.838398；F≈0.996037/0.998401；R增量1.01e-7/1.79e-7超过1e-8门，两态FAIL；theta/buffers已恢复 | [C原记录](records/network_witness_results_v18.json)、[Gate](records/gate_decisions_v18.json) |
+| 独立检查 / 真实用途 | B区域/分母/G配对、C向量、独立FE编号/MPC均完成；MPC≤1.54e-18，Gsolve真残差≤1.03e-13；真实性通过不等于解通过 | [checker](records/independent_checker_v18.json)、[回执](../response_v18.md) |
+| 故障 / 全费用保留 | 首C写出协议失败，唯一修复重放完成；含失败前向≤8/A≤14/Gsolve≤8/Gmat≤20/Gram≤2，AH/JVP/VJP0 | [修复账](records/repair_log_v18.json)、[完整父墙钟及嵌套费用](records/resource_costs_v18.json) |
+| Source / 同时资源 | A33fe1bc0、Bb42f0420、C及检查/恢复ca7ad5d5，完整SHA见索引；数值树sampled峰1,260,847,104B、自身swap0；Gram全部计费 | [身份](records/run_index_v18.json)、[六依赖组](records/selective_merge_manifest_v18.json) |
+| 未验证 / 下一步 / merge | 原有效解仍失败，D0成本否决/D1未运行；新C无完整E/H/通道/功率资格。原尺寸0.7nm、十进制2TB/172800s未资格化；不自动缩步/训练/累积迭代，无production或master合并授权 | 暂停等待新review；局部改善不算≥20%同精度完整成本NN净增益 |
+
+下方所有V1–V17历史、M3600较好中期和Mfinal退化、旧V15/V16失败/UNKNOWN、旧积分NOT_RUN、失联/PSI/重放及未测尾段原样保留。主线d24c97ae的Review V6已条件授权Gx784，但没有本次新结果；dot eb5b0ecc的新C1仍待真实FE/持久资格。本支不复制两线工作。原1e-6残差、1e-4场/通道、1e-5功率/能量、1e-6逐级功率及求积门不变。
+
 # Task42extra Review V16 后续：V17 暂停交接导航
 
 数值探索暂停：FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT，无主求解器或生产初值资格，D0成本否决/D1未运行。本轮只完成轻量交接与静态依赖闭环，没有新场或优化。下方所有V1–V16历史正文、M3600较好中期/Mfinal最终退化、UNKNOWN、失败与全部费用原样保留；历史“下一步建议”不是当前运行授权。

@@ -1,0 +1,112 @@
+{
+  "status": "FINAL_AFFECTED_RUFF_COMPILEALL_TARGETED_PASS",
+  "checked_utc": "2026-10-03T12:26:35.267406+00:00",
+  "exact_code_source": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+  "numerical_source_unchanged_since_last_formal": true,
+  "passed": 52,
+  "tests": [
+    "src/test/test_feinn_native_constraint.py",
+    "src/test/test_feinn_v18_integrals.py",
+    "src/test/test_feinn_v18_launch.py",
+    "src/test/test_feinn_v18_witness.py",
+    "src/test/test_feinn_saved_diagnostics.py"
+  ],
+  "changed_python_paths": [
+    "benchmarks/check_feinn_native_constraint.py",
+    "benchmarks/check_feinn_native_witness.py",
+    "benchmarks/check_feinn_saved_integrals.py",
+    "benchmarks/run_feinn_common_descent.py",
+    "scripts/launch_task42extra_durable.py",
+    "src/runners/feinn_attribution_campaign.py",
+    "src/runners/feinn_native_constraint_arrays.py",
+    "src/runners/feinn_workflow.py",
+    "src/solvers/feinn_native_constraint.py",
+    "src/solvers/feinn_native_network_witness.py",
+    "src/solvers/feinn_saved_attribution.py",
+    "src/solvers/feinn_saved_field_diagnostics.py",
+    "src/test/test_feinn_native_constraint.py",
+    "src/test/test_feinn_v18_integrals.py",
+    "src/test/test_feinn_v18_launch.py",
+    "src/test/test_feinn_v18_witness.py"
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "benchmarks/check_feinn_native_constraint.py",
+        "benchmarks/check_feinn_native_witness.py",
+        "benchmarks/check_feinn_saved_integrals.py",
+        "benchmarks/run_feinn_common_descent.py",
+        "scripts/launch_task42extra_durable.py",
+        "src/runners/feinn_attribution_campaign.py",
+        "src/runners/feinn_native_constraint_arrays.py",
+        "src/runners/feinn_workflow.py",
+        "src/solvers/feinn_native_constraint.py",
+        "src/solvers/feinn_native_network_witness.py",
+        "src/solvers/feinn_saved_attribution.py",
+        "src/solvers/feinn_saved_field_diagnostics.py",
+        "src/test/test_feinn_native_constraint.py",
+        "src/test/test_feinn_v18_integrals.py",
+        "src/test/test_feinn_v18_launch.py",
+        "src/test/test_feinn_v18_witness.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.04394503403455019,
+      "log": "tmp/task42extra/v18_final_quality_0.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "benchmarks/check_feinn_native_constraint.py",
+        "benchmarks/check_feinn_native_witness.py",
+        "benchmarks/check_feinn_saved_integrals.py",
+        "benchmarks/run_feinn_common_descent.py",
+        "scripts/launch_task42extra_durable.py",
+        "src/runners/feinn_attribution_campaign.py",
+        "src/runners/feinn_native_constraint_arrays.py",
+        "src/runners/feinn_workflow.py",
+        "src/solvers/feinn_native_constraint.py",
+        "src/solvers/feinn_native_network_witness.py",
+        "src/solvers/feinn_saved_attribution.py",
+        "src/solvers/feinn_saved_field_diagnostics.py",
+        "src/test/test_feinn_native_constraint.py",
+        "src/test/test_feinn_v18_integrals.py",
+        "src/test/test_feinn_v18_launch.py",
+        "src/test/test_feinn_v18_witness.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.12056552607100457,
+      "log": "tmp/task42extra/v18_final_quality_1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "src/test/test_feinn_native_constraint.py",
+        "src/test/test_feinn_v18_integrals.py",
+        "src/test/test_feinn_v18_launch.py",
+        "src/test/test_feinn_v18_witness.py",
+        "src/test/test_feinn_saved_diagnostics.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.16739455901552,
+      "log": "tmp/task42extra/v18_final_quality_2.log",
+      "sha256": "722d128a2c0514b72fb02fa17332631936fe85d9a20b71dc6d193f6f76add67c"
+    }
+  ],
+  "environment": "qualified Task42extra pure; CPU-only, single physical core/thread, tree 2GiB, own swap0",
+  "full_pytest_run": false,
+  "historical_expensive_gates_rerun": false,
+  "CI_claim": false,
+  "FE_evidence": "Fresh V18 B and independent C restore in qualified complex128/int64/MPI1 FE activation, not pure pytest"
+}

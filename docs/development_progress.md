@@ -3232,3 +3232,11 @@ Review V15要求避免把漏行或冻结缺失误判完整实验，已补齐chec
 ## 2026-10-03 Task42extra V17：研究暂停交接及依赖闭环
 
 Review V16已接受保存记录checker和两方向冲突，触发本次轻量交接以避免历史建议重新成为执行任务。基线89d24fa253aa6d9c8109e1d8b1983d964388e826，安全同步06386339abf0ce1803f08d87ee50a29f9b0c24a4；旧数值99f2968、checker a14dd618来源不改。用源码文本AST核查研究check/analyze与包初始化，给28模块准确import/调用依赖、六类组及已有数据/测试合同，无接收方，RESEARCH_ONLY_NOT_SELECTED_FOR_TRANSFER。一次相对import遗漏已修复，旧失败费用保留；原75/143按hash复用而不重跑，文档/有限渲染另列收据。M3600场误差约9.33%到最终12.29%的退化、native约0.886/0.847、界宽UNKNOWN和全部旧负结果继续保留，未过1e-6/1e-4原门。D0成本否决/D1未运行，无NN增量或主解/初值资格。主线Gx784为FE前工程失败、AUTO仅库存，dot新C1待实际FE/持久资格，各自review授权，不复制两线工作。原尺寸0.7nm/十进制2TB/172800s未资格化，本批交接完成即暂停，不自动V18、不合并master。[Response V17](task042extra_feinn_5nm/response_v17.md)、[准确依赖](task042extra_feinn_5nm/outcomes/records/diagnostic_dependencies_v17.json)、[本批成本/检查](task042extra_feinn_5nm/outcomes/records/handoff_receipt_v17.json)。
+
+## 2026-10-03 Task42extra V18：受约束原残差与真实网络见证
+
+背景是旧R最小方向反而增大原方程不平衡，以及M3600到Mfinal场误差退化却缺少独立区域归因。Review V17授权在原两态PDE8/半径/rcond内先冻结无标签候选再评分；小凸问题只改变选方向目标，未增加网络表示或训练。四配置rank8稳定且线性N/F至少降0.1%、R不增，按合同自动完成两态实际完整矩前向和独立FE恢复。实际native约0.885852→0.883116、0.846542→0.838398，G误差能量略降，但R增量1.01e-7/1.79e-7高于1e-8门，两态局部机制资格未过；线性约束贴边时很小的非线性也需核验。最优性界宽均UNKNOWN，不修改旧共同下降失败结论。
+
+B补完q15保存场积分：E误差能量0.211141→0.366628，正交叉项0.119581约占增量76.91%；curl类似。周期/界面邻层浓集约1，缺口约1.3，无明显邻层强集中；MPC和G配对精确，不归因为普遍约束错误。独立checker重算原能量、分母、区域和实际C配对。首C保存协议错误在第二态数组后失败，已保留并唯一同输入修复重放；所有失败/费用和已落盘边界保留。数值树峰1,260,847,104B、swap0，fresh Gram setup/solve/release明确计费。实际A source33fe1bc05c89eeef50de1fb44ae64cc96e868852；B/首C b42f042064fcef431e2e7d64eddcbfd43b2bf65a；C/独立检查/FE恢复 ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb，文档HEAD不替代source。
+
+保留中期较好、终态退化、全部负结果/UNKNOWN与D0成本否决/D1未运行。没有完整有效解或同完整成本NN净增益，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT及生产初始化禁止不变。主线Review V6条件授权与dot C1/持久资格属各自任务，不代办传统solver/storage。原尺寸0.7nm、十进制2TB整机及172800s完整流程、原精度门尚未资格化。完成整批后暂停，不自动缩步/调权/累积训练，不合并master。[Response V18](task042extra_feinn_5nm/response_v18.md)、[专题](task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md)、[原Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v18.json)、[完整资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json)。

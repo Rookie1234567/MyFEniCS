@@ -1,0 +1,110 @@
+{
+  "A_C_admission": true,
+  "A_optimality_not_promoted": true,
+  "B_independent_check": "PASS",
+  "C": {
+    "M3600": {
+      "local_checks": {
+        "retains_half_native_drop": true,
+        "field_energy": true,
+        "dual_nonincrease": false,
+        "nonlinear_model": true,
+        "original_identity": true,
+        "operator_pairings": true
+      },
+      "MPC_relative": 1.1506299999878469e-18,
+      "local_mechanism_support": false,
+      "failure_quantities": [
+        "dual_nonincrease"
+      ],
+      "points": {
+        "zero": {
+          "N": 1.0,
+          "R": 1.0,
+          "F": 1.0,
+          "native": 0.885852183252661,
+          "dual_loss": 0.0943146715760124,
+          "G_error_energy": 8.614265977037046
+        },
+        "linear": {
+          "N": 0.9938335826426441,
+          "R": 0.9999999999999265,
+          "F": 0.9960399553337048,
+          "native": 0.8831166925477544,
+          "dual_loss": 0.09431467157600545,
+          "G_error_energy": 8.580153099000633
+        },
+        "actual": {
+          "N": 0.9938326023262704,
+          "R": 1.0000001007948258,
+          "F": 0.9960369059102125,
+          "native": 0.8831162569949708,
+          "dual_loss": 0.09431468108244329,
+          "G_error_energy": 8.580126830455594
+        }
+      },
+      "nonlinear_defect": 0.0002878567548602914
+    },
+    "Mfinal": {
+      "local_checks": {
+        "retains_half_native_drop": true,
+        "field_energy": true,
+        "dual_nonincrease": false,
+        "nonlinear_model": true,
+        "original_identity": true,
+        "operator_pairings": true
+      },
+      "MPC_relative": 1.5318620263251886e-18,
+      "local_mechanism_support": false,
+      "failure_quantities": [
+        "dual_nonincrease"
+      ],
+      "points": {
+        "zero": {
+          "N": 1.0,
+          "R": 1.0,
+          "F": 1.0,
+          "native": 0.8465419049282757,
+          "dual_loss": 0.0872060784094609,
+          "G_error_energy": 14.905085807664646
+        },
+        "linear": {
+          "N": 0.9808472139968202,
+          "R": 0.999999999999886,
+          "F": 0.998407317821731,
+          "native": 0.8383958936794215,
+          "dual_loss": 0.08720607840945095,
+          "G_error_energy": 14.881346743133207
+        },
+        "actual": {
+          "N": 0.9808525820337267,
+          "R": 1.000000179017932,
+          "F": 0.9984005401617119,
+          "native": 0.8383981878868568,
+          "dual_loss": 0.08720609402091271,
+          "G_error_energy": 14.881245721529048
+        }
+      },
+      "nonlinear_defect": 0.0010830631208472146
+    }
+  },
+  "batch_local_mechanism": "LOCAL_NONLINEAR_MECHANISM_NOT_SUPPORTED_IN_BOTH_STATES",
+  "strict_solver_qualification": false,
+  "same_complete_cost_NN_increment": false,
+  "official_RTA_not_produced": true,
+  "new_full_E_H_channel_power_check": "NOT_RUN_NOT_AUTHORIZED_FOR_C",
+  "D0": "COST_VETO_CONFIRMED",
+  "D1": "NOT_RUN_COST_VETO",
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "production_initialization_allowed": false,
+  "pde_only_solve": false,
+  "official_candidate_results": false,
+  "new_training": false,
+  "full_target_qualified": false,
+  "reference_used_for_training": false,
+  "reference_used_for_diagnostic": true,
+  "features_reference_exposed": true,
+  "benchmark_previously_seen": true,
+  "pde_only_solver_qualified": false
+}

@@ -244,3 +244,9 @@ V15额外最小修复benchmarks/render_task42extra.py：滚动时重取当前DOM
 ## V17：一次轻量交接，无数值源码改动
 
 只新增response_v17、diagnostic_dependencies_v17与handoff_receipt_v17；README当前边界、summary页首导航、本测试/文件节、项目进度及本任务模型总账同步暂停和最新并行分工。原task/review/response/数值kernel/runner/checker/tests及V15–V16结果候选均未改。[六类依赖manifest](records/diagnostic_dependencies_v17.json)列准确静态闭包，无producer/优化授权、无接收方/迁移部署或production晋级；raw/完整AST审计/cache仍ignored。
+
+## V18：Review V17整批诊断
+
+新小凸诊断核在src/solvers，参数化数组runner在src/runners；三个独立checker在benchmarks。B只接续旧保存场数学路径并加四区原量/checker；C只实现冻结方向的事务前向、原点核验、编号/MPC恢复和不同序号的原子边界，不复制训练器/传统solver。已有workflow、campaign及durable launcher增加明确V18 opt-in和白名单/计时绑定，ordinary default不改；新的三个one-run dat按ML/FE独立激活执行。
+
+新response_v18、专题及compact设计/运行/检查/Gate/资源/修复/测试/渲染/CSV记录，summary页首导航、README及本支总账更新，历史正文不删。准确文件/hash/依赖/建议顺序见[六组manifest](records/selective_merge_manifest_v18.json)。大场、模型、缓存和完整采样留ignored；production numerical/core为空，未授权master合并。
