@@ -10,6 +10,8 @@ import pytest
 from src.geometry.task40_nonseparable_plan import (
     TASK40_COMPARISON_GROUP,
     TASK40_F1_REFERENCE_METRIC_RUN_ID,
+    TASK40_GX560_RUN_ID,
+    TASK40_GZ528_RUN_ID,
 )
 from src.io import InputError
 from src.runners import task038_launcher as launcher
@@ -384,3 +386,57 @@ def test_task40_f1_outer_timebase_recovery_is_one_hash_bound_repeat(tmp_path):
     assert final_ledger["infrastructure_recovery_count"] == 1
     assert len(final_ledger["authorized_performance_repeats"]) == 1
     assert len(final_ledger["stages"]["Q4_ORIGINAL"]["attempts"]) == 3
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_task40_review_v4_cases_have_independent_one_replay_limits(tmp_path, reverse):
+    old_lease = reserve(tmp_path, "legacy-first", "a" * 40)
+    fail(old_lease, "b" * 40)
+    old_repair = reserve(tmp_path, "legacy-repair", "b" * 40)
+    fail(old_repair, "c" * 40)
+    old_path = Path(old_lease["path"])
+    old_bytes = old_path.read_bytes()
+    cases = [
+        (TASK40_GX560_RUN_ID, "review_v4_gx560"),
+        (TASK40_GZ528_RUN_ID, "review_v4_gz528"),
+    ]
+    if reverse:
+        cases.reverse()
+    for run_id, batch in cases:
+        first = reserve(tmp_path, batch + "-first", "d" * 40, run_id)
+        assert first["replay"] is False
+        accounting = first["task40_batch_replay_accounting"]
+        assert accounting["selected_batch"] == batch
+        assert accounting["selected_bug_replay_limit"] == 1
+        assert accounting[batch]["run_ids"] == [run_id]
+        assert accounting["legacy"]["unique_bug_replay_count"] == 1
+        assert accounting["legacy"]["elapsed_seconds"] == 90.0
+        fail(first, "e" * 40)
+        second = reserve(tmp_path, batch + "-repair", "e" * 40, run_id)
+        assert second["replay"] is True
+        assert second["task40_batch_replay_accounting"]["selected_bug_replay_limit"] == 1
+        assert second["replay_evidence"]["fixed_source_sha"] == "e" * 40
+        fail(second, "f" * 40)
+        path = Path(second["path"])
+        settled_bytes = path.read_bytes()
+        settled = json.loads(settled_bytes)
+        assert settled["batch_identity"] == run_id
+        assert settled["fresh_worker_count"] == 2
+        assert settled["unique_bug_replay_count"] == 1
+        assert settled["elapsed_seconds"] == 90.0
+        with pytest.raises(InputError):
+            reserve(tmp_path, batch + "-second-repair", "f" * 40, run_id)
+        assert path.read_bytes() == settled_bytes
+        assert old_path.read_bytes() == old_bytes
+
+
+def test_task40_review_v4_unknown_run_is_rejected_without_ledger_mutation(tmp_path):
+    first = reserve(tmp_path, "gx-first", "a" * 40, TASK40_GX560_RUN_ID)
+    fail(first, "b" * 40)
+    ledger_path = Path(first["path"])
+    before = ledger_path.read_bytes()
+    unknown_directory = tmp_path / "unknown"
+    with pytest.raises(InputError, match="run authorized by its review batch"):
+        reserve(tmp_path, "unknown", "b" * 40, TASK40_GX560_RUN_ID + "_unknown")
+    assert ledger_path.read_bytes() == before
+    assert not unknown_directory.exists()

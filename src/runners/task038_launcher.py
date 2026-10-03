@@ -3482,6 +3482,8 @@ def _reserve_task40_0p7nm_budget(
         TASK40_F1_REFERENCE_METRIC_RUN_ID,
         TASK40_F2_G0_M1_RUN_ID,
         TASK40_F3_G0_M2_RUN_ID,
+        TASK40_GX560_RUN_ID,
+        TASK40_GZ528_RUN_ID,
         TASK40_REVIEW_V2_GROWTH_RUN_IDS,
     )
 
@@ -3496,12 +3498,17 @@ def _reserve_task40_0p7nm_budget(
     review_v2_f1_run_ids = {TASK40_F1_REFERENCE_METRIC_RUN_ID}
     review_v2_p3_run_ids = {TASK40_F2_G0_M1_RUN_ID, TASK40_F3_G0_M2_RUN_ID}
     review_v2_growth_run_ids = set(TASK40_REVIEW_V2_GROWTH_RUN_IDS)
+    review_v4_run_batches = {
+        TASK40_GX560_RUN_ID: "review_v4_gx560",
+        TASK40_GZ528_RUN_ID: "review_v4_gz528",
+    }
     allowed_run_ids = (
         legacy_run_ids
         | review_v1_run_ids
         | review_v2_f1_run_ids
         | review_v2_p3_run_ids
         | review_v2_growth_run_ids
+        | set(review_v4_run_batches)
     )
     if run_id not in allowed_run_ids or comparison_group != TASK40_COMPARISON_GROUP:
         raise InputError("Task40 budget requires a run authorized by its review batch")
@@ -3562,6 +3569,17 @@ def _reserve_task40_0p7nm_budget(
             "ledger_sha256": {},
         },
     }
+    for batch in review_v4_run_batches.values():
+        replay_accounting[batch] = {
+            "run_ids": [key for key, value in review_v4_run_batches.items() if value == batch],
+            "ledger_count": 0,
+            "unique_bug_replay_count": 0,
+            "infrastructure_recovery_count": 0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 0,
+            "ledger_sha256": {},
+        }
     for prior_run_id in allowed_run_ids:
         ledger_path = (
             run_ledger_root / prior_run_id / "shared_workflow_ledger.json"
@@ -3585,6 +3603,8 @@ def _reserve_task40_0p7nm_budget(
             group = "review_v2_p3"
         elif prior_run_id in review_v2_growth_run_ids:
             group = "review_v2_growth"
+        elif prior_run_id in review_v4_run_batches:
+            group = review_v4_run_batches[prior_run_id]
         else:
             group = "legacy"
         group_facts = replay_accounting[group]
@@ -3615,6 +3635,8 @@ def _reserve_task40_0p7nm_budget(
         selected_batch = "review_v2_p3"
     elif run_id in review_v2_growth_run_ids:
         selected_batch = "review_v2_growth"
+    elif run_id in review_v4_run_batches:
+        selected_batch = review_v4_run_batches[run_id]
     else:
         selected_batch = "legacy"
     selected_history = replay_accounting[selected_batch]
@@ -3626,6 +3648,9 @@ def _reserve_task40_0p7nm_budget(
         }
         else (0 if used_bug_replays >= 1 else 1)
     )
+    if run_id in review_v4_run_batches:
+        # Review V4 permits one implementation-bug replay per new case.
+        replay_limit = 1
     continuation = None
     record_path = repo_root / (
         "docs/task40extra_0p7nm_engineering/outcomes/records/"
