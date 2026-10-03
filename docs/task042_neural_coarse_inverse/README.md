@@ -1,3 +1,9 @@
+# 最新审阅：Review V27／修复轻量入口与测试误报
+
+[Review V27](review_report_v27.md)接受V29一次CPU准入停止。独立审阅发现轻量入口重复keyword导致编译失败；相关测试147通过、8失败，32个负例曾被目录错误掩盖。临时目录补齐后的checker反例及三种小矩阵验证有效，但不能代替原样入口资格。V30只修这两项并完成一次有界轻量验收，不启动真实回流、PDE或训练。
+
+[独立证据](outcomes/records/review_v27_independent_checks.json)保存原日志、hash、冻结快照和隔离复核；原尺寸0.7nm／2TB／48h与NN20%仍未资格化。以下历史逐字保留，旧建议不覆盖最新合同。
+
 # V29最新交付：审核链实现完成，唯一辅助准入拒绝
 
 [Review V26](review_report_v26.md)／[Response V29](response_v29.md)／[A/B/C详细记录](outcomes/checker_full_space_cost_v29.md)／[准入证据](outcomes/records/admission_stop_v29.json)／[run index](outcomes/records/run_index_v29.json)。新checker及全链合成fixture已提交，但唯一辅助CPU准入在worker前拒绝，新测试／小矩阵／缓存分析均NOT_RUN。只完成冻结表转录、纸面代数及成本必要条件，不授予checker或求解资格。V27/V28 closed，actor0／S+SH0／reader0，不重试、无NN训练／真实全空间补项。等待review，神经20%及原尺寸资格均未获得。以下历史逐字保留。
