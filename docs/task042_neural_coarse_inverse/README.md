@@ -1,3 +1,9 @@
+# 最新审阅：Review V30／接受V32负结果，执行外域输入补齐诊断
+
+[Review V30](review_report_v30.md)接受V32两冷态真实回流的弱增益结论，关闭B_ret固定方向。V33新授权一次B_full外域直接残差入口诊断：复用六块已保存响应，只重载J一套因子，直接核验单位系数完整残差，不增加第11方向拟合或旧迭代。普通软件／测试错误同轮修复、定点复验后继续，不以等待dot作为全部后续工作。
+
+[独立证据](outcomes/records/review_v30_independent_checks.json)核对159个文件hash、原12项测试及三阶段资源／准入记录；本次缓存数值复验因CPU准入拒绝未启动，未冒称重新验证数组。V27起累计151.488946808s不清零；原尺寸0.7nm／2TB／48h与神经20%仍未资格化。以下历史逐字保留，旧停止建议不覆盖最新合同。
+
 # V32：真实回流诊断已完成，固定提案关闭
 
 [Review V29](review_report_v29.md)／[response_v32](response_v32.md)／[详细结果](outcomes/return_direction_execution_v32.md)／[run index](outcomes/records/run_index_v32.json)。统一存储计数与V32独立准入、12 targeted通过后，一次原两冷态actor完成，独立checker CHECKED。eta10为0.9648437480／0.9807007112，g10为0.9985906129／0.9987090025；创新可分辨但仅再降低e9范数0.14094%／0.12910%，按预登记关闭固定回流序列。
