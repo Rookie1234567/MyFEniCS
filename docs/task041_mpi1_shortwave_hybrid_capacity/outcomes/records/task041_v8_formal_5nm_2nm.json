@@ -95,9 +95,9 @@
       "classification": "bounded diagnostic; not formal qualification"
     }
   ],
-  "observed_utc": "2026-10-03T05:46:22Z",
+  "observed_utc": "2026-10-03T06:46:58Z",
   "progress": {
-    "phase": "modal_full_build_top_modal_action_batch_24_of_30_logical_736_of_960",
+    "phase": "modal_full_build_top_modal_action_batch_25_of_30_logical_768_of_960",
     "formal_responses_completed": "not_yet_emitted",
     "expected_formal_responses": 1920,
     "outer_fgmres_iterations": "not_yet_emitted",
@@ -122,7 +122,7 @@
     "two_nm": "not_started"
   },
   "record_type": "task041_review_v8_formal_progress",
-  "record_written_utc": "2026-10-03T05:46:47Z",
+  "record_written_utc": "2026-10-03T06:47:08Z",
   "repository": {
     "branch": "codex/20260902-task41-mpi1-shortwave-hybrid-capacity",
     "runtime_source_sha": "d86ee4afb352304c9ff0d5042256ad9a7d0c9a4f",
@@ -241,7 +241,7 @@
   },
   "schema": "task041.v8.formal_progress.v1",
   "status": "formal_5nm_a6_consumer_running",
-  "next_progress_update_due_utc": "2026-10-03T06:46:47Z",
+  "next_progress_update_due_utc": "2026-10-03T07:47:08Z",
   "performance": {
     "worker_wall_seconds": 189308.766050059,
     "worker_wall_hours": 52.585768347239,
@@ -939,19 +939,19 @@
     "invocation_id": "b00e1993f6a2429185553092fa3ba7e2",
     "latest_supervision_sample": {
       "phase": "public_command",
-      "elapsed_seconds": 172514.88085167797,
-      "authority_bytes": 43247112192,
-      "process_tree_rss_bytes": 43247112192,
-      "cgroup_memory_current_bytes": 43195711488,
-      "cgroup_memory_peak_bytes": 43195715584,
+      "elapsed_seconds": 176129.88238852494,
+      "authority_bytes": 43288317952,
+      "process_tree_rss_bytes": 43247116288,
+      "cgroup_memory_current_bytes": 43288317952,
+      "cgroup_memory_peak_bytes": 43288326144,
       "job_swap_bytes": 0,
       "global_swap_used_bytes": 22151168,
       "global_swap_used_bytes_delta": 0,
       "global_pswpin_pages_delta": 1480998,
       "global_pswpout_pages_delta": 2781714,
-      "host_memavailable_bytes": 1550313009152,
+      "host_memavailable_bytes": 1497049591808,
       "worker_process_group_gone": false,
-      "retrieved_utc": "2026-10-03T05:46:22Z"
+      "retrieved_utc": "2026-10-03T06:46:58Z"
     },
     "launch_gate_snapshot": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/launch_gate_snapshot.json",
     "main_pid": 1026209,
@@ -995,7 +995,7 @@
     "resource_policy": "task041_v8_swap_observe_continue",
     "runtime_source_sha": "5bfb813870182fda172f658c8f276f58318844a5",
     "sequence": "A6 formal 5nm follow-up",
-    "stage_marker": "modal_full_build_top_modal_action_batch_24_of_30_logical_736_of_960",
+    "stage_marker": "modal_full_build_top_modal_action_batch_25_of_30_logical_768_of_960",
     "start_utc": "2026-10-01T05:51:15.915457Z",
     "startup_identity_record": "results/task041_review_v8_a6_formal_builder_wiring/s2_preparation_20261001T053737Z/startup_identity.json",
     "status": "running_modal_full_build_top_modal_action",
@@ -1064,6 +1064,6 @@
         "physical_action_source": "build_side_balanced_inverse"
       }
     },
-    "stage_marker_wall_seconds": 171809.11699540203
+    "stage_marker_wall_seconds": 174867.80144189496
   }
 }
