@@ -80,10 +80,10 @@ def _preflight_case(case_root: Path) -> dict[str, Any]:
         raise ValueError("Gx784 worker summary source SHA differs from its run manifest")
     if worker_summary.get("profile") != "task40extra_0p7nm_p6trace_p4_reference_metric_v2":
         raise ValueError("Gx784 worker summary profile differs from the frozen reference profile")
-    if worker_summary.get("result_classification") != manifest.get(
-        "result_classification"
-    ):
-        raise ValueError("Gx784 worker summary classification differs from its run manifest")
+    # The outer launcher classifies the subprocess outcome (for example,
+    # ``worker_exit0``); the worker summary classifies the numerical solve.
+    # They are intentionally different namespaces.  The numerical summary is
+    # validated below from its native residual and release fields.
     solver_gate = checker._recompute_solver_gate(worker_summary)
     field_artifact: dict[str, Any] = {
         "checked": False,

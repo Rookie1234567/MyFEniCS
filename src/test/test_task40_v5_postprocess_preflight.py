@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import builtins
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -151,6 +152,63 @@ def test_failed_solver_or_missing_saved_field_holds_before_budget_and_supervisor
     assert not (root / "postprocess_v5" / "attempt1").exists()
     assert Path(record["comparison_path"]).is_file()
     assert Path(record["checker_path"]).is_file()
+
+
+def test_ready_worker_uses_its_numerical_classification_not_launcher_exit_class(
+    tmp_path: Path,
+):
+    worker_classification = "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED"
+    root = _case_root(
+        tmp_path,
+        {
+            "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+            "result_classification": worker_classification,
+            **_passing_solver_summary(),
+        },
+    )
+
+    manifest_path = root / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.update(result_classification="worker_exit0", exit_status=0)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    (root / "run_summary.json").write_text(
+        json.dumps(
+            {
+                "run_id": RUN_ID,
+                "status": manifest["status"],
+                "result_classification": manifest["result_classification"],
+                "exit_status": manifest["exit_status"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    archive = root / "x2_retained_vectors.testbin"
+    archive.write_bytes(b"hash-bound retained vectors")
+    packet = {
+        "identity": {
+            "source_sha": manifest["source_sha"],
+            "physical_model_sha256": manifest["physical_model_sha256"],
+        },
+        "arrays": {
+            "path": str(archive),
+            "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+        },
+    }
+    (root / "x2_retained_final.json").write_text(
+        json.dumps(packet), encoding="utf-8"
+    )
+
+    preflight = service._preflight_case(root)
+
+    assert preflight["solver_gate"]["pass"] is True
+    assert preflight["field_artifact_preflight"]["complete"] is True
+    assert preflight["ready_for_supervised_field_work"] is True
+    worker_summary = json.loads(
+        (root / service.WORKER_SUMMARY_NAME).read_text(encoding="utf-8")
+    )
+    assert worker_summary["result_classification"] == worker_classification
+    assert manifest["result_classification"] == "worker_exit0"
 
 
 def test_supervisor_and_worker_modules_import_without_numerical_stack():
