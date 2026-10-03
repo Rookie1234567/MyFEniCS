@@ -163,3 +163,18 @@ def test_v34_namespace_storage_closed_and_consumed_reentry(tmp_path,monkeypatch)
     oldbytes=inventory(tmp_path,batch=33)['cumulative']['bytes']
     current=inventory(tmp_path,batch=34)
     assert current['new']['bytes']==10 and current['cumulative']['bytes']==oldbytes+15
+
+
+def test_saved_analysis_partition_and_complex_cross_term_sign():
+    from benchmarks.task042_full_input_checker import saved_direction_analysis
+    groups=np.arange(8);r=np.arange(1,9).astype(complex)*(1+.3j)
+    a=dict(input_residual=r,u=.2*r,k=.1j*r,qret=.3*r,au=.2*r,ak=.1j*r,
+        aqret=.3*r,adelta=(.2-.1j)*r,aqfull=(.5-.1j)*r,aq0=.5*r)
+    out=saved_direction_analysis(a,groups,np.array([5,7]))
+    assert out['partition_rows']==8 and out['no_new_action'] and out['no_reference']
+    for key,vector in (('input',r),('ret',r-a['aqret']),('full',r-a['aqfull']),('control',r-a['aq0'])):
+        np.testing.assert_allclose(sum(x['norms'][key]**2 for x in out['regions']),np.linalg.norm(vector)**2,rtol=1e-13)
+    for term in out['cross_terms'].values():
+        assert term['recombination_absolute_error']<=1e-12*term['precancellation_norm_squared_scale']
+    assert out['cross_terms']['outer_minus_feedback']['inner_product']['imag']>0
+    assert out['cross_terms']['residual_after_return_minus_direct']['signed_twice_real']<0

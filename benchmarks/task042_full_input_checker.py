@@ -98,6 +98,38 @@ def numeric(row,a,state,cache25,cache26,cache32,groups,ids,nt):
         max_identity_full_b_relative=worst_b,max_identity_operation_relative=worst_op)
 
 
+def saved_direction_analysis(a,groups,ids):
+    """Only frozen responses: region norms and complex cross terms, no new A."""
+    r=a['input_residual'];rn=float(np.linalg.norm(r))
+    residuals=dict(input=r,ret=r-a['aqret'],full=r-a['aqfull'],control=r-a['aq0'])
+    regions=[]
+    for block in range(8):
+        mask=groups==block
+        regions.append(dict(block=block,rows=int(np.count_nonzero(mask)),
+            norms={k:float(np.linalg.norm(v[mask])) for k,v in residuals.items()},
+            original_r_fractions={k:float(np.linalg.norm(v[mask])/rn) for k,v in residuals.items()}))
+    def pair(left,right,sign):
+        ln=float(np.linalg.norm(left));rr=float(np.linalg.norm(right));inner=np.vdot(left,right)
+        combined=left+sign*right;actual=float(np.linalg.norm(combined))**2
+        reconstructed=ln**2+rr**2+sign*2*float(inner.real)
+        return dict(left_norm=ln,right_norm=rr,sign=sign,
+            inner_product=dict(real=float(inner.real),imag=float(inner.imag)),
+            signed_twice_real=sign*2*float(inner.real),combined_norm_squared=actual,
+            reconstructed_norm_squared=reconstructed,
+            precancellation_norm_squared_scale=ln**2+rr**2+2*abs(inner),
+            recombination_absolute_error=abs(actual-reconstructed))
+    norm_fields=('u','k','qret','au','ak','aqret','adelta','aqfull')
+    return dict(regions=regions,partition_rows=sum(x['rows'] for x in regions),
+        J_final_residual_norm=float(np.linalg.norm(residuals['full'][ids])),
+        J_final_over_original_r=float(np.linalg.norm(residuals['full'][ids])/rn),
+        vector_norms={k:float(np.linalg.norm(a[k])) for k in norm_fields},
+        cross_terms=dict(outer_minus_feedback=pair(a['au'],a['ak'],-1),
+            return_plus_direct=pair(a['aqret'],a['adelta'],1),
+            residual_after_return_minus_direct=pair(residuals['ret'],a['adelta'],-1)),
+        no_new_action=True,no_new_solve=True,no_reference=True,
+        interpretation='fixed unit coefficients only; these norms never calibrate a new candidate')
+
+
 def consumption(result,plan,sources,ledger,manifest,*,batch='v33',root=None):
     require(set(EXPECTED)==set(CAPS) and result['budget_counts']==EXPECTED and
         all(type(x) is int and 0<=x<=CAPS[k] for k,x in result['budget_counts'].items()),'complete fixed consumption')
@@ -223,7 +255,9 @@ def collect(*,root=None,plan_path=None,artifact_root=None,records=None,ledger_pa
                 retdata=load_members(item['v32_arrays'],('return_direction','return_image'),root/'benchmarks/artifacts/task042/v32')
                 a=load_members(row['diagnostic_arrays'],VECTOR_KEYS,artifact_root)
                 require(row['operator_action_sha256']==plan['action_sha256'],'original action scale identity')
-                checked.append(numeric(row,a,state,d,j,retdata,groups,ids,nt))
+                measured=numeric(row,a,state,d,j,retdata,groups,ids,nt)
+                if batch=='v34':measured['saved_direction_analysis']=saved_direction_analysis(a,groups,ids)
+                checked.append(measured)
             out=dict(status='CHECKED',rows=checked,decision=classify(checked),raw=idx,
                 actual_numeric_source=result['source_sha'],no_factor_reads=True,no_new_actions=True,no_QR_SVD=True)
             require(out['decision']==result['decision'],'independent decision')
