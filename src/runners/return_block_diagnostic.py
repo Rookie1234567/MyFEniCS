@@ -28,13 +28,13 @@ class ReturnStage(DirectionStage):
         super().guard(**kwargs)
         if getattr(self.io,'LABEL','V27')=='V31' and time.monotonic()-self.run_started>=470:
             raise RuntimeError('V31 actor cutoff/cleanup margin')
-        if getattr(self.io,'LABEL','V27')=='V32':
+        if getattr(self.io,'LABEL','V27') in ('V32','V33'):
             if time.monotonic()-self.run_started>=self.formal_actor_limit-10:
                 raise RuntimeError('V32 unique actor cutoff/cleanup margin')
             now=time.monotonic()
             if now-getattr(self,'last_new_storage_check',0)>5:
                 from src.runners.diagnostic_storage import enforce
-                self.meta['storage_inventory']=enforce(self.io.ROOT)
+                self.meta['storage_inventory']=enforce(self.io.ROOT,batch=int(self.io.LABEL[1:]))
                 self.last_new_storage_check=now
             return
         now=time.monotonic()
@@ -55,7 +55,10 @@ class ReturnStage(DirectionStage):
 
 def main():
     global io,window
-    if b'[task042_v32]' in Path(sys.argv[1]).read_bytes():
+    if b'[task042_v33]' in Path(sys.argv[1]).read_bytes():
+        from src.io import full_input_block_v33 as io
+        from src.solvers import full_input_block_v33_window as window
+    elif b'[task042_v32]' in Path(sys.argv[1]).read_bytes():
         from src.io import return_block_v32 as io
         from src.solvers import return_block_v32_window as window
     elif b'[task042_v31]' in Path(sys.argv[1]).read_bytes():
@@ -70,7 +73,10 @@ def main():
     result={}
     try:
         if subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()!=stage.source:raise RuntimeError('V27 active source changed')
-        from src.solvers.return_block_study import run
+        if getattr(io,'LABEL','V27')=='V33':
+            from src.solvers.full_input_block_study import run
+        else:
+            from src.solvers.return_block_study import run
         result=run(stage)
     except Exception as error:
         result.update(getattr(stage,'partial_result',{}));result.update(status='FAILED',error=type(error).__name__+': '+str(error))

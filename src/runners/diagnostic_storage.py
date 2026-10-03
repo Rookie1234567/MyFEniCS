@@ -15,8 +15,8 @@ FREE_MINIMUM = 50 * 2**30
 
 def scope_paths(root, *, batch=32):
     root = Path(root).resolve()
-    if batch != 32:
-        raise ValueError('storage scope is explicitly V32')
+    if batch not in (32, 33):
+        raise ValueError('storage scope is explicitly V32 or V33')
     tmp = root / 'tmp/task042'
     artifact = root / 'benchmarks/artifacts/task042'
     results = root / 'results/task042'
@@ -35,13 +35,13 @@ def scope_paths(root, *, batch=32):
     # Review temporary data were included in the declared historical inventory.
     cumulative.extend(p for p in tmp.glob('review_v*')
                       if (m := re.match(r'review_v(\d+)(?:_|$)', p.name))
-                      and 24 <= int(m[1]) <= 29)
+                      and 24 <= int(m[1]) <= batch-3)
     for p in records.glob('*'):
         match = re.search(r'(?:^|_)v(\d+)(?:[_.]|$)', p.name)
         if not match:
             continue
         version = int(match[1])
-        if 27 <= version <= batch or (p.name.startswith('review_v') and 24 <= version <= 29):
+        if 27 <= version <= batch or (p.name.startswith('review_v') and 24 <= version <= batch-3):
             cumulative.append(p)
         if version == batch:
             new.append(p)
@@ -80,12 +80,12 @@ def inventory(root, *, batch=32, include_files=False):
     return result
 
 
-def enforce(root, *, reserve_bytes=0):
-    result = inventory(root)
+def enforce(root, *, reserve_bytes=0, batch=32):
+    result = inventory(root, batch=batch)
     for key, limit in (('new', NEW_LIMIT), ('cumulative', CUMULATIVE_LIMIT),
                        ('task_artifact', TASK_ARTIFACT_LIMIT)):
         if result[key]['bytes'] + reserve_bytes > limit:
-            raise MemoryError('V32 ' + key + ' storage cap / reserved output')
+            raise MemoryError('V'+str(batch)+' ' + key + ' storage cap / reserved output')
     if result['free_bytes'] < FREE_MINIMUM + reserve_bytes:
-        raise MemoryError('V32 disk free-space gate')
+        raise MemoryError('V'+str(batch)+' disk free-space gate')
     return result

@@ -10,6 +10,7 @@ def main():
     parser=argparse.ArgumentParser();group=parser.add_mutually_exclusive_group()
     group.add_argument('--v29',action='store_true');group.add_argument('--v30',action='store_true')
     group.add_argument('--v31-phase',choices=('pre','check'))
+    group.add_argument('--v33-phase',choices=('pre','check'))
     group.add_argument('--v32-phase',choices=('pre','check'))
     parser.add_argument('--attempt')
     parser.add_argument('command',nargs=argparse.REMAINDER);args=parser.parse_args()
@@ -17,6 +18,7 @@ def main():
     if args.v29:return v29(args.command)
     if args.v30:return v29(args.command,batch='v30')
     if args.v31_phase:return v31(args.command,phase=args.v31_phase)
+    if args.v33_phase:return v32(args.command,phase=args.v33_phase,attempt=args.attempt,batch=33)
     if args.v32_phase:return v32(args.command,phase=args.v32_phase,attempt=args.attempt)
     clock=window.require_live(margin=900);used=window.auxiliary_wall()+window.ledger()['actor_wall_seconds']
     if used>=590:raise RuntimeError('V27+V28 bounded auxiliary cap/cleanup')
@@ -104,26 +106,30 @@ def v31(command,*,phase):
         return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 1
 
 
-def v32(command,*,phase,attempt):
+def v32(command,*,phase,attempt,batch=32):
     """Bounded, uniquely named repair attempts; a resource rejection stops retries."""
     import re
     from src.io.task042_profile import ROOT
-    from src.solvers import return_block_v32_window as w
+    if batch==33:
+        from src.solvers import full_input_block_v33_window as w
+    elif batch==32:
+        from src.solvers import return_block_v32_window as w
+    else:raise ValueError("unapproved auxiliary batch")
     from src.runners.diagnostic_storage import enforce
     if phase not in ('pre','check') or not attempt or not re.fullmatch('[0-9]{3}',attempt):
         raise ValueError('V32 phase and immutable three-digit attempt ID required')
     clock=w.require_live(margin=30);book=w.ledger()
     if book['closed'] or book['active'] is not None:raise RuntimeError('V32 closed/active auxiliary boundary')
     if (w.TMP/'auxiliary_resource_rejection.json').exists():raise RuntimeError('V32 resource rejection; no retry')
-    if phase=='check' and len(book['runs'])!=1:raise RuntimeError('V32 checker requires settled actor')
-    if phase=='pre' and book['runs']:raise RuntimeError('V32 pre-test after actor forbidden')
+    if phase=='check' and sum(any(run['counts'].values()) for run in book['runs'])!=1:raise RuntimeError('checker requires one settled consuming actor')
+    if phase=='pre' and book['runs'] and not (batch==33 and w.allow_entry_repair()):raise RuntimeError('pre-test after consuming actor forbidden')
     used_phase=sum(json.loads(p.read_text())['elapsed_seconds'] for p in w.TMP.glob('aux_'+phase+'_*/summary.json'))
     used=w.auxiliary_wall()-w.CARRIED_SECONDS
     limit=70 if phase=='pre' else 20
     seconds=min(limit-used_phase,90-used,600-w.auxiliary_wall()-book['actor_wall_seconds'],
                 clock['heavy_remaining_seconds'])-2
     if seconds<=0:raise RuntimeError('V32 auxiliary / cumulative / deadline exhausted')
-    enforce(ROOT,reserve_bytes=2*2**20)
+    enforce(ROOT,batch=batch,reserve_bytes=2*2**20)
     folder=w.TMP/('aux_'+phase+'_'+attempt);folder.mkdir(parents=True,exist_ok=False)
     with (ROOT/'tmp/task042/task042_shared.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -140,11 +146,11 @@ def v32(command,*,phase,attempt):
         subprocess.run(['ionice','-c','3','-p',str(os.getpid())],check=True)
         write_json(folder/'baseline.json',baseline)
         source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
-        os.environ['TASK042_V32_AUX_DIRECTORY']=str(folder)
+        os.environ['TASK042_V'+str(batch)+'_AUX_DIRECTORY']=str(folder)
         result=supervise(command,folder/'supervision',wall_seconds=seconds,
             interval=.5,timebase_guard=True,hard_stop_immediate=True,rss_hard_limit_bytes=2*2**30,
             rss_warning_bytes=2**30,memory_envelope_provider=shared_envelope,
-            source_state=dict(source_sha=source,role='V32 '+phase+' auxiliary',attempt=attempt),
+            source_state=dict(source_sha=source,role='V'+str(batch)+' '+phase+' auxiliary',attempt=attempt),
             health_check=SharedHealth(folder,baseline['neighbor_processes']),include_pss=False,stop_on_global_swap=False)
         write_json(folder/'summary.json',result)
         w.journal('auxiliary_settled',phase=phase,attempt=attempt,seconds=result['elapsed_seconds'],

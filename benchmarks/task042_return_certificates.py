@@ -62,34 +62,7 @@ def complete_consumption(result, plan, sources, ledger, manifest):
             'missing/duplicate/wrong factor bundle')
     for row in records:
         b = row['block']; expected = sources[str(b)]
-        require(row['source_sha'] == expected['source_sha'] and
-                row['rows_sha256'] == expected['rows_sha256'] and
-                row['row_count'] == expected['row_count'], 'factor source/rows identity')
-        require(row['qualified'] is True and row['refactored'] is False and
-                row['solve_calls'] == row['RHS_columns'] == 4 and row['triangular_passes'] == 8,
-                'unqualified factor or solve/RHS/pass inventory')
-        files = row['files']
-        require(len(files) == 3 and {x['key'] for x in files} == {'matrix','LU','pivots'},
-                'factor file inventory')
-        for f in files:
-            ref = expected['files'][f['key']]
-            require(f['path'] == ref['path'] and f['container_sha256'] == ref['sha256'] and
-                    f['array_sha256'] == ref['array_sha256'] and f['readonly'] is True and
-                    f['full_hash_copy'] is False and f['container_stream_hash_reads'] ==
-                    f['numeric_mmap_loads'] == f['array_hash_scans'] == 1, 'factor hash/reader seal')
-        seeds = (422601,422602) if b == 'J' else (422401+2*b,422402+2*b)
-        witnesses = row['witnesses']
-        require(len(witnesses) == 2 and [x['seed'] for x in witnesses] == list(seeds), 'factor witness seeds')
-        for w in witnesses:
-            err = finite(w['solve_error_norm'], 'solve error')
-            rn = finite(w['rhs_norm'], 'solve RHS norm'); op = finite(w['solve_operand_scale'], 'solve scale')
-            require(rn > 0 and op > 0, 'nonzero witness scale')
-            scalar(err/rn, w['solve_relative'], 'solve relative')
-            scalar(err/op, w['solve_operation_relative'], 'solve operation relative')
-            require(err/rn <= 1e-8 and err/op <= 1e-12, 'failed raw factor solve witness')
-            pair_certificate(w['original_principal_action'], 'factor original principal')
-            if b == 'J':
-                pair_certificate(w['original_adjoint_action'], 'factor original adjoint')
+        factor_reload_certificate(row, expected)
     ports = result['port_rhs_inventory']
     require(len(ports) == 35 and sum(x['adjoint'] is True for x in ports) == 2,
             'port solve/adjoint inventory')
@@ -188,3 +161,35 @@ def state_certificate(row, a, state, nt):
               ('port_residual_full_b_relative',float(np.linalg.norm(a['audited_full_residual'][nt:])/bn),1e-10)]
     for k,value,limit in checks:
         scalar(value,identity[k],'state '+k); require(value <= limit,'state audit unsafe '+k)
+
+
+def factor_reload_certificate(row, expected):
+    b=row["block"]
+    require(row['source_sha'] == expected['source_sha'] and
+            row['rows_sha256'] == expected['rows_sha256'] and
+            row['row_count'] == expected['row_count'], 'factor source/rows identity')
+    require(row['qualified'] is True and row['refactored'] is False and
+            row['solve_calls'] == row['RHS_columns'] == 4 and row['triangular_passes'] == 8,
+            'unqualified factor or solve/RHS/pass inventory')
+    files = row['files']
+    require(len(files) == 3 and {x['key'] for x in files} == {'matrix','LU','pivots'},
+            'factor file inventory')
+    for f in files:
+        ref = expected['files'][f['key']]
+        require(f['path'] == ref['path'] and f['container_sha256'] == ref['sha256'] and
+                f['array_sha256'] == ref['array_sha256'] and f['readonly'] is True and
+                f['full_hash_copy'] is False and f['container_stream_hash_reads'] ==
+                f['numeric_mmap_loads'] == f['array_hash_scans'] == 1, 'factor hash/reader seal')
+    seeds = (422601,422602) if b == 'J' else (422401+2*b,422402+2*b)
+    witnesses = row['witnesses']
+    require(len(witnesses) == 2 and [x['seed'] for x in witnesses] == list(seeds), 'factor witness seeds')
+    for w in witnesses:
+        err = finite(w['solve_error_norm'], 'solve error')
+        rn = finite(w['rhs_norm'], 'solve RHS norm'); op = finite(w['solve_operand_scale'], 'solve scale')
+        require(rn > 0 and op > 0, 'nonzero witness scale')
+        scalar(err/rn, w['solve_relative'], 'solve relative')
+        scalar(err/op, w['solve_operation_relative'], 'solve operation relative')
+        require(err/rn <= 1e-8 and err/op <= 1e-12, 'failed raw factor solve witness')
+        pair_certificate(w['original_principal_action'], 'factor original principal')
+        if b == 'J':
+            pair_certificate(w['original_adjoint_action'], 'factor original adjoint')

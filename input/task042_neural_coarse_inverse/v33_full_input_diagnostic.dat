@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v33]
+stage = "DIAGNOSTIC"
+run_id = "task042_v33_full_input_diagnostic"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+diagnostic_family = "FIXED_FULL_INPUT_BLOCK_CORRECTION_DIAGNOSTIC"

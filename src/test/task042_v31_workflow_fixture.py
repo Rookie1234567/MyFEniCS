@@ -23,7 +23,7 @@ def arrays_receipt(path,**arrays):
 
 
 def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
-    if batch not in ('v31','v32'):raise ValueError('unapproved workflow namespace')
+    if batch not in ('v31','v32','v33'):raise ValueError('unapproved workflow namespace')
     from src.solvers import return_block_study as study,joint_block_study as oldstudy
     from src.solvers.return_block_direction import SelectedBundle,NAMES,FAMILY
     from src.solvers.return_block_window import CAPS
@@ -33,6 +33,10 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
     from src.io.p1_trace_galerkin import physical_state
     from benchmarks import collect_task042_block_direction as oldcollector
     from benchmarks.collect_task042_return_direction import collect
+    if batch=='v33':
+        from src.solvers import full_input_block_study as study
+        from src.solvers.full_input_block_correction import FAMILY,CAPS
+        from benchmarks.task042_full_input_checker import collect
     root=Path(root).resolve();art=root/'benchmarks/artifacts/task042';nt=18144
     rows=(2913,2676,2289,2076,2439,2220,1863,1668)
     groups=np.repeat(np.arange(8),rows);ids=np.flatnonzero((groups==5)|(groups==7))
@@ -87,6 +91,7 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
     for key in ('matrix','LU','pivots'):jitem[key]['path']=str(art/'v26/factors'/key)
     prior=dict(source_sha='3'*40,operator_packet=dict(sha256='a'*64),rows=[],matrix=jitem['matrix'],
         factor_inventory={k:jitem[k] for k in ('LU','pivots')},factor_safety=dict(qualified=True,rcond1_estimate=.5))
+    ret=dict(status='DIAGNOSTIC_COMPLETE',source_sha='4'*40,operator_packet=dict(sha256='a'*64),rows=[])
     old=dict(source_sha='2'*40,operator_packet=dict(sha256='a'*64),rows=[])
     plan=dict(upstream_source_sha='1'*40,v25_source_sha='2'*40,v26_source_sha='3'*40,
         action_sha256='a'*64,physical_sha256='a'*64,mode_sha256='a'*64,
@@ -103,10 +108,28 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         parent=json_receipt(art/'v24'/(name+'.json'),dict(source_sha='1'*40,operator_packet=dict(sha256='a'*64),
             cycles=[{},{},{},dict(state=state)],start=dict(state=state)))
         qj=np.zeros(nt,complex);qj[jactive]=np.linalg.solve(A[np.ix_(jpositions,jpositions)],r[jactive]);vj=bar(qj)
+        if batch=='v33':
+            # Genuine fixed block inverses on this residual, not fitted columns.
+            direction=np.zeros((nt,8),complex)
+            for block in range(8):
+                positions=np.flatnonzero(groups[active]==block)
+                direction[active[positions],block]=np.linalg.solve(A[np.ix_(positions,positions)],r[active[positions]])
+            images=np.column_stack([bar(x) for x in direction.T])
         W9=np.column_stack((images,vj));c9=lstsq(W9[active],r[active],cond=1e-12,lapack_driver='gelsd')[0];e9=r-W9@c9
         v25=arrays_receipt(art/'v25'/(name+'.npz'),directions=direction,images=images,coefficients=np.zeros(8,complex))
         v26=arrays_receipt(art/'v26'/(name+'.npz'),joint_direction=qj,joint_image=vj,coefficients=c9,diagnostic_residual=e9)
-        item=dict(name=name,parent_result=parent,state=state,v25_arrays=v25,v26_arrays=v26);plan['states'].append(item)
+        item=dict(name=name,parent_result=parent,state=state,v25_arrays=v25,v26_arrays=v26)
+        if batch=='v33':
+            wret=np.zeros(nt,complex)
+            for block in (0,1,2,3,4,6):
+                positions=np.flatnonzero(groups[active]==block)
+                wret[active[positions]]=np.linalg.solve(A[np.ix_(positions,positions)],vj[active[positions]])
+            qret=qj-wret
+            qret[jactive]+=np.linalg.solve(A[np.ix_(jpositions,jpositions)],bar(wret)[jactive])
+            v32=arrays_receipt(art/'v32'/(name+'.npz'),return_direction=qret,return_image=bar(qret))
+            item['v32_arrays']=v32
+            ret['rows'].append(dict(name=name,input_state=state,diagnostic_arrays=v32,v25_arrays=v25,v26_arrays=v26,trustworthy=True,gates=dict(qualified=True)))
+        plan['states'].append(item)
         prior['rows'].append(dict(name=name,input_state=state,diagnostic_arrays=v26,old_direction_arrays=v25,trustworthy=True,
             new_direction_resolved=True,rank=9,gates=dict(baseline=True),eta9=float(np.linalg.norm(e9)/np.linalg.norm(r)),full_b_norm=packet.bnorm))
         oldrow=dict(name=name,input_state=state,status='DIAGNOSTIC_COMPLETE',rank=8,diagnostic_arrays=v25,
@@ -119,6 +142,8 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         if i==0:
             initial=deepcopy(oldrow);initial['name']=OLD_NAMES[0];old['rows'].append(initial)
             oldplan['states'].append(dict(name=OLD_NAMES[0],state=state,parent_result=parent))
+    if batch=='v33':
+        plan['v32_result']=json_receipt(art/'v32/result.json',ret);plan['v32_source_sha']='4'*40
     plan['local_setup']=json_receipt(art/'v24/setup.json',setup)
     plan['v26_result']=json_receipt(art/'v26/result.json',prior);plan['v25_result']=json_receipt(art/'v25/result.json',old)
     plan_path=root/'plan.json';json_receipt(plan_path,plan);stage.own_plan=plan
@@ -128,7 +153,7 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
     io=SimpleNamespace(ROOT=root,LABEL=batch.upper(),FAMILY=FAMILY,PLAN_PATH=plan_path,ARTIFACT_ROOT=art/batch,checked_json=checked_json,
         physical_state=lambda item,p:physical_state(item,role='WARM',nt=p.nt,np_=p.np,size=p.size,allowed_versions=('v24',),allowed_root=root),
         publish=lambda name,path:json_receipt(art/batch/(name+'.json'),dict(path=str(path),sha256=file_hash(path))))
-    stage.io=io;monkeypatch.setattr(study,'io',io);monkeypatch.setattr(oldstudy,'io',io)
+    stage.io=io;monkeypatch.setattr(study,'io',io,raising=False);monkeypatch.setattr(oldstudy,'io',io)
     monkeypatch.setattr(study,'mapping',lambda stage:(groups,{'fixture':True}))
     monkeypatch.setattr(study,'local_readiness',lambda *a,**k:dict(qualified=True,fixture=True))
     def direct_c(p,e):
@@ -170,5 +195,5 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         elapsed_seconds=time.monotonic()-stage.run_started,sampled_process_tree_rss_peak_bytes=0,
         sampled_process_tree_swap_peak_bytes=0,descendants_cleared=True),0.)
     out=collect(root=root,plan_path=plan_path,artifact_root=art/batch,records=root/'records',
-        ledger_path=w.LEDGER_PATH,nt=nt,old_plan=oldplan,batch=batch)
+        ledger_path=w.LEDGER_PATH,nt=nt,old_plan=oldplan,**({} if batch=='v33' else dict(batch=batch)))
     return result,out,w.ledger()
