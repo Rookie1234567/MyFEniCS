@@ -66,6 +66,22 @@ V31_WORKFLOW_BUDGET_SECONDS = 43200.0
 TASK40_V5_PRELEDGER_ORIGINAL_RECORD_SHA256 = (
     "79acefeef2064ec738ba38f6158e2af9d3d050195068a8e86eb73b1ae7fd1da0"
 )
+TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA = (
+    "24a56962c733b9ae5454000cdae224dae6dda8f0"
+)
+TASK40_V6_REVIEW_COMMIT_SHA = (
+    "d24c97ae5e28271e1a8e936d311df978777956ad"
+)
+TASK40_V6_AUTHORIZATION_ID = "review_v6_gx784_once"
+TASK40_V6_INPUT_SHA256 = (
+    "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422"
+)
+TASK40_V6_PHYSICAL_MODEL_SHA256 = (
+    "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8"
+)
+TASK40_V6_SETTLEMENT_WRITE_ALLOWANCE_SECONDS = 5.0
+TASK40_V6_POSTPROCESS_GRACE_SECONDS = 30.0
+TASK40_V6_POSTPROCESS_CLOSEOUT_SECONDS = 30.0
 
 
 def _now() -> str:
@@ -1130,6 +1146,7 @@ def _reserve_blr_stage_from_ledger(
     prerequisite: Mapping[str, Any] | None = None,
     bug_replay_limit: int = 1,
     authorized_performance_repeat: Mapping[str, Any] | None = None,
+    review_authorization: Mapping[str, Any] | None = None,
     v28_startup_scope_recovery: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Share replay, reservation, and settlement metadata across BLR batches."""
@@ -1169,6 +1186,50 @@ def _reserve_blr_stage_from_ledger(
         if authorized_performance_repeat is not None
         else None
     )
+    review_auth = (
+        dict(review_authorization)
+        if review_authorization is not None
+        else None
+    )
+    if review_auth is not None:
+        history = ledger.get("review_authorizations", [])
+        if not isinstance(history, list):
+            raise InputError("Task40 review authorization history is invalid")
+        if (
+            error_prefix != "Task40"
+            or stage != "Q4_ORIGINAL"
+            or ledger.get("batch_identity") != TASK40_GX784_RUN_ID
+            or review_auth.get("authorization_id") != TASK40_V6_AUTHORIZATION_ID
+            or review_auth.get("review_commit_sha") != TASK40_V6_REVIEW_COMMIT_SHA
+            or review_auth.get("source_sha") != source_sha
+            or review_auth.get("output_directory")
+            != str(Path(run_directory).resolve())
+            or review_auth.get("allowed_execution_count") != 1
+            or review_auth.get("scope")
+            != "one Gx784 Q4 execution and its saved-field postprocess continuation"
+            or review_auth.get("previous_shared_ledger_sha256")
+            != hashlib.sha256(path.read_bytes()).hexdigest()
+            or len(attempts) != 1
+            or attempts[0].get("source_sha") != TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+            or attempts[0].get("status") != "WORKER_FAILED"
+            or int(ledger.get("unique_bug_replay_count", 0)) != 1
+            or any(
+                isinstance(item, Mapping)
+                and item.get("authorization_id") == TASK40_V6_AUTHORIZATION_ID
+                for item in history
+            )
+            or any(
+                isinstance(item, Mapping)
+                and isinstance(item.get("review_authorization"), Mapping)
+                and item["review_authorization"].get("authorization_id")
+                == TASK40_V6_AUTHORIZATION_ID
+                for item in attempts
+            )
+            or authorized_repeat is not None
+        ):
+            raise InputError(
+                "Task40 V6 one-time review authorization is invalid or consumed"
+            )
     if error_prefix == "Task40":
         ledger.setdefault("infrastructure_recovery_count", 0)
     task40_infrastructure_recovery_attempts = 0
@@ -1193,7 +1254,9 @@ def _reserve_blr_stage_from_ledger(
             != task40_infrastructure_recovery_attempts
         ):
             raise InputError("Task40 infrastructure recovery count does not match its attempts")
-    if authorized_repeat is not None:
+    if review_auth is not None:
+        pass
+    elif authorized_repeat is not None:
         history = ledger.get("authorized_performance_repeats", [])
         if not isinstance(history, list):
             raise InputError(
@@ -1368,6 +1431,8 @@ def _reserve_blr_stage_from_ledger(
         attempt["prerequisite"] = dict(prerequisite)
     if authorized_repeat is not None:
         attempt["authorized_performance_repeat"] = dict(authorized_repeat)
+    if review_auth is not None:
+        attempt["review_authorization"] = dict(review_auth)
     attempts.append(attempt)
     stage_record.update({"attempts": attempts, "active_attempt": len(attempts) - 1})
     ledger["stages"] = dict(ledger.get("stages", {}))
@@ -1380,6 +1445,8 @@ def _reserve_blr_stage_from_ledger(
     }
     if authorized_repeat is not None:
         source_attempt["authorized_performance_repeat"] = True
+    if review_auth is not None:
+        source_attempt["review_authorization_id"] = review_auth["authorization_id"]
     ledger["source_attempts"].append(source_attempt)
     ledger["fresh_worker_count"] = int(ledger.get("fresh_worker_count", 0)) + 1
     if (
@@ -1407,6 +1474,18 @@ def _reserve_blr_stage_from_ledger(
             }
         )
         ledger["authorized_performance_repeats"] = history
+    if review_auth is not None:
+        history = list(ledger.get("review_authorizations", []))
+        history.append(
+            {
+                **review_auth,
+                "stage": str(stage),
+                "attempt": len(attempts),
+                "reserved_timestamp_ns": attempt["reserved_timestamp_ns"],
+                "consumed": True,
+            }
+        )
+        ledger["review_authorizations"] = history
     if replay:
         ledger["unique_bug_replay_count"] = int(
             ledger.get("unique_bug_replay_count", 0)
@@ -1431,6 +1510,8 @@ def _reserve_blr_stage_from_ledger(
         result["prerequisite"] = dict(prerequisite)
     if authorized_repeat is not None:
         result["authorized_performance_repeat"] = authorized_repeat
+    if review_auth is not None:
+        result["review_authorization"] = review_auth
     return result
 
 
@@ -3082,6 +3163,7 @@ def _reserve_a4_tensor_h6_budget(
     bug_replay_limit: int = 1,
     user_bug_continuation: Mapping[str, Any] | None = None,
     preledger_implementation_bug_replay: Mapping[str, Any] | None = None,
+    review_authorization: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve one fresh original-model attempt in an independent batch ledger."""
     from src.geometry.task40_nonseparable_plan import (
@@ -3178,11 +3260,26 @@ def _reserve_a4_tensor_h6_budget(
                 raise InputError("Task40 F1 infrastructure recovery authorization is invalid")
         else:
             raise InputError(f"{error_prefix} completion rerun reservation authorization is invalid")
+    review_auth = (
+        dict(review_authorization)
+        if review_authorization is not None
+        else None
+    )
     repo_root = Path(repo_root).resolve()
     path = (
         repo_root / "benchmarks" / "artifacts" / ledger_task_directory
         / artifact_directory / batch_identity / "shared_workflow_ledger.json"
     )
+    if review_auth is not None and (
+        not path.is_file()
+        or review_auth.get("previous_shared_ledger_sha256")
+        != hashlib.sha256(path.read_bytes()).hexdigest()
+        or review_auth.get("output_directory")
+        != str(Path(run_directory).resolve())
+    ):
+        raise InputError(
+            "Task40 V6 authorization does not bind the preserved ledger and new output directory"
+        )
     prerequisite = {
         "original_only": True,
         "allowed_stages": ["Q4_ORIGINAL"],
@@ -3212,11 +3309,36 @@ def _reserve_a4_tensor_h6_budget(
         if preledger_implementation_bug_replay is not None
         else None
     )
+    if review_auth is not None:
+        if (
+            not task40_v5_gx784
+            or stage != "Q4_ORIGINAL"
+            or source_sha != review_auth.get("source_sha")
+            or review_auth.get("authorization_id") != TASK40_V6_AUTHORIZATION_ID
+            or review_auth.get("review_commit_sha") != TASK40_V6_REVIEW_COMMIT_SHA
+            or review_auth.get("input_sha256") != TASK40_V6_INPUT_SHA256
+            or review_auth.get("physical_model_sha256")
+            != TASK40_V6_PHYSICAL_MODEL_SHA256
+            or review_auth.get("allowed_execution_count") != 1
+            or review_auth.get("scope")
+            != "one Gx784 Q4 execution and its saved-field postprocess continuation"
+        ):
+            raise InputError("Task40 V6 review authorization identity changed")
+        prerequisite["review_authorization"] = review_auth
     if preledger_replay_entry is not None:
         if (
             not task40_v5_gx784
             or bug_replay_limit != 0
-            or source_sha != preledger_replay_entry.get("fixed_source_sha")
+            or preledger_replay_entry.get("fixed_source_sha")
+            != TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+            or (
+                review_auth is None
+                and source_sha != preledger_replay_entry.get("fixed_source_sha")
+            )
+            or (
+                review_auth is not None
+                and source_sha == preledger_replay_entry.get("fixed_source_sha")
+            )
             or preledger_replay_entry.get("stage") != stage
             or preledger_replay_entry.get("run_id") != batch_identity
             or preledger_replay_entry.get("classification") != "IMPLEMENTATION_BUG"
@@ -3245,6 +3367,8 @@ def _reserve_a4_tensor_h6_budget(
             "preledger_implementation_bug_replays", []
         ) != ([] if preledger_replay_entry is None else [preledger_replay_entry]):
             raise InputError("Task40 V5 pre-ledger bug replay ledger evidence changed")
+        if review_auth is not None and ledger.get("review_authorizations", []):
+            raise InputError("Task40 V6 one-time review authorization was already consumed")
     else:
         ledger = {
             "schema": schema,
@@ -3292,6 +3416,7 @@ def _reserve_a4_tensor_h6_budget(
         prerequisite=prerequisite,
         bug_replay_limit=bug_replay_limit,
         authorized_performance_repeat=authorized_repeat,
+        review_authorization=review_auth,
     )
 
 
@@ -3670,7 +3795,8 @@ def _load_task40_v5_preledger_bug_replay(
         and evidence.get("stage") == stage == "Q4_ORIGINAL"
         and evidence.get("allowed_repeat_count") == 1
         and evidence.get("failed_source_sha") != source_sha
-        and evidence.get("fixed_source_sha") == source_sha
+        and evidence.get("fixed_source_sha")
+        == TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
         and evidence.get("input_path") == str(input_path)
         and input_path.is_file()
         and evidence.get("input_sha256")
@@ -3706,7 +3832,7 @@ def _load_task40_v5_preledger_bug_replay(
         "run_id": TASK40_GX784_RUN_ID,
         "stage": "Q4_ORIGINAL",
         "failed_source_sha": str(evidence["failed_source_sha"]),
-        "fixed_source_sha": str(source_sha),
+        "fixed_source_sha": str(evidence["fixed_source_sha"]),
         "allowed_repeat_count": 1,
         "elapsed_charge_seconds": float(charge_seconds),
         "service_unit": str(evidence["service_unit"]),
@@ -3742,6 +3868,8 @@ def _reserve_task40_0p7nm_budget(
         TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
         TASK40_REVIEW_V2_GROWTH_RUN_IDS,
     )
+    input_sha256 = kwargs.pop("input_sha256", None)
+    physical_model_sha256 = kwargs.pop("physical_model_sha256", None)
 
     legacy_run_ids = {
         "task40extra_0p7nm_nonseparable_g0_iterative_v1",
@@ -3850,6 +3978,7 @@ def _reserve_task40_0p7nm_budget(
             "ledger_sha256": {},
         }
     prior_v5_batch_timer_start = None
+    prior_gx784_ledger: Mapping[str, Any] | None = None
     for prior_run_id in allowed_run_ids:
         ledger_path = (
             run_ledger_root / prior_run_id / "shared_workflow_ledger.json"
@@ -3881,6 +4010,7 @@ def _reserve_task40_0p7nm_budget(
             group = "legacy"
         group_facts = replay_accounting[group]
         if prior_run_id == TASK40_GX784_RUN_ID:
+            prior_gx784_ledger = prior_ledger
             attempts = (
                 prior_ledger.get("stages", {})
                 .get("Q4_ORIGINAL", {})
@@ -3924,6 +4054,56 @@ def _reserve_task40_0p7nm_budget(
     else:
         selected_batch = "legacy"
     selected_history = replay_accounting[selected_batch]
+    review_authorization = None
+    if run_id == TASK40_GX784_RUN_ID and prior_gx784_ledger is not None:
+        q4_record = prior_gx784_ledger.get("stages", {}).get("Q4_ORIGINAL", {})
+        q4_attempts = q4_record.get("attempts", []) if isinstance(q4_record, Mapping) else []
+        post_record = prior_gx784_ledger.get("stages", {}).get("V5_POSTPROCESS", {})
+        post_attempts = post_record.get("attempts", []) if isinstance(post_record, Mapping) else []
+        old_ledger_sha256 = selected_history["ledger_sha256"][run_id]
+        if (
+            len(q4_attempts) != 1
+            or q4_attempts[0].get("source_sha") != TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+            or q4_attempts[0].get("status") != "WORKER_FAILED"
+            or q4_attempts[0].get("watchdog_classification") != "WORKER_FAILED"
+            or q4_record.get("active_attempt") is not None
+            or len(post_attempts) != 1
+            or post_attempts[0].get("status") != "POSTPROCESS_PARENT_FAILED"
+            or post_attempts[0].get("watchdog_classification") is not None
+            or post_record.get("active_attempt") is not None
+            or int(prior_gx784_ledger.get("unique_bug_replay_count", 0)) != 1
+            or float(prior_gx784_ledger.get("elapsed_seconds", 0.0))
+            != 4.619253995631944
+            or prior_gx784_ledger.get("review_authorizations", [])
+            or input_sha256 != TASK40_V6_INPUT_SHA256
+            or physical_model_sha256 != TASK40_V6_PHYSICAL_MODEL_SHA256
+            or not isinstance(kwargs.get("source_sha"), str)
+            or kwargs.get("source_sha") == TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+        ):
+            raise InputError("Task40 V6 authorization requires the exact unsettled V5 history and frozen Gx784 identity")
+        output_directory = str(Path(run_directory).resolve())
+        if output_directory == str(Path(q4_attempts[0]["run_directory"]).resolve()):
+            raise InputError("Task40 V6 formal execution must use a new output directory")
+        review_authorization = {
+            "schema": "task40extra.review-v6.gx784-once-authorization.v1",
+            "authorization_id": TASK40_V6_AUTHORIZATION_ID,
+            "review_commit_sha": TASK40_V6_REVIEW_COMMIT_SHA,
+            "classification": "REVIEW_AUTHORIZED_SINGLE_EXECUTION",
+            "run_id": TASK40_GX784_RUN_ID,
+            "stage": "Q4_ORIGINAL",
+            "comparison_group": comparison_group,
+            "source_sha": str(kwargs["source_sha"]),
+            "input_sha256": input_sha256,
+            "physical_model_sha256": physical_model_sha256,
+            "previous_shared_ledger_sha256": old_ledger_sha256,
+            "output_directory": output_directory,
+            "allowed_execution_count": 1,
+            "scope": "one Gx784 Q4 execution and its saved-field postprocess continuation",
+            "postprocess_parent_failed_continuation": True,
+            "prior_unique_bug_replay_count": 1,
+            "prior_elapsed_seconds": 4.619253995631944,
+            "issued_timestamp_ns": time.time_ns(),
+        }
     preledger_bug_replay = _load_task40_v5_preledger_bug_replay(
         repo_root,
         run_id=run_id,
@@ -4067,6 +4247,20 @@ def _reserve_task40_0p7nm_budget(
     replay_accounting["selected_batch"] = selected_batch
     replay_accounting["selected_bug_replay_limit"] = replay_limit
     replay_accounting["old_history_preserved_separately"] = True
+    if review_authorization is not None:
+        replay_accounting["review_authorization"] = {
+            key: review_authorization[key]
+            for key in (
+                "authorization_id",
+                "review_commit_sha",
+                "source_sha",
+                "input_sha256",
+                "physical_model_sha256",
+                "previous_shared_ledger_sha256",
+                "output_directory",
+                "allowed_execution_count",
+            )
+        }
     if recovery_repeat is not None:
         replay_accounting["one_off_infrastructure_recovery"] = {
             key: recovery_repeat[key]
@@ -4106,6 +4300,7 @@ def _reserve_task40_0p7nm_budget(
         authorized_performance_repeat=recovery_repeat,
         user_bug_continuation=continuation,
         preledger_implementation_bug_replay=preledger_bug_replay,
+        review_authorization=review_authorization,
     )
     reservation["task40_batch_replay_accounting_path"] = str(accounting_path)
     reservation["task40_batch_replay_accounting"] = replay_accounting
@@ -4562,6 +4757,40 @@ def _settle_v14_shared_budget(
     ledger["stages"][stage] = stage_record
     ledger["elapsed_seconds"] = float(ledger.get("elapsed_seconds", 0.0)) + settled
     _write_v14_ledger(path, ledger)
+    if (
+        isinstance(attempt.get("review_authorization"), Mapping)
+        and attempt["review_authorization"].get("authorization_id")
+        == TASK40_V6_AUTHORIZATION_ID
+    ):
+        from .workflow_timebase import (
+            CONSERVATIVE_REALTIME,
+            checked_interval,
+            clock_sample,
+        )
+
+        finalization_interval = checked_interval(
+            parent_clock_end,
+            clock_sample(),
+            policy=CONSERVATIVE_REALTIME,
+        )
+        finalization_seconds = float(finalization_interval["budget_seconds"])
+        settled += finalization_seconds
+        attempt["settled_seconds"] = settled
+        attempt["actual_elapsed_seconds"] = settled
+        attempt["settlement_finalization_interval"] = dict(finalization_interval)
+        attempt["settlement_write_allowance_seconds"] = (
+            TASK40_V6_SETTLEMENT_WRITE_ALLOWANCE_SECONDS
+        )
+        attempt["reservation_exceeded_seconds"] = max(
+            0.0, settled - float(lease["reserved_seconds"])
+        )
+        stage_record["attempts"][index] = attempt
+        ledger["stages"][stage] = stage_record
+        ledger["elapsed_seconds"] = float(ledger["elapsed_seconds"]) + finalization_seconds
+        ledger["conservative_allowance_seconds"] = float(
+            ledger.get("conservative_allowance_seconds", 0.0)
+        ) + TASK40_V6_SETTLEMENT_WRITE_ALLOWANCE_SECONDS
+        _write_v14_ledger(path, ledger)
 
 
 def _reserve_task40_v5_postprocess_budget(
@@ -4621,15 +4850,48 @@ def _reserve_task40_v5_postprocess_budget(
         raise InputError("Task40 V5 postprocessing requires a recorded Gx784 solve attempt")
     if any("settled_seconds" not in item for item in solve_attempts if isinstance(item, Mapping)):
         raise InputError("Task40 V5 postprocessing requires every solve attempt to be settled")
+    review_authorizations = ledger.get("review_authorizations", [])
+    review_authorization = next(
+        (
+            dict(item)
+            for item in review_authorizations
+            if isinstance(item, Mapping)
+            and item.get("authorization_id") == TASK40_V6_AUTHORIZATION_ID
+        ),
+        None,
+    ) if isinstance(review_authorizations, list) else None
+    v6_authorized_postprocess = bool(
+        review_authorization is not None
+        and review_authorization.get("consumed") is True
+        and review_authorization.get("postprocess_parent_failed_continuation") is True
+        and len(solve_attempts) == 2
+        and isinstance(solve_attempts[-1].get("review_authorization"), Mapping)
+        and solve_attempts[-1]["review_authorization"].get("authorization_id")
+        == TASK40_V6_AUTHORIZATION_ID
+        and solve_attempts[-1].get("source_sha")
+        == review_authorization.get("source_sha")
+        and solve_attempts[0].get("source_sha")
+        == TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+    )
     prior_post = stages.get("V5_POSTPROCESS", {})
     post_attempts = (
         list(prior_post.get("attempts", []))
         if isinstance(prior_post, Mapping)
         else []
     )
-    if len(post_attempts) > 1:
-        raise InputError("Task40 V5 postprocessing exceeded its single local repair replay")
-    replay = bool(post_attempts)
+    if len(post_attempts) > (2 if v6_authorized_postprocess else 1):
+        raise InputError("Task40 postprocessing exceeded its authorized local repair replay")
+    v6_parent_continuation = bool(
+        v6_authorized_postprocess
+        and len(post_attempts) == 1
+        and source_sha == review_authorization.get("source_sha")
+        and post_attempts[0].get("source_sha")
+        == TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+        and post_attempts[0].get("status") == "POSTPROCESS_PARENT_FAILED"
+        and post_attempts[0].get("watchdog_classification") is None
+        and post_attempts[0].get("watchdog_leader_exit_code") is None
+    )
+    replay = bool(post_attempts) and not v6_parent_continuation
     replay_record = None
     if replay:
         if implementation_bug_replay is None:
@@ -4638,31 +4900,102 @@ def _reserve_task40_v5_postprocess_budget(
             )
         prior_bytes = path.read_bytes()
         prior_sha = hashlib.sha256(prior_bytes).hexdigest()
-        prior = post_attempts[0]
+        prior = post_attempts[-1]
         replay_record = dict(implementation_bug_replay)
-        valid_replay = (
-            replay_record.get("schema") == "task40extra.review-v5.postprocess-bug-replay.v1"
-            and replay_record.get("classification") == "IMPLEMENTATION_BUG"
-            and replay_record.get("run_id") == TASK40_GX784_RUN_ID
-            and replay_record.get("stage") == "V5_POSTPROCESS"
-            and replay_record.get("allowed_repeat_count") == 1
-            and replay_record.get("prior_attempt_source_sha") == prior.get("source_sha")
-            and replay_record.get("fixed_source_sha") == source_sha
-            and replay_record.get("prior_shared_ledger_sha256") == prior_sha
-            and prior.get("status")
-            == "POSTPROCESS_WORKER_FAILED_OR_CONTROLLED_STOP"
-            and prior.get("watchdog_classification") == "WORKER_FAILED"
-            and type(prior.get("watchdog_leader_exit_code")) is int
-            and prior.get("watchdog_leader_exit_code") != 0
-            and isinstance(replay_record.get("bug_and_fix"), str)
-            and bool(replay_record["bug_and_fix"].strip())
-            and isinstance(replay_record.get("supporting_evidence"), list)
-            and bool(replay_record["supporting_evidence"])
+        v6_parent_bug_replay = bool(
+            v6_authorized_postprocess
+            and len(post_attempts) == 2
+            and prior.get("review_authorization_id") == TASK40_V6_AUTHORIZATION_ID
+            and prior.get("status") == "POSTPROCESS_PARENT_FAILED"
+            and prior.get("watchdog_classification") is None
+            and prior.get("watchdog_leader_exit_code") is None
         )
+        if v6_parent_bug_replay:
+            result_path = Path(str(prior.get("pre_settlement_result_path", ""))).resolve()
+            try:
+                result_path.relative_to(Path(repo_root).resolve())
+                result_bytes = result_path.read_bytes()
+                result = json.loads(result_bytes.decode("utf-8"))
+            except (OSError, ValueError, UnicodeDecodeError, json.JSONDecodeError):
+                result_bytes = b""
+                result = {}
+            result_sha256 = hashlib.sha256(result_bytes).hexdigest()
+            supporting = replay_record.get("supporting_evidence")
+            supporting_result = (
+                next(
+                    (
+                        item
+                        for item in supporting
+                        if isinstance(item, Mapping)
+                        and item.get("path") == str(result_path)
+                    ),
+                    None,
+                )
+                if isinstance(supporting, list)
+                else None
+            )
+            valid_replay = (
+                replay_record.get("schema")
+                == "task40extra.review-v6.postprocess-parent-bug-replay.v1"
+                and replay_record.get("classification") == "IMPLEMENTATION_BUG"
+                and replay_record.get("authorization_id") == TASK40_V6_AUTHORIZATION_ID
+                and replay_record.get("review_commit_sha") == TASK40_V6_REVIEW_COMMIT_SHA
+                and replay_record.get("run_id") == TASK40_GX784_RUN_ID
+                and replay_record.get("stage") == "V5_POSTPROCESS"
+                and replay_record.get("allowed_repeat_count") == 1
+                and replay_record.get("prior_attempt") == prior.get("attempt")
+                and replay_record.get("prior_attempt_source_sha") == prior.get("source_sha")
+                and replay_record.get("fixed_source_sha") == source_sha
+                and source_sha != prior.get("source_sha")
+                and replay_record.get("prior_shared_ledger_sha256") == prior_sha
+                and replay_record.get("pre_settlement_result_path") == str(result_path)
+                and replay_record.get("pre_settlement_result_sha256") == result_sha256
+                and prior.get("pre_settlement_result_path") == str(result_path)
+                and prior.get("pre_settlement_result_sha256") == result_sha256
+                and isinstance(supporting_result, Mapping)
+                and supporting_result.get("sha256") == result_sha256
+                and result.get("status") == "POSTPROCESS_PARENT_FAILED"
+                and result.get("run_id") == TASK40_GX784_RUN_ID
+                and result.get("review_authorization_id") == TASK40_V6_AUTHORIZATION_ID
+                and result.get("source_sha") == prior.get("source_sha")
+                and result.get("worker_started") is False
+                and result.get("watchdog_summary") is None
+                and isinstance(result.get("watchdog_directory"), str)
+                and not Path(result["watchdog_directory"]).exists()
+                and isinstance(result.get("error"), str)
+                and result.get("error") == replay_record.get("failure_signature")
+                and bool(str(result.get("error", "")).strip())
+                and isinstance(replay_record.get("bug_and_fix"), str)
+                and bool(replay_record["bug_and_fix"].strip())
+                and isinstance(supporting, list)
+                and bool(supporting)
+            )
+        else:
+            valid_replay = (
+                replay_record.get("schema") == "task40extra.review-v5.postprocess-bug-replay.v1"
+                and replay_record.get("classification") == "IMPLEMENTATION_BUG"
+                and replay_record.get("run_id") == TASK40_GX784_RUN_ID
+                and replay_record.get("stage") == "V5_POSTPROCESS"
+                and replay_record.get("allowed_repeat_count") == 1
+                and replay_record.get("prior_attempt_source_sha") == prior.get("source_sha")
+                and replay_record.get("fixed_source_sha") == source_sha
+                and replay_record.get("prior_shared_ledger_sha256") == prior_sha
+                and prior.get("status")
+                == "POSTPROCESS_WORKER_FAILED_OR_CONTROLLED_STOP"
+                and prior.get("watchdog_classification") == "WORKER_FAILED"
+                and type(prior.get("watchdog_leader_exit_code")) is int
+                and prior.get("watchdog_leader_exit_code") != 0
+                and isinstance(replay_record.get("bug_and_fix"), str)
+                and bool(replay_record["bug_and_fix"].strip())
+                and isinstance(replay_record.get("supporting_evidence"), list)
+                and bool(replay_record["supporting_evidence"])
+            )
         if not valid_replay:
             raise InputError("Task40 V5 postprocessing implementation-bug replay evidence is invalid")
     elif implementation_bug_replay is not None:
         raise InputError("Task40 V5 postprocessing replay evidence has no failed prior attempt")
+    if v6_parent_continuation and implementation_bug_replay is not None:
+        raise InputError("Task40 V6 continuation does not consume postprocessing bug-replay evidence")
     from src.runners.physical_v14_budget import read_v14_effective_budget
     from .workflow_timebase import CONSERVATIVE_REALTIME, checked_interval, clock_sample
 
@@ -4679,6 +5012,15 @@ def _reserve_task40_v5_postprocess_budget(
     )
     if remaining <= 0.0:
         raise InputError("Task40 V5 batch has no remaining time for saved-field comparison")
+    watchdog_tail_reserve = (
+        TASK40_V6_POSTPROCESS_GRACE_SECONDS
+        + TASK40_V6_POSTPROCESS_CLOSEOUT_SECONDS
+        if v6_authorized_postprocess
+        else 0.0
+    )
+    watchdog_wall_seconds = remaining - watchdog_tail_reserve
+    if watchdog_wall_seconds <= 0.0:
+        raise InputError("Task40 V6 has no postprocess time after termination and closeout reserves")
     attempt = {
         "stage": "V5_POSTPROCESS",
         "attempt": len(post_attempts) + 1,
@@ -4687,6 +5029,13 @@ def _reserve_task40_v5_postprocess_budget(
         "run_directory": str(Path(run_directory).resolve()),
         "workflow_clock_start": dict(workflow_clock_start),
         "reserved_seconds": remaining,
+        "watchdog_wall_seconds": watchdog_wall_seconds,
+        "termination_grace_seconds": (
+            TASK40_V6_POSTPROCESS_GRACE_SECONDS if v6_authorized_postprocess else 30.0
+        ),
+        "closeout_reserve_seconds": (
+            TASK40_V6_POSTPROCESS_CLOSEOUT_SECONDS if v6_authorized_postprocess else 0.0
+        ),
         "elapsed_before_seconds": float(effective_before["measured_elapsed_seconds"]),
         "postprocess_preflight_seconds": postprocess_preflight_seconds,
         "elapsed_at_reservation_seconds": (
@@ -4701,7 +5050,21 @@ def _reserve_task40_v5_postprocess_budget(
         "effective_budget_before_reservation": effective_before,
         "time_policy": "enforce",
         "status": "ACTIVE",
-        "scope": "V5 saved-field restoration, pair comparisons, and independent raw-record checker",
+        "scope": (
+            "V6 saved-field restoration, pair comparisons, independent raw-record checker, "
+            "and bounded closeout"
+            if v6_authorized_postprocess
+            else "V5 saved-field restoration, pair comparisons, and independent raw-record checker"
+        ),
+        **(
+            {
+                "review_authorization_id": TASK40_V6_AUTHORIZATION_ID,
+                "pde_source_sha": review_authorization["source_sha"],
+                "authorized_parent_failure_continuation": v6_parent_continuation,
+            }
+            if v6_authorized_postprocess
+            else {}
+        ),
         **(
             {
                 "implementation_bug_replay": replay_record,
@@ -4726,6 +5089,19 @@ def _reserve_task40_v5_postprocess_budget(
         "attempt_index": len(post_attempts) - 1,
         "replay": replay,
         "reserved_seconds": remaining,
+        "watchdog_wall_seconds": watchdog_wall_seconds,
+        "termination_grace_seconds": (
+            TASK40_V6_POSTPROCESS_GRACE_SECONDS
+            if v6_authorized_postprocess
+            else 30.0
+        ),
+        "closeout_reserve_seconds": (
+            TASK40_V6_POSTPROCESS_CLOSEOUT_SECONDS
+            if v6_authorized_postprocess
+            else 0.0
+        ),
+        "review_authorization": review_authorization,
+        "v6_parent_failure_continuation": v6_parent_continuation,
         "workflow_clock_start": dict(workflow_clock_start),
         "effective_budget_before_reservation": effective_before,
     }
@@ -4737,10 +5113,16 @@ def _settle_task40_v5_postprocess_budget(
     status: str,
     watchdog_summary_path: Path | None,
     parent_clock_end: Mapping[str, Any],
+    pre_settlement_result_path: Path | None = None,
+    pre_settlement_result_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Debit actual comparison/checker wall time into the Gx784 shared ledger."""
 
-    from .workflow_timebase import CONSERVATIVE_REALTIME, checked_interval
+    from .workflow_timebase import (
+        CONSERVATIVE_REALTIME,
+        checked_interval,
+        clock_sample,
+    )
 
     path = Path(str(lease["path"]))
     try:
@@ -4790,6 +5172,12 @@ def _settle_task40_v5_postprocess_budget(
             "watchdog_summary_path": (
                 None if watchdog_summary_path is None else str(watchdog_summary_path)
             ),
+            "pre_settlement_result_path": (
+                None
+                if pre_settlement_result_path is None
+                else str(pre_settlement_result_path.resolve())
+            ),
+            "pre_settlement_result_sha256": pre_settlement_result_sha256,
             "watchdog_summary_sha256": summary_sha256,
             "watchdog_classification": watchdog_classification,
             "watchdog_leader_exit_code": watchdog_leader_exit_code,
@@ -4801,6 +5189,40 @@ def _settle_task40_v5_postprocess_budget(
     ledger["stages"]["V5_POSTPROCESS"] = stage_record
     ledger["elapsed_seconds"] = float(ledger.get("elapsed_seconds", 0.0)) + settled
     _write_v14_ledger(path, ledger)
+    if attempt.get("review_authorization_id") == TASK40_V6_AUTHORIZATION_ID:
+        finalization_interval = checked_interval(
+            parent_clock_end,
+            clock_sample(),
+            policy=CONSERVATIVE_REALTIME,
+        )
+        finalization_seconds = float(finalization_interval["budget_seconds"])
+        settled += finalization_seconds
+        attempt["settled_seconds"] = settled
+        attempt["actual_elapsed_monotonic_seconds"] = float(
+            attempt["actual_elapsed_monotonic_seconds"]
+        ) + float(finalization_interval["elapsed_seconds"]["monotonic"])
+        attempt["actual_elapsed_boottime_seconds"] = float(
+            attempt["actual_elapsed_boottime_seconds"]
+        ) + float(finalization_interval["elapsed_seconds"]["boottime"])
+        attempt["actual_elapsed_seconds"] = attempt[
+            "actual_elapsed_monotonic_seconds"
+        ]
+        attempt["conservative_clock_charge_seconds"] = settled
+        attempt["settlement_finalization_interval"] = dict(finalization_interval)
+        attempt["settlement_write_allowance_seconds"] = (
+            TASK40_V6_SETTLEMENT_WRITE_ALLOWANCE_SECONDS
+        )
+        attempt["reservation_exceeded_seconds"] = max(
+            0.0, settled - float(attempt["reserved_seconds"])
+        )
+        attempts[index] = attempt
+        stage_record["attempts"] = attempts
+        ledger["stages"]["V5_POSTPROCESS"] = stage_record
+        ledger["elapsed_seconds"] = float(ledger["elapsed_seconds"]) + finalization_seconds
+        ledger["conservative_allowance_seconds"] = float(
+            ledger.get("conservative_allowance_seconds", 0.0)
+        ) + TASK40_V6_SETTLEMENT_WRITE_ALLOWANCE_SECONDS
+        _write_v14_ledger(path, ledger)
     from src.runners.physical_v14_budget import read_v14_effective_budget
 
     return {
@@ -5469,6 +5891,8 @@ def launch_specification(
                 specification.identity.get("comparison_group")
             ),
             service_cgroup_path=service_cgroup_path,
+            input_sha256=specification.input_sha256,
+            physical_model_sha256=specification.physical_model_sha256,
         )
     elif (
         a4_tensor_h6_v29_profile
@@ -5800,6 +6224,20 @@ def launch_specification(
                         wall_budget = min(wall_budget, float(v14_lease['reserved_seconds']) - full_clock.seconds)
                         if wall_budget <= 0 and v14_time_policy == V14_TIME_POLICY_ENFORCE:
                             raise InputError('V14 preflight exhausted the stage or shared workflow budget')
+                    v6_tail_reserve = 0.0
+                    if (
+                        v14_lease is not None
+                        and isinstance(v14_lease.get("review_authorization"), Mapping)
+                    ):
+                        v6_tail_reserve = (
+                            float(watchdog_kwargs.get("grace_seconds", 0.0))
+                            + 30.0
+                        )
+                        wall_budget -= v6_tail_reserve
+                        if wall_budget <= 0.0:
+                            raise InputError(
+                                "Task40 V6 deadline has no time left for watchdog grace and final settlement"
+                            )
                     watchdog_wall_seconds = (
                         float(workflow_limit)
                         if v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
@@ -5829,6 +6267,9 @@ def launch_specification(
                     result = {'exit_status': authority['leader_exit_code'],
                         'result_classification': 'worker_exit0' if authority['classification'] == 'COMPLETED' else authority['classification'],
                         'resource_authority': authority}
+                    if v6_tail_reserve > 0.0:
+                        result["v6_deadline_tail_reserve_seconds"] = v6_tail_reserve
+                        result["v6_watchdog_wall_seconds"] = watchdog_wall_seconds
                     try:
                         source_after = _physical_source_gate(Path(__file__).resolve().parents[2], source)
                     except (InputError, OSError, subprocess.CalledProcessError) as exc:

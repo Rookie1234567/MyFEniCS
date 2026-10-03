@@ -10,7 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
-from typing import Any
+from typing import Any, Callable, Sequence
 
 from src.runners.workflow_timebase import clock_sample
 
@@ -226,6 +226,8 @@ def _write_held_comparison(
         "checker_path": str(checker_path),
         "checker_sha256": _sha256(checker_path),
         "checker_record": checked,
+        "accuracy_classification": checked.get("classification"),
+        "accuracy_pass": False,
         "preflight": preflight,
     }
 
@@ -294,7 +296,13 @@ def _watchdog_checks(summary: dict[str, Any], last: dict[str, Any]) -> dict[str,
     }
 
 
-def _run(case_root: Path, implementation_bug_evidence: Path | None) -> dict[str, Any]:
+def _run(
+    case_root: Path,
+    implementation_bug_evidence: Path | None,
+    *,
+    worker_command_override: Sequence[str] | None = None,
+    pre_supervise_hook: Callable[[], None] | None = None,
+) -> dict[str, Any]:
     preflight_start = time.monotonic()
     workflow_start = clock_sample()
     branch, source_sha = _git_facts()
@@ -326,7 +334,17 @@ def _run(case_root: Path, implementation_bug_evidence: Path | None) -> dict[str,
     previous = old_ledger.get("stages", {}).get("V5_POSTPROCESS", {})
     previous_attempts = previous.get("attempts", []) if isinstance(previous, dict) else []
     attempt_number = len(previous_attempts) + 1
-    if attempt_number > 2:
+    v6_authorization_consumed = any(
+        isinstance(item, dict)
+        and item.get("authorization_id") == "review_v6_gx784_once"
+        and item.get("consumed") is True
+        for item in old_ledger.get("review_authorizations", [])
+    )
+    if attempt_number > 2 and not (
+        attempt_number == 3
+        and v6_authorization_consumed
+        and implementation_bug_evidence is not None
+    ):
         raise RuntimeError("V5 comparison/checker is limited to one implementation-bug replay")
     post_root = case_root / "postprocess_v5" / f"attempt{attempt_number}"
     if post_root.exists():
@@ -345,32 +363,68 @@ def _run(case_root: Path, implementation_bug_evidence: Path | None) -> dict[str,
     )
     watchdog_dir = post_root / "watchdog"
     comparison_path = post_root / "gx784_pair_comparisons.json"
-    command = [
-        sys.executable,
-        "-u",
-        "-m",
-        "benchmarks.postprocess_task40_review_v5_gx784",
-        "--gx784-root",
-        str(case_root),
-        "--output",
-        str(comparison_path),
-    ]
+    command = (
+        list(worker_command_override)
+        if worker_command_override is not None
+        else [
+            sys.executable,
+            "-u",
+            "-m",
+            "benchmarks.postprocess_task40_review_v5_gx784",
+            "--gx784-root",
+            str(case_root),
+            "--output",
+            str(comparison_path),
+        ]
+    )
     worker_status = "POSTPROCESS_PARENT_FAILED"
     summary = None
     error: str | None = None
+    supervisor_started = False
+    actual_supervisor_wall_seconds = None
+    supervise_start_elapsed_seconds = None
     try:
+        if pre_supervise_hook is not None:
+            pre_supervise_hook()
+        from src.runners.workflow_timebase import (
+            CONSERVATIVE_REALTIME,
+            checked_interval,
+        )
+
+        supervise_start_interval = checked_interval(
+            workflow_start,
+            clock_sample(),
+            policy=CONSERVATIVE_REALTIME,
+        )
+        supervise_start_elapsed_seconds = float(
+            supervise_start_interval["budget_seconds"]
+        )
+        effective_remaining = float(
+            lease["effective_budget_before_reservation"]["remaining_seconds"]
+        )
+        actual_supervisor_wall_seconds = (
+            effective_remaining
+            - supervise_start_elapsed_seconds
+            - float(lease["termination_grace_seconds"])
+            - float(lease["closeout_reserve_seconds"])
+        )
+        if actual_supervisor_wall_seconds <= 0.0:
+            raise RuntimeError(
+                "V6 shared deadline has no postprocess time after startup, termination, and closeout"
+            )
         from benchmarks.subreaper_watchdog import (
             PHYSICAL_MEMORY_PRESSURE_POLICY,
             supervise,
         )
 
+        supervisor_started = True
         summary = supervise(
             command,
             watchdog_dir,
-            wall_seconds=float(lease["reserved_seconds"]),
-            solve_seconds=float(lease["reserved_seconds"]),
+            wall_seconds=actual_supervisor_wall_seconds,
+            solve_seconds=actual_supervisor_wall_seconds,
             interval=0.25,
-            grace_seconds=30.0,
+            grace_seconds=float(lease["termination_grace_seconds"]),
             source_state={
                 "branch": branch,
                 "source_sha": source_sha,
@@ -410,17 +464,46 @@ def _run(case_root: Path, implementation_bug_evidence: Path | None) -> dict[str,
             worker_tail = worker_log.read_text(
                 encoding="utf-8", errors="replace"
             ).splitlines()[-30:]
+        checker_path = comparison_path.with_name("gx784_independent_check.json")
+        checker_record = (
+            _read_json(checker_path)
+            if checker_path.is_file()
+            else None
+        )
+        accuracy_pass = bool(
+            isinstance(checker_record, dict)
+            and checker_record.get("status") == "pass"
+            and checker_record.get("classification") == "tested_x_agreement_pass"
+            and checker_record.get("independently_recomputed") is True
+        )
         record = {
             "schema": "task40extra.review-v5.gx784-postprocess-supervision.v1",
             "status": worker_status,
+            "run_id": manifest["run_id"],
             "branch": branch,
             "source_sha": source_sha,
             "source_clean_before_worker": True,
+            "review_authorization_id": (
+                lease["review_authorization"].get("authorization_id")
+                if isinstance(lease.get("review_authorization"), dict)
+                else None
+            ),
+            "supervisor_started": supervisor_started,
+            "worker_started": bool(
+                summary is not None
+                and summary.get("classification") in {"COMPLETED", "WORKER_FAILED", "TIME_LIMIT"}
+            ),
             "case_root": str(case_root),
             "postprocess_root": str(post_root),
+            "watchdog_directory": str(watchdog_dir.resolve()),
             "shared_ledger_path": lease["path"],
             "shared_ledger_attempt_index": lease["attempt_index"],
             "reserved_remaining_seconds": lease["reserved_seconds"],
+            "watchdog_wall_seconds_reserved_at_lease": lease["watchdog_wall_seconds"],
+            "workflow_elapsed_at_supervise_start_seconds": supervise_start_elapsed_seconds,
+            "actual_supervisor_wall_seconds": actual_supervisor_wall_seconds,
+            "termination_grace_seconds": lease["termination_grace_seconds"],
+            "closeout_reserve_seconds": lease["closeout_reserve_seconds"],
             "time_policy": "enforce",
             "watchdog_summary": summary,
             "watchdog_summary_sha256": (
@@ -441,9 +524,27 @@ def _run(case_root: Path, implementation_bug_evidence: Path | None) -> dict[str,
                 if comparison_path.is_file()
                 else None
             ),
+            "checker_path": str(checker_path),
+            "checker_sha256": (
+                hashlib.sha256(checker_path.read_bytes()).hexdigest()
+                if checker_path.is_file()
+                else None
+            ),
+            "checker_record": checker_record,
+            "accuracy_classification": (
+                checker_record.get("classification")
+                if isinstance(checker_record, dict)
+                else "checker_not_available"
+            ),
+            "accuracy_pass": accuracy_pass,
             "worker_log_tail": worker_tail,
             "error": error,
         }
+        pre_settlement_result_path = post_root / "supervisor_result_pre_settlement.json"
+        _write_json(pre_settlement_result_path, record)
+        pre_settlement_result_sha256 = _sha256(pre_settlement_result_path)
+        record["pre_settlement_result_path"] = str(pre_settlement_result_path.resolve())
+        record["pre_settlement_result_sha256"] = pre_settlement_result_sha256
         _write_json(post_root / "supervisor_result.json", record)
         settled = _settle_task40_v5_postprocess_budget(
             lease,
@@ -452,6 +553,8 @@ def _run(case_root: Path, implementation_bug_evidence: Path | None) -> dict[str,
             ),
             watchdog_summary_path=watchdog_summary,
             parent_clock_end=clock_sample(),
+            pre_settlement_result_path=pre_settlement_result_path,
+            pre_settlement_result_sha256=pre_settlement_result_sha256,
         )
         record["settlement"] = settled
         record["actual_run_time_seconds"] = settled["settled_seconds"]
@@ -473,6 +576,8 @@ def main() -> int:
             {
                 "status": record["status"],
                 "watchdog_gate_passed": record["watchdog_gate_passed"],
+                "accuracy_classification": record["accuracy_classification"],
+                "accuracy_pass": record["accuracy_pass"],
                 "actual_run_time_seconds": record.get("actual_run_time_seconds"),
                 "effective_budget_after_settlement": record.get(
                     "effective_budget_after_settlement"

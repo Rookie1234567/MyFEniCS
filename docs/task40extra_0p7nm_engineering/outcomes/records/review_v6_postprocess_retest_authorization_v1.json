@@ -1,0 +1,27 @@
+{
+  "schema": "task40extra.review-v6.postprocess-retest-authorization.v1",
+  "authorization_id": "review_v6_gx784_postprocess_settlement_retest_once",
+  "source": "Human reply in the controlling Task40 task, relayed to this execution thread",
+  "human_authorization": "允许一次补检，通过后直接计算",
+  "scope": {
+    "maximum_additional_same_chain_rechecks": 1,
+    "implementation_change": "Import clock_sample in the V6 postprocess settlement finalization and keep measured monotonic elapsed distinct from conservative charged time.",
+    "formal_case_after_pass": "One original Gx784 run using the unchanged run_id, input, numerical model, and resource contract.",
+    "out_of_scope": [
+      "Any other solver or numerical algorithm changes",
+      "Any new PDE case or repeat",
+      "Any formal PDE execution before the authorized control-chain recheck passes"
+    ]
+  },
+  "preserved_prior_failures": [
+    {
+      "recheck": 1,
+      "failure": "The copied-ledger integration fixture referenced sys without importing it."
+    },
+    {
+      "recheck": 2,
+      "failure": "V6 postprocess settlement finalization raised NameError because clock_sample was not imported."
+    }
+  ],
+  "formal_gx784_authorization_consumed": false
+}
