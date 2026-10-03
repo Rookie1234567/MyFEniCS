@@ -16,7 +16,12 @@ STAGES = {
     "v12_saved_field_integrals": ("fe", 1200, "B"),
     "v12_local_parameter_diagnostic": ("ml", 3600, "C1"),
     "v12_test_space_witness": ("fe", 1500, "C2"),
+    "v13_background_transfer": ("fe", 1500, "B"),
 }
+CLOSURE_REVIEW_SHA = "db4611c4092cd8a0ba4c68a391f58964685f945c"
+CLOSURE_DESIGN_RECORD = (
+    ROOT / "docs/task042extra_feinn_5nm/outcomes/records/closure_design_v13.json"
+)
 AUTHORITY, SUPERVISED = set(), set()
 DIAGNOSTIC_POLICY = dict(
     reference_used_for_training=False,
@@ -77,6 +82,48 @@ DEPENDENCIES["v12_test_space_witness"] = [
     "v12_saved_state_freeze",
     "v12_saved_field_attribution",
 ]
+DEPENDENCIES["v13_background_transfer"] = [
+    "e1_fe",
+    "v7_p_transfer_checks",
+    "v12_test_space_witness",
+]
+
+
+def closure_index(stage):
+    from src.runners.feinn_workflow import load_index
+
+    keys = {
+        "e1_fe": ("native",),
+        "v7_p_transfer_checks": ("native",),
+        "v12_test_space_witness": ("vectors", "result"),
+    }
+    item = load_index(stage, file_keys=keys[stage])
+    frozen = json.loads(CLOSURE_DESIGN_RECORD.read_text())["inputs"][stage]
+    if item["source_sha"] != frozen["source_sha"] or item["files"] != frozen["files"]:
+        raise ValueError("V13_FROZEN_INPUT_CHANGED")
+    return item
+
+
+def closure_budget(entries):
+    from datetime import datetime, timezone
+
+    pre = json.loads(CLOSURE_DESIGN_RECORD.read_text())
+    start = datetime.fromisoformat(pre["batch_started_utc"])
+    wall = (datetime.now(timezone.utc) - start).total_seconds()
+    chosen = [
+        e
+        for e in entries
+        if "/task42extra_v13_" in e["path"] or "/checks/v13_" in e["path"]
+    ]
+    used_B = sum(e["seconds"] for e in chosen if "/task42extra_v13_" in e["path"])
+    return dict(
+        new_used_seconds=sum(e["seconds"] for e in chosen),
+        new_complete_wall_seconds=wall,
+        new_limit_seconds=7200,
+        new_remaining_seconds=7200 - wall - 1500,
+        groups_remaining_seconds=dict(B=1500 - used_B),
+        entries=chosen,
+    )
 
 
 def campaign_budget(entries):
@@ -114,6 +161,10 @@ def campaign_budget(entries):
 
 
 def dispatch(stage, design, artifact, marker, manifest, load_index):
+    if stage == "v13_background_transfer":
+        from src.solvers.feinn_saved_field_diagnostics import background_transfer
+
+        return background_transfer(design, artifact, marker, manifest, closure_index)
     pre = json.loads(DESIGN_RECORD.read_text())
     if stage == "v12_saved_state_freeze":
         from src.solvers.feinn_saved_state import freeze

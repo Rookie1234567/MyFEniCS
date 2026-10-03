@@ -1,0 +1,63 @@
+{
+  "schema": "task42extra.evidence-closure-design.v13",
+  "received_head": "db4611c4092cd8a0ba4c68a391f58964685f945c",
+  "review": "docs/task042extra_feinn_5nm/review_report_v12.md",
+  "batch_started_utc": "2026-10-03T02:16:33+00:00",
+  "inputs": {
+    "e1_fe": {
+      "source_sha": "a3dd65f594dda0ffd593ef53f7a0f4adfbd7a35e",
+      "files": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+          "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+        }
+      }
+    },
+    "v7_p_transfer_checks": {
+      "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+      "files": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz",
+          "sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad"
+        }
+      }
+    },
+    "v12_test_space_witness": {
+      "source_sha": "6c8440e991ba1a960f0c0556319f3cc60148d0e1",
+      "files": {
+        "vectors": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_test_space_witness_20261003T002021620377Z/field_diagnostic_arrays.npz",
+          "sha256": "71701ffb090b4456d781db10d3a0c7450bf9c51989ce761101dd59922cc58808"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_test_space_witness_20261003T002021620377Z/result.json",
+          "sha256": "ac025f5e048a0fff2b38d593bea982b5bf50cb00f13f06b118fde696a6e5d65d"
+        }
+      }
+    }
+  },
+  "limits": {
+    "total_seconds": 7200,
+    "A": 900,
+    "B": 1500,
+    "adapter": 600,
+    "tests_docs_publish": 2400,
+    "repair": 900,
+    "save": 1500,
+    "cumulative_A4": 4,
+    "local_repairs": 2
+  },
+  "intervention": "single affine background transfer; shared A4(P34b3-b4) for three saved residuals",
+  "forbidden": [
+    "training",
+    "new_network_forward",
+    "AH",
+    "G",
+    "Gsolve",
+    "new_factor",
+    "new_reference_solve",
+    "new_global_matrix"
+  ],
+  "source_rule": "clean implementation commit before formal run; actual source differs from final documentation HEAD",
+  "policy": "research-only diagnostic, original p3 failure and all precision gates retained"
+}

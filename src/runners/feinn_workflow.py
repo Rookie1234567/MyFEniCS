@@ -292,10 +292,13 @@ def launch(spec):
     v8 = stage.startswith("v8_")
     v11 = stage.startswith("v11_")
     v12 = stage.startswith("v12_")
+    v13 = stage.startswith("v13_")
     v10 = stage.startswith("v10_")
-    v9 = stage.startswith(("v9_", "v10_", "v11_", "v12_"))
-    gn_version = "V12" if v12 else "V11" if v11 else "V10" if v10 else "V9"
-    if v12:
+    v9 = stage.startswith(("v9_", "v10_", "v11_", "v12_", "v13_"))
+    gn_version = (
+        "V13" if v13 else "V12" if v12 else "V11" if v11 else "V10" if v10 else "V9"
+    )
+    if v12 or v13:
         from src.runners import feinn_attribution_campaign as gn_campaign
     elif v11:
         from src.runners import feinn_metric_campaign as gn_campaign
@@ -305,7 +308,7 @@ def launch(spec):
         from src.runners import feinn_gn_campaign as gn_campaign
     if v9:
         GN_AUTHORITY = gn_campaign.AUTHORITY
-        GN_REVIEW = gn_campaign.REVIEW_SHA
+        GN_REVIEW = gn_campaign.CLOSURE_REVIEW_SHA if v13 else gn_campaign.REVIEW_SHA
         SUPERVISED = gn_campaign.SUPERVISED
         from src.solvers.feinn_discretization_audit import POLICY
 
@@ -321,7 +324,9 @@ def launch(spec):
             run_id=directory.name,
             v9_review_sha=GN_REVIEW,
             v9_campaign_design_sha256=sha(
-                gn_campaign.DESIGN_RECORD
+                gn_campaign.CLOSURE_DESIGN_RECORD
+                if v13
+                else gn_campaign.DESIGN_RECORD
                 if v12
                 else ROOT
                 / (
@@ -370,9 +375,10 @@ def launch(spec):
                 if sha(frozen[key]["path"]) != frozen[key]["sha256"]:
                     raise RuntimeError("PHASE75_BYTES_CHANGED_BEFORE_WORKER")
             state["V10_phase75_bound_before_worker"] = frozen
-        if v12:
-            state["v12_review_sha"] = state.pop("v9_review_sha")
-            state["v12_diagnostic_design_sha256"] = state.pop(
+        if v12 or v13:
+            prefix = "v13" if v13 else "v12"
+            state[prefix + "_review_sha"] = state.pop("v9_review_sha")
+            state[prefix + "_diagnostic_design_sha256"] = state.pop(
                 "v9_campaign_design_sha256"
             )
             state.update(**gn_campaign.DIAGNOSTIC_POLICY)
@@ -383,7 +389,7 @@ def launch(spec):
             )
         if stage in GN_AUTHORITY:
             state.update(**POLICY)
-        elif not v12:
+        elif not (v12 or v13):
             supervised = stage in SUPERVISED
             state.update(
                 reference_used_for_training=supervised,
@@ -567,7 +573,7 @@ def launch(spec):
             else 16 * 2**30
         )
         try:
-            if v11 or v12:
+            if v11 or v12 or v13:
                 from src.runners.feinn_resources import stable_window
 
                 state["pressure_stable_window"] = stable_window(directory, tree_limit)
@@ -577,7 +583,9 @@ def launch(spec):
                 classification="RESOURCE_WINDOW_UNAVAILABLE",
                 reason=str(error),
                 stage=stage,
-                elapsed_seconds=perf_counter() - launch_origin if v11 or v12 else 0,
+                elapsed_seconds=perf_counter() - launch_origin
+                if v11 or v12 or v13
+                else 0,
                 leader_exit_code=None,
                 descendants_cleared=True,
             )
@@ -590,7 +598,9 @@ def launch(spec):
             ledger["V8"] = campaign_budget(ledger["entries"])
             ledger["remaining_seconds"] = ledger["V8"]["new_remaining_seconds"]
         if v9:
-            ledger[gn_version] = gn_campaign.campaign_budget(ledger["entries"])
+            ledger[gn_version] = (
+                gn_campaign.closure_budget if v13 else gn_campaign.campaign_budget
+            )(ledger["entries"])
             ledger["remaining_seconds"] = ledger[gn_version]["new_remaining_seconds"]
             if (v11 or v12) and gn_campaign.STAGES[stage][2] == "E":
                 ledger["remaining_seconds"] += 1200
@@ -780,7 +790,13 @@ def launch(spec):
                     load_index, supervised="fit" in stage
                 )
                 prerequisite_stages = prerequisite_stages + list(actual)
-        dependency_loader = gn_campaign.selected_index if v12 else load_index
+        dependency_loader = (
+            gn_campaign.closure_index
+            if v13
+            else gn_campaign.selected_index
+            if v12
+            else load_index
+        )
         for dependency in prerequisite_stages:
             item = dependency_loader(dependency)
             dependencies[dependency] = dict(
@@ -799,6 +815,7 @@ def launch(spec):
                 mode_sha256=identity["mode_manifest_sha256"],
                 gram_sha256=operator["files"]["gram"]["sha256"]
                 if stage != "FEINN-EUC"
+                and not v13
                 and not v7
                 and not (v8 and stage in AUTHORITY)
                 and not (v9 and stage in GN_AUTHORITY)
@@ -833,6 +850,23 @@ def launch(spec):
             )
         if v7 and "v7_p_transfer_checks" in dependencies:
             bind_authority_packet(state, load_index("v7_p_transfer_checks"))
+            (directory / "physical_model_sha256.txt").write_text(
+                state["physical_model_sha256"] + "\n"
+            )
+        if v13:
+            bind_authority_packet(state, dependency_loader("v7_p_transfer_checks"))
+            state.update(
+                source_p3_operator_packet_sha256=dependencies["e1_fe"]["files"][
+                    "native"
+                ]["sha256"],
+                saved_C2_vector_sha256=dependencies["v12_test_space_witness"]["files"][
+                    "vectors"
+                ]["sha256"],
+                new_operator_assembly=False,
+                new_factor=False,
+                new_reference_solve=False,
+                no_network_forward=True,
+            )
             (directory / "physical_model_sha256.txt").write_text(
                 state["physical_model_sha256"] + "\n"
             )
@@ -904,10 +938,20 @@ def launch(spec):
                 and "reconstruct" not in stage,
                 network_quadrature_degree=15,
             )
-            if v12:
+            if v12 or v13:
                 state["gram_loaded_by_route"] = stage in (
                     "v12_saved_field_attribution",
                     "v12_local_parameter_diagnostic",
+                )
+            if v13:
+                state["discretization_identity"] = dict(
+                    trial_degree=3,
+                    test_degree=4,
+                    volume_quadrature_degree=15,
+                    DtN_quadrature_degree=15,
+                    source_complex_FE=31968,
+                    test_complex_FE=75264,
+                    channels=40,
                 )
             if stage in GN_AUTHORITY:
                 state.update(
@@ -928,7 +972,7 @@ def launch(spec):
                         authoritative_packet_stage="v9_p5_checks",
                         physical_hash_meaning="actual p5 full independent FE packet and fixed affine rhs",
                     )
-            elif not v12:
+            elif not (v12 or v13):
                 q = load_index("v8_phase_checks")
                 state.update(
                     network_moments_sha256=q["files"]["moments"]["sha256"],
@@ -1064,7 +1108,7 @@ def launch(spec):
                                     "V10_FULL_STATE_RECOVERY_REQUIRED_NO_V9_REPLAY"
                                 )
                         state["retry_boundary"] = "SAME_V9_FINAL_BEFORE_ANY_NEW_GN_WORK"
-            if group != "E" and not v12:
+            if group != "E" and not (v12 or v13):
                 limit = min(limit, ledger["remaining_seconds"] - 1200)
             if limit <= 150 or launch_origin + limit - 150 <= perf_counter():
                 raise RuntimeError("V9_BUDGET_RESERVE_UNAVAILABLE")
@@ -1171,7 +1215,7 @@ def worker(directory):
     manifest = json.loads((directory / "run_manifest.json").read_text())
     stage = manifest["stage"]
     if stage.startswith(
-        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_", "v11_", "v12_")
+        ("v4_", "v5_", "v6_", "v7_", "v8_", "v9_", "v10_", "v11_", "v12_", "v13_")
     ) or stage in (
         "FEINN-REFERENCE-FIT-G-ADAM500-REPLAY",
         "FEINN-FROZEN-HIDDEN-READOUT-G",
@@ -1214,8 +1258,8 @@ def worker(directory):
         design = json.loads(DESIGN.read_text())
         if sha(DESIGN) != manifest["design_sha256"]:
             raise RuntimeError("design changed after admission")
-        if stage.startswith(("v9_", "v10_", "v11_", "v12_")):
-            if stage.startswith("v12_"):
+        if stage.startswith(("v9_", "v10_", "v11_", "v12_", "v13_")):
+            if stage.startswith(("v12_", "v13_")):
                 from src.runners.feinn_attribution_campaign import dispatch
             elif stage.startswith("v11_"):
                 from src.runners.feinn_metric_campaign import dispatch
