@@ -1140,6 +1140,23 @@ def _reserve_blr_stage_from_ledger(
     workflow_budget = float(stage_budget.get("workflow_seconds", 0.0))
     if workflow_budget <= 0.0:
         raise InputError(f"{error_prefix} BLR stage budget must be positive")
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_GX784_RUN_ID,
+    )
+
+    task40_v5_enforced_budget = (
+        error_prefix == "Task40"
+        and ledger.get("batch_identity") == TASK40_GX784_RUN_ID
+    )
+    if task40_v5_enforced_budget and time_policy != V14_TIME_POLICY_ENFORCE:
+        raise InputError("Task40 V5 Gx784 requires its enforced batch deadline")
+    reserved_workflow_budget = workflow_budget
+    if task40_v5_enforced_budget:
+        reserved_workflow_budget = min(
+            workflow_budget, float(effective_before["remaining_seconds"])
+        )
+        if reserved_workflow_budget <= 0.0:
+            raise InputError("Task40 V5 Gx784 batch deadline is exhausted")
     stage_record = dict(ledger.get("stages", {}).get(stage, {}))
     attempts = list(stage_record.get("attempts", []))
     replay = False
@@ -1338,7 +1355,7 @@ def _reserve_blr_stage_from_ledger(
         "bug_replay_count_before": int(ledger.get("unique_bug_replay_count", 0)),
         "workflow_clock_start": dict(workflow_clock_start),
         "reserved_timestamp_ns": time.time_ns(),
-        "reserved_seconds": workflow_budget,
+        "reserved_seconds": reserved_workflow_budget,
         "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
         "effective_budget_before_reservation": effective_before,
         "time_policy": time_policy,
@@ -1397,7 +1414,7 @@ def _reserve_blr_stage_from_ledger(
         "path": str(path),
         "stage": str(stage),
         "attempt_index": len(attempts) - 1,
-        "reserved_seconds": workflow_budget,
+        "reserved_seconds": reserved_workflow_budget,
         "elapsed_before_seconds": effective_before["measured_elapsed_seconds"],
         "replay": replay,
         "replay_evidence": replay_evidence,
@@ -3063,11 +3080,33 @@ def _reserve_a4_tensor_h6_budget(
     user_bug_continuation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve one fresh original-model attempt in an independent batch ledger."""
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_GX784_RUN_ID,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+    )
 
-    if stage != "Q4_ORIGINAL" or time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
-        raise InputError(f"{error_prefix} permits only Q4_ORIGINAL with observe_only")
-    if float(stage_budget.get("workflow_seconds", 0.0)) != 43200.0:
-        raise InputError(f"{error_prefix} Q4 requires a 43200-second workflow budget")
+    task40_v5_gx784 = error_prefix == "Task40" and batch_identity == TASK40_GX784_RUN_ID
+    required_time_policy = (
+        V14_TIME_POLICY_ENFORCE
+        if task40_v5_gx784
+        else V14_TIME_POLICY_OBSERVE_ONLY
+    )
+    workflow_budget_seconds = (
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS if task40_v5_gx784 else 43200.0
+    )
+    if stage != "Q4_ORIGINAL" or time_policy != required_time_policy:
+        raise InputError(
+            f"{error_prefix} permits only Q4_ORIGINAL with "
+            f"{required_time_policy} time policy"
+        )
+    if (
+        not isinstance(stage_budget, Mapping)
+        or float(stage_budget.get("workflow_seconds", 0.0))
+        != workflow_budget_seconds
+    ):
+        raise InputError(
+            f"{error_prefix} Q4 workflow budget differs from its frozen batch contract"
+        )
     if require_user_service_cgroup and not _is_v28_user_service_cgroup(
         service_cgroup_path
     ):
@@ -3149,6 +3188,17 @@ def _reserve_a4_tensor_h6_budget(
         "numeric_cache_mode": "build",
         "r1_probe_replay": False,
     }
+    if task40_v5_gx784:
+        prerequisite["batch_time_contract"] = {
+            "hard_limit_seconds": workflow_budget_seconds,
+            "policy": "enforce",
+            "scope": (
+                "Task40 Review V5 Gx784 run_case workflow from the first launcher "
+                "workflow clock start through field recovery and official output"
+            ),
+            "batch_clock_start_semantics": "first attempt workflow_clock_start",
+            "retry_cost_is_cumulative": True,
+        }
     if user_bug_continuation is not None:
         if error_prefix != "Task40":
             raise InputError("Only Task40 accepts this continuation record")
@@ -3161,15 +3211,20 @@ def _reserve_a4_tensor_h6_budget(
         if (
             ledger.get("schema") != schema
             or ledger.get("batch_identity") != batch_identity
-            or ledger.get("total_budget_seconds") != V31_WORKFLOW_BUDGET_SECONDS
+            or ledger.get("total_budget_seconds") != workflow_budget_seconds
             or ledger.get("allowed_stages") != ["Q4_ORIGINAL"]
+            or (
+                task40_v5_gx784
+                and ledger.get("time_contract")
+                != prerequisite.get("batch_time_contract")
+            )
         ):
             raise InputError(f"{error_prefix} shared ledger identity or budget changed")
     else:
         ledger = {
             "schema": schema,
             "batch_identity": batch_identity,
-            "total_budget_seconds": 43200.0,
+            "total_budget_seconds": workflow_budget_seconds,
             "elapsed_seconds": 0.0,
             "conservative_allowance_seconds": 0.0,
             "policy_debits": [],
@@ -3179,6 +3234,15 @@ def _reserve_a4_tensor_h6_budget(
             "unique_bug_replay_count": 0,
             "allowed_stages": ["Q4_ORIGINAL"],
             "cross_case_recycling": False,
+            "time_contract": (
+                dict(prerequisite["batch_time_contract"])
+                if task40_v5_gx784
+                else {
+                    "hard_limit_seconds": 43200.0,
+                    "policy": "observe_only",
+                    "scope": "legacy Task40 Q4 workflow budget",
+                }
+            ),
         }
     return _reserve_blr_stage_from_ledger(
         path,
@@ -3528,6 +3592,8 @@ def _reserve_task40_0p7nm_budget(
         TASK40_F3_G0_M2_RUN_ID,
         TASK40_GX560_RUN_ID,
         TASK40_GZ528_RUN_ID,
+        TASK40_GX784_RUN_ID,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
         TASK40_REVIEW_V2_GROWTH_RUN_IDS,
     )
 
@@ -3546,6 +3612,7 @@ def _reserve_task40_0p7nm_budget(
         TASK40_GX560_RUN_ID: "review_v4_gx560",
         TASK40_GZ528_RUN_ID: "review_v4_gz528",
     }
+    review_v5_run_batches = {TASK40_GX784_RUN_ID: "review_v5_gx784"}
     allowed_run_ids = (
         legacy_run_ids
         | review_v1_run_ids
@@ -3553,6 +3620,7 @@ def _reserve_task40_0p7nm_budget(
         | review_v2_p3_run_ids
         | review_v2_growth_run_ids
         | set(review_v4_run_batches)
+        | set(review_v5_run_batches)
     )
     if run_id not in allowed_run_ids or comparison_group != TASK40_COMPARISON_GROUP:
         raise InputError("Task40 budget requires a run authorized by its review batch")
@@ -3624,6 +3692,18 @@ def _reserve_task40_0p7nm_budget(
             "fresh_worker_count": 0,
             "ledger_sha256": {},
         }
+    for batch in review_v5_run_batches.values():
+        replay_accounting[batch] = {
+            "run_ids": [key for key, value in review_v5_run_batches.items() if value == batch],
+            "ledger_count": 0,
+            "unique_bug_replay_count": 0,
+            "infrastructure_recovery_count": 0,
+            "elapsed_seconds": 0.0,
+            "conservative_allowance_seconds": 0.0,
+            "fresh_worker_count": 0,
+            "ledger_sha256": {},
+        }
+    prior_v5_batch_timer_start = None
     for prior_run_id in allowed_run_ids:
         ledger_path = (
             run_ledger_root / prior_run_id / "shared_workflow_ledger.json"
@@ -3649,9 +3729,21 @@ def _reserve_task40_0p7nm_budget(
             group = "review_v2_growth"
         elif prior_run_id in review_v4_run_batches:
             group = review_v4_run_batches[prior_run_id]
+        elif prior_run_id in review_v5_run_batches:
+            group = review_v5_run_batches[prior_run_id]
         else:
             group = "legacy"
         group_facts = replay_accounting[group]
+        if prior_run_id == TASK40_GX784_RUN_ID:
+            attempts = (
+                prior_ledger.get("stages", {})
+                .get("Q4_ORIGINAL", {})
+                .get("attempts", [])
+            )
+            if isinstance(attempts, list) and attempts:
+                first_start = attempts[0].get("workflow_clock_start")
+                if isinstance(first_start, Mapping):
+                    prior_v5_batch_timer_start = dict(first_start)
         group_facts["ledger_count"] += 1
         group_facts["unique_bug_replay_count"] += int(
             prior_ledger.get("unique_bug_replay_count", 0)
@@ -3681,6 +3773,8 @@ def _reserve_task40_0p7nm_budget(
         selected_batch = "review_v2_growth"
     elif run_id in review_v4_run_batches:
         selected_batch = review_v4_run_batches[run_id]
+    elif run_id in review_v5_run_batches:
+        selected_batch = review_v5_run_batches[run_id]
     else:
         selected_batch = "legacy"
     selected_history = replay_accounting[selected_batch]
@@ -3695,6 +3789,46 @@ def _reserve_task40_0p7nm_budget(
     if run_id in review_v4_run_batches:
         # Review V4 permits one implementation-bug replay per new case.
         replay_limit = 1
+    if run_id in review_v5_run_batches:
+        # V5 starts a fresh one-replay batch; all attempts debit its own clock.
+        replay_limit = 1
+        if kwargs.get("time_policy") != V14_TIME_POLICY_ENFORCE:
+            raise InputError("Task40 Review V5 requires the enforced 48-hour timer")
+        kwargs["stage_budget"] = {
+            "workflow_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+            "solve_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+        }
+        from .workflow_timebase import checked_interval, clock_sample
+
+        attempt_start = dict(kwargs["workflow_clock_start"])
+        batch_start = prior_v5_batch_timer_start or attempt_start
+        elapsed_this_attempt = checked_interval(
+            attempt_start, clock_sample(), policy=CONSERVATIVE_REALTIME
+        )["budget_seconds"]
+        elapsed_before = float(selected_history["elapsed_seconds"])
+        elapsed_at_reservation = elapsed_before + elapsed_this_attempt
+        remaining_at_reservation = max(
+            0.0,
+            TASK40_GX784_WORKFLOW_BUDGET_SECONDS - elapsed_at_reservation,
+        )
+        if remaining_at_reservation <= 0.0:
+            raise InputError("Task40 Review V5 48-hour batch budget is exhausted")
+        replay_accounting["batch_time_contract"] = {
+            "hard_limit_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+            "time_policy": "enforce",
+            "timer_origin": "first attempt workflow_clock_start",
+            "batch_timer_start": batch_start,
+            "current_attempt_timer_start": attempt_start,
+            "measured_prior_attempt_seconds": elapsed_before,
+            "current_attempt_preflight_seconds": elapsed_this_attempt,
+            "elapsed_at_reservation_seconds": elapsed_at_reservation,
+            "remaining_at_reservation_seconds": remaining_at_reservation,
+            "scope": (
+                "one Gx784 run_case workflow under the independent watchdog; "
+                "unused time remains available for final output and V5 comparison"
+            ),
+            "retry_cost_is_cumulative": True,
+        }
     continuation = None
     record_path = repo_root / (
         "docs/task40extra_0p7nm_engineering/outcomes/records/"
@@ -4236,6 +4370,251 @@ def _settle_v14_shared_budget(
     _write_v14_ledger(path, ledger)
 
 
+def _reserve_task40_v5_postprocess_budget(
+    repo_root: Path,
+    *,
+    source_sha: str,
+    run_directory: Path,
+    workflow_clock_start: Mapping[str, Any],
+    implementation_bug_replay: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Reserve the remaining V5 batch clock for its saved-field checker workflow."""
+
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_GX784_RUN_ID,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+    )
+
+    path = (
+        Path(repo_root).resolve()
+        / "benchmarks/artifacts/task40extra_0p7nm_engineering"
+        / "task40_nonseparable_0p7nm"
+        / TASK40_GX784_RUN_ID
+        / "shared_workflow_ledger.json"
+    )
+    try:
+        ledger = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("Task40 V5 postprocessing requires the settled Gx784 ledger") from exc
+    expected_contract = {
+        "hard_limit_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+        "policy": "enforce",
+        "scope": (
+            "Task40 Review V5 Gx784 run_case workflow from the first launcher "
+            "workflow clock start through field recovery and official output"
+        ),
+        "batch_clock_start_semantics": "first attempt workflow_clock_start",
+        "retry_cost_is_cumulative": True,
+    }
+    if (
+        ledger.get("schema")
+        != "task40extra.nonseparable-0p7nm.shared-workflow-ledger.v1"
+        or ledger.get("batch_identity") != TASK40_GX784_RUN_ID
+        or ledger.get("total_budget_seconds")
+        != TASK40_GX784_WORKFLOW_BUDGET_SECONDS
+        or ledger.get("time_contract") != expected_contract
+    ):
+        raise InputError("Task40 V5 shared ledger identity or time contract changed")
+    stages = ledger.get("stages", {})
+    if not isinstance(stages, Mapping) or any(
+        isinstance(record, Mapping) and record.get("active_attempt") is not None
+        for record in stages.values()
+    ):
+        raise InputError("Task40 V5 cannot start postprocessing with an active workflow stage")
+    solve = stages.get("Q4_ORIGINAL", {})
+    solve_attempts = solve.get("attempts", []) if isinstance(solve, Mapping) else []
+    if not isinstance(solve_attempts, list) or not solve_attempts:
+        raise InputError("Task40 V5 postprocessing requires a recorded Gx784 solve attempt")
+    if any("settled_seconds" not in item for item in solve_attempts if isinstance(item, Mapping)):
+        raise InputError("Task40 V5 postprocessing requires every solve attempt to be settled")
+    prior_post = stages.get("V5_POSTPROCESS", {})
+    post_attempts = (
+        list(prior_post.get("attempts", []))
+        if isinstance(prior_post, Mapping)
+        else []
+    )
+    if len(post_attempts) > 1:
+        raise InputError("Task40 V5 postprocessing exceeded its single local repair replay")
+    replay = bool(post_attempts)
+    replay_record = None
+    if replay:
+        if implementation_bug_replay is None:
+            raise InputError(
+                "Task40 V5 postprocessing replay requires hash-bound implementation-bug evidence"
+            )
+        prior_bytes = path.read_bytes()
+        prior_sha = hashlib.sha256(prior_bytes).hexdigest()
+        prior = post_attempts[0]
+        replay_record = dict(implementation_bug_replay)
+        valid_replay = (
+            replay_record.get("schema") == "task40extra.review-v5.postprocess-bug-replay.v1"
+            and replay_record.get("classification") == "IMPLEMENTATION_BUG"
+            and replay_record.get("run_id") == TASK40_GX784_RUN_ID
+            and replay_record.get("stage") == "V5_POSTPROCESS"
+            and replay_record.get("allowed_repeat_count") == 1
+            and replay_record.get("prior_attempt_source_sha") == prior.get("source_sha")
+            and replay_record.get("fixed_source_sha") == source_sha
+            and replay_record.get("prior_shared_ledger_sha256") == prior_sha
+            and prior.get("status")
+            == "POSTPROCESS_WORKER_FAILED_OR_CONTROLLED_STOP"
+            and prior.get("watchdog_classification") == "WORKER_FAILED"
+            and type(prior.get("watchdog_leader_exit_code")) is int
+            and prior.get("watchdog_leader_exit_code") != 0
+            and isinstance(replay_record.get("bug_and_fix"), str)
+            and bool(replay_record["bug_and_fix"].strip())
+            and isinstance(replay_record.get("supporting_evidence"), list)
+            and bool(replay_record["supporting_evidence"])
+        )
+        if not valid_replay:
+            raise InputError("Task40 V5 postprocessing implementation-bug replay evidence is invalid")
+    elif implementation_bug_replay is not None:
+        raise InputError("Task40 V5 postprocessing replay evidence has no failed prior attempt")
+    from src.runners.physical_v14_budget import read_v14_effective_budget
+    from .workflow_timebase import CONSERVATIVE_REALTIME, checked_interval, clock_sample
+
+    effective_before = read_v14_effective_budget(ledger)
+    preflight_interval = checked_interval(
+        workflow_clock_start,
+        clock_sample(),
+        policy=CONSERVATIVE_REALTIME,
+    )
+    postprocess_preflight_seconds = float(preflight_interval["budget_seconds"])
+    remaining = (
+        float(effective_before["remaining_seconds"])
+        - postprocess_preflight_seconds
+    )
+    if remaining <= 0.0:
+        raise InputError("Task40 V5 batch has no remaining time for saved-field comparison")
+    attempt = {
+        "stage": "V5_POSTPROCESS",
+        "attempt": len(post_attempts) + 1,
+        "replay": replay,
+        "source_sha": source_sha,
+        "run_directory": str(Path(run_directory).resolve()),
+        "workflow_clock_start": dict(workflow_clock_start),
+        "reserved_seconds": remaining,
+        "elapsed_before_seconds": float(effective_before["measured_elapsed_seconds"]),
+        "postprocess_preflight_seconds": postprocess_preflight_seconds,
+        "elapsed_at_reservation_seconds": (
+            float(effective_before["measured_elapsed_seconds"])
+            + postprocess_preflight_seconds
+        ),
+        "effective_budget_at_reservation": {
+            **effective_before,
+            "postprocess_preflight_seconds": postprocess_preflight_seconds,
+            "remaining_seconds": remaining,
+        },
+        "effective_budget_before_reservation": effective_before,
+        "time_policy": "enforce",
+        "status": "ACTIVE",
+        "scope": "V5 saved-field restoration, pair comparisons, and independent raw-record checker",
+        **(
+            {
+                "implementation_bug_replay": replay_record,
+                "implementation_bug_replay_sha256": hashlib.sha256(
+                    json.dumps(
+                        replay_record, sort_keys=True, separators=(",", ":")
+                    ).encode("utf-8")
+                ).hexdigest(),
+            }
+            if replay_record is not None
+            else {}
+        ),
+    }
+    post_attempts.append(attempt)
+    post_record = {"attempts": post_attempts, "active_attempt": len(post_attempts) - 1}
+    ledger["stages"] = dict(stages)
+    ledger["stages"]["V5_POSTPROCESS"] = post_record
+    _write_v14_ledger(path, ledger)
+    return {
+        "path": str(path),
+        "stage": "V5_POSTPROCESS",
+        "attempt_index": len(post_attempts) - 1,
+        "replay": replay,
+        "reserved_seconds": remaining,
+        "workflow_clock_start": dict(workflow_clock_start),
+        "effective_budget_before_reservation": effective_before,
+    }
+
+
+def _settle_task40_v5_postprocess_budget(
+    lease: Mapping[str, Any],
+    *,
+    status: str,
+    watchdog_summary_path: Path | None,
+    parent_clock_end: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Debit actual comparison/checker wall time into the Gx784 shared ledger."""
+
+    from .workflow_timebase import CONSERVATIVE_REALTIME, checked_interval
+
+    path = Path(str(lease["path"]))
+    try:
+        ledger = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError("Task40 V5 ledger disappeared before postprocessing settlement") from exc
+    stage_record = dict(ledger.get("stages", {}).get("V5_POSTPROCESS", {}))
+    attempts = list(stage_record.get("attempts", []))
+    index = int(lease["attempt_index"])
+    if not 0 <= index < len(attempts) or "settled_seconds" in attempts[index]:
+        raise InputError("Task40 V5 postprocessing lease is missing or already settled")
+    interval = checked_interval(
+        attempts[index]["workflow_clock_start"],
+        parent_clock_end,
+        policy=CONSERVATIVE_REALTIME,
+    )
+    settled = float(interval["budget_seconds"])
+    summary_sha256 = None
+    watchdog_classification = None
+    watchdog_leader_exit_code = None
+    if watchdog_summary_path is not None and watchdog_summary_path.is_file():
+        summary_bytes = watchdog_summary_path.read_bytes()
+        summary_sha256 = hashlib.sha256(summary_bytes).hexdigest()
+        watchdog_summary = json.loads(summary_bytes.decode("utf-8"))
+        watchdog_classification = watchdog_summary.get("classification")
+        watchdog_leader_exit_code = watchdog_summary.get("leader_exit_code")
+    attempt = dict(attempts[index])
+    attempt.update(
+        {
+            "status": str(status),
+            "settled_seconds": settled,
+            "actual_elapsed_seconds": float(
+                interval["elapsed_seconds"]["monotonic"]
+            ),
+            "actual_elapsed_monotonic_seconds": float(
+                interval["elapsed_seconds"]["monotonic"]
+            ),
+            "actual_elapsed_boottime_seconds": float(
+                interval["elapsed_seconds"]["boottime"]
+            ),
+            "conservative_clock_charge_seconds": settled,
+            "settled_interval": dict(interval),
+            "settled_timestamp_ns": time.time_ns(),
+            "reservation_exceeded_seconds": max(
+                0.0, settled - float(attempt["reserved_seconds"])
+            ),
+            "watchdog_summary_path": (
+                None if watchdog_summary_path is None else str(watchdog_summary_path)
+            ),
+            "watchdog_summary_sha256": summary_sha256,
+            "watchdog_classification": watchdog_classification,
+            "watchdog_leader_exit_code": watchdog_leader_exit_code,
+        }
+    )
+    attempts[index] = attempt
+    stage_record["attempts"] = attempts
+    stage_record["active_attempt"] = None
+    ledger["stages"]["V5_POSTPROCESS"] = stage_record
+    ledger["elapsed_seconds"] = float(ledger.get("elapsed_seconds", 0.0)) + settled
+    _write_v14_ledger(path, ledger)
+    from src.runners.physical_v14_budget import read_v14_effective_budget
+
+    return {
+        "settled_seconds": settled,
+        "effective_budget_after_settlement": read_v14_effective_budget(ledger),
+    }
+
+
 def _write_text_hash(path: Path, value: str) -> None:
     path.write_text(value + "\n", encoding="ascii")
 
@@ -4728,6 +5107,13 @@ def launch_specification(
     joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
     light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
     physical_resources = profile_facts(specification.solver['preconditioner'])['resources'] if physical_candidate else {}
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_GX784_RUN_ID,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+    )
+    task40_v5_gx784_enforced = (
+        specification.identity.get("run_id") == TASK40_GX784_RUN_ID
+    )
     if (
         v14_time_policy == V14_TIME_POLICY_OBSERVE_ONLY
         and (not (schur_v14 or blr_profile or cell_condensed_profile) or not physical_candidate)
@@ -4739,7 +5125,13 @@ def launch_specification(
         raise InputError(
             'reviewed BLR profiles require the explicit observe_only time policy'
         )
-    if cell_condensed_profile and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY:
+    if task40_v5_gx784_enforced and v14_time_policy != V14_TIME_POLICY_ENFORCE:
+        raise InputError("Task40 Review V5 Gx784 requires --v14-time-policy enforce")
+    if (
+        cell_condensed_profile
+        and v14_time_policy != V14_TIME_POLICY_OBSERVE_ONLY
+        and not task40_v5_gx784_enforced
+    ):
         raise InputError(
             'V18 cell-condensed profiles require the explicit observe_only time policy'
         )
@@ -4766,6 +5158,13 @@ def launch_specification(
         )
         if cell_stage_budget is None:
             raise InputError('V18 cell-condensed stage has no reviewed watchdog budget')
+        if task40_v5_gx784_enforced:
+            if specification.solver.get('stage') != "Q4_ORIGINAL":
+                raise InputError("Task40 Review V5 Gx784 permits only Q4_ORIGINAL")
+            cell_stage_budget = {
+                "workflow_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+                "solve_seconds": TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+            }
     workflow_limit = (
         (2400 if packed else 1800)
         if pc_profile is not None

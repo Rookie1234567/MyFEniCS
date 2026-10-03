@@ -446,6 +446,7 @@ def _task40_capacity_mesh_plan(cfg):
         "task40extra.e2.electrical_size_exact_planes.v1": "E2",
         "task40extra.gx560.crossed_axes.v1": "GX560",
         "task40extra.gz528.crossed_axes.v1": "GZ528",
+        "task40extra.gx784.review_v5.crossed_axes.v1": "GX784",
     }
     mesh_plan_id = str(getattr(cfg, "mesh_plan_id", ""))
     mesh_id = mesh_id_by_plan.get(mesh_plan_id)

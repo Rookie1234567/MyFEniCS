@@ -78,6 +78,7 @@ root = Path.cwd()
 for name in (
     "nonseparable_gx560_p6_q4_manual_m2_v3.dat",
     "nonseparable_gz528_p6_q4_manual_m2_v3.dat",
+    "nonseparable_gx784_p6_q4_review_v5.dat",
 ):
     spec = load_and_resolve(root / "input/task40extra_0p7nm_engineering" / name)
     assert spec.output["export_diffraction_orders"] is True

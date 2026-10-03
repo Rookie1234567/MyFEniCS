@@ -1030,6 +1030,16 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "task40extra_0p7nm_p6trace_p4_v1",
                 "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
             }:
+                from src.geometry.task40_nonseparable_plan import (
+                    TASK40_GX784_RUN_ID,
+                    TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+                )
+
+                reviewed_workflow_timeout = (
+                    TASK40_GX784_WORKFLOW_BUDGET_SECONDS
+                    if config.get("run_id") == TASK40_GX784_RUN_ID
+                    else 43200
+                )
                 if solver.get("stage") != "Q4_ORIGINAL":
                     raise _error(
                         "solver.stage",
@@ -1061,7 +1071,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                      solver.get("numeric_cache_mode"), "build"),
                     ("execution", "mpi_size", execution.get("mpi_size"), 1),
                     ("execution", "timeout_seconds",
-                     execution.get("timeout_seconds"), 43200),
+                     execution.get("timeout_seconds"), reviewed_workflow_timeout),
                     ("execution", "require_zero_swap",
                      execution.get("require_zero_swap"), True),
                     ("discretization", "nedelec_degree",

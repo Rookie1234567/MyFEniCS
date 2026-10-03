@@ -7,6 +7,7 @@ belong to the benchmark entry point.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -277,6 +278,64 @@ def _exact_axis_union(
         axes.append(union)
         facts.append(item)
     return tuple(axes), facts  # type: ignore[return-value]
+
+
+def _exact_axis_union_many(
+    fields: tuple[P6TotalField, ...],
+) -> tuple[tuple[np.ndarray, np.ndarray, np.ndarray], list[dict[str, Any]]]:
+    if len(fields) < 2:
+        raise ValueError("a common axis union requires at least two saved fields")
+    axes: list[np.ndarray] = []
+    facts: list[dict[str, Any]] = []
+    for index, name in enumerate(("x", "y", "z")):
+        source_axes = [np.asarray(field.axes[index], dtype=np.float64) for field in fields]
+        for axis in source_axes:
+            if (
+                axis.ndim != 1
+                or axis.size < 2
+                or not np.isfinite(axis).all()
+                or np.any(np.diff(axis) <= 0.0)
+            ):
+                raise ValueError("source mesh axes must be finite and strictly increasing")
+        bounds = {(float(axis[0]), float(axis[-1])) for axis in source_axes}
+        if len(bounds) != 1:
+            raise ValueError(f"source mesh {name} axis bounds differ")
+        raw = np.concatenate(source_axes)
+        union = np.unique(raw)
+        gaps = np.diff(union)
+        item = {
+            "source_point_counts": [int(axis.size) for axis in source_axes],
+            "union_point_count": int(union.size),
+            "exact_duplicate_count": int(raw.size - union.size),
+            "near_distinct_gap_count_below_diagnostic_tolerance": int(
+                np.count_nonzero((gaps > 0.0) & (gaps <= AXIS_MATCH_TOL_NM))
+            ),
+            "diagnostic_tolerance_nm_not_used_for_merging": AXIS_MATCH_TOL_NM,
+            "bounds_nm": [float(union[0]), float(union[-1])],
+            "minimum_union_interval_nm": float(np.min(gaps)),
+            "axis": name,
+        }
+        axes.append(union)
+        facts.append(item)
+    return tuple(axes), facts  # type: ignore[return-value]
+
+
+def _comparison_axis_union(
+    first: P6TotalField,
+    second: P6TotalField,
+    *,
+    axis_reference_fields: tuple[P6TotalField, ...] = (),
+    denominator_field: P6TotalField | None = None,
+) -> tuple[tuple[np.ndarray, np.ndarray, np.ndarray], list[dict[str, Any]]]:
+    """Keep the legacy pair metadata; use a multi-grid union only when requested."""
+
+    if denominator_field is None and not axis_reference_fields:
+        return _exact_axis_union(first, second)
+    fields: list[P6TotalField] = []
+    for field in (first, second, *axis_reference_fields, denominator_field):
+        if field is not None and all(field is not prior for prior in fields):
+            fields.append(field)
+    return _exact_axis_union_many(tuple(fields))
 
 
 def _cell_catalog(
@@ -1153,17 +1212,59 @@ def compare_common_subcell_volume(
     first: P6TotalField,
     second: P6TotalField,
     *,
+    axis_reference_fields: tuple[P6TotalField, ...] = (),
+    denominator_field: P6TotalField | None = None,
+    fixed_denominator_norms: Mapping[str, Mapping[str, float]] | None = None,
     progress: bool = True,
 ) -> dict[str, Any]:
-    """Stream field and independently differentiated curl norms on exact union cells."""
+    """Stream field/curl norms on exact union cells with an optional fixed denominator."""
 
     from src.common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 
-    axes, axis_facts = _exact_axis_union(first, second)
+    if (denominator_field is None) != (fixed_denominator_norms is None):
+        raise ValueError(
+            "a fixed denominator field and its archived norms must be supplied together"
+        )
+
+    union_fields: list[P6TotalField] = []
+    for field in (first, second, *axis_reference_fields, denominator_field):
+        if field is not None and all(field is not prior for prior in union_fields):
+            union_fields.append(field)
+    for field in union_fields[1:]:
+        for name in ("k0", "mu_r"):
+            if not np.isclose(
+                getattr(field.cfg, name), getattr(first.cfg, name), rtol=0.0, atol=1e-14
+            ):
+                raise ValueError(f"saved fields differ in {name}")
+        for name in (
+            "electric_field_scale_V_per_m",
+            "magnetic_field_scale_A_per_m",
+        ):
+            if not np.isclose(
+                getattr(field.cfg, name), getattr(first.cfg, name), rtol=1e-13, atol=0.0
+            ):
+                raise ValueError(f"saved fields differ in {name}")
+    axes, axis_facts = _comparison_axis_union(
+        first,
+        second,
+        axis_reference_fields=axis_reference_fields,
+        denominator_field=denominator_field,
+    )
     catalog = _cell_catalog(first, second, axes)
     centers = catalog["centers"]
     widths = catalog["widths"]
     masks = catalog["masks"]
+    cells_by_field = [_locate_cells(field, centers) for field in union_fields]
+    reference_tags = first.tags_by_cell[cells_by_field[0]]
+    for field, cells in zip(union_fields[1:], cells_by_field[1:], strict=True):
+        tags = field.tags_by_cell[cells]
+        mismatch = np.flatnonzero(tags != reference_tags)
+        if mismatch.size:
+            index = int(mismatch[0])
+            raise ValueError(
+                f"{field.label}: material tag differs at common cell center "
+                f"{centers[index].tolist()}"
+            )
     legendre, one_d_weights = np.polynomial.legendre.leggauss(COMMON_QUADRATURE_ORDER)
     qx, qy, qz = np.meshgrid(legendre, legendre, legendre, indexing="ij")
     qref = np.column_stack((qx.ravel(), qy.ravel(), qz.ravel()))
@@ -1173,8 +1274,17 @@ def compare_common_subcell_volume(
     stats = {
         region: {
             "volume_nm3": 0.0,
+            **(
+                {"incident_e_sq": 0.0, "incident_h_sq": 0.0}
+                if denominator_field is not None
+                else {}
+            ),
             **{
-                name: {"g0_sq": 0.0, "g1_sq": 0.0, "difference_sq": 0.0}
+                name: {
+                    "g0_sq": 0.0,
+                    "g1_sq": 0.0,
+                    "difference_sq": 0.0,
+                }
                 for name in _QUANTITIES
             },
         }
@@ -1188,20 +1298,38 @@ def compare_common_subcell_volume(
         half = 0.5 * widths[start:stop]
         points = (cell_centers[:, None, :] + half[:, None, :] * qref[None, :, :]).reshape((-1, 3))
         weights = (np.prod(half, axis=1)[:, None] * qweights_ref[None, :]).reshape((-1,))
-        cells0 = np.repeat(catalog["cells_g0"][start:stop], nq)
-        cells1 = np.repeat(catalog["cells_g1"][start:stop], nq)
-        e0, c0 = _eval(first.electric, points, cells0), _eval(first.curl, points, cells0)
-        e1, c1 = _eval(second.electric, points, cells1), _eval(second.curl, points, cells1)
+        point_cells = [
+            np.repeat(cells[start:stop], nq) for cells in cells_by_field
+        ]
+        e0, c0 = (
+            _eval(first.electric, points, point_cells[0]),
+            _eval(first.curl, points, point_cells[0]),
+        )
+        e1, c1 = (
+            _eval(second.electric, points, point_cells[1]),
+            _eval(second.curl, points, point_cells[1]),
+        )
         bg_e = electric_field_code_values(first.cfg, points)
         bg_h = magnetic_field_code_values(first.cfg, points)
         q0 = _quantities(first, e0, c0, bg_e, bg_h)
         q1 = _quantities(second, e1, c1, bg_e, bg_h)
+        if denominator_field is not None:
+            incident_e, incident_h, _ = _background_code_fields(
+                first.cfg, points, "incident_plane_wave"
+            )
         for region, mask in masks.items():
             selected = np.repeat(mask[start:stop], nq)
             if not np.any(selected):
                 continue
             selected_weights = weights[selected]
             stats[region]["volume_nm3"] += float(np.sum(selected_weights))
+            if denominator_field is not None:
+                stats[region]["incident_e_sq"] += weighted_vector_squared_norm(
+                    incident_e[selected], selected_weights
+                )
+                stats[region]["incident_h_sq"] += weighted_vector_squared_norm(
+                    incident_h[selected], selected_weights
+                )
             for name in _QUANTITIES:
                 left, right = q0[name][selected], q1[name][selected]
                 stats[region][name]["g0_sq"] += weighted_vector_squared_norm(left, selected_weights)
@@ -1221,21 +1349,62 @@ def compare_common_subcell_volume(
             n0 = np.sqrt(values[name]["g0_sq"]) * factor0
             n1 = np.sqrt(values[name]["g1_sq"]) * factor1
             error = np.sqrt(values[name]["difference_sq"]) * 0.5 * (factor0 + factor1)
-            row["quantities"][name] = {
+            quantity_row = {
                 "unit": unit,
                 "g0_l2_norm": float(n0),
                 "g1_l2_norm": float(n1),
                 "difference_l2_norm": float(error),
                 "relative_to_g1": float(error / max(n1, np.finfo(float).tiny)),
             }
+            if denominator_field is not None:
+                assert fixed_denominator_norms is not None
+                try:
+                    fixed_norm = float(fixed_denominator_norms[region][name])
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"archived fixed denominator is missing {region}/{name}"
+                    ) from exc
+                if not np.isfinite(fixed_norm) or fixed_norm <= 0.0:
+                    raise ValueError(
+                        f"archived fixed denominator is not positive for {region}/{name}"
+                    )
+                incident_code_sq = values[
+                    "incident_h_sq" if name.startswith("H_") else "incident_e_sq"
+                ]
+                incident_norm = np.sqrt(incident_code_sq) * factor0
+                if name.startswith("curl_E_"):
+                    incident_norm *= float(first.cfg.k0)
+                quantity_row.update(
+                    {
+                        "fixed_denominator_label": denominator_field.label,
+                        "fixed_denominator_l2_norm": float(fixed_norm),
+                        "relative_to_fixed_denominator": float(
+                            error / max(fixed_norm, np.finfo(float).tiny)
+                        ),
+                        "incident_l2_norm": float(incident_norm),
+                        "incident_relative_difference": float(
+                            error / max(incident_norm, np.finfo(float).tiny)
+                        ),
+                    }
+                )
+            row["quantities"][name] = quantity_row
         metrics[region] = row
 
     gate_fields = (
-        "E_total", "E_scattered", "H_total", "H_scattered",
-        "scaled_curl_E_total", "scaled_curl_E_scattered",
+        tuple(_QUANTITIES)
+        if denominator_field is not None
+        else (
+            "E_total", "E_scattered", "H_total", "H_scattered",
+            "scaled_curl_E_total", "scaled_curl_E_scattered",
+        )
+    )
+    gate_metric = (
+        "relative_to_fixed_denominator"
+        if denominator_field is not None
+        else "relative_to_g1"
     )
     global_values = metrics["physical_domain"]["quantities"]
-    relative_values = [global_values[name]["relative_to_g1"] for name in gate_fields]
+    relative_values = [global_values[name][gate_metric] for name in gate_fields]
     return {
         "axis_union": axis_facts,
         "common_subcell_shape": catalog["shape"],
@@ -1259,6 +1428,10 @@ def compare_common_subcell_volume(
         "field_scaled_curl_h_gate": {
             "metric_scope": "global physical-domain L2 norms on exact common subcells",
             "quantities": list(gate_fields),
+            "denominator": (
+                denominator_field.label if denominator_field is not None else second.label
+            ),
+            "relative_metric": gate_metric,
             "limit_relative_l2": FIELD_H_GATE,
             "max_relative_l2": float(max(relative_values, default=0.0)),
             "pass": bool(all(value <= FIELD_H_GATE for value in relative_values)),

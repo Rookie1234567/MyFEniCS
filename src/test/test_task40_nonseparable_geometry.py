@@ -28,6 +28,7 @@ from src.geometry.task40_nonseparable_plan import (
     TASK40_E2_RUN_ID,
     TASK40_GX560_RUN_ID,
     TASK40_GZ528_RUN_ID,
+    TASK40_GX784_RUN_ID,
     TASK40_REVIEW_V2_GROWTH_RUN_IDS,
     TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH,
     TASK40_GEOMETRY_IDENTITY,
@@ -64,6 +65,7 @@ F3_G0_M2_MANUAL = INPUT_ROOT / "nonseparable_g0_p6_q4_manual_m2_f3.dat"
 F5_G1_M2_MANUAL = INPUT_ROOT / "nonseparable_g1_p6_q4_manual_m2_f5.dat"
 GX560_M2 = INPUT_ROOT / "nonseparable_gx560_p6_q4_manual_m2_v3.dat"
 GZ528_M2 = INPUT_ROOT / "nonseparable_gz528_p6_q4_manual_m2_v3.dat"
+GX784_M2 = INPUT_ROOT / "nonseparable_gx784_p6_q4_review_v5.dat"
 E1_M2 = INPUT_ROOT / "nonseparable_e1_p6_q4_manual_m2_growth.dat"
 E2_M2 = INPUT_ROOT / "nonseparable_e2_p6_q4_manual_m2_growth.dat"
 G0_DIRECT = INPUT_ROOT / "nonseparable_g0_p6_direct_reference.dat"
@@ -75,7 +77,7 @@ def test_all_task40_inputs_resolve_to_the_frozen_physical_identity():
         for path in (
             G0, G1, G0_DIRECT, G0_REVIEW_V1, G1_REVIEW_V1,
             F1_REFERENCE_METRIC, F2_G0_M1_MANUAL, F3_G0_M2_MANUAL,
-            GX560_M2, GZ528_M2,
+            GX560_M2, GZ528_M2, GX784_M2,
         )
     ]
     for specification in resolved:
@@ -115,12 +117,12 @@ def test_direct_reference_selects_exact_mesh_geometry_without_changing_old_profi
         _stage4_preserve_exact_geometry(
             replace(cfg, geometry_identity=TASK40_GEOMETRY_IDENTITY_BY_MESH[mesh_id])
         )
-        for mesh_id in ("E1", "E2", "GX560", "GZ528")
+        for mesh_id in ("E1", "E2", "GX560", "GZ528", "GX784")
     )
     task40_gates = profile_facts(TASK40_PROFILE)["gates"]
     assert task40_gates["task40_geometry_identity_by_mesh"] == {
         mesh_id: TASK40_GEOMETRY_IDENTITY_BY_MESH[mesh_id]
-        for mesh_id in ("G0", "G1", "E1", "E2", "GX560", "GZ528")
+        for mesh_id in ("G0", "G1", "E1", "E2", "GX560", "GZ528", "GX784")
     }
 
 
@@ -221,6 +223,7 @@ def test_electrical_mesh_plans_scale_exact_planes_at_fixed_h():
         "E2": ((10, 4, 22), 880, 0.5185185185185185),
         "GX560": ((10, 4, 14), 560, 0.5185185185185185),
         "GZ528": ((6, 4, 22), 528, 0.5185185185185185),
+        "GX784": ((14, 4, 14), 784, 0.5185185185185185),
     }
     for mesh_id, (counts, cells, target_h) in expected.items():
         plan = task40_mesh_plan(mesh_id)
@@ -233,6 +236,9 @@ def test_electrical_mesh_plans_scale_exact_planes_at_fixed_h():
     assert task40_mesh_plan("G1")["mesh_plan_sha256"] == (
         "2e7e0a76c2161bfc0651c89d8c5e6edfa2a1ed37d1e2b5a674e314c6c5f5c27d"
     )
+    assert task40_mesh_plan("GX784")["mesh_plan_sha256"] == (
+        "00760c10b132911a40c84ae5950742dcbd0086af2b26732be628ea08346b88d1"
+    )
     g0, g1 = task40_mesh_plan("G0"), task40_mesh_plan("G1")
     for mesh_id, sources in (
         ("GX560", {"x": g1, "y": g0, "z": g0}),
@@ -242,12 +248,19 @@ def test_electrical_mesh_plans_scale_exact_planes_at_fixed_h():
         assert plan["mesh_plan_id"] == f"task40extra.{mesh_id.lower()}.crossed_axes.v1"
         for axis, source in sources.items():
             assert plan["axis_coordinates_nm"][axis] == source["axis_coordinates_nm"][axis]
+    gx560 = task40_mesh_plan("GX560")
+    gx784 = task40_mesh_plan("GX784")
+    for axis in ("y", "z"):
+        assert gx784["axis_coordinates_nm"][axis] == gx560["axis_coordinates_nm"][axis]
+    assert gx784["axis_segment_interval_counts"]["x"] == [4, 3, 3, 4]
+    assert gx784["mesh_plan_id"] == "task40extra.gx784.review_v5.crossed_axes.v1"
 
 
 def test_review_v3_crossed_inputs_bind_the_preregistered_m2_cases():
     cases = (
         (GX560_M2, TASK40_GX560_RUN_ID, "GX560", (10, 4, 14)),
         (GZ528_M2, TASK40_GZ528_RUN_ID, "GZ528", (6, 4, 22)),
+        (GX784_M2, TASK40_GX784_RUN_ID, "GX784", (14, 4, 14)),
     )
     base = load_and_resolve(F3_G0_M2_MANUAL)
     for path, run_id, mesh_id, counts in cases:

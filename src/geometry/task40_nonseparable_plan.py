@@ -26,6 +26,7 @@ TASK40_GEOMETRY_IDENTITY_BY_MESH = {
     "E2": TASK40_E2_GEOMETRY_IDENTITY,
     "GX560": TASK40_GEOMETRY_IDENTITY,
     "GZ528": TASK40_GEOMETRY_IDENTITY,
+    "GX784": TASK40_GEOMETRY_IDENTITY,
 }
 TASK40_F1_REFERENCE_METRIC_RUN_ID = (
     "task40extra_0p7nm_nonseparable_g1_reference_metric_f1_v1"
@@ -37,6 +38,8 @@ TASK40_E1_RUN_ID = "task40extra_0p7nm_nonseparable_e1_manual_m2_growth_v1"
 TASK40_E2_RUN_ID = "task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1"
 TASK40_GX560_RUN_ID = "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1"
 TASK40_GZ528_RUN_ID = "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1"
+TASK40_GX784_RUN_ID = "task40extra_0p7nm_nonseparable_gx784_review_v5_v1"
+TASK40_GX784_WORKFLOW_BUDGET_SECONDS = 172800.0
 TASK40_REVIEW_V2_GROWTH_RUN_IDS = frozenset(
     {TASK40_F5_G1_M2_RUN_ID, TASK40_E1_RUN_ID, TASK40_E2_RUN_ID}
 )
@@ -48,6 +51,7 @@ TASK40_MANUAL_BOUNDS_BY_RUN_ID = {
     TASK40_E2_RUN_ID: (12, 3),
     TASK40_GX560_RUN_ID: (8, 2),
     TASK40_GZ528_RUN_ID: (8, 2),
+    TASK40_GX784_RUN_ID: (8, 2),
 }
 TASK40_AUTO_PROPAGATING_ENVELOPE_BY_MESH = {
     "E1": (9, 2),
@@ -66,6 +70,7 @@ TASK40_RUNS = {
     TASK40_E2_RUN_ID: "E2",
     TASK40_GX560_RUN_ID: "GX560",
     TASK40_GZ528_RUN_ID: "GZ528",
+    TASK40_GX784_RUN_ID: "GX784",
     "task40extra_0p7nm_nonseparable_g0_direct_reference_v1": "G0",
 }
 TASK40_SI_N = complex(0.9998851703688496, 4.3236152269189515e-6)
@@ -99,11 +104,58 @@ def _subdivide(
     return coordinates, counts
 
 
+def _subdivide_counts(
+    points: list[Fraction], counts: list[int]
+) -> list[Fraction]:
+    if len(points) != len(counts) + 1 or any(count < 1 for count in counts):
+        raise ValueError("fixed subdivision counts must cover each adjacent point pair")
+    coordinates = [points[0]]
+    for low, high, count in zip(points[:-1], points[1:], counts, strict=True):
+        coordinates.extend(
+            low + (high - low) * Fraction(index, count)
+            for index in range(1, count + 1)
+        )
+    return coordinates
+
+
 def _to_nm(values: list[Fraction], shift: Fraction = Fraction(0)) -> list[float]:
     return [float((value + shift) * SCALE) for value in values]
 
 
 def task40_mesh_plan(mesh_id: str) -> dict[str, Any]:
+    if mesh_id == "GX784":
+        gx560 = task40_mesh_plan("GX560")
+        x_points = [
+            Fraction(0),
+            Fraction(33, 2),
+            Fraction(25),
+            Fraction(67, 2),
+            Fraction(50),
+        ]
+        axes = {
+            "x": _to_nm(_subdivide_counts(x_points, [4, 3, 3, 4])),
+            "y": list(gx560["axis_coordinates_nm"]["y"]),
+            "z": list(gx560["axis_coordinates_nm"]["z"]),
+        }
+        segment_counts = {
+            "x": [4, 3, 3, 4],
+            "y": list(gx560["axis_segment_interval_counts"]["y"]),
+            "z": list(gx560["axis_segment_interval_counts"]["z"]),
+        }
+        counts = {axis: sum(values) for axis, values in segment_counts.items()}
+        payload = {
+            "mesh_id": mesh_id,
+            "target_h_nm": gx560["target_h_nm"],
+            "axis_segment_interval_counts": segment_counts,
+            "axis_interval_counts": counts,
+            "axis_coordinates_nm": axes,
+            "expected_hexahedra": math.prod(counts.values()),
+        }
+        return {
+            **payload,
+            "mesh_plan_id": "task40extra.gx784.review_v5.crossed_axes.v1",
+            "mesh_plan_sha256": _canonical_sha256(payload),
+        }
     if mesh_id in {"GX560", "GZ528"}:
         coarse = task40_mesh_plan("G0")
         fine = task40_mesh_plan("G1")
