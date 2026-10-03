@@ -78,3 +78,42 @@ def test_atomic_result_rejects_nonfinite_numbers(tmp_path: Path) -> None:
 
     assert not output.exists()
     assert list(tmp_path.iterdir()) == []
+
+
+def test_mode_diagnostics_keep_first_and_g1_denominators() -> None:
+    from benchmarks import postprocess_task40_review_v4_modes as modes
+
+    key = ("top", 0, 0, "s")
+    inventories = {
+        "G00": {key: {"outgoing_amplitude_at_boundary": [1.0, 0.0]}},
+        "G10": {key: {"outgoing_amplitude_at_boundary": [2.0, 0.0]}},
+        "G01": {key: {"outgoing_amplitude_at_boundary": [4.0, 0.0]}},
+        "G11": {key: {"outgoing_amplitude_at_boundary": [8.0, 0.0]}},
+    }
+    comparison = {
+        "all_ordered_mode_comparisons": [
+            {
+                "key": list(key),
+                "absolute_amplitude_difference": 2.0,
+                "relative_difference_to_first_amplitude": 2.0,
+            }
+        ]
+    }
+
+    modes._add_g1_normalization(comparison, inventories["G11"])
+    interaction = modes._interaction_rows(inventories)
+
+    assert comparison["all_ordered_mode_comparisons"][0][
+        "relative_difference_to_first_amplitude"
+    ] == 2.0
+    assert comparison["all_ordered_mode_comparisons"][0][
+        "g1_normalized_amplitude_difference"
+    ] == 0.25
+    assert comparison["all_ordered_mode_comparisons"][0][
+        "g1_normalized_denominator"
+    ] == 8.0
+    assert len(interaction) == 1
+    assert interaction[0]["mixed_complex"] == [3.0, 0.0]
+    assert interaction[0]["relative_to_G00_amplitude"] == 3.0
+    assert interaction[0]["incident_normalized_mixed_difference"] == 3.0
+    assert interaction[0]["g1_normalized_mixed_difference"] == 0.375
