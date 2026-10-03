@@ -4,7 +4,7 @@
   "input_head": "7df3986ff07ef21990e3037693ebbcea94b885c2",
   "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
   "actual_numeric_source_reused": "8000ee893a42e2f3cef288fe4652ee1052d511e7",
-  "documentation_parent_head": "7df3986ff07ef21990e3037693ebbcea94b885c2",
+  "documentation_parent_head": "ba7ca3a18eb983c78c48beab285c2e07a41f8220",
   "canonical_common_git": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
   "canonical_worktree": "/home/fenics/Projects/NN-Lab-V2",
   "exact_branch": "task42extra_feinn_5nm",
@@ -219,14 +219,266 @@
     "historical_failures_or_NOT_RUN_not_overwritten": true
   },
   "changed_pages_actual_visual": {
-    "status": "PENDING_FINITE_POST_PUSH_CHECK"
+    "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+    "publication_sha": "ba7ca3a18eb983c78c48beab285c2e07a41f8220",
+    "raw_capture": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/render_records.json",
+      "sha256": "b1ec18a5bf6223df0310d50ccd72e1628129ba89b61a5a416dff58b4dd1feaa1"
+    },
+    "supervision": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v14_github_visual_readmission_20261003T035108518407Z/summary.json",
+      "sha256": "069811388d045d4abcf54998a441d815338525ff28a01d58a19f5a22d761188b"
+    },
+    "pages": [
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ba7ca3a18eb983c78c48beab285c2e07a41f8220/docs/task042extra_feinn_5nm/README.md",
+        "heading_prefix": "",
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "source_file": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/README.md",
+          "sha256": "3a8a21eefab707eda240bdb43213d572f877749c82dd169091f488884983d78d"
+        },
+        "DOM_tables": 2,
+        "table_columns": [
+          [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "rendered_new_math": 0,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_top.png",
+            "sha256": "03ab46c7b58f6473a9c242a54d80cb769487fba7273a4267bac2643eaa586136"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_table_00.png",
+            "sha256": "94eceb0d8e8498f04279f72423ca4a0794f16c52fc7ca8ecf676494e3872181b"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_table_01.png",
+            "sha256": "f2849cf9093e121e65d0b70e6267b00dcb552a07c3ee207b78206db7a1da5b63"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ba7ca3a18eb983c78c48beab285c2e07a41f8220/docs/task042extra_feinn_5nm/response_v14.md",
+        "heading_prefix": "",
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "source_file": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/response_v14.md",
+          "sha256": "e856ac404402a1c74878258e37fba09a711b2c70e6349f9480f899b8b056f6d5"
+        },
+        "DOM_tables": 1,
+        "table_columns": [
+          [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ]
+        ],
+        "rendered_new_math": 0,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/01_top.png",
+            "sha256": "cbd54eaf6ce5b11f2da389db090a18a152aa5b8ffb77128903fdcd069979b18f"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/01_table_00.png",
+            "sha256": "9cbfddcc5b31975caa6f73f4c5ae598a93e1b804830468456c6dbc5d939e7c66"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ba7ca3a18eb983c78c48beab285c2e07a41f8220/docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "heading_prefix": "Task42extra Review V13 后续：V14",
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "source_file": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/summary.md",
+          "sha256": "148c028241e59fc9c858ab911ea011142c99419ac68ce967300a76c5c635db43"
+        },
+        "DOM_tables": 1,
+        "table_columns": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "rendered_new_math": 0,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/02_top.png",
+            "sha256": "3d24ffb5172226fae2902964170ec5a13f54da9299a79742df3e27ef736c9afb"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/02_table_00.png",
+            "sha256": "55fbf3df7837aaf881a7f38044f8397693dbf254fd2f03e934e2dd1ec6359e5c"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ba7ca3a18eb983c78c48beab285c2e07a41f8220/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "heading_prefix": "Review V13 后续 V14",
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "source_file": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+          "sha256": "61de82bb775e22d6962d51dc2d24ccdf080a97a5067fdce187d896ee5fa09650"
+        },
+        "DOM_tables": 0,
+        "table_columns": [],
+        "rendered_new_math": 0,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/03_top.png",
+            "sha256": "76ff9ac9ad947ad6d883415685efd03fe7d75f0e95bf39aedfe707619b6273b5"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ba7ca3a18eb983c78c48beab285c2e07a41f8220/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "heading_prefix": "Review V13 后续 V14",
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "source_file": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+          "sha256": "9562270975c820af87f9f040762eb5949a8671984c506036f34df855baa6e10a"
+        },
+        "DOM_tables": 1,
+        "table_columns": [
+          [
+            3,
+            3
+          ]
+        ],
+        "rendered_new_math": 0,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/04_top.png",
+            "sha256": "8504fc2deaee240810743db6891cf17bde69fdc36e46d506e932a39c67c743ff"
+          },
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/04_table_00.png",
+            "sha256": "8504fc2deaee240810743db6891cf17bde69fdc36e46d506e932a39c67c743ff"
+          }
+        ]
+      },
+      {
+        "url": "https://github.com/Rookie1234567/MyFEniCS/blob/ba7ca3a18eb983c78c48beab285c2e07a41f8220/docs/development_progress.md",
+        "heading_prefix": "2026-10-03 Task42extra V14",
+        "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+        "source_file": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/docs/development_progress.md",
+          "sha256": "526b8c1e008d7b3e0fffadb14ba6f78c6275fc753fafac021679ee9f91d38b11"
+        },
+        "DOM_tables": 0,
+        "table_columns": [],
+        "rendered_new_math": 0,
+        "screenshots": [
+          {
+            "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/05_top.png",
+            "sha256": "dddddf50ffa087b5238a0a746fbf0e3280c9b93feea2ff91143960084639dbbb"
+          }
+        ]
+      }
+    ],
+    "selected_tables": 5,
+    "new_math_fences": 0,
+    "model_viewed_screenshots": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_table_01.png",
+        "sha256": "f2849cf9093e121e65d0b70e6267b00dcb552a07c3ee207b78206db7a1da5b63"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/01_table_00.png",
+        "sha256": "9cbfddcc5b31975caa6f73f4c5ae598a93e1b804830468456c6dbc5d939e7c66"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/02_table_00.png",
+        "sha256": "55fbf3df7837aaf881a7f38044f8397693dbf254fd2f03e934e2dd1ec6359e5c"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_top.png",
+        "sha256": "03ab46c7b58f6473a9c242a54d80cb769487fba7273a4267bac2643eaa586136"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/03_top.png",
+        "sha256": "76ff9ac9ad947ad6d883415685efd03fe7d75f0e95bf39aedfe707619b6273b5"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/04_table_00.png",
+        "sha256": "8504fc2deaee240810743db6891cf17bde69fdc36e46d506e932a39c67c743ff"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/05_top.png",
+        "sha256": "dddddf50ffa087b5238a0a746fbf0e3280c9b93feea2ff91143960084639dbbb"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/00_table_00.png",
+        "sha256": "94eceb0d8e8498f04279f72423ca4a0794f16c52fc7ca8ecf676494e3872181b"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v14_ba7ca3a1/01_top.png",
+        "sha256": "cbd54eaf6ce5b11f2da389db090a18a152aa5b8ffb77128903fdcd069979b18f"
+      }
+    ],
+    "scope": "two changed full pages and four new sections only; all five selected table DOM layouts and nine screenshots inspected; not historical-page qualification",
+    "supervised_worker_seconds": 42.27532923803665,
+    "complete_readmission_parent_seconds": 43.61836956592742,
+    "child_worker_seconds_included_in_parent_not_added_again": true,
+    "sampled_simultaneous_own_tree_peak_bytes": 2009993216,
+    "tree_rss_warning_bytes": 1879048192,
+    "warning_exceeded": true,
+    "tree_rss_hard_bytes": 2147483648,
+    "hard_limit_exceeded": false,
+    "self_swap_bytes": 0,
+    "descendants_cleared": true
   },
   "old_73_tests_reused": true,
   "CI_claim": false,
   "local_document_repairs_used": 0,
   "local_document_repairs_cap": 2,
-  "resource_refusals": [],
-  "resource_readmissions_used": 0,
+  "resource_refusals": [
+    {
+      "stage": "v14_github_visual",
+      "worker_started": false,
+      "directory": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v14_github_visual_20261003T034935749172Z",
+      "reason": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "classification": "NOT_STARTED_RESOURCE_WINDOW_UNAVAILABLE",
+      "exact_elapsed_seconds": "NOT_RETAINED; included in complete batch wall",
+      "new_visual_evidence_created": false
+    }
+  ],
+  "resource_readmissions_used": 1,
   "resource_readmissions_cap": 1,
   "resource_limits": {
     "cpu_only": true,
@@ -240,17 +492,17 @@
   },
   "costs": {
     "batch_started_utc": "2026-10-03T03:42:22+00:00",
-    "snapshot_utc": "2026-10-03T03:48:29.701100+00:00",
+    "snapshot_utc": "2026-10-03T03:55:30.128585+00:00",
     "batch_limit_seconds": 1800,
-    "complete_batch_wall_to_snapshot_seconds": 367.7011,
+    "complete_batch_wall_to_snapshot_seconds": 788.128585,
     "final_publication_upper_allowance_seconds": 120,
     "allowance_kind": "DERIVED_NOT_MEASURED_WORKER_TIME",
-    "new_conservative_charged_seconds": 487.7011,
+    "new_conservative_charged_seconds": 908.128585,
     "old_cumulative_research_seconds": 160249.97765731902,
     "review_v13_known_wall_to_snapshot_seconds": 1456.48735,
     "review_v13_worker_seconds_included_not_added_again": 55.99245859694201,
     "unmeasured_review_publication_or_old_tail_seconds": "NOT_RETAINED_NOT_ZERO",
-    "known_partial_cumulative_seconds": 162194.16610731903,
+    "known_partial_cumulative_seconds": 162614.59359231903,
     "accounting": "read/edit/import/checks/failures/IO/publish all in full batch wall; nested supervised worker costs not added again",
     "first_phase_start_utc": "2026-10-03T03:42:22+00:00",
     "first_phase_end_utc": "2026-10-03T03:47:09+00:00",
@@ -262,5 +514,63 @@
     "research_accumulation_is_not_original_target_single_172800s_qualification": true
   },
   "final_target": "original-size 0.7 nm full3D FE; decimal 2000000000000 B whole-machine; 172800s full necessary workflow; NOT_RUN_NOT_QUALIFIED",
-  "next_action": "PAUSE_WAIT_REVIEW; restart proposal only when every Review V13 P2 condition is met"
+  "next_action": "PAUSE_WAIT_REVIEW; restart proposal only when every Review V13 P2 condition is met",
+  "final_own_clearance": {
+    "record": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/final_clearance_v14.json",
+      "sha256": "304c45c646fb49bc06802657222d81a5c34cf682d76aa4506f8b6ce9e24da287"
+    },
+    "numerical_lock": "FREE",
+    "own_active_runs": 0,
+    "document_and_browser_supervisors_cleared": true
+  },
+  "static_final_checks": {
+    "status": "PASS",
+    "qualified_six_markdown_byte_hashes_unchanged": true,
+    "visual_page_byte_hashes_unchanged": true,
+    "exact_seven_document_files_only": true,
+    "source_inputs_task_reviews_old_records_unchanged": true,
+    "git_diff_check": "PASS",
+    "no_new_numeric_or_old_tests": true
+  },
+  "coarse_phase_windows": [
+    {
+      "phase": "P0 identity/read/current entry",
+      "start": "2026-10-03T03:42:22+00:00",
+      "end": "2026-10-03T03:47:09+00:00",
+      "upper_seconds": 287,
+      "limit_seconds": 600
+    },
+    {
+      "phase": "changed document checks, first publication, one refusal/probe/readmission and visual inspection",
+      "start": "2026-10-03T03:47:09+00:00",
+      "end": "2026-10-03T03:53:14+00:00",
+      "upper_seconds": 365,
+      "limit_seconds": 600
+    },
+    {
+      "phase": "final receipts, publication and own clearance allowance",
+      "start": "2026-10-03T03:53:14+00:00",
+      "snapshot": "2026-10-03T03:55:30.072552+00:00",
+      "upper_seconds_including_120s_final_publish": 256.072552,
+      "limit_seconds": 600
+    }
+  ],
+  "fresh_resource_probe": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v14_resource_probe.json",
+    "sha256": "c65e6d9f358f9f71cd188c29c3b56597b26a899a334d9010ff8515dbdebc05b7",
+    "status": "FRESH_QUALIFIED_WINDOW_OBSERVED",
+    "elapsed_seconds": 1.2800744409905747,
+    "policy_changed": false
+  },
+  "unique_resource_readmission": {
+    "status": "COMPLETED",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v14_readmission_result.json",
+      "sha256": "8166983608b32b051b138316bef70178027a84364409c4e2dd74f3de76ca0da8"
+    },
+    "outer_complete_seconds": 43.61836956592742,
+    "one_fresh_probe_only": true,
+    "resource_policy_unchanged": true
+  }
 }
