@@ -83,6 +83,7 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
         + manifest["supervised_limit_seconds"]
         - 150
     )
+    adapter_cutoff = min(cutoff, perf_counter() + 600)
 
     def guard():
         if perf_counter() >= cutoff:
@@ -249,6 +250,12 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
             p3reference=c_ref, M3600=fields["M3600"], Mfinal=fields["Mfinal"]
         ).items():
             guard()
+            if perf_counter() >= adapter_cutoff:
+                result.update(
+                    status="NOT_RUN_INPUT_OR_ADAPTER_UNAVAILABLE",
+                    reason="P34_RESTORE_600S_LIMIT",
+                )
+                return result, {}
             field3, defect = restore(floquet, packet, c)
             field4 = fem.Function(space4)
             field4.interpolate(field3)
@@ -269,11 +276,25 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
             if max([mpc] + pairing[name]["common_field_relative"]) > 1e-10:
                 raise ValueError("REUSED_P34_FIELD_PAIRING_FAILED")
             embedded[name] = storage[packet4.a["masters"]]
+        write_json(
+            Path(artifact) / "embedding_witness.json",
+            dict(
+                source_sha=manifest["source_sha"],
+                embedding=pairing,
+                p4_native=old["files"]["native"],
+                new_assembly=False,
+                new_factor=False,
+            ),
+        )
         with np.load(
             checked_entry(load_index("v8_p4_reference_recovery")["files"]["reference"]),
             allow_pickle=False,
         ) as z:
-            cref4 = np.array(z["c"])
+            if str(z["native_sha256"]) != old["files"]["native"]["sha256"]:
+                raise ValueError("SAVED_P4_REFERENCE_OPERATOR_IDENTITY_CHANGED")
+            # V8's qualified authority packet explicitly distinguishes scattered
+            # FE coefficients from total-field port amplitudes. Never alias them.
+            cref4 = reference_coefficients(z, "c_scattered", packet4.size)
         ref4 = packet4.apply(cref4) - packet4.f
         rows = {}
         residuals = {}
@@ -319,6 +340,9 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
             G4_created=False,
             p4_dual_norm_qualified=False,
             P34_source=old["source_sha"],
+            trial_degree=3,
+            test_degree=4,
+            test_space_operator=old["files"]["native"],
         )
         if packet4.counts["A"] > 8 or result["p4_reference_native"] > 1e-10:
             raise ValueError("P4_TEST_WITNESS_BUDGET_OR_REFERENCE_FAILED")
@@ -326,3 +350,14 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
     atomic_npz(path, **arrays)
     write_json(Path(artifact) / "partial_field_diagnostics.json", result)
     return result, dict(vectors=path)
+
+
+def reference_coefficients(archive, key, size):
+    value = np.array(archive[key])
+    if (
+        value.shape != (size,)
+        or value.dtype != np.complex128
+        or not np.isfinite(value).all()
+    ):
+        raise ValueError("SAVED_REFERENCE_MASTER_SCATTERED_LAYOUT_FAILED")
+    return value

@@ -107,3 +107,17 @@ def test_group_directions_real_and_zero_groups_removed():
     assert P.shape == (4, 2) and np.isrealobj(P)
     assert np.allclose(np.linalg.norm(P, axis=0), 1)
     assert sum(x["status"] == "ZERO_DIRECTION_REMOVED" for x in rows) == 2
+
+
+def test_p4_authority_scattered_schema_is_explicit(tmp_path):
+    from src.solvers.feinn_saved_field_diagnostics import reference_coefficients
+
+    path = tmp_path / "reference.npz"
+    c = np.arange(9, dtype=np.float64).astype(np.complex128) + 1j
+    np.savez(path, c_scattered=c, alpha_total=np.ones(4, dtype=np.complex128))
+    with np.load(path, allow_pickle=False) as z:
+        assert np.array_equal(reference_coefficients(z, "c_scattered", 9), c)
+        with pytest.raises(KeyError):
+            reference_coefficients(z, "c", 9)
+        with pytest.raises(ValueError, match="SCATTERED_LAYOUT"):
+            reference_coefficients(z, "alpha_total", 9)
