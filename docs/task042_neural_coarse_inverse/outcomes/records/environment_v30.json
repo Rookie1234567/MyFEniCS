@@ -1,0 +1,39 @@
+{
+  "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "numpy": "1.26.4",
+  "scipy": "1.11.4",
+  "affinity": [
+    21
+  ],
+  "MPI": 1,
+  "math_threads": 1,
+  "actual_BLAS": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "DataLoader_workers": 0,
+  "FE_JIT": false,
+  "Torch_loaded": false,
+  "GPU_used": false,
+  "bytecode_disabled": true,
+  "caches": {
+    "TMPDIR": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/tmp",
+    "PYTHONPYCACHEPREFIX": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/pycache",
+    "XDG_CACHE_HOME": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/xdg"
+  },
+  "shared_workstation": true
+}

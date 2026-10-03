@@ -1,0 +1,88 @@
+{
+  "schema": "task042.v30.render-check.v1",
+  "utc": "2026-10-03T06:51:54.546165+00:00",
+  "checks": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v30.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "whole file"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/light_entry_acceptance_v30.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 3,
+      "scope": "whole file"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "new prefix only; old suffix preserved"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "new prefix only; old suffix preserved"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "new prefix only; old suffix preserved"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "new prefix only; old suffix preserved"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_progress.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "new prefix only; old suffix preserved"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 0,
+      "scope": "new prefix only; old suffix preserved"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v27.md",
+      "tables": "PASS",
+      "fences": "PASS",
+      "local_links": "PASS",
+      "math_blocks": 2,
+      "scope": "whole file"
+    }
+  ],
+  "local_link_count": 64,
+  "github_visual": {
+    "status": "NOT_VERIFIED",
+    "reason": "exact page Cache miss; no visual evidence",
+    "attempted_url": "https://github.com/Rookie1234567/MyFEniCS/blob/0a0f03390247ef37b12a04cadc61d091320203c0/docs/task042_neural_coarse_inverse/review_report_v27.md"
+  },
+  "doc_pytest": "12 tests passed within 162 scope at implementation source before new documentation prefixes; not rerun after queue closed",
+  "no_CI_claim": true,
+  "final_new_documents_rechecked_utc": "2026-10-03T06:54:10.330874+00:00",
+  "raw_worker_archive": "lossless gzip; unmodified original retained in ignored tmp"
+}

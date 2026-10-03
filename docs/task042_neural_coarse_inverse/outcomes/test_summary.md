@@ -1,3 +1,9 @@
+# V30：最终实现的真实编译及唯一监督验收
+
+source `1a18f520dae3ecd702a1369b0d9241ec3e81802a`：准入前22文件compile成功，无执行／NumPy导入；唯一受监督任务最小7 passed、完整162 passed（原155＋新7，最小7重复，169次实际执行）。32变异先确认未变异正控制通过，再断言准确ValueError/KeyError消息；专门IO回归证明任意FileNotFoundError不能误报通过。完整轻量入口PASSED／exit0，CPU replay、三固定代数、成本模块整体执行。scope含12项仓库文档合同；它们绑定运行时source，交付前新增文档另作静态结构／链接检查，不声明对文档HEAD重跑pytest。无CI／full-repository／FE-MPI／真实PDE验收。
+
+[编译](records/compilation_v30.json)、[最小raw](records/minimal_stdout_v30.txt)、[完整raw](records/full_scope_stdout_v30.txt)、[JUnit](records/full_scope_junit_v30.xml)、[入口](records/entry_result_v30.json)、[原始监督](records/supervision_v30.json)。新source没有再修改或重启；V29原NOT_RUN及Review V27审阅测试分开保留。以下历史逐字保留。
+
 # V29测试：唯一CPU准入拒绝，全部运行验收未执行
 
 | 检查／数据身份 | 结果与具体限制 |

@@ -1,3 +1,18 @@
+# V30变化：入口修复与精准合成验收
+
+数值方程、真实action/PC/恢复和actor未改。本轮依赖组如下；source `1a18f520dae3ecd702a1369b0d9241ec3e81802a`已在clean提交后通过7/162回归，无production提升或merge approval。
+
+| 依赖组 | 文件／职责 | 数值行为与资格／合入边界 |
+|---|---|---|
+| production numerical/core | 无新增或改动 | fresh PDE无，禁止据此提升真实PC |
+| reusable runner/watchdog | task042_diagnostic_auxiliary.py；共享监督不改，只加v30 namespace | 复用原准入／deadline／树监督，1次实测通过；research opt-in |
+| checker/benchmark | collect_task042_return_direction.py、task042_v29_cached_analysis.py、task042_v29_light_checks.py | 创建输出目录、schema、批次／日志、完整入口；合成资格已过，真实验收未运行 |
+| tests/research-only | task042_return_fixture.py、test_task042_v29_checker.py、test_task042_v30_entry.py | 正控制及32准确错误Gate、7精准回归；小矩阵算法保持 |
+| compact evidence/docs | response_v30、light_entry_acceptance_v30、V30 raw/hash/资源／导航和总账 | 只提交轻量证据；历史原文保留，不重复复制nested旧JSON |
+| do-not-merge | 所有未资格化真实回流／全空间PC和大数组 | ignored scratch合成包不入Git；旧research路径不提升默认 |
+
+[原始source／run索引](records/run_index_v30.json)及[测试](records/tests_v30.json)。建议顺序是先单独审查审核／入口修复，再compact证据；不自动实施选择性合并。以下历史逐字保留。
+
 # V29变化与依赖分组
 
 | 依赖组 | 改动、证据与审阅边界 |

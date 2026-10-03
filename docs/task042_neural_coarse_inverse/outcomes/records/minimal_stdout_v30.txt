@@ -1,0 +1,3 @@
+.......                                                                  [100%]
+- generated xml file: /home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/junit.xml -
+7 passed in 1.26s

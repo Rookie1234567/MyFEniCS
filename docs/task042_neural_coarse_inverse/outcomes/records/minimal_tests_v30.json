@@ -1,0 +1,31 @@
+{
+  "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "command": [
+    "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--tb=short",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/pytest",
+    "--junitxml",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/junit.xml",
+    "src/test/test_task042_v30_entry.py"
+  ],
+  "returncode": 0,
+  "wall_seconds": 2.486083292053081,
+  "stdout": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/stdout.log",
+    "sha256": "5ea949825c7f08151e7631616db02c96e1f11356fd72dd032ecfee3a45771461"
+  },
+  "stderr": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": [
+    "src/test/test_task042_v30_entry.py"
+  ],
+  "role": "synthetic/cached-metadata tests; no real numeric payloads"
+}

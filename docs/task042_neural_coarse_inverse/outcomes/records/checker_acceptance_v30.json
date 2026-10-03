@@ -1,0 +1,239 @@
+{
+  "status": "SYNTHETIC_END_TO_END_CHECKED",
+  "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "role": "no real diagnostic consumption",
+  "full_scope_original155_and_new7": 162,
+  "minimal7_repeat": 7,
+  "unique_tests": 162,
+  "executions": 169,
+  "positive_control_per_mutation": true,
+  "arbitrary_OSError_no_longer_accepted": true,
+  "output_directory_owner": "collector; atomic writer unchanged",
+  "semantic_rejections": [
+    {
+      "case": "zero_consumption",
+      "expected_type": "ValueError",
+      "expected_message": "complete fixed consumption differs",
+      "qualified": true
+    },
+    {
+      "case": "missing_factor",
+      "expected_type": "ValueError",
+      "expected_message": "missing/duplicate/wrong factor bundle",
+      "qualified": true
+    },
+    {
+      "case": "duplicate_factor",
+      "expected_type": "ValueError",
+      "expected_message": "missing/duplicate/wrong factor bundle",
+      "qualified": true
+    },
+    {
+      "case": "failed_factor",
+      "expected_type": "ValueError",
+      "expected_message": "unqualified factor or solve/RHS/pass inventory",
+      "qualified": true
+    },
+    {
+      "case": "wrong_factor_source",
+      "expected_type": "ValueError",
+      "expected_message": "factor source/rows identity",
+      "qualified": true
+    },
+    {
+      "case": "wrong_factor_rows",
+      "expected_type": "ValueError",
+      "expected_message": "factor source/rows identity",
+      "qualified": true
+    },
+    {
+      "case": "wrong_factor_hash",
+      "expected_type": "ValueError",
+      "expected_message": "factor hash/reader seal",
+      "qualified": true
+    },
+    {
+      "case": "wrong_seed",
+      "expected_type": "ValueError",
+      "expected_message": "factor witness seeds",
+      "qualified": true
+    },
+    {
+      "case": "bad_solve",
+      "expected_type": "ValueError",
+      "expected_message": "solve relative differs",
+      "qualified": true
+    },
+    {
+      "case": "missing_witness",
+      "expected_type": "ValueError",
+      "expected_message": "factor witness seeds",
+      "qualified": true
+    },
+    {
+      "case": "nan_witness",
+      "expected_type": "ValueError",
+      "expected_message": "finite nonnegative certificate: solve relative",
+      "qualified": true
+    },
+    {
+      "case": "port_shape",
+      "expected_type": "ValueError",
+      "expected_message": "complete 40-port single RHS shape",
+      "qualified": true
+    },
+    {
+      "case": "port_columns",
+      "expected_type": "ValueError",
+      "expected_message": "complete 40-port single RHS shape",
+      "qualified": true
+    },
+    {
+      "case": "ledger_counts",
+      "expected_type": "ValueError",
+      "expected_message": "durable counts disagree",
+      "qualified": true
+    },
+    {
+      "case": "ledger_source",
+      "expected_type": "ValueError",
+      "expected_message": "durable run/source identity",
+      "qualified": true
+    },
+    {
+      "case": "manifest_counts",
+      "expected_type": "ValueError",
+      "expected_message": "durable counts disagree",
+      "qualified": true
+    },
+    {
+      "case": "wrong_parent",
+      "expected_type": "ValueError",
+      "expected_message": "named parent/cache binding parent_result",
+      "qualified": true
+    },
+    {
+      "case": "wrong_member",
+      "expected_type": "ValueError",
+      "expected_message": "fixed state path/container/member identity differs",
+      "qualified": true
+    },
+    {
+      "case": "missing_arrays",
+      "expected_type": "ValueError",
+      "expected_message": "missing new raw arrays",
+      "qualified": true
+    },
+    {
+      "case": "return_vector",
+      "expected_type": "ValueError",
+      "expected_message": "qret != hash-bound qJ+d",
+      "qualified": true
+    },
+    {
+      "case": "residual_norm",
+      "expected_type": "ValueError",
+      "expected_message": "actual input residual norm differs",
+      "qualified": true
+    },
+    {
+      "case": "w_support",
+      "expected_type": "ValueError",
+      "expected_message": "J/outer support differs",
+      "qualified": true
+    },
+    {
+      "case": "feedback_support",
+      "expected_type": "ValueError",
+      "expected_message": "J/outer support differs",
+      "qualified": true
+    },
+    {
+      "case": "missing_identity",
+      "expected_type": "KeyError",
+      "expected_message": "'identity'",
+      "qualified": true
+    },
+    {
+      "case": "failed_identity",
+      "expected_type": "ValueError",
+      "expected_message": "state identity threshold port_reclosure_operation_relative",
+      "qualified": true
+    },
+    {
+      "case": "cancellation",
+      "expected_type": "ValueError",
+      "expected_message": "cancellation error differs",
+      "qualified": true
+    },
+    {
+      "case": "missing_scale",
+      "expected_type": "KeyError",
+      "expected_message": "'scale_provenance'",
+      "qualified": true
+    },
+    {
+      "case": "wrong_recombination",
+      "expected_type": "ValueError",
+      "expected_message": "recombination operation_relative differs",
+      "qualified": true
+    },
+    {
+      "case": "state_concat",
+      "expected_type": "ValueError",
+      "expected_message": "state concat/homogeneous recovery",
+      "qualified": true
+    },
+    {
+      "case": "state_port",
+      "expected_type": "ValueError",
+      "expected_message": "state port_reclosure_operation_relative differs",
+      "qualified": true
+    },
+    {
+      "case": "missing_state_audit",
+      "expected_type": "KeyError",
+      "expected_message": "'audited_full_residual'",
+      "qualified": true
+    },
+    {
+      "case": "nonfinite",
+      "expected_type": "ValueError",
+      "expected_message": "saved member hash/finite return_direction",
+      "qualified": true
+    }
+  ],
+  "legal_cases": [
+    "positive",
+    "weak",
+    "beta_zero",
+    "zero",
+    "duplicate",
+    "nearzero",
+    "solved"
+  ],
+  "partial_case": "PARTIAL_UNRESOLVED",
+  "raw_junit": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/full_scope_junit_v30.xml",
+    "sha256": "af11327fcc084c100b99cbe27b589d00503e5b9be5878f2498123c1b1afc3065",
+    "bytes": 23994
+  },
+  "synthetic_inventory": {
+    "actions": 36,
+    "port_rhs_single": 35,
+    "factor_readers": 7
+  },
+  "real_inventory": {
+    "actor": 0,
+    "S": 0,
+    "SH": 0,
+    "factor_readers": 0,
+    "local_solve": 0,
+    "LU": 0,
+    "gecon": 0,
+    "QR_SVD": 0,
+    "FE": 0,
+    "iterations": 0,
+    "training": 0
+  }
+}

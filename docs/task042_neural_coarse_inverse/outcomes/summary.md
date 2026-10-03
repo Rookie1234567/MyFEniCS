@@ -1,3 +1,18 @@
+# V30最新结果：修复入口、关闭合成审核准备链
+
+审核器核对保存向量、来源和计数，软件修复让正例能正常写出、负例因预定Gate被拒绝，不改变有限元方程。唯一准入通过后的原样入口已完成；[回应](../response_v30.md)、[结果](light_entry_acceptance_v30.md)、[原始索引](records/run_index_v30.json)绑定实际source，旧V29 NOT_RUN不追溯改写。
+
+| 范围／数据身份／单位 | baseline与实测 | 成功边界／未完成原因／证据 |
+|---|---|---|
+| A入口与审核／measured | source1a18f520…；22编译、最小7、完整162 passed；原155＋新7；169为重复执行数 | 32变异各有正控制＋具体错误Gate；合成checker合格，[资格](records/checker_acceptance_v30.json) |
+| B缓存CPU／小矩阵／measured | 冻结48核两快照候选11/22/26及空；三fixture最大误差8.130e-17／1.905e-16≤1e-12 | 零主块拒绝；2×2补项残差放大6倍，不保证收敛，[代数](records/full_space_algebra_v30.json) |
+| C完整成本／cached-metadata | V26薄LS0.008964091s，占该诊断actor0.026949%；A＋LU载荷1,591,420,032B | 全成功N=1时间／同时峰unknown，不把载荷当RSS，[账](records/complete_cost_ledger_v30.json) |
+| shared-workstation／measured | CPU21；监督18.785166597s，累计39.949013367s；树RSS195,633,152B、ownswap0 | hard2GiB／warn1GiB，自身后代清空，无绝对零干扰结论，[资源](records/resource_costs_v30.json) |
+| 0.7nm／384hex/p3/q15／40port物理模型 | 新actor0、S+SH0、真实factor reader0、PDE/场/功率NOT_RUN | 无新R/T/A；原V24完整0/5、V23 0/6不改，原尺寸／2TB／48h NOT_QUALIFIED |
+| 神经增量／not_run | 无训练、无合格同精度非神经N=1对照 | ≥20%完整时间或同时峰收益NOT_DEMONSTRATED，不把传统块代数算成NN收益 |
+
+本批仅关闭轻量入口和合成可信链。唯一下一建议由新review决定是否授权原两冷态、V26九方向基线的一次真实回流诊断，仍须真实因子资格、fresh资源／监督和完整费用。未授予真实actor或merge；GitHub视觉NOT_VERIFIED，本地结构另列。以下历史原文完整保留。
+
 # Task042 V29：静态收口，运行资格未取得
 
 审核器改为核对完整消费、七因子见证、保存向量及原始范数，防止只信任结果标签。全空间补项给外域残差一个直接入口，但它是传统块校正，局部精确仍不保证残差下降；这里只作纸面推导，未接入求解器。

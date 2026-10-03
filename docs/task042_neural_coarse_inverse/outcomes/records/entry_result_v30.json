@@ -1,0 +1,231 @@
+{
+  "batch": "v30",
+  "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "exit_code": 0,
+  "status": "PASSED",
+  "inner_wall_seconds": 14.790799551992677,
+  "utc": "2026-10-03T06:45:49.030802+00:00",
+  "real_counts": {
+    "actor": 0,
+    "S": 0,
+    "SH": 0,
+    "factor_readers": 0,
+    "local_solve": 0,
+    "LU": 0,
+    "gecon": 0,
+    "QR_SVD": 0,
+    "FE": 0,
+    "iterations": 0,
+    "training": 0
+  },
+  "synthetic_and_cached_only": true,
+  "detail": {
+    "status": "PASSED",
+    "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+    "minimal": {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/pytest",
+        "--junitxml",
+        "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/junit.xml",
+        "src/test/test_task042_v30_entry.py"
+      ],
+      "returncode": 0,
+      "wall_seconds": 2.486083292053081,
+      "stdout": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/stdout.log",
+        "sha256": "5ea949825c7f08151e7631616db02c96e1f11356fd72dd032ecfee3a45771461"
+      },
+      "stderr": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/minimal/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "scope": [
+        "src/test/test_task042_v30_entry.py"
+      ],
+      "role": "synthetic/cached-metadata tests; no real numeric payloads"
+    },
+    "compilation": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_return_direction.py",
+        "sha256": "5840b307152419e3043bfd8e4430b492512f44bfab7a725891ac5eb346e42e3c",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_block_direction.py",
+        "sha256": "6073815bf94e168df36feb1197a4c24563d4344d29d1ca021765b0895c7bc637",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_return_certificates.py",
+        "sha256": "6c44b6e4cd2afd0e4ebd8bd81b291c0cc67184a16ad23e7139f13c234c377e1f",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_full_block_algebra.py",
+        "sha256": "97ac2c1f7dd9f71591bc5f90fe83e8e0d21240dedb80b39772ed7520961fc6f0",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_v29_cached_analysis.py",
+        "sha256": "ec3aabf25991432fc78988787c9a67d077aa052ef65bbd326ce62fff855e1bc9",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_v29_light_checks.py",
+        "sha256": "db78b187d1088c3b4c3cf81ed9353993b10f7eda9b934c4081f378a6100b4785",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py",
+        "sha256": "8be72fcaf37da2c04b5f662008f5567d7c0150083d6701dc151306918c400d68",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_admission_receipt.py",
+        "sha256": "2f334b479fe5417624515336898efaf47b575415ad7c6b296ff3a561014fa4fa",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/runners/return_block_diagnostic.py",
+        "sha256": "5ccb2e2f9d7f4d9bc4a999e48f6e751b9f00e2f641069c9b1e14aa250768df2d",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_study.py",
+        "sha256": "e615995cd710445a331895c5ceb858fa278599c4827bf8e124b7376d95729fb8",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_direction.py",
+        "sha256": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/task042_return_fixture.py",
+        "sha256": "575f8d44ead1a069ddaa93fea9a0f19c27a0c7187f70f4c8a326be842dab4b73",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v29_checker.py",
+        "sha256": "614a182627dea96747f21884b0ab4ecf64c6886bfdc5db0e5ca2e8805da437b4",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v29_algebra.py",
+        "sha256": "2d43f968588a699033deb05a5f75c81523a0e4a454254fc52292b94a0a2ccc57",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v28_cached_checker.py",
+        "sha256": "0318a14db20fef90df6d8a4549188b7c9c748ebc9e13609fcbd748f9d708a563",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v27_return_direction.py",
+        "sha256": "ec46013fef9151046ccf0bd059dd44e09500c315f9bcb61e7d0e16b434328fae",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_joint_direction.py",
+        "sha256": "f240f86bab30f250fb44e54da89167407c3a3ff8a0ed03049c84a11b4c7ed331",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v25_block_direction.py",
+        "sha256": "65db1e705e4498e35e978a777fc9941199b3cf9773770cb2b838fd4279a4cbb7",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v26_inventory.py",
+        "sha256": "d2b1aedf3c330fccfe65d9e29e1f18bba42032c34c13b527f438ff4dbfedb93f",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_24_repository_work_principles.py",
+        "sha256": "e3ae1a4675a8b323716229b5d964817e377adcc76ee3b0dc86f6c0e516c124d0",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_183_development_model_registry_markdown.py",
+        "sha256": "94de9ef19bfdf3c0f355890bbb8becc88c377e8db521cdf9f508966f003310a6",
+        "status": "COMPILED_IN_MEMORY"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v30_entry.py",
+        "sha256": "f1cc9c29946613f7ac1a566a518bb3db3814f9555b296b538c8d49d41c78da7c",
+        "status": "COMPILED_IN_MEMORY"
+      }
+    ],
+    "command": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v30/full_scope/pytest",
+      "--junitxml",
+      "/home/fenics/Projects/NN-Lab/tmp/task042/v30/full_scope/junit.xml",
+      "src/test/test_task042_v29_checker.py",
+      "src/test/test_task042_v29_algebra.py",
+      "src/test/test_task042_v28_cached_checker.py",
+      "src/test/test_task042_v27_return_direction.py",
+      "src/test/test_task042_v26_joint_direction.py",
+      "src/test/test_task042_v25_block_direction.py",
+      "src/test/test_task042_v26_inventory.py",
+      "src/test/test_24_repository_work_principles.py",
+      "src/test/test_183_development_model_registry_markdown.py",
+      "src/test/test_task042_v30_entry.py"
+    ],
+    "returncode": 0,
+    "wall_seconds": 12.198941457085311,
+    "stdout": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/full_scope/stdout.log",
+      "sha256": "6ff68a6629ba1bcce35ce7ff49930aa6c88d35675057450e06d13a2ab47ae0f1"
+    },
+    "stderr": {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/full_scope/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "scope": [
+      "src/test/test_task042_v29_checker.py",
+      "src/test/test_task042_v29_algebra.py",
+      "src/test/test_task042_v28_cached_checker.py",
+      "src/test/test_task042_v27_return_direction.py",
+      "src/test/test_task042_v26_joint_direction.py",
+      "src/test/test_task042_v25_block_direction.py",
+      "src/test/test_task042_v26_inventory.py",
+      "src/test/test_24_repository_work_principles.py",
+      "src/test/test_183_development_model_registry_markdown.py",
+      "src/test/test_task042_v30_entry.py"
+    ],
+    "role": "synthetic/cached-metadata tests; no real numeric payloads",
+    "CI": "NOT_RUN",
+    "full_repository": "NOT_RUN",
+    "FE_MPI": "NOT_RUN",
+    "real_counts": {
+      "actor": 0,
+      "S": 0,
+      "SH": 0,
+      "factor_readers": 0,
+      "local_solve": 0,
+      "LU": 0,
+      "gecon": 0,
+      "QR_SVD": 0,
+      "FE": 0,
+      "iterations": 0,
+      "training": 0
+    },
+    "synthetic_consumption_is_not_real": true
+  }
+}

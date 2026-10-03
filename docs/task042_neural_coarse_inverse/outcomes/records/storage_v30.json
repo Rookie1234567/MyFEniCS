@@ -1,0 +1,63 @@
+{
+  "status": "WITHIN_CAPS_AT_OBSERVATION",
+  "utc": "2026-10-03T06:52:36.257717+00:00",
+  "metadata_stat_only": true,
+  "no_factor_or_array_payload_read": true,
+  "V30_tmp_bytes": 7138857,
+  "V30_record_bytes": 309533,
+  "V30_new_document_bytes": 16066,
+  "V30_changed_code_full_file_bytes": 60770,
+  "V30_observed_total_bytes": 8250746,
+  "V30_limit_bytes": 16777216,
+  "V27_on_tmp_including_review_dirs": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/review_v26",
+      "bytes": 11622243
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/review_v27",
+      "bytes": 18153789
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30",
+      "bytes": 7138857
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28",
+      "bytes": 1224644
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28_auxiliary",
+      "bytes": 12783405
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27_auxiliary",
+      "bytes": 12474142
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27",
+      "bytes": 10269187
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29",
+      "bytes": 344469
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/review_v25",
+      "bytes": 10801461
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27_identity",
+      "bytes": 7658938
+    }
+  ],
+  "V27_on_observed_cumulative_bytes": 94124313,
+  "V27_on_limit_bytes": 134217728,
+  "whole_Task042_artifact_bytes": 18024901709,
+  "whole_artifact_cap_bytes": 21474836480,
+  "free_disk_bytes": 3387297087488,
+  "free_disk_min_bytes": 53687091200,
+  "scope": "timestamped stat-only inventory; conservative full changed code/navigation file sizes included; subsequent small receipts separate",
+  "V30_navigation_full_file_upper_bytes": 725520,
+  "V27_on_changed_code_full_file_upper_bytes": 252470
+}

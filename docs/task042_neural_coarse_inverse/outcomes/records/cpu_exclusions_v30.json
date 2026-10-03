@@ -1,0 +1,41 @@
+{
+  "status": "FROZEN_SNAPSHOTS_RECOMPUTED",
+  "batch": "v30",
+  "snapshots": [
+    {
+      "snapshot_label": "accepted",
+      "candidates": [
+        11,
+        22,
+        26
+      ],
+      "allowed_cpus": 48,
+      "snapshot": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_accepted_v28.json.gz",
+        "sha256": "db05dd0c06be8c6a05f92b4c24d5005c663b2e24c384a6196be6630b0b00113d"
+      },
+      "table": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cpu_exclusion_accepted_v30.json",
+        "sha256": "eb76f20f68e99e9a3ca7b9dc507280f02239da02cafe9d43bcbbd0ce0e12f080"
+      },
+      "at_most_5_percent": 28,
+      "policy_unchanged": true
+    },
+    {
+      "snapshot_label": "rejected",
+      "candidates": [],
+      "allowed_cpus": 48,
+      "snapshot": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_rejected_v28.json.gz",
+        "sha256": "437356115f0d69a08d43725c795ae65ccfa6cfd25a5a5300b354ad1cef0fe589"
+      },
+      "table": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cpu_exclusion_rejected_v30.json",
+        "sha256": "832d1daa79be14db27dd66ecd4bcc5cead9cc4fd14b0037196c876fdb2b47ce0"
+      },
+      "at_most_5_percent": 30,
+      "policy_unchanged": true
+    }
+  ],
+  "interpretation": "historical admission policy exclusion, not continuous full CPU utilization"
+}

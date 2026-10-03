@@ -1,0 +1,121 @@
+{
+  "workflow_deadline_seconds": 115,
+  "solve_deadline_seconds": null,
+  "time_limit_mode": "bounded",
+  "resource_stop_policy": "legacy",
+  "rss_hard_limit_bytes": 2147483648,
+  "rss_warning_bytes": 1073741824,
+  "startup_headroom_bytes": null,
+  "swap_policy": "legacy_stop",
+  "global_swap_delta_policy": "observe_only",
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 934926.937878013,
+    "boottime": 934926.937882598,
+    "utc_ns": 1791009932077017443
+  },
+  "timebase_policy": "strict",
+  "timebase_policy_version": 1,
+  "cache_metadata_stable": true,
+  "classification": "COMPLETED",
+  "leader_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    1414797,
+    1414810,
+    1414823,
+    1414837,
+    1414838
+  ],
+  "sampled_process_tree_rss_peak_bytes": 195633152,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 3139039,
+      "pswpout_pages": 5146004
+    },
+    "end": {
+      "pswpin_pages": 3139039,
+      "pswpout_pages": 5146004
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 1497063579648,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 1497063579648,
+    "reserve_bytes": 353748992000,
+    "launch_cap_bytes": 17179869184,
+    "planning_cap_bytes": 17179869184,
+    "cgroup_limits": [],
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 137438953472,
+    "shared_workstation": true
+  },
+  "samples": 27,
+  "elapsed_seconds": 18.785166596993804,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": {
+    "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+    "role": "V30 auxiliary; no real actor"
+  },
+  "clock_end": {
+    "monotonic": 934945.723054953,
+    "boottime": 934945.72305655,
+    "utc_ns": 1791009950862190231
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 18.785176940029487,
+      "boottime": 18.78517395199742,
+      "utc": 18.785172788
+    },
+    "budget_seconds": 18.785176940029487,
+    "discrepancy_seconds": 4.152029486448328e-06,
+    "tolerance_seconds": 5.0,
+    "policy": "strict",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": -4.152029486448328e-06,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.043288178043439984,
+        "boottime": 0.043287839042022824,
+        "utc": 0.04328788
+      },
+      "budget_seconds": 0.043288178043439984,
+      "discrepancy_seconds": 3.390014171600342e-07,
+      "tolerance_seconds": 5.0,
+      "policy": "strict",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -2.980434399835197e-07
+    },
+    "utc_positive_excess_seconds": 6.686043554693377e-06
+  }
+}

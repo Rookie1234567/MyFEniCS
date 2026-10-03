@@ -1,0 +1,274 @@
+{
+  "schema": "task042.v30.cost-necessary-conditions",
+  "batch": "v30",
+  "shared_workstation": true,
+  "sources": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v24.json",
+      "sha256": "1edff103dabbacda0225e2ea7786ab58bd3ef1bd931f854c697896675bee6f38",
+      "bytes": 32863
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v25.json",
+      "sha256": "4037e7a3eff4ff9307e9f0a51ac7d28c32f45c164ead9d55b641a6b010e1d103",
+      "bytes": 12892
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v26.json",
+      "sha256": "2ea27dda1deb906aed191ef96218d61a70d89219642fd4d856b58c7a87974e11",
+      "bytes": 16057
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v27.json",
+      "sha256": "2d6718a9de1778ec9eccb81cd0868a5c00ea295ac9dc8ea6e30967a0deb14609",
+      "bytes": 13087
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v28.json",
+      "sha256": "1823744e8bd0857156d2c9c8475ee63c5f2232cedd7bd9b5abc6707f2c6da4f3",
+      "bytes": 5638
+    }
+  ],
+  "historical_stages": [
+    {
+      "version": 24,
+      "formal_supervised_seconds": 1977.7116960771382,
+      "auxiliary_supervised_seconds": 62.58401921612676,
+      "source_role": "measured historical research, not complete successful N=1",
+      "nonadditive_nested_timers": {}
+    },
+    {
+      "version": 25,
+      "formal_supervised_seconds": 25.665227008983493,
+      "auxiliary_supervised_seconds": 26.429975512088276,
+      "source_role": "measured historical research, not complete successful N=1",
+      "nonadditive_nested_timers": {
+        "factor_reader_hash_reload_seconds": 14.426483312970959,
+        "original_packet_action_seconds": {
+          "S": 3.6614362489199266,
+          "SH": 0.0,
+          "audit": 0.0
+        },
+        "local_apply_seconds": 0.8256177960429341,
+        "local_LU_solve_seconds": 0.6726459340425208,
+        "port_action_and_solve_seconds": {
+          "S": 3.2509002836886793,
+          "SH": 0.0,
+          "port_solve": 0.005154405487701297
+        },
+        "eight_direction_seconds": [
+          0.9673047449905425,
+          1.461940249078907,
+          1.932286928058602
+        ],
+        "small_LS_seconds": [
+          0.007572227972559631,
+          0.008258877089247108,
+          0.05259341292548925
+        ]
+      }
+    },
+    {
+      "version": 26,
+      "formal_supervised_seconds": 33.262622487032786,
+      "auxiliary_supervised_seconds": 27.636738836881705,
+      "source_role": "measured historical research, not complete successful N=1",
+      "nonadditive_nested_timers": {
+        "assembly_seconds": 1.592389774043113,
+        "factor_seconds": 3.324998308904469,
+        "gecon_seconds": 0.5376470510382205,
+        "readonly_factor_hash_reload_seconds": 5.8352755040396005,
+        "joint_solve_seconds": 0.9674002305837348,
+        "original_actions": {
+          "S": 0.8745200139237568,
+          "SH": 0.6038451209897175,
+          "audit": 0.0
+        },
+        "port_chain": {
+          "S": 0.5919409731868654,
+          "SH": 0.6162860728800297,
+          "port_solve": 0.010746879037469625
+        },
+        "diagnostic_seconds": [
+          0.5547512179473415,
+          0.7757248739944771
+        ],
+        "thin_decomposition_seconds": [
+          0.004477262031286955,
+          0.004486829042434692
+        ]
+      }
+    },
+    {
+      "version": 27,
+      "formal_supervised_seconds": 0.0,
+      "auxiliary_supervised_seconds": 12.366657367907465,
+      "source_role": "measured historical research, not complete successful N=1",
+      "nonadditive_nested_timers": {}
+    },
+    {
+      "version": 28,
+      "formal_supervised_seconds": 0.0,
+      "auxiliary_supervised_seconds": 8.79718940204475,
+      "source_role": "measured historical research, not complete successful N=1",
+      "nonadditive_nested_timers": {}
+    }
+  ],
+  "cost_table": [
+    {
+      "item": "upstream operator packet assembly",
+      "status": "unknown",
+      "value": null,
+      "unit": "seconds",
+      "scope": "full geometry-to-packet lineage not reconstructed"
+    },
+    {
+      "item": "V24 full setup run",
+      "status": "measured",
+      "value": 111.49998616299126,
+      "unit": "seconds",
+      "scope": "includes qualification and audit nesting; not exclusive LU time"
+    },
+    {
+      "item": "V26 joint assembly",
+      "status": "measured",
+      "value": 1.592389774043113,
+      "unit": "seconds",
+      "scope": "nested, not added to actor"
+    },
+    {
+      "item": "V26 joint factorization",
+      "status": "measured",
+      "value": 3.324998308904469,
+      "unit": "seconds",
+      "scope": "nested, not added to actor"
+    },
+    {
+      "item": "V26 factor hash+readonly reload",
+      "status": "measured",
+      "value": 5.8352755040396005,
+      "unit": "seconds",
+      "scope": "nested, not per-deployment benchmark"
+    },
+    {
+      "item": "V26 J solve",
+      "status": "measured",
+      "value": 0.9674002305837348,
+      "unit": "seconds",
+      "scope": "nine historical solves, not predicted Bfull cost"
+    },
+    {
+      "item": "V26 original S/SH actions",
+      "status": "measured",
+      "value": {
+        "S": 0.8745200139237568,
+        "SH": 0.6038451209897175,
+        "audit": 0.0
+      },
+      "unit": "seconds",
+      "scope": "nested original oracle timers"
+    },
+    {
+      "item": "V26 port chain",
+      "status": "measured",
+      "value": {
+        "S": 0.5919409731868654,
+        "SH": 0.6162860728800297,
+        "port_solve": 0.010746879037469625
+      },
+      "unit": "seconds",
+      "scope": "contains action nesting; not additive"
+    },
+    {
+      "item": "V26 two thin decompositions",
+      "status": "measured",
+      "value": 0.008964091073721647,
+      "unit": "seconds",
+      "scope": "same diagnostic actor scope"
+    },
+    {
+      "item": "V24 old global image QR setup",
+      "status": "unknown",
+      "value": null,
+      "unit": "seconds",
+      "scope": "inherited T/U/R full lineage missing"
+    },
+    {
+      "item": "postprocessing/audit/IO independent exclusive costs",
+      "status": "unknown",
+      "value": null,
+      "unit": "seconds",
+      "scope": "nested records insufficient for exclusive partition"
+    },
+    {
+      "item": "seven A+LU payload",
+      "status": "derived",
+      "value": 1591420032,
+      "unit": "bytes",
+      "scope": "stored arrays, not RSS or simultaneous peak"
+    },
+    {
+      "item": "Bfull qualified deployment time/peak",
+      "status": "unknown",
+      "value": null,
+      "unit": "seconds/bytes",
+      "scope": "not authorized or measured"
+    },
+    {
+      "item": "best qualified non-neural complete N=1 baseline",
+      "status": "unknown",
+      "value": null,
+      "unit": "seconds/bytes",
+      "scope": "no fully qualified solve available"
+    }
+  ],
+  "nonadditive_nested_timers": true,
+  "historic_formal_research_lower_seconds": 77161.55713859801,
+  "historical_other_auxiliary_and_single_solve_lineage": "unknown retained",
+  "full_block_apply": {
+    "J_solves": 2,
+    "outer_solves_each": 1,
+    "outer_blocks": 6,
+    "local_triangular_passes": 16,
+    "original_A": 2,
+    "final_true_residual_A_and_port_closure": "additional",
+    "original_A_port_chain_cost": "also included, nested not double added"
+  },
+  "qualification": {
+    "required": "seven source/hash/row witnesses plus original primal/adjoint/port consistency",
+    "time": "unknown for Bfull"
+  },
+  "lifecycle": {
+    "cold_setup": "existing six outer factors plus joint preparation; full setup unknown",
+    "reload_each_apply": "hash+mmap seven bundles each time; not benchmarked",
+    "resident_reuse": "load once; no repeated hash; measured simultaneous RSS unknown",
+    "stored_A_LU_unique_bytes": 1591420032,
+    "deploy_LU_only_payload_lower_bytes": 795710016,
+    "simultaneous_peak": "unknown; include pages, copies, pivots, hash buffers, libraries, ports, workspace and overlap; bytes are not peak"
+  },
+  "neural_threshold": 0.2,
+  "complete_baseline_qualified": false,
+  "neural_increment": "NOT_DEMONSTRATED",
+  "time_necessary_condition": "Tremoved - Tadded >= 0.20*Tbase",
+  "added_costs": [
+    "data generation",
+    "training",
+    "model setup/load",
+    "inference",
+    "extra exact correction",
+    "audit"
+  ],
+  "N": 1,
+  "amortization_assumed": false,
+  "thin_only_upper_share": {
+    "seconds": 0.008964091073721647,
+    "actor_seconds": 33.262622487032786,
+    "fraction": 0.0002694944175618215,
+    "percent": 0.02694944175618215,
+    "verdict": "even free replacement cannot reach 20% in this diagnostic scope; not a full-solve share"
+  },
+  "possible_large_cost_replacement": "factor setup/storage, action/repeated solves or new qualified directions require new evidence; feasibility unknown",
+  "fixed_space_coefficients": "cannot beat the exact same-space residual minimum",
+  "peak_necessary_condition": "Mnew_simultaneous <= 0.80*Mbase_simultaneous, with other resource metric compliant",
+  "peak_from_cumulative_object_volume_forbidden": true
+}

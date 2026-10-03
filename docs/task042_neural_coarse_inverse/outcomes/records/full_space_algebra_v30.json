@@ -1,0 +1,127 @@
+{
+  "status": "SMALL_ALGEBRA_ONLY_CHECKED",
+  "fixed_fixture_count": 3,
+  "records": [
+    {
+      "name": "NON_HERMITIAN_8",
+      "n": 8,
+      "seed": 422901,
+      "dtype": "complex128",
+      "matrix_sha256": "df8b194620ba55f87aa7548f45cfa0bcc688fd36c782fb162e9c6a39ed32c197",
+      "J": [
+        0,
+        1
+      ],
+      "outer_groups": [
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ],
+      "status": "ALGEBRA_CHECKED",
+      "checks": {
+        "difference": 4.097127517920559e-18,
+        "chronological": 3.702713701638012e-18,
+        "zero": 0.0,
+        "complex_linearity": 8.129925522253385e-17,
+        "triangular_factorization": 4.1400483121502756e-17
+      },
+      "deployment_counts": {
+        "J_solves": 2,
+        "outer_solves_each": 1,
+        "outer_blocks": 6,
+        "original_A_propagations": 2,
+        "final_true_residual_and_port_closure": "separate"
+      },
+      "invertible_local_blocks_full_space_action": true,
+      "convergence_not_implied": true
+    },
+    {
+      "name": "NON_CONTRACTION_2",
+      "n": 2,
+      "seed": 422901,
+      "dtype": "complex128",
+      "matrix_sha256": "d8b2b5cceaa461bcd67825264f0d15017af3a1ca99d4d4a041e6d69529b26f77",
+      "J": [
+        0
+      ],
+      "outer_groups": [
+        [
+          1
+        ]
+      ],
+      "status": "ALGEBRA_CHECKED",
+      "checks": {
+        "difference": 0.0,
+        "chronological": 0.0,
+        "zero": 0.0,
+        "complex_linearity": 1.9052824066601806e-16,
+        "triangular_factorization": 0.0
+      },
+      "deployment_counts": {
+        "J_solves": 2,
+        "outer_solves_each": 1,
+        "outer_blocks": 1,
+        "original_A_propagations": 2,
+        "final_true_residual_and_port_closure": "separate"
+      },
+      "invertible_local_blocks_full_space_action": true,
+      "convergence_not_implied": true,
+      "external_input": [
+        0,
+        1
+      ],
+      "Bret_output": [
+        0,
+        0
+      ],
+      "Bfull_output": [
+        -2,
+        1
+      ],
+      "true_remaining": [
+        0,
+        6
+      ],
+      "residual_norm_ratio": 6.0,
+      "interpretation": "full-space action does not guarantee contraction"
+    },
+    {
+      "name": "SINGULAR_LOCAL_2",
+      "n": 2,
+      "seed": 422901,
+      "dtype": "complex128",
+      "matrix_sha256": "7235ac6fe7208003084a2af02fc3c1b60fab37030d33c139487b636677d0a9fb",
+      "J": [
+        0
+      ],
+      "outer_groups": [
+        [
+          1
+        ]
+      ],
+      "status": "SINGULAR_LOCAL_REJECTED",
+      "no_shift_or_repartition": true
+    }
+  ],
+  "real_action_calls": 0,
+  "real_factor_reads": 0,
+  "production_PC_registered": false,
+  "source_sha": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "elapsed_seconds": 0.0018479319987818599,
+  "role": "fixed small-matrix algebra only"
+}

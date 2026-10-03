@@ -1,0 +1,56 @@
+{
+  "status": "HASH_VERIFIED",
+  "observed_utc": "2026-10-03T06:47:33.100457+00:00",
+  "implementation_source": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "compiled_source_files": 22,
+  "source_hashes_match_committed_files": true,
+  "review_index": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/review_v27_independent_checks.json",
+    "sha256": "c6f97d6d60f7f16c24532b62a2700937f52037bc001805d5d4b5c2411851cb18",
+    "bytes": 80284
+  },
+  "review_linked_55_files_verified_before_edits": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/review_evidence_read.json",
+    "sha256": "51b55d54f1620f21fc4bf75d0f789ef0ae1f31a2b0a449648df6f8f4b0e59fce",
+    "bytes": 12613
+  },
+  "old_closed_windows_ledgers": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/window.json",
+      "sha256": "da23cf6111ad664c62540844d09b8a1f038014e69c7fbc942549792126587d2f"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json",
+      "sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/window.json",
+      "sha256": "efe33d8b6273086f70f3fdef8c2a91bfad7cde3b0dfe73376d0a4495fcd7d1bc"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json",
+      "sha256": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/window.json",
+      "sha256": "cf44902f535b392659c7fca6d95aab857df02f2a591f7ad6ff300f0a71e41403"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/ledger.json",
+      "sha256": "679ac1fd23be99441c9afd13a7e81fdf32442c261bea553f1f29d463787cec3d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/window.json",
+      "sha256": "65cd6cd7014bddbbe71ffc920587c47394615d6bc3ce38caedbc5b36db65718e"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/ledger.json",
+      "sha256": "69d2173f90f1e51cee05ab6b2cc91a1d14b33e1f212eb50cc55b221ba5a68202"
+    }
+  ],
+  "old_closed_unchanged": true,
+  "legacy_V29_results_unchanged": true,
+  "protected_old_files_verified_count": 642,
+  "protected_old_files_digest": "d9f2946cab6e21b1b494cf5557c6d996be5b5e682b8b617b3491d2e1a1725779",
+  "navigation_6_exact_historical_suffixes_preserved": true
+}

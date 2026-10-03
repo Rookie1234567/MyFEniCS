@@ -1,3 +1,7 @@
+# V30最新交付：轻量入口与合成审核已资格化
+
+[Review V27](review_report_v27.md)／[Response V30](response_v30.md)／[详细结果](outcomes/light_entry_acceptance_v30.md)／[run index](outcomes/records/run_index_v30.json)。重复keyword、输出目录和负例误报已修复；source `1a18f520dae3ecd702a1369b0d9241ec3e81802a`上22文件编译、最小7及完整162测试通过，完整轻量入口exit0，CPU缓存重算／固定三小矩阵／成本账已执行。监督18.785167s、累计39.949013s，真实actor／S+SH／reader／FE／训练0。这里只资格化软件入口与合成checker，非真实方向／物理解／NN20%或原尺寸资格；清场等待review。以下历史逐字保留，V26–V29 closed不变。
+
 # 最新审阅：Review V27／修复轻量入口与测试误报
 
 [Review V27](review_report_v27.md)接受V29一次CPU准入停止。独立审阅发现轻量入口重复keyword导致编译失败；相关测试147通过、8失败，32个负例曾被目录错误掩盖。临时目录补齐后的checker反例及三种小矩阵验证有效，但不能代替原样入口资格。V30只修这两项并完成一次有界轻量验收，不启动真实回流、PDE或训练。

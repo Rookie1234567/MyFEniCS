@@ -1,0 +1,18 @@
+{
+  "status": "PRE_DELIVERY_COMMIT_OBSERVATION",
+  "utc": "2026-10-03T06:52:36.258284+00:00",
+  "elapsed_seconds": 806.628181,
+  "implementation_source": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "precommit_HEAD": "1a18f520dae3ecd702a1369b0d9241ec3e81802a",
+  "final_delivery_HEAD": "to be reported from actual successful commit/push; not substituted for run source",
+  "worker_queue_closed": true,
+  "real_actors": 0,
+  "admission_attempts": 1,
+  "supervised_seconds": 18.785166596993804,
+  "cumulative_seconds": 39.94901336694602,
+  "source_and_environment": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/source_inventory_v30.json",
+    "sha256": "b4b44b06ebae7485bcba48284d67d4304b1b05e1610b57f5e26ddc75b9c4b482",
+    "bytes": 6297
+  }
+}

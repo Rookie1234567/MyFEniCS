@@ -1,3 +1,16 @@
+# Task042 V30：轻量软件资格，不新增物理解（2026-10-03）
+
+审核器检查保存向量和完整消费；本轮修复入口编译与目录/负例接线，并以最终source完成唯一有界验收，不改变原有限元模型或求解算法。
+
+| 模型／方法／数据身份 | 数值／资源与结果 | 资格边界／证据 |
+|---|---|---|
+| 0.7nm、384hex/p3/q15、完整40端口；本轮只轻量验收 | 22文件编译、最小7／完整162通过，source1a18f520…，原真实actor/S+SH/reader/FE/训练0 | 无新E/H／R/T/A；旧V24完整0/5、V23 0/6保持，[回应](task042_neural_coarse_inverse/response_v30.md) |
+| 合成checker／固定三小矩阵，measured | 32语义变异拒绝且有正控制；三固定fixture通过，2×2残差放大6倍，零局部块拒绝 | 只资格化入口与合成证据链；非真实PC／神经收益，[记录](task042_neural_coarse_inverse/outcomes/records/checker_acceptance_v30.json) |
+| shared-workstation辅助，measured | CPU21/math1；树RSS195,633,152B／ownswap0；监督18.785166597s，V27起累计39.949013367s | hard2GiB/warn1GiB；自身后代清空，非无争用性能，[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v30.json) |
+| NN20%／原尺寸／2TB／48h | NOT_DEMONSTRATED／NOT_QUALIFIED | 无合格同精度完整N=1对照，unknown保留，不能将传统代数改善归NN |
+
+本轮队列closed，等待review；不重开V26–V29、不改dot或其他分支，不merge。以下历史原文保留。
+
 # Task042 V29：无新模型结果，辅助CPU准入拒绝
 
 | 固定对象／数据身份 | 本批记录与资格边界 |
