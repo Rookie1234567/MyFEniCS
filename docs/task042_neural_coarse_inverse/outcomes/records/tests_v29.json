@@ -1,0 +1,17 @@
+{
+  "status": "NOT_RUN_AUXILIARY_CPU_ADMISSION",
+  "source_sha": "bea514e634a0fde7b1b929535f79a6268856d01b",
+  "command": "python -m benchmarks.task042_v29_light_checks",
+  "new_tests_executed": 0,
+  "related_old_100_executed": 0,
+  "compileall": "NOT_RUN",
+  "numeric_checker": "NOT_QUALIFIED",
+  "B_small_matrix_tests": "NOT_RUN",
+  "CPU_tick_replay": "NOT_RUN",
+  "document_contract_pytest": "NOT_RUN",
+  "AST_syntax_pre_admission": "selected files parsed; not runtime test",
+  "CI": "NOT_RUN",
+  "full_repository": "NOT_RUN",
+  "FE_MPI": "NOT_RUN",
+  "no_retry": true
+}

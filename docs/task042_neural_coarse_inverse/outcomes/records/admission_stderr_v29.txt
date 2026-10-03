@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py", line 63, in <module>
+    if __name__=='__main__':sys.exit(main())
+                                     ^^^^^^
+  File "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py", line 13, in main
+    if args.v29:return v29(args.command)
+                       ^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py", line 47, in v29
+    baseline=audit(observed_activity=True,receipt_path=folder/'admission.json',input_path=' '.join(command))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py", line 232, in audit
+    result=_audit(observed_activity=observed_activity,observation=observation)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py", line 360, in _audit
+    raise RuntimeError(
+RuntimeError: No audited unoccupied physical core; do not overlap a busy worker/SMT sibling

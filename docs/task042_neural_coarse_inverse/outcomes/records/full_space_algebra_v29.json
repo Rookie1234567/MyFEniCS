@@ -1,0 +1,68 @@
+{
+  "status": "NOT_RUN_AUXILIARY_CPU_ADMISSION",
+  "paper_derivation": "DERIVED_NOT_NUMERICAL_TEST",
+  "fixture_source": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_full_block_algebra.py",
+    "sha256": "97ac2c1f7dd9f71591bc5f90fe83e8e0d21240dedb80b39772ed7520961fc6f0",
+    "bytes": 4346
+  },
+  "preregistered_fixtures": 3,
+  "seed": 422901,
+  "n": [
+    8,
+    2,
+    2
+  ],
+  "fixture_executions": 0,
+  "real_action_calls": 0,
+  "real_factor_reads": 0,
+  "production_PC_registered": false,
+  "counterexample": {
+    "A": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        1
+      ]
+    ],
+    "Bfull": [
+      [
+        7,
+        -2
+      ],
+      [
+        -3,
+        1
+      ]
+    ],
+    "input": [
+      0,
+      1
+    ],
+    "Bret_output": [
+      0,
+      0
+    ],
+    "Bfull_output": [
+      -2,
+      1
+    ],
+    "remaining_residual": [
+      0,
+      6
+    ],
+    "scope": "exact paper arithmetic, not this-batch execution"
+  },
+  "cost_per_apply": {
+    "J_solve": 2,
+    "outer_solves_each": 1,
+    "outer_blocks": 6,
+    "original_A_propagations": 2,
+    "explicit_triangular_passes": 16,
+    "final_residual_and_port_closure": "additional"
+  },
+  "neural_method": false
+}

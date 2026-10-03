@@ -1,3 +1,20 @@
+# Task042 V29：静态收口，运行资格未取得
+
+审核器改为核对完整消费、七因子见证、保存向量及原始范数，防止只信任结果标签。全空间补项给外域残差一个直接入口，但它是传统块校正，局部精确仍不保证残差下降；这里只作纸面推导，未接入求解器。
+
+| 工作包／数据身份 | 实际结果、指标与边界 |
+|---|---|
+| A实现／待验收 | source bea514e634a0fde7b1b929535f79a6268856d01b；四反例和完整collector fixture已准备；运行0，IMPLEMENTED_NOT_QUALIFIED |
+| 资源原因表／static | V28两个冻结候选[11,22,26]／[]逐核保存决策转录；PID/TID/start、socket/core/SMT、busy及规则齐全；新重算NOT_RUN |
+| B纸面代数／derived | Bfull−Bret补外域项，局部块均可逆时乘积可逆；固定2×2外域输入剩余残差6倍，不能推出收敛；三fixture未运行 |
+| C成本／static＋历史measured | V24–V28 JSON hash-bound分账，nested不相加；完整合格N=1时间／同时峰unknown；薄LS仅约占V26诊断actor0.027% |
+| 唯一准入／measured停止 | 05:43:35.721686Z CPU_SMT拒绝，候选空；其他memory/PSI Gate未查；未启动worker或再准入 |
+| 新数值／not_run | 测试0、actor0、S/SH0、真实reader/solve/LU/FE/训练0；没有新R/T/A、场或方向结论 |
+| 费用／shared-workstation | 新监督有载0s；累计21.163846769952215s保持；launcher完整time/RSS/swap峰unknown，probe约1.245876s计elapsed |
+| 资格／唯一下一步 | 旧V24 0/5、V23 0/6保持；20%与原尺寸未合格；下一review只考虑已准备轻量可信链验收，不重开真实actor |
+
+[Response V29](../response_v29.md)／[详细记录](checker_full_space_cost_v29.md)／[测试](records/tests_v29.json)／[成本](records/resource_costs_v29.json)／[run index](records/run_index_v29.json)。窗口start05:29:16.937526Z不刷新，05:45:04.616694Z提前closed，无merge approval。以下历史原样保留。
+
 # Task042 V28：审阅所需验算已补，辅助准入拒绝后停止
 
 回流本想增加旧九个修正方向之外的一条信息传播路径。本轮先补独立保存数组审核与可重算CPU快照，代价是少量证书和审核费用；真实回流未启动，不凭小fixture判断其有效性。

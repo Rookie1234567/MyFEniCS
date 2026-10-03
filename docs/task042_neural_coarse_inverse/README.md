@@ -1,3 +1,7 @@
+# V29最新交付：审核链实现完成，唯一辅助准入拒绝
+
+[Review V26](review_report_v26.md)／[Response V29](response_v29.md)／[A/B/C详细记录](outcomes/checker_full_space_cost_v29.md)／[准入证据](outcomes/records/admission_stop_v29.json)／[run index](outcomes/records/run_index_v29.json)。新checker及全链合成fixture已提交，但唯一辅助CPU准入在worker前拒绝，新测试／小矩阵／缓存分析均NOT_RUN。只完成冻结表转录、纸面代数及成本必要条件，不授予checker或求解资格。V27/V28 closed，actor0／S+SH0／reader0，不重试、无NN训练／真实全空间补项。等待review，神经20%及原尺寸资格均未获得。以下历史逐字保留。
+
 # 最新审阅：Review V26／V29轻量工作包
 
 [Review V26](review_report_v26.md)接受V28辅助CPU准入停止，父指针和失败快照问题关闭；独立复跑100项通过，但新反例表明checker仍漏查完整消费及回流向量。下一轮只执行审核修复、全空间补项的小矩阵代数验证和神经20%完整成本分析；不重开V27/V28真实actor，不训练、不延长旧迭代。

@@ -1,0 +1,25 @@
+{
+  "status": "STATIC_STRUCTURE_ONLY",
+  "files": [
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v26.md",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v29.md",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/checker_full_space_cost_v29.md"
+  ],
+  "tables_and_math_fences": "static consistent",
+  "local_links_checked": 35,
+  "errors": [],
+  "old_governance_and_history_suffixes_preserved": [
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/development_progress.md",
+    "docs/development_model_registry.md"
+  ],
+  "old_authority_response_files_bytes_preserved": 55,
+  "pytest": "NOT_RUN",
+  "GitHub_visual": "NOT_VERIFIED",
+  "GitHub_reason": "exact Review V26 page returned Cache miss",
+  "url": "https://github.com/Rookie1234567/MyFEniCS/blob/5f78fb831e8b1b243f8d8865286dce54bb0d631f/docs/task042_neural_coarse_inverse/review_report_v26.md",
+  "source": "metadata text-only, not runtime test"
+}

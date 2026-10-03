@@ -1,3 +1,17 @@
+# V29测试：唯一CPU准入拒绝，全部运行验收未执行
+
+| 检查／数据身份 | 结果与具体限制 |
+|---|---|
+| 新四反例／完整collector合成包 | IMPLEMENTED_NOT_QUALIFIED；NOT_RUN，无零消费／失败因子／错向量／错范数的本轮运行通过声明 |
+| 原100相关scope | 保留在预备队列，当前source NOT_RUN；Review V26历史100通过不替代此次回归 |
+| B三个固定小fixture | n8/2/2、complex128、seed422901、显式奇异局部拒绝和非收缩反例；执行0 |
+| CPU replay／缓存分析 | NOT_RUN；逐核表为已保存decision静态转录；成本为hash-bound JSON字段转录，不运行benchmark |
+| AST／文档结构 | 准入前selected source AST静态解析；最终本地文档结构见render_check_v29，不称runtime或pytest |
+| compileall／doc pytest／CI／full／FE／MPI | 全部NOT_RUN，原因唯一辅助准入拒绝；未在closed窗口补跑 |
+| GitHub视觉 | 精确Review V26页Cache miss，NOT_VERIFIED，不伪称视觉通过 |
+
+实际实现及准入launcher source bea514e634a0fde7b1b929535f79a6268856d01b，worker source=null。[测试库存](records/tests_v29.json)／[准入stderr及快照](records/admission_stop_v29.json)。准备复现入口`python -m benchmarks.task042_v29_light_checks`，本轮不可自行执行或再次准入。以下历史逐字保留。
+
 # V28测试与实际未运行边界
 
 | scope／身份 | 结果及证据 |

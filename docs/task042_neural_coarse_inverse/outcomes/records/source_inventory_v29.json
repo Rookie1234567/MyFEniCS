@@ -1,0 +1,68 @@
+{
+  "implementation_source": "bea514e634a0fde7b1b929535f79a6268856d01b",
+  "actual_numeric_source": null,
+  "review": "5f78fb831e8b1b243f8d8865286dce54bb0d631f",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_return_direction.py",
+      "sha256": "46e207b66e11e8b3b535bb3fd87faf286268453f146e74ff75cae84ba631295a",
+      "bytes": 16143
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_return_certificates.py",
+      "sha256": "6c44b6e4cd2afd0e4ebd8bd81b291c0cc67184a16ad23e7139f13c234c377e1f",
+      "bytes": 12736
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_full_block_algebra.py",
+      "sha256": "97ac2c1f7dd9f71591bc5f90fe83e8e0d21240dedb80b39772ed7520961fc6f0",
+      "bytes": 4346
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_v29_cached_analysis.py",
+      "sha256": "d47bab70d7f8413e84bcf137b223b36eab801a5365fa4d30d647d6fc0902c756",
+      "bytes": 8845
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_v29_light_checks.py",
+      "sha256": "fd90c1ea8dca460ebf1141e71bfa0e67349fe4a6183b4fbc03295659ed7b10f6",
+      "bytes": 4187
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py",
+      "sha256": "1ac746ff9793176af814ba331c3061240c8a945537116b71d23615aede2a5811",
+      "bytes": 4203
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_study.py",
+      "sha256": "e615995cd710445a331895c5ceb858fa278599c4827bf8e124b7376d95729fb8",
+      "bytes": 17304
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_direction.py",
+      "sha256": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+      "bytes": 10738
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/return_block_diagnostic.py",
+      "sha256": "5ccb2e2f9d7f4d9bc4a999e48f6e751b9f00e2f641069c9b1e14aa250768df2d",
+      "bytes": 2694
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/task042_return_fixture.py",
+      "sha256": "9fc81b6a1bce41c591628f00d1d34f0c3ba75804754ae392b0d55855aa18bb75",
+      "bytes": 9696
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v29_checker.py",
+      "sha256": "e6f1ff577303de25856425be2e5661e9b51c5069573b71327e3e431e81e6f170",
+      "bytes": 8332
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v29_algebra.py",
+      "sha256": "2d43f968588a699033deb05a5f75c81523a0e4a454254fc52292b94a0a2ccc57",
+      "bytes": 517
+    }
+  ]
+}

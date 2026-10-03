@@ -1,0 +1,32 @@
+{
+  "observation": {
+    "utc": "2026-10-03T05:50:33.789549+00:00",
+    "monotonic": 931628.650462248,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "V29_TMP_bytes": 343680,
+  "V29_compact_docs_bytes": 145122,
+  "V29_code_file_payload_upper_bytes": 121596,
+  "V29_new_total_including_code_bytes": 610398,
+  "V27_V28_measured_namespace_and_records_bytes": 44556372,
+  "V27_plus_total_before_this_receipt_bytes": 45166770,
+  "all_Task042_artifact_bytes": 18024901709,
+  "free_disk_bytes": 3387749531648,
+  "metadata_only_no_heavy_file_hash_reads": true,
+  "observation_role": "before final receipt/commit; final small Git records add bytes",
+  "caps": {
+    "V29": 16777216,
+    "V27_plus": 134217728,
+    "Task_artifacts": 21474836480,
+    "disk_min": 53687091200
+  },
+  "included_historical_TMP_roots": [
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27_auxiliary",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v27_identity",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v28",
+    "/home/fenics/Projects/NN-Lab/tmp/task042/v28_auxiliary",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v27",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v28"
+  ]
+}

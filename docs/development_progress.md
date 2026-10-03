@@ -1,3 +1,18 @@
+# Task042 V29：审核可信链及成本必要条件，唯一辅助准入停止
+
+旧回流没有真实运行，本批先让审核器能检查七因子资格、完整消费和保存向量，避免未来未完成的计算被误判成功。另在纸面给外域残差一个直接入口；传统块顺序修正可以有全空间作用，却不能由此证明收敛或神经收益。代价包含局部因子、原作用及审核，不能只看薄分解费用。
+
+| 项目／数据身份 | 实际值及解释 |
+|---|---|
+| 实现／未验收 | bea514e634a0fde7b1b929535f79a6268856d01b；完整collector fixture与原100 scope准备，worker0／新测试0 |
+| CPU停止／measured | 唯一辅助准入05:43:35.721686Z拒绝，原5%／SMT门限不变；后续memory/PSI未查，无再次找核 |
+| 静态结果／derived | 两冻结CPU逐核决定转录；Bfull三角分解及2×2残差增长6倍反例；三个fixtureNOT_RUN |
+| 完整费用／历史measured与unknown | V24–V28分账保留nested；薄LS仅占V26诊断actor约0.027%；合格N=1时间／同时峰unknown，无法授予20% |
+| 本批资源／shared-workstation | 新监督有载0s，V27起累计21.163846769952215s；launcher峰RSS/swap未知，未创建监督；全elapsed不刷新 |
+| 最终边界与下一步 | A IMPLEMENTED_NOT_QUALIFIED，原尺寸／48h及神经20%未获得；仅建议下一review另判轻量验收，当前不运行真实actor或merge |
+
+[Response V29](task042_neural_coarse_inverse/response_v29.md)／[A/B/C](task042_neural_coarse_inverse/outcomes/checker_full_space_cost_v29.md)／[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v29.json)。V27/V28 closed及旧负结果保留，未动dot、其他分支、邻任务、ABI或系统设置。以下历史逐字保留。
+
 # Task042 V28：验算与准入证据补齐，数值仍未消费
 
 独立checker从保存数组重算回流诊断，防止零系数或退化被错误拒绝；新parent映射纠正旧null，成功／失败CPU快照可重算。100项小回归、compileall和V28 dat通过；最终辅助准入未找到合格物理核，前置资源Gate失败后停止，正式准入0／actor0／S+SH0／reader0。没有真实方向结论、新FE或学习资格。

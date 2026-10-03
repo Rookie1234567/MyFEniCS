@@ -1,0 +1,1346 @@
+{
+  "status": "FROZEN_METADATA_TRANSCRIBED",
+  "snapshot": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_accepted_v28.json.gz",
+    "sha256": "db05dd0c06be8c6a05f92b4c24d5005c663b2e24c384a6196be6630b0b00113d",
+    "bytes": 26461
+  },
+  "snapshot_utc": "2026-10-03T03:50:41.548643+00:00",
+  "saved_candidates": [
+    11,
+    22,
+    26
+  ],
+  "rows": [
+    {
+      "cpu": 0,
+      "socket": 0,
+      "core": 0,
+      "SMT_siblings": [
+        0
+      ],
+      "busy_fraction": 0.028846153846153855,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 0,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5651,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 1,
+      "socket": 0,
+      "core": 1,
+      "SMT_siblings": [
+        1
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 1,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 1,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026235,
+          "tid": 1026235,
+          "process_start_ticks": 75887252,
+          "thread_start_ticks": 75887252,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 1,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026235,
+          "tid": 1026243,
+          "process_start_ticks": 75887252,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 1,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026235,
+          "tid": 1026245,
+          "process_start_ticks": 75887252,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 2,
+      "socket": 0,
+      "core": 2,
+      "SMT_siblings": [
+        2
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 2,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 2,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026236,
+          "tid": 1026236,
+          "process_start_ticks": 75887253,
+          "thread_start_ticks": 75887253,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 2,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026236,
+          "tid": 1026244,
+          "process_start_ticks": 75887253,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 2,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026236,
+          "tid": 1026246,
+          "process_start_ticks": 75887253,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 3,
+      "socket": 0,
+      "core": 3,
+      "SMT_siblings": [
+        3
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 3,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 3,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026237,
+          "tid": 1026237,
+          "process_start_ticks": 75887253,
+          "thread_start_ticks": 75887253,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 3,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026237,
+          "tid": 1026247,
+          "process_start_ticks": 75887253,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 3,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026237,
+          "tid": 1026248,
+          "process_start_ticks": 75887253,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 4,
+      "socket": 0,
+      "core": 4,
+      "SMT_siblings": [
+        4
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 4,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 4,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026238,
+          "tid": 1026238,
+          "process_start_ticks": 75887254,
+          "thread_start_ticks": 75887254,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 4,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026238,
+          "tid": 1026250,
+          "process_start_ticks": 75887254,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 4,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026238,
+          "tid": 1026251,
+          "process_start_ticks": 75887254,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 5,
+      "socket": 0,
+      "core": 5,
+      "SMT_siblings": [
+        5
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 5,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 5,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026239,
+          "tid": 1026239,
+          "process_start_ticks": 75887254,
+          "thread_start_ticks": 75887254,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 5,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026239,
+          "tid": 1026249,
+          "process_start_ticks": 75887254,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 5,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026239,
+          "tid": 1026252,
+          "process_start_ticks": 75887254,
+          "thread_start_ticks": 75887269,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 6,
+      "socket": 0,
+      "core": 6,
+      "SMT_siblings": [
+        6
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 6,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 6,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026240,
+          "tid": 1026240,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887255,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 6,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026240,
+          "tid": 1026255,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887271,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 6,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026240,
+          "tid": 1026256,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887271,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 7,
+      "socket": 0,
+      "core": 9,
+      "SMT_siblings": [
+        7
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 7,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 7,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026241,
+          "tid": 1026241,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887255,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 7,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026241,
+          "tid": 1026253,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887270,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 7,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026241,
+          "tid": 1026254,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887270,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 8,
+      "socket": 0,
+      "core": 10,
+      "SMT_siblings": [
+        8
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 8,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 8,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026242,
+          "tid": 1026242,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887255,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 8,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026242,
+          "tid": 1026257,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887272,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 8,
+          "rule": "narrow_thread_affinity",
+          "pid": 1026242,
+          "tid": 1026258,
+          "process_start_ticks": 75887255,
+          "thread_start_ticks": 75887272,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 9,
+      "socket": 0,
+      "core": 11,
+      "SMT_siblings": [
+        9
+      ],
+      "busy_fraction": 0.3027522935779816,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 9,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 9,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5643,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        },
+        {
+          "excluded_sibling": 9,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320655,
+          "tid": 1320655,
+          "process_start_ticks": 89532355,
+          "thread_start_ticks": 89532355,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 10,
+      "socket": 0,
+      "core": 12,
+      "SMT_siblings": [
+        10
+      ],
+      "busy_fraction": 0.01851851851851849,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 10,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5652,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 11,
+      "socket": 0,
+      "core": 13,
+      "SMT_siblings": [
+        11
+      ],
+      "busy_fraction": 0.02752293577981646,
+      "eligible_saved": true,
+      "exclusions": []
+    },
+    {
+      "cpu": 12,
+      "socket": 0,
+      "core": 16,
+      "SMT_siblings": [
+        12
+      ],
+      "busy_fraction": 0.027272727272727226,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 12,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5665,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 13,
+      "socket": 0,
+      "core": 17,
+      "SMT_siblings": [
+        13
+      ],
+      "busy_fraction": 0.045454545454545414,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 13,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5640,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 14,
+      "socket": 0,
+      "core": 18,
+      "SMT_siblings": [
+        14
+      ],
+      "busy_fraction": 0.04587155963302747,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 14,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5660,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 15,
+      "socket": 0,
+      "core": 19,
+      "SMT_siblings": [
+        15
+      ],
+      "busy_fraction": 0.045454545454545414,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 15,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5664,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 16,
+      "socket": 0,
+      "core": 20,
+      "SMT_siblings": [
+        16
+      ],
+      "busy_fraction": 0.036363636363636376,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 16,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5654,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 17,
+      "socket": 0,
+      "core": 21,
+      "SMT_siblings": [
+        17
+      ],
+      "busy_fraction": 0.036036036036036,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 17,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5641,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 18,
+      "socket": 0,
+      "core": 24,
+      "SMT_siblings": [
+        18
+      ],
+      "busy_fraction": 0.01834862385321101,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 18,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5645,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 19,
+      "socket": 0,
+      "core": 25,
+      "SMT_siblings": [
+        19
+      ],
+      "busy_fraction": 0.03669724770642202,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 19,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5653,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 20,
+      "socket": 0,
+      "core": 26,
+      "SMT_siblings": [
+        20
+      ],
+      "busy_fraction": 0.036363636363636376,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 20,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5648,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 21,
+      "socket": 0,
+      "core": 27,
+      "SMT_siblings": [
+        21
+      ],
+      "busy_fraction": 0.03669724770642202,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 21,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5637,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 22,
+      "socket": 0,
+      "core": 28,
+      "SMT_siblings": [
+        22
+      ],
+      "busy_fraction": 0.01851851851851849,
+      "eligible_saved": true,
+      "exclusions": []
+    },
+    {
+      "cpu": 23,
+      "socket": 0,
+      "core": 29,
+      "SMT_siblings": [
+        23
+      ],
+      "busy_fraction": 0.054545454545454564,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 23,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 23,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5661,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 24,
+      "socket": 1,
+      "core": 0,
+      "SMT_siblings": [
+        24
+      ],
+      "busy_fraction": 1.0,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 24,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 24,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320701,
+          "tid": 1320701,
+          "process_start_ticks": 89532732,
+          "thread_start_ticks": 89532732,
+          "name": "mpiexec"
+        },
+        {
+          "excluded_sibling": 24,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320701,
+          "tid": 1320702,
+          "process_start_ticks": 89532732,
+          "thread_start_ticks": 89532746,
+          "name": "mpiexec"
+        },
+        {
+          "excluded_sibling": 24,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320701,
+          "tid": 1320703,
+          "process_start_ticks": 89532732,
+          "thread_start_ticks": 89532749,
+          "name": "mpiexec"
+        },
+        {
+          "excluded_sibling": 24,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320704,
+          "tid": 1320704,
+          "process_start_ticks": 89532750,
+          "thread_start_ticks": 89532750,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 24,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320704,
+          "tid": 1320705,
+          "process_start_ticks": 89532750,
+          "thread_start_ticks": 89532768,
+          "name": "python"
+        },
+        {
+          "excluded_sibling": 24,
+          "rule": "narrow_thread_affinity",
+          "pid": 1320704,
+          "tid": 1320706,
+          "process_start_ticks": 89532750,
+          "thread_start_ticks": 89532768,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 25,
+      "socket": 1,
+      "core": 1,
+      "SMT_siblings": [
+        25
+      ],
+      "busy_fraction": 0.12037037037037035,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 25,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 25,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5608,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74422,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 26,
+      "socket": 1,
+      "core": 2,
+      "SMT_siblings": [
+        26
+      ],
+      "busy_fraction": 0.0092592592592593,
+      "eligible_saved": true,
+      "exclusions": []
+    },
+    {
+      "cpu": 27,
+      "socket": 1,
+      "core": 3,
+      "SMT_siblings": [
+        27
+      ],
+      "busy_fraction": 0.03669724770642202,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 27,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5656,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 28,
+      "socket": 1,
+      "core": 4,
+      "SMT_siblings": [
+        28
+      ],
+      "busy_fraction": 0.036036036036036,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 28,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5646,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 29,
+      "socket": 1,
+      "core": 5,
+      "SMT_siblings": [
+        29
+      ],
+      "busy_fraction": 0.1009174311926605,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 29,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        }
+      ]
+    },
+    {
+      "cpu": 30,
+      "socket": 1,
+      "core": 6,
+      "SMT_siblings": [
+        30
+      ],
+      "busy_fraction": 0.018181818181818188,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 30,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5662,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 31,
+      "socket": 1,
+      "core": 9,
+      "SMT_siblings": [
+        31
+      ],
+      "busy_fraction": 0.027272727272727226,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 31,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5657,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 32,
+      "socket": 1,
+      "core": 10,
+      "SMT_siblings": [
+        32
+      ],
+      "busy_fraction": 0.0535714285714286,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 32,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 32,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5647,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 33,
+      "socket": 1,
+      "core": 11,
+      "SMT_siblings": [
+        33
+      ],
+      "busy_fraction": 0.11818181818181817,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 33,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 33,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5642,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 34,
+      "socket": 1,
+      "core": 12,
+      "SMT_siblings": [
+        34
+      ],
+      "busy_fraction": 0.045454545454545414,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 34,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5635,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 35,
+      "socket": 1,
+      "core": 13,
+      "SMT_siblings": [
+        35
+      ],
+      "busy_fraction": 0.0535714285714286,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 35,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 35,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5636,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 36,
+      "socket": 1,
+      "core": 16,
+      "SMT_siblings": [
+        36
+      ],
+      "busy_fraction": 0.036363636363636376,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 36,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5650,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 37,
+      "socket": 1,
+      "core": 17,
+      "SMT_siblings": [
+        37
+      ],
+      "busy_fraction": 0.06422018348623848,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 37,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 37,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5663,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 38,
+      "socket": 1,
+      "core": 18,
+      "SMT_siblings": [
+        38
+      ],
+      "busy_fraction": 0.036036036036036,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 38,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5639,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 39,
+      "socket": 1,
+      "core": 19,
+      "SMT_siblings": [
+        39
+      ],
+      "busy_fraction": 0.027272727272727226,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 39,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5659,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 40,
+      "socket": 1,
+      "core": 20,
+      "SMT_siblings": [
+        40
+      ],
+      "busy_fraction": 0.17272727272727273,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 40,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 40,
+          "rule": "active_wide_thread",
+          "pid": 1026214,
+          "tid": 1026214,
+          "process_start_ticks": 75887002,
+          "thread_start_ticks": 75887002,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 41,
+      "socket": 1,
+      "core": 21,
+      "SMT_siblings": [
+        41
+      ],
+      "busy_fraction": 0.02752293577981646,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 41,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5655,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 42,
+      "socket": 1,
+      "core": 24,
+      "SMT_siblings": [
+        42
+      ],
+      "busy_fraction": 0.036363636363636376,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 42,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5649,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 43,
+      "socket": 1,
+      "core": 25,
+      "SMT_siblings": [
+        43
+      ],
+      "busy_fraction": 0.036363636363636376,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 43,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5638,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 44,
+      "socket": 1,
+      "core": 26,
+      "SMT_siblings": [
+        44
+      ],
+      "busy_fraction": 0.045454545454545414,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 44,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5658,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 45,
+      "socket": 1,
+      "core": 27,
+      "SMT_siblings": [
+        45
+      ],
+      "busy_fraction": 0.1454545454545455,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 45,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 45,
+          "rule": "active_wide_thread",
+          "pid": 1026209,
+          "tid": 1026209,
+          "process_start_ticks": 75886958,
+          "thread_start_ticks": 75886958,
+          "name": "python"
+        }
+      ]
+    },
+    {
+      "cpu": 46,
+      "socket": 1,
+      "core": 28,
+      "SMT_siblings": [
+        46
+      ],
+      "busy_fraction": 0.04504504504504503,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 46,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5634,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    },
+    {
+      "cpu": 47,
+      "socket": 1,
+      "core": 29,
+      "SMT_siblings": [
+        47
+      ],
+      "busy_fraction": 0.0535714285714286,
+      "eligible_saved": false,
+      "exclusions": [
+        {
+          "excluded_sibling": 47,
+          "rule": "sample_busy_fraction_gt_0.05",
+          "pid": null,
+          "tid": null,
+          "process_start_ticks": null,
+          "thread_start_ticks": null
+        },
+        {
+          "excluded_sibling": 47,
+          "rule": "active_wide_thread",
+          "pid": 5608,
+          "tid": 5644,
+          "process_start_ticks": 74422,
+          "thread_start_ticks": 74435,
+          "name": "gnome-shell"
+        }
+      ]
+    }
+  ],
+  "recomputed_this_batch": false,
+  "prior_independent_replay": "review_v26_independent_checks.json",
+  "no_new_live_sampling": true
+}

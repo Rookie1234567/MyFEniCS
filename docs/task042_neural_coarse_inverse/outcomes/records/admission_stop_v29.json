@@ -1,0 +1,39 @@
+{
+  "status": "NOT_RUN_AUXILIARY_CPU_ADMISSION",
+  "source_sha": "bea514e634a0fde7b1b929535f79a6268856d01b",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/admission.json",
+    "sha256": "ebc9d2a339bb10ada0bfc8562e7dee81520b9fad6b7eac4fdcb93e79251c0c88",
+    "bytes": 339870
+  },
+  "lossless_gzip": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_rejected_v29.json.gz",
+    "sha256": "077e07e71c6c4aa18ed0736105ada436bae21b568d1849e2693a97856569c6c4",
+    "bytes": 17605
+  },
+  "raw_stderr": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_stderr_v29.txt",
+    "sha256": "395a1bac440708cd18ee60a78f1da257c9e40f4519647bd995cb102955a6093c",
+    "bytes": 1280
+  },
+  "stdout": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_stdout_v29.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "snapshot_utc": "2026-10-03T05:43:34.475826+00:00",
+  "finish_utc": "2026-10-03T05:43:35.721686+00:00",
+  "gates": {
+    "CPU_SMT": "FAIL",
+    "MEMORY": "NOT_CHECKED",
+    "DISK": "NOT_CHECKED",
+    "PSI": "NOT_CHECKED",
+    "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+  },
+  "candidate_cpus": [],
+  "one_attempt": true,
+  "retries": 0,
+  "supervised_worker_created": false,
+  "current_snapshot_independent_replay": "NOT_RUN",
+  "unvisited_gates_not_claimed_pass": true
+}

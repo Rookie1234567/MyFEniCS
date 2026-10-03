@@ -1,0 +1,27 @@
+{
+  "status": "IMPLEMENTED_NOT_QUALIFIED",
+  "implementation_source": "bea514e634a0fde7b1b929535f79a6268856d01b",
+  "counterexamples_covered_in_prepared_tests": [
+    "zero original/port consumption",
+    "failed incomplete factor reload",
+    "wrong return vector",
+    "wrong residual norm"
+  ],
+  "complete_expected_not_measured": {
+    "S": 34,
+    "SH": 2,
+    "actions": 36,
+    "J_columns": 4,
+    "outer_columns": 24,
+    "triangular_passes": 56,
+    "port_calls": 35,
+    "port_rhs_columns": 35,
+    "readers": 7,
+    "thin_flows": 2
+  },
+  "runtime_validation": "NOT_RUN_AUXILIARY_CPU_ADMISSION",
+  "new_tests_executed": 0,
+  "prior_100_tests": "historical review V26, different source; not reused as this source pass",
+  "durable_manifest_ledger_result_binding": true,
+  "source_identity_and_vector_certificates": true
+}

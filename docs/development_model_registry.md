@@ -1,3 +1,16 @@
+# Task042 V29：无新模型结果，辅助CPU准入拒绝
+
+| 固定对象／数据身份 | 本批记录与资格边界 |
+|---|---|
+| 0.7nm micro／not_run | 原384hex/p3/q15、18144trace＋40port、三维缺口／背景/MPC／用户材料不变；真实packet和因子未读取 |
+| 新完整方程／场／功率 | NOT_RUN；actor0／S+SH0／reader0／FE0／新LU0；不发布新official R/T/A |
+| checker／implementation | source bea514e634a0fde7b1b929535f79a6268856d01b；更严格的完整库存及向量证书、全链fixture已准备，测试未运行，IMPLEMENTED_NOT_QUALIFIED |
+| B／纸面 | 全空间传统块补项有条件可逆但非收缩；不接入真实PC、不训练NN，不给神经标签 |
+| 成本／shared-workstation | 唯一辅助CPU Gate拒绝；worker前停止，新有载0s，旧21.163846769952215s累计保持；完整合格N=1成本和峰值unknown |
+| 旧资格／下一步 | V24 0/5、V23 0/6及NN20%未证实保持；仅下一review可另授权轻量验收，无原尺寸／2TB／48h资格、无merge approval |
+
+[Response V29](task042_neural_coarse_inverse/response_v29.md)／[详细证据](task042_neural_coarse_inverse/outcomes/checker_full_space_cost_v29.md)／[资源账](task042_neural_coarse_inverse/outcomes/records/resource_costs_v29.json)。以下原模型记录原样保留。
+
 # Task042 V28：验算与准入证据补齐，数值仍未消费
 
 独立checker从保存数组重算回流诊断，防止零系数或退化被错误拒绝；新parent映射纠正旧null，成功／失败CPU快照可重算。100项小回归、compileall和V28 dat通过；最终辅助准入未找到合格物理核，前置资源Gate失败后停止，正式准入0／actor0／S+SH0／reader0。没有真实方向结论、新FE或学习资格。

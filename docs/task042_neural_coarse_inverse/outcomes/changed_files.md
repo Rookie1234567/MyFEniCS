@@ -1,3 +1,16 @@
+# V29变化与依赖分组
+
+| 依赖组 | 改动、证据与审阅边界 |
+|---|---|
+| production numerical/core | 原算子／物理／网格／MPC／恢复／普通默认未改变；不提升生产资格 |
+| checker/benchmark | 完整七bundle／消费／durable ledger-manifest-result检查；回流向量、支持、实际范数／状态／尺度一致性；参数化collector和临时合成包，未运行验收 |
+| research-only | 现有return读取已经算出的norm／state／action证书并保存，无额外原作用／solve／分解；B隔离n≤8纸面fixture，不注册真实PC/dat |
+| reusable runner/watchdog | 仅辅助wrapper新增V29显式profile，复用原准入和监督；一attempt marker／自有锁／旧窗口不读取；2GiB/1GiB监督因CPU早拒绝未创建 |
+| compact evidence/docs | response_v29、A/B/C静态记录、冻结逐核原因表、raw gzip／stderr、完整成本／NOT_RUN、导航和总账；旧task/review/response/raw不改 |
+| do-not-merge | 所有未验收checker／research路径、ignored缓存／因子／原始大数组；无merge approval |
+
+依赖审阅顺序：资格证书→独立checker→完整合成与既有回归→轻量资源证据→文档。source bea514e6与交付HEAD及null worker source分开；当前不是合入建议。以下历史逐字保留。
+
 # V28变化与依赖分组
 
 | 组 | 改动、资格与依赖 |

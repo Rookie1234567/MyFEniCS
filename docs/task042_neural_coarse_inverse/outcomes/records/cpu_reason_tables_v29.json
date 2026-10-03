@@ -1,0 +1,39 @@
+{
+  "status": "STATIC_TRANSCRIPTION_ONLY",
+  "tables": [
+    {
+      "snapshot": "accepted",
+      "table": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cpu_reason_table_accepted_v29.json",
+        "sha256": "066dd3dac57c18155f027fbfa9bd1a33a72b03dccab310c3036986c7826717be",
+        "bytes": 32166
+      },
+      "csv": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cpu_reason_table_accepted_v29.csv",
+        "sha256": "ead38995858139142922b23ab8b7d5797e54ca69a242c3efaa997bb93151827f",
+        "bytes": 6800
+      },
+      "saved_candidates": [
+        11,
+        22,
+        26
+      ]
+    },
+    {
+      "snapshot": "rejected",
+      "table": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cpu_reason_table_rejected_v29.json",
+        "sha256": "30c7c2d24053a92d69b24487e41532ab416554522265d842b4054e65d1b25f96",
+        "bytes": 33511
+      },
+      "csv": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/cpu_reason_table_rejected_v29.csv",
+        "sha256": "c39c57aae0f0dcbf28dbdbaac69c1c6fd8d65344725d4ffdc3e2bc0f9ae99b9b",
+        "bytes": 7175
+      },
+      "saved_candidates": []
+    }
+  ],
+  "independent_recomputation": "NOT_RUN_AUXILIARY_CPU_ADMISSION",
+  "no_policy_change": true
+}

@@ -1,0 +1,388 @@
+{
+  "status": "STATIC_HASH_BOUND_COST_TRANSCRIPTION",
+  "shared_workstation": true,
+  "versions": [
+    {
+      "version": 24,
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v24.json",
+        "sha256": "1edff103dabbacda0225e2ea7786ab58bd3ef1bd931f854c697896675bee6f38",
+        "bytes": 32863
+      },
+      "formal_supervised_seconds": 1977.7116960771382,
+      "auxiliary_supervised_seconds": 62.58401921612676,
+      "nested_timers": {},
+      "classification": "measured historical research, not qualified N=1"
+    },
+    {
+      "version": 25,
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v25.json",
+        "sha256": "4037e7a3eff4ff9307e9f0a51ac7d28c32f45c164ead9d55b641a6b010e1d103",
+        "bytes": 12892
+      },
+      "formal_supervised_seconds": 25.665227008983493,
+      "auxiliary_supervised_seconds": 26.429975512088276,
+      "nested_timers": {
+        "factor_reader_hash_reload_seconds": 14.426483312970959,
+        "original_packet_action_seconds": {
+          "S": 3.6614362489199266,
+          "SH": 0.0,
+          "audit": 0.0
+        },
+        "local_apply_seconds": 0.8256177960429341,
+        "local_LU_solve_seconds": 0.6726459340425208,
+        "port_action_and_solve_seconds": {
+          "S": 3.2509002836886793,
+          "SH": 0.0,
+          "port_solve": 0.005154405487701297
+        },
+        "eight_direction_seconds": [
+          0.9673047449905425,
+          1.461940249078907,
+          1.932286928058602
+        ],
+        "small_LS_seconds": [
+          0.007572227972559631,
+          0.008258877089247108,
+          0.05259341292548925
+        ]
+      },
+      "classification": "measured historical research, not qualified N=1"
+    },
+    {
+      "version": 26,
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v26.json",
+        "sha256": "2ea27dda1deb906aed191ef96218d61a70d89219642fd4d856b58c7a87974e11",
+        "bytes": 16057
+      },
+      "formal_supervised_seconds": 33.262622487032786,
+      "auxiliary_supervised_seconds": 27.636738836881705,
+      "nested_timers": {
+        "assembly_seconds": 1.592389774043113,
+        "factor_seconds": 3.324998308904469,
+        "gecon_seconds": 0.5376470510382205,
+        "readonly_factor_hash_reload_seconds": 5.8352755040396005,
+        "joint_solve_seconds": 0.9674002305837348,
+        "original_actions": {
+          "S": 0.8745200139237568,
+          "SH": 0.6038451209897175,
+          "audit": 0.0
+        },
+        "port_chain": {
+          "S": 0.5919409731868654,
+          "SH": 0.6162860728800297,
+          "port_solve": 0.010746879037469625
+        },
+        "diagnostic_seconds": [
+          0.5547512179473415,
+          0.7757248739944771
+        ],
+        "thin_decomposition_seconds": [
+          0.004477262031286955,
+          0.004486829042434692
+        ]
+      },
+      "classification": "measured historical research, not qualified N=1"
+    },
+    {
+      "version": 27,
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v27.json",
+        "sha256": "2d6718a9de1778ec9eccb81cd0868a5c00ea295ac9dc8ea6e30967a0deb14609",
+        "bytes": 13087
+      },
+      "formal_supervised_seconds": 0.0,
+      "auxiliary_supervised_seconds": 12.366657367907465,
+      "nested_timers": {},
+      "classification": "measured historical research, not qualified N=1"
+    },
+    {
+      "version": 28,
+      "source": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v28.json",
+        "sha256": "1823744e8bd0857156d2c9c8475ee63c5f2232cedd7bd9b5abc6707f2c6da4f3",
+        "bytes": 5638
+      },
+      "formal_supervised_seconds": 0.0,
+      "auxiliary_supervised_seconds": 8.79718940204475,
+      "nested_timers": {},
+      "classification": "measured historical research, not qualified N=1"
+    }
+  ],
+  "V24_setup_runs": [
+    {
+      "stage": "SETUP",
+      "CPU": 20,
+      "source_sha": "03fd7874190c33a837879d76312d9911223314e0",
+      "supervised_wall_seconds": 111.49998616299126,
+      "launch_wall_seconds": 112.90842760400847,
+      "numerical_actor_wall_seconds": 109.11253655899782,
+      "charged": {
+        "L8": 15,
+        "local_lu_solve": 136,
+        "local_triangular_pass": 272,
+        "R_triangular": 10,
+        "block_assemblies": 1,
+        "local_factors": 8,
+        "DL_SVD": 1,
+        "factor_readers": 0,
+        "actions": 36,
+        "audits": 0,
+        "field_states": 0
+      },
+      "completed": {
+        "L8": 15,
+        "local_lu_solve": 136,
+        "local_triangular_pass": 272,
+        "R_triangular": 10,
+        "block_assemblies": 1,
+        "local_factors": 8,
+        "DL_SVD": 1,
+        "factor_readers": 0,
+        "actions": 36,
+        "audits": 0,
+        "field_states": 0
+      },
+      "upper": {
+        "L8": 15,
+        "local_lu_solve": 136,
+        "local_triangular_pass": 272,
+        "R_triangular": 10,
+        "block_assemblies": 1,
+        "local_factors": 8,
+        "DL_SVD": 1,
+        "factor_readers": 0,
+        "actions": 36,
+        "audits": 0,
+        "field_states": 0
+      },
+      "old_action_counts": {
+        "S": 33,
+        "SH": 1,
+        "audit": 0
+      },
+      "new_backend_counts": {
+        "S": 1,
+        "SH": 1
+      },
+      "old_action_costs_inclusive_seconds": {
+        "S": 3.649337884155102,
+        "SH": 0.3573151509044692,
+        "audit": 0.0
+      },
+      "auxiliary_counts": {
+        "L8": 15,
+        "local_lu_solve": 136,
+        "local_triangular_pass": 272,
+        "R_triangular": 10,
+        "block_assemblies": 1,
+        "local_factors": 8,
+        "DL_SVD": 1,
+        "factor_readers": 0
+      },
+      "L8_inclusive_seconds": null,
+      "local_LU_solve_seconds_nested": null,
+      "LC8_inclusive_seconds": null,
+      "R_solve_seconds_nested": null,
+      "bar_costs_inclusive": null,
+      "RSS_peak_bytes": 2525442048,
+      "own_swap_peak_bytes": 0,
+      "classification": "COMPLETED",
+      "descendants_cleared": true,
+      "health": {
+        "samples": 151,
+        "PSI_full_avg10_max_percent": 0.0,
+        "pressure_consecutive_max": 0,
+        "available_min_bytes": 2097891872768
+      },
+      "neighbor_observation": {
+        "first": [],
+        "last": [],
+        "causal_effect": "INCONCLUSIVE; no readable comparable contemporaneous neighbor stage timing; no zero-impact claim; unqualified process observations kept only in ignored raw"
+      },
+      "actual_BLAS_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ]
+    }
+  ],
+  "V24_factor_safety": [
+    {
+      "block": 0,
+      "rcond1_estimate": 7.443161639156922e-06,
+      "gecon_info": 0,
+      "factor_seconds": 2.0093143220292404,
+      "gecon_seconds": 0.5033588670194149,
+      "LU_sha256": "62c8a9c1a6d8311ee3c4befc2d10d48084aee41e005d33968d17af9d86afe4dc",
+      "pivot_sha256": "7d64191f408fea790cbaaab3f3046f5a6a3faa1ce2b43c811a2dc78848a7909d",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 1,
+      "rcond1_estimate": 9.403833800482349e-06,
+      "gecon_info": 0,
+      "factor_seconds": 1.3148400039644912,
+      "gecon_seconds": 0.1809641500003636,
+      "LU_sha256": "c7427b60d265f6eb5cb946a807c9e0efba1ad829b998e567b26615ded44e509a",
+      "pivot_sha256": "b58de9954c891612fb914772ac926c3557431c266e8c76f7317ba4282d627d28",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 2,
+      "rcond1_estimate": 1.4958622951997327e-05,
+      "gecon_info": 0,
+      "factor_seconds": 0.6508139140205458,
+      "gecon_seconds": 0.275992262060754,
+      "LU_sha256": "ea2f22e343f6b72322e101f9cf33cd61c4774e7816b74507f317c9aaecd39d6b",
+      "pivot_sha256": "ce78c722816035728d27ba0594fbee5f1e4543ce26cf80267564514f08c4e58e",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 3,
+      "rcond1_estimate": 1.0055030735853493e-05,
+      "gecon_info": 0,
+      "factor_seconds": 0.7080658210907131,
+      "gecon_seconds": 0.3158222130732611,
+      "LU_sha256": "b34a6ee127610f5fe46e5f4a8c291e08874d50099eee138bf9332dc29a22804a",
+      "pivot_sha256": "d08f9290f25c167016eb019e4734c90de71bf8270f78cb92913e9cce7d6f2223",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 4,
+      "rcond1_estimate": 1.4905160818650747e-05,
+      "gecon_info": 0,
+      "factor_seconds": 1.29013304610271,
+      "gecon_seconds": 0.2640653600683436,
+      "LU_sha256": "10ed00cb00cb076e058d961d2b160b3d8562d5317f954c44603767e9640280a8",
+      "pivot_sha256": "3815708e7e07a151ca87bf29711f704faf4618c2d13a979c3de07b01ba1156da",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 5,
+      "rcond1_estimate": 9.888839837103996e-06,
+      "gecon_info": 0,
+      "factor_seconds": 0.8191639120923355,
+      "gecon_seconds": 0.2321049419697374,
+      "LU_sha256": "45bab605cf3b740062fffd48b6e15f91dc9ac7d786b8eae133215d857e8b2840",
+      "pivot_sha256": "32e11bdc749589b10e3c1adeb8821f15229083c499c5bfffafc555e59c3e5527",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 6,
+      "rcond1_estimate": 9.9824187153683e-06,
+      "gecon_info": 0,
+      "factor_seconds": 0.3879945300286636,
+      "gecon_seconds": 0.1229122820077464,
+      "LU_sha256": "a5bf3068935d4b06d83c7cd4dec32f97ee7a5f08337fa04b2eaa7bd43c4573b0",
+      "pivot_sha256": "10ce854fabe18e743673d008f8f15e18d154efe91dedf0203cbe15e46e3d329d",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    },
+    {
+      "block": 7,
+      "rcond1_estimate": 9.890436098323349e-06,
+      "gecon_info": 0,
+      "factor_seconds": 0.22770823596511036,
+      "gecon_seconds": 0.09763615403790027,
+      "LU_sha256": "af7018617e6860f672775249d8e2b633b5ceb93ebf9ff637821727bf12e4a4fb",
+      "pivot_sha256": "b50101a59247725c3cfa60cd9d41e5017c6c055acc2767e46e96f190fe12c296",
+      "qualified": true,
+      "gecon_internal_solve_count": "unknown; not measured",
+      "gecon_internal_triangular_pass_upper": 22,
+      "partial_pivoting": true,
+      "shift": null,
+      "drop": null,
+      "refinement": 0
+    }
+  ],
+  "V24_assembly_seconds": 8.715062577044591,
+  "V26_nested_timers": {
+    "assembly_seconds": 1.592389774043113,
+    "factor_seconds": 3.324998308904469,
+    "gecon_seconds": 0.5376470510382205,
+    "readonly_factor_hash_reload_seconds": 5.8352755040396005,
+    "joint_solve_seconds": 0.9674002305837348,
+    "original_actions": {
+      "S": 0.8745200139237568,
+      "SH": 0.6038451209897175,
+      "audit": 0.0
+    },
+    "port_chain": {
+      "S": 0.5919409731868654,
+      "SH": 0.6162860728800297,
+      "port_solve": 0.010746879037469625
+    },
+    "diagnostic_seconds": [
+      0.5547512179473415,
+      0.7757248739944771
+    ],
+    "thin_decomposition_seconds": [
+      0.004477262031286955,
+      0.004486829042434692
+    ]
+  },
+  "no_nested_timer_summation": true,
+  "no_factor_payload_reads": true,
+  "complete_qualified_N1_base": null,
+  "upstream_packet_setup": "unknown",
+  "global_image_QR_full_lineage": "unknown",
+  "exclusive_audit_IO": "unknown",
+  "historical_formal_lower_seconds": 77161.55713859801,
+  "historical_other_auxiliary_and_N1_lineage": "unknown retained"
+}
