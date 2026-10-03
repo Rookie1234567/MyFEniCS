@@ -57,7 +57,10 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
     fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, indent=2, sort_keys=True, default=_json_default)
+            json.dump(
+                value, stream, indent=2, sort_keys=True, allow_nan=False,
+                default=_json_default
+            )
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
@@ -74,30 +77,25 @@ def _canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), default=_json_default)
 
 
-def _source_sha(value: Any) -> str | None:
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if key in {"source_sha", "source_git_sha", "git_sha"} and isinstance(item, str):
-                return item
-        for item in value.values():
-            found = _source_sha(item)
-            if found:
-                return found
-    elif isinstance(value, list):
-        for item in value:
-            found = _source_sha(item)
-            if found:
-                return found
-    return None
-
-
 def _worker(run_roots: dict[str, Path], output: Path) -> None:
-    from benchmarks.postprocess_task40_p1_saved_fields_common_subcells import _load_run
+    from benchmarks.postprocess_task40_p1_saved_fields_common_subcells import (
+        _load_run,
+        _qualified_environment,
+        _sha256,
+    )
     from src.postprocessing.task40_saved_field_h_comparison import (
         compare_four_corner_directional,
         restore_p6_total_field,
     )
 
+    environment = _qualified_environment()
+    environment["thread_environment"] = {
+        key: os.environ.get(key)
+        for key in (
+            "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+            "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"
+        )
+    }
     started = datetime.now(timezone.utc).isoformat()
     started_monotonic = __import__("time").monotonic()
     runs = {label: _load_run(label, root) for label, root in run_roots.items()}
@@ -125,10 +123,10 @@ def _worker(run_roots: dict[str, Path], output: Path) -> None:
         identities[label] = {
             "run_root": str(run.root),
             "run_id": run.manifest.get("run_id", run.packet.get("run_id")),
-            "solver_source_sha": _source_sha(run.manifest) or _source_sha(run.packet),
-            "manifest_sha256": hashlib.sha256(
-                _canonical_json(run.manifest).encode("utf-8")
-            ).hexdigest(),
+            "solver_source_sha": run.manifest["source_sha"],
+            "run_manifest_sha256": _sha256(run.root / "run_manifest.json"),
+            "input_sha256": run.manifest["input_sha256"],
+            "physical_model_sha256": run.manifest["physical_model_sha256"],
             "packet_sha256": run.packet_sha256,
             "vector_sha256": run.vector_sha256,
             "vector_archive_sha256": run.vector_archive_sha256,
@@ -140,6 +138,7 @@ def _worker(run_roots: dict[str, Path], output: Path) -> None:
         "schema": "task40.review-v4.directional-cross-volume.v1",
         "status": "completed",
         "analysis_source_sha": head,
+        "qualified_environment": environment,
         "started_utc": started,
         "completed_utc": datetime.now(timezone.utc).isoformat(),
         "elapsed_seconds": __import__("time").monotonic() - started_monotonic,
@@ -179,8 +178,8 @@ def main() -> int:
         supervise,
     )
 
+    output.parent.mkdir(parents=True, exist_ok=True)
     watchdog_dir = output.parent / "four_corner_volume_v1_watchdog"
-    watchdog_dir.mkdir(parents=True, exist_ok=True)
     worker_environment = os.environ.copy()
     worker_environment.update(
         {
@@ -192,7 +191,8 @@ def main() -> int:
     )
     command = [
         sys.executable,
-        str(Path(__file__).resolve()),
+        "-m",
+        "benchmarks.postprocess_task40_review_v4_directional_cross",
         "--worker",
         "--output",
         str(output),
