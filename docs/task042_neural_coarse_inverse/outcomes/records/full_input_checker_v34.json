@@ -1,0 +1,421 @@
+{
+  "status": "CHECKED",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "trustworthy": true,
+      "rho_full": 2.97739708904112,
+      "rho0": 2.5444381411607355,
+      "rho_ret": 1.5795794693775491,
+      "outer_isolated_ratio": 2.7826044305407738,
+      "max_identity_full_b_relative": 3.810518370134921e-15,
+      "max_identity_operation_relative": 1.036342510695382e-14,
+      "saved_direction_analysis": {
+        "regions": [
+          {
+            "block": 0,
+            "rows": 2913,
+            "norms": {
+              "input": 0.0020820274738708204,
+              "ret": 0.002411388495584791,
+              "full": 0.006251352074400356,
+              "control": 0.0054058727276711915
+            },
+            "original_r_fractions": {
+              "input": 0.3094533124784643,
+              "ret": 0.3584064893456219,
+              "full": 0.9291431699005215,
+              "control": 0.8034789374343455
+            }
+          },
+          {
+            "block": 1,
+            "rows": 2676,
+            "norms": {
+              "input": 0.0023534643365540667,
+              "ret": 0.006256860385574087,
+              "full": 0.00781597865865623,
+              "control": 0.004527317695707523
+            },
+            "original_r_fractions": {
+              "input": 0.34979717793665094,
+              "ret": 0.9299618743413924,
+              "full": 1.1616947982369525,
+              "control": 0.6728986409455929
+            }
+          },
+          {
+            "block": 2,
+            "rows": 2289,
+            "norms": {
+              "input": 0.0022427663347594695,
+              "ret": 0.0027806504560576955,
+              "full": 0.007572942084490941,
+              "control": 0.0066988487931219564
+            },
+            "original_r_fractions": {
+              "input": 0.33334405050678184,
+              "ret": 0.4132901728102724,
+              "full": 1.1255720890639356,
+              "control": 0.9956549444421839
+            }
+          },
+          {
+            "block": 3,
+            "rows": 2076,
+            "norms": {
+              "input": 0.002181466711877867,
+              "ret": 0.005485895668006946,
+              "full": 0.0077104490207242785,
+              "control": 0.005217087814464238
+            },
+            "original_r_fractions": {
+              "input": 0.32423304136187103,
+              "ret": 0.815372807362549,
+              "full": 1.14600984862292,
+              "control": 0.7754196935141686
+            }
+          },
+          {
+            "block": 4,
+            "rows": 2439,
+            "norms": {
+              "input": 0.0027079307161109512,
+              "ret": 0.0039161123464357935,
+              "full": 0.006910970740294604,
+              "control": 0.0059761641076323275
+            },
+            "original_r_fractions": {
+              "input": 0.40248178305965343,
+              "ret": 0.5820547292727787,
+              "full": 1.0271827893077077,
+              "control": 0.8882417750153436
+            }
+          },
+          {
+            "block": 5,
+            "rows": 2220,
+            "norms": {
+              "input": 0.002562675047292745,
+              "ret": 2.0306024298502013e-16,
+              "full": 2.3522554573867845e-16,
+              "control": 0.003702729881341446
+            },
+            "original_r_fractions": {
+              "input": 0.3808923235370566,
+              "ret": 3.0180996943124436e-14,
+              "full": 3.496175013149942e-14,
+              "control": 0.5503395326786136
+            }
+          },
+          {
+            "block": 6,
+            "rows": 1863,
+            "norms": {
+              "input": 0.0025706433787104723,
+              "ret": 0.003849484788231222,
+              "full": 0.01168576354806588,
+              "control": 0.009905193940004628
+            },
+            "original_r_fractions": {
+              "input": 0.38207666264068885,
+              "ret": 0.5721518250856288,
+              "full": 1.7368638426590932,
+              "control": 1.4722164399576139
+            }
+          },
+          {
+            "block": 7,
+            "rows": 1668,
+            "norms": {
+              "input": 0.0022574911866262318,
+              "ret": 1.6869286910587087e-16,
+              "full": 2.0957961140688788e-16,
+              "control": 0.004869950137399382
+            },
+            "original_r_fractions": {
+              "input": 0.3355326163365366,
+              "ret": 2.5072948263864576e-14,
+              "full": 3.114997558472888e-14,
+              "control": 0.723824358965541
+            }
+          }
+        ],
+        "partition_rows": 18144,
+        "J_final_residual_norm": 3.1504709312342695e-16,
+        "J_final_over_original_r": 4.682568687362317e-14,
+        "vector_norms": {
+          "u": 0.001585194941232395,
+          "k": 0.0007138876691762956,
+          "qret": 0.0018589849494911553,
+          "au": 0.015647669753853965,
+          "ak": 0.008146900748610715,
+          "aqret": 0.00883652848958115,
+          "adelta": 0.015088783959423936,
+          "aqfull": 0.019170659690114642
+        },
+        "cross_terms": {
+          "outer_minus_feedback": {
+            "left_norm": 0.015647669753853965,
+            "right_norm": 0.008146900748610715,
+            "sign": -1,
+            "inner_product": {
+              "real": 4.17750795796104e-05,
+              "imag": 3.7128931993485846e-07
+            },
+            "signed_twice_real": -8.35501591592208e-05,
+            "combined_norm_squared": 0.00022767140137416907,
+            "reconstructed_norm_squared": 0.00022767140137416923,
+            "precancellation_norm_squared_scale": 0.00039477501957948526,
+            "recombination_absolute_error": 1.6263032587282567e-19
+          },
+          "return_plus_direct": {
+            "left_norm": 0.00883652848958115,
+            "right_norm": 0.015088783959423936,
+            "sign": 1,
+            "inner_product": {
+              "real": 3.0879277916418706e-05,
+              "imag": -3.3375734935970815e-06
+            },
+            "signed_twice_real": 6.175855583283741e-05,
+            "combined_norm_squared": 0.0003675141929541864,
+            "reconstructed_norm_squared": 0.0003675141929541858,
+            "precancellation_norm_squared_scale": 0.000367873885695003,
+            "recombination_absolute_error": 5.963111948670274e-19
+          },
+          "residual_after_return_minus_direct": {
+            "left_norm": 0.010627541279381914,
+            "right_norm": 0.015088783959423936,
+            "sign": -1,
+            "inner_product": {
+              "real": -3.033597616114946e-05,
+              "imag": 4.904338342624915e-06
+            },
+            "signed_twice_real": 6.067195232229892e-05,
+            "combined_norm_squared": 0.00040128798734143453,
+            "reconstructed_norm_squared": 0.0004012879873414346,
+            "precancellation_norm_squared_scale": 0.00040207574488596693,
+            "recombination_absolute_error": 5.421010862427522e-20
+          }
+        },
+        "no_new_action": true,
+        "no_new_solve": true,
+        "no_reference": true,
+        "interpretation": "fixed unit coefficients only; these norms never calibrate a new candidate"
+      }
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "trustworthy": true,
+      "rho_full": 4.065825954112519,
+      "rho0": 3.4623458468352646,
+      "rho_ret": 2.137828944967003,
+      "outer_isolated_ratio": 3.9707802967231465,
+      "max_identity_full_b_relative": 2.2185676399589505e-14,
+      "max_identity_operation_relative": 1.1049607203856011e-14,
+      "saved_direction_analysis": {
+        "regions": [
+          {
+            "block": 0,
+            "rows": 2913,
+            "norms": {
+              "input": 0.008404278475886578,
+              "ret": 0.010478113938824205,
+              "full": 0.03664603199880771,
+              "control": 0.032684482995528195
+            },
+            "original_r_fractions": {
+              "input": 0.3125182556964511,
+              "ret": 0.38963510080555364,
+              "full": 1.362705202037653,
+              "control": 1.2153925697976409
+            }
+          },
+          {
+            "block": 1,
+            "rows": 2676,
+            "norms": {
+              "input": 0.008300637706883105,
+              "ret": 0.033835138017571036,
+              "full": 0.04271852584587539,
+              "control": 0.025390046188125015
+            },
+            "original_r_fractions": {
+              "input": 0.3086643100613873,
+              "ret": 1.2581803833415341,
+              "full": 1.588514614500372,
+              "control": 0.9441444580319073
+            }
+          },
+          {
+            "block": 2,
+            "rows": 2289,
+            "norms": {
+              "input": 0.009072303492859195,
+              "ret": 0.011817069691325222,
+              "full": 0.0415710167545193,
+              "control": 0.03802514522680484
+            },
+            "original_r_fractions": {
+              "input": 0.33735917614725175,
+              "ret": 0.4394249926358817,
+              "full": 1.5458437843207955,
+              "control": 1.4139883742526358
+            }
+          },
+          {
+            "block": 3,
+            "rows": 2076,
+            "norms": {
+              "input": 0.009137395425132373,
+              "ret": 0.0354350774768827,
+              "full": 0.042589145165741,
+              "control": 0.025046078510442858
+            },
+            "original_r_fractions": {
+              "input": 0.3397796596179377,
+              "ret": 1.3176751145642829,
+              "full": 1.583703514464547,
+              "control": 0.9313538087270784
+            }
+          },
+          {
+            "block": 4,
+            "rows": 2439,
+            "norms": {
+              "input": 0.009218562933290103,
+              "ret": 0.0173450467979226,
+              "full": 0.031094895393214358,
+              "control": 0.0251128844593171
+            },
+            "original_r_fractions": {
+              "input": 0.34279792324895153,
+              "ret": 0.6449862157486702,
+              "full": 1.1562827787338197,
+              "control": 0.9338380289575512
+            }
+          },
+          {
+            "block": 5,
+            "rows": 2220,
+            "norms": {
+              "input": 0.009557874774681577,
+              "ret": 1.158126258359878e-15,
+              "full": 1.3439258110599844e-15,
+              "control": 0.020679833012283506
+            },
+            "original_r_fractions": {
+              "input": 0.3554154424224375,
+              "ret": 4.3065636053986835e-14,
+              "full": 4.997470650966241e-14,
+              "control": 0.768992288824765
+            }
+          },
+          {
+            "block": 6,
+            "rows": 1863,
+            "norms": {
+              "input": 0.010261641571304103,
+              "ret": 0.01882659613793629,
+              "full": 0.06540845199467528,
+              "control": 0.0569674059117328
+            },
+            "original_r_fractions": {
+              "input": 0.3815854428964341,
+              "ret": 0.7000785376889499,
+              "full": 2.4322534508858706,
+              "control": 2.118367969144232
+            }
+          },
+          {
+            "block": 7,
+            "rows": 1668,
+            "norms": {
+              "input": 0.011671280815460084,
+              "ret": 1.0597622742973623e-15,
+              "full": 1.2483680060654736e-15,
+              "control": 0.024076820327297604
+            },
+            "original_r_fractions": {
+              "input": 0.43400374376650586,
+              "ret": 3.940791090711418e-14,
+              "full": 4.64213308545422e-14,
+              "control": 0.8953113480226679
+            }
+          }
+        ],
+        "partition_rows": 18144,
+        "J_final_residual_norm": 1.8342734976554406e-15,
+        "J_final_over_original_r": 6.82085863292428e-14,
+        "vector_norms": {
+          "u": 0.009419418256442888,
+          "k": 0.003914434608783364,
+          "qret": 0.010757477882691551,
+          "au": 0.08730930052850298,
+          "ak": 0.04305945132841012,
+          "aqret": 0.05288529268828051,
+          "adelta": 0.08588895933261399,
+          "aqfull": 0.1072601645547548
+        },
+        "cross_terms": {
+          "outer_minus_feedback": {
+            "left_norm": 0.08730930052850298,
+            "right_norm": 0.04305945132841012,
+            "sign": -1,
+            "inner_product": {
+              "real": 0.0010500584861203757,
+              "imag": -3.547012941779085e-05
+            },
+            "signed_twice_real": -0.0021001169722407514,
+            "combined_norm_squared": 0.00737691333523942,
+            "reconstructed_norm_squared": 0.007376913335239419,
+            "precancellation_norm_squared_scale": 0.011578345090518952,
+            "recombination_absolute_error": 8.673617379884035e-19
+          },
+          "return_plus_direct": {
+            "left_norm": 0.05288529268828051,
+            "right_norm": 0.08588895933261399,
+            "sign": 1,
+            "inner_product": {
+              "real": 0.0006654876911742786,
+              "imag": -0.0006715446338767592
+            },
+            "signed_twice_real": 0.0013309753823485572,
+            "combined_norm_squared": 0.011504742900313081,
+            "reconstructed_norm_squared": 0.011504742900313072,
+            "precancellation_norm_squared_scale": 0.012064636167440879,
+            "recombination_absolute_error": 8.673617379884035e-18
+          },
+          "residual_after_return_minus_direct": {
+            "left_norm": 0.05749075281146056,
+            "right_norm": 0.08588895933261399,
+            "sign": -1,
+            "inner_product": {
+              "real": -0.0006364234747211231,
+              "imag": 0.0007260706682507616
+            },
+            "signed_twice_real": 0.0012728469494422462,
+            "combined_norm_squared": 0.011954946943510137,
+            "reconstructed_norm_squared": 0.011954946943510127,
+            "precancellation_norm_squared_scale": 0.012613124027548786,
+            "recombination_absolute_error": 1.0408340855860843e-17
+          }
+        },
+        "no_new_action": true,
+        "no_new_solve": true,
+        "no_reference": true,
+        "interpretation": "fixed unit coefficients only; these norms never calibrate a new candidate"
+      }
+    }
+  ],
+  "decision": "FULL_INPUT_FIXED_STEP_INSUFFICIENT",
+  "raw": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v34/task042_v34_full_input_diagnostic_20261003T130311441157Z/stage_result.json",
+    "sha256": "24485830c9953407df212147f97fc90e5612806eefac18a1c7fc5e92f10df661"
+  },
+  "actual_numeric_source": "fbc5c578e61adc670abda6f723f33192b1617e83",
+  "no_factor_reads": true,
+  "no_new_actions": true,
+  "no_QR_SVD": true,
+  "checker_source_sha256": "1395517407a889d65654fcf4a270c3d5d3e131884afc70906ca637493dc245ab"
+}

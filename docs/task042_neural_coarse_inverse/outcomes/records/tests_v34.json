@@ -1,0 +1,200 @@
+{
+  "schema": "task042.tests.v34",
+  "attempts": [
+    {
+      "attempt": "aux_pre_001",
+      "junit": {
+        "executions": 13,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0,
+        "tests": [
+          "src.test.test_task042_v34_workflow::test_actual_workflow_residual_identity_and_two_layer_checker",
+          "src.test.test_task042_v34_workflow::test_paid_entry_repair_preserves_attempt_and_campaign_caps",
+          "src.test.test_task042_v34_workflow::test_resource_wait_charges_probe_once_and_requires_backoff",
+          "src.test.test_task042_v34_workflow::test_v34_namespace_storage_closed_and_consumed_reentry",
+          "src.test.test_task042_v33_workflow::test_actual_study_saved_arrays_accounting_and_independent_checker",
+          "src.test.test_task042_v33_workflow::test_fixed_small_matrices_difference_external_only_zero_and_singular",
+          "src.test.test_task042_v33_workflow::test_qualified_negative_and_zero_control_do_not_fabricate_neural_gain",
+          "src.test.test_task042_v33_workflow::test_storage_v33_extends_scope_without_changing_v32",
+          "src.test.test_task042_v33_workflow::test_namespace_closed_and_zero_consumption_repair_boundary",
+          "src.test.test_task042_v33_workflow::test_column_support_inventory_rejects_swap",
+          "src.test.test_task042_v32_workflow::test_storage_scope_and_boundary",
+          "src.test.test_task042_v32_workflow::test_v32_actual_workflow_through_independent_checker",
+          "src.test.test_task042_v31_workflow::test_failed_prequalification_stops_formal_route"
+        ]
+      },
+      "entry": {
+        "exit_code": 1,
+        "elapsed_seconds": 5.087870029965416,
+        "environment": {
+          "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "numpy": "1.26.4",
+          "scipy": "1.11.4",
+          "BLAS": [
+            {
+              "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+              "function": "openblas_get_num_threads",
+              "threads": 1
+            },
+            {
+              "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+              "function": "openblas_get_num_threads",
+              "threads": 1
+            },
+            {
+              "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+              "function": "openblas_get_num_threads",
+              "threads": 1
+            }
+          ],
+          "affinity": [
+            40
+          ],
+          "MPI": 1,
+          "math_threads": 1,
+          "DataLoader0": true,
+          "torch_imported": false,
+          "FE_imported": false,
+          "source_sha": "79f3d5a8a4ff9abf75b640fb865872ce6003654e",
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "src/test/test_task042_v34_workflow.py",
+            "src/test/test_task042_v33_workflow.py",
+            "src/test/test_task042_v32_workflow.py::test_storage_scope_and_boundary",
+            "src/test/test_task042_v32_workflow.py::test_v32_actual_workflow_through_independent_checker",
+            "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/tests/fixtures",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/tests/junit.xml"
+          ]
+        },
+        "status": "FAILED"
+      },
+      "raw": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/tests/junit.xml",
+        "sha256": "9ed8f253f98da5c074d15e65d330102a9816d8c09e7223699e57f89c90799ca5",
+        "bytes": 11331
+      }
+    },
+    {
+      "attempt": "aux_pre_002",
+      "junit": {
+        "executions": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "tests": [
+          "src.test.test_task042_v34_workflow::test_actual_workflow_residual_identity_and_two_layer_checker",
+          "src.test.test_task042_v34_workflow::test_paid_entry_repair_preserves_attempt_and_campaign_caps",
+          "src.test.test_task042_v34_workflow::test_resource_wait_charges_probe_once_and_requires_backoff",
+          "src.test.test_task042_v34_workflow::test_v34_namespace_storage_closed_and_consumed_reentry",
+          "src.test.test_task042_v33_workflow::test_actual_study_saved_arrays_accounting_and_independent_checker",
+          "src.test.test_task042_v33_workflow::test_fixed_small_matrices_difference_external_only_zero_and_singular",
+          "src.test.test_task042_v33_workflow::test_qualified_negative_and_zero_control_do_not_fabricate_neural_gain",
+          "src.test.test_task042_v33_workflow::test_storage_v33_extends_scope_without_changing_v32",
+          "src.test.test_task042_v33_workflow::test_namespace_closed_and_zero_consumption_repair_boundary",
+          "src.test.test_task042_v33_workflow::test_column_support_inventory_rejects_swap",
+          "src.test.test_task042_v32_workflow::test_storage_scope_and_boundary",
+          "src.test.test_task042_v32_workflow::test_v32_actual_workflow_through_independent_checker",
+          "src.test.test_task042_v31_workflow::test_failed_prequalification_stops_formal_route"
+        ]
+      },
+      "entry": {
+        "exit_code": 0,
+        "elapsed_seconds": 8.137636978062801,
+        "environment": {
+          "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "numpy": "1.26.4",
+          "scipy": "1.11.4",
+          "BLAS": [
+            {
+              "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+              "function": "openblas_get_num_threads",
+              "threads": 1
+            },
+            {
+              "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+              "function": "openblas_get_num_threads",
+              "threads": 1
+            },
+            {
+              "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+              "function": "openblas_get_num_threads",
+              "threads": 1
+            }
+          ],
+          "affinity": [
+            11
+          ],
+          "MPI": 1,
+          "math_threads": 1,
+          "DataLoader0": true,
+          "torch_imported": false,
+          "FE_imported": false,
+          "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "src/test/test_task042_v34_workflow.py",
+            "src/test/test_task042_v33_workflow.py",
+            "src/test/test_task042_v32_workflow.py::test_storage_scope_and_boundary",
+            "src/test/test_task042_v32_workflow.py::test_v32_actual_workflow_through_independent_checker",
+            "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/tests/fixtures",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/tests/junit.xml"
+          ]
+        },
+        "status": "PASSED"
+      },
+      "raw": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/tests/junit.xml",
+        "sha256": "2a80234e411957d963720fa0f392b6d12dd728caa113652596143190b55b84b1",
+        "bytes": 1975
+      }
+    },
+    {
+      "attempt": "aux_check_001",
+      "junit": {
+        "executions": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "tests": [
+          "src.test.test_task042_v34_workflow::test_saved_analysis_partition_and_complex_cross_term_sign"
+        ]
+      },
+      "actual_saved_checker": "CHECKED",
+      "source": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6"
+    }
+  ],
+  "prequalification": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/tests/qualification.json",
+    "sha256": "724ab028bef1204ee8a8f28646d3913fffb0c4bf6f9c4824e6d902f490bc3d31",
+    "bytes": 4101
+  },
+  "compiled_static": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/compilation_static.json",
+    "sha256": "b72e0dc57ae5bd4fc893fd76220c80657881fdfd50c376f2392352d816407529",
+    "bytes": 737
+  },
+  "actor_source": "fbc5c578e61adc670abda6f723f33192b1617e83",
+  "checker_source": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+  "historical_failures_preserved": true,
+  "full_repository_pytest": "NOT_RUN",
+  "MPI_FE_tests_Ruff_CI": "NOT_RUN; only pure/native focused tests authorized",
+  "documentation_static_checks": "recorded separately in render_check_v34.json",
+  "documentation_static_final": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/documentation_static_tests_v34.json",
+    "sha256": "8a22d52a94a5cca3df374ad9e85298e5e6fde9f5608e5c4512e7e4759b3bc7d6",
+    "bytes": 815
+  }
+}

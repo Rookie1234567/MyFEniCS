@@ -1,3 +1,15 @@
+# V34测试：修后13定点通过，真实保存数组独立审核完成
+
+| source／实际范围 | 原始结果 | 说明 |
+|---|---|---|
+| 79f3d5a8a4ff9abf75b640fb865872ce6003654e／首次前测 | 11 passed/2 failed，监督7.912601837s | WAIT fixture目录责任及full_linearity ValueError消息；失败原样保留 |
+| fbc5c578e61adc670abda6f723f33192b1617e83／修后前测 | 13 passed，监督11.764919262s | actual study→save→settle→checker、残差原容差两侧/非有限/来源、收费消费/重入、WAIT退避/探针、closed与统一存储，含无损失败归档 |
+| 同source／正式dat | 一次真实actorCOMPLETED | S20SH2/全部22作用与manifest、write-ahead、ledger、真实因子资格一致；不是合成计数 |
+| a4cf9c0fc7dcb819bcbfe81559f040d5306720f6／最终checker | 保存分区与复交叉项小测试1 passed；实际CHECKED，5.926647831s | 零新作用/因子/solve/QR/reference，软件pass不写成数值改善 |
+| 静态／文档 | 最终表格、链接、math fence及纯文档测试另列render记录 | GitHub视觉NOT_VERIFIED，不伪称CI或网页通过 |
+
+[tests](records/tests_v34.json)／[首次与修后raw](records/raw_evidence_index_v34.json)／[资格](records/source_inventory_v34.json)／[repairs](records/repairs_v34.json)／[render](records/render_check_v34.json)。最终checker新增分析单独小测并实测审核，actor数值内核和环境未因文档变化重跑。没有MPI/FE/full-repository/Ruff/CI；不机械重复历史110/162或将旧review隔离修改当生产资格。以下旧测试逐字保留。
+
 # V33测试：最终静态通过，runtime因CPU准入未执行
 
 最终clean实现source a874498a1a8b854f394520627eaf09158b77fbf9的16 Python文件在内存中compile和全局符号检查通过，无科学库导入／pyc。准入发生在前一clean实现45d34165…；worker前被CPU/SMT拒绝。新6测试函数涵盖实际study→保存→结算→cached checker、非互伴port、差式／反馈抵消、外域-only／零输入、奇异块／错库存／wrong vector／zero-consumption／closed和V33存储边界，但本轮执行0，不借用旧12 passed作当前source资格。

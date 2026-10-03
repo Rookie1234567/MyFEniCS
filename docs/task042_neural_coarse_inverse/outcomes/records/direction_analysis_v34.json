@@ -1,0 +1,38 @@
+{
+  "schema": "task042.direction-analysis.v34",
+  "independent_saved_checker": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/full_input_checker_v34.json",
+    "sha256": "d1385d632588fbc32eb710bc67dba9d906fcb9ae1637d4b1b089e159791999bf",
+    "bytes": 14888
+  },
+  "scope": "canonical residual coefficient groups, not material-region E/H L2",
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "trustworthy": true,
+      "rho_full": 2.97739708904112,
+      "rho0": 2.5444381411607355,
+      "rho_ret": 1.5795794693775491,
+      "outer_isolated_ratio": 2.7826044305407738,
+      "max_identity_full_b_relative": 3.810518370134921e-15,
+      "max_identity_operation_relative": 1.036342510695382e-14
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "trustworthy": true,
+      "rho_full": 4.065825954112519,
+      "rho0": 3.4623458468352646,
+      "rho_ret": 2.137828944967003,
+      "outer_isolated_ratio": 3.9707802967231465,
+      "max_identity_full_b_relative": 2.2185676399589505e-14,
+      "max_identity_operation_relative": 1.1049607203856011e-14
+    }
+  ],
+  "remaining_exterior": "all six exterior groups amplified; block6 largest final norm in both",
+  "joint_block": "J5+7 effectively canceled; tiny J residual does not establish global residual pass",
+  "additive_term": "negative real alignment with residual-after-return; its subtraction increases norm-square cross term",
+  "not_condition_number_unique_cause_or_universal_bound": true,
+  "no_new_math_actions_solves_or_reference": true,
+  "arbitrary_RHS_deployment": "J2 + six exterior solves + two A propagations; additional ports/true residual/recovery/audit/IO",
+  "arbitrary_RHS_PC_or_Krylov": "NOT_RUN; this fixed undamped single step is closed"
+}

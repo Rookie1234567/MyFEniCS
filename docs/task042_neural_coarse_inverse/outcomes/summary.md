@@ -1,3 +1,20 @@
+# V34统一结果：可信单步负结果，原方程及神经资格不提升
+
+将外域残差直接送入已有六个外块，再用联合块抵消反馈，检验比旧回流更完整的信息传播。代价是局部因子和原作用；缓存省去历史读取并不省去任意RHS部署费用。这次只研究两个已消费冷末态，不新增正式有限元解。
+
+| 模型／方法／数据身份 | measured或not_run结果 | 基线／解释及证据 |
+|---|---|---|
+| .7nm/384hex/p3/q15、三维缺口、双Floquet、MPI1、18144trace/40port | LZ4 rho_full2.97739708904112；LCZ4 4.065825954112519 | rho=校正后/输入残差，<1才改善；[response](../response_v34.md) |
+| B_full固定单位系数 vs 七区直接q0／旧qret | q0 2.5444381411607355/3.4623458468352646；qret1.5795794693775491/2.137828944967003 | 两态更差；FULL_INPUT_FIXED_STEP_INSUFFICIENT，关闭本提案，[checker](records/full_input_checker_v34.json) |
+| 局部与全局作用，measured | J残差3.15047093123e-16/1.83427349766e-15；六外域均放大 | block6最大，负相关补项增加残差平方；不声称条件数或唯一病因 |
+| 软件可信链 | 首11pass/2fail保留，修后13pass，新保存分析1pass及CHECKED | 原容差/完整库存不放宽，实际study链通过，[tests](records/tests_v34.json) |
+| shared-workstation资源／费用 | actor20.032767938s，aux25.604168930s，probes5.347870708s；新50.984807576s，累计212.190443556s | 树采样峰1,019,056,128B/ownswap0，后代清空；旧合格N=1成本unknown，[费用](records/resource_costs_v34.json) |
+| 因子、内存与存储 | readonly J dense LU present，原A+LU483729408B；S20SH2，新LU/FE/train0 | 非factor-free，无global p4；[消费](records/actual_consumption_v34.json)／[存储](records/storage_v34.json) |
+| 新E/H/curl、R00_s/p/total、R/T/A/A_volume、40复通道及功率 | 全NOT_RUN | 不是新完整解；历史V24完整0/5、V23 0/6保持，不用J小残差授资格 |
+| NN贡献／最终模型 | NN20% NOT_DEMONSTRATED；原尺寸.7nm/2TB/48h NOT_QUALIFIED | 不把传统块校正或micro资源数字归NN／外推原尺寸 |
+
+p/h/M/MPI未变化，历史统一模型表保留；本批没有新的离散误差或MPI对照。只读dot新发布增量更新14项身份缺口，unknown保持。[完整归因](full_input_block_correction_v34.md)／[dot表](records/dot_identity_gap_v34.json)／[NN条件](records/neural_cost_assessment_v34.json)／[run index](records/run_index_v34.json)。唯一下一建议为不同的周期/全局信息传播路线先做身份、恢复和全成本对应；不实施新实验、不重复固定回流或旧p1/tau，不merge。以下旧summary逐字保留。
+
 # V33：固定外域输入补齐，CPU资源停止
 
 给原回流增加外域残差入口，尝试补上只读J=[5,7]内输入的缺口；传统块校正不代表神经学习或完整求解。唯一辅助CPU/SMT准入拒绝后，数值队列关闭，完成静态、费用和dot对照；未继续找核。

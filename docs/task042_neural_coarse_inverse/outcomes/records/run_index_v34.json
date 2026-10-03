@@ -1,0 +1,49 @@
+{
+  "schema": "task042.run-index.v34",
+  "review": "58238a4469f36c743a9010bc92b29694c6a63728",
+  "numeric_source": "fbc5c578e61adc670abda6f723f33192b1617e83",
+  "checker_source": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+  "run": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z",
+  "manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z/run_manifest.json",
+    "sha256": "650ff2dce1441397f8417ab3a9bf23e0045a48fdaf746cc8c066fe9171df1a82",
+    "bytes": 6994
+  },
+  "summary": {
+    "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z/run_summary.json",
+    "sha256": "45237bf39084e6fb37b59f47ca07427daca063759db920555f13d1313347589a",
+    "bytes": 10496
+  },
+  "raw_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v34/task042_v34_full_input_diagnostic_20261003T130311441157Z/stage_result.json",
+    "sha256": "24485830c9953407df212147f97fc90e5612806eefac18a1c7fc5e92f10df661"
+  },
+  "checker": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/full_input_checker_v34.json",
+    "sha256": "d1385d632588fbc32eb710bc67dba9d906fcb9ae1637d4b1b089e159791999bf",
+    "bytes": 14888
+  },
+  "ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/ledger.json",
+    "sha256": "3f40174d1da106efaf18f3ecff525852d41f6bb311aede7e19f00aa516dd38ce",
+    "bytes": 2655
+  },
+  "raw_evidence": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_evidence_index_v34.json",
+    "sha256": "eb79fe6c84afc8b565b67be263cb57e9b95ac122554528f6d1fd08ec46e6ec1a",
+    "bytes": 33262
+  },
+  "classification": "FULL_INPUT_FIXED_STEP_INSUFFICIENT",
+  "formal_PDE": false,
+  "new_official_result": false,
+  "not_run": [
+    "arbitrary-RHS PC/Krylov",
+    "FE fields/recovery/RTA",
+    "training",
+    "new LU",
+    "new factor reader beyond J1",
+    "largest 0.7nm model"
+  ],
+  "closed": true,
+  "descendants_cleared": true
+}

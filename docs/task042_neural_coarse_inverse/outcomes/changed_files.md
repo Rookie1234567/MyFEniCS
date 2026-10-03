@@ -1,3 +1,16 @@
+# V34依赖分组与本轮改动
+
+| 依赖组 | 内容／行为改变 | 验证及建议顺序 |
+|---|---|---|
+| production numerical/core | 无生产默认改动；原ActionPacket/recover/uncondensed保持独立 | 无fresh PDE，不提升为production |
+| reusable runner/watchdog | V34显式schema/dat、统一storage、收费probe/修复重入/退避、两层账及原始结算receipt | final13定点及真实one-run；旧V33默认/closed保持；先审核公共资格helper与runner |
+| checker/benchmark | 新旧残差原限值后统一使用保存新r，累计与单run独立消费审核；保存八区norm/复交叉项 | 合成阈值/来源/库存反例＋实际cached CHECKED，0新A/factor；其次审核checker |
+| compact evidence/docs | response34、result/cost/source/raw/consume/repairs/test/dot/NN/gate/run/integrity/storage/render；导航及总账前缀 | 绑定numeric fbc5c578…和checker a4cf9c0…；保护旧材料字节及closed；只新增版本记录 |
+| research-only | full_input_block_v34_window薄扩展、唯一fixed B_full dat及收费授权 | 数学内核未换；两态负结果，仅显式opt-in，不新增PC/迭代/训练 |
+| do-not-merge | ignored真实NPZ/因子/TMP、失败合成archive、未资格化研究执行路径 | 无merge approval；大对象不进Git，不把负求解代码升为默认 |
+
+源码阶段分别79f3d5a…、最小fixture修后fbc5c578…、独立保存分析a4cf9c0…，没有amend/重写历史。新批复用既有study/fixture/checker而非另复制求解器；[source列表](records/source_inventory_v34.json)、[repairs](records/repairs_v34.json)、[最终run index](records/run_index_v34.json)给出实际hash与依赖。P1/P2不改变loss、原方程或阈值。以下历史文件清单及分组逐字保留。
+
 # V33变更／依赖组：外域直接入口与完整交付
 
 只新增opt-in研究路径，不修改旧task/review/response/raw或默认V32数学。准入source45d34165…；静态防护后的最终实现a874498a…未运行资格化，不作production default。

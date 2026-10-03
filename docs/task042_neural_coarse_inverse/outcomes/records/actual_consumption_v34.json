@@ -1,0 +1,130 @@
+{
+  "schema": "task042.actual-consumption.v34",
+  "actor_attempts": 1,
+  "successful_complete_results": 1,
+  "actor_replays": 0,
+  "completed": {
+    "actions": 22,
+    "factor_readers": 1,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 4,
+    "explicit_triangular_pass": 8,
+    "thin_decompositions": 0,
+    "port_factors": 1,
+    "port_solves": 21,
+    "port_rhs_columns": 21,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "charged": {
+    "actions": 22,
+    "factor_readers": 1,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 4,
+    "explicit_triangular_pass": 8,
+    "thin_decompositions": 0,
+    "port_factors": 1,
+    "port_solves": 21,
+    "port_rhs_columns": 21,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "action_counts": {
+    "S": 20,
+    "SH": 2,
+    "audit": 0
+  },
+  "campaign_hard_caps": {
+    "actions": 96,
+    "factor_readers": 3,
+    "joint_lu_solve": 12,
+    "explicit_triangular_pass": 24,
+    "port_factors": 3,
+    "port_solves": 96,
+    "port_rhs_columns": 96,
+    "outer_lu_solve": 0,
+    "thin_decompositions": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "ledger": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/ledger.json",
+    "sha256": "3f40174d1da106efaf18f3ecff525852d41f6bb311aede7e19f00aa516dd38ce",
+    "bytes": 2655
+  },
+  "runs": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z",
+      "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+      "classification": "COMPLETED",
+      "counts": {
+        "actions": 22,
+        "factor_readers": 1,
+        "outer_lu_solve": 0,
+        "joint_lu_solve": 4,
+        "explicit_triangular_pass": 8,
+        "thin_decompositions": 0,
+        "port_factors": 1,
+        "port_solves": 21,
+        "port_rhs_columns": 21,
+        "new_assemblies": 0,
+        "new_LU_attempts": 0,
+        "new_gecon": 0
+      },
+      "completed": {
+        "actions": 22,
+        "factor_readers": 1,
+        "outer_lu_solve": 0,
+        "joint_lu_solve": 4,
+        "explicit_triangular_pass": 8,
+        "thin_decompositions": 0,
+        "port_factors": 1,
+        "port_solves": 21,
+        "port_rhs_columns": 21,
+        "new_assemblies": 0,
+        "new_LU_attempts": 0,
+        "new_gecon": 0
+      },
+      "upper": {
+        "actions": 22,
+        "factor_readers": 1,
+        "outer_lu_solve": 0,
+        "joint_lu_solve": 4,
+        "explicit_triangular_pass": 8,
+        "thin_decompositions": 0,
+        "port_factors": 1,
+        "port_solves": 21,
+        "port_rhs_columns": 21,
+        "new_assemblies": 0,
+        "new_LU_attempts": 0,
+        "new_gecon": 0
+      },
+      "exact_counts": true,
+      "actor_wall_seconds": 20.032767937984318,
+      "launch_wall_seconds": 23.54107076197397,
+      "rss_peak_bytes": 1019056128,
+      "swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z/run_summary.json",
+        "sha256": "45237bf39084e6fb37b59f47ca07427daca063759db920555f13d1313347589a"
+      },
+      "write_ahead_receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z/settlement_counts.json",
+        "sha256": "15b8de24322faa9bfe8f2e2d58872e1fedad4953673de851443bfb8afb7b8b22"
+      }
+    }
+  ],
+  "pre_and_post_real_action_or_factor_consumption": 0,
+  "synthetic_fixture_operations_not_mixed_with_real_consumption": true,
+  "global_p4_LU_present": false,
+  "factor_status": "READONLY_JOINT_DENSE_LU_PRESENT",
+  "reference_or_teacher_arrays_read": false,
+  "new_solver_or_FE_or_training": false,
+  "closed": true,
+  "active": null,
+  "decision": "FULL_INPUT_FIXED_STEP_INSUFFICIENT"
+}

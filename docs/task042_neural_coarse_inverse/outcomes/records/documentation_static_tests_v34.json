@@ -1,0 +1,22 @@
+{
+  "schema": "task042.static-doc-tests.v34",
+  "UTC": "2026-10-03T13:23:44.805932+00:00",
+  "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+  "Task042_activation": "1",
+  "scope": [
+    "/home/fenics/Projects/NN-Lab/src/test/test_26_documentation_contract.py",
+    "/home/fenics/Projects/NN-Lab/src/test/test_183_development_model_registry_markdown.py"
+  ],
+  "tests_run": 20,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "wall_seconds": 0.07246153790038079,
+  "status": "PASSED",
+  "no_NumPy_SciPy_FE_Torch_imported": true,
+  "classification": "stdlib static documentation checks, not a numerical auxiliary or CI",
+  "log": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/documentation_tests.log",
+    "sha256": "177ebe7f6955192448410350de04ce6c659929835392748427b7e73932dcea44"
+  }
+}

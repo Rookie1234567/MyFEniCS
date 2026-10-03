@@ -1,3 +1,11 @@
+# V34最新交付：完整输入诊断已实测，固定单步提案关闭
+
+按[Review V31](review_report_v31.md)同轮修复、定点复验、真实actor及独立缓存审核全部完成。两态rho_full=2.97739708904112／4.065825954112519，均放大且比七区单位相加对照更差，`FULL_INPUT_FIXED_STEP_INSUFFICIENT`。J内残差消除、六外域放大，block6最终norm最大；是可信传统块方法负结果，非新完整物理解或神经收益。
+
+[response_v34](response_v34.md)／[详细结果](outcomes/full_input_block_correction_v34.md)／[run index](outcomes/records/run_index_v34.json)／[独立checker](outcomes/records/full_input_checker_v34.json)／[原始证据](outcomes/records/raw_evidence_index_v34.json)／[完整费用](outcomes/records/resource_costs_v34.json)。首次11/2失败保留，最小修后13通过；真实sourcefbc5c578…，checker sourcea4cf9c0…，actor仅一次20.032768s。新收费50.984808s、累计212.190444/600s；树采样峰1,019,056,128B/ownswap0/后代清空，全部shared-workstation。
+
+队列closed且不重入；历史V23 0/6／V24 0/5、旧closed和失败不改。NN20% NOT_DEMONSTRATED、原尺寸/2TB/48h NOT_QUALIFIED。唯一下一建议仅只读核对dot不同周期/全局信息传播接口、恢复与全成本，未实施，不改dot或merge。以下旧导航逐字保留；历史停止／等待建议不覆盖本次已完成结论。
+
 # 最新审阅：Review V31／修复后同轮推进真实数值诊断
 
 [Review V31](review_report_v31.md)接受V33真实CPU停止，但独立合成复验为4 passed／2 failed：checker混用新旧残差并强求逐位相等，存储fixture误期望V32累计0B。前者最小修复方向在隔离审阅中通过两态及12个破坏性反例；生产源码未改、正式资格未授予。证据见[独立审阅记录](outcomes/records/review_v31_independent_checks.json)。

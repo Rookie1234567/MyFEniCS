@@ -1,0 +1,55 @@
+{
+  "schema": "task042.delivery.v34",
+  "phase": "PRE_PUBLICATION",
+  "UTC": "2026-10-03T13:25:08.347635+00:00",
+  "monotonic": 958903.208507634,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "calendar_elapsed_seconds": 2445.372149406001,
+  "start_UTC": "2026-10-03T12:44:22.975476+00:00",
+  "total_limit_seconds": 86400,
+  "heavy_limit_seconds": 82800,
+  "window_unchanged_sha256": "d163f498670e7e9fdca19fe7782d3cbf22bf8c7c26874a74433a0b6cd6c69bf6",
+  "branch": "task42_neural_coarse_inverse",
+  "pre_document_commit_HEAD": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "remote_probe_HEAD": "58238a4469f36c743a9010bc92b29694c6a63728",
+  "git_common_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "worktree": "/home/fenics/Projects/NN-Lab",
+  "no_active_Task042_actor": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/prepublish_host_check.json",
+    "sha256": "f5be38dd87b78d410d2bc5665359a9740d8a14472eea73c2a7a15bb0f7908e7e",
+    "bytes": 150
+  },
+  "cleared_all_supervised_trees": true,
+  "actor_source": "fbc5c578e61adc670abda6f723f33192b1617e83",
+  "checker_source": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+  "decision": "FULL_INPUT_FIXED_STEP_INSUFFICIENT",
+  "no_more_numeric_queue": true,
+  "same_frozen_start_no_budget_refresh": true,
+  "publication_receipt": "post-push full HEAD/upstream/worktree/UTC recorded separately in tmp/task042/v34/published_receipt.json and terminal final; this record is prepublication",
+  "neighbor_notification": "no send/dispatch interface exposed; prepare exact-SHA request after successful push, not falsely marked sent",
+  "protected_history": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/evidence_integrity_v34.json",
+    "sha256": "3a5c15cba491abd345ceca50b91fa0e7b814484ee42eace6f01deb292fc72172",
+    "bytes": 177272
+  },
+  "navigation_suffixes": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/navigation_history_v34.json",
+    "sha256": "2005c989c217a3407200105fa914e0242bd3b61c38ecef08bf1bf138f1147abd",
+    "bytes": 1716
+  },
+  "complete_method_cost": "historical lower bound plus unknowns retained; no full qualified N=1",
+  "cumulative_loaded_seconds": 212.19044355582446,
+  "remaining_600_seconds": 387.80955644417554,
+  "unexpected_numeric_replays": 0,
+  "resource_reentries": 0,
+  "fixture_repair_cycles": 1,
+  "final_stat_storage_bytes": {
+    "new": 16859402,
+    "cumulative": 122498584,
+    "task_artifact": 14882601270
+  },
+  "stat_free_bytes": 3385575755776
+}

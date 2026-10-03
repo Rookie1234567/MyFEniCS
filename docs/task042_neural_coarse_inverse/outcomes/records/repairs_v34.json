@@ -1,0 +1,29 @@
+{
+  "schema": "task042.repairs.v34",
+  "planned_review_fixes": [
+    "P1: audited saved input_residual consistently used after original state tolerance pairing",
+    "P2: V32 existing 5-byte fixture member asserted explicitly; V34/review31 storage namespace aligned"
+  ],
+  "paid_reentry_and_wait_wiring": "tested; failed attempts remain charged and raw-bound; successful actor cannot replay",
+  "unexpected_fixture_repair_cycles": [
+    {
+      "id": "F1-fixture-directory-and-specific-counterexample-message",
+      "utc": "2026-10-03T13:01:14.659237+00:00",
+      "failed_source": "79f3d5a8a4ff9abf75b640fb865872ce6003654e",
+      "evidence": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/tests/stdout.txt",
+      "observed": "11 passed / 2 failed; fixture directory responsibility and message mismatch",
+      "changes": [
+        "mkdir fixture auxiliary summary parent",
+        "add full_linearity to specific ValueError match"
+      ],
+      "numeric_thresholds_changed": false,
+      "supervised_seconds_charged": 7.9126018369570374
+    }
+  ],
+  "successful_repair_source": "fbc5c578e61adc670abda6f723f33192b1617e83",
+  "post_saved_analysis_source": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+  "actual_resource_refusals_waits_or_reentries": 0,
+  "real_actor_software_failures": 0,
+  "numeric_thresholds_changed": false,
+  "old_default_or_closed_behavior_changed": false
+}

@@ -1,0 +1,58 @@
+{
+  "threshold": 0.2,
+  "status": "NOT_DEMONSTRATED",
+  "original_size_status": "NOT_QUALIFIED",
+  "no_NN_training": true,
+  "best_qualified_nonneural_complete_N1_time": null,
+  "best_qualified_nonneural_simultaneous_peak": null,
+  "neural_complete_N1_time": null,
+  "neural_simultaneous_peak": null,
+  "time_necessary_condition": "same correctness: TNN <=0.8*Tbest; another resource metric compliant; savings >=0.2*Tbest + added data/training/setup/load/inference/correction/audit/IO cost",
+  "memory_necessary_condition": "all lifecycle simultaneous peaks including teacher/data/training/setup/deployment <=0.8*Mbest; complete time compliant",
+  "no_automatic_amortization": true,
+  "historical_V32_measured_nested": {
+    "actor_seconds": 83.1401845519431,
+    "thin_algebra_seconds": 0.023845749,
+    "share_fraction": 0.0002868137607404757,
+    "share_percent": 0.02868137607404757,
+    "reader_seconds": 38.168578001,
+    "factor_loaded_A_LU_bytes": 1591420032,
+    "share_is_not_complete_N1_speedup": true
+  },
+  "coefficients_prediction": {
+    "same_fixed_space_exact_minimum_residual_cannot_be_beaten_in_same_norm": true,
+    "V33_coefficients_fixed_unit_no_prediction_needed": true,
+    "20percent_full_time_opportunity_not_established": true
+  },
+  "factor_replacement": {
+    "potential_savings": "construction + residency + load/apply, only if original factors actually absent when not required",
+    "added_costs": "data/teacher/training/model/activation + full original action + precise corrections/audits/IO",
+    "correctness_and_complete_cost_unknown": true,
+    "no_deployment_qualification": true
+  },
+  "native_Bfull_deployment_counts": {
+    "J_solves": 2,
+    "outer_solve_each": 1,
+    "outer_blocks": 6,
+    "A_propagations": 2,
+    "full_audit_ports_recovery": "additional"
+  },
+  "cache_generation_not_free": true,
+  "warm_upstream_cost_not_erased": true,
+  "historical_formal_lower_bound_seconds": 77161.55713859801,
+  "historical_auxiliary": "unknown",
+  "complete_N1": "unknown",
+  "traditional_single_step_not_NN_gain": true,
+  "schema": "task042.neural-cost.v34",
+  "parent": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/neural_cost_assessment_v33.json",
+    "sha256": "84fd765d10d0a86b20649607691a2137cfda21233b48761be4fb3d4d69768266",
+    "bytes": 2059
+  },
+  "V34_fixed_unit_coefficients": true,
+  "V34_traditional_result": "FULL_INPUT_FIXED_STEP_INSUFFICIENT",
+  "V34_actual_actor_seconds": 20.032767937984318,
+  "V34_actual_peak_sampled_tree_bytes": 1019056128,
+  "full_correctness_comparable_baseline_available": false,
+  "next_information_source": "different periodic/global coupling information, first identity/recovery/complete-cost qualification; not automatic experiment"
+}

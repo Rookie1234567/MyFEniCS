@@ -1,3 +1,17 @@
+# Task042 V34：真实完整输入单步负结果，关闭固定反馈提案（2026-10-03）
+
+此前V33因CPU资源拒绝没有数值结果，Review V31又独立找出残差身份混用与存储fixture问题。本轮同窗口修复后，13定点通过，执行一次原两冷末态B_full诊断并独立审核；旧11/2首次失败原样保留，没有以实现完成代替交付。该方法给旧回流补上外域直接残差入口，希望改善跨块传播，代价是J因子及真实原作用，是传统块对照而非NN训练。
+
+| 背景／基线／实际结果 | 证据与决策 |
+|---|---|
+| .7nm/384hex/p3/q15/40port，原两冷态 | rho_full2.97739708904112/4.065825954112519，比q0的2.5444381411607355/3.4623458468352646更差；FULL_INPUT_FIXED_STEP_INSUFFICIENT |
+| 局部抵消与全域作用 | J最终norm约3.15e-16/1.83e-15，六外域放大、block6最大；负相关补项增加平方残差，不能只看J小数授资格 |
+| shared-workstation费用及资源 | actor20.032768s＋aux25.604169s＋probe5.347871s；新50.984808s，累计212.190444/600s；采样整树峰1,019,056,128B/ownswap0/全部后代清空 |
+| 成本／范围限制 | 旧formal下界77161.55713859801s、完整N=1/因子构建/旧aux unknown；有readonly J dense LU、无global p4，缓存生成不免费 |
+| 资格及下一步 | 新FE/E/H/RTA NOT_RUN；旧V24 0/5、V23 0/6保持；NN20%和原尺寸2TB/48h未获。只建议不同周期/全局信息传播接口/恢复/全成本只读对应，不实施 |
+
+[response](task042_neural_coarse_inverse/response_v34.md)／[完整结果](task042_neural_coarse_inverse/outcomes/full_input_block_correction_v34.md)／[run index](task042_neural_coarse_inverse/outcomes/records/run_index_v34.json)。工作队列closed，所有失败及旧closed保留；只推送本执行分支，等待集中review，不动dot/其他分支或merge。以下旧项目进展逐字保留。
+
 # Task042 V33：补齐外域残差入口，真实资源停止后完整收口（2026-10-03）
 
 旧B_ret方向只读取联合块J内残差，V32真实弱增量已关闭。本轮新B_full给六外块残差直接入口，用已有缓存和一个J反馈构造固定单位系数，不训练神经网络，不追加薄方向拟合或迭代。新数学／入口／独立checker与合成接线已提交，最终source a874498a…16 Python静态编译通过；runtime尚未资格化。

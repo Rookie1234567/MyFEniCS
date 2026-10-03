@@ -1,0 +1,66 @@
+{
+  "schema": "task042.render.v34",
+  "UTC": "2026-10-03T13:25:08.347635+00:00",
+  "local_static_status": "PASSED",
+  "files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "bb9c033532fda46917dad34e4ccba4344ab30d3683e4cef45bb20537a627b48d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "e8b2b4c11fe4dddb3923a45677374528f586970b5499e824ef02dce3dccbf54e"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "c3154af02c0ceb52a665b15618681e69443c576b7484d31e349bf7431798aee7"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "82b5c46d4d8a6732279107ea87f23aaad3a4114a6e9e36ef459f203579860fde"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_progress.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "34cf443a2277a28ef007d539dd41551fb5636d0fec6ac25957fe24c52146021d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "af01cf367dae69173d83b91bc3cd6c324231edc2e07828d88117f121b3478e7f"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v34.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "967c54a7d2dac77046b0492165e926909fb0eda17362986e2f2ec43bc34ba9a2"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/full_input_block_correction_v34.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "8dbb128577882324f5680c62c06ad8ba2f95c7ebdd40489cd5e7482122ab9e1d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v31.md",
+      "checked_scope": "new prefix only for links/fences; complete file for table columns",
+      "sha256": "d6c1198548f31b2e97e9cc4a79c709eb12069916bf939be781d649f5512600bb"
+    }
+  ],
+  "local_links_checked": 72,
+  "fence_lines_checked": 6,
+  "errors": [],
+  "documentation_static_tests": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/documentation_static_tests_v34.json",
+    "sha256": "8a22d52a94a5cca3df374ad9e85298e5e6fde9f5608e5c4512e7e4759b3bc7d6",
+    "bytes": 815
+  },
+  "GitHub_visual": "NOT_VERIFIED",
+  "exact_review_page": "https://github.com/Rookie1234567/MyFEniCS/blob/58238a4469f36c743a9010bc92b29694c6a63728/docs/task042_neural_coarse_inverse/review_report_v31.md",
+  "web_fetch_UTC": "2026-10-03T13:23:00+00:00",
+  "web_result": "Cache miss; no visual evidence",
+  "result_page_visual": "NOT_VERIFIED; pending unpublished result commit, no browser screenshot",
+  "not_CI_or_rendered_view_claim": true
+}

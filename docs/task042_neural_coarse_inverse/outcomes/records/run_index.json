@@ -1587,5 +1587,10 @@
     "bytes": null
   },
   "scope": "These foreground bounded invocations including supervisor/descendants only. Not a continuously monitored agent/editor/Git/read/wait session. Uninstrumented environment creation and static edits/reads have no invented wall/RSS peak.",
-  "total_sequential_monitored_wall_seconds": 107.39371595904231
+  "total_sequential_monitored_wall_seconds": 107.39371595904231,
+  "latest_v34": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/run_index_v34.json",
+    "sha256": "bc677e96ac0bd3038ef29ca4a31d3f99c26025cf087a8260912b874705884994",
+    "classification": "FULL_INPUT_FIXED_STEP_INSUFFICIENT"
+  }
 }

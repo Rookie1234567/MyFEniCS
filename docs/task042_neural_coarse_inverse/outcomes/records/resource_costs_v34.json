@@ -1,0 +1,422 @@
+{
+  "schema": "task042.resource-cost.v34",
+  "cost_label": "shared-workstation",
+  "window": {
+    "start_utc": "2026-10-03T12:44:22.975476+00:00",
+    "start_monotonic": 956457.836358228,
+    "start_monotonic_origin": "paired observation back-projected to first UTC tool check; includes identity/fetch/reads",
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "paired_utc": "2026-10-03T12:45:30.921461+00:00",
+    "paired_monotonic": 956525.782343228,
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "carried_seconds": 161.20563597988803,
+    "review_commit": "58238a4469f36c743a9010bc92b29694c6a63728"
+  },
+  "frozen_window": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/window.json",
+    "sha256": "d163f498670e7e9fdca19fe7782d3cbf22bf8c7c26874a74433a0b6cd6c69bf6",
+    "bytes": 526
+  },
+  "metadata_packaged_utc": "2026-10-03T13:18:50.247406+00:00",
+  "metadata_packaged_monotonic": 958525.393840883,
+  "total_calendar_elapsed_at_packaging_seconds": 2067.5574831520207,
+  "calendar_includes_reads_implementation_tests_Git_unknown_intervals_delivery": true,
+  "phases": [
+    {
+      "phase": "pre_001",
+      "source_state": {
+        "source_sha": "79f3d5a8a4ff9abf75b640fb865872ce6003654e",
+        "role": "V34 pre auxiliary",
+        "attempt": "001"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "supervised_seconds": 7.9126018369570374,
+      "launch_seconds_including_supervised": null,
+      "cpu": 40,
+      "MPI": 1,
+      "math_threads_requested": 1,
+      "peak_sampled_tree_RSS_bytes": 323706880,
+      "peak_sampled_tree_swap_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "samples": 12,
+      "observed_sampling_interval_seconds": {
+        "minimum": 0.5915933810174465,
+        "maximum": 0.9133973859716207
+      },
+      "shared_health_observations": 2,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1173879177216,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1173879177216,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/summary.json",
+        "sha256": "998c34bfe05f99412b8c60fb6aa67e370aa595f1ab706d69e7e2536851b4f197",
+        "bytes": 3608
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/admission.json",
+        "sha256": "67ff1d7aa790748575fa63e46b4be46860e338c6e1a9df13ccf4722a376884f7",
+        "bytes": 515226
+      }
+    },
+    {
+      "phase": "pre_002",
+      "source_state": {
+        "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+        "role": "V34 pre auxiliary",
+        "attempt": "002"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 11.764919262030162,
+      "launch_seconds_including_supervised": null,
+      "cpu": 11,
+      "MPI": 1,
+      "math_threads_requested": 1,
+      "peak_sampled_tree_RSS_bytes": 333119488,
+      "peak_sampled_tree_swap_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "samples": 17,
+      "observed_sampling_interval_seconds": {
+        "minimum": 0.5780755149899051,
+        "maximum": 1.0122977360151708
+      },
+      "shared_health_observations": 3,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1172208553984,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1172208553984,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/summary.json",
+        "sha256": "4c70ed3f9169e9e6ece6ff20dc70aec54f6553ccff40f75a881527da4c67f527",
+        "bytes": 3627
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/admission.json",
+        "sha256": "64e70c1bbec0453b887d138116bfc659be9bf811b76a3c4b9857bb7fac8d19dd",
+        "bytes": 514939
+      }
+    },
+    {
+      "phase": "actor_001",
+      "source_state": {
+        "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+        "git_status": "",
+        "stage": "V34-DIAGNOSTIC",
+        "formal_pde": false,
+        "formal_fe_stage": false,
+        "input_sha256": "52648bebc26bebf9e2d31c8f907f507d601ce6546d2da0b8c0e019c064ffff81",
+        "physical_model_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "shared_workstation": true,
+        "cpu": 46,
+        "mpi_size": 1,
+        "math_threads": 1,
+        "user_authorization": "2026-09-28 Task042 controlled parallel CPU stages; replaces only Task042 §2.3 exclusivity",
+        "lock": "/home/fenics/Projects/NN-Lab/tmp/task042/task042_shared.lock",
+        "nice": 10,
+        "io_priority": "idle",
+        "physical_model_complete": true,
+        "physical_operator_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+        "physical_hash_meaning": "original S/b; two frozen cold residuals; fixed unit-weight cached B_full; not arbitrary RHS deployment",
+        "material_status": "MATERIAL_READY_USER_SUPPLIED",
+        "plan_sha256": "047d3361c7a0ce02ce63bcc18a57eab6d7b663f41b18cd5cc2a9b0ac1f4a7592",
+        "batch_window": {
+          "start_utc": "2026-10-03T12:44:22.975476+00:00",
+          "start_monotonic": 956457.836358228,
+          "start_monotonic_origin": "paired observation back-projected to first UTC tool check; includes identity/fetch/reads",
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "paired_utc": "2026-10-03T12:45:30.921461+00:00",
+          "paired_monotonic": 956525.782343228,
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "carried_seconds": 161.20563597988803,
+          "review_commit": "58238a4469f36c743a9010bc92b29694c6a63728",
+          "observed_utc": "2026-10-03T13:03:11.471959+00:00",
+          "observed_monotonic": 957586.332826217,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1128.4964833259583,
+          "heavy_remaining_seconds": 81671.50351667404,
+          "total_remaining_seconds": 85271.50351667404
+        },
+        "window_sha256": "d163f498670e7e9fdca19fe7782d3cbf22bf8c7c26874a74433a0b6cd6c69bf6",
+        "review_authorization": "Review V31 58238a4469f36c743a9010bc92b29694c6a63728",
+        "pre_qualification": {
+          "status": "PASSED",
+          "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+          "implementation_hashes": {
+            "src/runners/diagnostic_storage.py": "58838c4cb09c54bf6495f9abaaa7d4234783711a4f33b1333de2380f206aeb31",
+            "src/solvers/full_input_block_v33_window.py": "b2cfb0c3c0f9c862618a1a3bc7ee9dbf2d5a6b51f2deb999a5063dee260ce89d",
+            "src/io/full_input_block_v33.py": "5011c9d433f2062c70dca6e9165685a054b047dccb6173135f686f0b5861b533",
+            "src/io/return_block_diagnostic.py": "cd83bc7494a07ccbab5277a048428555a61e6fc295c0ae938d66781ef1017dd9",
+            "src/io/task042_profile.py": "5fbda56b90fd870398e5890db5dd3779457a73a8301ee67e4160612750a59c10",
+            "scripts/run_case.py": "26e896d7810239cee093476ed5117a2b01338b6eeb5001259a7dbf1030766e41",
+            "src/runners/return_block_diagnostic.py": "898831fe09d5b87317e02a73dee2d6cc1c4f53e67e4fdeca017acf7fb675ab25",
+            "src/runners/task042_shared.py": "ed0ef7f8fdd513195840fa8b9c1edcd43c8e37f2df144d78ce1fa2e3ccd35705",
+            "src/solvers/full_input_block_study.py": "9dc94a6a678401dda6ad75aa2ffd2c802f870adf055c91f094fc7786d14b1dac",
+            "src/solvers/full_input_block_correction.py": "dbb957dd212e6c22249192271789ce2d6c908e752a551a051a392f7e59d5265c",
+            "src/solvers/return_block_direction.py": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+            "src/solvers/bounded_diagnostic_window.py": "f3f9d2934ae979b212c6d91ca46f6ea112666fbf02c5c8b6a243ff3061faf473",
+            "benchmarks/task042_diagnostic_auxiliary.py": "f19dc08fadf6d707a43d781e003769866d165eab91ef71e76d81ebd5b11f59a7",
+            "benchmarks/task042_v31_checks.py": "72a35f3417b92367983ba57b16b3a017ea286da83567f8289cf4e524d8c3bac6",
+            "benchmarks/collect_task042_return_direction.py": "fdfa7754f509bcad3fc54f16cfd627b025e3c2c4aadfbd3de9ced5a7eab8cd2d",
+            "benchmarks/task042_full_input_checker.py": "56ee16728c9e5b4a940db9b372703afc9f155a120147f6f5a5c6d160bd8e70ed",
+            "benchmarks/task042_return_certificates.py": "c1d46cb701047ad75c3dad2766b26a67daee8e66017e8b8a91b5c6f7075e3c7f",
+            "src/test/task042_v31_workflow_fixture.py": "4e0835345e1387e229dec1a4f43194fb8421d942470c4619a30d009be7d20d88",
+            "src/test/test_task042_v33_workflow.py": "73b666dd0bb75845d4ab99bdb7505f2fd6827307d82891299ddc8e663201847e",
+            "input/task042_neural_coarse_inverse/full_input_block_v33.json": "59622b11736f2181fb1360256759983011963d117ebf18da17aee67c347cbd5b",
+            "input/task042_neural_coarse_inverse/v33_full_input_diagnostic.dat": "67fa428bc01c0daa6a6e1d0fe92db0df3c90408b720a17e87dd4bf5d102de6ed",
+            "src/solvers/full_input_block_v34_window.py": "85603794dcb34c0311c260e1188fa0b1bfd34f753f7b5922ed10e346fdec0b5f",
+            "src/io/full_input_block_v34.py": "3bf8c32c8a168300ee0367da2b990165d0f6400d4bf05cf3a33b1de22cfc1d76",
+            "src/test/test_task042_v34_workflow.py": "b89d0ca392e803a72d3e3acf420e08f9f8b5062a51fd119b6d0b0c910b93a8da",
+            "input/task042_neural_coarse_inverse/full_input_block_v34.json": "047d3361c7a0ce02ce63bcc18a57eab6d7b663f41b18cd5cc2a9b0ac1f4a7592",
+            "input/task042_neural_coarse_inverse/v34_full_input_diagnostic.dat": "52648bebc26bebf9e2d31c8f907f507d601ce6546d2da0b8c0e019c064ffff81"
+          },
+          "coverage": [
+            "storage_scope",
+            "actual_study_workflow",
+            "residual_tolerance",
+            "charged_reentry",
+            "resource_wait",
+            "two_layer_accounting",
+            "namespace",
+            "closed_rejection",
+            "former_fixture",
+            "fixed_full_input",
+            "cached_checker"
+          ],
+          "scope": [
+            "src/test/test_task042_v34_workflow.py",
+            "src/test/test_task042_v33_workflow.py",
+            "src/test/test_task042_v32_workflow.py::test_storage_scope_and_boundary",
+            "src/test/test_task042_v32_workflow.py::test_v32_actual_workflow_through_independent_checker",
+            "src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route"
+          ],
+          "test_receipt": {
+            "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/tests/entry_result.json",
+            "sha256": "78bcc1056d02193db4c5883edf35a27cfeca2774f1d654bfa3bd1cb6e9a9fda9"
+          },
+          "previous_failures": [
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/summary.json"
+          ]
+        },
+        "factor_contract": "readonly V26 J only; two fixed cached B_full inputs; charged repair attempts",
+        "offline_diagnostic": true,
+        "new_solver_result": false,
+        "global_p4_factor_constructed": false
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 20.032767937984318,
+      "launch_seconds_including_supervised": 23.54107076197397,
+      "cpu": 46,
+      "MPI": 1,
+      "math_threads_requested": 1,
+      "peak_sampled_tree_RSS_bytes": 1019056128,
+      "peak_sampled_tree_swap_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "samples": 29,
+      "observed_sampling_interval_seconds": {
+        "minimum": 0.5952930209459737,
+        "maximum": 0.9242338419426233
+      },
+      "shared_health_observations": 4,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1163077885952,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1163077885952,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v34_full_input_diagnostic_20261003T130311441157Z/run_summary.json",
+        "sha256": "45237bf39084e6fb37b59f47ca07427daca063759db920555f13d1313347589a",
+        "bytes": 10496
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/formal_admission_receipt_001.json",
+        "sha256": "b5219ae0d9651a51d93233c2d73321a812f170c3d3f5af1dbc55c358ac91f5a9",
+        "bytes": 515015
+      }
+    },
+    {
+      "phase": "post_001",
+      "source_state": {
+        "source_sha": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+        "role": "V34 check auxiliary",
+        "attempt": "001"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "supervised_seconds": 5.926647830987349,
+      "launch_seconds_including_supervised": null,
+      "cpu": 0,
+      "MPI": 1,
+      "math_threads_requested": 1,
+      "peak_sampled_tree_RSS_bytes": 133902336,
+      "peak_sampled_tree_swap_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "samples": 9,
+      "observed_sampling_interval_seconds": {
+        "minimum": 0.575324162025936,
+        "maximum": 0.9059592540143058
+      },
+      "shared_health_observations": 2,
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1163123085312,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1163123085312,
+        "reserve_bytes": 353748992000,
+        "launch_cap_bytes": 17179869184,
+        "planning_cap_bytes": 17179869184,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 137438953472,
+        "shared_workstation": true
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_check_001/summary.json",
+        "sha256": "17e2c1b122119f30a9e40b06c1c0da64ac76aa9fa1246299f89fa2b94295d7b9",
+        "bytes": 3605
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_check_001/admission.json",
+        "sha256": "d1ca3a665bbc41f338dd2db41ec943f46c36fe86833d91c2f465bf3c03e4fe90",
+        "bytes": 515078
+      }
+    }
+  ],
+  "probes": [
+    {
+      "elapsed_seconds": 1.337728467071429,
+      "source_sha": "79f3d5a8a4ff9abf75b640fb865872ce6003654e",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_001/admission.json",
+      "receipt_sha256": "67ff1d7aa790748575fa63e46b4be46860e338c6e1a9df13ccf4722a376884f7",
+      "error": null,
+      "admitted": true,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "elapsed_seconds": 1.3394337249919772,
+      "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_pre_002/admission.json",
+      "receipt_sha256": "64e70c1bbec0453b887d138116bfc659be9bf811b76a3c4b9857bb7fac8d19dd",
+      "error": null,
+      "admitted": true,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "elapsed_seconds": 1.339179300935939,
+      "source_sha": "fbc5c578e61adc670abda6f723f33192b1617e83",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/formal_admission_receipt_001.json",
+      "receipt_sha256": "b5219ae0d9651a51d93233c2d73321a812f170c3d3f5af1dbc55c358ac91f5a9",
+      "error": null,
+      "admitted": true,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "elapsed_seconds": 1.331529214978218,
+      "source_sha": "a4cf9c0fc7dcb819bcbfe81559f040d5306720f6",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v34/aux_check_001/admission.json",
+      "receipt_sha256": "d1ca3a665bbc41f338dd2db41ec943f46c36fe86833d91c2f465bf3c03e4fe90",
+      "error": null,
+      "admitted": true,
+      "overlapped_supervised_interval": false
+    }
+  ],
+  "actor_supervised_seconds": 20.032767937984318,
+  "new_auxiliary_seconds": 25.60416892997455,
+  "new_probe_seconds": 5.347870707977563,
+  "new_charged_seconds": 50.98480757593643,
+  "cumulative_600_seconds": 212.19044355582446,
+  "remaining_of_600_seconds": 387.80955644417554,
+  "no_nested_time_double_counting": true,
+  "nested_actor_timers": {
+    "port_setup_seconds": 0.007742951973341405,
+    "joint_solve_seconds": 0.7126597858732566,
+    "port_seconds": {
+      "S": 0.7787229738896713,
+      "SH": 0.1837592979427427,
+      "port_solve": 0.002124579972587526
+    },
+    "worker_wall_after_packet_load_seconds": 16.05098034895491,
+    "worker_wall_seconds": 16.172886244021356,
+    "action_costs_seconds": {
+      "S": 0.9067462659440935,
+      "SH": 0.1760231531225145,
+      "audit": 0.0
+    },
+    "cost_timers_nested": true
+  },
+  "J_load_read_hash_seconds_nested": 7.01099608594086,
+  "maximum_sequential_stage_sampled_tree_peak_bytes": 1019056128,
+  "continuous_whole_calendar_kernel_peak_bytes": null,
+  "kernel_task_cgroup_hard_limit_installed": false,
+  "enforcement": "dedicated subreaper and descendant tree sampler; own-task stop/cleanup; no delegated writable cgroup",
+  "actor_warning_bytes": 12884901888,
+  "actor_hard_bytes": 17179869184,
+  "aux_warning_bytes": 1073741824,
+  "aux_hard_bytes": 2147483648,
+  "request_sample_interval_seconds": 0.5,
+  "own_swap_zero_in_all_samples": true,
+  "BLAS_actual_pre_and_actor": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "post_getter_separately_captured": false,
+  "post_native_activation_same_stack_math1_requested": true,
+  "neighbor_performance_impact": "INCONCLUSIVE; no controlled comparable neighbor timing; no pressure stop observed",
+  "not_absolute_zero_interference_claim": true,
+  "historical_formal_lower_bound_seconds": 77161.55713859801,
+  "historical_auxiliary_or_factor_construction": "unknown retained",
+  "complete_qualified_N1_cost": "unknown",
+  "old_caches_factors_and_upstream_not_free": true
+}

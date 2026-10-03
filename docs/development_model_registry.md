@@ -1,3 +1,17 @@
+# Task042 V34：固定完整输入块校正，实测负结果／无新物理解（2026-10-03）
+
+让六个外域块先处理自己的残差、再由联合块抵消反馈，检验跨区域传播能否减少同一原方程残差；保存缓存避免六套因子重载，部署仍需付这些费用。没有训练或新的有限元解。
+
+| 模型／方法／数据身份 | measured结果／资源 | 资格与证据 |
+|---|---|---|
+| 原.7nm micro、384hex/p3/q15、18144trace/40port、双Floquet/MPI1 | LZ4 rho_full2.97739708904112；LCZ4 4.065825954112519；rho0为2.5444381411607355/3.4623458468352646 | 两态残差放大，FULL_INPUT_FIXED_STEP_INSUFFICIENT；[response](task042_neural_coarse_inverse/response_v34.md) |
+| 固定单位系数J+外域补项 | J抵消成功但六外域放大，block6最大；真实S20SH2 | 独立CHECKED，关闭本单步；不否定或自动运行所有Krylov，[checker](task042_neural_coarse_inverse/outcomes/records/full_input_checker_v34.json) |
+| 因子／成本／shared-workstation | readonly J dense LU，净483729408B；actor20.032768s，新增全部50.984808s、累计212.190444s，树采样峰1019056128B/ownswap0 | 非factor-free，无global p4/新LU/FE/train；合格N=1仍unknown，[费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v34.json) |
+| 新E/H/curl、R00_s/p/total、R/T/A/A_volume、40复通道及功率 | 全NOT_RUN，未记录新official值 | 旧V24完整0/5、V23 0/6保持；不能从方向诊断授完整解资格 |
+| 神经／原尺寸2TB48h | NN20% NOT_DEMONSTRATED／NOT_QUALIFIED | 无同正确性完整N=1对照、训练或扩模；传统块方法不归NN |
+
+唯一下一建议为不同周期/全局信息传播的信息来源先做身份/恢复/成本对应；dot14项只读更新，unknown保持，未修改其分支。旧失败、task/review/response/raw逐字保留，无merge approval。以下历史原文保留。
+
 # Task042 V33：固定外域输入补齐实现，资源停止／未新增物理解（2026-10-03）
 
 传统块校正给旧回流漏掉的外域残差一个直接入口，可能改善信息传递但不保证收敛；此轮数学／缓存checker已实现，唯一辅助CPU/SMT准入拒绝后没有真实诊断，不能把未运行记为负数值或神经增量。

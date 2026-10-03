@@ -1,0 +1,138 @@
+{
+  "dot_branch": "task40extra_dot_parallel_cloud",
+  "local_old_ref_not_authority": "eb5b0ecc...",
+  "read_only_snapshots": [
+    {
+      "path": "/tmp/task042_review30_dot_README.md",
+      "sha256": "0451e9daf534b6df334496370a075bdea702b3eba96a65020ddc6d3e3cbd50db",
+      "bytes": 7326
+    },
+    {
+      "path": "/tmp/task042_review30_dot_response15.md",
+      "sha256": "35f94010994a9894ac12527cf8f2775d0f73bd5f3b82e315308b19d260a5d246",
+      "bytes": 4889
+    }
+  ],
+  "snapshot_provenance": "Review V31 pinned published object; read-only git show, no new dot fetch or branch mutation",
+  "Task042_design": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/neural_fe_design_v7.json",
+    "sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b",
+    "bytes": 5406
+  },
+  "rows": [
+    {
+      "field": "geometry",
+      "Task042": "[-0.7,0.7] x [-0.525,0.525] x [-0.175,1.225] nm; fixed3D notch",
+      "dot_published_Y": "Y aligned3cell translated notch, box(25,33.5,25/6,100/6,40,80)*7/135; whole Y bounds not exported in read documents",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "material",
+      "Task042": "canonical user Si table; n=[0.999885140474,4.32477054e-6], mu1",
+      "dot_published_Y": "weak perturbation reported; exact epsilon/material row/hash unavailable",
+      "comparison": "UNKNOWN"
+    },
+    {
+      "field": "wavelength",
+      "Task042": "nominal0.7/source0.699999988; fixed alias/no interpolation",
+      "dot_published_Y": "original target0.7nm; Y exact source row/physical hash unavailable",
+      "comparison": "UNKNOWN"
+    },
+    {
+      "field": "mesh",
+      "Task042": "384hex,8x6x8,step0.175nm",
+      "dot_published_Y": "120cells,4x6x5,three local40cells",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "p",
+      "Task042": "N1curl p3",
+      "dot_published_Y": "full3D p4",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "quadrature",
+      "Task042": "operator/moments q15, frozen identity",
+      "dot_published_Y": "live FFCx/basis/Gauss qualification reported; exact q unavailable here",
+      "comparison": "UNKNOWN"
+    },
+    {
+      "field": "MPC",
+      "Task042": "doubleFloquet x/y, original master order edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+      "dot_published_Y": "Ny6/K3 with6q/3twists; no matching explicit master mapping receipt",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "canonical_rows",
+      "Task042": "18144trace+40port;18184 reduced rows",
+      "dot_published_Y": "six augmentedq rows1884/1884/1884/1960/1884/1884;12960 interiors; mapping hash missing",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "mode",
+      "Task042": "s polarization/grazing1deg/azimuth0; 93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+      "dot_published_Y": "phi5, Ny6/K3; full matched mode hash unknown",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "port",
+      "Task042": "40 original auto-propagating DtN, Hhat != Hp",
+      "dot_published_Y": "manual532 aliases;8 sets each532 reported",
+      "comparison": "DIFFERENT"
+    },
+    {
+      "field": "RHS",
+      "Task042": "two frozen V24 cold residuals, original physicalb b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b",
+      "dot_published_Y": "generic/interior/physical/supported packets; exact same b/normalization absent",
+      "comparison": "UNKNOWN"
+    },
+    {
+      "field": "original_action",
+      "Task042": "original ActionPacket+BarAction, full40 closure; 9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+      "dot_published_Y": "full3D y-orbit quotient reconstructed from6q factors; no identical action packet hash",
+      "comparison": "DIFFERENT",
+      "V34_new_evidence": "bounded compact q projection added; synthetic exactness only, no same Task042 action"
+    },
+    {
+      "field": "recover_protocol",
+      "Task042": "original affine internal particular + reduced trace/40port; homogeneous directions subtract particular",
+      "dot_published_Y": "all12960 interiors/allq reported; source/interface/normalization not identical",
+      "comparison": "UNKNOWN"
+    },
+    {
+      "field": "cost_basis",
+      "Task042": "V34 actor20.032767938s cached fixed direction; complete qualified N=1 unknown",
+      "dot_published_Y": "worker1748.504063969s/checker565.966512849s including evidence/control; pureLU/perPCunknown",
+      "comparison": "DIFFERENT",
+      "V34_new_evidence": "dot component timing is not same-operation complete solve timing; whole RSS unknown"
+    }
+  ],
+  "same_correctness_performance_denominator": false,
+  "dot_factor_or_field_reads": 0,
+  "dot_messages_or_mutations": 0,
+  "not_a_diagnostic_precondition": true,
+  "schema": "task042.dot-identity.v34",
+  "parent_table": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/dot_identity_gap_v33.json",
+    "sha256": "49064bbf62769b96bff85dd51e617e971ae4a49b2bb39b5083064dc92fde56db",
+    "bytes": 4650
+  },
+  "pinned_previous_sha": "98084c70792b7ab51e95da60d8dd9f3da97ccef9",
+  "pinned_published_sha": "3c7458fad7c002babac4e634be4788b664be9ee5",
+  "new_published_document": {
+    "source_SHA": "3c7458fad7c002babac4e634be4788b664be9ee5",
+    "path": "docs/task40extra_dot_parallel_cloud/outcomes/bounded_projection_candidate_v1_zh.md",
+    "sha256": "41371608765e82af58b3dd1c735972143d0d9b3e8a7ee089547ea02d4a63060c",
+    "bytes": 7832
+  },
+  "increment": {
+    "new_synthetic_tests": 53,
+    "related_passed": 94,
+    "related_skipped": 4,
+    "related_deselected": 1,
+    "new_FE_PDE": false,
+    "process_tree_RSS_or_qualified_solve_cost": "unknown",
+    "owned_array_bounds": "synthetic/derived; not measured process-tree peak",
+    "compact_projection_provides_Task042_qualified_reference_inverse": false
+  }
+}
