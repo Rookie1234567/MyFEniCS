@@ -1,0 +1,673 @@
+{
+  "schema": "feinn.native-constraint.saved-integrals.design.v18",
+  "review_publication": "c12049f4ed8e5117ee69495c8f9c576b75ba0027",
+  "base_sha": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "batch_clock": "tmp/task42extra/v18_batch_clock.json",
+  "complete_batch_seconds": 15600,
+  "stage_limits": {
+    "implementation": 5400,
+    "A": 900,
+    "B": 1800,
+    "C": 1800,
+    "final": 2400,
+    "repair": 1800,
+    "clearance": 1500
+  },
+  "final_clearance_reserve_seconds": 600,
+  "A": {
+    "states": {
+      "M3600": {
+        "complete_c_sha256": "92cc2e774003286a0e9dc3d73ada568160feafffa6f0494a6faae09e74ffa402",
+        "directions": [
+          {
+            "column": 0,
+            "gradient_RMS": 0.008227261433403084,
+            "gradient_norm": 0.11400027847844871,
+            "group": "envelopes.0.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 1,
+            "gradient_RMS": 0.004963575114661364,
+            "gradient_norm": 0.039708600917290914,
+            "group": "envelopes.0.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 2,
+            "gradient_RMS": 0.006923553115656367,
+            "gradient_norm": 0.4431073994020075,
+            "group": "envelopes.2.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 3,
+            "gradient_RMS": 0.009311446270251713,
+            "gradient_norm": 0.0744915701620137,
+            "group": "envelopes.2.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 4,
+            "gradient_RMS": 0.0037480890314365413,
+            "gradient_norm": 0.23987769801193864,
+            "group": "envelopes.4.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 5,
+            "gradient_RMS": 0.012189127494354843,
+            "gradient_norm": 0.09751301995483874,
+            "group": "envelopes.4.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 6,
+            "gradient_RMS": 0.12805686696669052,
+            "gradient_norm": 2.5093918570228673,
+            "group": "envelopes.6.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 7,
+            "gradient_RMS": 1.1478333086521713,
+            "gradient_norm": 2.811605915968371,
+            "group": "envelopes.6.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 8,
+            "gradient_RMS": 0.0006785817780075829,
+            "gradient_norm": 0.009402704932796468,
+            "group": "envelopes.0.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 9,
+            "gradient_RMS": 0.00799689495798527,
+            "gradient_norm": 0.06397515966388216,
+            "group": "envelopes.0.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 10,
+            "gradient_RMS": 0.004230621679822412,
+            "gradient_norm": 0.2707597875086344,
+            "group": "envelopes.2.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 11,
+            "gradient_RMS": 0.015002412771190809,
+            "gradient_norm": 0.12001930216952647,
+            "group": "envelopes.2.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 12,
+            "gradient_RMS": 0.0018281342014521808,
+            "gradient_norm": 0.11700058889293957,
+            "group": "envelopes.4.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 13,
+            "gradient_RMS": 0.012765554171675117,
+            "gradient_norm": 0.10212443337340094,
+            "group": "envelopes.4.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 14,
+            "gradient_RMS": 0.019009494704599037,
+            "gradient_norm": 0.3725084983552518,
+            "group": "envelopes.6.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 15,
+            "gradient_RMS": 0.20808414931557495,
+            "gradient_norm": 0.5096999893842641,
+            "group": "envelopes.6.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          }
+        ],
+        "parameter_norm": 8.553653337049637,
+        "parameter_sha256": "b7cbf54511f6507ae1b3bfac4848596b3cf72c28227f2284ef1b11634934258f"
+      },
+      "Mfinal": {
+        "complete_c_sha256": "ddbe595aa97c7d031613ee7d8f39fde1217381b6eadecc94b772e5882cddde6f",
+        "directions": [
+          {
+            "column": 0,
+            "gradient_RMS": 0.004026654512672003,
+            "gradient_norm": 0.055794961603795254,
+            "group": "envelopes.0.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 1,
+            "gradient_RMS": 0.0022656274900392445,
+            "gradient_norm": 0.018125019920313956,
+            "group": "envelopes.0.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 2,
+            "gradient_RMS": 0.0015910121160796836,
+            "gradient_norm": 0.10182477542909975,
+            "group": "envelopes.2.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 3,
+            "gradient_RMS": 0.00496368686561552,
+            "gradient_norm": 0.03970949492492416,
+            "group": "envelopes.2.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 4,
+            "gradient_RMS": 0.0006602563538324726,
+            "gradient_norm": 0.042256406645278244,
+            "group": "envelopes.4.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 5,
+            "gradient_RMS": 0.006272576386163834,
+            "gradient_norm": 0.05018061108931067,
+            "group": "envelopes.4.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 6,
+            "gradient_RMS": 0.025975027643287452,
+            "gradient_norm": 0.509004510245937,
+            "group": "envelopes.6.weight",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 7,
+            "gradient_RMS": 0.1747836706711626,
+            "gradient_norm": 0.42813080851500573,
+            "group": "envelopes.6.bias",
+            "kind": "PDE",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 8,
+            "gradient_RMS": 0.0008255421658453077,
+            "gradient_norm": 0.011439047800276202,
+            "group": "envelopes.0.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 9,
+            "gradient_RMS": 0.010399961326618247,
+            "gradient_norm": 0.08319969061294598,
+            "group": "envelopes.0.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 10,
+            "gradient_RMS": 0.005559418732652305,
+            "gradient_norm": 0.35580279888974753,
+            "group": "envelopes.2.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 11,
+            "gradient_RMS": 0.019685953192416967,
+            "gradient_norm": 0.15748762553933573,
+            "group": "envelopes.2.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 12,
+            "gradient_RMS": 0.0024214140970559893,
+            "gradient_norm": 0.15497050221158332,
+            "group": "envelopes.4.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 13,
+            "gradient_RMS": 0.0168717215669882,
+            "gradient_norm": 0.1349737725359056,
+            "group": "envelopes.4.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 14,
+            "gradient_RMS": 0.025978192610835595,
+            "gradient_norm": 0.5090665306903003,
+            "group": "envelopes.6.weight",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          },
+          {
+            "column": 15,
+            "gradient_RMS": 0.27630329033364215,
+            "gradient_norm": 0.6768020755694988,
+            "group": "envelopes.6.bias",
+            "kind": "reference_G",
+            "status": "UNIT_REAL_GROUP_DIRECTION"
+          }
+        ],
+        "parameter_norm": 8.560515209936437,
+        "parameter_sha256": "0338d87e31ad87a01a0123b57e8abcd4e55d3b67c627533587ef43b40677a29a"
+      }
+    },
+    "rconds": [
+      1e-10,
+      1e-12
+    ],
+    "inputs": {
+      "field_geometry": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json",
+        "sha256": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a"
+      },
+      "field_geometry_index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_saved_field_attribution.json",
+        "sha256": "2636a9409bd5b220bcb5c1c162a5232a0b20337854da42d8f64bfb1be12c8076"
+      },
+      "index": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_local_parameter_diagnostic.json",
+        "sha256": "816a25856e9295a4866d28e193c464ae0087867a7e2645873a284f14a8433969"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json",
+        "sha256": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84"
+      },
+      "vectors": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz",
+        "sha256": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263"
+      }
+    },
+    "FE_count": 31968,
+    "parameter_count": 8966,
+    "native_denominator": 0.29104200262261154,
+    "original_C1_source": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+    "packet_identity": {
+      "cell_tags_sha256": "4c3e6d3a6dedeba8a995bb69487c52e25ae41528ee03bb237d6e2edb1643e65b",
+      "data_role": "REFERENCE_EXPOSED_DIAGNOSTIC_ONLY",
+      "gram_sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9",
+      "independent_master_count": 31968,
+      "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "mesh_sha256": "78e294e0337292d2750f587ddf394aaa868bd726f8b1104d4eae6a68db039086",
+      "mode_sha256": "1e37bd91b3cabafe27741db2e0cb99fce7392c2521c84ff9e67f4cfd6a28c14e",
+      "native_sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215",
+      "pde_only_solve": false,
+      "port_recovery_relative": 4.4596663759104176e-13,
+      "production_initialization_allowed": false,
+      "reference_state": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+        "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+      },
+      "reference_used_for_training": false,
+      "slave_count": 2082,
+      "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9"
+    },
+    "original_R_candidates": {
+      "M3600_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-10_candidate.json",
+        "sha256": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0"
+      },
+      "M3600_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-12_candidate.json",
+        "sha256": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb"
+      },
+      "Mfinal_1e-10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-10_candidate.json",
+        "sha256": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19"
+      },
+      "Mfinal_1e-12": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-12_candidate.json",
+        "sha256": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56"
+      }
+    },
+    "radius_rule": "0.001*max(norm(theta),1)",
+    "algorithm": "Minimize native energy on original PDE8 parameter ball subject to original dual energy <=1; constraint root <=96 and ball root <=80"
+  },
+  "saved_field_design": {
+    "schema": "task42extra.diagnostic-design.v12",
+    "authority_release": "c12049f4ed8e5117ee69495c8f9c576b75ba0027",
+    "initial_HEAD": "bafc9570110bbdcd28de455e9cd4552f3cd80215",
+    "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "branch": "task42extra_feinn_5nm",
+    "canonical": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+    "worktree": "/home/fenics/Projects/NN-Lab-V2",
+    "batch_started_UTC": "2026-10-02T23:39:09Z",
+    "old_project_seconds": 154319.25454592914,
+    "new_limit_seconds": 15600,
+    "no_training": true,
+    "no_optimizer_steps": true,
+    "reference_exposed_diagnostic_only": true,
+    "states": {
+      "M3600": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_metric_reconstruct_20261002T143534356286Z/v11_phase_block_metric_time_3600.npz",
+          "sha256": "895b715509bec97c752623b4c82e09c41b85b052564c1a7eaa1f7f7e16753be5"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000014.pt",
+          "sha256": "f59d4d367312d24835278a81a0ad303ffaff6d53c1142d288489fa98b7a36616"
+        },
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error",
+        "accepted_outer": 89
+      },
+      "Mfinal": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "checkpoint": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/frozen_checkpoint.npz",
+          "sha256": "58fcaf697307a56204d4af960f37f42c86171c605c2fe97f016efe3e5148e28d"
+        },
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000021.pt",
+          "sha256": "4c475bfba0eb816a4d62b6086f2e47006051b896ba442f09b7aab50c8b7c206d"
+        },
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "predeclared phase75/final or last committed before fixed 1800/3600 seconds; never selected by reference error"
+      }
+    },
+    "decline_steps": {
+      "M90": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000015.pt",
+          "sha256": "f23895e78ea830e2b462a9ad3056e1c05223b4321f6a20126f6c872771de4f10"
+        },
+        "accepted_outer": 90,
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "prespecified decline segment outer89->95, complete accepted step",
+        "status": "RETAINED"
+      },
+      "M91": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000016.pt",
+          "sha256": "566fce51ab992eede9d8f71d651a518a7617335e1a7a74539251058c9ce5b488"
+        },
+        "accepted_outer": 91,
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "prespecified decline segment outer89->95, complete accepted step",
+        "status": "RETAINED"
+      },
+      "M92": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000017.pt",
+          "sha256": "66f37df841adea748788cdabe1fb124dc9c5bc6e5d5b95524533fed24aa693a7"
+        },
+        "accepted_outer": 92,
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "prespecified decline segment outer89->95, complete accepted step",
+        "status": "RETAINED"
+      },
+      "M93": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000018.pt",
+          "sha256": "b51f351bbfce25731f55995c1b3a0a370d5d39f0b94b6f2d95ce029df7ac8b06"
+        },
+        "accepted_outer": 93,
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "prespecified decline segment outer89->95, complete accepted step",
+        "status": "RETAINED"
+      },
+      "M94": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000019.pt",
+          "sha256": "b6357c67526b5e174b591624bfd435dddc335a35494c362e004eb814a13de70d"
+        },
+        "accepted_outer": 94,
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "prespecified decline segment outer89->95, complete accepted step",
+        "status": "RETAINED"
+      },
+      "M95": {
+        "source_sha": "0f7ad43cb3e6a6f11e2b3f8b884a9d47f0f70524",
+        "durable_final": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v11_phase_block_metric_20261002T130453247268Z/durable_checkpoints/committed_000020.pt",
+          "sha256": "12cfca530297a5e96eaca6c1e233454a54791105e35101c20ba90ff786e14983"
+        },
+        "accepted_outer": 95,
+        "phase": true,
+        "reference_exposed": false,
+        "selection": "prespecified decline segment outer89->95, complete accepted step",
+        "status": "RETAINED"
+      }
+    },
+    "identity": {
+      "e1_fe": {
+        "source_sha": "a3dd65f594dda0ffd593ef53f7a0f4adfbd7a35e",
+        "files": {
+          "native": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/native.npz",
+            "sha256": "2dbd60267758c2c53ea62a722ee0b07fad16f3cfae3f772bb0ba4830f4e28215"
+          },
+          "gram": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/gram.npz",
+            "sha256": "2c984449248c02f01f4a41a681d00015bbe779add0ef30f0141d9eccf75b01c9"
+          }
+        }
+      },
+      "e3_reference": {
+        "source_sha": "7a79b3007d92a9b699e0451d0c8b6dfdacee7ad9",
+        "files": {
+          "reference": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e3_reference_20260929T180549681297Z/reference_state.npz",
+            "sha256": "0c3c0574a8c1eddcadfb56268e00c08e55d5cb15d44c0c76e873fcea0c467ff7"
+          }
+        }
+      },
+      "v8_phase_checks": {
+        "source_sha": "bc052a3744528277f00a7a9a5566aa4a6d7393ed",
+        "files": {
+          "moments": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_e1_fe_20260929T105407174591Z/moments_q15.npz",
+            "sha256": "0260c986bc7a71d6b8d6b0b695df4ca730d24654f5ad0705313a45205c28b69e"
+          }
+        }
+      },
+      "v7_p_transfer_checks": {
+        "source_sha": "76d863e43d2fc1b5bed8b1c835aa6f43bb2c93d2",
+        "files": {
+          "native": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v7_p_transfer_checks_20260930T121554990434Z/p4_native.npz",
+            "sha256": "062137c4c5be83b62be6a5373cfa24244f203f0b37244aeb4fb0b8feb75eb9ad"
+          }
+        }
+      },
+      "v8_p4_reference_recovery": {
+        "source_sha": "d0b82d7a165be89d9fa90b03be3151db9a9c3869",
+        "files": {
+          "reference": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v8_p4_reference_recovery_20260930T153638132044Z/p4_reference_state.npz",
+            "sha256": "249d7dcb4f683a87e4a5169bc75f5bcf9374ca64e2075910c3a874d88e1cc2c2"
+          }
+        }
+      }
+    },
+    "selected_old_receipt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v11_evidence_audit.json",
+      "sha256": "ac9bf8d2e95b53cd2eb9bfbd3ce5807a9a1d5761c88bef6c7272a08892c0e87c",
+      "reuse": "24 retained artifact/hash pairs and nine original field validations; hash only actual newly loaded data"
+    },
+    "B": {
+      "A": 64,
+      "AH": 64,
+      "Gsolve": 128,
+      "G_matvec": 256,
+      "new_G_factor_lifecycles": 1,
+      "field_directions": [
+        "e_phase75",
+        "e_M3600",
+        "e_Mfinal",
+        "e_Ifinal",
+        "delta_phase75_M3600",
+        "delta_M3600_Mfinal",
+        "delta_phase75_Ifinal",
+        "delta_M89_M90"
+      ]
+    },
+    "C1": {
+      "states": [
+        "M3600",
+        "Mfinal"
+      ],
+      "directions": "eight original W/b groups, nonzero normalized PDE gradient and reference G-error gradient within each group; max16/state",
+      "JVP": 64,
+      "VJP": 16,
+      "A": 64,
+      "AH": 64,
+      "Gsolve": 80,
+      "G_matvec": 128,
+      "new_G_factor_lifecycles": 1,
+      "main_rcond": 1e-10,
+      "sensitivity_rcond": 1e-12,
+      "QR_tolerance": 1e-14,
+      "parameter_step_caps": [
+        0.001,
+        0.01
+      ],
+      "witnesses": 8,
+      "new_direction_checks": 2,
+      "JVP_adjoint_tolerance": 1e-09,
+      "FD_steps": [
+        1e-05,
+        1e-06
+      ],
+      "FD_tolerance": 1e-05,
+      "reference_removed_energy_signal": 0.5
+    },
+    "C2": {
+      "states": [
+        "p3reference",
+        "M3600",
+        "Mfinal"
+      ],
+      "A4": 8,
+      "adapter_restore_limit_seconds": 600,
+      "new_factors": 0,
+      "new_assembly": 0
+    },
+    "D0": {
+      "prefix_lower_bound_seconds": 15758.74009511806,
+      "time_gain_required": 0.2,
+      "D1_requires_existing_same_M5_nonzero_initializer": true
+    },
+    "limits": {
+      "A": 900,
+      "B": 5400,
+      "C1": 3600,
+      "C2": 1500,
+      "D": 3600,
+      "E": 2400,
+      "repair_pool": 2400,
+      "saving_and_clearance": 1800,
+      "max_local_repairs": 2
+    },
+    "resource": {
+      "numeric_warn_GiB": 12,
+      "numeric_hard_GiB": 16,
+      "light_GiB": 2,
+      "detached_cache_GiB": 2,
+      "self_swap_bytes": 0,
+      "MPI": 1,
+      "math_Torch_threads": 1,
+      "neighbor_growth_GiB": 384,
+      "PSI_stable_seconds": 60
+    },
+    "data_status": "pre_registered_from_original_indices; actual file/model identity qualified by freeze stage; missing fields NOT_RETAINED"
+  },
+  "original_design": "docs/task042extra_feinn_5nm/outcomes/records/diagnostic_design_v12.json",
+  "policy": {
+    "reference_used_for_training": false,
+    "reference_used_for_diagnostic": true,
+    "pde_only_solve": false,
+    "production_initialization_allowed": false,
+    "pde_only_solver_qualified": false,
+    "official_candidate_results": false
+  },
+  "C_trigger": "Both main candidates direct N/F<=0.999-1e-8, R<=1+1e-10, norm_u<=1+1e-10; both ranks8 and physical step sensitivity<=1e-8; independent checker and freeze pass",
+  "C_normal_caps": {
+    "network_forward": 4,
+    "A": 8,
+    "AH": 0,
+    "JVP": 0,
+    "VJP": 0,
+    "Gsolve": 4,
+    "G": 12,
+    "Gram_factor_lifecycles": 1
+  },
+  "C_bug_replay_caps": {
+    "network_forward": 8,
+    "A": 16,
+    "AH": 0,
+    "JVP": 0,
+    "VJP": 0,
+    "Gsolve": 8,
+    "G": 24,
+    "Gram_factor_lifecycles": 2
+  },
+  "numerical_resource": {
+    "tree_warn_bytes": 12884901888,
+    "tree_hard_bytes": 17179869184,
+    "detached_cache_bytes": 2147483648,
+    "threads": 1,
+    "MPI": 1,
+    "swap_bytes": 0,
+    "neighbor_growth_reserve_bytes": 412316860416
+  },
+  "light_resource": {
+    "tree_warn_bytes": 1879048192,
+    "tree_hard_bytes": 2147483648,
+    "threads": 1,
+    "swap_bytes": 0
+  },
+  "no_training": true,
+  "no_new_reference": true,
+  "no_Maxwell_factor": true,
+  "no_weight_or_radius_scan": true
+}
