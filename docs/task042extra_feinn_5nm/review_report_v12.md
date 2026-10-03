@@ -255,7 +255,7 @@ V12 已发布资格分开保留：13 项代数/阶段测试、4+1 项保存接�
 
 原 GitHub 实际视觉记录绑定 `cad9fe635199d5c22e83a0698b7412e349449aaf` 的 Review V11 与 Response V12、18 个表和三组公式，42.048241 s、整树峰 1,800,376,320 B、swap0。该记录关闭了所检查页面的旧渲染缺口，不自动覆盖本页或所有后续页面。
 
-本次只新增本 review 与审阅核验 JSON，不改数值源码，不重新运行 PDE/训练或整套 pytest。本页 Markdown parser、链接/表格、diff 与实际 GitHub rendered view 在发布时分别记录；没有取得实际页面时明确 BLOCKED，不以本地结构通过代替视觉 PASS。提交/推送后给完整 HEAD/base、精确 tracking ahead/behind、工作树和证据入口；无 master merge approval。
+本次只新增本 review 与审阅核验 JSON，不改数值源码，不重新运行 PDE/训练或整套 pytest。首版正文的本地 parser 通过：11 表、24 链接、一组 math；GitHub 实际页面绑定发布提交 `f8374e69fc19a9ba00b65be76dbb08bff4fd4d18`，11 表各行列数一致，公式已渲染为 MathML；目视检查了裁决、八个见证表、公式/p4 表、跨线对照及资源表，记 `GITHUB_VISUAL_SPOTCHECK_PASS`。浏览器受监督 29.038661341 s、同时进程树 RSS 采样峰 1,714,999,296 B、swap0、清场完成。DOM、截图和费用绑定见[审阅核验记录](outcomes/records/review_v12_evidence_audit.json)。随后只补本核验段与回执元数据，不把有限截图宣称所有历史页面全量视觉通过；最终文本另跑本地 parser 与 diff 检查。提交/推送后给完整 HEAD/base、精确 tracking ahead/behind、工作树和证据入口；无 master merge approval。
 
 ## 10. 可直接交给项目主控 Codex 的执行文本
 

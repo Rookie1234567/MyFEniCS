@@ -304,5 +304,177 @@
     },
     "summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v12_markdown_20261003T020625623943Z/summary.json",
     "summary_sha256": "f9eb2bfb999869442682c7cf58b27e9649b02dbb0f8874fd4b8078323838aa4c"
-  }
+  },
+  "github_render": {
+    "status": "GITHUB_VISUAL_SPOTCHECK_PASS",
+    "checked_publication_commit": "f8374e69fc19a9ba00b65be76dbb08bff4fd4d18",
+    "checked_document_sha256": "fee8626cf0548653789b9657a441b0c3ff01a7b2417f6ea351ce776e61aa8f40",
+    "scope": "Actual new Review V12 page only; DOM table column checks plus five screenshots visually inspected. Later edits only record this check, not the reviewed math/tables.",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/f8374e69fc19a9ba00b65be76dbb08bff4fd4d18/docs/task042extra_feinn_5nm/review_report_v12.md",
+    "browser_version": "157.0",
+    "DOM_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/render_records.json",
+    "DOM_sha256": "d6e9c0d634ad97433b6b4c52f8601d7ccdf0169f547df0c82089f7e1059fd626",
+    "table_columns": [
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      [
+        5,
+        5,
+        5
+      ],
+      [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ]
+    ],
+    "math_rendered_as_MathML": true,
+    "inspected_screenshots": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/00_top.png",
+        "sha256": "06746aa839b34f90c805f8e817bde56e09eb3237f4cc95e9867cd012fd68be25"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/00_table_05.png",
+        "sha256": "01ad24acde89b0601e398de6bec50e3f3327f3c6bea0851bf2e1fea648ce0ce9"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/00_table_09.png",
+        "sha256": "c1e0dcfd4e47ecaf6d7638c1989c1ed90b7561ae373002cceb96f1ce22faba58"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/00_table_10.png",
+        "sha256": "a8a534d329fef35999983fa2690fe07cd991195d142a83a784cf9de281b8fea3"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v12_f8374e69/00_math-renderer_00.png",
+        "sha256": "30a455904126e159d4ad7e47af8edb35c1d07001d0d97be4cd717660e04fd362"
+      }
+    ],
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 29.038661340950057,
+      "sampled_process_tree_rss_peak_bytes": 1714999296,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v12_github_render_20261003T020915657990Z/summary.json",
+    "summary_sha256": "ec80d83587bfc8ee27d0e94be89309f3f2a7a7a5bc06d7e6ed6bd4d07795b751"
+  },
+  "published_index_linkage": {
+    "status": "PASS",
+    "scope": "All three source/index/artifact entries also matched the tracked resource_costs_v12.json completed entries",
+    "record_path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json",
+    "record_sha256": "2e8e64948c01404fc7b624623d84d34ba3188a80eb0887e18a99e9b9d8acb1d6"
+  },
+  "review_cost_scope": "Each supervised worker is recorded separately. Git/read/write/model/preparation and other unitemized review wall time is not measured here and must not be called zero or a complete workflow measurement.",
+  "final_local_markdown": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v12.md",
+    "sha256": "cde278b3d86c74ccc9d5846232a959889cb71a8f3fe7625be125aa0dabe17ed3",
+    "checked_scope": "entire page",
+    "markdown_tables": 11,
+    "parsed_tables": 11,
+    "math_fences": 1,
+    "links": 25,
+    "supervision": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.561537025962025,
+      "sampled_process_tree_rss_peak_bytes": 40390656,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    "summary_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v12_final_markdown_20261003T021239200839Z/summary.json",
+    "summary_sha256": "f15e36a96040f5a2fed1fa9b76cb8b072342e00d021816a9f2a014a8fc7d1dd2"
+  },
+  "recorded_supervised_worker_seconds": 34.72595566883683
 }
