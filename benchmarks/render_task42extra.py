@@ -150,7 +150,28 @@ if(arguments[0]) {
  nodes=children.slice(start,end);scope=h.innerText;
 }
 const collect=sel=>nodes.flatMap(e=>[...(e.matches(sel)?[e]:[]),...e.querySelectorAll(sel)]);
-window.__taskTables=collect('table');window.__taskMath=collect('math-renderer');
+// GitHub may replace the article after "complete". Resolve the CURRENT nodes
+// on each scroll instead of retaining references to detached React elements.
+const prefix=arguments[0];
+window.__taskRefresh=()=>{
+ const live=document.querySelector('article.markdown-body');
+ if(!live) throw new Error('live markdown article missing');
+ let selected=[live];
+ if(prefix) {
+  const h=[...live.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(x=>x.innerText.startsWith(prefix));
+  if(!h) throw new Error('live scope heading missing');
+  let first=h;while(first.parentElement!==live) first=first.parentElement;
+  const children=[...live.children],start=children.indexOf(first),level=Number(h.tagName.slice(1));let end=children.length;
+  for(let i=start+1;i<children.length;i++) {
+   const hs=children[i].matches('h1,h2,h3,h4,h5,h6')?[children[i]]:[...children[i].querySelectorAll('h1,h2,h3,h4,h5,h6')];
+   if(hs.some(x=>Number(x.tagName.slice(1))<=level)){end=i;break;}
+  }
+  selected=children.slice(start,end);
+ }
+ const current=sel=>selected.flatMap(e=>[...(e.matches(sel)?[e]:[]),...e.querySelectorAll(sel)]);
+ window.__taskTables=current('table');window.__taskMath=current('math-renderer');
+};
+window.__taskRefresh();
 return {title:document.title,scopeHeading:scope,articleText:nodes.map(x=>x.innerText).join(String.fromCharCode(10)).slice(0,220),ready:document.readyState,
 fonts:document.fonts.status,
 tables:window.__taskTables.map(e=>({columns:[...e.rows].map(r=>r.cells.length),
@@ -185,7 +206,7 @@ return {scrollY:window.scrollY,scopeTop:h?.getBoundingClientRect().top??null};
         ]:
             for index in range(count):
                 script(
-                    "const e=(arguments[0]==='table'?window.__taskTables:window.__taskMath)[arguments[1]]; e.style.scrollMarginTop='160px';e.scrollIntoView({block:'start',inline:'nearest',behavior:'instant'}); return e.getBoundingClientRect().top;",
+                    "window.__taskRefresh();const e=(arguments[0]==='table'?window.__taskTables:window.__taskMath)[arguments[1]]; if(!e?.isConnected)throw new Error('detached render target');e.style.scrollMarginTop='160px';e.scrollIntoView({block:'start',inline:'nearest',behavior:'instant'}); return {top:e.getBoundingClientRect().top,scrollY:window.scrollY};",
                     kind,
                     index,
                 )

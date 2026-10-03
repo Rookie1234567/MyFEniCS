@@ -1,5 +1,5 @@
 {
-  "local_repairs_used": 1,
+  "local_repairs_used": 2,
   "maximum": 2,
   "resource_readmission_used": 0,
   "entries": [
@@ -10,6 +10,14 @@
       "test": "26 passed; final pipeline and related checker combination 87 passed",
       "initial_failure_resource": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_fixtures_initial_20261003T053631428021Z/summary.json",
       "repair_retest_resource": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_fixture_repair1_20261003T053703339703Z/summary.json"
+    },
+    {
+      "failure": "GitHub Response V15 second-table screenshot remained at top; actual visual not qualified",
+      "hypothesis": "React replaced article after complete; previously retained table nodes detached",
+      "change": "refresh current live article and selected tables/math before every scroll; explicitly reject detached nodes",
+      "test": "targeted browser helper compileall and Ruff pass; one bounded visual retry for same core table",
+      "retry_scope": "Response V15 core results only; original captures retained",
+      "original_render": "tmp/task42extra/render/v15_2ca3cfc4/render_records.json"
     }
   ],
   "normal_numerical_stagnation_not_bug": true
