@@ -1,0 +1,306 @@
+{
+  "schema": "task40extra.review-v6.gx784-solve-and-postprocess-closeout.v1",
+  "status": "COMPLETE_WITH_QUALIFICATIONS",
+  "review": "docs/task40extra_0p7nm_engineering/review_report_v6.md",
+  "response": "docs/task40extra_0p7nm_engineering/response_v6.md",
+  "formal_execution": {
+    "authorization_id": "review_v6_gx784_once",
+    "authorization_consumed": true,
+    "run_id": "task40extra_0p7nm_nonseparable_gx784_review_v5_v1",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z",
+    "pde_source_sha": "2374d0d556aed7a415202757daa2b94b76ad399b",
+    "postprocess_source_sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
+    "input_sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+    "physical_model_sha256": "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8",
+    "grid_axis_cells": [
+      14,
+      4,
+      14
+    ],
+    "cell_count": 784,
+    "method": "Full3D p6 physical solve with exact p4 coarse correction, MPI1, complex128",
+    "p6_full_field_rows": 530400,
+    "p4_full_storage_rows": 160512,
+    "p4_condensed_matrix": {
+      "rows": 67988,
+      "owned_row_stored_nnz": 26295924
+    },
+    "mode_count": 340,
+    "ordered_mode_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+    "outer_launcher_classification": "worker_exit0",
+    "numerical_classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+    "official_result": true,
+    "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE",
+    "solver_gates": {
+      "explicit_relative_A6_true_residual": 9.692115162625173e-07,
+      "post_release_explicit_relative_A6_true_residual": 9.692115162625173e-07,
+      "limit": 1e-06,
+      "native_recovery_identity_relative": 6.42238071470954e-11,
+      "interior_residual_relative": 3.1328991283787902e-18,
+      "schur_port_identity_relative": 2.138885933110713e-29,
+      "native_identity_limit": 1e-10,
+      "port_residual_relative": 4.473743083467747e-16,
+      "port_residual_limit": 1e-08,
+      "native_release_recovery_checks": {
+        "post_release_residual_gate": true,
+        "release_after_final_residual": true,
+        "p6_released_after_final_residual": true,
+        "p4_released_after_final_residual": true,
+        "authority_limited_checks_pass": true,
+        "complete_field_saved": true,
+        "saved_before_field_evaluation": true,
+        "strict_zero_slave_storage": true
+      },
+      "pass": true,
+      "failure_reasons": []
+    },
+    "official_power_and_absorption": {
+      "R_total": 0.07612656490058632,
+      "T_total": 0.9057668832851113,
+      "A_balance": 0.01810655181430232,
+      "A_volume_total": 0.018106531117781374,
+      "A_volume_grating": 0.013893247714104029,
+      "A_volume_substrate": 0.004213283403677344,
+      "R00_s": 0.07612609133082268,
+      "R00_p": 1.819475255892784e-21,
+      "R00_total": 0.07612609133082268,
+      "energy_closure_error": 2.0696520941498875e-08,
+      "absorption_difference": 2.0696520944968322e-08
+    }
+  },
+  "saved_field_comparison": {
+    "scope": "postprocess only; reused the new Gx784 saved field and existing Gx/F5 fields; no PDE or FE regeneration",
+    "status": "pass",
+    "classification": "tested_x_agreement_pass",
+    "independently_recomputed": true,
+    "field_pairs": {
+      "Gx_to_Gx784": {
+        "maximum_relative_to_frozen_F5_same_quantity_norm": 0.0006419146264421262,
+        "limit": 0.01,
+        "pass": true
+      },
+      "F5_to_Gx784": {
+        "maximum_relative_to_frozen_F5_same_quantity_norm": 0.0006420202550004441,
+        "limit": 0.01,
+        "pass": true
+      }
+    },
+    "mode_pairs": {
+      "Gx_to_Gx784": {
+        "mode_count": 340,
+        "ordered_keys_identical": true,
+        "frozen_significant_key_count": 11,
+        "maximum_complex_amplitude_difference_relative_to_pair_first_mode": 8.030064719462767e-05,
+        "limit": 0.01,
+        "pass": true
+      },
+      "F5_to_Gx784": {
+        "mode_count": 340,
+        "ordered_keys_identical": true,
+        "frozen_significant_key_count": 11,
+        "maximum_complex_amplitude_difference_relative_to_pair_first_mode": 8.148431581802385e-05,
+        "limit": 0.01,
+        "pass": true
+      }
+    },
+    "power_pairs_absolute_differences": {
+      "Gx_to_Gx784": {
+        "absolute_differences": {
+          "R_total": 2.4943069198285484e-06,
+          "T_total": 2.314543935733049e-06,
+          "A_balance": 1.7976298405386615e-07,
+          "A_volume_total": 1.8065518352788912e-07
+        },
+        "limit": 0.001,
+        "pass": true
+      },
+      "F5_to_Gx784": {
+        "absolute_differences": {
+          "R_total": 2.4936299092420677e-06,
+          "T_total": 2.3565318039153738e-06,
+          "A_balance": 1.370981053128162e-07,
+          "A_volume_total": 1.8195046935440273e-07
+        },
+        "limit": 0.001,
+        "pass": true
+      }
+    },
+    "energy_gates": {
+      "Gx": {
+        "port_volume_closure": 1.9804321627070465e-08,
+        "absorption_difference": 1.9804321470945352e-08
+      },
+      "F5": {
+        "port_volume_closure": 2.4155843103557118e-08,
+        "absorption_difference": 2.4155843096618224e-08
+      },
+      "Gx784": {
+        "port_volume_closure": 2.0696520941498875e-08,
+        "absorption_difference": 2.0696520944968322e-08
+      }
+    },
+    "failure_reasons": [],
+    "fresh_checker_output_equal_to_saved_checker": true,
+    "fresh_reverification": {
+      "result": "pass",
+      "classification": "tested_x_agreement_pass",
+      "failure_reasons": [],
+      "fresh_output_sha256": "6d3efb845189d6c84665baaa35a5f43e2bc35d94e8a22b0165785b67e125bc99",
+      "saved_checker_sha256": "6d3efb845189d6c84665baaa35a5f43e2bc35d94e8a22b0165785b67e125bc99",
+      "byte_identical_to_saved_checker": true,
+      "no_fe_or_pde_regeneration": true
+    }
+  },
+  "timing_and_resources": {
+    "formal_run": {
+      "full_workflow_monotonic_seconds": 3431.6226415440906,
+      "run_summary_conservative_realtime_seconds": 3812.9144130120467,
+      "shared_ledger_settled_debit_seconds": 3812.953841459373,
+      "watchdog_elapsed_seconds": 3431.2005693890387,
+      "simultaneous_process_tree_rss_peak_bytes": 7782744064,
+      "process_tree_swap_peak_bytes": 0,
+      "process_tree_samples": 13507,
+      "identity_coverage": "complete",
+      "descendants_cleared": true,
+      "PSS": "disabled_by_profile",
+      "global_swap_note": "WSL-global pswpout increased by 151 pages; it cannot be attributed to this process tree; job tree swap remained 0 B."
+    },
+    "postprocess_attempt2": {
+      "status": "POSTPROCESS_WORKER_COMPLETED",
+      "source_sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
+      "authorization_id": "review_v6_gx784_once",
+      "watchdog_elapsed_monotonic_seconds": 1442.1525664149085,
+      "conservative_ledger_settled_debit_seconds": 1601.0044167499855,
+      "simultaneous_process_tree_rss_peak_bytes": 946765824,
+      "process_tree_swap_peak_bytes": 0,
+      "PSS": "disabled_by_profile",
+      "descendants_cleared": true,
+      "postprocess_directory_attempt": 2,
+      "shared_ledger_attempt_index": 1
+    },
+    "shared_budget_after_settlement": {
+      "total_seconds": 172800.0,
+      "historical_prior_charge_seconds": 4.619253995631944,
+      "measured_elapsed_seconds": 5418.577512204991,
+      "policy_debit_seconds": 0.004821757087484002,
+      "conservative_allowance_seconds": 10.0,
+      "budget_used_seconds": 5428.582333962078,
+      "remaining_seconds": 167371.41766603792,
+      "active_reservations_seconds": 0.0,
+      "measured_and_debit_components": {
+        "formal_Q4_conservative_realtime_charge_seconds": 3812.953841459373,
+        "postprocess_attempt2_conservative_charge_seconds": 1601.0044167499855,
+        "preformal_snapshot_policy_debit_seconds": 0.004821757087484002
+      }
+    }
+  },
+  "preserved_preflight_failure": {
+    "record": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/preflight_repair_history.json",
+    "record_sha256": "76544a5823b8aa5af4be36adf3956ca93f7c1ba8f555f9f372cfd044e048ee70",
+    "classification": "POSTPROCESS_PREFLIGHT_IMPLEMENTATION_BUG",
+    "exact_error": "ValueError: Gx784 worker summary classification differs from its run manifest",
+    "failure_point": "saved-field readiness preflight before postprocess attempt directory, budget reservation, supervisor, comparison worker, or checker",
+    "attempt2_started": false,
+    "budget_reserved": false,
+    "comparison_worker_started": false,
+    "pde_solver_or_factorization_started": false,
+    "elapsed_seconds": null,
+    "time_classification": "unknown_unqualified_not_charged; no workflow clock sample was captured",
+    "repairs": [
+      {
+        "change": "separate launcher subprocess classification from numerical worker classification",
+        "commit": "114755b404eb0c26c14564b465e1c51f187296c2"
+      },
+      {
+        "change": "allow the authorized V6 postprocess continuation after its preserved parent failure when postprocess source is newer",
+        "commit": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4"
+      }
+    ]
+  },
+  "auto_inventory_and_target_costs": {
+    "original_and_repair_manifest_size_bytes": 36244923,
+    "original_and_repair_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "ordered_key_count": 32060,
+    "maximum_abs_m_n": [
+      142,
+      35
+    ],
+    "ordered_key_digest_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "existing_manifests_read_once_each": true,
+    "generator_rerun": false,
+    "derived_values_carried_forward_not_measured_lifecycle": {
+      "single_auto_H_diagonal_and_dense_matrix_bytes": [
+        512960,
+        16445497600
+      ],
+      "p6_element_tensor_and_internal_LU_shape_bytes": [
+        12446784,
+        3240000
+      ],
+      "trace_schur_and_single_coupling_or_recovery_item_bytes": [
+        2985984,
+        3110400
+      ],
+      "272x4x14_count_candidate_cells_p6_full_p6_interior": [
+        15232,
+        10228620,
+        6854400
+      ],
+      "candidate_p6_retained_and_p4_interface_rows": [
+        3126332,
+        1346364
+      ],
+      "candidate_74_outer_vectors_bytes": 3701577088,
+      "candidate_retained_full_scratch_bytes": 4428003200
+    },
+    "unknown_target_lifecycle_costs": [
+      "cold JIT and quadrature at target inventory",
+      "C/D and Di/XiB assembly costs",
+      "H/Hhat coexistence and resident multiplicities",
+      "recovery cache classes and twist counts",
+      "projection temporaries and overlap lifetimes",
+      "all-q factor fill/workspace and simultaneous residency",
+      "outer iteration count at target scale",
+      "complete solve, field recovery, output and checker time",
+      "historical AUTO generation time"
+    ],
+    "target_size_status": "NO_GO; no 2 TB capacity or full workflow qualification"
+  },
+  "artifact_sha256": {
+    "run_manifest.json": "f3c79f65d2a7881a67aa3e0e663c1e3000723944b52fe983f491f508ce8c8e3f",
+    "run_summary.json": "cbb9828f3cf97f0c7300c4192d95089c871afb2678b112177056cdb4262561e2",
+    "task40extra_nonseparable_0p7nm_p6q4_summary.json": "ef8cb92122b659a13569f0a9fe87286718d659cd92e6535b7c736ff1002edfaf",
+    "watchdog/summary.json": "b09c851a5f50d0d4be38926289afd94f0d7a79f7734d7caa5325709337203073",
+    "task40q4_ordered_mode_manifest.json": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+    "numerical_output/dtn_port_power_metrics_3d.json": "bce6abbce469cb4feb22a6139c3c0dfab172330d112ad17f53c3c723d20968eb",
+    "numerical_output/volume_absorption.json": "820e573ab6848a80eff07cd2d68b88e527b49f21b785a6cdb646756785522d1f",
+    "postprocess_v5/preflight_repair_history.json": "76544a5823b8aa5af4be36adf3956ca93f7c1ba8f555f9f372cfd044e048ee70",
+    "postprocess_v5/attempt2/gx784_pair_comparisons.json": "229ebced952efd5ecf1e696410fd084a58db8c6e67d3ef8694c667950eb4b882",
+    "postprocess_v5/attempt2/gx784_independent_check.json": "6d3efb845189d6c84665baaa35a5f43e2bc35d94e8a22b0165785b67e125bc99",
+    "postprocess_v5/attempt2/supervisor_result.json": "d361692dc25e7654791962229b71edee53bfe46cda17f7e116093f16a4c82941",
+    "postprocess_v5/attempt2/supervisor_result_pre_settlement.json": "4341250b65d78d5dfa53d25dd20c4f44ba23c53c19def53847e8253dac8a29d7",
+    "postprocess_v5/attempt2/watchdog/summary.json": "a934315221ab3c4b532a556b11754f065441de2cb1f9757d7948128247231892",
+    "shared_workflow_ledger.json": "df6041ad118c4abcc805e367e789f2bf113975bf82de718b15c65cb40a09689e"
+  },
+  "validation": {
+    "qualified_activation_preflight": "PASS: qualified WSL activation, complex128 PETSc, int32 PETSc index, Linux ABI paths; MPI1 for formal run",
+    "targeted_postprocess_preflight_tests": "7 passed before documentation-only closeout edits",
+    "independent_checker_reverification": "PASS; fresh JSON exactly equaled the saved independent checker record; no FE or PDE regeneration",
+    "full_repository_pytest": "not_run",
+    "MPI4": "not_run",
+    "Ruff": "not_run",
+    "CI": "not_run",
+    "final_documentation_and_task40_contract_tests": {
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_task40_v5_postprocess_preflight.py",
+      "result": "31 passed",
+      "scope": "documentation contracts, model registry and retrospective contracts, plus Task40 postprocess preflight regression; no PDE"
+    },
+    "final_artifact_hash_check": "PASS; 14 raw artifact hashes matched and compact-record SHA matched run_index"
+  },
+  "limitations": [
+    "The Gx784 official result is authority-limited because no matched independent direct reference exists.",
+    "tested_x_agreement_pass applies only to the frozen small-model Gx/F5-to-Gx784 pairs; it is not continuum convergence.",
+    "The original 50x25x140 nm target remains NO_GO; target-scale AUTO lifecycle and complete-time costs remain unknown.",
+    "Dot-side work, workstation qualification, and master merge were not part of this closeout."
+  ]
+}

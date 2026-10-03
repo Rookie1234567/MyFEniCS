@@ -1,3 +1,18 @@
+# Task40extra 当前测试摘要：Review V6 closeout
+
+| 检查 | 命令 / 证据 | 结果与边界 |
+|---|---|---|
+| postprocess preflight regression | source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_v5_postprocess_preflight.py | 7 passed；检查授权后历史失败接续和 preflight 行为；无 PDE |
+| fresh independent checker | python -m benchmarks.check_task40_review_v5_gx784 对已保存 comparison 输出 fresh JSON（qualified activation 下） | tested_x_agreement_pass、无 failure reasons；fresh JSON 与保存 checker 记录相同；仅读保存场 |
+| qualification and compilation | Task40 qualified activation ABI preflight；targeted compileall | PASS；PETSc complex128/int32、Linux ABI、MPI1；没有运行 MPI4 |
+| final documentation and Task40 contracts | source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py src/test/test_task40_v5_postprocess_preflight.py | 31 passed；含 response、summary、registry、run-index 文档合同及 preflight regression，无 PDE |
+| whitespace / JSON identity | git diff --check；compact record、run index 和 artifact hashes | PASS; 14 raw artifact hashes and compact-record/run-index binding verified |
+| broader checks | full repository pytest / MPI4 / Ruff / CI / new PDE / target-scale / dot | not_run；本 closeout 不涵盖 |
+
+V6 PDE source=2374d0d556aed7a415202757daa2b94b76ad399b，postprocess source=fea2b6c01b34940a6393bd47a4f545d6d53d61b4。旧尝试的 positive/negative evidence 和历史测试范围仍保留在下文；本节不把旧测试改归到本轮 source。
+
+---
+
 # Task40extra 测试与文档检查摘要
 
 ## Review V5 Gx784 安全预检与定向回归

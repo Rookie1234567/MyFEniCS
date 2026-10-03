@@ -1,4 +1,31 @@
-# Task40extra Review V5/V4 收口总账（V2/R5 历史保留）
+# Task40extra Review V6/V5/V4 收口总账（V2/R5 历史保留）
+
+## Review V6：Gx784 单次运行与保存场后处理收口
+
+V6 按 review 授权只新增一张 14×4×14（784 单元）Gx784 小网格，复用 340 个端口模式和 p6 完整场/p4 校正流程。p6 产生实际完整电磁场；p4 在迭代中校正 p6 误差，收益是保留 p6 输出，成本是另装配和使用 p4 系统。本轮没有第二张网格、AUTO 重生成、dot 执行或原尺寸计算。
+
+| 模型与方法 | 完整残差与官方结果 | 对照和资源 | 当前裁决 |
+|---|---|---|---|
+| Gx784；784 cells；Full3D p6 + exact p4 correction；340 ordered modes；MPI1 complex128；p6 full rows 530,400；p4 condensed rows/NNZ 67,988 / 26,295,924 | explicit/post-release A6 9.692115162625173e-7（限值 1e-6）；R/T/A_balance/A_volume=0.07612656490058632 / 0.9057668832851113 / 0.01810655181430232 / 0.018106531117781374；能量闭合 2.0696520941498875e-8 | Gx→Gx784 与 F5→Gx784 八项场差最大 0.06420% 与 0.06420%；11 个冻结显著模式复振幅差最大 0.00803% 与 0.00815%；四类功率绝对差均 <1e-3。全 workflow monotonic 3431.623 s，任务进程树 RSS 峰 7,782,744,064 B、swap 0 B，watchdog 3431.201 s | 离散求解/恢复一致性通过但 AUTHORITY_LIMITED（无同离散 direct reference）；配对比较 tested_x_agreement_pass；不构成 continuum/y 收敛或原尺寸资格 |
+
+R/T 是端口模式功率比，A_balance 是功率平衡吸收，A_volume 是材料体积分吸收。Gx784 的 R00_s/R00_p/R00_total 为 0.07612609133082268 / 1.819475255892784e-21 / 0.07612609133082268。两场配对的场误差分母固定为 F5 同一物理量 L2 范数；显著模式复振幅按各配对首场归一。比较在共同物理坐标子单元上进行，checker 从原始字段独立重算并与保存结果完全一致。
+
+| 时间/预算 | 已结算值 | 口径 |
+|---|---:|---|
+| Gx784 workflow monotonic / conservative-realtime interval | 3431.622642 / 3812.914413 s | 两种时钟分列；后者受 UTC 偏差影响 |
+| Q4 shared-ledger debit | 3812.953841 s | conservative-realtime 收费，不称为 monotonic |
+| postprocess attempt2 watchdog / ledger debit | 1442.152566 / 1601.004417 s | 离线保存场比较，不包含 PDE |
+| 账本总 used / remaining | 5428.582334 / 167371.417666 s | 总预算 172,800 s；active reservation 为空；含旧扣费、policy debit 与 10 s allowance |
+| Gx784 进程树 RSS/swap | 7,782,744,064 / 0 B | 13,507 个采样，身份覆盖完整，后代清空；PSS disabled；全局 swap delta 不归属单个任务 |
+| postprocess 进程树 RSS/swap | 946,765,824 / 0 B | 5,680 个采样，身份覆盖完整，后代清空；PSS disabled |
+
+首次保存场 preflight 的分类错配错误和后续两项最小源码修复均保留；首次失败没有进入比较 worker、预算预留或 PDE/factorization，时钟缺样所以 elapsed 为 unknown、未收费。original/repair AUTO 清单身份相同：SHA256 52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d，32,060 个有序 key，digest 03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec；V6 各读取一次，未运行生成器。已有单个 H 对角/稠密矩阵 512,960 / 16,445,497,600 B、p6 单元张量/内部 LU 形状 12,446,784 / 3,240,000 B、trace Schur/单份耦合项 2,985,984 / 3,110,400 B；272×4×14 候选为 15,232 cells、p6 full/interior 10,228,620 / 6,854,400 行，74 个 outer vectors 3,701,577,088 B、retained/full scratch 4,428,003,200 B。这些是 derived 载荷/计数，不是实测峰值。目标尺寸生命周期仍缺冷 JIT、C/D、H/Hhat 同存、恢复/投影缓存与数量、全部 q 因子填充和 workspace、完整迭代与输出时间等实测；不同阶段不能简单相加为同时峰值。原尺寸仍 NO-GO，2 TB 容量未证明；dot、workstation 与 master 状态不变。
+
+详细边界、checker 数值、失败保留和证据链接见 [Response V6](../response_v6.md) 与 [V6 compact closeout record](records/review_v6_gx784_postprocess_closeout_v1.json)。V5/V4 与更早负结果继续保留如下。
+
+
+---
+
 
 ## Review V5：Gx784 工程失败与后处理安全预检
 

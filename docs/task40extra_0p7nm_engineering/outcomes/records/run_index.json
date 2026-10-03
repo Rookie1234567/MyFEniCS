@@ -2,7 +2,7 @@
   "schema": "task40extra.run_index.v1",
   "branch": "task40extra_0p7nm_engineering",
   "repair_base_sha": "e694452f2f9287135f046af45592e3665f8b6c71",
-  "current_code_sha": "969b4086320b844d44fb0b67092ffe5af2d760b1",
+  "current_code_sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
   "input": {
     "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4.dat",
     "sha256": "8e00fb6495845902a8113d982242d39ad0f4999b563c2c8049ecc3750b82ac9c",
@@ -642,6 +642,104 @@
         "identity_coverage": "complete",
         "descendants_cleared": true
       }
+    },
+    {
+      "stage": "Review V6 Gx784 formal execution",
+      "run_id": "task40extra_0p7nm_nonseparable_gx784_review_v5_v1",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z",
+      "source_sha": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "input_sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+      "physical_model_sha256": "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "outer_launcher_classification": "worker_exit0",
+      "official_result": true,
+      "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE",
+      "cells": 784,
+      "grid_axis_cells": [
+        14,
+        4,
+        14
+      ],
+      "p6_full_field_rows": 530400,
+      "p4_full_storage_rows": 160512,
+      "p4_condensed_rows": 67988,
+      "p4_condensed_nnz_owned_row_stored_entries": 26295924,
+      "ordered_mode_count": 340,
+      "ordered_mode_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+      "A6_true_residual": 9.692115162625173e-07,
+      "post_release_A6_true_residual": 9.692115162625173e-07,
+      "R_T_A": {
+        "R_total": 0.07612656490058632,
+        "T_total": 0.9057668832851113,
+        "A_balance": 0.01810655181430232,
+        "A_volume_total": 0.018106531117781374,
+        "R00_s": 0.07612609133082268,
+        "R00_p": 1.819475255892784e-21,
+        "R00_total": 0.07612609133082268
+      },
+      "full_workflow_monotonic_seconds": 3431.6226415440906,
+      "run_summary_conservative_realtime_seconds": 3812.9144130120467,
+      "shared_ledger_settled_debit_seconds": 3812.953841459373,
+      "watchdog_elapsed_seconds": 3431.2005693890387,
+      "tree_RSS_peak_B": 7782744064,
+      "task_swap_peak_B": 0,
+      "PSS": "DISABLED_BY_PROFILE",
+      "identity_coverage": "complete",
+      "descendants_cleared": true,
+      "raw_files": [
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/run_manifest.json",
+          "sha256": "f3c79f65d2a7881a67aa3e0e663c1e3000723944b52fe983f491f508ce8c8e3f"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/run_summary.json",
+          "sha256": "cbb9828f3cf97f0c7300c4192d95089c871afb2678b112177056cdb4262561e2"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/task40extra_nonseparable_0p7nm_p6q4_summary.json",
+          "sha256": "ef8cb92122b659a13569f0a9fe87286718d659cd92e6535b7c736ff1002edfaf"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/watchdog/summary.json",
+          "sha256": "b09c851a5f50d0d4be38926289afd94f0d7a79f7734d7caa5325709337203073"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/task40q4_ordered_mode_manifest.json",
+          "sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/numerical_output/dtn_port_power_metrics_3d.json",
+          "sha256": "bce6abbce469cb4feb22a6139c3c0dfab172330d112ad17f53c3c723d20968eb"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/numerical_output/volume_absorption.json",
+          "sha256": "820e573ab6848a80eff07cd2d68b88e527b49f21b785a6cdb646756785522d1f"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/preflight_repair_history.json",
+          "sha256": "76544a5823b8aa5af4be36adf3956ca93f7c1ba8f555f9f372cfd044e048ee70"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/gx784_pair_comparisons.json",
+          "sha256": "229ebced952efd5ecf1e696410fd084a58db8c6e67d3ef8694c667950eb4b882"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/gx784_independent_check.json",
+          "sha256": "6d3efb845189d6c84665baaa35a5f43e2bc35d94e8a22b0165785b67e125bc99"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/supervisor_result.json",
+          "sha256": "d361692dc25e7654791962229b71edee53bfe46cda17f7e116093f16a4c82941"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/supervisor_result_pre_settlement.json",
+          "sha256": "4341250b65d78d5dfa53d25dd20c4f44ba23c53c19def53847e8253dac8a29d7"
+        },
+        {
+          "path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/watchdog/summary.json",
+          "sha256": "a934315221ab3c4b532a556b11754f065441de2cb1f9757d7948128247231892"
+        }
+      ]
     }
   ],
   "ledger": {
@@ -672,9 +770,17 @@
       "fix": "bind the Task40 qualified JIT cache source to the explicit absolute Task39 artifact path; keep the legacy V31 relative profile unchanged",
       "validation": "five focused mock/path/ledger tests passed before attempt4; attempt4 reached outer iteration and stopped at the identity Gate",
       "pde_validation": "V20_RELEASE_GATE_FAIL; no successful G0 qualification"
+    },
+    {
+      "sha": "114755b404eb0c26c14564b465e1c51f187296c2",
+      "fix": "separate outer launcher subprocess exit classification from numerical worker classification so a completed worker can pass saved-field readiness"
+    },
+    {
+      "sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
+      "fix": "allow the authorized V6 postprocess continuation after preserved POSTPROCESS_PARENT_FAILED when postprocess source is newer"
     }
   ],
-  "last_formal_run_source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
+  "last_formal_run_source_sha": "2374d0d556aed7a415202757daa2b94b76ad399b",
   "review_v1_continuation": {
     "review": "docs/task40extra_0p7nm_engineering/review_report_v1.md",
     "source_sha": "b8a20bd24848a83f2f4fa50b1ccaaa4ec9be9672",
@@ -1250,5 +1356,41 @@
         "sha256": "619fe86652d836deb6591eb1ffc59be8346d33a6287adf57178a162aac226fe2"
       }
     ]
+  },
+  "review_v6_closeout": {
+    "status": "single authorized Gx784 solve and one saved-field postprocess complete; tested_x_agreement_pass; formal result authority-limited",
+    "pde_source_sha": "2374d0d556aed7a415202757daa2b94b76ad399b",
+    "postprocess_source_sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
+    "formal_run_id": "task40extra_0p7nm_nonseparable_gx784_review_v5_v1",
+    "formal_run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z",
+    "response": "docs/task40extra_0p7nm_engineering/response_v6.md",
+    "compact_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json",
+    "compact_record_sha256": "d56e042919d60fb6df7c4bb5dd22330f0d9d0743a850a14758d81962d7e2a9ee",
+    "comparison_sha256": "229ebced952efd5ecf1e696410fd084a58db8c6e67d3ef8694c667950eb4b882",
+    "independent_checker_sha256": "6d3efb845189d6c84665baaa35a5f43e2bc35d94e8a22b0165785b67e125bc99",
+    "preflight_repair_history_sha256": "76544a5823b8aa5af4be36adf3956ca93f7c1ba8f555f9f372cfd044e048ee70",
+    "shared_workflow_ledger": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
+    "shared_workflow_ledger_sha256": "df6041ad118c4abcc805e367e789f2bf113975bf82de718b15c65cb40a09689e",
+    "postprocess": {
+      "record": "postprocess_v5/attempt2/supervisor_result.json",
+      "status": "POSTPROCESS_WORKER_COMPLETED",
+      "watchdog_elapsed_monotonic_seconds": 1442.1525664149085,
+      "settled_conservative_charge_seconds": 1601.0044167499855,
+      "watchdog_rss_peak_B": 946765824,
+      "watchdog_swap_peak_B": 0,
+      "descendants_cleared": true,
+      "postprocess_directory_attempt": 2,
+      "shared_ledger_attempt_index": 1
+    },
+    "budget_after_settlement": {
+      "used_seconds": 5428.582333962078,
+      "remaining_seconds": 167371.41766603792,
+      "active_reservations_seconds": 0.0
+    },
+    "original_size_auto_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "original_size_auto_ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "target_size": "NO_GO; target lifecycle costs and 2 TB capacity remain unqualified",
+    "dot": "unchanged; not run in this closeout",
+    "master_merge": false
   }
 }

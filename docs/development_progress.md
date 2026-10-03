@@ -1,4 +1,14 @@
-# Task40extra 当前进展：Review V5 Gx784 工程尝试已收口，物理对照仍未运行
+# Task40extra 当前进展：Review V6 Gx784 求解与保存场配对完成
+
+Review V6 授权的单次 Gx784（14×4×14、784 cells）完整三维运行已完成。Full A6 显式/释放后残差为 9.692115162625173e-7，低于 1e-6；R/T/A_balance/A_volume=0.07612656490058632 / 0.9057668832851113 / 0.01810655181430232 / 0.018106531117781374。与已有 Gx、F5 保存场的共同坐标比较由独立 checker 复算通过，状态为 tested_x_agreement_pass；Gx784 本身仍缺 matched direct reference，因此为 authority-limited，不代表 continuum convergence。
+
+本轮 postprocess-only worker 完成，未重跑 PDE。Gx784 任务进程树 RSS/swap 峰值 7,782,744,064 / 0 B；共享账本最终 used/remaining 为 5428.582334 / 167371.417666 s。original/repair AUTO 清单保持 32,060 个模式、没有重生成，但 H/Hhat 并存、目标尺寸全部 q 因子填充/工作区和完整输出时长仍 unknown；50×25×140 nm 目标继续 NO-GO。dot、workstation、ordinary default 和 master 均未改变。
+
+证据入口：[Response V6](task40extra_0p7nm_engineering/response_v6.md)、[V6 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)。
+
+---
+
+# Task40extra 历史进展：Review V5 Gx784 工程尝试收口（更新于 V6 之前）
 
 Review V5 的唯一 Gx784 worker 在有限元和数值预检前因 time-policy 接口冲突退出；没有官方场、真残差或 R/T/A。源码修复提交为 969b4086320b844d44fb0b67092ffe5af2d760b1。修复后的安全后处理已对旧失败记录执行轻量 solver/recovery Gate，并生成 HELD 对照；未启动 worker、预算预留或 FE 导入。共享账本保守扣记 4.619253995631944 s 工程尝试预算（不称作实测求解时间），唯一 bug replay 已使用；没有再次正式运行。
 

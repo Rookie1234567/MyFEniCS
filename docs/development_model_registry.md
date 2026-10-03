@@ -1,4 +1,15 @@
-# Task40extra 当前模型登记：Review V5 Gx784 工程失败收口
+# Task40extra 当前模型登记：Review V6 Gx784 保存场配对验证
+
+| 模型 / 阶段 | source 与身份 | 数值结果与资源 | 资格边界 |
+|---|---|---|---|
+| Gx784 Review V6 | PDE source 2374d0d556aed7a415202757daa2b94b76ad399b；14×4×14、784 cells；Full3D p6、exact p4 correction、340 ordered modes、MPI1 complex128；input SHA 12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422；physical SHA 2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8 | explicit/post-release A6=9.692115162625173e-7; R/T/A_balance/A_volume=0.07612656490058632 / 0.9057668832851113 / 0.01810655181430232 / 0.018106531117781374; R00_s/p/total=0.07612609133082268 / 1.819475255892784e-21 / 0.07612609133082268; condensed p4=67,988 rows / 26,295,924 NNZ; tree RSS/swap=7,782,744,064 / 0 B; monotonic workflow=3431.623 s | DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED; Gx/F5 saved-field pair=tested_x_agreement_pass; no matched direct reference or continuum claim |
+
+Gx784 的 p6 是实际完整场方程，p4 是迭代校正系统；后者减少校正系统规模但仍需装配、因子化和重复动作。两组共同坐标场比较、340 个有序模式、能量 Gate、postprocess 资源、预算与原始 artifact hashes 见 [Response V6](task40extra_0p7nm_engineering/response_v6.md)、[V6 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。original 与 repair AUTO 库存仍没有目标生命周期成本或 2 TB 容量结论。原尺寸仍 NO-GO；dot / workstation qualification 不在本轮范围；ordinary default 未改，master 未合并。
+
+---
+
+# Task40extra 历史模型登记：Review V5 Gx784 工程失败收口
+
 
 ## Review V5：Gx784 当前身份与数值状态
 
