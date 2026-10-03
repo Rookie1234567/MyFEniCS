@@ -1,0 +1,378 @@
+{
+  "schema": "feinn.review-v16-audit.v1",
+  "head": "89d24fa253aa6d9c8109e1d8b1983d964388e826",
+  "checked_utc": "2026-10-03T09:54:43.922067+00:00",
+  "checked_files": {
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/check_feinn_common_descent.py": "b1700ee66e081cd2d6a0c0f062f7948b9d6c914b1ae5cdabafd886feb55534ea",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/run_feinn_common_descent.py": "a30f77dc1e662f5f30656ecd84f3f82f13d8c3c287b3f5153d7354efd18256ee",
+    "/home/fenics/Projects/NN-Lab-V2/src/runners/feinn_common_descent_arrays.py": "5ddb4750cf85fae85840b1d9ff6bda14a4480820f158d8291b982b61dc8b7251",
+    "/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_diagnostic_algebra.py": "543be365ba5badcb16b6df053614b9c6277296f1f42a88d9d94b3922ad61063f",
+    "/home/fenics/Projects/NN-Lab-V2/src/test/test_feinn_common_descent.py": "333e2df34854ec8d91550f3fbdfc31bfd0d3958938f22e8804155864495945ae",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/result.json": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/common_descent_design_v15.json": "744064ab22522c4fd90619aedf55663594d551e8e9d4953bcfacd8d50de43740",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/candidate_freeze.json": "763ede4c7c4012488058894e12bb505b9e6ea9f5a3f17ec0e7ea892f87a4ab20",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v16_original_recheck_20261003T065100Z/independent_checker_v16.json": "92ecbc87a9b3b93f81e0c93355754327e18a777ca53727233958091379ec44dd",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v16.json": "92ecbc87a9b3b93f81e0c93355754327e18a777ca53727233958091379ec44dd",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/checker_design_v16.json": "f1355d4a3dce0f81a83edf6cb787fee8ebc808c4caf142b78982407788734c6a",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/run_index_v15.json": "29468e50c5b9f60c3c90679e78b8b6c60b95694e2ff54e6ad31e8e9c8bc4df69",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_saved_field_attribution.json": "2636a9409bd5b220bcb5c1c162a5232a0b20337854da42d8f64bfb1be12c8076",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_local_parameter_diagnostic.json": "816a25856e9295a4866d28e193c464ae0087867a7e2645873a284f14a8433969",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-10_candidate.json": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-12_candidate.json": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-10_candidate.json": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-12_candidate.json": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_unique_original_checker_20261003T065101473632Z/summary.json": "671887c921229d791e02cdefe428a6f25b0ec9fd50a54513d56166345b5c0326",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_unique_original_checker_20261003T065101473632Z/admission.json": "721147919f64d77e0521eb97af397f5c488759219db05984fde50249078dcd78",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_unique_original_checker_20261003T065101473632Z/supervision/worker.log": "abbb2b3c5801f1870b1447d4363e28a134767063c044e1e2c8e0a69f9379dd87",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_clean_commit_qualification_20261003T064907515085Z/summary.json": "34ce66c296c090c068977f1243e60961adb3cea38cb1846f830a59e8bdfc57a1",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_clean_commit_qualification_20261003T064907515085Z/supervision/worker.log": "741a3388c9ceb1ed6ddba5bf803bab004fab9d23c59f728ade588493817e8b97",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_final_source_checks_20261003T064813654086Z/summary.json": "e317d0b8b461554ba8b085c8d0307a35b13999f2d86a5c9620b8c547a577469f",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_final_source_checks_20261003T064813654086Z/supervision/worker.log": "1d41b618f344c334203f2fa759e0c2dc7dc3b715640c23769d280746f83d2a84",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_20261003T064510873788Z/summary.json": "c0971f4e68f3ad8fbd6adea7cb3f36d4ab27a2f3514fb1878f5ccb897bd5f230",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_20261003T064510873788Z/supervision/worker.log": "f24751ef5cd3b6a1a0e535c77bb7c8986a64857713700fc5b5c4f8c09c98834b",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_repair1_20261003T064559863121Z/summary.json": "44fc16bcec5469810394f915442e9afa889c690cba1692046fab553e3f828791",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_fixture_repair1_20261003T064559863121Z/supervision/worker.log": "2d70297ba0cab69baa25ce0a82d3140d89e4cfeeba6fbb76bd3639bacfd71e7a",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_targeted_final_20261003T064655870597Z/summary.json": "fd3ccecab270e6c8eae27a1d9b1a01895f7f461404443cf876ea9e13f984a15b",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v16_targeted_final_20261003T064655870597Z/supervision/worker.log": "e1ac6120e439108609a9e5f99a06004ce1e6fecbfb1807fb66a8777301e7ed3a"
+  },
+  "original_result_sha256": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c",
+  "original_C1_source": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+  "original_numerical_source": "99f2968be8d715a6f2e6985f5b032c53ca505950",
+  "checker_source": "a14dd6187336c866f0a327760f10c4ece0140a8d",
+  "code_and_record_hashes_pass": true,
+  "configurations": 8,
+  "comparison_points": 32,
+  "frozen_candidates": 4,
+  "five_prior_regressions": [
+    {
+      "name": "empty_configurations",
+      "rejected": true,
+      "reason": "MISSING_CONFIGURATION_WITHOUT_UNKNOWN"
+    },
+    {
+      "name": "eight_duplicates",
+      "rejected": true,
+      "reason": "DUPLICATE_CONFIGURATION_KEY"
+    },
+    {
+      "name": "missing_three_points",
+      "rejected": true,
+      "reason": "FOUR_COMPARISON_POINTS_REQUIRED"
+    },
+    {
+      "name": "false_pde_and_production",
+      "rejected": true,
+      "reason": "DIAGNOSTIC_POLICY_pde_only_solve"
+    },
+    {
+      "name": "missing_freeze_and_false_hash",
+      "rejected_as_qualified": true,
+      "output": {
+        "status": "UNKNOWN",
+        "qualified": false,
+        "actual_ledger": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/candidate_freeze.json",
+          "sha256": "763ede4c7c4012488058894e12bb505b9e6ea9f5a3f17ec0e7ea892f87a4ab20"
+        },
+        "errors": [
+          {
+            "phase": "actual_ledger_and_events",
+            "reason": "ACTUAL_LEDGER_EVENTS"
+          }
+        ],
+        "candidate_hashes": {
+          "M3600_1e-10": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0",
+          "M3600_1e-12": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb",
+          "Mfinal_1e-10": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19",
+          "Mfinal_1e-12": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56"
+        },
+        "code_and_execution_order_tests_also_required": true,
+        "file_hash_alone_proves_no_label_access": false
+      }
+    }
+  ],
+  "independent_endpoint_products": [
+    {
+      "state": "M3600",
+      "norms": {
+        "F": {
+          "b": -0.0039057780049740294,
+          "c": 5.692265771361128e-05,
+          "at_zero": 1.0,
+          "at_one": 0.9961511446527399,
+          "endpoint_defect": 3.3306690738754696e-16
+        },
+        "R": {
+          "b": -0.0004348118590546603,
+          "c": 0.00021740592817641387,
+          "at_zero": 1.0,
+          "at_one": 0.9997825940691223,
+          "endpoint_defect": 5.551115123125783e-16
+        },
+        "N": {
+          "b": 0.005191717215577786,
+          "c": 0.00041762222393967576,
+          "at_zero": 1.0,
+          "at_one": 1.0056093394395171,
+          "endpoint_defect": 2.208060289583123e-16
+        }
+      },
+      "classification": "DIRECTION_NATIVE_CONFLICT"
+    },
+    {
+      "state": "Mfinal",
+      "norms": {
+        "F": {
+          "b": -0.002487793643966489,
+          "c": 1.368279502669172e-05,
+          "at_zero": 1.0,
+          "at_one": 0.9975258891510597,
+          "endpoint_defect": 5.551115123125783e-16
+        },
+        "R": {
+          "b": -0.000823294775278095,
+          "c": 0.00041164738772655503,
+          "at_zero": 1.0,
+          "at_one": 0.9995883526124485,
+          "endpoint_defect": 0.0
+        },
+        "N": {
+          "b": 0.001981172646056698,
+          "c": 0.00034188640680812534,
+          "at_zero": 1.0,
+          "at_one": 1.002323059052865,
+          "endpoint_defect": 0.0
+        }
+      },
+      "classification": "DIRECTION_NATIVE_CONFLICT"
+    }
+  ],
+  "existing_tests_reused_by_hash": true,
+  "new_full_checker_calls": 0,
+  "new_producer_calls": 0,
+  "new_actions": {
+    "FE": 0,
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "factor": 0,
+    "network_forward": 0,
+    "training": 0,
+    "optimization": 0
+  },
+  "no_new_valid_field": true,
+  "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "raw_review_audit": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v16_audit/audit.json",
+    "sha256": "9f90baf923331ccceaa602674dad1f0822bdb58be8a0b89e2d1018d3947bb5f7"
+  },
+  "reproduction_script": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v16_audit.py",
+    "sha256": "9fb82e34813e4b00deb966b02af8183628555e1528d5f0320c91070eadd404e9"
+  },
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "prior_review_publication": "788ac4c174263321a8fff8f86d856a4e9ebe8075",
+  "remote_frozen_refs": {
+    "task42extra_feinn_5nm": "89d24fa253aa6d9c8109e1d8b1983d964388e826",
+    "task40extra_0p7nm_engineering": "b8bd7c2f23726142161b58a7d7ff52275ea677ba",
+    "task40extra_dot_parallel_cloud": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+    "excluded_task42_neural_coarse_inverse": "b9e2d587cec6a2418573faa4e3c87721194914eb",
+    "excluded_task42extra_NN_V3_learned_iteration": "1f01ae46bbe21f17200350a46513ef5f33e5cf6a"
+  },
+  "branch_delta": [
+    "M\tbenchmarks/check_feinn_common_descent.py",
+    "M\tbenchmarks/run_feinn_common_descent.py",
+    "M\tdocs/development_model_registry.md",
+    "M\tdocs/development_progress.md",
+    "M\tdocs/task042extra_feinn_5nm/README.md",
+    "M\tdocs/task042extra_feinn_5nm/outcomes/changed_files.md",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/checker_integrity_v16.md",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/checker_design_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/independent_checker_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/native_direction_attribution_v16.csv",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/render_check_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/repair_log_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/resource_costs_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/run_index_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v16.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v16.json",
+    "M\tdocs/task042extra_feinn_5nm/outcomes/summary.md",
+    "M\tdocs/task042extra_feinn_5nm/outcomes/test_summary.md",
+    "A\tdocs/task042extra_feinn_5nm/response_v16.md",
+    "M\tsrc/runners/feinn_common_descent_arrays.py",
+    "M\tsrc/solvers/feinn_diagnostic_algebra.py",
+    "M\tsrc/test/test_feinn_common_descent.py"
+  ],
+  "parallel_branch_read_evidence": [
+    {
+      "commit": "b8bd7c2f23726142161b58a7d7ff52275ea677ba",
+      "path": "docs/task40extra_0p7nm_engineering/response_v5.md",
+      "sha256": "da29711ab0b8f9dabc7c4d43822d4b4c9e427a2053d97fa42518fb3a79ac7e43",
+      "scope": "read_only_remote_commit_documents_not_local_PDE_qualification"
+    },
+    {
+      "commit": "b8bd7c2f23726142161b58a7d7ff52275ea677ba",
+      "path": "docs/task40extra_0p7nm_engineering/review_report_v5.md",
+      "sha256": "9b937b97cad8814f50becc3bd8545c4cd3df661209a2eefcec0a96e5e43cf702",
+      "scope": "read_only_remote_commit_documents_not_local_PDE_qualification"
+    },
+    {
+      "commit": "b8bd7c2f23726142161b58a7d7ff52275ea677ba",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v5_execution_closeout_v1.json",
+      "sha256": "9477f52dc571e69b2cbe1c7cb6a2c759808153bfc83494edc6e3938e116bbe37",
+      "scope": "read_only_remote_commit_documents_not_local_PDE_qualification"
+    },
+    {
+      "commit": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/fresh_c1_candidate_v1_zh.md",
+      "sha256": "f1a155a1d263d655abf90b012fd55a6498c4dca808055a49c59597eaad6bfa6d",
+      "scope": "read_only_remote_commit_documents_not_local_PDE_qualification"
+    },
+    {
+      "commit": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+      "path": "docs/task40extra_dot_parallel_cloud/response_v15.md",
+      "sha256": "35f94010994a9894ac12527cf8f2775d0f73bd5f3b82e315308b19d260a5d246",
+      "scope": "read_only_remote_commit_documents_not_local_PDE_qualification"
+    }
+  ],
+  "supervised_audit": {
+    "summary": {
+      "workflow_deadline_seconds": 180.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        51
+      ],
+      "sampled_process_tree_rss_peak_bytes": 76230656,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1341123051520,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1341123051520,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 5,
+      "elapsed_seconds": 2.0707355339545757,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    },
+    "files": {
+      "summary.json": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v16_audit_20261003T095441983534Z/summary.json",
+        "sha256": "09e7fa8f6bb9d09b6df53c3924bbc992ff635176cb5e46c8a7669afa5826bc77"
+      },
+      "admission.json": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v16_audit_20261003T095441983534Z/admission.json",
+        "sha256": "08508b53bf3d6fe0ac7faec763a7b5f84d5fd9376c9641921cb0c6d994289cbb"
+      },
+      "supervision/worker.log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v16_audit_20261003T095441983534Z/supervision/worker.log",
+        "sha256": "a100ecf1a4789de7e8bc93467c7d626fe81a19c3d4d571b6cf925071ba16a2d8"
+      }
+    }
+  },
+  "historical_V16_visual_status": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "record": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/render_check_v16.json",
+      "sha256": "f9d21e4d21d2bb21bc682cd267d776255f7aebadb2d2d87edb367498e41dfb65"
+    },
+    "unchanged": true
+  },
+  "reviewer_cost": {
+    "first_explicit_time_observation_utc": "2026-10-03T09:45:20+00:00",
+    "scope": "Wall observation begins within initial identity reads; earlier unobserved startup and final publication tail are not claimed measured.",
+    "snapshot_utc": "2026-10-03T10:04:09.008690+00:00",
+    "worker_seconds_are_nested_not_added_again": true,
+    "formal_FE_or_NN_actions": 0,
+    "not_target_single_48h_or_whole_host_qualification": true,
+    "observed_wall_to_snapshot_seconds": 1129.00869
+  },
+  "next_round_scope": {
+    "response": "response_v17.md",
+    "full_workflow_limit_seconds": 3600,
+    "unconditional": [
+      "P0-A pause handoff and current navigation",
+      "P0-B static dependency manifest"
+    ],
+    "conditional": "P1 static admission design only when an actual named receiver/input contract exists",
+    "new_training": false,
+    "new_FE": false,
+    "new_optimization": false,
+    "merge_approved": false
+  },
+  "document_checks": {
+    "status": "LOCAL_MARKDOWN_LINKS_PASS",
+    "actual_visual": "PENDING_PUBLICATION",
+    "pages": [
+      {
+        "path": "docs/task042extra_feinn_5nm/review_report_v16.md",
+        "sha256": "69aa3c5560fb7c1d5ee38dae0ad6b55ae6d4c4c8f519e04717bd71c1959c0411",
+        "checked_scope": "entire page",
+        "markdown_tables": 7,
+        "parsed_tables": 7,
+        "math_fences": 1,
+        "links": 15
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v16.md",
+        "sha256": "39949633f262dd544cfcc9f4eddb4fecdd74a56b0d9af87ab45d056f9748dea2",
+        "checked_scope": "entire page",
+        "markdown_tables": 2,
+        "parsed_tables": 2,
+        "math_fences": 0,
+        "links": 10
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/checker_integrity_v16.md",
+        "sha256": "b99c747d9cc6ab82e8d5b04d28bdd532ea89b9f32721bb01b50852b21d02d7b3",
+        "checked_scope": "entire page",
+        "markdown_tables": 3,
+        "parsed_tables": 3,
+        "math_fences": 1,
+        "links": 7
+      }
+    ]
+  }
+}
