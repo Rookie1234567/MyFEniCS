@@ -1,0 +1,317 @@
+{
+  "schema": "feinn.review-v15-audit.v1",
+  "checked_utc": "2026-10-03T06:14:45.567059+00:00",
+  "head": "d373263962154a05cc023b264bdac688ca2fc386",
+  "result_source": "99f2968be8d715a6f2e6985f5b032c53ca505950",
+  "original_C1_source": "bc4c2026f8a9510c90424d24f1808a288413bba4",
+  "input_result_sha256": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c",
+  "checked_files": {
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/check_feinn_common_descent.py": "d2333d33684dd052c136c27b04060ed4e7fd617f342ff8aa089799597d5ca446",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/run_feinn_common_descent.py": "a363cd54690875b22212b9804fdaae08954a90601ee00ec1976f4b9b776f7672",
+    "/home/fenics/Projects/NN-Lab-V2/src/runners/feinn_common_descent_arrays.py": "16c4889a5ef03d92ff71d41c9ba50f2311d3d84d607aad46ace1bdf29cea9132",
+    "/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_common_descent.py": "85c58fdcc25c2ad2f74a71046654224a64462a453a9a9399ee8436d1f5af0ee7",
+    "/home/fenics/Projects/NN-Lab-V2/src/test/test_feinn_common_descent.py": "99430ae5be59b1b8435e63c2e34f3e9b3fd8b21e6aecf5abf2a54da69a4b7462",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_saved_field_attribution_20261003T000343740364Z/result.json": "f0c28944f70abae88440cbc691a8020257619e740e6d92fd3d23a6122f571a8a",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_saved_field_attribution.json": "2636a9409bd5b220bcb5c1c162a5232a0b20337854da42d8f64bfb1be12c8076",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v12_local_parameter_diagnostic.json": "816a25856e9295a4866d28e193c464ae0087867a7e2645873a284f14a8433969",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/result.json": "f481294266aad213844352903b137566089ee99c61066a371f372a976224ba84",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v12_local_parameter_diagnostic_20261003T000944472791Z/local_diagnostic_vectors.npz": "22c5200d6744cb3e0e4e360dae597fcb3f26b96bf80d478b2fff7d050ccd2263",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-10_candidate.json": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-12_candidate.json": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-10_candidate.json": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-12_candidate.json": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/result.json": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/independent_checker.json": "dda39c7d2849541e67c7fc46f627c77ce820dfb26063dee91c4082266dc80aef",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_A_design_freeze_20261003T053859009481Z/summary.json": "f6543f5cf8796923c392113694658d980913072c8fb143ba1220cb031c822813",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_A_inventory_20261003T053209498733Z/summary.json": "7305711131f14b5b1787cb9e287dc9639693adb927b6e22995829f1ebdb3fff0",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_complete_targeted_20261003T053947560519Z/summary.json": "9b3db2842179f0ccd3c42667f585fade3625905d48821d3d2c96cd85cd6d72ee",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_final_qualification_20261003T054027781959Z/summary.json": "7a2293bda4922b8e619c34741b6afd7840c0266adec1a15e86688d2217a88278",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_fixture_repair1_20261003T053703339703Z/summary.json": "04e12dcaec255adee54c1cc63c1e3160ca40e61531bcb583d013356d93cccbab",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_B_fixtures_initial_20261003T053631428021Z/summary.json": "73876f9b2e2f85d2806332e1ee4213e9387eb99cd492bce5d0b5b83e52755911",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_C_fixed_array_analysis_20261003T054115353452Z/summary.json": "af147faec93f2c48d086f4255774dedea732e6c6869a2c6875a3ced842585266",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_D_independent_array_checker_20261003T054129712356Z/summary.json": "87568be2637ea1bc846ed50b7ff39c75d25ef00e54105c99303c794d52177086",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_compact_delivery_20261003T054605412956Z/summary.json": "218193a0e24c3d31f5d981b7850fd97a78a706884bf1740ad4232859d21ec5e7",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_document_checks_20261003T054708161573Z/summary.json": "d27e6af1516ba9c2125560ac97a7881923cde5c9762653c8655fff436fc09314",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_final_document_checks_20261003T055427563997Z/summary.json": "02fe1d7b34e5779a6493d13eba4535f5e04174ceebd4fd317fe548d7c0096925",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_final_evidence_20261003T055311412400Z/summary.json": "20c50d42163e72cb42f39347e31aa5b6a0777f03c0646fa8f679fb0db49e74f4",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_github_render_20261003T054825438726Z/summary.json": "8c6a30bd0e00e0d5a22a55964929c01df2116e979e2e7604bb5a1b5289f935a0",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_github_table_retry_20261003T055134677437Z/summary.json": "2ac71855533204bcb2745c9e671daf36de327114ed9bb40aeb1cbaa029f05e57",
+    "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v15_E_render_repair_compile_20261003T055102021523Z/summary.json": "c1e3c271dfd70fd1965623d2b4a71ec91ad807110477e936315ba529102a5f36",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/common_descent_design_v15.json": "744064ab22522c4fd90619aedf55663594d551e8e9d4953bcfacd8d50de43740",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/candidate_freeze.json": "763ede4c7c4012488058894e12bb505b9e6ea9f5a3f17ec0e7ea892f87a4ab20"
+  },
+  "actual_candidate_ledger_matches": true,
+  "baseline_checker": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/baseline_checker.json",
+    "sha256": "dda39c7d2849541e67c7fc46f627c77ce820dfb26063dee91c4082266dc80aef",
+    "rows": 8,
+    "status": "RAW_ARRAY_CERTIFICATES_VERIFIED"
+  },
+  "existing_evidence_scope": "Original eight records and four candidate files intact; mutations are separate review-only copies, not evidence of corruption in submitted results.",
+  "adversarial_reproductions": [
+    {
+      "name": "empty_configurations",
+      "checker_accepted": true,
+      "status": "RAW_ARRAY_CERTIFICATES_VERIFIED",
+      "rows": 0,
+      "input_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/empty_configurations.json",
+      "input_sha256": "bb69454b06debdc04467b7e7b8068d4d5c6c0ea4e37771252eeda7008971e6d5",
+      "output_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/empty_configurations_checker.json",
+      "output_sha256": "c9487cd20ccca166eb20f1089352c6de4702aef0f8203c68241a27e6cdca85e6"
+    },
+    {
+      "name": "eight_duplicates_one_configuration",
+      "checker_accepted": true,
+      "status": "RAW_ARRAY_CERTIFICATES_VERIFIED",
+      "rows": 8,
+      "input_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/eight_duplicates_one_configuration.json",
+      "input_sha256": "4d42ec992fba7fe649ddfb1279c04366b0a0b1e5434d91e61b5819100ad41211",
+      "output_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/eight_duplicates_one_configuration_checker.json",
+      "output_sha256": "8d2cf9f98e9c6bb2a798cab0726ee1187938b6acf9d68094d9de8e173139b691"
+    },
+    {
+      "name": "missing_freeze_events_wrong_ledger",
+      "checker_accepted": true,
+      "status": "RAW_ARRAY_CERTIFICATES_VERIFIED",
+      "rows": 8,
+      "input_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/missing_freeze_events_wrong_ledger.json",
+      "input_sha256": "c8cce6ca500c70af2ac3edd0843c2771e1b75405054b01531cf2c446911ba09b",
+      "output_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/missing_freeze_events_wrong_ledger_checker.json",
+      "output_sha256": "3a4e7270399cf96dc91b3892cae87d416f9421c096bdc8e0853aecbf7954c4d4"
+    },
+    {
+      "name": "missing_three_control_points",
+      "checker_accepted": true,
+      "status": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "input_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/missing_three_control_points.json",
+      "input_sha256": "91b0c91b925a0ddfd8f3a5a2a2349f89ee4ece68809280f535bd829b7ddf1755"
+    },
+    {
+      "name": "false_pde_and_production_flags",
+      "checker_accepted": true,
+      "status": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "input_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/false_pde_and_production_flags.json",
+      "input_sha256": "be5dbb1555d931b779ca086694c9d0247583977510b486646548b36835d96916"
+    }
+  ],
+  "residual_endpoint_details": [
+    {
+      "state": "M3600",
+      "subset": "PDE8",
+      "rho": 0.008553653337049638,
+      "step": 0.005071334370372523,
+      "endpoint_mu": 0.0,
+      "residual_H_eigen_min": 0.00034886737217335246,
+      "residual_H_eigen_max": 164791.43201169287,
+      "F": 0.9961511446527399,
+      "R": 0.9997825940691222,
+      "native_before": 0.885852183252661,
+      "native_after": 0.8883332316520046
+    },
+    {
+      "state": "M3600",
+      "subset": "ALL16",
+      "rho": 0.008553653337049638,
+      "step": 0.008553653337049643,
+      "endpoint_mu": 0.0003018463201270359,
+      "residual_H_eigen_min": 0.00012077927857716596,
+      "residual_H_eigen_max": 164873.4318208012,
+      "F": 1.126720024110291,
+      "R": 0.9988697576284162,
+      "native_before": 0.885852183252661,
+      "native_after": 0.8880557582811075
+    },
+    {
+      "state": "Mfinal",
+      "subset": "PDE8",
+      "rho": 0.008560515209936437,
+      "step": 0.006112692035271496,
+      "endpoint_mu": 0.0,
+      "residual_H_eigen_min": 0.0005646488833802789,
+      "residual_H_eigen_max": 7300.116728924603,
+      "F": 0.9975258891510597,
+      "R": 0.9995883526124486,
+      "native_before": 0.8465419049282757,
+      "native_after": 0.8475246179521886
+    },
+    {
+      "state": "Mfinal",
+      "subset": "ALL16",
+      "rho": 0.008560515209936437,
+      "step": 0.008560515209936427,
+      "endpoint_mu": 0.0010702567147192774,
+      "residual_H_eigen_min": 0.000190810052821023,
+      "residual_H_eigen_max": 7901.872860691964,
+      "F": 1.099977386672713,
+      "R": 0.995773043770286,
+      "native_before": 0.8465419049282757,
+      "native_after": 0.8461001454408
+    }
+  ],
+  "new_actions": {
+    "FE": 0,
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "network_forward": 0,
+    "training": 0,
+    "optimization": 0
+  },
+  "supervised_receipt": {
+    "summary": {
+      "workflow_deadline_seconds": 300.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        52
+      ],
+      "sampled_process_tree_rss_peak_bytes": 192782336,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139039,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 1528204054528,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 1528204054528,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 17,
+      "elapsed_seconds": 8.121352058951743,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    },
+    "files": {
+      "summary.json": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v15_audit_20261003T061437707488Z/summary.json",
+        "sha256": "4fb077eda7b174de2520d931e94a1401c2de3681c3f2487683489a6c76866ad5"
+      },
+      "admission.json": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v15_audit_20261003T061437707488Z/admission.json",
+        "sha256": "d95b0d89d5d584018551e739a0088da9f5c6b4a2110216dea01441d6e12c7892"
+      },
+      "supervision/worker.log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/review_v15_audit_20261003T061437707488Z/supervision/worker.log",
+        "sha256": "8d4475c3ab2e515da6a98a79afff637a1ae9fdd4f2bebae6bc90ae27f59b89f2"
+      }
+    }
+  },
+  "raw_review_audit": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit/audit.json",
+    "sha256": "d118549362c3378dcf85a1d6b8ace48e73959ebd7ce279034a231631b3154fb1"
+  },
+  "reproduction_script": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v15_audit.py",
+    "sha256": "53cbeb381dfd99a32d11d3cf2626d3f5f77ad860b6f6be8775eaad8441971371"
+  },
+  "remote_frozen_refs": {
+    "task42extra_feinn_5nm": "d373263962154a05cc023b264bdac688ca2fc386",
+    "task40extra_0p7nm_engineering": "3f671fda0681826ff5f614a4af1bab22d4bf3c49",
+    "task40extra_dot_parallel_cloud": "eb5b0ecc1afe593f626b44a6038f7f26651b3317",
+    "excluded_task42_neural_coarse_inverse": "0b30054564440da6cd9c33723d70e28b5d872c19",
+    "excluded_task42extra_NN-V3-learned-iteration": "1f01ae46bbe21f17200350a46513ef5f33e5cf6a"
+  },
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "prior_review_publication": "229199194bb711ba03ee1294f9c0d884b83a53f9",
+  "branch_delta": [
+    "A\tbenchmarks/check_feinn_common_descent.py",
+    "M\tbenchmarks/render_task42extra.py",
+    "A\tbenchmarks/run_feinn_common_descent.py",
+    "M\tdocs/development_model_registry.md",
+    "M\tdocs/development_progress.md",
+    "M\tdocs/task042extra_feinn_5nm/README.md",
+    "M\tdocs/task042extra_feinn_5nm/outcomes/changed_files.md",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/common_descent_v15.md",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/candidate_permissions_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/common_descent_comparison_v15.csv",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/common_descent_design_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/common_descent_results_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/independent_checker_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/render_check_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/repair_log_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/resource_costs_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/run_index_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v15.json",
+    "A\tdocs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v15.json",
+    "M\tdocs/task042extra_feinn_5nm/outcomes/summary.md",
+    "M\tdocs/task042extra_feinn_5nm/outcomes/test_summary.md",
+    "A\tdocs/task042extra_feinn_5nm/response_v15.md",
+    "A\tsrc/runners/feinn_common_descent_arrays.py",
+    "A\tsrc/solvers/feinn_common_descent.py",
+    "A\tsrc/test/test_feinn_common_descent.py"
+  ],
+  "legacy_resource_accounting": {
+    "source": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v15.json",
+      "sha256": "2090785502166d8f82cd141993cd6c097a79f12e56941371234d487903423792"
+    },
+    "V15_measured_wall_to_snapshot_seconds": 1597.120276,
+    "V15_publication_reserve_not_measured_seconds": 120,
+    "V15_complete_conservative_new_seconds": 1717.120276,
+    "reported_known_research_cumulative_seconds": 165803.23590631902,
+    "historical_missing_tails": "NOT_RETAINED_NOT_ZERO",
+    "not_original_target_single_workflow_qualification": true
+  },
+  "reviewer_timing_scope": {
+    "complete_review_start_utc": "NOT_RECORDED",
+    "first_explicit_time_observation_utc": "2026-10-03T06:12:39+00:00",
+    "earlier_static_read_git_and_reasoning_wall": "NOT_SAMPLED_NOT_ZERO",
+    "worker_seconds_are_not_complete_review_wall": true,
+    "formal_FE_or_NN_work_performed": false
+  },
+  "unexecuted_next_tasks": [
+    "checker_repair",
+    "independent_decision_refactor",
+    "frozen_ray_native_attribution",
+    "new_source_saved_result_reverification"
+  ],
+  "new_review_document_checks": {
+    "local_parser": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v15.md",
+      "sha256": "24a47b1e7115eb2c14f511e53b968ab79742ecec06a9e8c95bb94bdab07572f6",
+      "checked_scope": "entire page",
+      "markdown_tables": 8,
+      "parsed_tables": 8,
+      "math_fences": 1,
+      "links": 13
+    },
+    "status": "LOCAL_MARKDOWN_LINKS_PASS",
+    "actual_visual": "PENDING_FIRST_PUBLICATION",
+    "checked_utc": "2026-10-03T06:24:47.987529+00:00"
+  }
+}
