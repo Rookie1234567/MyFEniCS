@@ -1,0 +1,219 @@
+{
+  "schema": "feinn.v19.review-v18-p0-closeout.v1",
+  "review_publication": "a88c1be95e1b50760a69e0530c85ad78408a632e",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "canonical_common_git": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "authority": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v18.md",
+    "sha256": "b210c5724fe6aec4048dcff7d17ad43d82232f9d3fdcfa026fb4789f506e188a"
+  },
+  "reviewer_audit": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+    "sha256": "0f36c35ac7881046b8b36d1f079b6f46903a7e189b1014c348982de22ce60442"
+  },
+  "scope": {
+    "P0": "CURRENT_STATE_AND_EXISTING_EVIDENCE_CITATIONS_ONLY",
+    "P1": "NOT_REQUESTED_NO_RUN",
+    "P1_missing": "No receiver, frozen input pair/reference or unanswered decision package provided",
+    "P2": "NOT_AUTHORIZED_NUMERICAL_RESEARCH",
+    "checker_binding_repair": "NOT_REQUIRED_NO_CURRENT_REUSE",
+    "repeat_v17_static_inventory": false,
+    "new_scientific_results": false
+  },
+  "states": {
+    "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+    "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+    "target": "FULL_TARGET_NOT_QUALIFIED",
+    "D0": "COST_VETO",
+    "D1": "NOT_RUN_COST_VETO",
+    "production_initialization_allowed": false,
+    "merge_approved": false
+  },
+  "reused_sources": {
+    "A": "33fe1bc05c89eeef50de1fb44ae64cc96e868852",
+    "B": "b42f042064fcef431e2e7d64eddcbfd43b2bf65a",
+    "C_and_checks": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "numerical_delivery": "c5d320e055e2128e8ba65dda4cc176fe2c013ffe"
+  },
+  "existing_evidence_only": {
+    "A": "FEASIBLE_BOTH; OPTIMALITY_UNKNOWN",
+    "B": "SAVED_CROSS_TERMS_COMPLETE; BROAD_OVERLAPPING_REGIONS_NOT_THIN_LAYER_EXCLUSION",
+    "C": "BOTH_FAIL_R_NONINCREASE",
+    "nonlinear_extra_G_fraction_of_total_improvement": {
+      "M3600": 0.0007694552345179214,
+      "Mfinal": 0.004237468085702158
+    },
+    "extra_G_fraction_units": "fraction, not percent; denominator is actual total G-energy improvement",
+    "actual_R_increment": {
+      "M3600": 1.007948258e-07,
+      "Mfinal": 1.79017932e-07
+    },
+    "original_R_increment_limit": 1e-08,
+    "B_E_cross_fraction": 0.7690760733290564,
+    "B_curl_cross_fraction": 0.7680517401726915,
+    "provenance": "Quoted from unchanged reviewer receipt; no new saved-vector calculation this batch"
+  },
+  "process_qualifications_preserved": {
+    "initial_engineering_fixes": 5,
+    "formal_bug_replays": 1,
+    "three_round_cap_unconditional_compliance": false,
+    "resource_refusal_to_readmission_mapping": "NOT_FULLY_ESTABLISHED",
+    "no_retroactive_permission_claim": true,
+    "numerical_operation_and_time_caps": "ACCEPTED_WITH_UNMEASURED_TAIL_ALLOWANCE",
+    "total_historical_cost": "UNKNOWN_UNMEASURED_TAILS_RETAINED"
+  },
+  "known_limits": {
+    "checker": "verify does not itself bind original theta radius/source columns/rcond/rank; reviewer independently verified current four radii",
+    "integral_checker": "saved-integral algebra; not a second independent FE integration",
+    "global_network_expressivity": "UNKNOWN",
+    "exact_old_project_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS; retain all old costs including 3284s"
+  },
+  "parallel_evidence_frozen": {
+    "main": "2374d0d556aed7a415202757daa2b94b76ad399b",
+    "main_Gx784": "NOT_STARTED_AT_REVIEW_SNAPSHOT",
+    "dot": "3c7458fad7c002babac4e634be4788b664be9ee5",
+    "dot_scope": "SYNTHETIC_PROJECTION; actual FE/storage/backend pending",
+    "no_other_branch_fetched_or_modified": true,
+    "no_cross_model_ranking": true
+  },
+  "original_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "silicon_width_height_nm": [
+      17,
+      120
+    ],
+    "wavelength_nm": 0.7,
+    "full_3D_FE": true,
+    "whole_machine_decimal_bytes": 2000000000000,
+    "own_swap_bytes": 0,
+    "complete_workflow_seconds": 172800,
+    "original_strict_accuracy_unchanged": true
+  },
+  "new_numerical_operations": {
+    "training": 0,
+    "network_forward": 0,
+    "FE": 0,
+    "A": 0,
+    "AH": 0,
+    "G": 0,
+    "Gsolve": 0,
+    "factor": 0,
+    "optimizer": 0
+  },
+  "inherited_testing": {
+    "new_pytest": false,
+    "full_pytest": false,
+    "CI_claim": false,
+    "reused": "unchanged ca7ad5d 52 targeted tests/Ruff/compileall, source hashes verified; no repeat"
+  },
+  "old_render_reused": {
+    "review_final": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v18.md",
+      "sha256": "b210c5724fe6aec4048dcff7d17ad43d82232f9d3fdcfa026fb4789f506e188a"
+    },
+    "review_final_visual": "Actual corrected equation and C/difference tables read visibly; no raw LaTeX/error panel in inspected final section.",
+    "original_region_gap": "CLOSED_FOR_TWO_TABLES_IN_REVIEWER_CAPTURE",
+    "old_failure_and_partial_receipts_not_overwritten": true,
+    "no_full_history_rerender": true
+  },
+  "new_render": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "reason": "Document worker twice refused before start; one fresh-window readmission exhausted; no browser started",
+    "local_parser_is_not_visual_pass": true
+  },
+  "local_repair": {
+    "count": 1,
+    "kind": "LOCAL_DOCUMENT_PATCH_CONTEXT",
+    "failure": "Multi-file patch referenced an absent historical ending paragraph; atomic tool rejected without partial edits",
+    "hypothesis": "Quoted tail came from a different historical document, not current changed_files bytes",
+    "change": "Used actual file tail and narrower exact anchors",
+    "test": "Patch applied after actual tail read; Git diff manually checked. Automatic parser/history check NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "numerical_retry": false
+  },
+  "documentation_check": {
+    "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+    "worker_started": false,
+    "affected_pages": 7,
+    "parser_links_JSON_and_automatic_history_bytes": "NOT_RUN",
+    "manual_git_delta_review": "Append-only prior summary/progress/test/file text; registry section inserted before existing template; README current navigation updated",
+    "not_equivalent_to_visual_or_parser_pass": true
+  },
+  "identity_check": {
+    "status": "PASS",
+    "path": "tmp/task42extra/v19_identity_checks.json",
+    "scope": "pure environment, authority/task/response/16 source hashes, 4669 paths and two review-file commit delta only",
+    "new_pytest": false,
+    "new_FE": false
+  },
+  "resources": {
+    "identity_supervision": "tmp/task42extra/checks/v19_identity_20261003T134721842356Z/summary.json",
+    "identity_admission": "tmp/task42extra/checks/v19_identity_20261003T134721842356Z/admission.json",
+    "cpu": 0,
+    "identity_supervision_seconds": 3.0051963749574497,
+    "sampled_simultaneous_tree_rss_peak_bytes": 57675776,
+    "sampled_simultaneous_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "hard_tree_bytes": 2147483648,
+    "warn_tree_bytes": 1879048192,
+    "system_reserve_bytes": 216310038528,
+    "neighbor_growth_allowance_bytes": 412316860416,
+    "effective_available_bytes_at_identity_admission": 1118077677568,
+    "pure_activation": true,
+    "math_threads": 1,
+    "OOC_bytes": 0,
+    "resource_refusals_before_worker": 2,
+    "fresh_window_observations": 1,
+    "fresh_observed_cpus": [39, 40],
+    "readmission_attempts": 1,
+    "successful_readmissions": 0,
+    "first_refusal_record": "tmp/task42extra/v19_resource_refusal.json",
+    "fresh_window_record": "tmp/task42extra/v19_new_resource_window.json",
+    "second_refusal": "tmp/task42extra/v19_second_resource_refusal.json; original tool traceback before worker/admission/summary",
+    "no_further_wait_polling_or_restart": true,
+    "scope": "0.5s sampled supervisor+worker tree only; no claimed continuous kernel/whole-machine or unsampled control-shell peak",
+    "failed_admission_cost": "Included in full parent wall, exact substage tail NOT_RETAINED",
+    "new_browser": "NOT_RUN; no invented measured browser peak"
+  },
+  "complete_batch_accounting": {
+    "first_explicit_utc": "2026-10-03T13:40:54+00:00",
+    "start_monotonic": 959848.86088057,
+    "clock_receipt": "tmp/task42extra/v19_batch_clock.json",
+    "observed_prepublication_utc": "2026-10-03T13:54:38+00:00",
+    "observed_wall_seconds_UTC_second_resolution": 824,
+    "startup_allowance_seconds": 60,
+    "observed_plus_startup_seconds": 884,
+    "publication_queue_response_tail_reserve_seconds": 600,
+    "conservative_bound_at_observation_seconds": 1484,
+    "total_limit_seconds": 3600,
+    "closing_reserve_seconds": 600,
+    "unmeasured_tail": "Not measured at tracked snapshot; final immutable ignored delivery receipt plus explicit response allowance",
+    "nested_worker_costs_not_added": true,
+    "old_project_exact_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS_RETAINED"
+  },
+  "git_at_start": {
+    "HEAD": "a88c1be95e1b50760a69e0530c85ad78408a632e",
+    "explicit_tracking": "refs/remotes/origin/task42extra_feinn_5nm",
+    "ahead": 0,
+    "behind": 0,
+    "clean": true,
+    "numerical_lock": "FREE",
+    "own_active_numerical_members": []
+  },
+  "final_git_and_clearance": "Post-push observed in tmp/task42extra/v19_delivery_receipt.json; cannot self-bind future HEAD",
+  "manifest_reuse": {
+    "path": "outcomes/records/selective_merge_manifest_v18.json",
+    "current_changes": "compact evidence/docs only",
+    "new_production_core": false,
+    "new_runner": false,
+    "new_checker": false,
+    "new_research_core": false,
+    "ignored_clock_checks_browser_queue": "do-not-merge",
+    "production_default_unchanged": true
+  }
+}

@@ -253,3 +253,9 @@ V15浏览器补查：原实际截图的回执核心表仍停留页首，保留�
 只做受影响pure fixture与真实父监督接线，没有full pytest、无关MPI或旧数值全量复验。最终A/B/C组合、Ruff/compileall、改动文档合同及原记录hash检查见[测试收据](records/targeted_tests_v18.json)。开发时lint、近零分母损坏fixture、语法/作用域错误，以及正式C重复不可覆盖记录错误的失败证据和费用均留[修复账](records/repair_log_v18.json)。
 
 A独立从原数组重算四配置、冻结顺序、实PID、N/R/F及保守证书，不调用优化器；B检查原能量/四区域/体积/近零分母/G恒等式，不执行FE或算子；C独立2A/4G检查实际场和原保存向量，后独立FE恢复两个c。全部真实性通过；实际R不增门两態FAIL，不因checker通过声称solver通过。新页结构与有限GitHub实际渲染分开，[render](records/render_check_v18.json)保留未测尾段及旧失败。
+
+## V19：Review V18停止落实的受影响文档检查
+
+实际仅完成pure身份/hash检查：原task/Response V18及16份相关源码、发布文档、4669个tracked路径与数值交付后的两文件差量通过；3.00519637496s、同时树峰57,675,776B、自身swap0、已清场。改变页Markdown parser/本地链接/compact JSON及自动历史正文保留检查两次在worker前被CPU门拒绝；唯一再准入前有实测新窗口，但启动时窗口消失，NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE。不直接裸跑绕过保护，Git差量人工核对/`git diff --check`不是parser通过，具体见[一次P0收据](records/closeout_receipt_v19.json)。未重复全库hash/AST或V17静态清单；原ca7ad5d的52 targeted/Ruff/compileall按未变hash复用，无新pytest、full pytest、FE/前向/算子或CI声明。
+
+Review V18最终公式及旧专题两张区域表右侧的实际浏览器资格复用[审阅收据](records/review_v18_evidence_audit.json)，旧失败及原执行端部分视图不覆盖。新改变页视觉为NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE：资源链停止后未启动浏览器，不假称截图/DOM或视觉PASS。没有实际复用需求，A checker半径及原始列来源绑定限制保留，不加无关fixture或重跑A/B/C。

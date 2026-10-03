@@ -3240,3 +3240,19 @@ Review V16已接受保存记录checker和两方向冲突，触发本次轻量交
 B补完q15保存场积分：E误差能量0.211141→0.366628，正交叉项0.119581约占增量76.91%；curl类似。周期/界面邻层浓集约1，缺口约1.3，无明显邻层强集中；MPC和G配对精确，不归因为普遍约束错误。独立checker重算原能量、分母、区域和实际C配对。首C保存协议错误在第二态数组后失败，已保留并唯一同输入修复重放；所有失败/费用和已落盘边界保留。数值树峰1,260,847,104B、swap0，fresh Gram setup/solve/release明确计费。实际A source33fe1bc05c89eeef50de1fb44ae64cc96e868852；B/首C b42f042064fcef431e2e7d64eddcbfd43b2bf65a；C/独立检查/FE恢复 ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb，文档HEAD不替代source。
 
 保留中期较好、终态退化、全部负结果/UNKNOWN与D0成本否决/D1未运行。没有完整有效解或同完整成本NN净增益，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT及生产初始化禁止不变。主线Review V6条件授权与dot C1/持久资格属各自任务，不代办传统solver/storage。原尺寸0.7nm、十进制2TB整机及172800s完整流程、原精度门尚未资格化。完成整批后暂停，不自动缩步/调权/累积训练，不合并master。[Response V18](task042extra_feinn_5nm/response_v18.md)、[专题](task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md)、[原Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v18.json)、[完整资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json)。
+
+## 2026-10-03 Task42extra V19：落实审阅归因，结束M5优化循环
+
+背景是V18局部原残差/场改善仍不能说明网络的额外价值，旧“完成后再继续”导航可能误触训练。Review V18发布a88c1be95e1b50760a69e0530c85ad78408a632e接受科研证据、保留修复/资源再准入流程限定，授权一次pure P0交接；冻结base fbac3d8777fcfd897d93b898cb9f460f79ddd6ff不变。此次只更新当前入口和本任务总账，无FE、前向、矩阵作用、训练或参考求解，也不重复28模块静态清单。
+
+| 引用的M5/p3旧证据 / 无量纲 | 原中期M3600 | 原终态Mfinal | 本次决策 |
+| --- | --- | --- | --- |
+| C实际native / R增量 | 0.883116256995 / 1.007948258e-7 | 0.838398187887 / 1.790179320e-7 | 原残差门1e-6及R不增门1e-8均未过，不缩步重跑 |
+| 非线性网络相对线性场的额外G改善占本次总改善 | 0.07695% | 0.42375% | 主要收益来自线性选向，无完整成本NN净收益 |
+| 旧散射E/curl误差 | 0.0933003 / 0.0935415 | 0.122945 / 0.123039 | 中期好态和最终退化保留；全局表达极限UNKNOWN |
+
+B原退化约77%来自与已有误差同向的正交叉项；宽重叠区域的平均集中度约1不能排除薄层或个别模式。A可行而最优性UNKNOWN，checker自身半径/原始列来源绑定限制保留，无复用需要不为它开新批次。D0必要前缀已成本否决，D1仍未运行。旧失败/失联3284s、Gram/重放及未知尾段不删除；完整P0资源和有限新页呈现另记，不把旧52项源码资格冒称新pytest或CI。
+
+pure身份/hash检查3.00520s、57,675,776B树峰、swap0，通过后清场。改变页parser/自动保留检查和新页视觉因CPU窗口不足未运行；首次拒绝后实测曾有新窗口，唯一再准入时已消失，停止该链，不绕过或继续抢跑。这些未验证项与已通过的身份资格分开，不称文档Gate全PASS。
+
+最终决定是FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；P1无真实接收包，NOT_REQUESTED_NO_RUN；P2仅是未来新机制、严格无标签同成本和≥20%净收益预案的重启条件。主线2374d0d负责尚未启动Gx784及精度，dot3c7458f负责真实FE/紧凑存储/后端资格，本支不复制或改两线。原50×25×140nm、λ0.7nm完整三维FE、十进制2e12B整机/172800s及原精度门不变，仍未资格化。一次交接后释放计算配额并停止，无production晋级或master合并。[Review V18](task042extra_feinn_5nm/review_report_v18.md)、[Response V19](task042extra_feinn_5nm/response_v19.md)、[当前导航](task042extra_feinn_5nm/outcomes/summary.md)、[P0检查与费用](task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json)。
