@@ -23,7 +23,7 @@ def arrays_receipt(path,**arrays):
 
 
 def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
-    if batch not in ('v31','v32','v33'):raise ValueError('unapproved workflow namespace')
+    if batch not in ('v31','v32','v33','v34'):raise ValueError('unapproved workflow namespace')
     from src.solvers import return_block_study as study,joint_block_study as oldstudy
     from src.solvers.return_block_direction import SelectedBundle,NAMES,FAMILY
     from src.solvers.return_block_window import CAPS
@@ -33,7 +33,7 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
     from src.io.p1_trace_galerkin import physical_state
     from benchmarks import collect_task042_block_direction as oldcollector
     from benchmarks.collect_task042_return_direction import collect
-    if batch=='v33':
+    if batch in ('v33','v34'):
         from src.solvers import full_input_block_study as study
         from src.solvers.full_input_block_correction import FAMILY,CAPS
         from benchmarks.task042_full_input_checker import collect
@@ -65,7 +65,10 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
     window_dir=root/'tmp/task042'/batch;window_dir.mkdir(parents=True)
     json_receipt(window_dir/'window.json',dict(start_utc=time.time(),start_monotonic=time.monotonic(),
         boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),heavy_limit_seconds=4500,total_limit_seconds=5400))
-    w=DiagnosticWindow(window_dir,CAPS,batch.upper()+'-fixture')
+    if batch=='v34':
+        from src.solvers.full_input_block_v34_window import PaidDiagnosticWindow
+        w=PaidDiagnosticWindow(window_dir)
+    else:w=DiagnosticWindow(window_dir,CAPS,batch.upper()+'-fixture')
     # evaluate_window accepts ISO UTC; keep the real implementation here too.
     from datetime import datetime,timezone
     window=json.loads(w.WINDOW_PATH.read_text());window['start_utc']=datetime.now(timezone.utc).isoformat();write_json(w.WINDOW_PATH,window)
@@ -108,7 +111,7 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         parent=json_receipt(art/'v24'/(name+'.json'),dict(source_sha='1'*40,operator_packet=dict(sha256='a'*64),
             cycles=[{},{},{},dict(state=state)],start=dict(state=state)))
         qj=np.zeros(nt,complex);qj[jactive]=np.linalg.solve(A[np.ix_(jpositions,jpositions)],r[jactive]);vj=bar(qj)
-        if batch=='v33':
+        if batch in ('v33','v34'):
             # Genuine fixed block inverses on this residual, not fitted columns.
             direction=np.zeros((nt,8),complex)
             for block in range(8):
@@ -119,7 +122,7 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         v25=arrays_receipt(art/'v25'/(name+'.npz'),directions=direction,images=images,coefficients=np.zeros(8,complex))
         v26=arrays_receipt(art/'v26'/(name+'.npz'),joint_direction=qj,joint_image=vj,coefficients=c9,diagnostic_residual=e9)
         item=dict(name=name,parent_result=parent,state=state,v25_arrays=v25,v26_arrays=v26)
-        if batch=='v33':
+        if batch in ('v33','v34'):
             wret=np.zeros(nt,complex)
             for block in (0,1,2,3,4,6):
                 positions=np.flatnonzero(groups[active]==block)
@@ -142,7 +145,7 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         if i==0:
             initial=deepcopy(oldrow);initial['name']=OLD_NAMES[0];old['rows'].append(initial)
             oldplan['states'].append(dict(name=OLD_NAMES[0],state=state,parent_result=parent))
-    if batch=='v33':
+    if batch in ('v33','v34'):
         plan['v32_result']=json_receipt(art/'v32/result.json',ret);plan['v32_source_sha']='4'*40
     plan['local_setup']=json_receipt(art/'v24/setup.json',setup)
     plan['v26_result']=json_receipt(art/'v26/result.json',prior);plan['v25_result']=json_receipt(art/'v25/result.json',old)
@@ -191,9 +194,11 @@ def workflow(root,monkeypatch,*,reject_state=False,batch='v31'):
         if not reject_state or str(error)!='synthetic state reader rejection':raise
         result=dict(stage.partial_result,status='FAILED',error=str(error))
     stage.finish(result)    # Real ReturnStage/Stage writer and manifest seal.
-    w.settle_run(stage.directory,dict(classification='FAILED' if reject_state else 'COMPLETED',leader_exit_code=1 if reject_state else 0,source_state=dict(source_sha=stage.source),
+    summary=dict(classification='FAILED' if reject_state else 'COMPLETED',leader_exit_code=1 if reject_state else 0,source_state=dict(source_sha=stage.source),
         elapsed_seconds=time.monotonic()-stage.run_started,sampled_process_tree_rss_peak_bytes=0,
-        sampled_process_tree_swap_peak_bytes=0,descendants_cleared=True),0.)
+        sampled_process_tree_swap_peak_bytes=0,descendants_cleared=True)
+    write_json(stage.directory/'run_summary.json',summary)
+    w.settle_run(stage.directory,summary,0.)
     out=collect(root=root,plan_path=plan_path,artifact_root=art/batch,records=root/'records',
         ledger_path=w.LEDGER_PATH,nt=nt,old_plan=oldplan,**({} if batch=='v33' else dict(batch=batch)))
     return result,out,w.ledger()

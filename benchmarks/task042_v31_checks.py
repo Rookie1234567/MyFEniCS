@@ -12,17 +12,21 @@ SCOPE=('src/test/test_task042_v31_workflow.py','src/test/test_task042_v28_cached
 def main():
     import argparse
     parser=argparse.ArgumentParser()
-    parser.add_argument('--batch',choices=('v31','v32','v33'),default='v31')
+    parser.add_argument('--batch',choices=('v31','v32','v33','v34'),default='v31')
     parser.add_argument('tests',nargs='*')
     args=parser.parse_args()
     from src.runners.actual_loss_block_descent import _pure_blas_threads
     import numpy as np,scipy
     if os.environ.get('TASK042_ACTIVATION')!='1' or os.environ.get('TASK042_ENV_MODE')!='pure':
         raise RuntimeError('qualified Task042 pure activation required')
-    folder=(Path(os.environ['TASK042_'+args.batch.upper()+'_AUX_DIRECTORY'])/'tests' if args.batch in ('v32','v33')
+    folder=(Path(os.environ['TASK042_'+args.batch.upper()+'_AUX_DIRECTORY'])/'tests' if args.batch in ('v32','v33','v34')
             else ROOT/'tmp/task042/v31/tests')
     folder.mkdir(parents=True,exist_ok=True)
-    scope=tuple(args.tests) if args.tests else (('src/test/test_task042_v33_workflow.py',
+    v34_scope=('src/test/test_task042_v34_workflow.py','src/test/test_task042_v33_workflow.py',
+        'src/test/test_task042_v32_workflow.py::test_storage_scope_and_boundary',
+        'src/test/test_task042_v32_workflow.py::test_v32_actual_workflow_through_independent_checker',
+        'src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route')
+    scope=tuple(args.tests) if args.tests else v34_scope if args.batch=='v34' else (('src/test/test_task042_v33_workflow.py',
         'src/test/test_task042_v32_workflow.py::test_storage_scope_and_boundary',
         'src/test/test_task042_v32_workflow.py::test_v32_actual_workflow_through_independent_checker',
         'src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route') if args.batch=='v33' else (('src/test/test_task042_v32_workflow.py',
@@ -30,8 +34,9 @@ def main():
         'src/test/test_task042_v31_workflow.py::test_actual_study_two_states_through_collector',
         'src/test/test_task042_v31_workflow.py::test_actual_workflow_reader_failure_preserves_partial_accounting')
         if args.batch=='v32' else SCOPE))
-    if args.batch=='v33':
-        from src.solvers import full_input_block_v33_window as qualified_window
+    if args.batch in ('v33','v34'):
+        if args.batch=='v34':from src.solvers import full_input_block_v34_window as qualified_window
+        else:from src.solvers import full_input_block_v33_window as qualified_window
         compiled=[]
         for rel in qualified_window.QUALIFICATION_FILES:
             if rel.endswith('.py'):
@@ -50,8 +55,10 @@ def main():
         result=subprocess.run(environment['command'],stdout=out,stderr=err,check=False)
     write_json(folder/'entry_result.json',dict(exit_code=result.returncode,elapsed_seconds=time.perf_counter()-began,
         environment=environment,status='PASSED' if result.returncode==0 else 'FAILED'))
-    if args.batch in ('v32','v33') and result.returncode==0:
-        if args.batch=='v33':
+    if args.batch in ('v32','v33','v34') and result.returncode==0:
+        if args.batch=='v34':
+            from src.solvers import full_input_block_v34_window as w
+        elif args.batch=='v33':
             from src.solvers import full_input_block_v33_window as w
         else:
             from src.solvers import return_block_v32_window as w
@@ -60,7 +67,7 @@ def main():
         # repair replays remain evidence; they cannot pretend to cover omitted gates.
         required=('src/test/test_task042_'+args.batch+'_workflow.py',
                   'src/test/test_task042_v31_workflow.py::test_failed_prequalification_stops_formal_route')
-        if all(p in scope for p in required):
+        if all(p in scope for p in required) and (args.batch!='v34' or all(p in scope for p in v34_scope)):
             write_json(folder/'qualification.json',dict(status='PASSED',source_sha=environment['source_sha'],
                 implementation_hashes=w.implementation_hashes(),coverage=list(w.REQUIRED_COVERAGE),
                 scope=list(scope),test_receipt=dict(path=str(folder/'entry_result.json'),sha256=file_hash(folder/'entry_result.json')),

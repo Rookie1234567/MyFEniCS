@@ -102,7 +102,9 @@ def test_storage_v33_extends_scope_without_changing_v32(tmp_path):
         p=tmp_path/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b'12345')
     assert inventory(tmp_path,batch=33)['cumulative']['bytes']==20
     assert inventory(tmp_path,batch=33)['new']['bytes']==10
-    assert inventory(tmp_path,batch=32)['cumulative']['bytes']==0
+    old=inventory(tmp_path,batch=32,include_files=True)
+    assert old['cumulative']['bytes']==5
+    assert set(old['cumulative']['files'])=={'docs/task042_neural_coarse_inverse/outcomes/records/review_v30_test.json'}
 
 
 def test_namespace_closed_and_zero_consumption_repair_boundary(tmp_path,monkeypatch):

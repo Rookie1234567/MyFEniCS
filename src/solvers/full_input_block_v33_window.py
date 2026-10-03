@@ -44,17 +44,22 @@ def implementation_hashes():
 
 
 def require_qualification():
-    pointer = json.loads((TMP / 'pre_qualification.json').read_text())
+    return check_qualification(TMP, REQUIRED_COVERAGE, implementation_hashes())
+
+
+def check_qualification(folder, coverage, hashes):
+    """Shared receipt validation; namespace, scope and current files stay explicit."""
+    pointer = json.loads((folder / 'pre_qualification.json').read_text())
     path = Path(pointer['path']).resolve()
-    if not path.is_relative_to(TMP.resolve()) or hashlib.sha256(path.read_bytes()).hexdigest() != pointer['sha256']:
+    if not path.is_relative_to(folder.resolve()) or hashlib.sha256(path.read_bytes()).hexdigest() != pointer['sha256']:
         raise ValueError('V33 qualification receipt path/hash')
     proof = json.loads(path.read_text())
     summary = json.loads((path.parent.parent / 'summary.json').read_text())
     if (summary['classification'] != 'COMPLETED' or summary['leader_exit_code'] != 0
             or summary['source_state']['source_sha'] != proof['source_sha']
             or proof['status'] != 'PASSED'
-            or tuple(proof['coverage']) != REQUIRED_COVERAGE
-            or proof['implementation_hashes'] != implementation_hashes()):
+            or tuple(proof['coverage']) != coverage
+            or proof['implementation_hashes'] != hashes):
         raise ValueError('V33 pre-test qualification invalid for current implementation')
     test = Path(proof['test_receipt']['path']).resolve()
     if not test.is_relative_to(path.parent) or hashlib.sha256(test.read_bytes()).hexdigest() != proof['test_receipt']['sha256']:

@@ -31,7 +31,9 @@ def numeric(row,a,state,cache25,cache26,cache32,groups,ids,nt):
         require(v.shape==shape and v.dtype==np.complex128 and np.isfinite(v).all(),'full vector shape/finite '+k)
     bn=finite(row['full_b_norm'],'physical b');require(bn>0,'positive physical b')
     state_certificate(row,a,state,nt)
-    r=state['residual'][:nt];rn=float(np.linalg.norm(r));require(rn>0,'positive real input residual')
+    # state_certificate keeps the original tolerance/source check. Metrics use
+    # the audited freshly recomputed residual, not a bitwise-equal historical one.
+    r=a['input_residual'];rn=float(np.linalg.norm(r));require(rn>0,'positive real input residual')
     scalar(rn,row['residual_norm'],'input residual norm')
     d,w=cache25['directions'],cache25['images']
     require(d.shape==w.shape==(nt,8),'eight fixed columns')
@@ -96,7 +98,7 @@ def numeric(row,a,state,cache25,cache26,cache32,groups,ids,nt):
         max_identity_full_b_relative=worst_b,max_identity_operation_relative=worst_op)
 
 
-def consumption(result,plan,sources,ledger,manifest):
+def consumption(result,plan,sources,ledger,manifest,*,batch='v33',root=None):
     require(set(EXPECTED)==set(CAPS) and result['budget_counts']==EXPECTED and
         all(type(x) is int and 0<=x<=CAPS[k] for k,x in result['budget_counts'].items()),'complete fixed consumption')
     require(result['action_counts']==dict(S=20,SH=2,audit=0),'S/SH inventory')
@@ -107,21 +109,66 @@ def consumption(result,plan,sources,ledger,manifest):
         all(type(x['adjoint']) is bool and x['shape']==[40] and x['RHS_columns']==1 for x in ports),'complete port count/columns')
     require(ledger['active'] is None and len(result['source_sha'])==40 and
         all(x in '0123456789abcdef' for x in result['source_sha']),'unsettled actor/source')
-    consuming=[r for r in ledger['runs'] if any(r['counts'].values())]
-    require(len(consuming)==1,'one real consuming actor')
-    for r in ledger['runs']:
-        if r not in consuming:require(r['classification']=='WORKER_FAILED' and not any(r['upper'].values()),'nonzero earlier consumption')
-    run=consuming[0]
+    if batch=='v34':
+        run=settled_campaign(ledger,result,root)
+    else:
+        consuming=[r for r in ledger['runs'] if any(r['counts'].values())]
+        require(len(consuming)==1,'one real consuming actor')
+        for r in ledger['runs']:
+            if r not in consuming:require(r['classification']=='WORKER_FAILED' and not any(r['upper'].values()),'nonzero earlier consumption')
+        run=consuming[0]
     require(run['exact_counts'] is True and run['classification']=='COMPLETED' and
         run['directory']==result['run_directory'] and run['source_sha']==result['source_sha'],'settled run identity')
-    require(all(c==EXPECTED for c in (run['counts'],run['completed'],run['upper'],ledger['charged'],manifest['completed_budget_counts'])),'durable count mismatch')
+    counts=(run['counts'],run['completed'],run['upper'],manifest['completed_budget_counts'])
+    if batch!='v34':counts=(*counts,ledger['charged'])
+    require(all(c==EXPECTED for c in counts),'durable count mismatch')
     require(manifest['completed_action_counts']==result['action_counts'] and
         manifest['source_sha']==result['source_sha'] and manifest['input_sha256']==result['input_sha256'] and
         manifest['plan_sha256']==result['plan_sha256'],'manifest identity')
 
 
-def collect(*,root=None,plan_path=None,artifact_root=None,records=None,ledger_path=None,nt=18144,old_plan=None):
-    from src.io import full_input_block_v33 as io
+def settled_campaign(ledger,result,root):
+    """Independently verify failed upper charges and one final valid full run."""
+    from src.solvers.full_input_block_v34_window import CAMPAIGN_CAPS
+    root=Path(root).resolve();total=dict.fromkeys(CAPS,0);wall=0.;complete=[]
+    require(ledger['active'] is None,'unsettled V34 actor')
+    for run in ledger['runs']:
+        require(run['descendants_cleared'] is True,'failed tree not cleared')
+        for field in ('counts','completed','upper'):
+            require(set(run[field])==set(CAPS) and all(type(v) is int and 0<=v<=CAPS[k]
+                for k,v in run[field].items()),'per-attempt consumption inventory')
+        require(all(run['completed'][k]<=run['counts'][k]<=run['upper'][k] for k in CAPS),'count bounds')
+        raw=[]
+        for field in ('summary_receipt','write_ahead_receipt'):
+            receipt=run[field];path=Path(receipt['path']).resolve()
+            require(path.is_relative_to(root/'results/task042') and path.parent==Path(run['directory']).resolve()
+                and file_hash(path)==receipt['sha256'],'settlement raw receipt path/hash')
+            raw.append(json.loads(path.read_text()))
+        summary,active=raw
+        require(summary['source_state']['source_sha']==active['source_sha']==run['source_sha'] and
+            summary['classification']==run['classification'] and summary['descendants_cleared'] is True,
+            'failed/successful raw source/exit identity')
+        require(active['upper']==run['upper'] and all(run['completed'][k]<=active['completed'][k]<=run['upper'][k]
+            for k in CAPS),'write-ahead upper/lower identity')
+        clean=summary['classification']=='COMPLETED' and summary['leader_exit_code']==0
+        require(run['exact_counts'] is clean and run['counts']==(active['completed'] if clean else active['upper']),
+            'failed upper charge or clean exact charge')
+        if clean:complete.append(run)
+        scalar(summary['elapsed_seconds'],run['actor_wall_seconds'],'settled wall')
+        require(run['actor_wall_seconds']<=180.,'single actor wall cap')
+        wall+=run['actor_wall_seconds']
+        for k,v in run['counts'].items():total[k]+=v
+    require(total==ledger['charged'] and all(total[k]<=CAMPAIGN_CAPS[k] for k in CAPS),'cumulative settlement sum/caps')
+    scalar(wall,ledger['actor_wall_seconds'],'cumulative actor wall')
+    require(wall<=300. and len(complete)==1 and complete[0]['directory']==result['run_directory'],
+        'one valid complete result / cumulative wall')
+    return complete[0]
+
+
+def collect(*,root=None,plan_path=None,artifact_root=None,records=None,ledger_path=None,nt=18144,old_plan=None,batch='v33'):
+    if batch=='v34':from src.io import full_input_block_v34 as io
+    elif batch=='v33':from src.io import full_input_block_v33 as io
+    else:raise ValueError('explicit V33/V34 cached namespace required')
     root=Path(root or io.ROOT).resolve();plan_path=Path(plan_path or io.PLAN_PATH)
     artifact_root=Path(artifact_root or io.ARTIFACT_ROOT);records=Path(records or root/'docs/task042_neural_coarse_inverse/outcomes/records')
     records.mkdir(parents=True,exist_ok=True);plan=json.loads(plan_path.read_text());pointer=artifact_root/'DIAGNOSTIC.json'
@@ -149,8 +196,8 @@ def collect(*,root=None,plan_path=None,artifact_root=None,records=None,ledger_pa
                 old['source_sha']==plan['v25_source_sha'] and ret['status']=='DIAGNOSTIC_COMPLETE','upstream source/status')
             for r in (prior,ret,old):require(r['operator_packet']['sha256']==plan['action_sha256'],'upstream operator')
             manifest=io.checked_json(result['run_manifest'],root/'results/task042')
-            lp=Path(ledger_path or result['ledger_path']).resolve();require(lp.is_relative_to(root/'tmp/task042/v33'),'ledger namespace')
-            consumption(result,plan,factor_sources(setup,prior,plan),json.loads(lp.read_text()),manifest)
+            lp=Path(ledger_path or result['ledger_path']).resolve();require(lp.is_relative_to(root/'tmp/task042'/batch),'ledger namespace')
+            consumption(result,plan,factor_sources(setup,prior,plan),json.loads(lp.read_text()),manifest,batch=batch,root=root)
             groups=np.empty(nt,np.int64)
             allrows=[]
             for b,part in enumerate(setup['block_inventory']):groups[part['rows']]=b;allrows.extend(part['rows'])
@@ -181,8 +228,11 @@ def collect(*,root=None,plan_path=None,artifact_root=None,records=None,ledger_pa
                 actual_numeric_source=result['source_sha'],no_factor_reads=True,no_new_actions=True,no_QR_SVD=True)
             require(out['decision']==result['decision'],'independent decision')
     out['checker_source_sha256']=file_hash(Path(__file__))
-    write_json(records/'full_input_checker_v33.json',out)
+    write_json(records/('full_input_checker_'+batch+'.json'),out)
     return out
 
 
-if __name__=='__main__':print(json.dumps(collect(),ensure_ascii=False))
+if __name__=='__main__':
+    import argparse
+    parser=argparse.ArgumentParser();parser.add_argument('--batch',choices=('v33','v34'),default='v33')
+    print(json.dumps(collect(batch=parser.parse_args().batch),ensure_ascii=False))

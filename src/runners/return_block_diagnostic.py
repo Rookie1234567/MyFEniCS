@@ -28,7 +28,7 @@ class ReturnStage(DirectionStage):
         super().guard(**kwargs)
         if getattr(self.io,'LABEL','V27')=='V31' and time.monotonic()-self.run_started>=470:
             raise RuntimeError('V31 actor cutoff/cleanup margin')
-        if getattr(self.io,'LABEL','V27') in ('V32','V33'):
+        if getattr(self.io,'LABEL','V27') in ('V32','V33','V34'):
             if time.monotonic()-self.run_started>=self.formal_actor_limit-10:
                 raise RuntimeError('V32 unique actor cutoff/cleanup margin')
             now=time.monotonic()
@@ -55,7 +55,10 @@ class ReturnStage(DirectionStage):
 
 def main():
     global io,window
-    if b'[task042_v33]' in Path(sys.argv[1]).read_bytes():
+    if b'[task042_v34]' in Path(sys.argv[1]).read_bytes():
+        from src.io import full_input_block_v34 as io
+        from src.solvers import full_input_block_v34_window as window
+    elif b'[task042_v33]' in Path(sys.argv[1]).read_bytes():
         from src.io import full_input_block_v33 as io
         from src.solvers import full_input_block_v33_window as window
     elif b'[task042_v32]' in Path(sys.argv[1]).read_bytes():
@@ -73,7 +76,7 @@ def main():
     result={}
     try:
         if subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()!=stage.source:raise RuntimeError('V27 active source changed')
-        if getattr(io,'LABEL','V27')=='V33':
+        if getattr(io,'LABEL','V27') in ('V33','V34'):
             from src.solvers.full_input_block_study import run
         else:
             from src.solvers.return_block_study import run
