@@ -74,6 +74,34 @@ def fixed_regions(mesh, centers, tags, notch, bounds, h=1.25):
     )
 
 
+def regional_statistics(value, reference, volume, total_volume, global_error):
+    """Report concentration without treating overlapping masks as a partition."""
+    value, reference, global_error = map(np.asarray, (value, reference, global_error))
+    if (
+        any(
+            x.shape != (2,) or not np.isfinite(x).all() or np.any(x < 0)
+            for x in (value, reference, global_error)
+        )
+        or not 0 < volume <= total_volume
+    ):
+        raise ValueError("REGION_ENERGY_OR_VOLUME_INVALID")
+    floor = 1e-12 * np.sqrt(volume)
+    denom = np.maximum(np.sqrt(reference), floor)
+    fraction = np.divide(value, global_error, out=np.zeros(2), where=global_error > 0)
+    return dict(
+        absolute=np.sqrt(value).tolist(),
+        error_energy=value.tolist(),
+        actual_denominator=denom.tolist(),
+        relative=(np.sqrt(value) / denom).tolist(),
+        incident_floor=float(floor),
+        near_zero_reference=(np.sqrt(reference) <= floor).tolist(),
+        volume_fraction=float(volume / total_volume),
+        error_energy_fraction=fraction.tolist(),
+        concentration=(fraction / (volume / total_volume)).tolist(),
+        global_zero_error=(global_error == 0).tolist(),
+    )
+
+
 def run(stage, design, pre, artifact, marker, manifest, load_index):
     from dolfinx import fem
     from src.solvers.feinn_bounded_field_integrals import BoundedFieldIntegrals
@@ -92,13 +120,18 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
     guard()
     native = load_index("e1_fe")
     packet = load_native(checked_entry(native["files"]["native"]))
-    fields = frozen_fields(load_index("v12_saved_state_freeze"))
+    v18 = stage == "v18_saved_field_integrals"
+    fields = frozen_fields(
+        load_index("v12_saved_state_freeze"), ("M3600", "Mfinal") if v18 else None
+    )
     with np.load(
         checked_entry(load_index("e3_reference")["files"]["reference"]),
         allow_pickle=False,
     ) as z:
         c_ref = np.array(z["c"])
     cfg, data, space, floquet, centers, tags, notch = geometry(design, packet)
+    if v18 and perf_counter() >= adapter_cutoff:
+        raise RuntimeError("V18_SAVED_FIELD_ADAPTER_600S_LIMIT")
     integrator = BoundedFieldIntegrals(data.mesh, cfg.k0)
     result = dict(
         no_training=True,
@@ -112,10 +145,14 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
         production_initialization_allowed=False,
     )
     arrays = {}
-    if stage == "v12_saved_field_integrals":
+    if stage in ("v12_saved_field_integrals", "v18_saved_field_integrals"):
         b = load_index("v12_saved_field_attribution")["result"]
         if not b.get("C_admitted"):
             raise ValueError("SAVED_FIELD_IDENTITY_GATE_REQUIRED")
+        if v18 and any(
+            array_hash(fields[key]) != b["rows"][key]["c_sha256"] for key in fields
+        ):
+            raise ValueError("V18_ORIGINAL_FIELD_IDENTITY_CHANGED")
         error0 = fields["M3600"] - c_ref
         error1 = fields["Mfinal"] - c_ref
         delta = fields["Mfinal"] - fields["M3600"]
@@ -132,6 +169,15 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
             energies[name] = integrator.energies(field).tolist()
             mpc[name] = defect
             marker("bounded_field_energy", dict(field=name, energies=energies[name]))
+        if v18:
+            guard()
+            total_ref, total_mpc = restore(
+                floquet, packet, c_ref + packet.a["background"]
+            )
+            energies["reference_total"] = integrator.energies(total_ref).tolist()
+            mpc["reference_total"] = total_mpc
+            for name, value in energies.items():
+                arrays["energy_" + name] = np.asarray(value)
         terms = {}
         for i, name in enumerate(("E_L2", "scaled_curl_L2")):
             cross = (energies["after"][i] - energies["minus"][i]) / 2
@@ -167,6 +213,9 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
         dg0 = fem.functionspace(data.mesh, ("DG", 0))
         region_rows = {}
         cell_volume = np.array([np.linalg.det(j) for j in integrator.geometry])
+        total_volume = float(cell_volume.sum())
+        if v18:
+            arrays["cell_volumes_nm3"] = cell_volume
         for name, cells in region_names.items():
             guard()
             indicator = fem.Function(dg0)
@@ -197,6 +246,26 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
                     incident_floor=1e-12 * np.sqrt(volume),
                     MPC_relative=defect,
                 )
+                if v18:
+                    which = "before" if key == "M3600" else "after"
+                    row["states"][key].update(
+                        regional_statistics(
+                            value, ref_energy, volume, total_volume, energies[which]
+                        )
+                    )
+                    arrays[name + "_" + key + "_error_energy"] = value
+            if v18:
+                arrays[name + "_reference_energy"] = ref_energy
+                row["increment"] = dict(
+                    error_energy=(
+                        np.array(row["states"]["Mfinal"]["error_energy"])
+                        - np.array(row["states"]["M3600"]["error_energy"])
+                    ).tolist(),
+                    concentration=(
+                        np.array(row["states"]["Mfinal"]["concentration"])
+                        - np.array(row["states"]["M3600"]["concentration"])
+                    ).tolist(),
+                )
             region_rows[name] = row
             marker("bounded_region", dict(region=name, cells=len(cells)))
         result.update(
@@ -210,6 +279,37 @@ def run(stage, design, pre, artifact, marker, manifest, load_index):
             A_actions=0,
             Gsolve_count=0,
         )
+        if v18:
+            result.update(
+                total_volume_nm3=total_volume,
+                k0_per_nm=float(cfg.k0),
+                ell_nm=5.0,
+                regions_are_overlapping_not_additive=True,
+                parameter_states=list(pre["states"]),
+                pde_only_solve=False,
+                pde_only_solver_qualified=False,
+                features_reference_exposed=True,
+                diagnostic_only=True,
+                data_role="REFERENCE_EXPOSED_DIAGNOSTIC",
+                scattering_and_total_error_numerator_identical=True,
+                global_denominators={
+                    kind: dict(
+                        reference_energy=energies[name],
+                        actual_denominator=np.maximum(
+                            np.sqrt(energies[name]), 1e-12 * np.sqrt(total_volume)
+                        ).tolist(),
+                        incident_floor=1e-12 * np.sqrt(total_volume),
+                    )
+                    for kind, name in (
+                        ("scattered", "reference"),
+                        ("total", "reference_total"),
+                    )
+                },
+                field_identity={key: array_hash(fields[key]) for key in fields},
+                reference_identity=array_hash(c_ref),
+                G_actions=0,
+                AH_actions=0,
+            )
         if (
             max(
                 [x["defect"] for x in terms.values()]

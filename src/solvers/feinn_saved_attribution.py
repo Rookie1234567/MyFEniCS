@@ -55,9 +55,9 @@ class DiagnosticActions:
         )
 
 
-def frozen_fields(index):
+def frozen_fields(index, names=None):
     with np.load(checked_entry(index["files"]["fields"]), allow_pickle=False) as data:
-        return {k: np.array(data[k]) for k in data.files}
+        return {k: np.array(data[k]) for k in (data.files if names is None else names)}
 
 
 def run(stage, design, pre, artifact, marker, manifest, load_index):

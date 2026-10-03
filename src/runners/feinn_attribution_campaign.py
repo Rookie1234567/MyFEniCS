@@ -17,7 +17,18 @@ STAGES = {
     "v12_local_parameter_diagnostic": ("ml", 3600, "C1"),
     "v12_test_space_witness": ("fe", 1500, "C2"),
     "v13_background_transfer": ("fe", 1500, "B"),
+    "v18_saved_field_integrals": ("fe", 1800, "B"),
+    "v18_native_network_witness": ("ml", 1800, "C"),
+    "v18_native_network_restore": ("fe", 600, "C"),
 }
+V18_REVIEW_SHA = "c12049f4ed8e5117ee69495c8f9c576b75ba0027"
+V18_DESIGN_RECORD = (
+    ROOT / "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v18.json"
+)
+V18_WITNESS_RECORD = (
+    ROOT
+    / "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_design_v18.json"
+)
 CLOSURE_REVIEW_SHA = "db4611c4092cd8a0ba4c68a391f58964685f945c"
 CLOSURE_DESIGN_RECORD = (
     ROOT / "docs/task042extra_feinn_5nm/outcomes/records/closure_design_v13.json"
@@ -87,6 +98,84 @@ DEPENDENCIES["v13_background_transfer"] = [
     "v7_p_transfer_checks",
     "v12_test_space_witness",
 ]
+DEPENDENCIES["v18_saved_field_integrals"] = [
+    "e1_fe",
+    "e3_reference",
+    "v12_saved_state_freeze",
+    "v12_saved_field_attribution",
+]
+DEPENDENCIES["v18_native_network_witness"] = [
+    "e1_fe",
+    "v8_phase_checks",
+    "v12_saved_state_freeze",
+    "v12_saved_field_attribution",
+]
+DEPENDENCIES["v18_native_network_restore"] = ["e1_fe", "v18_native_network_witness"]
+
+
+def v18_index(stage, route):
+    from src.runners.feinn_workflow import load_index
+
+    keys = {
+        "e1_fe": ("native", "gram")
+        if route == "v18_native_network_witness"
+        else ("native",),
+        "e3_reference": ("reference",),
+        "v8_phase_checks": ("moments",),
+        "v12_saved_state_freeze": ("fields",),
+        "v12_saved_field_attribution": ("result",),
+        "v18_native_network_witness": ("vectors", "result"),
+    }
+    item = load_index(stage, file_keys=keys[stage])
+    saved = json.loads(V18_DESIGN_RECORD.read_text())["saved_field_design"]["identity"]
+    if stage in saved and (
+        item["source_sha"] != saved[stage]["source_sha"]
+        or any(
+            entry != saved[stage]["files"][key] for key, entry in item["files"].items()
+        )
+    ):
+        raise ValueError("V18_FROZEN_INPUT_CHANGED")
+    return item
+
+
+def v18_budget(entries):
+    from time import monotonic
+
+    design = json.loads(V18_DESIGN_RECORD.read_text())
+    clock = json.loads((ROOT / design["batch_clock"]).read_text())
+    elapsed = (
+        monotonic()
+        - clock["start_monotonic"]
+        + clock["startup_unobserved_allowance_seconds"]
+    )
+    chosen = [
+        e
+        for e in entries
+        if "/task42extra_v18_" in e["path"] or "/checks/v18_" in e["path"]
+    ]
+    groups = dict(B=0.0, C=0.0)
+    for row in chosen:
+        name = Path(row["path"]).parent.name
+        group = next(
+            (
+                entry[2]
+                for stage, entry in STAGES.items()
+                if name.startswith("task42extra_" + stage + "_")
+            ),
+            None,
+        )
+        if group in groups:
+            groups[group] += row["seconds"]
+    return dict(
+        new_complete_wall_seconds=elapsed,
+        new_limit_seconds=15600,
+        new_remaining_seconds=15600 - elapsed - 600,
+        groups_used_seconds=groups,
+        groups_remaining_seconds={key: 1800 - value for key, value in groups.items()},
+        entries=chosen,
+        parent_wall_includes_workers=True,
+        startup_and_save_reserve_seconds=660,
+    )
 
 
 def closure_index(stage):
@@ -161,6 +250,19 @@ def campaign_budget(entries):
 
 
 def dispatch(stage, design, artifact, marker, manifest, load_index):
+    if stage.startswith("v18_"):
+        pre = json.loads(V18_DESIGN_RECORD.read_text())["saved_field_design"]
+
+        def loader(name):
+            return v18_index(name, stage)
+
+        if stage == "v18_saved_field_integrals":
+            from src.solvers.feinn_saved_field_diagnostics import run
+
+            return run(stage, design, pre, artifact, marker, manifest, loader)
+        from src.solvers.feinn_native_network_witness import run
+
+        return run(stage, design, pre, artifact, marker, manifest, loader)
     if stage == "v13_background_transfer":
         from src.solvers.feinn_saved_field_diagnostics import background_transfer
 
