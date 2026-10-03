@@ -1,0 +1,74 @@
+{
+  "status": "NOT_RUN_AUXILIARY_CPU_ADMISSION",
+  "decision": "NO_REAL_DIRECTION_CONCLUSION",
+  "implementation_source": "4808fcab78bbf1b1284ffba1f3ff19b0033fb937",
+  "actual_numeric_source": null,
+  "queue_closed": true,
+  "formal_admission_attempts": 0,
+  "formal_runs": 0,
+  "all_numeric_counts": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "actual_results": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "parent_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_zero_20261002T150705305076Z/stage_result.json",
+        "sha256": "4971ba16d38f22bc81e0be8e5ccda1556d99fb7eb3e2f98afa48c2b91b67c479"
+      },
+      "input_state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "4062d5a83cce4eca86715eaee0a587a4e83fc7c54a7da5a654b1843eff6283d7",
+        "trace_sha256": "db3906e8dfca78628cc38aae57556ac6e66806a3793a0d45818858cec3ba350d",
+        "port_sha256": "6e24b9260d2a6ded1530a7d774887d39402d70762f82eb5a0f79a5fb57998357",
+        "z_sha256": "1352294a4b71cd70ea8f307739acd25a0d3edad1ed6e916359d88268ef088e73",
+        "residual_sha256": "0337b6acc75576bab2d697cbaedc37fef0a113e6fa7d247f38b9dedd57f99d3a",
+        "y_sha256": "f7e5167ba5a5d97a7a9d1fec5317f29a5e4bef447cbe1b0cead9c9c44d5af576",
+        "By_sha256": "a63fbdeb9a461b923199fc3773716be607094c74315ad08de928e73cae78fa86"
+      },
+      "historical_V26_eta9": 0.9662055056183675,
+      "eta10": null,
+      "g10": null,
+      "new_direction_resolved": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "parent_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_zero_20261002T151327920057Z/stage_result.json",
+        "sha256": "3051afc21e80bef0baf7b4ebedccbe0c57fd65de9f3aa20bccb71b6062ce13fa"
+      },
+      "input_state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/LCZ/cycles/CYCLE_0004/numeric/slot1.npz",
+        "sha256": "6daf6fc209c6515dfc2fef94a46cf16ee341009d84bbd8e78b479093364a14ad",
+        "trace_sha256": "e97287164f9f92b941f335692aee061413434bbf59d25ddf7a313c89907e9180",
+        "port_sha256": "326991c559503be277d1f73816d77dbbac33d6963be305312f40e52d7161bc90",
+        "z_sha256": "2f30747bb00602d5a62fd5a94a5e7bf507beffb9ef73716f03b3430e70ac7c48",
+        "residual_sha256": "6876c978b19aafb13ce71a38a32c81f1e7b3c8b17f892232d0add1d2ffd693c2",
+        "y_sha256": "9473a1f9dfb277b0fd096253621f30c578756f0c4c607cf5e42b82210ce2d672",
+        "By_sha256": "47368b617dbf34c35451eea6f2822fc179e4da7472b6c0be21169d82b5f6affc"
+      },
+      "historical_V26_eta9": 0.9819684299899415,
+      "eta10": null,
+      "g10": null,
+      "new_direction_resolved": null,
+      "status": "NOT_RUN"
+    }
+  ],
+  "reason": "Final supervised auxiliary admission rejected all physical cores/SMT candidates; no repeat or formal launch after prerequisite resource Gate rejection",
+  "old_V27_remains_closed": true,
+  "original_size_qualification": "NOT_QUALIFIED",
+  "neural_20percent_gain": "NOT_DEMONSTRATED",
+  "new_official_physics": false
+}

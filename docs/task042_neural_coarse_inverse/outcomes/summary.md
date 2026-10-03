@@ -1,3 +1,20 @@
+# Task042 V28：审阅所需验算已补，辅助准入拒绝后停止
+
+回流本想增加旧九个修正方向之外的一条信息传播路径。本轮先补独立保存数组审核与可重算CPU快照，代价是少量证书和审核费用；真实回流未启动，不凭小fixture判断其有效性。
+
+| 数据身份／完成项 | 数值、单位与具体边界 |
+|---|---|
+| 实现／measured fixture | 100 passed in5.28s（新33＋旧67）；compileall／dat验证通过；source4808fcab78bbf1b1284ffba1f3ff19b0033fb937 |
+| 独立checker／NOT_RUN | 正例、可信弱／零系数／退化和库存预算反例通过；真实两冷态无新向量，checker实际结果NOT_RUN |
+| parent纠正／derived | V24父记录4971ba16／3051afc2逐名绑定；旧V27两个null只在新记录纠正，原文件不改 |
+| CPU／measured停止 | 成功辅助CPU11，最终辅助候选空；失败快照＋原始stderr可重算，内存／PSI未检查不填PASS |
+| 数值／not_run | 正式准入0、actor0、原作用0、reader0、新真实LU0；eta10/g10=null，无新FE或official物理结果 |
+| 成本／shared-workstation | V28受监督辅助8.797189402s；两轮累计21.163846770s/600s；辅助树峰150,163,456B，swap/VRAM0；全elapsed另记 |
+| 历史及目标资格 | V24 0/5、V23 0/6不改；77,161.557139s研发下界与旧unknown保留；NN20%未证实、原尺寸/2TB/48h未合格 |
+| 停止与唯一建议 | ledger closed，无重入或后台等待；外部CPU条件改善后由review另判授权，不改变方向、门限或模型 |
+
+[Response V28](../response_v28.md)／[详细结果](return_direction_v28.md)／[cost](records/resource_costs_v28.json)／[raw index](records/run_index_v28.json)。无subagents、重置卡、dot/其他分支/邻任务变更或merge。以下旧结论原样保留。
+
 # Task042 V27：修复测试后，回流诊断因CPU准入未运行
 
 固定J→外域→J只计划检验九个历史方向之外的一个方向，没有改变有限元方程。67项pure回归、compileall及新dat验证通过；正式入口未找到合格空闲物理核，已用完允许的一次只读复核，actor前以NOT_RUN_CPU_ADMISSION收口。两冷态eta10/g10均NOT_RUN，不把资源停止改成方向失败。

@@ -1,3 +1,7 @@
+# V28最新交付：checker／parent／准入证据完成，CPU Gate停止
+
+[Review V25](review_report_v25.md)／[Response V28](response_v28.md)／[详细结果](outcomes/return_direction_v28.md)／[独立checker](outcomes/records/return_direction_checker_v28.json)／[准入快照重算](outcomes/records/admission_checker_v28.json)／[raw index](outcomes/records/run_index_v28.json)。100项相关回归、compileall与dat验证通过；第二辅助准入失败后停止，正式准入0／actor0／S+SH0／reader0。两态回流NOT_RUN，不将资源停止写成数值负结果；V27 closed保持，新记录纠正旧null父指针。累计有载21.163846770s，NN20%及原尺寸资格未获得。等待审阅，不自动重入。以下历史完整保留。
+
 # 最新审阅：Review V25／接受V27零消费停止
 
 [Review V25](review_report_v25.md)接受V27的CPU准入停止，关闭真实窗口测试依赖问题；本次67项相关测试通过。真实回流方向仍未运行，不能称数值负结果。

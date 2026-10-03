@@ -1,3 +1,15 @@
+# V28测试与实际未运行边界
+
+| scope／身份 | 结果及证据 |
+|---|---|
+| 最终保留的pure实现 | 100 passed in5.28s；新33+旧67，不将重复执行相加；compileall与真实V28 dat validate通过 |
+| 独立结果checker小fixture | 正例、弱增量、beta0、已解基线null、零/重复/近零、库存/预算/非有限/失败Gate反例通过；不调用真实A/因子或新QR/SVD |
+| 实际准入重算 | 成功候选11/22/26及拒绝空集合重算一致；资源项已检查/NOT_CHECKED严格分列；原始stdio与无损快照hash绑定 |
+| 最后辅助／真实诊断 | 第二辅助在CPU Gate拒绝，后续pytest/compile/validate命令NOT_RUN；可选加强未纳入源码，恢复首次通过实现；正式准入与数值actor0 |
+| 成本／资格边界 | 新辅助8.797189402s、两轮累计21.163846770s；没有CI/full/MPI2/4/新PDE/Ruff或真实因子见证；旧跨任务checker失败未修，不宣称全仓绿 |
+
+[测试原始日志](records/tests_v28.json)／[准入证据](records/admission_checker_v28.json)／[run index](records/run_index_v28.json)。GitHub精确页Cache miss，视觉NOT_VERIFIED；本地静态另记。以下历史逐字保留。
+
 # V27最终测试与未运行边界
 
 67项focused pure测试通过（1.70s），包含旧V26的42项scope、4项临时ledger／时钟拒绝与21项V27回流fixture；46和早期67为相同scope子集／重复，不相加。源码与clean commit7b0e03f2逐文件绑定。compileall及真实新dat validate PASS。生产V26窗口／ledger未变。

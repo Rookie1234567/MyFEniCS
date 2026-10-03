@@ -1,0 +1,31 @@
+{
+  "status": "LOCAL_FOCUSED_PASSED",
+  "tests_passed": 100,
+  "pytest_seconds": 5.28,
+  "scope": [
+    "test_task042_v28_cached_checker.py",
+    "test_task042_v27_return_direction.py",
+    "test_task042_v26_joint_direction.py",
+    "test_task042_v25_block_direction.py",
+    "test_task042_v26_inventory.py"
+  ],
+  "new_tests": 33,
+  "old_tests": 67,
+  "compileall": "PASS",
+  "one_run_dat_validate": "PASS",
+  "implementation_source": "4808fcab78bbf1b1284ffba1f3ff19b0033fb937",
+  "test_head_at_execution": "455d816f01a44cdb98c53c893f48898602aaf752",
+  "source_committed_after_tests": true,
+  "delivered_numerical_implementation": "restored to first 100-pass scope after removing unexecuted optional strengthening",
+  "second_auxiliary_tests": "NOT_RUN_CPU_ADMISSION",
+  "worker_log": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035041548522/supervision/worker.log",
+    "sha256": "429ea85e8eb5f05340ae88e92fb867248a1c0ef27781acf092e8a13bca816203",
+    "bytes": 966
+  },
+  "live_factor_action_or_QR_tests": "NOT_RUN",
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN",
+  "Ruff": "not installed",
+  "old_cross_task_registry_failures": "unchanged; no all-green claim"
+}

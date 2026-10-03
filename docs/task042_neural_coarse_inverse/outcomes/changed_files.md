@@ -1,3 +1,16 @@
+# V28变化与依赖分组
+
+| 组 | 改动、资格与依赖 |
+|---|---|
+| production numerical/core | 原物理/材料/MPC/恢复/普通默认不变，无production资格提升 |
+| research-only | return数学核同一薄QR新增p9/QR/原作用证书；未分辨列只考核合格九列驻点，原门限不变；真实两态NOT_RUN |
+| reusable runner/watchdog | 原audit默认关闭receipt，仅V28显式出口；成功/失败CPU及未查Gate均保存；原0.5s监督/资源策略保留；独立V28薄接线与V27累计carry |
+| checker/benchmark | 独立cached-array数值checker、parent映射、准入receipt重算；33新fixture＋67旧scope100通过；不新调用原A/LU/分解 |
+| compact evidence/docs | 新response/outcomes、原始stderr及gzip快照、parent纠正、账/索引/源码/导航；旧task/review/response/raw不改 |
+| do-not-merge | ignored因素/raw/cache/TMP及尚无真实资格的研究路径；无merge approval |
+
+依赖顺序为checker/fixture→显式io/window/audit→research证书→证据文档；不是合并授权。source4808fcab…与最终文档HEAD及空数值source分开。以下历史保留。
+
 # V27变化与依赖分组
 
 | 依赖组 | 行为／证据／审阅边界 |

@@ -1,0 +1,1 @@
+{"directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035041548522", "classification": "COMPLETED", "elapsed_seconds": 8.79718940204475, "leader_exit_code": 0}

@@ -1,0 +1,32 @@
+{
+  "status": "ZERO_CONSUMPTION_AND_RESOURCE_RECHECKED",
+  "timeline": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035041548522/supervision/resources.jsonl",
+    "sha256": "94f5232c4bc2c6634780eef4249d1bdcd2ee19be3dca0bb542b25b635cecaec4",
+    "samples": 14,
+    "rss_peak_bytes": 150163456,
+    "swap_peak_bytes": 0,
+    "includes_launcher": true
+  },
+  "actor_arrays": 0,
+  "formal_result_directories": 0,
+  "formal_admission_marker_present": false,
+  "closed_ledger": true,
+  "counts": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "unchanged_V26_ledger_sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853",
+  "V27_closed": true,
+  "no_new_operator_factor_or_QR": true
+}

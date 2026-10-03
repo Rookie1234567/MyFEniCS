@@ -1,0 +1,138 @@
+{
+  "schema": "task042.admission-replay.v28",
+  "implementation_source": "4808fcab78bbf1b1284ffba1f3ff19b0033fb937",
+  "checker_entry": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_admission_receipt.py",
+    "sha256": "2f334b479fe5417624515336898efaf47b575415ad7c6b296ff3a561014fa4fa",
+    "bytes": 2151
+  },
+  "receipt_results": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035041548522/admission.json",
+      "bytes": 487548,
+      "observation_status": "ADMITTED",
+      "recomputed": {
+        "status": "CPU_RECEIPT_REPLAYED",
+        "candidate_cpus": [
+          11,
+          22,
+          26
+        ],
+        "CPU_SMT": "PASS",
+        "other_gates": {
+          "CPU_SMT": "PASS",
+          "MEMORY": "PASS",
+          "DISK": "PASS",
+          "PSI": "PASS",
+          "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+        },
+        "no_live_probe": true,
+        "no_reinterpretation_as_zero_interference": true
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035200694364/admission.json",
+      "bytes": 340805,
+      "observation_status": "REJECTED",
+      "recomputed": {
+        "status": "CPU_RECEIPT_REPLAYED",
+        "candidate_cpus": [],
+        "CPU_SMT": "FAIL",
+        "other_gates": {
+          "CPU_SMT": "FAIL",
+          "MEMORY": "NOT_CHECKED",
+          "DISK": "NOT_CHECKED",
+          "PSI": "NOT_CHECKED",
+          "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+        },
+        "no_live_probe": true,
+        "no_reinterpretation_as_zero_interference": true
+      }
+    }
+  ],
+  "observations": [
+    {
+      "raw": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035041548522/admission.json",
+        "sha256": "7cec38d7322540eb5887dcbe96867214f7e4dc6121d86247127014e44dc0c999",
+        "bytes": 487548
+      },
+      "lossless_gzip": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_accepted_v28.json.gz",
+        "sha256": "db05dd0c06be8c6a05f92b4c24d5005c663b2e24c384a6196be6630b0b00113d",
+        "bytes": 26461
+      },
+      "raw_sha256": "7cec38d7322540eb5887dcbe96867214f7e4dc6121d86247127014e44dc0c999",
+      "status": "ADMITTED",
+      "utc": "2026-10-03T03:50:41.548643+00:00",
+      "monotonic": 924436.409515228,
+      "finished_monotonic": 924437.686072548,
+      "observed_probe_seconds": 1.2765573200304061,
+      "pid": 1391631,
+      "process_start_ticks": 92443570,
+      "cwd": "/home/fenics/Projects/NN-Lab",
+      "exact_input": "bash tmp/task042/v28/aux_checks.sh",
+      "candidate_cpus": [
+        11,
+        22,
+        26
+      ],
+      "selected_cpu": 11,
+      "gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      },
+      "recomputed_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS"
+      },
+      "not_zero_interference_proof": true
+    },
+    {
+      "raw": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/aux_035200694364/admission.json",
+        "sha256": "b1fbd0080a01fa0d777a9dc01e22af7ea4fd7d5e0859f22d42351b0e5c97c31d",
+        "bytes": 340805
+      },
+      "lossless_gzip": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/admission_rejected_v28.json.gz",
+        "sha256": "437356115f0d69a08d43725c795ae65ccfa6cfd25a5a5300b354ad1cef0fe589",
+        "bytes": 17583
+      },
+      "raw_sha256": "b1fbd0080a01fa0d777a9dc01e22af7ea4fd7d5e0859f22d42351b0e5c97c31d",
+      "status": "REJECTED",
+      "utc": "2026-10-03T03:52:00.694545+00:00",
+      "monotonic": 924515.555422483,
+      "finished_monotonic": 924516.873889432,
+      "observed_probe_seconds": 1.3184669490437955,
+      "pid": 1392446,
+      "process_start_ticks": 92451538,
+      "cwd": "/home/fenics/Projects/NN-Lab",
+      "exact_input": "bash tmp/task042/v28/final_checks.sh",
+      "candidate_cpus": [],
+      "selected_cpu": null,
+      "gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED",
+        "CGROUP_GPU_SNAPSHOT": "NOT_CHECKED"
+      },
+      "recomputed_gates": {
+        "CPU_SMT": "FAIL",
+        "MEMORY": "NOT_CHECKED",
+        "DISK": "NOT_CHECKED",
+        "PSI": "NOT_CHECKED"
+      },
+      "not_zero_interference_proof": true
+    }
+  ],
+  "no_reprobe": true,
+  "formal_admission_attempted": false,
+  "formal_actor_started": false
+}

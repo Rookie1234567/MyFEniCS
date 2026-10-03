@@ -1,0 +1,105 @@
+{
+  "implementation_source": "4808fcab78bbf1b1284ffba1f3ff19b0033fb937",
+  "actual_numeric_source": null,
+  "initial_HEAD": "455d816f01a44cdb98c53c893f48898602aaf752",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "branch": "task42_neural_coarse_inverse",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "source_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/collect_task042_return_direction.py",
+      "sha256": "6d58545051464671c62cb8a869b2a0f7f0cc3c7c441637f88c2ba0a33cab8ba0",
+      "bytes": 13930
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_admission_receipt.py",
+      "sha256": "2f334b479fe5417624515336898efaf47b575415ad7c6b296ff3a561014fa4fa",
+      "bytes": 2151
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/task042_diagnostic_auxiliary.py",
+      "sha256": "f8259a33c16c36986eada416f5f59e1ce0e670c329c2a4321c3e22d5de33a0a1",
+      "bytes": 1841
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/return_block_direction_v28.json",
+      "sha256": "c82662a556b1f5dd32d2e064e23b74f6a686b29def04ffb0e5e83a6379101d44",
+      "bytes": 10426
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v28_return_direction_diagnostic.dat",
+      "sha256": "79bf552bd0c2b6b1a917c975dd2844e47d999869e4fbdf7cce97c73a087711ef",
+      "bytes": 232
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "sha256": "a7daaeb3b9fa150e789fe329c92ae8087e761bb382f419ab596c1475832c0d7e",
+      "bytes": 11500
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/return_block_continuation.py",
+      "sha256": "1e24f5f72bc9b69a6c40d2adb46dfb76009891b31920a4f149b6100705c7b5a1",
+      "bytes": 786
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/return_block_diagnostic.py",
+      "sha256": "4d4621e78981444113f239d028a24a0f43373bb8fcf69c9121670a684e045246",
+      "bytes": 4655
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/task042_profile.py",
+      "sha256": "64e8d9b5c74c956baa71df622c101a2b9b29c88098f8b0b8327c675aa4b294fc",
+      "bytes": 5669
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/return_block_diagnostic.py",
+      "sha256": "678dee51ec9142c1124c306b0a69a029e25c8f8c915dfa2a0458f49bdc800356",
+      "bytes": 1953
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+      "sha256": "2243c63370ad89ae5be5c3a2b5530f44b29f52858d5f21d267035071f4a7853d",
+      "bytes": 55954
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/bounded_diagnostic_window.py",
+      "sha256": "0c8b7f4c2b51d8aeb87e027e211d11876809465795a9aff80dd7d85ce9d320aa",
+      "bytes": 3921
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_continuation_window.py",
+      "sha256": "a98c3cb0c6b8e00e6e20c2488e3f1e3019cf822e4e5435eff6c50efbdf396298",
+      "bytes": 784
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_direction.py",
+      "sha256": "7f04943e60dc7ee803c707c12a624fb757a331a450bcd26d36eee2e441cef62d",
+      "bytes": 10603
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/return_block_study.py",
+      "sha256": "6724573d0395d6b15a659ace40b52c356e3ada6dfeb82ddf5bac635ca19feb73",
+      "bytes": 15357
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v28_cached_checker.py",
+      "sha256": "9f41c64efbdb62ae857d36959976fc28b619499f9cb5dfd885c1f9e2358670a8",
+      "bytes": 9165
+    }
+  ],
+  "pure_activation": {
+    "path": "/home/fenics/Projects/NN-Lab/scripts/activate_task042.sh",
+    "sha256": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "bytes": 5101
+  },
+  "input": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v28_return_direction_diagnostic.dat",
+    "sha256": "79bf552bd0c2b6b1a917c975dd2844e47d999869e4fbdf7cce97c73a087711ef",
+    "bytes": 232
+  },
+  "pre_registration": {
+    "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/return_block_direction_v28.json",
+    "sha256": "c82662a556b1f5dd32d2e064e23b74f6a686b29def04ffb0e5e83a6379101d44",
+    "bytes": 10426
+  }
+}

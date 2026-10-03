@@ -1,0 +1,28 @@
+{
+  "status": "NOT_RUN",
+  "actual_numeric_source": null,
+  "rows": [
+    {
+      "name": "V24-LZ-CYCLE4",
+      "parent_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_zero_20261002T150705305076Z/stage_result.json",
+        "sha256": "4971ba16d38f22bc81e0be8e5ccda1556d99fb7eb3e2f98afa48c2b91b67c479"
+      },
+      "eta10": null,
+      "g10": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "V24-LCZ-CYCLE4",
+      "parent_result": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v24/task042_v24_local_coarse_zero_20261002T151327920057Z/stage_result.json",
+        "sha256": "3051afc21e80bef0baf7b4ebedccbe0c57fd65de9f3aa20bccb71b6062ce13fa"
+      },
+      "eta10": null,
+      "g10": null,
+      "status": "NOT_RUN"
+    }
+  ],
+  "checker_scope": "no actual arrays; no numerical PASS claimed",
+  "checker_source_sha256": "6d58545051464671c62cb8a869b2a0f7f0cc3c7c441637f88c2ba0a33cab8ba0"
+}

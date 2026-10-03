@@ -1,3 +1,16 @@
+# Task042 V28：验算与准入证据补齐，数值仍未消费
+
+独立checker从保存数组重算回流诊断，防止零系数或退化被错误拒绝；新parent映射纠正旧null，成功／失败CPU快照可重算。100项小回归、compileall和V28 dat通过；最终辅助准入未找到合格物理核，前置资源Gate失败后停止，正式准入0／actor0／S+SH0／reader0。没有真实方向结论、新FE或学习资格。
+
+| 项目／数据身份 | 实际值／边界 |
+|---|---|
+| source／离散 | 4808fcab78bbf1b1284ffba1f3ff19b0033fb937实现；数值source=null；原0.7nm/384hex/p3/q15/40port不变 |
+| 成本／shared-workstation | 新辅助8.797189402s，两轮累计21.163846770s/600s；辅助同时RSS150,163,456B、自身swap0；旧77,161.557139s formal下界／N=1 unknown保持 |
+| 资源停止／measured | 成功CPU11、最终候选空；原5%/SMT门限未变，失败未查memory/PSI=NOT_CHECKED；原始stderr及快照保存，不重试找核 |
+| 资格与下一步 | V24 0/5、V23 0/6保持，NN20%未证实、原尺寸2TB/48h未合格；建议外部条件改善后另审授权，不自动重入/merge |
+
+[Response V28](task042_neural_coarse_inverse/response_v28.md)／[summary](task042_neural_coarse_inverse/outcomes/summary.md)／[原始索引](task042_neural_coarse_inverse/outcomes/records/run_index_v28.json)。旧历史逐字保留，无dot、其他分支、邻任务或系统设置改动。
+
 # Task042 V27：修复测试后，回流诊断因CPU准入未运行
 
 固定J→外域→J只计划检验九个历史方向之外的一个方向，没有改变有限元方程。67项pure回归、compileall及新dat验证通过；正式入口未找到合格空闲物理核，已用完允许的一次只读复核，actor前以NOT_RUN_CPU_ADMISSION收口。两冷态eta10/g10均NOT_RUN，不把资源停止改成方向失败。
