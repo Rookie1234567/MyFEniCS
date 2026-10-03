@@ -1,0 +1,50 @@
+{
+  "schema": "task042.delivery-observation.v28",
+  "observed_utc": "2026-10-03T04:02:37.238261+00:00",
+  "monotonic": 925152.099150662,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "elapsed_seconds": 1227.4467098712921,
+  "observation_phase": "before receipt commit and push; final pushed HEAD reported separately",
+  "head": "1d7b6514149214303b5b6936de694f48f5d6e257",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "implementation_source": "4808fcab78bbf1b1284ffba1f3ff19b0033fb937",
+  "actual_numeric_source": null,
+  "pwd": "/home/fenics/Projects/NN-Lab",
+  "git_toplevel": "/home/fenics/Projects/NN-Lab",
+  "branch": "task42_neural_coarse_inverse",
+  "upstream": "origin/task42_neural_coarse_inverse",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "common_git_directory": "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git",
+  "worktree_registration": [
+    "worktree /home/fenics/Projects/NN-Lab\nHEAD 1d7b6514149214303b5b6936de694f48f5d6e257\nbranch refs/heads/task42_neural_coarse_inverse"
+  ],
+  "ahead_behind": [
+    "2",
+    "0"
+  ],
+  "worktree_status_at_observation": "",
+  "window": {
+    "schema": "task042.campaign-window.v28",
+    "start_utc": "2026-10-03T03:42:09.791551+00:00",
+    "start_monotonic": 923924.652444378,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "heavy_limit_seconds": 4500,
+    "total_limit_seconds": 5400,
+    "heavy_stop_utc": "2026-10-03T04:57:09.791551+00:00",
+    "deadline_utc": "2026-10-03T05:12:09.791551+00:00",
+    "review_commit": "455d816f01a44cdb98c53c893f48898602aaf752",
+    "prior_V27_auxiliary_seconds": 12.366657367907465,
+    "numeric_plus_supervised_auxiliary_cumulative_limit_seconds": 600
+  },
+  "closed_ledger": true,
+  "formal_admission_attempts": 0,
+  "formal_actor_runs": 0,
+  "cumulative_V27_V28_supervised_seconds": 21.163846769952215,
+  "original_size": "NOT_QUALIFIED",
+  "neural_20percent": "NOT_DEMONSTRATED",
+  "new_V27_V28_persistent_bytes_at_observation": 44554177,
+  "global_artifact_bytes_at_observation": 18024901709,
+  "disk_free_bytes": 3388300509184,
+  "view": "shared-workstation; no numeric performance conclusion",
+  "raw_gzip_snapshots_lossless": true
+}
