@@ -4793,6 +4793,29 @@ def _settle_v14_shared_budget(
         _write_v14_ledger(path, ledger)
 
 
+def _task40_v6_parent_continuation_authorized(
+    *,
+    v6_authorized_postprocess: bool,
+    post_attempts: Sequence[Mapping[str, Any]],
+) -> bool:
+    """Recognize the original V6 continuation after its recorded parent failure.
+
+    The V6 authorization binds the PDE source SHA in the solve ledger.  A
+    clean postprocess-only repair can have a newer source SHA, which the
+    postprocess lease records separately.
+    """
+
+    return bool(
+        v6_authorized_postprocess
+        and len(post_attempts) == 1
+        and post_attempts[0].get("source_sha")
+        == TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
+        and post_attempts[0].get("status") == "POSTPROCESS_PARENT_FAILED"
+        and post_attempts[0].get("watchdog_classification") is None
+        and post_attempts[0].get("watchdog_leader_exit_code") is None
+    )
+
+
 def _reserve_task40_v5_postprocess_budget(
     repo_root: Path,
     *,
@@ -4881,15 +4904,9 @@ def _reserve_task40_v5_postprocess_budget(
     )
     if len(post_attempts) > (2 if v6_authorized_postprocess else 1):
         raise InputError("Task40 postprocessing exceeded its authorized local repair replay")
-    v6_parent_continuation = bool(
-        v6_authorized_postprocess
-        and len(post_attempts) == 1
-        and source_sha == review_authorization.get("source_sha")
-        and post_attempts[0].get("source_sha")
-        == TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA
-        and post_attempts[0].get("status") == "POSTPROCESS_PARENT_FAILED"
-        and post_attempts[0].get("watchdog_classification") is None
-        and post_attempts[0].get("watchdog_leader_exit_code") is None
+    v6_parent_continuation = _task40_v6_parent_continuation_authorized(
+        v6_authorized_postprocess=v6_authorized_postprocess,
+        post_attempts=post_attempts,
     )
     replay = bool(post_attempts) and not v6_parent_continuation
     replay_record = None

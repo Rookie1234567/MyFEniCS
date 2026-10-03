@@ -211,6 +211,38 @@ def test_ready_worker_uses_its_numerical_classification_not_launcher_exit_class(
     assert manifest["result_classification"] == "worker_exit0"
 
 
+def test_v6_parent_continuation_allows_postprocess_source_repair():
+    code = """
+from src.runners.task038_launcher import (
+    TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA,
+    _task40_v6_parent_continuation_authorized,
+)
+prior_attempt = {
+    "source_sha": TASK40_V5_PRELEDGER_FIXED_SOURCE_SHA,
+    "status": "POSTPROCESS_PARENT_FAILED",
+    "watchdog_classification": None,
+    "watchdog_leader_exit_code": None,
+}
+# The current postprocess repair SHA may differ; Q4 remains bound in its ledger.
+current_postprocess_source_sha = "f" * 40
+assert current_postprocess_source_sha != prior_attempt["source_sha"]
+assert _task40_v6_parent_continuation_authorized(
+    v6_authorized_postprocess=True,
+    post_attempts=[prior_attempt],
+)
+assert not _task40_v6_parent_continuation_authorized(
+    v6_authorized_postprocess=False,
+    post_attempts=[prior_attempt],
+)
+"""
+    subprocess.run(
+        [sys.executable, "-c", code],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_supervisor_and_worker_modules_import_without_numerical_stack():
     code = """
 import sys
