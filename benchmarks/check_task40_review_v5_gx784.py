@@ -184,6 +184,37 @@ def check_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "failure_reasons": list(solver_gate["failure_reasons"]),
         }
 
+    field_preflight = payload.get("field_artifact_preflight")
+    if isinstance(field_preflight, dict):
+        archive_path_value = field_preflight.get("archive_path")
+        expected_archive_sha = field_preflight.get("expected_sha256")
+        actual_archive_sha = None
+        if archive_path_value:
+            archive_path = Path(str(archive_path_value)).resolve()
+            if archive_path.is_file() and archive_path.stat().st_size > 0:
+                actual_archive_sha = _sha256(archive_path)
+        if (
+            field_preflight.get("complete") is not True
+            or not isinstance(expected_archive_sha, str)
+            or actual_archive_sha != expected_archive_sha
+        ):
+            reason = field_preflight.get("failure_reason") or (
+                "Gx784 retained-field archive is missing or its SHA differs"
+            )
+            return {
+                "schema": "task40extra.review-v5.gx784-independent-check.v1",
+                "status": "failed",
+                "classification": "saved_field_archive_missing_or_hash_mismatch_comparison_held",
+                "comparison_status": "held",
+                "independently_recomputed": True,
+                "solver_gate": solver_gate,
+                "field_artifact_preflight": {
+                    **field_preflight,
+                    "actual_sha256": actual_archive_sha,
+                },
+                "failure_reasons": [str(reason)],
+            }
+
     restoration_failures = []
     for label in ("Gx", "F5", "Gx784"):
         witness = payload.get("runs", {}).get(label, {}).get(

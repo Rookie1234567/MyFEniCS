@@ -544,7 +544,13 @@ def test_v20_entry_passes_legacy_complete_packet_contract_to_real_outer_factory(
 
     class FakeRuntime:
         time_policy = "observe_only"
+        time_policy_facts = {"time_policy": "observe_only"}
         shared_budget = {}
+        shared_attempt = {
+            "time_policy": "observe_only",
+            "reserved_seconds": 43200.0,
+        }
+        workflow_reserved_seconds = 43200.0
         contract = {"resources": {}}
         source_sha = "s" * 40
 

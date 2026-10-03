@@ -1186,6 +1186,148 @@ def _v22_capacity_callbacks(
     return build_capacity_request, observe_numeric, continuation_gate
 
 
+def _resolve_v20_worker_time_contract(resolved_payload, runtime, *, profile, stage):
+    """Resolve V20's legacy observation policy or the exact Task40 V5 clock.
+
+    Historical V20 workers keep their observation-only PC and stage clocks.
+    The one exception is the fully identified Gx784 Review V5 input, whose
+    parent-owned shared ledger enforces the reviewed 48-hour workflow limit.
+    """
+
+    from src.geometry.task40_nonseparable_plan import (
+        TASK40_COMPARISON_GROUP,
+        TASK40_GX784_RUN_ID,
+        TASK40_GX784_WORKFLOW_BUDGET_SECONDS,
+    )
+    from .physical_v14_budget import (
+        V14_TIME_POLICY_ENFORCE,
+        V14_TIME_POLICY_OBSERVE_ONLY,
+        normalize_v14_time_policy,
+    )
+
+    solver = resolved_payload.get("solver", {})
+    execution = resolved_payload.get("execution", {})
+    method = resolved_payload.get("method", {})
+    run_id = resolved_payload.get("run_id")
+    policy = normalize_v14_time_policy(getattr(runtime, "time_policy", None))
+    attempt = getattr(runtime, "shared_attempt", {})
+    attempt_policy = normalize_v14_time_policy(attempt.get("time_policy"))
+    if attempt_policy != policy:
+        raise ValueError("V20 worker time policy differs from its parent ledger attempt")
+
+    if run_id == TASK40_GX784_RUN_ID:
+        budget = float(TASK40_GX784_WORKFLOW_BUDGET_SECONDS)
+        timeout = (
+            execution.get("timeout_seconds")
+            if isinstance(execution, Mapping)
+            else None
+        )
+        if (
+            not isinstance(solver, Mapping)
+            or not isinstance(method, Mapping)
+            or not isinstance(execution, Mapping)
+            or profile != TASK40_REFERENCE_METRIC_PROFILE
+            or solver.get("preconditioner") != TASK40_REFERENCE_METRIC_PROFILE
+            or stage != "Q4_ORIGINAL"
+            or method.get("kind") != "full3d_iterative"
+            or resolved_payload.get("comparison_group") != TASK40_COMPARISON_GROUP
+            or isinstance(timeout, bool)
+            or not isinstance(timeout, (int, float))
+            or float(timeout) != budget
+        ):
+            raise ValueError(
+                "Task40 Review V5 Gx784 requires its exact profile, Q4 identity, "
+                "comparison group, and 172800-second input budget"
+            )
+        if policy != V14_TIME_POLICY_ENFORCE:
+            raise ValueError(
+                "Task40 Review V5 Gx784 requires the parent-enforced time policy"
+            )
+        shared_total = float(
+            getattr(runtime, "shared_budget", {}).get("total_budget_seconds", -1.0)
+        )
+        parent_reserved = float(attempt.get("reserved_seconds", -1.0))
+        runtime_reserved = float(
+            getattr(runtime, "workflow_reserved_seconds", -1.0)
+        )
+        if (
+            shared_total != budget
+            or not np.isfinite(parent_reserved)
+            or not np.isfinite(runtime_reserved)
+            or not 0.0 < parent_reserved <= budget
+            or abs(parent_reserved - runtime_reserved) > 1.0e-9
+        ):
+            raise ValueError(
+                "Task40 Review V5 Gx784 parent reservation does not match "
+                "the 172800-second shared ledger"
+            )
+
+        resources = runtime.contract["resources"]
+        original_stage_budget = resources.get("stage_budgets", {}).get(stage)
+        if (
+            not isinstance(original_stage_budget, Mapping)
+            or float(original_stage_budget.get("workflow_seconds", -1.0)) != 43200.0
+            or float(original_stage_budget.get("solve_seconds", -1.0)) != 43200.0
+            or float(resources.get("pc_soft_seconds", -1.0)) != 25.0
+            or float(resources.get("pc_hard_seconds", -1.0)) != 30.0
+            or resources.get("time_policy") != V14_TIME_POLICY_OBSERVE_ONLY
+            or resources.get("require_observe_only") is not True
+        ):
+            raise ValueError(
+                "Task40 Review V5 base V20 time declarations changed unexpectedly"
+            )
+
+        effective_resources = dict(resources)
+        stage_budgets = dict(resources["stage_budgets"])
+        stage_budgets[stage] = {
+            "workflow_seconds": budget,
+            "solve_seconds": budget,
+        }
+        effective_resources.update(
+            workflow_seconds=budget,
+            solve_seconds=budget,
+            pc_soft_seconds=budget,
+            pc_hard_seconds=budget,
+            time_policy=V14_TIME_POLICY_ENFORCE,
+            require_observe_only=False,
+            stage_budgets=stage_budgets,
+        )
+        effective_contract = dict(runtime.contract)
+        effective_contract["resources"] = effective_resources
+        runtime.contract = effective_contract
+        runtime.task40_gx784_enforced_clock = True
+        runtime.task40_gx784_enforced_clock_seconds = budget
+        return {
+            "authorization": "task40_review_v5_exact_gx784",
+            "effective_time_policy": V14_TIME_POLICY_ENFORCE,
+            "hard_limit_seconds": budget,
+            "shared_ledger_total_budget_seconds": shared_total,
+            "parent_reserved_seconds": parent_reserved,
+            "stage_workflow_seconds": budget,
+            "stage_solve_seconds": budget,
+            "pc_soft_seconds": budget,
+            "pc_hard_seconds": budget,
+            "legacy_pc_observation_seconds_overridden": [25.0, 30.0],
+            "legacy_observe_only_declaration_overridden": True,
+        }
+
+    if policy != V14_TIME_POLICY_OBSERVE_ONLY:
+        raise ValueError(
+            "V20 enforced time policy is reserved for the exact Task40 Review V5 Gx784 input"
+        )
+    runtime.task40_gx784_enforced_clock = False
+    resources = runtime.contract["resources"]
+    stage_budget = resources.get("stage_budgets", {}).get(stage, {})
+    return {
+        "authorization": "historical_v20_observe_only",
+        "effective_time_policy": V14_TIME_POLICY_OBSERVE_ONLY,
+        "stage_workflow_seconds": stage_budget.get("workflow_seconds"),
+        "stage_solve_seconds": stage_budget.get("solve_seconds"),
+        "pc_soft_seconds": resources.get("pc_soft_seconds"),
+        "pc_hard_seconds": resources.get("pc_hard_seconds"),
+    }
+
+
 def _run_physical_dual_cell_condensed_lowmem(
     resolved_payload,
     run_directory,
@@ -1330,7 +1472,7 @@ def _run_physical_dual_cell_condensed_lowmem(
         "status": "STARTED",
         "official_result": False,
         "stage_pass": False,
-        "time_policy": "observe_only",
+        "time_policy": None,
         "coarse_degree": coarse_degree,
         "require_zero_swap": bool(require_zero_swap),
         "swap_policy": (
@@ -1383,8 +1525,11 @@ def _run_physical_dual_cell_condensed_lowmem(
             evidence_prefix=evidence_prefix,
             require_zero_swap=require_zero_swap,
         )
-        if runtime.time_policy != "observe_only":
-            raise ValueError("V20 requires observe_only throughout the worker")
+        summary["time_policy"] = runtime.time_policy
+        summary["time_policy_facts"] = dict(runtime.time_policy_facts)
+        summary["time_budget_authority"] = _resolve_v20_worker_time_contract(
+            resolved_payload, runtime, profile=profile, stage=stage
+        )
         summary["shared_budget"] = runtime.shared_budget
         for signum in (signal.SIGTERM, signal.SIGINT):
             handlers[signum] = signal.signal(

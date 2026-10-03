@@ -22,7 +22,11 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from src.io.physical_intermediate_profile import SCHUR_PROFILE, profile_facts
+from src.io.physical_intermediate_profile import (
+    SCHUR_PROFILE,
+    TASK40_REFERENCE_METRIC_PROFILE,
+    profile_facts,
+)
 from .physical_v14_budget import (
     V14_TIME_POLICY_ENFORCE,
     V14_TIME_POLICY_OBSERVE_ONLY,
@@ -95,6 +99,30 @@ class V20ReleaseGateStop(RuntimeError):
         super().__init__(self.classification + ": " + json.dumps(
             _jsonable(self.facts), sort_keys=True, separators=(",", ":")
         ))
+
+
+def _v14_conditional_time_stop_decision(
+    *, solve_elapsed, workflow_elapsed, solve_limit, workflow_limit, time_policy
+):
+    """Apply the stage solve and parent-workflow boundaries used by Q4/Q5."""
+
+    policy = normalize_v14_time_policy(time_policy)
+    solve_gate = v14_time_gate_facts(
+        solve_elapsed, solve_limit, policy, inclusive=True
+    )
+    workflow_gate = v14_time_gate_facts(
+        workflow_elapsed, workflow_limit, policy, inclusive=True
+    )
+    reason = None
+    if solve_elapsed >= solve_limit and policy == V14_TIME_POLICY_ENFORCE:
+        reason = "solve_budget_reached"
+    elif workflow_elapsed >= workflow_limit and policy == V14_TIME_POLICY_ENFORCE:
+        reason = "workflow_budget_reached"
+    return {
+        "reason": reason,
+        "solve_time_gate": solve_gate,
+        "workflow_time_gate": workflow_gate,
+    }
 
 
 def _sha256_bytes(value: bytes) -> str:
@@ -7170,6 +7198,23 @@ def _v14_q4_q5_fullspace(
     if not isinstance(stage_budget, Mapping):
         raise ValueError(f"{stage} has no frozen stage budget")
     solve_limit = float(stage_budget["solve_seconds"])
+    task40_gx784_budget = float(
+        getattr(runtime, "task40_gx784_enforced_clock_seconds", 0.0)
+    )
+    task40_gx784_exact_budget = (
+        getattr(runtime, "task40_gx784_enforced_clock", False) is True
+        and runtime.contract.get("identity") == TASK40_REFERENCE_METRIC_PROFILE
+        and stage == "Q4_ORIGINAL"
+        and time_policy == V14_TIME_POLICY_ENFORCE
+        and task40_gx784_budget > 0.0
+        and float(stage_budget.get("workflow_seconds", 0.0))
+        == task40_gx784_budget
+        and solve_limit == task40_gx784_budget
+        and float(
+            runtime.shared_budget.get("total_budget_seconds", 0.0)
+        )
+        == task40_gx784_budget
+    )
     workflow_limit = min(
         float(stage_budget["workflow_seconds"]),
         float(getattr(runtime, "workflow_reserved_seconds", 0.0)),
@@ -7180,6 +7225,7 @@ def _v14_q4_q5_fullspace(
             not retained_coarse_stage
             and stage in {"Q4_ORIGINAL", "Q5_NOTCH"}
             and solve_limit != 10800.0
+            and not task40_gx784_exact_budget
         )
         or (
             stage in {
@@ -7649,19 +7695,17 @@ def _v14_q4_q5_fullspace(
             return True
         elapsed = solve_seconds()
         workflow = current_workflow_interval()["budget_seconds"]
-        solve_time = v14_time_gate_facts(
-            elapsed, solve_limit, time_policy, inclusive=True
+        decision = _v14_conditional_time_stop_decision(
+            solve_elapsed=elapsed,
+            workflow_elapsed=workflow,
+            solve_limit=solve_limit,
+            workflow_limit=workflow_limit,
+            time_policy=time_policy,
         )
-        workflow_time = v14_time_gate_facts(
-            workflow, workflow_limit, time_policy, inclusive=True
-        )
-        stop_state["solve_time_gate"] = solve_time
-        stop_state["workflow_time_gate"] = workflow_time
-        if elapsed >= solve_limit and time_policy == V14_TIME_POLICY_ENFORCE:
-            stop_state.update(requested=True, reason="solve_budget_reached")
-            return True
-        if workflow >= workflow_limit and time_policy == V14_TIME_POLICY_ENFORCE:
-            stop_state.update(requested=True, reason="workflow_budget_reached")
+        stop_state["solve_time_gate"] = decision["solve_time_gate"]
+        stop_state["workflow_time_gate"] = decision["workflow_time_gate"]
+        if decision["reason"] is not None:
+            stop_state.update(requested=True, reason=decision["reason"])
             return True
         return False
 

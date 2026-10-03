@@ -6,26 +6,13 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
-from benchmarks.postprocess_task40_p1_saved_fields_common_subcells import (
-    _load_run,
-    _sha256,
-    _qualified_environment,
-    _read_json,
-    _write_json,
-)
-from src.postprocessing.task40_saved_field_h_comparison import (
-    _exact_axis_union_many,
-    compare_common_subcell_volume,
-    restore_p6_total_field,
-    total_field_sample_witness,
-)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +43,34 @@ FIELD_NAMES = (
     "scaled_curl_E_total",
     "scaled_curl_E_scattered",
 )
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def _fixed_f5_norms(gx: Any, f5: Any, archive_path: Path) -> tuple[dict[str, dict[str, float]], dict[str, Any]]:
@@ -237,40 +252,45 @@ def _analysis(
 ) -> dict[str, Any]:
     started = time.monotonic()
     started_utc = datetime.now(timezone.utc).isoformat()
-    environment = _qualified_environment()
     gx784_root = gx784_root.resolve()
+    from benchmarks.run_task40_v5_postprocess_service import _preflight_case
+
+    preflight = _preflight_case(gx784_root)
     run_manifest = _read_json(gx784_root / "run_manifest.json")
-    if run_manifest.get("run_id") != "task40extra_0p7nm_nonseparable_gx784_review_v5_v1":
-        raise ValueError("the supplied run root is not the frozen Gx784 case")
     raw_summary_path = gx784_root / RUN_SUMMARY_NAME
     raw_solver_summary = _read_json(raw_summary_path)
-    if raw_solver_summary.get("run_id") != run_manifest.get("run_id"):
-        raise ValueError("Gx784 run manifest and solver summary identities differ")
-    from benchmarks.check_task40_review_v5_gx784 import _recompute_solver_gate
-
-    solver_preflight = _recompute_solver_gate(raw_solver_summary)
-    if not solver_preflight["pass"]:
+    solver_preflight = preflight["solver_gate"]
+    if not preflight["ready_for_supervised_field_work"]:
         output = output.resolve()
         if output.exists():
             raise FileExistsError(f"refusing to overwrite V5 held comparison output: {output}")
         held_payload = {
             "schema": "task40extra.review-v5.gx784-paired-comparison.v1",
             "status": "completed",
-            "classification": "solver_or_recovery_gate_not_passed_comparison_held",
+            "classification": (
+                "solver_or_recovery_gate_not_passed_comparison_held"
+                if not solver_preflight["pass"]
+                else "saved_field_archive_missing_or_hash_mismatch_comparison_held"
+            ),
             "started_utc": started_utc,
             "completed_utc": datetime.now(timezone.utc).isoformat(),
             "runs": {
                 "Gx784": {
                     "run_root": str(gx784_root),
                     "run_id": raw_solver_summary.get("run_id"),
+                    "field_restoration_sample_witness": {"pass": False},
                 }
             },
             "solver_evidence": {
                 "path": str(raw_summary_path.resolve()),
-                "sha256": _sha256(raw_summary_path),
+                "sha256": preflight["worker_summary_sha256"],
+                "run_manifest_path": preflight["run_manifest_path"],
+                "run_manifest_sha256": preflight["run_manifest_sha256"],
+                "source_sha": preflight["source_sha"],
             },
             "solver_preflight_diagnostics": solver_preflight,
-            "comparison_status": "held_before_saved_field_or_official_power_comparison",
+            "field_artifact_preflight": preflight["field_artifact_preflight"],
+            "comparison_status": "held_before_FE_import_field_restoration_and_power_comparison",
             "postprocess_elapsed_monotonic_seconds": time.monotonic() - started,
             "analysis_source": {
                 "source_sha": subprocess.check_output(
@@ -280,11 +300,24 @@ def _analysis(
                     ["git", "status", "--porcelain"], cwd=ROOT, text=True
                 ).splitlines(),
                 "script_sha256": _sha256(Path(__file__).resolve()),
-                "qualified_environment": environment,
+                "qualified_environment_imported": False,
             },
         }
         _write_json(output, held_payload)
         return _run_independent_checker(output)
+
+    from benchmarks.postprocess_task40_p1_saved_fields_common_subcells import (
+        _load_run,
+        _qualified_environment,
+    )
+    from src.postprocessing.task40_saved_field_h_comparison import (
+        _exact_axis_union_many,
+        compare_common_subcell_volume,
+        restore_p6_total_field,
+        total_field_sample_witness,
+    )
+
+    environment = _qualified_environment()
 
     runs = {
         "Gx": _load_run("Gx", gx_root),
