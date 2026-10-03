@@ -156,7 +156,7 @@
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/delivery_receipt_v32.json",
       "bytes": 926,
-      "sha256": "711223706630f76bfc2a85c6d14b4840e1ab750a4db4e5af146930feb975438c",
+      "sha256": "8f6e21e340922e59fc483bc5e0999c6b2933e1bbff5364901982bbf740619be4",
       "role": "compact evidence / documentation"
     },
     {
@@ -263,8 +263,8 @@
     },
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/render_check_v32.json",
-      "bytes": 4152,
-      "sha256": "c553d982fcd76abf988a98428a8c3a85b76460f5a55f51a1f49ca171abf07c90",
+      "bytes": 5879,
+      "sha256": "4edf01e1ecaae251a46cf5a912b622555c439077b143874943c3064e01be4ed2",
       "role": "compact evidence / documentation"
     },
     {
@@ -342,7 +342,7 @@
     {
       "path": "docs/task042_neural_coarse_inverse/outcomes/records/storage_v32.json",
       "bytes": 30643,
-      "sha256": "34a98c77b82a1ccbec72e7191f7dc9ddaa1ca391d515b2ec2f528b1773fb5fcd",
+      "sha256": "b4356b857df3c07b9e0dde77097843cc0b85b71f50737093b5ee0666a37b4681",
       "role": "compact evidence / documentation"
     },
     {

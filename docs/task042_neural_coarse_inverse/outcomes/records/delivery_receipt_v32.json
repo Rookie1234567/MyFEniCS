@@ -1,14 +1,14 @@
 {
   "schema": "task042.V32.delivery-observation.v1",
   "observed_clock": {
-    "utc": "2026-10-03T11:14:34.267680+00:00",
-    "monotonic": 951069.128587758,
+    "utc": "2026-10-03T11:16:03.585408+00:00",
+    "monotonic": 951158.446299226,
     "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
   },
-  "total_batch_elapsed_seconds": 1927.2333149471087,
+  "total_batch_elapsed_seconds": 2016.5510264150798,
   "total_limit_seconds": 5400,
   "actual_run_source": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
-  "HEAD_before_delivery_commit": "1fe058e3d120c42d197531139fc62e02a1a2cd5f",
+  "HEAD_before_delivery_commit": "a4ff16e23539af2421284908b04060d57126fb3a",
   "ledger_closed": true,
   "ledger_active": null,
   "numerical_queue": "COMPLETE_NO_MORE_WORK",

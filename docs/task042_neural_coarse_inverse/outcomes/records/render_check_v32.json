@@ -121,12 +121,22 @@
   },
   "qualified_source_unchanged": true,
   "checked_clock": {
-    "utc": "2026-10-03T11:14:34.267680+00:00",
-    "monotonic": 951069.128587758,
+    "utc": "2026-10-03T11:16:03.585408+00:00",
+    "monotonic": 951158.446299226,
     "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
   },
   "result_visual": {
     "status": "NOT_VERIFIED",
-    "reason": "Exact committed result page is checked after publication"
+    "exact_published_SHA": "a4ff16e23539af2421284908b04060d57126fb3a",
+    "attempted_pages": [
+      "https://github.com/Rookie1234567/MyFEniCS/blob/a4ff16e23539af2421284908b04060d57126fb3a/docs/task042_neural_coarse_inverse/response_v32.md",
+      "https://github.com/Rookie1234567/MyFEniCS/blob/a4ff16e23539af2421284908b04060d57126fb3a/docs/task042_neural_coarse_inverse/outcomes/return_direction_execution_v32.md"
+    ],
+    "observed_error": "web open: Cache miss on both exact pages; no visual evidence",
+    "raw_probe_text": "Internal Error ()\nciteturn48view0 [wordlim: 200] Source: open({\"ref_id\":\"https://github.com/Rookie1234567/MyFEniCS/blob/a4ff16e23539af2421284908b04060d57126fb3a/docs/task042_neural_coarse_inverse/response_v32.md\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://github.com/Rookie1234567/MyFEniCS/blob/a4ff16e23539af2421284908b04060d57126fb3a/docs/task042_neural_coarse_inverse/response_v32.md: Cache miss\n--------------------------------------------------------------------------------\nInternal Error ()\nciteturn48view1 [wordlim: 200] Source: open({\"ref_id\":\"https://github.com/Rookie1234567/MyFEniCS/blob/a4ff16e23539af2421284908b04060d57126fb3a/docs/task042_neural_coarse_inverse/outcomes/return_direction_execution_v32.md\",\"lineno\":null}); Total lines: 1\nL0: Failed to fetch https://github.com/Rookie1234567/MyFEniCS/blob/a4ff16e23539af2421284908b04060d57126fb3a/docs/task042_neural_coarse_inverse/outcomes/return_direction_execution_v32.md: Cache miss\n\n",
+    "raw_sha256": "9eea4d1d55073a5fcfa57e49f3627c2797c627bbed26a4eda34f09e1c6a7cea5",
+    "raw_path": "tmp/task042/v32/result_page_probe.txt",
+    "observed_after_push_UTC": "2026-10-03T11:16:03.528026+00:00",
+    "not_a_new_numeric_or_auxiliary_run": true
   }
 }
