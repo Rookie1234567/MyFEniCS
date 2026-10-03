@@ -1,8 +1,8 @@
 # Task42extra：NN-Lab-V2 / 5 nm compatible FEINN
 
-本目录对应独立支线，不是原 Task042 的新版本或旧粗逆续跑。当前裁决以 [Review V13](review_report_v13.md) 为准：`FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`。保存向量和背景转换诊断已接受，尚无解准原方程的无标签网络，也无同精度、完整成本下的神经增益。网络全局表达极限仍未知，不把有限负结果推广为所有神经方法无效。
+本目录对应独立支线，不是原 Task042 的新版本或旧粗逆续跑。当前裁决以 [Review V14](review_report_v14.md) 为准：`FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`。保存向量和背景转换诊断已接受，尚无解准原方程的无标签网络，也无同精度、完整成本下的神经增益。网络全局表达极限仍未知，不把有限负结果推广为所有神经方法无效。
 
-当前交接见 [Response V14](response_v14.md)；上一轮数值回执为 [Response V13](response_v13.md)，详细正负结果和历史导航见 [summary](outcomes/summary.md)。[task.md](task.md) 保留首轮冻结合同，[AGENTS.md](AGENTS.md) 为目录规则；其初建状态不是当前待运行计划。
+当前交接见 [Response V15](response_v15.md)；本轮保存数组诊断见 [共同下降专题](outcomes/common_descent_v15.md)，上轮归档回执为 [Response V14](response_v14.md)，详细正负结果和历史导航见 [summary](outcomes/summary.md)。[task.md](task.md) 保留首轮冻结合同，[AGENTS.md](AGENTS.md) 为目录规则；其初建状态不是当前待运行计划。
 
 | 项目 | 冻结身份 / 当前状态 |
 |---|---|
@@ -15,9 +15,9 @@
 | 与Task042区别 | 不仅训练trace、不求p4逆；端口仅准确解析消元；内部FE系数由网络矩产生 |
 | 辅助成本 | 小型DUAL路线允许准确稀疏Gram因子，必须全程记账；不称无全局因子生产方案 |
 | 执行端 | 工作站原生Linux；独立worktree/环境/cache；已有项目只读，不改其运行 |
-| 本轮资源与预算 | 仅文档归档≤1800s；1空闲物理核、线程1、轻任务整树≤2GiB、自身swap/OOC0；系统余量及至少384GiB邻增长预留不变 |
-| 当前结果 | `FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`；不再启动FEINN数值探索，生产初值未批准 |
-| 实际数值源码 / 证据入口 | `8000ee893a42e2f3cef288fe4652ee1052d511e7`；[V13 run index](outcomes/records/run_index_v13.json)、[审阅收据](outcomes/records/review_v13_evidence_audit.json)，与后续文档HEAD分开 |
+| 本轮资源与预算 | 本轮保存数组诊断完整≤7200s；1空闲物理核、线程1、轻任务整树≤2GiB、自身swap/OOC0；系统余量及至少384GiB邻增长预留不变 |
+| 当前结果 | `FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`；本轮保存数组诊断已完成，不启动训练或PDE求解，生产初值未批准 |
+| 实际数组分析源码 / 历史FE来源 | `99f2968be8d715a6f2e6985f5b032c53ca505950`；[V15 run index](outcomes/records/run_index_v15.json)，旧C1生成和V13背景source另列；不以文档HEAD冒充运行source |
 | 最终目标 | 原尺寸50×25×140nm、Si线宽17nm/高120nm、λ=0.7nm、完整三维FE；十进制2,000,000,000,000B整机、swap0、172800s完整流程；仍未运行/未资格化 |
 
 ## 冻结结论与最小证据
@@ -39,7 +39,7 @@
 
 ## 当前接续边界
 
-Review V13 P0只授权修正本入口、链接证据、文档核验和Response V14，完成后暂停。没有训练、调权重、范数/测试空间扫描、FE/矩阵作用、参考求解或完成器，也不重跑73项数值资格。task40extra继续其精度对照，dot继续fresh C1和持久证据资格；本支不复制它们的solver或存储工作。
+Review V14仅新增一次保存C1两态数组的共同下降诊断，现已完成；PDE8候选先hash后参考评价，ALL16共同/场点为参考oracle。两态无标签候选未同时达到0.1%能量下降，native预测增加；Mfinal ALL16有限正信号不计NN收益，M3600保守界宽资格UNKNOWN。详见[结果/Gate](outcomes/records/gate_decisions_v15.json)。没有新FE/矩阵作用、网络前向、训练、参考求解或完成器，不重复昂贵旧测试。主线task40extra已完成Gx/Gz四角对照，dot仍待实际FE及持久资格；不复制其solver/storage工作。
 
 以后只有满足[Review V13 P2](review_report_v13.md)的全部条件——新具体假设、无参考标签的单一干预、可区分解释的保存数据预检、同成本非NN对照、完整必要成本、原全部精度门和有限停止计划——才提出重启审阅。它不是本轮自动分支。只在精确执行分支提交/推送，完成后等待review，不合并master。
 

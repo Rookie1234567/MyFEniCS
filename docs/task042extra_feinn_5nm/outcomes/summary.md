@@ -1,3 +1,16 @@
+# Task42extra Review V14 后续：V15 当前数组诊断导航
+
+本轮A–D保存数组诊断已完成，训练和PDE求解仍暂停：`FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`。只用已保存方向问两项能量能否在固定小步内一起降低0.1%；新值均为DERIVED_LOCAL_LINEAR_MODEL，不是真实网络场。
+
+| 当前结果 / 同M5-p3 | 实际值与边界 | 入口 |
+| --- | --- | --- |
+| PDE8无标签候选，M3600/Mfinal | F约0.996151/0.997526；R约0.999783/0.999588，未达两项≥0.1%，native预测均增加 | [专题](common_descent_v15.md)、[权限/hash](records/candidate_permissions_v15.json) |
+| ALL16参考oracle | Mfinal共同F/R约0.996437可行；M3600 U约0.999312未达0.999；不算NN收益 | [四行主表/32点对照](records/common_descent_comparison_v15.csv)、[原小矩阵](records/common_descent_results_v15.json) |
+| 数值界资格 | M3600含保守余量界宽约1.5e-7未达1e-8：UNKNOWN；Mfinal达到目标；不凑PASS | [原数组checker](records/independent_checker_v15.json)、[Gate](records/gate_decisions_v15.json) |
+| 身份、测试与费用 | 新source99f2968be8d715a6f2e6985f5b032c53ca505950；87 targeted/Ruff/compileall通过，1局部修复；新FE/前向/训练/factor均0 | [Response V15](../response_v15.md)、[run index](records/run_index_v15.json)、[资源全账](records/resource_costs_v15.json) |
+
+两档rcond结论一致；两态无标签稳定正信号条件不成立，不提出新的非线性见证。D0成本否决/D1未运行、M3600中期改善与最终退化、所有历史失败/未知/未运行、原严格精度和0.7nm/十进制2TB/172800s目标保留。主线Gx/Gz四角已完成；dot实际FE资格仍未完成，本支不重复两线工作。无生产或master合并授权，完成后等待review。
+
 # Task42extra Review V13 后续：V14 归档停止导航
 
 仅完成P0文档交接，维持 `FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`，没有新数值任务或模型结果。下方V1–V13全部原值、M3600中间改善和最终退化、失败、未知与未运行项保留。

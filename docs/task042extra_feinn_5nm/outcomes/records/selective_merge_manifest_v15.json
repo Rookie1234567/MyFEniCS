@@ -1,0 +1,60 @@
+{
+  "groups": {
+    "checker/benchmark": {
+      "dependencies": [
+        "src/solvers/feinn_common_descent.py",
+        "src/runners/feinn_common_descent_arrays.py"
+      ],
+      "eligible": "RESEARCH_REVIEW_ONLY",
+      "files": [
+        "benchmarks/check_feinn_common_descent.py",
+        "benchmarks/run_feinn_common_descent.py"
+      ],
+      "fresh_PDE": false,
+      "tests": "87 targeted + independent saved-array checker"
+    },
+    "compact evidence/docs": {
+      "dependencies": "run_index_v15 links original C1 and actual V15 source; old records unchanged",
+      "eligible": "RESEARCH_ARCHIVE_ONLY",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v15.md",
+        "docs/task042extra_feinn_5nm/outcomes/common_descent_v15.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/*v15*"
+      ]
+    },
+    "do-not-merge": {
+      "eligible": false,
+      "files": [
+        "benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z",
+        "all model weights, reference fields, PC/factor data"
+      ],
+      "reason": "ignored arrays and model data remain research artifacts; no production or master approval"
+    },
+    "production numerical/core": {
+      "PDE_default_change": false,
+      "eligible": false,
+      "files": []
+    },
+    "research-only": {
+      "dependencies": "NumPy only, pure activation, existing raw C1",
+      "eligible": "EXPLICIT_ARRAY_DIAGNOSTIC_ONLY",
+      "files": [
+        "src/solvers/feinn_common_descent.py",
+        "src/runners/feinn_common_descent_arrays.py",
+        "src/test/test_feinn_common_descent.py"
+      ],
+      "fresh_PDE": false,
+      "numerical_behavior": "only <=16D saved-linear-model analysis; no FE/network update",
+      "tests": "known convex fixtures, explicit whitening, provenance, corruption, staged label-free pipeline"
+    },
+    "reusable runner/watchdog": {
+      "changed": false,
+      "eligible": false,
+      "files": [
+        "scripts/supervise_task42extra.py"
+      ],
+      "reuse": "existing single-core2GiB process-tree policy"
+    }
+  },
+  "suggested_order": "only after explicit future approval: research core and tests -> thin checker/entry -> compact docs; no production promotion"
+}

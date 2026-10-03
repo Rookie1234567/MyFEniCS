@@ -233,3 +233,7 @@ V12实际GitHub检查：发布cad9fe635199d5c22e83a0698b7412e349449aaf的Review 
 本轮只运行改变页面的现有Markdown parser/链接检查和有限实际GitHub渲染；真实结果与source/hash/资源见[归档收据](records/archive_receipt_v14.json)。V13的73项数值资格直接复用，54项包含在73项内，未新增或重复数值测试；不声称CI通过，不full pytest、不FE/矩阵作用、不安装环境。
 
 未变专题最终公式的本地parser及实际GitHub视觉PASS复用[Review V13收据](records/review_v13_evidence_audit.json)，绑定专题SHA256 b1a7541ee4b7a4d746f4d80b6ddc6e7e9a703dcbae86369c1630a5eb65965dd1；旧首次失败及资源未复验原记录均不覆盖。新/改变页的结构检查、实际视觉和未验证状态分别记账。
+
+## V15：保存数组诊断定向资格
+
+87项pure定向测试通过，改动Python Ruff/compileall通过；新增共同可行/真实冲突、复数白化、近相关与标签隔离/损坏记录/先fsync候选后参考读取的端到端fixture。首次近相关拉回失稳25通过/1失败保留；QR后小R-SVD修复26通过，再最终组合87通过。独立实际数组checker复算8配置通过，M3600保守界宽目标UNKNOWN不冒充数学全资格。未运行FE/MPI/full pytest/旧73项或CI。[测试hash](records/targeted_tests_v15.json)、[checker](records/independent_checker_v15.json)、[repair](records/repair_log_v15.json)。

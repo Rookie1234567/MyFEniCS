@@ -1,0 +1,73 @@
+{
+  "ALL16_and_common_and_field_role": "REFERENCE_EXPOSED_LOCAL_ORACLE",
+  "candidate_is_not_network_checkpoint": true,
+  "candidates": {
+    "M3600_1e-10": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-10_candidate.json",
+      "sha256": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0"
+    },
+    "M3600_1e-12": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/M3600_1e-12_candidate.json",
+      "sha256": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb"
+    },
+    "Mfinal_1e-10": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-10_candidate.json",
+      "sha256": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19"
+    },
+    "Mfinal_1e-12": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/v15_common_descent_20261003T054200Z/Mfinal_1e-12_candidate.json",
+      "sha256": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56"
+    }
+  },
+  "events": [
+    {
+      "event": "UNLABELED_CANDIDATE_FSYNC_HASHED",
+      "key": "M3600_1e-10",
+      "monotonic_since_start": 0.3408627579919994,
+      "sha256": "8873bb2c944121d3ce100a9bddbfd16ec1a0fae38dac156c14ec942330efe8d0"
+    },
+    {
+      "event": "UNLABELED_CANDIDATE_FSYNC_HASHED",
+      "key": "M3600_1e-12",
+      "monotonic_since_start": 0.348732884041965,
+      "sha256": "a6ad1a7ba253cefaa683d03365046fd10b1f14fc9404a606dec3dc2afc1151eb"
+    },
+    {
+      "event": "UNLABELED_CANDIDATE_FSYNC_HASHED",
+      "key": "Mfinal_1e-10",
+      "monotonic_since_start": 0.3942011590115726,
+      "sha256": "37b8b82e728217c1e01e6507206bc2db71bab060b6af70351a616cdb673fbc19"
+    },
+    {
+      "event": "UNLABELED_CANDIDATE_FSYNC_HASHED",
+      "key": "Mfinal_1e-12",
+      "monotonic_since_start": 0.402124730986543,
+      "sha256": "2761cbcf0978116eff83ac15a9dc674a912d72c948218177c6c6384fee487c56"
+    },
+    {
+      "event": "REFERENCE_ARRAY_EVALUATION_BEGINS",
+      "monotonic_since_start": 0.40439245803281665,
+      "preceding_candidate_ledger_sha256": "763ede4c7c4012488058894e12bb505b9e6ea9f5a3f17ec0e7ea892f87a4ab20"
+    }
+  ],
+  "freeze_order_independently_verified": true,
+  "input_allowlist": [
+    "PDE8:P",
+    "PDE8:Y",
+    "PDE8:WY",
+    "r",
+    "qr",
+    "theta_norm"
+  ],
+  "lazy_members_for_construction": [
+    "P",
+    "Y",
+    "WY",
+    "r",
+    "qr",
+    "theta"
+  ],
+  "reference_fields_e_Ge_gF_used_for_construction": false,
+  "reference_result_and_geometry_interpretation_deferred_until_candidate_fsync": true,
+  "source_sha": "99f2968be8d715a6f2e6985f5b032c53ca505950"
+}

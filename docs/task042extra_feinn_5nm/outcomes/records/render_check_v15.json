@@ -1,0 +1,98 @@
+{
+  "local_document_check": {
+    "status": "LOCAL_CHANGED_SCOPE_MARKDOWN_LINK_PASS",
+    "pages": [
+      {
+        "path": "docs/task042extra_feinn_5nm/review_report_v14.md",
+        "sha256": "b1f90d1b767c32e4a6ec3a0abefc0fa3d1e3f8e2d0620f3e970969a3842bba9e",
+        "checked_scope": "entire page",
+        "markdown_tables": 7,
+        "parsed_tables": 7,
+        "math_fences": 4,
+        "links": 12
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "sha256": "0c271bd06bc4313bde696ccbb3aa71780be00d5dfd8bb17438a39208ab00ad6e",
+        "checked_scope": "entire page",
+        "markdown_tables": 2,
+        "parsed_tables": 2,
+        "math_fences": 0,
+        "links": 22
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/response_v15.md",
+        "sha256": "679539ed9bb73583175e5e346511755afe1c391d111b2c002f2190d343c1e4ea",
+        "checked_scope": "entire page",
+        "markdown_tables": 2,
+        "parsed_tables": 2,
+        "math_fences": 0,
+        "links": 14
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/common_descent_v15.md",
+        "sha256": "6d5152c8ef13c44ff15b11592757759ba6d5dff087d12f122f9f323da1351856",
+        "checked_scope": "entire page",
+        "markdown_tables": 4,
+        "parsed_tables": 4,
+        "math_fences": 4,
+        "links": 12
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "sha256": "60027ba625908f9bca8063b2fc728cf1d13fdf473353b722ae3097d56bbd53f2",
+        "checked_scope": "Task42extra Review V14 后续：V15",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 9
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "sha256": "74a6836a71b526fb28eb543ece40e64ae015112725d246ffca053fc24c5a9fe5",
+        "checked_scope": "V15：",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 3
+      },
+      {
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "sha256": "db1be5f8c8be2631bb8a5cfdbc78af64e8140a03e910bd73e53ac8b1818c08bd",
+        "checked_scope": "V15：",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 1
+      },
+      {
+        "path": "docs/development_progress.md",
+        "sha256": "39eaa3db7ba7ea57faaaac4647263ed5f0b6ee840bbf37dcd848c7c0463d2233",
+        "checked_scope": "2026-10-03 Task42extra V15",
+        "markdown_tables": 0,
+        "parsed_tables": 0,
+        "math_fences": 0,
+        "links": 2
+      },
+      {
+        "path": "docs/development_model_registry.md",
+        "sha256": "613e3d9d5e1ea3e1f1858c019ab67fe30be955a701ddafb79a3e23811e111a5b",
+        "checked_scope": "3.44.13 Task42extra Review V14",
+        "markdown_tables": 1,
+        "parsed_tables": 1,
+        "math_fences": 0,
+        "links": 3
+      }
+    ],
+    "source_file_hashes_match_clean_implementation_commit": true,
+    "original_review_unchanged": true,
+    "tables": 17,
+    "math_fences": 8,
+    "links": 78
+  },
+  "GitHub_actual_view": "PENDING_NOT_PASS",
+  "scope": "Review V14 and key new V15 pages only",
+  "historical_failed_checks_preserved": true,
+  "local_check_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/development/markdown_check_v15.json",
+  "local_check_sha256": "f63995445e4b04bb462c5f2e1b0b6b46bcbf73e65639e5798dc31b592b01e858"
+}

@@ -1,0 +1,91 @@
+{
+  "candidate_freeze_order_verified": true,
+  "new_FE_or_network_actions": 0,
+  "optimize_calls": 0,
+  "result_sha256": "ea99221df016b6750be227491dd6160c42582c31310df97d940ef16e19eada2c",
+  "rows": [
+    {
+      "L": 0.9997825940691406,
+      "U": 0.9997825940691222,
+      "classification": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "margin": 1.4994173853316397e-07,
+      "raw_cross_defect": 5.001092330808097e-16,
+      "rcond": 1e-10,
+      "state": "M3600",
+      "subset": "PDE8"
+    },
+    {
+      "L": 0.9997825940691406,
+      "U": 0.9997825940691222,
+      "classification": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "margin": 1.4994173853316397e-07,
+      "raw_cross_defect": 5.001092330808097e-16,
+      "rcond": 1e-12,
+      "state": "M3600",
+      "subset": "PDE8"
+    },
+    {
+      "L": 0.9993121324785114,
+      "U": 0.9993121324785401,
+      "classification": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "margin": 1.4895941539567604e-07,
+      "raw_cross_defect": 9.046472403550759e-16,
+      "rcond": 1e-10,
+      "state": "M3600",
+      "subset": "ALL16"
+    },
+    {
+      "L": 0.9993121324785114,
+      "U": 0.9993121324785401,
+      "classification": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "margin": 1.4895941539567604e-07,
+      "raw_cross_defect": 9.046472403550759e-16,
+      "rcond": 1e-12,
+      "state": "M3600",
+      "subset": "ALL16"
+    },
+    {
+      "L": 0.999588352612446,
+      "U": 0.9995883526124486,
+      "classification": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "margin": 6.661648108656456e-09,
+      "raw_cross_defect": 4.896357574033206e-16,
+      "rcond": 1e-10,
+      "state": "Mfinal",
+      "subset": "PDE8"
+    },
+    {
+      "L": 0.999588352612446,
+      "U": 0.9995883526124486,
+      "classification": "NO_0P1_PERCENT_COMMON_DESCENT_IN_RETAINED_BALL",
+      "margin": 6.661648108656456e-09,
+      "raw_cross_defect": 4.896357574033206e-16,
+      "rcond": 1e-12,
+      "state": "Mfinal",
+      "subset": "PDE8"
+    },
+    {
+      "L": 0.9964371396871075,
+      "U": 0.9964371396871257,
+      "classification": "COMMON_DESCENT_AT_LEAST_0P1_PERCENT",
+      "margin": 7.114071607836341e-09,
+      "raw_cross_defect": 6.976914950725664e-16,
+      "rcond": 1e-10,
+      "state": "Mfinal",
+      "subset": "ALL16"
+    },
+    {
+      "L": 0.9964371396871075,
+      "U": 0.9964371396871257,
+      "classification": "COMMON_DESCENT_AT_LEAST_0P1_PERCENT",
+      "margin": 7.114071607836341e-09,
+      "raw_cross_defect": 6.976914950725664e-16,
+      "rcond": 1e-12,
+      "state": "Mfinal",
+      "subset": "ALL16"
+    }
+  ],
+  "schema": "feinn.saved-common-descent.checker.v1",
+  "status": "RAW_ARRAY_CERTIFICATES_VERIFIED",
+  "unknown": []
+}

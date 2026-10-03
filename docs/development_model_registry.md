@@ -2039,3 +2039,10 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 最终目标与晋级 | 原尺寸0.7nm、十进制2TB整机、172800s完整三维FE仍NOT_RUN/NOT_QUALIFIED；无神经增量、无production晋级 | FEINN_MAIN_SOLVER_ON_HOLD，暂停并待review |
 
 不新训练/初始化对照、p/h/端口扩展或参考重求。task40extra/dot按各自合同推进精度/存储，FEINN不复制其实现。[回执](task042extra_feinn_5nm/response_v13.md)、[专题](task042extra_feinn_5nm/outcomes/evidence_closure_v13.md)、[运行hash](task042extra_feinn_5nm/outcomes/records/run_index_v13.json)。
+
+### 3.44.13 Task42extra Review V14 后续：V15离线数组审计
+
+| 对象 / 方法 | 结果与资源边界 | 证据 |
+| --- | --- | --- |
+| 复用M5/p3两态C1，PDE8/ALL16固定球共同下降 | 无新FE/网络场；PDE8无稳定0.1%/native不增信号，ALL16终态为参考oracle；M3600保守界宽UNKNOWN | [专题](task042extra_feinn_5nm/outcomes/common_descent_v15.md)、[资源全账](task042extra_feinn_5nm/outcomes/records/resource_costs_v15.json) |
+| 原尺寸目标 / 生产 | FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；0.7nm完整FE、十进制2TB、172800s未资格化，历史结果不改 | [Response V15](task042extra_feinn_5nm/response_v15.md) |
