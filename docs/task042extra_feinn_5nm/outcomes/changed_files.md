@@ -222,3 +222,11 @@ V2实现提交 `19c725efd27ae5daedba8e77d2ad98375711bb71` 绑定D0/D1/D2正式�
 | do-not-merge | 所有旧失败/未资格化NN、监督权重、ignored大型场/模型/timeline | 不作production默认或初始化，不复制别任务求解器/存储 |
 
 逐文件hash、依赖、测试及fresh诊断来源见[六组manifest](records/selective_merge_manifest_v13.json)。实际Bsource为8000ee893a42e2f3cef288fe4652ee1052d511e7；后续只有checker选择/文档/证据收口，不重跑数值。
+
+# Review V13 后续 V14 文档交接
+
+| 依赖组 | 实际改动 | 数值与合入边界 |
+| --- | --- | --- |
+| compact evidence/docs | README当前暂停与历史初建导航、response_v14、summary页首停止链接、本测试/文件节和本任务进度；一个轻量归档收据 | 数值代码/输入/旧task/review/response与记录不改，无新模型/PDE/factor；复用[V13六组manifest](records/selective_merge_manifest_v13.json)，production numerical/core仍为空，未批准合并 |
+
+本次改变页parser/链接与实际render资格、最小路径可访问性及资源见[归档收据](records/archive_receipt_v14.json)。大数组、checkpoint、原轨迹和截图留ignored；不复制一套数值记录或开展存储迁移。

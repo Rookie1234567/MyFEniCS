@@ -1,3 +1,16 @@
+# Task42extra Review V13 后续：V14 归档停止导航
+
+仅完成P0文档交接，维持 `FEINN_MAIN_SOLVER_ON_HOLD` / `NO_VERIFIED_NN_INCREMENT`，没有新数值任务或模型结果。下方V1–V13全部原值、M3600中间改善和最终退化、失败、未知与未运行项保留。
+
+| 本轮范围 / 数据身份 | 实际处理与边界 | 入口 |
+| --- | --- | --- |
+| 文档入口，非新PDE实测 | README当前状态改为暂停，首次空目录/E0–E5标为已完成历史；原精度门与最终0.7nm/十进制2TB/172800s目标不变 | [README](../README.md)、[Response V14](../response_v14.md) |
+| 既有数值与成本，复用 | 无合格无标签解/NN增量；D0已否决、D1未运行；不重跑背景、保存场、73项数值测试或完成器 | [Review V13](../review_report_v13.md)、[run index](records/run_index_v13.json)、[manifest](records/selective_merge_manifest_v13.json) |
+| 最终公式资格，复用而不追改历史 | 审阅已通过未变专题最终字节的parser和实际GitHub目视；旧失败/资源未复验记录保留 | [审阅收据](records/review_v13_evidence_audit.json)、[旧失败](records/render_check_v13.json) |
+| 本次文档检查与可访问性 | 只查改变页面与最小证据入口，结果、预算和未验证项分列；本地可读不等于跨机恢复资格 | [归档收据](records/archive_receipt_v14.json) |
+
+暂停后只在Review V13 P2的新假设、无标签干预、保存数据预检、同成本非NN对照、完整成本和原精度/停止计划全部具备时提出重启，不自动执行。task40extra/dot继续各自精度与fresh C1/持久证据工作，本支不复制。无production或master合并授权。
+
 # Task42extra Review V12 后续：V13 当前收口导航
 
 A原向量分类、八个见证范数复用、D0/D1状态纠正及唯一B背景转换已完成；停止FEINN数值探索。没有训练、网络前向、新G/factor/reference或传统求解器复制。同 p3 NN 求解失败、有限已测局部方向的目标分歧成立、网络全局表达极限未知，三者分开。原 native/增广门1e-6、场/复通道1e-4、功率/能量1e-5、逐级功率1e-6均不改变。较好中间态M3600、最终退化Mfinal、全部失败/失联/PSI/重放费用与未验证项保留。

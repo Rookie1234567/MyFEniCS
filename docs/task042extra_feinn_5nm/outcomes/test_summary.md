@@ -227,3 +227,9 @@ V12实际GitHub检查：发布cad9fe635199d5c22e83a0698b7412e349449aaf的Review 
 一次轻测试调用因无空闲物理核未启动；原Gate的新只读窗口准入一次后，73测试通过。数值修复0次，文档修复2次（转义及GitHub拒绝公式宏），B数值重试0次，所有费用计入完整墙钟账。[定向原日志/JUnit](records/targeted_tests_v13.json)、[独立checker](records/independent_checker_v13.json)、[失败/准入](records/repair_log_v13.json)、[渲染](records/render_check_v13.json)。旧V12合并24项未启动及新增FE邻层积分未运行不改标。
 
 首次本地parser为8页26表通过；GitHub发布bebd08f24d50f9791e03e7ca5ea5d0c2dcc7d4d9的回执公式/结果表目视通过，专题公式报实部宏不允许，25.759025916s/1810116608B树峰/swap0/清场。专题宏已改为 `\mathrm{Re}`，数学不变；修正后的parser与浏览器复查资源未运行，不冒称最终视觉通过，也不在唯一资源重新准入用完后继续等待或重启。仅追加文档、记录与Git收口，未再运行数值测试或算子。
+
+# Review V13 后续 V14 文档核验
+
+本轮只运行改变页面的现有Markdown parser/链接检查和有限实际GitHub渲染；真实结果与source/hash/资源见[归档收据](records/archive_receipt_v14.json)。V13的73项数值资格直接复用，54项包含在73项内，未新增或重复数值测试；不声称CI通过，不full pytest、不FE/矩阵作用、不安装环境。
+
+未变专题最终公式的本地parser及实际GitHub视觉PASS复用[Review V13收据](records/review_v13_evidence_audit.json)，绑定专题SHA256 b1a7541ee4b7a4d746f4d80b6ddc6e7e9a703dcbae86369c1630a5eb65965dd1；旧首次失败及资源未复验原记录均不覆盖。新/改变页的结构检查、实际视觉和未验证状态分别记账。
