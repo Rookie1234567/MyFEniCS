@@ -319,13 +319,19 @@
       "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1",
       "stage": "P3_F3_G0_M2",
       "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
-      "source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "source_sha": "a43f7f76a0df0f4440b77834846973b2de7ea3a8",
       "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1__full3d_iterative__mpi1__Mna/20261001T154625.204407Z",
       "input_sha256": "7421fef7bc7558cb875711d5693208340d14171a3d2215adc80f966537eb7d93",
       "physical_model_sha256": "6ee8e976955c8e8f1e642c1c860a1fe77cec366801ddc7554d2d5d24a2a74ce2",
       "A6_pre_post": 7.593610432084708e-07,
       "tree_RSS_peak_B": 4006539264,
-      "task_swap_B": 0
+      "task_swap_B": 0,
+      "source_sha_correction": {
+        "previously_recorded_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+        "corrected_source_sha": "a43f7f76a0df0f4440b77834846973b2de7ea3a8",
+        "basis": "Saved run_manifest.json SHA256 and retained-final packet identity in review_v4_four_corner_interface_v1.json; the corresponding F3 solver run manifest declares this source SHA.",
+        "correction_scope": "metadata only; no solver run, field, or official result was changed."
+      }
     },
     {
       "run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
@@ -364,6 +370,251 @@
       "official_result": false,
       "v3_record": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_e2_manual_m2_growth_v1__full3d_iterative__mpi1__Mna/20261002T023827.030745Z/postprocess_repair_v3/repair_record.json",
       "fresh_PDE_recovery": false
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+      "stage": "Review V4 crossed-axis official solve",
+      "corner": "G10",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "source_sha": "9fd295624444cf16b6ba393a0a7c3522f0070f73",
+      "input_sha256": "f5b30f26fa7b6e119dcfed139b7ac2a45cbd528dbdaef19bc0178030f78276ca",
+      "physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T002312.848713Z",
+      "run_manifest_sha256": "c1892ae63767e59f8afbac40b83e86576f01ccfe35f50041dd0ee7de1bb8fbcc",
+      "mesh": {
+        "axis_cell_counts": [
+          10,
+          4,
+          14
+        ],
+        "axis_node_counts": {
+          "x": 11,
+          "y": 5,
+          "z": 15
+        },
+        "mesh_cell_type": "hexahedron",
+        "mesh_spacing_mode": "boundary_fitted",
+        "mesh_plan_id": "task40extra.gx560.crossed_axes.v1",
+        "mesh_plan_sha256": "167fd4d43d55d4652a23dc766d161f9f5605b879937fd51d91629fd532e08aa5"
+      },
+      "solver_gate": {
+        "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+        "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+        "stage_pass": true,
+        "official_result": true,
+        "final_explicit_relative_residual": 9.733476895086066e-07,
+        "post_release_explicit_relative_residual": 9.733476895086066e-07,
+        "residual_definition": "||A6 x - b6||_2 / ||b6||_2, explicit full-system true residual, checked after solve release",
+        "residual_limit": 1e-06,
+        "solver_iterations": 171,
+        "ksp_solve_seconds": 1499.305480348,
+        "retained_global_size": 114100,
+        "matvec_count": 176
+      },
+      "p6_space": {
+        "full_rows": 380040,
+        "active_rows": 113760,
+        "interior_rows": 252000,
+        "trace_rows": 128040,
+        "slave_rows": 14280,
+        "appended_rows": 340,
+        "owned_cell_count": 560,
+        "local_tensor_dimension": 882,
+        "local_interior_dimension": 450,
+        "local_trace_dimension": 432
+      },
+      "p4_space": {
+        "full_rows": 115184,
+        "active_rows": 48320,
+        "interior_rows": 60480,
+        "trace_rows": 54704,
+        "slave_rows": 6384,
+        "appended_rows": 340,
+        "owned_cell_count": 560,
+        "local_tensor_dimension": 300,
+        "local_interior_dimension": 108,
+        "local_trace_dimension": 192
+      },
+      "p4_interface_matrix": {
+        "shape": [
+          48660,
+          48660
+        ],
+        "nnz": 18782900,
+        "nnz_semantics": "owned-row-getRow-stored-entries",
+        "dtype": "complex128"
+      },
+      "resources": {
+        "run_summary": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T002312.848713Z/run_summary.json",
+        "run_summary_sha256": "84fed0c9b8fe8c3a7ae4ee25ec38ef8dcbee384dfb21ffba4b978ad175936987",
+        "process_tree_rss_peak_bytes": 5255675904,
+        "process_tree_swap_peak_bytes": 0,
+        "process_tree_pss_peak_bytes": null,
+        "elapsed_seconds_scope": 1925.7210588939488
+      },
+      "workflow_ledger": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1/shared_workflow_ledger.json",
+        "sha256": "7b0ec5ea5f5f07f396eaa62991c2e50effc6df62a0b2ef3e63c8ce721ac5f9bc",
+        "settled_conservative_realtime_debit_seconds": 2141.819255361028,
+        "attempt_count": 2,
+        "attempt_debits_conservative_realtime_seconds": [
+          0.024069007951766253,
+          2141.795186353076
+        ],
+        "unique_bug_replay_count": 1,
+        "active_attempt": null,
+        "time_scope_note": "Settled ledger debit using conservative realtime accounting; not pure monotonic full-workflow runtime."
+      },
+      "power_values": {
+        "A_balance": 0.018106731577286372,
+        "A_balance_minus_A_volume_absolute": 1.9804321470945352e-08,
+        "A_volume_total": 0.0181067117729649,
+        "R00_p": 1.2441799926557666e-16,
+        "R00_s": 0.07612359701387299,
+        "R00_total": 0.07612359701387311,
+        "R_total": 0.07612407059366649,
+        "T_total": 0.9057691978290471,
+        "port_volume_energy_closure_absolute": 1.9804321627070465e-08
+      },
+      "saved_data": {
+        "retained_final_packet_sha256": "d2ab23f47340a3505bfdeefb07e1e955918854234b1b753981455725fc34824a",
+        "saved_vector_sha256": "350f7566688ee59a825960e0263ad70b0b68b69937c877b5745c2000dc6c56c0",
+        "saved_vector_archive": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T002312.848713Z/x2_retained_final.npz",
+        "saved_vector_archive_sha256": "fd1d144026b20f13da1e1a077a674d6476cf864f0712413eba7a0c2899e6d224",
+        "saved_vector_length": 380040,
+        "saved_vector_dtype": "complex128",
+        "saved_mode_files": {
+          "mode_output": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T002312.848713Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "mode_output_sha256": "dd8831eb0c6e5cc4f33d2980f73db72fdd0af13a023ad77dde7251562d39bc7c",
+          "ordered_mode_manifest": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T002312.848713Z/task40q4_ordered_mode_manifest.json",
+          "ordered_mode_manifest_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253"
+        }
+      },
+      "review_v4_interface_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json",
+      "authority_note": "Saved official result from an explicit full-system residual passing run; this remains a reduced-size discrete result and does not establish continuum convergence or target-size readiness."
+    },
+    {
+      "run_id": "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1",
+      "stage": "Review V4 crossed-axis official solve",
+      "corner": "G01",
+      "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+      "official_result": true,
+      "source_sha": "9fd295624444cf16b6ba393a0a7c3522f0070f73",
+      "input_sha256": "9383791fe3c05da5338c5924656ab4e50f45f587195a1c843759936b8fa60111",
+      "physical_model_sha256": "e01c9751a74a2666e9238101f7c06ff3db70a00c99e2b664c6122a94b7939bcd",
+      "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T010317.735278Z",
+      "run_manifest_sha256": "ea5f3dcba03eace70f80a9448423d356bb2994429cace6a7e11dae3d0c98db27",
+      "mesh": {
+        "axis_cell_counts": [
+          6,
+          4,
+          22
+        ],
+        "axis_node_counts": {
+          "x": 7,
+          "y": 5,
+          "z": 23
+        },
+        "mesh_cell_type": "hexahedron",
+        "mesh_spacing_mode": "boundary_fitted",
+        "mesh_plan_id": "task40extra.gz528.crossed_axes.v1",
+        "mesh_plan_sha256": "09aa9ebe1e5214ec96b8cc78952f492da2e51309f4d0d64d73719aa96c0c1278"
+      },
+      "solver_gate": {
+        "status": "Q4_ORIGINAL_AUTHORITY_LIMITED_PASS",
+        "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+        "stage_pass": true,
+        "official_result": true,
+        "final_explicit_relative_residual": 9.745295368551415e-07,
+        "post_release_explicit_relative_residual": 9.745295368551415e-07,
+        "residual_definition": "||A6 x - b6||_2 / ||b6||_2, explicit full-system true residual, checked after solve release",
+        "residual_limit": 1e-06,
+        "solver_iterations": 202,
+        "ksp_solve_seconds": 1522.375745824,
+        "retained_global_size": 106612,
+        "matvec_count": 208
+      },
+      "p6_space": {
+        "full_rows": 359904,
+        "active_rows": 106272,
+        "interior_rows": 237600,
+        "trace_rows": 122304,
+        "slave_rows": 16032,
+        "appended_rows": 340,
+        "owned_cell_count": 528,
+        "local_tensor_dimension": 882,
+        "local_interior_dimension": 450,
+        "local_trace_dimension": 432
+      },
+      "p4_space": {
+        "full_rows": 109312,
+        "active_rows": 45120,
+        "interior_rows": 57024,
+        "trace_rows": 52288,
+        "slave_rows": 7168,
+        "appended_rows": 340,
+        "owned_cell_count": 528,
+        "local_tensor_dimension": 300,
+        "local_interior_dimension": 108,
+        "local_trace_dimension": 192
+      },
+      "p4_interface_matrix": {
+        "shape": [
+          45460,
+          45460
+        ],
+        "nnz": 17879806,
+        "nnz_semantics": "owned-row-getRow-stored-entries",
+        "dtype": "complex128"
+      },
+      "resources": {
+        "run_summary": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T010317.735278Z/run_summary.json",
+        "run_summary_sha256": "7df32d4d186269f658046293cf82576d9ebd985d9f43db9067637ea94c09299b",
+        "process_tree_rss_peak_bytes": 5434322944,
+        "process_tree_swap_peak_bytes": 0,
+        "process_tree_pss_peak_bytes": null,
+        "elapsed_seconds_scope": 1917.7574730130145
+      },
+      "workflow_ledger": {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1/shared_workflow_ledger.json",
+        "sha256": "3bc751b3690c61f14edeaa5ccb3f084c9c8c44fa9e68916fad4993d837a6857d",
+        "settled_conservative_realtime_debit_seconds": 2129.84311068633,
+        "attempt_count": 1,
+        "attempt_debits_conservative_realtime_seconds": [
+          2129.84311068633
+        ],
+        "unique_bug_replay_count": 0,
+        "active_attempt": null,
+        "time_scope_note": "Settled ledger debit using conservative realtime accounting; not pure monotonic full-workflow runtime."
+      },
+      "power_values": {
+        "A_balance": 0.018141312191896297,
+        "A_balance_minus_A_volume_absolute": 4.552254465398087e-08,
+        "A_volume_total": 0.018141266669351643,
+        "R00_p": 4.049487706422875e-20,
+        "R00_s": 0.0756514054710725,
+        "R00_total": 0.0756514054710725,
+        "R_total": 0.07565187954954337,
+        "T_total": 0.9062068082585604,
+        "port_volume_energy_closure_absolute": 4.5522544622755845e-08
+      },
+      "saved_data": {
+        "retained_final_packet_sha256": "386dff3c02a47a0b85a356bbc8523acbc73806ab5dcdf5ed81916bbc88abde8c",
+        "saved_vector_sha256": "b3de01a7c81c52d5c159c99494b558793b3b24fb969b9235e23e65f46ada13e1",
+        "saved_vector_archive": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T010317.735278Z/x2_retained_final.npz",
+        "saved_vector_archive_sha256": "7648a79c05157fdb135b895d5200ff4093f8a5aff8558d84eedb21220920daf5",
+        "saved_vector_length": 359904,
+        "saved_vector_dtype": "complex128",
+        "saved_mode_files": {
+          "mode_output": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T010317.735278Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "mode_output_sha256": "03da3b247b6e50a900142c4bf166ea792ec247910352db153d82a2371504ae5d",
+          "ordered_mode_manifest": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1__full3d_iterative__mpi1__Mna/20261003T010317.735278Z/task40q4_ordered_mode_manifest.json",
+          "ordered_mode_manifest_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253"
+        }
+      },
+      "review_v4_interface_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json",
+      "authority_note": "Saved official result from an explicit full-system residual passing run; this remains a reduced-size discrete result and does not establish continuum convergence or target-size readiness."
     }
   ],
   "ledger": {
@@ -886,5 +1137,64 @@
         "recovery_A_volume_delta": 0.0
       }
     }
-  ]
+  ],
+  "review_v4_closeout": {
+    "status": "crossed_grid and offline four-corner analysis complete; awaiting review",
+    "execution_start_sha": "9fd295624444cf16b6ba393a0a7c3522f0070f73",
+    "interface_record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json",
+    "interface_record_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+    "four_corner_solver_run_ids": [
+      "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1",
+      "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+      "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1",
+      "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1"
+    ],
+    "solver_source_shas": {
+      "G00": "a43f7f76a0df0f4440b77834846973b2de7ea3a8",
+      "G10": "9fd295624444cf16b6ba393a0a7c3522f0070f73",
+      "G01": "9fd295624444cf16b6ba393a0a7c3522f0070f73",
+      "G11": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf"
+    },
+    "analysis_records": [
+      {
+        "kind": "four_corner_volume_directional_comparison",
+        "source_sha": "9fd0e5aec0019c522741ecc1df41f195831dc752",
+        "artifact": "benchmarks/artifacts/task40extra_0p7nm_engineering/review_v4/four_corner_volume_v1.json",
+        "artifact_sha256": "5f8004f51cb7d9543730281ace16f296cdc47b0358c66038302bf4f39ac40c17",
+        "status": "completed",
+        "common_subcell_count": 1344
+      },
+      {
+        "kind": "all_340_modes_power_and_frozen_significance",
+        "source_sha": "55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2",
+        "artifact": "benchmarks/artifacts/task40extra_0p7nm_engineering/review_v4/four_corner_modes_v1.json",
+        "artifact_sha256": "e723cf5fd6dc761e3642582af12b921c05453c581903eaf47abac07816d17df2",
+        "status": "completed",
+        "mode_count": 340,
+        "selected_mode_count": 11
+      }
+    ],
+    "focused_test_record": {
+      "source_sha": "55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_review_v4_volume_runner.py src/test/test_task40_review_v4_directional_cross.py src/test/test_task40_p3_mode_staircase.py",
+      "result": "8 passed in 0.68 s"
+    },
+    "launcher_startup_failure": {
+      "source_sha": "7cffbe0ca153905ee16b4fa7377dc21ff68e7709",
+      "classification": "engineering launcher startup failure only",
+      "details": "Parent module launch could not resolve benchmarks because repository root was absent from sys.path; it occurred before loading any saved run or importing field restoration/integration code. No PDE or saved-field operation started. Fixed by module-based invocation in the next launcher commit."
+    },
+    "dot_boundary": {
+      "status": "HELD / NOT_RUN",
+      "old_checker_status": "UNKNOWN",
+      "workspace_or_workstation_readiness": "not established",
+      "changes_this_task": false,
+      "reason": "No fresh dot complex FE/PETSc fixture, recovery, backend, AUTO projection, or target-size qualification was performed."
+    },
+    "documentation_contract_test_record": {
+      "source_sha": "55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py",
+      "result": "13 passed in 0.03 s"
+    }
+  }
 }

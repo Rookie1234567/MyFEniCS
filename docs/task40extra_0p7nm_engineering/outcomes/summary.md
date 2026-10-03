@@ -1,4 +1,76 @@
-# Task40extra Review V2 收口总账
+# Task40extra Review V4 收口总账（V2/R5 历史保留）
+
+## Review V4：交叉网格与四角离线结果
+
+本节追加 V4 实际执行结果；后面的 V2、R5 和更早阶段记录保留原样。G00=F3、G10=Gx560、G01=Gz528、G11=F5。p6 是求解实际电磁场的高阶离散；同网格准确 p4 校正用于迭代中近似修正 p6 误差，收益是保留完整 p6 解和输出，代价是还要组装/使用 p4 全局矩阵。四角均使用同一 0.7 nm 物理模型、M=8/N=2 的 340 个有序端口模式和 MPI1/threads1。因为原 F3→F5 同时改变 x 与 z，Gx 只把 x 节点改为 10×4×14、Gz 只把 z 节点改为 6×4×22，以隔离方向影响；y、材料和边界不变。
+
+| 角点 | 网格轴单元 | cells | p6 完整行数 | p4 界面矩阵 rows / NNZ | full A6 真残差 | KSP 秒 | 同时进程树 RSS 峰值 B / swap B | 结果 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| G00 / F3 | 6×4×14 | 336 | 229,680 | 29,332 / 11,293,034 | 7.5936104e-7 | 823.922 | 4,006,539,264 / 0 | official，残差门通过 |
+| G10 / Gx560 | 10×4×14 | 560 | 380,040 | 48,660 / 18,782,900 | 9.7334769e-7 | 1,499.305 | 5,255,675,904 / 0 | official，残差门通过 |
+| G01 / Gz528 | 6×4×22 | 528 | 359,904 | 45,460 / 17,879,806 | 9.7452954e-7 | 1,522.376 | 5,434,322,944 / 0 | official，残差门通过 |
+| G11 / F5 | 10×4×22 | 880 | 595,512 | 75,540 / 29,765,186 | 8.7353225e-7 | 1,797.975 | 7,754,170,368 / 0 | official，残差门通过 |
+
+这里的残差是完整 p6 原系统 `||A6 x-b6||₂/||b6||₂`，限值 1e-6；RSS 是一次运行同时存活进程树峰值，swap 为任务进程树峰值。PSS 未采样。p4 矩阵 NNZ 使用 owned-row `getRow` stored-entry 口径；它不是 p6 外层自由度，也不能直接代表分解填充。
+
+Gx560 与 Gz528 的正式运行另有各自独立的 shared workflow ledger。Gx 的 settled conservative-realtime debit 为 2,141.819255361028 s（2 次尝试：早期 parent 故障 0.024069007951766253 s，正式运行 2,141.795186353076 s；unique bug replay=1）；Gz 为 2,129.84311068633 s（1 次尝试，bug replay=0）。两个 ledger 的 `active_attempt` 均为 `null`。这些数是账本的 conservative-realtime debit，不是纯 monotonic 全流程时长；`run_summary` 的 full-workflow monotonic 值分别为 1,925.862865802017 s 和 1,917.8436222969322 s，KSP-only 分别为 1,499.305480348 s（171 步）和 1,522.375745824 s（202 步）。watchdog elapsed 字段是更窄的进程监控区间。没有精确 setup 分项，故不从总时长相减推算。逐 run 路径及 ledger SHA 见 [run_index](records/run_index.json)，原始 ledger 保持独立文件。
+
+| 角点 | R_total | T_total | A_balance | A_volume | R00_s / R00_p / R00_total |
+|---|---:|---:|---:|---:|---:|
+| G00 / F3 | 0.075651901996 | 0.906206870522 | 0.018141227482 | 0.018141268088 | 0.075651427914 / 7.2332e-17 / 0.075651427914 |
+| G10 / Gx560 | 0.076124070594 | 0.905769197829 | 0.018106731577 | 0.018106711773 | 0.076123597014 / 1.2442e-16 / 0.076123597014 |
+| G01 / Gz528 | 0.075651879550 | 0.906206808259 | 0.018141312192 | 0.018141266669 | 0.075651405471 / 4.0495e-20 / 0.075651405471 |
+| G11 / F5 | 0.076124071271 | 0.905769239817 | 0.018106688912 | 0.018106713068 | 0.076123597691 / 3.5618e-17 / 0.076123597691 |
+
+相对 F5 的 `|ΔR|/|ΔT|/|ΔA_balance|/|ΔA_volume|` 分别为：G00 `4.72169e-4/4.37631e-4/3.45386e-5/3.45550e-5`；G10 `6.77011e-10/4.19879e-8/4.26649e-8/1.29529e-9`；G01 `4.72192e-4/4.37568e-4/3.46233e-5/3.45536e-5`。每项均小于 1e-3。四角分别检查 `|R_total+T_total+A_volume_total-1|` 和 `|A_balance-A_volume|`；两项均小于 1e-5，实际最大约 4.56e-8。功率门通过不替代复场门。
+
+| 物理域量；误差分母固定为 G1/F5 同量 L2 范数 | x 方向：G10→G11 | z 方向：G01→G11 | x/z 交互量 `(G11-G10-G01+G00)`，相对 G1 |
+|---|---:|---:|---:|
+| Fresnel 背景下的散射 E | 1.375971e-6 | 2.6118624e-2 | 1.05444e-6 |
+| curl(E_scattered)/k0 | 8.788076e-7 | 2.7503537e-2 | 3.93253e-6 |
+| top `(0,0,s)` 复模态振幅 | 3.234128e-7 | 1.5507592e-2 | 见全 340 模式记录 |
+| 总 E | 1.976082e-7 | 3.7509897e-3 | 见四角记录 |
+| 总 H | 1.262070e-7 | 3.9498291e-3 | 见四角记录 |
+
+这里 `curl(E_scattered)/k0` 的计算是先从保存的总电场直接计算 curl，扣除 `layered_fresnel` 背景的解析 curl 得到 `curl(E_scattered)`，再除以 `k0`。散射 E 与该 scaled-curl 的预登记方向假设均得到支持：x-only 细化接近 F5，z-only 细化仍接近 F3。完整物理域场表还包括总/散射 E、H、原始 curl、scaled curl、x/z 增量和交互项；逐材料区数据保存在 volume artifact。该比较只跨 x、z 两轴，不能推出 y 或 continuum convergence。
+
+| 冻结 11 个显著模式的最大复振幅差；各 comparison 按其首角幅度归一化 | 最大值 | 1% 门 |
+|---|---:|---|
+| G00→G11 | 1.555605% | 失败 |
+| x increment G00→G10 | 1.555637% | 失败 |
+| z increment G00→G01 | 0.010781% | 通过 |
+| G10→G11 | 0.010866% | 通过 |
+| G01→G11 | 1.555591% | 失败 |
+
+因此“x 比 z 更接近 G1”的三项主要预登记观测均成立，但 F3→F5 与 Gz→F5 的整体显著模式门仍失败；不能把 overall 1% 模式 Gate 写成通过。旧失败通道也完整保留：`bottom(-1,0,s)` 的 F3→F5 首幅值归一化差为 1.274430%，`top(0,0,s)` 为 1.555605%；Gx→F5 分别为 2.34773e-5 和 3.23413e-7，Gz→F5 分别为 1.260666% 和 1.550759%。各角复振幅、全部 340 行和五种比较均见 mode artifact。
+
+| 检查 / 证据身份 | 结果与边界 |
+|---|---|
+| 公共体积 | 1,344 子单元（形状 12×4×28），每轴 7 阶求积；物理体积 24.3966874968 nm³，材料标签错配 0 |
+| 轴并集 | x/y/z 节点数 13/5/29；仅合并完全相同节点，完整有序节点列在接口包 |
+| 模式清单 | 340 ordered modes，80 propagating、210 power-carrying；`power_carrying` 表示有限端口单位振幅的实能流 `mode.power_per_unit_amplitude > 0`，并非传播通道数；四角 manifest digest 相同；保留全部 340 对照行及冻结 11 键 |
+| volume 离线分析资源 | 864.838 s；同时进程树 RSS 934,637,568 B、swap 0 B、PSS 未采样；subreaper leader exit 0 且后代清空 |
+| 模式离线分析 | 读取已校验保存包；没有场恢复、PDE、矩阵装配或因子化；未单独采样同时进程树资源 |
+| 紧凑接口包 | [`review_v4_four_corner_interface_v1.json`](records/review_v4_four_corner_interface_v1.json)，SHA256 `44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43`；物理参数、精确网格节点、参考面、相位、unknown/recovery、残差、全部物理域字段指标、模式键、功率和资源边界均在其中 |
+| 原始离线结果 | [volume artifact](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/review_v4/four_corner_volume_v1.json)，SHA256 `5f8004f51cb7d9543730281ace16f296cdc47b0358c66038302bf4f39ac40c17`；[mode artifact](../../../benchmarks/artifacts/task40extra_0p7nm_engineering/review_v4/four_corner_modes_v1.json)，SHA256 `e723cf5fd6dc761e3642582af12b921c05453c581903eaf47abac07816d17df2` |
+| 求解/输入来源 | G00 source `a43f7f76a0df0f4440b77834846973b2de7ea3a8`；G10/G01 `9fd295624444cf16b6ba393a0a7c3522f0070f73`；G11 `63dd2a7378153f2ab5094eb5e7a98d05758a39bf`；run/input/physical hashes 在接口包和 [run_index](records/run_index.json) |
+| F3 源码索引修正 | `run_index.runs` 中旧 F3 SHA `63dd2a...` 更正为 run manifest 实证的 `a43f7f...`；旧值和修正依据保留在同一 F3 项的 `source_sha_correction`，未变更求解输出 |
+| V3-A / V3-B / V4 范围 | 复用已接受的 paired-background attribution，不重算 A；完成预登记 Gx560、Gz528 与四角比较；没有新网格、背景扫描、相位拟合或删除模式 |
+| dot / 原尺寸 / 工作站 | dot 仍 `HELD / NOT_RUN`，旧 checker `UNKNOWN`；没有改 dot 或 workstation，没有原尺寸计算，不建立 workstation readiness 或 continuum claim |
+
+## V4 选择性合并分组与下一步
+
+| 依赖组 | 数值行为与依赖 | 测试 / fresh evidence | 决策与顺序 |
+|---|---|---|---|
+| production numerical/core | 本轮新增 Gx/Gz 输入参数与 `src/geometry/task40_nonseparable_plan.py` 交叉几何/预算登记；`src/io/physical_intermediate_profile.py` 和 `src/runners/task038_launcher.py` 有 parent-FE import/launcher 最小修复；`src/postprocessing/diffraction_3d.py` 是输出后处理调整；另新增 `src/postprocessing/task40_saved_field_h_comparison.py`，恢复已保存场、直接求 curl 并在公共子单元上做离线比较。以上改变研究配置、入口和后处理；生产 Maxwell 方程、有限元离散、矩阵/约束数学及普通 solver default 未变，离线算法明确登记在 `src/` 中 | 四角 official PDE 的 solver source 与原残差/R/T/A 绑定 run_index；新增 comparator 只分析已保存场，不触发 PDE | 新增代码仍属 Task40 研究与离线分析支撑；不作为 production default，未来拆分复用前另行 review |
+| reusable runner/watchdog | `benchmarks/postprocess_task40_review_v4_directional_cross.py`、`benchmarks/postprocess_task40_review_v4_modes.py` 与 `src/postprocessing/task40_saved_field_h_comparison.py`；仅读已保存场/模式，依赖既有 `subreaper_watchdog`，不改 watchdog | 三个目标测试文件共 8 passed；V4 volume/mode artifacts 各自绑定 source/artifact SHA；runner 不触发 PDE | 保持 Task40 research/evidence 工具，先经审阅；没有宣称替代通用 runner或可设为默认 |
+| checker/benchmark | 本轮无新的独立 checker 或 benchmark case/schema | targeted tests 校验方向量和冻结模式规则；不是 solver checker qualification | 无 checker/benchmark 文件待迁移 |
+| compact evidence/docs | `response_v4.md`、V4 summary/test-summary 段、interface JSON、run_index source correction 与新增 Gx/Gz identities | 4 个 JSON 可解析，hash 与索引一致；保留全部 positive/negative/not_run 边界 | 审阅后按文档依赖组迁移；完整历史 records 不改写 |
+| research-only | Gx/Gz 输入参数、Task40 交叉几何/预算登记与 launcher/parent import 最小路径修复、`src/postprocessing/task40_saved_field_h_comparison.py` 离线算法、两个 task-scoped postprocessor、M2 crossed-grid 解释与四角数据；无 continuum/y/目标尺寸证据 | 两项离线 artifact；F3/F5 与 Gz/F5 的显著模式 1% Gate 仍失败 | 这些实现只支持本轮研究入口和保存场离线分析；不升 production、不改 ordinary default；方向结果只作后续实验优先级依据 |
+| do-not-merge | dot 分支源码、workstation 操作、原尺寸/Phase II solver、任何未经 Review 的 master 变更 | dot `HELD / NOT_RUN`、旧 checker `UNKNOWN`，无新环境 fixture | 本轮无授权或证据，不迁移、不合并 master |
+
+本批结论限定为 Review V4 指定的小尺寸离散模型与已保存场的四角对比。功率一致和 residual 通过说明这四场具有可审查的求解与能量证据；模式/散射场 Gate 的负结果仍然有效。由方向对照可将后续网格投入优先放在 x，但不得把当前证据外推为最终工程精度或原尺寸可运行。
+
 
 ## 一级账：模型结果与campaign状态
 

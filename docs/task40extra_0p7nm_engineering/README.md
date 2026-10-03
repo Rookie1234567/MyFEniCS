@@ -31,6 +31,20 @@
 | [测试摘要](outcomes/test_summary.md) | N2、修复 fixture 与文档检查结果 |
 
 
+
+## Review V4 closeout
+
+| 文件 | 用途 |
+|---|---|
+| [Review V4](review_report_v4.md) | 主线四角 x/z 对照及 dot 边界合同 |
+| [Response V4](response_v4.md) | 逐项回应 V3-A/V3-B/V4，列出正负结果和停止项 |
+| [V4 interface package](outcomes/records/review_v4_four_corner_interface_v1.json) | 完整物理身份、精确轴节点、reference plane/phase、unknown/recovery、mode 和 hash 接口 |
+| [Updated run index](outcomes/records/run_index.json) | Gx/Gz 求解身份、源 SHA 修正、analysis artifacts 与资源口径 |
+| [V4 outcomes](outcomes/summary.md) | 四角结果、Gate 决定和依赖组 selective-merge 边界 |
+| [V4 test record](outcomes/test_summary.md) | targeted tests、工程 startup failure 分类及未运行范围 |
+
+本轮确认 x-only refinement 比 z-only 更接近 F5 的三个预登记主要量，但 F3/F5 与 Gz/F5 的全体显著模式 1% 门、散射 E/curl 门仍未通过；功率门通过不能覆盖这些负结果。dot、原尺寸、workstation readiness 和 continuum convergence 均未验证，master merge 未授权。
+
 ## Review V2 closeout
 
 | 文件 | 用途 |

@@ -1,4 +1,39 @@
-# Task40extra 当前模型登记：Review V1 / R5 收口
+# Task40extra 当前模型登记：Review V4 四角交叉网格与方向性结论
+
+本登记追加正式 Gx/Gz solves 和四角 postprocessing。`p6` 是产生正式电磁场的高阶离散；`p4` 是更低阶、可准确装配的校正系统，迭代过程中用它近似纠正 p6 的误差。这样可以保留完整 p6 输出，同时付出 p4 全局矩阵/因子成本。x/z 交叉网格把 F3→F5 中同时改变的两个方向拆开：Gx 仅用 G1 的 x 节点，Gz 仅用 G1 的 z 节点，y、物理模型和端口不动。保存场的离线比较使用精确公共坐标切分，在相同物理点做体积范数；复模式按完整 real/imag 对照，因为功率不含相位。所有结论只针对小尺寸 0.7 nm 离散模型。
+
+| 模型 | source / 网格 | full p6 residual | R_total / T_total / A_volume | KSP s / 同时树 RSS B / swap B | 分类 |
+|---|---|---:|---|---|---|
+| G00 / F3 | `a43f7f76a0df0f4440b77834846973b2de7ea3a8`；336 cells，M340 | 7.593610432084708e-7 | 0.0756519019957502 / 0.9062068705222379 / 0.018141268088495303 | 823.922 / 4,006,539,264 / 0 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED` |
+| G10 / Gx560 | `9fd295624444cf16b6ba393a0a7c3522f0070f73`；560 cells，M340 | 9.733476895086066e-7 | 0.07612407059366649 / 0.9057691978290471 / 0.0181067117729649 | 1,499.305 / 5,255,675,904 / 0 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED` |
+| G01 / Gz528 | `9fd295624444cf16b6ba393a0a7c3522f0070f73`；528 cells，M340 | 9.745295368551415e-7 | 0.07565187954954337 / 0.9062068082585604 / 0.018141266669351643 | 1,522.376 / 5,434,322,944 / 0 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED` |
+| G11 / F5 | `63dd2a7378153f2ab5094eb5e7a98d05758a39bf`；880 cells，M340 | 8.735322490524255e-7 | 0.07612407127067708 / 0.9057692398169153 / 0.018106713068250728 | 1,797.975 / 7,754,170,368 / 0 | `DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED` |
+
+四个 residual 均按完整 `A6` 系统的显式 `||A6x-b6||₂/||b6||₂` 检查，限值 1e-6。R/T 是从开放边界端口上的反射/透射模式功率汇总，`A_volume` 是材料区内吸收的体积分。能量门分别检查 `|R_total+T_total+A_volume_total-1|` 和 `|A_balance-A_volume|`；和 F5 比较时，各总功率绝对差均小于 1e-3，两项闭合误差最大约 4.56e-8。RSS 是运行时同时存活的整棵进程树，不与 workflow/KSP 秒相加；PSS未采样。p4 rows/NNZ 与每个run的 input hash、physical hash、saved-vector及 mode manifest SHA 见 [V4 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。
+
+| 物理域 / 复模态量，相对 G1 同量范数 | Gx→G1 | Gz→G1 | 1% interpretation |
+|---|---:|---:|---|
+| Fresnel `E_scattered` | 1.375971e-6 | 2.6118624e-2 | x pass，z fail |
+| `curl(E_scattered)/k0` | 8.788076e-7 | 2.7503537e-2 | x pass，z fail |
+| top `(0,0,s)` complex amplitude, G1-normalized | 3.234128e-7 | 1.5507592e-2 | x pass，z fail |
+| frozen 11 significant modes, maximum G00→G11 difference relative to first-corner amplitude | — | — | 1.555605%，fail |
+| same frozen-mode gate, G10→G11 | — | — | 0.010866%，pass |
+| same frozen-mode gate, G01→G11 | — | — | 1.555591%，fail |
+
+Fresnel 散射场按已接受的分层背景定义，并以 G1 同量 L2 范数作分母。三项预登记量均显示 x-only 更接近 G1；但 F3/F5 的散射场与显著模式 1% 门仍失败，不能由总功率接近覆盖。两条历史失败通道是 `bottom(-1,0,s)`（F3→F5 为 1.274430%）和 `top(0,0,s)`（1.555605%）。旧 F3 source SHA 的索引修正和原记录值保留在 run_index 的 `source_sha_correction` 中，未改写求解结果。它们的四角出射幅值没有相位拟合或平移，并以 real/imag 保存：
+
+| 通道 | G00/F3 `(real,imag)` | G10/Gx `(real,imag)` | G01/Gz `(real,imag)` | G11/F5 `(real,imag)` |
+|---|---|---|---|---|
+| bottom `(-1,0,s)` | `(1.7269438167e-5,3.1418644829e-6)` | `(1.7469718343e-5,3.2419174853e-6)` | `(1.7269316419e-5,3.1414486697e-6)` | `(1.7469723378e-5,3.2415003732e-6)` |
+| top `(0,0,s)` | `(0.2475607417,0.1198545247)` | `(0.2464738372,0.1239929216)` | `(0.2475606843,0.1198545496)` | `(0.2464738784,0.1239928424)` |
+
+四角积分采用 1,344 个公共子单元（12×4×28），每轴 7 阶张量求积，物理体积 24.396687496824647 nm³，材料标签错配为 0。全模式比较保留 340 个有序模式（80 个传播、210 个携带功率）和原冻结 11 键。体积 worker 的进程树 RSS 峰值为 934,637,568 B、swap 为 0 B、耗时 864.838 s；worker 正常结束并清空后代。独立模式后处理未单独采样进程树峰值。紧凑[物理/接口合同](task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json)绑定了物理输入、精确节点和参考面、solver 身份、场恢复与相位约定、完整模式 digest 及资源边界。
+
+**当前决定：** `PASS_WITH_QUALIFICATIONS_FOR_REVIEW_V4_SCOPE`，等待审阅。若后续获准继续网格研究，本结果支持优先细化 x；它不证明 y 或 continuum convergence、50×25×140 nm 目标容量、2 TB workstation readiness 或 dot 恢复。dot 仍为 `HELD / NOT_RUN`，旧 checker 是 `UNKNOWN`；ordinary default 未变，也未授权合并 master。
+
+---
+
+## Historical registration: Review V1 / R5 closeout
 
 | 模型 / 阶段 | source / identity | 实测结果与资源 | 当前资格边界 |
 |---|---|---|---|

@@ -1,4 +1,33 @@
-# Task40extra：0.7 nm 非可分三维 Maxwell 工程起步（B 线 N0–N6 受限收口）
+# Task40extra 当前进展：Review V4 x/z 交叉网格已完成，等待审阅
+
+Task40 的早期 N0–N6 受限收口留下真实 0.7 nm Full3D 解，但 G0→G1 同时改变 x/z，无法判断后续网格投入的主方向；Review V3 的配对背景分析又显示功率接近不能排除散射场与复模态超门。本轮只执行 V4 已授权的两张交叉网格，复用四角 official saved fields，并按共同物理坐标离线比较。执行分支为 `task40extra_0p7nm_engineering`；本次 continuation 从 clean HEAD `9fd295624444cf16b6ba393a0a7c3522f0070f73` 开始，正式 V4 回执和证据仍待同分支审阅。
+
+不同网格的有限元向量序号没有相同物理含义。离线比较把四个网格的真实节点并成公共切分，在每个共同子单元内恢复保存场并做 L2 积分；这让场差在相同位置和材料上比较，代价是额外离线恢复与积分。跨模式保留复数实部/虚部，因为功率不能表达相位差。Gx 只改 x 轴、Gz 只改 z 轴，从而区分原 F3/F5 同时改变两个方向造成的误差来源。
+
+| 四角模型 | 网格/cells | A6 full residual | R_total / T_total / A_volume | 同时进程树 RSS峰值 / swap | 证据状态 |
+|---|---:|---:|---|---:|---|
+| G00 / F3 | 6×4×14 / 336 | 7.5936104e-7 | 0.0756519020 / 0.9062068705 / 0.0181412681 | 4,006,539,264 B / 0 B | official saved field |
+| G10 / Gx560 | 10×4×14 / 560 | 9.7334769e-7 | 0.0761240706 / 0.9057691978 / 0.0181067118 | 5,255,675,904 B / 0 B | official saved field |
+| G01 / Gz528 | 6×4×22 / 528 | 9.7452954e-7 | 0.0756518795 / 0.9062068083 / 0.0181412667 | 5,434,322,944 B / 0 B | official saved field |
+| G11 / F5 | 10×4×22 / 880 | 8.7353225e-7 | 0.0761240713 / 0.9057692398 / 0.0181067131 | 7,754,170,368 B / 0 B | official saved field |
+
+完整原 p6 方程 residual limit 为 1e-6，四场均通过。R/T/A_balance/A_volume 对 F5 的绝对差都小于 1e-3；分别检查的 `|R_total+T_total+A_volume_total-1|` 与 `|A_balance-A_volume|` 均约 4.56e-8 以下。场和模式比较没有整体通过：相对 F5，x-only Fresnel 散射 E 为 1.375971e-6、`curl(E_scattered)/k0` 为 8.788076e-7，z-only 分别为 2.6118624% 和 2.7503537%。固定 11 个显著模式的最大幅值差，F3→F5 为 1.555605%（fail 1%），Gx→F5 为 0.010866%（pass），Gz→F5 为 1.555591%（fail）。top `(0,0,s)` 与 bottom `(-1,0,s)` 两条旧失败模式的四角复幅值保存在 mode artifact；x 比 z 更接近 F5 的三项预登记指标全部成立，但并不抵消 F3/F5 模式 Gate failure。
+
+| 项目 | 决定 / 边界 |
+|---|---|
+| 本轮结论 | `PASS_WITH_QUALIFICATIONS_FOR_REVIEW_V4_SCOPE`：四角求解和能量校验有效，x 方向 refinement 更接近 G1；场/复模态仍有 1% 负结果 |
+| 可解释的下一步 | 若后续 review 授权网格研究，先针对 x 方向，不因本轮结果自动增跑；无 y 或 continuum convergence 结论 |
+| dot 与目标规模 | dot `HELD / NOT_RUN`、旧 checker `UNKNOWN`；原尺寸、2 TB 预算及工作站 readiness 未验证 |
+| 项目/代码边界 | ordinary solver default 未变；不改 dot/workstation；未合并 master，也不在本轮提出 production-core migration |
+| 测试 | V4 三文件 targeted suite `8 passed in 0.68 s`；full pytest、MPI4、Ruff、CI `not_run` |
+
+可独立复核的结果、准确物理配置、reference planes/phase、完整节点并集、矩阵维数、全部 340 个模式和两分析 SHA 见 [Response V4](task40extra_0p7nm_engineering/response_v4.md)、[V4 summary](task40extra_0p7nm_engineering/outcomes/summary.md)、[interface package](task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json) 与 [test summary](task40extra_0p7nm_engineering/outcomes/test_summary.md)。本 V4 段更新下方早期 N0–N6 快照的当前状态；历史数值与失败分类仍完整保留。
+
+---
+
+## 历史快照：Task40extra 初始 N0–N6 受限收口（后续阶段前）
+
+
 
 ### 最终状态
 

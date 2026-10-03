@@ -1,5 +1,29 @@
 # Task40extra 测试与文档检查摘要
 
+## Review V4 交叉网格收口验证
+
+| 检查 | 命令 / source | 结果 | 证据边界 |
+|---|---|---|---|
+| V4 定向测试 | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_task40_review_v4_volume_runner.py src/test/test_task40_review_v4_directional_cross.py src/test/test_task40_p3_mode_staircase.py`；source `55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2` | `8 passed in 0.68 s` | runner/watchdog 启动与隔离、父进程不导入 FE、方向/交互量和模式分母 helper；不运行 PDE |
+| Python 编译、命令入口 | 三个新增/相关模块 `py_compile`；volume/modes runner `--help` | PASS | 静态语法和入口参数检查；不代表完整仓库编译 |
+| whitespace | `git diff --check` | PASS | V4 文档及 metadata 最终版检查 |
+| Ruff | qualified environment 中 `python -m ruff` | `not_run`：环境没有安装 ruff 模块 | 未安装或临时增加依赖 |
+| 项目文档合同测试 | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_183_development_model_registry_markdown.py src/test/test_29_task_retrospective_contract.py`；source `55feda2c6f5c0e0b9ec4b57a341d209ec8b566d2` | `13 passed in 0.03 s` | registry 表格结构与 retrospective 文档约定；不涉及 PDE |
+| full repository pytest / MPI4 / CI | 未运行 | `not_run` | 本轮只运行 V4 focused 与两个文档合同测试；不声称 CI 通过 |
+| V4 保存场后处理 | 4-corner directional volume worker 和 all-340-mode/power pass | 已完成，非 pytest | volume 用一个受 subreaper 监督的离线 worker，退出码 0、后代清空；mode 分析读取保存记录。无新 PDE/网格/factorization |
+
+首个 volume launcher 曾在任何 run 包载入前失败：parent 用文件路径启动导致 repository root 未进入 `sys.path`，`benchmarks` 模块解析失败。该事件准确归类为**工程 launcher startup failure**，不是场恢复、积分、PDE、残差或物理失败；无 saved run 被读取，也没有恢复或积分发生。随后的 launcher 修复改为 `python -m benchmarks...`，focused runner test 覆盖这一模块启动路径。此失败保留，不由后续成功覆盖。
+
+## 当前文档检查
+
+| 检查 | 状态 |
+|---|---|
+| V4 compact JSON 与 artifact SHA | `PASS`；run index、接口包及两个原始分析 artifact 均可解析；接口 SHA、两项 artifact SHA 和 F3 source correction 均与索引一致 |
+| 本轮 Markdown 合同 | `PASS`；response/summary/test-summary、Task40 README、development_progress、development_model_registry 六份文档新增区共 23 个表格列数一致，新增相对链接目标均存在，`git diff --check` 通过；无独立多行公式 |
+| GitHub rendered view | `NOT_VERIFIED`；待推送后检查当前分支上的 summary/response 页面 | 缓存或页面不可读时如实保留未验证状态 |
+| full repository pytest / MPI4 / Ruff / CI | `not_run`；不外推 |
+
+
 ## 测试结果
 
 | 范围 | 命令/输入 | 结果 | 证据边界 |
