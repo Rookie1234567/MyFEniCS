@@ -1,3 +1,9 @@
+# 最新审阅：Review V26／V29轻量工作包
+
+[Review V26](review_report_v26.md)接受V28辅助CPU准入停止，父指针和失败快照问题关闭；独立复跑100项通过，但新反例表明checker仍漏查完整消费及回流向量。下一轮只执行审核修复、全空间补项的小矩阵代数验证和神经20%完整成本分析；不重开V27/V28真实actor，不训练、不延长旧迭代。
+
+[独立核验记录](outcomes/records/review_v26_independent_checks.json)包含原始hash、冻结准入重算和反例。原尺寸0.7nm／2TB／48h及NN20%资格仍未获得。以下历史逐字保留，旧建议不覆盖最新合同。
+
 # V28最新交付：checker／parent／准入证据完成，CPU Gate停止
 
 [Review V25](review_report_v25.md)／[Response V28](response_v28.md)／[详细结果](outcomes/return_direction_v28.md)／[独立checker](outcomes/records/return_direction_checker_v28.json)／[准入快照重算](outcomes/records/admission_checker_v28.json)／[raw index](outcomes/records/run_index_v28.json)。100项相关回归、compileall与dat验证通过；第二辅助准入失败后停止，正式准入0／actor0／S+SH0／reader0。两态回流NOT_RUN，不将资源停止写成数值负结果；V27 closed保持，新记录纠正旧null父指针。累计有载21.163846770s，NN20%及原尺寸资格未获得。等待审阅，不自动重入。以下历史完整保留。
