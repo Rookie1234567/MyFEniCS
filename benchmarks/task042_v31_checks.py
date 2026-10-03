@@ -9,10 +9,42 @@ SCOPE=('src/test/test_task042_v31_workflow.py','src/test/test_task042_v28_cached
        'src/test/test_task042_v27_return_direction.py')
 
 
+def archive_failed_fixtures(window, current):
+    """Lossless failed synthetic payload archival; logs/receipts remain in place.
+
+    Executed only inside this charged supervised auxiliary, never a real factor
+    reader. The inventory retains original paths and per-file reconstruction hashes.
+    """
+    import hashlib,tarfile,shutil
+    from src.solvers.neural_fe_action_packet import file_hash
+    for summary in sorted(window.TMP.glob('aux_pre_*/summary.json')):
+        previous=summary.parent/'tests/fixtures'
+        if summary.parent==current or not previous.exists() or json.loads(summary.read_text())['leader_exit_code']==0:
+            continue
+        files=sorted(p for p in previous.rglob('*') if p.is_file())
+        archive=summary.parent/'failed_fixtures.tar.gz'
+        index=summary.parent/'failed_fixtures_archive.json'
+        rows=[dict(relative_path=str(p.relative_to(previous)),original_path=str(p),
+            sha256=file_hash(p),bytes=p.stat().st_size) for p in files]
+        with tarfile.open(archive,'x:gz') as store:
+            for p in files:store.add(p,arcname=str(p.relative_to(previous)),recursive=False)
+        with tarfile.open(archive,'r:gz') as store:
+            for row in rows:
+                with store.extractfile(row['relative_path']) as stream:
+                    digest=hashlib.file_digest(stream,'sha256').hexdigest()
+                if digest!=row['sha256']:raise ValueError('failed synthetic archival hash differs')
+        write_json(index,dict(archive_path=str(archive),archive_sha256=file_hash(archive),
+            original_root=str(previous),files=rows,verified_lossless=True,
+            restore_command=['tar','-xzf',str(archive),'-C',str(previous)],
+            removed_bytes=sum(x['bytes'] for x in rows),real_payloads_removed=False))
+        shutil.rmtree(previous)
+
+
 def main():
     import argparse
     parser=argparse.ArgumentParser()
     parser.add_argument('--batch',choices=('v31','v32','v33','v34'),default='v31')
+    parser.add_argument('--archive-previous-fixtures',action='store_true')
     parser.add_argument('tests',nargs='*')
     args=parser.parse_args()
     from src.runners.actual_loss_block_descent import _pure_blas_threads
@@ -22,6 +54,10 @@ def main():
     folder=(Path(os.environ['TASK042_'+args.batch.upper()+'_AUX_DIRECTORY'])/'tests' if args.batch in ('v32','v33','v34')
             else ROOT/'tmp/task042/v31/tests')
     folder.mkdir(parents=True,exist_ok=True)
+    if args.archive_previous_fixtures:
+        if args.batch!='v34':raise ValueError('explicit V34 synthetic archival only')
+        from src.solvers import full_input_block_v34_window as paid_window
+        archive_failed_fixtures(paid_window,folder.parent)
     v34_scope=('src/test/test_task042_v34_workflow.py','src/test/test_task042_v33_workflow.py',
         'src/test/test_task042_v32_workflow.py::test_storage_scope_and_boundary',
         'src/test/test_task042_v32_workflow.py::test_v32_actual_workflow_through_independent_checker',

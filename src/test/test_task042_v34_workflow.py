@@ -130,6 +130,7 @@ def test_resource_wait_charges_probe_once_and_requires_backoff(tmp_path,monkeypa
         return dict(cpu=0)
     assert w.admission(admitted,receipt_path=tmp_path/'admission002.json')['cpu']==0
     assert w.probe_wall()==2.25 and len(calls)==2
+    (tmp_path/'aux_pre_001').mkdir()
     write_json(tmp_path/'aux_pre_001/summary.json',dict(elapsed_seconds=3.))
     assert w.auxiliary_wall()==w.carried_auxiliary_seconds+5.25
     write_json(tmp_path/'probe_003.json',dict(elapsed_seconds=17.75))

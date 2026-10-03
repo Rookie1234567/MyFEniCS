@@ -37,7 +37,7 @@ def test_actual_study_saved_arrays_accounting_and_independent_checker(tmp_path,m
     # Each mutation checks a named semantic failure, never an arbitrary OSError.
     for member in ('qfull','delta','aqfull','aqret_cached'):
         bad={k:v.copy() for k,v in a.items()};bad[member][0]+=.1
-        with pytest.raises(ValueError,match='identity|bound|scale|unsafe|cached'):
+        with pytest.raises(ValueError,match='identity|bound|scale|unsafe|cached|full_linearity'):
             numeric(row,bad,state,d,j,ret,groups,ids,n)
     for value in (0.,2.):
         bad=deepcopy(row);bad['rho_full']=value
