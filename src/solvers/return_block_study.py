@@ -36,6 +36,7 @@ def prior_arrays(item,nt):
 
 
 def run(stage):
+    io=stage.io
     began=perf_counter();packet=stage.packet;own=stage.own_plan
     if (packet.nt,packet.np,packet.size)!=(18144,40,18184):raise ValueError('V27 complete original row inventory')
     if array_hash(packet.a['masters'])!=own['canonical_master_sha256'] or array_hash(packet.a['b'])!=own['b_sha256']:
@@ -72,6 +73,7 @@ def run(stage):
         selected_old_outer_LU_blocks=list(OUTER_BLOCKS),old5_7_LU_read=False,
         rank_upper_bound=3888,full_trace_rows=18144,full_space_preconditioner=False)
     result=dict(status='PENDING',rows=[],factor_readiness=ready,map_check=mapcheck,capacity=capacity,
+        operator_identity={k:own[k] for k in ('action_sha256','physical_sha256','mode_sha256','canonical_master_sha256','b_sha256')},
         factor_reloads=[],source_lineage=dict(V24=own['upstream_source_sha'],V25=own['v25_source_sha'],V26=own['v26_source_sha']),
         new_solver_states=0,new_local_assemblies=0,new_local_factors=0,old5_7_LU_read=False,
         cache_reused_qj_vj=True,rank_upper_bound=3888,full_space_PC=False,decision='PENDING')
@@ -101,6 +103,9 @@ def run(stage):
         if not reload['qualified']:return dict(result,status='JOINT_RELOAD_UNSAFE',decision='NUMERICALLY_UNRESOLVED',dependent_samples='NOT_RUN')
         rhs=a['b'];barb=bar.reduced_rhs(rhs);samples=[]
         for item in own['states']:
+            parent=io.checked_json(item['parent_result'],io.ROOT/'benchmarks/artifacts/task042/v24')
+            if parent['source_sha']!=own['upstream_source_sha'] or parent['operator_packet']['sha256']!=own['action_sha256']:
+                raise ValueError('named V24 parent source/operator')
             stage.guard();name=item['name'];previous=prow[name];v25=oldrows[name]
             if (previous['input_state']!=item['state'] or previous['diagnostic_arrays']!=item['v26_arrays']
                     or previous['old_direction_arrays']!=item['v25_arrays'] or v25['input_state']!=item['state']):
@@ -169,7 +174,8 @@ def run(stage):
             receipt=atomic_arrays(stage.artifact/(sample['name']+'.npz'),**arrays,
                 w=w,aw=flow['aw'],feedback=flow['feedback'],feedback_image=flow['feedback_image'],
                 return_direction=flow['return_direction'],return_image=flow['return_image'])
-            row=dict(name=sample['name'],input_state=sample['item']['state'],v25_arrays=sample['item']['v25_arrays'],v26_arrays=sample['item']['v26_arrays'],
+            row=dict(name=sample['name'],parent_result=sample['item']['parent_result'],input_state=sample['item']['state'],v25_arrays=sample['item']['v25_arrays'],v26_arrays=sample['item']['v26_arrays'],
+                old_operation_scales=sample['old_scales'].tolist(),
                 identity=sample['identity'],cached_original_pair=sample['cache_original_pair'],cached_joint_inner_pair=sample['cached_joint_inner_pair'],
                 cancellation=cancellation,action_operation_scales=scales,regions=regions,**metrics,diagnostic_arrays=receipt)
             result['rows'].append(row);write_json(stage.artifact/(sample['name']+'.json'),row)

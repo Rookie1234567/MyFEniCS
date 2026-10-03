@@ -1,0 +1,7 @@
+schema_version = 1
+
+[task042_v28]
+stage = "DIAGNOSTIC"
+run_id = "task042_v28_return_direction_diagnostic"
+material_table_id = "SI_OPTICAL_CONSTANTS_USER_20260929_V1"
+diagnostic_family = "FIXED_J_OUTER_J_RETURN_DIRECTION_DIAGNOSTIC"

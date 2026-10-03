@@ -101,6 +101,7 @@ def details(pid, stat):
                     "tid": int(entry.name),
                     "affinity": sorted(os.sched_getaffinity(int(entry.name))),
                     "cpu": int(fields[36]),
+                    "start_ticks": int(fields[19]),
                 }
             )
         except (OSError, ValueError, IndexError):
@@ -129,6 +130,7 @@ def details(pid, stat):
         affinity=sorted(os.sched_getaffinity(pid)),
         threads=threads,
         source_input_paths=paths,
+        cwd=str((path / "cwd").resolve()),
         public_phase_path=phase_path,
     )
 
@@ -203,7 +205,42 @@ def spare_cores(topology, neighbors, cpu_busy_fraction, thread_deltas):
     return [t["cpu"] for t in topology if not set(t["siblings"]) & excluded]
 
 
-def audit(*, observed_activity=False):
+def cpu_exclusions(topology, neighbors, fractions, deltas):
+    """Reporting only; the existing spare_cores policy remains authoritative."""
+    reasons={}
+    for cpu,value in fractions.items():
+        if value>0.05:reasons.setdefault(cpu,[]).append("sample_busy_fraction_gt_0.05")
+    for row in neighbors:
+        for thread in row["threads"]:
+            if len(thread["affinity"])<=16:
+                for cpu in thread["affinity"]:reasons.setdefault(cpu,[]).append("narrow_thread_affinity:"+str(thread["tid"]))
+            elif deltas.get(thread["tid"],1)>0:
+                reasons.setdefault(thread["cpu"],[]).append("active_wide_thread:"+str(thread["tid"]))
+    return [dict(**t,eligible=not any(cpu in reasons for cpu in t["siblings"]),
+        excluded_siblings={str(cpu):reasons[cpu] for cpu in t["siblings"] if cpu in reasons}) for t in topology]
+
+
+def audit(*, observed_activity=False, receipt_path=None, input_path=None):
+    """Optional replayable receipt, including early rejection; defaults unchanged."""
+    if receipt_path is None:return _audit(observed_activity=observed_activity)
+    observation=dict(schema="task042.admission-observation.v1",utc=datetime.now(timezone.utc).isoformat(),
+        monotonic=time.monotonic(),boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+        pid=os.getpid(),cwd=str(Path.cwd().resolve()),input_path=input_path,
+        allowed_cpus=sorted(os.sched_getaffinity(0)),observed_activity=observed_activity,
+        gates=dict.fromkeys(('CPU_SMT','MEMORY','DISK','PSI','CGROUP_GPU_SNAPSHOT'),'NOT_CHECKED'))
+    try:
+        result=_audit(observed_activity=observed_activity,observation=observation)
+        observation.update(status='ADMITTED',selected_cpu=result['cpu'],baseline=result)
+        return result
+    except Exception as error:
+        observation.update(status='REJECTED',error=type(error).__name__+': '+str(error))
+        raise
+    finally:
+        observation.update(finished_utc=datetime.now(timezone.utc).isoformat(),finished_monotonic=time.monotonic())
+        write_json(receipt_path,observation)
+
+
+def _audit(*, observed_activity=False, observation=None):
     """Two short CPU samples; include worker parents, siblings and descendants."""
     before = proc_stats()
     cpu_before = _cpu_ticks() if observed_activity else None
@@ -309,19 +346,35 @@ def audit(*, observed_activity=False):
             if tid in threads_before and last[0] == threads_before[tid][0]
         }
         candidates = spare_cores(topology, rows, cpu_busy_fraction, thread_deltas)
+    if observation is not None:
+        tids={t['tid'] for row in rows for t in row['threads']}
+        observation.update(process_start_ticks=after.get(os.getpid(),{}).get('start_ticks'),
+            sample_interval_seconds=interval,topology=topology,neighbor_processes=rows,
+            cpu_ticks_before=cpu_before,cpu_ticks_after=cpu_after,cpu_busy_fractions=cpu_busy_fraction,
+            thread_ticks_before={tid:threads_before[tid] for tid in tids if tid in (threads_before or {})},
+            thread_ticks_after={tid:threads_after[tid] for tid in tids if tid in (threads_after or {})},
+            thread_delta_ticks=thread_deltas,candidate_cpus=candidates,
+            cpu_decisions=cpu_exclusions(topology,rows,cpu_busy_fraction,thread_deltas))
+        observation['gates']['CPU_SMT']='PASS' if candidates else 'FAIL'
     if not candidates:
         raise RuntimeError(
             "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling"
         )
     env = shared_envelope()
+    if observation is not None:
+        observation['memory']=env;observation['gates']['MEMORY']='PASS' if env['launch_cap_bytes']>=HARD else 'FAIL'
     if env["launch_cap_bytes"] < HARD:
         raise RuntimeError(
             "Insufficient reserve + neighbor growth allowance + Task042 hard budget"
         )
     disk = shutil.disk_usage(ROOT).free
+    if observation is not None:
+        observation['disk_free_bytes']=disk;observation['gates']['DISK']='PASS' if disk>=50*2**30 else 'FAIL'
     if disk < 50 * 2**30:
         raise RuntimeError("Disk headroom below 50 GiB")
     psi = pressure()
+    if observation is not None:
+        observation['memory_pressure']=psi;observation['gates']['PSI']='PASS' if psi['some']['avg10']<1. and psi['full']['avg10']<.1 else 'FAIL'
     if psi["some"]["avg10"] >= 1.0 or psi["full"]["avg10"] >= 0.1:
         raise RuntimeError("Memory pressure already present")
     gpu = subprocess.run(
@@ -365,6 +418,7 @@ def audit(*, observed_activity=False):
         "ancestors": ancestors,
         "implementation": "process-tree sampled enforcement; no kernel cgroup limit claimed",
     }
+    if observation is not None:observation['gates']['CGROUP_GPU_SNAPSHOT']='OBSERVED_READONLY'
     return {
         "schema": "task042.shared-resource-baseline.v2",
         "utc": datetime.now(timezone.utc).isoformat(),
@@ -458,6 +512,9 @@ def launch(specification):
         raise RuntimeError("Formal Task042 stage requires clean committed source")
     profile = specification.solver["preconditioner"]
     stage = TASK042_PROFILES[profile]
+    if stage.startswith("V28-"):
+        from src.solvers.return_block_continuation_window import snapshot, journal, require_live
+        remaining_budget = require_live(heavy=True,margin=900)["heavy_remaining_seconds"]
     if stage.startswith("V27-"):
         from src.solvers.return_block_window import snapshot, journal, require_live
         remaining_budget = require_live(heavy=True,margin=900)["heavy_remaining_seconds"]
@@ -540,7 +597,7 @@ def launch(specification):
         if remaining_budget <= 0:
             raise RuntimeError("V10 original heavy deadline reached")
     expected_mode = "ml" if stage in ("F3-train", "V6-ML-INTERFACE") else "fe"
-    if stage.startswith(("V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")):
+    if stage.startswith(("V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")):
         expected_mode = specification.derived["environment_mode"]
     if stage.startswith("V16-"):
         expected_mode = specification.derived["environment_mode"]
@@ -581,10 +638,20 @@ def launch(specification):
     lock_path = ROOT / "tmp/task042/task042_shared.lock"
     with lock_path.open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        baseline = audit(
+        audit_kwargs={}
+        if stage.startswith("V28-"):
+            from src.solvers import return_block_continuation_window as v28_window
+            attempt=v28_window.TMP/"formal_admission_attempt.json"
+            with attempt.open("x") as stream:
+                json.dump(dict(utc=datetime.now(timezone.utc).isoformat(),monotonic=time.monotonic(),
+                    input_path=str(specification.source_path),input_sha256=specification.input_sha256),stream)
+                stream.flush();os.fsync(stream.fileno())
+            audit_kwargs=dict(receipt_path=v28_window.TMP/"formal_admission.json",input_path=str(specification.source_path))
+        baseline = audit(**audit_kwargs,
             observed_activity=stage in ("V3-reuse", "V3-overlap")
-            or stage.startswith(("V4-", "V5-", "V6-", "V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-"))
+            or stage.startswith(("V4-", "V5-", "V6-", "V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-"))
         )
+        if stage.startswith("V28-"):os.environ["TASK042_V28_ADMITTED_WORKER"]="1"
         os.sched_setaffinity(0, {baseline["cpu"]})
         os.nice(10)
         subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())], check=True)
@@ -630,7 +697,7 @@ def launch(specification):
                          physical_hash_meaning=specification.derived["identity_hash_meaning"],
                          material_status="MATERIAL_READY_USER_SUPPLIED",
                          formal_pde=stage != "V7-M0")
-        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")):
+        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")):
             state.update(physical_model_complete=True,
                          physical_operator_sha256=specification.physical_model_sha256,
                          physical_hash_meaning=specification.derived["identity_hash_meaning"],
@@ -638,6 +705,15 @@ def launch(specification):
                          plan_sha256=specification.derived["plan_sha256"],
                          formal_pde=False, formal_fe_stage=expected_mode == "fe")
         write_json(directory / "run_manifest.json", state)
+        if stage.startswith("V28-"):
+            from src.solvers.return_block_continuation_window import WINDOW_PATH
+            from src.solvers.neural_fe_action_packet import file_hash
+            state.update(batch_window=snapshot(),window_sha256=file_hash(WINDOW_PATH),
+                review_authorization="Review V25 455d816f01a44cdb98c53c893f48898602aaf752",
+                factor_contract="readonly J and six outer bundles; rank<=3888; no full-space PC",
+                offline_diagnostic=True,new_solver_result=False,global_p4_factor_constructed=False)
+            write_json(directory / "run_manifest.json",state)
+            journal("stage_start",stage=stage,directory=str(directory),cpu=baseline["cpu"])
         if stage.startswith("V27-"):
             from src.solvers.return_block_window import WINDOW_PATH
             from src.solvers.neural_fe_action_packet import file_hash
@@ -818,7 +894,7 @@ def launch(specification):
             sys.executable,
             "-m",
             "src.runners.return_block_diagnostic"
-            if stage.startswith("V27-")
+            if stage.startswith(("V27-", "V28-"))
             else "src.runners.joint_block_diagnostic"
             if stage.startswith("V26-")
             else "src.runners.block_direction_diagnostic"
@@ -869,10 +945,10 @@ def launch(specification):
         result = supervise(
             command,
             directory / "supervision",
-            wall_seconds=min(specification.execution["timeout_seconds"], snapshot()["heavy_remaining_seconds"] if stage.startswith(("V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")) else window_snapshot()["heavy_remaining_seconds"] if stage.startswith("V10-") else remaining_budget) if stage.startswith(("V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")) else 600 if stage.startswith("V6-") else 10800,
-            timebase_guard=stage.startswith(("V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")),
+            wall_seconds=min(specification.execution["timeout_seconds"], snapshot()["heavy_remaining_seconds"] if stage.startswith(("V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")) else window_snapshot()["heavy_remaining_seconds"] if stage.startswith("V10-") else remaining_budget) if stage.startswith(("V7-", "V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")) else 600 if stage.startswith("V6-") else 10800,
+            timebase_guard=stage.startswith(("V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")),
             interval=0.5,
-            source_state=_json_metadata(state) if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")) else state,
+            source_state=_json_metadata(state) if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")) else state,
             worker_environment={"TASK042_WATCHDOG_PARENT_PID": str(os.getpid())},
             hard_stop_immediate=True,
             rss_hard_limit_bytes=HARD,
@@ -884,9 +960,12 @@ def launch(specification):
             stop_on_global_swap=False,
         )
         result.update(directory=str(directory), stage=stage, shared_workstation=True)
-        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")):
+        if stage.startswith(("V8-", "V9-", "V10-", "V11-", "V12-", "V13-", "V14-", "V15-", "V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")):
             result["launch_wall_seconds"] = time.perf_counter() - launch_began
         write_json(directory / "run_summary.json", result)
+        if stage.startswith("V28-"):
+            from src.solvers.return_block_continuation_window import settle_run
+            settle_run(directory,result,result["launch_wall_seconds"])
         if stage.startswith("V27-"):
             from src.solvers.return_block_window import settle_run
             settle_run(directory,result,result["launch_wall_seconds"])
@@ -920,7 +999,7 @@ def launch(specification):
         if stage.startswith("V17-"):
             from src.solvers.resumable_trace_window import settle_run
             settle_run(directory,result,result["launch_wall_seconds"])
-        if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-")):
+        if stage.startswith(("V16-", "V17-", "V18-", "V19-", "V20-", "V21-", "V22-", "V23-", "V24-", "V25-", "V26-", "V27-", "V28-")):
             journal("stage_end",stage=stage,directory=str(directory),classification=result["classification"],
                 descendants_cleared=result["descendants_cleared"],elapsed_seconds=result["elapsed_seconds"],
                 rss_peak_bytes=result["sampled_process_tree_rss_peak_bytes"])

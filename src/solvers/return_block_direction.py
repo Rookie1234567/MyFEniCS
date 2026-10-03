@@ -112,13 +112,16 @@ def extend_nine(r,Q9,W9,cached_c9,cached_e9,d,ad,action,*,bnorm,old_scales,new_s
     c9=solve_triangular(R[:9,:9],Z[:,:9].conj().T@r,check_finite=False)/norms
     thin_seconds=perf_counter()-started;e9=r-W9@c9;eta9=float(np.linalg.norm(e9)/rn)
     h=ad-Z[:,:9]@(Z[:,:9].conj().T@ad);hn=float(np.linalg.norm(h));floor=64*EPS*new_scale
+    # A certificate from the SAME existing QR, independent of the new beta.
+    p9=solve_triangular(R[:9,:9],Z[:,:9].conj().T@ad,check_finite=False)/norms
     resolved=bool(an>0 and hn>floor and hn/an>1e-12 and rank==10)
     coef=np.r_[c9,0j]
     if resolved:coef=np.r_[beta[:9]/norms,beta[9]/an]
     thin=r-W9@coef[:9]-coef[9]*ad;actual=action(Q9@coef[:9]+coef[9]*d)
     e10=r-actual;eta10=float(np.linalg.norm(e10)/rn);err=float(np.linalg.norm(actual-(r-thin)))
     op=float(np.dot(abs(coef[:9]),old_scales)+abs(coef[9])*new_scale)
-    station=relative(float(np.linalg.norm(W.conj().T@thin)),float(np.linalg.norm(W)*(rn+np.linalg.norm(r-thin))))
+    qualified_W=W if resolved else W[:,:9]
+    station=relative(float(np.linalg.norm(qualified_W.conj().T@thin)),float(np.linalg.norm(qualified_W)*(rn+np.linalg.norm(r-thin))))
     qr_error=float(np.linalg.norm(Z@R-W)/np.linalg.norm(W));orth=float(np.linalg.norm(Z.conj().T@Z-np.eye(Z.shape[1]))/np.sqrt(Z.shape[1]))
     baseline_diff=float(np.linalg.norm(W9@(c9-cached_c9))/bnorm)
     e9_diff=float(np.linalg.norm(e9-cached_e9)/bnorm)
@@ -140,10 +143,14 @@ def extend_nine(r,Q9,W9,cached_c9,cached_e9,d,ad,action,*,bnorm,old_scales,new_s
         old_cached_response_difference_full_b_relative=baseline_diff,old_e9_difference_full_b_relative=e9_diff,
         old_nine_original_response_full_b_relative=baseline_original,QR_relative=qr_error,orthogonality_relative=orth,
         stationarity_operation_relative=station,
+        stationarity_scope='nine_plus_resolved_innovation' if resolved else 'qualified_nine_baseline',
         independent_recombination=dict(full_b_relative=err/bnorm,current_r_relative=err/rn,operation_relative=relative(err,op)),
         coefficients=[complex_value(x) for x in coef],decomposition_seconds=thin_seconds,
         diagnostic_seconds=perf_counter()-began,new_solver_state=False)
-    return metrics,dict(direction=d,image=ad,innovation=h,coefficients=coef,old_e9=e9,diagnostic_residual=e10)
+    return metrics,dict(direction=d,image=ad,innovation=h,projection_coefficients=p9,
+        coefficients=coef,baseline_coefficients=c9,old_e9=e9,diagnostic_residual=e10,
+        original_combination_image=actual,original_baseline_image=baseline_actual,
+        thin_Q=Z,thin_R=R,input_residual=r)
 
 
 def decision(rows):

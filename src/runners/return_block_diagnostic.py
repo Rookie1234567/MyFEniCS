@@ -12,12 +12,18 @@ class ReturnStage(DirectionStage):
         now=time.monotonic()
         if now-getattr(self,'last_new_storage_check',0)>5:
             roots=[self.io.ARTIFACT_ROOT,self.directory,*((self.io.ROOT/'tmp/task042').glob('v27*'))]
+            if getattr(self.io,'LABEL','V27')=='V28':
+                roots.extend([self.io.ROOT/'benchmarks/artifacts/task042/v27',*((self.io.ROOT/'tmp/task042').glob('v28*'))])
             size=sum(p.stat().st_size for root in roots for p in root.rglob('*') if p.is_file())
             if size>128*2**20:raise MemoryError('V27 new persistent outputs including TMP cap')
             self.last_new_storage_check=now
 
 
 def main():
+    global io,window
+    if b'[task042_v28]' in Path(sys.argv[1]).read_bytes():
+        from src.io import return_block_continuation as io
+        from src.solvers import return_block_continuation_window as window
     window.guard_worker_parent()
     stage=ReturnStage(io.load_return_diagnostic(sys.argv[1]),Path(sys.argv[2]).resolve(),
         io_module=io,window_module=window,historical_lower=77161.55713859801)

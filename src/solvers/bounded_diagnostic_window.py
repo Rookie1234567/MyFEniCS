@@ -7,8 +7,9 @@ from src.solvers.exact_recycle_window import evaluate_window
 
 
 class DiagnosticWindow:
-    def __init__(self,folder,caps,label):
+    def __init__(self,folder,caps,label,*,carried_auxiliary_seconds=0.):
         self.TMP=Path(folder);self.CAPS=caps;self.label=label
+        self.carried_auxiliary_seconds=carried_auxiliary_seconds
         self.WINDOW_PATH=self.TMP/'window.json';self.LEDGER_PATH=self.TMP/'ledger.json'
         self.JOURNAL_PATH=self.TMP/'progress_journal.jsonl'
 
@@ -23,7 +24,7 @@ class DiagnosticWindow:
         return value
 
     def auxiliary_wall(self):
-        return sum(json.loads(p.read_text())['elapsed_seconds'] for p in self.TMP.glob('aux_*/summary.json'))
+        return self.carried_auxiliary_seconds+sum(json.loads(p.read_text())['elapsed_seconds'] for p in self.TMP.glob('aux_*/summary.json'))
 
     def journal(self,event,**fields):
         row=dict(event=event,clock=self.snapshot(),shared_workstation=True,**fields)
