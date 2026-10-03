@@ -5,23 +5,10 @@
   "batch_start_utc": "2026-10-03T05:29:02+00:00",
   "complete_batch_wall_to_snapshot_seconds": 1597.120276,
   "complete_conservative_new_seconds": 1717.120276,
+  "final_cleanup_git_tail": "Included in existing120s publication reserve; independent empty-tree probe replaces same-shell false match, no numerical restart",
   "final_lock_clearance": {
     "numerical_lock": "FREE",
-    "own_active_numerical_members": [
-      {
-        "command": "/bin/bash -c source scripts/activate_task42extra.sh pure\npython scripts/supervise_task42extra.py --label v15_E_final_document_checks --seconds 300 -- python tmp/task42extra/v15_doc_check.py\npython tmp/task42extra/own_state_v11.py > tmp/task42extra/final_clearance_v15.json\ngit diff --check\ngit status --short ",
-        "cwd": "/home/fenics/Projects/NN-Lab-V2",
-        "pid": 1407267,
-        "ppid": 1276332,
-        "start_ticks": 93186219,
-        "status": {
-          "Cpus_allowed_list": "0-47",
-          "Threads": "1",
-          "VmRSS": "3724 kB",
-          "VmSwap": "0 kB"
-        }
-      }
-    ]
+    "own_active_numerical_members": []
   },
   "known_project_partial_cumulative_seconds": 165803.23590631902,
   "local_repairs_used": 2,
@@ -42,6 +29,24 @@
   "old_known_research_seconds": 162614.59359231903,
   "one_local_repair_all_failed_cost_retained": true,
   "own_swap_peak_bytes": 0,
+  "post_document_same_shell_probe_preserved": {
+    "numerical_lock": "FREE",
+    "own_active_numerical_members": [
+      {
+        "command": "/bin/bash -c source scripts/activate_task42extra.sh pure\npython scripts/supervise_task42extra.py --label v15_E_final_document_checks --seconds 300 -- python tmp/task42extra/v15_doc_check.py\npython tmp/task42extra/own_state_v11.py > tmp/task42extra/final_clearance_v15.json\ngit diff --check\ngit status --short ",
+        "cwd": "/home/fenics/Projects/NN-Lab-V2",
+        "pid": 1407267,
+        "ppid": 1276332,
+        "start_ticks": 93186219,
+        "status": {
+          "Cpus_allowed_list": "0-47",
+          "Threads": "1",
+          "VmRSS": "3724 kB",
+          "VmSwap": "0 kB"
+        }
+      }
+    ]
+  },
   "publication_and_final_clearance_reserve_seconds": 120,
   "resource_entries": [
     {
@@ -407,7 +412,13 @@
   ],
   "resource_readmission_used": 0,
   "review_v14_known_wall_seconds": 1471.522038,
+  "same_shell_probe_interpretation": "Probe matched the enclosing bash text containing the already-finished supervisor command; it was a 3724kB shell, not a surviving worker. Raw observation retained.",
   "scope": "sampled simultaneous watchdog parent+all descendants, 0.5s; not kernel cgroup hard guarantee",
+  "separate_clearance_receipt": {
+    "observed_utc": "2026-10-03T05:56:11+00:00",
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/final_clearance_v15_separate.json",
+    "sha256": "304c45c646fb49bc06802657222d81a5c34cf682d76aa4506f8b6ce9e24da287"
+  },
   "shared_workstation": true,
   "snapshot_utc": "2026-10-03T05:55:39.120276+00:00",
   "supervised_worker_total_seconds": 93.1808600500226,
