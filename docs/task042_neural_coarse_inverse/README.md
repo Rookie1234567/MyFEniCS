@@ -1,3 +1,7 @@
+# V31最新交付：真实接线通过，前测fixture错误停止正式运行
+
+[Review V28](review_report_v28.md)／[Response V31](response_v31.md)／[详细结果](outcomes/return_direction_workflow_v31.md)／[run index](outcomes/records/run_index_v31.json)。relative导入与V31独立namespace已实现，实际study→保存→结算→collector合成测试通过；唯一前测整体109 passed／1 failed，新拒绝fixture缺窗口接口。已最小补齐但修后runtime NOT_RUN；依合同停止，不作正式准入或actor／后checker。监督12.731163s、累计52.680176s、树RSS254,758,912B／ownswap0；真实S/SH/reader/FE/训练0，eta10/g10未运行。旧负结果与closed历史不变，NN20%及原尺寸资格未获得。以下历史逐字保留。
+
 # 最新审阅：Review V28／准备通过，真实回流有条件解锁
 
 [Review V28](review_report_v28.md)接受V30轻量入口及合成审核资格，关闭上一轮两项缺陷。真实study另有未导入`relative`的旧接线问题；V31先修复并验证实际工作流，再在fresh准入和累计预算内只做一次原两冷态、V26九方向基线的回流诊断。不得直接启动旧dat、重开closed窗口或追加迭代／训练。

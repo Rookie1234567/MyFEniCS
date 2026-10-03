@@ -1,0 +1,32 @@
+{
+  "charged": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "runs": [],
+  "active": null,
+  "closed": true,
+  "actor_wall_seconds": 0.0,
+  "carried_supervised_seconds": 39.94901336694602,
+  "auxiliary_supervised_seconds": 12.731162693002261,
+  "carried_plus_supervised_seconds": 52.68017605994828,
+  "auxiliary_runs": [
+    {
+      "phase": "pre",
+      "summary_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v31/aux_pre/auxiliary_summary.json",
+      "source_sha": "997397093f7061f7086b2088458d50c6ca773b7d",
+      "classification": "WORKER_FAILED"
+    }
+  ],
+  "closure_reason": "PRETEST_FAILED: incomplete window stub in rejection test; no formal admission or actor; no second pre-test"
+}

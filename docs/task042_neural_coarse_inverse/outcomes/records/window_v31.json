@@ -1,0 +1,12 @@
+{
+  "start_utc": "2026-10-03T10:00:29.125963+00:00",
+  "start_monotonic": 946623.986853628,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "heavy_limit_seconds": 4500,
+  "total_limit_seconds": 5400,
+  "review_commit": "a871cc1a0ef6c888f9fe8040e321dd25db9612ed",
+  "carried_auxiliary_seconds": 39.94901336694602,
+  "closed": true,
+  "closed_utc": "2026-10-03T10:12:35.920648+00:00",
+  "closed_reason": "PRETEST_FAILED: incomplete window stub in rejection test; no formal admission or actor; no second pre-test"
+}

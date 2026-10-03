@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-03T10:18:32.067380+00:00",
+  "method": "stat logical bytes; no payload reads; TMP, review temporaries and new compact records included",
+  "V31_bytes_including_TMP_and_new_records": 6951472,
+  "V31_cap_bytes": 33554432,
+  "V27_on_bytes_including_review_tmp_and_new_records": 110693959,
+  "V27_on_cap_bytes": 134217728,
+  "all_Task042_artifact_bytes": 18024901709,
+  "Task042_artifact_cap_bytes": 21474836480,
+  "disk_free_bytes": 3386508824576,
+  "old_failures_deleted": false
+}

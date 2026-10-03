@@ -1,0 +1,66 @@
+{
+  "utc": "2026-10-03T10:18:32.727815+00:00",
+  "status": "LOCAL_STRUCTURE_PASS",
+  "files": {
+    "docs/task042_neural_coarse_inverse/response_v31.md": {
+      "table_blocks": 3,
+      "fences": "PASS",
+      "sha256": "b1d056f551f5a123a5d7021653b2c95473f00905783dd1672d73ffff9da6ad11"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/return_direction_workflow_v31.md": {
+      "table_blocks": 3,
+      "fences": "PASS",
+      "sha256": "32fe7ba2c3aaec58a831cb9401213284bf8d288ace64f810c4509a937676142e"
+    },
+    "docs/task042_neural_coarse_inverse/README.md": {
+      "table_blocks": 5,
+      "fences": "PASS",
+      "sha256": "ff34183ac5de20c98a97fc256ed5858c321102b3433b42a9fd99c99ebea8e23a"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md": {
+      "table_blocks": 52,
+      "fences": "PASS",
+      "sha256": "733b8f3afb573a92a93ed6f9308d91eb5837cceca21adc20638122a7d7adedba"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md": {
+      "table_blocks": 25,
+      "fences": "PASS",
+      "sha256": "fde5ee6eca85da9316c5db30c09bac371e140205bf8ef650563f303628d41fce"
+    },
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md": {
+      "table_blocks": 28,
+      "fences": "PASS",
+      "sha256": "ddaf5eb3b645023af6455b6d7a8cc0da7e5d56d26b8acc10a5663ef050ae6ab1"
+    },
+    "docs/development_progress.md": {
+      "table_blocks": 68,
+      "fences": "PASS",
+      "sha256": "efb1f601016188d25150282ce3d8789e47a7fea406814996448670a32e61b497"
+    },
+    "docs/development_model_registry.md": {
+      "table_blocks": 151,
+      "fences": "PASS",
+      "sha256": "093019c146f3a7623b94ebe163bc7d79ecb78b59e9e27f3bcc59c152dccff0b5"
+    },
+    "docs/task042_neural_coarse_inverse/review_report_v28.md": {
+      "table_blocks": 9,
+      "fences": "PASS",
+      "sha256": "66a8460ebd263979de57fd5c35a603ae40f4cf21a599a7ef3ad88c4ef2151778"
+    }
+  },
+  "protected_root_task_reviews_responses": 59,
+  "history_navigation_suffixes_unchanged": [
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/development_progress.md",
+    "docs/development_model_registry.md"
+  ],
+  "github_visual": {
+    "status": "NOT_VERIFIED",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/a871cc1a0ef6c888f9fe8040e321dd25db9612ed/docs/task042_neural_coarse_inverse/review_report_v28.md",
+    "reason": "web exact page Cache miss; no visual evidence"
+  },
+  "numerical_retest": "NOT_RUN after unique pre-test failed; no second admission"
+}

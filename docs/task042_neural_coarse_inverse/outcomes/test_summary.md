@@ -1,3 +1,11 @@
+# V31测试：109通过／1失败，修后只静态检查
+
+唯一受监督前测在clean source997397093f7061f7086b2088458d50c6ca773b7d执行110个不同测试：旧受影响102＋新V31 8，109 passed／1 failed，无skip。实际study两态／七合成bundle／保存／结算／collector及partial失败写出均通过。唯一失败test_failed_prequalification_stops_formal_route的window桩缺接口，AttributeError早于预期InputError，未误报通过。
+
+4734b22d1b9260b8500c32212e4e30b1c03f0507最小补齐接口，17文件编译和符号检查通过；修后runtime NOT_RUN。Review V28规定前测新错误即停止数值链，不能为满足普通重测规则重复一次性准入。正式actor／后checker未运行，不声称CI、全仓或FE/MPI通过。原109/1保留。
+
+[失败trace与资格](records/tests_v31.json)／[stdout](records/tests_stdout_v31.txt.gz)／[JUnit](records/tests_junit_v31.xml.gz)／[最终静态](records/compilation_after_v31.json)。以下旧测试记录保持。
+
 # V30：最终实现的真实编译及唯一监督验收
 
 source `1a18f520dae3ecd702a1369b0d9241ec3e81802a`：准入前22文件compile成功，无执行／NumPy导入；唯一受监督任务最小7 passed、完整162 passed（原155＋新7，最小7重复，169次实际执行）。32变异先确认未变异正控制通过，再断言准确ValueError/KeyError消息；专门IO回归证明任意FileNotFoundError不能误报通过。完整轻量入口PASSED／exit0，CPU replay、三固定代数、成本模块整体执行。scope含12项仓库文档合同；它们绑定运行时source，交付前新增文档另作静态结构／链接检查，不声明对文档HEAD重跑pytest。无CI／full-repository／FE-MPI／真实PDE验收。

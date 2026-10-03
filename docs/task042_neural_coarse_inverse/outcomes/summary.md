@@ -1,3 +1,16 @@
+# V31最新结果：前测错误收口，真实方向尚未运行
+
+完整接线测试让两个指定样本实际经过study、写出、结算及独立审核，避免仅用手工包自证；成本是一次有界前测。前测109通过／1失败，失败在新增拒绝路径fixture缺三个窗口接口。已最小修正，但本轮不再准入重测或启动actor。
+
+| 对象／数据身份 | 实际值与范围 | 资格／证据 |
+|---|---|---|
+| 软件／measured | source99739709…；17静态通过，110测试109/1，完整study合成通过 | 修后source4734b22d…仅静态通过，runtime未再测，[测试](records/tests_v31.json) |
+| 固定0.7nm/384hex/p3/q15/40port | 真实actor0／S+SH0／七bundle读取0 | 两冷态eta10/g10 NOT_RUN，旧V24 0/5、V23 0/6保留 |
+| shared-workstation费用／measured | CPU11；监督12.731162693s，累计52.680176060s；采样峰254,758,912B／swap0 | 一次pre准入，formal/checker0，后代清空，[资源](records/resource_costs_v31.json) |
+| NN20%与目标尺度 | 完整N=1 baseline未知，NN20% NOT_DEMONSTRATED，原尺寸NOT_QUALIFIED | 不把接线修复或合成通过视为物理解／神经增量 |
+
+[回应](../response_v31.md)／[详细交付](return_direction_workflow_v31.md)／[原始索引](records/run_index_v31.json)。PRETEST_FAILED_CLOSED；仅建议独立验收修后的拒绝fixture，由review另判真实准入，不在本批实施。以下历史原文保留。
+
 # V30最新结果：修复入口、关闭合成审核准备链
 
 审核器核对保存向量、来源和计数，软件修复让正例能正常写出、负例因预定Gate被拒绝，不改变有限元方程。唯一准入通过后的原样入口已完成；[回应](../response_v30.md)、[结果](light_entry_acceptance_v30.md)、[原始索引](records/run_index_v30.json)绑定实际source，旧V29 NOT_RUN不追溯改写。

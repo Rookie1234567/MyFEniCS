@@ -1,0 +1,51 @@
+{
+  "exit_code": 1,
+  "elapsed_seconds": 9.11510722595267,
+  "environment": {
+    "python": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "numpy": "1.26.4",
+    "scipy": "1.11.4",
+    "BLAS": [
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "affinity": [
+      11
+    ],
+    "MPI": 1,
+    "math_threads": 1,
+    "DataLoader0": true,
+    "torch_imported": false,
+    "FE_imported": false,
+    "source_sha": "997397093f7061f7086b2088458d50c6ca773b7d",
+    "command": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "src/test/test_task042_v31_workflow.py",
+      "src/test/test_task042_v28_cached_checker.py",
+      "src/test/test_task042_v29_checker.py",
+      "src/test/test_task042_v30_entry.py",
+      "src/test/test_task042_v27_return_direction.py",
+      "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v31/tests/fixtures",
+      "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v31/tests/junit.xml"
+    ]
+  },
+  "status": "FAILED"
+}

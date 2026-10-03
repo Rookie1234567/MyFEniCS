@@ -1,3 +1,9 @@
+# V31改动与证据边界
+
+源99739709…添加relative显式导入、V31 IO/window/profile/run_case/worker/父监督/结算、collector显式后缀、固定aux summary计费及合成workflow fixture；普通默认和数学阈值不变。后续4734b22d…仅补拒绝fixture三个接口。数值核心复用原模块，没有新全局矩阵、LU、训练、迭代或大型runner复制。
+
+真实study接线与checker合成通过，前测整体109/1；修后runtime未再测，正式运行未启动。[完整文件／hash与分组](records/source_inventory_v31.json)、[测试](records/tests_v31.json)、[response](../response_v31.md)。新增records绑定原始日志和真实费用；旧task/review/response/raw与closed文件不改。以下历史保持。
+
 # V30变化：入口修复与精准合成验收
 
 数值方程、真实action/PC/恢复和actor未改。本轮依赖组如下；source `1a18f520dae3ecd702a1369b0d9241ec3e81802a`已在clean提交后通过7/162回归，无production提升或merge approval。

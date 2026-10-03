@@ -1,0 +1,94 @@
+{
+  "utc": "2026-10-03T10:11:11.756948+00:00",
+  "scope": "actual V31 entrance/dependency chain; standard-library compile and symtable; no numerical imports or CI",
+  "files": [
+    {
+      "path": "src/solvers/return_block_study.py",
+      "sha256": "72df82279ceedc24a82b897567cd4437613fb814bb31a76209c2c650b5f510bc",
+      "compiled": true
+    },
+    {
+      "path": "src/solvers/return_block_direction.py",
+      "sha256": "aef9b43bffedbd977c1e312ca72fc4f35b8d10d78d2a78e23de7d04f686d30d3",
+      "compiled": true
+    },
+    {
+      "path": "src/solvers/bounded_diagnostic_window.py",
+      "sha256": "f3f9d2934ae979b212c6d91ca46f6ea112666fbf02c5c8b6a243ff3061faf473",
+      "compiled": true
+    },
+    {
+      "path": "src/solvers/return_block_v31_window.py",
+      "sha256": "440ba72b9dadecfd0c4c2e21ff85abbbc643d60c299a70baeadb985026eaf45b",
+      "compiled": true
+    },
+    {
+      "path": "src/io/return_block_v31.py",
+      "sha256": "78c58f9628d273159a4c10c3fe964d2c7c4d5954bbd3a1024de3391bdaf3eb86",
+      "compiled": true
+    },
+    {
+      "path": "src/io/return_block_diagnostic.py",
+      "sha256": "206d4b904b38af895497bc611b4de7524061e8c86b3f60efcb6298c7261918b8",
+      "compiled": true
+    },
+    {
+      "path": "src/io/task042_profile.py",
+      "sha256": "a3f2be2355550eb0ccfd644da0b9fdb96480a8c90e88572bf447ee5375e258d5",
+      "compiled": true
+    },
+    {
+      "path": "src/runners/return_block_diagnostic.py",
+      "sha256": "5ae12cdd218e5f3f4b8e0c4162ccacdd1859046f523a730f99f2e69a214f4e08",
+      "compiled": true
+    },
+    {
+      "path": "src/runners/block_direction_diagnostic.py",
+      "sha256": "b39f42db1aa46cb738f60fccaa7655fedda934059a8e3ab7412718e2a0c4772b",
+      "compiled": true
+    },
+    {
+      "path": "src/runners/task042_shared.py",
+      "sha256": "9c454875977abfb5bafb2c210eda5f68111f25837afa8da00d904f9db21615fd",
+      "compiled": true
+    },
+    {
+      "path": "scripts/run_case.py",
+      "sha256": "ba815ff74b994949d7cd8819bcd66fa85e20060b8e3fdc39bedc5a89880fc8e1",
+      "compiled": true
+    },
+    {
+      "path": "benchmarks/collect_task042_return_direction.py",
+      "sha256": "1c5dd2375a07c2b6f83b0b2847dc78fd1483f3d9d53f3b87213b5860449dad06",
+      "compiled": true
+    },
+    {
+      "path": "benchmarks/task042_return_certificates.py",
+      "sha256": "6c44b6e4cd2afd0e4ebd8bd81b291c0cc67184a16ad23e7139f13c234c377e1f",
+      "compiled": true
+    },
+    {
+      "path": "benchmarks/task042_diagnostic_auxiliary.py",
+      "sha256": "3eada9b927a43d02bf134c5e98458c69744232b034fd00b257cf1993819e110f",
+      "compiled": true
+    },
+    {
+      "path": "src/test/task042_v31_workflow_fixture.py",
+      "sha256": "e342caab7e6877911098d968edbb83bebf02f61200c303bdd0d47b084b1a663c",
+      "compiled": true
+    },
+    {
+      "path": "src/test/test_task042_v31_workflow.py",
+      "sha256": "75001476906126268e261a6d8ec2f4ce0bd951ffda849ac6ff2bc79f11e738ab",
+      "compiled": true
+    },
+    {
+      "path": "benchmarks/task042_v31_checks.py",
+      "sha256": "cb9773f0601f8a94b869fd3179239c42ae9482b982c64654c047b89d3d421cdd",
+      "compiled": true
+    }
+  ],
+  "unbound": [],
+  "status": "PASS",
+  "implicit_module_bindings": "standard Python import globals; first instrument falsely flagged __file__, not a source NameError"
+}

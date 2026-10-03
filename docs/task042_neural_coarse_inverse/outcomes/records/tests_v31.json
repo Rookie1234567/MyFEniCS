@@ -1,0 +1,82 @@
+{
+  "status": "FAILED",
+  "run_source": "997397093f7061f7086b2088458d50c6ca773b7d",
+  "final_implementation_source": "4734b22d1b9260b8500c32212e4e30b1c03f0507",
+  "total": 110,
+  "passed": 109,
+  "failed": 1,
+  "skipped": 0,
+  "scope": "102 prior affected cases +8 new V31 executions, once; no CI/full-repo/FE-MPI",
+  "new_V31_passed": 7,
+  "new_V31_failed": 1,
+  "failures": [
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_failed_prequalification_stops_formal_route",
+      "time": "0.024",
+      "message": "AttributeError: 'types.SimpleNamespace' object has no attribute 'require_live'",
+      "trace": "tmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v31/tests/fixtures/test_failed_prequalification_s0')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x748e53fa2c00>\n\n    def test_failed_prequalification_stops_formal_route(tmp_path,monkeypatch):\n        from src.io import return_block_v31 as io\n        from src.io.input_loader import InputError\n        (tmp_path/'aux_pre').mkdir();(tmp_path/'aux_pre/auxiliary_summary.json').write_text('{\"classification\":\"COMPLETED\",\"leader_exit_code\":1}')\n        monkeypatch.setattr(io,'window',SimpleNamespace(TMP=tmp_path))\n        with pytest.raises(InputError,match='pre-test qualification failed'):\n>           io.load_return_diagnostic('input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat')\n\nsrc/test/test_task042_v31_workflow.py:75: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/io/return_block_v31.py:12: in load_return_diagnostic\n    def load_return_diagnostic(path):return _load(path,namespace=sys.modules[__name__])\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\npath = PosixPath('/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v31_return_direction_diagnostic.dat')\n\n    def load_return_diagnostic(path, *, namespace=None):\n        import sys\n        io=sys.modules[__name__] if namespace is None else namespace\n        label=getattr(io,\"LABEL\",\"V27\"); section=\"task042_\"+label.lower()\n        path=Path(path).resolve()\n        try:raw=path.read_bytes()\n        except OSError:return None\n        if ('['+section+']').encode() not in raw:return None\n        try:\n            cfg=tomllib.loads(raw.decode());item=cfg[section]\n            if set(cfg)!={'schema_version',section} or cfg['schema_version']!=1 or set(item)!={'stage','run_id','material_table_id','diagnostic_family'}:\n                raise ValueError('explicit V27 schema required')\n            if item['stage']!='DIAGNOSTIC' or not re.fullmatch('task042_'+label.lower()+'_[a-z0-9_]+',item['run_id']):raise ValueError('V27 one diagnostic only')\n            plan,design,material,fe=plan_and_operator();own=json.loads(io.PLAN_PATH.read_text())\n            if own['action_sha256']!=fe['packet']['sha256'] or own['physical_sha256']!=plan['physical_model_sha256']:raise ValueError('V27 original operator identity')\n            if item['diagnostic_family']!=FAMILY or item['material_table_id']!=material.provenance['material_table_id']:raise ValueError('V27 material/family differs')\n            if tuple(x['name'] for x in own['states'])!=NAMES or own['outer_blocks']!=list(OUTER_BLOCKS) or own['joint_blocks']!=[5,7] or own['joint_rows']!=3888:\n                raise ValueError('fixed two cold states and return path only')\n            window=io.window if hasattr(io,\"window\") else __import__(\"src.solvers.return_block_window\",fromlist=[\"ledger\"])\n>           require_live,ledger,auxiliary_wall=window.require_live,window.ledger,window.auxiliary_wall\nE           AttributeError: 'types.SimpleNamespace' object has no attribute 'require_live'\n\nsrc/io/return_block_diagnostic.py:35: AttributeError"
+    }
+  ],
+  "qualified_synthetic_V31_cases": [
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_actual_study_two_states_through_collector",
+      "time": "1.941"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_fixed_summary_charged_exactly_once",
+      "time": "0.006"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_actual_workflow_reader_failure_preserves_partial_accounting",
+      "time": "0.463"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_v31_rejects_old_or_consumed_boundaries[True-None-runs0]",
+      "time": "0.011"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_v31_rejects_old_or_consumed_boundaries[False-active1-runs1]",
+      "time": "0.008"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_v31_rejects_old_or_consumed_boundaries[False-None-runs2]",
+      "time": "0.008"
+    },
+    {
+      "classname": "src.test.test_task042_v31_workflow",
+      "name": "test_v31_schema_and_old_routes_are_separate",
+      "time": "0.035"
+    }
+  ],
+  "actual_study_test": {
+    "status": "PASSED",
+    "test": "test_actual_study_two_states_through_collector",
+    "trace": 18144,
+    "port": 40,
+    "small_operator_active_rows": 16,
+    "real_study_run": true,
+    "seven_synthetic_readers": true,
+    "two_named_states": true,
+    "real_writer_finish_and_durable_settlement": true,
+    "collector": true,
+    "production_payloads_read": false,
+    "raw_successful_fixture_disposed_only_after_assertions": true
+  },
+  "repair": {
+    "commit": "4734b22d1b9260b8500c32212e4e30b1c03f0507",
+    "root_cause": "new failed-prequalification fixture supplied only TMP, but loader binds require_live/ledger/auxiliary_wall before checking receipt",
+    "change": "supply the three interface callables; each raises if invoked, verifying failed pre-test exits before their use",
+    "after_repair_compilation": "PASS",
+    "after_repair_runtime": "NOT_RUN",
+    "no_second_auxiliary_admission": true
+  },
+  "real_actor": "NOT_RUN_PRETEST_FAILED",
+  "checker": "NOT_RUN_PRETEST_FAILED"
+}

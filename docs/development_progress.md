@@ -1,3 +1,11 @@
+# Task042 V31：接线修复后按前测停止合同收口（2026-10-03）
+
+此前真实study在构造抵消证书时缺relative导入。V31补齐导入和独立路由，新增实际study→写出→结算→collector的18144/40合成接线，两个状态和七合成reader通过；唯一前测总109/1，失败在我新增的拒绝fixture缺三个窗口接口。最小修复已提交但修后runtime未重跑，依Review V28停止链路，没有正式准入／actor／后checker。
+
+shared-workstation辅助12.731162693s、累计52.680176060s；CPU11/math1、整树采样峰254,758,912B、自身swap0、后代清空。新真实S/SH、factor读取、FE和训练全0；两态eta10/g10未运行，V24 0/5及V23 0/6不改。完整N=1成本unknown，NN20%及原尺寸/2TB/48h未资格化。窗口提前closed，不追加准入或旧实验。
+
+唯一下一建议是独立验收修后拒绝fixture，由review判断是否重授未消费真实诊断；本批不实施、不merge。证据：[response](task042_neural_coarse_inverse/response_v31.md)、[结果](task042_neural_coarse_inverse/outcomes/return_direction_workflow_v31.md)、[原始索引](task042_neural_coarse_inverse/outcomes/records/run_index_v31.json)。以下历史逐字保留。
+
 # Task042 V30：结束轻量审核准备链（2026-10-03）
 
 本轮背景是V29因CPU准入停止而未运行；独立审阅另外找出重复keyword编译错误，以及输出目录缺失让32个负例误以为通过。V30只修接线和测试，不增加求解路线。collector现在负责输出目录，负例先有完整正控制并限定语义错误；最终clean source1a18f520…实际编译22文件，唯一合格准入后最小7／完整162项及整体入口通过，CPU冻结重算、三小矩阵和完整成本模块已执行。

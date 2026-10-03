@@ -1,3 +1,14 @@
+# Task042 V31：前測实现失败，未新增物理解（2026-10-03）
+
+| 模型／方法／数据身份 | 实际值 | 资格边界／证据 |
+|---|---|---|
+| 固定0.7nm micro／384hex/p3/q15/40port，not_run | actor0／S+SH0／factor读取0／FE0；两冷态eta10/g10未运行 | 无新E/H或R/T/A，旧V24 0/5／V23 0/6不改，[response](task042_neural_coarse_inverse/response_v31.md) |
+| 实际study合成／measured | 18144/40、两态、七synthetic reader及collector通过；前测整体109/1 | 拒绝fixture缺接口；最小修后仅静态通过，非正式方向资格，[测试](task042_neural_coarse_inverse/outcomes/records/tests_v31.json) |
+| shared-workstation辅助／measured | CPU11；12.731162693s，累计52.680176060s，树采样峰254,758,912B／swap0 | 一次前测后封闭，formal/checker0，旧账/unknown保留 |
+| 神经／目标尺度 | NN20% NOT_DEMONSTRATED，原尺寸/2TB/48h NOT_QUALIFIED | 无训练、完整合格基线或配对；不将传统接线当神经贡献 |
+
+以下旧模型记录逐字保留，不改dot或其他分支，不merge。
+
 # Task042 V30：轻量软件资格，不新增物理解（2026-10-03）
 
 审核器检查保存向量和完整消费；本轮修复入口编译与目录/负例接线，并以最终source完成唯一有界验收，不改变原有限元模型或求解算法。

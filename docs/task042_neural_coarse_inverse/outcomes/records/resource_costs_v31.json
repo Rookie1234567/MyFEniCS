@@ -1,0 +1,92 @@
+{
+  "utc": "2026-10-03T10:18:32.067380+00:00",
+  "shared_workstation": true,
+  "first": {
+    "utc": "2026-10-03T10:00:29.125963+00:00",
+    "monotonic": 946623.986853628,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_observation": "initial read-only identity probe",
+    "total_s": 5400
+  },
+  "window_closed": true,
+  "window_closed_utc": "2026-10-03T10:12:35.920648+00:00",
+  "delivery_elapsed_seconds": 1082.9414149480872,
+  "auxiliary": {
+    "attempts": 1,
+    "classification": "WORKER_FAILED",
+    "run_source": "997397093f7061f7086b2088458d50c6ca773b7d",
+    "supervised_seconds": 12.731162693002261,
+    "cap_seconds": 40,
+    "worker_and_pytest_seconds": 9.11510722595267,
+    "pytest_reported_seconds": 7.99,
+    "nested_timers_not_added": true,
+    "CPU": 11,
+    "candidates": [
+      11,
+      14
+    ],
+    "gates": {
+      "CPU_SMT": "PASS",
+      "MEMORY": "PASS",
+      "DISK": "PASS",
+      "PSI": "PASS",
+      "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+    },
+    "sample_count": 18,
+    "sampled_simultaneous_tree_RSS_bytes": 254758912,
+    "own_swap_peak_bytes": 0,
+    "sampling": {
+      "requested_seconds": 0.5,
+      "observed_gap_min_seconds": 0.586017483,
+      "observed_gap_max_seconds": 1.004565624,
+      "observed_gap_mean_seconds": 0.7317232137058823
+    },
+    "warning_bytes": 1073741824,
+    "hard_bytes": 2147483648,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "kernel_cgroup_hard_limit_claimed": false,
+    "descendants_cleared": true
+  },
+  "cumulative": {
+    "carried_seconds": 39.94901336694602,
+    "new_auxiliary_seconds": 12.731162693002261,
+    "new_actor_seconds": 0.0,
+    "new_checker_seconds": 0.0,
+    "total_seconds": 52.68017605994828,
+    "cap_seconds": 600,
+    "carry_not_reset": true
+  },
+  "counts": {
+    "actions": 0,
+    "factor_readers": 0,
+    "outer_lu_solve": 0,
+    "joint_lu_solve": 0,
+    "explicit_triangular_pass": 0,
+    "thin_decompositions": 0,
+    "port_factors": 0,
+    "port_solves": 0,
+    "port_rhs_columns": 0,
+    "new_assemblies": 0,
+    "new_LU_attempts": 0,
+    "new_gecon": 0
+  },
+  "formal_admission_attempts": 0,
+  "actor_runs": 0,
+  "post_checker_admission_attempts": 0,
+  "factor_load_prepare_cost": {
+    "new_real": "NOT_RUN",
+    "old_bundle_preparation": "historical V24/V26 retained",
+    "seven_matrix_plus_LU_payload_bytes": 1591420032,
+    "payload_is_not_RSS": true
+  },
+  "old_formal_research_lower_bound_seconds": 77161.55713859801,
+  "old_auxiliary_cost": "unknown retained",
+  "complete_N1": {
+    "time": "unknown",
+    "simultaneous_peak": "unknown",
+    "NN_20percent": "NOT_DEMONSTRATED"
+  },
+  "launcher_exclusive_time_RSS_swap": "unknown; launch/reading/implementation/delivery all included in total elapsed, not fabricated as zero",
+  "observed_impact": "no resource/health stop reported; test failed; absolute zero interference not claimed",
+  "delivery_clock_basis": "UTC/monotonic at low-load final record; final push terminal clock separately saved"
+}

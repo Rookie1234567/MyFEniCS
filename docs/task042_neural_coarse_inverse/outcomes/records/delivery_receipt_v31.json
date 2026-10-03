@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-03T10:18:32.067380+00:00",
+  "monotonic": 947707.169567079,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "elapsed_seconds": 1082.9414149480872,
+  "implementation_source": "4734b22d1b9260b8500c32212e4e30b1c03f0507",
+  "test_source": "997397093f7061f7086b2088458d50c6ca773b7d",
+  "actual_numeric_source": null,
+  "branch": "task42_neural_coarse_inverse",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "status": "PRETEST_FAILED_CLOSED",
+  "final_document_HEAD": "reported by commit/push terminal; not self-referential content",
+  "no_actors": true,
+  "no_reset_card": true,
+  "no_subagents": true
+}
