@@ -295,3 +295,19 @@ def test_modal_physics_is_recomputed_not_copied_from_saved_status():
     rows[0]["projection_denominator"] = 0
     with pytest.raises(ValueError, match="modal H"):
         modal_physics(rows, area=4, k0=2, mu_r=1)
+
+
+def test_evaluate_freezes_counter_snapshot_before_next_input():
+    from src.solvers.boundary_structure_study import evaluate
+
+    p = FacetPolynomial(element())
+    l = BoundaryLayout([0.0, 1.0], [0.0, 1.0], p, (1, 1))
+    a = DirectionalBoundaryAction(l, modes(), 30)
+    rng = np.random.default_rng(423801)
+    x = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)
+    _, first = evaluate(a, x, x, np.ones(len(modes()), complex))
+    snapshot = first["stats"].copy()
+    evaluate(a, x, x, np.ones(len(modes()), complex))
+    assert first["stats"] == snapshot
+    assert a.stats["project_calls"] == 2 * snapshot["project_calls"]
+    assert a.stats["scatter_calls"] == 2 * snapshot["scatter_calls"]

@@ -414,7 +414,7 @@ def evaluate(action, x, y, alpha):
         "wall_seconds": perf_counter() - start,
         "per_action_seconds": times,
         "checks": checks,
-        "stats": action.stats,
+        "stats": dict(action.stats),
         "cache_bytes": action.cache_bytes,
     }
 
