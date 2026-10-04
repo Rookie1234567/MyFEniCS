@@ -21,6 +21,23 @@ class SelectionWindow(DecisionWindow):
         super().__init__(*args, **kwargs)
         self.CAPS = CAPS
 
+    def launcher_overhead(self):
+        probes = {}
+        for path in self.TMP.glob("probe_*.json"):
+            record = json.loads(path.read_text())
+            key = str(Path(record["receipt_path"]).parent)
+            probes[key] = probes.get(key, 0.0) + record["elapsed_seconds"]
+        seconds = 0.0
+        for run in self.ledger()["runs"]:
+            folder = Path(run["folder"])
+            path = folder / "run_summary.json"
+            if not path.exists():
+                path = folder / "summary.json"
+            if path.exists():
+                summary = json.loads(path.read_text())
+                seconds += max(0.0, summary["launch_wall_seconds"]-run["elapsed_seconds"]-probes.get(str(folder),0.0))
+        return seconds
+
     def remaining(self, role):
         self.require_ready()
         runs = self.ledger()["runs"]
@@ -72,7 +89,7 @@ def implementation_hashes():
              "src/solvers/neural_decision_scope.py", "src/solvers/trace_selection_scope.py",
              "src/solvers/bound_array_identity.py", "src/solvers/trace_subspace_selection.py",
              "src/solvers/trace_selection_study.py", "benchmarks/check_trace_selection.py",
-             "benchmarks/qualify_trace_selection.py", "src/test/test_trace_selection.py",
+             "benchmarks/qualify_trace_selection.py", "benchmarks/collect_trace_selection.py", "src/test/test_trace_selection.py",
              str(PLAN.relative_to(ROOT))]
     return {n: file_hash(ROOT / n) for n in names}
 

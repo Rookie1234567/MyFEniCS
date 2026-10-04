@@ -7,7 +7,13 @@ import numpy as np
 
 from src.runners.task042_shared import write_json
 from src.solvers.bound_array_identity import read_arrays
-from src.solvers.trace_selection_scope import ARTIFACT, ROOT, parent, plan_record, stage, window
+from src.solvers.trace_selection_scope import (
+    ROOT,
+    parent,
+    plan_record,
+    stage,
+    window,
+)
 
 
 def sample_analysis(record, graph, ntrace):
@@ -52,6 +58,25 @@ def main():
     graph = read_arrays(parent("graph")["graph"], ROOT)
     ntrace = plan_record()["finite_identity"]["trace_rows"]
     details = [sample_analysis(r, graph, ntrace) for r in oracle["results"]]
+    literal_receipt = parent("bridge")["results"][0]["packets"][0]["numeric"]
+    literal = read_arrays(literal_receipt, ROOT, names=("slave_local_dofs", "MPC_offsets", "MPC_masters", "MPC_coefficients"))
+    constraint_checks = []
+    for record in oracle["results"]:
+        value = read_arrays(record["arrays"], ROOT, names=("e_M",))["e_M"]
+        expanded = value.copy()
+        for slave in literal["slave_local_dofs"]:
+            lo, hi = literal["MPC_offsets"][slave:slave+2]
+            expanded[slave] = literal["MPC_coefficients"][lo:hi] @ value[literal["MPC_masters"][lo:hi]]
+        defects = []
+        for slave in literal["slave_local_dofs"]:
+            lo, hi = literal["MPC_offsets"][slave:slave+2]
+            defects.append(expanded[slave]-sum(coef*expanded[master] for coef,master in zip(literal["MPC_coefficients"][lo:hi],literal["MPC_masters"][lo:hi],strict=True)))
+        relative = float(np.linalg.norm(defects)/np.linalg.norm(expanded))
+        if relative > 1e-10 or np.count_nonzero(value[literal["slave_local_dofs"]]):
+            raise ValueError("masked carrier / literal physical MPC identity")
+        constraint_checks.append({"split":record["split"],"sample":record["sample"],"fraction":record["fraction"],
+                                  "carrier_slave_zero":True,"physical_MPC_relative":relative,
+                                  "slave_count":len(defects),"literal_sha256":literal_receipt["sha256"]})
     # Separate effects, then the complex cross term; not just their cancellation.
     groups = [read_arrays(r["arrays"], ROOT, names=("action",)) for r in oracle["error_groups"]]
     edge, face = [g["action"] for g in groups]
@@ -68,7 +93,7 @@ def main():
                      "not_a_condition_number":True}
     write_json(folder/"spatial_and_action_analysis.json", {"status":"NEGATIVE_WITNESS_DECOMPOSED",
                "spatial_rule":"x=25/y=12.5/z=60; centers on cut choose low side; from frozen finite geometry, no new masks",
-               "samples":details,"action_balance":group_balance,"new_actions":0,
+               "samples":details,"action_balance":group_balance,"constraint_checks":constraint_checks,"new_actions":0,
                "training":"NOT_RUN_ORACLE_GATE","heldout_consumed":False})
     print(json.dumps({"samples":len(details),"new_actions":0,"training":"NOT_RUN_ORACLE_GATE"}))
 

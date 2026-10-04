@@ -1,19 +1,38 @@
 """One-run V47 stages, with FE interpolation separated from CSR residency."""
 
-import json
 from pathlib import Path
 from time import perf_counter
 
 import numpy as np
 
 from src.runners.task042_shared import write_json
-from src.solvers.bound_array_identity import consume_identity, file_hash, original_source, read_arrays, source_identity
+from src.solvers.bound_array_identity import (
+    consume_identity,
+    original_source,
+    read_arrays,
+    source_identity,
+)
 from src.solvers.port_component_study import array_file, environment
-from src.solvers.trace_selection_scope import ROOT, ActionBudget, parent, plan_record, stage, window
+from src.solvers.trace_selection_scope import (
+    ROOT,
+    ActionBudget,
+    parent,
+    plan_record,
+    stage,
+    window,
+)
 from src.solvers.trace_subspace_selection import (
-    SingleCSR, bridge_checks, bridge_packet, expand_mpc, grouped_omission,
-    interpolate_complete, mask_from_scores, masked_coefficients, relative,
-    wave_parameters, witness_metrics,
+    SingleCSR,
+    bridge_checks,
+    bridge_packet,
+    expand_mpc,
+    grouped_omission,
+    interpolate_complete,
+    mask_from_scores,
+    masked_coefficients,
+    relative,
+    wave_parameters,
+    witness_metrics,
 )
 
 
@@ -64,7 +83,7 @@ def data(folder):
     env = environment(fe=True)
     identities = bind_identity()
     bridge, graph, ntrace, checks = graph_packet()
-    literal, metadata = literal_packet()
+    literal, _metadata = literal_packet()
     element = basix.create_element(basix.ElementFamily.N1E, basix.CellType.hexahedron, 6, basix.LagrangeVariant.legendre)
     if element.dim != 882 or len(element.entity_dofs[3][0]) != 450 or len(literal["cell_vertices"]) != 64:
         raise ValueError("complete finite p6 moments/cells")

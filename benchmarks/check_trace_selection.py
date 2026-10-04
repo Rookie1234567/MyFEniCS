@@ -1,6 +1,5 @@
 """Independent saved witness consumption; never accepts a producer status flag."""
 
-from pathlib import Path
 
 import numpy as np
 from scipy.sparse import csr_matrix

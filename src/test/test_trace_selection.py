@@ -10,9 +10,20 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from benchmarks.check_trace_selection import inventory
-from src.solvers.bound_array_identity import consume_identity, file_hash, read_arrays, source_identity
+from src.solvers.bound_array_identity import (
+    consume_identity,
+    file_hash,
+    read_arrays,
+    source_identity,
+)
 from src.solvers.port_component_study import array_file
-from src.solvers.trace_subspace_selection import SingleCSR, bridge_checks, mask_from_scores, masked_coefficients, witness_metrics
+from src.solvers.trace_subspace_selection import (
+    SingleCSR,
+    bridge_checks,
+    mask_from_scores,
+    masked_coefficients,
+    witness_metrics,
+)
 
 
 class IdentityTests(unittest.TestCase):
@@ -98,7 +109,7 @@ class NumericalTests(unittest.TestCase):
 
     def test_checker_inventory_is_exact_not_status(self):
         plan={"split":{s:{"seeds":[1],"families":["x"]} for s in ("train","validation")}}
-        rows=[dict(split=s,sample=0,fraction=f,seed=1,family="x") for s in plan["split"] for f in (.5,.8)]
+        rows=[{"split":s,"sample":0,"fraction":f,"seed":1,"family":"x"} for s in plan["split"] for f in (.5,.8)]
         inventory(plan,rows)
         with self.assertRaisesRegex(ValueError,"inventory"):
             inventory(plan,rows[:-1])
@@ -114,6 +125,24 @@ class NumericalTests(unittest.TestCase):
             self.assertEqual(spec.derived["preparation_scope"],"v47")
             self.assertEqual(dict(spec.derived["storage_limits"]),storage_limits("v47"))
             self.assertEqual(spec.execution["terminate_memory_gib"],2)
+
+    def test_formal_and_aux_launcher_overhead_is_charged_once(self):
+        import json
+
+        from src.solvers.trace_selection_scope import SelectionWindow
+
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name)
+            campaign=SelectionWindow(root,total=3600,probe=90,reserve=180)
+            runs=[]
+            for i,filename in enumerate(("summary.json","run_summary.json")):
+                folder=root/f"run{i}"
+                folder.mkdir()
+                (folder/filename).write_text(json.dumps({"launch_wall_seconds":5+4*i}))
+                runs.append({"folder":str(folder),"elapsed_seconds":2+i})
+                (root/f"probe_{i}.json").write_text(json.dumps({"receipt_path":str(folder/"admission.json"),"elapsed_seconds":1+i}))
+            campaign.LEDGER_PATH.write_text(json.dumps({"runs":runs}))
+            self.assertEqual(campaign.launcher_overhead(),6)
 
 
 if __name__ == "__main__":
