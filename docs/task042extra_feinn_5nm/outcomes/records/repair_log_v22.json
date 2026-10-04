@@ -279,12 +279,12 @@
       ]
     },
     {
-      "run": "v22_publication_records_20261004T120229971010Z",
+      "run": "v22_publication_format_seal_20261004T120538606522Z",
       "classification": "NO_CLOSED_SUMMARY",
       "raw_admission": {
-        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/admission.json",
-        "sha256": "e7b4533a414cf5a22b69fcd7221ee44b32e1d28ff45f6a0f9a7aaab8d4d730d7",
-        "bytes": 272007
+        "path": "tmp/task42extra/checks/v22_publication_format_seal_20261004T120538606522Z/admission.json",
+        "sha256": "95d98727f1945452345b66956c4877e4e29fecd2c9f2ed07d00e93e52e0baa6f",
+        "bytes": 269799
       }
     }
   ],
@@ -383,5 +383,17 @@
     "new_measured_window_readmission_count": 1,
     "active_polling_or_neighbor_modification": false,
     "continuous_parent_includes_all_control_and_wait_cost": true
+  },
+  "default_diff_check_and_CSV": {
+    "binding": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/format_check_v22.json",
+      "sha256": "f2625e11b5691ab5ea7f757bf0459ab6c315bfba48400d96fce5fe725344777d",
+      "bytes": 3679
+    },
+    "default_exit": 2,
+    "reason": "standard CSV CRLF is reported as trailing whitespace by default Git; original CSV retained, original row/raw audit already passed",
+    "local_command_rule": "cr-at-eol with all ordinary whitespace checks retained",
+    "result": "PASS_COMMAND_LOCAL_CSV_CRLF_AWARE_DIFF_CHECK",
+    "shared_config_changed": false
   }
 }

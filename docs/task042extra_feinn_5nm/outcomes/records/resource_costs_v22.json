@@ -10,8 +10,8 @@
   },
   "observed_since_clock_initialized_seconds": 12575.930996943032,
   "initial_read_conservative_allowance_seconds": 600,
-  "observed_complete_batch_seconds": 14434.586865758058,
-  "conservative_complete_batch_upper_seconds": 16234.586865758058,
+  "observed_complete_batch_seconds": 14623.179867329076,
+  "conservative_complete_batch_upper_seconds": 16423.179867329076,
   "tail_reserve_seconds": 1800,
   "includes_code_read_tests_failure_wait_IO_Git": true,
   "nested_costs_not_added_twice": true,
@@ -557,6 +557,28 @@
       ]
     },
     {
+      "run": "v22_git_CSV_format_check_20261004T120418989133Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9596825649496168,
+      "tree_peak_bytes": 68771840,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw": {
+        "path": "tmp/task42extra/checks/v22_git_CSV_format_check_20261004T120418989133Z/summary.json",
+        "sha256": "1f115817cb9e6b31a562fdfcad048b1ca96b0e36a8d3d3ea458fe95d020f8826",
+        "bytes": 2019
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v22_git_CSV_format_check_20261004T120418989133Z/supervision/worker.log",
+        "sha256": "6686d9ef0670e29f8a2d9a1504687333604cc2f7069a7199bd71f230fd3bfc49",
+        "bytes": 185
+      },
+      "last_log_lines": [
+        "{\"status\": \"PASS_COMMAND_LOCAL_CSV_CRLF_AWARE_DIFF_CHECK\", \"default_exit\": 2, \"default_CRLF_warnings\": 15359, \"CSV_files\": 9, \"source_HEAD\": \"f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc\"}"
+      ]
+    },
+    {
       "run": "v22_guard_digit_event_repair_20261004T084821035586Z",
       "classification": "COMPLETED",
       "exit_code": 0,
@@ -768,13 +790,57 @@
       ]
     },
     {
-      "run": "v22_publication_records_20261004T120229971010Z",
+      "run": "v22_publication_format_records_20261004T120504173695Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9740677929949015,
+      "tree_peak_bytes": 58974208,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw": {
+        "path": "tmp/task42extra/checks/v22_publication_format_records_20261004T120504173695Z/summary.json",
+        "sha256": "c9865741f5bab96ba000f9db6a2b194e94a3f2d60545f48daeb3c491793a3dc8",
+        "bytes": 2023
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v22_publication_format_records_20261004T120504173695Z/supervision/worker.log",
+        "sha256": "c91fac53c486ddcb5482baf7b1c855e7bdfe930a3a1809436bb51cec0c56407d",
+        "bytes": 143
+      },
+      "last_log_lines": [
+        "{\"observed_complete_batch_seconds\": 14588.776886817068, \"upper_seconds\": 16388.776886817068, \"light_closed\": 34, \"inventory\": 26, \"groups\": 6}"
+      ]
+    },
+    {
+      "run": "v22_publication_format_seal_20261004T120538606522Z",
       "classification": "NO_CLOSED_SUMMARY",
       "raw_admission": {
-        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/admission.json",
-        "sha256": "e7b4533a414cf5a22b69fcd7221ee44b32e1d28ff45f6a0f9a7aaab8d4d730d7",
-        "bytes": 272007
+        "path": "tmp/task42extra/checks/v22_publication_format_seal_20261004T120538606522Z/admission.json",
+        "sha256": "95d98727f1945452345b66956c4877e4e29fecd2c9f2ed07d00e93e52e0baa6f",
+        "bytes": 269799
       }
+    },
+    {
+      "run": "v22_publication_records_20261004T120229971010Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.030273081967607,
+      "tree_peak_bytes": 59346944,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw": {
+        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/summary.json",
+        "sha256": "927945b6383667d0621b75fe2f7b4c9080c223210d16e4897b829869be767722",
+        "bytes": 2022
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/supervision/worker.log",
+        "sha256": "90989c964027ce04b40677c30e87e45794d02fdf35e9972b098e6b9298b1cbb1",
+        "bytes": 143
+      },
+      "last_log_lines": [
+        "{\"observed_complete_batch_seconds\": 14434.586865758058, \"upper_seconds\": 16234.586865758058, \"light_closed\": 32, \"inventory\": 26, \"groups\": 6}"
+      ]
     },
     {
       "run": "v22_rhs_equivalence_fe_20261004T093654718695Z",
@@ -886,7 +952,7 @@
   "old_exact_project_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS_RETAINED",
   "lost_3284_seconds_preserved": true,
   "all_failed_attempts_included": true,
-  "snapshot_utc": "2026-10-04T12:02:30.153783+00:00",
+  "snapshot_utc": "2026-10-04T12:05:38.741296+00:00",
   "native_linux": true,
   "legacy_global_swap_label": "WSL-global in inherited supervisor is a historical label; native Linux host; no global attribution to this task",
   "current_writer_own_summary": "will be included at next closeout snapshot; continuous parent already includes cost",

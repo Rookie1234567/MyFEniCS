@@ -1,0 +1,103 @@
+{
+  "status": "PASS_COMMAND_LOCAL_CSV_CRLF_AWARE_DIFF_CHECK",
+  "source_HEAD": "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+  "input_HEAD": "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+  "default": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+      "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+      "--"
+    ],
+    "returncode": 2,
+    "warning_count": 15359,
+    "raw_path": "tmp/task42extra/v22/default_git_diff_check_CRLF.log",
+    "raw_sha256": "8a92663082ce279bcee5793fae1b039fd06482b2ef04e0471a1e4f280e8b5c6e",
+    "classification": "LEGAL_CSV_CRLF_REPORTS_AS_TRAILING_WHITESPACE",
+    "commit_continued_after_default_check_failure": true
+  },
+  "qualified": {
+    "command": [
+      "git",
+      "-c",
+      "core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol",
+      "diff",
+      "--check",
+      "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+      "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+      "--"
+    ],
+    "returncode": 0,
+    "keeps_blank_at_eol_blank_at_eof_space_before_tab_checks": true
+  },
+  "original_CSV_bindings": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/affine_channels_v22.csv",
+      "sha256": "b74578353ca1b28abbe53af9e785e407bc92c1ab399e3f5e2afcd9e430a50af1",
+      "bytes": 200472,
+      "CRLF_lines": 1021,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/affine_recovery_v22.csv",
+      "sha256": "7e6c98790ccfb971e442cdff43666d04b37c72cc2d6817d10fe36d53b61e9657",
+      "bytes": 146326,
+      "CRLF_lines": 3061,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/affine_samples_v22.csv",
+      "sha256": "a1b5f9cafb4ec863bfd6b7322d774e01b9c3354e893b46c3205232bf57565b00",
+      "bytes": 10990,
+      "CRLF_lines": 19,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_channels_v22.csv",
+      "sha256": "fdb00fca53a391319175c5be38997c7145e132f73851d3684bc70f8327d2c6d2",
+      "bytes": 157116,
+      "CRLF_lines": 681,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_mode_errors_v22.csv",
+      "sha256": "bdf1bd9f0a949f36f1780fdb63794c3df58d45ed09914daee8ad648c40ebad20",
+      "bytes": 914090,
+      "CRLF_lines": 4081,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_regions_v22.csv",
+      "sha256": "2492615814d92fb56401630e2e73a898978429cbb82cefdd25947358850d0fc3",
+      "bytes": 10706,
+      "CRLF_lines": 73,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_samples_v22.csv",
+      "sha256": "30f308ed28ef52bcde3aeb331615835ec0b07abbac26dba51a69ee109b711170",
+      "bytes": 7430,
+      "CRLF_lines": 13,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/face_block_modes_v22.csv",
+      "sha256": "b8558ab5d1d73a254e850ce92476315310fcc351729ffdd0ff3776bd335c5941",
+      "bytes": 465564,
+      "CRLF_lines": 2329,
+      "row_fields_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/frozen_channel_changes_v22.csv",
+      "sha256": "cf032ba32db53b07843e1ad0691683d7e683cba21eab5b55e9959e5b387d2c48",
+      "bytes": 709879,
+      "CRLF_lines": 4081,
+      "row_fields_unchanged": true
+    }
+  ],
+  "CSV_fields_raw_arrays_and_document_pages_unchanged": true,
+  "shared_git_configuration_modified": false,
+  "no_FE_or_producer": true
+}

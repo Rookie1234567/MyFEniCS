@@ -546,6 +546,28 @@
       ]
     },
     {
+      "run": "v22_git_CSV_format_check_20261004T120418989133Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9596825649496168,
+      "tree_peak_bytes": 68771840,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw": {
+        "path": "tmp/task42extra/checks/v22_git_CSV_format_check_20261004T120418989133Z/summary.json",
+        "sha256": "1f115817cb9e6b31a562fdfcad048b1ca96b0e36a8d3d3ea458fe95d020f8826",
+        "bytes": 2019
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v22_git_CSV_format_check_20261004T120418989133Z/supervision/worker.log",
+        "sha256": "6686d9ef0670e29f8a2d9a1504687333604cc2f7069a7199bd71f230fd3bfc49",
+        "bytes": 185
+      },
+      "last_log_lines": [
+        "{\"status\": \"PASS_COMMAND_LOCAL_CSV_CRLF_AWARE_DIFF_CHECK\", \"default_exit\": 2, \"default_CRLF_warnings\": 15359, \"CSV_files\": 9, \"source_HEAD\": \"f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc\"}"
+      ]
+    },
+    {
       "run": "v22_guard_digit_event_repair_20261004T084821035586Z",
       "classification": "COMPLETED",
       "exit_code": 0,
@@ -757,13 +779,57 @@
       ]
     },
     {
-      "run": "v22_publication_records_20261004T120229971010Z",
+      "run": "v22_publication_format_records_20261004T120504173695Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9740677929949015,
+      "tree_peak_bytes": 58974208,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw": {
+        "path": "tmp/task42extra/checks/v22_publication_format_records_20261004T120504173695Z/summary.json",
+        "sha256": "c9865741f5bab96ba000f9db6a2b194e94a3f2d60545f48daeb3c491793a3dc8",
+        "bytes": 2023
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v22_publication_format_records_20261004T120504173695Z/supervision/worker.log",
+        "sha256": "c91fac53c486ddcb5482baf7b1c855e7bdfe930a3a1809436bb51cec0c56407d",
+        "bytes": 143
+      },
+      "last_log_lines": [
+        "{\"observed_complete_batch_seconds\": 14588.776886817068, \"upper_seconds\": 16388.776886817068, \"light_closed\": 34, \"inventory\": 26, \"groups\": 6}"
+      ]
+    },
+    {
+      "run": "v22_publication_format_seal_20261004T120538606522Z",
       "classification": "NO_CLOSED_SUMMARY",
       "raw_admission": {
-        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/admission.json",
-        "sha256": "e7b4533a414cf5a22b69fcd7221ee44b32e1d28ff45f6a0f9a7aaab8d4d730d7",
-        "bytes": 272007
+        "path": "tmp/task42extra/checks/v22_publication_format_seal_20261004T120538606522Z/admission.json",
+        "sha256": "95d98727f1945452345b66956c4877e4e29fecd2c9f2ed07d00e93e52e0baa6f",
+        "bytes": 269799
       }
+    },
+    {
+      "run": "v22_publication_records_20261004T120229971010Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.030273081967607,
+      "tree_peak_bytes": 59346944,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw": {
+        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/summary.json",
+        "sha256": "927945b6383667d0621b75fe2f7b4c9080c223210d16e4897b829869be767722",
+        "bytes": 2022
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/supervision/worker.log",
+        "sha256": "90989c964027ce04b40677c30e87e45794d02fdf35e9972b098e6b9298b1cbb1",
+        "bytes": 143
+      },
+      "last_log_lines": [
+        "{\"observed_complete_batch_seconds\": 14434.586865758058, \"upper_seconds\": 16234.586865758058, \"light_closed\": 32, \"inventory\": 26, \"groups\": 6}"
+      ]
     },
     {
       "run": "v22_rhs_equivalence_fe_20261004T093654718695Z",
@@ -858,8 +924,8 @@
     },
     {
       "path": "/tmp/task42_v22_finish_records.py",
-      "sha256": "003025c78f230b47a44f099aa95a1f786f250f7003cd59be37e0c77d8252abc1",
-      "bytes": 13935
+      "sha256": "41e7c51e6bfb6d60701d45c229802ce0755a1206e3e73261369a158575e4deff",
+      "bytes": 14578
     }
   ],
   "early_test_XML_limit": "original 42-test XML NOT_RETAINED after developmental output overwrite; original expected hash/log and fees preserved; final XML unique",
@@ -972,6 +1038,116 @@
       "path": "tmp/task42extra/v22/final_checker_tests.json",
       "sha256": "456d82769f0f10ff2cb2c88e7e66eab8efb3ba77f634b0e6bce94c388d0330e7",
       "bytes": 3828
+    }
+  },
+  "command_local_CSV_line_endings": {
+    "details": {
+      "status": "PASS_COMMAND_LOCAL_CSV_CRLF_AWARE_DIFF_CHECK",
+      "source_HEAD": "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+      "input_HEAD": "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+      "default": {
+        "command": [
+          "git",
+          "diff",
+          "--check",
+          "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+          "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+          "--"
+        ],
+        "returncode": 2,
+        "warning_count": 15359,
+        "raw_path": "tmp/task42extra/v22/default_git_diff_check_CRLF.log",
+        "raw_sha256": "8a92663082ce279bcee5793fae1b039fd06482b2ef04e0471a1e4f280e8b5c6e",
+        "classification": "LEGAL_CSV_CRLF_REPORTS_AS_TRAILING_WHITESPACE",
+        "commit_continued_after_default_check_failure": true
+      },
+      "qualified": {
+        "command": [
+          "git",
+          "-c",
+          "core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol",
+          "diff",
+          "--check",
+          "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+          "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+          "--"
+        ],
+        "returncode": 0,
+        "keeps_blank_at_eol_blank_at_eof_space_before_tab_checks": true
+      },
+      "original_CSV_bindings": [
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/affine_channels_v22.csv",
+          "sha256": "b74578353ca1b28abbe53af9e785e407bc92c1ab399e3f5e2afcd9e430a50af1",
+          "bytes": 200472,
+          "CRLF_lines": 1021,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/affine_recovery_v22.csv",
+          "sha256": "7e6c98790ccfb971e442cdff43666d04b37c72cc2d6817d10fe36d53b61e9657",
+          "bytes": 146326,
+          "CRLF_lines": 3061,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/affine_samples_v22.csv",
+          "sha256": "a1b5f9cafb4ec863bfd6b7322d774e01b9c3354e893b46c3205232bf57565b00",
+          "bytes": 10990,
+          "CRLF_lines": 19,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_channels_v22.csv",
+          "sha256": "fdb00fca53a391319175c5be38997c7145e132f73851d3684bc70f8327d2c6d2",
+          "bytes": 157116,
+          "CRLF_lines": 681,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_mode_errors_v22.csv",
+          "sha256": "bdf1bd9f0a949f36f1780fdb63794c3df58d45ed09914daee8ad648c40ebad20",
+          "bytes": 914090,
+          "CRLF_lines": 4081,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_regions_v22.csv",
+          "sha256": "2492615814d92fb56401630e2e73a898978429cbb82cefdd25947358850d0fc3",
+          "bytes": 10706,
+          "CRLF_lines": 73,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/corrected_samples_v22.csv",
+          "sha256": "30f308ed28ef52bcde3aeb331615835ec0b07abbac26dba51a69ee109b711170",
+          "bytes": 7430,
+          "CRLF_lines": 13,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/face_block_modes_v22.csv",
+          "sha256": "b8558ab5d1d73a254e850ce92476315310fcc351729ffdd0ff3776bd335c5941",
+          "bytes": 465564,
+          "CRLF_lines": 2329,
+          "row_fields_unchanged": true
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/frozen_channel_changes_v22.csv",
+          "sha256": "cf032ba32db53b07843e1ad0691683d7e683cba21eab5b55e9959e5b387d2c48",
+          "bytes": 709879,
+          "CRLF_lines": 4081,
+          "row_fields_unchanged": true
+        }
+      ],
+      "CSV_fields_raw_arrays_and_document_pages_unchanged": true,
+      "shared_git_configuration_modified": false,
+      "no_FE_or_producer": true
+    },
+    "binding": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/format_check_v22.json",
+      "sha256": "f2625e11b5691ab5ea7f757bf0459ab6c315bfba48400d96fce5fe725344777d",
+      "bytes": 3679
     }
   },
   "local_documents_CSV_history": {
