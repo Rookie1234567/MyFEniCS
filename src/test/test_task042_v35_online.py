@@ -152,6 +152,12 @@ def actual_synthetic_chain(tmp_path,monkeypatch):
     directory=tmp_path/'one_run';directory.mkdir();(directory/'source_sha.txt').write_text('a'*40)
     stage=runner.OnlineStage(spec,directory)
     result=runner.execute_stage(stage);stage.finish(result)
+    # The real launcher settles/clears active before another stage is loaded.
+    # Exercise that boundary in our own fixture rather than bypassing the guard.
+    w.settle_run(directory,dict(stage='V35-ONLINE',classification='COMPLETED',
+        leader_exit_code=0,elapsed_seconds=.1,source_state=dict(source_sha='a'*40),
+        sampled_process_tree_rss_peak_bytes=100,sampled_process_tree_swap_peak_bytes=0,
+        descendants_cleared=True),.2)
     stored,_=io.read_result('ONLINE')
     checked=check(stored,packet.a['b'],root=tmp_path/'artifacts',nt=8)
     assert checked['status']=='CHECKED' and stored['status']=='ORIGINAL_EQUATION_PASS'
