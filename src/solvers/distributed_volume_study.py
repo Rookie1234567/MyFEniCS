@@ -418,14 +418,43 @@ def volume(folder, ranks):
             0
         ]
     y[lit["slave_local_dofs"]] = 0
-    x = lit["computation"][:nn].copy()
+    # Same pre-registered canonical input for every actual MPI layout.
+    xlocal = np.zeros(len(lit["actual_dof_global_ids"]), np.complex128)
+    for d, nm in ((1, 6), (2, 60)):
+        vals = canonical_values(lit[f"entity{d}_master_keys"], nm, 424201)
+        for j, perm in enumerate(lit[f"entity{d}_vertex_permutations"]):
+            xlocal[lit[f"entity{d}_native_dofs"][j]] = lit[f"entity{d}_phase"][j] * (
+                entity_transform(d, perm) @ vals[j]
+            )
+    for c, key in enumerate(cell_keys):
+        xlocal[lit["cell_native_dofs"][c, ip]] = canonical_values(
+            np.asarray(key)[None, :], 450, 424201
+        )[0]
+    xlocal[lit["slave_local_dofs"]] = 0
+    x = xlocal[:nn].copy()
     y = y[:nn].copy()
     forward = action.apply_original(x)
     adjoint = action.apply_original_adjoint(y)
     left = comm.allreduce(np.vdot(y, forward))
     right = comm.allreduce(np.vdot(adjoint, x))
+
+    def norm2(v):
+        return float(comm.allreduce(float(np.vdot(v, v).real)))
+
+    denom = max(
+        np.sqrt(norm2(forward) * norm2(y)), np.sqrt(norm2(x) * norm2(adjoint)), 1e-30
+    )
+    error = float(abs(left - right))
     checks = [
-        dict(kind="global_dual", **metric(np.asarray([left]), np.asarray([right])))
+        {
+            "kind": "global_dual",
+            "numerator": error,
+            "denominator": float(denom),
+            "relative": error / denom,
+            "passed": error / denom <= 1e-10,
+            "left": [left.real, left.imag],
+            "right": [right.real, right.imag],
+        }
     ]
     zero = action.apply_original(np.zeros_like(x))
     scaled = action.apply_original((0.37 - 0.91j) * x)
@@ -433,6 +462,26 @@ def volume(folder, ranks):
         dict(kind="zero", **metric(zero, np.zeros_like(zero))),
         dict(kind="complex_linearity", **metric(scaled, (0.37 - 0.91j) * forward)),
     ]
+    oracle_check_seconds = 0.0
+    if ranks == 1:
+        from scipy.sparse import csr_matrix
+
+        began = perf_counter()
+        _, a = s.read("native_csr")
+        matrix = csr_matrix(
+            (a["data"], a["indices"], a["indptr"]), shape=tuple(a["shape"])
+        )
+        checks.extend(
+            [
+                dict(kind="original_native_CSR_forward", **metric(forward, matrix @ x)),
+                dict(
+                    kind="original_native_CSR_adjoint",
+                    **metric(adjoint, matrix.conjugate().T @ y),
+                ),
+            ]
+        )
+        del matrix, a
+        oracle_check_seconds = perf_counter() - began
     arrays = {
         "x": x,
         "y": y,
@@ -472,10 +521,11 @@ def volume(folder, ranks):
     balance = []
     fi = []
     physical = action.expand(x)
+    factors = [s.read(name + "_lu")[1] for name in row["class_names"]]
     for c in range(nc):
         i = int(ids[c])
         a = mats[i]
-        lu = s.read(row["class_names"][i] + "_lu")[1]
+        lu = factors[i]
         f = canonical_values(np.asarray(cell_keys[c])[None, :], 450, 424213)[0]
         t = action.transforms[int(lit["cell_permutations"][c])]
         local = physical[lit["cell_native_dofs"][c]].copy()
@@ -502,6 +552,7 @@ def volume(folder, ranks):
             "parent": p["numeric"],
             "calls": action.calls,
             "seconds": action.seconds,
+            "oracle_check_seconds": oracle_check_seconds,
             "class_ids": ids.tolist(),
             "all_trace_allgather": False,
         },
@@ -520,6 +571,53 @@ def volume(folder, ranks):
     }
 
 
+def check_volume(folder):
+    from scipy.sparse import csr_matrix
+
+    from benchmarks.check_distributed_volume import compare_mpi
+
+    require_live_envelope()
+    s = store()
+    _, a = s.read("native_csr")
+    matrix = csr_matrix((a["data"], a["indices"], a["indptr"]), shape=tuple(a["shape"]))
+    checks = []
+    rows = []
+    for n in (1, 2, 4):
+        r, path = stage("VOLUME" + str(n))
+        if r.get("MPI_size") != n or len(r.get("packets", [])) != n:
+            raise ValueError("required complete finite volume rank inventory")
+        checks.extend(c for p in r["packets"] for c in p["metadata"]["checks"])
+        rows.append({"path": str(path), "sha256": sha(path), "MPI_size": n})
+        if n == 1:
+            v = read_arrays(r["packets"][0]["numeric"])
+            for label, result in (
+                ("forward", matrix @ v["x"]),
+                ("adjoint", matrix.conjugate().T @ v["y"]),
+            ):
+                checks.append(
+                    dict(
+                        kind="independent_original_native_CSR_" + label,
+                        **metric(v[label], result),
+                    )
+                )
+            baseline = r["packets"]
+        else:
+            for label in ("forward", "adjoint"):
+                checks.extend(
+                    dict(c, MPI_size=n)
+                    for c in compare_mpi(baseline, r["packets"], label)
+                )
+    return {
+        "status": "FINITE_VOLUME_QUALIFIED"
+        if all(c["passed"] for c in checks)
+        else "VOLUME_NOT_QUALIFIED",
+        "checks": checks,
+        "parents": rows,
+        "PDE_solved": False,
+        "passed": all(c["passed"] for c in checks),
+    }
+
+
 def execute(role, folder, state):
     environment()
     if role == "ENVELOPE":
@@ -530,4 +628,6 @@ def execute(role, folder, state):
         return oracle(folder)
     if role.startswith("VOLUME"):
         return volume(folder, int(role[-1]))
+    if role == "CHECK":
+        return check_volume(folder)
     raise NotImplementedError("V42 stage wiring incomplete: " + role)
