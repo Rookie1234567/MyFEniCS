@@ -17,15 +17,42 @@ from src.solvers.native_recovery_packets import PacketStore, sha
 
 def producer_store():
     """Current consumer physics/ABI/source, with explicit producer MPI1 ABI."""
-    from src.solvers.native_boundary_adapter import identity_digest
+    from src.solvers.bounded_port_provider import content_hash
+    from src.solvers.native_boundary_adapter import boundary_identity, identity_digest
     from src.solvers.native_integration_study import selected_action
-    from src.solvers.native_recovery_study import contract, dependencies, patch_record
+    from src.solvers.native_recovery_scope import PLAN
+    from src.solvers.native_recovery_study import patch_record
+    from src.solvers.target_port_preparation import geometry_contract, target_config
 
     p = patch_record()
-    expected = contract(read_arrays(p["literal"]), selected_action(p["description"]))
-    deps = dependencies()
-    deps["ABI"]["MPI_size"] = 1
-    expected["dependencies"] = deps
+    cfg, mat = target_config()
+    deps = {
+        "plan": sha(PLAN),
+        "material": sha(ROOT / "input/materials/si_optical_constants_v1.json"),
+        "numeric_sources": {
+            name: sha(ROOT / name)
+            for name in (
+                "src/solvers/common_3d_forms.py",
+                "src/solvers/hcurl_assembly_time_condensation.py",
+                "src/solvers/p6_cell_condensed_action.py",
+                "src/solvers/native_boundary_adapter.py",
+                "src/solvers/directional_boundary.py",
+            )
+        },
+        "ABI": producer_abi(),
+    }
+    expected = {
+        "schema": "native-volume-boundary-consumer.v1",
+        "boundary": boundary_identity(selected_action(p["description"])),
+        "native": content_hash(read_arrays(p["literal"])),
+        "physical": geometry_contract(cfg, mat)["physical_contract_sha256"],
+        "material": deps["material"],
+        "dependencies": deps,
+        "basis": "N1E-hexahedron-p6-Legendre-882",
+        "q_volume": 15,
+        "Hp": "IMPLICIT_IDENTITY",
+        "port_D": "normalized_once",
+    }
     s = PacketStore(
         ROOT / "benchmarks/artifacts/task042/v40/checkpoints",
         deps,
@@ -35,6 +62,22 @@ def producer_store():
     if identity_digest(row["metadata"]["contract"]) != identity_digest(expected):
         raise ValueError("immutable producer versus live consumer physics/ABI/source")
     return s, p
+
+
+def producer_abi(env=None):
+    """Validate the live multi-rank stack without calling MPI1-only producers."""
+    from src.solvers.native_entity_study import environment
+
+    env = environment() if env is None else env
+    if (
+        env["scalar"] != "complex128"
+        or env["IntType"] != "int64"
+        or env["MPI_size"] not in (1, 2, 4)
+    ):
+        raise ValueError("live consumer ABI is not the qualified finite native stack")
+    abi = {k: env[k] for k in ("executable", "scalar", "IntType", "module_paths")}
+    abi["MPI_size"] = 1  # Explicit immutable producer rank metadata only.
+    return abi
 
 
 def recover(folder, ranks):

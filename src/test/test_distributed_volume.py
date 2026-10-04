@@ -213,6 +213,20 @@ def test_native_inverse_transpose_transfer_and_independent_dual():
         assert abs(np.vdot(y, m @ x) - np.vdot(m.conjugate().T @ y, x)) < 1e-9
 
 
+def test_current_mpi_consumer_abi_and_live_producer_packet_identity():
+    from src.solvers.distributed_recovery_study import producer_abi, producer_store
+    from src.solvers.native_entity_study import environment
+    from src.solvers.native_recovery_study import dependencies
+
+    env = dict(environment(), MPI_size=4)
+    assert producer_abi(env)["MPI_size"] == 1
+    with pytest.raises(ValueError, match="live consumer ABI"):
+        producer_abi(dict(env, scalar="float64"))
+    # Real immutable geometry plus current physics; no saved self-identity.
+    packet, _ = producer_store()
+    assert packet.dependencies == dependencies()
+
+
 def test_saved_owner_consumer_nonhermitian_nonmutual_ports_and_affine_rhs():
     from scipy.linalg import lu_factor
 
