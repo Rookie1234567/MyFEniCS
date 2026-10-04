@@ -1889,7 +1889,130 @@
     "No new FE, LU, solve, training, package install, environment change or other branch write by reviewer."
   ],
   "publication": {
-    "status": "PENDING_GITHUB_RENDER"
+    "status": "PASS_ACTUAL_GITHUB_BOUNDED_VISUAL_REVIEW",
+    "page_commit": "1b5290b96cbd84e1837a944fbe8f3ed039c65ed1",
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/1b5290b96cbd84e1837a944fbe8f3ed039c65ed1/docs/task042extra_feinn_5nm/review_report_v24.md",
+    "page_sha256": "dccb4eca6632d785a4d64e5b675fddac99b49fbf7eb1e66cd77972bcab3c4fbf",
+    "record": {
+      "path": "tmp/task42extra/render/review_v24_1b5290b9/render_records.json",
+      "bytes": 8373,
+      "sha256": "e99b43b0b4dcda115cc7681942587dbf2beb0c03ed14b2364d036865c59abe88"
+    },
+    "supervision": {
+      "path": "tmp/task42extra/checks/review_v24_github_render_20261004T173932764539Z/summary.json",
+      "bytes": 2075,
+      "sha256": "4689346a2afc3c15e8e56d901a5a823e925d008065a6920ea844c112a63f9088"
+    },
+    "resource": {
+      "sampled_root_identity": null,
+      "workflow_deadline_seconds": 240.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        1922522,
+        1922523,
+        1922526,
+        1922580,
+        1922583,
+        1922603,
+        1922611,
+        1922663,
+        1922718,
+        1922724,
+        1922729,
+        1922741,
+        1922759,
+        1922873
+      ],
+      "sampled_process_tree_rss_peak_bytes": 1607340032,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139073,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2141445242880,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2141445242880,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 17,
+      "elapsed_seconds": 11.891940028872341,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    },
+    "captures": [
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_top.png",
+        "bytes": 405938,
+        "sha256": "d9163cc6de64a2458c3687963fa2813a94e86a0e081016afb9845607c9c55c83"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_table_00_element.png",
+        "bytes": 60241,
+        "sha256": "961b9838c99738861941fd9c7e5341a9e94d0833851e31b31701d2b2c07f2c94"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_table_01_element.png",
+        "bytes": 124704,
+        "sha256": "23f5e9a2e35bc97b535875becac10123e5c3c1c068aa58256b2ee09a790c215e"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_table_02_element.png",
+        "bytes": 66738,
+        "sha256": "c8d4a91b1bb17668ede97e48d70d89eb4556c50fd9be23947da846535feb196a"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_table_03_element.png",
+        "bytes": 200504,
+        "sha256": "87c4e934f56979b0a8764491f47e774e0ad9898299b23363f1252044aeb3e13f"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_table_04_element.png",
+        "bytes": 90017,
+        "sha256": "eda4e4bbf75e356cd7596c757848c77ec5dd4f2d2541113b14d545a33fe99928"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v24_1b5290b9/00_table_05_element.png",
+        "bytes": 126471,
+        "sha256": "a48e76a9bca3ad89f4b80aa71fc042a1c3a9148e4ae20fe24a54f4c98ab34405"
+      }
+    ],
+    "scope": "Actual GitHub unmodified CSS: first viewport and all six complete tables including rightmost columns; seven images inspected individually; zero math fences. Does not claim a screenshot audit of every prose line. Unchanged V24 response/topic receipt reused by hash.",
+    "visual_reviewer": "review assistant",
+    "new_review_only": true
   },
   "review_repairs": [
     {
@@ -1906,10 +2029,16 @@
       "earlier_reading_allowance_seconds": 600,
       "goal": "original 50x25x140 nm Si17/120nm lambda0.7 full3D FE all interiors double Floquet full ports <=2e12B machine own swap/OOC0 <=172800s complete pipeline original accuracy"
     },
-    "observed_utc": "2026-10-04T17:38:36.040783+00:00",
-    "observed_monotonic": 1060510.901670918,
+    "observed_utc": "2026-10-04T17:40:45.086121+00:00",
+    "observed_monotonic": 1060639.9470172,
     "scope": "Continuous review parent including reads, raw audit, authoring, waiting, Git/render; nested subprocess times are not added twice.",
-    "project_exact_total_status": "UNKNOWN"
+    "project_exact_total_status": "UNKNOWN",
+    "continuous_since_record_seconds": 1435.2665545030031,
+    "prior_reading_conservative_allowance_seconds": 600,
+    "remaining_delivery_tail_upper_seconds": 600,
+    "conservative_upper_seconds": 2635.2665551498067,
+    "largest_sampled_supervised_tree_bytes": 1607340032,
+    "scope_limit": "RSS is sampled supervised audit/browser trees, not a continuous whole-review kernel cap; unmeasured preparatory shell peaks remain unmeasured."
   },
   "local_document_check": {
     "page": {
@@ -1925,5 +2054,13 @@
     "old_tracked_bytes_changed": false,
     "full_pytest": "NOT_RUN_DOC_ONLY",
     "CI": "NOT_CLAIMED"
+  },
+  "git_publication_proof_before_seal": {
+    "branch": "task42extra_feinn_5nm",
+    "reviewed_head": "72886d0d4786ef825b286dc8302d8476ad472eb8",
+    "page_commit": "1b5290b96cbd84e1837a944fbe8f3ed039c65ed1",
+    "only_new_review_and_audit": true,
+    "final_seal_changes": "this JSON only; report/render hash unchanged",
+    "final_delivery_receipt": "tmp/task42extra/review_v24/delivery_receipt.json"
   }
 }
