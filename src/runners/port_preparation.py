@@ -29,7 +29,7 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace in ("v37", "v38", "v39", "v40", "v41"):
+        if self.namespace in ("v37", "v38", "v39", "v40", "v41", "v42"):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
                 ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
@@ -39,10 +39,12 @@ class PreparationHealth:
             )
             size = inventory_paths(own, ROOT)["bytes"]
             row["new_preparation_bytes"] = size
-            if (
-                size
-                > (2048 if self.namespace in ("v39", "v40", "v41") else 512) * 2**20
-            ):
+            limit = (
+                40 * 2**30
+                if self.namespace == "v42"
+                else (2048 if self.namespace in ("v39", "v40", "v41") else 512) * 2**20
+            )
+            if size > limit:
                 row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
             if self.namespace in ("v39", "v40"):
                 jit = ROOT / ("tmp/task042/" + self.namespace + "/formal/xdg/fenics")
@@ -66,6 +68,10 @@ FE_ROLES = (
 
 
 def context(namespace):
+    if namespace == "v42":
+        from src.solvers import distributed_volume_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v41":
         from src.solvers import native_entity_scope as scope
 
@@ -98,14 +104,17 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     new = inventory_paths(own, ROOT)["bytes"]
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
+    limit = (
+        40 * 2**30
+        if namespace == "v42"
+        else (2048 if namespace in ("v39", "v40", "v41") else 512) * 2**20
+    )
+    task_limit = (64 if namespace == "v42" else 20) * 2**30
+    free_limit = (100 if namespace == "v42" else 50) * 2**30
     if (
-        (
-            new + reserve
-            > (2048 if namespace in ("v39", "v40", "v41") else 512) * 2**20
-            and not cleanup
-        )
-        or total + reserve > 20 * 2**30
-        or free < 50 * 2**30 + reserve
+        (new + reserve > limit and not cleanup)
+        or total + reserve > task_limit
+        or free < free_limit + reserve
     ):
         raise MemoryError("V36 new512MiB/task20GiB/free50GiB storage reserve")
     return {
@@ -140,7 +149,8 @@ def require_component_gate(*, namespace="v36"):
 def diagnosed_phase_repair(namespace, role, previous, plan):
     if namespace in ("v39", "v40"):
         return previous["status"] in (
-            "NATIVE_ADAPTER_NOT_QUALIFIED", "COUPLED_INTERFACE_NOT_QUALIFIED",
+            "NATIVE_ADAPTER_NOT_QUALIFIED",
+            "COUPLED_INTERFACE_NOT_QUALIFIED",
             "NATIVE_RECOVERY_NOT_QUALIFIED",
         )
     if namespace == "v41" and role == "ROUTING":
@@ -170,7 +180,11 @@ def launch(
         from src.solvers.native_entity_scope import NATIVE
 
         is_fe = role in NATIVE
-    if is_fe or (namespace == "v41" and specification is not None):
+    if namespace == "v42":
+        from src.solvers.distributed_volume_scope import NATIVE
+
+        is_fe = role in NATIVE
+    if is_fe or (namespace in ("v41", "v42") and specification is not None):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -181,7 +195,9 @@ def launch(
             prior_result = json.loads(
                 __import__("pathlib").Path(previous["path"]).read_text()
             )
-            if not diagnosed_phase_repair(namespace, role, prior_result, json.loads(PLAN.read_text())):
+            if not diagnosed_phase_repair(
+                namespace, role, prior_result, json.loads(PLAN.read_text())
+            ):
                 raise ValueError(
                     "completed qualified phase already published; reuse pointer, no restart"
                 )
@@ -194,7 +210,7 @@ def launch(
         if status:
             raise RuntimeError("V36 formal component/preparation requires clean source")
     seconds = window.remaining(role)
-    if specification is not None and namespace == "v41":
+    if specification is not None and namespace in ("v41", "v42"):
         seconds = min(seconds, float(specification.execution["timeout_seconds"]))
     if seconds <= 5:
         raise RuntimeError("V36 phase paid wall exhausted")
@@ -225,7 +241,7 @@ def launch(
             ARTIFACT.joinpath(role + ".json").read_bytes()
         )
     storage(
-        32 * 2**20,
+        (1024 if namespace == "v42" else 32) * 2**20,
         namespace=namespace,
         cleanup=(namespace in ("v37", "v40") and role == "archive"),
     )
@@ -243,7 +259,7 @@ def launch(
             int(specification.execution["mpi_size"]) if specification is not None else 1
         )
         cpus = [baseline["cpu"]]
-        if namespace == "v41":
+        if namespace in ("v41", "v42"):
             cpus, used = [], set()
             for t in baseline["topology"]:
                 key = (t["socket"], t["core"])
@@ -298,7 +314,7 @@ def launch(
                 str(folder),
                 namespace,
             ]
-            if namespace == "v41" and ranks > 1:
+            if namespace in ("v41", "v42") and ranks > 1:
                 command = ["mpiexec", "--bind-to", "none", "-n", str(ranks), *command]
         write_json(folder / "run_manifest.json", state)
         window.begin(role, folder, source)
@@ -364,10 +380,10 @@ def launch(
 
 def worker(folder, namespace="v36"):
     window, ARTIFACT, _plan, implementation_hashes = context(namespace)
-    if namespace == "v41":
+    if namespace in ("v41", "v42"):
         from src.solvers.native_entity_scope import guard_entity_worker
 
-        guard_entity_worker()
+        guard_entity_worker(window)
     else:
         window.guard_worker_parent()
     state = json.loads((folder / "run_manifest.json").read_text())
@@ -379,7 +395,7 @@ def worker(folder, namespace="v36"):
         raise RuntimeError("V36 active source changed")
     role = state["stage"].removeprefix(namespace.upper() + "-")
     artifact = ARTIFACT / folder.name
-    if namespace == "v41":
+    if namespace in ("v41", "v42"):
         from mpi4py import MPI
 
         comm = MPI.COMM_WORLD
@@ -391,7 +407,9 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v41":
+        if namespace == "v42":
+            from src.solvers.distributed_volume_study import execute
+        elif namespace == "v41":
             from src.solvers.native_entity_study import execute
         elif namespace == "v40":
             from src.solvers.native_recovery_study import execute
@@ -420,15 +438,21 @@ def worker(folder, namespace="v36"):
         )
         result_path = artifact / (
             "result.json"
-            if namespace != "v41" or comm.rank == 0
+            if namespace not in ("v41", "v42") or comm.rank == 0
             else f"result_rank{comm.rank}.json"
         )
         write_json(result_path, result)
-        if namespace == "v41" and comm.size > 1 and result["status"] == "FAILED":
+        if (
+            namespace in ("v41", "v42")
+            and comm.size > 1
+            and result["status"] == "FAILED"
+        ):
             # Keep the failed rank's result, then terminate only this MPI job
             # instead of waiting in MPI_Finalize with blocked peers.
             comm.Abort(1)
-        if result["status"] != "FAILED" and (namespace != "v41" or comm.rank == 0):
+        if result["status"] != "FAILED" and (
+            namespace not in ("v41", "v42") or comm.rank == 0
+        ):
             write_json(
                 ARTIFACT / (role + ".json"),
                 {

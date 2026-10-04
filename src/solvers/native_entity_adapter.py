@@ -76,6 +76,15 @@ class CompleteEntityAdapter:
             out[i] = (self.inverses[tuple(p)] @ values[i]) / self.phases[i]
         return out
 
+    def physical_dual_from_canonical(self, values):
+        """Adjoint of canonical_from_physical, not adjoint of extract."""
+        out = np.empty_like(values)
+        for i, p in enumerate(self.permutations):
+            out[i] = (self.inverses[tuple(p)].conjugate().T @ values[i]) / self.phases[
+                i
+            ].conjugate()
+        return out
+
     def scatter_into(self, physical_dual, owned_canonical_dual):
         values = np.empty_like(physical_dual)
         for i, p in enumerate(self.permutations):

@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v42]
+stage = "ENVELOPE"
+run_id = "task042_v42_envelope"

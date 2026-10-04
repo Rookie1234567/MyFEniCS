@@ -35,6 +35,50 @@ STAGE_SOURCES = {
     },
 }
 
+# Full modules close helper/global/default dependencies as well as the selected
+# function ASTs above. Runner/document changes are outside these numerical groups.
+HELPER_SOURCES = {
+    "geometry": (
+        "src/constraints/floquet_3d.py",
+        "src/constraints/floquet_3d_high_order.py",
+        "src/constraints/high_order_floquet_trace.py",
+        "src/solvers/native_entity_topology.py",
+        "src/common/config_3d.py",
+        "src/common/optical_material_table.py",
+    ),
+    "classes": ("src/solvers/hcurl_affine_isotropic_tensor.py",),
+    "quadrature": ("src/solvers/hcurl_affine_isotropic_tensor.py",),
+    "recovery": (
+        "src/solvers/native_recovery_packets.py",
+        "src/solvers/native_entity_adapter.py",
+        "src/solvers/native_entity_protocol.py",
+    ),
+}
+
+
+def dependency_closure(group, source=None):
+    """Consumer-derived file identities; no dependence on a saved identity."""
+    result = {}
+    for name in sorted(set(STAGE_SOURCES[group]) | set(HELPER_SOURCES[group])):
+        data = (
+            (ROOT / name).read_bytes()
+            if source is None
+            else subprocess.check_output(
+                [
+                    "git",
+                    "-c",
+                    "gc.auto=0",
+                    "-c",
+                    "maintenance.auto=false",
+                    "show",
+                    source + ":" + name,
+                ],
+                cwd=ROOT,
+            )
+        )
+        result[name] = hashlib.sha256(data).hexdigest()
+    return result
+
 
 def digest(value):
     return hashlib.sha256(
@@ -89,7 +133,7 @@ def validate_envelope(envelope, expected):
         or envelope.get("commit") is not True
     ):
         raise ValueError("consumption commit/schema")
-    for name in (
+    required = (
         "physical",
         "material",
         "phase",
@@ -101,7 +145,14 @@ def validate_envelope(envelope, expected):
         "modes",
         "slave_semantics",
         "stage_dependencies",
-    ):
+        "tags",
+        "q",
+    )
+    if any(name not in expected for name in required):
+        raise ValueError("incomplete live consumer identity")
+    for name in expected:
+        if name not in envelope:
+            raise ValueError("missing live consumption identity " + name)
         if envelope[name] != expected[name]:
             raise ValueError("consumption identity " + name)
     if envelope["identity_sha256"] != digest({k: envelope[k] for k in expected}):

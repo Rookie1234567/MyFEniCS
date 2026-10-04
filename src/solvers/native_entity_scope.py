@@ -65,9 +65,9 @@ window = EntityWindow(
 )
 
 
-def guard_entity_worker():
+def guard_entity_worker(active_window=None):
     """MPI rank's immediate parent is not the supervision process."""
-    window.require_live(margin=1)
+    (active_window or window).require_live(margin=1)
     pid = int(os.environ["TASK042_WATCHDOG_PARENT_PID"])
     os.kill(pid, 0)
     parent = os.getppid()

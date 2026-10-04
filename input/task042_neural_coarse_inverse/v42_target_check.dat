@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v42]
+stage = "TARGET_CHECK"
+run_id = "task042_v42_target_check"

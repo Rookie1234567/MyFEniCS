@@ -21,6 +21,7 @@ from src.solvers.native_entity_adapter import (
     entity_transform,
 )
 from src.solvers.native_entity_dependencies import (
+    dependency_closure,
     publish_envelope,
     semantic_hashes,
     validate_envelope,
@@ -117,7 +118,8 @@ def frozen_axes():
     return [np.array(r["capacity"]["axes_nm"][a], np.float64) for a in ("x", "y", "z")]
 
 
-def envelope(folder):
+def current_consumption_identity():
+    """Construct expected physics/dependencies from the live consumer, not its packet."""
     cfg, material = target_config()
     contract = geometry_contract(cfg, material)
     checkpoint = ROOT / "benchmarks/artifacts/task042/v40/checkpoints"
@@ -159,7 +161,17 @@ def envelope(folder):
         "stage_dependencies": groups,
         "tags": contract["regular_geometry"]["tags"],
         "q": {"volume": 15, "boundary": 30, "audit": 17},
+        "live_dependency_closure": {
+            group: dependency_closure(group) for group in groups
+        },
+        "config_seed": sha(ROOT / "src/solvers/target_port_preparation.py"),
     }
+    return expected
+
+
+def envelope(folder):
+    expected = current_consumption_identity()
+    checkpoint = ROOT / "benchmarks/artifacts/task042/v40/checkpoints"
     parents = []
     logical = actual = aliases = 0
     for p in sorted(checkpoint.glob("*.json")):
@@ -210,7 +222,9 @@ def require_envelope():
     e, _ = stage("ENVELOPE")
     if sha(e["envelope_path"]) != e["envelope_sha256"]:
         raise ValueError("envelope hash")
-    validate_envelope(json.loads(Path(e["envelope_path"]).read_text()), e["identity"])
+    validate_envelope(
+        json.loads(Path(e["envelope_path"]).read_text()), current_consumption_identity()
+    )
     return e
 
 
@@ -1063,10 +1077,13 @@ def finish(role, folder):
         check_directions,
         check_packets,
         check_routing,
+        ranks,
     )
+    from src.solvers.native_entity_qualification import complete_native_checks
 
     require_envelope()
     checks = {}
+    t = o = None
     if role in ("DEPLOY", "CAPACITY"):
         checked, checked_path = stage("CHECK")
         if checked["status"] != "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE" or not checked["passed"]:
@@ -1077,7 +1094,13 @@ def finish(role, folder):
             checks[name] = {"status": "NOT_RUN"}
             continue
         r, _ = stage(name)
+        expected_ranks = int(name.removeprefix("BRIDGE"))
+        if not r.get("results") or r.get("MPI_size") != expected_ranks:
+            raise ValueError("required bridge stage actual MPI identity")
+        for fixture in r["results"]:
+            ranks(fixture["packets"], expected_ranks)
         checks[name] = {
+            "MPI_size": expected_ranks,
             "fixtures": [
                 check_packets(p["packets"], fixture=True) for p in r["results"]
             ],
@@ -1090,7 +1113,7 @@ def finish(role, folder):
     if (ARTIFACT / "ORIENTATION.json").exists():
         o, _ = stage("ORIENTATION")
         checks["ORIENTATION"] = check_directions(o["direction_witness"]["numeric"])
-    if (ARTIFACT / "ROUTING.json").exists():
+    if (ARTIFACT / "ROUTING.json").exists() and t is not None and o is not None:
         r, _ = stage("ROUTING")
         checks["ROUTING"] = check_routing(
             r["packets"], topology=t["packets"], actions=r["complete_actions"],
@@ -1101,14 +1124,7 @@ def finish(role, folder):
             {"kind": n, **metric(a[n], a["frozen_" + n])}
             for n in ("amplitudes", "forward", "adjoint", "modal")
         ]
-    def qualified(value):
-        if isinstance(value, dict):
-            return value.get("passed", True) and all(qualified(v) for v in value.values())
-        if isinstance(value, list):
-            return all(qualified(v) for v in value)
-        return True
-
-    passed = qualified(checks)
+    passed = complete_native_checks(checks)
     return {
         "status": "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE" if passed else "INDEPENDENT_NATIVE_ENTITY_CHECKS_FAILED",
         "passed": passed,

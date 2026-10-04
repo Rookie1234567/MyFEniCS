@@ -1,0 +1,99 @@
+{
+  "schema": "distributed-volume.v42.v1",
+  "review_commit": "31774b6282f61280fe33c162f9f48bf4ea526ce6",
+  "stages": [
+    "ENVELOPE",
+    "CLASSES",
+    "ORACLE",
+    "VOLUME1",
+    "VOLUME2",
+    "VOLUME4",
+    "RECOVERY2",
+    "RECOVERY4",
+    "CHECK",
+    "TARGET_GATE",
+    "TARGET_FORWARD",
+    "TARGET_ADJOINT",
+    "TARGET_CHECK",
+    "DEPLOY",
+    "CAPACITY"
+  ],
+  "parents": {
+    "v41_BRIDGE1": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/BRIDGE1.json",
+      "sha256": "172013e1071def32228d4092896360fedf89cba705eff0a1917bd688ee88f086"
+    },
+    "v41_BRIDGE2": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/BRIDGE2.json",
+      "sha256": "cb1ff961e3cb7b618707c23d81654673ed9013acc42ac0cd12362bf18b0ba964"
+    },
+    "v41_BRIDGE4": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/BRIDGE4.json",
+      "sha256": "0ff39e3f1394bce75e3aba1628635d8d3d25d66b976f27c67788ea11dc0c76bb"
+    },
+    "v41_TOPOLOGY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/TOPOLOGY.json",
+      "sha256": "5e537d89c51896965f222accaaaaa1b7d145bc0ca337196d01f4ac1c27187689"
+    },
+    "v41_ORIENTATION": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/ORIENTATION.json",
+      "sha256": "1b70b0ac79d4795e4251eb5f4bfd81098c69df275906b68ff970a55d1431e5cc"
+    },
+    "v41_ROUTING": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/ROUTING.json",
+      "sha256": "1a88921f0fd319c8b38d078ec201e7fbb33b18941012dca644e086185e826078"
+    },
+    "v41_CHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/CHECK.json",
+      "sha256": "70d683d6ed15ce114203021bf3b05ac1b3787c9bc329d3e7232c35a13bd8d945"
+    },
+    "v41_ENVELOPE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/ENVELOPE.json",
+      "sha256": "8d2376c2aceb19456242d8bad5105505c4e5c6e32784f3e4171e577bbf90a737"
+    },
+    "v40_BUILD": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/BUILD.json",
+      "sha256": "c4d9f25b47cc855e892278aae5fc1a0f435e165a7c2cf2aeaf09c95a3cad7471"
+    },
+    "v40_RECOVER": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/RECOVER.json",
+      "sha256": "74cf9cae60cb015c9070974adb269d6c5a74c80f2bb735e843c9b199af332d75"
+    },
+    "v40_CHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/CHECK.json",
+      "sha256": "b2624718dc1772d23853efd50a99e0208c5861b0217bba185d341f6749cbee91"
+    },
+    "v38_LAYOUT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/LAYOUT.json",
+      "sha256": "3d699974d3996b148bb0cb7f38f64c90efb7b0b4f4c33f0b898115dfda26a21c"
+    },
+    "v38_COMPONENT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/COMPONENT.json",
+      "sha256": "5f9e7a2b631cd699f983f7a7fa8312952d80664bc521b139cd279587672749d0"
+    }
+  },
+  "target_cells": 530856,
+  "target_native_p6_space": false,
+  "target_LU": false,
+  "maximum_new_local_LU": 6,
+  "maximum_new_native_hex": 512,
+  "finite_seeds": [
+    424201,
+    424209
+  ],
+  "target_seeds": [
+    424211,
+    424219
+  ],
+  "target_MPI": 2,
+  "p": 6,
+  "q_volume": 15,
+  "q_audit": 17,
+  "q_boundary": 30,
+  "numerical_tolerance": 1e-10,
+  "dot_denominator": "max(norm(Ax)*norm(y),norm(x)*norm(AHy),1e-30)",
+  "target_exclusive": true,
+  "new_storage_bytes": 42949672960,
+  "task_storage_bytes": 68719476736,
+  "evidence_reserve_bytes": 1073741824
+}

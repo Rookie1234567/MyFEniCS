@@ -93,6 +93,7 @@ def test_same_shape_wrong_identity_rejected(key):
         "stage_dependencies",
     ]
     expected = {k: "correct" for k in keys}
+    expected.update(q="correct", tags="correct")
     row = dict(
         expected,
         schema="native-entity-consumption.v1",
@@ -125,6 +126,7 @@ def test_system_rejects_another_self_consistent_class(tmp_path):
         ]
     }
     path = tmp_path / "system.json"
+    expected.update(q="correct", tags="correct")
     path.write_text(
         json.dumps({"metadata": {"classes": [{"name": "wrong", "sha256": "other"}]}})
     )
