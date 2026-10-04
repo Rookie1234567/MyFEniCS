@@ -1,3 +1,11 @@
+# V36变更：准备接口、按需全端口与独立证据
+
+新增通用bounded provider／surface适配、目标物理／计数／mode准备核；runner只编排新scope的四个opt-in stage，复用既有监督，不复制体积求解。仅在run_case加explicit dispatch、修闭账fixture；原ActionPacket/recover/uncondensed/audit、默认物理solver及其他分支不变。
+
+[source/hash](records/run_index_v36.json)、[依赖分组](records/selective_merge_v36.json)、[实际变更清单](records/changed_files_v36.json)。本轮不授production目标求解或merge approval。
+
+<!-- V36-LATEST-END -->
+
 # V35依赖分组：opt-in在线核、守卫、独立checker与紧凑证据
 
 本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。

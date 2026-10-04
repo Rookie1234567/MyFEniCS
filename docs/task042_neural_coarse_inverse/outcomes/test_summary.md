@@ -1,3 +1,11 @@
+# V36测试：最终19定点与MPI2/4、真实组件及cache审核通过
+
+实际编译发生在测试前；最终源文件hash绑定19个定点（含fixture closed／负结果reference barrier、actual dat、坏hash／readonly／空owner／weakref／独立保存数组反例），MPI2及MPI4保存实际完整向量并与serial配对。Ruff新文件通过。真实micro边界及独立cache checker两seed通过原1e-10门。
+
+首次环境／MPI启动／静态格式／collector错误的raw、source和消费完整保留。没有重跑全仓PDE或声称CI。收口文档标准库测试单列在[测试记录](records/tests_v36.json)，不冒充更多PDE。
+
+<!-- V36-LATEST-END -->
+
 # V35测试：真实接线、缓存消费反例及最终静态复验
 
 本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。

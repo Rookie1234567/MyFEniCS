@@ -1,0 +1,119 @@
+{
+  "implementation_commits": [
+    "19eb5dc9ca4d245612d7ddbf9f1a750387b9c8d4",
+    "730e8f3336ddd6f9449b70430a48c77cdc1750e3"
+  ],
+  "tracked_implementation": [
+    {
+      "status": "A",
+      "path": "benchmarks/check_port_preparation.py"
+    },
+    {
+      "status": "A",
+      "path": "benchmarks/qualify_port_preparation.py"
+    },
+    {
+      "status": "A",
+      "path": "input/task042_neural_coarse_inverse/port_preparation_v36.json"
+    },
+    {
+      "status": "A",
+      "path": "input/task042_neural_coarse_inverse/v36_deployment_package.dat"
+    },
+    {
+      "status": "A",
+      "path": "input/task042_neural_coarse_inverse/v36_port_checker.dat"
+    },
+    {
+      "status": "A",
+      "path": "input/task042_neural_coarse_inverse/v36_port_component.dat"
+    },
+    {
+      "status": "A",
+      "path": "input/task042_neural_coarse_inverse/v36_target_inventory.dat"
+    },
+    {
+      "status": "M",
+      "path": "scripts/run_case.py"
+    },
+    {
+      "status": "A",
+      "path": "src/io/port_preparation.py"
+    },
+    {
+      "status": "A",
+      "path": "src/runners/port_preparation.py"
+    },
+    {
+      "status": "A",
+      "path": "src/solvers/bounded_port_provider.py"
+    },
+    {
+      "status": "A",
+      "path": "src/solvers/bounded_port_surface.py"
+    },
+    {
+      "status": "A",
+      "path": "src/solvers/port_component_study.py"
+    },
+    {
+      "status": "A",
+      "path": "src/solvers/port_preparation_window.py"
+    },
+    {
+      "status": "A",
+      "path": "src/solvers/target_port_preparation.py"
+    },
+    {
+      "status": "A",
+      "path": "src/test/port_provider_mpi_fixture.py"
+    },
+    {
+      "status": "M",
+      "path": "src/test/test_task042_v35_cache.py"
+    },
+    {
+      "status": "A",
+      "path": "src/test/test_task042_v36_checker.py"
+    },
+    {
+      "status": "A",
+      "path": "src/test/test_task042_v36_ports.py"
+    }
+  ],
+  "existing_documents_prefixed": [
+    "docs/development_model_registry.md",
+    "docs/development_progress.md",
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md"
+  ],
+  "new_compact_evidence": [
+    "docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+    "docs/task042_neural_coarse_inverse/outcomes/records/capacity_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/changed_files_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/component_checker_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/component_result_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/deployment_package_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/documentation_checks_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/dot_identity_gap_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/final_state_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/history_protection_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/minimum_result_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/raw_evidence_index_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resource_checks_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/run_index_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/selective_merge_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/storage_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/target_contract_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/target_inventory_v36.json",
+    "docs/task042_neural_coarse_inverse/outcomes/records/tests_v36.json",
+    "docs/task042_neural_coarse_inverse/response_v36.md"
+  ],
+  "raw_receipt_count": 239,
+  "raw_receipt_index": "raw_evidence_index_v36.json",
+  "other_branches_modified": false,
+  "ordinary_physics_defaults_changed": false
+}

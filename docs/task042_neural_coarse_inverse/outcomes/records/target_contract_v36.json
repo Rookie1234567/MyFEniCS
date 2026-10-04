@@ -1,0 +1,195 @@
+{
+  "schema": "target-port.contract.v1",
+  "regular_geometry": {
+    "bounds_nm": [
+      [
+        0.0,
+        50.0
+      ],
+      [
+        0.0,
+        25.0
+      ],
+      [
+        -10.0,
+        130.0
+      ]
+    ],
+    "block_bounds_nm": [
+      [
+        16.5,
+        33.5
+      ],
+      [
+        0.0,
+        25.0
+      ],
+      [
+        0.0,
+        120.0
+      ]
+    ],
+    "interface_z_nm": 0.0,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "reference_planes_nm": {
+      "top": 130.0,
+      "bottom": -10.0
+    },
+    "output_probe_planes_nm": {
+      "top": 127.5,
+      "bottom": -7.5
+    },
+    "coordinate_convention": "legacy SimulationConfig3D x=[0,50], y=[0,25]; centered block x=[16.5,33.5], y=[0,25]",
+    "units": "nm; code-unit E/H amplitudes; exp(-i omega t)",
+    "dimensionality": "full three-dimensional Nedelec; no y-invariant reduction"
+  },
+  "regular_geometry_sha256": "35dc945663619f33c7900718ddda67ac53a831f477f18810329452e20c6d84c1",
+  "nonseparable_witness": {
+    "regular_parent_sha256": "35dc945663619f33c7900718ddda67ac53a831f477f18810329452e20c6d84c1",
+    "selector": "positive_x_middle_y_z40_80",
+    "source": "src/geometry/cell_notch.py:apply_cell_notch",
+    "rule": "grating tag AND x>0 AND abs(y)<period_y/4 AND 40<=z<80",
+    "selected_bounds_nm": [
+      [
+        16.5,
+        33.5
+      ],
+      [
+        0.0,
+        6.25
+      ],
+      [
+        40.0,
+        80.0
+      ]
+    ],
+    "excluded_upper_y_boundary": true,
+    "midpoint_tag_rule": true,
+    "alignment_required_nm": {
+      "x": [
+        0.0,
+        16.5,
+        33.5,
+        50.0
+      ],
+      "y": [
+        0.0,
+        6.25,
+        25.0
+      ],
+      "z": [
+        -10.0,
+        0.0,
+        40.0,
+        80.0,
+        120.0,
+        130.0
+      ]
+    },
+    "not_target_regular_geometry": true,
+    "nonseparable_capability_witness_only": true,
+    "old_misaligned_mesh_not_an_analytic_notch": true
+  },
+  "witness_sha256": "8d8e20cfa54f40b13d0497715fcf3a52f434160f9e4bba6a35ce5001c7650b22",
+  "geometry_source": {
+    "path": "input/task39extra/original_13p5nm_p6h10_balanced_h6_p4_v5.dat",
+    "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+    "blob": "0c5211a0e99b4f1b74ad5e4223b5d91066b57816",
+    "current_sha256": "da6fd8771bd6a4f46b31fe5be3eee1e172589885adea5e560d10a4167216877e"
+  },
+  "materials": {
+    "status": "MATERIAL_READY_USER_SUPPLIED",
+    "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+    "canonical_path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+    "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "query_wavelength_nm": "0.7",
+    "nominal_wavelength_nm": "0.7",
+    "source_wavelength_nm": "0.699999988",
+    "delta": "0.000114859526",
+    "beta": "4.32477054E-06",
+    "n_decimal": [
+      "0.999885140474",
+      "0.00000432477054"
+    ],
+    "epsilon_decimal": [
+      "0.9997702941220070727210241084",
+      "0.00000864854759781143367192"
+    ],
+    "source_kind": "user_supplied/user_authorized",
+    "source": {
+      "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+      "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+      "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+    },
+    "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+    "time_convention": "exp(-i omega t)",
+    "external_dataset_version": "not_provided",
+    "n_loaded": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon_loaded": [
+      0.9997702941220071,
+      8.648547597811433e-06
+    ],
+    "air_n": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ]
+  },
+  "n_si": [
+    0.999885140474,
+    4.32477054e-06
+  ],
+  "epsilon_si": [
+    0.9997702941220071,
+    8.648547597811433e-06
+  ],
+  "material_assignment": "substrate/grating/layered background/bottom port use same selected Si",
+  "n_air": [
+    1.0,
+    0.0
+  ],
+  "mu_r": [
+    1.0,
+    0.0
+  ],
+  "nominal_wavelength_nm": "0.7",
+  "source_wavelength_nm": "0.699999988",
+  "wavelength_nm": 0.7,
+  "incidence": {
+    "grazing_degrees": 1.0,
+    "azimuth_degrees": 0.0,
+    "polarization": "s",
+    "amplitude": 1.0
+  },
+  "boundary": {
+    "x": "Floquet",
+    "y": "Floquet",
+    "vertical": "open DtN",
+    "background": "layered",
+    "pml": false
+  },
+  "capacity_scenario": {
+    "degree": 6,
+    "maximum_axis_spacing_nm": 0.7,
+    "quadrature_degree": 15,
+    "status": "CAPACITY_SCENARIO_NOT_ACCURACY_QUALIFIED"
+  },
+  "status": "TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

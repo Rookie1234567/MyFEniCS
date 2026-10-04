@@ -1,3 +1,13 @@
+# 最新导航：V36 / Review V33 已连续收口
+
+已完成原尺寸规则3D物理／32060全端口／解析容量包，以及真实384hex/p3/q15/40mode按需provider边界配对。只获PORT_COMPONENT_QUALIFIED_ON_MICRO；目标solve、2TB/48h、NN20%未合格。旧V35七／八块追加路线关闭，未重复actor。
+
+[review](review_report_v33.md)、[response](response_v36.md)、[完整结果／命令](outcomes/original_size_port_preparation_v36.md)、[run/source](outcomes/records/run_index_v36.json)、[独立checker](outcomes/records/component_checker_v36.json)、[费用](outcomes/records/resource_costs_v36.json)、[原始证据](outcomes/records/raw_evidence_index_v36.json)。新四个one-run已执行，scope收口closed；只读包查看见结果文档，不授权重复数值。
+
+以下全部历史正文逐字保留；旧“当前”不是待执行命令。
+
+<!-- V36-LATEST-END -->
+
 # 当前审阅入口：Review V33 / 下一执行 V36
 
 [Review V33](review_report_v33.md)审阅交付HEAD `9a6cadff62771d63a4996a6dccc9424df431ee4c`。接受V35唯一冷启动GMRES256的可信负结果：原Schur残差0.2052488635，高于0.01继续门；不追加固定七／八块周期。完整原尺寸0.7nm、2TB／48h及神经20%均未资格化。

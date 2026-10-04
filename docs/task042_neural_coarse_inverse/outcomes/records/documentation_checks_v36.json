@@ -1,0 +1,354 @@
+{
+  "UTC": "2026-10-04T02:51:16.746292+00:00",
+  "checked_files": {
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md": "4b700d52ae0a959d3bbb113cd3a369942de101354f10e60f2655f85df1787c3e",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md": "5cea44e8a20832596dccfc2bc02e83037c1d30939d6996a9446ad77aa16e63ca",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md": "eccdbdafb2fdda07d5585a3d72058f0a3758fac128f80bbb91c0390127714a9f",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md": "20e1ad8f7777a94403ab58cceea56196aef30a80563749e09a27a598c0fae693",
+    "/home/fenics/Projects/NN-Lab/docs/development_progress.md": "b2805e3bb333b8ccf8d6b339ab8fb8f0ea81f0694eca9e9f0464fe3d9034292a",
+    "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md": "f3adf8fb140c2f00ce2315812e52e57858026e529a4bce76e3ebb44a86fa78ae",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md": "41e22f0d08b68922d950e20b1fa6540d4d65d620bfca7a6fffb0130cff195750",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/test_summary.md": "32250c05a61003c68d817157e69d3d1bd9c39e7ee504fa0139776748814172cd",
+    "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md": "48aeb9897ceda5dea23453d61bc2255c65a0e88964e93a62663b267d207c872a"
+  },
+  "new_or_review_tables": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 13,
+      "columns": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 32,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 53,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 80,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 144,
+      "columns": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 169,
+      "columns": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 5,
+      "columns": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 7,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 25,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 45,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 60,
+      "columns": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "line": 5,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_progress.md",
+      "line": 5,
+      "columns": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md",
+      "line": 5,
+      "columns": 3
+    }
+  ],
+  "local_links": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 24,
+      "url": "outcomes/records/review_v33_independent_checks.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 24,
+      "url": "outcomes/records/review_v33_metadata_audit.py.gz"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 24,
+      "url": "outcomes/records/review_v33_repository_index.gz"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 49,
+      "url": "response_v35.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 49,
+      "url": "outcomes/records/run_index_v35.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 49,
+      "url": "outcomes/records/online_checker_v35.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 49,
+      "url": "outcomes/records/residual_analysis_v35.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 67,
+      "url": "outcomes/records/resource_costs_v35.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 67,
+      "url": "outcomes/records/metadata_corrections_v35.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 78,
+      "url": "review_report_v21.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 78,
+      "url": "review_report_v32.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 97,
+      "url": "../../src/solvers/fullspace_dtn_action.py"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v33.md",
+      "line": 185,
+      "url": "outcomes/records/review_v33_documentation_checks.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 3,
+      "url": "review_report_v33.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/original_size_port_preparation_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/records/run_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/records/component_checker_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/records/resource_costs_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/records/raw_evidence_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/records/capacity_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v36.md",
+      "line": 29,
+      "url": "outcomes/records/deployment_package_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 54,
+      "url": "records/component_result_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 54,
+      "url": "records/component_checker_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 54,
+      "url": "records/raw_evidence_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 54,
+      "url": "records/run_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 70,
+      "url": "records/storage_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 89,
+      "url": "records/deployment_package_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md",
+      "line": 89,
+      "url": "records/dot_identity_gap_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "line": 13,
+      "url": "../response_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "line": 13,
+      "url": "original_size_port_preparation_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "line": 13,
+      "url": "records/resource_costs_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "line": 13,
+      "url": "records/component_checker_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_progress.md",
+      "line": 13,
+      "url": "task042_neural_coarse_inverse/response_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_progress.md",
+      "line": 13,
+      "url": "task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_progress.md",
+      "line": 13,
+      "url": "task042_neural_coarse_inverse/outcomes/records/deployment_package_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md",
+      "line": 13,
+      "url": "task042_neural_coarse_inverse/response_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md",
+      "line": 13,
+      "url": "task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/development_model_registry.md",
+      "line": 13,
+      "url": "task042_neural_coarse_inverse/outcomes/records/deployment_package_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "review_report_v33.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "response_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "outcomes/original_size_port_preparation_v36.md"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "outcomes/records/run_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "outcomes/records/component_checker_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "outcomes/records/resource_costs_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/README.md",
+      "line": 5,
+      "url": "outcomes/records/raw_evidence_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "line": 5,
+      "url": "records/tests_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "line": 5,
+      "url": "records/run_index_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "line": 5,
+      "url": "records/selective_merge_v36.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "line": 5,
+      "url": "records/changed_files_v36.json"
+    }
+  ],
+  "protected_suffixes": true,
+  "raw_gzip_verified": 212,
+  "closed_history_unchanged": true,
+  "old_authorities_unchanged": true,
+  "pure_unittest": {
+    "returncode": 0,
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.046s\n\nOK\n",
+    "wall_seconds": 0.35282669495791197
+  },
+  "scope": "new sections only; old untouched mathematical notation not bulk rewritten",
+  "GitHub_visual": "NOT_VERIFIED",
+  "GitHub_attempt": {
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/cc5d9823a66fb5090618705114093998a647e40c/docs/task042_neural_coarse_inverse/review_report_v33.md",
+    "failure": "Cache miss; no screenshot or rendered DOM"
+  },
+  "CI": "NOT_RUN",
+  "final_static_recheck_UTC": "2026-10-04T02:55:48.912801+00:00",
+  "cost_placeholder_removed": true,
+  "final_raw_gzip_verified": 239,
+  "final_resource_runs_recomputed": 16,
+  "final_metadata_recheck_UTC": "2026-10-04T02:59:12.441168+00:00"
+}

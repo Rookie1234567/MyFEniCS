@@ -1,0 +1,28 @@
+{
+  "statistics": {
+    "mode_count": 32060,
+    "top": 16030,
+    "bottom": 16030,
+    "original_mode_manifest_sha256": "ae785ecbdaaa7ff11ef7897b1ab00c58232aaf1d97f851a8960206063496eeda",
+    "enriched_manifest_sha256": "e7b815dac8365a2594fb7f553205543bba9006c93907f19f8ea569cc0075eefe",
+    "integer_enclosing_box": [
+      144,
+      37
+    ],
+    "independent_ordered_match": true,
+    "maximum_dispersion_relative": 4.4286660119203253e-16,
+    "classification_counts": {
+      "propagating": 32060,
+      "evanescent": 0,
+      "near-cutoff": 0
+    },
+    "truncation_status": "CHANNEL_TRUNCATION_UNQUALIFIED",
+    "dot_32060_historical_only": true
+  },
+  "complete_ordered_modes": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v36/task042_v36_target_inventory_20261004T023228048893Z/ordered_modes.json",
+    "sha256": "b57d2a6144616240e593eb6c11c1dd1ab107266f503216051ec6d7c85b7db57c"
+  },
+  "source_sha": "19eb5dc9ca4d245612d7ddbf9f1a750387b9c8d4",
+  "material_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+}

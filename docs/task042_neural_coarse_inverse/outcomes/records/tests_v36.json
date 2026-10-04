@@ -1,0 +1,445 @@
+{
+  "final_pre": "aux_pre_007",
+  "related_serial_passed": 19,
+  "MPI2_and_MPI4_full_vector_pass": true,
+  "Ruff_new_files": "PASS",
+  "compile_actual": "PASS",
+  "failure_history": "All first failures and immutable sources preserved in raw_v36",
+  "tests": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002",
+      "status": "FAILED",
+      "source_sha": "cc5d9823a66fb5090618705114093998a647e40c",
+      "tested_file_hashes": {
+        "src/solvers/bounded_port_provider.py": "fcb8dcc38499bb46a3d0e98ed326fd9a5e8f1b3e809ad1084fdab31ad88d91d4",
+        "src/solvers/bounded_port_surface.py": "94b73bfa9eccced35d639017d89f3edd8679e97d8cd9abe3a5767bf8eebe74b5",
+        "src/solvers/target_port_preparation.py": "314f4fdeb70bc5890c132d6dcf2439ac5171ec540d6acc7ce613c270ab5602fb",
+        "src/solvers/port_component_study.py": "c697ece1cbd0e2565284f509897ad2b1ef26e68ca00dfc5cfa094cb9e38ad0b5",
+        "src/solvers/port_preparation_window.py": "9b81ca763126e98f1ffb356f9880aa8cee77fb5f4ded4107cc3113f433535795",
+        "src/io/port_preparation.py": "876a7c56cc251f68eeb9307d70ecb1e6a69cf3ef6c33fc8c0cf9ed4a2008854a",
+        "src/runners/port_preparation.py": "4ef6dcb658e51c8a602c6aa4939eea9a4e35a801c6103b0eea557a8a2ba80dea",
+        "scripts/run_case.py": "4ab8b257a83ead2e9f8142c0a2c48b51b1751b9310308b3c4b3997d8d8752c10",
+        "benchmarks/check_port_preparation.py": "7e04b2ac38af874d9d9a6ceb0b274e52a67872db69067385aca4f8fdaa968d2b",
+        "src/test/test_task042_v36_ports.py": "4e6bcad5deb35429653cc30f907a54ab144caea41ea6a54147bf1176669d2ec2",
+        "src/test/port_provider_mpi_fixture.py": "d8f450c6e50cdf16bfb55a9249bbf28d2fb68523426d7c498cb07cc6851b36b9",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json": "b6b0049eca60b6ec8f672500c05b55b33a4a4fd44eaf1998935fdd02478af7ef",
+        "benchmarks/qualify_port_preparation.py": "81053463e4e1167733ca5eef1098d7364fa1d358bf5099957c94e51534383024",
+        "src/test/test_task042_v35_cache.py": "8ee099d96b37121b7c9d5965c70d93a1226872c1db692e51eafeb6a86ddaef4b"
+      },
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002/fixtures",
+            "src/test/test_task042_v36_ports.py",
+            "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002/pytest.xml"
+          ],
+          "returncode": 0,
+          "seconds": 1.6420961819821969
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "2",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002/mpi2.json"
+          ],
+          "returncode": 1,
+          "seconds": 0.005322007928043604
+        }
+      ],
+      "compiled": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/bounded_port_surface.py",
+        "src/solvers/target_port_preparation.py",
+        "src/solvers/port_component_study.py",
+        "src/solvers/port_preparation_window.py",
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "benchmarks/check_port_preparation.py",
+        "src/test/test_task042_v36_ports.py",
+        "src/test/port_provider_mpi_fixture.py",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_task042_v35_cache.py"
+      ],
+      "receipt_sha256": "b0e4fb8776b9a76ea20945b650f544753b687c2c4a9ed367bce6570899eceef0"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003",
+      "status": "PASSED",
+      "source_sha": "cc5d9823a66fb5090618705114093998a647e40c",
+      "tested_file_hashes": {
+        "src/solvers/bounded_port_provider.py": "fcb8dcc38499bb46a3d0e98ed326fd9a5e8f1b3e809ad1084fdab31ad88d91d4",
+        "src/solvers/bounded_port_surface.py": "481e12e817895614e69c945c1144e0b9d3cf755783b0fd61522860dfc1c744ce",
+        "src/solvers/target_port_preparation.py": "314f4fdeb70bc5890c132d6dcf2439ac5171ec540d6acc7ce613c270ab5602fb",
+        "src/solvers/port_component_study.py": "c697ece1cbd0e2565284f509897ad2b1ef26e68ca00dfc5cfa094cb9e38ad0b5",
+        "src/solvers/port_preparation_window.py": "7204e3237261b2970b1bdb400b6769ff10154ad59efe6f17c787a0f9a686b247",
+        "src/io/port_preparation.py": "876a7c56cc251f68eeb9307d70ecb1e6a69cf3ef6c33fc8c0cf9ed4a2008854a",
+        "src/runners/port_preparation.py": "4ef6dcb658e51c8a602c6aa4939eea9a4e35a801c6103b0eea557a8a2ba80dea",
+        "scripts/run_case.py": "4ab8b257a83ead2e9f8142c0a2c48b51b1751b9310308b3c4b3997d8d8752c10",
+        "benchmarks/check_port_preparation.py": "a60a8359e272de19b9633de48ba684ee5fae24a0ff06f2e794c5ddf4bbc66248",
+        "src/test/test_task042_v36_ports.py": "4e6bcad5deb35429653cc30f907a54ab144caea41ea6a54147bf1176669d2ec2",
+        "src/test/port_provider_mpi_fixture.py": "702ec0303fe55dbb49e73ad70b764a3ec284ed3be9bff7bdf51acc06b8b1414e",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json": "b6b0049eca60b6ec8f672500c05b55b33a4a4fd44eaf1998935fdd02478af7ef",
+        "benchmarks/qualify_port_preparation.py": "6b0bef07158e585d95594836ae0679fa0d42e625ba53081f6bb5b008f7809fa8",
+        "src/test/test_task042_v35_cache.py": "8ee099d96b37121b7c9d5965c70d93a1226872c1db692e51eafeb6a86ddaef4b",
+        "src/test/test_task042_v36_checker.py": "3888b025f618d19d863a893a77596e6b0a086907b781a044d9dc694ca8b7ec4d"
+      },
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/fixtures",
+            "src/test/test_task042_v36_ports.py",
+            "src/test/test_task042_v36_checker.py",
+            "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/pytest.xml"
+          ],
+          "returncode": 0,
+          "seconds": 5.396112371934578
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "2",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/mpi2.json"
+          ],
+          "returncode": 0,
+          "seconds": 3.2160917569417506
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "4",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/mpi4.json"
+          ],
+          "returncode": 0,
+          "seconds": 6.595574553939514
+        }
+      ],
+      "compiled": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/bounded_port_surface.py",
+        "src/solvers/target_port_preparation.py",
+        "src/solvers/port_component_study.py",
+        "src/solvers/port_preparation_window.py",
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "benchmarks/check_port_preparation.py",
+        "src/test/test_task042_v36_ports.py",
+        "src/test/port_provider_mpi_fixture.py",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_task042_v35_cache.py",
+        "src/test/test_task042_v36_checker.py"
+      ],
+      "receipt_sha256": "3188d46b4281d5e08a7766f9422d9c44b967c73ffc0deb5a9341be1a1455e59e"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005",
+      "status": "PASSED",
+      "source_sha": "cc5d9823a66fb5090618705114093998a647e40c",
+      "tested_file_hashes": {
+        "src/solvers/bounded_port_provider.py": "8fa59dee6ea52bc6cd4ce567e647215d9ac8ed7ef4af5746dd26deafed77c6cb",
+        "src/solvers/bounded_port_surface.py": "9a6367e01f91323bc14f38c96b1eea312f4a0706500efa6c2e28494e4b54c24e",
+        "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+        "src/solvers/port_component_study.py": "257950f8b9fa3d063177a8e98f24855c6de4ad709abc1449098886be267f108c",
+        "src/solvers/port_preparation_window.py": "17a2d4e7e2e59e440d07e4fb729a65ac3842cc98825a81c222d577b8982021c1",
+        "src/io/port_preparation.py": "709c31d2a4357182a3f0a3a59a20676e3b8ff0d32df25b05dfb83e75a3dc6656",
+        "src/runners/port_preparation.py": "6715d0140f663a1b4410b133aef8e89dadc9fe4b5459e0842fcb98d076a0fca4",
+        "scripts/run_case.py": "4ab8b257a83ead2e9f8142c0a2c48b51b1751b9310308b3c4b3997d8d8752c10",
+        "benchmarks/check_port_preparation.py": "a9aafe9a77cb3e772fc1acc3fba1fc4ab77a4185573acefbbafef6286f9496df",
+        "src/test/test_task042_v36_ports.py": "f9aca2f40b27e49c2906c127344ab1fe4620c9bec943c3d9c51711d840c3a951",
+        "src/test/port_provider_mpi_fixture.py": "1d5c596973895d9f6fff23fceaeb0fff1b6845e14c095ee33e901c7d93d39f45",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json": "b6b0049eca60b6ec8f672500c05b55b33a4a4fd44eaf1998935fdd02478af7ef",
+        "benchmarks/qualify_port_preparation.py": "b00524ba3427a33ce5b120349e78c526486911ccda1cdb37023e0961f9b2d3ee",
+        "src/test/test_task042_v35_cache.py": "a92d706304eb88b5da1ea41da29bbfeef9f0a50c108909965481cd1a8869aba0",
+        "src/test/test_task042_v36_checker.py": "ec4ca85956e944cc54462b2f8e6df590ed44c59926e50d6e8ed1bbb813c4c432"
+      },
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/fixtures",
+            "src/test/test_task042_v36_ports.py",
+            "src/test/test_task042_v36_checker.py",
+            "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/pytest.xml"
+          ],
+          "returncode": 0,
+          "seconds": 5.424171349965036
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "2",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/mpi2.json"
+          ],
+          "returncode": 0,
+          "seconds": 3.2998928650049493
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "4",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/mpi4.json"
+          ],
+          "returncode": 0,
+          "seconds": 6.392485150019638
+        }
+      ],
+      "compiled": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/bounded_port_surface.py",
+        "src/solvers/target_port_preparation.py",
+        "src/solvers/port_component_study.py",
+        "src/solvers/port_preparation_window.py",
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "benchmarks/check_port_preparation.py",
+        "src/test/test_task042_v36_ports.py",
+        "src/test/port_provider_mpi_fixture.py",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_task042_v35_cache.py",
+        "src/test/test_task042_v36_checker.py"
+      ],
+      "receipt_sha256": "ed05da7b54fadcb78384ee83ee85e7d5aa029f32203f3c4b912d9802dd812367"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006",
+      "status": "PASSED",
+      "source_sha": "cc5d9823a66fb5090618705114093998a647e40c",
+      "tested_file_hashes": {
+        "src/solvers/bounded_port_provider.py": "8fa59dee6ea52bc6cd4ce567e647215d9ac8ed7ef4af5746dd26deafed77c6cb",
+        "src/solvers/bounded_port_surface.py": "9a6367e01f91323bc14f38c96b1eea312f4a0706500efa6c2e28494e4b54c24e",
+        "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+        "src/solvers/port_component_study.py": "257950f8b9fa3d063177a8e98f24855c6de4ad709abc1449098886be267f108c",
+        "src/solvers/port_preparation_window.py": "17a2d4e7e2e59e440d07e4fb729a65ac3842cc98825a81c222d577b8982021c1",
+        "src/io/port_preparation.py": "db5c5c7f8243b92976bef3a7ea7fb083ae75bd55a78624bd6396a24f4d8446b0",
+        "src/runners/port_preparation.py": "6715d0140f663a1b4410b133aef8e89dadc9fe4b5459e0842fcb98d076a0fca4",
+        "scripts/run_case.py": "4ab8b257a83ead2e9f8142c0a2c48b51b1751b9310308b3c4b3997d8d8752c10",
+        "benchmarks/check_port_preparation.py": "a9aafe9a77cb3e772fc1acc3fba1fc4ab77a4185573acefbbafef6286f9496df",
+        "src/test/test_task042_v36_ports.py": "aca53b6e57aa5d3728b46017daad4f6b29f0ec6e09d9047e1ffede98a9c7f81d",
+        "src/test/port_provider_mpi_fixture.py": "1d5c596973895d9f6fff23fceaeb0fff1b6845e14c095ee33e901c7d93d39f45",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json": "b6b0049eca60b6ec8f672500c05b55b33a4a4fd44eaf1998935fdd02478af7ef",
+        "benchmarks/qualify_port_preparation.py": "b00524ba3427a33ce5b120349e78c526486911ccda1cdb37023e0961f9b2d3ee",
+        "src/test/test_task042_v35_cache.py": "a92d706304eb88b5da1ea41da29bbfeef9f0a50c108909965481cd1a8869aba0",
+        "src/test/test_task042_v36_checker.py": "ec4ca85956e944cc54462b2f8e6df590ed44c59926e50d6e8ed1bbb813c4c432"
+      },
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/fixtures",
+            "src/test/test_task042_v36_ports.py",
+            "src/test/test_task042_v36_checker.py",
+            "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/pytest.xml"
+          ],
+          "returncode": 0,
+          "seconds": 5.680356360040605
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "2",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/mpi2.json"
+          ],
+          "returncode": 0,
+          "seconds": 3.3902811750303954
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "4",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/mpi4.json"
+          ],
+          "returncode": 0,
+          "seconds": 6.827419682987966
+        }
+      ],
+      "compiled": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/bounded_port_surface.py",
+        "src/solvers/target_port_preparation.py",
+        "src/solvers/port_component_study.py",
+        "src/solvers/port_preparation_window.py",
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "benchmarks/check_port_preparation.py",
+        "src/test/test_task042_v36_ports.py",
+        "src/test/port_provider_mpi_fixture.py",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_task042_v35_cache.py",
+        "src/test/test_task042_v36_checker.py"
+      ],
+      "receipt_sha256": "62678f08d62f6dab93707c1bd26d2bf12f48386990cafb330a175b7717edb423"
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007",
+      "status": "PASSED",
+      "source_sha": "19eb5dc9ca4d245612d7ddbf9f1a750387b9c8d4",
+      "tested_file_hashes": {
+        "src/solvers/bounded_port_provider.py": "a98cabb41b0bcf36b94446130b14c0b703b03e0d0e8d0699f30ec459de2449ee",
+        "src/solvers/bounded_port_surface.py": "9a6367e01f91323bc14f38c96b1eea312f4a0706500efa6c2e28494e4b54c24e",
+        "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+        "src/solvers/port_component_study.py": "257950f8b9fa3d063177a8e98f24855c6de4ad709abc1449098886be267f108c",
+        "src/solvers/port_preparation_window.py": "17a2d4e7e2e59e440d07e4fb729a65ac3842cc98825a81c222d577b8982021c1",
+        "src/io/port_preparation.py": "db5c5c7f8243b92976bef3a7ea7fb083ae75bd55a78624bd6396a24f4d8446b0",
+        "src/runners/port_preparation.py": "6715d0140f663a1b4410b133aef8e89dadc9fe4b5459e0842fcb98d076a0fca4",
+        "scripts/run_case.py": "4ab8b257a83ead2e9f8142c0a2c48b51b1751b9310308b3c4b3997d8d8752c10",
+        "benchmarks/check_port_preparation.py": "dfd401c65e812e493f3e43324660df4d2d9276014116d41af6f7508671aa65c3",
+        "src/test/test_task042_v36_ports.py": "2be9d27febf4552befda5e4768565c2f0493344f7d89f6960035466bd94defc0",
+        "src/test/port_provider_mpi_fixture.py": "1d5c596973895d9f6fff23fceaeb0fff1b6845e14c095ee33e901c7d93d39f45",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json": "b6b0049eca60b6ec8f672500c05b55b33a4a4fd44eaf1998935fdd02478af7ef",
+        "benchmarks/qualify_port_preparation.py": "b4fea865a19567276e99c9a5e658ff5c7c3960e9159014ea1c3c20fe4223bfd3",
+        "src/test/test_task042_v35_cache.py": "a92d706304eb88b5da1ea41da29bbfeef9f0a50c108909965481cd1a8869aba0",
+        "src/test/test_task042_v36_checker.py": "ec4ca85956e944cc54462b2f8e6df590ed44c59926e50d6e8ed1bbb813c4c432"
+      },
+      "commands": [
+        {
+          "command": [
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/fixtures",
+            "src/test/test_task042_v36_ports.py",
+            "src/test/test_task042_v36_checker.py",
+            "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+            "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/pytest.xml"
+          ],
+          "returncode": 0,
+          "seconds": 5.391245965030976
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "2",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/mpi2.json"
+          ],
+          "returncode": 0,
+          "seconds": 3.268415478989482
+        },
+        {
+          "command": [
+            "mpiexec",
+            "--bind-to",
+            "none",
+            "-n",
+            "4",
+            "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "-m",
+            "src.test.port_provider_mpi_fixture",
+            "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/mpi4.json"
+          ],
+          "returncode": 0,
+          "seconds": 6.447982853045687
+        }
+      ],
+      "compiled": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/bounded_port_surface.py",
+        "src/solvers/target_port_preparation.py",
+        "src/solvers/port_component_study.py",
+        "src/solvers/port_preparation_window.py",
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py",
+        "benchmarks/check_port_preparation.py",
+        "src/test/test_task042_v36_ports.py",
+        "src/test/port_provider_mpi_fixture.py",
+        "input/task042_neural_coarse_inverse/port_preparation_v36.json",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_task042_v35_cache.py",
+        "src/test/test_task042_v36_checker.py"
+      ],
+      "receipt_sha256": "a3089fccd2ebd301df8f25226985121924b592be65e552dc088096674ff0828f"
+    }
+  ],
+  "CI": "NOT_RUN",
+  "full_repository_PDE_suite": "NOT_RUN_SCOPE_COMPONENT_ONLY",
+  "pure_documentation_unittest": {
+    "returncode": 0,
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.046s\n\nOK\n",
+    "wall_seconds": 0.35282669495791197
+  },
+  "final_static_structure_recheck": "PASS"
+}

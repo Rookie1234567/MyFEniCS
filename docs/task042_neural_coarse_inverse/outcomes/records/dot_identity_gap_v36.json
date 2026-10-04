@@ -1,0 +1,30 @@
+{
+  "dot_snapshot_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+  "evidence": "review_report_v33.md §5.1; readonly source inspection at the same snapshot",
+  "equivalent_bounded_provider_found": false,
+  "resident_builder": "src/solvers/fullspace_dtn_action.py entries/component_cache retained",
+  "dot_snapshot_result": {
+    "p": 4,
+    "cells": 120,
+    "manual_ports": 532,
+    "twists": 3,
+    "q_blocks": 6
+  },
+  "this_target": {
+    "p": 6,
+    "capacity_cells": 530856,
+    "automatic_complete_ports": 32060,
+    "mesh_accuracy": "NOT_QUALIFIED",
+    "material": "canonical user Si n=.999885140474+4.32477054e-6i"
+  },
+  "mismatches": [
+    "degree/discretization",
+    "geometry/mode inventory",
+    "material identity",
+    "background/Floquet/reference-plane identity",
+    "row/MPC ownership and solver source",
+    "complete accuracy and full-N1 capacity proof"
+  ],
+  "target_2TB_48h_and_NN20": "NOT_QUALIFIED",
+  "dot_branch_modified": false
+}

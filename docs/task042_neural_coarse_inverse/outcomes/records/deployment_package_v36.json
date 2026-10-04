@@ -1,0 +1,54 @@
+{
+  "status": "TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED",
+  "component_status": "PORT_COMPONENT_QUALIFIED_ON_MICRO",
+  "solver_required_fields": [
+    "source SHA",
+    "full 3D action/recovery identity",
+    "physical/material/RHS/row/MPC/mode hash",
+    "complete residual and field audit",
+    "peak/lifecycle/full N1 cost and resource contract"
+  ],
+  "published_proof_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v36/task042_v36_deployment_package_20261004T023423836261Z/result.json",
+  "target_contract": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+  "target_modes": "ae785ecbdaaa7ff11ef7897b1ab00c58232aaf1d97f851a8960206063496eeda",
+  "target_complete_modes": 32060,
+  "target_counts": {
+    "cells": 530856,
+    "degree": 6,
+    "cell_dimension": 882,
+    "full_fe_rows": 345771066,
+    "full_trace_rows": 106885866,
+    "independent_trace_rows": 105298704,
+    "interior_rows": 238885200,
+    "edges": 1642171,
+    "faces": 1617214,
+    "periodic_slaves": 1587162
+  },
+  "target_solve_authorized": false,
+  "target_stage_before_solve": "operator/source/row/material/mode/accuracy/resource identity qualification required",
+  "scalar_row_tiling": {
+    "implemented": false,
+    "required_if": "any single mode completed numeric bound exceeds cap",
+    "minimum_protocol": [
+      "ordered mode and canonical ownership key",
+      "owned surface-row tile and no overlap/drop",
+      "accumulate local projections over all row tiles, then one agreed collective per mode batch",
+      "replay same row tiles for coupling scatter and adjoint; no full-mode materialization",
+      "full mode amplitude/power only after complete collective",
+      "tile bytes/source hash/checkpoint and temporary buffers charged"
+    ]
+  },
+  "capacity_single_global_mode_upper_bytes": 9082376,
+  "default_cache_bytes": 67108864,
+  "default_max_modes": 64,
+  "numeric_memory_bound_is_not_tree_RSS_or_speedup": true,
+  "nonlinear_NN_baseline": "NOT_DEMONSTRATED_OR_COMPARED",
+  "accuracy_requirements": [
+    "production p/h and quadrature convergence",
+    "exterior mode truncation",
+    "full original residual/native/port/recovery/slave",
+    "total/scattered E/H/curl and all complex channels",
+    "R/T/A/A_volume/single-mode powers/energy",
+    "simultaneous full N1 peak and complete 48h cost"
+  ]
+}

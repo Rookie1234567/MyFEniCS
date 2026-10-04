@@ -1,0 +1,84 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "name": "production numerical/core candidate",
+      "files": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/bounded_port_surface.py"
+      ],
+      "dependencies": [
+        "original fullspace/dtn surface definitions"
+      ],
+      "equations_changed": false,
+      "tests": "19 targeted + MPI2/4 + actual micro boundary + saved replay",
+      "fresh_PDE": "NOT_RUN_BOUNDARY_ONLY",
+      "proposed_order": 1,
+      "scope": "opt-in component only, target not qualified"
+    },
+    {
+      "name": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/solvers/port_preparation_window.py"
+      ],
+      "dependencies": [
+        "existing task042_shared/subreaper"
+      ],
+      "tests": "isolated new scope/reentry/source gates + supervised all phases",
+      "proposed_order": 2,
+      "scope": "research resource adapter; original watchdog unchanged"
+    },
+    {
+      "name": "checker/benchmark",
+      "files": [
+        "benchmarks/check_port_preparation.py",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_task042_v36_ports.py",
+        "src/test/test_task042_v36_checker.py",
+        "src/test/port_provider_mpi_fixture.py",
+        "src/test/test_task042_v35_cache.py"
+      ],
+      "dependencies": [
+        "core and frozen receipts"
+      ],
+      "tests": "same focused suite",
+      "proposed_order": 3
+    },
+    {
+      "name": "compact evidence/docs",
+      "files": [
+        "response_v36.md",
+        "outcomes/*v36*",
+        "README navigation",
+        "project ledgers"
+      ],
+      "dependencies": [
+        "source19eb/730e bound original arrays"
+      ],
+      "tests": "local markdown/hash protection",
+      "proposed_order": 4
+    },
+    {
+      "name": "research-only",
+      "files": [
+        "src/solvers/target_port_preparation.py",
+        "src/solvers/port_component_study.py",
+        "src/io/port_preparation.py",
+        "scripts/run_case.py V36 dispatch",
+        "input/task042_neural_coarse_inverse/v36_*",
+        "port_preparation_v36.json"
+      ],
+      "target_solve_authorized": false
+    },
+    {
+      "name": "do-not-merge",
+      "files": [
+        "ignored numeric artifact/window/cache/raw fixture arrays",
+        "any ordinary-default target solver promotion",
+        "any dot migration"
+      ],
+      "reason": "not target- or solve-qualified"
+    }
+  ]
+}

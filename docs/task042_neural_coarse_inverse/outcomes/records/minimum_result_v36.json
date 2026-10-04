@@ -1,0 +1,10 @@
+{
+  "UTC": "2026-10-04T02:55:50.200918+00:00",
+  "closed": true,
+  "active": null,
+  "component": "PORT_COMPONENT_QUALIFIED_ON_MICRO",
+  "target": "TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED",
+  "NN20": "NOT_DEMONSTRATED",
+  "paid_wall_measured_seconds": 175.7740275616024,
+  "evidence_index": "raw_evidence_index_v36.json"
+}

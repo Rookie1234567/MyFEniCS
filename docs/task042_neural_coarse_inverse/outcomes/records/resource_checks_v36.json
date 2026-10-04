@@ -1,0 +1,262 @@
+{
+  "recomputed": [
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_001",
+      "sample_count": 5,
+      "peak_recomputed": 96866304,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "e58e31e2481bb129b15a6b8cce51fb8361b19ecb4a945af404013042592c530b",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002",
+      "sample_count": 9,
+      "peak_recomputed": 263684096,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "5372cba331118e67311ae9df68ad8ea499ed58df1f9569c3d929a73031641c06",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003",
+      "sample_count": 27,
+      "peak_recomputed": 462979072,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "2eeb66f896b5bb64a7424af9a5614e732d6565ad6ca84fe38eadf7cfd2e5eeac",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_style_001",
+      "sample_count": 5,
+      "peak_recomputed": 96714752,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "ad7ea93b8eb336caa505259122ad9eedf46307d4c25287da72b9f8a0b824c5e7",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_004",
+      "sample_count": 5,
+      "peak_recomputed": 97710080,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "a483514d0faafe6cd3cf4eeea100e8a3e70f2e66a4be51170c7d031a3ba2dc76",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005",
+      "sample_count": 27,
+      "peak_recomputed": 464232448,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "3ac403ae255bbb122d519362fa1a4bc62ba201dee770b1bcb89f797a832de78a",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006",
+      "sample_count": 27,
+      "peak_recomputed": 470986752,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "47401e898400621b841794a08f729e3c9ee67386766daf232203c30bef3b9a9b",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_target_inventory_20261004T023228048893Z",
+      "sample_count": 38,
+      "peak_recomputed": 603471872,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "9d08cd099f0fb71b387b5907d4c4ce1a31964829c0bca3dcb49f029f1899cc50",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_port_component_20261004T023327208081Z",
+      "sample_count": 18,
+      "peak_recomputed": 352448512,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "bd6652fbeb33957e89289972388ebd56ca27f3f0101d0b3217cb8db718d41f25",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_port_checker_20261004T023414520694Z",
+      "sample_count": 8,
+      "peak_recomputed": 288509952,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "5049c0c4e7490de4f43ccb44bee4ec6a05415a9940d98edf8093ec9206d8cda1",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_deployment_package_20261004T023423836261Z",
+      "sample_count": 8,
+      "peak_recomputed": 293474304,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "a3b26894f5fc0e0056aa221919e87f181357322b8318e565b884e0b2cad525ee",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007",
+      "sample_count": 30,
+      "peak_recomputed": 466509824,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "9f2637a1400d80a9b1f22a2b91797f07b030f9370fc2f33fd75a7c80e584db1f",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_post_001",
+      "sample_count": 8,
+      "peak_recomputed": 290787328,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "e26a7326448c1d1a17e0cd980bc4545e81d0c597efd88f4c3407e3f67f2c0cdf",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_collect_001",
+      "sample_count": 5,
+      "peak_recomputed": 98127872,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "253d62c067c262c68e5a61ca856073416227d0609938d9e6d457bbadf63ec140",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_collect_002",
+      "sample_count": 8,
+      "peak_recomputed": 99233792,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "e91cb0fb680aad9d280af16b57643540b8d0d153897b820c70116a36c6d048aa",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    },
+    {
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_docs_001",
+      "sample_count": 5,
+      "peak_recomputed": 95875072,
+      "all_readable": true,
+      "zero_swap": true,
+      "pressure_full_max": 0.0,
+      "admission_sha256": "757938359ef9e65daac8cdbe17b45d21a07e2e97ff4aebbca2a9b2cb973e1247",
+      "original_gates": {
+        "CPU_SMT": "PASS",
+        "MEMORY": "PASS",
+        "DISK": "PASS",
+        "PSI": "PASS",
+        "CGROUP_GPU_SNAPSHOT": "OBSERVED_READONLY"
+      }
+    }
+  ],
+  "all_descendants_cleared": true,
+  "final_metadata_recheck_UTC": "2026-10-04T02:59:12.236237+00:00"
+}

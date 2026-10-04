@@ -1,0 +1,8 @@
+{
+  "new_bytes": 216605035,
+  "task_artifact_bytes": 14946636002,
+  "free_bytes": 3374480445440,
+  "reserve_bytes": 0,
+  "meaning": "unique-file logical payload; original health gate also counts repeated paths",
+  "numeric_arrays_stay_ignored": true
+}

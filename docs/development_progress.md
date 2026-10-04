@@ -1,3 +1,22 @@
+# Task042 V36进展：有界完整端口组件通过，原尺寸求解仍未授权
+
+新provider按需生成／读取一批边界系数并释放，避免保留全mode×surface表；代价是更多生成和IO。它是存储接口工程，不是NN收益，也不代替全局求解。
+
+| 对象／实际工作 | 结果／费用 | 资格边界 |
+|---|---|---|
+| 原50×25×140nm／.7nm规则3D | 完整32060ports；p6容量530856cells／345771066storage | 解析计数／mode实生成，未造目标mesh或PDE |
+| 384hex/p3/q15/40port真实边界 | 两seed全部作用／adjoint／复振幅／单位功率≤1e-10；cache82960B／live2 | PORT_COMPONENT_QUALIFIED_ON_MICRO |
+| shared-workstation费用／全树采样峰 | 175.774027562 s（所有失败／aux／探针）；603471872B／ownswap0 | 0.5s采样，非连续cgroup峰；IO独立时钟unknown |
+| 原方程／E/H/curl／R/T/A/A_volume／逐通道能量 | 本轮NOT_RUN | 无新完整解；旧V35 Schur0.2052488635负结果保持 |
+| 神经／原尺寸2TB／48h | NN20% NOT_DEMONSTRATED；TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED | 不以流式cache或micro推断生产资格 |
+
+[response](task042_neural_coarse_inverse/response_v36.md)／[结果](task042_neural_coarse_inverse/outcomes/original_size_port_preparation_v36.md)／[部署](task042_neural_coarse_inverse/outcomes/records/deployment_package_v36.json)。
+
+唯一下一建议：取得与本轮physical／mode合同匹配的dot冻结全局solver包，按部署清单做一次逐字段身份与端口接口验收；本轮不自动实施。
+本批已清场，V24–V35永久closed，V36也closed后等待review；下方“当前”仅指其历史时点。
+
+<!-- V36-LATEST-END -->
+
 # Task042 V35：首次零trace在线七区资格试验完成（2026-10-04）
 
 本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。
