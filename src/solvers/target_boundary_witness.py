@@ -241,7 +241,20 @@ def build_patch(description, cfg):
         {},
     )
     V = fem.functionspace(msh, basix.ufl.element("N1curl", "hexahedron", 6))
-    floquet = build_double_floquet_mpc(V, data, cfg)
+    if np.isin(
+        tags.values, [cfg.tags.x_min, cfg.tags.x_max, cfg.tags.y_min, cfg.tags.y_max]
+    ).any():
+        floquet = build_double_floquet_mpc(V, data, cfg)
+    else:
+        # Interior fragments contain no periodic entities. Their restriction
+        # of the full-target MPC is the identity, not a new small period.
+        from types import SimpleNamespace
+
+        import dolfinx_mpc
+
+        mpc = dolfinx_mpc.MultiPointConstraint(V)
+        mpc.finalize()
+        floquet = SimpleNamespace(mpc=mpc)
     return data, V, floquet
 
 
