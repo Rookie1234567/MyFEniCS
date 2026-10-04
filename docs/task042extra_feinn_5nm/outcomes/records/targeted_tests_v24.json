@@ -909,5 +909,19 @@
     "pages": 9,
     "tables": 17,
     "browser_visual_pass": false
+  },
+  "actual_browser": {
+    "record": "render_check_v24.json",
+    "published_page_source_sha": "bd041236bc42e990e075e8a31c603b46a5eed210",
+    "pages": 2,
+    "tables": 6,
+    "formulas": 0,
+    "browser_visual_pass": true,
+    "local_parser_is_not_visual_proof": true
+  },
+  "receipt_integrity_before_last_binding_append": {
+    "path": "tmp/task42extra/w0_receiver/closeout/final_receipt_verification.json",
+    "sha256": "9e6a3315a67673a5bb9e226b48e641b0bf4f3128416e49c6da28d5471f62f01d",
+    "bytes": 450
   }
 }

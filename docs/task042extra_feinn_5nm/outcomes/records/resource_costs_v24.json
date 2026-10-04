@@ -530,5 +530,75 @@
       "sampled_process_tree_swap_peak_bytes": 0,
       "descendants_cleared": true
     }
+  },
+  "seal_observed_snapshot_utc": "2026-10-04T17:04:21.585545+00:00",
+  "seal_complete_batch_elapsed_seconds": 8249.585473490879,
+  "remaining_at_seal_snapshot_seconds": 6150.414486488095,
+  "final_delivery_tail_reserved_seconds": 600,
+  "conservative_complete_batch_upper_seconds": 8849.585473490879,
+  "actual_browser_light_lifecycles": {
+    "initial_browser": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 26.608036133926362,
+      "sampled_process_tree_rss_peak_bytes": 1786486784,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "receipt": {
+        "path": "tmp/task42extra/w0_receiver/closeout/render_supervision/browser/summary.json",
+        "sha256": "0f336b9d31b3210c68f6a9a3076e1dc15c27880818b688ec13d9932a574e305c",
+        "bytes": 2065
+      }
+    },
+    "live_element_supplement": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 16.176363716833293,
+      "sampled_process_tree_rss_peak_bytes": 1759313920,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "receipt": {
+        "path": "tmp/task42extra/w0_receiver/closeout/render_supplement_retry1/browser/summary.json",
+        "sha256": "d2666a1439ad4902e8937a4ba06761b241e918cfda6ccd68296a74b6bd1ba645",
+        "bytes": 2065
+      }
+    },
+    "hard_tree_bytes": 2147483648,
+    "own_swap_bytes": 0
+  },
+  "browser_prelaunch_refusal": {
+    "path": "tmp/task42extra/w0_receiver/closeout/render_supplement_refusal.json",
+    "sha256": "3419178740156f871ebc319f4e538be194d3a307b596847a1992cb4984759340",
+    "bytes": 620
+  },
+  "browser_prelaunch_refusal_exact_wall": "NOT_RETAINED_INCLUDED_IN_CONTINUOUS_BATCH_WINDOW",
+  "numerical_checks_not_repeated_for_publication": true,
+  "sampled_numerical_parent_peak_bytes": 2383208448,
+  "complete_preparation_tree_peak": "NOT_MEASURED_NOT_SUBSTITUTED_WITH_NUMERICAL_STAGE_PEAK",
+  "final_pure_metadata_stages": {
+    "seal_supervision/metadata/summary.json": {
+      "elapsed_seconds": 1.838676234940067,
+      "sampled_process_tree_rss_peak_bytes": 39714816,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "receipt": {
+        "path": "tmp/task42extra/w0_receiver/closeout/seal_supervision/metadata/summary.json",
+        "sha256": "9b1cd1e206c897a6e4ce681c2eac09b18976303b636ad4f2979059c98525431e",
+        "bytes": 1892
+      }
+    },
+    "verify_supervision/verify/summary.json": {
+      "elapsed_seconds": 1.9176637220662087,
+      "sampled_process_tree_rss_peak_bytes": 58568704,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "receipt": {
+        "path": "tmp/task42extra/w0_receiver/closeout/verify_supervision/verify/summary.json",
+        "sha256": "14fd4180cb03be986bfda825ba6a0000f939f5baa7e7727bab4e90947dcada70",
+        "bytes": 1893
+      }
+    }
   }
 }

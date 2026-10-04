@@ -1,7 +1,334 @@
 {
   "schema": "task42extra.w0-render.v24",
-  "status": "PENDING_PUBLISH_AND_ACTUAL_BROWSER",
-  "browser_visual_pass": false,
-  "scope": "two new key pages only; old V23/review accepted render receipt reused",
+  "status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
+  "browser_visual_pass": true,
+  "published_page_source_sha": "bd041236bc42e990e075e8a31c603b46a5eed210",
+  "page_bodies_unchanged_after_publication": true,
+  "counts": {
+    "pages": 2,
+    "tables": 6,
+    "formulas": 0,
+    "visually_inspected_captures": 8
+  },
+  "scope": "two published key-page openings and all six complete table elements; all rows and right edges actually inspected",
+  "not_claimed": "every paragraph screenshot, every historical page, full-repository rendering, or numerical qualification from screenshots",
+  "full_scientific_content_read_as_files": true,
+  "capture_method": "native WebDriver live-element screenshots of unmodified actual GitHub CSS",
+  "record": {
+    "path": "tmp/task42extra/render/w0_v24_elements_bd041236/render_records.json",
+    "sha256": "1141e8bb80e7a21053f8836ec9d0e3611b9950399e7596ee3919cd475cf2c195",
+    "bytes": 10654
+  },
+  "captures": [
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/00_top.png",
+      "sha256": "dd6d1a307412b8d506f9a6b6d5d035dad3b693dbe0e02b036506a87185ada643",
+      "bytes": 381060
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/00_table_00_element.png",
+      "sha256": "1714561a304b6b74fa472d1fb6b5983ad66b4a46d483f47c8db0762757ec67ba",
+      "bytes": 108373
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/00_table_01_element.png",
+      "sha256": "16f905345b03170885528f9bd625c8d5308ffa5246bdfa32ed83536ecb394962",
+      "bytes": 90176
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/00_table_02_element.png",
+      "sha256": "21df15d21a336f77942d7d83c67e187336f2126e2f0a43ae54fa17afde62241d",
+      "bytes": 78177
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/00_table_03_element.png",
+      "sha256": "fb408e70ed9a0ad807f25126d6da8407b72cdfb09c025a116ea6a3fa84a66762",
+      "bytes": 114276
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/01_top.png",
+      "sha256": "8b2483bec820e02522d5a9fd3498df2873b18d7f8a568887bd5e4c280b63b3e5",
+      "bytes": 408528
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/01_table_00_element.png",
+      "sha256": "385c11fbe69c811cbf39656133bfd915a518d344b651b77fd3c6fd75402fbb3d",
+      "bytes": 86593
+    },
+    {
+      "path": "tmp/task42extra/render/w0_v24_elements_bd041236/01_table_01_element.png",
+      "sha256": "97190ba027b3733795a31ac4e509e8133b2934e763c36195c5afbf9ed7fe7b96",
+      "bytes": 55486
+    }
+  ],
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/bd041236bc42e990e075e8a31c603b46a5eed210/docs/task042extra_feinn_5nm/response_v24.md",
+      "DOM": {
+        "title": "MyFEniCS/docs/task042extra_feinn_5nm/response_v24.md at bd041236bc42e990e075e8a31c603b46a5eed210 · Rookie1234567/MyFEniCS · GitHub",
+        "scopeHeading": "entire task document",
+        "articleText": "Response V24：W0 已完成真实组件、独立检查与保存读回\n\n用户在 Review V23 收口后要求在现有工作树继续 W0，再推进原尺寸完整端口。本次实际完成了 W0 的 worker → 原科学数组 → 未改数学的独立 checker → 本机持久读回。数值组件 PASS，接收批次 PASS_WITH_QUALIFICATIONS；初始 nice/IO/终端绑定缺口保留。不是再次确认收信或只做测试。W1 尚未启动：本机缺少已",
+        "ready": "complete",
+        "fonts": "loaded",
+        "tables": [
+          {
+            "columns": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 978.9833374023438,
+            "scrollWidth": 979,
+            "clientWidth": 979
+          },
+          {
+            "columns": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "width": 852.5999755859375,
+            "scrollWidth": 853,
+            "clientWidth": 853
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          }
+        ],
+        "math": [],
+        "live_element_geometry": [
+          {
+            "connected": true,
+            "width": 1012,
+            "height": 430,
+            "top": 684,
+            "rows": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          },
+          {
+            "connected": true,
+            "width": 978.9833374023438,
+            "height": 305.4000244140625,
+            "top": 808.4000244140625,
+            "rows": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "connected": true,
+            "width": 852.5999755859375,
+            "height": 297,
+            "top": 816.7999877929688,
+            "rows": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          },
+          {
+            "connected": true,
+            "width": 1012,
+            "height": 381.20001220703125,
+            "top": 733.2000122070312,
+            "rows": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "mathAfterScroll": []
+      }
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/bd041236bc42e990e075e8a31c603b46a5eed210/docs/task042extra_feinn_5nm/outcomes/w0_receiver_v24.md",
+      "DOM": {
+        "title": "MyFEniCS/docs/task042extra_feinn_5nm/outcomes/w0_receiver_v24.md at bd041236bc42e990e075e8a31c603b46a5eed210 · Rookie1234567/MyFEniCS · GitHub",
+        "scopeHeading": "entire task document",
+        "articleText": "W0 接收 V24：保留全部内部量的真实组件闭环\n\n本轮推进原尺寸计算的第一道组件关。单元内的内部场先被准确消去，边界和端口上计算完后再完整恢复；这节省全局处理的对象，但必须证明没有遗漏内部载荷或端口影响。W0 用非零内部/端口载荷、真实有限元方向和周期映射验证这种等价性，完成全部科学数组和独立读回。它没有计算入射散射前向解。\n\n范围 / 身份\tmeasured / derived / not_run\n规则同80组件\tλ0.7、φ5°、",
+        "ready": "complete",
+        "fonts": "loaded",
+        "tables": [
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 938.2666625976562,
+            "scrollWidth": 938,
+            "clientWidth": 938
+          },
+          {
+            "columns": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "width": 706.7333374023438,
+            "scrollWidth": 707,
+            "clientWidth": 707
+          }
+        ],
+        "math": [],
+        "live_element_geometry": [
+          {
+            "connected": true,
+            "width": 938.2666625976562,
+            "height": 260,
+            "top": 540.5999755859375,
+            "rows": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          {
+            "connected": true,
+            "width": 706.7333374023438,
+            "height": 260,
+            "top": 853.7999877929688,
+            "rows": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        ],
+        "mathAfterScroll": []
+      }
+    }
+  ],
+  "initial_capture": {
+    "record": {
+      "path": "tmp/task42extra/render/w0_v24_bd041236/render_records.json",
+      "sha256": "10d3845633eb27689d1eb697df82c3e161cdd80b7ed68a34df6e244b7f295496",
+      "bytes": 7981
+    },
+    "status": "PARTIAL_FIRST_FOLD_AND_DOM_ONLY_FULL_RESPONSE_TABLE_VISUAL_NOT_PASSED",
+    "response_captures": 5,
+    "unique_response_capture_hashes": 1,
+    "cause": "retained early JS nodes did not scroll the live React table; repeated first-fold screenshots kept"
+  },
+  "prelaunch_resource_refusal": {
+    "path": "tmp/task42extra/w0_receiver/closeout/render_supplement_refusal.json",
+    "sha256": "3419178740156f871ebc319f4e538be194d3a307b596847a1992cb4984759340",
+    "bytes": 620
+  },
+  "final_fresh_window_admission": {
+    "path": "tmp/task42extra/w0_receiver/closeout/render_supplement_retry1/admission.json",
+    "sha256": "596b29944f9284320d31c06341046512446561ba294b487c183394c043935936",
+    "bytes": 270049
+  },
+  "resource": {
+    "initial_browser": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 26.608036133926362,
+      "sampled_process_tree_rss_peak_bytes": 1786486784,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "receipt": {
+        "path": "tmp/task42extra/w0_receiver/closeout/render_supervision/browser/summary.json",
+        "sha256": "0f336b9d31b3210c68f6a9a3076e1dc15c27880818b688ec13d9932a574e305c",
+        "bytes": 2065
+      }
+    },
+    "live_element_supplement": {
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 16.176363716833293,
+      "sampled_process_tree_rss_peak_bytes": 1759313920,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "receipt": {
+        "path": "tmp/task42extra/w0_receiver/closeout/render_supplement_retry1/browser/summary.json",
+        "sha256": "d2666a1439ad4902e8937a4ba06761b241e918cfda6ccd68296a74b6bd1ba645",
+        "bytes": 2065
+      }
+    },
+    "hard_tree_bytes": 2147483648,
+    "own_swap_bytes": 0
+  },
   "history_render_failures_retained": true
 }
