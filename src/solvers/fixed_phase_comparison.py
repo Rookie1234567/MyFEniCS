@@ -229,6 +229,17 @@ def compare(indices, artifact, marker, budget):
     import basix
     from src.geometry.fixed_phase_plan import physical_design
 
+    missing = [r for r in ("O3", "E3", "E4", "O6") if r not in indices]
+    if not indices:
+        atomic_npz(artifact / "comparison_integrals.npz")
+        return dict(
+            stage_qualified=True,
+            status="UNKNOWN_NO_RETAINED_FIELDS",
+            missing_roles=missing,
+            reference_qualified=False,
+            comparisons={},
+            no_new_solve_or_factor=True,
+        ), dict(integrals=artifact / "comparison_integrals.npz")
     models, packets, states, obs = {}, {}, {}, {}
     for role, idx in indices.items():
         mesh, degree, phase = ROLES[role]
@@ -285,13 +296,25 @@ def compare(indices, artifact, marker, budget):
     }
     if len(physical) != 1 or len(modes) != 1:
         raise ValueError("CROSS_SPACE_PHYSICS_OR_PORT_KEYS_NOT_IDENTICAL")
-    pairs = [(r, "O6") for r in ("O3", "E3", "E4")] + [("E3", "E4")]
+    pairs = [
+        (a, b)
+        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")] + [("E3", "E4")]
+        if a in indices and b in indices
+    ]
     names = ["total_E", "total_scaled_curl", "scattered_E", "scattered_scaled_curl"]
     region_names = ["all", "air", "substrate", "grating", "notch", "interface_band"]
     axes = [
         np.unique(np.concatenate([m["axes"][axis] for m in models.values()]))
         for axis in range(3)
     ]
+    # Fixed regional masks must be constant within integration subcells.
+    # Splitting at the preregistered band boundaries avoids using Gauss nodes
+    # as an approximation to the discontinuous region indicator.
+    plane_sets = ([16.5, 25, 33.5], [6.25, 18.75], [0, 40, 80, 120])
+    for axis, planes in enumerate(plane_sets):
+        cuts = np.asarray([(p + sign) * 7 / 135 for p in planes for sign in (-1, 1)])
+        cuts = cuts[(cuts > axes[axis][0]) & (cuts < axes[axis][-1])]
+        axes[axis] = np.unique(np.r_[axes[axis], cuts])
     local = {
         r: {k: packets[r].expand(c) for k, c in states[r].items() if k.startswith("c_")}
         for r in indices
@@ -350,14 +373,15 @@ def compare(indices, artifact, marker, budget):
                 fields[role] = (E, C / model["cfg"].k0, SE, SC / model["cfg"].k0)
             from src.geometry.neural_micro_pilot import material_tags
 
-            g = models["E3"]["design"]["geometry"]
+            representative = next(iter(models.values()))
+            g = representative["design"]["geometry"]
             tags, notch = material_tags(
                 x,
                 substrate_z=g["substrate_z_nm"],
                 block_bounds=g["block_bounds_nm"],
                 notch_bounds=g["notch_bounds_nm"],
             )
-            cfg = models["E3"]["cfg"]
+            cfg = representative["cfg"]
             masks = [
                 np.ones(len(x), bool),
                 tags == cfg.tags.air,
@@ -365,7 +389,6 @@ def compare(indices, artifact, marker, budget):
                 tags == cfg.tags.grating,
                 notch,
             ]
-            plane_sets = ([16.5, 25, 33.5], [6.25, 18.75], [0, 40, 80, 120])
             band = np.zeros(len(x), bool)
             for axis, planes in enumerate(plane_sets):
                 band |= np.any(
@@ -390,7 +413,8 @@ def compare(indices, artifact, marker, budget):
         marker("common_subcell_q" + str(q) + "_complete", dict(subcells=subcell + 1))
     comparisons = {}
     ref_qualified = (
-        indices["O6"]["result"]["checker"]["passed"]
+        "O6" in indices
+        and indices["O6"]["result"]["checker"]["passed"]
         and indices["O6"]["result"]["physics"]["physical_gate_passed"]
     )
     for left, right in pairs:
@@ -461,6 +485,15 @@ def compare(indices, artifact, marker, budget):
             v["relative"] <= threshold for v in fields["all"].values()
         ) and all(v["relative"] <= threshold for v in complex_errors.values())
         power_pass = max(powers.values()) <= 1e-5 and level <= 1e-6
+        pair_reference = (
+            ref_qualified
+            if right == "O6"
+            else all(
+                indices[r]["result"]["checker"]["passed"]
+                and indices[r]["result"]["physics"]["physical_gate_passed"]
+                for r in (left, right)
+            )
+        )
         comparisons[key] = dict(
             fields=fields,
             complex_errors=complex_errors,
@@ -471,9 +504,11 @@ def compare(indices, artifact, marker, budget):
             field_passed=field_pass,
             power_passed=power_pass,
             strict_passed=bool(
-                ref_qualified and field_pass and power_pass and drift <= 1e-8
+                pair_reference and field_pass and power_pass and drift <= 1e-8
             ),
-            reference_status="QUALIFIED_DISCRETE_ONLY" if ref_qualified else "UNKNOWN",
+            reference_status=("QUALIFIED_DISCRETE_ONLY" if ref_qualified else "UNKNOWN")
+            if right == "O6"
+            else "FINITE_P_PAIR_ONLY",
         )
     atomic_npz(
         artifact / "comparison_integrals.npz",
@@ -488,6 +523,8 @@ def compare(indices, artifact, marker, budget):
     gc.collect()
     return dict(
         stage_qualified=True,
+        status="COMPLETE" if not missing else "PARTIAL_REFERENCE_OR_ROLE_UNAVAILABLE",
+        missing_roles=missing,
         comparisons=comparisons,
         reference_qualified=bool(ref_qualified),
         FE_representation_benefit="UNKNOWN_PENDING_MATCHED_PRECISION_AND_COST",

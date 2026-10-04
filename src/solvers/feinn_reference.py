@@ -225,6 +225,11 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
                 condensed_rows=n,
                 local_interior_factors="exact reference-only; no training use",
             )
+        if (audit_options or {}).get('save_unqualified_recovery',False):
+            # Preserve a real recovered state even when a later strict gate
+            # fails; this is explicitly unqualified until all audits finish.
+            audit_options['save_packet'](c,alpha,record)
+            record['unqualified_recovery_saved_before_checks']=True
         recovered = packet.alpha(c)
         record["original_port_recovery_relative"] = float(
             np.linalg.norm(recovered - alpha) / max(np.linalg.norm(alpha), 1e-12)

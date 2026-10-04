@@ -230,17 +230,24 @@ def compare_from_arrays(integrals, observables, algebra):
     """Producer status/relative errors are ignored: Gate is independently rebuilt."""
     import numpy as np
 
-    roles = ("O3", "E3", "E4", "O6")
-    if set(observables) != set(roles) or set(algebra) != set(roles):
-        raise ValueError("FOUR_ROLES_REQUIRED")
+    allowed = ("O3", "E3", "E4", "O6")
+    if set(observables) != set(algebra) or not set(observables) <= set(allowed):
+        raise ValueError("RETAINED_ROLE_COVERAGE_INCONSISTENT")
+    roles = tuple(r for r in allowed if r in observables)
+    missing = [r for r in allowed if r not in roles]
     physics = {r: physics_from_arrays(observables[r]) for r in roles}
     equations = {r: solved(algebra[r], reference=r == "O6") for r in roles}
     reference = (
-        equations["O6"]["passed"]
+        "O6" in roles
+        and equations["O6"]["passed"]
         and physics["O6"]["raw_valid"]
         and physics["O6"]["energy_closure"] <= 1e-5
     )
-    pairs = [(r, "O6") for r in ("O3", "E3", "E4")] + [("E3", "E4")]
+    pairs = [
+        (a, b)
+        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")] + [("E3", "E4")]
+        if a in roles and b in roles
+    ]
     expected = {f"{a}_vs_{b}_q{q}" for a, b in pairs for q in (15, 30)}
     if set(integrals) != expected:
         raise ValueError("COMMON_INTEGRAL_COVERAGE_INCOMPLETE")
@@ -317,7 +324,13 @@ def compare_from_arrays(integrals, observables, algebra):
             field_passed=fieldpass,
             power_passed=bool(powerpass),
             qualified=bool(
-                reference
+                (
+                    reference
+                    if b == "O6"
+                    else equations[b]["passed"]
+                    and physics[b]["raw_valid"]
+                    and physics[b]["energy_closure"] <= 1e-5
+                )
                 and equations[a]["passed"]
                 and physics[a]["raw_valid"]
                 and fieldpass
@@ -327,6 +340,8 @@ def compare_from_arrays(integrals, observables, algebra):
         )
     return dict(
         schema="fixed_phase.independent-comparison.v1",
+        coverage="COMPLETE" if not missing else "PARTIAL",
+        missing_roles=missing,
         physics=physics,
         equations=equations,
         reference_qualified=bool(reference),

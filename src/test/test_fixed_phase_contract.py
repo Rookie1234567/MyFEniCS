@@ -170,9 +170,8 @@ def test_corrupt_modes_background_and_physical_wavenumber():
     assert not qualification(r)["passed"]
 
 
-def test_saved_physical_arrays_recompute_power_and_reject_damage():
+def _saved_physics_fixture():
     import numpy as np
-    from benchmarks.fixed_phase_checker import physics_from_arrays
 
     keys = np.asarray(
         [
@@ -218,6 +217,15 @@ def test_saved_physical_arrays_recompute_power_and_reject_damage():
         per_level_power=power,
         physical_field_norms=np.asarray([1, 1, 0, 0]),
     )
+    return z
+
+
+def test_saved_physical_arrays_recompute_power_and_reject_damage():
+    import numpy as np
+    from benchmarks.fixed_phase_checker import physics_from_arrays
+
+    z = _saved_physics_fixture()
+    curl = z["total_curl"]
     r = physics_from_arrays(z)
     assert (
         r["raw_valid"]
@@ -227,8 +235,56 @@ def test_saved_physical_arrays_recompute_power_and_reject_damage():
     )
     damaged = dict(z, total_H=np.zeros_like(curl))
     assert not physics_from_arrays(damaged)["raw_valid"]
-    damaged = dict(z, per_level_power=power + 0.01)
+    damaged = dict(z, per_level_power=z["per_level_power"] + 0.01)
     assert not physics_from_arrays(damaged)["raw_valid"]
-    damaged = dict(z, mode_keys=keys[:-1])
+    damaged = dict(z, mode_keys=z["mode_keys"][:-1])
     with pytest.raises(ValueError, match="MODE_KEYS"):
         physics_from_arrays(damaged)
+
+
+def test_partial_reference_and_finite_p_pair_are_not_full_accuracy():
+    import numpy as np
+    from benchmarks.fixed_phase_checker import compare_from_arrays
+
+    empty = compare_from_arrays({}, {}, {})
+    assert empty["coverage"] == "PARTIAL" and not empty["reference_qualified"]
+    assert len(empty["missing_roles"]) == 4 and empty["comparisons"] == {}
+    z = _saved_physics_fixture()
+    for k in (
+        "selected_total_E",
+        "selected_total_H",
+        "selected_scattered_E",
+        "selected_scattered_H",
+    ):
+        z[k] = np.ones((6, 3), complex)
+    for k in ("total_projection", "scattered_projection", "outgoing_origin"):
+        z[k] = np.ones(340, complex)
+    equations = {
+        k: 0.0
+        for k in (
+            "native_relative",
+            "augmented_relative",
+            "original_total_augmented_relative",
+            "independent_physical_weak",
+            "recovery",
+        )
+    }
+    equations.update(channels=340, full_FE_recovered=True)
+    first = np.zeros((6, 4, 3))
+    first[:, :, 1:] = 1
+    r = compare_from_arrays(
+        {"E3_vs_E4_q15": first, "E3_vs_E4_q30": first.copy()},
+        {"E3": z, "E4": z},
+        {"E3": equations, "E4": equations},
+    )
+    assert r["coverage"] == "PARTIAL" and not r["reference_qualified"]
+    assert r["comparisons"]["E3_vs_E4"]["qualified"]
+    assert r["target_qualified"] is False
+    with pytest.raises(ValueError, match="COVERAGE"):
+        compare_from_arrays({}, {"E3": z}, {})
+    with pytest.raises(ValueError, match="COVERAGE"):
+        compare_from_arrays(
+            {}, {"E3": z, "EXTRA": z}, {"E3": equations, "EXTRA": equations}
+        )
+    with pytest.raises(ValueError, match="COVERAGE"):
+        compare_from_arrays({}, {"E3": z, "E4": z}, {"E3": equations, "E4": equations})

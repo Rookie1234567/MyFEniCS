@@ -73,13 +73,22 @@ def reference(design, role, artifact, marker, check_budget):
         reduced = ExactInteriorCondensation(
             packet, model["space"].element.basix_element.entity_dofs[3][0]
         )
+        from src.solvers.fixed_phase_port_coordinates import BoundaryPortCondensation
+        from src.solvers.dtn_port_3d import _mode_boundary_phase
+
+        reduced = BoundaryPortCondensation(
+            reduced,
+            [
+                _mode_boundary_phase(mode, model["cfg"])
+                for mode in model["bundle"]["modes"]
+            ],
+            artifact,
+        )
         condensation_setup = perf_counter() - start
         plan = capacity(packet.nc, degree, classes=len(packet.a["F"]), ports=340)
 
         def assemble(m, p, mark, current=reduced):
-            return current.assemble(
-                m, p, mark, save=artifact / "condensed_csr_recovery.npz"
-            )
+            return current.assemble(m, p, mark)
 
         state_path = artifact / "field_state.npz"
 
@@ -106,6 +115,7 @@ def reference(design, role, artifact, marker, check_budget):
                 allocation_upper_bytes=plan["allocation_upper_bytes"],
                 check_budget=check_budget,
                 save_packet=save,
+                save_unqualified_recovery=True,
             ),
         )
         del reduced, assemble
@@ -151,6 +161,7 @@ def reference(design, role, artifact, marker, check_budget):
             capacity=plan,
             physics=physics,
             global_Maxwell_factor=True,
+            direct_coordinates="exact beta=boundary_phase*alpha; raw equations audited",
             reference_role="REFERENCE_ONLY"
             if role == "O6"
             else "RESEARCH_DETERMINISTIC_FE_CONTROL",
@@ -168,6 +179,7 @@ def reference(design, role, artifact, marker, check_budget):
             field=state_path,
             identity=artifact / "identity.json",
             condensed_csr=artifact / "condensed_csr_recovery.npz",
+            boundary_coordinate_csr=artifact / "boundary_coordinate_csr.npz",
             observables=artifact / "observables.npz",
         )
     finally:

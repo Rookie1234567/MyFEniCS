@@ -122,6 +122,38 @@ def selected(stage):
     return good[0]
 
 
+def retained_roles():
+    """Available frozen physical states, including explicitly negative ones.
+
+    Missing reference is a partial diagnostic, never a silently qualified role.
+    Same-input repaired attempts prefer the unique algebra-qualified state.
+    """
+    records = {}
+    for role in ("O3", "E3", "E4", "O6"):
+        paths = sorted(ARTIFACTS.glob("index_v20_" + role.lower() + "_attempt*.json"))
+        candidates = [json.loads(p.read_text()) for p in paths]
+        candidates = [
+            c
+            for c in candidates
+            if all(k in c["files"] for k in ("native", "field", "observables"))
+        ]
+        qualified = [c for c in candidates if c["result"].get("stage_qualified")]
+        if len(qualified) > 1:
+            raise RuntimeError("V20_AMBIGUOUS_RETAINED_ROLE:" + role)
+        if not candidates:
+            continue
+        record = qualified[0] if qualified else candidates[-1]
+        for v in record["files"].values():
+            p = Path(v["path"])
+            if (
+                not p.resolve().is_relative_to(ARTIFACTS.resolve())
+                or sha(p) != v["sha256"]
+            ):
+                raise RuntimeError("V20_RETAINED_IDENTITY_CHANGED")
+        records[role] = record
+    return records
+
+
 def launch(spec):
     from benchmarks.subreaper_watchdog import supervise
     from src.runners.guarded_exec import ticks
@@ -350,10 +382,7 @@ def worker(directory):
             import numpy as np
             from benchmarks.fixed_phase_checker import compare_from_arrays
 
-            indices = {
-                role: selected("v20_" + role.lower())
-                for role in ("O3", "E3", "E4", "O6")
-            }
+            indices = retained_roles()
             compare_index = selected("v20_physical_compare")
             with np.load(
                 compare_index["files"]["integrals"]["path"], allow_pickle=False
@@ -376,10 +405,7 @@ def worker(directory):
             from src.solvers.fixed_phase_comparison import compare
 
             result, files = compare(
-                {
-                    role: selected("v20_" + role.lower())
-                    for role in ("O3", "E3", "E4", "O6")
-                },
+                retained_roles(),
                 artifact,
                 marker,
                 budget,
