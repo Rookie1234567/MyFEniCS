@@ -628,6 +628,22 @@ def execute(role, folder, state):
         return oracle(folder)
     if role.startswith("VOLUME"):
         return volume(folder, int(role[-1]))
+    if role.startswith("RECOVERY"):
+        from src.solvers.distributed_recovery_study import recover
+
+        return recover(folder, int(role[-1]))
     if role == "CHECK":
-        return check_volume(folder)
+        result = check_volume(folder)
+        from benchmarks.check_distributed_volume import check_recovery
+
+        recovery = check_recovery()
+        result["volume_status"] = result["status"]
+        result["recovery"] = recovery
+        result["passed"] = result["passed"] and recovery["passed"]
+        result["status"] = (
+            "DISTRIBUTED_VOLUME_ACTION_AND_AFFINE_RECOVERY_QUALIFIED_ON_WITNESSES"
+            if result["passed"]
+            else "DISTRIBUTED_VOLUME_NOT_QUALIFIED"
+        )
+        return result
     raise NotImplementedError("V42 stage wiring incomplete: " + role)

@@ -196,3 +196,96 @@ def test_actual_V42_one_run_schema_registration():
         )
         assert r.derived["stage"] == name and r.derived["preparation_scope"] == "v42"
         assert r.derived["target_solve"] is False
+
+
+def test_native_inverse_transpose_transfer_and_independent_dual():
+    from src.solvers.distributed_entity_volume import cell_transform
+    from src.solvers.distributed_saved_recovery import native_transfer
+    from src.solvers.distributed_volume_study import element
+
+    e = element()
+    for old, new in ((0, 585), (3, 1 << 18), (585, 3)):
+        m = native_transfer(e, old, new)
+        t0, t1 = cell_transform(e, old), cell_transform(e, new)
+        assert np.linalg.norm(t1.T @ m - t0.T) < 1e-10
+        x = np.sin(np.arange(882)) + 1j * np.cos(np.arange(882) * 0.31)
+        y = np.cos(np.arange(882) * 0.7) + 1j * np.sin(np.arange(882) * 0.23)
+        assert abs(np.vdot(y, m @ x) - np.vdot(m.conjugate().T @ y, x)) < 1e-9
+
+
+def test_saved_owner_consumer_nonhermitian_nonmutual_ports_and_affine_rhs():
+    from scipy.linalg import lu_factor
+
+    from src.solvers.distributed_saved_recovery import SavedRecoveryConsumer
+
+    rng = np.random.default_rng(424209)
+    raw = [
+        rng.normal(size=(4, 4)) + 1j * rng.normal(size=(4, 4)) + 6 * np.eye(4)
+        for _ in range(2)
+    ]
+    dofs = np.array([[0, 1, 2, 3], [0, 1, 4, 5]])
+    lit = {
+        "cell_dofs": dofs,
+        "master_offsets": np.arange(7),
+        "master_rows": np.array([0, 0, 2, 3, 4, 5]),
+        "master_dual_coefficients": np.array([1, 0.7 - 0.2j, 1, 1, 1, 1]),
+    }
+    numbering = {
+        "cell_class": np.arange(2),
+        "cell_interior": dofs[:, 2:],
+        "cell_trace": dofs[:, :2],
+        "owned_active": np.array([0]),
+    }
+    classes = []
+    for a in raw:
+        lu, piv = lu_factor(a[2:, 2:])
+        classes.append(
+            {
+                "raw_tensor": a,
+                "original": a,
+                "lu": lu,
+                "pivots": piv,
+                "recovery": np.linalg.solve(a[2:, 2:], -a[2:, :2]),
+                "rhs_trace": -np.linalg.solve(a[2:, 2:].T, a[:2, 2:].T).T,
+                "trace_positions": np.array([0, 1]),
+                "interior_positions": np.array([2, 3]),
+            }
+        )
+    t = np.array([[2.0, 0.3, 0, 0], [0, 1.0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    bridge = {
+        "producer_cells": np.arange(2),
+        "owned_cells": 2,
+        "producer_owner": np.zeros(6, np.int32),
+        "transfer": [np.linalg.inv(t.T)] * 2,
+        "native_transforms": [t] * 2,
+    }
+    C = np.zeros((6, 12), complex)
+    D = np.zeros((12, 6), complex)
+    C[0] = rng.normal(size=12) + 1j * rng.normal(size=12)
+    D[:, 0] = rng.normal(size=12) + 1j * rng.normal(size=12)
+    actor = SavedRecoveryConsumer(MPI.COMM_SELF, lit, numbering, classes, bridge, C, D)
+    G = np.eye(6, dtype=complex)
+    G[1] = 0
+    G[1, 0] = 0.7 + 0.2j
+    V = np.zeros((6, 6), complex)
+    for ids, a in zip(dofs, raw, strict=True):
+        V[np.ix_(ids, ids)] += a
+    V = G.conjugate().T @ V @ G
+    x = rng.normal(size=6) + 1j * rng.normal(size=6)
+    x[1] = 0
+    assert np.allclose(actor.apply_original(x, coupled=True), V @ x + C @ (D @ x))
+    assert np.allclose(
+        actor.apply_original(x, coupled=True, adjoint=True),
+        V.conjugate().T @ x + D.conjugate().T @ (C.conjugate().T @ x),
+    )
+    f = rng.normal(size=6) + 1j * rng.normal(size=6)
+    f[1] = 0
+    g = rng.normal(size=12) + 1j * rng.normal(size=12)
+    z = rng.normal(size=13) + 1j * rng.normal(size=13)
+    u, u0 = actor.recover(z, f), actor.recover(np.zeros_like(z), f)
+    assert np.allclose((V @ u)[2:], f[2:])
+    assert np.allclose(u - u0, actor.recover(z, np.zeros_like(f)))
+    assert np.allclose(actor.reduced_rhs(f, g)[1:], g)
+    rFE, rp = f - V @ u - C @ z[1:], g + D @ u - z[1:]
+    assert np.allclose(rFE - C @ rp, f - C @ g - V @ u - C @ (D @ u))
+    assert not np.allclose(D, C.conjugate().T)
