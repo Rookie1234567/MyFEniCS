@@ -4,8 +4,8 @@ set -e
 cloud_c1_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cloud_c1_repo="$(cd "$cloud_c1_script_dir/../.." && pwd)"
 cloud_c1_prefix="${1:?pass the explicit native independent prefix}"
-cloud_c1_manifest="${2:?pass this run's fresh local ABI receipt}"
-cloud_c1_cache="${3:?pass this run's JIT/cache directory}"
+cloud_c1_manifest="${2:?run-local imports-only ABI receipt required}"
+cloud_c1_cache="${3:?run-local JIT cache directory required}"
 if [[ ! -x "$cloud_c1_prefix/bin/python" || ! -f "$cloud_c1_manifest" ]]; then
   echo "fresh native prefix or run-local imports-only ABI receipt missing" >&2; return 1
 fi
