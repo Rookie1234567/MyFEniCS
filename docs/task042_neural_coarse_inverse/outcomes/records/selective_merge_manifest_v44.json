@@ -1,0 +1,81 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "name": "production numerical/core",
+      "files": [],
+      "decision": "no unqualified candidate made production default"
+    },
+    {
+      "name": "reusable runner/watchdog",
+      "files": [
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "src/runners/task042_shared.py",
+        "scripts/run_case.py"
+      ],
+      "numerical_change": "V44 opt-in dispatch, authorized24GiB storage ceiling, typed live provenance; old defaults preserved",
+      "dependencies": [
+        "qualified activation",
+        "existing watchdog",
+        "V44 scope"
+      ],
+      "tests": "53 focused, real supervisor failures retained",
+      "fresh_PDE": "none",
+      "merge_order": "only after future core authorization"
+    },
+    {
+      "name": "checker/benchmark",
+      "files": [
+        "benchmarks/check_neighborhood_late_error.py",
+        "benchmarks/qualify_neighborhood_late_error.py",
+        "src/test/test_neighborhood_late_error.py"
+      ],
+      "numerical_change": "frozen inventory/hash/coverage/error checks; tests not a solver",
+      "dependencies": [
+        "original independent checker",
+        "V44 input contract"
+      ],
+      "fresh_PDE": "40 frozen finite states, no official field",
+      "merge_order": "with audited dependencies"
+    },
+    {
+      "name": "compact evidence/docs",
+      "files": [
+        "response_v44.md",
+        "outcomes/late_error_learning_v44.md",
+        "outcomes/records/*_v44.json",
+        "outcomes/records/v44_raw/"
+      ],
+      "numerical_change": false,
+      "dependencies": [
+        "hash-bound ignored arrays/models/raw"
+      ],
+      "merge_order": "only approved evidence"
+    },
+    {
+      "name": "research-only",
+      "files": [
+        "src/solvers/neighborhood_late_error*.py",
+        "src/solvers/neighborhood_training_transaction.py",
+        "src/solvers/neighborhood_residual_models.py",
+        "input/task042_neural_coarse_inverse/v44_*.dat",
+        "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json"
+      ],
+      "numerical_change": "new late-error training and shared prefix under explicit opt-in, old V43 math unchanged",
+      "tests": "real gradient, four128 training,40 heldout,12 small decoder SVD",
+      "fresh_PDE": "finite algebra only",
+      "merge_order": "not approved"
+    },
+    {
+      "name": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v44/",
+        "tmp/task042/v44/",
+        "results/task042/task042_v44_*/",
+        ".venv-ml/"
+      ],
+      "decision": "large arrays, weights, runtime caches only ignored; no other task or branch edits"
+    }
+  ]
+}

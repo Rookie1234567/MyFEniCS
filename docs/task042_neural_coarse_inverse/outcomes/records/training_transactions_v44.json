@@ -1,0 +1,94 @@
+{
+  "rows": [
+    {
+      "route": "NN-R",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 128,
+      "resume_prior_updates": 0,
+      "new_updates": 128,
+      "group_changes": {
+        "encoder": 2.416778563461436,
+        "message": 0.9056064283040223,
+        "decoder": 3.6670037762104024
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "95bf7f67dccf40d85bedcc0122f0b9e3f8060c6b3cb96d1afa30e185c6d4a441"
+    },
+    {
+      "route": "NN-E",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 128,
+      "resume_prior_updates": 7,
+      "new_updates": 121,
+      "group_changes": {
+        "encoder": 2.590830335215465,
+        "message": 0.8831305224812326,
+        "decoder": 3.6721270026555013
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "95bf7f67dccf40d85bedcc0122f0b9e3f8060c6b3cb96d1afa30e185c6d4a441"
+    },
+    {
+      "route": "RL-E",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 128,
+      "resume_prior_updates": 0,
+      "new_updates": 128,
+      "group_changes": {
+        "encoder": 2.5911715044673067,
+        "message": 0.883057665000307,
+        "decoder": 3.672091703842355
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "95bf7f67dccf40d85bedcc0122f0b9e3f8060c6b3cb96d1afa30e185c6d4a441"
+    },
+    {
+      "route": "CL-E",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 128,
+      "resume_prior_updates": 0,
+      "new_updates": 128,
+      "group_changes": {
+        "encoder": 2.1120882546794806,
+        "message": 1.3648340333991265,
+        "decoder": 2.614121147190393
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "7da0dd45b989d4663ed5cc59dafae014f22c4c67dbc5bbfd06e651fed352244f"
+    }
+  ],
+  "NN_R_NN_E_initial_parameter_bytes_equal": true,
+  "no_old_V43_labels_or_weights": "new V44 opt-in reader/source evidence, not OS audit claim"
+}

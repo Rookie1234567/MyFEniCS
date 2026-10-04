@@ -1,0 +1,38 @@
+{
+  "stages": {
+    "SETUP": "V44_GRAPH_ACTION_FORECAST_READY",
+    "DATA": "V44_POST64_DATA_FROZEN",
+    "GRADIENT": "V44_MIXED_FULL_GRADIENT_READY",
+    "TRAIN_NR": "WEIGHTS_FROZEN",
+    "TRAIN_NE": "WEIGHTS_FROZEN",
+    "TRAIN_RL": "WEIGHTS_FROZEN",
+    "TRAIN_CL": "WEIGHTS_FROZEN",
+    "EVAL_R0": "ROUTE_FROZEN",
+    "EVAL_NR": "ROUTE_FROZEN",
+    "EVAL_NE": "ROUTE_FROZEN",
+    "EVAL_RL": "ROUTE_FROZEN",
+    "EVAL_CL": "ROUTE_FROZEN",
+    "CHECK": "INDEPENDENT_HELDOUT_FROZEN_AUDIT",
+    "DIAGNOSTIC": "FIXED_DECODER_DIAGNOSTIC"
+  },
+  "qualified": {
+    "NN-R": 0,
+    "NN-E": 0,
+    "RL-E": 0,
+    "CL-E": 0,
+    "R0": 0
+  },
+  "NN20": "NOT_DEMONSTRATED",
+  "full_target_PDE": "NOT_QUALIFIED",
+  "A_AH_counts_upper": 7046,
+  "B_counts_upper": 0,
+  "new_mesh_JIT_LU_global_QR_target_action": 0,
+  "global_p4_factor": false,
+  "online_recovery_factor_calls": 0,
+  "old_finite_CSR_present": true,
+  "A_old_native_recovery_max": 7.591466917360182e-10,
+  "B_old_CSR_internal_balance": 1.0104485117650333e-10,
+  "recovery_gate": 1e-10,
+  "old_recovery_FAIL_retained": true,
+  "new_method": "full independent FE coefficients, not trace-only recovery"
+}

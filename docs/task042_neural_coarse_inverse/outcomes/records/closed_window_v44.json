@@ -1,0 +1,1306 @@
+{
+  "window": {
+    "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+    "start_utc_seconds": 1791125700.722005,
+    "start_monotonic": 1050695.58288696,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+    "first_python_monotonic": 1050695.766951393,
+    "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+    "label": "V44",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "learning_seconds": 5400,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180
+  },
+  "ledger": {
+    "charged": {
+      "actions": 0
+    },
+    "runs": [
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_pre_pre01",
+        "source_sha": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:03:01.899379+00:00",
+          "observed_monotonic": 1051176.760246149,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 481.17737436294556,
+          "heavy_remaining_seconds": 82318.82262563705,
+          "total_remaining_seconds": 85918.82262563705
+        },
+        "elapsed_seconds": 20.85977548197843,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 485404672,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "SETUP",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_setup_20261004T150344181216Z",
+        "source_sha": "ef9f0ddc10b96fdeaf56c659f2c7c1726c963c6a",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:03:46.633510+00:00",
+          "observed_monotonic": 1051221.494377068,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 525.9115054607391,
+          "heavy_remaining_seconds": 82274.08849453926,
+          "total_remaining_seconds": 85874.08849453926
+        },
+        "elapsed_seconds": 16.864862818969414,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2059661312,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 2,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 2,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "DATA",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_data_20261004T150414199240Z",
+        "source_sha": "ef9f0ddc10b96fdeaf56c659f2c7c1726c963c6a",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:04:16.777228+00:00",
+          "observed_monotonic": 1051251.63809469,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 556.0552229881287,
+          "heavy_remaining_seconds": 82243.94477701187,
+          "total_remaining_seconds": 85843.94477701187
+        },
+        "elapsed_seconds": 429.48252647183836,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2354966528,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 2016,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 2016,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "GRADIENT",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_gradient_20261004T151218358323Z",
+        "source_sha": "ef9f0ddc10b96fdeaf56c659f2c7c1726c963c6a",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:12:20.889964+00:00",
+          "observed_monotonic": 1051735.750830302,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1040.1679587364197,
+          "heavy_remaining_seconds": 81759.83204126358,
+          "total_remaining_seconds": 85359.83204126358
+        },
+        "elapsed_seconds": 25.43660477711819,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2420203520,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 12,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 12,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_pre_pre02",
+        "source_sha": "ef9f0ddc10b96fdeaf56c659f2c7c1726c963c6a",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:14:12.222222+00:00",
+          "observed_monotonic": 1051847.083089152,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1151.5002174377441,
+          "heavy_remaining_seconds": 81648.49978256226,
+          "total_remaining_seconds": 85248.49978256226
+        },
+        "elapsed_seconds": 22.397374845808372,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 485994496,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_NR",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_train_nr_20261004T151448094661Z",
+        "source_sha": "41b6eda61c654d9a9abc658948778a95066ffb41",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:14:50.622440+00:00",
+          "observed_monotonic": 1051885.483307004,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1189.9004352092743,
+          "heavy_remaining_seconds": 81610.09956479073,
+          "total_remaining_seconds": 85210.09956479073
+        },
+        "elapsed_seconds": 120.02857625600882,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2436718592,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 532,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 532,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_NE",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_train_ne_20261004T151652218661Z",
+        "source_sha": "41b6eda61c654d9a9abc658948778a95066ffb41",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:16:54.739918+00:00",
+          "observed_monotonic": 1052009.600784579,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1314.0179126262665,
+          "heavy_remaining_seconds": 81485.98208737373,
+          "total_remaining_seconds": 85085.98208737373
+        },
+        "elapsed_seconds": 29.558938937960193,
+        "classification": "RESOURCE_CONTROLLED_STOP",
+        "exit_code": -9,
+        "descendants_cleared": true,
+        "peak_bytes": 2454601728,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 34,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 36,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_pre_pre03",
+        "source_sha": "41b6eda61c654d9a9abc658948778a95066ffb41",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:20:50.142123+00:00",
+          "observed_monotonic": 1052245.002989918,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1549.4201180934906,
+          "heavy_remaining_seconds": 81250.57988190651,
+          "total_remaining_seconds": 84850.57988190651
+        },
+        "elapsed_seconds": 23.214890881907195,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 482107392,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_NE",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_train_ne_resume_20261004T152204503395Z",
+        "source_sha": "e137607b8f415be34927faf2f57d656621f105e9",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:22:07.092378+00:00",
+          "observed_monotonic": 1052321.953244444,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1626.3703727722168,
+          "heavy_remaining_seconds": 81173.62962722778,
+          "total_remaining_seconds": 84773.62962722778
+        },
+        "elapsed_seconds": 304.9910106079187,
+        "classification": "POST_ACTOR_METADATA_SERIALIZATION_FAILURE",
+        "exit_code": null,
+        "descendants_cleared": true,
+        "peak_bytes": 2476052480,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 504,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 504,
+            "B_actions": 0
+          }
+        },
+        "elapsed_seconds_lower": 116.96001048013568,
+        "elapsed_seconds_semantics": "conservative settlement upper including observation interval; exact supervisor total and exit code unknown"
+      },
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_pre_pre04",
+        "source_sha": "e137607b8f415be34927faf2f57d656621f105e9",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:27:18.892786+00:00",
+          "observed_monotonic": 1052633.753652623,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1938.170780658722,
+          "heavy_remaining_seconds": 80861.82921934128,
+          "total_remaining_seconds": 84461.82921934128
+        },
+        "elapsed_seconds": 23.74191932287067,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 478900224,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_RL",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_train_rl_20261004T153033727993Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:30:36.396307+00:00",
+          "observed_monotonic": 1052831.257173519,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2135.6743018627167,
+          "heavy_remaining_seconds": 80664.32569813728,
+          "total_remaining_seconds": 84264.32569813728
+        },
+        "elapsed_seconds": 129.97152415290475,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2473226240,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 532,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 532,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_CL",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_train_cl_20261004T153305504825Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:33:08.326654+00:00",
+          "observed_monotonic": 1052983.187521499,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2287.604649543762,
+          "heavy_remaining_seconds": 80512.39535045624,
+          "total_remaining_seconds": 84112.39535045624
+        },
+        "elapsed_seconds": 133.8712910329923,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2493480960,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 532,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 532,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_R0",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_eval_r0_20261004T153740574103Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:37:43.312654+00:00",
+          "observed_monotonic": 1053258.173520741,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2562.5906488895416,
+          "heavy_remaining_seconds": 80237.40935111046,
+          "total_remaining_seconds": 83837.40935111046
+        },
+        "elapsed_seconds": 151.77678112289868,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2276847616,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_NR",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_eval_nr_20261004T154016903643Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:40:19.655076+00:00",
+          "observed_monotonic": 1053414.515942438,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2718.9330706596375,
+          "heavy_remaining_seconds": 80081.06692934036,
+          "total_remaining_seconds": 83681.06692934036
+        },
+        "elapsed_seconds": 154.91936170007102,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2307964928,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_NE",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_eval_ne_20261004T154256373816Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:42:59.099703+00:00",
+          "observed_monotonic": 1053573.960569346,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2878.3776977062225,
+          "heavy_remaining_seconds": 79921.62230229378,
+          "total_remaining_seconds": 83521.62230229378
+        },
+        "elapsed_seconds": 153.2768494640477,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2307702784,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_RL",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_eval_rl_20261004T154534183818Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:45:36.874380+00:00",
+          "observed_monotonic": 1053731.73524718,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3036.1523752212524,
+          "heavy_remaining_seconds": 79763.84762477875,
+          "total_remaining_seconds": 83363.84762477875
+        },
+        "elapsed_seconds": 154.01699283602647,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2306285568,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_CL",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_eval_cl_20261004T154812809759Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:48:15.648995+00:00",
+          "observed_monotonic": 1053890.50986162,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3194.926990032196,
+          "heavy_remaining_seconds": 79605.0730099678,
+          "total_remaining_seconds": 83205.0730099678
+        },
+        "elapsed_seconds": 113.33775486191735,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2312450048,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "CHECK",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_check_20261004T155037967239Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:50:40.732215+00:00",
+          "observed_monotonic": 1054035.59308163,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3340.010209798813,
+          "heavy_remaining_seconds": 79459.98979020119,
+          "total_remaining_seconds": 83059.98979020119
+        },
+        "elapsed_seconds": 45.9345602740068,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2272272384,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 40,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 40,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "DIAGNOSTIC",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v44_diagnostic_20261004T155128616653Z",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:51:31.485670+00:00",
+          "observed_monotonic": 1054086.346536753,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3390.763664960861,
+          "heavy_remaining_seconds": 79409.23633503914,
+          "total_remaining_seconds": 83009.23633503914
+        },
+        "elapsed_seconds": 8.086718123173341,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 339398656,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_collect01",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:52:49.048846+00:00",
+          "observed_monotonic": 1054163.90971308,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3468.32684135437,
+          "heavy_remaining_seconds": 79331.67315864563,
+          "total_remaining_seconds": 82931.67315864563
+        },
+        "elapsed_seconds": 10.60470419912599,
+        "classification": "WORKER_FAILED",
+        "exit_code": 1,
+        "descendants_cleared": true,
+        "peak_bytes": 89325568,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_collect02",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:53:27.338587+00:00",
+          "observed_monotonic": 1054202.199454271,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3506.6165823936462,
+          "heavy_remaining_seconds": 79293.38341760635,
+          "total_remaining_seconds": 82893.38341760635
+        },
+        "elapsed_seconds": 15.30495658586733,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 93233152,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_report01",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:54:49.354737+00:00",
+          "observed_monotonic": 1054284.2156036,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3588.6327319145203,
+          "heavy_remaining_seconds": 79211.36726808548,
+          "total_remaining_seconds": 82811.36726808548
+        },
+        "elapsed_seconds": 3.0816799928434193,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 70639616,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_docs01",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:54:57.310539+00:00",
+          "observed_monotonic": 1054292.171405467,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3596.588533639908,
+          "heavy_remaining_seconds": 79203.41146636009,
+          "total_remaining_seconds": 82803.41146636009
+        },
+        "elapsed_seconds": 3.5079115480184555,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 65589248,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_collect03",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:56:58.920563+00:00",
+          "observed_monotonic": 1054413.781429262,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3718.19855761528,
+          "heavy_remaining_seconds": 79081.80144238472,
+          "total_remaining_seconds": 82681.80144238472
+        },
+        "elapsed_seconds": 14.361899980111048,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 91529216,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_report02",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:57:18.120277+00:00",
+          "observed_monotonic": 1054432.981143828,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3737.398272037506,
+          "heavy_remaining_seconds": 79062.6017279625,
+          "total_remaining_seconds": 82662.6017279625
+        },
+        "elapsed_seconds": 3.087770165875554,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 70283264,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/aux_post_docs02",
+        "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+        "before_clock": {
+          "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+          "start_utc_seconds": 1791125700.722005,
+          "start_monotonic": 1050695.58288696,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+          "first_python_monotonic": 1050695.766951393,
+          "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+          "label": "V44",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "observed_utc": "2026-10-04T15:57:26.071286+00:00",
+          "observed_monotonic": 1054440.93215341,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3745.3492815494537,
+          "heavy_remaining_seconds": 79054.65071845055,
+          "total_remaining_seconds": 82654.65071845055
+        },
+        "elapsed_seconds": 3.4512804558034986,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 65179648,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      }
+    ],
+    "active": null,
+    "closed": true,
+    "actor_wall_seconds": 0.0,
+    "numerical_counts_total": {
+      "upper": {
+        "actions": 7046,
+        "B_actions": 0
+      },
+      "completed": {
+        "actions": 7044,
+        "B_actions": 0
+      }
+    },
+    "closure": {
+      "classification": "REAL_TRAINING_COMPLETE_STRICT_ALGEBRA_NEGATIVE",
+      "clock": {
+        "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+        "start_utc_seconds": 1791125700.722005,
+        "start_monotonic": 1050695.58288696,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+        "first_python_monotonic": 1050695.766951393,
+        "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+        "branch": "task42_neural_coarse_inverse",
+        "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+        "label": "V44",
+        "total_limit_seconds": 86400,
+        "heavy_limit_seconds": 82800,
+        "total_loaded_seconds": 7200,
+        "learning_seconds": 5400,
+        "probe_seconds": 90,
+        "cleanup_reserve_seconds": 180,
+        "observed_utc": "2026-10-04T15:59:30.389984+00:00",
+        "observed_monotonic": 1054565.250850866,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 3869.667979001999,
+        "heavy_remaining_seconds": 78930.332020998,
+        "total_remaining_seconds": 82530.332020998
+      },
+      "paid_seconds_lower": 1961.0021774845663,
+      "budget_charge_upper_seconds": 2149.0331776123494,
+      "future_actor_or_training_reentry": false,
+      "all_run_descendants_cleared": true
+    }
+  },
+  "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+  "historical_windows_reopened": false,
+  "all_actors_cleared": true,
+  "closure": {
+    "classification": "REAL_TRAINING_COMPLETE_STRICT_ALGEBRA_NEGATIVE",
+    "clock": {
+      "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+      "start_utc_seconds": 1791125700.722005,
+      "start_monotonic": 1050695.58288696,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+      "first_python_monotonic": 1050695.766951393,
+      "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+      "branch": "task42_neural_coarse_inverse",
+      "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+      "label": "V44",
+      "total_limit_seconds": 86400,
+      "heavy_limit_seconds": 82800,
+      "total_loaded_seconds": 7200,
+      "learning_seconds": 5400,
+      "probe_seconds": 90,
+      "cleanup_reserve_seconds": 180,
+      "observed_utc": "2026-10-04T15:59:30.389984+00:00",
+      "observed_monotonic": 1054565.250850866,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 3869.667979001999,
+      "heavy_remaining_seconds": 78930.332020998,
+      "total_remaining_seconds": 82530.332020998
+    },
+    "paid_seconds_lower": 1961.0021774845663,
+    "budget_charge_upper_seconds": 2149.0331776123494,
+    "future_actor_or_training_reentry": false,
+    "all_run_descendants_cleared": true
+  },
+  "small_final_settlement_seconds_so_far": 0.05698539293371141
+}

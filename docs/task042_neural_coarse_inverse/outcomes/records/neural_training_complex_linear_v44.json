@@ -1,0 +1,250 @@
+{
+  "status": "WEIGHTS_FROZEN",
+  "route": "CL-E",
+  "initial_parameter_hash": "7da0dd45b989d4663ed5cc59dafae014f22c4c67dbc5bbfd06e651fed352244f",
+  "selected": {
+    "update": 128,
+    "qr": [
+      0.8701937716966457,
+      0.873990798097725,
+      0.7467378717997094,
+      0.7374548541209704
+    ],
+    "qe": [
+      1.007378241560384,
+      0.9955317438424834,
+      0.910040571833954,
+      0.9102410096154455
+    ],
+    "median_qr": 0.8084658217481775,
+    "median_qe": 0.9528863767289645,
+    "max_qe": 1.007378241560384,
+    "receipt": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_128.pt",
+      "sha256": "5bd5e82965247d341edce9081dff8928c48fc983778965ab879e05c70667f277",
+      "committed": true
+    }
+  },
+  "all_checkpoints": [
+    {
+      "update": 0,
+      "qr": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "qe": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "median_qr": 1.0,
+      "median_qe": 1.0,
+      "max_qe": 1.0,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_0.pt",
+        "sha256": "0d47f392ab7fb14312ab11bf7ff3445ccaced4d68dbaf4a156ae49d40ee43ed3",
+        "committed": true
+      }
+    },
+    {
+      "update": 16,
+      "qr": [
+        0.9356793293368847,
+        0.9531514839226725,
+        0.8116731472834668,
+        0.7911559184796625
+      ],
+      "qe": [
+        1.0020267839545247,
+        1.0028554687992541,
+        0.9878506268838424,
+        0.9865658146125317
+      ],
+      "median_qr": 0.8736762383101757,
+      "median_qe": 0.9949387054191836,
+      "max_qe": 1.0028554687992541,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_16.pt",
+        "sha256": "6b1fa3e86031b60abcf0c3ee20ef057d40189ac75c706977be989953ff22ebd7",
+        "committed": true
+      }
+    },
+    {
+      "update": 32,
+      "qr": [
+        0.9035940743654994,
+        0.9079041014244715,
+        0.7546801578641743,
+        0.7347649432055791
+      ],
+      "qe": [
+        1.0019287739040055,
+        0.9978842405960026,
+        0.9674768339941727,
+        0.966278619745001
+      ],
+      "median_qr": 0.8291371161148369,
+      "median_qe": 0.9826805372950876,
+      "max_qe": 1.0019287739040055,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_32.pt",
+        "sha256": "59c3e001cc3ab37205d010913056b699bc1a922d42738910309702e2e4985fba",
+        "committed": true
+      }
+    },
+    {
+      "update": 64,
+      "qr": [
+        0.8723882959952067,
+        0.876358116568717,
+        0.7324053841382505,
+        0.7230264510171992
+      ],
+      "qe": [
+        1.0057478903379782,
+        0.9986890940082113,
+        0.9107287145507863,
+        0.9090019866865645
+      ],
+      "median_qr": 0.8023968400667286,
+      "median_qe": 0.9547089042794987,
+      "max_qe": 1.0057478903379782,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_64.pt",
+        "sha256": "cd7495db22278dbf9f20a59fb3becee90e74d4e44b2cb50cec984120ad9cea9c",
+        "committed": true
+      }
+    },
+    {
+      "update": 128,
+      "qr": [
+        0.8701937716966457,
+        0.873990798097725,
+        0.7467378717997094,
+        0.7374548541209704
+      ],
+      "qe": [
+        1.007378241560384,
+        0.9955317438424834,
+        0.910040571833954,
+        0.9102410096154455
+      ],
+      "median_qr": 0.8084658217481775,
+      "median_qe": 0.9528863767289645,
+      "max_qe": 1.007378241560384,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_128.pt",
+        "sha256": "5bd5e82965247d341edce9081dff8928c48fc983778965ab879e05c70667f277",
+        "committed": true
+      }
+    }
+  ],
+  "training_updates": 128,
+  "prior_complete_updates": 0,
+  "new_complete_updates": 128,
+  "resume_manifest": null,
+  "stop_reason": "FIXED_128_UPDATES",
+  "parameter_group_changes_last": {
+    "encoder": 2.1120882546794806,
+    "message": 1.3648340333991265,
+    "decoder": 2.614121147190393
+  },
+  "real_parameters": 74240,
+  "heldout_reads": 0,
+  "labels_reads": "train/validation only",
+  "history_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/training_history.jsonl",
+  "history_sha256": "c23419212c7239ad38bf5b9cad22f1071a8ba197e54ed377133df990e5628dd0",
+  "actual_action_calls": {
+    "A": 276,
+    "AH": 256
+  },
+  "environment": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "Torch": "2.7.1+cpu",
+    "NumPy": "1.26.4",
+    "intra": 1,
+    "interop": 1,
+    "CUDA_available": false,
+    "GPU": 0,
+    "DataLoader": 0,
+    "affinity": [
+      1
+    ],
+    "loaded_threadpools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "symbol": "openblas_get_num_threads64_",
+        "threads": 1
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+        "symbol": "omp_get_max_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ]
+  },
+  "numerical_counts": {
+    "completed": {
+      "actions": 532,
+      "B_actions": 0
+    },
+    "upper": {
+      "actions": 532,
+      "B_actions": 0
+    }
+  },
+  "actual_math_hashes": {
+    "scripts/run_case.py": "bcc5578f23cdfb18e4dc8ecd403b4fef795b5f068acef15bfee88ab9d0fdde88",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "b6019834ff665f87d4ac4e61080d83d7aa9a4dd0e1e5775fd2abe0ddd3a5edea",
+    "src/runners/port_preparation.py": "9ec4cb0eb96bae073c93057a544a45e0872daaf7a6b46aed526da2741f14a9fe",
+    "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_late_error_scope.py": "f569aacdd0ac1c3b10a95c8e32075d601547e95c02e4babf763b87ee5dd18017",
+    "src/solvers/neighborhood_late_error.py": "a59bb8ae7be0facc157815dec3c7a7bdd4983ae5ec29a69ee8af61a840545924",
+    "src/solvers/neighborhood_late_error_study.py": "3d718f30fdb46cd5d452aa4050c7dcc3b540d4542d63e57d9435fa4bb6b64d3f",
+    "src/solvers/neighborhood_training_transaction.py": "dfb0d83558442824daafc36ab2f84a39e243540ff2481f79e6ee5f9cc2e24f83",
+    "src/test/test_neighborhood_late_error.py": "1b90e76db24114e1b47c8d2d367fff99f5aeb3ca25d9de9d177161b0fd3a0910",
+    "benchmarks/qualify_neighborhood_late_error.py": "be7c4ea2f8c83ae85a57114ffb805262273ad5e2cd99eb5f120677c67c21a7f6",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "92508a0ad65972010791ea9f59ab8ef94c46152ea886b704938a72d018629118",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "benchmarks/check_neighborhood_late_error.py": "1be964e67f2b79a8a01631cda8eca2dfcd709e801f550ab1702fca8c1ea2f047",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json": "c1cf1034964305a87c0ac42627f7067e6fbf4a3328feedeeeba9feb4dd832b14"
+  },
+  "full_coefficients_not_trace_recovery": true,
+  "stage": "TRAIN_CL",
+  "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+  "elapsed_worker_seconds": 129.66600774321705,
+  "input_sha256": "deb405c1a1ccbd60ba140ec2286477e1726740697112e82c934d9e5a8cfe4cad",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

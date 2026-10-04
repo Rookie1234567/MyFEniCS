@@ -1,0 +1,168 @@
+{
+  "routes": {
+    "R0": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.5125427452576793e-08,
+      "rho_max": 3.986645040398054e-08,
+      "eta_min": 0.00033593363271022716,
+      "eta_max": 0.0005311309216545876,
+      "Arnoldi_min": 128,
+      "Arnoldi_max": 128,
+      "independent_group_solver_seconds": 244.58883139165118,
+      "prefix_seconds": 111.90633175498806,
+      "inference_seconds": 0.000791286351159215,
+      "per_route_process_tree_peak": 2276847616,
+      "family": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.00042434366949889094,
+          "prefix_eta_median": 0.08029668111967714,
+          "corrected_eta_median": 0.08029668111967714,
+          "qr_median": 1.0,
+          "qe_median": 1.0
+        },
+        "local_uniform": {
+          "eta_median": 0.0004540275956245734,
+          "prefix_eta_median": 0.06275680655907663,
+          "corrected_eta_median": 0.06275680655907663,
+          "qr_median": 1.0,
+          "qe_median": 1.0
+        }
+      }
+    },
+    "NN-R": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.490087854849464e-08,
+      "rho_max": 4.215064100483685e-08,
+      "eta_min": 0.00036741318178547564,
+      "eta_max": 0.0005308487408095847,
+      "Arnoldi_min": 128,
+      "Arnoldi_max": 128,
+      "independent_group_solver_seconds": 247.68601089483127,
+      "prefix_seconds": 111.90633175498806,
+      "inference_seconds": 0.13970926264300942,
+      "per_route_process_tree_peak": 2307964928,
+      "family": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.0004346397732506209,
+          "prefix_eta_median": 0.08029668111967714,
+          "corrected_eta_median": 0.08034724098247897,
+          "qr_median": 0.743299484527696,
+          "qe_median": 1.0006285403076567
+        },
+        "local_uniform": {
+          "eta_median": 0.0004614588374769633,
+          "prefix_eta_median": 0.06275680655907663,
+          "corrected_eta_median": 0.0630493405691106,
+          "qr_median": 0.8779972961648617,
+          "qe_median": 1.0077351900564562
+        }
+      }
+    },
+    "NN-E": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.6517710457193428e-08,
+      "rho_max": 4.215432377885096e-08,
+      "eta_min": 0.0003643483428564514,
+      "eta_max": 0.0005497722015072371,
+      "Arnoldi_min": 128,
+      "Arnoldi_max": 128,
+      "independent_group_solver_seconds": 245.30586776975542,
+      "prefix_seconds": 111.90633175498806,
+      "inference_seconds": 0.1485031119082123,
+      "per_route_process_tree_peak": 2307702784,
+      "family": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.0004410591304497544,
+          "prefix_eta_median": 0.08029668111967714,
+          "corrected_eta_median": 0.07518512786246634,
+          "qr_median": 0.7708570496091134,
+          "qe_median": 0.936327471154073
+        },
+        "local_uniform": {
+          "eta_median": 0.0004650233623260493,
+          "prefix_eta_median": 0.06275680655907663,
+          "corrected_eta_median": 0.06371577911163911,
+          "qr_median": 0.8931758974475619,
+          "qe_median": 1.016372234447448
+        }
+      }
+    },
+    "RL-E": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.6510878882257973e-08,
+      "rho_max": 4.215243340218397e-08,
+      "eta_min": 0.00036432984969316163,
+      "eta_max": 0.0005496776936310481,
+      "Arnoldi_min": 128,
+      "Arnoldi_max": 128,
+      "independent_group_solver_seconds": 246.0411107589025,
+      "prefix_seconds": 111.90633175498806,
+      "inference_seconds": 0.14685989869758487,
+      "per_route_process_tree_peak": 2306285568,
+      "family": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.00044099293385141815,
+          "prefix_eta_median": 0.08029668111967714,
+          "corrected_eta_median": 0.075191100202158,
+          "qr_median": 0.7709119664392597,
+          "qe_median": 0.9364018805388332
+        },
+        "local_uniform": {
+          "eta_median": 0.0004650829657384646,
+          "prefix_eta_median": 0.06275680655907663,
+          "corrected_eta_median": 0.06371626690434835,
+          "qr_median": 0.8931997617125575,
+          "qe_median": 1.0163977021412296
+        }
+      }
+    },
+    "CL-E": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.6103899543684116e-08,
+      "rho_max": 4.1466309517141584e-08,
+      "eta_min": 0.0003642299581641819,
+      "eta_max": 0.0005170740579537186,
+      "Arnoldi_min": 128,
+      "Arnoldi_max": 128,
+      "independent_group_solver_seconds": 207.05173433199525,
+      "prefix_seconds": 111.90633175498806,
+      "inference_seconds": 0.10190216870978475,
+      "per_route_process_tree_peak": 2312450048,
+      "family": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.0004027581227340193,
+          "prefix_eta_median": 0.08029668111967714,
+          "corrected_eta_median": 0.0732887108064946,
+          "qr_median": 0.7483232823499744,
+          "qe_median": 0.9098642238366189
+        },
+        "local_uniform": {
+          "eta_median": 0.00044356939959127315,
+          "prefix_eta_median": 0.06275680655907663,
+          "corrected_eta_median": 0.06298873280593874,
+          "qr_median": 0.862183423736357,
+          "qe_median": 1.014737851172966
+        }
+      }
+    }
+  },
+  "full_qualified_routes": [],
+  "NN20": "NOT_DEMONSTRATED",
+  "conditioned_independent_timing": "NOT_RUN_NO_MATCHED_ALL_EIGHT_QUALIFIED_PAIR",
+  "comparison_scope": "same frozen operator/RHS, total128 Arnoldi; all shared-workstation, no contention-free speed claim",
+  "qualification_route": "CLOSE_FIXED_A_TWO_HOP_WIDTH32_QUALIFICATION",
+  "next_only": "唯一下一建议：在新合同中只比较一种包含远距离残差信息、并扩大单元内部输出表达能力的可扩展神经表示及同信息线性控制；先以本轮封存误差诊断确定所需容量，不复用它们训练。本批不实现该网络，不再为同一两跳宽32表示追加初始化、训练步或GMRES步数。",
+  "hidden_training": true,
+  "reference_training": "V44 train/validation manufactured labels explicitly authorized; heldout sealed until independent CHECK",
+  "full_target": "NOT_QUALIFIED"
+}

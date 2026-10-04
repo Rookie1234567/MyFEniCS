@@ -1,0 +1,253 @@
+{
+  "status": "WEIGHTS_FROZEN",
+  "route": "NN-E",
+  "initial_parameter_hash": "95bf7f67dccf40d85bedcc0122f0b9e3f8060c6b3cb96d1afa30e185c6d4a441",
+  "selected": {
+    "update": 128,
+    "qr": [
+      0.9002970028559568,
+      0.9105392740931347,
+      0.7310188261376726,
+      0.7146588544710173
+    ],
+    "qe": [
+      1.011756058527425,
+      0.9992486249800009,
+      0.9042659457245492,
+      0.9039170915042367
+    ],
+    "median_qr": 0.8156579144968147,
+    "median_qe": 0.9517572853522751,
+    "max_qe": 1.011756058527425,
+    "receipt": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/checkpoint_128.pt",
+      "sha256": "b82749bda336f234b9497bdba932b5fcee76169bb900a71b6d83b6fac9e4f34e",
+      "committed": true
+    }
+  },
+  "all_checkpoints": [
+    {
+      "update": 0,
+      "qr": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "qe": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "median_qr": 1.0,
+      "median_qe": 1.0,
+      "max_qe": 1.0,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/checkpoint_0.pt",
+        "sha256": "608b511c166b3e33681a8333dbf6835ef7ce2978173da4821f6312bd9bdd3ea8",
+        "committed": true
+      }
+    },
+    {
+      "update": 16,
+      "qr": [
+        0.9481567106962732,
+        0.9515222723262285,
+        0.8444401790397109,
+        0.8282201200376985
+      ],
+      "qe": [
+        1.0012275983676584,
+        1.004157768642625,
+        0.9945583631812912,
+        0.9946225215193162
+      ],
+      "median_qr": 0.896298444867992,
+      "median_qe": 0.9979250599434872,
+      "max_qe": 1.004157768642625,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/checkpoint_16.pt",
+        "sha256": "3fe8a2689d2d6cf692d8dc11d766b3e1d68f755747f64b51e23e80e5431ad904",
+        "committed": true
+      }
+    },
+    {
+      "update": 32,
+      "qr": [
+        0.9319477515152409,
+        0.9368481387995363,
+        0.7823719054097643,
+        0.7612269652452213
+      ],
+      "qe": [
+        1.001796407428443,
+        1.004850270221506,
+        0.9768433508458786,
+        0.9778904911924103
+      ],
+      "median_qr": 0.8571598284625026,
+      "median_qe": 0.9898434493104267,
+      "max_qe": 1.004850270221506,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/checkpoint_32.pt",
+        "sha256": "67162d574141805ba56817154e69ce709e2db91e77c2a03b3c99aa053fd47e10",
+        "committed": true
+      }
+    },
+    {
+      "update": 64,
+      "qr": [
+        0.9111916502560656,
+        0.9258672414252934,
+        0.7447365556439873,
+        0.7228980313897446
+      ],
+      "qe": [
+        1.004959430758378,
+        0.9968500134360762,
+        0.9217130385252786,
+        0.9230166477773372
+      ],
+      "median_qr": 0.8279641029500264,
+      "median_qe": 0.9599333306067066,
+      "max_qe": 1.004959430758378,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/checkpoint_64.pt",
+        "sha256": "8f8be4e5cb5cf4defb151cd2d54d0818f72a717352345477353ddf2b0fffaa2f",
+        "committed": true
+      }
+    },
+    {
+      "update": 128,
+      "qr": [
+        0.9002970028559568,
+        0.9105392740931347,
+        0.7310188261376726,
+        0.7146588544710173
+      ],
+      "qe": [
+        1.011756058527425,
+        0.9992486249800009,
+        0.9042659457245492,
+        0.9039170915042367
+      ],
+      "median_qr": 0.8156579144968147,
+      "median_qe": 0.9517572853522751,
+      "max_qe": 1.011756058527425,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/checkpoint_128.pt",
+        "sha256": "b82749bda336f234b9497bdba932b5fcee76169bb900a71b6d83b6fac9e4f34e",
+        "committed": true
+      }
+    }
+  ],
+  "training_updates": 128,
+  "prior_complete_updates": 7,
+  "new_complete_updates": 121,
+  "resume_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v44/train_NE_resume.json",
+    "sha256": "e6f9571cd50cba6c636eaa31eac7ae5c5c1b2119815ce6812cacdaad3eb77200"
+  },
+  "stop_reason": "FIXED_128_UPDATES",
+  "parameter_group_changes_last": {
+    "encoder": 2.590830335215465,
+    "message": 0.8831305224812326,
+    "decoder": 3.6721270026555013
+  },
+  "real_parameters": 70144,
+  "heldout_reads": 0,
+  "labels_reads": "train/validation only",
+  "history_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_ne_resume_20261004T152204503395Z/training_history.jsonl",
+  "history_sha256": "6120df46a62adf6f987f44b1f5b1d494219b1b1a2c74ebea88cb0112f9303b20",
+  "actual_action_calls": {
+    "A": 262,
+    "AH": 242
+  },
+  "environment": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "Torch": "2.7.1+cpu",
+    "NumPy": "1.26.4",
+    "intra": 1,
+    "interop": 1,
+    "CUDA_available": false,
+    "GPU": 0,
+    "DataLoader": 0,
+    "affinity": [
+      1
+    ],
+    "loaded_threadpools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "symbol": "openblas_get_num_threads64_",
+        "threads": 1
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+        "symbol": "omp_get_max_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ]
+  },
+  "numerical_counts": {
+    "completed": {
+      "actions": 504,
+      "B_actions": 0
+    },
+    "upper": {
+      "actions": 504,
+      "B_actions": 0
+    }
+  },
+  "actual_math_hashes": {
+    "scripts/run_case.py": "bcc5578f23cdfb18e4dc8ecd403b4fef795b5f068acef15bfee88ab9d0fdde88",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "b6019834ff665f87d4ac4e61080d83d7aa9a4dd0e1e5775fd2abe0ddd3a5edea",
+    "src/runners/port_preparation.py": "90c06586d129bd12384db9d670ebbe5266b39eede9553efa9adbcdd269413c36",
+    "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_late_error_scope.py": "f569aacdd0ac1c3b10a95c8e32075d601547e95c02e4babf763b87ee5dd18017",
+    "src/solvers/neighborhood_late_error.py": "a59bb8ae7be0facc157815dec3c7a7bdd4983ae5ec29a69ee8af61a840545924",
+    "src/solvers/neighborhood_late_error_study.py": "3d718f30fdb46cd5d452aa4050c7dcc3b540d4542d63e57d9435fa4bb6b64d3f",
+    "src/solvers/neighborhood_training_transaction.py": "dfb0d83558442824daafc36ab2f84a39e243540ff2481f79e6ee5f9cc2e24f83",
+    "src/test/test_neighborhood_late_error.py": "9241b715f49f2dc27ec6196810243d4cb8bfac27ad4796ff22fe9dc9dabe7d17",
+    "benchmarks/qualify_neighborhood_late_error.py": "be7c4ea2f8c83ae85a57114ffb805262273ad5e2cd99eb5f120677c67c21a7f6",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "92508a0ad65972010791ea9f59ab8ef94c46152ea886b704938a72d018629118",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "benchmarks/check_neighborhood_late_error.py": "1be964e67f2b79a8a01631cda8eca2dfcd709e801f550ab1702fca8c1ea2f047",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json": "c1cf1034964305a87c0ac42627f7067e6fbf4a3328feedeeeba9feb4dd832b14"
+  },
+  "full_coefficients_not_trace_recovery": true,
+  "stage": "TRAIN_NE",
+  "source_sha": "e137607b8f415be34927faf2f57d656621f105e9",
+  "elapsed_worker_seconds": 113.97625334304757,
+  "input_sha256": "ff35dde1102fcfe0b69076efc4c4f0c038fe29ca6769aee4c2bc02ce68fed55d",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

@@ -1,0 +1,43 @@
+{
+  "clock": {
+    "start_utc": "2026-10-04T14:55:00.722005567+00:00",
+    "start_utc_seconds": 1791125700.722005,
+    "start_monotonic": 1050695.58288696,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "first_python_utc": "2026-10-04T14:55:00.906070+00:00",
+    "first_python_monotonic": 1050695.766951393,
+    "monotonic_start_semantics": "conservative earliest shell UTC offset from same first Python clock observation; 0.184064433s subtracted",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+    "label": "V44",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "learning_seconds": 5400,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "observed_utc": "2026-10-04T15:57:08.704075+00:00",
+    "observed_monotonic": 1054423.564943339,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 3727.9820704460144,
+    "heavy_remaining_seconds": 79072.01792955399,
+    "total_remaining_seconds": 82672.01792955399
+  },
+  "seconds": 9.403236089041457,
+  "raw_files": 381,
+  "array_files": 95,
+  "all_member_hashes_verified": true,
+  "source": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+  "collector": {
+    "path": "tmp/task042/v44/collect.py",
+    "sha256": "d8be6264de4c8b66aec5f8a6ba751002233b8b179ac34652dbfd89485fcfe54e",
+    "bytes": 23767
+  },
+  "storage_with_256MiB_reserve": {
+    "new_bytes": 540136743,
+    "task_artifact_bytes": 18636263333,
+    "free_bytes": 3352681525248,
+    "reserve_bytes": 268435456
+  }
+}

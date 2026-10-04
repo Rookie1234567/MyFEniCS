@@ -1,0 +1,86 @@
+{
+  "snapshots": [
+    {
+      "count": 50,
+      "junit": {
+        "path": "tmp/task042/v44/aux_pre_pre01/pytest.xml",
+        "sha256": "ba8aa1ebdd3e2eecd33cb86761a97872e7b2adf623689281f7b5162aa72e70cb",
+        "bytes": 6733
+      },
+      "source_sha": "5fa04c6c517e019107bd4a9ec7dacd8a1e0dd676",
+      "failures": []
+    },
+    {
+      "count": 50,
+      "junit": {
+        "path": "tmp/task042/v44/aux_pre_pre02/pytest.xml",
+        "sha256": "e668d9a5a3f64b599e5907196d25bc8bd5ce3e18972edb231fc86d38901d8c70",
+        "bytes": 6733
+      },
+      "source_sha": "ef9f0ddc10b96fdeaf56c659f2c7c1726c963c6a",
+      "failures": []
+    },
+    {
+      "count": 52,
+      "junit": {
+        "path": "tmp/task042/v44/aux_pre_pre03/pytest.xml",
+        "sha256": "4f0f381116e1a1e8b989a428ac9a4a88283d815debf9db2cfa116e1541dd10a4",
+        "bytes": 7003
+      },
+      "source_sha": "41b6eda61c654d9a9abc658948778a95066ffb41",
+      "failures": []
+    },
+    {
+      "count": 53,
+      "junit": {
+        "path": "tmp/task042/v44/aux_pre_pre04/pytest.xml",
+        "sha256": "1111913813417478fd8ede966eadc8f5c1cfff9f6ba38e5469ae8822d1a40b4b",
+        "bytes": 7136
+      },
+      "source_sha": "e137607b8f415be34927faf2f57d656621f105e9",
+      "failures": []
+    }
+  ],
+  "final_numerical_wiring": "final targeted qualification and byte hashes, all failures preserved",
+  "actual_new_MPI": [
+    1
+  ],
+  "previous_MPI2_4": "not replayed; V41/V42 only hash-bound dependencies",
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN_UNRELATED_HEAVY_SCOPE",
+  "implementation_hashes": {
+    "scripts/run_case.py": "bcc5578f23cdfb18e4dc8ecd403b4fef795b5f068acef15bfee88ab9d0fdde88",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "b6019834ff665f87d4ac4e61080d83d7aa9a4dd0e1e5775fd2abe0ddd3a5edea",
+    "src/runners/port_preparation.py": "9ec4cb0eb96bae073c93057a544a45e0872daaf7a6b46aed526da2741f14a9fe",
+    "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_late_error_scope.py": "f569aacdd0ac1c3b10a95c8e32075d601547e95c02e4babf763b87ee5dd18017",
+    "src/solvers/neighborhood_late_error.py": "a59bb8ae7be0facc157815dec3c7a7bdd4983ae5ec29a69ee8af61a840545924",
+    "src/solvers/neighborhood_late_error_study.py": "3d718f30fdb46cd5d452aa4050c7dcc3b540d4542d63e57d9435fa4bb6b64d3f",
+    "src/solvers/neighborhood_training_transaction.py": "dfb0d83558442824daafc36ab2f84a39e243540ff2481f79e6ee5f9cc2e24f83",
+    "src/test/test_neighborhood_late_error.py": "1b90e76db24114e1b47c8d2d367fff99f5aeb3ca25d9de9d177161b0fd3a0910",
+    "benchmarks/qualify_neighborhood_late_error.py": "be7c4ea2f8c83ae85a57114ffb805262273ad5e2cd99eb5f120677c67c21a7f6",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "92508a0ad65972010791ea9f59ab8ef94c46152ea886b704938a72d018629118",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "benchmarks/check_neighborhood_late_error.py": "1be964e67f2b79a8a01631cda8eca2dfcd709e801f550ab1702fca8c1ea2f047",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json": "c1cf1034964305a87c0ac42627f7067e6fbf4a3328feedeeeba9feb4dd832b14"
+  },
+  "qualified_record": {
+    "path": "tmp/task042/v44/qualification.json",
+    "sha256": "c55c01dac3b17e5863c620ca3bd13048b18cfa986ec8107d15ddc43e24fc846b",
+    "bytes": 3463
+  }
+}

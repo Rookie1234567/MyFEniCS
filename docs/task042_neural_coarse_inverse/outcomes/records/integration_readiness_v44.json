@@ -1,0 +1,28 @@
+{
+  "finite64hex_original_action": "qualified saved original CSR and AH, same hash/canonical/MPC",
+  "real_neural_training": "four models128 Adam; NN nonlinear, RL real-linear, CL complex-linear",
+  "complete_correctness": {
+    "NN-R": 0,
+    "NN-E": 0,
+    "RL-E": 0,
+    "CL-E": 0,
+    "R0": 0
+  },
+  "old_trace_only_recovery": "A7.591466917360182e-10 and B1.0104485117650333e-10 >1e-10 remain FAIL",
+  "original_size_full_DtN_E_H_curl_ports_R_T_A_Avolume_energy": "NOT_RUN / NOT_QUALIFIED",
+  "two_TB_48h": "NOT_QUALIFIED",
+  "NN20": "NOT_DEMONSTRATED",
+  "new_mesh_JIT_LU_global_QR_target_actions": 0,
+  "finite_CSR_bytes": 971189560,
+  "explicit_adjoint_copy_present": true,
+  "memory_formula": {
+    "real_output_bytes_per_independent_coefficient": 16,
+    "real_hidden_bytes_per_node_per_layer": 256,
+    "training_batch": 2,
+    "message_rounds": 2,
+    "neighbor_index_bytes_per_link": 16
+  },
+  "capacity_is_derived_not_target_measurement": true,
+  "target_graph_vector_action_allocations": 0,
+  "decoder_diagnostic": "transformed coordinate projection only, not eta lower bound or predictive reachability"
+}

@@ -1,0 +1,475 @@
+{
+  "status": "V44_MIXED_FULL_GRADIENT_READY",
+  "passed": true,
+  "checks": [
+    {
+      "kind": "batch1_batch2_mixed_loss_gradient",
+      "gradient_numerator": 1.2590271957274586e-14,
+      "gradient_denominator": 31.140654254803525,
+      "loss_difference": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "mixed_original_VJP_0",
+      "left": -0.09850671442844361,
+      "right": -0.09850671442844328,
+      "operation_denominator": 24465.52155507181,
+      "result_scale": 0.09850671442844361,
+      "relative": 1.3613726020016145e-20,
+      "passed": true
+    },
+    {
+      "kind": "adjacent_vector_FD_0",
+      "passed": true
+    },
+    {
+      "kind": "mixed_original_VJP_1",
+      "left": 0.11861943928723145,
+      "right": 0.11861943928723129,
+      "operation_denominator": 22415.13482117026,
+      "result_scale": 0.11861943928723145,
+      "relative": 7.42950934814315e-21,
+      "passed": true
+    },
+    {
+      "kind": "adjacent_vector_FD_1",
+      "passed": true
+    },
+    {
+      "kind": "mixed_original_VJP_2",
+      "left": -0.1765188175207522,
+      "right": -0.17651881752075174,
+      "operation_denominator": 28267.023206361788,
+      "result_scale": 0.1765188175207522,
+      "relative": 1.669241157871544e-20,
+      "passed": true
+    },
+    {
+      "kind": "adjacent_vector_FD_2",
+      "passed": true
+    },
+    {
+      "kind": "NR_zero_decoder",
+      "passed": true
+    },
+    {
+      "kind": "NR_exact_zero",
+      "passed": true
+    },
+    {
+      "kind": "NE_zero_decoder",
+      "passed": true
+    },
+    {
+      "kind": "NE_exact_zero",
+      "passed": true
+    },
+    {
+      "kind": "RL_zero_decoder",
+      "passed": true
+    },
+    {
+      "kind": "RL_exact_zero",
+      "passed": true
+    },
+    {
+      "kind": "CL_zero_decoder",
+      "passed": true
+    },
+    {
+      "kind": "CL_exact_zero",
+      "passed": true
+    },
+    {
+      "kind": "RL_linearity",
+      "numerator": 2.7086187242173677e-22,
+      "denominator": 3.1978797822898424e-07,
+      "relative": 8.470045494574098e-16,
+      "passed": true
+    },
+    {
+      "kind": "CL_linearity",
+      "numerator": 1.7911146212699573e-21,
+      "denominator": 2.0732158249338535e-06,
+      "relative": 8.639306143281553e-16,
+      "passed": true
+    }
+  ],
+  "FD": [
+    {
+      "direction": 0,
+      "step": 0.0001,
+      "numerator": 4.321410369391603e-18,
+      "denominator": 1.4186273379243192e-07,
+      "relative": 3.046191380827697e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_0_1e-04.npz",
+        "sha256": "3ee0d405e3bb6403fa8f096e872071c33c8d97256e88d7618a6d71d31fec9424",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1db9d403e5792902fc6cffc7980125c3863597cb884b316b912cc05d5234824b"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e8bb14fa2b94fbbb5cdba0d9cda63123fc3e0caf00a7ca35e1346e3b282f11d4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 0,
+      "step": 3e-05,
+      "numerator": 9.282930727197065e-18,
+      "denominator": 1.4186273379243192e-07,
+      "relative": 6.543600619440685e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_0_3e-05.npz",
+        "sha256": "abcd135aca246efd0e225e62d263f7ec82aa25d00128a6d94428f9147070fa49",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "21e5432f3ce287252321f5279ce8027b5f9bc2db5d398895d45b87c3e348cd53"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e8bb14fa2b94fbbb5cdba0d9cda63123fc3e0caf00a7ca35e1346e3b282f11d4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 0,
+      "step": 1e-05,
+      "numerator": 2.85173313828671e-17,
+      "denominator": 1.4186273379243192e-07,
+      "relative": 2.010205966042679e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_0_1e-05.npz",
+        "sha256": "a40aeafb31863e0dac8c286871dbad50e4381c01bff237de6838b9f0a096209b",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0db5d8caee8657c1f8291303995db0c44229d4a125d4cbffb1bb66efa37ebece"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e8bb14fa2b94fbbb5cdba0d9cda63123fc3e0caf00a7ca35e1346e3b282f11d4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 0.0001,
+      "numerator": 4.032029692056253e-18,
+      "denominator": 1.299736160089318e-07,
+      "relative": 3.1021909029438495e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_1_1e-04.npz",
+        "sha256": "c247b3bbd41ce2beaaec64abc8d1286a28eef3143b1543095c49419ced7b23a8",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bfa74b1e126776190713a14ed0e57cb4b6e2c78067e7e1523b19fed45e2a3d9d"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f89e9f56f96fe9a8bbe6de39471de833c706e74cca0cc2aaefe4c0c3ea429825"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 3e-05,
+      "numerator": 9.216013908654428e-18,
+      "denominator": 1.299736160089318e-07,
+      "relative": 7.090680548597726e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_1_3e-05.npz",
+        "sha256": "578cef03808f18f612b196c5f2f30acf57cf90cb8ecd8d9533cc8d3099dbc58c",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "920090f52ec4fffa085aaa281e891485f3570c9ae0f12ddf91d2d24f8e87634a"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f89e9f56f96fe9a8bbe6de39471de833c706e74cca0cc2aaefe4c0c3ea429825"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 1e-05,
+      "numerator": 2.7327360023048515e-17,
+      "denominator": 1.299736160089318e-07,
+      "relative": 2.1025313338339818e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_1_1e-05.npz",
+        "sha256": "44d241abc430d9197a13a83910e586814c734006baec657420f6b3c5616d5210",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5a4f7a371b85d6d5fb5b8988f04dd1962eb06cc5c127dabb279ae28e03e1b33b"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f89e9f56f96fe9a8bbe6de39471de833c706e74cca0cc2aaefe4c0c3ea429825"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 0.0001,
+      "numerator": 1.781842136637804e-18,
+      "denominator": 1.639056489845114e-07,
+      "relative": 1.0871145367333756e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_2_1e-04.npz",
+        "sha256": "9d303b3a518f76469dd2205cec4f36f67be2a48f7b44541a36a0563dfacf3dbf",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4ff883ad631f9f834d7dc78c76831663307e8068542e9b3443a09a3724154550"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6dc2f6f14869a2d5e37274f8cda4105c7b862797de86334a409e0a9ef8840792"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 3e-05,
+      "numerator": 5.992718084671967e-18,
+      "denominator": 1.639056489845114e-07,
+      "relative": 3.6561998453380095e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_2_3e-05.npz",
+        "sha256": "9e74d9b1a194a65eda61b208dfd72d24fe7d7c34e83c2a3fff099b701e54250f",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3e8d13bd1161139b822631af1b66a60672e888102de9169b733805d917a18e86"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6dc2f6f14869a2d5e37274f8cda4105c7b862797de86334a409e0a9ef8840792"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 1e-05,
+      "numerator": 1.7649996559834952e-17,
+      "denominator": 1.639056489845114e-07,
+      "relative": 1.0768388197226091e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_gradient_20261004T151218358323Z/FD_2_1e-05.npz",
+        "sha256": "287cf0fd0fecaee8cf9fcf1f3d1f5708024d9253c5705e00409dcb610e853b06",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7ad74c71bb360d130db77b06a1553517616af9142254700284b3729d3e344a7c"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6dc2f6f14869a2d5e37274f8cda4105c7b862797de86334a409e0a9ef8840792"
+          }
+        }
+      }
+    }
+  ],
+  "loss": 5.6402707879219305,
+  "qr": [
+    8.796047147195813,
+    9.230293001474626
+  ],
+  "qe": [
+    2.4437031956679585,
+    2.091039807349323
+  ],
+  "witness_hash": "ce0d67b7ee367c7d84d10bf521f1e23a7d9874c0a927e05ec532ae5be5e74a57",
+  "heldout_reads": 0,
+  "environment": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "Torch": "2.7.1+cpu",
+    "NumPy": "1.26.4",
+    "intra": 1,
+    "interop": 1,
+    "CUDA_available": false,
+    "GPU": 0,
+    "DataLoader": 0,
+    "affinity": [
+      11
+    ],
+    "loaded_threadpools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "symbol": "openblas_get_num_threads64_",
+        "threads": 1
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+        "symbol": "omp_get_max_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ]
+  },
+  "numerical_counts": {
+    "completed": {
+      "actions": 12,
+      "B_actions": 0
+    },
+    "upper": {
+      "actions": 12,
+      "B_actions": 0
+    }
+  },
+  "actual_math_hashes": {
+    "scripts/run_case.py": "bcc5578f23cdfb18e4dc8ecd403b4fef795b5f068acef15bfee88ab9d0fdde88",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "1057415262c6d844739e06476f455c30c24d9c04a84c25d2f7cd0a8a2388b269",
+    "src/runners/port_preparation.py": "507bb11473ddb557cd5ac08dab22d1bfa365d315596f3e6439bfbd2795b6c7ea",
+    "src/runners/task042_shared.py": "4dbac95a7a341e8c6982e54ea992c413ad4604aa8760c3788833fc70aa5cc94d",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_late_error_scope.py": "b5c4ef2c9c0b4ef0e2b3172903c9c3992b0e8e7c7b49adff9c9cac30d5a0c772",
+    "src/solvers/neighborhood_late_error.py": "3aa16a3b3792813c1ac90b8af13ce3106501843eb07328c819556cefd5744799",
+    "src/solvers/neighborhood_late_error_study.py": "e60dbc81cb93523f4f23453e89ac9e02c43a04fa718ffc9b4133d0c7aed85037",
+    "src/test/test_neighborhood_late_error.py": "a9fef85d2b2d03ae4c95c958978fc56177d7a575f9d0c57400ccea197793c6fb",
+    "benchmarks/qualify_neighborhood_late_error.py": "be7c4ea2f8c83ae85a57114ffb805262273ad5e2cd99eb5f120677c67c21a7f6",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "92508a0ad65972010791ea9f59ab8ef94c46152ea886b704938a72d018629118",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "benchmarks/check_neighborhood_late_error.py": "db083ff656e015c6aeadf10688e6b0f7297678f2b7879ce525bf8db1d67f8627",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json": "c1cf1034964305a87c0ac42627f7067e6fbf4a3328feedeeeba9feb4dd832b14"
+  },
+  "full_coefficients_not_trace_recovery": true,
+  "stage": "GRADIENT",
+  "source_sha": "ef9f0ddc10b96fdeaf56c659f2c7c1726c963c6a",
+  "elapsed_worker_seconds": 22.264586720848456,
+  "input_sha256": "f07d3540ccce62257cc95af903b7f1de70c39a8cc5f00b65cda81140b60e7f15",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}
