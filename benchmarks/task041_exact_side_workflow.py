@@ -4436,6 +4436,7 @@ def _run_task041_balh_candidate_setup(
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
     complex_qr_research: bool = False,
+    capture_modal_solve_trace: bool = False,
     physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -12340,6 +12341,7 @@ def _run_task041_balh_candidate_setup(
             marker_callback=marker_callback,
             use_anderson_modal_inner=use_anderson_modal_inner,
             complex_qr_research=complex_qr_research,
+            capture_modal_solve_trace=capture_modal_solve_trace,
         )
         context_inventory_before = dict(context.inventory)
         marker_callback(
@@ -12487,6 +12489,7 @@ def run_task041_consumer(
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
     complex_qr_research: bool = False,
+    capture_modal_solve_trace: bool = False,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -12518,9 +12521,22 @@ def run_task041_consumer(
         raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
     if not isinstance(complex_qr_research, bool):
         raise Task041ModePrepError("complex_qr_research must be a boolean")
+    if not isinstance(capture_modal_solve_trace, bool):
+        raise Task041ModePrepError("capture_modal_solve_trace must be a boolean")
     if complex_qr_research and not use_anderson_modal_inner:
         raise Task041ModePrepError(
             "complex_qr_research requires use_anderson_modal_inner"
+        )
+    if capture_modal_solve_trace and not (
+        candidate
+        and use_anderson_modal_inner
+        and complex_qr_research
+        and normalized.get("model_id")
+        == TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+        and task041_resource_policy == TASK041_V8_SWAP_OBSERVE_CONTINUE
+    ):
+        raise Task041ModePrepError(
+            "modal solve trace capture is limited to the registered 13.5 nm V8 complex-QR research path"
         )
     if use_anderson_modal_inner:
         registered_case = task041_balh_case(str(normalized.get("model_id", "")))
@@ -13531,15 +13547,32 @@ def run_task041_consumer(
         def full_formal_runner(**kwargs: Any) -> Mapping[str, Any]:
             base_release = kwargs.pop("release_before_recovery")
             modal_inner_failure_snapshot = None
+            modal_trace_capture = None
+            modal_trace_capture_attempted = False
 
-            def capture_modal_inner_failure_snapshot() -> dict[str, Any] | None:
+            def capture_modal_trace() -> dict[str, Any] | None:
+                nonlocal modal_trace_capture, modal_trace_capture_attempted
+                if not capture_modal_solve_trace or modal_trace_capture_attempted:
+                    return modal_trace_capture
+                modal_trace_capture_attempted = True
+                candidate_context = kwargs.get("context")
+                if candidate_context is None:
+                    return None
+                modal_system = candidate_context.action_modal_schur_system
+                modal_trace_capture = modal_system.export_modal_solve_capture(
+                    comm,
+                    writer_rank=0,
+                    side_audit_path=str(candidate_audit_path),
+                )
+                return modal_trace_capture
+
+            def capture_modal_failure_snapshot() -> dict[str, Any] | None:
                 if not use_anderson_modal_inner:
                     return None
                 candidate_context = kwargs.get("context")
                 if candidate_context is None:
                     return None
-                context_inventory = candidate_context.inventory
-                modal_inner = context_inventory.get("modal_inner_solver")
+                modal_inner = candidate_context.inventory.get("modal_inner_solver")
                 if not isinstance(modal_inner, Mapping):
                     return None
                 last_solve = modal_inner.get("last_solve")
@@ -13571,12 +13604,13 @@ def run_task041_consumer(
 
             def release_before_recovery() -> Mapping[str, Any]:
                 nonlocal current_stage, modal_inner_failure_snapshot
+                capture_modal_trace()
                 if modal_inner_failure_snapshot is None:
-                    modal_inner_failure_snapshot = (
-                        capture_modal_inner_failure_snapshot()
-                    )
+                    modal_inner_failure_snapshot = capture_modal_failure_snapshot()
                 current_stage = "outer_solve_objects_cleanup"
                 release = dict(base_release())
+                if comm.rank == 0 and isinstance(modal_trace_capture, Mapping):
+                    release["modal_inner_solve_trace_capture"] = modal_trace_capture
                 before_rss_values = [
                     _process_tree_rss(marker.get("resource", {}))
                     for marker in marker_records
@@ -13648,14 +13682,19 @@ def run_task041_consumer(
                     **kwargs,
                 )
             except BaseException:
+                capture_modal_trace()
                 if modal_inner_failure_snapshot is None:
-                    modal_inner_failure_snapshot = (
-                        capture_modal_inner_failure_snapshot()
-                    )
+                    modal_inner_failure_snapshot = capture_modal_failure_snapshot()
                 if modal_inner_failure_snapshot is not None:
                     candidate_failure_evidence["modal_inner_solver"] = (
                         modal_inner_failure_snapshot
                     )
+                if comm.rank == 0 and isinstance(modal_trace_capture, Mapping):
+                    snapshot = candidate_failure_evidence.get("modal_inner_solver")
+                    if not isinstance(snapshot, dict):
+                        snapshot = {}
+                        candidate_failure_evidence["modal_inner_solver"] = snapshot
+                    snapshot["bounded_solve_trace_capture"] = modal_trace_capture
                 raise
 
         current_stage = "factor_setup"
@@ -13714,6 +13753,7 @@ def run_task041_consumer(
                 a6_response_pair=a6_response_pair,
                 use_anderson_modal_inner=use_anderson_modal_inner,
                 complex_qr_research=complex_qr_research,
+                capture_modal_solve_trace=capture_modal_solve_trace,
                 physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity

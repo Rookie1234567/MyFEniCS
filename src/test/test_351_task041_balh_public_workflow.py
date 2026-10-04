@@ -2169,6 +2169,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         )
     assert captured["use_anderson_modal_inner"] is True
     assert captured["complex_qr_research"] is True
+    assert captured["capture_modal_solve_trace"] is False
     assert captured["p4_inverse_backend"] == "cell_condensed"
     assert captured["p4_refinement_target_tolerance"] is None
     assert captured["p4_response_correction_steps"] == 0
@@ -2183,6 +2184,28 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
         )
     )
+
+    captured.clear()
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="modal solve trace capture is limited to the registered 13.5 nm V8 complex-QR research path",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_capture_without_qr_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            use_anderson_modal_inner=True,
+            capture_modal_solve_trace=True,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+    assert not captured
 
     captured.clear()
     with pytest.raises(
@@ -2373,6 +2396,27 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
         inventory={"modal_inner_solver": modal_inner}
     )
     events = []
+    captured_modal_trace = {
+        "schema": "task041.modal_inner.solve_trace_capture.v1",
+        "capture_status": "complete",
+        "capture_complete": True,
+        "owner_rank": 7,
+        "writer_rank": 0,
+        "trace_token": "two-solve-owner-payload",
+    }
+
+    class FakeCaptureSystem:
+        def export_modal_solve_capture(
+            self, comm, *, writer_rank=0, side_audit_path=None
+        ):
+            events.append("trace_export")
+            assert comm.rank == 0
+            assert writer_rank == 0
+            payload = copy.deepcopy(captured_modal_trace)
+            payload["side_rhs_audit_path"] = side_audit_path
+            return payload
+
+    fake_context.action_modal_schur_system = FakeCaptureSystem()
     summary_files = {}
     modal_s_evaluations = 16
     failure = RuntimeError("modal inner solve did not converge")
@@ -2406,6 +2450,8 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
 
     def run_candidate_setup(*args, **kwargs):
         assert kwargs["use_anderson_modal_inner"] is True
+        assert kwargs["complex_qr_research"] is True
+        assert kwargs["capture_modal_solve_trace"] is True
         if not invoke_failure_runner["enabled"]:
             raise AssertionError("unexpected candidate setup invocation")
         return kwargs["full_formal_runner"](
@@ -2469,6 +2515,8 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
             candidate=True,
             comm=FakeComm(),
             use_anderson_modal_inner=True,
+            complex_qr_research=True,
+            capture_modal_solve_trace=True,
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
@@ -2476,6 +2524,7 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
 
     assert raised.value is failure
     assert events == [
+        "trace_export",
         "context_release",
         "formal_failure",
         "consumer_cleanup",
@@ -2496,8 +2545,15 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
     assert evidence["s_evaluation_count"] == 16
     assert evidence["side_action_call_count"] == {"bottom": 10, "top": 10}
     assert evidence["last_solve"] == last_solve
-    assert evidence["last_solve"]["residual_evaluation_history"] == residual_history
-    assert not any(isinstance(value, np.ndarray) for value in evidence["last_solve"].values())
+    trace_capture = evidence["bounded_solve_trace_capture"]
+    assert trace_capture["trace_token"] == captured_modal_trace["trace_token"]
+    assert trace_capture["owner_rank"] == 7
+    assert trace_capture["writer_rank"] == 0
+    assert trace_capture["side_rhs_audit_path"]
+    assert not any(
+        isinstance(value, np.ndarray)
+        for value in trace_capture.values()
+    )
 
 
 @pytest.mark.parametrize(

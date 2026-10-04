@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import copy
 import hashlib
 import json
 from types import SimpleNamespace
@@ -934,11 +936,19 @@ def test_complex_qr_anderson_coefficients_match_independent_complex_lstsq() -> N
     coefficients, diagnostics = block_ldu._complex_anderson_qr_coefficients(
         delta_f, current_f
     )
+    _, capture_diagnostics = block_ldu._complex_anderson_candidate_update(
+        np.zeros(delta_f.shape[0], dtype=np.complex128),
+        current_f,
+        np.zeros_like(delta_f),
+        delta_f,
+        capture_coefficients=True,
+    )
     expected = np.linalg.lstsq(delta_f, current_f, rcond=None)[0]
     fit_residual = delta_f @ coefficients - current_f
 
     assert diagnostics["effective_rank"] == delta_f.shape[1]
     assert diagnostics["discarded_column_count"] == 0
+    assert np.array_equal(capture_diagnostics["_capture_gamma"], coefficients)
     assert np.allclose(coefficients, expected, rtol=2.0e-13, atol=2.0e-14)
     assert np.linalg.norm(delta_f.conj().T @ fit_residual) <= 2.0e-13
     assert np.linalg.norm(fit_residual) == pytest.approx(
@@ -1004,6 +1014,7 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
         [0.2 + 0.4j, -0.5 + 0.1j, 0.7 - 0.3j, -0.2 - 0.6j],
         dtype=np.complex128,
     )
+    assert np.linalg.norm(rhs) > 0.0
     rhs_before = rhs.copy()
     before = {
         side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
@@ -1019,6 +1030,7 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
             modal_action,
             modal_owner=fixture["layout"].modal_owner,
             complex_qr_research=True,
+            capture_modal_solve_trace=True,
         )
         assert modal_system.diagnostics["mixing_method"] == (
             "complex_qr_type_ii_research"
@@ -1087,6 +1099,25 @@ def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> 
             assert actual_calls == last_solve["s_evaluation_count"]
             assert diagnostics["side_action_call_count"][side] == actual_calls
         assert diagnostics["constraint_lu_factorizations"] == 1
+        capture = modal_system.export_modal_solve_capture(MPI.COMM_WORLD)
+        if MPI.COMM_WORLD.rank == 0:
+            assert capture["capture_status"] == "incomplete"
+            assert [row["solve_id"] for row in capture["traces"]] == [1, 2]
+            assert capture["traces"][0]["capture_complete"] is False
+            real_solve_trace = capture["traces"][1]
+            assert real_solve_trace["rhs_sha256"] == hashlib.sha256(
+                rhs.tobytes()
+            ).hexdigest()
+            assert real_solve_trace["s_evaluation_count"] == len(
+                real_solve_trace["evaluations"]
+            )
+            if last_solve["iterations"] > 1:
+                assert any(
+                    update.get("gamma") is not None
+                    for update in real_solve_trace["updates"]
+                )
+        else:
+            assert capture is None
         assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
         assert fixture["top_inverse"].diagnostics["destroyed"] is False
         if MPI.COMM_WORLD.rank == 0:
@@ -1225,4 +1256,376 @@ def test_side_balh_complex_qr_zero_rhs_uses_absolute_raw_gate() -> None:
             modal_system.destroy()
         elif modal_action is not None and not modal_action._destroyed:
             modal_action.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_modal_trace_keeps_two_solves_and_gathers_owner_payload(
+    monkeypatch,
+) -> None:
+    fixture = _side_block_fixture()
+    rhs = np.asarray(
+        [0.2 + 0.4j, -0.5 + 0.1j, 0.7 - 0.3j, -0.2 - 0.6j],
+        dtype=np.complex128,
+    )
+    original_rhs = rhs.copy()
+    owned_objects = []
+
+    def run_two_solves(capture: bool):
+        action = block_ldu.HybridActionModalSchurApply(
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+        )
+        system = block_ldu.HybridActionModalSchurAndersonSystem(
+            action,
+            modal_owner=fixture["layout"].modal_owner,
+            complex_qr_research=True,
+            capture_modal_solve_trace=capture,
+        )
+        owned_objects.append(system)
+        before = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        solutions = []
+        summaries = []
+        errors = []
+        for _ in range(2):
+            try:
+                solutions.append(system.solve(rhs).copy())
+                errors.append(None)
+            except RuntimeError as exc:
+                solutions.append(None)
+                errors.append(str(exc))
+            summaries.append(copy.deepcopy(system.diagnostics["last_solve"]))
+        after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        calls = {side: after[side] - before[side] for side in ("bottom", "top")}
+        return system, solutions, summaries, errors, calls
+
+    try:
+        off_system, off_solutions, off_summaries, off_errors, off_calls = (
+            run_two_solves(False)
+        )
+        assert off_system.export_modal_solve_capture(MPI.COMM_WORLD) is None
+        on_system, on_solutions, on_summaries, on_errors, on_calls = (
+            run_two_solves(True)
+        )
+        calls_before_export = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        capture = on_system.export_modal_solve_capture(MPI.COMM_WORLD)
+        calls_after_export = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert off_calls == on_calls
+        assert off_calls == {
+            side: sum(summary["side_action_calls"][side] for summary in off_summaries)
+            for side in ("bottom", "top")
+        }
+        assert calls_before_export == calls_after_export
+        assert np.array_equal(rhs, original_rhs)
+        assert off_errors == on_errors
+        for off_solution, on_solution, off_summary, on_summary in zip(
+            off_solutions, on_solutions, off_summaries, on_summaries
+        ):
+            assert off_summary["status"] == on_summary["status"]
+            assert off_summary["stop_reason"] == on_summary["stop_reason"]
+            assert off_summary["target_reached"] == on_summary["target_reached"]
+            assert off_summary["unscaled_residual_norm"] == pytest.approx(
+                on_summary["unscaled_residual_norm"], rel=0.0, abs=0.0
+            )
+            off_scaled = off_summary["residual_evaluation_history"][-1][
+                "scaled_residual_norm"
+            ]
+            on_scaled = on_summary["residual_evaluation_history"][-1][
+                "scaled_residual_norm"
+            ]
+            assert off_scaled == pytest.approx(on_scaled, rel=0.0, abs=0.0)
+            assert off_summary["s_evaluation_count"] == on_summary["s_evaluation_count"]
+            assert off_summary["side_action_calls"] == on_summary["side_action_calls"]
+            assert off_summary["relative_residual"] == pytest.approx(
+                on_summary["relative_residual"], rel=0.0, abs=0.0
+            )
+            assert (off_solution is None) == (on_solution is None)
+            if off_solution is not None:
+                assert np.array_equal(off_solution, on_solution)
+                assert off_summary["status"] == "converged"
+                assert off_summary["relative_residual"] <= 1.0e-2
+        if MPI.COMM_WORLD.rank == 0:
+            assert capture["owner_rank"] == fixture["layout"].modal_owner
+            assert capture["writer_rank"] == 0
+            assert [row["solve_id"] for row in capture["traces"]] == [1, 2]
+            assert [row["rhs_sha256"] for row in capture["traces"]] == [
+                hashlib.sha256(rhs.tobytes()).hexdigest()
+            ] * 2
+            assert capture["array_payload_bytes"] <= capture[
+                "array_payload_limit_bytes"
+            ]
+            assert capture["array_payload_limit_bytes"] == (
+                block_ldu._modal_trace_array_limit_bytes(rhs.size)
+            )
+            assert capture["serialized_payload_size_basis"] == "compact_utf8_json"
+            encoded_capture_size = len(
+                json.dumps(
+                    capture,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode("utf-8")
+            )
+            assert encoded_capture_size <= capture[
+                "serialized_payload_limit_bytes"
+            ]
+            assert capture["capture_complete"] is True
+            assert capture["capture_status"] == "complete"
+            for trace, summary in zip(capture["traces"], on_summaries):
+                assert summary["status"] in {"converged", "not_converged"}
+                assert trace["solver_status"] == summary["status"]
+                assert trace["solver_stop_reason"] == summary["stop_reason"]
+                assert trace["s_evaluation_count"] == summary["s_evaluation_count"]
+                assert trace["capture_complete"] is True
+                assert trace.get("capture_incomplete_reason") is None
+                assert trace["g"] is not None
+                assert len(trace["evaluations"]) == summary["s_evaluation_count"]
+                assert all(
+                    row["capture_complete"] is True
+                    and all(row.get(key) is not None for key in ("m", "raw", "scaled"))
+                    for row in trace["evaluations"]
+                )
+                assert trace["evaluations"][-1]["raw_target_metric"] == pytest.approx(
+                    summary["relative_residual"], rel=0.0, abs=0.0
+                )
+                encoded = trace["g"]
+                encoded_arrays = [encoded]
+                encoded_arrays.extend(
+                    row[key]
+                    for row in trace["evaluations"]
+                    for key in ("m", "raw", "scaled")
+                    if row.get(key) is not None
+                )
+                encoded_arrays.extend(
+                    row["gamma"]
+                    for row in trace["updates"]
+                    if row.get("gamma") is not None
+                )
+                trace_array_bytes = 0
+                for descriptor in encoded_arrays:
+                    raw = base64.b64decode(descriptor["data"], validate=True)
+                    assert descriptor["dtype"] == "complex128"
+                    assert descriptor["order"] == "C"
+                    assert hashlib.sha256(raw).hexdigest() == descriptor["sha256"]
+                    assert len(raw) == (
+                        np.prod(descriptor["shape"]) * np.dtype(np.complex128).itemsize
+                    )
+                    trace_array_bytes += len(raw)
+                assert trace_array_bytes == trace["captured_array_bytes"]
+                g_raw = base64.b64decode(encoded["data"], validate=True)
+                assert np.array_equal(
+                    np.frombuffer(g_raw, dtype=np.complex128).reshape(encoded["shape"]),
+                    rhs,
+                )
+                iteration_rows = [
+                    row
+                    for row in trace["evaluations"]
+                    if row["source"] == "complex_qr_iteration"
+                ]
+                gamma_updates = [
+                    row for row in trace["updates"] if row.get("gamma") is not None
+                ]
+                assert gamma_updates
+                for update in gamma_updates:
+                    source_count = update["source_evaluation_index"]
+                    states = [
+                        row
+                        for row in iteration_rows
+                        if row["evaluation"] <= source_count
+                    ][-block_ldu._MODAL_SOLVE_TRACE_HISTORY_LIMIT - 1 :]
+                    fixed_point_history = [
+                        -np.frombuffer(
+                            base64.b64decode(row["scaled"]["data"], validate=True),
+                            dtype=np.complex128,
+                        ).reshape(row["scaled"]["shape"])
+                        for row in states
+                    ]
+                    delta_f = np.column_stack(
+                        [
+                            fixed_point_history[index + 1] - fixed_point_history[index]
+                            for index in range(len(fixed_point_history) - 1)
+                        ]
+                    )
+                    rcond = np.finfo(np.float64).eps * max(delta_f.shape)
+                    expected_gamma, _, oracle_rank, _ = np.linalg.lstsq(
+                        delta_f, fixed_point_history[-1], rcond=rcond
+                    )
+                    encoded_gamma = update["gamma"]
+                    decoded_gamma = np.frombuffer(
+                        base64.b64decode(encoded_gamma["data"], validate=True),
+                        dtype=np.complex128,
+                    ).reshape(encoded_gamma["shape"])
+                    actual_fit = delta_f @ decoded_gamma - fixed_point_history[-1]
+                    oracle_fit = delta_f @ expected_gamma - fixed_point_history[-1]
+                    assert np.allclose(
+                        delta_f @ decoded_gamma,
+                        delta_f @ expected_gamma,
+                        rtol=2.0e-13,
+                        atol=2.0e-14,
+                    )
+                    assert np.linalg.norm(actual_fit) == pytest.approx(
+                        np.linalg.norm(oracle_fit), rel=2.0e-13, abs=2.0e-14
+                    )
+                    if oracle_rank == delta_f.shape[1]:
+                        assert update["mixing_scalars"]["effective_rank"] == oracle_rank
+                        assert np.allclose(
+                            decoded_gamma,
+                            expected_gamma,
+                            rtol=2.0e-13,
+                            atol=2.0e-14,
+                        )
+                        orthogonality = np.linalg.norm(delta_f.conj().T @ actual_fit)
+                        orthogonality_scale = max(
+                            1.0,
+                            np.linalg.norm(delta_f)
+                            * np.linalg.norm(fixed_point_history[-1]),
+                        )
+                        assert orthogonality <= 5.0e-13 * orthogonality_scale
+                for side in ("bottom", "top"):
+                    side_rows = [
+                        item["side_actions"][side]
+                        for item in trace["evaluations"]
+                    ]
+                    assert all(
+                        row["audit_index"] == "unknown"
+                        and row["apply_count_source"] == "action_apply_count"
+                        and row["apply_count"] > 0
+                        for row in side_rows
+                    )
+                    last_applies = [row["last_apply"] for row in side_rows]
+                    assert all(
+                        "residual_norm" in row
+                        and "iterations" in row
+                        and "reason" in row
+                        for row in last_applies
+                    )
+                    zero_rhs_records = [
+                        row
+                        for row in last_applies
+                        if row["status"] == "ZERO_RHS_EXACT"
+                    ]
+                    assert zero_rhs_records
+                    assert all(
+                        row["reason"] is None
+                        and row["iterations"] == 0
+                        and row["rhs_norm"] == 0.0
+                        and row["residual_norm"] == 0.0
+                        for row in zero_rhs_records
+                    )
+                    nonzero_ksp_records = [
+                        row for row in last_applies if row["rhs_norm"] > 0.0
+                    ]
+                    assert nonzero_ksp_records
+                    assert all(
+                        row["reason"] is not None and row["iterations"] > 0
+                        for row in nonzero_ksp_records
+                    )
+            assert capture["serialized_payload_limit_bytes"] == 640 * 1024
+            assert capture["array_payload_bytes"] == sum(
+                trace["captured_array_bytes"] for trace in capture["traces"]
+            )
+        else:
+            assert capture is None
+        if MPI.COMM_WORLD.rank == fixture["layout"].modal_owner:
+            assert on_system._modal_solve_trace_records == []
+
+        overflow_solver_state = {
+            "status": "not_converged",
+            "stop_reason": "synthetic_existing_failure",
+            "error": "original solver error remains unchanged " + ("x" * 4096),
+        }
+        on_system._last_solve = copy.deepcopy(overflow_solver_state)
+        overflow_records = [
+            {
+                "solve_id": solve_id,
+                "captured_array_bytes": 0,
+                "capture_complete": True,
+                "capture_incomplete_reason": None,
+                "evaluations": [],
+                "updates": [],
+                "solver_status": overflow_solver_state["status"],
+                "solver_stop_reason": overflow_solver_state["stop_reason"],
+                "solver_error": overflow_solver_state["error"],
+            }
+            for solve_id in (1, 2)
+        ]
+        if MPI.COMM_WORLD.rank == fixture["layout"].modal_owner:
+            on_system._modal_solve_trace_records.extend(
+                copy.deepcopy(overflow_records)
+            )
+        monkeypatch.setattr(
+            block_ldu, "_MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES", 2048
+        )
+        overflow_capture = on_system.export_modal_solve_capture(MPI.COMM_WORLD)
+        assert on_system.diagnostics["last_solve"] == overflow_solver_state
+        if MPI.COMM_WORLD.rank == 0:
+            assert overflow_capture["capture_status"] == "incomplete"
+            assert overflow_capture["capture_complete"] is False
+            assert overflow_capture["capture_incomplete_reason"] == (
+                "serialized_payload_limit_exceeded"
+            )
+            assert overflow_capture["traces"] == []
+            assert overflow_capture["trace_arrays_omitted"] is True
+            assert overflow_capture["array_payload_bytes"] == 0
+            assert overflow_capture["array_payload_bytes"] <= overflow_capture[
+                "array_payload_limit_bytes"
+            ]
+            assert overflow_capture["serialized_payload_size_basis"] == (
+                "compact_utf8_json"
+            )
+            overflow_json_bytes = len(
+                json.dumps(
+                    overflow_capture,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode("utf-8")
+            )
+            assert overflow_json_bytes <= overflow_capture[
+                "serialized_payload_limit_bytes"
+            ]
+            assert overflow_records[0]["solver_status"] == "not_converged"
+            assert overflow_records[0]["solver_error"] == (
+                overflow_solver_state["error"]
+            )
+        else:
+            assert overflow_capture is None
+
+        pending_trace = {
+            "solve_id": 1,
+            "captured_array_bytes": 0,
+            "capture_complete": True,
+            "evaluations": [],
+            "updates": [],
+        }
+        if MPI.COMM_WORLD.rank == fixture["layout"].modal_owner:
+            off_system._modal_solve_trace_records.append(pending_trace)
+        calls_before_destroy = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        off_system.destroy()
+        assert off_system._modal_solve_trace_records == []
+        calls_after_destroy = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert calls_before_destroy == calls_after_destroy
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        for system in owned_objects:
+            system.destroy()
         _destroy_side_block_fixture(fixture)

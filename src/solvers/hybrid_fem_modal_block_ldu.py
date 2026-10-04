@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import time
@@ -46,6 +47,99 @@ _RESIDUAL_KEYS = (
     "modal_true_relative_residual",
 )
 _MODAL_ANDERSON_S_EVALUATION_LIMIT = 16
+_MODAL_SOLVE_TRACE_SOLVE_LIMIT = 2
+_MODAL_SOLVE_TRACE_EVALUATION_LIMIT = 16
+_MODAL_SOLVE_TRACE_HISTORY_LIMIT = 4
+_MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES = 640 * 1024
+
+
+def _modal_trace_array_limit_bytes(modal_count: int) -> int:
+    values_per_solve = (
+        (1 + 3 * _MODAL_SOLVE_TRACE_EVALUATION_LIMIT) * modal_count
+        + 14 * _MODAL_SOLVE_TRACE_HISTORY_LIMIT
+    )
+    return int(
+        _MODAL_SOLVE_TRACE_SOLVE_LIMIT
+        * values_per_solve
+        * np.dtype(np.complex128).itemsize
+    )
+
+
+def _capture_modal_array(
+    record: dict[str, Any],
+    key: str,
+    values: np.ndarray,
+) -> dict[str, Any] | None:
+    array = np.asarray(values)
+    current = int(record.get("captured_array_bytes", 0))
+    modal_count = int(record.get("modal_count", array.size))
+    if (
+        key not in {"g", "m", "raw", "scaled", "gamma"}
+        or array.dtype != np.dtype(np.complex128)
+        or array.ndim != 1
+        or array.size > (
+            _MODAL_SOLVE_TRACE_HISTORY_LIMIT if key == "gamma" else modal_count
+        )
+        or (key != "gamma" and array.size != modal_count)
+    ):
+        record["capture_complete"] = False
+        record["capture_incomplete_reason"] = "unexpected_array_shape_or_dtype"
+        return None
+    if current + int(array.nbytes) > _modal_trace_array_limit_bytes(modal_count) // 2:
+        record["capture_complete"] = False
+        record["capture_incomplete_reason"] = "array_payload_limit_exceeded"
+        return None
+    raw = np.ascontiguousarray(array).tobytes(order="C")
+    record["captured_array_bytes"] = current + int(array.nbytes)
+    return {
+        "dtype": "complex128",
+        "shape": list(array.shape),
+        "order": "C",
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "encoding": "base64",
+        "data": base64.b64encode(raw).decode("ascii"),
+    }
+
+
+def _modal_trace_side_apply_record(action: Any) -> dict[str, Any]:
+    source = getattr(action, "_last_apply", None)
+    source = source if isinstance(source, Mapping) else {}
+    last_apply = {}
+    for key in (
+        "status",
+        "reason",
+        "iterations",
+        "elapsed_seconds",
+        "rhs_norm",
+        "residual_norm",
+        "relative_residual",
+    ):
+        if key not in source:
+            continue
+        value = source[key]
+        if isinstance(value, np.generic):
+            value = value.item()
+        if value is None or isinstance(value, (str, int, float, bool)):
+            last_apply[key] = value
+    counts = source.get("counts", {})
+    delta = counts.get("delta") if isinstance(counts, Mapping) else None
+    if isinstance(delta, Mapping):
+        last_apply["count_delta"] = {
+            key: int(delta[key])
+            for key in (
+                "Q", "H6", "A6", "p4_backsolve", "p4_refinement", "P", "PH_total"
+            )
+            if isinstance(delta.get(key), (int, np.integer))
+        }
+    apply_count = getattr(action, "_apply_count", None)
+    return {
+        "apply_count": int(apply_count)
+        if isinstance(apply_count, (int, np.integer))
+        else None,
+        "apply_count_source": "action_apply_count",
+        "audit_index": "unknown",
+        "last_apply": last_apply,
+    }
 
 
 def _set_owned_values(vector: PETSc.Vec, values: np.ndarray) -> None:
@@ -221,6 +315,8 @@ def _complex_anderson_candidate_update(
     fixed_point_residual: np.ndarray,
     delta_m: np.ndarray | None,
     delta_f: np.ndarray | None,
+    *,
+    capture_coefficients: bool = False,
 ) -> tuple[np.ndarray | None, dict[str, Any]]:
     """Make one beta=1 complex Type-II Anderson update or report rank zero."""
 
@@ -264,6 +360,8 @@ def _complex_anderson_candidate_update(
     coefficients, diagnostics = _complex_anderson_qr_coefficients(
         delta_f_values, fixed_point
     )
+    if capture_coefficients:
+        diagnostics["_capture_gamma"] = coefficients
     if diagnostics["effective_rank"] == 0:
         return None, {"update": "rank_zero_history", **diagnostics}
     candidate = current + fixed_point - (delta_m_values + delta_f_values) @ coefficients
@@ -1054,6 +1152,7 @@ def solve_action_modal_schur_anderson_complex_qr_research(
     rhs: np.ndarray,
     *,
     _borrowed_constraint_factor: Any,
+    _capture_trace_record: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Bounded full-S Anderson research path with complex QR coefficients."""
 
@@ -1073,6 +1172,11 @@ def solve_action_modal_schur_anderson_complex_qr_research(
     if len(set(rhs_hashes)) != 1:
         raise ValueError("Modal Anderson RHS differs across MPI ranks.")
     rhs_values = rhs_values.copy()
+    if _capture_trace_record is not None:
+        _capture_trace_record["rhs_sha256"] = rhs_hashes[root]
+        _capture_trace_record["g"] = _capture_modal_array(
+            _capture_trace_record, "g", rhs_values
+        )
     with np.errstate(over="ignore", invalid="ignore"):
         rhs_norm = float(np.linalg.norm(rhs_values))
     if not comm.allreduce(bool(np.isfinite(rhs_norm)), op=MPI.LAND):
@@ -1103,6 +1207,8 @@ def solve_action_modal_schur_anderson_complex_qr_research(
     actions = {"bottom": modal_action.bottom_action, "top": modal_action.top_action}
     counts_before = {side: _action_apply_count(action) for side, action in actions.items()}
     residual_history: list[dict[str, Any]] = []
+    if _capture_trace_record is not None and comm.rank == root:
+        _capture_trace_record["evaluations"] = residual_history
     mixing_history: list[dict[str, Any]] = []
     owner_states: list[tuple[np.ndarray, np.ndarray]] = []
     modal_values = np.zeros(modal_count, dtype=np.complex128)
@@ -1115,10 +1221,35 @@ def solve_action_modal_schur_anderson_complex_qr_research(
 
     def evaluate(current: np.ndarray, source: str):
         nonlocal function_evaluations, total_evaluations, c_solves
-        raw = np.asarray(modal_action.apply(current) - rhs_values, dtype=np.complex128)
+        capture_evaluation = None
+        if _capture_trace_record is not None and comm.rank == root:
+            capture_evaluation = {
+                "evaluation": total_evaluations + 1,
+                "source": source,
+                "finite": False,
+            }
+            residual_history.append(capture_evaluation)
+            if len(residual_history) <= evaluation_limit:
+                capture_evaluation["m"] = _capture_modal_array(
+                    _capture_trace_record, "m", current
+                )
+            else:
+                _capture_trace_record["capture_incomplete_reason"] = (
+                    "evaluation_count_exceeded_capture_limit"
+                )
+        action_values = modal_action.apply(current)
+        raw = np.asarray(action_values - rhs_values, dtype=np.complex128)
         total_evaluations += 1
         if source == "complex_qr_iteration":
             function_evaluations += 1
+        if capture_evaluation is not None and comm.rank == root:
+            capture_evaluation["side_actions"] = {
+                side: _modal_trace_side_apply_record(action)
+                for side, action in actions.items()
+            }
+            capture_evaluation["raw"] = _capture_modal_array(
+                _capture_trace_record, "raw", raw
+            )
         finite = raw.shape == (modal_count,) and bool(np.all(np.isfinite(raw)))
         finite = bool(comm.allreduce(finite, op=MPI.LAND))
         payload = None
@@ -1130,6 +1261,12 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                     raw_norm = float(np.linalg.norm(raw))
                     raw_metric = raw_norm / rhs_norm if rhs_norm else raw_norm
                     scaled = lu_solve((factor_lu, factor_pivots), raw, check_finite=True)
+                    if capture_evaluation is not None:
+                        capture_evaluation["scaled"] = _capture_modal_array(
+                            _capture_trace_record,
+                            "scaled",
+                            np.asarray(scaled, dtype=np.complex128),
+                        )
                     fixed_point = -np.asarray(scaled, dtype=np.complex128)
                     scaled_norm = float(np.linalg.norm(scaled))
                     if (
@@ -1149,27 +1286,52 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                     payload = (False, None, f"constraint_solve_failure: {exc}")
         success, values, error = comm.bcast(payload, root=root)
         if not success:
-            row = {
-                "evaluation": total_evaluations,
-                "source": source,
-                "raw_residual_norm": None,
-                "raw_target_metric": None,
-                "scaled_residual_norm": None,
-                "finite": False,
-            }
-            residual_history.append(row)
+            if capture_evaluation is not None:
+                row = capture_evaluation
+                row.update(finite=False, capture_complete=False)
+                _capture_trace_record["capture_incomplete_reason"] = (
+                    "residual_evaluation_failed"
+                )
+            else:
+                row = {
+                    "evaluation": total_evaluations,
+                    "source": source,
+                    "raw_residual_norm": None,
+                    "raw_target_metric": None,
+                    "scaled_residual_norm": None,
+                    "finite": False,
+                }
+                residual_history.append(row)
             return None, row, error
         c_solves += 1
         raw_norm, raw_metric, scaled_norm, fixed_point = values
-        row = {
-            "evaluation": total_evaluations,
-            "source": source,
-            "raw_residual_norm": float(raw_norm),
-            "raw_target_metric": float(raw_metric),
-            "scaled_residual_norm": float(scaled_norm),
-            "finite": True,
-        }
-        residual_history.append(row)
+        if capture_evaluation is None:
+            row = {
+                "evaluation": total_evaluations,
+                "source": source,
+                "raw_residual_norm": float(raw_norm),
+                "raw_target_metric": float(raw_metric),
+                "scaled_residual_norm": float(scaled_norm),
+                "finite": True,
+            }
+            residual_history.append(row)
+        else:
+            row = capture_evaluation
+            row.update(
+                {
+                    "raw_residual_norm": float(raw_norm),
+                    "raw_target_metric": float(raw_metric),
+                    "scaled_residual_norm": float(scaled_norm),
+                    "finite": True,
+                    "capture_complete": all(
+                        row.get(key) is not None for key in ("m", "raw", "scaled")
+                    ),
+                }
+            )
+            if not row["capture_complete"]:
+                _capture_trace_record["capture_incomplete_reason"] = (
+                    "evaluation_vector_not_captured"
+                )
         return np.asarray(fixed_point, dtype=np.complex128), row, None
 
     for _ in range(max_iterations + 1):
@@ -1208,10 +1370,43 @@ def solve_action_modal_schur_anderson_complex_qr_research(
                 )
             try:
                 candidate, mix = _complex_anderson_candidate_update(
-                    modal_values, fixed_point, delta_m, delta_f
+                    modal_values,
+                    fixed_point,
+                    delta_m,
+                    delta_f,
+                    capture_coefficients=_capture_trace_record is not None,
                 )
+                gamma = mix.pop("_capture_gamma", None)
+                if _capture_trace_record is not None:
+                    update_capture = {
+                        "update_index": iterations + 1,
+                        "source_evaluation_index": total_evaluations,
+                        "candidate_accepted": candidate is not None,
+                        "mixing_scalars": dict(mix),
+                    }
+                    if isinstance(gamma, np.ndarray):
+                        update_capture["gamma"] = _capture_modal_array(
+                            _capture_trace_record, "gamma", gamma
+                        )
+                    else:
+                        update_capture["gamma"] = None
+                        update_capture["gamma_status"] = "not_applicable_startup"
+                    _capture_trace_record["updates"].append(update_capture)
                 update_payload = (candidate is not None, candidate, mix, None)
             except (FloatingPointError, ValueError, np.linalg.LinAlgError) as exc:
+                if _capture_trace_record is not None:
+                    _capture_trace_record["updates"].append(
+                        {
+                            "update_index": iterations + 1,
+                            "source_evaluation_index": total_evaluations,
+                            "candidate_accepted": False,
+                            "mixing_scalars": {},
+                            "gamma": None,
+                        }
+                    )
+                    _capture_trace_record["capture_incomplete_reason"] = (
+                        "anderson_update_failed"
+                    )
                 update_payload = (False, None, {}, str(exc))
         update_ok, candidate, mix, update_error = comm.bcast(update_payload, root=root)
         mixing_history.append(dict(mix))
@@ -1273,6 +1468,27 @@ def solve_action_modal_schur_anderson_complex_qr_research(
     if any(item != rank_state for item in comm.allgather(rank_state)):
         raise RuntimeError("Complex modal Anderson control flow differs across MPI ranks.")
 
+    if _capture_trace_record is not None and comm.rank == root:
+        evaluations = _capture_trace_record.get("evaluations", [])
+        capture_complete = bool(
+            _capture_trace_record.get("g") is not None
+            and len(evaluations) == total_evaluations
+            and total_evaluations <= evaluation_limit
+            and all(row.get("capture_complete") is True for row in evaluations)
+            and not _capture_trace_record.get("capture_incomplete_reason")
+        )
+        _capture_trace_record.update(
+            solver_status=status,
+            solver_stop_reason=stop_reason,
+            s_evaluation_count=total_evaluations,
+            anderson_iterations=iterations,
+            capture_complete=capture_complete,
+        )
+        if not capture_complete:
+            _capture_trace_record.setdefault(
+                "capture_incomplete_reason", "evaluation_trace_incomplete"
+            )
+
     return {
         "status": status,
         "stop_reason": stop_reason,
@@ -1330,12 +1546,20 @@ class HybridActionModalSchurAndersonSystem:
         *,
         modal_owner: int,
         complex_qr_research: bool = False,
+        capture_modal_solve_trace: bool = False,
     ) -> None:
         if not isinstance(complex_qr_research, (bool, np.bool_)):
             raise TypeError("Complex QR research selection must be an explicit boolean.")
+        if not isinstance(capture_modal_solve_trace, (bool, np.bool_)):
+            raise TypeError("Modal solve trace capture must be an explicit boolean.")
+        if capture_modal_solve_trace and not complex_qr_research:
+            raise ValueError(
+                "Modal solve trace capture requires the complex QR research path."
+            )
         self.modal_action = modal_action
         self.modal_count = int(modal_action.modal_count)
         self.complex_qr_research = bool(complex_qr_research)
+        self.capture_modal_solve_trace = bool(capture_modal_solve_trace)
         self.mixing_method = (
             "complex_qr_type_ii_research"
             if self.complex_qr_research
@@ -1358,6 +1582,7 @@ class HybridActionModalSchurAndersonSystem:
         self._side_action_call_count = {"bottom": 0, "top": 0}
         self._side_action_call_count_known = {"bottom": True, "top": True}
         self._last_solve: dict[str, Any] | None = None
+        self._modal_solve_trace_records: list[dict[str, Any]] = []
 
         operator = _action_operator(modal_action.bottom_action)
         comm = operator.getComm().tompi4py()
@@ -1460,25 +1685,144 @@ class HybridActionModalSchurAndersonSystem:
             "destroyed": bool(self._destroyed),
         }
 
+    def export_modal_solve_capture(
+        self,
+        comm: Any,
+        *,
+        writer_rank: int = 0,
+        side_audit_path: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Gather the bounded owner trace at an explicit all-rank boundary."""
+        if not self.capture_modal_solve_trace:
+            return None
+        owner = self.constraint_lu_owner_rank
+        payload = None
+        if int(comm.rank) == owner:
+            traces = list(self._modal_solve_trace_records)
+            array_bytes = sum(trace["captured_array_bytes"] for trace in traces)
+            complete = [trace["solve_id"] for trace in traces] == [1, 2] and all(
+                trace["capture_complete"] for trace in traces
+            )
+            payload = {
+                "schema": "task041.modal_inner.solve_trace_capture.v1",
+                "capture_status": "complete" if complete else "incomplete",
+                "capture_complete": complete,
+                "capture_incomplete_reason": (
+                    None
+                    if complete
+                    else next(
+                        (
+                            trace["capture_incomplete_reason"]
+                            for trace in traces
+                            if trace.get("capture_incomplete_reason")
+                        ),
+                        "two_complete_solve_traces_not_available",
+                    )
+                ),
+                "owner_rank": int(owner),
+                "writer_rank": int(writer_rank),
+                "modal_count": self.modal_count,
+                "array_payload_bytes": array_bytes,
+                "array_payload_limit_bytes": _modal_trace_array_limit_bytes(
+                    self.modal_count
+                ),
+                "serialized_payload_limit_bytes": _MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES,
+                "serialized_payload_size_basis": "compact_utf8_json",
+                "solve_count_observed": self._solve_count,
+                "side_rhs_audit_path": side_audit_path,
+                "traces": traces,
+            }
+            try:
+                serialized_size = len(
+                    json.dumps(
+                        payload,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        allow_nan=False,
+                    ).encode("utf-8")
+                )
+            except (TypeError, ValueError):
+                serialized_size = _MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES + 1
+                payload["capture_incomplete_reason"] = "trace_serialization_failed"
+            if serialized_size > _MODAL_SOLVE_TRACE_JSON_LIMIT_BYTES:
+                payload.update(
+                    capture_status="incomplete",
+                    capture_complete=False,
+                    capture_incomplete_reason=payload.get(
+                        "capture_incomplete_reason"
+                    )
+                    or "serialized_payload_limit_exceeded",
+                    traces=[],
+                    trace_arrays_omitted=True,
+                )
+        gathered = comm.gather(payload, root=writer_rank)
+        if int(comm.rank) == writer_rank:
+            result = gathered[owner] if owner < len(gathered) else None
+            if result is None:
+                result = {
+                    "schema": "task041.modal_inner.solve_trace_capture.v1",
+                    "capture_status": "incomplete",
+                    "capture_complete": False,
+                    "capture_incomplete_reason": "owner_payload_missing",
+                    "owner_rank": int(owner),
+                    "writer_rank": int(writer_rank),
+                }
+        else:
+            result = None
+        if int(comm.rank) == owner:
+            self._modal_solve_trace_records.clear()
+        return result
+
     def solve(self, rhs: np.ndarray) -> np.ndarray:
         if self._destroyed:
             raise RuntimeError("On-demand modal Anderson system has been destroyed.")
         self._solve_count += 1
-        if self.complex_qr_research:
-            result = solve_action_modal_schur_anderson_complex_qr_research(
-                self.modal_action,
-                rhs,
-                _borrowed_constraint_factor=self,
-            )
-        else:
-            result = solve_action_modal_schur_anderson(
-                self.modal_action,
-                rhs,
-                scale_residual_by_constraint=True,
-                real_coordinate_embedding=True,
-                max_iterations=14,
-                _borrowed_constraint_factor=self,
-            )
+        trace_record = None
+        if self.capture_modal_solve_trace and self._solve_count <= 2:
+            comm = _action_operator(self.modal_action.bottom_action).getComm().tompi4py()
+            if comm.rank == self.constraint_lu_owner_rank:
+                trace_record = {
+                    "solve_id": int(self._solve_count),
+                    "modal_count": self.modal_count,
+                    "captured_array_bytes": 0,
+                    "capture_complete": True,
+                    "capture_incomplete_reason": None,
+                    "evaluations": [],
+                    "updates": [],
+                }
+                self._modal_solve_trace_records.append(trace_record)
+        try:
+            if self.complex_qr_research:
+                result = solve_action_modal_schur_anderson_complex_qr_research(
+                    self.modal_action,
+                    rhs,
+                    _borrowed_constraint_factor=self,
+                    _capture_trace_record=trace_record,
+                )
+            else:
+                result = solve_action_modal_schur_anderson(
+                    self.modal_action,
+                    rhs,
+                    scale_residual_by_constraint=True,
+                    real_coordinate_embedding=True,
+                    max_iterations=14,
+                    _borrowed_constraint_factor=self,
+                )
+        except BaseException:
+            if trace_record is not None:
+                trace_record.update(
+                    capture_complete=False,
+                    capture_incomplete_reason="solver_raised_before_trace_completion",
+                )
+                if trace_record["evaluations"]:
+                    trace_record["evaluations"][-1]["side_actions"] = {
+                        side: _modal_trace_side_apply_record(action)
+                        for side, action in (
+                            ("bottom", self.modal_action.bottom_action),
+                            ("top", self.modal_action.top_action),
+                        )
+                    }
+            raise
         side_calls = dict(result["side_action_calls"])
         for side in ("bottom", "top"):
             delta = side_calls.get(side)
@@ -1529,6 +1873,15 @@ class HybridActionModalSchurAndersonSystem:
         self._last_solve = {
             key: result[key] for key in summary_keys if key in result
         }
+        if self.capture_modal_solve_trace:
+            self._last_solve["residual_evaluation_history"] = [
+                {
+                    key: value
+                    for key, value in row.items()
+                    if key not in {"m", "raw", "scaled", "side_actions", "capture_complete"}
+                }
+                for row in result["residual_evaluation_history"]
+            ]
         solution = result.pop("solution")
         if result["status"] != "converged":
             self._not_converged_count += 1
@@ -1546,6 +1899,7 @@ class HybridActionModalSchurAndersonSystem:
         return np.asarray(solution, dtype=np.complex128)
 
     def destroy(self) -> None:
+        self._modal_solve_trace_records.clear()
         if self._destroyed:
             return
         self.constraint_lu = None
@@ -2742,6 +3096,7 @@ def create_side_balh_block_ldu_preconditioner(
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     use_anderson_modal_inner: bool = False,
     complex_qr_research: bool = False,
+    capture_modal_solve_trace: bool = False,
 ) -> HybridBlockLduPreconditioner:
     """Build the sampled Schur or an opt-in BAL_H modal inner solve.
 
@@ -2786,9 +3141,18 @@ def create_side_balh_block_ldu_preconditioner(
     if not isinstance(complex_qr_research, (bool, np.bool_)):
         raise TypeError("Complex QR research selection must be an explicit boolean.")
     complex_qr_research = bool(complex_qr_research)
+    if not isinstance(capture_modal_solve_trace, (bool, np.bool_)):
+        raise TypeError("Modal solve trace capture must be an explicit boolean.")
+    capture_modal_solve_trace = bool(capture_modal_solve_trace)
     if complex_qr_research and not use_anderson_modal_inner:
         raise ValueError(
             "Complex QR research requires the on-demand Anderson modal inner."
+        )
+    if capture_modal_solve_trace and not (
+        use_anderson_modal_inner and complex_qr_research
+    ):
+        raise ValueError(
+            "Modal solve trace capture requires complex QR modal inner research."
         )
     if not use_anderson_modal_inner and not all(
         value is not None
@@ -2821,6 +3185,7 @@ def create_side_balh_block_ldu_preconditioner(
                 modal_action,
                 modal_owner=layout.modal_owner,
                 complex_qr_research=complex_qr_research,
+                capture_modal_solve_trace=capture_modal_solve_trace,
             )
             research_inventory = {
                 "research_only": True,
