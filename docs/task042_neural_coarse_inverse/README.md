@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V35 / 下一执行 V38
+
+[Review V35](review_report_v35.md)已独立审阅V37交付`011718d84606cc052085c200d2ce767030f21e38`。接受普通p6面片的有限未裁剪分块资格；q15负结果、native q60存储停止和周期缺项保留。原尺寸完整0.7nm前向解、2TB／48h与NN20%仍未资格化。
+
+V38一次连续推进：补齐周期native q30与独立q60见证、修复完整checker和重复元数据、实现同离散的分方向边界计算，并在数值／容量门通过后执行原尺寸完整表面及全部32060端口组件。普通bug同轮修复；不重复巨型q60 JIT或旧7/8块，不运行dot体积solver。完整范围、验收、预算和失败替代均以本报告为准。
+
+[独立核验](outcomes/records/review_v35_independent_checks.json) · [文档验收](outcomes/records/review_v35_documentation_checks.json)。完成提交／推送／清场后按原队列交接，两个窗口不并行仓库工作；不merge。以下历史正文逐字保留。
+
+---
+
 # 最新交付导航：V37 / Review V34 已连续收口
 
 已完成普通p6真实4hex／12mode未裁剪积分、单mode面片分块及独立保存数组检查。q15不合格；原生q60 JIT超过新存储门，周期缝／角点未完成，故仅P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS，无目标全量边界／完整求解／NN20%资格。

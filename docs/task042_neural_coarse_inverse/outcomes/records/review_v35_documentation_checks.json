@@ -1,0 +1,122 @@
+{
+  "schema": "task042.review35.docs.v1",
+  "UTC": "2026-10-04T04:39:02.547723+00:00",
+  "reviewed_HEAD": "011718d84606cc052085c200d2ce767030f21e38",
+  "files": {
+    "docs/task042_neural_coarse_inverse/review_report_v35.md": {
+      "sha256": "604eed3f14e9f2fb30b029dc09e8724805f1af2af96106b92748c6f5cc152295",
+      "bytes": 24742
+    },
+    "docs/task042_neural_coarse_inverse/README.md": {
+      "sha256": "9bc8cb0e5567cf0057a7f3b4f1640266378d01ec0be9db87341fe720019effe2",
+      "bytes": 47986
+    }
+  },
+  "README_original_suffix_sha256": "6cca499b4f785a9cc7684efd1b44afb468129fc485d4ddac8060a8ef20129a36",
+  "historical_suffix_unchanged": true,
+  "review_math_fences": [],
+  "review_tables": [
+    {
+      "start": 15,
+      "columns": 2
+    },
+    {
+      "start": 35,
+      "columns": 3
+    },
+    {
+      "start": 54,
+      "columns": 3
+    },
+    {
+      "start": 76,
+      "columns": 2
+    }
+  ],
+  "local_links_checked": [
+    {
+      "line": 29,
+      "path": "outcomes/records/review_v35_independent_checks.json"
+    },
+    {
+      "line": 29,
+      "path": "outcomes/records/review_v35_metadata_audit.py.gz"
+    },
+    {
+      "line": 29,
+      "path": "outcomes/records/review_v35_repository_index.gz"
+    },
+    {
+      "line": 50,
+      "path": "response_v37.md"
+    },
+    {
+      "line": 50,
+      "path": "outcomes/target_p6_boundary_tiles_v37.md"
+    },
+    {
+      "line": 50,
+      "path": "outcomes/records/component_checker_v37.json"
+    },
+    {
+      "line": 50,
+      "path": "outcomes/records/gate_decisions_v37.json"
+    },
+    {
+      "line": 64,
+      "path": "outcomes/records/resource_costs_v37.json"
+    },
+    {
+      "line": 88,
+      "path": "review_report_v21.md"
+    },
+    {
+      "line": 88,
+      "path": "review_report_v32.md"
+    },
+    {
+      "line": 88,
+      "path": "review_report_v33.md"
+    },
+    {
+      "line": 88,
+      "path": "review_report_v34.md"
+    },
+    {
+      "line": 90,
+      "path": "outcomes/records/consumer_v37.json"
+    },
+    {
+      "line": 157,
+      "path": "outcomes/records/review_v35_documentation_checks.json"
+    }
+  ],
+  "raw_review_archives_verified": 2,
+  "review_archive_hashes": [
+    {
+      "path": "review_v35_repository_index.gz",
+      "sha256": "ab101cd4a4e49b27c95c51a4fc214c0ef3c5cf4f9ddd3afbc482c561164a89f8",
+      "uncompressed_sha256": "24660faf35d18627ba6b86caa40d292c370b7a59f4c3bb72ea84a1534402e78b",
+      "bytes": 3051028
+    },
+    {
+      "path": "review_v35_metadata_audit.py.gz",
+      "sha256": "224072cc07f77a9c6ca3e94a6d6c0b3153dcfa47091dea94625b4875c37b1b0b",
+      "uncompressed_sha256": "84b066c971d22bd3e8de6772613b7a8cf34e526866cce9706d604393092a21b2",
+      "bytes": 10850
+    }
+  ],
+  "unittest": {
+    "command": "python -m unittest -q src.test.test_26_documentation_contract",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.046s\n\nOK\n",
+    "elapsed_including_startup_seconds": 0.34305126301478595,
+    "scope": "pure stdlib documentation only; no FE"
+  },
+  "diff_check": "PASS",
+  "no_source_edits": true,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "script": "import gzip, hashlib, json, re, subprocess, sys, time\nfrom pathlib import Path\nfrom datetime import datetime, timezone\n\nroot=Path('/home/fenics/Projects/NN-Lab')\nbase='011718d84606cc052085c200d2ce767030f21e38'\ndocs=root/'docs/task042_neural_coarse_inverse'\nrec=docs/'outcomes/records'\ntarget=rec/'review_v35_documentation_checks.json'\ntarget.write_text('{}\\n')\nsha=lambda b:hashlib.sha256(b).hexdigest()\nold=subprocess.check_output(['git','show',base+':docs/task042_neural_coarse_inverse/README.md'],cwd=root)\nassert (docs/'README.md').read_bytes().endswith(old)\nreport=docs/'review_report_v35.md'\nlines=report.read_text().splitlines()\ninside=False;fences=[];links=[];tables=[];width=None\nfor i,line in enumerate(lines,1):\n    if line.startswith('```'):\n        inside=not inside;fences.append(dict(line=i,syntax=line))\n        continue\n    if inside:continue\n    assert '$$' not in line and '\\\\[' not in line and '\\\\]' not in line,(i,line)\n    if line.startswith('|'):\n        count=len(line.split('|'))\n        if width is None:width=count;tables.append(dict(start=i,columns=count-2))\n        assert count==width,(i,count,width)\n    else:width=None\n    for label,link in re.findall(r'\\[([^\\]]+)\\]\\(([^)]+)\\)',line):\n        if link.startswith(('https://','http://')):continue\n        path=(report.parent/link.split('#')[0]).resolve()\n        assert path.exists(),(i,link)\n        links.append(dict(line=i,path=link))\nassert not inside and len(fences)==0\ntest_started=time.perf_counter()\nr=subprocess.run([sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],cwd=root,capture_output=True,text=True)\nelapsed=time.perf_counter()-test_started\nassert r.returncode==0,r.stdout+r.stderr\nsubprocess.run(['git','diff','--check'],cwd=root,check=True)\nassert not subprocess.check_output(['git','diff','--name-only','--','src','benchmarks','input','scripts'],cwd=root)\nraw={'raw_review_evidence': []}\nfor name in ('review_v35_repository_index.gz','review_v35_metadata_audit.py.gz'):\n    compressed=(rec/name).read_bytes()\n    expanded=gzip.decompress(compressed)\n    if name.endswith('repository_index.gz'):\n        assert expanded==(root/'tmp/task042/review_v35/repository_index.json').read_bytes()\n    else:\n        compile(expanded.decode(), name, 'exec')\n    raw['raw_review_evidence'].append(dict(path=name,sha256=sha(compressed),uncompressed_sha256=sha(expanded),bytes=len(expanded)))\n\nout=dict(schema='task042.review35.docs.v1',UTC=datetime.now(timezone.utc).isoformat(),reviewed_HEAD=base,\n    files={str(p.relative_to(root)):dict(sha256=sha(p.read_bytes()),bytes=p.stat().st_size) for p in (report,docs/'README.md')},\n    README_original_suffix_sha256=sha(old),historical_suffix_unchanged=True,review_math_fences=fences,\n    review_tables=tables,local_links_checked=links,raw_review_archives_verified=len(raw['raw_review_evidence']),review_archive_hashes=raw['raw_review_evidence'],\n    unittest=dict(command='python -m unittest -q src.test.test_26_documentation_contract',returncode=r.returncode,\n        stdout=r.stdout,stderr=r.stderr,elapsed_including_startup_seconds=elapsed,scope='pure stdlib documentation only; no FE'),\n    diff_check='PASS',no_source_edits=True,GitHub_visual='NOT_VERIFIED',CI='NOT_RUN',script=Path(__file__).read_text())\ntarget.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\\n')\nprint(json.dumps(dict(local_links=len(links),tables=len(tables),math_blocks=len(fences)//2,unittest=r.stderr.strip(),diff_check='PASS'),ensure_ascii=False,indent=2))\n"
+}
