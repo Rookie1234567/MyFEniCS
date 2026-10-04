@@ -40,6 +40,24 @@ def sha(path):
     return h.hexdigest()
 
 
+def scientific_json_value(x):
+    """Round scalar telemetry once; raw complex256 arrays remain in NPZ."""
+    if isinstance(x, complex):
+        return dict(real=float(x.real),imag=float(x.imag))
+    if hasattr(x,'dtype') and getattr(x,'ndim',None)==0:
+        if x.dtype.kind=='f':
+            return float(x)
+        if x.dtype.kind=='c':
+            return dict(real=float(x.real),imag=float(x.imag))
+        if x.dtype.kind in ('i','u'):
+            return int(x)
+        if x.dtype.kind=='b':
+            return bool(x)
+    if hasattr(x,'tolist'):
+        return x.tolist()
+    raise TypeError(type(x).__name__)
+
+
 def write(path, value):
     def convert(x):
         if isinstance(x, complex):
@@ -370,7 +388,8 @@ def worker(directory):
             stream.write(
                 json.dumps(
                     row,
-                    default=lambda x: x.tolist() if hasattr(x, "tolist") else str(x),
+                    default=(scientific_json_value if m['campaign_version']==22 else
+                             lambda x: x.tolist() if hasattr(x, "tolist") else str(x)),
                 )
                 + "\n"
             )

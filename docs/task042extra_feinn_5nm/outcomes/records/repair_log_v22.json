@@ -27,6 +27,16 @@
       "process_limitations_preserved": true
     }
   ],
-  "formal_repairs": [],
+  "formal_repairs": [
+    {
+      "round": 1,
+      "failure": "V22 affine_saved attempt1 completed O3 raw fields but marker JSON recursed on numpy.longdouble",
+      "hypothesis": "np.longdouble.tolist returns a numpy.longdouble scalar",
+      "change": "opt-in V22 event scalar serializer rounds telemetry once; raw guard digits stay in NPZ",
+      "test": "guard_digit_event_repair targeted regression",
+      "retry": "affine_saved attempt2, original attempt1 preserved",
+      "numeric_math_changed": false
+    }
+  ],
   "all_failed_costs_preserved": true
 }

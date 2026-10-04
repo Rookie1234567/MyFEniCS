@@ -91,3 +91,13 @@ def test_missing_and_duplicate_modes_cannot_be_partial_pass():
         face_gates(
             dict(roles=[], air=[], small_sparse_LU_count=0, stage_qualified=True)
         )
+
+
+def test_guard_digit_event_serialization_does_not_recurse():
+    import json
+    import numpy as np
+    from src.runners.fixed_phase_campaign import scientific_json_value
+    value=dict(scalar=np.longdouble('.2'),complex_value=np.clongdouble(1+2j),
+               array=np.array([.1,.2],np.longdouble),passed=np.bool_(True))
+    r=json.loads(json.dumps(value,default=scientific_json_value,allow_nan=False))
+    assert r==dict(scalar=.2,complex_value=dict(real=1.,imag=2.),array=[.1,.2],passed=True)
