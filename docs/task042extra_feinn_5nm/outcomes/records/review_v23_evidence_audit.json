@@ -1542,6 +1542,147 @@
         "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "source_state": "development_worktree; not formal PDE provenance"
       }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v23_publication_check_20261004T140022019063Z/summary.json",
+        "sha256": "3b7846d9a1f4d0f7533378e115cef35a98dfd5a05056c492ee3225e5b83c5b41",
+        "bytes": 1903
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 180.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1824562
+        ],
+        "sampled_process_tree_rss_peak_bytes": 65564672,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123958296576,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123958296576,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.9274377999827266,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v23_github_render_20261004T140139163564Z/summary.json",
+        "sha256": "f20ebb0e4c35e89efbac80471c103a1664774f8f53c466d52b547fb34dde67b0",
+        "bytes": 2074
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1825033,
+          1825034,
+          1825037,
+          1825092,
+          1825095,
+          1825140,
+          1825146,
+          1825198,
+          1825238,
+          1825244,
+          1825249,
+          1825259,
+          1825278,
+          1825394
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1677565952,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123997696000,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123997696000,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 32,
+        "elapsed_seconds": 20.10625227005221,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
     }
   ],
   "script": {
@@ -2283,12 +2424,15 @@
     "initial_read_upper_seconds": 600,
     "branch": "task42extra_feinn_5nm",
     "head": "54da65a2c24515acb851dbd404e14ffc5ff78b4f",
-    "monotonic_since_anchor_seconds": 653.453642666107,
+    "monotonic_since_anchor_seconds": 822.7231327641057,
     "first_read_before_anchor_not_exactly_measured": true,
     "conservative_read_prefix_seconds": 600,
     "reading_reasoning_IO_Git_render_in_tail": true,
     "tail_reserved_seconds": 900,
-    "old_project_exact_total": "UNKNOWN"
+    "old_project_exact_total": "UNKNOWN",
+    "observed_plus_prefix_upper_seconds": 1422.7231327641057,
+    "conservative_upper_including_final900s": 2322.7231327641057,
+    "observation_utc": "2026-10-04T14:03:12.793233+00:00"
   },
   "goal": {
     "geometry_nm": [
@@ -2323,13 +2467,58 @@
       "math_fences": 0,
       "links": 14
     },
-    "actual_GitHub_render": "PENDING_AFTER_PUSH",
+    "actual_GitHub_render": "PASS_SCOPED_ACTUAL_VISUAL",
     "previous_V23_render_reused": {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v23.json",
       "sha256": "44900889557dc4fa5da1c183b42cbe456cc8409f711f000ec831f9a451dbe7e2",
       "bytes": 4695
     },
     "previous_V23_render_status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
-    "notification": "NOT_SENT"
+    "notification": "PENDING_SINGLE_HANDOFF_AFTER_SEAL",
+    "publication_HEAD": "68189fdbd47de680f197fcab65d97ca62fb25ba3",
+    "counts": {
+      "pages": 1,
+      "tables": 6,
+      "formulas": 0,
+      "captures": 7
+    },
+    "render_record": {
+      "path": "tmp/task42extra/render/review_v23_published/render_records.json",
+      "sha256": "d0970750726f701e777567a875baca952838fdb3d4a76c172b44cbdfabdba2ef",
+      "bytes": 6089
+    },
+    "visual_scope": "All seven screenshots actually inspected: report opening and all six tables, all rows and right edges; no horizontal clipping or leaked Markdown. No claim of every paragraph screenshot coverage.",
+    "screenshots": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_top.png",
+        "sha256": "87ac8d60cd5edf642f1903a791d0e5eae8f179cb7cb63ace5497393477ea0da6"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_table_00.png",
+        "sha256": "8f4fb872da43d47129778c655a5f4a3288cd1393642a8e187c9051d4cc91925f"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_table_01.png",
+        "sha256": "037512908940b73c291183a66686100988e74bcd4f986d37e49252eff5cace56"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_table_02.png",
+        "sha256": "c8110a07fd87649336ff7ec4e763d5e364f616519594b0006ba59abdf7b968b0"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_table_03.png",
+        "sha256": "0aea2ddc60bb6d0a610495ff8a6e7f51c17f9afcffec3cd7a973bd3345cd7139"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_table_04.png",
+        "sha256": "1882b6dff884ba64f5b952ff4cecb4e7a494ba139c5ff949ecf7fcf37b26f340"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v23_published/00_table_05.png",
+        "sha256": "ea7b87f21636c3122b3c8c75d013d2f154fd4c1e1dec0cea4bf34f1cf343307b"
+      }
+    ],
+    "final_seal_changes_only_audit_JSON": true,
+    "postrender_review_scope_unchanged": true
   }
 }
