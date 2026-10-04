@@ -176,10 +176,20 @@ def adapter_stage(folder):
     # their source and all array receipts stay bound to the original attempt.
     prefix = window.TMP / "adapter_prefix.json"
     if prefix.exists():
-        patches = json.loads(prefix.read_text())
-        for p in patches:
+        previous = json.loads(prefix.read_text())
+        for p in previous:
             for key in ("literal", "adapter", "vectors"):
                 read_arrays(p[key])
+        # Preserve the earlier unnormalized structural-zero witness. A
+        # unit-input absolute-zero test is scale-defined; arbitrary large
+        # internal input cannot share its unscaled absolute output floor.
+        patches = [
+            p
+            for p in previous
+            if p.get("internal_input_norm") == 1
+            and all(c["passed"] for c in p["checks"])
+        ]
+        write_json(folder / "previous_adapter_prefix.json", previous)
     for desc in wp["patches"]:
         name = desc["name"]
         if any(p["description"] == desc for p in patches):
@@ -236,6 +246,7 @@ def adapter_stage(folder):
         y[lit["slaves"]] = 0
         internal = np.zeros(n, np.complex128)
         internal[lit["interiors"]] = random_complex(rng, len(lit["interiors"]))
+        internal /= np.linalg.norm(internal)
         times = {}
         began = perf_counter()
         for label, value in (
@@ -282,6 +293,7 @@ def adapter_stage(folder):
             description=desc,
             record_source_sha=os.environ["TASK042_RUN_SOURCE"],
             storage_rows=n,
+            internal_input_norm=1,
             ownership=ownership,
             checks=checks,
             setup_seconds=setup,

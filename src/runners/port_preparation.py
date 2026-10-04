@@ -137,9 +137,21 @@ def launch(
             read_stage("INVENTORY")
     if specification is not None:
         if ARTIFACT.joinpath(role + ".json").exists():
-            raise ValueError(
-                "V36 completed phase already published; reuse pointer, no restart"
-            )
+            pointer = ARTIFACT.joinpath(role + ".json")
+            previous = json.loads(pointer.read_text())
+            prior_status = json.loads(
+                __import__("pathlib").Path(previous["path"]).read_text()
+            )["status"]
+            if namespace != "v39" or prior_status not in (
+                "NATIVE_ADAPTER_NOT_QUALIFIED",
+                "COUPLED_INTERFACE_NOT_QUALIFIED",
+            ):
+                raise ValueError(
+                    "completed qualified phase already published; reuse pointer, no restart"
+                )
+            # This allows only a diagnosed repair of a nonqualified phase.
+            # Its result/arrays/source remain immutable and the superseded
+            # pointer is saved beside the new run before publication.
         status = subprocess.check_output(
             ["git", "status", "--porcelain"], cwd=ROOT, text=True
         )
@@ -166,6 +178,14 @@ def launch(
             )
         )
     folder.mkdir(parents=True, exist_ok=False)
+    if (
+        specification is not None
+        and namespace == "v39"
+        and ARTIFACT.joinpath(role + ".json").exists()
+    ):
+        (folder / "superseded_partial_pointer.json").write_bytes(
+            ARTIFACT.joinpath(role + ".json").read_bytes()
+        )
     storage(
         32 * 2**20,
         namespace=namespace,
