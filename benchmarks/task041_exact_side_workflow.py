@@ -4713,43 +4713,80 @@ def _task041_same_g_modal_layout_signatures(
                     or _task041_pair_complex(mode.beta) != _task041_pair_complex(expected["beta"][index])
                 ):
                     raise ValueError(f"{branch} ordered mode mismatch at {index}")
-            normalization_values = {
-                "right_scale": np.asarray(
-                    [mode.right_scale for mode in basis.modes], dtype=np.float64
-                ),
-                "poynting_z_after_normalization": np.asarray(
-                    [mode.poynting_z_after_normalization for mode in basis.modes],
-                    dtype=np.float64,
-                ),
-                "left_pair_relative_errors": np.asarray(
-                    basis.left_pair_relative_errors, dtype=np.float64
-                ),
-                "biorthogonality_matrix": np.asarray(
-                    basis.biorthogonality_matrix, dtype=np.complex128
-                ),
-                "max_identity_error": np.asarray(
-                    basis.max_identity_error, dtype=np.float64
-                ),
-                "max_entry_identity_error": np.asarray(
-                    basis.max_entry_identity_error, dtype=np.float64
-                ),
-            }
-            if normalization_values["biorthogonality_matrix"].shape != (
-                mode_count,
-                mode_count,
+            gram_authority = basis.gram_authority
+            packet_authority = basis.packet_authority
+            if not isinstance(gram_authority, Mapping) or not isinstance(
+                packet_authority, Mapping
             ):
-                raise ValueError(f"{branch} biorthogonality layout differs from packet")
-            if not all(np.all(np.isfinite(value)) for value in normalization_values.values()):
-                raise ValueError(f"{branch} hydrated normalization is non-finite")
-            normalization = {
-                key: (
-                    _task041_pair_array_signature(value)
-                    if key == "biorthogonality_matrix"
-                    else value.tolist() if value.ndim else float(value)
+                raise TypeError(f"{branch} hydrated Gram authority is unavailable")
+            packet_gram_authority = packet_authority.get("gram_authority")
+            if not isinstance(packet_gram_authority, Mapping):
+                raise TypeError(f"{branch} packet Gram authority is unavailable")
+            authority_sha = _task041_pair_canonical_sha256(gram_authority)
+            if (
+                authority_sha != _task041_pair_canonical_sha256(packet_gram_authority)
+                or authority_sha != packet_normalization_sha
+            ):
+                raise ValueError(f"{branch} Gram authority hash differs from request")
+            if gram_authority.get("mode_count") != mode_count:
+                raise ValueError(f"{branch} Gram authority mode count differs from packet")
+            left_pair_errors = np.asarray(
+                gram_authority.get("left_pair_relative_errors"), dtype=np.float64
+            )
+            gram_errors = np.asarray(
+                [
+                    gram_authority.get("max_identity_error"),
+                    gram_authority.get("max_entry_identity_error"),
+                ],
+                dtype=np.float64,
+            )
+            gram_groups = gram_authority.get("groups")
+            if (
+                left_pair_errors.shape != (mode_count,)
+                or gram_errors.shape != (2,)
+                or not np.all(np.isfinite(left_pair_errors))
+                or not np.all(np.isfinite(gram_errors))
+                or not isinstance(gram_groups, list)
+                or not gram_groups
+            ):
+                raise ValueError(f"{branch} Gram authority shape or values are invalid")
+            authority_group_indices = []
+            authority_methods = set()
+            for gram_group in gram_groups:
+                if not isinstance(gram_group, Mapping):
+                    raise TypeError(f"{branch} Gram group authority is invalid")
+                indices = gram_group.get("indices")
+                method = gram_group.get("normalization_method")
+                beta_center = np.asarray(gram_group.get("beta_center"), dtype=np.float64)
+                group_metrics = np.asarray(
+                    [
+                        gram_group.get("max_relative_beta_spread"),
+                        gram_group.get("overlap_condition"),
+                        gram_group.get("post_normalization_identity_error"),
+                    ],
+                    dtype=np.float64,
                 )
-                for key, value in normalization_values.items()
-            }
-            branch_runtime[branch] = _task041_pair_canonical_sha256(normalization)
+                if (
+                    not isinstance(indices, (list, tuple))
+                    or not indices
+                    or any(type(index) is not int for index in indices)
+                    or not isinstance(method, str)
+                    or not method
+                    or beta_center.shape != (2,)
+                    or group_metrics.shape != (3,)
+                    or not np.all(np.isfinite(beta_center))
+                    or not np.all(np.isfinite(group_metrics))
+                ):
+                    raise ValueError(f"{branch} Gram group authority is incomplete")
+                authority_group_indices.append(tuple(indices))
+                authority_methods.add(method)
+            if tuple(authority_group_indices) != tuple(
+                tuple(int(index) for index in group.indices) for group in basis.groups
+            ):
+                raise ValueError(f"{branch} Gram groups differ from hydrated groups")
+            if sorted(authority_methods) != normalization_methods:
+                raise ValueError(f"{branch} normalization methods differ from packet")
+            branch_runtime[branch] = authority_sha
         if any(int(side.projection.getSize()[0]) != mode_count for side in (coupling.bottom, coupling.top)):
             raise ValueError("bottom/top projection row coordinates differ")
         mappings = {

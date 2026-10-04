@@ -9022,7 +9022,12 @@ def test_task041_same_g_source_binding_rejects_a_changed_current_file(tmp_path):
         _task041_validate_pair_source_evidence(evidence, tmp_path)
 
 
-def _same_g_modal_layout_fixture(*, reverse_positive=False):
+def _same_g_modal_layout_fixture(
+    *,
+    reverse_positive=False,
+    missing_gram_authority=None,
+    normalization_sha_mismatch=None,
+):
     from benchmarks import task041_exact_side_workflow as worker
 
     mode_count = 2
@@ -9032,6 +9037,27 @@ def _same_g_modal_layout_fixture(*, reverse_positive=False):
         kinds = ["propagating", "evanescent"]
         beta = [[1.0, 0.0], [2.0, 0.0]]
         mode_keys = [{"direction": direction, "kind": kind} for kind in kinds]
+        gram_authority = {
+            "mode_count": mode_count,
+            "max_identity_error": 0.0,
+            "max_entry_identity_error": 0.0,
+            "left_pair_relative_errors": [0.0, 0.0],
+            "groups": [
+                {
+                    "indices": [0, 1],
+                    "beta_center": [1.5, 0.0],
+                    "max_relative_beta_spread": 0.0,
+                    "overlap_condition": 1.0,
+                    "normalization_method": "fixture_basis_scale",
+                    "post_normalization_identity_error": 0.0,
+                }
+            ],
+        }
+        normalization_sha256 = worker._task041_pair_canonical_sha256(
+            gram_authority
+        )
+        if normalization_sha_mismatch == branch:
+            normalization_sha256 = "8" * 64
         expected[branch] = {
             "direction": direction,
             "mode_keys": mode_keys,
@@ -9039,7 +9065,7 @@ def _same_g_modal_layout_fixture(*, reverse_positive=False):
             "groups": [0, 0],
             "passive_branch_valid": [True, True],
             "normalization_methods": ["fixture_basis_scale"],
-            "normalization_sha256": "9" * 64,
+            "normalization_sha256": normalization_sha256,
         }
         order = [1, 0] if branch == "positive" and reverse_positive else [0, 1]
         modes = [
@@ -9048,18 +9074,16 @@ def _same_g_modal_layout_fixture(*, reverse_positive=False):
                 kind=kinds[index],
                 beta=complex(index + 1),
                 passive_branch_valid=True,
-                right_scale=1.0,
-                poynting_z_after_normalization=1.0,
             )
             for index in order
         ]
         bases[branch] = SimpleNamespace(
             modes=modes,
             groups=[SimpleNamespace(indices=[0, 1])],
-            left_pair_relative_errors=[0.0, 0.0],
-            biorthogonality_matrix=np.eye(mode_count, dtype=np.complex128),
-            max_identity_error=0.0,
-            max_entry_identity_error=0.0,
+            gram_authority=(
+                None if missing_gram_authority == branch else gram_authority
+            ),
+            packet_authority={"gram_authority": gram_authority},
         )
 
     class Projection:
@@ -9100,6 +9124,187 @@ def _same_g_modal_layout_fixture(*, reverse_positive=False):
         "branches": expected,
     }
     return worker, coupling, layout, modal_system, descriptor
+
+
+def _same_g_hydrated_modal_layout_fixture(tmp_path):
+    from benchmarks import task039_v4_selected_mode_packet as packet_api
+    from benchmarks import task041_exact_side_workflow as worker
+    from src.test import test_292_task039_selected_mode_packet as packet_fixture
+
+    comm = MPI.COMM_SELF
+    packet_directory = tmp_path / f"rank-{MPI.COMM_WORLD.rank}"
+    packet_directory.mkdir(parents=True, exist_ok=True)
+    branches, ownership = packet_fixture._branches(comm)
+    bases = {
+        name: packet_fixture._fake_basis(branches[name], ownership)
+        for name in ("positive", "negative")
+    }
+    metadata = packet_fixture._metadata()
+    metadata["gram_authority"] = {
+        name: packet_api._basis_gram_authority(basis)
+        for name, basis in bases.items()
+    }
+    identity = packet_fixture._identity(comm)
+    written = packet_api.write_task039_v4_selected_mode_packet(
+        packet_directory,
+        positive_basis=bases["positive"],
+        negative_basis=bases["negative"],
+        identity=identity,
+        metadata=metadata,
+        comm=comm,
+    )
+    loaded = packet_api.load_task039_v4_selected_mode_packet(
+        packet_directory / "manifest.json",
+        identity=identity,
+        expected_manifest_sha256=written["manifest_sha256"],
+        comm=comm,
+    )
+    hydrated = packet_api.hydrate_task039_v4_selected_mode_packet(
+        loaded, comm=comm
+    )
+    mode_count = int(loaded["mode_count"])
+    branch_descriptors = {}
+    for branch in ("positive", "negative"):
+        selection = loaded["selection"][branch]
+        authority = getattr(hydrated, f"{branch}_basis").gram_authority
+        branch_descriptors[branch] = {
+            "direction": selection["direction"],
+            "mode_keys": selection["mode_keys"],
+            "beta": [
+                [float(complex(value).real), float(complex(value).imag)]
+                for value in selection["beta"]
+            ],
+            "groups": selection["groups"],
+            "passive_branch_valid": selection["passive_branch_valid"],
+            "normalization_methods": sorted(
+                {group["normalization_method"] for group in authority["groups"]}
+            ),
+            "normalization_sha256": worker._task041_pair_canonical_sha256(
+                authority
+            ),
+        }
+
+    class Projection:
+        @staticmethod
+        def getSize():
+            return (mode_count, mode_count)
+
+    coupling = SimpleNamespace(
+        mode_count_per_direction=mode_count,
+        bottom=SimpleNamespace(side="bottom", projection=Projection()),
+        top=SimpleNamespace(side="top", projection=Projection()),
+        positive_basis=hydrated.positive_basis,
+        negative_basis=hydrated.negative_basis,
+        negative_trace_to_positive=np.zeros(
+            (mode_count, mode_count), dtype=np.complex128
+        ),
+        propagation=SimpleNamespace(
+            forward=SimpleNamespace(
+                factors=np.ones(mode_count, dtype=np.complex128)
+            ),
+            backward=SimpleNamespace(
+                factors=np.ones(mode_count, dtype=np.complex128)
+            ),
+        ),
+    )
+    modal_system = SimpleNamespace(
+        modal_action=SimpleNamespace(
+            modal_count=2 * mode_count,
+            modal_constraint=np.zeros(
+                (2 * mode_count, 2 * mode_count), dtype=np.complex128
+            ),
+        )
+    )
+    layout = SimpleNamespace(modal_count=2 * mode_count, modal_owner=0)
+    descriptor = {
+        "mode_count": mode_count,
+        "artifact_sha256": "a" * 64,
+        "source_evidence_sha256": "b" * 64,
+        "packet_manifest_sha256": written["manifest_sha256"],
+        "packet_identity_canonical_sha256": worker._task041_pair_canonical_sha256(
+            loaded["identity"]
+        ),
+        "selection_sha256": written["selection_sha256"],
+        "cross_section_layout_sha256": "d" * 64,
+        "canonical_mapping_source": "fixture-negative-to-positive",
+        "trace_mapping_source": "fixture-selected-packet-traces",
+        "physical_method": {"propagation_model": "fixture-two-sided"},
+        "branches": branch_descriptors,
+    }
+    return worker, coupling, layout, modal_system, descriptor, hydrated
+
+def test_task041_same_g_hydrated_packet_matches_layout_signer_interface(tmp_path):
+    worker, coupling, layout, modal_system, descriptor, hydrated = (
+        _same_g_hydrated_modal_layout_fixture(tmp_path)
+    )
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    try:
+        signatures = worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, SerialComm()
+        )
+        assert signatures["artifact_sha256"] == descriptor["artifact_sha256"]
+        assert signatures["row_layout_sha256"]
+        assert signatures["column_layout_sha256"]
+        for basis in (hydrated.positive_basis, hydrated.negative_basis):
+            assert set(vars(basis)) == {
+                "modes",
+                "groups",
+                "gram_authority",
+                "adjoint_solver_report",
+                "selection_diagnostics",
+                "packet_authority",
+                "packet_consumer_diagnostics",
+            }
+            assert all(
+                set(vars(mode))
+                == {
+                    "beta",
+                    "direction",
+                    "group_id",
+                    "kind",
+                    "passive_branch_valid",
+                    "right",
+                    "left_full",
+                }
+                for mode in basis.modes
+            )
+    finally:
+        hydrated.destroy()
+    assert hydrated.packet_consumer_diagnostics["destroyed"] is True
+
+
+def test_task041_same_g_layout_rejects_missing_or_mismatched_gram_authority():
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    worker, coupling, layout, modal_system, descriptor = (
+        _same_g_modal_layout_fixture(missing_gram_authority="positive")
+    )
+    with pytest.raises(Task041ModePrepError, match="Gram authority is unavailable"):
+        worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, SerialComm()
+        )
+
+    worker, coupling, layout, modal_system, descriptor = (
+        _same_g_modal_layout_fixture(normalization_sha_mismatch="positive")
+    )
+    with pytest.raises(Task041ModePrepError, match="Gram authority hash differs"):
+        worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, SerialComm()
+        )
 
 
 def test_task041_same_g_modal_order_rejects_equal_length_reordering():
