@@ -1,0 +1,56 @@
+{
+  "schema": "task40extra.independent-paired-source-launch-review.v1",
+  "status": "PASS_BOUNDED_SOURCE_AND_ORCHESTRATION_REVIEW",
+  "record_kind": "post-review record; no numerical execution by reviewer",
+  "reviewed_at_UTC": "2026-10-04T17:53:29Z",
+  "reviewer": "/root/review_checker_launch_identity",
+  "head": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+  "tree": "c48eed05e8f3fd84556ffbcecefb9a3e13589e24",
+  "working_tree_clean": true,
+  "sha256": {
+    "src/solvers/fresh_paired_compact_inverse.py": "1b823c4e1a50d30099d1a016570b6b3c9ff08763ebfb92c5cc8b1342abe6fdef",
+    "src/solvers/fresh_paired_compact_checker.py": "4a3ef2978d12215cee3a09f89e0992ad2c17fc164da0cea829f2cc2916f05888",
+    "src/test/test_fresh_paired_compact_checker.py": "c1480237fae02c3be37fc430517591cf11546b81447724bebcc0f50d5c6dd65f",
+    "src/solvers/paired_fresh_c1b_authority.py": "a8500e6423cc36c6fbbe953b8a062d4f5b57795d6c01097258f4285c68b79833",
+    "src/solvers/y_orbit_two_cell_block_audit.py": "4ba8df2f06d0feb35931b9aca51dee77bbe66bf0b555afe7f6d39b148cade46b",
+    "launch_paired_compact_inverse.py": "95969cfde94b5c2474c4a9fae34ddae32becf8eaf49c90b2ec6a4872d04d4c9b",
+    "preflight.json": "559abfc4a81e7db80c0e3bf2af855d1c747b4b8f01e2902d939f17b717b5aaf8",
+    "targeted_tests.log": "7ad1121f6beac77e1dbd056e4ec75e4c7c267b6a9a522bed8aa8f384ea2535c6"
+  },
+  "closed_blocker": "Checker now admits actual source_facts clean dirty='' schema, rejects boolean/dirty/missing substitutes, and retains complete source equality. The b39-to-17c0 delta contains only this comparison and two regression tests.",
+  "reviewed_gates": [
+    "Original immutable fresh C1b metadata, raw artifacts, ABI and worker/checker Library pins remain validation authority; only the exact six-line bounded provider old/new hash pair changes existing source.",
+    "Both live 40-cell caches and disjoint 228/304 original-port sectors remain alive; four diagonal and four within-twist cross gates precede all four q factors.",
+    "Structural-empty projection skip occurs after label/index/value checks, is bounded-path opt-in, and preserves default behavior.",
+    "CompleteTwoCellInverse and FourBranchFactors public implementations are unchanged; no candidate full-Ny S/F/Q, dense Hhat, or per-apply cache rebuild was found.",
+    "Before/after numeric cache digests and production cache identities are retained; whole-run cleanup closes the shared transform bank after use.",
+    "Saved-only checker binds all artifacts and raw/carrier/source receipts, independently projects compact recipes and applies saved cell LU with admitted int32 pivots, and checks all interior RHS/recovery and original FE/port equations.",
+    "Four saved factor controls and eight regular/notch original-load field and all-532 mode/output packets, including global conversion and round trips, retain their gates.",
+    "Exact qualified relative interpreter argv and complete producer/current/child environment equality remain; checker requires completed qualified worker supervision before candidate array work.",
+    "Unchanged supervisor hard stops and final source/environment/script/exit/RSS/wall/swap/readability/identity/descendant-cleanup gates remain; checker is separately invoked."
+  ],
+  "resource_contract": {
+    "whole_tree_cap_bytes": 3221225472,
+    "wall_seconds_per_stage": 4500,
+    "reserve_bytes": 134217728,
+    "factor_workspace_allowance_aggregate_bytes": 536870912,
+    "factor_allowance_included_in_measured_admission": true,
+    "zero_swap": true,
+    "MPI_ranks": 1,
+    "math_threads": 1,
+    "projection_owned_max_bytes": 134217728,
+    "primitive_export_max_bytes": 536870912
+  },
+  "observed_test_log": {"passed": 185, "subtests_passed": 50, "seconds": 0.93, "reviewer_reran_tests": false},
+  "proof_limits": [
+    "Source review only; no reviewer FE/JIT/factor/PDE execution or saved-array numerical replay.",
+    "Saved live FFCx volume vectors remain authority; checker does not independently rebuild FFCx.",
+    "Native map column and live cache lifecycle evidence retains its disclosed producer-control scope.",
+    "Within-twist cross checks do not establish a fresh complete 16-pair full-Ny scan.",
+    "Same80 scaled fixture only; no target geometry, continuum accuracy, 2TB or 48-hour qualification."
+  ],
+  "remaining_release_conditions": [
+    "Coordinator updates the stale b39/183 external test receipt before final checkpoint publication.",
+    "Root verifies final exact-source Library readback and fresh resource admission before any separately authorized numerical launch."
+  ]
+}

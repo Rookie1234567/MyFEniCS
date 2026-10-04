@@ -311,6 +311,12 @@ class TwoCellBlockProvider:
                     raise ValueError('compact contribution native row/column order differs: ' + label)
 
             if bounded is not None:
+                # Empty native CSR support makes this contribution exactly zero.
+                # Stored zero entries remain structural support; values are not inspected.
+                if (all(left.indptr[int(row)] == left.indptr[int(row) + 1] for row in rows)
+                        or all(right.indptr[int(col)] == right.indptr[int(col) + 1] for col in cols)):
+                    del rows, cols, values
+                    continue
                 bounded.add(left, right, rows, cols, values, label)
                 del rows, cols, values
                 continue

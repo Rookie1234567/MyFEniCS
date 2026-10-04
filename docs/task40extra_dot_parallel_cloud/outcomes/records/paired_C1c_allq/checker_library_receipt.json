@@ -1,0 +1,18 @@
+{
+  "library_file_id": "libfile_6cc685d92a688191944d130638f0df20",
+  "file_id": "file_0000000065288207bb99d23798f84fd6",
+  "filename": "paired_C1c_final_checker_checkpoint.zip",
+  "sha256": "64f4cf066cf7291f6d8df0ae0813fcaf2534d085a16e823a01396f902ad78d2d",
+  "members_verified": 13,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "metadata": {
+    "source_head": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+    "source_tree": "c48eed05e8f3fd84556ffbcecefb9a3e13589e24",
+    "scope": "freshsame80scaledp4 pairedcompactallq inverse; fulloriginalregular/two-cellnotch4loads; nooriginaltargetclaim",
+    "checker_status": "PASS_399_CHECKS",
+    "checker_sha256": "72e0428a0d8c78a7a55adc3199a2b2ab01cd00969a262f3e2c4ee717ed67b599",
+    "worker_report_sha256": "9fd8e2592382320f595807c17276b6f662193461ee64e0b105bd32df87dfe47d",
+    "worker_raw_Library_index": "libfile_60d8198784848191b6df98edc928d187",
+    "worker_full_readback_PASS": true
+  }
+}

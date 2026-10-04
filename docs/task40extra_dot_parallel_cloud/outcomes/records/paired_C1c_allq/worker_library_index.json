@@ -1,0 +1,114 @@
+{
+  "status": "LIBRARY_PAIRED_WORKER_PACKET_FULL_ROUNDTRIP_PASS",
+  "independent_checker_status": "PENDING",
+  "full_qualification": false,
+  "archive_sha256": "83281889ec2012850663d39b0c4d3de64c606780f74e8c13f89bcd0e7e77bc98",
+  "archive_bytes": 181347965,
+  "member_manifest_sha256": "5d09290aef023045f04581b71ee50c185a8b4cbdd944e8ae46515b092ae411c6",
+  "split_manifest_sha256": "278bb736e9b9228a3c52f1ea27876d33b927515d9ad8fe0a4e67ca08091859e1",
+  "parts_verified": 6,
+  "zip_members_verified": 4755,
+  "original_files_verified": 4754,
+  "NPYs_shape_dtype_numeric_hash_verified": 4199,
+  "NPY_numeric_bytes": 229239168,
+  "uncompressed_bytes_with_manifest": 1714777634,
+  "metadata": {
+    "schema": "own_paired_live_compact_terminal_packet.v1",
+    "source_head": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+    "source_tree": "c48eed05e8f3fd84556ffbcecefb9a3e13589e24",
+    "preservation_only_uncompressed_2GiB_exception": true,
+    "old_1GiB_guard_stop": true,
+    "primitive_scientific_cap_bytes": 536870912,
+    "actual_metadata_breakdown": {
+      "NPY_bytes": 229776640,
+      "JSON_bytes": 641352105,
+      "journals_bytes": 841358160
+    },
+    "worker_classification": "COMPLETED",
+    "scientific_qualification": "worker only; independentchecker and durable readback remain separate gates",
+    "file_count": 4754,
+    "uncompressed_bytes": 1713118012,
+    "numeric_hash_recipe": "sha256(repr((shape,str(dtype))).encode()+C_order_bytes), streamed by row"
+  },
+  "elapsed_transfer_readback_seconds": 108.32361030578613,
+  "library_files": [
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_compact_WORKER_PASS.zip.part01",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000a6e081f5991ff8fb865872bd",
+      "library_file_id": "libfile_d67aafe41a0081919948e22a8a9af981",
+      "file_name": "paired_compact_WORKER_PASS.zip.part01",
+      "local_metadata_applied": true,
+      "path": "/paired_compact_WORKER_PASS.zip.part01",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_compact_WORKER_PASS.zip.part02",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000963481f598ce23456a8945be",
+      "library_file_id": "libfile_77262300953c8191bd76786bd4ecc8fb",
+      "file_name": "paired_compact_WORKER_PASS.zip.part02",
+      "local_metadata_applied": true,
+      "path": "/paired_compact_WORKER_PASS.zip.part02",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_compact_WORKER_PASS.zip.part03",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000402c81f5b4d80bf4c676aebc",
+      "library_file_id": "libfile_52c43c11c0e881918e82062e20deed9d",
+      "file_name": "paired_compact_WORKER_PASS.zip.part03",
+      "local_metadata_applied": true,
+      "path": "/paired_compact_WORKER_PASS.zip.part03",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_compact_WORKER_PASS.zip.part04",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000dfc881f5952e9ac7adabc5e3",
+      "library_file_id": "libfile_2f717d3f2d848191ad7c1a417b2ca9ec",
+      "file_name": "paired_compact_WORKER_PASS.zip.part04",
+      "local_metadata_applied": true,
+      "path": "/paired_compact_WORKER_PASS.zip.part04",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_compact_WORKER_PASS.zip.part05",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000a41881f5931bd6288870f31b",
+      "library_file_id": "libfile_8ddaaa86c2b4819196def3a9012f5a6a",
+      "file_name": "paired_compact_WORKER_PASS.zip.part05",
+      "local_metadata_applied": true,
+      "path": "/paired_compact_WORKER_PASS.zip.part05",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_compact_WORKER_PASS.zip.part06",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000248481f5828b3b837d67a17f",
+      "library_file_id": "libfile_88c06bfcca3c8191afe8bb30db94adc0",
+      "file_name": "paired_compact_WORKER_PASS.zip.part06",
+      "local_metadata_applied": true,
+      "path": "/paired_compact_WORKER_PASS.zip.part06",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/library_parts/paired_terminal_split_manifest.json",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000bd5081f596cc1bf88d74a225",
+      "library_file_id": "libfile_a6c55e8ac8a48191932bcbc53a093084",
+      "file_name": "paired_terminal_split_manifest.json",
+      "local_metadata_applied": true,
+      "path": "/paired_terminal_split_manifest.json",
+      "current_version_number": 0
+    }
+  ],
+  "extracted_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/paired_live_candidate/terminal_packet/fresh_library_readback/extracted_verified"
+}
