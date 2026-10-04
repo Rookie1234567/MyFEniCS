@@ -125,6 +125,7 @@ def implementation_hashes():
             "distributed_entity_volume",
             "native_entity_qualification",
             "hcurl_affine_isotropic_tensor",
+            "native_witness_csr",
         )
     )
     paths.update(

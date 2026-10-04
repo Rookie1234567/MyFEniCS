@@ -150,3 +150,49 @@ def test_affine_recovery_difference_removes_nonzero_particular_solution():
     )
     assert not np.allclose(recover(x) - recover(y), recover(x - y))
     assert np.allclose((a @ recover(x))[1:], f)
+
+
+def test_literal_native_CSR_shared_contributions_and_complex_MPC():
+    from scipy.sparse import csr_matrix
+
+    from src.solvers.native_witness_csr import assemble_witness_csr
+
+    a = np.array([[2 + 0.7j, 0.3 - 1j], [0.9 + 0.2j, 3 - 0.4j]])
+    b = np.array([[1 - 0.6j, 0.4 + 0.8j], [1.2 - 0.3j, 4 + 0.1j]])
+    e = np.array([[1, 0, 0], [0.6 + 0.8j, 0, 0], [0, 0, 1]], complex)
+    expected = np.zeros((3, 3), complex)
+    expected[:2, :2] += a
+    expected[1:, 1:] += b
+    expected = e.conjugate().T @ expected @ e
+    actual = assemble_witness_csr([a, b], [[0, 1], [1, 2]], csr_matrix(e), 3)
+    assert np.allclose(actual.toarray(), expected)
+    assert not np.allclose(expected, e.T @ e)
+
+
+def test_p6_layer_orientation_against_native_Basix_both_axes():
+    from src.solvers.distributed_entity_volume import cell_transform
+    from src.solvers.distributed_volume_study import element
+    from src.solvers.native_recovery_study import orient_basix_tensor
+
+    e = element()
+    rng = np.random.default_rng(424201)
+    a = rng.normal(size=(882, 882)) + 1j * rng.normal(size=(882, 882))
+    for info in (1 << 18, 3, 585):
+        t = cell_transform(e, info)
+        assert (
+            np.linalg.norm(t @ a @ t.T - orient_basix_tensor(e, a, info))
+            / np.linalg.norm(a)
+            < 1e-12
+        )
+
+
+def test_actual_V42_one_run_schema_registration():
+    from src.io.port_preparation import load_preparation
+    from src.solvers.distributed_volume_scope import ROOT, STAGES
+
+    for name in STAGES:
+        r = load_preparation(
+            ROOT / f"input/task042_neural_coarse_inverse/v42_{name.lower()}.dat"
+        )
+        assert r.derived["stage"] == name and r.derived["preparation_scope"] == "v42"
+        assert r.derived["target_solve"] is False

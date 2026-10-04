@@ -147,6 +147,11 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
+    if namespace == "v42":
+        # A failed attempt never counts as a published successful checkpoint.
+        # Retain its result and source; numerical stages reuse only committed
+        # immutable class packets with the live dependency gate.
+        return previous.get("status") == "FAILED"
     if namespace in ("v39", "v40"):
         return previous["status"] in (
             "NATIVE_ADAPTER_NOT_QUALIFIED",

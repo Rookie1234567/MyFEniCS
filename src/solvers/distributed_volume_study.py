@@ -211,7 +211,6 @@ def classes(folder):
 
 def oracle(folder):
     import basix.ufl
-    import dolfinx_mpc
     import ufl
     from dolfinx import fem
     from mpi4py import MPI
@@ -224,6 +223,8 @@ def oracle(folder):
         _tabulate_raw_tensor_class,
     )
     from src.solvers.native_entity_topology import create_structured_mesh
+    from src.solvers.native_recovery_study import orient_basix_tensor
+    from src.solvers.native_witness_csr import assemble_witness_csr
 
     require_live_envelope()
     row, _ = stage("CLASSES")
@@ -242,6 +243,14 @@ def oracle(folder):
     mpc = build_double_floquet_mpc(
         V, SimpleNamespace(mesh=msh, facet_tags=facets, boundary_facets=exterior), cfg
     ).mpc
+    coefficients, offsets = mpc.coefficients()
+    if (
+        not np.array_equal(mpc.slaves, lit["slave_local_dofs"])
+        or not np.array_equal(offsets, lit["MPC_offsets"])
+        or not np.array_equal(mpc.masters.array, lit["MPC_masters"])
+        or not metric(np.asarray(coefficients), lit["MPC_coefficients"])["passed"]
+    ):
+        raise ValueError("live original native MPC differs from immutable bridge")
     if any(
         not np.array_equal(V.dofmap.cell_dofs(c), lit["cell_native_dofs"][c])
         for c in range(64)
@@ -264,6 +273,13 @@ def oracle(folder):
     kernels = _cell_integral_kernels(compiled, sum_duplicate_cell_integrals=True)
     s, checks = store(), []
     for i, key in enumerate(row["class_keys"]):
+        if s.has(f"class_{i}_native"):
+            cached = s.read(f"class_{i}_native")[1]["raw_native"]
+            raw = s.read(f"class_{i}_tensor")[1]["raw"]
+            checks.append(
+                dict(kind=f"native_q15_class_{i}_cached", **metric(raw, cached))
+            )
+            continue
         c = int(np.flatnonzero(lit["cell_raw_class_local"] == key["index"])[0])
         xyz = np.ascontiguousarray(
             lit["coordinates"][lit["cell_vertices"][c]], np.float64
@@ -277,24 +293,49 @@ def oracle(folder):
         s.save(f"class_{i}_native", {"raw_native": a}, {"checks": [check]})
     if not all(c["passed"] for c in checks):
         return {"status": "VOLUME_NOT_QUALIFIED", "checks": checks}
-    matrix = dolfinx_mpc.assemble_matrix(compiled, mpc, diagval=0.0)
-    matrix.assemble()
-    indptr, indices, data = matrix.getValuesCSR()
+    from scipy.sparse import csr_matrix
+
+    nr = len(lit["actual_dof_global_ids"])
+    rr, cc, vv = [], [], []
+    slaves = set(map(int, lit["slave_local_dofs"]))
+    for j in range(nr):
+        if j in slaves:
+            lo, hi = lit["MPC_offsets"][j : j + 2]
+            rr.extend([j] * int(hi - lo))
+            cc.extend(lit["MPC_masters"][lo:hi])
+            vv.extend(lit["MPC_coefficients"][lo:hi])
+        else:
+            rr.append(j)
+            cc.append(j)
+            vv.append(1.0 + 0j)
+    expansion = csr_matrix((vv, (rr, cc)), shape=(nr, nr), dtype=np.complex128)
+    original = [s.read(f"class_{i}_native")[1]["raw_native"] for i in range(6)]
+
+    def matrices():
+        for c in range(64):
+            i = int(lit["cell_raw_class_local"][c])
+            yield orient_basix_tensor(
+                V.element.basix_element, original[i], int(lit["cell_permutations"][c])
+            )
+
+    matrix = assemble_witness_csr(matrices(), lit["cell_native_dofs"], expansion, nr)
+    indptr, indices, data = matrix.indptr, matrix.indices, matrix.data
     s.save(
         "native_csr",
         {
             "indptr": indptr,
             "indices": indices,
             "data": data,
-            "shape": np.asarray(matrix.getSize(), np.int64),
+            "shape": np.asarray(matrix.shape, np.int64),
         },
         {
             "classes": checks,
-            "source": "ORIGINAL_NATIVE_UFL_q15_DOLFINx_MPC",
+            "source": "ORIGINAL_NATIVE_UFL_q15_BASIX_TRANSFORM_LITERAL_DOLFINx_MPC",
+            "assembly": "original class kernels reused; sum E_c^H V_c E_c; no repeated cell integral",
             "factorized": False,
         },
     )
-    matrix.destroy()
+    del matrix
     return {
         "status": "FINITE_NATIVE_ORACLE_READY",
         "checks": checks,
