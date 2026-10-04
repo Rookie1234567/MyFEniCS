@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V38 / 下一执行 V41
+
+[Review V38](review_report_v38.md)已独立审阅V40交付`b2dcd6a7497f272abb4c5298d8830b41fb803b84`。接受8hex／p6／MPI1的真实体积作用、非零载荷恢复及新进程消费；完整原尺寸0.7nm前向解、2TB／48h和NN20%仍未资格化。数组正确计数为11包／129逻辑成员／120实际成员／9别名，旧138记录保留并纠正说明。
+
+V41一次连续完成阶段身份合同、连接的真实p6 MPI1/2/4编号桥、门通过后的原尺寸geometry/topology-only库存及完整边界owner路由、可消费包和容量／完整求解就绪矩阵。明确禁止目标全p6空间／向量／A、新LU／Krylov／训练及dot求解器实验；普通bug同轮修复，不单开小review。完整范围、预算、验收与失败替代以报告为准。
+
+[独立核验](outcomes/records/review_v38_independent_checks.json) · [文档检查](outcomes/records/review_v38_documentation_checks.json)。提交推送／清场后按原队列交接，两个窗口不并行仓库工作；不merge。以下历史正文逐字保留。
+
+---
+
 # Task042 V40：真实有限体积与非零载荷恢复闭环通过
 
 先保存每个昂贵阶段，再将原体积、完整有限端口与内部非零载荷连接并独立审核。这样接线错误只补未完成阶段。本轮通过有限接口，不是完整PDE解，也没有神经训练。
