@@ -308,6 +308,20 @@ def gradient(folder, budget):
     whole_step_seconds = perf_counter() - timed_start
     counted_action_seconds = sum(action.seconds.values())
     network_seconds = max(0.0, whole_step_seconds - counted_action_seconds)
+    save_model(
+        folder,
+        "gradient_origin",
+        model,
+        None,
+        {"seed": plan_record()["seed"], "use": "gradient witness only"},
+    )
+    save(
+        folder,
+        "gradient_origin",
+        rhs=rhs.numpy(),
+        delta=delta.detach().numpy(),
+        gradients=np.concatenate([g.detach().numpy().ravel() for g in grads]),
+    )
     names = [n for n, _ in model.named_parameters()]
     weights = tuple(p.detach().clone().requires_grad_() for p in model.parameters())
 
@@ -389,6 +403,9 @@ def gradient(folder, budget):
             )
             fd = ((plus - minus) / (2 * h)).detach().numpy()
             row = ratio(fd, jv, tol=1e-5)
+            receipt = save(
+                folder, f"FD_direction_{i}_step_{h:.0e}", finite_difference=fd, jvp=jv
+            )
             successes += int(row["passed"])
             fd_rows.append(
                 dict(
@@ -396,6 +413,7 @@ def gradient(folder, budget):
                     step=h,
                     near_zero_rule="if norm(Jd)=0 require exact zero; otherwise relative",
                     **row,
+                    arrays=receipt,
                 )
             )
         checks.append(
@@ -421,6 +439,7 @@ def gradient(folder, budget):
         zeros = model(torch.zeros_like(r)).numpy()
         checks.append(dict(kind="NN_exact_zero", **ratio(zeros, np.zeros_like(zeros))))
     port = port_gradient(folder, budget)
+    write_json(folder / "B_gradient_completed.json", port)
     passed = all(c["passed"] for c in checks) and port["passed"]
     from src.solvers.neighborhood_residual_scope import window
 
@@ -429,7 +448,7 @@ def gradient(folder, budget):
     # Conservative full cap, plus all 256 training updates' measured non-action
     # cost and repeated sparse loads. These are predictions, not timed solves.
     forecast = 6000 * vector_seconds + 256 * network_seconds + 8 * action.load_seconds
-    available = window.remaining("TRAIN_NN")
+    available = window.worker_learning_remaining()
     budget_ready = forecast <= 0.75 * available
     return {
         "status": "NEURAL_FULL_RESIDUAL_GRADIENT_QUALIFIED"

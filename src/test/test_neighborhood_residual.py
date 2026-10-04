@@ -256,6 +256,35 @@ def test_actual_ML_runtime_math_pools_without_optional_threadpoolctl():
     assert not any(n in sys.modules for n in ("dolfinx", "mpi4py", "petsc4py"))
 
 
+def test_forecast_inside_own_active_worker_preserves_admission_guard(
+    monkeypatch, tmp_path
+):
+    import time
+
+    from src.solvers.neighborhood_residual_scope import window
+
+    fake = {
+        "closed": False,
+        "active": {
+            "role": "GRADIENT",
+            "folder": str(tmp_path),
+            "before_clock": {"observed_monotonic": time.monotonic() - 10},
+        },
+        "runs": [{"role": "DATA", "elapsed_seconds": 30}],
+    }
+    monkeypatch.setenv("TASK042_V36_AUX_DIRECTORY", str(tmp_path))
+    monkeypatch.setattr(window, "guard_worker_parent", lambda: None)
+    monkeypatch.setattr(window, "ledger", lambda: fake)
+    monkeypatch.setattr(window, "charged_wall", lambda: 50)
+    monkeypatch.setattr(window, "snapshot", lambda: {"heavy_remaining_seconds": 10000})
+    assert 5350 < window.worker_learning_remaining() < 5361
+    with pytest.raises(RuntimeError, match="closed/active"):
+        window.remaining("TRAIN_NN")
+    monkeypatch.setenv("TASK042_V36_AUX_DIRECTORY", str(tmp_path / "other"))
+    with pytest.raises(RuntimeError, match="own active|active worker"):
+        window.worker_learning_remaining()
+
+
 def test_actual_dat_run_case_validate_registration():
     import subprocess
     import sys

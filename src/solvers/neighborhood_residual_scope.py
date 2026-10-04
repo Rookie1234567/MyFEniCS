@@ -1,6 +1,7 @@
 """Review V40: immutable V43 neural pilot, with original-action accounting."""
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -36,6 +37,27 @@ class NeuralWindow(PreparationWindow):
             if role in LEARNING
             else (180 - recovery if role == "RECOVERY" else self.auxiliary),
             self.total - self.reserve - self.charged_wall(),
+            self.snapshot()["heavy_remaining_seconds"],
+        )
+
+    def worker_learning_remaining(self):
+        """Forecast inside the active worker without admitting a second actor."""
+        self.guard_worker_parent()
+        book = self.ledger()
+        active = book.get("active")
+        if (
+            not active
+            or Path(active["folder"]).resolve()
+            != Path(os.environ["TASK042_V36_AUX_DIRECTORY"]).resolve()
+        ):
+            raise RuntimeError("V43 forecast must belong to its active worker")
+        elapsed = time.monotonic() - active["before_clock"]["observed_monotonic"]
+        learn = sum(r["elapsed_seconds"] for r in book["runs"] if r["role"] in LEARNING)
+        if active["role"] in LEARNING:
+            learn += elapsed
+        return min(
+            5400 - learn,
+            self.total - self.reserve - self.charged_wall() - elapsed,
             self.snapshot()["heavy_remaining_seconds"],
         )
 
