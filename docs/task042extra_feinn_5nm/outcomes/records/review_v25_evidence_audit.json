@@ -1041,7 +1041,7 @@
   "limitations": [
     "No received manifest/ledger/checkpoint; all declared paths absent at independent check",
     "Synthetic checker counterexamples are not native/PDE qualification",
-    "New review render pending; V25 original NOT_RUN retained",
+    "Finite actual visual supplement: newreview/response/topic only, not all V25 navigation; original V25 NOT_RUN retained",
     "Global project exact cumulative time UNKNOWN; 3284s old missing period and all old negative/unknown preserved",
     "Review script first receipt serialization failed; only reviewer receipt converter changed, not production code",
     "Full repository bytes/headings refresh not all-line semantic audit"
@@ -1062,9 +1062,16 @@
       "earlier_reading_allowance_seconds": 180,
       "goal": "original50x25x140nm Si17/120nm lambda0.7 full3D FE allinteriors doubleFloquet fullports 2e12B wholemachine ownswap/OOC0 172800s coldcomplete originalaccuracy"
     },
-    "observed_parent_seconds_including_earlier_allowance": 1621.59239398106,
+    "observed_parent_seconds_including_earlier_allowance": 1830.908862468088,
     "scope": "continuous review parent, nested resources not added twice",
-    "final_tail": "PENDING_SEAL"
+    "final_tail": "600s explicit publication/Git/notification reserve, actual endpoint retained in ignored delivery receipt",
+    "seal_observed_utc": "2026-10-04T18:57:59.569156+00:00",
+    "final_tail_reserved_seconds": 600,
+    "conservative_upper_seconds_including_final_tail": 2430.908862468088,
+    "sampled_simultaneous_review_worker_peak_bytes": 1785421824,
+    "own_sampled_swap_peak_bytes": 0,
+    "outside_supervised_subtree_peak": "NOT_MEASURED; simple reading/metadata processes not mislabelled as continuously supervised",
+    "project_exact_cumulative_seconds": "UNKNOWN"
   },
   "local_document_validation": {
     "status": "PASS",
@@ -1080,8 +1087,183 @@
     "no_full_pytest_or_CI_claim": true
   },
   "render": {
-    "status": "PENDING_PUBLICATION",
-    "scope": "new review plus V25 response and W1 topic only; not all project navigation"
+    "status": "PASS_FINITE_VISUAL_SCOPE",
+    "publication_commit": "47bb6e72c3384dcf41f292848b1844216210eb60",
+    "render_records": {
+      "path": "tmp/task42extra/render/review_v25_47bb6e72/render_records.json",
+      "bytes": 13086,
+      "sha256": "50e81984ee024823369d313c96d9bf4722510e5ea985a3754c3cbf3134d580ad"
+    },
+    "method": "Actual GitHub Firefox live table screenshots; all10 opened and inspected with view_image; no modified CSS",
+    "pages": 3,
+    "tables": 7,
+    "math": 0,
+    "screenshots": [
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/00_top.png",
+        "bytes": 440726,
+        "sha256": "67ce8d9a7da81979897cd2409cacbf647549432e865c658ca501dd5920c12236"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/00_table_00_element.png",
+        "bytes": 85122,
+        "sha256": "cdf08e1d4cc50a3bf8543b09ad271366e13e3cb04da4becda6926373e1b87a98"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/00_table_01_element.png",
+        "bytes": 131558,
+        "sha256": "2bb17eb4111182515c019602f0740c10014950173c87a6620f241cb81ffc3989"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/00_table_02_element.png",
+        "bytes": 156558,
+        "sha256": "eb167a080531e9a49b583e19e22abbf8fd786fd922c9dcfecc6c73f74450b67e"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/01_top.png",
+        "bytes": 434110,
+        "sha256": "4861b88921ec720a0058084fd0efaf93bca4297d9fcd87128e037a403f3d30c3"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/01_table_00_element.png",
+        "bytes": 156403,
+        "sha256": "4af325e9bc55189206dd22929cc20a91da1387754fb3ed43e1a97d7f4349b3c3"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/01_table_01_element.png",
+        "bytes": 135881,
+        "sha256": "d7b6f988bf913261b51b84b5242d68ef606cda660a2b6bb153078c58d788d927"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/02_top.png",
+        "bytes": 417436,
+        "sha256": "e0393db9e3e648c8051e8b1e1998e0f153d39e694fdcd4112f456cc0e64c60cb"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/02_table_00_element.png",
+        "bytes": 165763,
+        "sha256": "8301a8804f2559a182eaa26ab4b2adf58bc1ed425b8b189d43a8747da9ddd2fa"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v25_47bb6e72/02_table_01_element.png",
+        "bytes": 104309,
+        "sha256": "8ba054634d55de290d5b35d42311dfd4ac3b0874d7f6948c0eaf6d57915d6643"
+      }
+    ],
+    "visual_findings": "Newreview3tables and V25response2/topic2tables fully visible including rightmost columns; title/text legible; no malformed columns. Other V25 navigation pages not visually rechecked. No numerical evidence supplied by render.",
+    "original_V25_NOT_RUN_retained": true,
+    "review_resources": {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v25_github_render_20261004T185610797699Z/supervision/summary.json",
+        "bytes": 2075,
+        "sha256": "258350d17374a643feed7b8620701e78c0f0e830e4058a9fd85f6000049a979b"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/checks/review_v25_github_render_20261004T185610797699Z/supervision/worker.log",
+        "bytes": 101,
+        "sha256": "3733446ed2ba7cf5a080503020555a96eb43f6c201dc31d78c078b0c22a0e2fe"
+      },
+      "admission": {
+        "path": "tmp/task42extra/checks/review_v25_github_render_20261004T185610797699Z/admission.json",
+        "bytes": 259939,
+        "sha256": "39c2944d21be9abc8fd0809cb2fdb5bad77246b959fa4d0218c3326a9f4b8b83"
+      },
+      "values": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1944872,
+          1944873,
+          1944876,
+          1944935,
+          1944938,
+          1944947,
+          1944955,
+          1945025,
+          1945065,
+          1945070,
+          1945086,
+          1945088,
+          1945108,
+          1945214
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1785421824,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2141550731264,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2141550731264,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 29,
+        "elapsed_seconds": 19.880262451944873,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    "source_files_at_render": [
+      {
+        "commit": "47bb6e72c3384dcf41f292848b1844216210eb60",
+        "path": "docs/task042extra_feinn_5nm/review_report_v25.md",
+        "bytes": 24060,
+        "sha256": "afbb7c35ddff61ceef2437aaac4fa0bd5055dc8647f3788af4d4a55237227e2e"
+      },
+      {
+        "commit": "bf3fa49d771fb2517166748c268328049f175be9",
+        "path": "docs/task042extra_feinn_5nm/response_v25.md",
+        "bytes": 7628,
+        "sha256": "80efa4157c26fe5161039f557472ff5d27714914625f4719eb9e68366ec0a46c"
+      },
+      {
+        "commit": "bf3fa49d771fb2517166748c268328049f175be9",
+        "path": "docs/task042extra_feinn_5nm/outcomes/w1_receiver_v25.md",
+        "bytes": 5832,
+        "sha256": "878e9dff87ed13c76e3f711b6cda8d02ed8ec1b9559e5813641c5a1e92a3cb25"
+      }
+    ],
+    "receipt_binding": {
+      "path": "tmp/task42extra/review_v25/publication_render_receipt.json",
+      "bytes": 6660,
+      "sha256": "8f044296c79762632e32c7ddea9ae0cb89a57293027c2cf87394ca68c24ecd29"
+    }
   },
   "review_authoring_corrections": [
     {
@@ -1097,5 +1279,8 @@
       "issue": "initial git diff --cached --check found extra EOF blank",
       "effect": "publication stopped before commit; trailing blank removed and document binding refreshed; no source or numerical changes"
     }
-  ]
+  ],
+  "publication_commit": "47bb6e72c3384dcf41f292848b1844216210eb60",
+  "final_seal_policy": "Only this metadata updated after render; report and numerical source unchanged; exact seal and clearance recorded at delivery",
+  "clearance_at_seal": "LOCK_FREE_ALL_REVIEW_SUPERVISORS_CLEARED"
 }
