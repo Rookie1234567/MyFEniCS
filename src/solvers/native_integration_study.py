@@ -731,6 +731,7 @@ def checker_stage(folder):
 
 
 def deploy(folder):
+    setup_began = perf_counter()
     checked, _ = read_stage("CHECK")
     if checked["status"] not in (
         "NATIVE_INTEGRATION_SAVED_ARRAYS_QUALIFIED",
@@ -756,27 +757,59 @@ def deploy(folder):
         )
         vectors = read_arrays(coupled["vectors"])
         x, g, expected = vectors["x"], vectors["g"], vectors["full_action_oracle"]
+        y, adjoint_expected = vectors["y"], vectors["adjoint_oracle"]
     else:
         # Legal callback demo only. Zero volume is explicitly synthetic and
         # confers no qualification on the missing physical volume coupling.
         callback = lambda x, adjoint=False: np.zeros_like(x)
         vectors = read_arrays(p["vectors"])
         x, g, expected = vectors["a_x"], vectors["alpha"], vectors["a_oracle_forward"]
+        y, adjoint_expected = vectors["b_x"], vectors["b_oracle_adjoint"]
     wrapper = CoupledNativeBoundaryAction(
         a,
         action,
         callback,
     )
+    costs = {"saved_hash_decode_and_callback_setup": perf_counter() - setup_began}
     began = perf_counter()
     output = wrapper.apply(x)
+    costs["forward_with_extract_scatter"] = perf_counter() - began
+    began = perf_counter()
+    adjoint = wrapper.apply(y, adjoint=True)
+    costs["adjoint_with_extract_scatter"] = perf_counter() - began
+    began = perf_counter()
     modal = wrapper.modal_rhs(g)
+    amplitudes = wrapper.port_extract(x)
+    hp = wrapper.hp_apply(g)
+    costs["modal_amplitude_and_implicit_hp"] = perf_counter() - began
+    began = perf_counter()
     receipt = array_file(
         folder / "consumer_demo.npz",
         action=output,
+        adjoint=adjoint,
         modal=modal,
-        amplitudes=wrapper.port_extract(x),
+        amplitudes=amplitudes,
+        implicit_hp=hp,
     )
-    checks = [dict(kind="frozen_callback_demo", **metric(output, expected))]
+    costs["array_pack_hash_and_IO"] = perf_counter() - began
+    checks = [
+        dict(kind="frozen_callback_demo", **metric(output, expected)),
+        dict(kind="frozen_callback_adjoint_demo", **metric(adjoint, adjoint_expected)),
+        dict(kind="implicit_unit_Hp", **metric(hp, g)),
+    ]
+    if coupled is None:
+        checks.extend(
+            [
+                dict(
+                    kind="frozen_native_modal_demo",
+                    **metric(modal, vectors["oracle_modal"]),
+                ),
+                dict(
+                    kind="frozen_native_amplitude_demo",
+                    **metric(amplitudes, vectors["a_oracle_amplitudes"]),
+                ),
+            ]
+        )
     return {
         "status": (
             "WITNESS_INTEGRATION_CONSUMER_READY"
@@ -787,7 +820,27 @@ def deploy(folder):
         else "CONSUMER_NOT_QUALIFIED",
         "checks": checks,
         "arrays": receipt,
-        "seconds": perf_counter() - began,
+        "costs": costs,
+        "seconds": sum(costs.values()),
+        "adapter_cost": dict(a.stats),
+        "boundary_cost": dict(action.stats),
+        "cache_payload_bytes": {
+            "Fourier_moments": action.cache_bytes,
+            "shared_boundary_layout": action.layout.nbytes,
+            "sparse_E_and_EH": sum(
+                v.nbytes
+                for v in (
+                    a.E.data,
+                    a.E.indices,
+                    a.E.indptr,
+                    a.EH.data,
+                    a.EH.indices,
+                    a.EH.indptr,
+                )
+            ),
+            "one_full_boundary_vector": a.boundary_size * 16,
+            "dense_port_matrix_created": 0,
+        },
         "interfaces": [
             "extract",
             "scatter",
