@@ -6,7 +6,7 @@
 
 ```math
 E_h=g u_h,\quad g=e^{i(k_x x+k_y y)},\quad
-\operatorname{curl}E_h=g\bigl(\operatorname{curl}u_h+i\kappa\times u_h\bigr),\quad \kappa=(k_x,k_y,0).
+\mathrm{curl}E_h=g\bigl(\mathrm{curl}u_h+i\kappa\times u_h\bigr),\quad \kappa=(k_x,k_y,0).
 ```
 
 物理cfg的kx/ky、端口波数、导纳、极化和参考面保持原值；包络u只在MPC中去掉已提取相位一次。基函数在所有积分点含g，磁场从物理curl恢复；没有给FE系数乘中心点相位。原体/DtN求积degree15不改，q30只用于独立差积分。ordinary default和旧M5的A/G/背景身份未重定义。
@@ -36,6 +36,8 @@ E_h=g u_h,\quad g=e^{i(k_x x+k_y y)},\quad
 | 独立Poynting逐级与解析差 | 2.74336e-12 / 1.99840e-13 | 36完整模式、逐级≤1e-6；R≈0/T≈1，闭合≤2.91e-12 |
 
 负控实际改输入/算式后被拒绝：漏iκ×u差0.0606、重复相位1.469、漏内部载荷0.00570、错端口1.469、旧背景0.513。每单元边/面/内部矩数量36/72/36，不只核边或trace。原A air_plane_power是振幅平方proxy；另做物理Poynting小fixture补验，不追改旧记录含义。[原20门与补验](records/qualification_v20.json)。
+
+流程限定：独立物理Poynting补验在B/C之后才落盘，B启动前只有原20门，其中power项是振幅平方proxy。事后补验增强当前科学证据，不追认联合前置当时已完整；B的原恢复失败和所有费用不改。
 
 正式修复1只改空气fixture准确稀疏求解；修复2准确换端口坐标并保全失败场，未改物理门。第二轮之后不再重放B；E3/O6及保存场诊断独立完成。[完整修复账](records/repair_log_v20.json)。初始UFL复数、路径/metadata/schema/fixture错误按开发定向测试解决，原失败、费用都在测试索引，未假作科学成功。
 

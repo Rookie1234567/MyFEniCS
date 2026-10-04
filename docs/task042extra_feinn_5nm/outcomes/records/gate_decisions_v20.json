@@ -243,5 +243,6 @@
   "production": false,
   "merge_approval": false,
   "no_gate_relaxed": true,
-  "raw_vector_provenance_not_overwritten": true
+  "raw_vector_provenance_not_overwritten": true,
+  "process_qualification": "Independent physical Poynting supplement was completed after B/C, not a complete pre-B power qualification; old20 proxy gate and B failures preserved"
 }

@@ -533,5 +533,6 @@
     "tested_state": "d9f1b50ee9b7be66d610fbbb78449bc9f6a3dc2f plus final test/checker working changes; later committed unchanged as 0ede17f482d6370ce84bf8bbf0c638e7f95193ab",
     "old_air_plane_power_field_is_amplitude_squared_proxy_not_flux": true
   },
-  "full_modes_location": "hash-bound original qualification index and identity; not duplicated in compact JSON"
+  "full_modes_location": "hash-bound original qualification index and identity; not duplicated in compact JSON",
+  "process_qualification": "Independent physical Poynting supplement was completed after B/C, not a complete pre-B power qualification; old20 proxy gate and B failures preserved"
 }

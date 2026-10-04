@@ -1,5 +1,5 @@
 {
-  "status": "NEW_KEY_PAGES_PENDING_ACTUAL_BROWSER_CAPTURE",
+  "status": "FIRST_RENDER_FORMULA_FAILED_REPAIR_PENDING",
   "review_v19": {
     "status": "REUSED_UNCHANGED_REVIEWER_VISUAL_PASS",
     "review": {
@@ -64,5 +64,17 @@
     "old_failure_records_preserved": true
   },
   "new_page_visual_PASS_claim": false,
-  "old_failure_records_preserved": true
+  "old_failure_records_preserved": true,
+  "first_publication_render": {
+    "publication_HEAD": "0cd4d690cd32872e649a888aaab359ce6b2ffa68",
+    "record": {
+      "path": "tmp/task42extra/render/v20_published/render_records.json",
+      "sha256": "e47d3869c631619f84198318c5261bcae213e8602748c26c1d8d8c117235a789"
+    },
+    "model_inspected_all_12_images": true,
+    "nine_tables_complete_right_columns": true,
+    "formula": "FAILED_GITHUB_OPERATORNAME_MACRO_FORBIDDEN",
+    "new_visual_PASS_claim": false,
+    "raw_failure_preserved": true
+  }
 }
