@@ -153,6 +153,8 @@ def launch(spec):
         raise RuntimeError("V20_DUPLICATE_STAGE_FORBIDDEN")
     old = prior_runs()
     group = spec.derived["group"]
+    if stage == "v20_phase_qualification":
+        selected("v20_control_checks")
     if group == "B":
         if sum(r["group"] == "B" for r in old) >= 6:
             raise RuntimeError("V20_SIX_B_LIFECYCLES_EXHAUSTED")
@@ -263,6 +265,14 @@ def launch(spec):
                 sampled_root_identity={
                     k: terminal["server"][k] for k in ("pid", "start_ticks")
                 },
+                source_state=dict(
+                    source_sha=source,
+                    clean_worktree=True,
+                    branch=branch,
+                    input_sha256=spec.input_sha256,
+                    design_sha256=sha(DESIGN),
+                    identity="new fixed-phase FE research stage, not legacy M5",
+                ),
             )
     except BaseException as exc:
         result = dict(

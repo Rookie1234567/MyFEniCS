@@ -289,9 +289,7 @@ def compare(indices, artifact, marker, budget):
     names = ["total_E", "total_scaled_curl", "scattered_E", "scattered_scaled_curl"]
     region_names = ["all", "air", "substrate", "grating", "notch", "interface_band"]
     axes = [
-        np.unique(
-            np.round(np.concatenate([m["axes"][axis] for m in models.values()]), 14)
-        )
+        np.unique(np.concatenate([m["axes"][axis] for m in models.values()]))
         for axis in range(3)
     ]
     local = {

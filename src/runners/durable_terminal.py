@@ -8,7 +8,7 @@ import subprocess
 from time import time
 
 
-def launch_tmux(directory, session, command, root):
+def launch_tmux(directory, session, command, root, *, management_supervised=False):
     directory, root = Path(directory).resolve(), Path(root).resolve()
     if not directory.is_relative_to(root / "tmp/task42extra"):
         raise ValueError("durable terminal directory must be task-local")
@@ -70,7 +70,8 @@ def launch_tmux(directory, session, command, root):
         pane=observed(identity[1]),
         output=str(directory / "launcher.log"),
         mechanism="isolated native tmux; no service changes; server exits when job pane exits",
-        scope="server/pane management overhead outside numerical watchdog tree; recorded separately",
+        scope=("identity-bound isolated tmux server/launcher/watchdog/worker sampled together"
+               if management_supervised else "server/pane management overhead outside numerical watchdog tree; recorded separately"),
     )
     temporary = directory / "terminal_identity.json.tmp"
     temporary.write_text(json.dumps(result, indent=2) + "\n")

@@ -553,7 +553,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             'observed_child_pids': sorted(observed),
             'sampled_process_tree_rss_peak_bytes': peak_rss if samples else None,
             'sampled_process_tree_swap_peak_bytes': peak_swap if samples else None,
-            'memory_scope': 'dedicated subreaper parent plus all descendants; sampled simultaneous RSS',
+            'memory_scope': ('identity-bound isolated terminal ancestor plus all descendants; sampled simultaneous RSS'
+                             if sampled_root_identity is not None else
+                             'dedicated subreaper parent plus all descendants; sampled simultaneous RSS'),
             'swap_scope': 'same process tree sampled VmSwap; no global swap attribution',
             'global_swap_activity': {'scope': 'WSL-global diagnostic, not dedicated job',
                                      'baseline': swap_baseline, 'end': swap_end, 'delta': swap_delta},

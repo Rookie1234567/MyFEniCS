@@ -131,7 +131,8 @@ def main():
         + " && exec python scripts/run_case.py "
         + str(spec.source_path.relative_to(ROOT)),
     ]
-    result = launch_tmux(directory, session, command, ROOT)
+    result = launch_tmux(directory, session, command, ROOT,
+                        management_supervised=spec.derived["stage"].startswith("v20_"))
     print(
         json.dumps(
             {k: result[k] for k in ("socket", "session", "output", "scope")},
