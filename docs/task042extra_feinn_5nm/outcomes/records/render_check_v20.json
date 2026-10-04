@@ -1,5 +1,5 @@
 {
-  "status": "FIRST_RENDER_FORMULA_FAILED_REPAIR_PENDING",
+  "status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
   "review_v19": {
     "status": "REUSED_UNCHANGED_REVIEWER_VISUAL_PASS",
     "review": {
@@ -63,7 +63,7 @@
     ],
     "old_failure_records_preserved": true
   },
-  "new_page_visual_PASS_claim": false,
+  "new_page_visual_PASS_claim": true,
   "old_failure_records_preserved": true,
   "first_publication_render": {
     "publication_HEAD": "0cd4d690cd32872e649a888aaab359ce6b2ffa68",
@@ -76,5 +76,124 @@
     "formula": "FAILED_GITHUB_OPERATORNAME_MACRO_FORBIDDEN",
     "new_visual_PASS_claim": false,
     "raw_failure_preserved": true
+  },
+  "corrected_publication_render": {
+    "publication_HEAD": "6ba20e899c8f9ce50b1cce2c628aa8c036e2d6ef",
+    "record": {
+      "path": "tmp/task42extra/render/v20_macro_fixed/render_records.json",
+      "sha256": "a342603db7581ba606960a5e90f4c48d7d526899555882a23b0ebacaa42493a2",
+      "bytes": 13798
+    },
+    "captures": [
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/00_top.png",
+        "sha256": "cd882482379f18cb9e725660f48464608270d4e5295fe0445c84b28c1e711cc9",
+        "bytes": 419438
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/00_table_00.png",
+        "sha256": "0f3c5c90c2cfe15905c580d2facf0d4c313e3462015efa16a156abd11c221c3b",
+        "bytes": 484332
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/00_table_01.png",
+        "sha256": "e49ad9cf62157765783545e9dcfd7c7e7bf4df9e612a6444e413cf1e02373a76",
+        "bytes": 525057
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/00_table_02.png",
+        "sha256": "380777bb5472d34066ca6d3ec1f34866c7b90394117ae4d203f0fe3d833a177d",
+        "bytes": 489188
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_top.png",
+        "sha256": "b3594941c04c93b2555f111d2a66aee322d1f7fe4f0d236b0dda38b6b1b9b6f3",
+        "bytes": 371893
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_table_00.png",
+        "sha256": "1afc2e049179d5fc57ffa6c2f402157caef9dd89ba403a634466b7284b99d9ef",
+        "bytes": 461744
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_table_01.png",
+        "sha256": "b57f91b3a93a5f099faff8f22cbe5610ea8a26fd3397c3936ad7156a3813d0d9",
+        "bytes": 461001
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_table_02.png",
+        "sha256": "9435356412aa1dd546f726404817df7a3d37cead44d251d97272435e644f8efd",
+        "bytes": 474322
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_table_03.png",
+        "sha256": "c0ad1570be208e26d2cb37d4f3b81460b108f8ade6ad71108dec81fc7b736801",
+        "bytes": 477083
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_table_04.png",
+        "sha256": "5c5b5159ebf2f16eb6902679ceb5c7fce8a9746693d11a179b26d86c7e0115fd",
+        "bytes": 489035
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_table_05.png",
+        "sha256": "c61ce1db894a206b4eae65ff68cefa174b066817190b2dd8e13a1b8f630e8cac",
+        "bytes": 485657
+      },
+      {
+        "path": "tmp/task42extra/render/v20_macro_fixed/01_math-renderer_00.png",
+        "sha256": "c183b87a2d2c6af16a61198133809642e7ecee8ac43a28522b96605c0ecd6863",
+        "bytes": 423782
+      }
+    ],
+    "pages": [
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/response_v20.md",
+          "sha256": "4af8be8f44261f400aa3728738dd006a7ef6999625f84db56037f045ed26d610",
+          "bytes": 9188
+        },
+        "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/6ba20e899c8f9ce50b1cce2c628aa8c036e2d6ef/docs/task042extra_feinn_5nm/response_v20.md",
+        "tables": 3,
+        "formulas": 0,
+        "all_table_right_columns_visually_checked": true
+      },
+      {
+        "file": {
+          "path": "docs/task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md",
+          "sha256": "9100c55f9d8041caff632cc785bcd531878a13cef0d932f6e9ed8052371d1b69",
+          "bytes": 11765
+        },
+        "URL": "https://github.com/Rookie1234567/MyFEniCS/blob/6ba20e899c8f9ce50b1cce2c628aa8c036e2d6ef/docs/task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md",
+        "tables": 6,
+        "formulas": 1,
+        "all_table_right_columns_visually_checked": true
+      }
+    ],
+    "browser_supervision": {
+      "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 23.119654942071065,
+      "sampled_tree_rss_peak_bytes": 1782587392,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/summary.json",
+        "sha256": "bcfe09f7379768e9e5b5eabc05892a67983ca57dee60914e9c5b759ef54b3869",
+        "bytes": 2075
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/supervision/worker.log",
+        "sha256": "4aa44ca5174f63979eb6a7d1b7a5e5386b368a96381a6ad1b99bf5c1acb22bb2",
+        "bytes": 97
+      }
+    },
+    "model_inspected_all_12_images": true,
+    "nine_tables_complete_right_columns": true,
+    "formula": "PASS_ACTUAL_MATHML_AND_IMAGE",
+    "scope": "Two title views, all nine complete tables including right columns, and one complete mathematical display; not every prose line visually inspected",
+    "inspection_utc": "2026-10-04T04:02:02.296412+00:00",
+    "source_record_retained_unchanged": true
   }
 }

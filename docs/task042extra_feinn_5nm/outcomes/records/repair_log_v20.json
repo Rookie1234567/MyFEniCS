@@ -82,8 +82,33 @@
     "failure": "Actual GitHub math renderer rejects operatorname at publication0cd4d690",
     "hypothesis": "Use accepted equivalent upright text macro",
     "change": "New topic formula operatorname{curl} -> mathrm{curl}; same mathematics, no numerical source or gate mutation",
-    "test": "Scoped local parser and new actual render pending",
+    "test": "20 scoped local document tests/parser/CSV/history pass; corrected actual GitHub images inspected and formula rendered",
     "initial_failed_capture": "tmp/task42extra/render/v20_published/render_records.json",
-    "formal_numerical_retry": false
+    "formal_numerical_retry": false,
+    "change_source": "6ba20e899c8f9ce50b1cce2c628aa8c036e2d6ef",
+    "final_render_record": {
+      "path": "tmp/task42extra/render/v20_macro_fixed/render_records.json",
+      "sha256": "a342603db7581ba606960a5e90f4c48d7d526899555882a23b0ebacaa42493a2",
+      "bytes": 13798
+    },
+    "final_visual_status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL"
+  },
+  "metadata_seal_local_repair": {
+    "failure": "A preexisting compact light row lacks sampled_tree_rss_peak_bytes; KeyError before any metadata write",
+    "hypothesis": "Older compact rows were copied with differing field sets; authoritative summary has the required measured field",
+    "change": "Normalize each completed light row from its own saved summary; preserve other original fields and failure logs",
+    "failed_summary": {
+      "path": "tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z/summary.json",
+      "sha256": "9516c4e723e7959c0c254d299e42dab9f1ab5fa44990ad4b8024d356a50cf80a",
+      "bytes": 1901
+    },
+    "failed_log": {
+      "path": "tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z/supervision/worker.log",
+      "sha256": "a058d2a759906e5b281e6ca980ca275f6402713677249006510bd1a24a69b30e",
+      "bytes": 647
+    },
+    "targeted_check": "The same metadata-only seal asserts all measured tree peaks and byte-bound JSON outputs; no numerical replay",
+    "formal_numerical_retry": false,
+    "costs_retained": true
   }
 }

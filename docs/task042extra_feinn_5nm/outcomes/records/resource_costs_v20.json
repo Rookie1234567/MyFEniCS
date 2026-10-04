@@ -7,8 +7,8 @@
     "final_reserve_seconds": 1800,
     "input_head": "dfb60aa3a88c5554e9660ae6de7f169c5ac26298"
   },
-  "observed_complete_batch_seconds": 8612.615644666948,
-  "pending_document_Git_render_queue_tail": "New key-page visual and final publication/queue not yet measured; final seal will update wall and bound tail",
+  "observed_complete_batch_seconds": 9228.315863776952,
+  "pending_document_Git_render_queue_tail": "Final metadata seal worker tail, commit/push/tracking check, cleanup receipt and one reviewer notification remain; conservatively charged below, not claimed already measured",
   "tail_conservative_reserve_seconds": 1800,
   "whole_parent_includes_code_tests_waits_failures_numeric": true,
   "nested_costs_not_added_again": true,
@@ -266,8 +266,22 @@
     },
     {
       "path": "tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z",
-      "classification": "PRE_WORKER_ADMISSION_REFUSAL",
-      "summary": "NOT_RETAINED"
+      "classification": "COMPLETED",
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z/summary.json",
+        "sha256": "b77e788b743d99df651fec7b489a98c763f1d5e3f684ba46d0844b5d5030a395",
+        "bytes": 1902
+      },
+      "exit_code": 0,
+      "seconds": 4.535373579943553,
+      "sampled_tree_rss_peak_bytes": 83279872,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "log": {
+        "path": "tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z/supervision/worker.log",
+        "sha256": "af8808296dc94f2a72523ee45cf0c62880f6044227347da36ca1b0e799158dd2",
+        "bytes": 62
+      }
     },
     {
       "path": "tmp/task42extra/checks/v20_control_metadata_fix_20261004T020334172346Z",
@@ -1040,7 +1054,13 @@
       "descendants_cleared": true,
       "summary": {
         "path": "tmp/task42extra/checks/v20_final_document_contracts_20261004T035038647196Z/summary.json",
-        "sha256": "6a289f16f7e05b1f80f6619a1a3305dcf0839ea61b4839043aa2837713752b56"
+        "sha256": "6a289f16f7e05b1f80f6619a1a3305dcf0839ea61b4839043aa2837713752b56",
+        "bytes": 1916
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_final_document_contracts_20261004T035038647196Z/supervision/worker.log",
+        "sha256": "e0131c81cee173c688b5eaa6f68d89af87677aaa8c04e1cd40ae650461d8df78",
+        "bytes": 201
       }
     },
     {
@@ -1053,7 +1073,89 @@
       "descendants_cleared": true,
       "summary": {
         "path": "tmp/task42extra/checks/v20_record_binding_20261004T035011169557Z/summary.json",
-        "sha256": "e1f7ec526aa8dace12e294b20e749e3831c2e2ac25f2505e965aa3c5607e7cb7"
+        "sha256": "e1f7ec526aa8dace12e294b20e749e3831c2e2ac25f2505e965aa3c5607e7cb7",
+        "bytes": 1903
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_record_binding_20261004T035011169557Z/supervision/worker.log",
+        "sha256": "8af625127da76b461e412741dead9baf1dcdf002ae248fc8a5a5f416af756a75",
+        "bytes": 73
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 1.548215493094176,
+      "sampled_tree_rss_peak_bytes": 43241472,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z/summary.json",
+        "sha256": "9516c4e723e7959c0c254d299e42dab9f1ab5fa44990ad4b8024d356a50cf80a",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z/supervision/worker.log",
+        "sha256": "a058d2a759906e5b281e6ca980ca275f6402713677249006510bd1a24a69b30e",
+        "bytes": 647
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_formula_document_repair_20261004T035445236360Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 3.231276409002021,
+      "sampled_tree_rss_peak_bytes": 86528000,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_formula_document_repair_20261004T035445236360Z/summary.json",
+        "sha256": "692d2a6fdc6177d3559bc79cb0ab4c8bc4dd4434e21b64b8b672ba3a5b7e4bd3",
+        "bytes": 1915
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_formula_document_repair_20261004T035445236360Z/supervision/worker.log",
+        "sha256": "23a3e968694b0c9ae74913117f4ca026b29db958869385fcd2e3b9d007602fd1",
+        "bytes": 201
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_github_render_20261004T035226070355Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 26.85305915295612,
+      "sampled_tree_rss_peak_bytes": 1780101120,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_github_render_20261004T035226070355Z/summary.json",
+        "sha256": "9a66b6667556b12457189275856dc80d1c666654c199cad9d9bb33fe015e3216",
+        "bytes": 2074
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_github_render_20261004T035226070355Z/supervision/worker.log",
+        "sha256": "bbeb81d2c6ac8fe0a2fd488549a66392cfd5668503491a40d73881ee549285c1",
+        "bytes": 95
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 23.119654942071065,
+      "sampled_tree_rss_peak_bytes": 1782587392,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/summary.json",
+        "sha256": "bcfe09f7379768e9e5b5eabc05892a67983ca57dee60914e9c5b759ef54b3869",
+        "bytes": 2075
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/supervision/worker.log",
+        "sha256": "4aa44ca5174f63979eb6a7d1b7a5e5386b368a96381a6ad1b99bf5c1acb22bb2",
+        "bytes": 97
       }
     }
   ],
@@ -1071,7 +1173,7 @@
   "new_Gram_factors": 0,
   "new_NN_training": 0,
   "global_Maxwell_factor_use": "3 real B factors plus explicitly separated small analytic fixture LUs; O6 no factor",
-  "old_project_exact_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS_RETAINED",
+  "old_project_exact_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS_RETAINED; no historical costs reset or recharged as new work",
   "old_lost_3284_seconds_preserved": true,
   "resource_refusals": [
     {
@@ -1091,13 +1193,13 @@
     "sha256": "9c0b098aa3fe1f51fabcb5c573e568cb11fa59413bc36b7089255b17eddc417a",
     "bytes": 188152
   },
-  "observation_scope": "Full wall from first reading through this pre-publication snapshot; later render/Git/notification tail will be sealed separately, not claimed measured yet",
+  "observation_scope": "Monotonic parent wall through final visual inspection and metadata-seal snapshot, including all reading/code/waits/failures/PDE/checks/browser/Git already elapsed; final delivery actual time is additionally reported in ignored delivery receipt and final queue acknowledgement. Nested stages are not added twice.",
   "compact_collect": {
     "path": "tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z/summary.json",
     "sha256": "b77e788b743d99df651fec7b489a98c763f1d5e3f684ba46d0844b5d5030a395",
     "bytes": 1902
   },
-  "light_runs_at_collect_snapshot_exclude_collector_and_future_doc_render": true,
+  "light_runs_at_collect_snapshot_exclude_collector_and_future_doc_render": false,
   "global_Maxwell_numeric_and_solve_counts": {
     "O3_first": 1,
     "O3_repair": 1,
@@ -1106,5 +1208,68 @@
     "E4": 0
   },
   "C_diagonal_port_recovery_calls": 8,
-  "C_fresh_Maxwell_or_Gram_factors": 0
+  "C_fresh_Maxwell_or_Gram_factors": 0,
+  "seal_snapshot_utc": "2026-10-04T04:02:02.315865+00:00",
+  "conservative_batch_charged_upper_bound_seconds": 11028.315863776952,
+  "light_and_browser_sampled_tree_peak_bytes": 1782587392,
+  "historical_cost_bindings": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json",
+      "sha256": "42dc142ae0672294ed744c89a11799899cfeb8a3fd1bba7dee4266622dd28405",
+      "bytes": 52165
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json",
+      "sha256": "217e85e355bde95236336376c2b1e4a4213b1abd6f7780c1d90a921275befe5e",
+      "bytes": 9588
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v19_evidence_audit.json",
+      "sha256": "2885fa63dcbc473266b31a19be6af9e9be27ce309c4c002f010dc81138ca69d8",
+      "bytes": 34979
+    }
+  ],
+  "final_seal_light_worker": "Current bounded pure metadata worker; its own final summary cannot be bound before exit, covered by explicit final-tail upper bound and ignored delivery receipt",
+  "browser_attempts": [
+    {
+      "path": "tmp/task42extra/checks/v20_github_render_20261004T035226070355Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 26.85305915295612,
+      "sampled_tree_rss_peak_bytes": 1780101120,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_github_render_20261004T035226070355Z/summary.json",
+        "sha256": "9a66b6667556b12457189275856dc80d1c666654c199cad9d9bb33fe015e3216",
+        "bytes": 2074
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_github_render_20261004T035226070355Z/supervision/worker.log",
+        "sha256": "bbeb81d2c6ac8fe0a2fd488549a66392cfd5668503491a40d73881ee549285c1",
+        "bytes": 95
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 23.119654942071065,
+      "sampled_tree_rss_peak_bytes": 1782587392,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/summary.json",
+        "sha256": "bcfe09f7379768e9e5b5eabc05892a67983ca57dee60914e9c5b759ef54b3869",
+        "bytes": 2075
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/supervision/worker.log",
+        "sha256": "4aa44ca5174f63979eb6a7d1b7a5e5386b368a96381a6ad1b99bf5c1acb22bb2",
+        "bytes": 97
+      }
+    }
+  ],
+  "v20_auxiliary_bytes_at_seal": 149396321,
+  "artifact_and_auxiliary_upper_bytes_at_seal": 907684917
 }
