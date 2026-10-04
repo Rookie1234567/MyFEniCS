@@ -1,3 +1,18 @@
+# 当前：Review V19 → V20 相位适配FE整批结果
+
+本轮是实际FE新空间研究，旧NN训练仍暂停。已完成A资格、普通/相位p3实际求解、唯一p6参考尝试、保存物理全场及独立C/D。**原恢复超门、合格参考缺失，表示收益UNKNOWN；没有有效解或NN净收益。** 下方V1–V19历史完整保留，其旧“下一步”不构成新授权。
+
+| measured / derived / not_run | 当前值与判断 | 证据 |
+| --- | --- | --- |
+| 新空间gVh，λ0.7 / G0 | 全3D curl修正、340端口和完整内部；A20原门及独立空气物理通量通过 | [回执](../response_v20.md)、[资格](records/qualification_v20.json) |
+| O3 / E3全场 | native9.93e-12 / 8.54e-11；原恢复2.42e-4 / 1.56e-3 >1e-10，FAIL | [原字段](records/physical_comparison_v20.json) |
+| O6 / 条件E4 | p6 packet365760 FE保存，内部B/D各2264非零项，因子前拒绝；p4未准入 | [独立checker](records/independent_checker_v20.json)、[Gate](records/gate_decisions_v20.json) |
+| C物理差 / 分母E3非参考 | total E差1.00526、scat E差6.85671；q15/30漂移3.39e-12；能量闭合好不等于精度 | [专题](phase_adapted_fe_v20.md)、[全通道](records/channels_v20.csv)、[区域](records/regions_v20.csv) |
+| 费用 / 资源 | B4生命周期/两正式修复；O6 1752.71s/C1380.81s；数值同时树采样峰4929130496B，swap0 | [成本](records/resource_costs_v20.json)、[测试](records/targeted_tests_v20.json)、[运行](records/run_index_v20.json) |
+| 原尺寸 / 神经线 | 50×25×140nm、λ0.7、2e12B整机、172800s完整3D NOT_RUN/NOT_QUALIFIED；NN NOT_TESTED，旧主解/生产初值暂停 | [一页后续准入](phase_adapted_fe_v20.md#5-原尺寸后续准入判断)；无production/merge授权 |
+
+主线冻结最新b5f85c59已完成Gx784，其自身1%场配对6.42e-4不是本支1e-4证书；dot5be1210a小合成包不是FE/C1/完整存储资格。本支几何仍绑定2374d0d，不复制两线工作。旧M3600较好中期、Mfinal退化、D0成本否决/D1未运行、所有失败/UNKNOWN和旧费用不改。
+
 # Task42extra Review V18 后续：V19 当前停止导航
 
 **当前M5局部优化循环结束**：FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。本轮只落实审阅结论和证据引用，没有新场、数值作用或训练；历史章节中的下一步建议不是当前授权。[Review V18](../review_report_v18.md)、[一次交接回执](../response_v19.md)、[P0收据](records/closeout_receipt_v19.json)。

@@ -1,0 +1,922 @@
+{
+  "authority": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+    "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4",
+    "bytes": 30186
+  },
+  "review_receipt": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v19_evidence_audit.json",
+    "sha256": "2885fa63dcbc473266b31a19be6af9e9be27ce309c4c002f010dc81138ca69d8",
+    "bytes": 34979
+  },
+  "branch": "task42extra_feinn_5nm",
+  "input_head": "dfb60aa3a88c5554e9660ae6de7f169c5ac26298",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "main_geometry_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+  "input_design": {
+    "path": "input/task042extra_feinn_5nm/design_v20.json",
+    "sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+    "bytes": 8951
+  },
+  "frozen_design": {
+    "schema": "fixed_phase.review_v19.v1",
+    "review_publication": "65966f1f4fe9f199ba4d1b4099d6b986ac405d5a",
+    "frozen_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+    "models": {
+      "G0": {
+        "schema": "fixed-transverse-phase.physical.v1",
+        "wavelength_nm": 0.7,
+        "geometry": {
+          "bounds_nm": [
+            [
+              0.0,
+              2.5925925925925926
+            ],
+            [
+              0.0,
+              1.2962962962962963
+            ],
+            [
+              -0.5185185185185185,
+              6.7407407407407405
+            ]
+          ],
+          "substrate_z_nm": 0.0,
+          "block_bounds_nm": [
+            [
+              0.8555555555555555,
+              1.737037037037037
+            ],
+            [
+              0.0,
+              1.2962962962962963
+            ],
+            [
+              0.0,
+              6.222222222222222
+            ]
+          ],
+          "notch_bounds_nm": [
+            [
+              1.2962962962962963,
+              1.737037037037037
+            ],
+            [
+              0.32407407407407407,
+              0.9722222222222222
+            ],
+            [
+              2.074074074074074,
+              4.148148148148148
+            ]
+          ],
+          "axis_coordinates_nm": [
+            [
+              0.0,
+              0.42777777777777776,
+              0.8555555555555555,
+              1.2962962962962963,
+              1.737037037037037,
+              2.164814814814815,
+              2.5925925925925926
+            ],
+            [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            [
+              -0.5185185185185185,
+              0.0,
+              0.5185185185185185,
+              1.037037037037037,
+              1.5555555555555556,
+              2.074074074074074,
+              2.5925925925925926,
+              3.111111111111111,
+              3.6296296296296298,
+              4.148148148148148,
+              4.666666666666667,
+              5.185185185185185,
+              5.703703703703703,
+              6.222222222222222,
+              6.7407407407407405
+            ]
+          ],
+          "mesh_id": "G0",
+          "cells": [
+            6,
+            4,
+            14
+          ]
+        },
+        "materials": {
+          "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+          "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+          "si_n": [
+            0.9998851703688496,
+            4.3236152269189515e-06
+          ]
+        },
+        "incidence": {
+          "grazing_deg": 1.0,
+          "azimuth_deg": 0.0,
+          "polarization": "s",
+          "amplitude": 1.0
+        },
+        "boundary": {
+          "max_m": 8,
+          "max_n": 2,
+          "channels": 340,
+          "reference_origin_nm": [
+            0,
+            0,
+            0
+          ]
+        },
+        "finite_element": {
+          "family": "N1curl",
+          "quadrature_degree": 15
+        },
+        "interface_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+        "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43"
+      },
+      "GX560": {
+        "schema": "fixed-transverse-phase.physical.v1",
+        "wavelength_nm": 0.7,
+        "geometry": {
+          "bounds_nm": [
+            [
+              0.0,
+              2.5925925925925926
+            ],
+            [
+              0.0,
+              1.2962962962962963
+            ],
+            [
+              -0.5185185185185185,
+              6.7407407407407405
+            ]
+          ],
+          "substrate_z_nm": 0.0,
+          "block_bounds_nm": [
+            [
+              0.8555555555555555,
+              1.737037037037037
+            ],
+            [
+              0.0,
+              1.2962962962962963
+            ],
+            [
+              0.0,
+              6.222222222222222
+            ]
+          ],
+          "notch_bounds_nm": [
+            [
+              1.2962962962962963,
+              1.737037037037037
+            ],
+            [
+              0.32407407407407407,
+              0.9722222222222222
+            ],
+            [
+              2.074074074074074,
+              4.148148148148148
+            ]
+          ],
+          "axis_coordinates_nm": [
+            [
+              0.0,
+              0.2851851851851852,
+              0.5703703703703704,
+              0.8555555555555555,
+              1.075925925925926,
+              1.2962962962962963,
+              1.5166666666666666,
+              1.737037037037037,
+              2.022222222222222,
+              2.3074074074074074,
+              2.5925925925925926
+            ],
+            [
+              0.0,
+              0.32407407407407407,
+              0.6481481481481481,
+              0.9722222222222222,
+              1.2962962962962963
+            ],
+            [
+              -0.5185185185185185,
+              0.0,
+              0.5185185185185185,
+              1.037037037037037,
+              1.5555555555555556,
+              2.074074074074074,
+              2.5925925925925926,
+              3.111111111111111,
+              3.6296296296296298,
+              4.148148148148148,
+              4.666666666666667,
+              5.185185185185185,
+              5.703703703703703,
+              6.222222222222222,
+              6.7407407407407405
+            ]
+          ],
+          "mesh_id": "GX560",
+          "cells": [
+            10,
+            4,
+            14
+          ]
+        },
+        "materials": {
+          "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+          "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+          "si_n": [
+            0.9998851703688496,
+            4.3236152269189515e-06
+          ]
+        },
+        "incidence": {
+          "grazing_deg": 1.0,
+          "azimuth_deg": 0.0,
+          "polarization": "s",
+          "amplitude": 1.0
+        },
+        "boundary": {
+          "max_m": 8,
+          "max_n": 2,
+          "channels": 340,
+          "reference_origin_nm": [
+            0,
+            0,
+            0
+          ]
+        },
+        "finite_element": {
+          "family": "N1curl",
+          "quadrature_degree": 15
+        },
+        "interface_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+        "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43"
+      }
+    },
+    "fixture": {
+      "schema": "fixed-transverse-phase.physical.v1",
+      "wavelength_nm": 0.7,
+      "geometry": {
+        "bounds_nm": [
+          [
+            0.0,
+            0.28
+          ],
+          [
+            0.0,
+            0.21
+          ],
+          [
+            0.0,
+            0.07
+          ]
+        ],
+        "substrate_z_nm": -1.0,
+        "block_bounds_nm": [
+          [
+            2,
+            3
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            2,
+            3
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "axis_coordinates_nm": [
+          [
+            0.0,
+            0.14,
+            0.28
+          ],
+          [
+            0.0,
+            0.105,
+            0.21
+          ],
+          [
+            0.0,
+            0.035,
+            0.07
+          ]
+        ],
+        "cells": [
+          2,
+          2,
+          2
+        ],
+        "mesh_id": "AIR8"
+      },
+      "materials": {
+        "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+        "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+        "si_n": [
+          0.9998851703688496,
+          4.3236152269189515e-06
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 17.0,
+        "polarization": "s",
+        "amplitude": 1.0
+      },
+      "boundary": {
+        "max_m": 1,
+        "max_n": 1,
+        "channels": 36,
+        "reference_origin_nm": [
+          0,
+          0,
+          0
+        ]
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "quadrature_degree": 15
+      },
+      "interface_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+      "fixture": true
+    },
+    "selected_original_nm": [
+      [
+        5,
+        3,
+        -5
+      ],
+      [
+        5,
+        3,
+        20
+      ],
+      [
+        20,
+        3,
+        20
+      ],
+      [
+        29,
+        10,
+        60
+      ],
+      [
+        40,
+        20,
+        125
+      ],
+      [
+        20,
+        10,
+        100
+      ]
+    ],
+    "fixed_carrier": "(physical kx, physical ky, 0); origin (0,0,0)",
+    "quadrature": {
+      "primary": "max(15,2p+3)",
+      "verification": "2q once",
+      "diagnosis": "4q at most once on failure"
+    },
+    "no_NN_training": true,
+    "bounds": {
+      "batch_seconds": 43200,
+      "final_reserve_seconds": 1800,
+      "A_seconds": 3600,
+      "B_seconds": 14400,
+      "B_each_seconds": 7200,
+      "C_seconds": 5400,
+      "B_lifecycles": 6
+    }
+  },
+  "actual_identities": {
+    "O3": {
+      "original": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/identity.json",
+        "sha256": "b5494717a0392302d4b1bcbe0e5f7375402e96d59fb859343375c09b7cb352c1",
+        "bytes": 662271
+      },
+      "compact_fields": {
+        "material": {
+          "selection": {
+            "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+            "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+            "si_n": [
+              0.9998851703688496,
+              4.3236152269189515e-06
+            ]
+          },
+          "actual_n": [
+            0.9998851703688496,
+            4.3236152269189515e-06
+          ],
+          "actual_epsilon": [
+            0.9997703539048498,
+            8.646237495554417e-06
+          ],
+          "legacy_table_read_only": {
+            "status": "MATERIAL_READY_USER_SUPPLIED",
+            "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+            "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+            "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "query_wavelength_nm": "0.7",
+            "nominal_wavelength_nm": "0.7",
+            "source_wavelength_nm": "0.699999988",
+            "delta": "0.000114859526",
+            "beta": "4.32477054E-06",
+            "n_decimal": [
+              "0.999885140474",
+              "0.00000432477054"
+            ],
+            "epsilon_decimal": [
+              "0.9997702941220070727210241084",
+              "0.00000864854759781143367192"
+            ],
+            "source_kind": "user_supplied/user_authorized",
+            "source": {
+              "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+              "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+              "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+            },
+            "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+            "time_convention": "exp(-i omega t)",
+            "external_dataset_version": "not_provided",
+            "n_loaded": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_loaded": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "air_n": [
+              1.0,
+              0.0
+            ],
+            "mu_r": [
+              1.0,
+              0.0
+            ]
+          },
+          "legacy_0p7_entry_used": false
+        },
+        "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+        "channels": 340,
+        "degree": 3,
+        "phase_carrier": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "field_space": "ordinary_Floquet_N1curl",
+        "mesh_coordinates_sha256": "fc0e45ddfccbdb70e8e1e385487ad5a5b1955d7d98e07ca5c9e03e29663af9e6",
+        "geometry_cell_dofs_sha256": "77c7588e21fdecafaaf51f61e423146f064534a7dd7b31bf8d8c3d659b51a1a3",
+        "cell_tags_sha256": "366eac10b7fc15a4033400486912a4044a29b9a59096afe00c00aef9dc23018e",
+        "centers_sha256": "f998e7036cc8f318e1b4cb42fdbfef2ed27177486554b38b87fcb616272c3c0b",
+        "cells": 336,
+        "actual_material_cell_counts": {
+          "1": 224,
+          "2": 24,
+          "3": 88
+        },
+        "actual_notch_cells": 8,
+        "nonseparable_y_z_witness": true,
+        "native_rows": 30240,
+        "slaves": 2592,
+        "volume_quadrature_degree": 15,
+        "dtn_quadrature_degree": 15,
+        "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+        "discretization_sha256": "1a541cd6e3627abcff86e650abd247fe4c3619934174adf281e8bf6be9c52b7f",
+        "full_independent_rows": 27648,
+        "interior_rows": 12096,
+        "local_tensor_classes": 12,
+        "local_tensor_payload_bytes": 3981312,
+        "packet_payload_bytes": 13768872,
+        "packet_array_hashes": {
+          "F": "11d2621f0f9f7c2eafa0c882b7a4a19f0723fd4e4ea5997b3421843742e14bf8",
+          "classes": "9b267cb30999225398cd233ec80393353f78ecb6f8a5db158c89c084f1fcbdb1",
+          "cell_dofs": "6f64509f6adbf1eacee729ed4981e345d834d2d376f99e4339fe83cdb221e6bc",
+          "masters": "235e9136ed4ff41bf4a59f818c6a12bcbd82d0d2f41701df0cff11711562f056",
+          "slaves": "a4e1d47f4f55a8c01db47a86189c1472230cc35f72a61d551a396a4afa5afdd0",
+          "erows": "3941cd24b93934df588d987dc87f3baaca63ca97382d24d92b920e4e2073dc2e",
+          "eids": "a2e0f48b93768f9e05f29a34560fe7f86bd5b0ef09929a2e24991daa675df265",
+          "evals": "a980e9d344f29db7b6758e6deff3312374ccdd8b80a770534f09d79ac88bc424",
+          "br": "e703917063329edba9652fffbd70187543a94c617c5da2ef1e8a07f90e2b90a2",
+          "bp": "7f64095a65b5e7ffcc22d81783333bb6603511a628197f6918104ddf0d68b9a0",
+          "bv": "3c14b34146470f21c98b433184a323edf5281b7115568a7fc2224bba092c4421",
+          "dr": "e703917063329edba9652fffbd70187543a94c617c5da2ef1e8a07f90e2b90a2",
+          "dp": "7f64095a65b5e7ffcc22d81783333bb6603511a628197f6918104ddf0d68b9a0",
+          "dv": "ef06ddfd96219ac727883231b49c38a954ee02558cfeb86b660ec064d319a57a",
+          "H": "b77a9bf818b9765b2274c8d7e3452839330b19e018c970b1dad96d854e7d7fa6",
+          "full_rows": "cd7574bd2a7e8e732c7c272fca7bc84338ae5a15afcec5469ddf72e8ed3e2ff8",
+          "idofs": "ce625cb0956be626c82ac771ead5ac5615296954cba937e5fabd74e4a8c671f9",
+          "g": "07a825f4c70be4e7630f335071e2fe502608cae001fbb377841d6df4ffa0eb32",
+          "gp": "5230a9c3cbc42fdb8f987508aead8b9f8f5fe8e1debbed12149c8061ae591541",
+          "total_g": "f6a82cb9f4e16c0ccc317656073db48641048c5c065e8b74336cc8bd2b3ee919",
+          "background": "02b5135822decd04d7b26900bd1f1be23f49510e589e3ba7ecc9f1dc293adb9a",
+          "background_alpha": "845fe34f2f465d39906e183d66d055cfb1b33007ddae4387431976fde4802c50"
+        },
+        "rhs": {
+          "generation": "original_total_Maxwell_incident_traction_plus_ports",
+          "phase_carrier": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "physical_wavevector": [
+            [
+              8.97461192517716,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              -0.1566524338595219,
+              0.0
+            ]
+          ],
+          "channels": 340,
+          "phase_application": "envelope_MPC_once"
+        },
+        "affine_background_native_relative": 2.2466409103980388e-13,
+        "export_seconds": 22.867736382060684,
+        "global_Maxwell_matrix_created": false,
+        "interior_elimination": false
+      }
+    },
+    "E3": {
+      "original": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/identity.json",
+        "sha256": "b39c0707ddadb9b59d9090ff0b3bb11465990b2d5258a4196f6ce3ac0bcf99d8",
+        "bytes": 662291
+      },
+      "compact_fields": {
+        "material": {
+          "selection": {
+            "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+            "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+            "si_n": [
+              0.9998851703688496,
+              4.3236152269189515e-06
+            ]
+          },
+          "actual_n": [
+            0.9998851703688496,
+            4.3236152269189515e-06
+          ],
+          "actual_epsilon": [
+            0.9997703539048498,
+            8.646237495554417e-06
+          ],
+          "legacy_table_read_only": {
+            "status": "MATERIAL_READY_USER_SUPPLIED",
+            "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+            "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+            "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "query_wavelength_nm": "0.7",
+            "nominal_wavelength_nm": "0.7",
+            "source_wavelength_nm": "0.699999988",
+            "delta": "0.000114859526",
+            "beta": "4.32477054E-06",
+            "n_decimal": [
+              "0.999885140474",
+              "0.00000432477054"
+            ],
+            "epsilon_decimal": [
+              "0.9997702941220070727210241084",
+              "0.00000864854759781143367192"
+            ],
+            "source_kind": "user_supplied/user_authorized",
+            "source": {
+              "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+              "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+              "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+            },
+            "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+            "time_convention": "exp(-i omega t)",
+            "external_dataset_version": "not_provided",
+            "n_loaded": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_loaded": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "air_n": [
+              1.0,
+              0.0
+            ],
+            "mu_r": [
+              1.0,
+              0.0
+            ]
+          },
+          "legacy_0p7_entry_used": false
+        },
+        "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+        "channels": 340,
+        "degree": 3,
+        "phase_carrier": [
+          8.97461192517716,
+          0.0,
+          0.0
+        ],
+        "field_space": "g*periodic_N1curl",
+        "mesh_coordinates_sha256": "fc0e45ddfccbdb70e8e1e385487ad5a5b1955d7d98e07ca5c9e03e29663af9e6",
+        "geometry_cell_dofs_sha256": "77c7588e21fdecafaaf51f61e423146f064534a7dd7b31bf8d8c3d659b51a1a3",
+        "cell_tags_sha256": "366eac10b7fc15a4033400486912a4044a29b9a59096afe00c00aef9dc23018e",
+        "centers_sha256": "f998e7036cc8f318e1b4cb42fdbfef2ed27177486554b38b87fcb616272c3c0b",
+        "cells": 336,
+        "actual_material_cell_counts": {
+          "1": 224,
+          "2": 24,
+          "3": 88
+        },
+        "actual_notch_cells": 8,
+        "nonseparable_y_z_witness": true,
+        "native_rows": 30240,
+        "slaves": 2592,
+        "volume_quadrature_degree": 15,
+        "dtn_quadrature_degree": 15,
+        "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+        "discretization_sha256": "8f3b8350bca5e7dfef7e8de108c668e929ba9af5af5f789fe00a67a96b60b9a3",
+        "full_independent_rows": 27648,
+        "interior_rows": 12096,
+        "local_tensor_classes": 12,
+        "local_tensor_payload_bytes": 3981312,
+        "packet_payload_bytes": 13618344,
+        "packet_array_hashes": {
+          "F": "508008361307e4a1761f6c13842a6d8b8e71ef427715ca412f17fe9a62e06282",
+          "classes": "9b267cb30999225398cd233ec80393353f78ecb6f8a5db158c89c084f1fcbdb1",
+          "cell_dofs": "6f64509f6adbf1eacee729ed4981e345d834d2d376f99e4339fe83cdb221e6bc",
+          "masters": "235e9136ed4ff41bf4a59f818c6a12bcbd82d0d2f41701df0cff11711562f056",
+          "slaves": "a4e1d47f4f55a8c01db47a86189c1472230cc35f72a61d551a396a4afa5afdd0",
+          "erows": "3941cd24b93934df588d987dc87f3baaca63ca97382d24d92b920e4e2073dc2e",
+          "eids": "a2e0f48b93768f9e05f29a34560fe7f86bd5b0ef09929a2e24991daa675df265",
+          "evals": "ae64a5a96eeaea71c984e2c0646d119819027950c3fb4254a4dddde233f80ca1",
+          "br": "cc59a9484c7f8287837e7036433adc84171f5f7da9505c05d2982bdfc5d40f82",
+          "bp": "5d3c5e73d8e2c5ff75857a38102e2c2d0704c022f07ef89bbae373d86bec1fc4",
+          "bv": "2867a4239dfa5333d9063d33da1ea41d5063104061f3c12b682920c3b8069292",
+          "dr": "cc59a9484c7f8287837e7036433adc84171f5f7da9505c05d2982bdfc5d40f82",
+          "dp": "5d3c5e73d8e2c5ff75857a38102e2c2d0704c022f07ef89bbae373d86bec1fc4",
+          "dv": "54891ef70548a32d7df6cae9558c22e75ca0e4a1cd86f111cc7db0efc099a565",
+          "H": "b77a9bf818b9765b2274c8d7e3452839330b19e018c970b1dad96d854e7d7fa6",
+          "full_rows": "cd7574bd2a7e8e732c7c272fca7bc84338ae5a15afcec5469ddf72e8ed3e2ff8",
+          "idofs": "ce625cb0956be626c82ac771ead5ac5615296954cba937e5fabd74e4a8c671f9",
+          "g": "6c5d00f453049d44de9a41dd21af9b4c2fd539bac40129d91c98fd5f15f3cdb3",
+          "gp": "5230a9c3cbc42fdb8f987508aead8b9f8f5fe8e1debbed12149c8061ae591541",
+          "total_g": "2aaf24772e1eb42d4b4a049893d7b1e8db60c1bd6f77adda1d32ef267101b194",
+          "background": "426b1ea7b7913fe94e03d116816a06a381cfa186eb6b79dc81aea465c818163a",
+          "background_alpha": "bbf81466f1b730f9b99688103e36d58ce64791c8f131ecf5faccc5d912a46023"
+        },
+        "rhs": {
+          "generation": "original_total_Maxwell_incident_traction_plus_ports",
+          "phase_carrier": [
+            8.97461192517716,
+            0.0,
+            0.0
+          ],
+          "physical_wavevector": [
+            [
+              8.97461192517716,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              -0.1566524338595219,
+              0.0
+            ]
+          ],
+          "channels": 340,
+          "phase_application": "envelope_MPC_once"
+        },
+        "affine_background_native_relative": 3.5572217677086904e-12,
+        "export_seconds": 38.660970299039036,
+        "global_Maxwell_matrix_created": false,
+        "interior_elimination": false
+      }
+    },
+    "O6": {
+      "original": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/identity.json",
+        "sha256": "11772b2fc31c815b1faea78411a4bf3dc428f1d652d0d0713a69b5031dc7a509",
+        "bytes": 662278
+      },
+      "compact_fields": {
+        "material": {
+          "selection": {
+            "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+            "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+            "si_n": [
+              0.9998851703688496,
+              4.3236152269189515e-06
+            ]
+          },
+          "actual_n": [
+            0.9998851703688496,
+            4.3236152269189515e-06
+          ],
+          "actual_epsilon": [
+            0.9997703539048498,
+            8.646237495554417e-06
+          ],
+          "legacy_table_read_only": {
+            "status": "MATERIAL_READY_USER_SUPPLIED",
+            "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+            "canonical_path": "/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json",
+            "material_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "query_wavelength_nm": "0.7",
+            "nominal_wavelength_nm": "0.7",
+            "source_wavelength_nm": "0.699999988",
+            "delta": "0.000114859526",
+            "beta": "4.32477054E-06",
+            "n_decimal": [
+              "0.999885140474",
+              "0.00000432477054"
+            ],
+            "epsilon_decimal": [
+              "0.9997702941220070727210241084",
+              "0.00000864854759781143367192"
+            ],
+            "source_kind": "user_supplied/user_authorized",
+            "source": {
+              "review_path": "docs/task042_neural_coarse_inverse/review_report_v4.md",
+              "review_commit": "18084a6213570e26a0a0941e628717f2c63fd00a",
+              "review_blob": "a0e0c106970eab91271d61981810544146c4a32f"
+            },
+            "alias_reason": "Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7",
+            "time_convention": "exp(-i omega t)",
+            "external_dataset_version": "not_provided",
+            "n_loaded": [
+              0.999885140474,
+              4.32477054e-06
+            ],
+            "epsilon_loaded": [
+              0.9997702941220071,
+              8.648547597811433e-06
+            ],
+            "air_n": [
+              1.0,
+              0.0
+            ],
+            "mu_r": [
+              1.0,
+              0.0
+            ]
+          },
+          "legacy_0p7_entry_used": false
+        },
+        "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+        "channels": 340,
+        "degree": 6,
+        "phase_carrier": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "field_space": "ordinary_Floquet_N1curl",
+        "mesh_coordinates_sha256": "5844641014fa31c5c063d61004eaf036ee45fd2d5e682ce09f64c5838c017a59",
+        "geometry_cell_dofs_sha256": "741f733f36757e84fff67dbda8396a21afcaa9a1064ca76cc202960450e28075",
+        "cell_tags_sha256": "9c7670eba7ed4e62447eff3512a9a4a0b7b61680379a7465aab5b71bf5019993",
+        "centers_sha256": "4f87466305dbccd969f396cb283954b0e46577060c24dc0c21a33b58bd235cf6",
+        "cells": 560,
+        "actual_material_cell_counts": {
+          "1": 344,
+          "2": 40,
+          "3": 176
+        },
+        "actual_notch_cells": 16,
+        "nonseparable_y_z_witness": true,
+        "native_rows": 380040,
+        "slaves": 14280,
+        "volume_quadrature_degree": 15,
+        "dtn_quadrature_degree": 15,
+        "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+        "discretization_sha256": "e0b54197dc654688b35653c11d8bfea8cb88eced27064c4787b98451ad3da073",
+        "full_independent_rows": 365760,
+        "interior_rows": 252000,
+        "local_tensor_classes": 12,
+        "local_tensor_payload_bytes": 149361408,
+        "packet_payload_bytes": 231550696,
+        "packet_array_hashes": {
+          "F": "2c451fe0ce2b151d1b9de55e503518419612f36e36d7702ce041b26bddcdee90",
+          "classes": "6efde86e732ff8525d48760d3dee3022593309a29586b0c492a0150b5c7974cd",
+          "cell_dofs": "e5ce9cb6b8ea79ff7bcf0d5edc0cc9e4e7c8c87a11d1ea846eb290c2776e891d",
+          "masters": "96a33213c2843ab73c19f9bc2bfa08b2cbac74474755e4ca356a24b7ea7918a6",
+          "slaves": "f10dd657e80256391fcf938ca39bcf4768c030bec221bebc30925a09bdeeaed2",
+          "erows": "035cc95023c2b2991bf088365925f6f416c2d5ded77f28cc6ab5450b551f4593",
+          "eids": "43c27a9bfa0b5ca093f444332d29a5eeb3f339aa58e026dc3fd90082ceb5ee79",
+          "evals": "0d834173f79d9bcbc5bb5e3f935d686951826278015bdd38b487c401aacef94b",
+          "br": "ef13af71d71b1aa4a4e96bf6d8ed9c9d2dd89b000e7038e97799481901980899",
+          "bp": "f9c15970c6b2268a7f17b18f6e04afeb38b09adb99807a4713c234ccb37c6bb2",
+          "bv": "b0444d06cf14821e7e107ce87ae3623132fcdb15825f6b28f7956d7cea6f4a3e",
+          "dr": "b9b71922f3a3c60a4520b219bcfa3b0b2bf1187ae886d1378f459e1a1770b48a",
+          "dp": "033be5fcaa9134b2c2ce0b0e2324922fcc4c14704202c1862c7f050f8c995929",
+          "dv": "2ee4db71564930c074fde1bcc70660beb5a9a295323d8e1b7cb650c786981120",
+          "H": "b77a9bf818b9765b2274c8d7e3452839330b19e018c970b1dad96d854e7d7fa6",
+          "full_rows": "51f549fe95ffb41e06d9958bb40ac67ef07449839caccc62240ccb9f668477be",
+          "idofs": "5d5307d6be9f37aa84e918472e2c04e9c7f079bb78e21a12dd8fc30a9ccf5337",
+          "g": "40e44ca67404239b1f397fe605fce9ea202397cc4db8ec803487aa7992b645b3",
+          "gp": "5230a9c3cbc42fdb8f987508aead8b9f8f5fe8e1debbed12149c8061ae591541",
+          "total_g": "35303551088209366aecd596ed8b84a187a7c62a113b80a88b86de00ede936d7",
+          "background": "aab3433b65d0b7e5ff976c226f31212f648e61f8b205bd0a98be2ba1220ed0d1",
+          "background_alpha": "1a1dff2af7585888c095013cfc5184b5cf67f76de5aad411285bcc9c63da7f90"
+        },
+        "rhs": {
+          "generation": "original_total_Maxwell_incident_traction_plus_ports",
+          "phase_carrier": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "physical_wavevector": [
+            [
+              8.97461192517716,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              -0.1566524338595219,
+              0.0
+            ]
+          ],
+          "channels": 340,
+          "phase_application": "envelope_MPC_once"
+        },
+        "affine_background_native_relative": 7.816208311044103e-11,
+        "export_seconds": 827.0575596999843,
+        "global_Maxwell_matrix_created": false,
+        "interior_elimination": false
+      }
+    }
+  },
+  "actual_material_authority": "Review V19 / frozen main geometry interface explicit complex index; old local 0.7nm table is read-only provenance, not substituted for this value",
+  "local_legacy_index": {
+    "real": 0.999885140474,
+    "imag": 4.32477054e-06
+  },
+  "actual_review_index": {
+    "real": 0.9998851703688496,
+    "imag": 4.3236152269189515e-06
+  },
+  "target": {
+    "original_dimensions_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "full_workflow_seconds": 172800,
+    "qualified": false
+  },
+  "NN_training": false,
+  "neural_gain": "NOT_TESTED",
+  "no_old_physical_identity_redefined": true
+}

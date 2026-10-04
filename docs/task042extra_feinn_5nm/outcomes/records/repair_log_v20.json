@@ -1,0 +1,81 @@
+{
+  "schema": "fixed_phase.repairs.v1",
+  "formal_pool_limit": 2,
+  "used": 2,
+  "B_lifecycles": 4,
+  "B_limit": 6,
+  "formal_rounds": [
+    {
+      "round": 1,
+      "failure": "8-cell air original residual 1.2348802636382706e-10 > 1e-10",
+      "hypothesis": "Default CSR sparse solve at grazing angle fails strict explicit residual; sparse CSC LU is an equivalent bounded fixture solver",
+      "change_source": "6cd669d376008e2a12542764c4bde95b383e6166",
+      "test": "Targeted same air fixture; no change to equations or gates",
+      "retry": "A attempt2: 20 gates pass, air original residual 8.527826100766301e-12",
+      "costs_retained": true
+    },
+    {
+      "round": 2,
+      "failure": "O3 attempt1 original port recovery 0.00013056583061586 > 1e-10",
+      "hypothesis": "Evanescent origin amplitudes and very small original H magnify recovered coordinate errors",
+      "change_source": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "change": "Exact boundary-port coordinate equivalence plus save unqualified recovered full fields; original physical outputs/gate unchanged",
+      "test": "Complex small equivalence and three actual saved-CSR action directions",
+      "retry": "O3 attempt2 original recovery 0.0002415785461783923; repair did not close original gate",
+      "costs_retained": true
+    }
+  ],
+  "no_more_B_repair_replay": true,
+  "continued_independent_work": [
+    "E3 once",
+    "O6 once",
+    "C retained-negative physical reconstruction",
+    "pure saved checker",
+    "D target decision"
+  ],
+  "p6_hypothesis": "Analytically trace-free internal basis may have floating integration support; exact zeros not proved, no entries removed",
+  "C_new_diagnostic_not_solver_replay": true,
+  "supplemental_test_corrections": [
+    {
+      "failure": "E4 descriptor fixture wrongly assumed degree key exists in generic frozen geometry",
+      "correction": "Assert the actual frozen family/q dictionary and explicit unrun E4 p4 descriptor",
+      "scope": "pure test/schema only; no B replay or numerical change",
+      "final_test": "41 passed; Ruff/compileall passed"
+    }
+  ],
+  "initial_development_failures": "All bounded check summaries and logs listed in targeted_tests_v20.json; initial construction/UFL/schema/metadata/format errors are retained, not formal scientific retries",
+  "resource_refusal": {
+    "stage": "v20_zero_rhs_regression",
+    "status": "RESOURCE_WINDOW_UNAVAILABLE",
+    "exception": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+    "no_numeric_worker_started": true,
+    "resource_gate_unchanged": true,
+    "attempt_start_utc": "2026-10-04T03:04:08.535405Z",
+    "failure_instant": "NOT_RETAINED",
+    "cpu_detail_at_failure": "NOT_RETAINED",
+    "exception_source": "actual supervise_task42extra traceback from tool output"
+  },
+  "measured_new_window": {
+    "path": "tmp/task42extra/v20/new_window_1.json",
+    "sha256": "9c0b098aa3fe1f51fabcb5c573e568cb11fa59413bc36b7089255b17eddc417a",
+    "bytes": 188152
+  },
+  "resource_readmissions_used": 1,
+  "resource_readmissions_limit": 2,
+  "document_check_preexisting_failure": {
+    "classification": "PREEXISTING_FAILURE_NOT_FIXED_OUT_OF_SCOPE",
+    "original_failure_log": "tmp/task42extra/checks/v20_document_contracts_20261004T034742880146Z/supervision/worker.log",
+    "baseline_path": "tmp/task42extra/v20/registry_before_v20.md",
+    "baseline_sha256": "9e22616bd3eb536b701e1bfe0522d527fd897f7d260f28c10684bc29302861ad",
+    "baseline_errors": [
+      "Task sections are not the exact continuous 3.1–3.40 sequence",
+      "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json"
+    ],
+    "current_errors": [
+      "Task sections are not the exact continuous 3.1–3.40 sequence",
+      "missing evidence path: docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json"
+    ],
+    "actual_sequence_unchanged": true,
+    "old_test_requires_only_40_tasks": true
+  }
+}

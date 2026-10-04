@@ -1,0 +1,2784 @@
+{
+  "schema": "fixed_phase.compact-run-index.v1",
+  "authority": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+    "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4",
+    "bytes": 30186
+  },
+  "input_head": "dfb60aa3a88c5554e9660ae6de7f169c5ac26298",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "runs": [
+    {
+      "run": "task42extra_v20_control_checks_20261004T020228363071Z",
+      "stage": "v20_control_checks",
+      "role": null,
+      "group": "implementation",
+      "attempt": 1,
+      "source_sha": "d20c4557394cbe6228903712b39fc41bdfdc7274",
+      "input_sha256": "4e697064ae65a22b9d07885c53d119c8c3553dcdb551ce78e78f13822e4a31d1",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 0,
+      "formal_classification": "COMPLETED",
+      "full_launch_monotonic_seconds": 18.26853362703696,
+      "sampled_tree_rss_peak_bytes": 96436224,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/run_manifest.json",
+          "sha256": "69468d636c765b33d5af6c333a6afe609422efa94f7c457f88e8755e61d868aa",
+          "bytes": 1359
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/run_summary.json",
+          "sha256": "b4322ad977d1df8acd22b1faaad7bf94c3d9e2b7c6f426c846831caf66be6b66",
+          "bytes": 2431
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/events.jsonl",
+          "sha256": "f58f1461998a4186ec04884c8ecaa441f4fd020a42c8ed9815bc9c9517650c9e",
+          "bytes": 379
+        }
+      },
+      "phases": [
+        {
+          "phase": "control_chain_verified",
+          "worker_elapsed_seconds": 14.395712792058475,
+          "values": {}
+        },
+        {
+          "phase": "frozen",
+          "worker_elapsed_seconds": 14.401884512975812,
+          "values": {
+            "stage_qualified": true
+          },
+          "full_result_location": "immutable index in this record"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/result.json",
+          "sha256": "eae07acc9d59cfaf5ac843f6776ef005fb5b91a2679f51ec554d841cd9f1216d",
+          "bytes": 4596
+        }
+      ]
+    },
+    {
+      "run": "task42extra_v20_e3_20261004T022926144000Z",
+      "stage": "v20_e3",
+      "role": "E3",
+      "group": "B",
+      "attempt": 1,
+      "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "input_sha256": "7bfd5227b11e24884534d7185d3a562505f27069567722146e25c76d78729a6e",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 1,
+      "formal_classification": "WORKER_FAILED",
+      "full_launch_monotonic_seconds": 176.59969027899206,
+      "sampled_tree_rss_peak_bytes": 923660288,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_e3_20261004T022926144000Z/run_manifest.json",
+          "sha256": "288f47c92b2843d0faaf642610e2c63e152851ececea9e60324fdc7bf7ca37dc",
+          "bytes": 2520
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_e3_20261004T022926144000Z/run_summary.json",
+          "sha256": "e8b60851b5979cf45e81a26eaaefc57c7ca3b56cadd7aa0e0846bb347261a5dd",
+          "bytes": 2827
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_e3_20261004T022926144000Z/events.jsonl",
+          "sha256": "5d45ff2511bac0f504f16869fe14fdad279331b74e3a1cbc723682612f7bcf21",
+          "bytes": 651996
+        },
+        "failure": {
+          "path": "results/task42extra/task42extra_v20_e3_20261004T022926144000Z/worker_failure.json",
+          "sha256": "cbf128bbb7d31eb9249d8365f18e31ef033e39c65c84c625b42e742ed5894126",
+          "bytes": 855
+        }
+      },
+      "phases": [
+        {
+          "phase": "initial_derived_capacity",
+          "worker_elapsed_seconds": 0.0601155050098896,
+          "values": {
+            "kind": "derived conservative assembly/conversion overlap; not RSS",
+            "degree": 3,
+            "local_dimension": 144,
+            "local_interior": 36,
+            "local_trace": 108,
+            "raw_all_cell_tensor_bytes": 111476736,
+            "triplets": 3919104,
+            "cache_classes_assumed": 48,
+            "local_cache_upper_bytes": 28864512,
+            "allocation_upper_bytes": 1416134656,
+            "factor_planning_cap_bytes": 12884901888,
+            "full_FE_recovered": true
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 6.550884136930108,
+          "values": {
+            "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+            "channels": 340,
+            "degree": 3,
+            "field_space": "g*periodic_N1curl",
+            "mesh_coordinates_sha256": "fc0e45ddfccbdb70e8e1e385487ad5a5b1955d7d98e07ca5c9e03e29663af9e6",
+            "geometry_cell_dofs_sha256": "77c7588e21fdecafaaf51f61e423146f064534a7dd7b31bf8d8c3d659b51a1a3",
+            "cell_tags_sha256": "366eac10b7fc15a4033400486912a4044a29b9a59096afe00c00aef9dc23018e",
+            "centers_sha256": "f998e7036cc8f318e1b4cb42fdbfef2ed27177486554b38b87fcb616272c3c0b",
+            "cells": 336,
+            "actual_notch_cells": 8,
+            "nonseparable_y_z_witness": true,
+            "native_rows": 30240,
+            "slaves": 2592,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+            "discretization_sha256": "8f3b8350bca5e7dfef7e8de108c668e929ba9af5af5f789fe00a67a96b60b9a3"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 45.22651430696715,
+          "values": {
+            "full_independent_rows": 27648,
+            "interior_rows": 12096,
+            "local_tensor_classes": 12,
+            "local_tensor_payload_bytes": 3981312,
+            "packet_payload_bytes": 13618344,
+            "export_seconds": 38.660970299039036,
+            "affine_background_native_relative": 3.5572217677086904e-12
+          }
+        },
+        {
+          "phase": "independent_physical_volume",
+          "worker_elapsed_seconds": 49.8842327829916,
+          "values": {
+            "relative": [
+              1.6412734444714e-15,
+              1.6861595622707705e-15,
+              1.6463991761206933e-15
+            ],
+            "passed": true,
+            "scope": {
+              "q": 15,
+              "classes": 12,
+              "physical_product_derivative": true,
+              "producer_F_read": false,
+              "shared": "Basix, geometry, orientation API, MPC input"
+            }
+          }
+        },
+        {
+          "phase": "reference_pre_assembly_capacity",
+          "worker_elapsed_seconds": 109.0539654570166,
+          "values": {
+            "kind": "derived reference assembly/conversion reserve, not RSS",
+            "rows": 15892,
+            "upper_triplets": 4107556,
+            "allocation_upper_bytes": 1394486272,
+            "own_rss_bytes": 446459904,
+            "planning_cap_bytes": 12884901888
+          }
+        },
+        {
+          "phase": "exact_condensed_CSR",
+          "worker_elapsed_seconds": 109.63266834593378,
+          "values": {
+            "rows": 15892,
+            "nnz": 3549412,
+            "complete_recovered_FE": 27648,
+            "action_pairs": [
+              {
+                "reduced": 4.664505252263891e-16,
+                "interior": 1.732002209919381e-15
+              },
+              {
+                "reduced": 4.786971525205674e-16,
+                "interior": 1.777750797862637e-15
+              },
+              {
+                "reduced": 4.843195164498416e-16,
+                "interior": 1.7601843078640768e-15
+              }
+            ],
+            "seconds": 0.5784849439514801
+          }
+        },
+        {
+          "phase": "exact_boundary_port_coordinates",
+          "worker_elapsed_seconds": 109.85252663993742,
+          "values": {
+            "beta_definition": "beta=physical_boundary_phase*alpha_origin",
+            "original_equations_unchanged": true,
+            "field_coefficients_unchanged": true,
+            "row_scale": "phase/H",
+            "column_scale": "1/phase",
+            "phase_magnitude_min": 1.9056646052565524e-84,
+            "phase_magnitude_max": 1.0000000000000002,
+            "pairs": [
+              1.1337067504404644e-17,
+              1.3106662703927562e-17,
+              1.1178312235084024e-17
+            ],
+            "port_diagonal_max_difference": 2.3252617392099354e-16,
+            "not_PC": true,
+            "not_shift": true
+          }
+        },
+        {
+          "phase": "reference_PETSc_conversion_begin",
+          "worker_elapsed_seconds": 110.11536221799906,
+          "values": {}
+        },
+        {
+          "phase": "reference_PETSc_conversion_end",
+          "worker_elapsed_seconds": 110.20384324493352,
+          "values": {}
+        },
+        {
+          "phase": "reference_symbolic_begin",
+          "worker_elapsed_seconds": 110.26724335900508,
+          "values": {}
+        },
+        {
+          "phase": "reference_symbolic_capacity",
+          "worker_elapsed_seconds": 110.60344744392205,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4107556,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 446459904,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3549412,
+            "independent_augmented_action_relative": 1.777750797862637e-15,
+            "csr_payload_bytes": 71051812,
+            "CSR_hashes": {
+              "indptr": "7a7ab2fc9a471cff3003737a9ea784e189e84ca9e2837be7f4cfbec1483b51c1",
+              "indices": "fb27852fa28d800b4c2bf6440f5e3bf5ca7280d562100a7f47415e28d46fd2d9",
+              "data": "7363402904392714cc925106fa89411ef530deebb5d5e95649b222db6e056638"
+            },
+            "assembly_and_pair_seconds": 1.2055788059951738,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17791436,
+                "4": 161442,
+                "5": 1260,
+                "6": 243,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 421,
+                "17": 421,
+                "18": 0,
+                "19": 0,
+                "20": 17791436,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11842282304.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 284.662976,
+                "16": 0.0,
+                "17": 14.849918,
+                "18": 14.847613,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.3360475489171222,
+            "estimated_factor_bytes": 422000000,
+            "conversion_and_workspace_reserve_bytes": 384050816,
+            "rss_after_symbolic_bytes": 564051968
+          }
+        },
+        {
+          "phase": "reference_numeric_begin",
+          "worker_elapsed_seconds": 110.6037071730243,
+          "values": {}
+        },
+        {
+          "phase": "reference_numeric",
+          "worker_elapsed_seconds": 112.3894197139889,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4107556,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 446459904,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3549412,
+            "independent_augmented_action_relative": 1.777750797862637e-15,
+            "csr_payload_bytes": 71051812,
+            "CSR_hashes": {
+              "indptr": "7a7ab2fc9a471cff3003737a9ea784e189e84ca9e2837be7f4cfbec1483b51c1",
+              "indices": "fb27852fa28d800b4c2bf6440f5e3bf5ca7280d562100a7f47415e28d46fd2d9",
+              "data": "7363402904392714cc925106fa89411ef530deebb5d5e95649b222db6e056638"
+            },
+            "assembly_and_pair_seconds": 1.2055788059951738,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17791436,
+                "4": 161442,
+                "5": 1260,
+                "6": 243,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 421,
+                "17": 421,
+                "18": 0,
+                "19": 0,
+                "20": 17791436,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11842282304.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 284.662976,
+                "16": 0.0,
+                "17": 14.849918,
+                "18": 14.847613,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.3360475489171222,
+            "estimated_factor_bytes": 422000000,
+            "conversion_and_workspace_reserve_bytes": 384050816,
+            "rss_after_symbolic_bytes": 564051968,
+            "numeric_memory_limit_decimal_MB": 11936,
+            "symbolic_estimate_source": "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html",
+            "numeric_seconds": 1.7855407178867608,
+            "numeric_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17791436,
+                "4": 161442,
+                "5": 1260,
+                "6": 243,
+                "7": 4,
+                "8": 100,
+                "9": 17791436,
+                "10": 161442,
+                "11": 1260,
+                "12": 70,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 421,
+                "17": 421,
+                "18": 6178,
+                "19": 6178,
+                "20": 17791436,
+                "21": 363,
+                "22": 363,
+                "29": 17791436
+              },
+              "rinfog": {
+                "1": 11842282304.0,
+                "2": 26582245.0,
+                "3": 11842282304.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 284.662976,
+                "16": 0.0,
+                "17": 300.415846,
+                "18": 6121.726489,
+                "19": 0.0010094849038192201,
+                "20": 0.0010094849038192201
+              }
+            }
+          }
+        },
+        {
+          "phase": "reference_solve_begin",
+          "worker_elapsed_seconds": 112.39007926196791,
+          "values": {}
+        },
+        {
+          "phase": "reference_release_before_postprocessing",
+          "worker_elapsed_seconds": 112.56210235401522,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4107556,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 446459904,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3549412,
+            "independent_augmented_action_relative": 1.777750797862637e-15,
+            "csr_payload_bytes": 71051812,
+            "CSR_hashes": {
+              "indptr": "7a7ab2fc9a471cff3003737a9ea784e189e84ca9e2837be7f4cfbec1483b51c1",
+              "indices": "fb27852fa28d800b4c2bf6440f5e3bf5ca7280d562100a7f47415e28d46fd2d9",
+              "data": "7363402904392714cc925106fa89411ef530deebb5d5e95649b222db6e056638"
+            },
+            "assembly_and_pair_seconds": 1.2055788059951738,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17791436,
+                "4": 161442,
+                "5": 1260,
+                "6": 243,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 421,
+                "17": 421,
+                "18": 0,
+                "19": 0,
+                "20": 17791436,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11842282304.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 284.662976,
+                "16": 0.0,
+                "17": 14.849918,
+                "18": 14.847613,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.3360475489171222,
+            "estimated_factor_bytes": 422000000,
+            "conversion_and_workspace_reserve_bytes": 384050816,
+            "rss_after_symbolic_bytes": 564051968,
+            "numeric_memory_limit_decimal_MB": 11936,
+            "symbolic_estimate_source": "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html",
+            "numeric_seconds": 1.7855407178867608,
+            "numeric_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17791436,
+                "4": 161442,
+                "5": 1260,
+                "6": 243,
+                "7": 4,
+                "8": 100,
+                "9": 17791436,
+                "10": 161442,
+                "11": 1260,
+                "12": 70,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 421,
+                "17": 421,
+                "18": 6178,
+                "19": 6178,
+                "20": 17791436,
+                "21": 363,
+                "22": 363,
+                "29": 17791436
+              },
+              "rinfog": {
+                "1": 11842282304.0,
+                "2": 26582245.0,
+                "3": 11842282304.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 284.662976,
+                "16": 0.0,
+                "17": 300.415846,
+                "18": 6121.726489,
+                "19": 0.0010094849038192201,
+                "20": 0.0010094849038192201
+              }
+            },
+            "solve_seconds": 0.08758343604858965,
+            "original_augmented_relative": 6.475910510435699e-11,
+            "rss_with_numeric_factor_bytes": 871616512,
+            "exact_static_condensation": true,
+            "recovered_independent_complex_FE": 27648,
+            "condensed_rows": 15892,
+            "local_interior_factors": "exact reference-only; no training use",
+            "unqualified_recovery_saved_before_checks": true,
+            "original_port_recovery_relative": 0.001556235707641714,
+            "rss_before_release_bytes": 871616512,
+            "rss_after_release_bytes": 331313152,
+            "factor_released": true,
+            "matrix_released": true,
+            "total_reference_setup_solve_seconds": 3.508278780966066
+          }
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/field_state.npz",
+          "sha256": "d95fb546834f09ea2d05209010b8c93a7d2066f9c947958e7b7af8512e82f1cf",
+          "bytes": 1566408
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/native.npz",
+          "sha256": "5b153fe537ee38b7c2394923c5da2611cfadbb90e4dae5386732df797aa6cc37",
+          "bytes": 13623684
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/condensed_csr_recovery.npz",
+          "sha256": "ac10e8546bfe7436cd6e8bf1a5949d4dfb537caa9671e8cf55e81a3c521429cf",
+          "bytes": 73979582
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/identity.json",
+          "sha256": "b39c0707ddadb9b59d9090ff0b3bb11465990b2d5258a4196f6ce3ac0bcf99d8",
+          "bytes": 662291
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/boundary_coordinate_csr.npz",
+          "sha256": "a08cc96eb7df4d6dcd3580e752db9a82500d8895b172f67664c2e0a0d0881263",
+          "bytes": 71825012
+        }
+      ],
+      "failure": {
+        "reason": "REFERENCE_PORT_RECOVERY_FAILED",
+        "kind": "RuntimeError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/fixed_phase_campaign.py\", line 380, in worker\n    result, files = reference(design, m[\"role\"], artifact, marker, budget)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reference.py\", line 107, in reference\n    c, direct = exact_solve(\n                ^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_reference.py\", line 238, in exact_solve\n    raise RuntimeError(\"REFERENCE_PORT_RECOVERY_FAILED\")\nRuntimeError: REFERENCE_PORT_RECOVERY_FAILED\n",
+        "wall_seconds": 112.56875705393031,
+        "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2"
+      }
+    },
+    {
+      "run": "task42extra_v20_o3_20261004T021625611145Z",
+      "stage": "v20_o3",
+      "role": "O3",
+      "group": "B",
+      "attempt": 1,
+      "source_sha": "6cd669d376008e2a12542764c4bde95b383e6166",
+      "input_sha256": "609b86feafd4b75e1448f90028ef971951330c5d3fee392d62509145ca2a3b99",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 12,
+      "formal_classification": "WORKER_FAILED",
+      "full_launch_monotonic_seconds": 172.3716183709912,
+      "sampled_tree_rss_peak_bytes": 916008960,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T021625611145Z/run_manifest.json",
+          "sha256": "be9ae6d38422826a325c6ca083fdcb13b14d59eff281f888fabcd235b2d19733",
+          "bytes": 2079
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T021625611145Z/run_summary.json",
+          "sha256": "ac6f238c4cc23ba9c30a29f132a9318593de657490a45ccb836b276b49e4b2b5",
+          "bytes": 2812
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T021625611145Z/events.jsonl",
+          "sha256": "e82cbe11c152763a9b9732536695621c6744b78486d276f59b7577fa22ad994b",
+          "bytes": 651336
+        },
+        "failure": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T021625611145Z/worker_failure.json",
+          "sha256": "f8bbf2eb62a6dbbc0c9ff749f17a0b0e52340c8b386e9829150387735f46b0cd",
+          "bytes": 854
+        }
+      },
+      "phases": [
+        {
+          "phase": "initial_derived_capacity",
+          "worker_elapsed_seconds": 0.05999823193997145,
+          "values": {
+            "kind": "derived conservative assembly/conversion overlap; not RSS",
+            "degree": 3,
+            "local_dimension": 144,
+            "local_interior": 36,
+            "local_trace": 108,
+            "raw_all_cell_tensor_bytes": 111476736,
+            "triplets": 3919104,
+            "cache_classes_assumed": 48,
+            "local_cache_upper_bytes": 28864512,
+            "allocation_upper_bytes": 1416134656,
+            "factor_planning_cap_bytes": 12884901888,
+            "full_FE_recovered": true
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 4.3757241040002555,
+          "values": {
+            "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+            "channels": 340,
+            "degree": 3,
+            "field_space": "ordinary_Floquet_N1curl",
+            "mesh_coordinates_sha256": "fc0e45ddfccbdb70e8e1e385487ad5a5b1955d7d98e07ca5c9e03e29663af9e6",
+            "geometry_cell_dofs_sha256": "77c7588e21fdecafaaf51f61e423146f064534a7dd7b31bf8d8c3d659b51a1a3",
+            "cell_tags_sha256": "366eac10b7fc15a4033400486912a4044a29b9a59096afe00c00aef9dc23018e",
+            "centers_sha256": "f998e7036cc8f318e1b4cb42fdbfef2ed27177486554b38b87fcb616272c3c0b",
+            "cells": 336,
+            "actual_notch_cells": 8,
+            "nonseparable_y_z_witness": true,
+            "native_rows": 30240,
+            "slaves": 2592,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+            "discretization_sha256": "1a541cd6e3627abcff86e650abd247fe4c3619934174adf281e8bf6be9c52b7f"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 42.34441252902616,
+          "values": {
+            "full_independent_rows": 27648,
+            "interior_rows": 12096,
+            "local_tensor_classes": 12,
+            "local_tensor_payload_bytes": 3981312,
+            "packet_payload_bytes": 13768872,
+            "export_seconds": 37.95215011399705,
+            "affine_background_native_relative": 2.2466409103980388e-13
+          }
+        },
+        {
+          "phase": "independent_physical_volume",
+          "worker_elapsed_seconds": 47.03641179704573,
+          "values": {
+            "relative": [
+              1.560867670489473e-15,
+              1.6199738275106284e-15,
+              1.5897217254478762e-15
+            ],
+            "passed": true,
+            "scope": {
+              "q": 15,
+              "classes": 12,
+              "physical_product_derivative": true,
+              "producer_F_read": false,
+              "shared": "Basix, geometry, orientation API, MPC input"
+            }
+          }
+        },
+        {
+          "phase": "reference_pre_assembly_capacity",
+          "worker_elapsed_seconds": 105.44677148503251,
+          "values": {
+            "kind": "derived reference assembly/conversion reserve, not RSS",
+            "rows": 15892,
+            "upper_triplets": 4112260,
+            "allocation_upper_bytes": 1394486272,
+            "own_rss_bytes": 436781056,
+            "planning_cap_bytes": 12884901888
+          }
+        },
+        {
+          "phase": "exact_condensed_CSR",
+          "worker_elapsed_seconds": 106.00398331100587,
+          "values": {
+            "rows": 15892,
+            "nnz": 3554116,
+            "complete_recovered_FE": 27648,
+            "action_pairs": [
+              {
+                "reduced": 4.439538522932152e-16,
+                "interior": 1.6625531325517171e-15
+              },
+              {
+                "reduced": 4.382687648368371e-16,
+                "interior": 1.6502539446016042e-15
+              },
+              {
+                "reduced": 4.475159579652367e-16,
+                "interior": 1.6713552829125305e-15
+              }
+            ],
+            "seconds": 0.557030183961615
+          }
+        },
+        {
+          "phase": "reference_PETSc_conversion_begin",
+          "worker_elapsed_seconds": 106.17157463403419,
+          "values": {}
+        },
+        {
+          "phase": "reference_PETSc_conversion_end",
+          "worker_elapsed_seconds": 106.26259526400827,
+          "values": {}
+        },
+        {
+          "phase": "reference_symbolic_begin",
+          "worker_elapsed_seconds": 106.38453059596941,
+          "values": {}
+        },
+        {
+          "phase": "reference_symbolic_capacity",
+          "worker_elapsed_seconds": 106.68873326701578,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4112260,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 436781056,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3554116,
+            "independent_augmented_action_relative": 1.6713552829125305e-15,
+            "csr_payload_bytes": 71145892,
+            "CSR_hashes": {
+              "indptr": "f7223cc5f6466c9373539a7cb8e47111205e0952b5dd9fd68ef45dcad4d56a99",
+              "indices": "3f4cc80cfc9e9f17e5e904388a9479be765cc47372842fc9a5fe15f4233cbfea",
+              "data": "e1156c8a5d55ba0db3a88bb7e5e885fb6b65fbca245dcdfe57fd2e18602709f7"
+            },
+            "assembly_and_pair_seconds": 0.9213655149796978,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 0,
+                "19": 0,
+                "20": 17828660,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 14.868714,
+                "18": 14.866409,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.30404628498945385,
+            "estimated_factor_bytes": 426000000,
+            "conversion_and_workspace_reserve_bytes": 384201344,
+            "rss_after_symbolic_bytes": 538284032
+          }
+        },
+        {
+          "phase": "reference_numeric_begin",
+          "worker_elapsed_seconds": 106.68903314194176,
+          "values": {}
+        },
+        {
+          "phase": "reference_numeric",
+          "worker_elapsed_seconds": 108.31844307098072,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4112260,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 436781056,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3554116,
+            "independent_augmented_action_relative": 1.6713552829125305e-15,
+            "csr_payload_bytes": 71145892,
+            "CSR_hashes": {
+              "indptr": "f7223cc5f6466c9373539a7cb8e47111205e0952b5dd9fd68ef45dcad4d56a99",
+              "indices": "3f4cc80cfc9e9f17e5e904388a9479be765cc47372842fc9a5fe15f4233cbfea",
+              "data": "e1156c8a5d55ba0db3a88bb7e5e885fb6b65fbca245dcdfe57fd2e18602709f7"
+            },
+            "assembly_and_pair_seconds": 0.9213655149796978,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 0,
+                "19": 0,
+                "20": 17828660,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 14.868714,
+                "18": 14.866409,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.30404628498945385,
+            "estimated_factor_bytes": 426000000,
+            "conversion_and_workspace_reserve_bytes": 384201344,
+            "rss_after_symbolic_bytes": 538284032,
+            "numeric_memory_limit_decimal_MB": 11962,
+            "symbolic_estimate_source": "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html",
+            "numeric_seconds": 1.6293018339201808,
+            "numeric_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 17828660,
+                "10": 160350,
+                "11": 1260,
+                "12": 85,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 6194,
+                "19": 6194,
+                "20": 17828660,
+                "21": 366,
+                "22": 366,
+                "29": 17828660
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 26294949.0,
+                "3": 11892329972.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 301.025846,
+                "18": 6136.824377,
+                "19": 4.866681442324016e-05,
+                "20": 4.866681442324016e-05
+              }
+            }
+          }
+        },
+        {
+          "phase": "reference_solve_begin",
+          "worker_elapsed_seconds": 108.31890985905193,
+          "values": {}
+        },
+        {
+          "phase": "reference_release_before_postprocessing",
+          "worker_elapsed_seconds": 108.52034328994341,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4112260,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 436781056,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3554116,
+            "independent_augmented_action_relative": 1.6713552829125305e-15,
+            "csr_payload_bytes": 71145892,
+            "CSR_hashes": {
+              "indptr": "f7223cc5f6466c9373539a7cb8e47111205e0952b5dd9fd68ef45dcad4d56a99",
+              "indices": "3f4cc80cfc9e9f17e5e904388a9479be765cc47372842fc9a5fe15f4233cbfea",
+              "data": "e1156c8a5d55ba0db3a88bb7e5e885fb6b65fbca245dcdfe57fd2e18602709f7"
+            },
+            "assembly_and_pair_seconds": 0.9213655149796978,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 0,
+                "19": 0,
+                "20": 17828660,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 14.868714,
+                "18": 14.866409,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.30404628498945385,
+            "estimated_factor_bytes": 426000000,
+            "conversion_and_workspace_reserve_bytes": 384201344,
+            "rss_after_symbolic_bytes": 538284032,
+            "numeric_memory_limit_decimal_MB": 11962,
+            "symbolic_estimate_source": "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html",
+            "numeric_seconds": 1.6293018339201808,
+            "numeric_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 17828660,
+                "10": 160350,
+                "11": 1260,
+                "12": 85,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 6194,
+                "19": 6194,
+                "20": 17828660,
+                "21": 366,
+                "22": 366,
+                "29": 17828660
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 26294949.0,
+                "3": 11892329972.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 301.025846,
+                "18": 6136.824377,
+                "19": 4.866681442324016e-05,
+                "20": 4.866681442324016e-05
+              }
+            },
+            "solve_seconds": 0.1264595289248973,
+            "original_augmented_relative": 2.4577083282336496e-12,
+            "rss_with_numeric_factor_bytes": 846446592,
+            "exact_static_condensation": true,
+            "recovered_independent_complex_FE": 27648,
+            "condensed_rows": 15892,
+            "local_interior_factors": "exact reference-only; no training use",
+            "original_port_recovery_relative": 0.00013056583061586,
+            "rss_before_release_bytes": 846446592,
+            "rss_after_release_bytes": 326430720,
+            "factor_released": true,
+            "matrix_released": true,
+            "total_reference_setup_solve_seconds": 3.073694549035281
+          }
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T021625611145Z/native.npz",
+          "sha256": "639cebc3a5d093405226dd8deea4e632c81530b8dd60b1d1d3e72397180b54b9",
+          "bytes": 13774212
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T021625611145Z/condensed_csr_recovery.npz",
+          "sha256": "fee68ed0bfa8be957d8593dd72bdf43eee7e0edd619b27ea02ecf4da1248b62c",
+          "bytes": 74073662
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T021625611145Z/identity.json",
+          "sha256": "361ec2d437d97ae614fed7b7d4f4b4b79593325c43bf4fc955f4250ba9929fd7",
+          "bytes": 662270
+        }
+      ],
+      "failure": {
+        "reason": "REFERENCE_PORT_RECOVERY_FAILED",
+        "kind": "RuntimeError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/fixed_phase_campaign.py\", line 348, in worker\n    result, files = reference(design, m[\"role\"], artifact, marker, budget)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reference.py\", line 98, in reference\n    c, direct = exact_solve(\n                ^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_reference.py\", line 233, in exact_solve\n    raise RuntimeError(\"REFERENCE_PORT_RECOVERY_FAILED\")\nRuntimeError: REFERENCE_PORT_RECOVERY_FAILED\n",
+        "wall_seconds": 108.52347105403896,
+        "source_sha": "6cd669d376008e2a12542764c4bde95b383e6166"
+      }
+    },
+    {
+      "run": "task42extra_v20_o3_20261004T022559061402Z",
+      "stage": "v20_o3",
+      "role": "O3",
+      "group": "B",
+      "attempt": 2,
+      "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "input_sha256": "609b86feafd4b75e1448f90028ef971951330c5d3fee392d62509145ca2a3b99",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 1,
+      "formal_classification": "WORKER_FAILED",
+      "full_launch_monotonic_seconds": 154.9792955960147,
+      "sampled_tree_rss_peak_bytes": 945733632,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T022559061402Z/run_manifest.json",
+          "sha256": "6b7d5727ab9bf3aa6398678ac093de2088152322cbc9926d5a2f4126535291a5",
+          "bytes": 2299
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T022559061402Z/run_summary.json",
+          "sha256": "515f2f3efc69d5a70618ad5beb0fe0fdeb93ac74bad1db7933b41335e9c6af7c",
+          "bytes": 2721
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T022559061402Z/events.jsonl",
+          "sha256": "5fb524aa7ab3e6846f4fe68e2e20ffd2ae545cd96bbc5ece1f165695d21e939f",
+          "bytes": 651965
+        },
+        "failure": {
+          "path": "results/task42extra/task42extra_v20_o3_20261004T022559061402Z/worker_failure.json",
+          "sha256": "7bedc62f804a671d48afc017bd3d6b23f8d5a5e548ec4b9109e69a3e6bbfdcd7",
+          "bytes": 852
+        }
+      },
+      "phases": [
+        {
+          "phase": "initial_derived_capacity",
+          "worker_elapsed_seconds": 0.08158604009076953,
+          "values": {
+            "kind": "derived conservative assembly/conversion overlap; not RSS",
+            "degree": 3,
+            "local_dimension": 144,
+            "local_interior": 36,
+            "local_trace": 108,
+            "raw_all_cell_tensor_bytes": 111476736,
+            "triplets": 3919104,
+            "cache_classes_assumed": 48,
+            "local_cache_upper_bytes": 28864512,
+            "allocation_upper_bytes": 1416134656,
+            "factor_planning_cap_bytes": 12884901888,
+            "full_FE_recovered": true
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 2.438601260073483,
+          "values": {
+            "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+            "channels": 340,
+            "degree": 3,
+            "field_space": "ordinary_Floquet_N1curl",
+            "mesh_coordinates_sha256": "fc0e45ddfccbdb70e8e1e385487ad5a5b1955d7d98e07ca5c9e03e29663af9e6",
+            "geometry_cell_dofs_sha256": "77c7588e21fdecafaaf51f61e423146f064534a7dd7b31bf8d8c3d659b51a1a3",
+            "cell_tags_sha256": "366eac10b7fc15a4033400486912a4044a29b9a59096afe00c00aef9dc23018e",
+            "centers_sha256": "f998e7036cc8f318e1b4cb42fdbfef2ed27177486554b38b87fcb616272c3c0b",
+            "cells": 336,
+            "actual_notch_cells": 8,
+            "nonseparable_y_z_witness": true,
+            "native_rows": 30240,
+            "slaves": 2592,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+            "discretization_sha256": "1a541cd6e3627abcff86e650abd247fe4c3619934174adf281e8bf6be9c52b7f"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 25.32151523209177,
+          "values": {
+            "full_independent_rows": 27648,
+            "interior_rows": 12096,
+            "local_tensor_classes": 12,
+            "local_tensor_payload_bytes": 3981312,
+            "packet_payload_bytes": 13768872,
+            "export_seconds": 22.867736382060684,
+            "affine_background_native_relative": 2.2466409103980388e-13
+          }
+        },
+        {
+          "phase": "independent_physical_volume",
+          "worker_elapsed_seconds": 29.941726466058753,
+          "values": {
+            "relative": [
+              1.560867670489473e-15,
+              1.6199738275106284e-15,
+              1.5897217254478762e-15
+            ],
+            "passed": true,
+            "scope": {
+              "q": 15,
+              "classes": 12,
+              "physical_product_derivative": true,
+              "producer_F_read": false,
+              "shared": "Basix, geometry, orientation API, MPC input"
+            }
+          }
+        },
+        {
+          "phase": "reference_pre_assembly_capacity",
+          "worker_elapsed_seconds": 87.85683144500945,
+          "values": {
+            "kind": "derived reference assembly/conversion reserve, not RSS",
+            "rows": 15892,
+            "upper_triplets": 4112260,
+            "allocation_upper_bytes": 1394486272,
+            "own_rss_bytes": 415932416,
+            "planning_cap_bytes": 12884901888
+          }
+        },
+        {
+          "phase": "exact_condensed_CSR",
+          "worker_elapsed_seconds": 88.43891814898234,
+          "values": {
+            "rows": 15892,
+            "nnz": 3554116,
+            "complete_recovered_FE": 27648,
+            "action_pairs": [
+              {
+                "reduced": 4.439538522932152e-16,
+                "interior": 1.6625531325517171e-15
+              },
+              {
+                "reduced": 4.382687648368371e-16,
+                "interior": 1.6502539446016042e-15
+              },
+              {
+                "reduced": 4.475159579652367e-16,
+                "interior": 1.6713552829125305e-15
+              }
+            ],
+            "seconds": 0.5818877579877153
+          }
+        },
+        {
+          "phase": "exact_boundary_port_coordinates",
+          "worker_elapsed_seconds": 88.67645009106491,
+          "values": {
+            "beta_definition": "beta=physical_boundary_phase*alpha_origin",
+            "original_equations_unchanged": true,
+            "field_coefficients_unchanged": true,
+            "row_scale": "phase/H",
+            "column_scale": "1/phase",
+            "phase_magnitude_min": 1.9056646052565524e-84,
+            "phase_magnitude_max": 1.0000000000000002,
+            "pairs": [
+              1.2120282738430013e-17,
+              1.0593769713477508e-17,
+              1.0214463088046499e-17
+            ],
+            "port_diagonal_max_difference": 2.3252617392099354e-16,
+            "not_PC": true,
+            "not_shift": true
+          }
+        },
+        {
+          "phase": "reference_PETSc_conversion_begin",
+          "worker_elapsed_seconds": 88.89952931809239,
+          "values": {}
+        },
+        {
+          "phase": "reference_PETSc_conversion_end",
+          "worker_elapsed_seconds": 89.02470738708507,
+          "values": {}
+        },
+        {
+          "phase": "reference_symbolic_begin",
+          "worker_elapsed_seconds": 89.07795398903545,
+          "values": {}
+        },
+        {
+          "phase": "reference_symbolic_capacity",
+          "worker_elapsed_seconds": 89.36653499107342,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4112260,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 415932416,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3554116,
+            "independent_augmented_action_relative": 1.6713552829125305e-15,
+            "csr_payload_bytes": 71145892,
+            "CSR_hashes": {
+              "indptr": "f7223cc5f6466c9373539a7cb8e47111205e0952b5dd9fd68ef45dcad4d56a99",
+              "indices": "3f4cc80cfc9e9f17e5e904388a9479be765cc47372842fc9a5fe15f4233cbfea",
+              "data": "49fe695602315f0f0dafd81978a22bb883d084ccc8a92b7efd296440979cdc01"
+            },
+            "assembly_and_pair_seconds": 1.2136672830674797,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 0,
+                "19": 0,
+                "20": 17828660,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 14.868714,
+                "18": 14.866409,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.28843127202708274,
+            "estimated_factor_bytes": 426000000,
+            "conversion_and_workspace_reserve_bytes": 384201344,
+            "rss_after_symbolic_bytes": 531173376
+          }
+        },
+        {
+          "phase": "reference_numeric_begin",
+          "worker_elapsed_seconds": 89.366800563992,
+          "values": {}
+        },
+        {
+          "phase": "reference_numeric",
+          "worker_elapsed_seconds": 91.02220983197913,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4112260,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 415932416,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3554116,
+            "independent_augmented_action_relative": 1.6713552829125305e-15,
+            "csr_payload_bytes": 71145892,
+            "CSR_hashes": {
+              "indptr": "f7223cc5f6466c9373539a7cb8e47111205e0952b5dd9fd68ef45dcad4d56a99",
+              "indices": "3f4cc80cfc9e9f17e5e904388a9479be765cc47372842fc9a5fe15f4233cbfea",
+              "data": "49fe695602315f0f0dafd81978a22bb883d084ccc8a92b7efd296440979cdc01"
+            },
+            "assembly_and_pair_seconds": 1.2136672830674797,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 0,
+                "19": 0,
+                "20": 17828660,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 14.868714,
+                "18": 14.866409,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.28843127202708274,
+            "estimated_factor_bytes": 426000000,
+            "conversion_and_workspace_reserve_bytes": 384201344,
+            "rss_after_symbolic_bytes": 531173376,
+            "numeric_memory_limit_decimal_MB": 11969,
+            "symbolic_estimate_source": "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html",
+            "numeric_seconds": 1.6552878089714795,
+            "numeric_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 17828660,
+                "10": 160350,
+                "11": 1260,
+                "12": 84,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 6197,
+                "19": 6197,
+                "20": 17828660,
+                "21": 366,
+                "22": 366,
+                "29": 17828660
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 26294949.0,
+                "3": 11892329972.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 301.025846,
+                "18": 6140.324377,
+                "19": 0.0006336433659052802,
+                "20": 0.0006336433659052802
+              }
+            }
+          }
+        },
+        {
+          "phase": "reference_solve_begin",
+          "worker_elapsed_seconds": 91.02271543000825,
+          "values": {}
+        },
+        {
+          "phase": "reference_release_before_postprocessing",
+          "worker_elapsed_seconds": 91.17965385399293,
+          "values": {
+            "role": "independent reference ONLY",
+            "global_Maxwell_factor": true,
+            "training_fallback": false,
+            "preassembly": {
+              "kind": "derived reference assembly/conversion reserve, not RSS",
+              "rows": 15892,
+              "upper_triplets": 4112260,
+              "allocation_upper_bytes": 1394486272,
+              "own_rss_bytes": 415932416,
+              "planning_cap_bytes": 12884901888
+            },
+            "rows": 15892,
+            "nnz": 3554116,
+            "independent_augmented_action_relative": 1.6713552829125305e-15,
+            "csr_payload_bytes": 71145892,
+            "CSR_hashes": {
+              "indptr": "f7223cc5f6466c9373539a7cb8e47111205e0952b5dd9fd68ef45dcad4d56a99",
+              "indices": "3f4cc80cfc9e9f17e5e904388a9479be765cc47372842fc9a5fe15f4233cbfea",
+              "data": "49fe695602315f0f0dafd81978a22bb883d084ccc8a92b7efd296440979cdc01"
+            },
+            "assembly_and_pair_seconds": 1.2136672830674797,
+            "symbolic_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 0,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 0,
+                "19": 0,
+                "20": 17828660,
+                "21": 0,
+                "22": 0,
+                "29": 0
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 0.0,
+                "3": 0.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 14.868714,
+                "18": 14.866409,
+                "19": 0.0,
+                "20": 0.0
+              }
+            },
+            "symbolic_memory_settings": {
+              "icntl": {
+                "7": 7,
+                "10": 0,
+                "14": 20,
+                "18": 0,
+                "22": 0,
+                "23": 0
+              },
+              "modified": false
+            },
+            "symbolic_estimate_meaning": "MUMPS INFOG(16)/(17): estimated factorization working memory maximum/sum over processes in decimal MB; MPI1; INFOG(17) plus independent conversion/workspace reserve",
+            "reference_role": "REFERENCE_ONLY",
+            "symbolic_seconds": 0.28843127202708274,
+            "estimated_factor_bytes": 426000000,
+            "conversion_and_workspace_reserve_bytes": 384201344,
+            "rss_after_symbolic_bytes": 531173376,
+            "numeric_memory_limit_decimal_MB": 11969,
+            "symbolic_estimate_source": "https://www.mcs.anl.gov/petsc/petsc-3.10/src/mat/impls/aij/mpi/mumps/mumps.c.html",
+            "numeric_seconds": 1.6552878089714795,
+            "numeric_info": {
+              "infog": {
+                "1": 0,
+                "2": 0,
+                "3": 17828660,
+                "4": 160350,
+                "5": 1260,
+                "6": 242,
+                "7": 4,
+                "8": 100,
+                "9": 17828660,
+                "10": 160350,
+                "11": 1260,
+                "12": 84,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 425,
+                "17": 425,
+                "18": 6197,
+                "19": 6197,
+                "20": 17828660,
+                "21": 366,
+                "22": 366,
+                "29": 17828660
+              },
+              "rinfog": {
+                "1": 11892329972.0,
+                "2": 26294949.0,
+                "3": 11892329972.0,
+                "4": 0.0,
+                "5": 0.0,
+                "6": 0.0,
+                "7": 0.0,
+                "8": 0.0,
+                "9": 0.0,
+                "10": 0.0,
+                "11": 0.0,
+                "12": 0.0,
+                "13": 0.0,
+                "14": 0.0,
+                "15": 285.25856,
+                "16": 0.0,
+                "17": 301.025846,
+                "18": 6140.324377,
+                "19": 0.0006336433659052802,
+                "20": 0.0006336433659052802
+              }
+            },
+            "solve_seconds": 0.08974751201458275,
+            "original_augmented_relative": 2.746710479790695e-12,
+            "rss_with_numeric_factor_bytes": 839335936,
+            "exact_static_condensation": true,
+            "recovered_independent_complex_FE": 27648,
+            "condensed_rows": 15892,
+            "local_interior_factors": "exact reference-only; no training use",
+            "unqualified_recovery_saved_before_checks": true,
+            "original_port_recovery_relative": 0.0002415785461783923,
+            "rss_before_release_bytes": 839335936,
+            "rss_after_release_bytes": 313081856,
+            "factor_released": true,
+            "matrix_released": true,
+            "total_reference_setup_solve_seconds": 3.32298656005878
+          }
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/field_state.npz",
+          "sha256": "4e00c42335cd179529c88bcea2c8e4b8a5b27cf3bc415a4611fd9957c6dbac42",
+          "bytes": 1566408
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/native.npz",
+          "sha256": "639cebc3a5d093405226dd8deea4e632c81530b8dd60b1d1d3e72397180b54b9",
+          "bytes": 13774212
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/condensed_csr_recovery.npz",
+          "sha256": "fee68ed0bfa8be957d8593dd72bdf43eee7e0edd619b27ea02ecf4da1248b62c",
+          "bytes": 74073662
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/identity.json",
+          "sha256": "b5494717a0392302d4b1bcbe0e5f7375402e96d59fb859343375c09b7cb352c1",
+          "bytes": 662271
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/boundary_coordinate_csr.npz",
+          "sha256": "dbc396f86996fb52847c880c7125d744875890c603f6928910ab567bc1d7fbe5",
+          "bytes": 71919092
+        }
+      ],
+      "failure": {
+        "reason": "REFERENCE_PORT_RECOVERY_FAILED",
+        "kind": "RuntimeError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/fixed_phase_campaign.py\", line 380, in worker\n    result, files = reference(design, m[\"role\"], artifact, marker, budget)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reference.py\", line 107, in reference\n    c, direct = exact_solve(\n                ^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_reference.py\", line 238, in exact_solve\n    raise RuntimeError(\"REFERENCE_PORT_RECOVERY_FAILED\")\nRuntimeError: REFERENCE_PORT_RECOVERY_FAILED\n",
+        "wall_seconds": 91.183002306032,
+        "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2"
+      }
+    },
+    {
+      "run": "task42extra_v20_o6_20261004T023256068972Z",
+      "stage": "v20_o6",
+      "role": "O6",
+      "group": "B",
+      "attempt": 1,
+      "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "input_sha256": "71f811b768fa3cd593ca524e57e2c25f139da12b49087b7a0bf9d974c1b4d0e0",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 1,
+      "formal_classification": "WORKER_FAILED",
+      "full_launch_monotonic_seconds": 1752.7133576469496,
+      "sampled_tree_rss_peak_bytes": 4929130496,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_o6_20261004T023256068972Z/run_manifest.json",
+          "sha256": "ce3ef782630e38eedd3cc7f877cf68b7254664809e3c58a106cc4f6fa51f2cbc",
+          "bytes": 2943
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_o6_20261004T023256068972Z/run_summary.json",
+          "sha256": "8a94807eda8bf882124bdaef57cf3f59567f6111da717c902defa0968f9baee2",
+          "bytes": 3010
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_o6_20261004T023256068972Z/events.jsonl",
+          "sha256": "3123acd6168c399b2e628ce7fb01b673bbee2315794eddb847306175bae84c6e",
+          "bytes": 642054
+        },
+        "failure": {
+          "path": "results/task42extra/task42extra_v20_o6_20261004T023256068972Z/worker_failure.json",
+          "sha256": "ddd97bcf701dc345c0578e60359c4b23974c246c83024d4d4ef6a01cc4975139",
+          "bytes": 901
+        }
+      },
+      "phases": [
+        {
+          "phase": "initial_derived_capacity",
+          "worker_elapsed_seconds": 0.06048870203085244,
+          "values": {
+            "kind": "derived conservative assembly/conversion overlap; not RSS",
+            "degree": 6,
+            "local_dimension": 882,
+            "local_interior": 450,
+            "local_trace": 432,
+            "raw_all_cell_tensor_bytes": 6970199040,
+            "triplets": 104509440,
+            "cache_classes_assumed": 48,
+            "local_cache_upper_bytes": 1045592064,
+            "allocation_upper_bytes": 10480089088,
+            "factor_planning_cap_bytes": 12884901888,
+            "full_FE_recovered": true
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 53.68568182096351,
+          "values": {
+            "mode_manifest_sha256": "a1fd12a0b414b5cc79670d14dd255e88e07d1899066cae6a6b057c8284bfdab3",
+            "channels": 340,
+            "degree": 6,
+            "field_space": "ordinary_Floquet_N1curl",
+            "mesh_coordinates_sha256": "5844641014fa31c5c063d61004eaf036ee45fd2d5e682ce09f64c5838c017a59",
+            "geometry_cell_dofs_sha256": "741f733f36757e84fff67dbda8396a21afcaa9a1064ca76cc202960450e28075",
+            "cell_tags_sha256": "9c7670eba7ed4e62447eff3512a9a4a0b7b61680379a7465aab5b71bf5019993",
+            "centers_sha256": "4f87466305dbccd969f396cb283954b0e46577060c24dc0c21a33b58bd235cf6",
+            "cells": 560,
+            "actual_notch_cells": 16,
+            "nonseparable_y_z_witness": true,
+            "native_rows": 380040,
+            "slaves": 14280,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "6190ebe1f3951d8e7858648df20379b820a00234f34cbbe8e678176148772b11",
+            "discretization_sha256": "e0b54197dc654688b35653c11d8bfea8cb88eced27064c4787b98451ad3da073"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 880.758473171969,
+          "values": {
+            "full_independent_rows": 365760,
+            "interior_rows": 252000,
+            "local_tensor_classes": 12,
+            "local_tensor_payload_bytes": 149361408,
+            "packet_payload_bytes": 231550696,
+            "export_seconds": 827.0575596999843,
+            "affine_background_native_relative": 7.816208311044103e-11
+          }
+        },
+        {
+          "phase": "independent_physical_volume",
+          "worker_elapsed_seconds": 991.7728639849229,
+          "values": {
+            "relative": [
+              1.9702757606803666e-15,
+              1.9679354127773507e-15,
+              1.943578787582366e-15
+            ],
+            "passed": true,
+            "scope": {
+              "q": 15,
+              "classes": 12,
+              "physical_product_derivative": true,
+              "producer_F_read": false,
+              "shared": "Basix, geometry, orientation API, MPC input"
+            }
+          }
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/native.npz",
+          "sha256": "dcbb858703562ee91c0cd318f7032400522eb1daa61d829dfba02b76338ccba1",
+          "bytes": 231556036
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/identity.json",
+          "sha256": "11772b2fc31c815b1faea78411a4bf3dc428f1d652d0d0713a69b5031dc7a509",
+          "bytes": 662278
+        }
+      ],
+      "failure": {
+        "reason": "CONDENSATION_PORT_HAS_INTERIOR_SUPPORT",
+        "kind": "ValueError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/fenics/Projects/NN-Lab-V2/src/runners/fixed_phase_campaign.py\", line 380, in worker\n    result, files = reference(design, m[\"role\"], artifact, marker, budget)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reference.py\", line 73, in reference\n    reduced = ExactInteriorCondensation(\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_exact_condensation.py\", line 32, in __init__\n    raise ValueError(\"CONDENSATION_PORT_HAS_INTERIOR_SUPPORT\")\nValueError: CONDENSATION_PORT_HAS_INTERIOR_SUPPORT\n",
+        "wall_seconds": 1688.6255326159298,
+        "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2"
+      }
+    },
+    {
+      "run": "task42extra_v20_phase_qualification_20261004T020747732671Z",
+      "stage": "v20_phase_qualification",
+      "role": null,
+      "group": "A",
+      "attempt": 1,
+      "source_sha": "3ba7d13b048408ed64b8fa48e9819cab1138415b",
+      "input_sha256": "8ac921d822fbeb6b3e6e694080ed160a4565f2cae2c5ba8a06fe43af58d37864",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 12,
+      "formal_classification": "COMPLETED",
+      "full_launch_monotonic_seconds": 139.59743234305643,
+      "sampled_tree_rss_peak_bytes": 651595776,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/run_manifest.json",
+          "sha256": "0a0ad55f689ad16a08baaf14db46100f9480a40624ed3a8fdea97d46cc5510e6",
+          "bytes": 1619
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/run_summary.json",
+          "sha256": "95906653d5eb2147009470b775ee9a0990ee4b6768f9fd2421d5a2c57abc90c5",
+          "bytes": 2835
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/events.jsonl",
+          "sha256": "d3764a3daba997f1a7fc4ac1cf4c1cdf480de9a7ca40ae59d5f447537a35aa23",
+          "bytes": 207193
+        }
+      },
+      "phases": [
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 0.9879107240121812,
+          "values": {
+            "mode_manifest_sha256": "1cb8bcfe4fa479ee4ee0367c6b96b20af4c8062807e18ade96b44473b8f4acd9",
+            "channels": 36,
+            "degree": 3,
+            "field_space": "ordinary_Floquet_N1curl",
+            "mesh_coordinates_sha256": "4073dca24b916a8bf75ee5d0a38aebb4a5d62537394767fde7dc0bf105b53ce7",
+            "geometry_cell_dofs_sha256": "8206397498b6ca4539dd825dc1106ae8fd53ae92b2a6113bb31728ff24099448",
+            "cell_tags_sha256": "1645dafaadd8b1075dbb65a6a961a05d28e40d93da92293ce602dca244e85d6b",
+            "centers_sha256": "7f7a4600aaf6e2440260e93a7bd8458923e8fb4c8077f0eddc6cf9b75624df1c",
+            "cells": 8,
+            "actual_notch_cells": 0,
+            "nonseparable_y_z_witness": false,
+            "native_rows": 882,
+            "slaves": 162,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "b5a2f785b08145a961891a628fcb4034beb64fc0596831244248a06c930a5768",
+            "discretization_sha256": "a75b5b860535c251443540884817a456d3aced68c943f35363c70b2fa354cc24"
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 1.1573016929905862,
+          "values": {
+            "mode_manifest_sha256": "1cb8bcfe4fa479ee4ee0367c6b96b20af4c8062807e18ade96b44473b8f4acd9",
+            "channels": 36,
+            "degree": 3,
+            "field_space": "g*periodic_N1curl",
+            "mesh_coordinates_sha256": "4073dca24b916a8bf75ee5d0a38aebb4a5d62537394767fde7dc0bf105b53ce7",
+            "geometry_cell_dofs_sha256": "8206397498b6ca4539dd825dc1106ae8fd53ae92b2a6113bb31728ff24099448",
+            "cell_tags_sha256": "1645dafaadd8b1075dbb65a6a961a05d28e40d93da92293ce602dca244e85d6b",
+            "centers_sha256": "7f7a4600aaf6e2440260e93a7bd8458923e8fb4c8077f0eddc6cf9b75624df1c",
+            "cells": 8,
+            "actual_notch_cells": 0,
+            "nonseparable_y_z_witness": false,
+            "native_rows": 882,
+            "slaves": 162,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "b5a2f785b08145a961891a628fcb4034beb64fc0596831244248a06c930a5768",
+            "discretization_sha256": "a75b5b860535c251443540884817a456d3aced68c943f35363c70b2fa354cc24"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 20.451263422030024,
+          "values": {
+            "full_independent_rows": 720,
+            "interior_rows": 288,
+            "local_tensor_classes": 5,
+            "local_tensor_payload_bytes": 1658880,
+            "packet_payload_bytes": 1916280,
+            "export_seconds": 19.28782189101912,
+            "affine_background_native_relative": 6.307647339060543e-12
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 30.891956008970737,
+          "values": {
+            "full_independent_rows": 720,
+            "interior_rows": 288,
+            "local_tensor_classes": 5,
+            "local_tensor_payload_bytes": 1658880,
+            "packet_payload_bytes": 1916280,
+            "export_seconds": 10.438660133979283,
+            "affine_background_native_relative": 6.307647339060543e-12
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 31.053184936987236,
+          "values": {
+            "mode_manifest_sha256": "1cb8bcfe4fa479ee4ee0367c6b96b20af4c8062807e18ade96b44473b8f4acd9",
+            "channels": 36,
+            "degree": 3,
+            "field_space": "g*periodic_N1curl",
+            "mesh_coordinates_sha256": "4073dca24b916a8bf75ee5d0a38aebb4a5d62537394767fde7dc0bf105b53ce7",
+            "geometry_cell_dofs_sha256": "8206397498b6ca4539dd825dc1106ae8fd53ae92b2a6113bb31728ff24099448",
+            "cell_tags_sha256": "1645dafaadd8b1075dbb65a6a961a05d28e40d93da92293ce602dca244e85d6b",
+            "centers_sha256": "7f7a4600aaf6e2440260e93a7bd8458923e8fb4c8077f0eddc6cf9b75624df1c",
+            "cells": 8,
+            "actual_notch_cells": 0,
+            "nonseparable_y_z_witness": false,
+            "native_rows": 882,
+            "slaves": 162,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "b5a2f785b08145a961891a628fcb4034beb64fc0596831244248a06c930a5768",
+            "discretization_sha256": "8296c3b336ffb77d03a738e2368687cb65a0c13d723a3d025d7d23dd3f92abb8"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 41.341758940019645,
+          "values": {
+            "full_independent_rows": 720,
+            "interior_rows": 288,
+            "local_tensor_classes": 5,
+            "local_tensor_payload_bytes": 1658880,
+            "packet_payload_bytes": 1877368,
+            "export_seconds": 10.287477697944269,
+            "affine_background_native_relative": 5.156066315100309e-12
+          }
+        },
+        {
+          "phase": "frozen",
+          "worker_elapsed_seconds": 75.47294259804767,
+          "values": {
+            "stage_qualified": false
+          },
+          "full_result_location": "immutable index in this record"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/result.json",
+          "sha256": "e772942988a011dbbf8b6b312d0bc974d8182f131252b20f182652072fef97e9",
+          "bytes": 91595
+        }
+      ]
+    },
+    {
+      "run": "task42extra_v20_phase_qualification_20261004T021334646405Z",
+      "stage": "v20_phase_qualification",
+      "role": null,
+      "group": "A",
+      "attempt": 2,
+      "source_sha": "6cd669d376008e2a12542764c4bde95b383e6166",
+      "input_sha256": "8ac921d822fbeb6b3e6e694080ed160a4565f2cae2c5ba8a06fe43af58d37864",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 12,
+      "formal_classification": "COMPLETED",
+      "full_launch_monotonic_seconds": 129.7912851559231,
+      "sampled_tree_rss_peak_bytes": 642084864,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/run_manifest.json",
+          "sha256": "c7b26c318f51c3d4570f1d72e336fde440305d7bad3ac3324e8f2594060341a1",
+          "bytes": 1887
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/run_summary.json",
+          "sha256": "95cba61f99f239b2591a5cedc3fad89d93c3c72e2a72e8ff116f34102c7dc0ce",
+          "bytes": 2768
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/events.jsonl",
+          "sha256": "b16cee2d65fff401d7b241a1aa69cda96673bc3f74b8dd0f7eb016ef801b019a",
+          "bytes": 207193
+        }
+      },
+      "phases": [
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 0.9812378790229559,
+          "values": {
+            "mode_manifest_sha256": "1cb8bcfe4fa479ee4ee0367c6b96b20af4c8062807e18ade96b44473b8f4acd9",
+            "channels": 36,
+            "degree": 3,
+            "field_space": "ordinary_Floquet_N1curl",
+            "mesh_coordinates_sha256": "4073dca24b916a8bf75ee5d0a38aebb4a5d62537394767fde7dc0bf105b53ce7",
+            "geometry_cell_dofs_sha256": "8206397498b6ca4539dd825dc1106ae8fd53ae92b2a6113bb31728ff24099448",
+            "cell_tags_sha256": "1645dafaadd8b1075dbb65a6a961a05d28e40d93da92293ce602dca244e85d6b",
+            "centers_sha256": "7f7a4600aaf6e2440260e93a7bd8458923e8fb4c8077f0eddc6cf9b75624df1c",
+            "cells": 8,
+            "actual_notch_cells": 0,
+            "nonseparable_y_z_witness": false,
+            "native_rows": 882,
+            "slaves": 162,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "b5a2f785b08145a961891a628fcb4034beb64fc0596831244248a06c930a5768",
+            "discretization_sha256": "a75b5b860535c251443540884817a456d3aced68c943f35363c70b2fa354cc24"
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 1.0826882990077138,
+          "values": {
+            "mode_manifest_sha256": "1cb8bcfe4fa479ee4ee0367c6b96b20af4c8062807e18ade96b44473b8f4acd9",
+            "channels": 36,
+            "degree": 3,
+            "field_space": "g*periodic_N1curl",
+            "mesh_coordinates_sha256": "4073dca24b916a8bf75ee5d0a38aebb4a5d62537394767fde7dc0bf105b53ce7",
+            "geometry_cell_dofs_sha256": "8206397498b6ca4539dd825dc1106ae8fd53ae92b2a6113bb31728ff24099448",
+            "cell_tags_sha256": "1645dafaadd8b1075dbb65a6a961a05d28e40d93da92293ce602dca244e85d6b",
+            "centers_sha256": "7f7a4600aaf6e2440260e93a7bd8458923e8fb4c8077f0eddc6cf9b75624df1c",
+            "cells": 8,
+            "actual_notch_cells": 0,
+            "nonseparable_y_z_witness": false,
+            "native_rows": 882,
+            "slaves": 162,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "b5a2f785b08145a961891a628fcb4034beb64fc0596831244248a06c930a5768",
+            "discretization_sha256": "a75b5b860535c251443540884817a456d3aced68c943f35363c70b2fa354cc24"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 11.374052328057587,
+          "values": {
+            "full_independent_rows": 720,
+            "interior_rows": 288,
+            "local_tensor_classes": 5,
+            "local_tensor_payload_bytes": 1658880,
+            "packet_payload_bytes": 1916280,
+            "export_seconds": 10.279537951922975,
+            "affine_background_native_relative": 6.307647339060543e-12
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 21.603379426989704,
+          "values": {
+            "full_independent_rows": 720,
+            "interior_rows": 288,
+            "local_tensor_classes": 5,
+            "local_tensor_payload_bytes": 1658880,
+            "packet_payload_bytes": 1916280,
+            "export_seconds": 10.227885785046965,
+            "affine_background_native_relative": 6.307647339060543e-12
+          }
+        },
+        {
+          "phase": "physical_model",
+          "worker_elapsed_seconds": 21.75281052396167,
+          "values": {
+            "mode_manifest_sha256": "1cb8bcfe4fa479ee4ee0367c6b96b20af4c8062807e18ade96b44473b8f4acd9",
+            "channels": 36,
+            "degree": 3,
+            "field_space": "g*periodic_N1curl",
+            "mesh_coordinates_sha256": "4073dca24b916a8bf75ee5d0a38aebb4a5d62537394767fde7dc0bf105b53ce7",
+            "geometry_cell_dofs_sha256": "8206397498b6ca4539dd825dc1106ae8fd53ae92b2a6113bb31728ff24099448",
+            "cell_tags_sha256": "1645dafaadd8b1075dbb65a6a961a05d28e40d93da92293ce602dca244e85d6b",
+            "centers_sha256": "7f7a4600aaf6e2440260e93a7bd8458923e8fb4c8077f0eddc6cf9b75624df1c",
+            "cells": 8,
+            "actual_notch_cells": 0,
+            "nonseparable_y_z_witness": false,
+            "native_rows": 882,
+            "slaves": 162,
+            "volume_quadrature_degree": 15,
+            "dtn_quadrature_degree": 15,
+            "physical_model_sha256": "b5a2f785b08145a961891a628fcb4034beb64fc0596831244248a06c930a5768",
+            "discretization_sha256": "8296c3b336ffb77d03a738e2368687cb65a0c13d723a3d025d7d23dd3f92abb8"
+          }
+        },
+        {
+          "phase": "full_native_export",
+          "worker_elapsed_seconds": 32.03907247597817,
+          "values": {
+            "full_independent_rows": 720,
+            "interior_rows": 288,
+            "local_tensor_classes": 5,
+            "local_tensor_payload_bytes": 1658880,
+            "packet_payload_bytes": 1877368,
+            "export_seconds": 10.285265905898996,
+            "affine_background_native_relative": 5.156066315100309e-12
+          }
+        },
+        {
+          "phase": "frozen",
+          "worker_elapsed_seconds": 66.21568670298439,
+          "values": {
+            "stage_qualified": true
+          },
+          "full_result_location": "immutable index in this record"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/result.json",
+          "sha256": "bb55918f1b90a86950990bb72790ce04e19f52c3a273d58b3f16ec51bc90c6af",
+          "bytes": 92319
+        }
+      ]
+    },
+    {
+      "run": "task42extra_v20_physical_compare_20261004T030757807555Z",
+      "stage": "v20_physical_compare",
+      "role": null,
+      "group": "C",
+      "attempt": 1,
+      "source_sha": "d9f1b50ee9b7be66d610fbbb78449bc9f6a3dc2f",
+      "input_sha256": "4db1b4d332d4cf965467c281c2513d84870059c33256ffaac42063ee0c1e4120",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 1,
+      "formal_classification": "COMPLETED",
+      "full_launch_monotonic_seconds": 1380.8116786580067,
+      "sampled_tree_rss_peak_bytes": 642138112,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/run_manifest.json",
+          "sha256": "1927cd981fe2a681557753117a8b15f8ed68b1a023243488b34d5c08d9dfc51f",
+          "bytes": 3006
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/run_summary.json",
+          "sha256": "7a0a722a4cded179e1f03eb0845f0dfe1516ef5ec9543eb84759cf696c7fd7c4",
+          "bytes": 2764
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/events.jsonl",
+          "sha256": "5c4aae9d2cde0ab42317be8768377ff6bb10f7b313d203d0256bca6a99ae984f",
+          "bytes": 13869
+        }
+      },
+      "phases": [
+        {
+          "phase": "physical_full_field_saved",
+          "worker_elapsed_seconds": 67.36784350301605,
+          "values": {
+            "port": {
+              "R_total": 0.9999742561941375,
+              "R00_total": 0.9999570513376865,
+              "R00_s": 0.9999570513376865,
+              "R00_p": 5.2679987029971355e-28,
+              "R00_by_polarization": {
+                "s": 0.9999570513376865,
+                "p": 5.2679987029971355e-28
+              },
+              "T_total": 1.6619579635827706e-05,
+              "R_plus_T": 0.9999908757737733,
+              "A_balance": 9.124226226682643e-06,
+              "R_total_dtn_port_modal": 0.9999742561941375,
+              "T_total_dtn_port_modal": 1.6619579635827706e-05,
+              "R_plus_T_dtn_port_modal": 0.9999908757737733,
+              "A_balance_dtn_port_modal": 9.124226226682643e-06,
+              "R_plus_T_plus_A_volume": null,
+              "R_plus_T_plus_A_volume_dtn_port_modal": null,
+              "energy_closure_error_dtn_port_modal_volume": null,
+              "power_source": "dtn_port_modal_amplitudes",
+              "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+              "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+              "dtn_port_top_reference_z": 6.7407407407407405,
+              "dtn_port_bottom_reference_z": -0.5185185185185185,
+              "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+              "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+              "incident_power_code_units": 0.029326746070880844,
+              "stage4_dtn_order_policy": "manual",
+              "stage4_dtn_assembly": "auxiliary",
+              "dtn_port_mode_count": 340,
+              "dtn_port_top_mode_count": 170,
+              "dtn_port_bottom_mode_count": 170,
+              "dtn_port_propagating_mode_count": 80,
+              "dtn_port_rayleigh_warning_count": 0,
+              "port_power_file": "port_power.json",
+              "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+              "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+              "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+              "port_power_csv": "port_power.csv",
+              "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+            },
+            "A_volume": 9.124226701676728e-06,
+            "absorption_regions": {
+              "air": 0.0,
+              "substrate": 8.315747587429559e-10,
+              "grating": 9.123395126917985e-06
+            },
+            "energy_closure": 4.74953409934642e-13,
+            "absorption_balance_gap": 4.749940844567691e-13,
+            "norms": [
+              0.2776750644287179,
+              0.28326953669065064,
+              5.854944212185265,
+              5.914141535098434
+            ],
+            "norm_order": [
+              "total_E",
+              "total_scaled_curl",
+              "scattered_E",
+              "scattered_scaled_curl"
+            ],
+            "physical_H_definition": "curl(E)/(i*k0*mu_r); code units",
+            "integration_degree": 15,
+            "full_complex_channel_families": 4,
+            "channels": 340,
+            "postprocess_seconds": 5.653484601993114,
+            "physical_gate_passed": true
+          }
+        },
+        {
+          "phase": "saved_negative_physical_diagnostic_frozen",
+          "worker_elapsed_seconds": 67.77571446599904,
+          "values": {
+            "role": "O3",
+            "full_equation": {
+              "native_relative": 9.926705954967039e-12,
+              "augmented_relative": 9.897417145997699e-12,
+              "original_total_augmented_relative": 1.2652726716336513e-10,
+              "independent_physical_weak": 1.2652767180650845e-10,
+              "recovery": 0.0002415785461783923,
+              "channels": 340,
+              "full_FE_recovered": true
+            },
+            "preserved_failure": "REFERENCE_PORT_RECOVERY_FAILED",
+            "field_sha256": "4e00c42335cd179529c88bcea2c8e4b8a5b27cf3bc415a4611fd9957c6dbac42",
+            "A_counts": {
+              "A": 0,
+              "AH": 0,
+              "audit": 1,
+              "port_solve": 4
+            }
+          }
+        },
+        {
+          "phase": "physical_full_field_saved",
+          "worker_elapsed_seconds": 134.65932555601466,
+          "values": {
+            "port": {
+              "R_total": 0.0761265836364785,
+              "R00_total": 0.07612595981019281,
+              "R00_s": 0.07612595981019281,
+              "R00_p": 1.7420320844414824e-26,
+              "R00_by_polarization": {
+                "s": 0.07612595981019281,
+                "p": 1.7420320844414824e-26
+              },
+              "T_total": 0.9057668087268693,
+              "R_plus_T": 0.9818933923633478,
+              "A_balance": 0.018106607636652172,
+              "R_total_dtn_port_modal": 0.0761265836364785,
+              "T_total_dtn_port_modal": 0.9057668087268693,
+              "R_plus_T_dtn_port_modal": 0.9818933923633478,
+              "A_balance_dtn_port_modal": 0.018106607636652172,
+              "R_plus_T_plus_A_volume": null,
+              "R_plus_T_plus_A_volume_dtn_port_modal": null,
+              "energy_closure_error_dtn_port_modal_volume": null,
+              "power_source": "dtn_port_modal_amplitudes",
+              "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+              "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+              "dtn_port_top_reference_z": 6.7407407407407405,
+              "dtn_port_bottom_reference_z": -0.5185185185185185,
+              "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+              "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+              "incident_power_code_units": 0.029326746070880844,
+              "stage4_dtn_order_policy": "manual",
+              "stage4_dtn_assembly": "auxiliary",
+              "dtn_port_mode_count": 340,
+              "dtn_port_top_mode_count": 170,
+              "dtn_port_bottom_mode_count": 170,
+              "dtn_port_propagating_mode_count": 80,
+              "dtn_port_rayleigh_warning_count": 0,
+              "port_power_file": "port_power.json",
+              "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+              "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+              "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+              "port_power_csv": "port_power.csv",
+              "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+            },
+            "A_volume": 0.018106607640842695,
+            "absorption_regions": {
+              "air": 0.0,
+              "substrate": 0.004213282096068876,
+              "grating": 0.013893325544773818
+            },
+            "energy_closure": 4.190425784145191e-12,
+            "absorption_balance_gap": 4.1905229286598455e-12,
+            "norms": [
+              6.242118729661892,
+              6.241551233371393,
+              0.896340904866721,
+              0.8962472274187462
+            ],
+            "norm_order": [
+              "total_E",
+              "total_scaled_curl",
+              "scattered_E",
+              "scattered_scaled_curl"
+            ],
+            "physical_H_definition": "curl(E)/(i*k0*mu_r); code units",
+            "integration_degree": 15,
+            "full_complex_channel_families": 4,
+            "channels": 340,
+            "postprocess_seconds": 5.67265627393499,
+            "physical_gate_passed": true
+          }
+        },
+        {
+          "phase": "saved_negative_physical_diagnostic_frozen",
+          "worker_elapsed_seconds": 135.03266851301305,
+          "values": {
+            "role": "E3",
+            "full_equation": {
+              "native_relative": 8.535705572443456e-11,
+              "augmented_relative": 8.446070536934496e-11,
+              "original_total_augmented_relative": 6.817443488574088e-12,
+              "independent_physical_weak": 6.107349764857411e-12,
+              "recovery": 0.001556235707641714,
+              "channels": 340,
+              "full_FE_recovered": true
+            },
+            "preserved_failure": "REFERENCE_PORT_RECOVERY_FAILED",
+            "field_sha256": "d95fb546834f09ea2d05209010b8c93a7d2066f9c947958e7b7af8512e82f1cf",
+            "A_counts": {
+              "A": 0,
+              "AH": 0,
+              "audit": 1,
+              "port_solve": 4
+            }
+          }
+        },
+        {
+          "phase": "negative_role_not_retained",
+          "worker_elapsed_seconds": 135.1092750299722,
+          "values": {
+            "role": "E4",
+            "status": "NOT_RETAINED_OR_NOT_RUN"
+          }
+        },
+        {
+          "phase": "negative_role_not_retained",
+          "worker_elapsed_seconds": 135.1099888989702,
+          "values": {
+            "role": "O6",
+            "status": "NOT_RETAINED_OR_NOT_RUN"
+          }
+        },
+        {
+          "phase": "common_subcell_q15_complete",
+          "worker_elapsed_seconds": 230.78653983701952,
+          "values": {
+            "subcells": 2112
+          }
+        },
+        {
+          "phase": "common_subcell_q30_complete",
+          "worker_elapsed_seconds": 1316.3793197610648,
+          "values": {
+            "subcells": 2112
+          }
+        },
+        {
+          "phase": "frozen",
+          "worker_elapsed_seconds": 1317.1096699080663,
+          "values": {
+            "stage_qualified": true
+          },
+          "full_result_location": "immutable index in this record"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/comparison_integrals.npz",
+          "sha256": "d8e368911d4fd29731c703236fdfc6406f4494363da0b12c5620a3db2edd5dce",
+          "bytes": 1686
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/result.json",
+          "sha256": "ca78f7bf81da12d82c399aea508f08694c9306b28c34a15551cca4cae3d14e77",
+          "bytes": 21466
+        },
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/role_indices.json",
+          "sha256": "4636ebda221a8bfe080dac14dfcb3f545a1b7bcf73b33be25bc967248df89c04",
+          "bytes": 1713631
+        }
+      ]
+    },
+    {
+      "run": "task42extra_v20_saved_checker_20261004T034019066959Z",
+      "stage": "v20_saved_checker",
+      "role": null,
+      "group": "C",
+      "attempt": 1,
+      "source_sha": "0ede17f482d6370ce84bf8bbf0c638e7f95193ab",
+      "input_sha256": "03d864537cde5bff2a329bed875500d56cd282a1b5d82bce1b8e70846c1e5cd2",
+      "design_sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+      "cpu": 4,
+      "formal_classification": "COMPLETED",
+      "full_launch_monotonic_seconds": 5.184892363962717,
+      "sampled_tree_rss_peak_bytes": 224890880,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "raw_records": {
+        "manifest": {
+          "path": "results/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/run_manifest.json",
+          "sha256": "7045c1ff4cd23f51fe1df2517c30a71be65fc1c749fbb29a09570c887e0e6972",
+          "bytes": 3249
+        },
+        "summary": {
+          "path": "results/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/run_summary.json",
+          "sha256": "84aa7277d65d5ae692578a0b1716ff810bf5862e3ceb132704a373b18c95daf1",
+          "bytes": 2734
+        },
+        "events": {
+          "path": "results/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/events.jsonl",
+          "sha256": "550a19ca1cdaf14549c0ab8957da26dffe9794bd798a1d95b44e4706c551c25e",
+          "bytes": 249
+        }
+      },
+      "phases": [
+        {
+          "phase": "frozen",
+          "worker_elapsed_seconds": 1.318301087943837,
+          "values": {
+            "stage_qualified": true
+          },
+          "full_result_location": "immutable index in this record"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "benchmarks/artifacts/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/result.json",
+          "sha256": "379db69b904202fea780e4bac6bcf97a46ef298b118079a0ab1cb16032d7e876",
+          "bytes": 26223
+        }
+      ]
+    }
+  ],
+  "available_saved_roles": [
+    "O3",
+    "E3"
+  ],
+  "not_run": {
+    "E4": "E3_ORIGINAL_RECOVERY_GATE_FAILED",
+    "original_size": "NOT_AUTHORIZED_NOT_RUN",
+    "neural_training": "NOT_TESTED"
+  },
+  "indices": {
+    "index_v20_physical_compare_attempt1.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v20_physical_compare_attempt1.json",
+      "sha256": "d3adbabdee8ff687fa550e33ffdeded6e81282b782a6ae85175d183f4989e9d7",
+      "bytes": 23722
+    },
+    "index_v20_saved_checker_attempt1.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v20_saved_checker_attempt1.json",
+      "sha256": "c559259c3e6ce544888d1c84555a2b2e7fb8847f3b5bc3065415aae48a591640",
+      "bytes": 28634
+    },
+    "index_v20_phase_qualification_attempt2.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v20_phase_qualification_attempt2.json",
+      "sha256": "647e0eb262efa5f6681221eeaad9ba6bc5d35adc2b7940e3dda0ae7a29af1c8f",
+      "bytes": 99870
+    },
+    "index_v20_phase_qualification_attempt1.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v20_phase_qualification_attempt1.json",
+      "sha256": "b0ea40de077b5fa34e9dca48f8ff1a4462b79ef3b031281547a8e64a74622422",
+      "bytes": 99102
+    },
+    "index_v20_control_checks_attempt1.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v20_control_checks_attempt1.json",
+      "sha256": "bda52fd7b7a856fdbfb99ff303d36f1c49aa63767a98112c8e69865fb9b394cd",
+      "bytes": 5384
+    }
+  },
+  "source_vs_document_HEAD_separated": true,
+  "qualified_environment_reuse": {
+    "current_file": {
+      "path": "tmp/task42extra/setup/fe_abi.json",
+      "sha256": "79beaa5362e1f24c5daa05ed77e622086b4c21bd0b87a8847807fd38c852f4be",
+      "bytes": 1130
+    },
+    "content": {
+      "executable": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+      "source": "/home/fenics/Projects/NN-Lab-V2/src/__init__.py",
+      "PETSc_scalar": "complex128",
+      "PETSc_int": "int64",
+      "MPI": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "mpi_size": 1,
+      "paths": {
+        "numpy": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+        "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+        "ffcx": "/usr/lib/python3/dist-packages/ffcx/__init__.py",
+        "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+        "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+        "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+      },
+      "versions": {
+        "numpy": "1.26.4",
+        "basix": "0.10.0",
+        "ffcx": "0.10.1.post0",
+        "dolfinx": "0.10.0",
+        "dolfinx_mpc": "unknown",
+        "mpi4py": "3.1.5"
+      }
+    },
+    "original_manifest_binds_qualification_path_not_hash": true,
+    "current_hash_observed_after_runs_not_falsely_claimed_per_run_capture": true,
+    "activation": "scripts/activate_task42extra.sh pure/fe; read-only complex/int64 ABI prefix",
+    "reused_environment_no_reinstall_or_library_change": true
+  },
+  "reference_lookups": {
+    "O6": {
+      "path": "tmp/task42extra/v20/O6_lookup.json",
+      "sha256": "ee7befcf5ae670789894328334cd2accd548e4ba452bbdc1f139c3a7fb7fe36d",
+      "bytes": 8015
+    },
+    "optional_Gx784": {
+      "path": "tmp/task42extra/v20/Gx784_optional_lookup.json",
+      "sha256": "07b199aa6d24181c1b21d862d786866a8b7520f0b6e60464d5a170dd279dfc6b",
+      "bytes": 998
+    },
+    "reasons": {
+      "O6": "Existing compact native9.733476895086066e-7 cannot satisfy1e-10 authority; no qualified raw transfer",
+      "Gx784": "Optional raw not available; only published scalar consistency used, no solve"
+    }
+  }
+}

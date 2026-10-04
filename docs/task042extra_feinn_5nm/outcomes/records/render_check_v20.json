@@ -1,0 +1,68 @@
+{
+  "status": "NEW_KEY_PAGES_PENDING_ACTUAL_BROWSER_CAPTURE",
+  "review_v19": {
+    "status": "REUSED_UNCHANGED_REVIEWER_VISUAL_PASS",
+    "review": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+      "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4"
+    },
+    "source": "review_v19_evidence_audit.json",
+    "visual_reinspection_this_batch": false,
+    "prior_visual_scope": "Model inspected all ten captured images: title/goal, seven complete tables including all right columns, and both mathematical displays. Not a claim of every prose line inspected in browser.",
+    "capture_hashes": [
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_top.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_00.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_01.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_02.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_03.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_04.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_05.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_06.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_math-renderer_00.png",
+        "exists": true,
+        "hash_ok": true
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_math-renderer_01.png",
+        "exists": true,
+        "hash_ok": true
+      }
+    ],
+    "old_failure_records_preserved": true
+  },
+  "new_page_visual_PASS_claim": false,
+  "old_failure_records_preserved": true
+}

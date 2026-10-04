@@ -1,0 +1,120 @@
+{
+  "schema": "fixed_phase.dependencies.v1",
+  "implementation_source": "0ede17f482d6370ce84bf8bbf0c638e7f95193ab",
+  "groups": {
+    "production numerical/core": {
+      "files": [],
+      "promotion": "NONE",
+      "reason": "No strict candidate/reference accuracy qualification; ordinary defaults not changed"
+    },
+    "reusable runner/watchdog": {
+      "files": [
+        "benchmarks/subreaper_watchdog.py",
+        "scripts/launch_task42extra_durable.py",
+        "src/io/feinn_pilot.py",
+        "src/io/fixed_phase_pilot.py",
+        "src/runners/durable_terminal.py",
+        "src/runners/feinn_workflow.py",
+        "src/runners/fixed_phase_campaign.py"
+      ],
+      "behavior": "New opt-in FE-only stage/identity/clock and isolated management-tree supervision",
+      "qualification": "control child exit/orphan cleanup/import timer; all formal trees cleared",
+      "merge_order": 2
+    },
+    "checker/benchmark": {
+      "files": [
+        "benchmarks/fixed_phase_checker.py",
+        "benchmarks/fixed_phase_control_checks.py",
+        "src/test/test_fixed_phase_air_flux.py",
+        "src/test/test_fixed_phase_contract.py",
+        "src/test/test_fixed_phase_fem.py",
+        "src/test/test_fixed_phase_mode_checks.py",
+        "src/test/test_fixed_phase_old_rhs.py",
+        "src/test/test_fixed_phase_port_coordinates.py",
+        "src/test/test_fixed_phase_saved_diagnostics.py"
+      ],
+      "behavior": "Independent physical/raw array gates, all physical mode keys and corruption fixtures; never qualifies missing authority",
+      "qualification": "41 final pure fixtures, FE anchors/supplements and frozen checker index",
+      "merge_order": 3
+    },
+    "compact evidence/docs": {
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v20.md",
+        "docs/task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/*_v20.*",
+        "docs/task042extra_feinn_5nm/README.md",
+        "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "docs/development_progress.md",
+        "docs/development_model_registry.md"
+      ],
+      "behavior": "Accepted history retained; failures, partial diagnostics, complete costs and unknowns",
+      "merge_order": 4
+    },
+    "research-only": {
+      "files": [
+        "input/task042extra_feinn_5nm/design_v20.json",
+        "input/task042extra_feinn_5nm/v20_control_checks.dat",
+        "input/task042extra_feinn_5nm/v20_e3.dat",
+        "input/task042extra_feinn_5nm/v20_e4.dat",
+        "input/task042extra_feinn_5nm/v20_o3.dat",
+        "input/task042extra_feinn_5nm/v20_o6.dat",
+        "input/task042extra_feinn_5nm/v20_phase_qualification.dat",
+        "input/task042extra_feinn_5nm/v20_physical_compare.dat",
+        "input/task042extra_feinn_5nm/v20_saved_checker.dat",
+        "src/geometry/fixed_phase_plan.py",
+        "src/solvers/common_3d_forms.py",
+        "src/solvers/dtn_port_3d.py",
+        "src/solvers/feinn_fem.py",
+        "src/solvers/feinn_reference.py",
+        "src/solvers/fixed_phase_audit.py",
+        "src/solvers/fixed_phase_comparison.py",
+        "src/solvers/fixed_phase_fem.py",
+        "src/solvers/fixed_phase_port_coordinates.py",
+        "src/solvers/fixed_phase_qualification.py",
+        "src/solvers/fixed_phase_reference.py",
+        "src/solvers/fixed_phase_saved_diagnostics.py",
+        "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py"
+      ],
+      "behavior": "Frozen V19 physical input, new explicit A/B/C stages; no NN training or target-size authorization",
+      "dependencies": "Opt-in numerical kernel plus runner and independent checker",
+      "numerical_kernel": {
+        "files": [
+          "src/geometry/fixed_phase_plan.py",
+          "src/solvers/common_3d_forms.py",
+          "src/solvers/dtn_port_3d.py",
+          "src/solvers/feinn_fem.py",
+          "src/solvers/feinn_reference.py",
+          "src/solvers/fixed_phase_audit.py",
+          "src/solvers/fixed_phase_comparison.py",
+          "src/solvers/fixed_phase_fem.py",
+          "src/solvers/fixed_phase_port_coordinates.py",
+          "src/solvers/fixed_phase_qualification.py",
+          "src/solvers/fixed_phase_reference.py",
+          "src/solvers/fixed_phase_saved_diagnostics.py",
+          "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py"
+        ],
+        "behavior": "New gVh physical curl/ports/background, exact opt-in port coordinates, negative field preservation; ordinary default unchanged",
+        "qualification": "A and targeted pairings only, B recovery/p6 unresolved",
+        "merge_order": 1
+      }
+    },
+    "do-not-merge": {
+      "files": [
+        "benchmarks/artifacts/task42extra/task42extra_v20_*",
+        "results/task42extra/task42extra_v20_*",
+        "tmp/task42extra/v20/*",
+        "tmp/task42extra/checks/v20*",
+        "tmp/task42extra/durable/v20_*",
+        "tmp/task42extra/render/v20*"
+      ],
+      "reason": "Ignored raw arrays/CSR/factors/fields/cache/timeline/screenshots; local provenance and safety, not tracked bulk"
+    }
+  },
+  "no_merge_authorized": true,
+  "no_production_default_change": true,
+  "fresh_PDE_evidence": "O3/E3 strict recovery failed; O6 pre-factor failed; no candidate promotion",
+  "suggested_order": "Only future explicit review can authorize selective migration; kernel -> runner -> checker -> compact docs",
+  "new_algorithms_in_src_not_benchmark": true
+}

@@ -259,3 +259,13 @@ A独立从原数组重算四配置、冻结顺序、实PID、N/R/F及保守证�
 实际仅完成pure身份/hash检查：原task/Response V18及16份相关源码、发布文档、4669个tracked路径与数值交付后的两文件差量通过；3.00519637496s、同时树峰57,675,776B、自身swap0、已清场。改变页Markdown parser/本地链接/compact JSON及自动历史正文保留检查两次在worker前被CPU门拒绝；唯一再准入前有实测新窗口，但启动时窗口消失，NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE。不直接裸跑绕过保护，Git差量人工核对/`git diff --check`不是parser通过，具体见[一次P0收据](records/closeout_receipt_v19.json)。未重复全库hash/AST或V17静态清单；原ca7ad5d的52 targeted/Ruff/compileall按未变hash复用，无新pytest、full pytest、FE/前向/算子或CI声明。
 
 Review V18最终公式及旧专题两张区域表右侧的实际浏览器资格复用[审阅收据](records/review_v18_evidence_audit.json)，旧失败及原执行端部分视图不覆盖。新改变页视觉为NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE：资源链停止后未启动浏览器，不假称截图/DOM或视觉PASS。没有实际复用需求，A checker半径及原始列来源绑定限制保留，不加无关fixture或重跑A/B/C。
+
+## V20：相位进入FE基函数的联合资格与独立保存场检查
+
+最终受影响pure fixtures41 passed、Ruff/compileall通过；κ=0对真实旧build_physical_rhs回归差0；8-cell双向空气独立Poynting及全部36模式/逐级/能量通过。原A20门通过，原air_plane_power为振幅平方proxy，物理通量由独立补验收据给出而不追改含义。最早A残差超门及CSC修复、O3坐标修复仍超门、p6内部端口支撑拒绝都保留；测试通过不表示B候选解通过。
+
+唯一最终纯数组checker source0ede17f482d6370ce84bf8bbf0c638e7f95193ab，5.184892364s/224890880B采样树峰/swap0、已清场；逐模式/物理key/参考面与坏输入fixtures不调用FE/solver。C source d9f1b50ee9b7be66d610fbbb78449bc9f6a3dc2f，q15/q30积分漂移3.39275e-12，仅两未合格空间争议，O6/E4缺失为PARTIAL/UNKNOWN。所有开发失败和最终fixture配置KeyError修复日志均hash绑定，旧昂贵测试不重跑，无full pytest/CI声明。
+
+[测试/原日志](records/targeted_tests_v20.json)、[原资格和补验](records/qualification_v20.json)、[checker](records/independent_checker_v20.json)、[修复](records/repair_log_v20.json)。文档parser/实际GitHub关键页目视与完整费用另行封存，不把DOM检查冒称视觉。
+
+本批改变的8处文档parser/链接/表格/公式检查、716行原CSV逐值配对及旧正文保留已通过，另20项仓库原则/总账Markdown/回顾合同pure测试通过。旧全库总账测试仍按40任务限定并引用历史缺失文件，修改前后两项错误完全相同，记PREEXISTING_FAILURE_NOT_FIXED_OUT_OF_SCOPE；不改其他任务历史或声称全库测试通过。原失败与基线核对见测试收据。

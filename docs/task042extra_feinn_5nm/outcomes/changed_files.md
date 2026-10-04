@@ -256,3 +256,9 @@ V15额外最小修复benchmarks/render_task42extra.py：滚动时重取当前DOM
 README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧正文完整保留；本任务模型总账新增3.44.17、进度/测试/changed_files只追加；新增response_v19与closeout_receipt_v19。只落实已接受归因、流程限定、原目标及暂停状态，没有新数值结果。
 
 原task/review/Response V18/结果/候选和源码、其他任务/分支均未改；不用新文档HEAD代替运行source。原六组[manifest](records/selective_merge_manifest_v18.json)继续有效：本轮仅compact evidence/docs；production numerical/core、runner/watchdog、checker/benchmark、research-only源码均无新增，ignored时钟/检查/浏览器收据属于do-not-merge。本轮无迁移部署或master合并建议。
+
+## V20：完整3D相位适配FE显式研究入口
+
++src内新增固定几何计划、新空间构建/独立gψ审计/资格/参考与物理比较/保存负态诊断；已有体弱式/端口/物理action/export/exact_solve只加显式opt-in，ordinary/M5默认不改。准确边界端口换元保留原物理alpha和原门，未推广solver默认。新runner只做独立账本/资源/身份编排，durable入口包含import前时钟及监督tmux根，checker只读原数组重算。输入设计和八个one-run dat冻结新物理角色，未跑E4受Gate保护。
+
++新Response/专题/设计/资格/运行/checker/Gate/完整成本/修复/模式样本区域CSV与依赖manifest；summary只前置V20，README当前入口更新，进度/模型总账/测试只追加本支事实。原task/reviews/历史响应与旧数组及其他分支不改。全部raw/F/CSR/场/资源轨迹/cache和浏览器图留ignored。production numerical/core无晋级：[六类依赖](records/selective_merge_manifest_v20.json)。

@@ -1809,6 +1809,24 @@ B独立保存场积分说明旧退化约77%来自正E交叉项，周期/界面�
 
 主线2374d0d556aed7a415202757daa2b94b76ad399b的Gx784未启动，dot3c7458fad7c002babac4e634be4788b664be9ee5仅有新合成分块证据，真实FE/存储/后端由该线负责；这些是Review V18冻结引用，不作跨模型排名或改变其他分支。原尺寸50×25×140nm、λ0.7nm完整三维FE、十进制2e12B整机、172800s及严格精度未资格化，无production或master合并授权。[审阅收据](task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json)、[一次回执](task042extra_feinn_5nm/response_v19.md)、[本批资源/检查](task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json)。
 
+
+## 3.44.18 Task42extra Review V19：V20相位适配FE，真实0.7nm批次
+
+把固定横向振荡写入FE基函数，试图减少表示入射/散射场的多项式网格代价；仍保留全部3D Maxwell和完整内部场。这是确定性FE表示研究，不是NN训练或旧p3方程同离散求解。缩小几何比例7/135、λ0.7、G0/GX560、Si/air三维缺口、340端口。
+
+| 模型 / measured unless derived | 全独立复FE | native / 独立物理弱式 | 原端口恢复 | 状态与成本s/采样树峰B |
+| --- | ---: | --- | --- | --- |
+| O3普通G0 p3修复 | 27648 | 9.92671e-12 / 1.26528e-10 | 2.41579e-4 >1e-10 | FAIL；154.9793 / 945733632；首次失败172.3716保留 |
+| E3相位G0 p3 | 27648 | 8.53571e-11 / 6.10735e-12 | 1.55624e-3 >1e-10 | FAIL；176.5997 / 923660288 |
+| E4相位G0 p4 | 65280 derived | NOT_RUN | E3 Gate未过 | NOT_RUN，无新费用 |
+| O6普通GX560 p6packet | 365760 | 未解，算子资格通过 | 内部端口支撑拒绝 | FAILED_BEFORE_FACTOR；1752.7134 / 4929130496 |
+
+O3/E3 diagnostic R/T/A_balance/A_volume分别0.999974256/0.0000166196/0.00000912423/0.00000912423与0.076126584/0.905766809/0.018106608/0.018106608；R00_s/p/total为0.999957051/5.27e-28/0.999957051与0.076125960/1.74e-26/0.076125960。能量闭合4.75e-13/4.19e-12，不代表准确解。全模式复值/逐级功率见[680行CSV](task042extra_feinn_5nm/outcomes/records/channels_v20.csv)。
+
+A小fixture联合资格通过；C完整物理比较1380.8117s/642138112B，total E差1.00526、scattered E差6.85671，以实际E3范数为分母而非reference误差，q15/q30漂移3.39e-12。p6内部B/D各2264非零项保留，无幅值删除或重复factor；O6准确参考缺失、E4未跑，FE收益及原尺寸容量/时间UNKNOWN。各source完整SHA和全部失败/成本见[运行](task042extra_feinn_5nm/outcomes/records/run_index_v20.json)、[专题](task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v20.json)。
+
+原目标50×25×140nm、λ0.7、2e12B整机、172800s完整三维FE及原门不变，NOT_RUN/NOT_QUALIFIED。NN NOT_TESTED，FEINN_MAIN_SOLVER_ON_HOLD/NO_VERIFIED_NN_INCREMENT，M3600改善/Mfinal退化、D0成本否决/D1未运行及全部旧UNKNOWN保留。无production/merge，不重复主线Gx784或dot C1/storage。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

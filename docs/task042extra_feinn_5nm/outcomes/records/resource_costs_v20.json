@@ -1,0 +1,1110 @@
+{
+  "schema": "fixed_phase.full-cost.v1",
+  "clock": {
+    "start_utc": "2026-10-04T01:28:14+00:00",
+    "start_monotonic": 1002288.860866353,
+    "batch_limit_seconds": 43200,
+    "final_reserve_seconds": 1800,
+    "input_head": "dfb60aa3a88c5554e9660ae6de7f169c5ac26298"
+  },
+  "observed_complete_batch_seconds": 8612.615644666948,
+  "pending_document_Git_render_queue_tail": "New key-page visual and final publication/queue not yet measured; final seal will update wall and bound tail",
+  "tail_conservative_reserve_seconds": 1800,
+  "whole_parent_includes_code_tests_waits_failures_numeric": true,
+  "nested_costs_not_added_again": true,
+  "formal_stage_seconds": {
+    "implementation": 18.26853362703696,
+    "A": 269.38871749897953,
+    "B": 2256.6639618929476,
+    "C": 1385.9965710219694
+  },
+  "runs": [
+    {
+      "run": "task42extra_v20_control_checks_20261004T020228363071Z",
+      "stage": "v20_control_checks",
+      "full_launch_monotonic_seconds": 18.26853362703696,
+      "sampled_tree_rss_peak_bytes": 96436224,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_e3_20261004T022926144000Z",
+      "stage": "v20_e3",
+      "full_launch_monotonic_seconds": 176.59969027899206,
+      "sampled_tree_rss_peak_bytes": 923660288,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_o3_20261004T021625611145Z",
+      "stage": "v20_o3",
+      "full_launch_monotonic_seconds": 172.3716183709912,
+      "sampled_tree_rss_peak_bytes": 916008960,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_o3_20261004T022559061402Z",
+      "stage": "v20_o3",
+      "full_launch_monotonic_seconds": 154.9792955960147,
+      "sampled_tree_rss_peak_bytes": 945733632,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_o6_20261004T023256068972Z",
+      "stage": "v20_o6",
+      "full_launch_monotonic_seconds": 1752.7133576469496,
+      "sampled_tree_rss_peak_bytes": 4929130496,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_phase_qualification_20261004T020747732671Z",
+      "stage": "v20_phase_qualification",
+      "full_launch_monotonic_seconds": 139.59743234305643,
+      "sampled_tree_rss_peak_bytes": 651595776,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_phase_qualification_20261004T021334646405Z",
+      "stage": "v20_phase_qualification",
+      "full_launch_monotonic_seconds": 129.7912851559231,
+      "sampled_tree_rss_peak_bytes": 642084864,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_physical_compare_20261004T030757807555Z",
+      "stage": "v20_physical_compare",
+      "full_launch_monotonic_seconds": 1380.8116786580067,
+      "sampled_tree_rss_peak_bytes": 642138112,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "run": "task42extra_v20_saved_checker_20261004T034019066959Z",
+      "stage": "v20_saved_checker",
+      "full_launch_monotonic_seconds": 5.184892363962717,
+      "sampled_tree_rss_peak_bytes": 224890880,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "light_runs": [
+    {
+      "path": "tmp/task42extra/checks/v20_O6_saved_lookup_20261004T015842297194Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9148288069991395,
+      "sampled_tree_rss_peak_bytes": 67051520,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_O6_saved_lookup_20261004T015842297194Z/summary.json",
+        "sha256": "7076f3e03812453a7dc524009174bbba936af31c9696abaf6ed54ea864a84973",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_O6_saved_lookup_20261004T015842297194Z/supervision/worker.log",
+        "sha256": "bb4ff1f2d5a2331166899f3a349726c3d76afeae3ad42dac43bc498b0d5dac06",
+        "bytes": 455
+      },
+      "last_log_lines": [
+        "O3 1.318878173828125",
+        "E3 1.318878173828125",
+        "E4 2.0367660522460938",
+        "O6 9.760343551635742"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_air_physical_flux_20261004T033348725920Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 16.662555136019364,
+      "sampled_tree_rss_peak_bytes": 318251008,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_air_physical_flux_20261004T033348725920Z/summary.json",
+        "sha256": "efaf4a45127926e7e829f2198e1e99ea13c35a509d0fe204627faa8439d83463",
+        "bytes": 1918
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_air_physical_flux_20261004T033348725920Z/supervision/worker.log",
+        "sha256": "5e79c64b22b7d5be0644525d1ac65f0c03aaba130cb2fe6bedf5ee99a42e6c86",
+        "bytes": 21
+      },
+      "last_log_lines": [
+        ".",
+        "1 passed in 14.94s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_c_final_targeted_20261004T030727074600Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.566633736016229,
+      "sampled_tree_rss_peak_bytes": 88436736,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_c_final_targeted_20261004T030727074600Z/summary.json",
+        "sha256": "a0dae0c713351a63bcc6b978dcb9cf0744cf228772e89626a784313d4a97497e",
+        "bytes": 1928
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_c_final_targeted_20261004T030727074600Z/supervision/worker.log",
+        "sha256": "9008adc2515a655814843197a1d3653cad5ad0f7eac8399ecf346f6420449850",
+        "bytes": 262
+      },
+      "last_log_lines": [
+        "...............                                                          [100%]",
+        "15 passed in 0.11s",
+        "......................                                                   [100%]",
+        "22 passed in 0.23s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_c_negative_fixtures_20261004T030351410311Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.0061239479109645,
+      "sampled_tree_rss_peak_bytes": 59908096,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_c_negative_fixtures_20261004T030351410311Z/summary.json",
+        "sha256": "dbf2dd1425256fa5135e73eb3a0446f71f558c8fae6bddd14375d801f79b6d61",
+        "bytes": 1903
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_c_negative_fixtures_20261004T030351410311Z/supervision/worker.log",
+        "sha256": "fd28cc0ade2aec754277aa76b9ba505d1f80f1fe4eeda3c75bc94c1d5302f49b",
+        "bytes": 99
+      },
+      "last_log_lines": [
+        "....................................                                     [100%]",
+        "36 passed in 0.20s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_c_saved_contracts_20261004T030324421899Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9565520489122719,
+      "sampled_tree_rss_peak_bytes": 52850688,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_c_saved_contracts_20261004T030324421899Z/summary.json",
+        "sha256": "44bbdc310a08a75112ac1b8aa6eb3505a4d3ed13f15c8213ae3885bfbc261c29",
+        "bytes": 1903
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_c_saved_contracts_20261004T030324421899Z/supervision/worker.log",
+        "sha256": "7ae13f136c8583934f403456e17ee36da589c1ec60420c3aef8e10c16124628c",
+        "bytes": 163
+      },
+      "last_log_lines": [
+        "6 files reformatted, 11 files left unchanged",
+        "All checks passed!",
+        "...............                                                          [100%]",
+        "15 passed in 0.11s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_checker_freeze_final_20261004T033447493583Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 2.666122484020889,
+      "sampled_tree_rss_peak_bytes": 64806912,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_checker_freeze_final_20261004T033447493583Z/summary.json",
+        "sha256": "2481d8ab56ccc5cd9b0bc24f5f7b983d7b0ca7a617e47e576a8b752be3078d07",
+        "bytes": 1919
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_checker_freeze_final_20261004T033447493583Z/supervision/worker.log",
+        "sha256": "d0df4bea974cf9ed58f5820deb2aaa38898d7cec70d82e542d53f399a23bc0a6",
+        "bytes": 1739
+      },
+      "last_log_lines": [
+        "  File \"<string>\", line 1, in <module>",
+        "  File \"/usr/lib/python3.12/subprocess.py\", line 571, in run",
+        "    raise CalledProcessError(retcode, process.args,",
+        "subprocess.CalledProcessError: Command '['/home/fenics/Projects/NN-Lab-V2/.venv/bin/python', '/tmp/task42_v20_verify.py']' returned non-zero exit status 1."
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_checker_schema_fixture_fix_20261004T033558082365Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.6031659030122682,
+      "sampled_tree_rss_peak_bytes": 97386496,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_checker_schema_fixture_fix_20261004T033558082365Z/summary.json",
+        "sha256": "f4074c8ab240580a658b1e26afb156efa4c087adc494e1d703539f17804a8700",
+        "bytes": 1929
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_checker_schema_fixture_fix_20261004T033558082365Z/supervision/worker.log",
+        "sha256": "30c82438d5429e008d57b1a2689e0bdc75ccdc3d986b9b71c4ca713f712736a6",
+        "bytes": 261
+      },
+      "last_log_lines": [
+        "................                                                         [100%]",
+        "16 passed in 0.13s",
+        ".........................                                                [100%]",
+        "25 passed in 0.24s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z",
+      "classification": "PRE_WORKER_ADMISSION_REFUSAL",
+      "summary": "NOT_RETAINED"
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_control_metadata_fix_20261004T020334172346Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9118067639647052,
+      "sampled_tree_rss_peak_bytes": 52899840,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_control_metadata_fix_20261004T020334172346Z/summary.json",
+        "sha256": "ed75692f8829710296cadb107c730762cb09ca8aaae2eddd2cc96824cbc1728a",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_control_metadata_fix_20261004T020334172346Z/supervision/worker.log",
+        "sha256": "4b08de413d25957d754715da40ae13d4c56fc7ca66ed57c359ee6f04395820d1",
+        "bytes": 162
+      },
+      "last_log_lines": [
+        "1 file reformatted, 11 files left unchanged",
+        "All checks passed!",
+        "..............                                                           [100%]",
+        "14 passed in 0.10s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_analytic_maxwell_20261004T015403147982Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 20.426935447962023,
+      "sampled_tree_rss_peak_bytes": 355618816,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_analytic_maxwell_20261004T015403147982Z/summary.json",
+        "sha256": "41e16c3298e90f1ea66b7e195d68b1931ad5125a01f75cf1d3dc8d0f164eebf1",
+        "bytes": 1916
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_analytic_maxwell_20261004T015403147982Z/supervision/worker.log",
+        "sha256": "d62a8109099eb254ea787e76cf82da89e3efa6d423fb220bf9df9953e25f6ac1",
+        "bytes": 99
+      },
+      "last_log_lines": [
+        "..                                                                       [100%]",
+        "2 passed in 18.41s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_contracts_20261004T014723743817Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9430103920167312,
+      "sampled_tree_rss_peak_bytes": 68710400,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_contracts_20261004T014723743817Z/summary.json",
+        "sha256": "5963118623822de4d2a10f3c907c7046726cf6e27e8d278b4706b366a32d4340",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_contracts_20261004T014723743817Z/supervision/worker.log",
+        "sha256": "fdbea69a2189e4a1722abadda5c0ce102d5a19bb12efe4b54113643c0d517145",
+        "bytes": 178
+      },
+      "last_log_lines": [
+        "frozen design b42809ddd22450efec0569d84027f721b648449997216f36778e13b8e335477a",
+        "............                                                             [100%]",
+        "12 passed in 0.11s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_fe_adapter_20261004T015000974429Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 2.551732489024289,
+      "sampled_tree_rss_peak_bytes": 144093184,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_adapter_20261004T015000974429Z/summary.json",
+        "sha256": "fa81589c9d378a3400d91b91172e257c46b7f2ff1ada560d94647307a57c4cb7",
+        "bytes": 1918
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_adapter_20261004T015000974429Z/supervision/worker.log",
+        "sha256": "6cc27afc457923868d569ee43ec38add5073f4c7dd9bcd73c1adc1939024219a",
+        "bytes": 4509
+      },
+      "last_log_lines": [
+        "src/solvers/fixed_phase_fem.py:141: TypeError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_fixed_phase_fem.py::test_small_mesh_envelope_and_physical_wavenumber",
+        "1 failed in 0.61s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_fe_construction_20261004T014756001635Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 2.4691352519439533,
+      "sampled_tree_rss_peak_bytes": 144347136,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_construction_20261004T014756001635Z/summary.json",
+        "sha256": "18acc353075a4d34af9e57bb326facc3c8909b2fc6a0759a3a1e68646e9183b7",
+        "bytes": 1919
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_construction_20261004T014756001635Z/supervision/worker.log",
+        "sha256": "6b41af1c952e6a95827cc62a4b8e73e5db035b1e63c764297668087f5f9ef303",
+        "bytes": 2550
+      },
+      "last_log_lines": [
+        "src/solvers/fixed_phase_fem.py:93: ValueError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_fixed_phase_fem.py::test_small_mesh_envelope_and_physical_wavenumber",
+        "1 failed in 0.64s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_fe_construction_repair_20261004T014910397021Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 2.548157729092054,
+      "sampled_tree_rss_peak_bytes": 144621568,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_construction_repair_20261004T014910397021Z/summary.json",
+        "sha256": "ead2906e949333fe4adb98daf22ffa4e41a924e911e9ecf9f35b13181799914d",
+        "bytes": 1918
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_construction_repair_20261004T014910397021Z/supervision/worker.log",
+        "sha256": "c842322567cc59e6e86b2228db0a716bb06757a4a9486e5f6dcc542c301f29bf",
+        "bytes": 4345
+      },
+      "last_log_lines": [
+        "src/solvers/fixed_phase_fem.py:97: TypeError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_fixed_phase_fem.py::test_small_mesh_envelope_and_physical_wavenumber",
+        "1 failed in 0.61s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_fe_mode_adapter_20261004T015144392685Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 3.1933249859139323,
+      "sampled_tree_rss_peak_bytes": 256094208,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_mode_adapter_20261004T015144392685Z/summary.json",
+        "sha256": "d46312610b27dfd7ad1024af5d5146a8f6e4e4c0caa2dd18de86b57db411f03c",
+        "bytes": 1915
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_mode_adapter_20261004T015144392685Z/supervision/worker.log",
+        "sha256": "c6dfde3f9bcc0d41df6a577e59abe1633603cb8f3e01b81b8a9ad8e61bb6442c",
+        "bytes": 98
+      },
+      "last_log_lines": [
+        ".                                                                        [100%]",
+        "1 passed in 0.96s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_fe_schema_complete_20261004T015103769300Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 3.1952471679542214,
+      "sampled_tree_rss_peak_bytes": 257368064,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_schema_complete_20261004T015103769300Z/summary.json",
+        "sha256": "5205e9aef7f507435aa06841b8833c1741d331574c0ca57b8c856b5336ed8c2a",
+        "bytes": 1919
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_fe_schema_complete_20261004T015103769300Z/supervision/worker.log",
+        "sha256": "edc5a946841d98ee9a70888fd93cf60df91ea58960bd62e05cf8fcedca52a45c",
+        "bytes": 7210
+      },
+      "last_log_lines": [
+        "src/solvers/fixed_phase_fem.py:237: ImportError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_fixed_phase_fem.py::test_small_mesh_envelope_and_physical_wavenumber",
+        "1 failed in 1.01s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_independent_forms_20261004T015220424777Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 3.1842938060872257,
+      "sampled_tree_rss_peak_bytes": 262348800,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_independent_forms_20261004T015220424777Z/summary.json",
+        "sha256": "9ef85c971568a2dc19a679c622b3ec6203314aacfd31068469475d178ba01914",
+        "bytes": 1919
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_independent_forms_20261004T015220424777Z/supervision/worker.log",
+        "sha256": "35d3d75ca4ce3f4f39e00732388567ea0be4070895c9026e9e830127c6a67254",
+        "bytes": 4604
+      },
+      "last_log_lines": [
+        "/usr/lib/python3/dist-packages/ufl/constantvalue.py:511: ValueError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_fixed_phase_fem.py::test_small_independent_physical_volume_and_ports",
+        "1 failed, 1 passed in 1.23s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_material_routing_20261004T014858895819Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9974735169671476,
+      "sampled_tree_rss_peak_bytes": 68837376,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_material_routing_20261004T014858895819Z/summary.json",
+        "sha256": "a90ea76f6771335e1f477e672b8f75c62dfa9ce24c48c6b480c52684acecdfb0",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_material_routing_20261004T014858895819Z/supervision/worker.log",
+        "sha256": "31b00a979ae974daa101b934ce741018479f392b633e0916def4d50f435682ae",
+        "bytes": 178
+      },
+      "last_log_lines": [
+        "frozen design b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+        "............                                                             [100%]",
+        "12 passed in 0.09s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_physical_reconstruction_20261004T015638458666Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 20.42070686398074,
+      "sampled_tree_rss_peak_bytes": 326217728,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_physical_reconstruction_20261004T015638458666Z/summary.json",
+        "sha256": "deb72caa383c739fc885dbfb139d724c609942350f6aae733b8f0b80d507a181",
+        "bytes": 1915
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_physical_reconstruction_20261004T015638458666Z/supervision/worker.log",
+        "sha256": "d62a8109099eb254ea787e76cf82da89e3efa6d423fb220bf9df9953e25f6ac1",
+        "bytes": 99
+      },
+      "last_log_lines": [
+        "..                                                                       [100%]",
+        "2 passed in 18.41s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_dev_ufl_vector_fix_20261004T015248654381Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 31.017564876005054,
+      "sampled_tree_rss_peak_bytes": 665628672,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_dev_ufl_vector_fix_20261004T015248654381Z/summary.json",
+        "sha256": "ddcae232cb99e56bd8da6eba5fa5d160d659f3699ae261c28b8423849898bab3",
+        "bytes": 2020
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_dev_ufl_vector_fix_20261004T015248654381Z/supervision/worker.log",
+        "sha256": "406791179d421e349307d849ec132044aaffdd79d100863470b8d135bb1182ca",
+        "bytes": 99
+      },
+      "last_log_lines": [
+        "..                                                                       [100%]",
+        "2 passed in 28.79s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_final_mode_targeted_20261004T033245568998Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.562394273933023,
+      "sampled_tree_rss_peak_bytes": 87961600,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_final_mode_targeted_20261004T033245568998Z/summary.json",
+        "sha256": "886f6b47c27e29277c6f85c37b291ed99282f8a5162b17ddf8bf5822216aa43b",
+        "bytes": 1928
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_final_mode_targeted_20261004T033245568998Z/supervision/worker.log",
+        "sha256": "467aae21647bbcfe2e7b5b1a2db80fe8e4964337ea22d3542e5022a9c6adb52d",
+        "bytes": 262
+      },
+      "last_log_lines": [
+        "...............                                                          [100%]",
+        "15 passed in 0.13s",
+        ".........................                                                [100%]",
+        "25 passed in 0.23s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_final_pure_tests_20261004T015537328818Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 28.934285428957082,
+      "sampled_tree_rss_peak_bytes": 142958592,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_final_pure_tests_20261004T015537328818Z/summary.json",
+        "sha256": "5218fab40a2387ddc8122244d42497734404b69efac185ac040642c125b0df8b",
+        "bytes": 2150
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_final_pure_tests_20261004T015537328818Z/supervision/worker.log",
+        "sha256": "0341ef7a0a8e440f13758e06e1ab09a4adf5a30d037dfc9ee06d78d000914286",
+        "bytes": 100
+      },
+      "last_log_lines": [
+        "..........................                                               [100%]",
+        "26 passed in 26.69s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_format_final_20261004T015457564003Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.8753926180070266,
+      "sampled_tree_rss_peak_bytes": 39964672,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_format_final_20261004T015457564003Z/summary.json",
+        "sha256": "b1c2a5d45fa6bfcaae6b808e814652ea4a9c42ec3dfaa639677a7cd02499ea43",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_format_final_20261004T015457564003Z/supervision/worker.log",
+        "sha256": "74d24646bf55a9a2b4f259991888ed0938166ca56fac74117eccc31447ed72f4",
+        "bytes": 44
+      },
+      "last_log_lines": [
+        "6 files reformatted, 6 files left unchanged"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_format_fix_20261004T014948800201Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.0210864580003545,
+      "sampled_tree_rss_peak_bytes": 40022016,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_format_fix_20261004T014948800201Z/summary.json",
+        "sha256": "4b11145fff50e7145d7a28bef5eeb13f68543efa9da9803a8b525608e81d083d",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_format_fix_20261004T014948800201Z/supervision/worker.log",
+        "sha256": "1f9912f4ae8ba0a943435ac12aefb28c780434e1b20ddb8f8397e88b2f2a3734",
+        "bytes": 21
+      },
+      "last_log_lines": [
+        "12 files reformatted"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_freeze_checks_20261004T020051756795Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 1.929513192968443,
+      "sampled_tree_rss_peak_bytes": 52457472,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_freeze_checks_20261004T020051756795Z/summary.json",
+        "sha256": "40aa4c2cffb36e2c42f6eb2c1ba5b95f848a68d7993ed6f72cca18a20821a952",
+        "bytes": 1904
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_freeze_checks_20261004T020051756795Z/supervision/worker.log",
+        "sha256": "f42107c594d7bc8adb4bae829d6ec4a5911e0245d2312c96822d0b7bffa2f8cd",
+        "bytes": 3308
+      },
+      "last_log_lines": [
+        "    subprocess.run([sys.executable,'-m','ruff','check',*files,'benchmarks/subreaper_watchdog.py','src/solvers/common_3d_forms.py','src/solvers/dtn_port_3d.py','src/solvers/feinn_fem.py','src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py','src/io/feinn_pilot.py','src/runners/feinn_workflow.py','scripts/launch_task42extra_durable.py'],check=True)",
+        "  File \"/usr/lib/python3.12/subprocess.py\", line 571, in run",
+        "    raise CalledProcessError(retcode, process.args,",
+        "subprocess.CalledProcessError: Command '['/home/fenics/Projects/NN-Lab-V2/.venv/bin/python', '-m', 'ruff', 'check', 'src/geometry/fixed_phase_plan.py', 'src/solvers/fixed_phase_fem.py', 'src/solvers/fixed_phase_qualification.py', 'src/solvers/fixed_phase_reference.py', 'src/solvers/fixed_phase_comparison.py', 'src/solvers/fixed_phase_audit.py', 'src/runners/fixed_phase_campaign.py', 'src/io/fixed_phase_pilot.py', 'benchmarks/fixed_phase_control_checks.py', 'benchmarks/fixed_phase_checker.py', 'src/test/test_fixed_phase_contract.py', 'src/test/test_fixed_phase_fem.py', 'benchmarks/subreaper_watchdog.py', 'src/solvers/common_3d_forms.py', 'src/solvers/dtn_port_3d.py', 'src/solvers/feinn_fem.py', 'src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py', 'src/io/feinn_pilot.py', 'src/runners/feinn_workflow.py', 'scripts/launch_task42extra_durable.py']' returned non-zero exit status 1."
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_freeze_final_20261004T020121616699Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9172925489256158,
+      "sampled_tree_rss_peak_bytes": 52441088,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_freeze_final_20261004T020121616699Z/summary.json",
+        "sha256": "d7b0f3a34c3c83a07927711446cc01d774d9b6920983bd64659820323f05f4b0",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_freeze_final_20261004T020121616699Z/supervision/worker.log",
+        "sha256": "3675608513dcab6cbc4beb7bd6428a03163018007b3a734657342fbdbde07de7",
+        "bytes": 142
+      },
+      "last_log_lines": [
+        "12 files left unchanged",
+        "All checks passed!",
+        "..............                                                           [100%]",
+        "14 passed in 0.11s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_freeze_metadata_final_20261004T020705165739Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9786672090413049,
+      "sampled_tree_rss_peak_bytes": 52568064,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_freeze_metadata_final_20261004T020705165739Z/summary.json",
+        "sha256": "2e903ebab36509cf0d8813a748af2128bad79664d55e473469d710410ac176f5",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_freeze_metadata_final_20261004T020705165739Z/supervision/worker.log",
+        "sha256": "4b08de413d25957d754715da40ae13d4c56fc7ca66ed57c359ee6f04395820d1",
+        "bytes": 162
+      },
+      "last_log_lines": [
+        "1 file reformatted, 11 files left unchanged",
+        "All checks passed!",
+        "..............                                                           [100%]",
+        "14 passed in 0.10s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_input_extra_checker_20261004T015907317863Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.8974846240598708,
+      "sampled_tree_rss_peak_bytes": 67903488,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_input_extra_checker_20261004T015907317863Z/summary.json",
+        "sha256": "c3a46973f6f16923395e870a0fed678cccb59b72844adcfa5b81f1460b7f708b",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_input_extra_checker_20261004T015907317863Z/supervision/worker.log",
+        "sha256": "7c8b1416d84da1a346e3a5b234d812fc1b9e44e6aef6b3ffff3521ab2d06796c",
+        "bytes": 178
+      },
+      "last_log_lines": [
+        "frozen design b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+        ".............                                                            [100%]",
+        "13 passed in 0.10s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_lint_20261004T014924535744Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 1.9252571769757196,
+      "sampled_tree_rss_peak_bytes": 40071168,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_lint_20261004T014924535744Z/summary.json",
+        "sha256": "dac4bdc3d3f1b92edd73a879ee50e2b2a562ecd54bbdb05ba7b5867a77d22ad7",
+        "bytes": 1905
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_lint_20261004T014924535744Z/supervision/worker.log",
+        "sha256": "eb09875eecffb8a7683a8b16ee66f7b5d1bb2bac53b62eeb32e056288962600d",
+        "bytes": 15934
+      },
+      "last_log_lines": [
+        "   |",
+        "",
+        "Found 32 errors.",
+        "[*] 4 fixable with the `--fix` option (3 hidden fixes can be enabled with the `--unsafe-fixes` option)."
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_lint_import_fix_20261004T015035256102Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 2.0182801199844107,
+      "sampled_tree_rss_peak_bytes": 39784448,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_lint_import_fix_20261004T015035256102Z/summary.json",
+        "sha256": "5308671120f62edab50778791a83bade544d3f6ebd37d04d5c3735cc9541aa71",
+        "bytes": 1905
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_lint_import_fix_20261004T015035256102Z/supervision/worker.log",
+        "sha256": "d2e543fd93bb1e67ee11128ac4ada86743077e4e4d38acfa114ca32750fa2337",
+        "bytes": 1831
+      },
+      "last_log_lines": [
+        "help: Rewrite `curl` as a `def`",
+        "",
+        "Found 7 errors (4 fixed, 3 remaining).",
+        "No fixes available (2 hidden fixes can be enabled with the `--unsafe-fixes` option)."
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_material_identity_20261004T014814778789Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.8574458049843088,
+      "sampled_tree_rss_peak_bytes": 39817216,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_material_identity_20261004T014814778789Z/summary.json",
+        "sha256": "71a3c49ccbccc6eba99ed4ad8d03f598dbeef36ee7110b45c64bf6c90684fab8",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_material_identity_20261004T014814778789Z/supervision/worker.log",
+        "sha256": "5ad8b410d1e919cd9055547da465ba5b7ce309baa4696f14f9e2f7ad55bd8ade",
+        "bytes": 1236
+      },
+      "last_log_lines": [
+        "(0.999885140474+4.32477054e-06j) {'status': 'MATERIAL_READY_USER_SUPPLIED', 'material_table_id': 'SI_OPTICAL_CONSTANTS_USER_20260929_V1', 'canonical_path': '/home/fenics/Projects/NN-Lab-V2/input/materials/si_optical_constants_v1.json', 'material_table_sha256': '55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2', 'query_wavelength_nm': '0.7', 'nominal_wavelength_nm': '0.7', 'source_wavelength_nm': '0.699999988', 'delta': '0.000114859526', 'beta': '4.32477054E-06', 'n_decimal': ['0.999885140474', '0.00000432477054'], 'epsilon_decimal': ['0.9997702941220070727210241084', '0.00000864854759781143367192'], 'source_kind': 'user_supplied/user_authorized', 'source': {'review_path': 'docs/task042_neural_coarse_inverse/review_report_v4.md', 'review_commit': '18084a6213570e26a0a0941e628717f2c63fd00a', 'review_blob': 'a0e0c106970eab91271d61981810544146c4a32f'}, 'alias_reason': 'Review V4 explicitly authorizes source 0.699999988 for nominal 0.7; no interpolation; solve uses nominal 0.7', 'time_convention': 'exp(-i omega t)', 'external_dataset_version': 'not_provided', 'n_loaded': [0.999885140474, 4.32477054e-06], 'epsilon_loaded': [0.9997702941220071, 8.648547597811433e-06], 'air_n': [1.0, 0.0], 'mu_r': [1.0, 0.0]}"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_repair1_air_residual_20261004T021206041847Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 16.583698443952017,
+      "sampled_tree_rss_peak_bytes": 321835008,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_repair1_air_residual_20261004T021206041847Z/summary.json",
+        "sha256": "b6f6e2c6d27cb3fba11282dd39d3e4f6e9e4a4ca5b8be97f1206f9f45557aaa0",
+        "bytes": 1916
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_repair1_air_residual_20261004T021206041847Z/supervision/worker.log",
+        "sha256": "339cd69abe99e28102e7a639f7e736dce37c701e40d6796e25759f22c481b793",
+        "bytes": 348
+      },
+      "last_log_lines": [
+        "-1 {'original_relative_residuals': [7.68239211673301e-12], 'factor_count': 1, 'maximum_defect_corrections': 3, 'accepted_relative_residual': 7.68239211673301e-12}",
+        "1 {'original_relative_residuals': [8.527826100766301e-12], 'factor_count': 1, 'maximum_defect_corrections': 3, 'accepted_relative_residual': 8.527826100766301e-12}",
+        ".",
+        "1 passed in 14.84s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_repair1_contracts_20261004T021317970402Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.9945349750341848,
+      "sampled_tree_rss_peak_bytes": 59035648,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_repair1_contracts_20261004T021317970402Z/summary.json",
+        "sha256": "84994d5929737c358b752ba1d4c7ab45faa7cc3633d3251ace2ea8340ae8f242",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_repair1_contracts_20261004T021317970402Z/supervision/worker.log",
+        "sha256": "b2bb7c736fd764c58b5c084c02be00c2655a150d19312641f7648c97349df7df",
+        "bytes": 99
+      },
+      "last_log_lines": [
+        "..............                                                           [100%]",
+        "14 passed in 0.10s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_repair2_contracts_final_20261004T022514786874Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.8974704629508778,
+      "sampled_tree_rss_peak_bytes": 52826112,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_repair2_contracts_final_20261004T022514786874Z/summary.json",
+        "sha256": "242a9cd9e7d200b0f028d3a93e4a7cc4a87562543e62cce01b2b45946873bc4b",
+        "bytes": 1901
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_repair2_contracts_final_20261004T022514786874Z/supervision/worker.log",
+        "sha256": "5253e80b353eafb2bccda07d101ced479115b8bc5629c309ae9b4ac661d72a5f",
+        "bytes": 142
+      },
+      "last_log_lines": [
+        "14 files left unchanged",
+        "All checks passed!",
+        "...............                                                          [100%]",
+        "15 passed in 0.13s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_repair2_port_and_partial_final_20261004T022500305331Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 2.6374644440365955,
+      "sampled_tree_rss_peak_bytes": 265539584,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_repair2_port_and_partial_final_20261004T022500305331Z/summary.json",
+        "sha256": "af74dab220d097403ffe5e3a45842bf45ee5f76a617886b6781f81b1cf1b8857",
+        "bytes": 1902
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_repair2_port_and_partial_final_20261004T022500305331Z/supervision/worker.log",
+        "sha256": "8b270750318c7246402c0a78f495c7f173fe7c79839f0a802065bb9e35ae1749",
+        "bytes": 536
+      },
+      "last_log_lines": [
+        "......                                                                   [100%]",
+        "6 passed in 0.12s",
+        "{\"schema\": \"fixed_phase.saved_port_scale_check.v1\", \"source_field\": \"V20 failed O3 raw CSR\", \"matrix_rhs_hash\": \"7c43ab2e3a9f4d2afbe124ca8148875b10d6a02ac38bc562bccbc68eeacc133c\", \"nnz\": 3554116, \"shape\": [15892, 15892], \"phase_min\": 1.9056646052565524e-84, \"H_min\": 5.815941294018401e-168, \"pairs\": [1.2120282738430013e-17, 1.0593769713477508e-17, 1.0214463088046499e-17], \"passed\": true, \"new_FE\": 0, \"new_factors\": 0, \"new_solves\": 0}"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_repair2_port_coordinates_20261004T022256569411Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 1.9146116559859365,
+      "sampled_tree_rss_peak_bytes": 65040384,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_repair2_port_coordinates_20261004T022256569411Z/summary.json",
+        "sha256": "f0de4929b4a4d1f510214f1082bdea2f04150006a1bdde76536f04cdf8c15f7c",
+        "bytes": 1905
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_repair2_port_coordinates_20261004T022256569411Z/supervision/worker.log",
+        "sha256": "a6937c336950cd459bc590560a715f9bb6be80f97567f7978864bc21c207b765",
+        "bytes": 478
+      },
+      "last_log_lines": [
+        "  File \"/tmp/task42_v20_port_check.py\", line 14, in <module>",
+        "    phase=np.asarray([np.exp(1j*complex(m['k_vector'][2])*(6.7407407407407405 if m['side']=='top' else -0.5185185185185185)) for m in idx['modes']])",
+        "                                ^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "TypeError: complex() first argument must be a string or a number, not 'dict'"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_zero_rhs_regression_20261004T030408535405Z",
+      "classification": "PRE_WORKER_ADMISSION_REFUSAL",
+      "summary": "NOT_RETAINED"
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_zero_rhs_regression_readmit1_20261004T030554826705Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 3.8361698599765077,
+      "sampled_tree_rss_peak_bytes": 323559424,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_zero_rhs_regression_readmit1_20261004T030554826705Z/summary.json",
+        "sha256": "c39f2ab94d51e912d3a0faffd6cbf5a0d20fd2a469d4a24eb5ea7058015524e9",
+        "bytes": 1943
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_zero_rhs_regression_readmit1_20261004T030554826705Z/supervision/worker.log",
+        "sha256": "26b3f000d277d511b5a69c3aea6ced58dfa0d66ed726b6879339f46c6152a6f2",
+        "bytes": 62
+      },
+      "last_log_lines": [
+        "zero_carrier_rhs_old_default_relative 0.0",
+        ".",
+        "1 passed in 2.12s"
+      ]
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_document_contracts_20261004T034742880146Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 3.2011564270360395,
+      "sampled_tree_rss_peak_bytes": 84967424,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_document_contracts_20261004T034742880146Z/summary.json",
+        "sha256": "086a3f2ba1bae0e03b2e33a91d9a86e3bceb619e3e0a274fdc1e765e34ce1fa9",
+        "bytes": 1920
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_document_contracts_20261004T034742880146Z/supervision/worker.log",
+        "sha256": "02021e4f8d38a3a15d7af3b5cfa14e7d24ed1b91473de95218a3b63118158efe",
+        "bytes": 1579
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_document_contracts_scoped_20261004T034823267977Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 3.2032886890228838,
+      "sampled_tree_rss_peak_bytes": 86368256,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_document_contracts_scoped_20261004T034823267977Z/summary.json",
+        "sha256": "73b1cdd74a2afd2b539717d67df75d51486c994992a865b4de517f8eb3558819",
+        "bytes": 1916
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_document_contracts_scoped_20261004T034823267977Z/supervision/worker.log",
+        "sha256": "fb5cb7243feea2e5943956db0dedc1a095009d6bc60bf1c449de5455539e8cca",
+        "bytes": 201
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_document_evidence_20261004T034622030951Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.915412864065729,
+      "sampled_tree_rss_peak_bytes": 68395008,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_document_evidence_20261004T034622030951Z/summary.json",
+        "sha256": "bbfd23adc59e9d09de435dd6052e0eb179390e7480d9c5698706f3e5241afc23",
+        "bytes": 1902
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v20_document_evidence_20261004T034622030951Z/supervision/worker.log",
+        "sha256": "b8cd72fed34758cf2d75e5169554aaf46900097e1931134875c3db785eba8dbb",
+        "bytes": 203
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_final_document_contracts_20261004T035038647196Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 3.2056166359689087,
+      "sampled_tree_rss_peak_bytes": 85987328,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_final_document_contracts_20261004T035038647196Z/summary.json",
+        "sha256": "6a289f16f7e05b1f80f6619a1a3305dcf0839ea61b4839043aa2837713752b56"
+      }
+    },
+    {
+      "path": "tmp/task42extra/checks/v20_record_binding_20261004T035011169557Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.8619891139678657,
+      "sampled_tree_rss_peak_bytes": 39661568,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v20_record_binding_20261004T035011169557Z/summary.json",
+        "sha256": "e1f7ec526aa8dace12e294b20e749e3831c2e2ac25f2505e965aa3c5607e7cb7"
+      }
+    }
+  ],
+  "new_v20_primary_artifact_bytes": 758288596,
+  "new_artifact_cap_bytes": 21474836480,
+  "numerical_tree_peak_bytes": 4929130496,
+  "hard_numerical_tree_bytes": 17179869184,
+  "warn_numerical_tree_bytes": 12884901888,
+  "light_tree_limit_bytes": 2147483648,
+  "sampling_seconds": 0.5,
+  "continuous_kernel_hard_cap_claim": false,
+  "unsampled_control_shell_peak": "NOT_MEASURED",
+  "own_swap_measured_zero": true,
+  "OOC": 0,
+  "new_Gram_factors": 0,
+  "new_NN_training": 0,
+  "global_Maxwell_factor_use": "3 real B factors plus explicitly separated small analytic fixture LUs; O6 no factor",
+  "old_project_exact_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS_RETAINED",
+  "old_lost_3284_seconds_preserved": true,
+  "resource_refusals": [
+    {
+      "stage": "v20_zero_rhs_regression",
+      "status": "RESOURCE_WINDOW_UNAVAILABLE",
+      "exception": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+      "no_numeric_worker_started": true,
+      "resource_gate_unchanged": true,
+      "attempt_start_utc": "2026-10-04T03:04:08.535405Z",
+      "failure_instant": "NOT_RETAINED",
+      "cpu_detail_at_failure": "NOT_RETAINED",
+      "exception_source": "actual supervise_task42extra traceback from tool output"
+    }
+  ],
+  "new_window": {
+    "path": "tmp/task42extra/v20/new_window_1.json",
+    "sha256": "9c0b098aa3fe1f51fabcb5c573e568cb11fa59413bc36b7089255b17eddc417a",
+    "bytes": 188152
+  },
+  "observation_scope": "Full wall from first reading through this pre-publication snapshot; later render/Git/notification tail will be sealed separately, not claimed measured yet",
+  "compact_collect": {
+    "path": "tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z/summary.json",
+    "sha256": "b77e788b743d99df651fec7b489a98c763f1d5e3f684ba46d0844b5d5030a395",
+    "bytes": 1902
+  },
+  "light_runs_at_collect_snapshot_exclude_collector_and_future_doc_render": true,
+  "global_Maxwell_numeric_and_solve_counts": {
+    "O3_first": 1,
+    "O3_repair": 1,
+    "E3": 1,
+    "O6": 0,
+    "E4": 0
+  },
+  "C_diagonal_port_recovery_calls": 8,
+  "C_fresh_Maxwell_or_Gram_factors": 0
+}
