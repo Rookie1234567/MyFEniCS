@@ -185,6 +185,30 @@ def test_checker_requires_all_24_frozen_final_states():
         require_inventory(rows[:-1])
     with pytest.raises(ValueError):
         require_inventory(rows + [dict(rows[0])])
+    with pytest.raises(ValueError):
+        require_inventory(rows + [{"split": "train", "sample": 0, "route": "R0"}])
+
+
+def test_checker_binds_current_RHS_and_complete_independent_slave_inventory():
+    from benchmarks.check_neighborhood_residual import require_frozen_input
+
+    rhs = np.array([1 + 2j, 2 - 1j, 0j])
+    arrays = {
+        n: rhs.copy() for n in ("rhs", "initial", "initial_residual", "z", "residual")
+    }
+    independent, slaves = np.array([0, 1]), np.array([2])
+    assert require_frozen_input(arrays, rhs, independent, slaves)
+    bad = dict(arrays, rhs=2 * rhs)
+    with pytest.raises(ValueError, match="RHS differs"):
+        require_frozen_input(bad, rhs, independent, slaves)
+    with pytest.raises(ValueError, match="coverage"):
+        require_frozen_input(arrays, rhs, np.array([0, 0]), slaves)
+    with pytest.raises(ValueError, match="coverage"):
+        require_frozen_input(arrays, rhs, np.array([0]), slaves)
+    with pytest.raises(ValueError, match="finite complete"):
+        require_frozen_input(
+            dict(arrays, z=np.array([complex("nan"), 0, 0])), rhs, independent, slaves
+        )
 
 
 def test_no_reference_training_reader_contract():

@@ -759,17 +759,40 @@ def evaluate(folder, budget):
 
 
 def check(folder, budget):
-    from benchmarks.check_neighborhood_residual import audit_state, require_inventory
+    from benchmarks.check_neighborhood_residual import (
+        audit_state,
+        require_frozen_input,
+        require_inventory,
+    )
 
     row, _ = stage("EVALUATE")
     require_inventory(row["rows"])
     ds, _ = stage("DATA")
+    frozen_rhs = read_arrays(ds["RHS"]["heldout"])["rhs"]
+    for route, label in (("R-NN", "TRAIN_NN"), ("R-LIN", "TRAIN_LIN")):
+        training, _ = stage(label)
+        receipt = training["selected"]["receipt"]
+        if (
+            row["frozen_model_hashes"][route] != receipt["sha256"]
+            or sha(receipt["path"]) != receipt["sha256"]
+        ):
+            raise ValueError(
+                "heldout candidate model differs from frozen validation selection"
+            )
     errors = read_arrays(ds["sealed_errors"]["heldout"])["error"]
     _b, graph = graph_packet()
+    if frozen_rhs.shape != errors.shape or frozen_rhs.shape != (
+        8,
+        int(graph["shape"][0]),
+    ):
+        raise ValueError("complete heldout DATA/reference/native inventory")
     action = load_action(budget)
     audited = []
     for item in row["rows"]:
         arrays = read_arrays(item["state"])
+        require_frozen_input(
+            arrays, frozen_rhs[item["sample"]], graph["independent"], graph["slaves"]
+        )
         # Each explicit checker replay remains an original A action and is billed.
         actual = budget.call(
             action.matrix.__matmul__, arrays["z"], kind="independent_frozen_checker_A"
@@ -786,6 +809,9 @@ def check(folder, budget):
         checks["saved_residual_consistent"] = ratio(
             arrays["residual"], arrays["rhs"] - actual
         )["passed"]
+        checks["frozen_rhs_identity"] = True
+        checks["complete_row_coverage"] = True
+        checks["frozen_model_identity"] = True
         if item["route"] != "R0":
             phase = ratio(arrays["phase_correction"], 1j * arrays["initial"])
             amplitude = ratio(arrays["amplitude_correction"], 3.2 * arrays["initial"])
