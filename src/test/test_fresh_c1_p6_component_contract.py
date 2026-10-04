@@ -359,8 +359,9 @@ def test_boundary_oracle_uses_nested_profile_before_numerical_work(
               "cfg": Config(), "setup": object(), "dtn_phase_gauge": BOUNDARY_PLANE,
               "modes": modes, "mode_sha256": manifest_sha}
     expected_sha = "wrong-full-manifest" if wrong_expected else manifest_sha
+    record_path = tmp_path / f"{runtime_profile}-{wrong_expected}.json"
     call = lambda: qualification.qualify_fresh_c1_p6_boundary_plane_bundle(
-        bundle, record_path=tmp_path / f"{runtime_profile}-{wrong_expected}.json",
+        bundle, record_path=record_path,
         expected_physical_manifest=expected_sha, expected_ordered_keys=ordered_keys)
     if wrong_expected:
         with pytest.raises(ValueError, match="differs from the qualified runtime profile"):
@@ -368,6 +369,11 @@ def test_boundary_oracle_uses_nested_profile_before_numerical_work(
     else:
         with pytest.raises(ReachedAfterProfileComparison):
             call()
+    failed_packet = json.loads(record_path.with_name("failed_live_component.json").read_text())
+    if runtime_profile == "local_wsl2_authorized":
+        assert failed_packet["runtime_profile"] == runtime_profile
+    else:
+        assert "runtime_profile" not in failed_packet
 
 
 
@@ -478,6 +484,8 @@ def test_runner_checker_cli_forwards_the_qualified_receipt_profile(monkeypatch, 
     assert runner._checker_cli(tmp_path, tmp_path / "abi_receipt.json") == 0
     assert received["runtime_profile"] == runtime_profile
     assert json.loads((tmp_path / "checker_report.json").read_text())["independent_component_pass"] is True
+
+
 
 def test_pyvista_postprocessing_import_is_deferred_to_plot_callsite():
     source = Path(__file__).parents[1] / "solvers" / "solve_vector_maxwell.py"

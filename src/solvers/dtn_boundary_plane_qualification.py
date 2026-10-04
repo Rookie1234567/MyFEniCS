@@ -343,6 +343,8 @@ def qualify_fresh_c1_p6_boundary_plane_bundle(
         modes = tuple(bundle["modes"])
         assert len(modes) == len(carrier.entries) == 532
         degree_profile = profile["fresh_c1_profile"]
+        if "runtime_profile" in degree_profile:
+            base_identity["runtime_profile"] = degree_profile["runtime_profile"]
         if (expected_physical_manifest != degree_profile["physical_generator_manifest_sha256"]
                 or bundle["mode_sha256"] != expected_physical_manifest
                 or carrier.physical_generator_manifest_sha256 != expected_physical_manifest):
