@@ -18,7 +18,13 @@ from pathlib import Path
 from benchmarks.subreaper_watchdog import supervise
 from src.io.port_preparation import ARTIFACT, PLAN, ROOT, read_stage
 from src.runners.diagnostic_storage import inventory_paths
-from src.runners.task042_shared import SharedHealth, audit, shared_envelope, write_json
+from src.runners.task042_shared import (
+    SharedHealth,
+    _json_metadata,
+    audit,
+    shared_envelope,
+    write_json,
+)
 from src.solvers.port_preparation_window import implementation_hashes, window
 
 
@@ -342,6 +348,10 @@ def launch(
             ]
             if namespace in ("v41", "v42") and ranks > 1:
                 command = ["mpiexec", "--bind-to", "none", "-n", str(ranks), *command]
+        # RunSpecification deliberately freezes nested mappings. Normalize the
+        # live source envelope too: write_json converts a copy, while supervise
+        # receives this object and must serialize its own final receipt.
+        state = _json_metadata(state)
         write_json(folder / "run_manifest.json", state)
         window.begin(role, folder, source)
         result = supervise(

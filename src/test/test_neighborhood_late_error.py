@@ -301,3 +301,25 @@ def test_consistent_adam_restore_independent_reload(tmp_path):
     assert parameters_hash(model) == parameters_hash(other)
     with pytest.raises(ValueError, match="boundary"):
         restore(other, otheropt, dict(record, completed_update=4))
+
+
+def test_live_supervision_mappingproxy_not_only_writer():
+    import json
+    from types import MappingProxyType
+
+    from src.runners.task042_shared import _json_metadata
+
+    live = {
+        "source": "abc",
+        "training_resume": MappingProxyType(
+            {"path": "checkpoint.json", "sha256": "123"}
+        ),
+    }
+    with pytest.raises(TypeError, match="mappingproxy"):
+        json.dumps(live)
+    fixed = _json_metadata(live)
+    assert json.loads(json.dumps(fixed)) == {
+        "source": "abc",
+        "training_resume": {"path": "checkpoint.json", "sha256": "123"},
+    }
+    assert isinstance(live["training_resume"], MappingProxyType)
