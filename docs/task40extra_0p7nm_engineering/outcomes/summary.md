@@ -1,4 +1,4 @@
-# Task40extra Review V7 进行中 / V6-V4 历史总账
+# Task40extra Review V7 补充执行收口待审 / V6-V4 历史总账
 
 ## Review V6：Gx784 单次运行与保存场后处理收口
 
@@ -347,18 +347,40 @@ attempt3 的独立 elapsed 和必要人工修复工时都是 unknown，不能由
 - [测试摘要](test_summary.md)
 - ignored raw attempt4 artifacts 位于 run index 所列 results 路径。
 
-## Review V7 当前执行状态（尚未收口）
+## Review V7 W0 实际补充执行收口（待审，目标未实现）
 
-| 项目 | 当前状态 | 结果与限制 |
+本次补充执行已在时间与实现失败边界收口，等待审阅；不自动继续 W1/W2。W0 进入 p6-only setup，生成 8 门 `PASS_COMPONENT_ONLY` same-live receipt 后，worker 在 tuple/list mode identity guard 处 exit 1，未到 full p6 component worker/raw export。修复版 public validator 在 native 主机上对保存 JSON 的 list、tuple 身份形式都通过；主线仅捕获并 hash-check 了 stdout。没有 p6 科学 tensor/场数组、independent tensor/CSR checker、full A6 residual 或 official R/T/A。目标尺寸继续 **NO-GO**。
+
+| 阶段/对象 | 结果 | 数据身份与边界 |
 |---|---|---|
-| AUTO 清单 | `reused_verified_inventory` | original/repair 仍是同一 32,060-key 清单；manifest SHA256 `52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d`，ordered-key digest `03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec`；本轮未重跑生成器。 |
-| 单一原尺寸计数候选 | `derived_only` | 272×4×14=15,232 六面体；不是已生成或资格化的网格。 |
-| W0 工作站组件 | `BLOCKED_BEFORE_FE; pinned-source import closure failed` | native ABI/identity 原始收据核验通过；三个浅导入通过后，真实命令 `python -c 'import src.solvers.dtn_port_3d'` 在 `5be1210…` 因缺少 `pyvista` exit 1。W0 FE start `NOT_REACHED`，component/dry admission/worker/checker/physics/raw archive 均 `NOT_RUN`。trace/closure SHA 与 packet 见[收据索引](records/native_w0_handoff_4c98a859/handoff_index.json)。 |
-| 原生宿主窗口 | `HELD; NOT_ATTEMPTED` | 03:35:29Z `MemAvailable=2,089,370,224 KiB`（约 `2.1395e12 B`），没有显示容量不足；Task42 进程组在 03:34:11Z 前后已消失，Metrology 仍活动，故本次没有满足单 heavy/空闲窗口准入。这是合同窗口未资格化，不是已测容量失败。SwapUsed 基线/末次都为 21,600 KiB，基线时间未知；相等值只给出 derived 0 KiB差值，不能归因给 Task40，page-in/out 增量未知。 |
-| W1 原尺寸 AUTO 成本 | `not_run; conditional` | 等待 W0 数值通过并补最小入口。读取存档 manifest，不生成清单；完整 keys 不抽样。16 GiB Gate 必须纳入 `Di@XiB/Hhat`、输入/借用/BLAS 暂存/输出/检查器的并存对象；若现有受限表示无法在界内测量，则 controlled stop。 |
-| W2 全阶 p6 周期对照 | `not_run; conditional` | 等待 W0、C1c raw 和完整 p6 链入口。 |
-| 原尺寸完整求解 | `NO-GO` | AUTO 接线、全 q 因子及并存、p6 完整恢复、精度与端到端成本尚未闭合。 |
+| W0 p6-only setup | `FE_REACHED; eight component gates PASS_COMPONENT_ONLY` | 80 cells（4×4×5），degree `{6}`、532 ordered modes、φ=5°；输入文件名中的 `q4` 配置标签未由本 probe 执行为四个 q 或因子 |
+| W0 worker | `WORKER_FAILED`, exit 1 | tuple/list ordered-mode identity guard；wall `196.762108860 s` / per-worker limit `199.490712881 s`；不是 time/resource/solver failure |
+| 收据 validator | native list/tuple 两次 PASS | same-live JSON 的纯身份/字段重验；非本地主机执行，非 worker replay，FE/JIT 未运行 |
+| full p6 worker / scientific raw | `NOT_REACHED` / `NOT_CREATED` | `raw_member_count=0`；p6 tensor/FE field arrays 未生成，独立 tensor/CSR checker 未运行 |
+| W1 / W2 | `NOT_RUN` | 本次补充执行不会自动继续；W0 full qualification 未完成，W2 另缺 C1c 与完整 p6 链 |
+| 原尺寸 full solve | `NO-GO` | AUTO 接线、全部 q 因子、完整恢复、精度与端到端成本未闭合 |
 
-已把 Gx784 的独立 run/source/input/model/mesh 身份及它与 G10/Gx560、G11/F5 的两条已通过 tested-x 配对，链接到原四角接口包；原四角物理签名与四角结果没有改写。详见 [V7 Gx784/四角身份链接](records/review_v7_gx784_four_corner_link_v1.json)。V7 增量预算独立于 V6 历史账本，W0/W1/W2 上限分别为 14,400/7,200/21,600 s；完整准备起点与 monotonic/boottime 计时未保存，W0 已用和总剩余仍为 unknown/null，不是零。packet 只支持局部 UTC-derived 片段，不把安装时长或 FE 运行费记入 W0；V6 历史 settled debit 5,428.582334 s 保持不变，详见 [V7 增量工作流账本](records/review_v7_incremental_workflow_ledger.json)。完整包 SHA256 `4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d`、113,898 B、19 个成员均核验；ignored packet/member 与 13 份 tracked raw 收据的路径/hash 见 [原生 W0 交接索引](records/native_w0_handoff_4c98a859/handoff_index.json)。没有 FE 数值结果，所以本轮不新增模型登记或改写既有 Gx784/G10/G11 模型结论。
+### 保存组件纯校验结果
 
-W1 当前仍无真实 `--help`、无 FE 控制链和完整 keys 对照收据；完整 32,060×32,060 complex128 `Di@XiB/Hhat` 的单一结果载荷为 16,445,497,600 B，在 16 GiB W1 范围内不能脱离输入、副本、其他缓存和写出并存状况单独准入。完整执行状态及 known/derived/unknown 对象账见 [Response V7](../response_v7.md)。资格化 WSL activation 的文档合同定向测试 24 passed；本轮不运行 FE、MPI 多进程或全仓 pytest。W0 本次阻塞已在 FE 前收口，V7 整体仍未关闭。
+| 组件门 | 重算最大 defect/ratio | 限值 | 结果 |
+|---|---:|---:|---|
+| C/D/H 与 raw action 等价 | `3.5931818134322393e-14` | `1e-10` | PASS |
+| 532-mode full-DOF rank-one bound | `2.4672054282185927e-13` | `1e-10` | PASS |
+| 五状态 action/recovery/output | `3.099637928778201e-14` | `1e-10` | PASS |
+| 物理 FE RHS literal defect | `1.7324712509441664e-14` | `1e-10` | PASS |
+| 非零端口 mode equation defect | `1.8654147652106162e-14` | `1e-10` | PASS |
+| transform gate ratio | `3.4637921787560976e-6` | `1` | PASS |
+
+这是保存组件收据的重算，不是全域方程 residual 或物理 R/T/A。求积数据是 4 个 facet identity records（两侧 × 两分量、相同节点）与 8 个独立身份比对，不表示执行四个 q cases。
+
+### 资源、历史 attempt 与时间
+
+- 当前 worker 的同时进程树 RSS peak 为 `1,408,434,176 B`，采样间隔约 `0.25 s`；PSS disabled/null；task swap `0 B`。native host preexisting swap `21,600 KiB`，不构成整机 zero-swap 资格。8 GiB raw-export 上界 `6,900,030,936 B` 是导出预算，不是 RAM/RSS。
+- 两次 pre-FE worker fail 分别耗时 `2.026239892 s`（missing `src`，RSS `287,481,856 B`）及 `2.090595266 s`（live subreaper identity gate，RSS `290,197,504 B`）；当前 worker `196.762108860 s`。三次 worker elapsed 小计 `200.87894401792437 s`，不包含 `preflight_6bbc` shell/activation blocker，其耗时/收费 unknown。完整准备与 W0 总收费仍 null。
+- 四小时 policy cutoff `06:41:49Z` 与 FE 启动 deadline `10:07:14Z` 分开；FE 在启动 deadline 前开始，worker 在 policy cutoff 前退出且 time gate false。policy 窗是派生 allowance，不是实测准备时间；现已到期，不启动新 FE。V6 debit `5,428.582333962078 s` 不变。
+
+native 侧 36 份支持收据 `5,757,491 B` 有逐文件 SHA 和 copy/fsync/readback；原 35-member 包 `47,078 B` 是日志/ABI/资源/测试收据，不是 tensor/场数据。worker 在 raw 导出前失败，科学 p6 tensor/场原始数据没有生成；收据跨窗传输受限是另一项事实。native JIT 64 files、`1,220,807,231 B` 留在原路径。细节见 [actual-run record](records/native_w0_actual_run_v1.json)、[test summary](test_summary.md) 与 [response V7](../response_v7.md)。
+
+5f74 提交中的完整旧 pre-FE ledger 与旧完整 response 均有独立、hash-bound 原文快照：[ledger snapshot](records/review_v7_prefe_snapshot_5f74e15.json)（10,566 B，SHA256 `e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20`）及[旧 response snapshot](../response_v7_prefe_snapshot_5f74e15.md)（12,983 B，SHA256 `922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5`）。旧 response 中目标/AUTO/W1/H 成本账与历史负结果保留完整；早期 source authorization/no-PID/held 仅属历史时点。
+
+本地文档合同 suite 使用 `scripts/activate_myfenics_wsl.sh` 的 `.venv`、PETSc 3.19/Open MPI 4.1.6 旧栈；最终输出见 test summary，不代表 native W0 ABI 或 PDE。native focused `40 passed, 10 skipped` 与两次 public validator PASS 均是已有 native 回执，不代表 PDE 或 raw checker 通过。数值代码仍以 `5f74e15fae6e01e4361325db162806a7319ba3f4` 为基线；主控审核后统一提交推送并回读最终 HEAD。

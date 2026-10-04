@@ -6,6 +6,23 @@
 
 Gx784 的 p6 是实际完整场方程，p4 是迭代校正系统；后者减少校正系统规模但仍需装配、因子化和重复动作。两组共同坐标场比较、340 个有序模式、能量 Gate、postprocess 资源、预算与原始 artifact hashes 见 [Response V6](task40extra_0p7nm_engineering/response_v6.md)、[V6 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。original 与 repair AUTO 库存仍没有目标生命周期成本或 2 TB 容量结论。原尺寸仍 NO-GO；dot / workstation qualification 不在本轮范围；ordinary default 未改，master 未合并。
 
+
+## Review V7 W0 实际组件执行记录（非PDE模型登记）
+
+这次小型运行用于检查工作站自己的 complex PETSc/FEniCS ABI、p6 组件 action、恢复和端口 RHS 接线。它确实进入 FE setup，但并未完成完整 Maxwell PDE。8 门 same-live receipt 的组件结果通过；worker 在 full p6 component worker/raw export 前因 tuple/list mode identity validation bug 退出，因此没有 p6 tensor/FE field、独立 tensor/CSR checker、full residual 或 official R/T/A。该记录是 Task40 的工程组件负结果，不新增成功物理模型，也不改变下面 Review V6 Gx784 的既有结论。
+
+| 项目 | 实测/重算值 | 分类与边界 |
+|---|---|---|
+| native 执行端独立 ABI / fixture | 80 cells（4×4×5）、p6-only degree set {6}、532 modes、φ=5°；输入文件名含 q4 配置标签，但本 probe 未执行四个 q 或 q 因子；PETSc 3.25.6 complex128/int32、DOLFINx/Basix 0.10.0、MPC 0.10.5、MPICH 5.0.1、MPI1/线程1 | actual fresh p6 setup；input SHA `6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e` |
+| same-live receipt | 8 named gates；C/D/H/action `3.5931818134322393e-14`；full-DOF bound `2.4672054282185927e-13`；五状态 action/recovery/output `3.099637928778201e-14`；physical FE RHS `1.7324712509441664e-14`；nonzero port equation `1.8654147652106162e-14`；transform ratio `3.4637921787560976e-6` | `PASS_COMPONENT_ONLY`；来自保存 receipt 纯重算，限值 `1e-10`（ratio 限1）；不等同 PDE/residual/RTA pass |
+| worker | wall `196.762108860 s`；exit 1；tuple/list ordered identity guard；剩余 `2.746385813 s` 至 worker cutoff | `WORKER_FAILED_IMPLEMENTATION_BUG`；不是 deadline/resource/solver failure；完整 worker 未到达 |
+| 同时资源 | process-tree RSS `1,408,434,176 B`；PSS disabled/null；task swap `0 B`；native host preexisting swap `21,600 KiB`；resource gate false | 只限该 worker 树；8 GiB evidence export upper bound `6,900,030,936 B` 不是 RSS |
+| scientific raw / official outputs | p6 tensor/FE field arrays 未生成；raw export `NOT_REACHED`；independent native tensor/CSR checker、full A6 residual、R/T/A 均 `NOT_RUN` | 原始 scientific data 不存在；35-member receipt package 是 logs/ABI/resource/test receipts，不是 tensor/field |
+
+已修复版本 public validator 对同一保存 JSON 的 list 与 tuple identities 均离线 PASS；该校验不重跑 FE。冻结预算 manifest `benchmarks/fresh_c1_p6_w0_budget.json` SHA256 `533930676db07f7a145e0e6b71eacd198288bea92717bf7a8ba91fe9d16a9b81` 分开限定 8 GiB raw-member 磁盘载荷上限与 3 GiB process-tree memory cap；worst-case member upper bound `6,900,030,936 B` 是 derived，不是实测。旧 checker fixture 中的 512 MiB mismatch rejection 仍保留。native 侧 36 份支持收据 `5,757,491 B` 有逐项 hash 与 fsync/readback；JIT 64 文件 `1,220,807,231 B` 原地保留。主线未收到完整原始 p6 tensor，因为 worker 在导出前失败；支持收据跨窗传输受 auto-review 限制是另一项边界，不是 raw arrays 缺失的原因。
+
+证据：[W0 actual-run record](../docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_actual_run_v1.json)、[V7 response](../docs/task40extra_0p7nm_engineering/response_v7.md)、[run index](../docs/task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[incremental ledger](../docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json)、[prefe snapshot](../docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_prefe_snapshot_5f74e15.json)。原尺寸继续 NO-GO；W1/W2 未运行。
+
 ---
 
 # Task40extra 历史模型登记：Review V5 Gx784 工程失败收口

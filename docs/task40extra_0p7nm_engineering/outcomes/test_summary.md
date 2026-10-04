@@ -158,3 +158,27 @@ Review V2的正式F1/F2/F3/F5/E1/E2计算发生在此前campaign阶段，见run_
 保留的辅助诊断也按实际类型分类：两次 readback 误报分别是 lexical venv Python 与 resolved symlink 被错误要求相同路径，以及假设 `dolfinx_mpc.__version__` 存在但模块未提供该属性；分别改用 prefix 同源核对和 conda-meta/dist-info 版本证据后通过，均未重建环境。只读 `micromamba list` 与 `micromamba --version` 查询曾以 `tl::bad_expected_access` 失败；包事实由 conda-meta 读取，版本查询未生成 core dump（`ulimit -c=0`），canonical repo 状态复查未变。这些是读取/断言诊断，不等于 ABI 或 package 环境失败。
 
 原生 packet 文档收尾后，资格化 activation 轻量 preflight 再次通过；相同的三文件文档/模型注册/回顾合同 suite **24 passed in 0.05 s**。最小交叉 hash/index 检查通过：run index 的 response、增量账、四角父接口、V4/V6 历史引用和 handoff index 指针一致；packet 为 113,898 B、SHA256 匹配，19 个 artifact 成员及 14 个 tracked receipts 的长度/哈希匹配；W0/W1/W2 与 V6 settled debit 状态一致；`git diff --check` 通过。首个检查脚本自身曾把仓库相对路径再交给 `Path.relative_to(root)`，在文件校验开始前因 `ValueError` 退出；没有改写文件或触及证据。修正为根目录路径拼接后，上述检查通过。该脚本处理错误不是项目、packet 或数值失败。
+
+## Review V7 W0 实际运行与离线收口（2026-10-04）
+
+| 检查 | 命令/来源 | 结果 | 范围与边界 |
+|---|---|---|---|
+| Native 16-module import closure | earlier native startup preflight at source `74bfcddf52cc97b518e71154dc47d59654fd4a8e`; formal W0 run source `4b89d7f922bda3859048d20714557ac0cf07ffc6` used its own fresh ABI receipt; metadata-only identity fix `5f74e15fae6e01e4361325db162806a7319ba3f4` did not rerun the 16-module closure | 16-module closure passed at the earlier preflight; the 4b89 W0 startup ABI receipt passed independently; 5f74 explicitly reran the saved-receipt public validator in list and tuple forms | Import closure is historical startup evidence, not a new 5f74 test or FE/solver pass |
+| Runner scope / degree gate | Read-only inspection of `benchmarks/run_fresh_c1_p6_component.py` at SHA `7290d392a9ac4c00b1bc1a3f070da947b62414865b29faac8f07814315a3ef36` | degree tuple `(6,)`; asserts `spaces == {6}` and `floquets == {6}` | Confirms p6-only setup; filename/config `q4` label was not run as four q branches; no p4 or q factors |
+| W0 frozen budget manifest | `benchmarks/fresh_c1_p6_w0_budget.json`, SHA256 `533930676db07f7a145e0e6b71eacd198288bea92717bf7a8ba91fe9d16a9b81` | raw-member disk cap `8,589,934,592 B`; derived worst-case `6,900,030,936 B`; margin `1,689,903,656 B`; separate process-tree cap `3,221,225,472 B` | Derived admission contract; not measured output/RSS/capacity; legacy checker assertion still expects 512 MiB and was not changed |
+| Native focused component suite | `python -m pytest -q -p no:cacheprovider src/test/test_fresh_c1_p6_component_contract.py src/test/test_fresh_c1_p6_native_tensor_checker.py` | `40 passed, 10 skipped in 0.39 s` | 10 项因 archive fixtures unavailable 而 skip；未对原始 tensor/CSR 数据执行 checker，且该 raw 未生成 |
+| Actual W0 worker | native run `w0_20261004T0638Z_4b89d7f` | `WORKER_FAILED`, exit 1，tuple/list mode identity guard；196.762108860 s，RSS peak 1,408,434,176 B，task swap 0 | fresh setup 与 same-live component receipt 已生成；full p6 worker/raw export 前退出，不是 time/resource stop |
+| Saved-receipt public validator: list | 捕获 native stdout `/tmp/task40_w0_fix5f74_list_tuple_stdout.json` | PASS；1.411307457 s 内部 / 1.58 s outer，46,796 KiB max RSS | JSON list 身份；FE/JIT/mesh/form/matrix/factor/PDE 均 NOT_RUN |
+| Saved-receipt public validator: tuple | 同一 stdout 与同一 receipt SHA | PASS；1.404511847 s 内部 / 1.58 s outer，47,108 KiB max RSS | Python tuple 身份；离线验证，不是 worker 重放或 scientific raw checker |
+| Captured validator stdout identity | root readback of native public validator stdout `/tmp/task40_w0_fix5f74_list_tuple_stdout.json` | `1,951 B`; SHA256 `b563cbce296c0740b707aa48394bc3fd15cb8cdbc5a89dbb6f473db5e01a8c89` | validator SHA `aec3ae90634ce8ef0f18d3490097e331f863dc56cc4d978c0e2244a22af4673d`; qualification SHA `fb572d7f1ab6f0e5bc2b94cc14bbb3d9a3bd9d1c6b637aa59a7926121c5ddfdb` |
+| 本地文档合同 suite | `source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py` | `24 passed in 0.05 s` | 使用本地旧 PETSc 3.19/Open MPI 4.1.6 activation，仅测文档合同；不代表 native W0 ABI 或 PDE |
+| Snapshot, packet 与 compact hash | qualification activation 下的单次 Python hash/index 合同检查 | PASS | 5f74 ledger snapshot byte-equal 到 commit blob；small packet archive 与 3 JSON members 的长度/SHA 匹配；native 36-file copy/readback 由本地 manifest 逐项报告，但原 member bytes/tensor arrays 不在主线 |
+| `git diff --check` | 仓库根目录 | PASS after final content edits | 纯文本空白检查；不提供 Markdown GitHub rendered-view 证明 |
+
+Native component-only receipt 的重算 Gate 数值、worker 失败位置、4 小时 policy cutoff 与 10:07:14Z launch deadline 的区别、scientific raw 不存在的原因见 [Response V7](../response_v7.md) 与 [actual-run record](records/native_w0_actual_run_v1.json)。
+
+
+
+早期 native worker attempts 的 measured elapsed 子计时和 6bbc shell blocker 的 unknown cost 见 [Response V7](../response_v7.md) 与 [incremental ledger](records/review_v7_incremental_workflow_ledger.json)。三次 worker 仅小计 worker elapsed，不折算完整 W0 准备或收费。
+
+本轮离线证据身份进一步确认：原 35-member 包（47,078 B，SHA256 `d5f934e09e034b1349c2860948e1dc91ec24c9670ba6dd5939a01bc8e6379f62`）是运行日志/ABI/资源/测试收据，不是 tensor/场数据；native 侧 36 份支持文件共 5,757,491 B，逐文件 SHA 和 copy/fsync/readback 通过。worker 在 scientific raw export 前失败，原始 p6 tensor/field 数组根本不存在；另一次支持收据跨窗传输被 auto-review 拒绝后，没有尝试替代通道。JIT 64 files / 1,220,807,231 B 留在 native 原路径，未复制。

@@ -1,0 +1,188 @@
+{
+  "schema": "task40extra.review-v7.incremental-workflow-ledger.v1",
+  "status": "in_progress_controlled_block_before_FE_elapsed_unknown",
+  "created_utc": "2026-10-04T03:11:59Z",
+  "historical_v6_ledger": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
+    "sha256": "df6041ad118c4abcc805e367e789f2bf113975bf82de718b15c65cb40a09689e",
+    "workflow_budget_seconds": 172800,
+    "measured_elapsed_seconds": 5418.577512204991,
+    "settled_historical_debit_seconds": 5428.582333962078,
+    "disposition": "immutable historical V6 ledger; not rewritten or combined with the separate V7 research cap"
+  },
+  "v7_research_cap": {
+    "total_seconds": 43200,
+    "includes": [
+      "preparation",
+      "failed attempts",
+      "authorized repair replay",
+      "checker",
+      "raw write and cleanup"
+    ],
+    "stages": {
+      "W0": {
+        "maximum_seconds": 14400
+      },
+      "W1": {
+        "maximum_seconds": 7200
+      },
+      "W2": {
+        "maximum_seconds": 21600
+      }
+    },
+    "stage_budgets_transferable": false
+  },
+  "v7_accounting_now": {
+    "charged_seconds": null,
+    "remaining_seconds": null,
+    "reason": "Native W0 packet and all 19 member hashes are now locally verified. The packet has UTC-derived subintervals but no durable full-preparation start or monotonic/boottime timer; overall W0 elapsed/charge and total remaining stay unknown/null, not zero. No debit or reservation is imputed; historical V6 ledger remains separate and unchanged.",
+    "local_metadata_and_documentation_elapsed_seconds": null,
+    "local_metadata_time_policy": "not captured as a V7 research-stage clock; reconcile from authoritative receipt if the task contract charges it"
+  },
+  "stage_status": {
+    "W0": {
+      "status": "controlled_block_before_FE_pinned_source_import_closure_failed_resource_window_held",
+      "maximum_seconds": 14400,
+      "elapsed_seconds": null,
+      "reserved_seconds": null,
+      "actual_fe": "not_run",
+      "reported_host_facts": "At 2026-10-04T03:35:29Z MemAvailable=2089370224 KiB (~2.1395e12 B); Task42 process group absent by 03:34:11Z; Metrology training active. The required empty-heavy-work window was not qualified. This is a contract-window hold, not evidence of insufficient host capacity.",
+      "approved_dot_source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+      "new_dot_source_sha_pending_authorization": "077ec9c8386c976da232093779279fb9d1a93033",
+      "new_source_state": "077ec9c8386c976da232093779279fb9d1a93033 observed but not used; broader than PyVista import repair because it also changes native direction-byte authority/checker; source-upgrade authorization remains pending human response; no automatic retry or switch",
+      "native_abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
+      "latest_import_attempt": {
+        "utc_window": [
+          "2026-10-04T03:24:37Z",
+          "2026-10-04T03:24:38Z"
+        ],
+        "source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+        "command": "python -c 'import src.solvers.dtn_port_3d'",
+        "shallow_import_status": "IMPORT_CLOSURE_PASS_NO_FE_ACTION",
+        "delayed_import_chain": [
+          "dtn_port_3d",
+          "common_3d_utils",
+          "solve_vector_maxwell",
+          "postprocess",
+          "pyvista"
+        ],
+        "classification": "missing_pyvista_import_closure_failure_before_FE",
+        "exception": "ModuleNotFoundError: No module named pyvista",
+        "exit_code": 1,
+        "FE_start_event": "NOT_REACHED",
+        "FE_component": "not_run",
+        "dry_admission": "not_run",
+        "worker_started": false,
+        "checker_started": false,
+        "official_physics": "not_run",
+        "raw_archive": "not_run",
+        "trace_sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+        "closure_receipt_sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
+        "full_native_packet": "locally verified; see docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/handoff_index.json"
+      },
+      "host_swap_used_kib_reported": 21600,
+      "whole_machine_zero_swap": "not a qualified W0 resource-gate outcome; host baseline/final snapshot is nonzero and task-attributed swap was not measured",
+      "source_retry": "not authorized; no PyVista install or source edit; remain on reviewed 5be source; 077 source requires human decision",
+      "dry_admission": "not_run",
+      "worker": "not_run",
+      "independent_checker": "not_run",
+      "official_physics": "not_run",
+      "raw_archive": "not_run",
+      "resource_window_status": "HELD_NOT_ATTEMPTED; no measured capacity-failure classification",
+      "host_swap_facts": {
+        "baseline_used_kib": 21600,
+        "baseline_capture_utc": null,
+        "final_used_kib": 21600,
+        "final_capture_utc": "2026-10-04T03:35:29Z",
+        "equal_snapshot_delta_kib_derived": 0,
+        "interpretation": "baseline timestamp unknown; equal-value difference is derived only and is not Task40-attributed swap",
+        "pswpin_baseline_pages": null,
+        "pswpout_baseline_pages": null,
+        "pswpin_pswpout_delta": null,
+        "unknown_reason": "initial vmstat counters were not sampled"
+      },
+      "native_abi_result": "PASS_NO_FE_ACTION; prefix identity audit passed",
+      "native_packet": {
+        "sha256": "4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d",
+        "bytes": 113898,
+        "member_count": 19,
+        "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/handoff_packet.json",
+        "local_transport_path": "/tmp/task40_native_handoff_4c98a859.b64",
+        "tracked_handoff_index": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/handoff_index.json",
+        "tracked_handoff_index_sha256": "704bba313920e9e9c45775a8a6922d405e2b6020df95de21f607805d4db88e82",
+        "verification": "gzip+base64 decoded locally; packet hash/length and all member UTF-8 byte lengths/SHA256 verified before and after ignored-artifact write"
+      },
+      "timing_evidence": {
+        "earliest_surviving_artifact_utc": "2026-10-04T03:10:38.425757354Z",
+        "prefix_transaction_start_utc": "2026-10-04T03:11:47Z",
+        "prefix_transaction_finish_utc": "2026-10-04T03:12:22.313564304Z",
+        "prefix_transaction_elapsed_seconds_derived": 34.489,
+        "transaction_start_to_import_blocker_seconds_derived": 771,
+        "final_host_snapshot_utc": "2026-10-04T03:35:29Z",
+        "packet_created_utc": "2026-10-04T03:44:02Z",
+        "full_preparation_start_utc": null,
+        "total_preparation_elapsed_seconds": null,
+        "W0_budget_consumed_seconds": null,
+        "deadline_utc": "2026-10-04T10:07:14Z",
+        "deadline_remaining_seconds_at_final_snapshot_derived": 23505,
+        "interpretation": "UTC-derived subintervals and boundaries only; no overall preparation, install, FE runtime, or W0 debit can be inferred."
+      },
+      "auxiliary_readback_diagnostics": {
+        "two_corrected_assertions": "lexical venv executable was falsely rejected against its resolved symlink target; later lexical/resolved prefix identity passed. A missing dolfinx_mpc.__version__ attribute was assumed; later conda-meta/dist-info package evidence verified version 0.10.5. Neither rebuilt the environment.",
+        "micromamba_list": "read-only CLI inspection failed with tl::bad_expected_access; prior raw tool output/timestamp unavailable; package facts were read from conda-meta.",
+        "micromamba_version": "read-only --version query aborted with tl::bad_expected_access; binary SHA256 366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3; no core dump because ulimit -c=0; canonical repository status rechecked and unchanged."
+      },
+      "process_cleanup": "No W0 FE, worker, or checker PID was started; there was no W0 process subtree to terminate or clean."
+    },
+    "W1": {
+      "status": "not_run_condition_W0_numerical_pass_not_satisfied",
+      "maximum_seconds": 7200,
+      "elapsed_seconds": null,
+      "reserved_seconds": null
+    },
+    "W2": {
+      "status": "not_run_condition_W0_and_C1c_and_complete_p6_entry_not_satisfied",
+      "maximum_seconds": 21600,
+      "elapsed_seconds": null,
+      "reserved_seconds": null
+    }
+  },
+  "source_authority": {
+    "review_report_path": "docs/task40extra_0p7nm_engineering/review_report_v7.md",
+    "review_report_sha256": "22313b2b2bc60e6178a35f77bd9e6584f7e2d9c2fd76e276004041de25a6b06e",
+    "execution_branch_head_at_recording": "66b151a72d4f837bfebc0aa9b9d854457b0fd93a",
+    "push_owner": "root; no local push"
+  },
+  "local_preflight_diagnostics": {
+    "classification": "agent_assertion_errors_before_pytest_not_repository_or_ABI_failures",
+    "attempts": [
+      {
+        "attempt": 1,
+        "misdiagnosis": "The checker required Path(sys.executable).resolve() to remain under the venv.",
+        "actual": "The qualified lexical executable is repo/.venv/bin/python and the standard venv symlink resolves to /usr/bin/python3.12.",
+        "pytest_started": false,
+        "elapsed_seconds": null
+      },
+      {
+        "attempt": 2,
+        "misdiagnosis": "The checker required slepc4py to share petsc4py’s filesystem prefix.",
+        "actual": "Debian installs SLEPc under /usr/lib/slepcdir while matching PETSc3.19 complex ABI; sys.prefix and earlier ABI assertions passed.",
+        "pytest_started": false,
+        "elapsed_seconds": null
+      }
+    ],
+    "cost_interpretation": "No monotonic receipt was captured for either diagnostic command; time and charge remain unknown, not zero."
+  },
+  "local_validation": {
+    "qualified_activation_preflight": "PASS: lexical interpreter under repository .venv; sys.prefix matches; PETSc complex128/int32; Linux PETSc/SLEPc/DOLFINx/Basix/mpi4py; Open MPI 4.1.6; MPI1",
+    "documentation_contract_tests": {
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py",
+      "result": "24 passed",
+      "pytest_reported_seconds": 0.06,
+      "scope": "documentation contracts and retrospective/model registry only; no PDE"
+    },
+    "full_repository_pytest": "not_run",
+    "PDE_MPI_or_expensive_gate": "not_run"
+  },
+  "updated_utc": "2026-10-04T03:44:02Z"
+}

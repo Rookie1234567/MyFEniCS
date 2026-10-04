@@ -1,0 +1,402 @@
+{
+  "schema": "task40extra.native-w0-actual-run-metadata-closeout.v1",
+  "classification": "WORKER_FAILED_IMPLEMENTATION_BUG_AT_LIVE_RECEIPT_IDENTITY_VALIDATION",
+  "interpretation": "A real fresh p6 setup and same-live literal532 component qualification ran. The saved eight-gate receipt passes component checks only; the worker then failed before the full p6 component worker, raw export, independent tensor checker, residuals, or official results.",
+  "source": {
+    "branch": "task40extra_0p7nm_engineering",
+    "run_commit": "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+    "run_tree_clean_at_launch": true,
+    "runner_file_sha256": "7290d392a9ac4c00b1bc1a3f070da947b62414865b29faac8f07814315a3ef36",
+    "metadata_fix_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+    "fix_scope": "Use the existing JSON-normalized ordered_mode_keys for count, uniqueness, key-type and order checks. No numerical or ABI gate changed."
+  },
+  "input": {
+    "path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+    "sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+  },
+  "timeline": {
+    "fresh_p6_cold_setup_begin_utc": "2026-10-04T06:38:30.344517Z",
+    "fresh_p6_cold_setup_complete_utc": "2026-10-04T06:38:31.146454Z",
+    "same_live_bundle_complete_utc": "2026-10-04T06:39:42.862780Z",
+    "literal532_gate_start_utc": "2026-10-04T06:39:43.258435Z",
+    "carrier_unchanged_gate_utc": "2026-10-04T06:41:43.256105Z",
+    "terminal_observation_utc": "2026-10-04T06:41:46.252994Z",
+    "policy_deadline_utc": "2026-10-04T06:41:49Z",
+    "worker_policy_cutoff_utc": "2026-10-04T06:41:49Z",
+    "review_v7_launch_deadline_utc": "2026-10-04T10:07:14Z",
+    "launch_deadline_and_worker_policy_cutoff_are_distinct": true
+  },
+  "saved_same_live_receipt": {
+    "name": "same_live_literal532.json",
+    "reported_size_bytes": 2410188,
+    "reported_sha256": "858094d19ec9f7ea05eec85c94ecf003fa37ddbbe12cc7f1e62749de2fc6c037",
+    "reported_status": "PASS_COMPONENT_ONLY",
+    "PDE_solved": false,
+    "official_results": false,
+    "mode_count": 532,
+    "completed_gates": [
+      "loaded_kernel_provenance_and_constant_restoration",
+      "compiled_primary_literal_same_gauss",
+      "all532_raw_coefficient_H_equivalence",
+      "every_mode_full_DOF_rank_one_bound",
+      "five_state_actual_action_recovery_output_components",
+      "physical_FE_RHS_literal_oracle",
+      "incident_and_nonzero_port_RHS_transforms",
+      "unchanged_live_carrier_digest"
+    ],
+    "raw_receipt_local_copy": "not_received_in_the_derived_packet"
+  },
+  "worker_outcome": {
+    "supervisor_classification": "WORKER_FAILED",
+    "worker_exit_code": 1,
+    "first_exception": "ValueError: same-live receipt ordered mode identity is incomplete or repeated",
+    "failure_site": "validate_live_receipt ordered-mode identity gate; live carrier supplied tuple keys while saved JSON uses list keys",
+    "root_cause": "The validator read the pre-serialization identity instead of the already JSON-normalized identity; equivalent tuple/list representations were rejected.",
+    "worker_elapsed_seconds": 196.76210885995533,
+    "worker_limit_seconds": 199.49071288108826,
+    "time_exceeded": false,
+    "remaining_seconds_at_terminal_observation": 2.7463858127593994,
+    "service_runtime_seconds": 197.678,
+    "time_gates": {
+      "active_pc": false,
+      "solve": false,
+      "workflow": false
+    },
+    "deadline_or_resource_stop": false,
+    "full_p6_component_worker": "NOT_REACHED",
+    "raw_export": "NOT_REACHED",
+    "independent_native_tensor_checker": "NOT_RUN",
+    "residuals": "NOT_REACHED",
+    "official_R_T_A": "NOT_RUN"
+  },
+  "resources": {
+    "simultaneous_process_tree_rss_peak_bytes": 1408434176,
+    "PSS_bytes": null,
+    "task_swap_peak_bytes": 0,
+    "global_swap_delta_pages": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "resource_gate_triggered": false,
+    "preexisting_host_swap_used_kib": 21600,
+    "worker_pid": 1649149,
+    "worker_start_ticks": 102090439,
+    "supervisor_pid": 1649133,
+    "supervisor_start_ticks": 102090354,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "formula_derived_8_gib_export_budget_upper_bound_bytes": 6900030936,
+    "export_budget_is_not_process_rss_or_machine_ram": true,
+    "process_tree_rss_sampling_interval_seconds": 0.25,
+    "PSS_enabled": false,
+    "whole_machine_zero_swap_qualified": false
+  },
+  "offline_saved_receipt_replay": {
+    "status": "PASS_PURE_SAVED_RECEIPT",
+    "recorded_gates_passed": 8,
+    "performed": "Reopened JSON and recomputed saved numeric/identity fields only; no mesh, form, JIT, matrix, factor or PDE.",
+    "validator_elapsed_seconds": 1.4228339550318196,
+    "outer_wall_seconds": 1.62,
+    "max_rss_kib": 46636,
+    "metrics": {
+      "max_C_D_H_and_raw_action_equivalence": 3.5931818134322393e-14,
+      "max_full_dof_rank_one_bound": 2.4672054282185927e-13,
+      "max_five_state_action_recovery_output": 3.099637928778201e-14,
+      "max_physical_FE_RHS_literal_defect": 1.7324712509441664e-14,
+      "max_nonzero_port_mode_equation_defect": 1.8654147652106162e-14,
+      "max_transform_gate_ratio": 3.4637921787560976e-06,
+      "quadrature": {
+        "primary_records": 4,
+        "independent_records": 8,
+        "degree": 27,
+        "facet_points": 196,
+        "interpretation": "Identity metadata only: 4 primary facet records are two sides by two components with the same nodes; 8 independent identity comparisons; this is not four q cases or four integration runs.",
+        "primary_facet_records": 4,
+        "primary_facet_record_interpretation": "two sides × two components, same nodes; identity metadata only"
+      },
+      "five_state_mode_checks": 2660,
+      "live_carrier_before_after_equal": true
+    },
+    "patched_public_validator_list_and_tuple_recheck": {
+      "status": "PASS_BOTH_LIST_AND_TUPLE",
+      "source_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+      "validator_source_sha256": "aec3ae90634ce8ef0f18d3490097e331f863dc56cc4d978c0e2244a22af4673d",
+      "qualification_source_sha256": "fb572d7f1ab6f0e5bc2b94cc14bbb3d9a3bd9d1c6b637aa59a7926121c5ddfdb",
+      "stdout": {
+        "path": "/tmp/task40_w0_fix5f74_list_tuple_stdout.json",
+        "bytes": 1951,
+        "sha256": "b563cbce296c0740b707aa48394bc3fd15cb8cdbc5a89dbb6f473db5e01a8c89"
+      },
+      "tests": [
+        {
+          "identity_form": "json-list",
+          "status": "PASS",
+          "validator_elapsed_seconds": 1.411307457019575,
+          "outer_wall_seconds": 1.58,
+          "max_rss_kib": 46796,
+          "receipt_sha256": "858094d19ec9f7ea05eec85c94ecf003fa37ddbbe12cc7f1e62749de2fc6c037",
+          "FE_or_JIT": "NOT_RUN"
+        },
+        {
+          "identity_form": "python-tuple",
+          "status": "PASS",
+          "validator_elapsed_seconds": 1.404511846951209,
+          "outer_wall_seconds": 1.58,
+          "max_rss_kib": 47108,
+          "receipt_sha256": "858094d19ec9f7ea05eec85c94ecf003fa37ddbbe12cc7f1e62749de2fc6c037",
+          "FE_or_JIT": "NOT_RUN"
+        }
+      ],
+      "performed": "Reopened and revalidated the same saved JSON under list and tuple identity forms; no FE, mesh, form, JIT, matrix, factor or raw tensor was generated.",
+      "execution_host": "native W0 execution host; mainline captured and hash-checked stdout, did not execute the validator locally"
+    }
+  },
+  "packet_readback": {
+    "derived_small_packet_local_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_1c65fa40/",
+    "local_packet_integrity": "PASS; compressed archive byte/hash and three JSON members matched the local extraction and parsed",
+    "local_packet_members": {
+      "small_packet.tar.gz": {
+        "bytes": 6972,
+        "sha256": "1c65fa402ea537cf732871895a7aa29cf5d4f0b56cba770eaa9b1b2665a8dd4b"
+      },
+      "summary_packet.json": {
+        "bytes": 10556,
+        "sha256": "43da54c28c91c53658ff45d3616f8798f2788322686f538f3d24ed573f5d6223"
+      },
+      "member_manifest.json": {
+        "bytes": 14533,
+        "sha256": "8ca12ab374ed109ef3b0e639541d30f3205bacad9e6920b6c815dca28a5602a8"
+      },
+      "evidence_correction.json": {
+        "bytes": 10678,
+        "sha256": "a4a9dd88785a4e0209d4e3cf9aa424c9a75ec004a95ecb22051380631a323abb"
+      }
+    },
+    "scope_limit": "Derived summary/correction/member-manifest only; original same-live JSON and raw worker/checker members are not present locally.",
+    "controller_reported_full_native_packet": {
+      "bytes": 47078,
+      "member_count": 35,
+      "sha256": "d5f934e09e034b1349c2860948e1dc91ec24c9670ba6dd5939a01bc8e6379f62",
+      "local_readback": false,
+      "status": "native persistent copy reported; cross-window transfer was blocked",
+      "classification": "original supporting run-log/ABI/resource/test-receipt package; not tensor or field data",
+      "scientific_tensor_or_field_members": 0
+    },
+    "native_side_supporting_receipt_copy": {
+      "copied_member_count": 36,
+      "copied_bytes": 5757491,
+      "per_member_sha256_present": true,
+      "copy_fsync_readback_verified": true,
+      "copy_wall_seconds": 0.05155863403342664,
+      "manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_1c65fa40/member_manifest.json",
+      "manifest_sha256": "8ca12ab374ed109ef3b0e639541d30f3205bacad9e6920b6c815dca28a5602a8",
+      "manifest_raw_member_count": 0,
+      "scope": "Supporting run, ABI, resource, test and timeline evidence including the 2,410,188-byte same-live JSON receipt; not a scientific tensor/field raw export.",
+      "root_received_original_member_bytes": false
+    },
+    "native_jit_cache": {
+      "copied": false,
+      "files": 64,
+      "bytes": 1220807231,
+      "disposition": "preserved in place at native run path; hash rescan not performed"
+    },
+    "scientific_raw_boundary": {
+      "raw_export": "NOT_REACHED",
+      "raw_member_count": 0,
+      "p6_tensor_or_field_arrays_generated": false,
+      "independent_native_tensor_or_CSR_checker": "NOT_RUN",
+      "reason": "Worker failed at the ordered-mode tuple/list identity guard before the full p6 component worker/export stage. The absence of scientific raw arrays is due to that execution boundary; the later cross-window transfer restriction separately limits receipt transfer."
+    }
+  },
+  "accounting": {
+    "measured_full_preparation_elapsed_seconds": null,
+    "measured_W0_total_charge_seconds": null,
+    "worker_elapsed_seconds_measured_separately": 196.76210885995533,
+    "W0_policy_window_seconds": 14400,
+    "UI_start_to_cutoff_as_measured_elapsed": false,
+    "interpretation": "The 4-hour window is a conservative policy interval derived from UI/cutoff boundaries, not measured preparation or compute time. Overall charge remains unknown/null.",
+    "historical_V6_settled_debit_seconds_preserved": 5428.582333962078,
+    "W1": "NOT_RUN; W0 full component qualification did not pass",
+    "W2": "NOT_RUN; W0/C1c/full-p6 prerequisites not satisfied",
+    "original_size_full_solve": "NO_GO",
+    "W0_policy_cutoff_utc": "2026-10-04T06:41:49Z",
+    "W0_policy_window_is_measured_elapsed": false,
+    "review_v7_fe_launch_deadline_utc": "2026-10-04T10:07:14Z",
+    "first_fe_event_before_launch_deadline": true,
+    "worker_time_gate_exceeded": false,
+    "no_new_fe_after_policy_cutoff": true,
+    "complete_preparation_elapsed_seconds": null,
+    "W0_total_charge_seconds": null,
+    "historical_V6_settled_debit_seconds": 5428.582333962078,
+    "known_worker_attempt_elapsed_subtotal_seconds": 200.87894401792437,
+    "known_worker_attempts": [
+      {
+        "run_id": "w0_20261004T0629Z_74bfcddf",
+        "source_commit": "74bfcddf52cc97b518e71154dc47d59654fd4a8e",
+        "classification": "WORKER_FAILED_BEFORE_FE",
+        "first_exception": "ModuleNotFoundError: No module named 'src'",
+        "worker_elapsed_seconds": 2.026239892002195,
+        "rss_peak_bytes": 287481856,
+        "task_swap_peak_bytes": 0,
+        "worker_exit_code": 1,
+        "descendants_cleared": true
+      },
+      {
+        "run_id": "w0_20261004T0635Z_17c0f2b9",
+        "source_commit": "17c0f2b921fd9ed7244c53fad87c5fcb6bc620ad",
+        "classification": "WORKER_FAILED_BEFORE_FE",
+        "first_exception": "RuntimeError: allocation gate requires the live subreaper identity",
+        "worker_elapsed_seconds": 2.09059526596684,
+        "rss_peak_bytes": 290197504,
+        "task_swap_peak_bytes": 0,
+        "worker_exit_code": 1,
+        "descendants_cleared": true
+      },
+      {
+        "run_id": "w0_20261004T0638Z_4b89d7f",
+        "source_commit": "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+        "classification": "WORKER_FAILED_BEFORE_FULL_P6_COMPONENT_WORKER",
+        "first_exception": "ValueError: same-live receipt ordered mode identity is incomplete or repeated",
+        "worker_elapsed_seconds": 196.76210885995533,
+        "rss_peak_bytes": 1408434176,
+        "task_swap_peak_bytes": 0,
+        "worker_exit_code": 1,
+        "descendants_cleared": true
+      }
+    ],
+    "preflight_6bbc_shell_blocker": {
+      "status": "activation/cache-reference shell blocker before worker",
+      "elapsed_seconds": null,
+      "charged_seconds": null,
+      "interpretation": "Unknown; do not count as zero and not included in measured worker subtotal."
+    }
+  },
+  "run_environment": {
+    "fixture": {
+      "cells": 80,
+      "cell_axes": [
+        4,
+        4,
+        5
+      ],
+      "degree": 6,
+      "mode_count": 532,
+      "phi_degrees": 5,
+      "degree_set": [
+        6
+      ],
+      "actual_space_degrees": [
+        6
+      ],
+      "executed_q_branches": [],
+      "p4_space_built": false,
+      "q_factorization_executed": false,
+      "input_q4_label": "present in input filename/config only; not executed by this p6-only probe",
+      "primary_facet_records": 4,
+      "primary_facet_records_interpretation": "two sides × two components, same quadrature nodes; identity metadata only, not four q integrations"
+    },
+    "ABI": {
+      "PETSc": "3.25.6",
+      "PETSc_scalar": "complex128",
+      "PETSc_integer": "int32",
+      "DOLFINx": "0.10.0",
+      "Basix": "0.10.0",
+      "MPC": "0.10.5",
+      "MPI": "MPICH 5.0.1",
+      "MPI_size": 1,
+      "math_threads": 1
+    },
+    "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "runner_scope": {
+      "path": "benchmarks/run_fresh_c1_p6_component.py",
+      "sha256": "7290d392a9ac4c00b1bc1a3f070da947b62414865b29faac8f07814315a3ef36",
+      "configured_degree_tuple": [
+        6
+      ],
+      "asserted_space_degrees": [
+        6
+      ],
+      "global_p6_matrix_created_at_admission": false,
+      "full_p6_component_worker_reached": false,
+      "p4_or_four_q_factor_branches_executed": false
+    },
+    "W0_frozen_budget_manifest": {
+      "path": "benchmarks/fresh_c1_p6_w0_budget.json",
+      "sha256": "533930676db07f7a145e0e6b71eacd198288bea92717bf7a8ba91fe9d16a9b81",
+      "raw_member_disk_payload_cap_bytes": 8589934592,
+      "derived_worst_case_member_upper_bytes": 6900030936,
+      "remaining_limit_margin_bytes": 1689903656,
+      "process_tree_memory_cap_bytes": 3221225472,
+      "scope": "derived admission contract; not measured file output or RSS"
+    },
+    "code_lineage": {
+      "dot_reference_observed_not_used": "077ec9c8386c976da232093779279fb9d1a93033",
+      "actual_chain": [
+        "6bbc4fb57f7132dd6367ba3173f563fad7d9b025",
+        "74bfcddf52cc97b518e71154dc47d59654fd4a8e",
+        "17c0f2b921fd9ed7244c53fad87c5fcb6bc620ad",
+        "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+        "5f74e15fae6e01e4361325db162806a7319ba3f4"
+      ],
+      "legacy_512_MiB_cap_assertion_preserved": "src/test/test_fresh_c1_p6_native_tensor_checker.py rejects 512 MiB cap mismatch; this W0 disk payload cap is separate"
+    }
+  },
+  "pre_fe_history_snapshot": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_prefe_snapshot_5f74e15.json",
+    "source_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+    "git_blob_oid": "7eb0caf575732e9f68e18b48b7fee4379ee074a2",
+    "sha256": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20",
+    "bytes": 10566,
+    "meaning": "Byte-identical full W0 pre-FE ledger as stored at 5f74e15; immutable historical snapshot. Earlier source/import/authorization/held/no-PID statements describe that prior checkpoint only.",
+    "response_snapshot": {
+      "path": "docs/task40extra_0p7nm_engineering/response_v7_prefe_snapshot_5f74e15.md",
+      "source_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+      "git_blob_oid": "883bbf822cb97e9f72714d923802984be1b800d9",
+      "sha256": "922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5",
+      "bytes": 12983,
+      "meaning": "Byte-identical full response_v7.md from 5f74e15. Preserves the full target/AUTO/W1/H dense-cost ledger and prior negative results."
+    }
+  },
+  "supplement_status": "CLOSED_AT_TIME_AND_IMPLEMENTATION_FAILURE_BOUNDARY_PENDING_REVIEW; TARGET_NOT_ACHIEVED",
+  "historical_pre_fe_worker_attempts": [
+    {
+      "run_id": "w0_20261004T0629Z_74bfcddf",
+      "source_commit": "74bfcddf52cc97b518e71154dc47d59654fd4a8e",
+      "classification": "WORKER_FAILED_BEFORE_FE",
+      "first_exception": "ModuleNotFoundError: No module named 'src'",
+      "worker_elapsed_seconds": 2.026239892002195,
+      "rss_peak_bytes": 287481856,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 1,
+      "descendants_cleared": true
+    },
+    {
+      "run_id": "w0_20261004T0635Z_17c0f2b9",
+      "source_commit": "17c0f2b921fd9ed7244c53fad87c5fcb6bc620ad",
+      "classification": "WORKER_FAILED_BEFORE_FE",
+      "first_exception": "RuntimeError: allocation gate requires the live subreaper identity",
+      "worker_elapsed_seconds": 2.09059526596684,
+      "rss_peak_bytes": 290197504,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 1,
+      "descendants_cleared": true
+    },
+    {
+      "run_id": "w0_20261004T0638Z_4b89d7f",
+      "source_commit": "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+      "classification": "WORKER_FAILED_BEFORE_FULL_P6_COMPONENT_WORKER",
+      "first_exception": "ValueError: same-live receipt ordered mode identity is incomplete or repeated",
+      "worker_elapsed_seconds": 196.76210885995533,
+      "rss_peak_bytes": 1408434176,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 1,
+      "descendants_cleared": true
+    }
+  ],
+  "historical_pre_fe_6bbc_shell_blocker": {
+    "status": "activation/cache-reference shell blocker before worker",
+    "elapsed_seconds": null,
+    "charged_seconds": null,
+    "interpretation": "Unknown; do not count as zero and not included in measured worker subtotal."
+  }
+}

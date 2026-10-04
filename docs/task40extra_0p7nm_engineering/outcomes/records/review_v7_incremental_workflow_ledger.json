@@ -1,6 +1,6 @@
 {
   "schema": "task40extra.review-v7.incremental-workflow-ledger.v1",
-  "status": "in_progress_controlled_block_before_FE_elapsed_unknown",
+  "status": "supplement_closed_at_time_and_implementation_failure_boundary_pending_review_target_not_achieved",
   "created_utc": "2026-10-04T03:11:59Z",
   "historical_v6_ledger": {
     "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
@@ -35,113 +35,257 @@
   "v7_accounting_now": {
     "charged_seconds": null,
     "remaining_seconds": null,
-    "reason": "Native W0 packet and all 19 member hashes are now locally verified. The packet has UTC-derived subintervals but no durable full-preparation start or monotonic/boottime timer; overall W0 elapsed/charge and total remaining stay unknown/null, not zero. No debit or reservation is imputed; historical V6 ledger remains separate and unchanged.",
+    "reason": "Actual FE setup began before the separate 2026-10-04T10:07:14Z launch deadline and produced an eight-gate PASS_COMPONENT_ONLY receipt. The worker failed after 196.76210885995533 measured seconds at tuple/list identity validation, before full p6 worker/export. It exited at 06:41:46.252994Z with all time gates false, 2.7463858127593994 s before the distinct 06:41:49Z four-hour policy cutoff. The policy window is a derived allowance, not measured total preparation/research time; full preparation elapsed and total W0 charge remain unknown/null. No FE retry is initiated after the policy cutoff. Historical V6 debit remains unchanged.",
+    "measured_full_preparation_elapsed_seconds": null,
+    "measured_W0_total_charge_seconds": null,
+    "worker_elapsed_seconds_measured_separately": 196.76210885995533,
+    "policy_window_seconds": 14400,
+    "policy_window_cutoff_utc": "2026-10-04T06:41:49Z",
+    "policy_window_is_measured_elapsed": false,
+    "launch_deadline_utc": "2026-10-04T10:07:14Z",
+    "launch_deadline_met": true,
+    "worker_deadline_utc": "2026-10-04T06:41:49Z",
+    "worker_time_gate_exceeded": false,
+    "policy_cutoff_has_passed": true,
+    "new_fe_after_cutoff": "NOT_AUTHORIZED_IN_THIS_CLOSEOUT",
     "local_metadata_and_documentation_elapsed_seconds": null,
-    "local_metadata_time_policy": "not captured as a V7 research-stage clock; reconcile from authoritative receipt if the task contract charges it"
+    "historical_V6_settled_debit_seconds_preserved": 5428.582333962078,
+    "known_worker_attempt_elapsed_subtotal_seconds": 200.87894401792437,
+    "known_worker_attempts": [
+      "w0_20261004T0629Z_74bfcddf",
+      "w0_20261004T0635Z_17c0f2b9",
+      "w0_20261004T0638Z_4b89d7f"
+    ],
+    "preflight_6bbc_elapsed_seconds": null,
+    "preflight_6bbc_charged_seconds": null,
+    "preflight_6bbc_unknown_not_zero": true,
+    "supplement_status": "closed pending review; target not achieved; no automatic W1/W2 continuation"
   },
   "stage_status": {
     "W0": {
-      "status": "controlled_block_before_FE_pinned_source_import_closure_failed_resource_window_held",
+      "status": "WORKER_FAILED_IMPLEMENTATION_BUG_AFTER_FE_SETUP_BEFORE_FULL_P6_WORKER",
+      "classification": "implementation/metadata identity validation failure; neither deadline stop nor resource stop nor numerical solver failure",
       "maximum_seconds": 14400,
       "elapsed_seconds": null,
       "reserved_seconds": null,
-      "actual_fe": "not_run",
-      "reported_host_facts": "At 2026-10-04T03:35:29Z MemAvailable=2089370224 KiB (~2.1395e12 B); Task42 process group absent by 03:34:11Z; Metrology training active. The required empty-heavy-work window was not qualified. This is a contract-window hold, not evidence of insufficient host capacity.",
-      "approved_dot_source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
-      "new_dot_source_sha_pending_authorization": "077ec9c8386c976da232093779279fb9d1a93033",
-      "new_source_state": "077ec9c8386c976da232093779279fb9d1a93033 observed but not used; broader than PyVista import repair because it also changes native direction-byte authority/checker; source-upgrade authorization remains pending human response; no automatic retry or switch",
-      "native_abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
-      "latest_import_attempt": {
-        "utc_window": [
-          "2026-10-04T03:24:37Z",
-          "2026-10-04T03:24:38Z"
+      "run_id": "w0_20261004T0638Z_4b89d7f",
+      "source_sha": "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+      "metadata_fix_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+      "runner_file_sha256": "7290d392a9ac4c00b1bc1a3f070da947b62414865b29faac8f07814315a3ef36",
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "fixture_and_abi": {
+        "fixture": {
+          "cells": 80,
+          "cell_axes": [
+            4,
+            4,
+            5
+          ],
+          "degree": 6,
+          "mode_count": 532,
+          "phi_degrees": 5,
+          "degree_set": [
+            6
+          ],
+          "actual_space_degrees": [
+            6
+          ],
+          "executed_q_branches": [],
+          "p4_space_built": false,
+          "q_factorization_executed": false,
+          "input_q4_label": "present in input filename/config only; not executed by this p6-only probe"
+        },
+        "ABI": {
+          "PETSc": "3.25.6",
+          "PETSc_scalar": "complex128",
+          "PETSc_integer": "int32",
+          "DOLFINx": "0.10.0",
+          "Basix": "0.10.0",
+          "MPC": "0.10.5",
+          "MPI": "MPICH 5.0.1",
+          "MPI_size": 1,
+          "math_threads": 1
+        },
+        "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+        "runner_scope": {
+          "path": "benchmarks/run_fresh_c1_p6_component.py",
+          "sha256": "7290d392a9ac4c00b1bc1a3f070da947b62414865b29faac8f07814315a3ef36",
+          "configured_degree_tuple": [
+            6
+          ],
+          "asserted_space_degrees": [
+            6
+          ],
+          "global_p6_matrix_created_at_admission": false,
+          "full_p6_component_worker_reached": false,
+          "p4_or_four_q_factor_branches_executed": false
+        }
+      },
+      "first_fe_event_utc": "2026-10-04T06:38:30.344517Z",
+      "launch_deadline_utc": "2026-10-04T10:07:14Z",
+      "launch_deadline_met": true,
+      "four_hour_policy_cutoff_utc": "2026-10-04T06:41:49Z",
+      "worker_elapsed_seconds": 196.76210885995533,
+      "worker_limit_seconds": 199.49071288108826,
+      "worker_terminal_observation_utc": "2026-10-04T06:41:46.252994Z",
+      "worker_time_exceeded": false,
+      "seconds_to_policy_cutoff_at_worker_exit": 2.7463858127593994,
+      "policy_window_seconds": 14400,
+      "policy_window_is_measured_elapsed": false,
+      "first_exception": "ValueError: same-live receipt ordered mode identity is incomplete or repeated",
+      "root_cause": "Live receipt yielded tuple identity keys while saved JSON normalized the same keys as lists; worker read pre-serialization identity rather than JSON-normalized identity.",
+      "worker_exit_code": 1,
+      "resource_gate_triggered": false,
+      "process_tree_rss_peak_bytes": 1408434176,
+      "PSS_bytes": null,
+      "task_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "saved_component_receipt": {
+        "reported_sha256": "858094d19ec9f7ea05eec85c94ecf003fa37ddbbe12cc7f1e62749de2fc6c037",
+        "reported_bytes": 2410188,
+        "reported_status": "PASS_COMPONENT_ONLY",
+        "mode_count": 532,
+        "completed_named_gates": 8,
+        "original_same_live_json_bytes_received_in_root": false
+      },
+      "component_receipt_metrics": {
+        "max_C_D_H_and_raw_action_equivalence": 3.5931818134322393e-14,
+        "max_full_dof_rank_one_bound": 2.4672054282185927e-13,
+        "max_five_state_action_recovery_output": 3.099637928778201e-14,
+        "max_physical_FE_RHS_literal_defect": 1.7324712509441664e-14,
+        "max_nonzero_port_mode_equation_defect": 1.8654147652106162e-14,
+        "max_transform_gate_ratio": 3.4637921787560976e-06,
+        "quadrature": {
+          "primary_records": 4,
+          "independent_records": 8,
+          "degree": 27,
+          "facet_points": 196
+        },
+        "five_state_mode_checks": 2660,
+        "live_carrier_before_after_equal": true
+      },
+      "public_validator_recheck": {
+        "status": "PASS_BOTH_LIST_AND_TUPLE",
+        "source_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+        "validator_source_sha256": "aec3ae90634ce8ef0f18d3490097e331f863dc56cc4d978c0e2244a22af4673d",
+        "qualification_source_sha256": "fb572d7f1ab6f0e5bc2b94cc14bbb3d9a3bd9d1c6b637aa59a7926121c5ddfdb",
+        "stdout": {
+          "path": "/tmp/task40_w0_fix5f74_list_tuple_stdout.json",
+          "bytes": 1951,
+          "sha256": "b563cbce296c0740b707aa48394bc3fd15cb8cdbc5a89dbb6f473db5e01a8c89"
+        },
+        "tests": [
+          {
+            "identity_form": "json-list",
+            "status": "PASS",
+            "validator_elapsed_seconds": 1.411307457019575,
+            "outer_wall_seconds": 1.58,
+            "max_rss_kib": 46796,
+            "receipt_sha256": "858094d19ec9f7ea05eec85c94ecf003fa37ddbbe12cc7f1e62749de2fc6c037",
+            "FE_or_JIT": "NOT_RUN"
+          },
+          {
+            "identity_form": "python-tuple",
+            "status": "PASS",
+            "validator_elapsed_seconds": 1.404511846951209,
+            "outer_wall_seconds": 1.58,
+            "max_rss_kib": 47108,
+            "receipt_sha256": "858094d19ec9f7ea05eec85c94ecf003fa37ddbbe12cc7f1e62749de2fc6c037",
+            "FE_or_JIT": "NOT_RUN"
+          }
         ],
-        "source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
-        "command": "python -c 'import src.solvers.dtn_port_3d'",
-        "shallow_import_status": "IMPORT_CLOSURE_PASS_NO_FE_ACTION",
-        "delayed_import_chain": [
-          "dtn_port_3d",
-          "common_3d_utils",
-          "solve_vector_maxwell",
-          "postprocess",
-          "pyvista"
+        "performed": "Reopened and revalidated the same saved JSON under list and tuple identity forms; no FE, mesh, form, JIT, matrix, factor or raw tensor was generated.",
+        "execution_host": "native W0 host; root only captured and hash-checked stdout"
+      },
+      "completion_boundary": {
+        "full_p6_component_worker": "NOT_REACHED",
+        "scientific_raw_export": "NOT_REACHED; raw_member_count=0; no p6 tensor/field raw generated",
+        "independent_native_tensor_or_CSR_checker": "NOT_RUN",
+        "full_A6_residual": "NOT_REACHED",
+        "official_R_T_A": "NOT_RUN"
+      },
+      "supporting_evidence_transfer": {
+        "native_side_copy_readback_members": 36,
+        "native_side_copy_readback_bytes": 5757491,
+        "original_35_member_receipt_packet_bytes": 47078,
+        "original_35_member_receipt_packet_sha256": "d5f934e09e034b1349c2860948e1dc91ec24c9670ba6dd5939a01bc8e6379f62",
+        "original_35_member_packet_scope": "run logs/ABI/resource/test receipts, not tensor/field data",
+        "root_local_derived_packet_bytes": 6972,
+        "root_local_derived_packet_sha256": "1c65fa402ea537cf732871895a7aa29cf5d4f0b56cba770eaa9b1b2665a8dd4b",
+        "root_local_derived_packet_members": 3,
+        "root_local_original_tensor_or_field_bytes_received": false,
+        "cross_window_transfer": "additional transfer attempt was rejected by auto-review; no alternate-channel retry requested"
+      },
+      "native_jit_cache_bytes_preserved_in_place": 1220807231,
+      "pre_fe_history_snapshot": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_prefe_snapshot_5f74e15.json",
+        "source_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+        "git_blob_oid": "7eb0caf575732e9f68e18b48b7fee4379ee074a2",
+        "sha256": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20",
+        "bytes": 10566,
+        "meaning": "Byte-identical full W0 pre-FE ledger as stored at 5f74e15; immutable historical snapshot. Earlier source/import/authorization/held/no-PID statements describe that prior checkpoint only.",
+        "response_snapshot": {
+          "path": "docs/task40extra_0p7nm_engineering/response_v7_prefe_snapshot_5f74e15.md",
+          "sha256": "922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5",
+          "git_blob_oid": "883bbf822cb97e9f72714d923802984be1b800d9",
+          "bytes": 12983
+        }
+      },
+      "actual_run_record": {
+        "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_actual_run_v1.json",
+        "sha256": "0d188bb966181f8a3d3937b6c038d54463e13f4b60e355bb04f0377793601db8"
+      },
+      "no_new_fe_or_budget_expansion": true,
+      "runner_scope": {
+        "path": "benchmarks/run_fresh_c1_p6_component.py",
+        "sha256": "7290d392a9ac4c00b1bc1a3f070da947b62414865b29faac8f07814315a3ef36",
+        "configured_degree_tuple": [
+          6
         ],
-        "classification": "missing_pyvista_import_closure_failure_before_FE",
-        "exception": "ModuleNotFoundError: No module named pyvista",
-        "exit_code": 1,
-        "FE_start_event": "NOT_REACHED",
-        "FE_component": "not_run",
-        "dry_admission": "not_run",
-        "worker_started": false,
-        "checker_started": false,
-        "official_physics": "not_run",
-        "raw_archive": "not_run",
-        "trace_sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
-        "closure_receipt_sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
-        "full_native_packet": "locally verified; see docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/handoff_index.json"
+        "asserted_space_degrees": [
+          6
+        ],
+        "global_p6_matrix_created_at_admission": false,
+        "full_p6_component_worker_reached": false,
+        "p4_or_four_q_factor_branches_executed": false
       },
-      "host_swap_used_kib_reported": 21600,
-      "whole_machine_zero_swap": "not a qualified W0 resource-gate outcome; host baseline/final snapshot is nonzero and task-attributed swap was not measured",
-      "source_retry": "not authorized; no PyVista install or source edit; remain on reviewed 5be source; 077 source requires human decision",
-      "dry_admission": "not_run",
-      "worker": "not_run",
-      "independent_checker": "not_run",
-      "official_physics": "not_run",
-      "raw_archive": "not_run",
-      "resource_window_status": "HELD_NOT_ATTEMPTED; no measured capacity-failure classification",
-      "host_swap_facts": {
-        "baseline_used_kib": 21600,
-        "baseline_capture_utc": null,
-        "final_used_kib": 21600,
-        "final_capture_utc": "2026-10-04T03:35:29Z",
-        "equal_snapshot_delta_kib_derived": 0,
-        "interpretation": "baseline timestamp unknown; equal-value difference is derived only and is not Task40-attributed swap",
-        "pswpin_baseline_pages": null,
-        "pswpout_baseline_pages": null,
-        "pswpin_pswpout_delta": null,
-        "unknown_reason": "initial vmstat counters were not sampled"
+      "process_tree_rss_sampling_interval_seconds": 0.25,
+      "PSS_enabled": false,
+      "preexisting_host_swap_used_kib": 21600,
+      "whole_machine_zero_swap_qualified": false,
+      "frozen_budget_manifest": {
+        "path": "benchmarks/fresh_c1_p6_w0_budget.json",
+        "sha256": "533930676db07f7a145e0e6b71eacd198288bea92717bf7a8ba91fe9d16a9b81",
+        "raw_member_disk_payload_cap_bytes": 8589934592,
+        "derived_worst_case_member_upper_bytes": 6900030936,
+        "process_tree_memory_cap_bytes": 3221225472,
+        "status": "derived admission; not measured output or RSS"
       },
-      "native_abi_result": "PASS_NO_FE_ACTION; prefix identity audit passed",
-      "native_packet": {
-        "sha256": "4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d",
-        "bytes": 113898,
-        "member_count": 19,
-        "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/handoff_packet.json",
-        "local_transport_path": "/tmp/task40_native_handoff_4c98a859.b64",
-        "tracked_handoff_index": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/handoff_index.json",
-        "tracked_handoff_index_sha256": "704bba313920e9e9c45775a8a6922d405e2b6020df95de21f607805d4db88e82",
-        "verification": "gzip+base64 decoded locally; packet hash/length and all member UTF-8 byte lengths/SHA256 verified before and after ignored-artifact write"
-      },
-      "timing_evidence": {
-        "earliest_surviving_artifact_utc": "2026-10-04T03:10:38.425757354Z",
-        "prefix_transaction_start_utc": "2026-10-04T03:11:47Z",
-        "prefix_transaction_finish_utc": "2026-10-04T03:12:22.313564304Z",
-        "prefix_transaction_elapsed_seconds_derived": 34.489,
-        "transaction_start_to_import_blocker_seconds_derived": 771,
-        "final_host_snapshot_utc": "2026-10-04T03:35:29Z",
-        "packet_created_utc": "2026-10-04T03:44:02Z",
-        "full_preparation_start_utc": null,
-        "total_preparation_elapsed_seconds": null,
-        "W0_budget_consumed_seconds": null,
-        "deadline_utc": "2026-10-04T10:07:14Z",
-        "deadline_remaining_seconds_at_final_snapshot_derived": 23505,
-        "interpretation": "UTC-derived subintervals and boundaries only; no overall preparation, install, FE runtime, or W0 debit can be inferred."
-      },
-      "auxiliary_readback_diagnostics": {
-        "two_corrected_assertions": "lexical venv executable was falsely rejected against its resolved symlink target; later lexical/resolved prefix identity passed. A missing dolfinx_mpc.__version__ attribute was assumed; later conda-meta/dist-info package evidence verified version 0.10.5. Neither rebuilt the environment.",
-        "micromamba_list": "read-only CLI inspection failed with tl::bad_expected_access; prior raw tool output/timestamp unavailable; package facts were read from conda-meta.",
-        "micromamba_version": "read-only --version query aborted with tl::bad_expected_access; binary SHA256 366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3; no core dump because ulimit -c=0; canonical repository status rechecked and unchanged."
-      },
-      "process_cleanup": "No W0 FE, worker, or checker PID was started; there was no W0 process subtree to terminate or clean."
+      "code_lineage": {
+        "dot_reference_observed_not_used": "077ec9c8386c976da232093779279fb9d1a93033",
+        "actual_chain": [
+          "6bbc4fb57f7132dd6367ba3173f563fad7d9b025",
+          "74bfcddf52cc97b518e71154dc47d59654fd4a8e",
+          "17c0f2b921fd9ed7244c53fad87c5fcb6bc620ad",
+          "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+          "5f74e15fae6e01e4361325db162806a7319ba3f4"
+        ],
+        "legacy_512_MiB_cap_assertion_preserved": "src/test/test_fresh_c1_p6_native_tensor_checker.py rejects 512 MiB cap mismatch; this W0 disk payload cap is separate"
+      }
     },
     "W1": {
-      "status": "not_run_condition_W0_numerical_pass_not_satisfied",
+      "status": "NOT_RUN; W0 did not complete full component qualification",
       "maximum_seconds": 7200,
       "elapsed_seconds": null,
       "reserved_seconds": null
     },
     "W2": {
-      "status": "not_run_condition_W0_and_C1c_and_complete_p6_entry_not_satisfied",
+      "status": "NOT_RUN; W0/C1c/full-p6 prerequisites are unmet",
       "maximum_seconds": 21600,
       "elapsed_seconds": null,
       "reserved_seconds": null
@@ -150,8 +294,28 @@
   "source_authority": {
     "review_report_path": "docs/task40extra_0p7nm_engineering/review_report_v7.md",
     "review_report_sha256": "22313b2b2bc60e6178a35f77bd9e6584f7e2d9c2fd76e276004041de25a6b06e",
-    "execution_branch_head_at_recording": "66b151a72d4f837bfebc0aa9b9d854457b0fd93a",
-    "push_owner": "root; no local push"
+    "branch": "task40extra_0p7nm_engineering",
+    "upstream": "origin/task40extra_0p7nm_engineering",
+    "execution_branch_head_at_closeout_base": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+    "actual_run_source_sha": "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+    "metadata_fix_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+    "prefe_snapshot": {
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_prefe_snapshot_5f74e15.json",
+      "source_commit": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+      "git_blob_oid": "7eb0caf575732e9f68e18b48b7fee4379ee074a2",
+      "sha256": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20",
+      "bytes": 10566,
+      "meaning": "Byte-identical full W0 pre-FE ledger as stored at 5f74e15; immutable historical snapshot. Earlier source/import/authorization/held/no-PID statements describe that prior checkpoint only."
+    },
+    "push_owner": "main controller reviews, commits/pushes, then verifies the delivery HEAD",
+    "prefe_response_snapshot": {
+      "path": "docs/task40extra_0p7nm_engineering/response_v7_prefe_snapshot_5f74e15.md",
+      "sha256": "922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5",
+      "git_blob_oid": "883bbf822cb97e9f72714d923802984be1b800d9",
+      "bytes": 12983
+    },
+    "supplement_status": "closed at current time/implementation-failure boundary pending review; target not achieved; no automatic W1/W2 continuation",
+    "dot_reference_observed_not_used": "077ec9c8386c976da232093779279fb9d1a93033"
   },
   "local_preflight_diagnostics": {
     "classification": "agent_assertion_errors_before_pytest_not_repository_or_ABI_failures",
@@ -176,13 +340,103 @@
   "local_validation": {
     "qualified_activation_preflight": "PASS: lexical interpreter under repository .venv; sys.prefix matches; PETSc complex128/int32; Linux PETSc/SLEPc/DOLFINx/Basix/mpi4py; Open MPI 4.1.6; MPI1",
     "documentation_contract_tests": {
-      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py",
+      "command": "source scripts/activate_myfenics_wsl.sh && python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py",
       "result": "24 passed",
-      "pytest_reported_seconds": 0.06,
-      "scope": "documentation contracts and retrospective/model registry only; no PDE"
+      "pytest_reported_seconds": 0.05,
+      "scope": "documentation/model registry/retrospective contracts only; local old PETSc3.19/Open MPI4.1.6 environment; no native FE/PDE"
     },
     "full_repository_pytest": "not_run",
-    "PDE_MPI_or_expensive_gate": "not_run"
+    "PDE_MPI_or_expensive_gate": "not_run",
+    "latest_review_v7_closeout": {
+      "qualified_activation": "PASS; _MYFENICS_WSL_QUALIFIED_ACTIVATION=1; repository .venv interpreter selected for pure metadata tests",
+      "native_focused_suite": {
+        "result": "40 passed, 10 skipped in 0.39 s",
+        "command": "python -m pytest -q -p no:cacheprovider src/test/test_fresh_c1_p6_component_contract.py src/test/test_fresh_c1_p6_native_tensor_checker.py",
+        "skip_reason": "archive fixtures unavailable; no actual native saved-raw tensor checker run"
+      },
+      "public_validator_stdout": {
+        "path": "/tmp/task40_w0_fix5f74_list_tuple_stdout.json",
+        "bytes": 1951,
+        "sha256": "b563cbce296c0740b707aa48394bc3fd15cb8cdbc5a89dbb6f473db5e01a8c89",
+        "list": "PASS; 1.411307457019575 s, 46,796 KiB; no FE/JIT",
+        "tuple": "PASS; 1.404511846951209 s, 47,108 KiB; no FE/JIT",
+        "validator_sha256": "aec3ae90634ce8ef0f18d3490097e331f863dc56cc4d978c0e2244a22af4673d",
+        "qualification_sha256": "fb572d7f1ab6f0e5bc2b94cc14bbb3d9a3bd9d1c6b637aa59a7926121c5ddfdb"
+      },
+      "scientific_raw_boundary": "No p6 tensor/field raw generated because worker failed before raw export; supporting receipts are distinct and do not prove raw availability.",
+      "full_repository_pytest": "NOT_RUN",
+      "new_FE_MPI_factor_or_PDE": "NOT_RUN",
+      "local_documentation_contract_tests": "24 passed in 0.05 s; source-bound command above",
+      "run_index_hash_pointer_check": "PASS; final bounded check will verify source/input/runner, current doc and ledger pointers, immutable snapshot blobs, derived packet members, captured public-validator stdout, budget manifest, support manifest attestation, and diff whitespace; no raw tensor artifacts.",
+      "snapshot_hash_check_helper_correction": {
+        "initial_attempt": "The agent-authored checker asked git show for each newly created snapshot destination path at the 5f74 baseline commit; those destination paths did not exist in that commit, so git show stopped before comparing snapshot bytes.",
+        "no_project_artifact_changed": true,
+        "corrected_comparison": "Compare each copied snapshot against the corresponding original file path at the 5f74 commit and its recorded Git blob OID.",
+        "ledger_snapshot": {
+          "baseline_source_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json",
+          "git_blob_oid": "7eb0caf575732e9f68e18b48b7fee4379ee074a2",
+          "sha256": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20"
+        },
+        "response_snapshot": {
+          "baseline_source_path": "docs/task40extra_0p7nm_engineering/response_v7.md",
+          "git_blob_oid": "883bbf822cb97e9f72714d923802984be1b800d9",
+          "sha256": "922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5"
+        },
+        "corrected_result": "PASS; byte-identical to the original 5f74 files and matching the expected Git blobs.",
+        "classification": "local checker path-selection error; not an FE failure, storage failure, or evidence corruption."
+      }
+    }
   },
-  "updated_utc": "2026-10-04T03:44:02Z"
+  "updated_utc": "2026-10-04T07:15:56Z",
+  "historical_pre_fe_worker_attempt_costs": {
+    "source": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_1c65fa40/evidence_correction.json",
+    "attempts": [
+      {
+        "run_id": "w0_20261004T0629Z_74bfcddf",
+        "source_commit": "74bfcddf52cc97b518e71154dc47d59654fd4a8e",
+        "classification": "WORKER_FAILED_BEFORE_FE",
+        "first_exception": "ModuleNotFoundError: No module named 'src'",
+        "worker_elapsed_seconds": 2.026239892002195,
+        "rss_peak_bytes": 287481856,
+        "task_swap_peak_bytes": 0,
+        "worker_exit_code": 1,
+        "descendants_cleared": true
+      },
+      {
+        "run_id": "w0_20261004T0635Z_17c0f2b9",
+        "source_commit": "17c0f2b921fd9ed7244c53fad87c5fcb6bc620ad",
+        "classification": "WORKER_FAILED_BEFORE_FE",
+        "first_exception": "RuntimeError: allocation gate requires the live subreaper identity",
+        "worker_elapsed_seconds": 2.09059526596684,
+        "rss_peak_bytes": 290197504,
+        "task_swap_peak_bytes": 0,
+        "worker_exit_code": 1,
+        "descendants_cleared": true
+      },
+      {
+        "run_id": "w0_20261004T0638Z_4b89d7f",
+        "source_commit": "4b89d7f922bda3859048d20714557ac0cf07ffc6",
+        "classification": "WORKER_FAILED_BEFORE_FULL_P6_COMPONENT_WORKER",
+        "first_exception": "ValueError: same-live receipt ordered mode identity is incomplete or repeated",
+        "worker_elapsed_seconds": 196.76210885995533,
+        "rss_peak_bytes": 1408434176,
+        "task_swap_peak_bytes": 0,
+        "worker_exit_code": 1,
+        "descendants_cleared": true
+      }
+    ],
+    "known_worker_elapsed_subtotal_seconds": 200.87894401792437,
+    "preflight_6bbc_shell_blocker": {
+      "status": "activation/cache-reference shell blocker before worker",
+      "elapsed_seconds": null,
+      "charged_seconds": null,
+      "interpretation": "Unknown; do not count as zero and not included in measured worker subtotal."
+    },
+    "scope": "Separate historical workers and pre-FE shell blocker; not full W0 preparation/charge. Current W0 state remains only the latest actual run in stage_status.W0.",
+    "evidence_detail": {
+      "preflight_6bbc_status": "activation/cache-reference shell blocker; elapsed and charge unknown; do not coerce to 0",
+      "measured_worker_elapsed_subtotal_including_latest_actual_attempt_seconds": 200.87894401792437,
+      "native_side_source": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_1c65fa40/evidence_correction.json"
+    }
+  }
 }

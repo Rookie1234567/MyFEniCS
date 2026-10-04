@@ -1,4 +1,14 @@
-# Task40extra 当前进展：Review V7 原生 W0 在 FE 前受控阻塞
+# Task40extra 当前进展：Review V7 W0 补充执行按时间与实现失败边界收口、等待审阅（目标未实现）
+
+W0 于 `2026-10-04T06:38:30.344517Z` 进入真实 fresh p6 setup。80-cell（4×4×5）、p6-only degree {6}、532-mode、φ=5°；文件中的 q4 标签未执行为 q branches 的同 live 组件记录通过八个 action/恢复/端口组件门，状态仅为 `PASS_COMPONENT_ONLY`；随后 worker 在有序 mode identity 的 tuple/list 校验处以 exit 1 失败，尚未交给完整 p6 component worker，也未生成科学 tensor/FE field raw、独立 tensor checker、full A6 residual 或 official R/T/A。
+
+worker 实测 `196.762108860 s`，进程树 RSS 峰值 `1,408,434,176 B`，任务 swap `0 B`，时间/资源 gates 均未触发。修复后的公共 validator 对同一保存 JSON 的 list/tuple 表示均通过；这只是离线验证，不改变 W0 的 worker failure。启动 deadline `10:07:14Z` 与四小时 policy cutoff `06:41:49Z` 是两个不同边界；前者在本次 FE 启动时尚未到，后者是政策窗、不是实测总耗时。完整准备和总收费保持 unknown/null，V6 settled debit 不变。cutoff 已过，本次不启动新 FE。
+
+W1/W2 均 `NOT_RUN`，本次补充执行不自动续跑，原尺寸仍 **NO-GO**。5f74 commit 的完整旧 pre-FE ledger 按原字节保存于 [prefe snapshot](task40extra_0p7nm_engineering/outcomes/records/review_v7_prefe_snapshot_5f74e15.json)；早期 PyVista 缺依赖、source 状态、held window、dry admission/no-PID 等只属于该历史时点。当前运行、receipt、worker 失败和原始数据边界见 [Response V7](task40extra_0p7nm_engineering/response_v7.md)、[actual-run record](task40extra_0p7nm_engineering/outcomes/records/native_w0_actual_run_v1.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json) 与 [V7 增量账](task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json)。
+
+---
+
+# Task40extra 历史进展：Review V7 首次 FE 前 import blocker（后续已发生实际 W0 运行）
 
 Review V7 已完成原尺寸 AUTO 清单复用、候选对象计数及 native ABI/identity 收据核验；没有重建模式清单。固定在已审阅 source `5be1210aa79f25c13a7677cc291a4a766a548650` 的浅导入预检通过，但真实 `python -c 'import src.solvers.dtn_port_3d'` 经 `dtn_port_3d → common_3d_utils → solve_vector_maxwell → postprocess → pyvista` 以 `ModuleNotFoundError`、exit 1 停止。W0 FE start 未到达，dry admission、worker、checker、official physics 和 raw archive 均 `NOT_RUN`；这不是 PDE/数值失败。较新 source `077ec9c8386c976da232093779279fb9d1a93033` 还改变方向字节 authority/checker，仍需人类授权，本轮没有换 source、安装 PyVista 或重放。
 
