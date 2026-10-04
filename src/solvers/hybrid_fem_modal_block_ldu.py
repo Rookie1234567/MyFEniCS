@@ -976,6 +976,7 @@ def solve_action_modal_schur_anderson(
         return {
             "status": status,
             "stop_reason": stop_reason,
+            "mixing_method": "petsc_snes_anderson_default",
             "solution": modal_values.copy(),
             "target_reached": bool(callback_target_reached and final_target_reached),
             "convergence_callback_target_reached": bool(callback_target_reached),
@@ -2740,6 +2741,7 @@ def create_side_balh_block_ldu_preconditioner(
     sampled_column_contract_sha256: str | None,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     use_anderson_modal_inner: bool = False,
+    complex_qr_research: bool = False,
 ) -> HybridBlockLduPreconditioner:
     """Build the sampled Schur or an opt-in BAL_H modal inner solve.
 
@@ -2781,6 +2783,13 @@ def create_side_balh_block_ldu_preconditioner(
     if not isinstance(use_anderson_modal_inner, (bool, np.bool_)):
         raise TypeError("Anderson modal inner opt-in must be an explicit boolean.")
     use_anderson_modal_inner = bool(use_anderson_modal_inner)
+    if not isinstance(complex_qr_research, (bool, np.bool_)):
+        raise TypeError("Complex QR research selection must be an explicit boolean.")
+    complex_qr_research = bool(complex_qr_research)
+    if complex_qr_research and not use_anderson_modal_inner:
+        raise ValueError(
+            "Complex QR research requires the on-demand Anderson modal inner."
+        )
     if not use_anderson_modal_inner and not all(
         value is not None
         for value in (
@@ -2811,6 +2820,7 @@ def create_side_balh_block_ldu_preconditioner(
             modal_system = HybridActionModalSchurAndersonSystem(
                 modal_action,
                 modal_owner=layout.modal_owner,
+                complex_qr_research=complex_qr_research,
             )
             research_inventory = {
                 "research_only": True,

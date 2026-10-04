@@ -4435,6 +4435,7 @@ def _run_task041_balh_candidate_setup(
     p4_backend_pair_side: str | None = None,
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
+    complex_qr_research: bool = False,
     physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -4476,6 +4477,12 @@ def _run_task041_balh_candidate_setup(
         raise Task041ModePrepError("a6_response_pair must be a boolean")
     if not isinstance(use_anderson_modal_inner, bool):
         raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
+    if not isinstance(complex_qr_research, bool):
+        raise Task041ModePrepError("complex_qr_research must be a boolean")
+    if complex_qr_research and not use_anderson_modal_inner:
+        raise Task041ModePrepError(
+            "complex_qr_research requires use_anderson_modal_inner"
+        )
     if use_anderson_modal_inner and (
         not isinstance(identity, Mapping)
         or str(identity.get("model_id"))
@@ -12332,6 +12339,7 @@ def _run_task041_balh_candidate_setup(
             sampled_column_contract_sha256=sampled_column_contract["sha256"],
             marker_callback=marker_callback,
             use_anderson_modal_inner=use_anderson_modal_inner,
+            complex_qr_research=complex_qr_research,
         )
         context_inventory_before = dict(context.inventory)
         marker_callback(
@@ -12478,6 +12486,7 @@ def run_task041_consumer(
     task041_resource_policy: str | None = None,
     a6_response_pair: bool = False,
     use_anderson_modal_inner: bool = False,
+    complex_qr_research: bool = False,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -12507,6 +12516,12 @@ def run_task041_consumer(
         raise Task041ModePrepError("a6_response_pair must be a boolean")
     if not isinstance(use_anderson_modal_inner, bool):
         raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
+    if not isinstance(complex_qr_research, bool):
+        raise Task041ModePrepError("complex_qr_research must be a boolean")
+    if complex_qr_research and not use_anderson_modal_inner:
+        raise Task041ModePrepError(
+            "complex_qr_research requires use_anderson_modal_inner"
+        )
     if use_anderson_modal_inner:
         registered_case = task041_balh_case(str(normalized.get("model_id", "")))
         if (
@@ -13698,6 +13713,7 @@ def run_task041_consumer(
                 p4_backend_pair_side=p4_backend_pair_side,
                 a6_response_pair=a6_response_pair,
                 use_anderson_modal_inner=use_anderson_modal_inner,
+                complex_qr_research=complex_qr_research,
                 physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity

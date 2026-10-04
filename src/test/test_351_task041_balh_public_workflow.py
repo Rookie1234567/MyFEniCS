@@ -2130,6 +2130,7 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     assert captured["performance_profile"] is None
     assert captured["a6_response_pair"] is False
     assert captured["use_anderson_modal_inner"] is False
+    assert captured["complex_qr_research"] is False
     assert loaded_rhs_manifests == [formal_rhs_manifest]
 
     formal_13p5_cell_condensed_path = (
@@ -2161,11 +2162,13 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             candidate=True,
             comm=FakeComm(),
             use_anderson_modal_inner=True,
+            complex_qr_research=True,
             task041_resource_policy=(
                 task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
             ),
         )
     assert captured["use_anderson_modal_inner"] is True
+    assert captured["complex_qr_research"] is True
     assert captured["p4_inverse_backend"] == "cell_condensed"
     assert captured["p4_refinement_target_tolerance"] is None
     assert captured["p4_response_correction_steps"] == 0
@@ -2180,6 +2183,27 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
         )
     )
+
+    captured.clear()
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="complex_qr_research requires use_anderson_modal_inner",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_complex_qr_without_inner_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            complex_qr_research=True,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+    assert not captured
 
     captured.clear()
     with pytest.raises(

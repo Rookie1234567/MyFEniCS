@@ -363,8 +363,15 @@ def test_side_balh_block_factory_releases_modal_on_constructor_error(monkeypatch
         _destroy_side_block_fixture(fixture)
 
 
+@pytest.mark.parametrize(
+    ("complex_qr_research", "expected_mixing_method"),
+    [
+        (False, "petsc_snes_anderson_default"),
+        (True, "complex_qr_type_ii_research"),
+    ],
+)
 def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
-    monkeypatch,
+    monkeypatch, complex_qr_research: bool, expected_mixing_method: str
 ) -> None:
     fixture = _side_block_fixture()
     original_action = original_context = context = result = rhs = None
@@ -407,9 +414,11 @@ def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
             sampled_column_roles=None,
             sampled_column_contract_sha256=None,
             use_anderson_modal_inner=True,
+            complex_qr_research=complex_qr_research,
         )
         initial_inventory = context.inventory
         initial_inner = initial_inventory["modal_inner_solver"]
+        assert initial_inner["mixing_method"] == expected_mixing_method
         assert context.modal_schur is None
         assert context.modal_constraint.shape == (
             layout.modal_count,
@@ -471,6 +480,7 @@ def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
             value = float(result.postsolve_audit[key])
             assert np.isfinite(value) and 0.0 <= value <= 5.0e-9
         inner = result.inventory["modal_inner_solver"]
+        assert inner["last_solve"]["mixing_method"] == expected_mixing_method
         assert result.inventory["modal_schur"] is None
         assert inner["constraint_lu_factorizations"] == 1
         assert inner["last_solve"]["max_iterations"] == 14
