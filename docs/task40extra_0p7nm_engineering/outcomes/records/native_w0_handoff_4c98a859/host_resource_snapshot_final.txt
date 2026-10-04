@@ -1,0 +1,60 @@
+capture_utc=2026-10-04T03:35:29Z
+hostname=fenics-ws01
+MemAvailable/Swap_kib
+MemTotal:       2112402720 kB
+MemAvailable:   2089370224 kB
+SwapCached:         2748 kB
+SwapTotal:       8388604 kB
+SwapFree:        8367004 kB
+vmstat_pages
+pswpin 3139063
+pswpout 5146004
+loadavg=3.81 3.35 3.79 13/1778 1574259
+active_task_process_search
+1450823 1450820   58011 Sl+   0.3 534492 /home/fenics/Projects/Metrology/.venv/bin/python -m torch.distributed.run --standalone --nnodes=1 --nproc-per-node=2 -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+1450869 1450823   58009 Rsl   100 1469248 /home/fenics/Projects/Metrology/.venv/bin/python -u -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+1450870 1450823   58009 Rsl  91.4 1469032 /home/fenics/Projects/Metrology/.venv/bin/python -u -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+process pid=1450823
+1450820   58011 Sl+   0.3 534492 /home/fenics/Projects/Metrology/.venv/bin/python -m torch.distributed.run --standalone --nnodes=1 --nproc-per-node=2 -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+start_ticks=95191339
+cgroup=0::/user.slice/user-1000.slice/session-1117.scope
+memory.current=10535272448
+memory.peak=10754138112
+memory.max=max
+memory.swap.current=1314816
+memory.swap.peak=64102400
+memory.swap.max=max
+cpu.max=max 100000
+pids.current=142
+pids.max=max
+process pid=1450869
+1450823   58009 Rsl   100 1469248 /home/fenics/Projects/Metrology/.venv/bin/python -u -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+start_ticks=95191535
+cgroup=0::/user.slice/user-1000.slice/session-1117.scope
+memory.current=10535006208
+memory.peak=10754138112
+memory.max=max
+memory.swap.current=1314816
+memory.swap.peak=64102400
+memory.swap.max=max
+cpu.max=max 100000
+pids.current=142
+pids.max=max
+process pid=1450870
+1450823   58009 Rsl  91.4 1469032 /home/fenics/Projects/Metrology/.venv/bin/python -u -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+start_ticks=95191535
+cgroup=0::/user.slice/user-1000.slice/session-1117.scope
+memory.current=10534739968
+memory.peak=10754138112
+memory.max=max
+memory.swap.current=1314816
+memory.swap.peak=64102400
+memory.swap.max=max
+cpu.max=max 100000
+pids.current=142
+pids.max=max
+process pid=1564129 state=not_present_at_capture
+process pid=1564131 state=not_present_at_capture
+FE_start=NOT_RUN
+worker=NOT_RUN
+checker=NOT_RUN

@@ -1,0 +1,30 @@
+{
+  "FE_action": "NOT_RUN",
+  "PDE_calls": 0,
+  "abi_manifest_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
+  "activation_scope": "imports_only_C1_FE_JIT_NOT_RUN",
+  "classification": "missing_optional_plotting_dependency",
+  "command": "python -c 'import src.solvers.dtn_port_3d'",
+  "entry_import_role": "run_fresh_c1_p6_probe calls build_same_mesh_physical_action; that imports dtn_port_3d before constructing surface assemblers",
+  "exit_code": 1,
+  "factor_calls": 0,
+  "finish_utc": "2026-10-04T03:24:38Z",
+  "hostname": "fenics-ws01",
+  "matrix_creation_calls": 0,
+  "python_executable": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/bin/python",
+  "schema": "task40extra.v7.w0-entry-import-closure.v1",
+  "source_commit": "5be1210aa79f25c13a7677cc291a4a766a548650",
+  "source_files_sha256": {
+    "src/postprocessing/postprocess.py": "dce3c22fb7e23f8cae0fea073592ca9ccb7d00eb7987d4b93589e04ca6175c6a",
+    "src/solvers/dtn_port_3d.py": "fc1992068c8c3fdab770e8ff601b0fdd4a3506384be59bba418daa80e08ec780",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "437542356ea441c65dd25c3ed4fa086af2ca67b1f53deff69c664f20c954bbb7",
+    "src/solvers/solve_vector_maxwell.py": "ad2eba91fae03f0517b70bd5f9260a6a3dcbe167ddeaf6085f421c711d1d3d26",
+    "src/solvers/y_orbit_sparse_probe.py": "70b8446cf371146b6d96f7b370e33e04d655da8644c9111acd798ec3748ea16e"
+  },
+  "start_utc": "2026-10-04T03:24:37Z",
+  "status": "IMPORT_FAILED_BEFORE_W0",
+  "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/tmp/task40extra-dot-readonly-5be1210/src/solvers/dtn_port_3d.py\", line 51, in <module>\n    from .common_3d_utils import _write_progress_event\n  File \"/tmp/task40extra-dot-readonly-5be1210/src/solvers/common_3d_utils.py\", line 18, in <module>\n    from .solve_vector_maxwell import _json_default\n  File \"/tmp/task40extra-dot-readonly-5be1210/src/solvers/solve_vector_maxwell.py\", line 27, in <module>\n    from ..postprocessing.postprocess import save_fields_and_plots\n  File \"/tmp/task40extra-dot-readonly-5be1210/src/postprocessing/postprocess.py\", line 6, in <module>\n    import pyvista\nModuleNotFoundError: No module named 'pyvista'\n",
+  "stderr_sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+  "stdout": "",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

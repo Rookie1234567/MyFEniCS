@@ -1,0 +1,77 @@
+capture_utc=2026-10-04T03:34:11Z
+hostname=fenics-ws01
+uname=Linux fenics-ws01 7.0.0-31-generic #31~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Aug 10 09:38:02 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+cpu_summary
+Architecture:                            x86_64
+CPU(s):                                  48
+On-line CPU(s) list:                     0-47
+Model name:                              Intel(R) Xeon(R) Platinum 8260 CPU @ 2.40GHz
+Thread(s) per core:                      1
+Core(s) per socket:                      24
+Socket(s):                               2
+CPU(s) scaling MHz:                      33%
+CPU max MHz:                             3900.0000
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0-23
+NUMA node1 CPU(s):                       24-47
+nproc=48
+cpu0_flags=fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts vnmi pku ospke avx512_vnni md_clear flush_l1d arch_capabilities
+meminfo_kib
+MemTotal:       2112402720 kB
+MemAvailable:   2089451520 kB
+SwapCached:         2748 kB
+SwapTotal:       8388604 kB
+SwapFree:        8367004 kB
+vmstat_pages
+pswpin 3139063
+pswpout 5146004
+page_size_bytes=4096
+swaps
+Filename				Type		Size		Used		Priority
+/swap.img                               file		8388604		21600		-1
+loadavg=2.77 3.18 3.79 3/1775 1573208
+disk_bytes
+Filesystem         1B-blocks         Used     Available Use% Mounted on
+/dev/nvme0n1p1 4030220222464 454249091072 3371170557952  12% /
+/dev/nvme0n1p1 4030220222464 454249091072 3371170557952  12% /
+process pid=1450823
+1450820   57932 Sl+   0.3 534492 /home/fenics/Projects/Metrology/.venv/bin/python -m torch.distributed.run --standalone --nnodes=1 --nproc-per-node=2 -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+start_ticks=95191339
+cgroup=0::/user.slice/user-1000.slice/session-1117.scope
+memory.current=10534756352
+memory.peak=10754138112
+memory.max=max
+memory.swap.current=1314816
+memory.swap.peak=64102400
+memory.swap.max=max
+cpu.max=max 100000
+pids.current=142
+pids.max=max
+process pid=1450869
+1450823   57930 Rsl   100 1469248 /home/fenics/Projects/Metrology/.venv/bin/python -u -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+start_ticks=95191535
+cgroup=0::/user.slice/user-1000.slice/session-1117.scope
+memory.current=10534756352
+memory.peak=10754138112
+memory.max=max
+memory.swap.current=1314816
+memory.swap.peak=64102400
+memory.swap.max=max
+cpu.max=max 100000
+pids.current=142
+pids.max=max
+process pid=1450870
+1450823   57930 Rsl  91.4 1469032 /home/fenics/Projects/Metrology/.venv/bin/python -u -m metrology run experiments/hole_sample_1/inversion/open_depth_9p_optimization_task.yaml
+start_ticks=95191535
+cgroup=0::/user.slice/user-1000.slice/session-1117.scope
+memory.current=10534756352
+memory.peak=10754138112
+memory.max=max
+memory.swap.current=1314816
+memory.swap.peak=64102400
+memory.swap.max=max
+cpu.max=max 100000
+pids.current=142
+pids.max=max
+process pid=1564129 state=not_present_at_capture
+process pid=1564131 state=not_present_at_capture

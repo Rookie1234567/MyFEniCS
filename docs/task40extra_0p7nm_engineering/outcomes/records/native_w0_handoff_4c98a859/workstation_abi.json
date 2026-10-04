@@ -1,0 +1,131 @@
+{
+  "schema": "fresh-runtime-imports-only.v1",
+  "status": "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION",
+  "started_utc": "2026-10-04T03:13:31Z",
+  "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "executable": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/bin/python",
+  "prefix": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210",
+  "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+  "modules": {
+    "numpy": {
+      "version": "2.5.3",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/numpy/__init__.py"
+    },
+    "scipy": {
+      "version": "1.18.1",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/scipy/__init__.py"
+    },
+    "mpi4py": {
+      "version": "4.1.2",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/mpi4py/__init__.py"
+    },
+    "petsc4py": {
+      "version": "3.25.6",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/petsc4py/__init__.py"
+    },
+    "basix": {
+      "version": "0.10.0",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/basix/__init__.py"
+    },
+    "ufl": {
+      "version": "2025.2.1",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/ufl/__init__.py"
+    },
+    "ffcx": {
+      "version": "0.10.0",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/ffcx/__init__.py"
+    },
+    "dolfinx": {
+      "version": "0.10.0",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx/__init__.py"
+    },
+    "dolfinx_mpc": {
+      "version": null,
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx_mpc/__init__.py"
+    },
+    "pytest": {
+      "version": "9.1.1",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/pytest/__init__.py"
+    },
+    "psutil": {
+      "version": "7.2.2",
+      "file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/psutil/__init__.py"
+    }
+  },
+  "FE_action": "NOT_RUN",
+  "C1": "NOT_RUN",
+  "matrix_creation_calls": 0,
+  "factor_calls": 0,
+  "PDE_calls": 0,
+  "old_ABI_inherited": false,
+  "process_local_UCX_TLS": "self",
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  },
+  "MPI": {
+    "library_version": "MPICH Version:      5.0.1\nMPICH Release date: Fri Apr 10 09:45:31 AM CDT 2026\nMPICH ABI:          18:1:6\nMPICH Device:       ch4:ucx ofi\nMPICH configure:    --prefix=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210 --disable-doc --disable-dependency-tracking --enable-cxx --enable-fortran --enable-f08 --enable-mpi-abi --with-wrapper-dl-type=none --disable-static --with-device=ch4:ucx,ofi --with-ucx=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210 --with-libfabric=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210 --with-hwloc=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210 --with-yaksa=embedded --with-pm=hydra:gforker\nMPICH CC:           x86_64-conda-linux-gnu-cc -I/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210=/usr/local/src/conda-prefix   -O2\nMPICH CXX:          x86_64-conda-linux-gnu-c++ -I/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210=/usr/local/src/conda-prefix -O2\nMPICH F77:          x86_64-conda-linux-gnu-gfortran -I/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210=/usr/local/src/conda-prefix -O2\nMPICH FC:           x86_64-conda-linux-gnu-gfortran -I/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -fno-merge-constants -isystem /home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/include -I/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/build_env/include -fdebug-prefix-map=/home/conda/feedstock_root/build_artifacts/bld/rattler-build_mpich_1784230131/work=/usr/local/src/conda/mpich-5.0.1 -fdebug-prefix-map=/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210=/usr/local/src/conda-prefix -O2\nMPICH features:     threadcomm\n",
+    "size": 1,
+    "rank": 0,
+    "extension_file": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/mpi4py/MPI.cpython-312-x86_64-linux-gnu.so"
+  },
+  "PETSc": {
+    "version": [
+      3,
+      25,
+      6
+    ],
+    "version_info": {
+      "major": 3,
+      "minor": 25,
+      "subminor": 6,
+      "release": true,
+      "date": "Sep 28, 2026",
+      "authorinfo": [
+        "The PETSc Team",
+        "petsc-maint@mcs.anl.gov",
+        "https://petsc.org/"
+      ]
+    },
+    "scalar_dtype": "complex128",
+    "int_dtype": "int32",
+    "mumps_enabled": true,
+    "public_PC_methods": {
+      "setType": true,
+      "setOperators": true,
+      "setFactorSolverType": true,
+      "setFactorSetUpSolverType": true,
+      "getFactorMatrix": true,
+      "setUp": true
+    },
+    "public_Mat_methods": {
+      "solve": true,
+      "setMumpsIcntl": true,
+      "getMumpsIcntl": true,
+      "getMumpsInfo": true,
+      "getMumpsInfog": true
+    }
+  },
+  "dolfinx_default_scalar_dtype": "complex128",
+  "loaded_numerical_libraries": [
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libbasix.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libcmumps.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libdolfinx.so.0.10.0",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libdolfinx_mpc.so.0.10.5",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libmpi.so.12.6.1",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libmpifort.so.12.6.1",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libmumps_common.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libopenblasp-r0.3.34.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libpetsc.so.3.25.6",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libptesmumps.so.7.0.11",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libstdc++.so.6.0.36",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/libzmumps.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/basix/_basixcpp.abi3.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx/cpp.abi3.so",
+    "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx_mpc/cpp.abi3.so"
+  ],
+  "source_sha256": "0430475027ab600e1cf882003ca745529616c574dba3964e0b2d4cd09238044a",
+  "finished_utc": "2026-10-04T03:13:31Z"
+}

@@ -1,0 +1,105 @@
+{
+  "status": "LOCAL_PREFIX_ABI_IDENTITY_PASS_NO_FE_ACTION",
+  "utc": "2026-10-04T03:17:22.582700+00:00",
+  "hostname": "fenics-ws01",
+  "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+  "executable": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/bin/python",
+  "resolved_executable": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/bin/python3.12",
+  "prefix": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210",
+  "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "PETSc": {
+    "version": [
+      3,
+      25,
+      6
+    ],
+    "scalar": "complex128",
+    "int": "int32"
+  },
+  "MPI": {
+    "library": "MPICH Version:      5.0.1",
+    "size": 1,
+    "rank": 0
+  },
+  "Basix": "0.10.0",
+  "DOLFINx": "0.10.0",
+  "MPC_module_path": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx_mpc/__init__.py",
+  "MPC_package_version": "0.10.5",
+  "packages": {
+    "dolfinx_mpc": {
+      "version": "0.10.5",
+      "build": "py312hdf92c3e_0",
+      "channel": "conda-forge",
+      "sha256": "1dd11c622b4b90dd9c7e661ed53eb387d40da1ce2f6824c9e2cb8f842079e06d"
+    },
+    "petsc": {
+      "version": "3.25.6",
+      "build": "complex_h1b66200_0",
+      "channel": "conda-forge",
+      "sha256": "9c7b3e83107ee1c861cdabbcfc1229f8b481534efcf791a7608b7c748f47b1e4"
+    },
+    "python": {
+      "version": "3.12.13",
+      "build": "hd63d673_0_cpython",
+      "channel": "conda-forge",
+      "sha256": "a44655c1c3e1d43ed8704890a91e12afd68130414ea2c0872e154e5633a13d7e"
+    },
+    "mpi4py": {
+      "version": "4.1.2",
+      "build": "py312h5ecf655_101",
+      "channel": "conda-forge",
+      "sha256": "8d30747dc5147dc3dd19b82d96a4e69753e14966b4b62f11b04147619344be15"
+    },
+    "slepc": {
+      "version": "3.25.2",
+      "build": "complex_h9ee8adb_0",
+      "channel": "conda-forge",
+      "sha256": "f5bf673f24841c9bd95751a721825d1155de2d78d33e31ffeaff695ffeab176f"
+    },
+    "petsc4py": {
+      "version": "3.25.6",
+      "build": "np2py311h5af2b71_0",
+      "channel": "conda-forge",
+      "sha256": "1b167a68e27ad277683303b3b0c0ddc439745ca65805e97a16219a74e18c2a4b"
+    },
+    "fenics-basix": {
+      "version": "0.10.0",
+      "build": "py312h31cd249_1",
+      "channel": "conda-forge",
+      "sha256": "3efdf656ba51131bcfc165d8e935776c8afe4a04d6eb0337fac6e91bd58d549f"
+    },
+    "mpich": {
+      "version": "5.0.1",
+      "build": "h6f9170e_1",
+      "channel": "conda-forge",
+      "sha256": "326e36d06746dd96350dbb232f9fbb0e948e71f04e4225c2d76561153aff46f0"
+    },
+    "fenics-dolfinx": {
+      "version": "0.10.0",
+      "build": "py312hf367bb2_7",
+      "channel": "conda-forge",
+      "sha256": "4329b57f03763fc24b8a9efeb2e9582dd5af4dc1513cb66033fe4a02dbfc4433"
+    },
+    "slepc4py": {
+      "version": "3.25.2",
+      "build": "np2py311hc778b8e_0",
+      "channel": "conda-forge",
+      "sha256": "03ab3910c068b9129317c81c25ce25f0210df47f1395bde1b6282caaac095745"
+    }
+  },
+  "abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
+  "module_paths": {
+    "numpy": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/numpy/__init__.py",
+    "scipy": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/scipy/__init__.py",
+    "mpi4py": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/mpi4py/__init__.py",
+    "petsc4py": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/petsc4py/__init__.py",
+    "basix": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/basix/__init__.py",
+    "ufl": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/ufl/__init__.py",
+    "ffcx": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/ffcx/__init__.py",
+    "dolfinx": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx/__init__.py",
+    "dolfinx_mpc": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/dolfinx_mpc/__init__.py",
+    "pytest": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/pytest/__init__.py",
+    "psutil": "/home/fenics/.local/share/mamba/task40extra_w0_root/envs/task40extra_w0_5be1210/lib/python3.12/site-packages/psutil/__init__.py"
+  },
+  "FE_action": "NOT_RUN"
+}

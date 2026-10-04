@@ -1,0 +1,342 @@
+{
+  "schema": "task40extra.native_w0_handoff_index.v1",
+  "classification": "verified_pre_fe_controlled_block; no numerical result",
+  "packet": {
+    "sha256": "4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d",
+    "bytes": 113898,
+    "member_count": 19,
+    "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/handoff_packet.json",
+    "artifact_manifest_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/artifact_manifest.json",
+    "artifact_manifest_sha256": "7eeab22d314971d6397ddcafc97fc030d58efed2b8f1bf25cf559ef8ad207aa4",
+    "controller_reported_persistent_copy_path": "/home/fenics/.local/share/mamba/task40extra_w0_root/evidence/native_w0_handoff_4c98a859/handoff_packet.json",
+    "controller_reported_persistent_readback": "PASS; stdout captured below; source host path was not directly mounted in this checkout",
+    "captured_tool_stdout_path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/captured_persistent_readback_stdout.txt",
+    "local_transport_path": "/tmp/task40_native_handoff_4c98a859.b64",
+    "local_transport_bytes": 38485,
+    "local_transport_sha256": "49a795db3b33eefc48ef659b25cf78ce3a91879fed58dd2204eef585026fe9d3",
+    "transport_decoding": "base64 decode followed by gzip decompress"
+  },
+  "verification": {
+    "packet_sha_and_length": "PASS",
+    "packet_utf8_json": "PASS",
+    "member_count": "PASS (19)",
+    "member_utf8_byte_lengths_and_sha256": "PASS for all 19 before write and after artifact readback",
+    "tracked_raw_receipts": "PASS; byte-identical to packet members",
+    "non_copied_large_logs_and_package_inventory": "kept only in ignored artifact directory and listed with hashes in artifact_manifest.json"
+  },
+  "members": [
+    {
+      "name": "workstation_abi.json",
+      "bytes": 9557,
+      "sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/workstation_abi.json"
+    },
+    {
+      "name": "abi_identity_audit.json",
+      "bytes": 4839,
+      "sha256": "1aba3c2325c33397d47c5b951054d90646b3a216750f1c2139f49aede4213041",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/abi_identity_audit.json"
+    },
+    {
+      "name": "source_import_closure.json",
+      "bytes": 1728,
+      "sha256": "0edecb96a79c2ac79663c07d0836911dbc2ba8279b691fd433781d72f10c28da",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/source_import_closure.json"
+    },
+    {
+      "name": "source_import_closure.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/source_import_closure.stdout"
+    },
+    {
+      "name": "source_import_closure.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/source_import_closure.stderr"
+    },
+    {
+      "name": "source_import_closure_w0_callpath.json",
+      "bytes": 2456,
+      "sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.json"
+    },
+    {
+      "name": "source_import_closure_w0_callpath.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.stdout"
+    },
+    {
+      "name": "source_import_closure_w0_callpath.stderr",
+      "bytes": 717,
+      "sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.stderr"
+    },
+    {
+      "name": "hostname.txt",
+      "bytes": 12,
+      "sha256": "43dc08cd3f80537d511e9d11798e55e5adfb7b49063a08b97d81f874c4f98889",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/hostname.txt"
+    },
+    {
+      "name": "uname.txt",
+      "bytes": 131,
+      "sha256": "627ccf7bda2b34ca340798777f63bcb907e679a6aab384a01a0a7f3c462c2f94",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/uname.txt"
+    },
+    {
+      "name": "host_resource_snapshot.txt",
+      "bytes": 3816,
+      "sha256": "1662731dc688e40100efc5c322711630ffdcae1e35bbbba86f5c54e16d3b0170",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/host_resource_snapshot.txt"
+    },
+    {
+      "name": "host_resource_snapshot_final.txt",
+      "bytes": 2545,
+      "sha256": "3bfc86dad9454190726d6def22187fa9a060b7898c4f0f7ccaad9a0cd6128480",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/host_resource_snapshot_final.txt"
+    },
+    {
+      "name": "repo_identity_snapshot.txt",
+      "bytes": 3583,
+      "sha256": "e8da5e61d40b682a243085fa555db52ed4387c0ab2bf80c88f6d613d92e6a32a",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/repo_identity_snapshot.txt"
+    },
+    {
+      "name": "environment_explicit_conda_forge.txt",
+      "bytes": 16201,
+      "sha256": "ed36f20d42c7d09f06cf3b99c8e1e6e1b11a596b43bc8d07f2e63285f64335b2",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/environment_explicit_conda_forge.txt"
+    },
+    {
+      "name": "qualify_imports_only.py",
+      "bytes": 3281,
+      "sha256": "0430475027ab600e1cf882003ca745529616c574dba3964e0b2d4cd09238044a",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/qualify_imports_only.py"
+    },
+    {
+      "name": "activate_fresh_cloud_complex.sh",
+      "bytes": 2078,
+      "sha256": "8a0cd91825100603a76e054443c4817cab92c892a2c1dbe3ee1d90357a8ffe10",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/activate_fresh_cloud_complex.sh"
+    },
+    {
+      "name": "micromamba_create.log",
+      "bytes": 24654,
+      "sha256": "3c4f6feee7498935e41a280cbbdb1136bc96958c19344bd5564cf4f20047c063",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/micromamba_create.log"
+    },
+    {
+      "name": "conda_meta_history",
+      "bytes": 16117,
+      "sha256": "3cf89c7670cb61db284b744f187ff3a322709ab4c2b299ef06999beff83ea2e8",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/conda_meta_history"
+    },
+    {
+      "name": "dolfinx_mpc_dist_info_METADATA",
+      "bytes": 1360,
+      "sha256": "ef8fbf903ae240b34ea06f9a659187cda4189cbccea1fda3c1e144358108be08",
+      "artifact_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/dolfinx_mpc_dist_info_METADATA"
+    }
+  ],
+  "tracked_raw_receipts": [
+    {
+      "name": "workstation_abi.json",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/workstation_abi.json",
+      "bytes": 9557,
+      "sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102"
+    },
+    {
+      "name": "abi_identity_audit.json",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/abi_identity_audit.json",
+      "bytes": 4839,
+      "sha256": "1aba3c2325c33397d47c5b951054d90646b3a216750f1c2139f49aede4213041"
+    },
+    {
+      "name": "source_import_closure.json",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure.json",
+      "bytes": 1728,
+      "sha256": "0edecb96a79c2ac79663c07d0836911dbc2ba8279b691fd433781d72f10c28da"
+    },
+    {
+      "name": "source_import_closure.stdout",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source_import_closure.stderr",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source_import_closure_w0_callpath.json",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.json",
+      "bytes": 2456,
+      "sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7"
+    },
+    {
+      "name": "source_import_closure_w0_callpath.stdout",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source_import_closure_w0_callpath.stderr",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.stderr",
+      "bytes": 717,
+      "sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a"
+    },
+    {
+      "name": "hostname.txt",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/hostname.txt",
+      "bytes": 12,
+      "sha256": "43dc08cd3f80537d511e9d11798e55e5adfb7b49063a08b97d81f874c4f98889"
+    },
+    {
+      "name": "uname.txt",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/uname.txt",
+      "bytes": 131,
+      "sha256": "627ccf7bda2b34ca340798777f63bcb907e679a6aab384a01a0a7f3c462c2f94"
+    },
+    {
+      "name": "repo_identity_snapshot.txt",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/repo_identity_snapshot.txt",
+      "bytes": 3583,
+      "sha256": "e8da5e61d40b682a243085fa555db52ed4387c0ab2bf80c88f6d613d92e6a32a"
+    },
+    {
+      "name": "host_resource_snapshot.txt",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/host_resource_snapshot.txt",
+      "bytes": 3816,
+      "sha256": "1662731dc688e40100efc5c322711630ffdcae1e35bbbba86f5c54e16d3b0170"
+    },
+    {
+      "name": "host_resource_snapshot_final.txt",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/host_resource_snapshot_final.txt",
+      "bytes": 2545,
+      "sha256": "3bfc86dad9454190726d6def22187fa9a060b7898c4f0f7ccaad9a0cd6128480"
+    },
+    {
+      "name": "captured_persistent_readback_stdout.txt",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/captured_persistent_readback_stdout.txt",
+      "bytes": 2090,
+      "sha256": "7f3cc33523b47d04877eea2b149d970b40ab315ab9d8af3699c3a51f16e4d3ed"
+    }
+  ],
+  "source_identity": {
+    "pinned_source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+    "newer_observed_source_sha": "077ec9c8386c976da232093779279fb9d1a93033",
+    "newer_source_authorization": "pending human response; not used; not a narrow PyVista-only repair",
+    "no_pyvista_install_or_source_edit": true
+  },
+  "native_attempt": {
+    "packet_result": "BLOCKED_BEFORE_FE",
+    "actual_import_closure_status": "IMPORT_FAILED_BEFORE_W0",
+    "shallow_import_status": "IMPORT_CLOSURE_PASS_NO_FE_ACTION",
+    "actual_command": "python -c 'import src.solvers.dtn_port_3d'",
+    "error": "ModuleNotFoundError: No module named pyvista",
+    "call_chain": [
+      "dtn_port_3d",
+      "common_3d_utils",
+      "solve_vector_maxwell",
+      "postprocess",
+      "pyvista"
+    ],
+    "callpath_start_utc": "2026-10-04T03:24:37Z",
+    "callpath_finish_utc": "2026-10-04T03:24:38Z",
+    "exit_code": 1,
+    "FE_start_event": "NOT_REACHED",
+    "FE_component": "NOT_RUN",
+    "dry_admission": "NOT_RUN",
+    "worker": "NOT_RUN",
+    "independent_checker": "NOT_RUN",
+    "official_physics": "NOT_RUN",
+    "raw_archive": "NOT_RUN",
+    "W0_worker_pid": null,
+    "W0_FE_pid": null,
+    "W0_checker_pid": null,
+    "trace_sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+    "closure_receipt_sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
+    "native_abi_status": "LOCAL_PREFIX_ABI_IDENTITY_PASS_NO_FE_ACTION",
+    "native_abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102"
+  },
+  "resource_window": {
+    "status": "HELD_NOT_ATTEMPTED; no capacity-failure classification",
+    "final_snapshot_utc": "2026-10-04T03:35:29Z",
+    "MemAvailable_kib": 2089370224,
+    "MemAvailable_bytes": 2139515109376,
+    "Task42_process_group": "absent by 2026-10-04T03:34:11Z; not signaled/restarted per receipt",
+    "Metrology_training": "active at final snapshot; not itself evidence of a W0 capacity failure",
+    "SwapUsed_host_baseline_kib": 21600,
+    "SwapUsed_baseline_capture_utc": null,
+    "SwapUsed_host_final_kib": 21600,
+    "SwapUsed_final_capture_utc": "2026-10-04T03:35:29Z",
+    "equal_snapshot_delta_kib_derived": 0,
+    "swap_delta_interpretation": "derived from equal observed values; baseline timestamp is unknown; not attributed to Task40",
+    "pswpin_baseline_pages": null,
+    "pswpout_baseline_pages": null,
+    "pswpin_pswpout_delta": null,
+    "pswpin_pswpout_unknown_reason": "The initial vmstat counters were not sampled; no cumulative delta is attributed to this work."
+  },
+  "timing": {
+    "earliest_surviving_artifact_utc": "2026-10-04T03:10:38.425757354Z",
+    "prefix_transaction_start_utc": "2026-10-04T03:11:47Z",
+    "prefix_transaction_finish_utc": "2026-10-04T03:12:22.313564304Z",
+    "prefix_transaction_elapsed_seconds_derived": 34.489,
+    "import_blocker_start_utc": "2026-10-04T03:24:37Z",
+    "import_blocker_finish_utc": "2026-10-04T03:24:38Z",
+    "transaction_start_to_import_blocker_seconds_derived": 771,
+    "final_resource_snapshot_utc": "2026-10-04T03:35:29Z",
+    "packet_created_utc": "2026-10-04T03:44:02Z",
+    "deadline_utc": "2026-10-04T10:07:14Z",
+    "deadline_remaining_seconds_at_final_snapshot_derived": 23505,
+    "full_preparation_start_utc": null,
+    "total_preparation_elapsed_seconds": null,
+    "W0_budget_consumed_seconds": null,
+    "unknown_reason": "No durable start timestamp for full source/host preparation and no retained monotonic/boottime timer; UTC-derived subintervals are not overall W0 charge, install duration, or FE runtime."
+  },
+  "preserved_auxiliary_diagnostics": {
+    "MPC_package_sha256": "1dd11c622b4b90dd9c7e661ed53eb387d40da1ce2f6824c9e2cb8f842079e06d",
+    "micromamba_list_failure": {
+      "exact_output_file": null,
+      "output_origin": "prior tool output in the active execution thread; timestamp/full raw output unavailable",
+      "status": "earlier read-only CLI inspection failed with tl::bad_expected_access; package facts then read from conda-meta"
+    },
+    "micromamba_version_failure": {
+      "binary_sha256": "366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3",
+      "core_dump_file": false,
+      "note": "ulimit -c was 0; canonical repository status was rechecked and unchanged",
+      "status": "current read-only --version query aborted with tl::bad_expected_access"
+    },
+    "two_corrected_readback_assertions": [
+      {
+        "correction": "Compare lexical and resolved interpreter identities with the same prefix; final path audit passed.",
+        "environment_rebuilt": false,
+        "first": "A lexical sys.executable bin/python path was compared with its resolved bin/python3.12 target and falsely rejected."
+      },
+      {
+        "correction": "Use conda-meta package version/build/SHA and installed module/dist-info paths; verified 0.10.5.",
+        "environment_rebuilt": false,
+        "first": "dolfinx_mpc.__version__ was assumed to exist but the module has no such attribute."
+      }
+    ]
+  },
+  "budget": {
+    "V7_total_seconds": 43200,
+    "W0_maximum_seconds": 14400,
+    "W1_maximum_seconds": 7200,
+    "W2_maximum_seconds": 21600,
+    "W0_elapsed_seconds": null,
+    "V6_settled_debit_seconds": 5428.582333962078,
+    "V6_ledger_mutated": false
+  },
+  "next_stages": {
+    "W1": "NOT_RUN; W0 did not pass",
+    "W2": "NOT_RUN; prerequisites not met",
+    "original_size_full_solve": "NO-GO"
+  },
+  "worktree_process_cleanup": "No W0 worker, FE, or checker process was started; no W0 process subtree existed to terminate or clean."
+}

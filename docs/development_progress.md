@@ -1,4 +1,14 @@
-# Task40extra 当前进展：Review V6 Gx784 求解与保存场配对完成
+# Task40extra 当前进展：Review V7 原生 W0 在 FE 前受控阻塞
+
+Review V7 已完成原尺寸 AUTO 清单复用、候选对象计数及 native ABI/identity 收据核验；没有重建模式清单。固定在已审阅 source `5be1210aa79f25c13a7677cc291a4a766a548650` 的浅导入预检通过，但真实 `python -c 'import src.solvers.dtn_port_3d'` 经 `dtn_port_3d → common_3d_utils → solve_vector_maxwell → postprocess → pyvista` 以 `ModuleNotFoundError`、exit 1 停止。W0 FE start 未到达，dry admission、worker、checker、official physics 和 raw archive 均 `NOT_RUN`；这不是 PDE/数值失败。较新 source `077ec9c8386c976da232093779279fb9d1a93033` 还改变方向字节 authority/checker，仍需人类授权，本轮没有换 source、安装 PyVista 或重放。
+
+资源/空闲窗口状态是 `HELD/NOT_ATTEMPTED`，不是测得容量不足。03:35:29Z 宿主 `MemAvailable=2,089,370,224 KiB`（约 2.1395e12 B）；Task42 进程组在 03:34:11Z 前后已不见，Metrology 训练仍在运行。宿主 SwapUsed 基线与末次观测都为 21,600 KiB，但基线时刻缺失；相等值仅给出 derived 差值，不归因给 Task40，pswpin/out 增量保持 unknown。整体准备起点、monotonic/boottime 总时长与 W0 预算消耗均 `unknown/null`；局部 34.489 s 与 771 s 是 UTC-derived 区间，不能当成安装或 FE 耗时。V7 总预算 43,200 s，W0/W1/W2 上限为 14,400/7,200/21,600 s；V6 settled debit 5,428.582334 s 未改。W1/W2 仍 `NOT_RUN`，50×25×140 nm 原尺寸完整求解继续 NO-GO；本轮没有新 FE 数值模型，因此不新增或改写模型 registry 条目。
+
+Native packet SHA256 `4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d`、113,898 B，19 个成员逐项通过 UTF-8 长度和 SHA256 核验。完整 packet/member 保存在 ignored artifact；轻量 ABI、audit、import closure、资源快照及身份 raw receipts 按原字节放在 Git 收据目录。详细身份、路径与 hash 见 [Response V7](task40extra_0p7nm_engineering/response_v7.md)、[native W0 handoff index](task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/handoff_index.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[V7增量账](task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json) 和 [outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。本段只收口当前 FE 前 blocker；需要人类决定的 source 升级若后续获准，由主控另行唤醒，不在本轮等待 Metrology 结束或启动新候选。
+
+---
+
+# Task40extra 历史进展：Review V6 Gx784 求解与保存场配对完成
 
 Review V6 授权的单次 Gx784（14×4×14、784 cells）完整三维运行已完成。Full A6 显式/释放后残差为 9.692115162625173e-7，低于 1e-6；R/T/A_balance/A_volume=0.07612656490058632 / 0.9057668832851113 / 0.01810655181430232 / 0.018106531117781374。与已有 Gx、F5 保存场的共同坐标比较由独立 checker 复算通过，状态为 tested_x_agreement_pass；Gx784 本身仍缺 matched direct reference，因此为 authority-limited，不代表 continuum convergence。
 

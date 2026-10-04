@@ -1396,7 +1396,7 @@
   "review_v7_progress": {
     "status": "in_progress_not_closed",
     "response": "docs/task40extra_0p7nm_engineering/response_v7.md",
-    "response_sha256_at_recording": "8faef782d0a5cea355d4d692fe9a0de2e7510ae91fb31f29f7af7d497634f0f3",
+    "response_sha256_at_recording": "922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5",
     "review_report": "docs/task40extra_0p7nm_engineering/review_report_v7.md",
     "review_report_sha256": "22313b2b2bc60e6178a35f77bd9e6584f7e2d9c2fd76e276004041de25a6b06e",
     "branch_head_at_recording": "66b151a72d4f837bfebc0aa9b9d854457b0fd93a",
@@ -1406,7 +1406,7 @@
     "four_corner_parent_file_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
     "four_corner_physical_signature_sha256": "f7593863b1e4edafa2f5deb61834bd5df6b5c84252c1f6f76f24ecbd22220ade",
     "incremental_workflow_ledger": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json",
-    "incremental_workflow_ledger_sha256": "39712a7aaae4da6f8a34048b55bf4cb01767e850e6024925c748319f489f2871",
+    "incremental_workflow_ledger_sha256": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20",
     "historical_v6_workflow_ledger": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
     "historical_v6_workflow_ledger_sha256": "df6041ad118c4abcc805e367e789f2bf113975bf82de718b15c65cb40a09689e",
     "auto_inventory_reuse": {
@@ -1425,41 +1425,102 @@
       "status": "derived_count_only_not_mesh_or_accuracy_qualification"
     },
     "stage_status": {
-      "W0": "controlled_stop_before_FE_import_closure_failure_no_FE",
+      "W0": "controlled_block_before_FE_import_closure_failed_resource_window_held",
       "W0_dot_source_used": "5be1210aa79f25c13a7677cc291a4a766a548650",
       "W0_new_source_observed": "077ec9c8386c976da232093779279fb9d1a93033",
-      "W0_source_upgrade_authorization": "pending",
-      "W0_native_evidence_provenance": "controller_reported; complete original packet pending no-loss transfer and independent local hash verification",
-      "W0_native_abi_result": "reported_PASS",
+      "W0_source_upgrade_authorization": "pending human response; 077 source not used",
+      "W0_native_evidence_provenance": "local gzip+base64 decode; packet SHA/size verified; all 19 member UTF-8 lengths/SHA verified before and after ignored-artifact write",
+      "W0_native_abi_result": "PASS_NO_FE_ACTION; native prefix identity audit PASS",
       "W0_native_abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
       "W0_import_attempt": {
         "source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
-        "utc_window": ["2026-10-04T03:24:37Z", "2026-10-04T03:24:38Z"],
+        "command": "python -c 'import src.solvers.dtn_port_3d'",
+        "utc_window": [
+          "2026-10-04T03:24:37Z",
+          "2026-10-04T03:24:38Z"
+        ],
+        "shallow_import_status": "IMPORT_CLOSURE_PASS_NO_FE_ACTION",
         "classification": "missing_pyvista_import_closure_failure_before_FE",
+        "exception": "ModuleNotFoundError: No module named 'pyvista'",
         "exit_code": 1,
-        "delayed_import_chain": ["dtn_port_3d", "common_3d_utils", "solve_vector_maxwell", "postprocess"],
-        "fe_worker_or_checker_started": false,
-        "trace_sha256_reported": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
-        "closure_receipt_sha256_reported": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
-        "full_native_packet": "pending no-loss transfer"
+        "delayed_import_chain": [
+          "dtn_port_3d",
+          "common_3d_utils",
+          "solve_vector_maxwell",
+          "postprocess",
+          "pyvista"
+        ],
+        "FE_start_event": "NOT_REACHED",
+        "FE_component": "NOT_RUN",
+        "dry_admission": "NOT_RUN",
+        "worker_started": false,
+        "checker_started": false,
+        "official_physics": "NOT_RUN",
+        "raw_archive": "NOT_RUN",
+        "trace_sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+        "closure_receipt_sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7"
       },
       "W0_reported_host_swap_used_kib": 21600,
       "W1": "not_run_pending_W0_pass_and_minimal_entry",
       "W2": "not_run_pending_W0_C1c_and_complete_p6_entry",
-      "original_size_full_solve": "NO_GO"
+      "original_size_full_solve": "NO_GO",
+      "W0_native_packet_sha256": "4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d",
+      "W0_native_packet_bytes": 113898,
+      "W0_native_packet_member_count": 19,
+      "W0_native_packet_artifact": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/handoff_packet.json",
+      "W0_native_handoff_index": "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/handoff_index.json",
+      "W0_native_handoff_index_sha256": "704bba313920e9e9c45775a8a6922d405e2b6020df95de21f607805d4db88e82",
+      "W0_reported_persistent_copy_readback": "PASS per captured controller stdout; original fenics-ws path is not mounted in this checkout",
+      "W0_resource_window_status": "HELD_NOT_ATTEMPTED; not a measured capacity failure",
+      "W0_final_host_snapshot_utc": "2026-10-04T03:35:29Z",
+      "W0_MemAvailable_kib": 2089370224,
+      "W0_Task42_group": "absent by 2026-10-04T03:34:11Z",
+      "W0_Metrology_training": "active at final snapshot",
+      "W0_host_swap_used_baseline_final_kib": [
+        21600,
+        21600
+      ],
+      "W0_host_swap_baseline_utc": null,
+      "W0_host_swap_snapshot_delta_kib_derived": 0,
+      "W0_task_attributed_swap": "not measured",
+      "W0_pswpin_pswpout_delta": null,
+      "W0_timing": {
+        "full_preparation_start_utc": null,
+        "total_preparation_elapsed_seconds": null,
+        "W0_budget_consumed_seconds": null,
+        "prefix_transaction_elapsed_seconds_derived": 34.489,
+        "transaction_start_to_import_blocker_seconds_derived": 771,
+        "deadline_remaining_at_final_snapshot_seconds_derived": 23505,
+        "interpretation": "derived UTC event bounds only; overall W0 elapsed and charge remain unknown/null"
+      }
     },
     "validation": {
       "qualified_local_abi_preflight": "PASS; repo .venv lexical executable and sys.prefix verified; PETSc complex128/int32; Linux PETSc/SLEPc/DOLFINx/Basix/mpi4py; Open MPI 4.1.6; MPI1",
       "documentation_contract_tests": {
         "result": "24 passed",
-        "pytest_reported_seconds": 0.06,
-        "scope": "documentation/retrospective/model registry; no PDE"
+        "pytest_reported_seconds": 0.05,
+        "scope": "documentation/retrospective/model registry; rerun after native packet integration; no PDE"
       },
       "preflight_assertion_errors": {
         "attempts": 2,
         "pytest_started_during_errors": false,
         "elapsed_seconds": null,
         "classification": "agent assertion errors, not repository/ABI failures"
+      },
+      "native_handoff_packet": {
+        "result": "PASS",
+        "packet_sha256": "4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d",
+        "bytes": 113898,
+        "member_count": 19,
+        "member_utf8_bytes_and_hashes": "all verified before write and after artifact readback",
+        "tracked_raw_receipts": "13 byte-identical packet members plus captured controller stdout (not a packet member)",
+        "handoff_index_sha256": "704bba313920e9e9c45775a8a6922d405e2b6020df95de21f607805d4db88e82"
+      },
+      "final_hash_index_check": {
+        "result": "PASS after corrected helper",
+        "scope": "response/ledger/four-corner/V4/V6/run-index pointers; packet bytes/SHA; 19 artifact member byte lengths/SHA; 14 tracked receipt byte lengths/SHA; W0-W2 state; preserved V6 debit; git diff --check",
+        "first_helper_attempt": "agent-authored path handling error: relative packet artifact path was passed to Path.relative_to(absolute_root), raising ValueError before file checks; no files were written; corrected to root-relative path joining",
+        "classification": "metadata-check helper error, not packet/receipt/ABI/FE/project failure"
       }
     },
     "push_owner": "root; this execution window did not push"

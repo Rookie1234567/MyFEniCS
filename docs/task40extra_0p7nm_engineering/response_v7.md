@@ -1,18 +1,25 @@
 # Task40 Review V7 执行回应（进行中）
 
-**状态：本轮尚未收口。** 已复用原尺寸 AUTO 清单并复核计数候选和已有对象账；原生独立 ABI 收据报告通过，但 W0 在 FE 前因缺少 `pyvista` 的延迟导入闭包失败而受控停止。没有启动 FE/PDE，W1/W2 均为条件性 `not_run`。这不是数值失败，也不构成任何阶段通过。原尺寸完整求解继续 **NO-GO**。
+**状态：W0 本次尝试已在 FE 前受控阻塞收口；Task40 Review V7 整体仍在进行中。** 原生独立 ABI 与身份审计原始收据已核对通过；固定在已审阅 source `5be1210aa79f25c13a7677cc291a4a766a548650` 的实际导入闭包因缺少 `pyvista` 失败，FE 未开始。没有 worker/checker、PDE、残差或 raw 场。这是 FE 前入口阻塞，不是数值失败，也不构成任何数值阶段通过。W1/W2 保持 `not_run`，原尺寸完整求解继续 **NO-GO**。
 
 ## 当前执行状态
 
 | 阶段 | 状态 | 已有证据与边界 |
 |---|---|---|
-| 原生工作站准入 | `ABI_PASS; resource_gate_not_passed` | 原生独立 ABI 收据已通过；活动作业仍在运行，宿主 `SwapUsed=21,600 KiB`，因此不能称整机 swap=0。实际余量/cgroup/进程树收据仍待无损移交。 |
-| W0 λ0.7/p6 组件 | `controlled_stop_before_FE`（导入闭包失败） | 2026-10-04T03:24:37–38Z 在 source `5be1210…` 的延迟导入链中因缺少 `pyvista` 以 exit 1 停止；FE worker/checker、PDE、残差和 raw 场均未启动。trace SHA256 `343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a`，closure receipt SHA256 `64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7`；原始完整 packet 仍待无损移交。截止实际 FE 启动时间为 2026-10-04 10:07:14 UTC。 |
+| 原生 ABI 与 prefix 身份 | `PASS; no FE action` | 原始 `workstation_abi.json` 与 `abi_identity_audit.json` 均在 packet 中逐成员核验；ABI receipt SHA256 `4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102`。它证明隔离 native prefix 的 ABI 身份，不代表 FE/求解通过。 |
+| 宿主资源/空闲窗口 | `HELD; NOT_ATTEMPTED` | 03:35:29Z 快照 `MemAvailable=2,089,370,224 KiB`（约 `2.1395e12 B`），没有显示容量不足；Task42 进程组在 03:34:11Z 前后已不见，Metrology 训练仍活动，因此本次没有完成合同要求的空闲重型作业窗口资格。此状态是窗口未准入，不是已测容量失败。宿主 SwapUsed 基线/末次观测均为 21,600 KiB；基线时间缺失，相等读数的 0 KiB 差值只是 derived，不能归因给 Task40。`pswpin/pswpout` 初始计数未采集，增量为 `null`。 |
+| W0 λ0.7/p6 导入闭包 | `BLOCKED_BEFORE_FE` | 三个浅导入预检通过后，实际命令 `python -c 'import src.solvers.dtn_port_3d'` 于 2026-10-04T03:24:37–38Z 在 source `5be1210…` 上沿 `dtn_port_3d → common_3d_utils → solve_vector_maxwell → postprocess → pyvista` 因 `ModuleNotFoundError`、exit 1 停止。FE start event 为 `NOT_REACHED`；W0 component、dry admission、worker、checker、physics、raw archive 均为 `NOT_RUN`。控制端在 FE 启动截止时间 2026-10-04 10:07:14 UTC 前已报告未能启动 FE。trace SHA256 `343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a`，closure receipt SHA256 `64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7`。 |
 | W1 原尺寸 AUTO 端口/局部修正成本 | `not_run`（有条件） | 必须先有 W0 数值通过；主线目前没有可运行的完整 W1 入口。只准备最小接口和缺口，不提前实现或运行。 |
 | W2 全阶 p6 周期参考对照 | `not_run`（有条件） | 还需 W0 本机资格、dot C1c raw 和新的完整 p6 链入口；p6 component probe 不等于完整求解链。 |
 | 50×25×140 nm 原尺寸完整求解 | `NO-GO` | 完整 AUTO 接线、全部 q 因子及并存、完整 p6 恢复、原尺寸精度与端到端成本均未闭合。 |
 
-原生 ABI 独立收据 SHA256 `4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102` 已报告通过；其余物理内存/cgroup/可用余量和进程树指标等完整收据仍待移交。活动的 Metrology 训练和 Task42 正式作业继续保留；主机 `SwapUsed=21,600 KiB` 是非零主机快照，不满足“整机 swap=0”的表述，不能混作 Task40 进程树 swap。W0 暂固定在已审阅 dot source `5be1210aa79f25c13a7677cc291a4a766a548650`。新 source `077ec9c8386c976da232093779279fb9d1a93033` 不止修复 PyVista 导入，还改变原生方向字节 authority/checker；历史 raw 与云端测试日志已丢失，不能继承 C1 通过。该改动超出窄修复范围，升级授权仍待主控/用户明确决定，因此本次失败不自动切换新 source、不重放，也不形成 FE 资格。W0 attempt 的 monotonic/boottime 计费值仍 unknown，等完整原生 packet 核验后再记；不能用秒级 UTC 窗口推导计费。此前本地 WSL 的 PETSc3.19/OpenMPI4.1.6 和旧内存快照不替代工作站证据。Task41 的 dirty 工作树保持不动。
+原生 packet 的 packet SHA256 为 `4c98a859a265bb942cc2eb3e37cead21f0fafd2251574bbe742f1cef61cf4d3d`、113,898 B，19 个成员的 UTF-8 字节数和 SHA256 均已独立核验。控制端报告的持久副本路径为 `/home/fenics/.local/share/mamba/task40extra_w0_root/evidence/native_w0_handoff_4c98a859/handoff_packet.json`，其回读 stdout 已单独保存并标明来源；本地又从 `/tmp/task40_native_handoff_4c98a859.b64` 解码、核 hash 后写入 ignored artifact。完整包和全部成员在 `benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_4c98a859/`；13 份轻量原始 ABI/audit/import/resource/host 身份收据在 [W0 收据索引](outcomes/records/native_w0_handoff_4c98a859/handoff_index.json)。较长安装日志、包清单和辅助脚本只保留在 ignored artifacts，由索引列出各自 SHA，不复制 timeline。
+
+W0 的实际入口阻塞和 resource-window 状态是两个不同结论：主要复现阻塞是冻结 source 的 `pyvista` import 闭包失败；资源窗口则因 Metrology 训练仍活动而保持 `HELD/NOT_ATTEMPTED`。大约 `2.1395e12 B` 的 MemAvailable 快照不支持“内存容量不足”结论；宿主 SwapUsed 快照也不是 Task40 进程树 swap。Task42 已不在末次观察中，不能继续写成仍活动。没有 W0 worker/FE/checker PID，因此没有本任务进程子树需要终止或清理。
+
+本次完成到 native ABI/identity audit 和固定 source 的导入闭包检查，仍有三个缺口：固定 source 的入口闭包未通过；本轮没有完成空闲重型作业窗口资格；W0 FE component 因此前两项没有运行，故无数值结果。新 source `077ec9c8386c976da232093779279fb9d1a93033` 还包含方向字节 authority/checker 变化，超出窄导入修复；其授权仍待人类答复，主控的静态审阅不作为新授权。本轮没有安装 PyVista、修改 solver source、重跑或换 source。
+
+可证的时钟字段只支持局部边界：prefix transaction UTC 起止为 `03:11:47Z–03:12:22.313564304Z`，receipt 给出的 `34.489 s` 是 derived 子区间；从 transaction 开始至 import blocker 的 `771 s` 也由 UTC 边界推导。完整准备起点无耐久时间戳，整体准备时长、W0 monotonic/boottime 用时及预算扣款均为 `unknown/null`，不得记零或用秒级 UTC 窗口替代。V7 总上限 43,200 s，W0/W1/W2 上限 14,400/7,200/21,600 s；V6 历史 settled debit 5,428.582334 s 未改。
 
 ## AUTO 清单与离散成本账
 
@@ -46,4 +53,4 @@ W1 整组（准备、冷 JIT、p4/p6 对象、checker、写出）累计 ≤7,200
 
 ## 验证与后续
 
-本地资格化 WSL preflight 最终通过：原始 `sys.executable` 位于仓库 `.venv`、`sys.prefix` 与该环境一致；PETSc complex128/int32，PETSc/SLEPc/DOLFINx/Basix/mpi4py 均为 Linux ABI 路径（PETSc/SLEPc complex3.19、Open MPI 4.1.6、MPI1）。此前两次 preflight 都因我写的断言口径错误在 pytest 启动前停止：第一次错误要求解释器符号链接的最终目标仍位于 `.venv`，第二次错误要求 SLEPc 使用 PETSc 的安装根目录；实际为标准 venv symlink 和独立 `/usr/lib/slepcdir` 前缀。它们不是仓库环境失败，耗时没有 monotonic 收据，记为 unknown。修正后文档合同测试 24 passed（pytest 报告 0.06 s）。这只是本地文档检查，不是工作站 W0 资格。没有运行 FE、MPI 多进程、全仓 pytest 或昂贵 Gate，也未改写 V6 账本。下一步等待控制端无损移交原生完整 packet，核对单调时钟、资源与进程树原始记录；W0 已在 FE 前停止，W1/W2 继续 `not_run`。解决已审阅 source 的导入闭包问题、厘清较新 source 的授权，并重新满足宿主资源 Gate 之前，不重放 W0。此次 W0 的完整 elapsed/charge 仍 unknown，不从秒级 UTC 窗口推算为零或具体时长。Gx784 身份已作为独立 x-refinement 对照接入四角接口包旁的 V7 link 记录，原四角签名和四角结果保持不变；现有 run index、outcomes summary 与 V7 增量账已登记本轮状态。完整工作站 packet 到达后仍须更新同一 response 和索引再收口；本文件当前为进度记录，不是最终审批或 merge 请求。
+本地资格化 WSL preflight 最终通过：原始 `sys.executable` 位于仓库 `.venv`、`sys.prefix` 与该环境一致；PETSc complex128/int32，PETSc/SLEPc/DOLFINx/Basix/mpi4py 均为 Linux ABI 路径（PETSc/SLEPc complex3.19、Open MPI 4.1.6、MPI1）。此前两次 preflight 都因我写的断言口径错误在 pytest 启动前停止：第一次错误要求解释器符号链接的最终目标仍位于 `.venv`，第二次错误要求 SLEPc 使用 PETSc 的安装根目录；实际为标准 venv symlink 和独立 `/usr/lib/slepcdir` 前缀。它们不是仓库环境失败，耗时没有 monotonic 收据，记为 unknown。修正后文档合同测试 24 passed（pytest 报告 0.06 s）。这只是本地文档检查，不是工作站 W0 资格。没有运行 FE、MPI 多进程、全仓 pytest 或昂贵 Gate，也未改写 V6 账本。原生完整 packet 已以 4c98a859… SHA、113,898 B 和 19 个逐成员 SHA 核验，native ABI/identity、导入链与末次资源快照原始收据见 [W0 收据索引](outcomes/records/native_w0_handoff_4c98a859/handoff_index.json)。控制端回读路径的完整 packet 位于 ignored artifacts；轻量 raw receipt 在本目录；长安装日志和 package inventory 留在 artifact 并有 hash index。Task42 process group 在末次快照前已不见，Metrology 仍活动；空闲重型工作窗口保持 `HELD/NOT_ATTEMPTED`，并非内存容量失败。W0 固定 source 的导入闭包仍缺 `pyvista`，本次没有启动 FE 或清理任何 W0 进程子树。source `077ec9c…` 的人类授权仍未解决；本轮停止，不自动换 source、不等待训练结束，也不重放。W0 总耗时/预算扣款仍为 `unknown/null`；V7 的 W1/W2 保持 `not_run`，全尺寸仍 **NO-GO**。Gx784 身份已作为独立 x-refinement 对照接入四角接口包旁的 V7 link 记录，原四角签名和四角结果保持不变；run index、outcomes summary 和 V7 增量账已同步。当前回应是 FE 前受控阻塞记录，不是 V7 数值通过、最终审批或 merge 请求。

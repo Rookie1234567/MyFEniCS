@@ -1,0 +1,83 @@
+capture_utc=2026-10-04T03:34:07Z
+pinned_dot_worktree_branch=task40extra_dot_parallel_cloud
+pinned_dot_worktree_head=5be1210aa79f25c13a7677cc291a4a766a548650
+pinned_dot_worktree_status
+pinned_dot_upstream=fatal: no upstream configured for branch 'task40extra_dot_parallel_cloud'
+remote_refs
+077ec9c8386c976da232093779279fb9d1a93033
+66b151a72d4f837bfebc0aa9b9d854457b0fd93a
+pinned_is_ancestor_of_remote_dot=true
+canonical_branch=codex/20260902-task41-mpi1-shortwave-hybrid-capacity
+canonical_head=02ec1dd2678e005e45f8c159f0012966f2acd321
+canonical_status
+ M benchmarks/task041_balh_workflow.py
+ M scripts/run_case.py
+ M src/io/input_validation.py
+ M src/runners/task041_service.py
+ M src/runners/task041_supervisor.py
+ M src/test/test_351_task041_balh_public_workflow.py
+ M src/test/test_352_task041_service_boundary.py
+?? input/official/task041/side_balh/2nm_p6h1p5_m1200_mpi8_cell_condensed.dat
+canonical_worktree_registration
+worktree /home/fenics/Projects/MyFEniCS
+HEAD 02ec1dd2678e005e45f8c159f0012966f2acd321
+branch refs/heads/codex/20260902-task41-mpi1-shortwave-hybrid-capacity
+
+worktree /tmp/myfenics-task035e-goal-trace-69cd41c
+HEAD 69cd41c74ba0dfc310d8631cf7bbd8103ec8fc73
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task035e-goal-trace-b078d77
+HEAD b078d77d5f6ca900c1e6f84bace01cc78fc5dd8d
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task035e-goal-trace-ca955c1
+HEAD ca955c1bc8ec97306ea8483b4b9788188bd6797e
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task036-cauchy-audit-6efcaff
+HEAD a7f9b4a2647adec67e910488f815246c4e254e2a
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task036-p6phi45
+HEAD ecfd3a12ab446ea48ba517c4c2fda66565cf9908
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task036-v5-0870e10
+HEAD 0870e10c9b41aa5859c76ea1b5e5596c73e83a73
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task036-v5-3259bcb
+HEAD 3259bcb6ed2b6d71a9c51a701c4cf51410d7b353
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/myfenics-task38-selective-integration-20260812
+HEAD 438caf150439343ee7c4c58ad7e02a3da812a23c
+branch refs/heads/local-only/task38-selective-integration
+prunable gitdir file points to non-existent location
+
+worktree /tmp/task041-d2a-doc-review-20260920
+HEAD a9a205abc576e1db3714ecb0fd72ee2b64ea4a6e
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/task041-d3b-terminal-review-20260920
+HEAD 566accb7eb326d89a37f5c8f540a3e3f67856a69
+detached
+prunable gitdir file points to non-existent location
+
+worktree /tmp/task40extra-dot-readonly-5be1210
+HEAD 5be1210aa79f25c13a7677cc291a4a766a548650
+branch refs/heads/task40extra_dot_parallel_cloud
+
+official_lock_sha256=ed36f20d42c7d09f06cf3b99c8e1e6e1b11a596b43bc8d07f2e63285f64335b2  /tmp/task40extra-dot-readonly-5be1210/scripts/task40extra_cloud_recovery/environment_explicit_conda_forge.txt
+abi_qualifier_sha256=0430475027ab600e1cf882003ca745529616c574dba3964e0b2d4cd09238044a  /tmp/task40extra-dot-readonly-5be1210/scripts/task40extra_cloud_recovery/qualify_imports_only.py
+activation_script_sha256=8a0cd91825100603a76e054443c4817cab92c892a2c1dbe3ee1d90357a8ffe10  /tmp/task40extra-dot-readonly-5be1210/scripts/task40extra_cloud_recovery/activate_fresh_cloud_complex.sh
+micromamba_binary_sha256=366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3  /home/fenics/.local/opt/task40extra-micromamba/bin/micromamba

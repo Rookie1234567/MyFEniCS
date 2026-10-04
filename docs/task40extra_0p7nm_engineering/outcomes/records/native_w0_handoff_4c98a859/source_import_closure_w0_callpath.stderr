@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/tmp/task40extra-dot-readonly-5be1210/src/solvers/dtn_port_3d.py", line 51, in <module>
+    from .common_3d_utils import _write_progress_event
+  File "/tmp/task40extra-dot-readonly-5be1210/src/solvers/common_3d_utils.py", line 18, in <module>
+    from .solve_vector_maxwell import _json_default
+  File "/tmp/task40extra-dot-readonly-5be1210/src/solvers/solve_vector_maxwell.py", line 27, in <module>
+    from ..postprocessing.postprocess import save_fields_and_plots
+  File "/tmp/task40extra-dot-readonly-5be1210/src/postprocessing/postprocess.py", line 6, in <module>
+    import pyvista
+ModuleNotFoundError: No module named 'pyvista'
