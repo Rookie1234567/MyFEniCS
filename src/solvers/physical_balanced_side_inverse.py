@@ -25,7 +25,7 @@ from .physical_balanced_coupling import (
     BalancedConstraintRejected,
     PhysicalBalancedCoupling,
 )
-from .physical_balanced_h6 import build_balanced_h6
+from .physical_balanced_h6 import H6_DEGREE, FixedH6, build_balanced_h6
 from .physical_balanced_physical_operator import (
     P4PhysicalResidualGateError,
     _full_action_inventory,
@@ -46,6 +46,7 @@ from .physical_balanced_trace_bridge import (
 )
 
 __all__ = (
+    "FixedH6ActiveTraceAction",
     "SideBalancedInverse",
     "build_side_balanced_inverse",
 )
@@ -312,6 +313,243 @@ def _classify_ksp_result(
         "BAL_H side KSP failed with non-iterative reason "
         f"{reason} after {iterations} iterations"
     )
+
+
+class FixedH6ActiveTraceAction:
+    """Borrow a fixed positive H6 action through the existing trace maps.
+
+    This adapter applies ``J H6 J^H`` on active rows.  In a modal Schur
+    action it supplies the two feedback terms
+    ``C - P_b J_b H6_b J_b^H T_b - P_t J_t H6_t J_t^H T_t``; ``T`` remains
+    the existing modal coupling action.  H6 is a frozen positive surrogate,
+    not the Maxwell side inverse, and adds no exact P4 or DtN feedback. The
+    action is linear only while the borrowed H6 window, diagonal, runtime
+    matrix, and condensed maps remain frozen for this adapter's lifetime.
+    This adapter is not reentrant because its two work vectors are shared.
+    The active operator, condensed layout, and H6 are borrowed. Only the two
+    full-space work vectors allocated here are owned by this adapter.
+    """
+
+    operator_identity = "borrowed_fixed_h6_active_trace_J_H6_JH"
+
+    def __init__(self, operator: PETSc.Mat, condensed: Any, h6: FixedH6) -> None:
+        self._operator: PETSc.Mat | None = operator
+        self._condensed: Any | None = condensed
+        self._h6: FixedH6 | None = h6
+        self._comm = condensed.comm
+        self._full_rhs: PETSc.Vec | None = None
+        self._full_solution: PETSc.Vec | None = None
+        self._destroyed = False
+        self._apply_count = 0
+        self._matrix_mult_count = 0
+
+        local_error = None
+        try:
+            if not isinstance(operator, PETSc.Mat):
+                raise TypeError("active H6 bridge requires a PETSc operator")
+            if not isinstance(h6, FixedH6):
+                raise TypeError("active H6 bridge requires a FixedH6 action")
+            if not hasattr(self._comm, "allgather"):
+                raise TypeError("condensed trace map has no MPI communicator")
+            active_rows = int(condensed.active_rows)
+            full_rows = int(condensed.full_rows)
+            if operator.getSize() != (active_rows, active_rows):
+                raise ValueError("active operator and trace rows differ")
+            if h6.matrix.getSize() != (full_rows, full_rows):
+                raise ValueError("FixedH6 and full p6 rows differ")
+            trace = condensed.trace_constraints
+            active_original = np.asarray(
+                trace.owned_active_original_dofs, dtype=PETSc.IntType
+            )
+            if (
+                active_original.ndim != 1
+                or active_original.size != int(condensed.owned_active_rows)
+                or np.unique(active_original).size != active_original.size
+                or np.any(active_original < 0)
+                or np.any(active_original >= full_rows)
+            ):
+                raise ValueError("owned active-to-full row map is inconsistent")
+            for matrix in (operator, h6.matrix):
+                relation = MPI.Comm.Compare(
+                    self._comm, matrix.getComm().tompi4py()
+                )
+                if relation not in (MPI.IDENT, MPI.CONGRUENT):
+                    raise ValueError("active and full H6 communicators differ")
+        except Exception as exc:  # noqa: BLE001 - report rank-local metadata errors together
+            local_error = f"{type(exc).__name__}: {exc}"
+        self._raise_layout_errors(local_error, "metadata")
+
+        active_rows = int(condensed.active_rows)
+        full_rows = int(condensed.full_rows)
+        local_error = None
+        full_range = row_range = column_range = None
+        try:
+            self._full_rhs = self._h6.matrix.createVecRight()
+            self._full_solution = self._h6.matrix.createVecLeft()
+            full_range = tuple(map(int, self._full_rhs.getOwnershipRange()))
+            if tuple(map(int, self._full_solution.getOwnershipRange())) != full_range:
+                raise ValueError("FixedH6 full work-vector ownership differs")
+            row_range = tuple(map(int, operator.getOwnershipRange()))
+            column_range = tuple(map(int, operator.getOwnershipRangeColumn()))
+            if (
+                operator.getSize() != (active_rows, active_rows)
+                or row_range[1] - row_range[0]
+                != int(condensed.owned_active_rows)
+                or column_range[1] - column_range[0]
+                != int(condensed.owned_active_rows)
+            ):
+                raise ValueError("active operator ownership differs from trace map")
+            active_original = np.asarray(
+                condensed.trace_constraints.owned_active_original_dofs,
+                dtype=PETSc.IntType,
+            )
+            if active_original.size and (
+                int(active_original.min()) < full_range[0]
+                or int(active_original.max()) >= full_range[1]
+            ):
+                raise ValueError("active full rows are not locally owned by H6")
+        except Exception as exc:  # noqa: BLE001 - report rank-local layout errors together
+            local_error = f"{type(exc).__name__}: {exc}"
+
+        layout_records = self._comm.allgather(
+            (
+                local_error,
+                full_range,
+                row_range,
+                column_range,
+                int(condensed.owned_active_rows),
+            )
+        )
+        failures = [
+            f"rank {rank}: {record[0]}"
+            for rank, record in enumerate(layout_records)
+            if record[0] is not None
+        ]
+        if not failures:
+            full_ranges = [record[1] for record in layout_records]
+            active_ranges = [record[2] for record in layout_records]
+            active_column_ranges = [record[3] for record in layout_records]
+            active_counts = [record[4] for record in layout_records]
+            full_valid = (
+                full_ranges[0][0] == 0
+                and full_ranges[-1][1] == full_rows
+                and all(
+                    full_ranges[rank - 1][1] == full_ranges[rank][0]
+                    for rank in range(1, len(full_ranges))
+                )
+            )
+            active_offsets = np.cumsum([0, *active_counts])
+            active_valid = (
+                int(active_offsets[-1]) == active_rows
+                and all(
+                    active_ranges[rank]
+                    == (int(active_offsets[rank]), int(active_offsets[rank + 1]))
+                    and active_column_ranges[rank] == active_ranges[rank]
+                    for rank in range(len(active_ranges))
+                )
+            )
+            if not full_valid:
+                failures.append("full p6 ownership ranges do not cover rows")
+            if not active_valid:
+                failures.append("active ownership ranges do not match trace rows")
+        if failures:
+            self.destroy()
+            raise ValueError(
+                "FixedH6 active-trace vector layout validation failed; "
+                + "; ".join(failures)
+            )
+        self._active_layout = row_range
+
+    def _raise_layout_errors(self, local_error: str | None, stage: str) -> None:
+        errors = self._comm.allgather(local_error)
+        failures = [
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(errors)
+            if error is not None
+        ]
+        if failures:
+            raise ValueError(
+                f"FixedH6 active-trace {stage} validation failed; "
+                + "; ".join(failures)
+            )
+
+    @property
+    def operator(self) -> PETSc.Mat:
+        if self._destroyed or self._operator is None:
+            raise RuntimeError("FixedH6 active-trace adapter has been destroyed")
+        return self._operator
+
+    @property
+    def audit(self) -> dict[str, Any]:
+        return {
+            "operator_identity": self.operator_identity,
+            "action": "J H6 J^H",
+            "linearity_condition": (
+                "borrowed H6 window/diagonal/runtime matrix and condensed maps "
+                "remain frozen for adapter lifetime"
+            ),
+            "reentrant": False,
+            "h6_degree": H6_DEGREE,
+            "h6_is_positive_surrogate": True,
+            "exact_p4_or_dtn_feedback": False,
+            "apply_count": self._apply_count,
+            "matrix_mult_count": self._matrix_mult_count,
+            "owned_work_vectors": 2,
+            "borrowed_objects": ("operator", "condensed", "FixedH6"),
+            "destroyed": self._destroyed,
+        }
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        """Apply ``J H6 J^H`` without changing the borrowed source vector."""
+
+        local_error = None
+        try:
+            if self._destroyed or self._condensed is None or self._h6 is None:
+                raise RuntimeError("FixedH6 active-trace adapter has been destroyed")
+            if _same_handle(source, target):
+                raise ValueError("source and target PETSc vectors alias")
+            active_rows = int(self._condensed.active_rows)
+            if (
+                source.getSize() != active_rows
+                or target.getSize() != active_rows
+                or tuple(map(int, source.getOwnershipRange()))
+                != self._active_layout
+                or tuple(map(int, target.getOwnershipRange()))
+                != self._active_layout
+            ):
+                raise ValueError("active H6 bridge input/output layout differs")
+        except Exception as exc:  # noqa: BLE001 - reject rank-local errors together
+            local_error = f"{type(exc).__name__}: {exc}"
+        self._raise_layout_errors(local_error, "apply arguments")
+
+        condensed = self._condensed
+        h6 = self._h6
+        inject_active_residual_to_full_p6(condensed, source, self._full_rhs)
+        facts = h6.apply_into(self._full_rhs, self._full_solution)
+        active_solution = extract_full_p6_to_active_trace(
+            condensed, self._full_solution
+        )
+        try:
+            active_solution.copy(target)
+        finally:
+            active_solution.destroy()
+        self._apply_count += 1
+        self._matrix_mult_count += int(facts["matrix_mult_count"])
+
+    def destroy(self) -> None:
+        """Release work vectors only; all three operator inputs are borrowed."""
+
+        if self._destroyed:
+            return
+        self._destroyed = True
+        for name in ("_full_rhs", "_full_solution"):
+            vector = getattr(self, name)
+            if vector is not None:
+                vector.destroy()
+                setattr(self, name, None)
+        self._operator = None
+        self._condensed = None
+        self._h6 = None
 
 
 class _SidePythonPcContext:

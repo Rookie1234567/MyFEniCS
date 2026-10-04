@@ -18,12 +18,17 @@ from petsc4py import PETSc
 import src.solvers.hybrid_fem_modal_block_ldu as block_ldu
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     HybridAugmentedLayout,
+    internal_modal_constraint_matrix,
     internal_modal_rhs_correction,
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
+from src.solvers.physical_balanced_h6 import H6_DEGREE, FixedH6
+from src.solvers.physical_balanced_side_inverse import FixedH6ActiveTraceAction
 from src.test.test_241_task037b_hybrid_action_modal_schur import (
     _destroy_fixture,
+    _gather_matrix,
     _gather_vector,
+    _matrix_from_dense,
     _tiny_fixture,
 )
 from src.test.test_349_task041_balh_side_inverse import _build_fixture
@@ -137,6 +142,329 @@ def _destroy_side_block_fixture(fixture: dict[str, object]) -> None:
     fixture["bottom"].b.destroy()
     fixture["top"].b.destroy()
     _destroy_fixture(fixture["tiny"])
+
+
+class _TinyPositiveWindow:
+    """Matrix carrier for the real FixedH6 recurrence on a tiny PETSc matrix."""
+
+    def __init__(self, matrix: PETSc.Mat) -> None:
+        self.matrix = matrix
+        self.audit = {"apply_count": 0}
+        self.destroyed = False
+
+    def destroy(self) -> None:
+        if self.destroyed:
+            return
+        self.destroyed = True
+        self.matrix.destroy()
+
+
+def _tiny_fixed_h6_bundle(side: str) -> dict[str, object]:
+    comm = MPI.COMM_WORLD
+    full_rows = 8
+    active_rows = 4
+    full_template = PETSc.Vec().createMPI(
+        (full_rows // comm.size, full_rows), comm=comm
+    )
+    active_local_rows = active_rows // comm.size
+    active_template = PETSc.Vec().createMPI(
+        (active_local_rows, active_rows), comm=comm
+    )
+    diagonal_factor = np.diag(np.sqrt(np.arange(2.0, 10.0))).astype(
+        np.complex128
+    )
+    phase = 1.0 if side == "bottom" else -1.0
+    for index in range(full_rows - 1):
+        diagonal_factor[index, index + 1] = phase * (0.05 + 0.03j)
+        diagonal_factor[index + 1, index] = phase * (0.02 - 0.04j)
+    dense_h6 = diagonal_factor.conj().T @ diagonal_factor + 3.0 * np.eye(
+        full_rows, dtype=np.complex128
+    )
+    h6_matrix = _matrix_from_dense(full_template, full_template, dense_h6)
+    active_operator = _matrix_from_dense(
+        active_template,
+        active_template,
+        np.diag(np.asarray([1.0, 1.2, 1.4, 1.6], dtype=np.complex128)),
+    )
+    diagonal = h6_matrix.createVecRight()
+    first, last = map(int, diagonal.getOwnershipRange())
+    diagonal.getArray()[:] = np.real(np.diag(dense_h6))[first:last]
+    diagonal.assemble()
+    seed = h6_matrix.createVecRight()
+    first, last = map(int, seed.getOwnershipRange())
+    seed.getArray()[:] = np.asarray(
+        [1.0 + 0.1j * (row + 1) for row in range(first, last)],
+        dtype=PETSc.ScalarType,
+    )
+    seed.assemble()
+    window = _TinyPositiveWindow(h6_matrix)
+    h6 = FixedH6(
+        window,
+        diagonal,
+        seed,
+        {"source": "test350 tiny SPD PETSc matrix"},
+        {"source": "deterministic nonzero test seed"},
+    )
+    seed.destroy()
+
+    selected_full_rows = np.asarray([0, 2, 4, 6], dtype=PETSc.IntType)
+    full_first, full_last = map(int, full_template.getOwnershipRange())
+    local_active_original = selected_full_rows[
+        (selected_full_rows >= full_first) & (selected_full_rows < full_last)
+    ].copy()
+
+    def create_active_vector() -> PETSc.Vec:
+        return PETSc.Vec().createMPI(
+            (len(local_active_original), active_rows), comm=comm
+        )
+
+    condensed = SimpleNamespace(
+        full_rows=full_rows,
+        active_rows=active_rows,
+        owned_active_rows=len(local_active_original),
+        trace_constraints=SimpleNamespace(
+            owned_active_original_dofs=local_active_original
+        ),
+        comm=comm,
+        create_active_vector=create_active_vector,
+    )
+    full_template.destroy()
+    active_template.destroy()
+    return {
+        "side": side,
+        "selected_full_rows": selected_full_rows,
+        "local_active_original": local_active_original,
+        "h6_matrix": h6_matrix,
+        "active_operator": active_operator,
+        "window": window,
+        "h6": h6,
+        "condensed": condensed,
+    }
+
+
+def _tiny_h6_dense_action(h6: FixedH6) -> np.ndarray:
+    rhs = h6.matrix.createVecRight()
+    target = h6.matrix.createVecLeft()
+    dense = np.empty(h6.matrix.getSize(), dtype=np.complex128)
+    first, last = map(int, rhs.getOwnershipRange())
+    try:
+        for column in range(int(rhs.getSize())):
+            rhs.set(0.0)
+            if first <= column < last:
+                rhs.getArray()[column - first] = 1.0
+            rhs.assemble()
+            h6.apply_into(rhs, target)
+            dense[:, column] = _gather_vector(target)
+    finally:
+        target.destroy()
+        rhs.destroy()
+    return dense
+
+
+def _tiny_fixed_h6_modal_oracle(
+    fixture: dict[str, object],
+    bottom_h6: np.ndarray,
+    top_h6: np.ndarray,
+    selected_full_rows: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    coupling = fixture["coupling"]
+    blocks = fixture["blocks"]
+    mode_count = int(coupling.mode_count_per_direction)
+    active_h6 = [
+        matrix[np.ix_(selected_full_rows, selected_full_rows)]
+        for matrix in (bottom_h6, top_h6)
+    ]
+    backward = np.asarray(coupling.propagation.backward.factors)
+    forward = np.asarray(coupling.propagation.forward.factors)
+    bottom_traction = np.concatenate(
+        (
+            blocks["bottom_positive"],
+            blocks["bottom_negative"] * backward[np.newaxis, :],
+        ),
+        axis=1,
+    )
+    top_traction = np.concatenate(
+        (
+            blocks["top_positive"] * forward[np.newaxis, :],
+            blocks["top_negative"],
+        ),
+        axis=1,
+    )
+    bottom_feedback = np.zeros((2 * mode_count, 2 * mode_count), dtype=np.complex128)
+    top_feedback = np.zeros_like(bottom_feedback)
+    bottom_feedback[:mode_count, :] = (
+        blocks["bottom_projection"] @ active_h6[0] @ bottom_traction
+    )
+    top_feedback[mode_count:, :] = (
+        blocks["top_projection"] @ active_h6[1] @ top_traction
+    )
+    constraint = np.asarray(
+        internal_modal_constraint_matrix(coupling), dtype=np.complex128
+    )
+    return constraint - bottom_feedback - top_feedback, bottom_feedback, top_feedback
+
+
+def test_fixed_h6_active_trace_action_matches_full_modal_feedback_oracle() -> None:
+    """Exercise the real FixedH6 recurrence on tiny noncontiguous trace rows."""
+
+    fixture = _tiny_fixture()
+    bundles: list[dict[str, object]] = []
+    modal_action = None
+    inputs = (
+        np.asarray([0.3 + 0.7j, -0.2 + 0.1j, 0.6 - 0.4j, 0.5 + 0.2j]),
+        np.asarray([-0.4 + 0.2j, 0.8 - 0.3j, 0.1 + 0.9j, -0.7 + 0.5j]),
+    )
+    modal_inputs = (
+        np.asarray([0.2 + 0.5j, -0.6 + 0.1j, 0.7 - 0.3j, -0.1 + 0.8j]),
+        np.asarray([-0.3 + 0.4j, 0.5 - 0.7j, 0.2 + 0.6j, 0.9 - 0.2j]),
+    )
+    try:
+        assert H6_DEGREE == 3
+        for side in ("bottom", "top"):
+            bundle = _tiny_fixed_h6_bundle(side)
+            bundles.append(bundle)
+            bundle["adapter"] = FixedH6ActiveTraceAction(
+                bundle["active_operator"], bundle["condensed"], bundle["h6"]
+            )
+
+        selected = bundles[0]["selected_full_rows"]
+        assert np.array_equal(selected, np.asarray([0, 2, 4, 6]))
+        for bundle in bundles:
+            assert np.array_equal(bundle["selected_full_rows"], selected)
+            bundle["matrix_before"] = _gather_matrix(bundle["h6_matrix"])
+            bundle["dense_h6"] = _tiny_h6_dense_action(bundle["h6"])
+        expected, bottom_feedback, top_feedback = _tiny_fixed_h6_modal_oracle(
+            fixture,
+            bundles[0]["dense_h6"],
+            bundles[1]["dense_h6"],
+            selected,
+        )
+        assert np.linalg.norm(bottom_feedback) > 0.0
+        assert np.linalg.norm(top_feedback) > 0.0
+
+        for bundle in bundles:
+            adapter = bundle["adapter"]
+            h6 = bundle["h6"]
+            source = bundle["active_operator"].createVecRight()
+            target = bundle["active_operator"].createVecLeft()
+            alias_target = bundle["active_operator"].createVecLeft()
+            active_h6 = bundle["dense_h6"][np.ix_(selected, selected)]
+            try:
+                _set_vector(source, inputs[0])
+                source_before = _gather_vector(source)
+                h6_applies = int(h6.apply_count)
+                h6_mults = int(h6.matrix_mult_count)
+                adapter_applies = adapter.audit["apply_count"]
+                adapter_mults = adapter.audit["matrix_mult_count"]
+                rank_target = source if MPI.COMM_WORLD.rank == 0 else alias_target
+                with pytest.raises(
+                    ValueError, match="source and target PETSc vectors alias"
+                ) as alias_error:
+                    adapter.apply(source, rank_target)
+                alias_errors = MPI.COMM_WORLD.allgather(str(alias_error.value))
+                assert len(set(alias_errors)) == 1
+                assert "rank 0" in alias_errors[0]
+                assert np.array_equal(_gather_vector(source), source_before)
+                assert int(h6.apply_count) == h6_applies
+                assert int(h6.matrix_mult_count) == h6_mults
+                assert adapter.audit["apply_count"] == adapter_applies
+                assert adapter.audit["matrix_mult_count"] == adapter_mults
+
+                for values in (*inputs, inputs[0], np.zeros(4, dtype=np.complex128)):
+                    _set_vector(source, values)
+                    source_before = _gather_vector(source)
+                    h6_applies = int(h6.apply_count)
+                    h6_mults = int(h6.matrix_mult_count)
+                    adapter.apply(source, target)
+                    assert _relative_or_absolute(
+                        _gather_vector(target), active_h6 @ values
+                    ) <= 2.0e-12
+                    assert np.array_equal(_gather_vector(source), source_before)
+                    assert int(h6.apply_count) - h6_applies == 1
+                    assert int(h6.matrix_mult_count) - h6_mults == 2
+                assert adapter.audit["apply_count"] == 4
+                assert adapter.audit["matrix_mult_count"] == 8
+                assert "frozen for adapter lifetime" in adapter.audit[
+                    "linearity_condition"
+                ]
+                assert adapter.audit["reentrant"] is False
+                assert adapter.audit["h6_is_positive_surrogate"] is True
+                assert adapter.audit["action"] == "J H6 J^H"
+            finally:
+                alias_target.destroy()
+                target.destroy()
+                source.destroy()
+
+        modal_action = block_ldu.HybridActionModalSchurApply(
+            fixture["coupling"], bundles[0]["adapter"], bundles[1]["adapter"]
+        )
+        vectors = (
+            modal_inputs[0],
+            modal_inputs[1],
+            modal_inputs[0],
+            np.zeros(4, dtype=np.complex128),
+            (0.37 + 0.21j) * modal_inputs[0]
+            + (-0.13 + 0.29j) * modal_inputs[1],
+        )
+        outputs = []
+        for values in vectors:
+            values_before = values.copy()
+            h6_before = [int(bundle["h6"].apply_count) for bundle in bundles]
+            mult_before = [int(bundle["h6"].matrix_mult_count) for bundle in bundles]
+            output = modal_action.apply(values)
+            outputs.append(output)
+            assert _relative_or_absolute(output, expected @ values) <= 2.0e-12
+            assert np.array_equal(values, values_before)
+            assert [
+                int(bundle["h6"].apply_count) - before
+                for bundle, before in zip(bundles, h6_before, strict=True)
+            ] == [1, 1]
+            assert [
+                int(bundle["h6"].matrix_mult_count) - before
+                for bundle, before in zip(bundles, mult_before, strict=True)
+            ] == [2, 2]
+        assert _relative_or_absolute(outputs[2], outputs[0]) <= 2.0e-12
+        assert np.linalg.norm(outputs[3]) <= 2.0e-12
+        assert _relative_or_absolute(
+            outputs[4], (0.37 + 0.21j) * outputs[0] + (-0.13 + 0.29j) * outputs[1]
+        ) <= 2.0e-12
+        for bundle in bundles:
+            adapter = bundle["adapter"]
+            assert adapter.audit["apply_count"] == 9
+            assert adapter.audit["matrix_mult_count"] == 18
+            assert np.array_equal(
+                _gather_matrix(bundle["h6_matrix"]), bundle["matrix_before"]
+            )
+
+        modal_action.destroy()
+        modal_action = None
+        for bundle in bundles:
+            adapter = bundle["adapter"]
+            operator = bundle["active_operator"]
+            h6 = bundle["h6"]
+            window = bundle["window"]
+            adapter.destroy()
+            assert adapter.audit["destroyed"] is True
+            assert h6.matrix is bundle["h6_matrix"]
+            assert window.destroyed is False
+            assert operator.isAssembled()
+            h6.destroy()
+            bundle["h6_destroyed"] = True
+            assert window.destroyed is True
+    finally:
+        if modal_action is not None:
+            modal_action.destroy()
+        for bundle in bundles:
+            adapter = bundle.get("adapter")
+            if adapter is not None:
+                adapter.destroy()
+            h6 = bundle.get("h6")
+            if h6 is not None:
+                h6.destroy()
+            operator = bundle.get("active_operator")
+            if operator is not None:
+                operator.destroy()
+        _destroy_fixture(fixture)
 
 
 def test_side_balh_block_factory_preserves_global_action_and_borrows_sides() -> None:
