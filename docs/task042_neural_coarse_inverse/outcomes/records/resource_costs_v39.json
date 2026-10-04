@@ -1,0 +1,288 @@
+{
+  "status": "FINAL_ACCOUNTED_NO_ACTIVE_NUMERICAL_QUEUE",
+  "immutable_start": {
+    "start_utc": "2026-10-04T06:15:37+00:00",
+    "start_monotonic": 1019531.860872642,
+    "monotonic_anchor_method": "first tool UTC, conservatively back-projected at bootstrap using contemporaneous UTC/monotonic pair",
+    "bootstrap_utc": "2026-10-04T06:16:11.060499+00:00",
+    "bootstrap_monotonic": 1019565.921371642,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "initial_HEAD": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "review_commit": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "component_seconds": 5400,
+    "slow_oracle_seconds": 1200,
+    "cleanup_reserve_seconds": 180,
+    "new_storage_bytes": 2147483648,
+    "actors_before": []
+  },
+  "settlement_clock": {
+    "start_utc": "2026-10-04T06:15:37+00:00",
+    "start_monotonic": 1019531.860872642,
+    "monotonic_anchor_method": "first tool UTC, conservatively back-projected at bootstrap using contemporaneous UTC/monotonic pair",
+    "bootstrap_utc": "2026-10-04T06:16:11.060499+00:00",
+    "bootstrap_monotonic": 1019565.921371642,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "initial_HEAD": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "review_commit": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "component_seconds": 5400,
+    "slow_oracle_seconds": 1200,
+    "cleanup_reserve_seconds": 180,
+    "new_storage_bytes": 2147483648,
+    "actors_before": [],
+    "observed_utc": "2026-10-04T07:41:21.577255+00:00",
+    "observed_monotonic": 1024676.43812157,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5144.577254772186,
+    "heavy_remaining_seconds": 77655.42274522781,
+    "total_remaining_seconds": 81255.42274522781
+  },
+  "shared_workstation": true,
+  "supervised_seconds": 1249.459315514192,
+  "paid_probe_seconds": 31.04950369836297,
+  "bootstrap_conservative_seconds": 3.0,
+  "delivery_close_charge_upper_seconds": 5.0,
+  "charged_total_upper_seconds": 1288.508819212555,
+  "global_loaded_limit_seconds": 7200,
+  "formal_component_seconds": 992.2815476800315,
+  "component_including_basis_conservative_seconds": 1000.1894001520704,
+  "component_limit_seconds": 5400,
+  "native_and_slow_oracle_seconds": 972.8778460749891,
+  "native_and_slow_oracle_limit_seconds": 1200,
+  "native_replay_time_gate": "gate_decisions_v39.json: derived prior setup exceeds remaining budget; no complete replay, not actually exhausted1200",
+  "runs": [
+    {
+      "role": "pre",
+      "source_sha": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "folder": "tmp/task042/v39/aux_pre_01",
+      "seconds": 9.472712895018049,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "folder": "tmp/task042/v39/aux_pre_02",
+      "seconds": 27.654503377969377,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "folder": "tmp/task042/v39/aux_pre_03",
+      "seconds": 29.580095804063603,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "folder": "tmp/task042/v39/aux_pre_04",
+      "seconds": 30.98642321501393,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "EVIDENCE",
+      "source_sha": "94e423b8a9dbed6505e016e548742e598d64eb5b",
+      "folder": "results/task042/task042_v39_evidence_20261004T063949799089Z",
+      "seconds": 11.485942829051055,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ADAPTER",
+      "source_sha": "94e423b8a9dbed6505e016e548742e598d64eb5b",
+      "folder": "results/task042/task042_v39_native_adapter_20261004T064015982193Z",
+      "seconds": 10.699517330969684,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "94e423b8a9dbed6505e016e548742e598d64eb5b",
+      "folder": "tmp/task042/v39/aux_pre_05",
+      "seconds": 29.018220874946564,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ADAPTER",
+      "source_sha": "a1795710697dcce1131f81fe2a82c7e1fd6ec0d5",
+      "folder": "results/task042/task042_v39_native_adapter_20261004T064205604582Z",
+      "seconds": 12.388118527946062,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "inspect",
+      "source_sha": "a1795710697dcce1131f81fe2a82c7e1fd6ec0d5",
+      "folder": "tmp/task042/v39/aux_inspect_01",
+      "seconds": 2.9489653341006488,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "a1795710697dcce1131f81fe2a82c7e1fd6ec0d5",
+      "folder": "tmp/task042/v39/aux_pre_06",
+      "seconds": 28.230710012023337,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "ADAPTER",
+      "source_sha": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+      "folder": "results/task042/task042_v39_native_adapter_20261004T064653461688Z",
+      "seconds": 29.2904765260173,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "COUPLED",
+      "source_sha": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+      "folder": "results/task042/task042_v39_coupled_recovery_20261004T064751743461Z",
+      "seconds": 912.5918812180171,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+      "folder": "tmp/task042/v39/aux_pre_07",
+      "seconds": 25.901532273972407,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "CHECK",
+      "source_sha": "6fd4a43323e1aef7a4fd0df515eb63c1054aae2c",
+      "folder": "results/task042/task042_v39_integration_check_20261004T070842606071Z",
+      "seconds": 8.91593464196194,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "6fd4a43323e1aef7a4fd0df515eb63c1054aae2c",
+      "folder": "tmp/task042/v39/aux_pre_08",
+      "seconds": 28.185609651962295,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "DEPLOY",
+      "source_sha": "1987e51943a5e9027ddd41b951b7d19185e220a9",
+      "folder": "results/task042/task042_v39_consumer_20261004T071055392427Z",
+      "seconds": 6.909676606068388,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "1987e51943a5e9027ddd41b951b7d19185e220a9",
+      "folder": "tmp/task042/v39/aux_post_09",
+      "seconds": 3.851434670970775,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "1987e51943a5e9027ddd41b951b7d19185e220a9",
+      "folder": "tmp/task042/v39/aux_post_10",
+      "seconds": 3.868468745960854,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "source_sha": "d9488f8cbbf05dcbce35f389a4e48a8913b35700",
+      "folder": "tmp/task042/v39/aux_archive_01",
+      "seconds": 6.068073783069849,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "d9488f8cbbf05dcbce35f389a4e48a8913b35700",
+      "folder": "tmp/task042/v39/aux_post_11",
+      "seconds": 3.0723930690437555,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "basis_audit",
+      "source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+      "folder": "tmp/task042/v39/aux_basis_audit_01",
+      "seconds": 7.90785247203894,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+      "folder": "tmp/task042/v39/aux_post_12",
+      "seconds": 11.195951362024061,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "post",
+      "source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+      "folder": "tmp/task042/v39/aux_post_13",
+      "seconds": 3.172700722934678,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+      "folder": "tmp/task042/v39/aux_archive_02",
+      "seconds": 6.062119569047354,
+      "classification": "COMPLETED"
+    }
+  ],
+  "counts": {
+    "native_hex": 36,
+    "local_LU_actual_classes": 4,
+    "local_LU_cumulative_upper": 8,
+    "planned_cache_upper_bytes": 112548672,
+    "actual_cache_payload": "UNKNOWN_NOT_SAVED_BEFORE_FAILURE",
+    "global_target_volume_mesh": 0,
+    "global_target_matrix": 0,
+    "global_LU": 0,
+    "global_QR": 0,
+    "Krylov_runs": 0,
+    "NN_training": 0,
+    "formal_actions_on_target_body": 0
+  },
+  "peak_bytes": 2073407488,
+  "swap_bytes": 0,
+  "memory_scope": "0.5s simultaneous sampled own process tree with independent watchdog; no writable dedicated cgroup, no continuous kernel-enforced peak claim",
+  "FE_warn_hard_bytes": [
+    6442450944,
+    8589934592
+  ],
+  "aux_warn_hard_bytes": [
+    1073741824,
+    2147483648
+  ],
+  "actual_selected_CPUs": [
+    0,
+    1,
+    2,
+    4,
+    7,
+    9
+  ],
+  "thread_math": 1,
+  "MPI_native": 1,
+  "GPU_used": false,
+  "neighbor_modifications": false,
+  "neighbor_impact": "INCONCLUSIVE: no sustained sampled memory pressure; comparable neighbor phase baseline unavailable",
+  "storage": {
+    "new_bytes": 434582387,
+    "task_artifact_bytes": 15430859850,
+    "free_bytes": 3365920247808,
+    "reserve_bytes": 0,
+    "new_compact_docs_nav_bytes": 2371338,
+    "new_known_upper_with1MiB_final_allowance": 438002301,
+    "new_limit_bytes": 2147483648,
+    "evidence_remaining_upper_bytes": 1709481347,
+    "jit_known_bytes": 196161322,
+    "jit_limit_bytes": 1610612736
+  },
+  "previous_historical_reported_lower_seconds": 78517.88650908363,
+  "historical_lower_plus_this_supervised_only_seconds": 79767.34582459783,
+  "historical_full_cost": "UNKNOWN, original lower-bound scope retained; no failed cost erased or nested sub-timer double-added",
+  "unmonitored_implementation_and_generic_metadata_cost": "UNKNOWN_NOT_ZERO",
+  "small_post_checks_source": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+  "body_native_affine_recovery": "NOT_QUALIFIED",
+  "full_target_PDE": "NOT_RUN",
+  "NN20percent": "NOT_DEMONSTRATED",
+  "extra_parameters_scans": 0
+}

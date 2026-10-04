@@ -1,0 +1,480 @@
+{
+  "status": "SAVED_MPC_STORAGE_AND_PHYSICAL_COPY_CONTRACT_PASS",
+  "source_sha": "d9488f8cbbf05dcbce35f389a4e48a8913b35700",
+  "script": {
+    "path": "tmp/task042/v39/delivery_collect.py",
+    "sha256": "ddd8b635e91af0770903ee69aae058349a4b6e1d41198e33d082b6fe5ba6f90f",
+    "bytes": 18260
+  },
+  "checks": [
+    {
+      "patch": "min_ordinary",
+      "input": "a",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 80.53398926709161,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "b",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 82.00031923488108,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "interior",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.9999999999999999,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "zero",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.0,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "scale",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 79.11209204235155,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "a",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 80.53398926709161,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "b",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 82.00031923488108,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "interior",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.9999999999999999,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "zero",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.0,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "scale",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 79.11209204235155,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "a",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": true,
+      "expanded_norm": 82.91020432366179,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "b",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": true,
+      "expanded_norm": 84.16828438497019,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "interior",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.9999999999999997,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "zero",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.0,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "scale",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": true,
+      "expanded_norm": 81.44635296719342,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "a",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": true,
+      "expanded_norm": 118.01488540759,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "b",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": true,
+      "expanded_norm": 118.95061433078268,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "interior",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.9999999999999996,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "zero",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": false,
+      "expanded_norm": 0.0,
+      "canonical_storage_unchanged": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "scale",
+      "storage_slave_zero": true,
+      "physical_slave_nonzero": true,
+      "expanded_norm": 115.93123054873857,
+      "canonical_storage_unchanged": true
+    }
+  ],
+  "arrays": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/storage_copy_audit/storage_copies.npz",
+    "sha256": "254bcbd88e2c63a3f439d29bfc573a8427919d49b4561c8978596fc7ba47b02c",
+    "aliases": {
+      "min_ordinary_a_physical_expanded": "min_ordinary_a_independent",
+      "min_ordinary_b_physical_expanded": "min_ordinary_b_independent",
+      "min_ordinary_interior_physical_expanded": "min_ordinary_interior_independent",
+      "min_ordinary_zero_physical_expanded": "min_ordinary_zero_independent",
+      "min_ordinary_scale_physical_expanded": "min_ordinary_scale_independent",
+      "max_ordinary_a_independent": "min_ordinary_a_independent",
+      "max_ordinary_a_physical_expanded": "min_ordinary_a_independent",
+      "max_ordinary_b_independent": "min_ordinary_b_independent",
+      "max_ordinary_b_physical_expanded": "min_ordinary_b_independent",
+      "max_ordinary_interior_independent": "min_ordinary_interior_independent",
+      "max_ordinary_interior_physical_expanded": "min_ordinary_interior_independent",
+      "max_ordinary_zero_independent": "min_ordinary_zero_independent",
+      "max_ordinary_zero_physical_expanded": "min_ordinary_zero_independent",
+      "max_ordinary_scale_independent": "min_ordinary_scale_independent",
+      "max_ordinary_scale_physical_expanded": "min_ordinary_scale_independent",
+      "x_seam_interior_physical_expanded": "x_seam_interior_independent",
+      "x_seam_zero_physical_expanded": "x_seam_zero_independent",
+      "xy_corner_interior_physical_expanded": "xy_corner_interior_independent",
+      "xy_corner_zero_physical_expanded": "xy_corner_zero_independent"
+    },
+    "members": {
+      "min_ordinary_a_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "6a4073eac896365ccd0c6952c6b57df38ce73cb41154d62b05d0709361214898"
+      },
+      "min_ordinary_a_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "6a4073eac896365ccd0c6952c6b57df38ce73cb41154d62b05d0709361214898"
+      },
+      "min_ordinary_b_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3ac5a74d6aefe7ba15ea131877aac02291c2be0af285004b0eacc60db640b913"
+      },
+      "min_ordinary_b_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3ac5a74d6aefe7ba15ea131877aac02291c2be0af285004b0eacc60db640b913"
+      },
+      "min_ordinary_interior_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "dff13e478c7602373c7ca127e488488e7871d83106184df6aaf25c908a8e09d3"
+      },
+      "min_ordinary_interior_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "dff13e478c7602373c7ca127e488488e7871d83106184df6aaf25c908a8e09d3"
+      },
+      "min_ordinary_zero_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3dd1b47dd95350a891906a22913dcfd6dd2dcf1c1a297b6b5321c1d66eed9c2c"
+      },
+      "min_ordinary_zero_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3dd1b47dd95350a891906a22913dcfd6dd2dcf1c1a297b6b5321c1d66eed9c2c"
+      },
+      "min_ordinary_scale_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "a42cc8182a706fe9786f6b6394a1e097a62af535c610f920ad4f09295a09a326"
+      },
+      "min_ordinary_scale_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "a42cc8182a706fe9786f6b6394a1e097a62af535c610f920ad4f09295a09a326"
+      },
+      "max_ordinary_a_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "6a4073eac896365ccd0c6952c6b57df38ce73cb41154d62b05d0709361214898"
+      },
+      "max_ordinary_a_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "6a4073eac896365ccd0c6952c6b57df38ce73cb41154d62b05d0709361214898"
+      },
+      "max_ordinary_b_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3ac5a74d6aefe7ba15ea131877aac02291c2be0af285004b0eacc60db640b913"
+      },
+      "max_ordinary_b_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3ac5a74d6aefe7ba15ea131877aac02291c2be0af285004b0eacc60db640b913"
+      },
+      "max_ordinary_interior_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "dff13e478c7602373c7ca127e488488e7871d83106184df6aaf25c908a8e09d3"
+      },
+      "max_ordinary_interior_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "dff13e478c7602373c7ca127e488488e7871d83106184df6aaf25c908a8e09d3"
+      },
+      "max_ordinary_zero_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3dd1b47dd95350a891906a22913dcfd6dd2dcf1c1a297b6b5321c1d66eed9c2c"
+      },
+      "max_ordinary_zero_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "3dd1b47dd95350a891906a22913dcfd6dd2dcf1c1a297b6b5321c1d66eed9c2c"
+      },
+      "max_ordinary_scale_independent": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "a42cc8182a706fe9786f6b6394a1e097a62af535c610f920ad4f09295a09a326"
+      },
+      "max_ordinary_scale_physical_expanded": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "a42cc8182a706fe9786f6b6394a1e097a62af535c610f920ad4f09295a09a326"
+      },
+      "x_seam_a_independent": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "eeb478d414ddc1362c3752c5d7d77ffbc2bc8a5a14969ea9afac2361f7f72268"
+      },
+      "x_seam_a_physical_expanded": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "cf8460bbec5bd1d2ed6676a8fa217be3d22546332b39d942ac43990e9484b2de"
+      },
+      "x_seam_b_independent": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "d8fe7576f364ed8d6abbce14a054d65a656adad1ff7c216bcae68660703c69c6"
+      },
+      "x_seam_b_physical_expanded": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "8672b35689ab135076ce06930e9000bd9cd69a6d3cf63a5236cf3e03eb8d53c6"
+      },
+      "x_seam_interior_independent": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "87e44371a518b5150887b717eaf96e07af92ea3d675c02f9cc7b96131ae6a722"
+      },
+      "x_seam_interior_physical_expanded": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "87e44371a518b5150887b717eaf96e07af92ea3d675c02f9cc7b96131ae6a722"
+      },
+      "x_seam_zero_independent": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "39a732513c237419665d6f93424831508f73cffa67c1d945959f4cd9b31d5c50"
+      },
+      "x_seam_zero_physical_expanded": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "39a732513c237419665d6f93424831508f73cffa67c1d945959f4cd9b31d5c50"
+      },
+      "x_seam_scale_independent": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "0e652d9e2a015aad3be27f91e96b0204333ffaaaf690fd06d67aa9c4a9b94c05"
+      },
+      "x_seam_scale_physical_expanded": {
+        "shape": [
+          3528
+        ],
+        "dtype": "<c16",
+        "sha256": "6eb7f59e2f52a5a84e89458514384fe9e53a1d83d89506d5708da3b94f1946d5"
+      },
+      "xy_corner_a_independent": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "244773a918e30996a7495159d767df09fb1402421cd5b1a4da06e95e7df16c5c"
+      },
+      "xy_corner_a_physical_expanded": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "18381953febe21e4a8a92d0ec2b4d6c33e7835287964ea40313cde76ee70e68b"
+      },
+      "xy_corner_b_independent": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "133433d2a5c25a4320d999e5e1238ef1071d154f9354b1a0185a72f3fce2739f"
+      },
+      "xy_corner_b_physical_expanded": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "24d3d02dc828f40322c79d4512fee217c6a5342229b566475b7906f578d883d1"
+      },
+      "xy_corner_interior_independent": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "cc41c587bd7a32da939160341121acd82e9d9e1b6e11d2018eeb815bc6e66911"
+      },
+      "xy_corner_interior_physical_expanded": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "cc41c587bd7a32da939160341121acd82e9d9e1b6e11d2018eeb815bc6e66911"
+      },
+      "xy_corner_zero_independent": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "86122304273e87e72c07f9681fe6a84610891c05955462bfd7cb32c6277d22db"
+      },
+      "xy_corner_zero_physical_expanded": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "86122304273e87e72c07f9681fe6a84610891c05955462bfd7cb32c6277d22db"
+      },
+      "xy_corner_scale_independent": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "f51f412e4171ade44f110db29dea21529b5bdc6d618b5527c7e01d7f941021e7"
+      },
+      "xy_corner_scale_physical_expanded": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "739f2fd3b2ea2aab1609cb076a9f8a918ad8e95ec20c1c3709f99d9644da41e3"
+      }
+    }
+  },
+  "scope": "independent explicit expansion of frozen literal MPC; no FE solve or internal recovery",
+  "PDE_solved": false
+}

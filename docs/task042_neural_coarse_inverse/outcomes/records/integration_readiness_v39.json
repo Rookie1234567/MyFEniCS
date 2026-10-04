@@ -1,0 +1,139 @@
+{
+  "items": [
+    {
+      "item": "full boundary q30",
+      "data_identity": "measured-reused",
+      "status": "QUALIFIED_MPI1",
+      "evidence": "V38 COMPONENT/CHECK frozen hashes"
+    },
+    {
+      "item": "native primal extract/conjugate dual scatter",
+      "data_identity": "measured",
+      "status": "QUALIFIED_ON_FOUR_WITNESSES",
+      "evidence": "ADAPTER/CHECK"
+    },
+    {
+      "item": "independent storage vs physical MPC copy",
+      "data_identity": "measured-saved-array-audit",
+      "status": "QUALIFIED_ON_SAVED_WITNESSES",
+      "evidence": "storage_copy_checker_v39.json"
+    },
+    {
+      "item": "full original p6 interior basis six-face trace",
+      "data_identity": "measured saved frozen Basix array and native C/D audit",
+      "status": "QUALIFIED_WITHOUT_CLIPPING",
+      "evidence": "internal_trace_checker_v39.json"
+    },
+    {
+      "item": "bounded native volume kernel/local classes",
+      "data_identity": "measured-attempt",
+      "status": "SETUP_EXECUTED_NOT_QUALIFIED",
+      "evidence": "COUPLED FAILED;4classes, q15/q17 exact scalars not retained"
+    },
+    {
+      "item": "nonzero internal and port RHS affine recovery",
+      "data_identity": "not_run-after-software-failure",
+      "status": "NOT_QUALIFIED",
+      "evidence": "corrected independent carrier; no full replay fits remaining native budget"
+    },
+    {
+      "item": "native/augmented residual identity",
+      "data_identity": "implemented-small-test",
+      "status": "NOT_QUALIFIED_ON_NATIVE_WITNESS",
+      "evidence": "synthetic nonHermitian40-port test only"
+    },
+    {
+      "item": "same physical full volume engine package",
+      "data_identity": "not_run",
+      "status": "NOT_QUALIFIED",
+      "evidence": "no full target volume construction"
+    },
+    {
+      "item": "full target native rows/MPC mapping",
+      "data_identity": "not_run",
+      "status": "UNKNOWN",
+      "evidence": "boundary canonical rows are not full DOLFINx IDs"
+    },
+    {
+      "item": "distributed FE ownership",
+      "data_identity": "not_run",
+      "status": "NOT_QUALIFIED",
+      "evidence": "synthetic MPI2/4 not native MPI qualification"
+    },
+    {
+      "item": "complete cold solve/explicit original residual",
+      "data_identity": "not_run",
+      "status": "NOT_QUALIFIED",
+      "evidence": "no Krylov campaign authorized"
+    },
+    {
+      "item": "total/scattered E/H/curl, amplitudes, R/T/A and energy",
+      "data_identity": "not_run",
+      "status": "NOT_QUALIFIED",
+      "evidence": "no official result"
+    },
+    {
+      "item": "h/p and mode truncation accuracy",
+      "data_identity": "not_run",
+      "status": "NOT_QUALIFIED",
+      "evidence": "capacity scenario not mesh convergence"
+    },
+    {
+      "item": "2TB and48h full N=1",
+      "data_identity": "derived/unknown",
+      "status": "NOT_QUALIFIED",
+      "evidence": "classes, vectors, K and setup unknown"
+    },
+    {
+      "item": "NN20% independent benefit",
+      "data_identity": "not_run",
+      "status": "NOT_DEMONSTRATED",
+      "evidence": "no training or qualified full baseline"
+    }
+  ],
+  "target": {
+    "period_nm": [
+      50,
+      25
+    ],
+    "z_nm": [
+      -10,
+      130
+    ],
+    "grating_nm": [
+      17,
+      25,
+      120
+    ],
+    "wavelength_nm": 0.7,
+    "source_wavelength_nm": "0.699999988",
+    "n": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon": "n*n",
+    "mu_r": 1,
+    "ports": 32060
+  },
+  "capacity_scenario": {
+    "cells": 530856,
+    "trace_rows": 105298704,
+    "interior_rows": 238885200,
+    "storage_rows": 345771066,
+    "one_full_vector_bytes": 5532337056,
+    "naive_cell_LU_recovery_Schur_bytes": 4956275464704,
+    "avoided_dense_Hp_bytes": 16445497600,
+    "full_native_mesh_built": false
+  },
+  "cost_formula": "T_setup+K*(T_volume+T_boundary+T_adapter+T_PC)+T_recovery+T_audit+T_IO",
+  "conditional_K_bound": "(172800-T_setup-T_recovery-T_audit-T_IO)/(T_volume+T_boundary+T_adapter+T_PC)",
+  "unknown": [
+    "full volume class count",
+    "solver live vector count",
+    "cold iteration K",
+    "full volume action and PC costs",
+    "full setup/recovery/audit/IO"
+  ],
+  "neural_threshold_percent": 20,
+  "next": "matching volume engine integration/capacity, with finite nonzero-RHS recovery and original residual gate; no more standalone boundary speed rounds"
+}

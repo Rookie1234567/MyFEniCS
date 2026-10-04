@@ -1,3 +1,20 @@
+# Task042 V39：原生边界接口资格通过，体积组合保留真实失败
+
+通过稀疏实体映射将体积系数取到边界，并按共轭周期相位把力加回；新增的是接线，不是神经训练。真实体积组合已运行并失败，接线修复通过小回归，但剩余慢oracle额度不足以完整重放，非零内部RHS恢复和完整解仍未资格化。
+
+| 对象／方法 | 实际值及原因 | 分类／证据 |
+|---|---|---|
+| .7nm／p6／q30／四类20hex／12冻结mode | native最大1.36230187281e-12<1e-10；全32060输出链接最大1.51058119943e-13 | NATIVE_BOUNDARY_ADAPTER_QUALIFIED_ON_WITNESSES，MPI1 |
+| 原内部零迹／计算存储 | 六面完整882基，切向max4.89818e-13；20对MPC存储／展开副本 | 原浮点C/D保留，不硬设0；旧未归一化L2 6.42361e-12 FAIL保留 |
+| 有限体积组合／非零载荷恢复 | 912.591881218s后carrier含slave而失败；4内部LU class，修复后完整重放预测超235.030s余量 | SETUP_EXECUTED_NOT_QUALIFIED／恢复NOT_RUN_AFTER_FAILURE |
+| 消费接口 | extract/scatter/forward/adjoint/modal/implicit Hp，demo差≤1.35886e-12 | 明确零volume callback，非物理解 |
+| 同时整树峰／ownswap／费用 | 2073407488B／0；component992.281548s，native972.877846s | 0.5s采样、shared-workstation；全部费用另列 |
+| 原尺寸全PDE／E/H／R/T/A/A_volume／2TB48h／NN20% | NOT_RUN／NOT_QUALIFIED／NOT_DEMONSTRATED | 本轮没有训练，不归神经收益，不授原尺寸资格 |
+
+[Review V36](../review_report_v36.md) · [response](../response_v39.md) · [结果](native_boundary_volume_integration_v39.md) · [run/source](records/run_index_v39.json) · [原始证据](records/raw_evidence_index_v39.json) · [成本](records/resource_costs_v39.json) · [集成就绪](records/integration_readiness_v39.json)。唯一下一建议：匹配体积引擎，补有限非零内部／port RHS恢复及独立残差恒等式，再作原尺寸容量准入；结束独立边界测速轮次。以下历史正文逐字保留。
+
+<!-- V39-LATEST-END -->
+
 # Task042 V38：全原尺寸边界作用通过，完整体积解仍未资格化
 
 将相同有限元边界积分按x/y方向收缩并共享几何，减少逐通道重算，代价是局部坐标桥及7.28MiB缓存。它只加速端口组件，不改变体积三维Maxwell，也不是神经训练增量。

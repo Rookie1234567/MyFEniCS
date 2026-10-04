@@ -1,0 +1,101 @@
+{
+  "source_sha": "d9488f8cbbf05dcbce35f389a4e48a8913b35700",
+  "actual_demo_source": "1987e51943a5e9027ddd41b951b7d19185e220a9",
+  "boundary_qualified_source": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+  "interfaces": [
+    "extract",
+    "scatter",
+    "boundary.apply(adjoint=...)",
+    "port_extract",
+    "modal_rhs",
+    "volume_apply(x,adjoint=...)",
+    "implicit hp_apply"
+  ],
+  "dtype": "complex128 finite exact shape; independent native slave-zero storage",
+  "ownership": "whole entity owner once, conjugate MPC pullback; physical expanded copy isolated",
+  "lifecycle": "immutable input snapshot; q/geometry/mode change requires new object; release callback, adapter, Fourier cache after actor",
+  "callback_output": "complex128, finite, exact shape; independent dual slave zero; no hidden solve",
+  "costs": {
+    "saved_hash_decode_and_callback_setup": 3.3682270400458947,
+    "forward_with_extract_scatter": 0.054396650986745954,
+    "adjoint_with_extract_scatter": 0.07087497902102768,
+    "modal_amplitude_and_implicit_hp": 0.10505467699840665,
+    "array_pack_hash_and_IO": 0.007968498044647276
+  },
+  "cache_payload_bytes": {
+    "Fourier_moments": 1462728,
+    "shared_boundary_layout": 10596096,
+    "sparse_E_and_EH": 55688,
+    "one_full_boundary_vector": 6054912,
+    "dense_port_matrix_created": 0
+  },
+  "volume_callback_kind": "SYNTHETIC_ZERO_VOLUME_CALLABLE_DEMO_ONLY",
+  "physical_volume_qualification": false,
+  "MPI_qualification": 1,
+  "arrays": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_consumer_20261004T071055392427Z/consumer_demo.npz",
+    "sha256": "effda094e7a921268049f42a1f744ae015d0915353d6b856a09163af4981382b",
+    "aliases": {},
+    "members": {
+      "action": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "b392652feeea5947b79ba35db361e4fda589f015dea740cf0c46ca4e2432c52f"
+      },
+      "adjoint": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "8102635e3d51302992a5dc522ac227e87ef8deadd7f5cacb52e7855b34f20487"
+      },
+      "modal": {
+        "shape": [
+          7056
+        ],
+        "dtype": "<c16",
+        "sha256": "919b94c97bc908808be15c779243d01543993af5bdace7151e5c04593eaa7b99"
+      },
+      "amplitudes": {
+        "shape": [
+          12
+        ],
+        "dtype": "<c16",
+        "sha256": "d76106933a4273c9ad5e66e2fefb6b9997387fd3299ca491d6d383d51d3adec7"
+      },
+      "implicit_hp": {
+        "shape": [
+          12
+        ],
+        "dtype": "<c16",
+        "sha256": "238431013a6eacd8bacb377858b3cc17e05294324fe7df7bae36527398768486"
+      }
+    }
+  },
+  "integration_gate": "PARTIAL: actual native nonzero-RHS affine recovery not completed",
+  "target_global_native_rows": "UNKNOWN_NOT_CONSTRUCTED",
+  "target_ports": "32060 implicit Hp=I; no dense Hp created",
+  "remaining_volume_adapter_fields": [
+    "exact physical/material/mesh/basis/MPC hashes",
+    "native row IDs and distributed ownership",
+    "original volume forward and conjugate-transpose callback",
+    "class identities/count, cache lifetime and simultaneous capacity",
+    "nonzero internal RHS recovery and independent native/augmented identity",
+    "cold complete solve and field/power gates"
+  ],
+  "final_implementation_source": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+  "adapter_cost": {
+    "extract_calls": 3,
+    "scatter_calls": 3,
+    "extract_seconds": 0.0011540140258148313,
+    "scatter_seconds": 0.006550499005243182
+  },
+  "boundary_cost": {
+    "project_calls": 3,
+    "scatter_calls": 3,
+    "project_seconds": 0.07497732003685087,
+    "scatter_seconds": 0.13311884307768196
+  }
+}

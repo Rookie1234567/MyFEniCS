@@ -1,0 +1,75 @@
+{
+  "metadata_source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+  "implementation_hashes": {
+    "src/solvers/native_boundary_adapter.py": "9d84af368d7c1a48c19bf173451877242d95485d14fee45b6c835004b9ae72a2",
+    "src/solvers/native_integration_scope.py": "7413bbbe9b5e3b8eda407043ab87738b9d8433548559cc58a22704f5f3ede87d",
+    "src/solvers/native_integration_study.py": "fe560dcb8d320d4e46de8be256734e91497a731c88bdf0f5ef44278878ea6f60",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/boundary_structure_study.py": "cf736b56c52eb7f9254549e5477bd39b18a5a5b947ad8b6ff3ef575d7fe80576",
+    "src/solvers/target_boundary_witness.py": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+    "src/solvers/port_component_study.py": "b927214df3250f767e4cbe8813c7c844b8f8ce13a23165e31cbacb3fbb9c3238",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+    "src/solvers/hcurl_assembly_time_condensation.py": "c23e9d6f5fef9de82cfc277d2dc2da5d1012c8a4aec86b03d9d6a39ed3c07045",
+    "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+    "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+    "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+    "src/io/port_preparation.py": "c322192d3c6f4417d89f853df4e1fd0eefc0e17ffea3cd8fe693edae02e16faf",
+    "src/runners/port_preparation.py": "b087a72c83a6b07fab2c48dace96544cacf907a51bbab2063ea7a626c51e87af",
+    "scripts/run_case.py": "70969fd5042fbad1f204aaf34b7e6aeb460b32db2bd53f922be7eb0808bac2b4",
+    "benchmarks/qualify_port_preparation.py": "0950a6cf002e115f17848776415afc9535793bc73ead1ff6f9c8a2cb8d1dbc4c",
+    "benchmarks/check_boundary_structure.py": "ba75af5a19940da228ce70d901c1f98e945b9a259cd2697e761661c949425896",
+    "benchmarks/check_native_integration.py": "93cbb9dfaede5f9c4f27e8393e76d3d6fffe24eccc9fd42ee05363eadc2f17ba",
+    "src/test/test_native_integration.py": "ce4cceb74b305fca732cef772b7d98edeb60b28cc2459480984a81246fe7f22f",
+    "src/test/test_boundary_structure.py": "02c859f4674ab3dd18fee31c66253835b492c202a20eb33febe7e842e7114a06",
+    "input/task042_neural_coarse_inverse/native_integration_v39.json": "3b2c30ab6205a544f59a522921fbc0f436e24de0a8a508e07cd46717266d7afe"
+  },
+  "formal_run_identity": "run_index_v39.json manifests bind individual clean actual SHA; final document SHA is not numerical run source",
+  "input_plan": {
+    "path": "input/task042_neural_coarse_inverse/native_integration_v39.json",
+    "sha256": "3b2c30ab6205a544f59a522921fbc0f436e24de0a8a508e07cd46717266d7afe",
+    "bytes": 1855
+  },
+  "five_one_run_inputs": [
+    {
+      "path": "input/task042_neural_coarse_inverse/v39_consumer.dat",
+      "sha256": "6a63564683c3c22fc8eab03a35728017f9fb643925fe71c2e35b72cc62137a52",
+      "bytes": 82
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v39_coupled_recovery.dat",
+      "sha256": "adf01632601663be5c3d9b7b2eef07d622392839dcf35f9909d474fde26b1006",
+      "bytes": 91
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v39_evidence.dat",
+      "sha256": "767793d804159a40739c81712717085c690a5d96ebb74d8e5b4a30228a4de982",
+      "bytes": 84
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v39_integration_check.dat",
+      "sha256": "bcf2c9e7814b86e7567c5c373d4dac8f49bf2fc34240af488468e12aa66c9349",
+      "bytes": 90
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v39_native_adapter.dat",
+      "sha256": "343f1a07bb2b28b4d31eb9b68307421082d833107cec3dae632a45fb5453227d",
+      "bytes": 89
+    }
+  ],
+  "basis_audit_script": {
+    "path": "tmp/task042/v39/basis_zero_audit.py",
+    "sha256": "5584cb5acdbca9514e8a57a4e3cc24ff09b1250735554cbbd26288ec1bea2167",
+    "bytes": 3503
+  },
+  "archive_script": {
+    "path": "tmp/task042/v39/delivery_collect.py",
+    "sha256": "ddd8b635e91af0770903ee69aae058349a4b6e1d41198e33d082b6fe5ba6f90f",
+    "bytes": 18260
+  },
+  "final_post_script": {
+    "path": "tmp/task042/v39/final_post.py",
+    "sha256": "29df076b38983aec28403c60664b267715b3d8bde34f9d559e9574c2308ebb8a",
+    "bytes": 9621
+  }
+}

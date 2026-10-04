@@ -1,0 +1,38 @@
+[
+  {
+    "path": "docs/task042_neural_coarse_inverse/README.md",
+    "base": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "old_sha256": "b37f482009cca8da6c1dbe95d0b39c9750c0d3019d8e0f66c1ee4be8ff977d44",
+    "historical_suffix_exact": true
+  },
+  {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "base": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "old_sha256": "457809aff1b5132389fef60e8990e2633dcf1f13618fd2a2a6fa7e009ad221c9",
+    "historical_suffix_exact": true
+  },
+  {
+    "path": "docs/development_progress.md",
+    "base": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "old_sha256": "537d6c61b71abc33bd9e9f16eb04d059a9b0e4d1765b599765b23c46ef4a36f5",
+    "historical_suffix_exact": true
+  },
+  {
+    "path": "docs/development_model_registry.md",
+    "base": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "old_sha256": "58fd6866ae7099e62b57b8d9e8eee8fa9d463f3f0e13b1be5cc4730af9ef1772",
+    "historical_suffix_exact": true
+  },
+  {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "base": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "old_sha256": "a39e02dc5c0c6915e392d17b6393667a604b08da7e9046cf8b42cef9e3499322",
+    "historical_suffix_exact": true
+  },
+  {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "base": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "old_sha256": "5f1c9597625c884b258ad2f1fd3602619e5f35348455dd9f40d05b9311a69c1c",
+    "historical_suffix_exact": true
+  }
+]

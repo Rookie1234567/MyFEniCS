@@ -1,0 +1,76 @@
+{
+  "merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/directional_boundary.py",
+        "src/solvers/native_boundary_adapter.py"
+      ],
+      "status": "opt-in, no production promotion",
+      "dependencies": [
+        "frozen native basis/MPC identity",
+        "matching volume engine"
+      ],
+      "behavior": "new exact boundary adapter/callback validation; full native recovery still unqualified",
+      "tests": "tests_v39.json",
+      "fresh_PDE": "NOT_RUN",
+      "order": 1
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/solvers/native_integration_scope.py",
+        "src/io/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "status": "Task042 scoped interface only",
+      "behavior": "budget and one-run V39 registration",
+      "tests": "tests_v39.json",
+      "fresh_PDE": "NOT_RUN",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_boundary_structure.py",
+        "benchmarks/check_native_integration.py",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_native_integration.py"
+      ],
+      "status": "candidate for review",
+      "behavior": "independent original-output and literal map audit",
+      "tests": "tests_v39.json",
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v39.md",
+        "outcomes/records/*v39*",
+        "outcomes/native_boundary_volume_integration_v39.md"
+      ],
+      "status": "keep positive and negative evidence",
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/native_integration_study.py",
+        "input/task042_neural_coarse_inverse/v39_*.dat",
+        "input/task042_neural_coarse_inverse/native_integration_v39.json"
+      ],
+      "status": "finite witness; no complete solver or target claim"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v39",
+        "tmp/task042/v39",
+        "results/task042/task042_v39_*"
+      ],
+      "status": "large science arrays, JIT, factors and runtime caches ignored"
+    }
+  ]
+}

@@ -1,3 +1,9 @@
+# V39测试：边界接线通过，真实体积恢复缺项保留
+
+最后一次全相关serial为22项，最终新增callback反例及预算定点测试已复验；最终源码的小测试、真实compile／Ruff、15项文档合同结果见[tests](records/tests_v39.json)。相关MPI2/4为合成fixture，真实native仅MPI1。fixture dtype、carrier接线、旧输入FAIL等原始负例不删除，不称CI或完整PDE通过。以下历史逐字保留。
+
+<!-- V39-LATEST-END -->
+
 # V38测试：最终27个定点、合成MPI2/4及保存数组独立验收通过
 
 完整checker缺q/缺action/重复/错身份、共享计划、单rank坏H/hash、单侧前缀、active worker预算、byte-identical别名及counter快照反例已覆盖。真实编译与复杂ABI/getter先于测试；最终aux_pre_12 27pass，MPI2/4通过，真实native与全量组件仅MPI1。没有重复旧campaign或CI声明。[测试身份](records/tests_v38.json) · [raw日志](records/raw_evidence_index_v38.json) · [独立checker](records/component_checker_v38.json)。文档检查另记；GitHub视觉NOT_VERIFIED。历史全文保留。

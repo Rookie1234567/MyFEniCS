@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "path": "tmp/task042/v39/formal/xdg/fenics/libffcx_forms_4b52db1660ce52a5e3c964dc49eaf1b15b91030a.o",
+      "bytes": 43665616,
+      "sha256": "44c48d675c70c31902410895ec0a6a430f4281308dc1651940cf678467a3cb7d"
+    },
+    {
+      "path": "tmp/task042/v39/formal/xdg/fenics/libffcx_forms_4b52db1660ce52a5e3c964dc49eaf1b15b91030a.c.cached",
+      "bytes": 969,
+      "sha256": "3b209b20a336588431f640a93395c1f269b084a74b5a366c6e9ad60c4f83b252"
+    },
+    {
+      "path": "tmp/task042/v39/formal/xdg/fenics/libffcx_forms_4b52db1660ce52a5e3c964dc49eaf1b15b91030a.c",
+      "bytes": 108832001,
+      "sha256": "8ad0a409289ab7d67bb43822181500d2c95c14adc4eb5f5677a353f426a2d23c"
+    },
+    {
+      "path": "tmp/task042/v39/formal/xdg/fenics/libffcx_forms_4b52db1660ce52a5e3c964dc49eaf1b15b91030a.cpython-312-x86_64-linux-gnu.so",
+      "bytes": 43662736,
+      "sha256": "8e94f8b04cd76e9fd23d458545b14f39e1bf3f7669acb22cefe633fbe009723f"
+    }
+  ],
+  "bytes": 196161322,
+  "cap_bytes": 1610612736,
+  "copied_to_Git": false,
+  "giant_old_native_q60_restarted": false,
+  "temporary_compilation_peak": "observed in resource logs; no unobserved exact continuous peak claim"
+}

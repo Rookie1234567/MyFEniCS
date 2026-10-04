@@ -1,0 +1,1224 @@
+{
+  "scope": "final source:23 related serial pass;15 documentation unittest pass; unchanged synthetic MPI2/4 reused; actual native FE MPI1",
+  "tests": [
+    {
+      "folder": "tmp/task042/v39/aux_post_09",
+      "count": 2,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.006"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_direct_native_carrier_uses_independent_trace_not_slave_storage",
+          "time": "0.544"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_post_09/pytest.xml",
+        "sha256": "01037e5c9c6d69a95ef445b3c4ee93db76b1cc9e626326bc36d5913d71c2b9f5",
+        "bytes": 496
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_post_10",
+      "count": 4,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.007"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_direct_native_carrier_uses_independent_trace_not_slave_storage",
+          "time": "0.568"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_coupled_callback_rejects_wrong_shape_dtype_finite_or_dual_storage",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_post_10/pytest.xml",
+        "sha256": "6c5c065982217037c7f272673bd6998ca2468c8475d28b85e06daef7b3d0ee83",
+        "bytes": 779
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_01",
+      "count": 18,
+      "failures": [
+        {
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "type": "failure",
+          "text": "side_only = None\n\n    @pytest.mark.parametrize(\"side_only\", [None, \"top\", \"bottom\"])\n    def test_tensor_matches_independent_complete_facet_sum(side_only):\n        import basix\n    \n        p = FacetPolynomial(element())\n        l = BoundaryLayout(\n            [0.0, 0.6, 1.5], [0.0, 0.8, 1.9], p, (np.exp(0.3j), np.exp(-0.2j))\n        )\n        rows = [r for r in modes() if side_only is None or r[\"side\"] == side_only]\n        action = DirectionalBoundaryAction(l, rows, 30)\n        rng = np.random.default_rng(423801)\n        x = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)\n        y = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)\n        rule, w = basix.make_quadrature(basix.CellType.quadrilateral, 60)\n        C = np.zeros((l.rows, len(rows)), complex)\n        D = np.zeros((len(rows), l.rows), complex)\n        for m, r in enumerate(rows):\n            side = r[\"side\"]\n            z = 0 if side == \"bottom\" else 1\n            tab = p.element.tabulate(0, np.column_stack((rule, np.full(len(rule), z))))[0][\n                :, p.active[side], :2\n            ]\n            for i in range(l.nx):\n                for j in range(l.ny):\n                    dx = l.x[i + 1] - l.x[i]\n                    dy = l.y[j + 1] - l.y[j]\n                    pts = np.column_stack(\n                        (\n                            l.x[i] + dx * rule[:, 0],\n                            l.y[j] + dy * rule[:, 1],\n                            np.full(len(rule), r[\"reference_plane_nm\"]),\n                        )\n                    )\n                    integral = np.einsum(\n                        \"q,qjc->jc\", w * np.exp(1j * (pts @ r[\"k_vector\"])), tab\n                    ) * [dy, dx]\n                    row_ids = l.maps[side][i, j]\n                    ph = l.weights[side][i, j]\n                    np.add.at(\n                        C[:, m],\n                        row_ids,\n                        (integral @ (-np.asarray(r[\"traction_vector\"][:2]))) * ph.conj(),\n                    )\n                    np.add.at(\n                        D[m],\n                        row_ids,\n                        (integral @ np.asarray(r[\"e_vector\"][:2])).conj() * ph,\n                    )\n        H = np.array([r[\"projection_denominator\"] for r in rows])\n        A = C @ (D / H[:, None])\n        np.testing.assert_allclose(action.recover(x), D @ x / H, rtol=1e-10, atol=1e-10)\n        np.testing.assert_allclose(action.apply(x), A @ x, rtol=1e-10, atol=1e-10)\n        np.testing.assert_allclose(\n            action.apply(y, adjoint=True), A.conj().T @ y, rtol=1e-10, atol=1e-10\n        )\n        np.testing.assert_allclose(\n>           action.modal_rhs(np.ones(len(H))), C @ np.ones(len(H)), rtol=1e-10, atol=1e-10\n        )\n\nsrc/test/test_boundary_structure.py:95: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/solvers/directional_boundary.py:386: in modal_rhs\n    -self.traction * _vector(alpha, len(self.modes), \"port amplitudes\")[:, None]\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nvalue = array([1., 1., 1., 1., 1., 1.]), size = 6, name = 'port amplitudes'\n\n    def _vector(value, size, name):\n        a = np.asarray(value)\n        if a.shape != (size,) or a.dtype != np.complex128 or not np.isfinite(a).all():\n>           raise ValueError(name + \" shape/complex128/finite\")\nE           ValueError: port amplitudes shape/complex128/finite\n\nsrc/solvers/directional_boundary.py:32: ValueError"
+        },
+        {
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "type": "failure",
+          "text": "side_only = 'top'\n\n    @pytest.mark.parametrize(\"side_only\", [None, \"top\", \"bottom\"])\n    def test_tensor_matches_independent_complete_facet_sum(side_only):\n        import basix\n    \n        p = FacetPolynomial(element())\n        l = BoundaryLayout(\n            [0.0, 0.6, 1.5], [0.0, 0.8, 1.9], p, (np.exp(0.3j), np.exp(-0.2j))\n        )\n        rows = [r for r in modes() if side_only is None or r[\"side\"] == side_only]\n        action = DirectionalBoundaryAction(l, rows, 30)\n        rng = np.random.default_rng(423801)\n        x = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)\n        y = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)\n        rule, w = basix.make_quadrature(basix.CellType.quadrilateral, 60)\n        C = np.zeros((l.rows, len(rows)), complex)\n        D = np.zeros((len(rows), l.rows), complex)\n        for m, r in enumerate(rows):\n            side = r[\"side\"]\n            z = 0 if side == \"bottom\" else 1\n            tab = p.element.tabulate(0, np.column_stack((rule, np.full(len(rule), z))))[0][\n                :, p.active[side], :2\n            ]\n            for i in range(l.nx):\n                for j in range(l.ny):\n                    dx = l.x[i + 1] - l.x[i]\n                    dy = l.y[j + 1] - l.y[j]\n                    pts = np.column_stack(\n                        (\n                            l.x[i] + dx * rule[:, 0],\n                            l.y[j] + dy * rule[:, 1],\n                            np.full(len(rule), r[\"reference_plane_nm\"]),\n                        )\n                    )\n                    integral = np.einsum(\n                        \"q,qjc->jc\", w * np.exp(1j * (pts @ r[\"k_vector\"])), tab\n                    ) * [dy, dx]\n                    row_ids = l.maps[side][i, j]\n                    ph = l.weights[side][i, j]\n                    np.add.at(\n                        C[:, m],\n                        row_ids,\n                        (integral @ (-np.asarray(r[\"traction_vector\"][:2]))) * ph.conj(),\n                    )\n                    np.add.at(\n                        D[m],\n                        row_ids,\n                        (integral @ np.asarray(r[\"e_vector\"][:2])).conj() * ph,\n                    )\n        H = np.array([r[\"projection_denominator\"] for r in rows])\n        A = C @ (D / H[:, None])\n        np.testing.assert_allclose(action.recover(x), D @ x / H, rtol=1e-10, atol=1e-10)\n        np.testing.assert_allclose(action.apply(x), A @ x, rtol=1e-10, atol=1e-10)\n        np.testing.assert_allclose(\n            action.apply(y, adjoint=True), A.conj().T @ y, rtol=1e-10, atol=1e-10\n        )\n        np.testing.assert_allclose(\n>           action.modal_rhs(np.ones(len(H))), C @ np.ones(len(H)), rtol=1e-10, atol=1e-10\n        )\n\nsrc/test/test_boundary_structure.py:95: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/solvers/directional_boundary.py:386: in modal_rhs\n    -self.traction * _vector(alpha, len(self.modes), \"port amplitudes\")[:, None]\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nvalue = array([1., 1., 1.]), size = 3, name = 'port amplitudes'\n\n    def _vector(value, size, name):\n        a = np.asarray(value)\n        if a.shape != (size,) or a.dtype != np.complex128 or not np.isfinite(a).all():\n>           raise ValueError(name + \" shape/complex128/finite\")\nE           ValueError: port amplitudes shape/complex128/finite\n\nsrc/solvers/directional_boundary.py:32: ValueError"
+        },
+        {
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "type": "failure",
+          "text": "side_only = 'bottom'\n\n    @pytest.mark.parametrize(\"side_only\", [None, \"top\", \"bottom\"])\n    def test_tensor_matches_independent_complete_facet_sum(side_only):\n        import basix\n    \n        p = FacetPolynomial(element())\n        l = BoundaryLayout(\n            [0.0, 0.6, 1.5], [0.0, 0.8, 1.9], p, (np.exp(0.3j), np.exp(-0.2j))\n        )\n        rows = [r for r in modes() if side_only is None or r[\"side\"] == side_only]\n        action = DirectionalBoundaryAction(l, rows, 30)\n        rng = np.random.default_rng(423801)\n        x = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)\n        y = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)\n        rule, w = basix.make_quadrature(basix.CellType.quadrilateral, 60)\n        C = np.zeros((l.rows, len(rows)), complex)\n        D = np.zeros((len(rows), l.rows), complex)\n        for m, r in enumerate(rows):\n            side = r[\"side\"]\n            z = 0 if side == \"bottom\" else 1\n            tab = p.element.tabulate(0, np.column_stack((rule, np.full(len(rule), z))))[0][\n                :, p.active[side], :2\n            ]\n            for i in range(l.nx):\n                for j in range(l.ny):\n                    dx = l.x[i + 1] - l.x[i]\n                    dy = l.y[j + 1] - l.y[j]\n                    pts = np.column_stack(\n                        (\n                            l.x[i] + dx * rule[:, 0],\n                            l.y[j] + dy * rule[:, 1],\n                            np.full(len(rule), r[\"reference_plane_nm\"]),\n                        )\n                    )\n                    integral = np.einsum(\n                        \"q,qjc->jc\", w * np.exp(1j * (pts @ r[\"k_vector\"])), tab\n                    ) * [dy, dx]\n                    row_ids = l.maps[side][i, j]\n                    ph = l.weights[side][i, j]\n                    np.add.at(\n                        C[:, m],\n                        row_ids,\n                        (integral @ (-np.asarray(r[\"traction_vector\"][:2]))) * ph.conj(),\n                    )\n                    np.add.at(\n                        D[m],\n                        row_ids,\n                        (integral @ np.asarray(r[\"e_vector\"][:2])).conj() * ph,\n                    )\n        H = np.array([r[\"projection_denominator\"] for r in rows])\n        A = C @ (D / H[:, None])\n        np.testing.assert_allclose(action.recover(x), D @ x / H, rtol=1e-10, atol=1e-10)\n        np.testing.assert_allclose(action.apply(x), A @ x, rtol=1e-10, atol=1e-10)\n        np.testing.assert_allclose(\n            action.apply(y, adjoint=True), A.conj().T @ y, rtol=1e-10, atol=1e-10\n        )\n        np.testing.assert_allclose(\n>           action.modal_rhs(np.ones(len(H))), C @ np.ones(len(H)), rtol=1e-10, atol=1e-10\n        )\n\nsrc/test/test_boundary_structure.py:95: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/solvers/directional_boundary.py:386: in modal_rhs\n    -self.traction * _vector(alpha, len(self.modes), \"port amplitudes\")[:, None]\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nvalue = array([1., 1., 1.]), size = 3, name = 'port amplitudes'\n\n    def _vector(value, size, name):\n        a = np.asarray(value)\n        if a.shape != (size,) or a.dtype != np.complex128 or not np.isfinite(a).all():\n>           raise ValueError(name + \" shape/complex128/finite\")\nE           ValueError: port amplitudes shape/complex128/finite\n\nsrc/solvers/directional_boundary.py:32: ValueError"
+        }
+      ],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.500"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.276"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.475"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.024"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.684"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.374"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.463"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_01/pytest.xml",
+        "sha256": "9f811035f36a10c9c4ed1d2a2d5aeef9b44be0b8f725b16fb65794a3e8b2d303",
+        "bytes": 13584
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_02",
+      "count": 18,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.562"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.255"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.454"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.022"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.706"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.360"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.481"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_02/pytest.xml",
+        "sha256": "9bcaaf417d246a9cceae9446250b833a26319829df4796a02e1f927a3666dd53",
+        "bytes": 2842
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_03",
+      "count": 19,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.475"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.308"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.237"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.583"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.024"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.703"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.485"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.385"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_03/pytest.xml",
+        "sha256": "01a1e245b3c94c899d8aad859507cd3d671b45d0fe2979e6ad7344384df5bfff",
+        "bytes": 2990
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_04",
+      "count": 19,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.461"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.325"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.246"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.676"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.029"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.723"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.508"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.440"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_04/pytest.xml",
+        "sha256": "c245407e0fad9fdaea01494be27fe67bd881ce7ffa7cca4298509dec65411518",
+        "bytes": 2990
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_05",
+      "count": 20,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.462"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.447"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.238"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_identity_without_saved_mpc_and_nontrivial_coefficients",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.590"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.028"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.732"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.485"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.373"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_05/pytest.xml",
+        "sha256": "bcf0bca06aff9469bdf65aeffddce4dc0da8974333e297618d1bbd1f5e57ed97",
+        "bytes": 3135
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_06",
+      "count": 20,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.479"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.442"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.248"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_identity_without_saved_mpc_and_nontrivial_coefficients",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.539"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.022"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.737"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.511"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.396"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_06/pytest.xml",
+        "sha256": "02c3f3ef0d033212fa1a62ad7327f07eb9a764af21a6e6cab85ec735b8e4600f",
+        "bytes": 3135
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_07",
+      "count": 22,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.542"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.228"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.399"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_identity_without_saved_mpc_and_nontrivial_coefficients",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.475"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_direct_native_carrier_uses_independent_trace_not_slave_storage",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_saved_adapter_checker_enforces_actual_input_inventory_and_units",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.023"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.682"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.507"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.381"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_07/pytest.xml",
+        "sha256": "8ba2aa97a2a34242533ff2659d6a9eec7fe2fd412af55e0878fb4c044eeaab07",
+        "bytes": 3426
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_pre_08",
+      "count": 22,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.550"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.228"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.336"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.005"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_identity_without_saved_mpc_and_nontrivial_coefficients",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.535"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_direct_native_carrier_uses_independent_trace_not_slave_storage",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_saved_adapter_checker_enforces_actual_input_inventory_and_units",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.023"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.667"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.494"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.360"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_pre_08/pytest.xml",
+        "sha256": "0c943a19f6e79bbeec9d6972939412e406b3b2ddd5a107a09bcf951802d2b3cc",
+        "bytes": 3426
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_post_11",
+      "count": 1,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.007"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_post_11/pytest.xml",
+        "sha256": "f94d232655297bf8dd5826418d5aea49250f00f48d18f1e6ecefb20b1c9bf46a",
+        "bytes": 351
+      }
+    },
+    {
+      "folder": "tmp/task042/v39/aux_post_12",
+      "count": 23,
+      "failures": [],
+      "cases": [
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_consumer_freezes_modes_coordinates_and_rejects_invalid_input",
+          "time": "0.582"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_finite_surface_restriction_is_explicit_and_preserves_full_default",
+          "time": "0.236"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[missing]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[permuted]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[mode]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_final_inventory_oracle_link_rejects_coverage_and_numerical_corruption[value]",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_mapping_audit_recomputes_periodic_and_orientation",
+          "time": "0.316"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_sparse_native_primal_dual_and_storage_copy",
+          "time": "0.005"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_coupled_callback_rejects_wrong_shape_dtype_finite_or_dual_storage",
+          "time": "0.004"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_literal_identity_without_saved_mpc_and_nontrivial_coefficients",
+          "time": "0.001"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_complex_nonhermitian_augmented_identity_nonzero_port",
+          "time": "0.005"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_affine_recovery_error_removes_internal_particular_nonzero_ports",
+          "time": "0.609"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_direct_native_carrier_uses_independent_trace_not_slave_storage",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_saved_adapter_checker_enforces_actual_input_inventory_and_units",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[evidence]",
+          "time": "0.024"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[native_adapter]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[coupled_recovery]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[integration_check]",
+          "time": "0.003"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_actual_one_run_dat_registry_does_not_reopen_old_window[consumer]",
+          "time": "0.002"
+        },
+        {
+          "classname": "src.test.test_native_integration",
+          "name": "test_new_window_deadline_and_closed_parent_isolation",
+          "time": "0.005"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[None]",
+          "time": "0.779"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[top]",
+          "time": "0.538"
+        },
+        {
+          "classname": "src.test.test_boundary_structure",
+          "name": "test_tensor_matches_independent_complete_facet_sum[bottom]",
+          "time": "0.343"
+        }
+      ],
+      "raw": {
+        "path": "tmp/task042/v39/aux_post_12/pytest.xml",
+        "sha256": "e78021f68fc8e89012021959cb996895526faade6c86ee599579d70e59955423",
+        "bytes": 3574
+      }
+    }
+  ],
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN_NEIGHBOR_HEAVY_AND_UNRELATED_SCOPE",
+  "old_fixture_dtype_failure_preserved": true,
+  "implementation_hashes": {
+    "src/solvers/native_boundary_adapter.py": "9d84af368d7c1a48c19bf173451877242d95485d14fee45b6c835004b9ae72a2",
+    "src/solvers/native_integration_scope.py": "7413bbbe9b5e3b8eda407043ab87738b9d8433548559cc58a22704f5f3ede87d",
+    "src/solvers/native_integration_study.py": "fe560dcb8d320d4e46de8be256734e91497a731c88bdf0f5ef44278878ea6f60",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/boundary_structure_study.py": "cf736b56c52eb7f9254549e5477bd39b18a5a5b947ad8b6ff3ef575d7fe80576",
+    "src/solvers/target_boundary_witness.py": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+    "src/solvers/port_component_study.py": "b927214df3250f767e4cbe8813c7c844b8f8ce13a23165e31cbacb3fbb9c3238",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+    "src/solvers/hcurl_assembly_time_condensation.py": "c23e9d6f5fef9de82cfc277d2dc2da5d1012c8a4aec86b03d9d6a39ed3c07045",
+    "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+    "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+    "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+    "src/io/port_preparation.py": "c322192d3c6f4417d89f853df4e1fd0eefc0e17ffea3cd8fe693edae02e16faf",
+    "src/runners/port_preparation.py": "b087a72c83a6b07fab2c48dace96544cacf907a51bbab2063ea7a626c51e87af",
+    "scripts/run_case.py": "70969fd5042fbad1f204aaf34b7e6aeb460b32db2bd53f922be7eb0808bac2b4",
+    "benchmarks/qualify_port_preparation.py": "0950a6cf002e115f17848776415afc9535793bc73ead1ff6f9c8a2cb8d1dbc4c",
+    "benchmarks/check_boundary_structure.py": "ba75af5a19940da228ce70d901c1f98e945b9a259cd2697e761661c949425896",
+    "benchmarks/check_native_integration.py": "93cbb9dfaede5f9c4f27e8393e76d3d6fffe24eccc9fd42ee05363eadc2f17ba",
+    "src/test/test_native_integration.py": "ce4cceb74b305fca732cef772b7d98edeb60b28cc2459480984a81246fe7f22f",
+    "src/test/test_boundary_structure.py": "02c859f4674ab3dd18fee31c66253835b492c202a20eb33febe7e842e7114a06",
+    "input/task042_neural_coarse_inverse/native_integration_v39.json": "3b2c30ab6205a544f59a522921fbc0f436e24de0a8a508e07cd46717266d7afe"
+  },
+  "last_qualified_abi": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "src_root": "/home/fenics/Projects/NN-Lab",
+    "affinity": [
+      0
+    ],
+    "math_pools": [
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "activation": "1",
+    "mode": "fe",
+    "MPI_size": 1,
+    "Torch_loaded": false,
+    "GPU_used": false,
+    "DataLoader_workers": 0,
+    "scalar": "complex128",
+    "IntType": "int64",
+    "native_marker": "1",
+    "module_paths": {
+      "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+      "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+      "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+      "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+    }
+  },
+  "final_code_compile": "imports compiled by final targeted pytest; formal FE source independently checked against git blobs",
+  "final_checks": {
+    "path": "tmp/task042/v39/aux_post_13/final_checks.json",
+    "sha256": "00ab74504e07f6fd2b62dd4b710fd6077c01bd18b3f3f1c7cc97d394ae8e5211",
+    "bytes": 7744
+  },
+  "final_source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+  "final_qualified_abi": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "src_root": "/home/fenics/Projects/NN-Lab",
+    "affinity": [
+      0
+    ],
+    "math_pools": [
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "activation": "1",
+    "mode": "fe",
+    "MPI_size": 1,
+    "Torch_loaded": false,
+    "GPU_used": false,
+    "DataLoader_workers": 0,
+    "scalar": "complex128",
+    "IntType": "int64",
+    "native_marker": "1",
+    "module_paths": {
+      "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+      "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+      "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+      "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+    }
+  },
+  "late_doc_failure": "aux_post_12 all numeric/test/ABI/compile/Ruff passed; self-link output missing at local doc audit; minimal writer-order fix in post13, no numeric replay",
+  "documentation": "documentation_checks_v39.json",
+  "sealed_auxiliary_failure_costs_preserved": true,
+  "failed_document_helper_original_bytes_at_launch": "UNKNOWN_NOT_CAPTURED; core SHA/hashes and all raw completed numeric checks retained; corrected helper source archived",
+  "field_solver_tests": "NOT_RUN: no new full-target PDE authorized"
+}

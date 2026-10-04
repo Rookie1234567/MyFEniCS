@@ -1,0 +1,74 @@
+{
+  "adapter": "NATIVE_BOUNDARY_ADAPTER_QUALIFIED_ON_WITNESSES",
+  "coupled": "NOT_QUALIFIED_SOFTWARE_FAILURE_AND_REPLAY_TIME_ADMISSION_STOP",
+  "partial_consumer": "BOUNDARY_CONSUMER_READY_VOLUME_QUALIFICATION_MISSING",
+  "old_unnormalized_internal_zero": {
+    "status": "FAIL_RETAINED",
+    "forward_l2": 6.423614109330073e-12,
+    "limit": 1e-12,
+    "source": "a1795710697dcce1131f81fe2a82c7e1fd6ec0d5"
+  },
+  "new_unit_L2_internal_witness": {
+    "status": "PASS_ON_NEW_INPUT",
+    "absolute_rule": 1e-12,
+    "changes": "input normalized only; no clipping or physical/operator/loss change; old FAIL retained"
+  },
+  "software_repair": "independent direct carrier rows, actual public _prepare_direct_terms positive/negative regression passed",
+  "replay_time_admission": {
+    "status": "COUPLED_REPLAY_NOT_ADMITTED_TIME_MODEL",
+    "native_spent_seconds": 964.9699936029501,
+    "native_limit_seconds": 1200,
+    "remaining_seconds": 235.03000639704987,
+    "prior_failed_actor_seconds": 912.5918812180171,
+    "local_setup_timestamp_span_seconds": 311.419277446,
+    "local_setup_timing": "derived file timestamp span; not independently saved exact sub-timer",
+    "basis": "same8hex/class/kernel path; observed local setup span alone exceeds remaining native wall; no budget extension",
+    "software_error": "redundant MPC slave rows sent to independent direct carriers",
+    "repair": "owned_active_original_dofs, exact-zero support validation; original public semantics retained",
+    "physical_volume_qualification": false,
+    "calendar": {
+      "start_utc": "2026-10-04T06:15:37+00:00",
+      "start_monotonic": 1019531.860872642,
+      "monotonic_anchor_method": "first tool UTC, conservatively back-projected at bootstrap using contemporaneous UTC/monotonic pair",
+      "bootstrap_utc": "2026-10-04T06:16:11.060499+00:00",
+      "bootstrap_monotonic": 1019565.921371642,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "initial_HEAD": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "review_commit": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "total_limit_seconds": 86400,
+      "heavy_limit_seconds": 82800,
+      "total_loaded_seconds": 7200,
+      "component_seconds": 5400,
+      "slow_oracle_seconds": 1200,
+      "cleanup_reserve_seconds": 180,
+      "new_storage_bytes": 2147483648,
+      "actors_before": [],
+      "observed_utc": "2026-10-04T07:07:53.800798+00:00",
+      "observed_monotonic": 1022668.661665619,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 3136.8007984161377,
+      "heavy_remaining_seconds": 79663.19920158386,
+      "total_remaining_seconds": 83263.19920158386
+    }
+  },
+  "target": "NOT_QUALIFIED",
+  "neural": "NOT_DEMONSTRATED",
+  "no_global_p4_LU": true,
+  "local_p6_internal_LU_present": true,
+  "actual_local_classes": {
+    "upper": 8,
+    "attempts": [
+      {
+        "source_sha": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+        "reserved_upper": 8,
+        "actual": 4
+      }
+    ]
+  },
+  "native_constructs": {
+    "count": 36,
+    "charged_before_construction": true
+  },
+  "numeric_errors_not_convergence_evidence": true
+}

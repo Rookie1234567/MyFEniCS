@@ -1,0 +1,51 @@
+{
+  "closed": true,
+  "clock": {
+    "start_utc": "2026-10-04T06:15:37+00:00",
+    "start_monotonic": 1019531.860872642,
+    "monotonic_anchor_method": "first tool UTC, conservatively back-projected at bootstrap using contemporaneous UTC/monotonic pair",
+    "bootstrap_utc": "2026-10-04T06:16:11.060499+00:00",
+    "bootstrap_monotonic": 1019565.921371642,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "initial_HEAD": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "review_commit": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "component_seconds": 5400,
+    "slow_oracle_seconds": 1200,
+    "cleanup_reserve_seconds": 180,
+    "new_storage_bytes": 2147483648,
+    "actors_before": [],
+    "observed_utc": "2026-10-04T07:41:21.588505+00:00",
+    "observed_monotonic": 1024676.449371743,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 5144.588505029678,
+    "heavy_remaining_seconds": 77655.41149497032,
+    "total_remaining_seconds": 81255.41149497032
+  },
+  "own_lock_exclusively_acquired": true,
+  "all_supervised_descendants_cleared": true,
+  "active_numerical_queue": null,
+  "run_count": 24,
+  "source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+  "ledger": {
+    "path": "tmp/task042/v39/ledger.json",
+    "sha256": "32c9831e7f18cd80db2a2da1b32aa0013fce4831974fd9c349dbd5ab27ae2cf7",
+    "bytes": 40152
+  },
+  "journal": {
+    "path": "tmp/task042/v39/progress_journal.jsonl",
+    "sha256": "f5c7e433db2c9404fdf84828599cf3e8d910245b9198700ffbc9b02cd752c34e",
+    "bytes": 69384
+  },
+  "costs": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v39.json",
+    "sha256": "9ffa13e75385554978e5f0e3e312ccbfbf8329e3cb17a81b5403226ed8bae78a",
+    "bytes": 10279
+  },
+  "delivery_close_observed_seconds": 1.312025630963035,
+  "delivery_close_charge_upper_seconds": 5.0,
+  "external_final_HEAD_and_push_receipt": "captured after documentation commit; not numerical source"
+}

@@ -1,0 +1,185 @@
+{
+  "status": "ALL_ORIGINAL_P6_INTERNAL_TRACE_ZERO_WITHIN_FROZEN_ABSOLUTE_GATE",
+  "source_sha": "8efb82029829dcba3f133b0ab90a1f05d9aa6c60",
+  "script_sha256": "5584cb5acdbca9514e8a57a4e3cc24ff09b1250735554cbbd26288ec1bea2167",
+  "element_family": "ElementFamily.N1E",
+  "degree": 6,
+  "variant": "LagrangeVariant.legendre",
+  "basis_columns": 882,
+  "interior_columns": 450,
+  "q": 30,
+  "faces": 6,
+  "checks": [
+    {
+      "face_axis": 0,
+      "endpoint": 0.0,
+      "maximum_absolute_tangential": 4.685013824509113e-13,
+      "limit": 1e-10,
+      "passed": true
+    },
+    {
+      "face_axis": 0,
+      "endpoint": 1.0,
+      "maximum_absolute_tangential": 4.898176645237146e-13,
+      "limit": 1e-10,
+      "passed": true
+    },
+    {
+      "face_axis": 1,
+      "endpoint": 0.0,
+      "maximum_absolute_tangential": 4.852016405353653e-13,
+      "limit": 1e-10,
+      "passed": true
+    },
+    {
+      "face_axis": 1,
+      "endpoint": 1.0,
+      "maximum_absolute_tangential": 4.225066932624153e-13,
+      "limit": 1e-10,
+      "passed": true
+    },
+    {
+      "face_axis": 2,
+      "endpoint": 0.0,
+      "maximum_absolute_tangential": 2.4298774702777044e-13,
+      "limit": 1e-10,
+      "passed": true
+    },
+    {
+      "face_axis": 2,
+      "endpoint": 1.0,
+      "maximum_absolute_tangential": 2.6188663584136427e-13,
+      "limit": 1e-10,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "C_internal",
+      "maximum_absolute": 1.2946182484057657e-11,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "D_internal",
+      "maximum_absolute": 6.080760124170941e-14,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "C_internal",
+      "maximum_absolute": 1.3012535225303092e-11,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "D_internal",
+      "maximum_absolute": 6.101591248222371e-14,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "x_seam",
+      "kind": "C_internal",
+      "maximum_absolute": 1.301253522530305e-11,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "x_seam",
+      "kind": "D_internal",
+      "maximum_absolute": 6.10159124822234e-14,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "C_internal",
+      "maximum_absolute": 1.301253522530309e-11,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "D_internal",
+      "maximum_absolute": 6.101591248222376e-14,
+      "limit": 1e-10,
+      "passed": true,
+      "operator_clipping": false
+    }
+  ],
+  "arrays": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/basis_zero_audit/full_882_basis_trace.npz",
+    "sha256": "ef5fbe6697cd15fdba2666a211f1b8b3ece3776340a45ed5cd24169c2cc3e135",
+    "aliases": {},
+    "members": {
+      "axis0_end0_full_basis": {
+        "shape": [
+          256,
+          882,
+          3
+        ],
+        "dtype": "<f8",
+        "sha256": "bb5f75541c427416f502b688bc4f5f0c8090feff07f15f80a219037d69616e2f"
+      },
+      "axis0_end1_full_basis": {
+        "shape": [
+          256,
+          882,
+          3
+        ],
+        "dtype": "<f8",
+        "sha256": "d4cfe5bcd7f9ffaa438926b22449ed78eac2c8d9e46daba35f87de7d6ce3cfb7"
+      },
+      "axis1_end0_full_basis": {
+        "shape": [
+          256,
+          882,
+          3
+        ],
+        "dtype": "<f8",
+        "sha256": "b09b2824d0462bc96b8f769f4f742d9cc998d72e98cc05b7d3ea1d3d9ffc1f78"
+      },
+      "axis1_end1_full_basis": {
+        "shape": [
+          256,
+          882,
+          3
+        ],
+        "dtype": "<f8",
+        "sha256": "e081d10af6faaf3076e1299b62e5041777e45e2c7e1732c0502d9e4c6b74fbab"
+      },
+      "axis2_end0_full_basis": {
+        "shape": [
+          256,
+          882,
+          3
+        ],
+        "dtype": "<f8",
+        "sha256": "9e8337e285fd546f148486f7584029b1cb7a02da47acdb4deb813d5aa55b6b18"
+      },
+      "axis2_end1_full_basis": {
+        "shape": [
+          256,
+          882,
+          3
+        ],
+        "dtype": "<f8",
+        "sha256": "619c68a40c4a152ca8efb0c4d0c3e5fede5c0ab03b5a8d6a2ca32c85eb461561"
+      }
+    }
+  },
+  "seconds": 4.967771696974523,
+  "scope": "same frozen Basix basis and actual literal native C/D; no native mesh/JIT/LU or recovery",
+  "coupled_nonzero_RHS_recovery_qualification": false,
+  "conservative_native_oracle_wall_charged": true
+}

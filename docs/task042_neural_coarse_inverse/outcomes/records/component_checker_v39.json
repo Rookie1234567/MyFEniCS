@@ -1,0 +1,1689 @@
+{
+  "status": "BOUNDARY_ADAPTER_SAVED_ARRAYS_QUALIFIED_BODY_PARTIAL",
+  "source_sha": "6fd4a43323e1aef7a4fd0df515eb63c1054aae2c",
+  "checks": [
+    {
+      "patch": "min_ordinary",
+      "kind": "C",
+      "numerator": 5.60529388031867e-11,
+      "denominator": 60.39675926991626,
+      "relative": 9.280785836982278e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "D",
+      "numerator": 1.6901012862986215e-13,
+      "denominator": 0.30904711493156906,
+      "relative": 5.46874960043828e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "a",
+      "kind": "forward",
+      "numerator": 5.6919620333103874e-12,
+      "denominator": 6.257503080361395,
+      "relative": 9.096219306985391e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "a",
+      "kind": "adjoint",
+      "numerator": 5.691630938826922e-12,
+      "denominator": 6.267835062669596,
+      "relative": 9.080696734867084e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "a",
+      "kind": "amplitudes",
+      "numerator": 1.6118618523711085e-13,
+      "denominator": 0.24776154013540153,
+      "relative": 6.50569838841907e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "b",
+      "kind": "forward",
+      "numerator": 6.9468982301923755e-12,
+      "denominator": 10.829419782260153,
+      "relative": 6.41483880934434e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "b",
+      "kind": "adjoint",
+      "numerator": 6.9423038878707504e-12,
+      "denominator": 10.830822978803441,
+      "relative": 6.409765815079102e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "b",
+      "kind": "amplitudes",
+      "numerator": 2.3550379988108e-13,
+      "denominator": 0.4143738537801521,
+      "relative": 5.683365341048463e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "interior",
+      "kind": "forward",
+      "numerator": 1.0896314781824339e-13,
+      "denominator": 1.0896314781824339e-13,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "interior",
+      "kind": "adjoint",
+      "numerator": 1.0896293224060086e-13,
+      "denominator": 1.0896293224060086e-13,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "interior",
+      "kind": "amplitudes",
+      "numerator": 4.8666370727808635e-15,
+      "denominator": 4.8666370727808635e-15,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "zero",
+      "kind": "forward",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "zero",
+      "kind": "adjoint",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "zero",
+      "kind": "amplitudes",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "scale",
+      "kind": "forward",
+      "numerator": 5.590224744326546e-12,
+      "denominator": 6.147021452110499,
+      "relative": 9.094200805834533e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "scale",
+      "kind": "adjoint",
+      "numerator": 5.591407599375058e-12,
+      "denominator": 6.157171014336155,
+      "relative": 9.081130906314293e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "input": "scale",
+      "kind": "amplitudes",
+      "numerator": 1.582513556718094e-13,
+      "denominator": 0.2433870958849437,
+      "relative": 6.502043795560119e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "complex_linearity",
+      "numerator": 4.103239989948383e-15,
+      "denominator": 6.147021452108727,
+      "relative": 6.675167838467154e-16,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "native_boundary_dual",
+      "numerator": 4.440892098500626e-15,
+      "denominator": 6.95886179112359,
+      "relative": 6.38163572118249e-16,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "pure_port_modal",
+      "numerator": 3.0630842536936264e-11,
+      "denominator": 52.309577805341,
+      "relative": 5.855685291692173e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "extract_conjugate_scatter",
+      "numerator": 6.4047456679787536e-15,
+      "denominator": 13.564051755124403,
+      "relative": 4.721852867863827e-16,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 0,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 1,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 2,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 3,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_C_link",
+      "patch": "min_ordinary",
+      "numerator": 0.0,
+      "denominator": 60.39675926991626,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_D_normalized_link",
+      "patch": "min_ordinary",
+      "numerator": 0.0,
+      "denominator": 0.30904711493156906,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "C",
+      "numerator": 5.628107455059759e-11,
+      "denominator": 60.6831315665702,
+      "relative": 9.274583083909656e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "D",
+      "numerator": 1.6914678050453533e-13,
+      "denominator": 0.3096973318395378,
+      "relative": 5.461680263754247e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "a",
+      "kind": "forward",
+      "numerator": 5.657217217773335e-12,
+      "denominator": 6.5210360093094115,
+      "relative": 8.675335038323832e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "a",
+      "kind": "adjoint",
+      "numerator": 5.657332298744388e-12,
+      "denominator": 6.530306024862528,
+      "relative": 8.663196299232366e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "a",
+      "kind": "amplitudes",
+      "numerator": 1.6099566379755708e-13,
+      "denominator": 0.2582623697113604,
+      "relative": 6.233802623955217e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "b",
+      "kind": "forward",
+      "numerator": 6.7770202907259445e-12,
+      "denominator": 10.841487554022628,
+      "relative": 6.251005922348172e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "b",
+      "kind": "adjoint",
+      "numerator": 6.7835985990837564e-12,
+      "denominator": 10.840913604579125,
+      "relative": 6.25740490747792e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "b",
+      "kind": "amplitudes",
+      "numerator": 2.2426492596800464e-13,
+      "denominator": 0.4121590463647363,
+      "relative": 5.441222944056005e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "interior",
+      "kind": "forward",
+      "numerator": 1.096021456462295e-13,
+      "denominator": 1.096021456462295e-13,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "interior",
+      "kind": "adjoint",
+      "numerator": 1.096020487927739e-13,
+      "denominator": 1.096020487927739e-13,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "interior",
+      "kind": "amplitudes",
+      "numerator": 4.91772849397855e-15,
+      "denominator": 4.91772849397855e-15,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "zero",
+      "kind": "forward",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "zero",
+      "kind": "adjoint",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "zero",
+      "kind": "amplitudes",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "scale",
+      "kind": "forward",
+      "numerator": 5.557590601424498e-12,
+      "denominator": 6.405901479299782,
+      "relative": 8.675735365870766e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "scale",
+      "kind": "adjoint",
+      "numerator": 5.558987550683582e-12,
+      "denominator": 6.4150078247117825,
+      "relative": 8.665597459241352e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "input": "scale",
+      "kind": "amplitudes",
+      "numerator": 1.58158829223338e-13,
+      "denominator": 0.2537025242338256,
+      "relative": 6.234026630242373e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "complex_linearity",
+      "numerator": 4.862514795934971e-15,
+      "denominator": 6.405901479298084,
+      "relative": 7.590679956051669e-16,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "native_boundary_dual",
+      "numerator": 1.0126792072454708e-14,
+      "denominator": 7.503929737074814,
+      "relative": 1.3495318356222163e-15,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "pure_port_modal",
+      "numerator": 3.064063443138682e-11,
+      "denominator": 45.166468529575305,
+      "relative": 6.783934061907702e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "extract_conjugate_scatter",
+      "numerator": 7.549516567451064e-15,
+      "denominator": 21.67717887084038,
+      "relative": 3.482702528974604e-16,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 0,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 1,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 2,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "independent_native_entity_equation",
+      "cell": 3,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_C_link",
+      "patch": "max_ordinary",
+      "numerator": 0.0,
+      "denominator": 60.6831315665702,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_D_normalized_link",
+      "patch": "max_ordinary",
+      "numerator": 0.0,
+      "denominator": 0.3096973318395378,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "C",
+      "numerator": 5.634258921042644e-11,
+      "denominator": 60.68313156657006,
+      "relative": 9.284720111818555e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "D",
+      "numerator": 1.698299595005589e-13,
+      "denominator": 0.30969733183953607,
+      "relative": 5.483739833721046e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "a",
+      "kind": "forward",
+      "numerator": 1.2926854707611984e-11,
+      "denominator": 14.620205785661602,
+      "relative": 8.841773431321787e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "a",
+      "kind": "adjoint",
+      "numerator": 1.292449617916599e-11,
+      "denominator": 14.671907912809363,
+      "relative": 8.809008518845875e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "a",
+      "kind": "amplitudes",
+      "numerator": 2.7039699532932934e-13,
+      "denominator": 0.5761946168658183,
+      "relative": 4.692806690908364e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "b",
+      "kind": "forward",
+      "numerator": 7.2208913338138505e-12,
+      "denominator": 16.086662500604543,
+      "relative": 4.4887442212096427e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "b",
+      "kind": "adjoint",
+      "numerator": 7.2206577121577976e-12,
+      "denominator": 16.02309872460494,
+      "relative": 4.5064053066525857e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "b",
+      "kind": "amplitudes",
+      "numerator": 1.495763301366863e-13,
+      "denominator": 0.6369985533442722,
+      "relative": 2.3481423835486527e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "interior",
+      "kind": "forward",
+      "numerator": 9.623622949060967e-14,
+      "denominator": 9.623622949060967e-14,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "interior",
+      "kind": "adjoint",
+      "numerator": 9.623740414956787e-14,
+      "denominator": 9.623740414956787e-14,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "interior",
+      "kind": "amplitudes",
+      "numerator": 3.893029228842833e-15,
+      "denominator": 3.893029228842833e-15,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "zero",
+      "kind": "forward",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "zero",
+      "kind": "adjoint",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "zero",
+      "kind": "amplitudes",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "scale",
+      "kind": "forward",
+      "numerator": 1.2698605009796542e-11,
+      "denominator": 14.362073409245781,
+      "relative": 8.841763057429884e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "scale",
+      "kind": "adjoint",
+      "numerator": 1.269903637065865e-11,
+      "denominator": 14.412862690627767,
+      "relative": 8.810904983446789e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "input": "scale",
+      "kind": "amplitudes",
+      "numerator": 2.656274856327856e-13,
+      "denominator": 0.5660214026231403,
+      "relative": 4.692887661169265e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "complex_linearity",
+      "numerator": 6.511975459724627e-15,
+      "denominator": 14.362073409244982,
+      "relative": 4.534147176502257e-16,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "native_boundary_dual",
+      "numerator": 1.0048591735576161e-14,
+      "denominator": 36.007725480103794,
+      "relative": 2.790676612197721e-16,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "pure_port_modal",
+      "numerator": 7.267895219499765e-11,
+      "denominator": 77.6825823855331,
+      "relative": 9.355887763140676e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "extract_conjugate_scatter",
+      "numerator": 8.881784197001252e-15,
+      "denominator": 18.337769951264466,
+      "relative": 4.843437463009953e-16,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "independent_native_entity_equation",
+      "cell": 0,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "independent_native_entity_equation",
+      "cell": 1,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "independent_native_entity_equation",
+      "cell": 2,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "independent_native_entity_equation",
+      "cell": 3,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_C_link",
+      "patch": "x_seam",
+      "numerator": 0.0,
+      "denominator": 60.68313156657006,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_D_normalized_link",
+      "patch": "x_seam",
+      "numerator": 0.0,
+      "denominator": 0.30969733183953607,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "C",
+      "numerator": 7.969073289302341e-11,
+      "denominator": 85.81890300311295,
+      "relative": 9.285918382122962e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "D",
+      "numerator": 2.4015858733690466e-13,
+      "denominator": 0.4379781647027108,
+      "relative": 5.483346127538542e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "a",
+      "kind": "forward",
+      "numerator": 1.2763702609504252e-11,
+      "denominator": 9.39297848374242,
+      "relative": 1.3588557273495258e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "a",
+      "kind": "adjoint",
+      "numerator": 1.2761096931042056e-11,
+      "denominator": 9.367304843147062,
+      "relative": 1.3623018728143374e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "a",
+      "kind": "amplitudes",
+      "numerator": 2.661591527497225e-13,
+      "denominator": 0.272257882608076,
+      "relative": 9.775994369752269e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "b",
+      "kind": "forward",
+      "numerator": 1.5508039564234878e-11,
+      "denominator": 36.43984599905674,
+      "relative": 4.2557917408971234e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "b",
+      "kind": "adjoint",
+      "numerator": 1.5506399674309627e-11,
+      "denominator": 36.39027677484572,
+      "relative": 4.2611381524386247e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "b",
+      "kind": "amplitudes",
+      "numerator": 2.7099041055008016e-13,
+      "denominator": 1.040944221217969,
+      "relative": 2.603313463165247e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "interior",
+      "kind": "forward",
+      "numerator": 2.3170056754398636e-13,
+      "denominator": 2.3170056754398636e-13,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "interior",
+      "kind": "adjoint",
+      "numerator": 2.31700717997397e-13,
+      "denominator": 2.31700717997397e-13,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "interior",
+      "kind": "amplitudes",
+      "numerator": 6.677625964470712e-15,
+      "denominator": 6.677625964470712e-15,
+      "absolute_rule": 1e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "zero",
+      "kind": "forward",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "zero",
+      "kind": "adjoint",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "zero",
+      "kind": "amplitudes",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "scale",
+      "kind": "forward",
+      "numerator": 1.2534863795862636e-11,
+      "denominator": 9.227137325746611,
+      "relative": 1.358478079749223e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "scale",
+      "kind": "adjoint",
+      "numerator": 1.253561979097947e-11,
+      "denominator": 9.201916975478028,
+      "relative": 1.362283513792327e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "input": "scale",
+      "kind": "amplitudes",
+      "numerator": 2.6136522692749137e-13,
+      "denominator": 0.26745093424730215,
+      "relative": 9.77245518558617e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "complex_linearity",
+      "numerator": 1.038088324276771e-14,
+      "denominator": 9.227137325744986,
+      "relative": 1.1250383381423852e-15,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "native_boundary_dual",
+      "numerator": 3.552713678800501e-15,
+      "denominator": 22.64922354131073,
+      "relative": 1.5685807826129576e-16,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "pure_port_modal",
+      "numerator": 1.1161580044567429e-10,
+      "denominator": 120.29624984672468,
+      "relative": 9.278410639391455e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "extract_conjugate_scatter",
+      "numerator": 3.552713678800501e-15,
+      "denominator": 53.88570987911085,
+      "relative": 6.593053495575705e-17,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 0,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 1,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 2,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 3,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 4,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 5,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 6,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "independent_native_entity_equation",
+      "cell": 7,
+      "numerator": 0.0,
+      "denominator": 9.16515138991168,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_C_link",
+      "patch": "xy_corner",
+      "numerator": 0.0,
+      "denominator": 85.81890300311295,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "original_native_D_normalized_link",
+      "patch": "xy_corner",
+      "numerator": 0.0,
+      "denominator": 0.4379781647027108,
+      "relative": 0.0,
+      "passed": true
+    }
+  ],
+  "body_evidence_available": false,
+  "evidence_links": {
+    "final_full_mode_amplitude": [
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 0,
+        "numerator": 1.4992186436931484e-15,
+        "denominator": 0.045365085297812746,
+        "relative": 3.304785241449623e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 1,
+        "numerator": 2.4844449691641582e-14,
+        "denominator": 0.7811402047800037,
+        "relative": 3.18053654639869e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 6018,
+        "numerator": 9.949512507731418e-16,
+        "denominator": 0.07783049646404228,
+        "relative": 1.2783565517056797e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 6019,
+        "numerator": 1.3442412398903256e-14,
+        "denominator": 1.1910872452517205,
+        "relative": 1.1285833554587667e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 16028,
+        "numerator": 8.872593634348124e-16,
+        "denominator": 0.005873629062581381,
+        "relative": 1.5105811994277926e-13,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 16029,
+        "numerator": 2.8338320372156673e-14,
+        "denominator": 6.242514875268073,
+        "relative": 4.539567936702712e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 16030,
+        "numerator": 1.7971199381208717e-15,
+        "denominator": 0.08084959033554323,
+        "relative": 2.2227941176478896e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 16031,
+        "numerator": 3.5526095938672385e-14,
+        "denominator": 0.8370470556213837,
+        "relative": 4.2442172993846216e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 22048,
+        "numerator": 3.445284854659282e-15,
+        "denominator": 0.05569403326061185,
+        "relative": 6.186093290348699e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 22049,
+        "numerator": 2.0217341132534735e-14,
+        "denominator": 1.8467844503381983,
+        "relative": 1.0947320424336674e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 32058,
+        "numerator": 2.0184340695624173e-15,
+        "denominator": 0.03568963713572196,
+        "relative": 5.655518608627588e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 30,
+        "original_index": 32059,
+        "numerator": 2.689054592532082e-13,
+        "denominator": 14.804650174990446,
+        "relative": 1.8163580771903094e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 0,
+        "numerator": 2.422441801388186e-15,
+        "denominator": 0.04536508529781358,
+        "relative": 5.339881509062077e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 1,
+        "numerator": 1.8905194401529058e-14,
+        "denominator": 0.7811402047800013,
+        "relative": 2.4202050138814036e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 6018,
+        "numerator": 9.634073844686985e-16,
+        "denominator": 0.07783049646404228,
+        "relative": 1.2378276231525687e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 6019,
+        "numerator": 1.798218605817297e-14,
+        "denominator": 1.1910872452517205,
+        "relative": 1.5097287062605288e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 16028,
+        "numerator": 1.4891226939471666e-15,
+        "denominator": 0.00587362906258233,
+        "relative": 2.535268533441362e-13,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 16029,
+        "numerator": 1.416059764453436e-13,
+        "denominator": 6.242514875268073,
+        "relative": 2.26841231898967e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 16030,
+        "numerator": 2.2707470665197273e-15,
+        "denominator": 0.08084959033554323,
+        "relative": 2.8086067685632512e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 16031,
+        "numerator": 4.48001128753581e-14,
+        "denominator": 0.8370470556213837,
+        "relative": 5.352161813901924e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 22048,
+        "numerator": 2.9476173018412917e-15,
+        "denominator": 0.055694033260611904,
+        "relative": 5.2925190173395366e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 22049,
+        "numerator": 3.454203409104305e-14,
+        "denominator": 1.846784450338205,
+        "relative": 1.8703879645898746e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 32058,
+        "numerator": 1.4570613608686844e-15,
+        "denominator": 0.035689637135721215,
+        "relative": 4.082589451183671e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "a",
+        "q": 60,
+        "original_index": 32059,
+        "numerator": 1.0853235018537168e-13,
+        "denominator": 14.80465017499027,
+        "relative": 7.3309635082575e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 0,
+        "numerator": 1.2751574572811336e-15,
+        "denominator": 0.038734688964298505,
+        "relative": 3.292029680311716e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 1,
+        "numerator": 1.6144108755643213e-14,
+        "denominator": 2.5013651923544344,
+        "relative": 6.45411905666098e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 6018,
+        "numerator": 1.9117447639149637e-15,
+        "denominator": 0.04370885804171674,
+        "relative": 4.373815399364474e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 6019,
+        "numerator": 1.9764542519169038e-14,
+        "denominator": 0.5624908022542061,
+        "relative": 3.5137539031681554e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 16028,
+        "numerator": 1.379885022956838e-15,
+        "denominator": 0.07842745249074928,
+        "relative": 1.7594413424554354e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 16029,
+        "numerator": 1.7226028828931792e-13,
+        "denominator": 3.703610440300902,
+        "relative": 4.6511449048437864e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 16030,
+        "numerator": 1.8371172076229083e-15,
+        "denominator": 0.16729201474871463,
+        "relative": 1.0981499687133294e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 16031,
+        "numerator": 3.9866901494167785e-14,
+        "denominator": 1.960076891826504,
+        "relative": 2.0339457936784147e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 22048,
+        "numerator": 6.269627593800408e-16,
+        "denominator": 0.02105151243671093,
+        "relative": 2.978231427622769e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 22049,
+        "numerator": 2.80079064181632e-14,
+        "denominator": 0.4374594393773174,
+        "relative": 6.402400747833864e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 32058,
+        "numerator": 2.6155580482387523e-15,
+        "denominator": 0.07730377141955717,
+        "relative": 3.383480521335909e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 30,
+        "original_index": 32059,
+        "numerator": 1.5329506680134465e-13,
+        "denominator": 16.641943921465803,
+        "relative": 9.211367826063591e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 0,
+        "numerator": 1.3809967876245986e-15,
+        "denominator": 0.038734688964298616,
+        "relative": 3.565271400262049e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 1,
+        "numerator": 9.336440972175736e-15,
+        "denominator": 2.5013651923544233,
+        "relative": 3.7325381358600265e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 6018,
+        "numerator": 1.7248988039453674e-15,
+        "denominator": 0.04370885804171674,
+        "relative": 3.946336923968785e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 6019,
+        "numerator": 1.2765151026709995e-14,
+        "denominator": 0.5624908022542061,
+        "relative": 2.2693972906851282e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 16028,
+        "numerator": 9.47076408401004e-16,
+        "denominator": 0.07842745249074942,
+        "relative": 1.2075827765956218e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 16029,
+        "numerator": 9.387846589650253e-14,
+        "denominator": 3.703610440300902,
+        "relative": 2.5347824078624026e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 16030,
+        "numerator": 1.0950489174571622e-15,
+        "denominator": 0.1672920147487138,
+        "relative": 6.5457333340268195e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 16031,
+        "numerator": 2.3052104215611535e-14,
+        "denominator": 1.960076891826504,
+        "relative": 1.1760816278044254e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 22048,
+        "numerator": 6.821787662631082e-16,
+        "denominator": 0.02105151243671093,
+        "relative": 3.240521403457372e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 22049,
+        "numerator": 4.062661642740952e-15,
+        "denominator": 0.43745943937729975,
+        "relative": 9.286944747435178e-15,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 32058,
+        "numerator": 2.7629086260355874e-15,
+        "denominator": 0.07730377141955717,
+        "relative": 3.574092926256112e-14,
+        "passed": true
+      },
+      {
+        "kind": "final_full_oracle_amplitude",
+        "input": "b",
+        "q": 60,
+        "original_index": 32059,
+        "numerator": 2.332462053894277e-13,
+        "denominator": 16.64194392146575,
+        "relative": 1.4015562514218855e-14,
+        "passed": true
+      }
+    ],
+    "literal": [
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "min_ordinary",
+        "cell": 0,
+        "numerator": 5.438959822042073e-16,
+        "denominator": 9.16515138991168,
+        "relative": 5.93439168722175e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "min_ordinary",
+        "cell": 1,
+        "numerator": 4.501979871696071e-14,
+        "denominator": 9.16515138991168,
+        "relative": 4.9120627474321014e-15,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "min_ordinary",
+        "cell": 2,
+        "numerator": 5.695046485961394e-16,
+        "denominator": 9.16515138991168,
+        "relative": 6.213805144811988e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "min_ordinary",
+        "cell": 3,
+        "numerator": 4.2436165866713326e-14,
+        "denominator": 9.16515138991168,
+        "relative": 4.630165292569408e-15,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "max_ordinary",
+        "cell": 0,
+        "numerator": 5.438959822042073e-16,
+        "denominator": 9.16515138991168,
+        "relative": 5.93439168722175e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "max_ordinary",
+        "cell": 1,
+        "numerator": 4.501979871696071e-14,
+        "denominator": 9.16515138991168,
+        "relative": 4.9120627474321014e-15,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "max_ordinary",
+        "cell": 2,
+        "numerator": 5.695046485961394e-16,
+        "denominator": 9.16515138991168,
+        "relative": 6.213805144811988e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "max_ordinary",
+        "cell": 3,
+        "numerator": 4.2436165866713326e-14,
+        "denominator": 9.16515138991168,
+        "relative": 4.630165292569408e-15,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "x_seam",
+        "cell": 0,
+        "numerator": 5.438959822042073e-16,
+        "denominator": 9.16515138991168,
+        "relative": 5.93439168722175e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "x_seam",
+        "cell": 1,
+        "numerator": 6.080941944488118e-16,
+        "denominator": 9.16515138991168,
+        "relative": 6.634851608868751e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "x_seam",
+        "cell": 2,
+        "numerator": 5.438959822042073e-16,
+        "denominator": 9.16515138991168,
+        "relative": 5.93439168722175e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "x_seam",
+        "cell": 3,
+        "numerator": 6.080941944488118e-16,
+        "denominator": 9.16515138991168,
+        "relative": 6.634851608868751e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 0,
+        "numerator": 7.691850745534255e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.392497208503151e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 1,
+        "numerator": 7.691850745534255e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.392497208503151e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 2,
+        "numerator": 8.15843973306311e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.901587530832624e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 3,
+        "numerator": 8.15843973306311e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.901587530832624e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 4,
+        "numerator": 7.691850745534255e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.392497208503151e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 5,
+        "numerator": 7.691850745534255e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.392497208503151e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 6,
+        "numerator": 8.15843973306311e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.901587530832624e-17,
+        "passed": true
+      },
+      {
+        "kind": "independent_literal_adapter",
+        "patch": "xy_corner",
+        "cell": 7,
+        "numerator": 8.15843973306311e-16,
+        "denominator": 9.16515138991168,
+        "relative": 8.901587530832624e-17,
+        "passed": true
+      }
+    ]
+  },
+  "consumer_checks": [
+    {
+      "kind": "frozen_callback_demo",
+      "numerator": 1.2763702609504252e-11,
+      "denominator": 9.39297848374242,
+      "relative": 1.3588557273495258e-12,
+      "passed": true
+    },
+    {
+      "kind": "frozen_callback_adjoint_demo",
+      "numerator": 1.5506399674309627e-11,
+      "denominator": 36.39027677484572,
+      "relative": 4.2611381524386247e-13,
+      "passed": true
+    },
+    {
+      "kind": "implicit_unit_Hp",
+      "numerator": 0.0,
+      "denominator": 5.876500660087762,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "frozen_native_modal_demo",
+      "numerator": 1.1161580044567429e-10,
+      "denominator": 120.29624984672468,
+      "relative": 9.278410639391455e-13,
+      "passed": true
+    },
+    {
+      "kind": "frozen_native_amplitude_demo",
+      "numerator": 2.661591527497225e-13,
+      "denominator": 0.272257882608076,
+      "relative": 9.775994369752269e-13,
+      "passed": true
+    }
+  ],
+  "storage_copy_checker": "storage_copy_checker_v39.json",
+  "physical_PDE": "NOT_RUN",
+  "neural_gain": "NOT_DEMONSTRATED"
+}

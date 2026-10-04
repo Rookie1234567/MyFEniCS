@@ -1,3 +1,9 @@
+# V39变化：原生抽取／对偶散布、独立checker与部分体积接线
+
+数值核进入src/solvers，五个one-run入口复用runner／watchdog；新输入生命周期／callback检查、实体映射、费用及保存数组checker是opt-in。旧ActionPacket和native oracle保持独立，普通默认、其他任务及dot不改。体积接线修复未获得完整native重放资格。精确清单见[changed_files](records/changed_files_v39.json)，依赖分组见[manifest](records/selective_merge_manifest_v39.json)。旧task/review/response/raw及以下历史正文逐字保留。
+
+<!-- V39-LATEST-END -->
+
 # V38变化：opt-in分方向边界核、完整库存checker和接口修复
 
 新数值核在src/solvers，六个明确stage复用同一个runner及监督。改变的是边界数据布局／相同q计算顺序，ordinary默认和原native oracle不改；无体积求解或NN训练。覆盖、MPI共同错误、预算reader与原子无损writer修复均附定点测试。旧task/review/response/raw保持。[精确列表](records/changed_files_v38.json) · [依赖分组及production边界](records/selective_merge_manifest_v38.json)。以下历史逐字保留。
