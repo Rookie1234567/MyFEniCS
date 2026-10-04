@@ -12,7 +12,7 @@ from scipy.sparse import csr_matrix
 from benchmarks.check_trace_selection import inventory
 from src.solvers.bound_array_identity import consume_identity, file_hash, read_arrays, source_identity
 from src.solvers.port_component_study import array_file
-from src.solvers.trace_subspace_selection import SingleCSR, mask_from_scores, masked_coefficients, witness_metrics
+from src.solvers.trace_subspace_selection import SingleCSR, bridge_checks, mask_from_scores, masked_coefficients, witness_metrics
 
 
 class IdentityTests(unittest.TestCase):
@@ -50,6 +50,13 @@ class IdentityTests(unittest.TestCase):
 
 
 class NumericalTests(unittest.TestCase):
+    def test_bridge_roundoff_is_not_a_structural_sparsity_requirement(self):
+        matrix=csr_matrix(np.array([[1,1e-14],[0,1],[0,0]],complex))
+        graph={"independent":np.array([0,1]),"slaves":np.array([2])}
+        self.assertTrue(bridge_checks(matrix,graph)["passed"])
+        matrix.data[1]=1e-4
+        self.assertFalse(bridge_checks(matrix,graph)["passed"])
+
     def test_complex_nonhermitian_adjoint_without_conjugate_copy(self):
         m = csr_matrix(np.array([[2+3j, 4j], [7-1j, -2+2j]]))
         op = SingleCSR({"data":m.data,"indices":m.indices,"indptr":m.indptr,"shape":np.array(m.shape)})

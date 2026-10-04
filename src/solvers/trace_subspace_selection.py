@@ -19,15 +19,19 @@ def bridge_packet(arrays):
 
 
 def bridge_checks(bridge, graph):
+    from scipy.sparse import eye
+
     identity = bridge.conjugate().T @ bridge
     identity.sum_duplicates()
-    rows = np.diff(identity.indptr)
-    unit = bool(np.all(rows == 1) and np.array_equal(identity.indices, np.arange(bridge.shape[1]))
-                and np.max(abs(identity.data - 1)) <= 1e-10)
+    defect = identity - eye(bridge.shape[1], dtype=np.complex128, format="csr")
+    maximum = float(np.max(abs(defect.data))) if defect.nnz else 0.0
+    normalized_frobenius = float(np.linalg.norm(defect.data)/np.sqrt(bridge.shape[1]))
+    unit = maximum <= 1e-10 and normalized_frobenius <= 1e-10
     used = np.flatnonzero(np.diff(bridge.indptr))
     coverage = np.array_equal(used, graph["independent"])
     slaves_zero = not np.any(np.diff(bridge.indptr)[graph["slaves"]])
     return {"JH_J_identity": unit, "complete_independent_coverage": bool(coverage),
+            "JH_J_max_error": maximum, "JH_J_relative_frobenius_error": normalized_frobenius,
             "slave_zero": bool(slaves_zero), "passed": bool(unit and coverage and slaves_zero)}
 
 
