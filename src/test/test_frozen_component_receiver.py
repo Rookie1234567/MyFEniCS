@@ -8,6 +8,7 @@ import pytest
 
 from src.runners.fresh_component_receiver import (
     DEPENDENCY, INPUT_SHA, atomic_json, load_receiver, native_command, remaining,
+    WORKER_SHA, bind_own_terminal_core, set_own_low_priority,
 )
 from src.runners.frozen_source_snapshot import validate_manifest, verify_snapshot
 
@@ -109,3 +110,71 @@ def test_atomic_saved_record_is_complete_and_readable(tmp_path):
     atomic_json(path, {"complete": [1, 2, 3]})
     assert json.loads(path.read_text()) == {"complete": [1, 2, 3]}
     assert not Path(str(path) + ".tmp").exists()
+
+
+def test_saved_checker_binds_exact_completed_worker(tmp_path):
+    path = tmp_path / "check.dat"
+    base = ('receiver_schema = 1\ncomponent = "fresh_c1_same80_p6"\nmode = "saved_check"\n'
+            f'dependency_commit = "{DEPENDENCY}"\ninput_sha256 = "{INPUT_SHA}"\n')
+    path.write_text(base + f'worker_report_sha256 = "{WORKER_SHA}"\n')
+    assert load_receiver(path)["mode"] == "saved_check"
+    path.write_text(base + 'worker_report_sha256 = "wrong"\n')
+    with pytest.raises(ValueError, match="unique frozen"):
+        load_receiver(path)
+    text = native_command(tmp_path, tmp_path, "2030-01-01T01:00:00Z", False, saved_check=True)[-1]
+    assert "saved_component_checker.py" in text and WORKER_SHA in text
+    assert "--supervised" not in text and "--worker " not in text
+
+
+def test_priority_only_lowers_self(monkeypatch):
+    import src.runners.fresh_component_receiver as module
+    actions = []
+    monkeypatch.setattr(module.os, "getpid", lambda: 123)
+    monkeypatch.setattr(module.os, "getpriority", lambda *_: 12)
+    monkeypatch.setattr(module.os, "setpriority", lambda *args: actions.append(args))
+    monkeypatch.setattr(module.subprocess, "run", lambda command, **kw: actions.append(command))
+    assert set_own_low_priority()["nice"] == 12
+    assert actions == [(module.os.PRIO_PROCESS, 0, 12), ["ionice", "-c", "3", "-p", "123"]]
+
+
+def terminal_fixture(tmp_path, monkeypatch):
+    import src.runners.fresh_component_receiver as module
+    terminal = {"server": {"pid": 42, "start_ticks": 100}, "pane": {"pid": 43, "start_ticks": 101},
+                "socket": str(tmp_path / "own.sock")}
+    for row in (terminal["server"], terminal["pane"]):
+        path = tmp_path / str(row["pid"])
+        path.mkdir()
+        fields = ["0"] * 20
+        fields[19] = str(row["start_ticks"])
+        (path / "stat").write_text(f'{row["pid"]} (own) ' + " ".join(fields))
+    (tmp_path / "42/cmdline").write_bytes(b"tmux\0-S\0" + str(tmp_path / "own.sock").encode() + b"\0")
+    monkeypatch.setattr(module.os, "getpid", lambda: 43)
+    monkeypatch.setattr(module.os, "getppid", lambda: 42)
+    monkeypatch.setattr(module.os, "getpriority", lambda *_: 10)
+    monkeypatch.setattr(module.os, "sched_getaffinity", lambda *_: {5})
+    actions = []
+    monkeypatch.setattr(module.os, "setpriority", lambda *a: actions.append(("priority", a)))
+    monkeypatch.setattr(module.os, "sched_setaffinity", lambda *a: actions.append(("affinity", a)))
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **kw: actions.append(("io", a)))
+    return terminal, actions
+
+
+def test_terminal_affinity_targets_only_bound_own_parent(tmp_path, monkeypatch):
+    terminal, actions = terminal_fixture(tmp_path, monkeypatch)
+    result = bind_own_terminal_core(terminal, 5, proc_root=tmp_path)
+    assert result["neighbor_changes"] == 0 and result["server_affinity"] == [5]
+    assert ("affinity", (42, {5})) in actions
+
+
+@pytest.mark.parametrize("corruption", ["parent", "birth", "socket"])
+def test_foreign_or_reused_terminal_rejected_before_changes(tmp_path, monkeypatch, corruption):
+    terminal, actions = terminal_fixture(tmp_path, monkeypatch)
+    if corruption == "parent":
+        terminal["server"]["pid"] = 44
+    elif corruption == "birth":
+        terminal["server"]["start_ticks"] = 999
+    else:
+        terminal["socket"] = str(tmp_path / "other.sock")
+    with pytest.raises(ValueError):
+        bind_own_terminal_core(terminal, 5, proc_root=tmp_path)
+    assert actions == []
