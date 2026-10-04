@@ -1,0 +1,9 @@
+{
+  "tests": 40,
+  "passed": true,
+  "scope": "final pre-P2/P3 source freeze; raw surface oracle, cutoff/H, schema, exact affine and independent equations",
+  "junit_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/current_tests.xml",
+  "junit_sha256": "5ea3a31ad54ee1299324029890471d22f8d9331fcb16dc5dfb3f6b1fcc4df356",
+  "CI": false,
+  "full_pytest": false
+}

@@ -234,6 +234,21 @@ def block_evidence(B, D, H, BB, DD, HH, seed=422202):
     )
 
 
+def save_surface_evidence(path, versions):
+    arrays = {}
+    for name, (B, D, H) in versions.items():
+        for label, matrix in (("B", B.tocsr()), ("D", D.tocsr())):
+            for key, value in (
+                ("indptr", matrix.indptr),
+                ("indices", matrix.indices),
+                ("data", matrix.data),
+                ("shape", np.asarray(matrix.shape)),
+            ):
+                arrays[name + "_" + label + "_" + key] = value
+        arrays[name + "_H"] = H
+    atomic_npz(path, **arrays)
+
+
 def cutoff_face_witness(model, packet, n):
     """Direct physical Gauss oracle near kz=0, no Bessel or transform oracle."""
     import basix
@@ -369,6 +384,10 @@ def face_qualification(design, artifact, marker, budget):
             BBB, DDD, HHH = surface_blocks(model, p, 2 * n2 - 1)
             pair = block_evidence(B, D, H, BB, DD, HH)
             oracle = block_evidence(BB, DD, HH, BBB, DDD, HHH)
+            save_surface_evidence(
+                artifact / (role + "_surface_oracles.npz"),
+                dict(analytic=(B, D, H), oracle1=(BB, DD, HH), oracle2=(BBB, DDD, HHH)),
+            )
             new = packet_with_blocks(model, p, B, D, H)
             rng = np.random.default_rng(422210 + degree)
             c = np.asarray(rng.normal(size=p.size) + 1j * rng.normal(size=p.size))
@@ -564,6 +583,23 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
         BBB, DDD, HHH = surface_blocks(model, old, 2 * n2 - 1)
         pair = block_evidence(B, D, H, BB, DD, HH)
         oracle = block_evidence(BB, DD, HH, BBB, DDD, HHH)
+        from scipy import sparse
+
+        oldB = sparse.coo_matrix(
+            (old.a["bv"], (old.a["br"], old.a["bp"])), shape=B.shape
+        ).tocsr()
+        oldD = sparse.coo_matrix(
+            (old.a["dv"], (old.a["dp"], old.a["dr"])), shape=D.shape
+        ).tocsr()
+        save_surface_evidence(
+            out / "surface_oracles.npz",
+            dict(
+                old_q15=(oldB, oldD, old.a["H"]),
+                analytic=(B, D, H),
+                oracle1=(BB, DD, HH),
+                oracle2=(BBB, DDD, HHH),
+            ),
+        )
         rhs = incident_rhs(model, old, BB, 2 * n - 1)
         traction = rhs - BB @ np.asarray(model["bundle"]["incident_projections"])
         rhs2 = incident_rhs(model, old, BBB, 2 * n2 - 1)
@@ -582,6 +618,26 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
             s,
             mode_hash=model["record"]["mode_manifest_sha256"],
             expected_mode_hash=model["record"]["mode_manifest_sha256"],
+        )
+        oracle_arrays = dict(
+            p.a,
+            dp=DD.tocoo().row.astype(np.int64),
+            dr=DD.tocoo().col.astype(np.int64),
+            dv=DD.tocoo().data,
+            H=HH,
+        )
+        oracle_alpha, _ = recover_ports(oracle_arrays, c)
+        atomic_npz(
+            out / "frozen_residual_terms.npz",
+            c_scattered=c,
+            alpha_old=state["alpha_scattered"],
+            alpha_new=alpha,
+            alpha_independent_physical=oracle_alpha,
+            old_residual=old.apply(c) - old.f,
+            new_residual=p.apply(c) - p.f,
+            native_f=p.f,
+            operator_delta=p.apply(c) - old.apply(c),
+            RHS_delta=p.f - old.f,
         )
         old_audit = split_equation(old, affine_state(old, c, state["alpha_scattered"]))
         inc = np.asarray(model["bundle"]["incident_projections"])
@@ -660,6 +716,13 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
                 np.linalg.norm(alpha - state["alpha_scattered"])
                 / max(np.linalg.norm(alpha), 1e-12)
             ),
+            actual_alpha_vs_independent_physical_oracle_relative=float(
+                np.linalg.norm(alpha - oracle_alpha)
+                / max(np.linalg.norm(oracle_alpha), 1e-12)
+            ),
+            actual_alpha_vs_independent_physical_oracle_per_mode=(
+                abs(alpha - oracle_alpha) / np.maximum(abs(oracle_alpha), 1e-12)
+            ).tolist(),
             channels=channel_records,
             mode_keys=[
                 [m.side, m.m, m.n, m.polarization] for m in model["bundle"]["modes"]
@@ -684,7 +747,9 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
         )
         from src.geometry.fixed_phase_plan import digest
 
-        identity["legacy_discretization_sha256"] = identity.get("discretization_sha256")
+        identity["legacy_discretization_sha256"] = identity.get(
+            "discretization_sha256", digest(packet_hashes(old))
+        )
         identity["discretization_sha256"] = digest(
             dict(
                 legacy=identity["legacy_discretization_sha256"],
@@ -704,6 +769,8 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
                     field=out / "affine_state.npz",
                     identity=out / "identity.json",
                     result=out / "result.json",
+                    surface_oracles=out / "surface_oracles.npz",
+                    frozen_residual_terms=out / "frozen_residual_terms.npz",
                 ).items()
             },
         )
@@ -974,6 +1041,7 @@ def target_local_face(artifact, marker, budget):
         functions=[
             "src.solvers.analytic_face_ports.face_polynomial(model,cell,facet)",
             "AffineFacePolynomial.blocks(modes,kappa,side)",
+            "original_normalization(modes,period_x,period_y,z_top,z_bottom)",
             "src.solvers.affine_field_output.affine_state(packet,c,alpha)",
             "SplitVector.map(action)",
             "src.solvers.accurate_ports.recover_ports_components(a,components,gp=...)",
@@ -1008,6 +1076,15 @@ def target_local_face(artifact, marker, budget):
             path="src/solvers/analytic_face_ports.py",
             sha256=sha(ROOT / "src/solvers/analytic_face_ports.py"),
         ),
+        data_layout=dict(
+            local_B="closure_dof x mode, complex128; already Piola/oriented, not yet global MPC",
+            local_D="mode x closure_dof, complex128",
+            original_H="mode real positive diagonal, whole cell area; not summed by local face",
+            polynomial="(p+1,p+1,closure_dof,3) tensor Legendre coefficients",
+            global_MPC="receiver applies conjugate C to B, C to D once; supports exact slave/master mapping",
+            low_bits="two separate complex128 coefficients; linear consumers apply both before guard-digit physical combination",
+        ),
+        ABI=dict(PETSc_scalar="complex128", PETSc_int="int64", MPI=1),
         lookup_paths=[str(p) for p in paths],
         main_full_target_qualified=False,
         NN_increment=False,

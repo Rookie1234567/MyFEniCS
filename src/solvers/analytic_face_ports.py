@@ -37,6 +37,30 @@ def oracle_rule(max_half_span, degree):
     return n, n + 8
 
 
+def original_normalization(modes, period_x, period_y, z_top, z_bottom):
+    """Original diagonal H, whole unit-cell area, never a local face area."""
+    if (
+        not np.isfinite([period_x, period_y, z_top, z_bottom]).all()
+        or min(period_x, period_y) <= 0
+    ):
+        raise ValueError("ORIGINAL_PORT_GEOMETRY_INVALID")
+    if any(m.side not in ("top", "bottom") for m in modes):
+        raise ValueError("ORIGINAL_PORT_SIDE_INVALID")
+    H = np.asarray(
+        [
+            period_x
+            * period_y
+            * np.vdot(m.e_vector[:2], m.e_vector[:2]).real
+            * abs(np.exp(1j * m.k_vector[2] * (z_top if m.side == "top" else z_bottom)))
+            ** 2
+            for m in modes
+        ]
+    )
+    if not np.isfinite(H).all() or np.any(H <= 0):
+        raise ValueError("ANALYTIC_ORIGINAL_H_UNDERFLOW_OR_INVALID")
+    return H
+
+
 @dataclass
 class AffineFacePolynomial:
     coefficients: np.ndarray  # degree+1, degree+1, closure columns, xyz
@@ -192,24 +216,9 @@ def surface_blocks_analytic(model, packet, marker=lambda *_: None):
             face_count += 1
     B = sparse.coo_matrix((bv, (br, bc)), shape=(packet.size, packet.np)).tocsr()
     D = sparse.coo_matrix((dv, (dr, dc)), shape=(packet.np, packet.size)).tocsr()
-    H = np.asarray(
-        [
-            cfg.period_x
-            * cfg.period_y
-            * np.vdot(m.e_vector[:2], m.e_vector[:2]).real
-            * abs(
-                np.exp(
-                    1j
-                    * m.k_vector[2]
-                    * (cfg.physical_z_max if m.side == "top" else cfg.physical_z_min)
-                )
-            )
-            ** 2
-            for m in modes
-        ]
+    H = original_normalization(
+        modes, cfg.period_x, cfg.period_y, cfg.physical_z_max, cfg.physical_z_min
     )
-    if not np.isfinite(H).all() or np.any(H <= 0):
-        raise ValueError("ANALYTIC_ORIGINAL_H_UNDERFLOW_OR_INVALID")
     marker(
         "analytic_surface_frozen",
         dict(

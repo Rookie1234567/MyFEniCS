@@ -171,6 +171,55 @@ def raw_equations(a, state):
     )
 
 
+def surface_array_checks(path):
+    """Recompute complete mode block errors directly from saved CSR arrays."""
+    from scipy import sparse
+
+    with np.load(path, allow_pickle=False) as z:
+        names = ("analytic", "oracle1", "oracle2")
+        blocks = {}
+        for name in names:
+            blocks[name] = tuple(
+                sparse.csr_matrix(
+                    (
+                        z[name + "_" + label + "_data"],
+                        z[name + "_" + label + "_indices"],
+                        z[name + "_" + label + "_indptr"],
+                    ),
+                    shape=tuple(z[name + "_" + label + "_shape"]),
+                )
+                for label in ("B", "D")
+            ) + (z[name + "_H"].copy(),)
+    out = {}
+    for name, left, right in (
+        ("physical", "analytic", "oracle1"),
+        ("oracle", "oracle1", "oracle2"),
+    ):
+        values = {}
+        for i, label in enumerate(("B", "D", "H")):
+            x, y = blocks[left][i], blocks[right][i]
+            if label == "H":
+                num, den = abs(x - y), abs(y)
+            else:
+                axis = 0 if label == "B" else 1
+                num = np.sqrt(
+                    np.asarray(
+                        (x - y).multiply((x - y).conj()).real.sum(axis=axis)
+                    ).ravel()
+                )
+                den = np.sqrt(
+                    np.asarray(y.multiply(y.conj()).real.sum(axis=axis)).ravel()
+                )
+            values[label] = dict(
+                absolute=num.tolist(),
+                denominator=den.tolist(),
+                relative=(num / np.maximum(den, 1e-300)).tolist(),
+                maximum=float(np.max(num / np.maximum(den, 1e-300))),
+            )
+        out[name] = values
+    return out
+
+
 def check_campaign(root, artifact):
     from src.runners.fixed_phase_campaign import evidence_v22, sha
     from benchmarks.affine_output_checker import check_state
@@ -207,6 +256,14 @@ def check_campaign(root, artifact):
         )
     )
     q = face_gates(json.loads(paths[-1].read_text())["result"]) if paths else None
+    face_arrays = {}
+    if paths:
+        record = json.loads(paths[-1].read_text())
+        where = Path(record["files"]["qualification"]["path"]).parent
+        face_arrays = {
+            role: surface_array_checks(where / (role + "_surface_oracles.npz"))
+            for role in ("O3", "E3", "E4", "O6_LOCAL_ONLY")
+        }
     frozen = {}
     candidates = list(
         (root / "benchmarks/artifacts/task42extra").glob(
@@ -236,11 +293,42 @@ def check_campaign(root, artifact):
                     a, s, mode_hash="bound", expected_mode_hash="bound"
                 ),
             )
+            frozen[role]["independent_surface_arrays"] = surface_array_checks(
+                b["files"]["surface_oracles"]["path"]
+            )
+            with np.load(
+                b["files"]["frozen_residual_terms"]["path"], allow_pickle=False
+            ) as z:
+                old, new, da, df = (
+                    z[k]
+                    for k in (
+                        "old_residual",
+                        "new_residual",
+                        "operator_delta",
+                        "RHS_delta",
+                    )
+                )
+                delta = da - df
+                identity = np.linalg.norm(new - old - delta) / max(
+                    np.linalg.norm(z["native_f"]), 1e-300
+                )
+                if identity > 1e-10:
+                    raise ValueError("SAVED_RESIDUAL_DECOMPOSITION_IDENTITY_FAILED")
+                frozen[role]["signed_frozen_decomposition"] = dict(
+                    identity_relative=float(identity),
+                    old_energy=float(np.vdot(old, old).real),
+                    delta_energy=float(np.vdot(delta, delta).real),
+                    cross=float(2 * np.vdot(old, delta).real),
+                    new_energy=float(np.vdot(new, new).real),
+                    no_field_change=True,
+                    identity_denominator="original native RHS norm, no phase fit",
+                )
             del a, s
     return dict(
         stage_qualified=True,
         roles=rows,
         independent_face_gate=q,
+        independent_face_arrays=face_arrays,
         frozen_native=frozen,
         no_FE_or_factor=True,
         reference_qualified=False,
