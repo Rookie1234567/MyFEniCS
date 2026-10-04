@@ -1,0 +1,31 @@
+{
+  "schema": "target-boundary-structure.v38.v1",
+  "review_commit": "cf0896e57f9f16970e5af6b55ad14920ab4c7815",
+  "target_solve_authorized": false,
+  "q": [
+    30,
+    60
+  ],
+  "component_seeds": [
+    423801,
+    423803
+  ],
+  "cost_ladder": [
+    64,
+    1024,
+    32060
+  ],
+  "max_modes": 64,
+  "cache_cap_bytes": 67108864,
+  "new_storage_cap_bytes": 536870912,
+  "native_hex_cap": 32,
+  "native_mode_cap": 24,
+  "parent_identity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_identity_20261004T033307945408Z/result.json",
+    "sha256": "d5edbce8c3059b43626c59fdf2ae5892dd1cb0a9788fbfef2e0a0646db661023"
+  },
+  "parent_capacity": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_tile_capacity_20261004T034945301416Z/result.json",
+    "sha256": "33d00b61e415820cad6b68d06d5feeded11b554aa0f14f49dfb296e70e2a18f1"
+  }
+}

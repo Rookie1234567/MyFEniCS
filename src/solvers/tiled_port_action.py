@@ -72,15 +72,30 @@ class TiledPortAction:
         self.reduce_sum = reduce_sum or (lambda x: x)
         self.collective_all = collective_all or (lambda x: x)
         self.plans = []
-        for i, row in enumerate(self.identities):
-            if row["mode_index"] != i or not 0 < row["projection_denominator"] < float(
-                "inf"
-            ):
-                raise ValueError("ordered mode/H identity")
-            plan = tuple(source.tile_ids(i))
-            if len(set(plan)) != len(plan) or plan != tuple(row["tile_ids"]):
-                raise ValueError("missing/duplicate/reordered face inventory")
-            self.plans.append(plan)
+        error = None
+        try:
+            shared = getattr(source, "shared_tile_plans", None)
+            tables = {} if shared is None else {k: tuple(v) for k, v in shared.items()}
+            self.shared_plan_hash = hashlib.sha256(json_bytes(tables)).hexdigest()
+            for i, row in enumerate(self.identities):
+                if row["mode_index"] != i or not 0 < row[
+                    "projection_denominator"
+                ] < float("inf"):
+                    raise ValueError("ordered mode/H identity")
+                if shared is None:
+                    plan = tuple(source.tile_ids(i))
+                    expected = tuple(row["tile_ids"])
+                else:
+                    plan = tables[row["tile_plan_key"]]
+                    expected = plan
+                    if row["tile_plan_sha256"] != self.shared_plan_hash:
+                        raise ValueError("shared ordered plan identity")
+                if len(set(plan)) != len(plan) or plan != expected:
+                    raise ValueError("missing/duplicate/reordered face inventory")
+                self.plans.append(plan)
+        except Exception as exc:  # noqa: BLE001 - propagate every local MPI stage failure
+            error = exc
+        self._agree(error, "mode/H/ordered inventory")
         self.receipts, self.references = {}, []
         self.active = False
         self.stats = {
@@ -95,70 +110,107 @@ class TiledPortAction:
             "passes": 0,
         }
 
+    def _agree(self, error, stage):
+        """All participants leave a failing stage before any later reduction."""
+        if not self.collective_all(error is None):
+            if error is not None:
+                raise error
+            raise ValueError("collective " + stage + " rejected on another rank")
+
     def _pass(self, index, consumer):
         identity = self.identities[index]
-        if (
-            json_bytes(identity) != self.identity_bytes[index]
-            or tuple(self.source.tile_ids(index)) != self.plans[index]
-        ):
-            raise ValueError("immutable mode/H/ordered tile identity changed")
-        if not self.collective_all(
-            all(
+        error = None
+        try:
+            if json_bytes(identity) != self.identity_bytes[index]:
+                raise ValueError("immutable mode/H identity changed")
+            if hasattr(self.source, "shared_tile_plans"):
+                digest = hashlib.sha256(
+                    json_bytes(
+                        {k: tuple(v) for k, v in self.source.shared_tile_plans.items()}
+                    )
+                ).hexdigest()
+                if digest != self.shared_plan_hash:
+                    raise ValueError("immutable shared ordered tile identity changed")
+            elif tuple(self.source.tile_ids(index)) != self.plans[index]:
+                raise ValueError("immutable ordered tile identity changed")
+        except Exception as exc:  # noqa: BLE001 - propagate every local MPI stage failure
+            error = exc
+        self._agree(error, "identity")
+        error = None
+        try:
+            safe = all(
                 self.source.upper_bytes(index, t) <= self.tile_bytes
                 for t in self.plans[index]
             )
-        ):
+        except Exception as exc:  # noqa: BLE001 - collective source failure
+            error = exc
+        self._agree(error, "capacity declaration")
+        if not self.collective_all(safe):
             raise MemoryError("collective tile capacity rejected before allocation")
         digest = hashlib.sha256(json_bytes([self.source_identity, identity]))
         for tile_id in self.plans[index]:
-            if any(ref() is not None for ref in self.references):
-                raise RuntimeError("tile numeric arrays retained across lease")
-            began = perf_counter()
-            tile = self.source.load_tile(index, tile_id, self.source_identity)
-            self.stats["creator_seconds"] += perf_counter() - began
-            if (
-                not isinstance(tile, PortTile)
-                or tile.tile_id != tile_id
-                or tile.nbytes > self.source.upper_bytes(index, tile_id)
-            ):
-                raise ValueError("tile schema/id/declared bound")
-            a, b = self.ownership_range
-            for side in ("coupling", "projection"):
-                rows, values = (
-                    getattr(tile, side + "_rows"),
-                    getattr(tile, side + "_values"),
-                )
+            error = None
+            try:
+                if any(ref() is not None for ref in self.references):
+                    raise RuntimeError("tile numeric arrays retained across lease")
+                began = perf_counter()
+                tile = self.source.load_tile(index, tile_id, self.source_identity)
+                self.stats["creator_seconds"] += perf_counter() - began
                 if (
-                    rows.dtype != np.int64
-                    or values.dtype != np.complex128
-                    or rows.shape != values.shape
-                    or np.any((rows < a) | (rows >= b))
-                    or np.any(np.diff(rows) <= 0)
-                    or not np.isfinite(values).all()
-                    or rows.flags.writeable
-                    or values.flags.writeable
+                    not isinstance(tile, PortTile)
+                    or tile.tile_id != tile_id
+                    or tile.nbytes > self.source.upper_bytes(index, tile_id)
                 ):
-                    raise ValueError("tile canonical rows/dtype/finite/readonly")
-            began = perf_counter()
-            numeric = content_hash(tile.arrays)
-            expected = getattr(self.source, "expected_hash", lambda *_: None)(
-                index, tile_id
-            )
-            if expected is not None and numeric != expected:
-                raise ValueError("tile content hash")
-            digest.update(json_bytes([tile_id, numeric]))
-            self.stats["hash_seconds"] += perf_counter() - began
+                    raise ValueError("tile schema/id/declared bound")
+                a, b = self.ownership_range
+                for side in ("coupling", "projection"):
+                    rows, values = (
+                        getattr(tile, side + "_rows"),
+                        getattr(tile, side + "_values"),
+                    )
+                    if (
+                        rows.dtype != np.int64
+                        or values.dtype != np.complex128
+                        or rows.shape != values.shape
+                        or np.any((rows < a) | (rows >= b))
+                        or np.any(np.diff(rows) <= 0)
+                        or not np.isfinite(values).all()
+                        or rows.flags.writeable
+                        or values.flags.writeable
+                    ):
+                        raise ValueError("tile canonical rows/dtype/finite/readonly")
+                began = perf_counter()
+                numeric = content_hash(tile.arrays)
+                expected = getattr(self.source, "expected_hash", lambda *_: None)(
+                    index, tile_id
+                )
+                if expected is not None and numeric != expected:
+                    raise ValueError("tile content hash")
+                digest.update(json_bytes([tile_id, numeric]))
+                self.stats["hash_seconds"] += perf_counter() - began
+            except Exception as exc:  # noqa: BLE001 - propagate every local MPI stage failure
+                error = exc
+            self._agree(error, "load/schema/hash/row")
             self.stats["tile_loads"] += 1
             self.stats["numeric_cache_peak_bytes"] = max(
                 self.stats["numeric_cache_peak_bytes"], tile.nbytes
             )
             self.references = [weakref.ref(v) for v in tile.arrays.values()]
-            consumer(tile)
+            error = None
+            try:
+                consumer(tile)
+            except Exception as exc:  # noqa: BLE001 - propagate every local MPI stage failure
+                error = exc
+            self._agree(error, "consumer")
             del rows, values, tile
         value = digest.hexdigest()
         previous = self.receipts.get(index)
-        if previous is not None and previous["sha256"] != value:
-            raise ValueError("replay changed tile/H/source content")
+        error = (
+            ValueError("replay changed tile/H/source content")
+            if previous is not None and previous["sha256"] != value
+            else None
+        )
+        self._agree(error, "replay")
         self.receipts[index] = {
             "index": index,
             "sha256": value,
@@ -178,7 +230,10 @@ class TiledPortAction:
             x.shape != ((len(self.identities),) if modal else (b - a,))
             or not np.isfinite(x).all()
         ):
-            raise ValueError("owned FE/complete modal vector")
+            error = ValueError("owned FE/complete modal vector")
+        else:
+            error = None
+        self._agree(error, "input shape/finite")
         out = np.zeros(
             (len(self.identities),) if amplitudes_only else (b - a,),
             dtype=np.complex128,

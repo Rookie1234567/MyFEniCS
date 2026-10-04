@@ -14,7 +14,12 @@ from src.solvers.port_preparation_window import ROOT, implementation_hashes, win
 
 def main():
     namespace = os.environ.get("TASK042_PREPARATION_SCOPE", "v36")
-    if namespace == "v37":
+    if namespace == "v38":
+        from src.solvers.boundary_structure_scope import (
+            implementation_hashes as selected_hashes,
+        )
+        from src.solvers.boundary_structure_scope import window as selected_window
+    elif namespace == "v37":
         from src.solvers.boundary_witness_scope import (
             implementation_hashes as selected_hashes,
         )
@@ -87,7 +92,12 @@ def main():
             "--basetemp=" + str(folder / "fixtures"),
             "src/test/test_task042_v36_ports.py",
             "src/test/test_task042_v36_checker.py",
-            *(["src/test/test_boundary_witness.py"] if namespace == "v37" else []),
+            *(
+                ["src/test/test_boundary_witness.py"]
+                if namespace in ("v37", "v38")
+                else []
+            ),
+            *(["src/test/test_boundary_structure.py"] if namespace == "v38" else []),
             "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
             "--junitxml=" + str(folder / "pytest.xml"),
         ]
@@ -102,7 +112,7 @@ def main():
             sys.executable,
             "-m",
             "src.test.tiled_port_mpi_fixture"
-            if namespace == "v37"
+            if namespace in ("v37", "v38")
             else "src.test.port_provider_mpi_fixture",
             str(folder / f"mpi{n}.json"),
         ]

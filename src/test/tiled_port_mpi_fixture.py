@@ -63,6 +63,32 @@ def main():
         pass
     else:
         raise AssertionError("collective rejection missing")
+    # A local failure must propagate before a peer enters the next reduction.
+    bad = TileSource(owner)
+    if comm.rank == 0:
+        bad.rows[0]["projection_denominator"] = -1
+    try:
+        action(
+            bad,
+            reduce_sum=reduce,
+            collective_all=lambda x: comm.allreduce(x, op=MPI.LAND),
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("single-rank bad H did not propagate")
+    bad = TileSource(owner)
+    if comm.rank == 0:
+        bad.expected_hash = lambda *_: "bad"
+    broken = action(
+        bad, reduce_sum=reduce, collective_all=lambda x: comm.allreduce(x, op=MPI.LAND)
+    )
+    try:
+        broken.apply(x[lo:hi])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("single-rank bad hash did not propagate")
     rows = comm.gather(
         {
             "owner": owner,

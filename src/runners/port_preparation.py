@@ -29,9 +29,14 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace == "v37":
-            own = [ROOT / "tmp/task042/v37", ROOT / "benchmarks/artifacts/task042/v37"]
-            own.extend((ROOT / "results/task042").glob("task042_v37_*"))
+        if self.namespace in ("v37", "v38"):
+            own = [
+                ROOT / ("tmp/task042/" + self.namespace),
+                ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
+            ]
+            own.extend(
+                (ROOT / "results/task042").glob("task042_" + self.namespace + "_*")
+            )
             size = inventory_paths(own, ROOT)["bytes"]
             row["new_preparation_bytes"] = size
             if size > 512 * 2**20:
@@ -39,7 +44,14 @@ class PreparationHealth:
         return row
 
 
+FE_ROLES = ("COMPONENT", "PATCH", "CAPACITY", "BRIDGE", "LAYOUT", "ORACLE")
+
+
 def context(namespace):
+    if namespace == "v38":
+        from src.solvers import boundary_structure_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v37":
         from src.solvers import boundary_witness_scope as scope
 
@@ -100,7 +112,7 @@ def launch(
     started = time.monotonic()
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
-    if role in ("COMPONENT", "PATCH", "CAPACITY"):
+    if role in FE_ROLES:
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -164,9 +176,7 @@ def launch(
             "shared_workstation": True,
             "environment_mode": os.environ.get("TASK042_ENV_MODE"),
             "cpu": baseline["cpu"],
-            "planned_bytes": 6 * 2**30
-            if role in ("COMPONENT", "PATCH", "CAPACITY")
-            else 2 * 2**30,
+            "planned_bytes": 6 * 2**30 if role in FE_ROLES else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
         }
@@ -196,12 +206,8 @@ def launch(
             interval=0.5,
             timebase_guard=True,
             hard_stop_immediate=True,
-            rss_hard_limit_bytes=(
-                8 if role in ("COMPONENT", "PATCH", "CAPACITY") else 2
-            )
-            * 2**30,
-            rss_warning_bytes=(6 if role in ("COMPONENT", "PATCH", "CAPACITY") else 1)
-            * 2**30,
+            rss_hard_limit_bytes=(8 if role in FE_ROLES else 2) * 2**30,
+            rss_warning_bytes=(6 if role in FE_ROLES else 1) * 2**30,
             memory_envelope_provider=shared_envelope,
             include_pss=False,
             source_state=state,
@@ -268,7 +274,9 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v37":
+        if namespace == "v38":
+            from src.solvers.boundary_structure_study import execute
+        elif namespace == "v37":
             from src.solvers.target_boundary_witness import execute
         else:
             from src.solvers.port_component_study import execute

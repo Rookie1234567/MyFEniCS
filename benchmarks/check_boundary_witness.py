@@ -43,6 +43,23 @@ def read_arrays(receipt):
     return result
 
 
+def require_complete_coverage(plan, result):
+    """Validate inventory independently; counts alone cannot prove coverage."""
+    expected = {p["name"]: p for p in plan["patches"]}
+    found = [p["description"]["name"] for p in result["patches"]]
+    if len(found) != len(expected) or set(found) != set(expected):
+        raise ValueError("missing/duplicate planned patch identity")
+    qset = set(plan["quadrature_degrees"])
+    for patch in result["patches"]:
+        if patch["description"] != expected[patch["description"]["name"]]:
+            raise ValueError("wrong planned patch geometry identity")
+        qs = [r["q"] for r in patch["q_records"]]
+        if len(qs) != len(qset) or set(qs) != qset:
+            raise ValueError("missing/duplicate planned quadrature coverage")
+        if "witness" not in patch["component"]:
+            raise ValueError("missing planned action witness")
+
+
 def check_saved():
     if not (ARTIFACT / "PATCH.json").exists():
         return check_partial()
@@ -57,6 +74,7 @@ def check_saved():
     ):
         raise ValueError("selected inventory")
     plan = json.loads(Path(planfile["path"]).read_text())
+    require_complete_coverage(plan, result)
     nm = len(plan["selected_modes"])
     if (
         len(result["patches"]) != len(plan["patches"])
@@ -113,6 +131,16 @@ def check_saved():
         component = patch["component"]
         if "witness" in component:
             data = read_arrays(component["witness"])
+            if not {
+                "x",
+                "y",
+                "forward",
+                "adjoint",
+                "amplitudes",
+                "modal",
+                "linear",
+            } <= set(data):
+                raise ValueError("missing complete action inventory")
             native = qdata[30]
             n = nm
             C = np.column_stack([native[f"C_{i}"] for i in range(n)])
@@ -150,7 +178,9 @@ def check_saved():
         "q15_vs_q30_pass": all(c["passed"] for c in q30),
         "q30_vs_q60_pass": all(c["passed"] for c in q60),
         "checked_members": counts,
-        "component_classification": result["status"],
+        "component_classification": "TARGET_P6_BOUNDARY_WITNESS_QUALIFIED"
+        if same_q and q60 and all(c["passed"] for c in same_q + q60)
+        else "TARGET_P6_BOUNDARY_WITNESS_NOT_QUALIFIED",
         "target_solve": False,
         "reference_read": False,
         "new_volume_actions": 0,

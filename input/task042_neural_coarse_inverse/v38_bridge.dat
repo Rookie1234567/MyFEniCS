@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v38]
+stage = "BRIDGE"
+run_id = "task042_v38_bridge"

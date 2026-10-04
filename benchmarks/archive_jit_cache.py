@@ -15,21 +15,20 @@ from time import perf_counter
 from src.runners.task042_shared import write_json
 
 
-def archive(cache, destination):
+def archive(cache, destination, *, namespace="v37", suffixes=(".c", ".o", ".so")):
     cache = Path(cache).resolve()
     destination = Path(destination).resolve()
-    root = Path("/home/fenics/Projects/NN-Lab/tmp/task042/v37").resolve()
+    if namespace not in ("v37", "v38") or not set(suffixes) <= {".c", ".o", ".so"}:
+        raise ValueError("explicit generated cache cleanup scope")
+    root = Path("/home/fenics/Projects/NN-Lab/tmp/task042") / namespace
+    root = root.resolve()
     if not cache.is_relative_to(root) or not destination.is_relative_to(root):
         raise ValueError("V37-only generated cache cleanup")
     destination.mkdir(parents=True, exist_ok=True)
     records = []
     began = perf_counter()
     for path in sorted(cache.iterdir()):
-        if (
-            path.suffix not in (".c", ".o", ".so")
-            or not path.is_file()
-            or path.is_symlink()
-        ):
+        if path.suffix not in suffixes or not path.is_file() or path.is_symlink():
             continue
         output = destination / (path.name + ".gz")
         temporary = output.with_suffix(".gz.partial")
