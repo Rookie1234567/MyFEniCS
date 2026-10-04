@@ -1,0 +1,66 @@
+{
+  "schema": "saved_only_C1a_complete_primitive_upper.v1",
+  "status": "DERIVED_NOT_RUN",
+  "source_head": "a02744457cfdcc8c4794e066d194e2b478cb848e",
+  "measured_input_hashes": {
+    "live_component_receipt": "bb564eb5de9699938de9c7b669fe2b5d3d4112b333343745f005ecb9e224e46d",
+    "member_manifest": "29eace32f3b374ffc493dda1cb302fe888d4e750c0307027ffc05885437bb52f",
+    "probe_events": "fd1e6abee12801816d7672124e69d295c9bfd7f1a3a47ee4968adc811d6eac5f"
+  },
+  "actual_counts": {
+    "raw_classes": 16,
+    "oriented_classes": 29,
+    "ports": 532,
+    "C_entries": 614904,
+    "D_entries": 614904,
+    "cell_port_sum": 1504,
+    "cell_port_max": 127,
+    "cells_with_ports": 16
+  },
+  "numeric_byte_terms": {
+    "measured_complete_native_maps_original_raw_classes_volume_cache_numeric": 519760952,
+    "complete532_C_D_rows_int32_and_values_complex128_no_future_interning": 24596160,
+    "carrier_slave_rows_int32": 11832,
+    "all80_cell_Bi_Di_XiB_Bt_Dt_Bhat_Dhat_no_future_interning": 74068992,
+    "all80_cell_original_interiors_trace_and_port_indices_int32": 288256,
+    "optional_zero_Hlocal_per_actual_port_support_complex128": 2540800,
+    "three532_square_dense_H_oracles_and_original_diagonal": 13593664,
+    "eight_port_control_vectors_complex128": 68096,
+    "five_main_reduced_vectors_complex128": 1401920,
+    "five_main_native_vectors_complex128": 4476000,
+    "both17_array_residual_packets_9native_4reduced_4port": 18424768,
+    "two_chosen_manufactured_native_states_complex128": 1790400,
+    "complete16_array_material_control_twoports": 58080
+  },
+  "member_count_upper_terms": {
+    "measured_base_unique": 174,
+    "full_carrier_four_per532": 2128,
+    "carrier_slave_rows": 1,
+    "cells11_per80_with_optional_Hlocal": 880,
+    "dense_H_original_diag_and_three_squares": 4,
+    "port_controls": 8,
+    "main_reduced": 5,
+    "main_native": 5,
+    "two_residual_packets": 34,
+    "manufactured_chosen": 2,
+    "material_control": 16
+  },
+  "numeric_bytes_upper": 661079920,
+  "npy_member_count_upper": 3257,
+  "header_bytes_each": 4096,
+  "complete_primitive_uncompressed_bytes_upper": 674420592,
+  "proposed_next_primitive_cap_bytes": 805306368,
+  "proposed_full_packet_uncompressed_cap_bytes": 1073741824,
+  "metadata_reserve_to_packet_bytes": 399321232,
+  "memory3GiB_wall4500s_mathematical_gates_unchanged": true,
+  "future_compressed_bytes": "UNKNOWN; failed565.58MB fullpacket solidtar.xz measured184.04MB but not guaranteed for remaining data",
+  "no_future_dedup_assumed": true,
+  "missing_resume_witnesses": [
+    "remaining183 complete physical carrier C/D rows/values/H entries",
+    "all80 per-cell port caches Bi/Di/XiB/Bhat/Dhat/Bt/Dt",
+    "complete per-cell trace maps/class assignments original_sources descriptor not checkpointed",
+    "arbitrary and manufactured full-action/RHS/recovery/residual packets and material controls"
+  ],
+  "current_packet_resume_status": "NOT_COMPLETE enough to restart fullcomponent; fresh mesh/carrier/control work and reviewed restore glue would be needed; no implementation or qualification claimed",
+  "new_execution_authorization": "NONE"
+}

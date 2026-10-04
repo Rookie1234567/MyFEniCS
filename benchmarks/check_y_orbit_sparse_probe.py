@@ -16,6 +16,16 @@ import sys
 import numpy as np
 from scipy import sparse
 
+# Exact reviewed fresh-ABI basis-byte pin and its negative regression only.
+NATIVE_BASIS_PIN_SOURCE_DELTA = {
+    "benchmarks/check_fresh_c1_p6_component.py": (
+        "fc048ed73fa71aaebe6ee741560febef064c9379140cd7798b394eef80a71a5f",
+        "f5fc1b3dd6d6778f0cec1c41fb72df6a667c03c6a9dc6c014bd63027bf3b0272"),
+    "src/test/test_fresh_c1_p6_native_tensor_checker.py": (
+        "22f64dc1e9a1446a1b34a42ddf781828f5e8bb2f5322101efd7e551ba2c4155f",
+        "0550375bfdd896353ae8f883e3a3d4ef99e3a6329af24e6374fa98d4693ceb76"),
+}
+
 
 def _complete_interior_rhs(generic, interior_positions, expected_rows):
     return bool(len(interior_positions) == int(expected_rows)
@@ -51,13 +61,19 @@ def _bind_worker_dependencies(worker_source, checker_source):
                "src/test/test_y_orbit_sparse_diagnostic_inventory.py"}
     old, new = worker_source["files_sha256"], checker_source["files_sha256"]
     changed = {path for path in set(old) | set(new) if old.get(path) != new.get(path)}
+    bounded = changed - allowed
     if (worker_source["branch"] != checker_source["branch"] or worker_source["dirty"]
-            or checker_source["dirty"] or not changed.issubset(allowed)):
+            or checker_source["dirty"] or not bounded.issubset(NATIVE_BASIS_PIN_SOURCE_DELTA)):
         raise RuntimeError("checker requires byte-identical numerical/config dependencies")
+    for path in bounded:
+        if (old.get(path), new.get(path)) != NATIVE_BASIS_PIN_SOURCE_DELTA[path]:
+            raise RuntimeError("checker requires the exact native basis pin source delta")
     return {"worker_head": worker_source["head"], "checker_head": checker_source["head"],
-            "verified_unchanged_dependency_count": len((set(old) | set(new)) - allowed),
+            "verified_unchanged_dependency_count": len((set(old) | set(new)) - allowed - bounded),
             "reviewed_changed_paths": sorted(changed),
-            "exception_scope": "only checker serialization/binding code and its own regression test",
+            "native_basis_pin_hash_binding": {path: {"worker_sha256": old[path], "checker_sha256": new[path]}
+                                               for path in sorted(bounded)},
+            "exception_scope": "checker binding plus exact fresh basis-byte pin and regression; all numerical gates unchanged",
             "all_other_source_config_input_hashes_match": True}
 
 
@@ -89,7 +105,7 @@ def _raw_factor_inventory(report, directory, ny):
 def _fresh_p6_check(directory,report,provenance,summary,checker_source,checker_environment):
     from benchmarks.check_fresh_c1_p6_component import check_component
     from src.solvers.fresh_c1_contract import (P6_WORKER_STATUS,P6_CHECKER_STATUS,
-        digest_json,TREE_CAP_BYTES,WALL_SECONDS,validate_resource_receipt)
+        digest_json,TREE_CAP_BYTES,WALL_SECONDS,validate_resource_receipt,resolve_storage_budget)
     from src.solvers.y_orbit_live_boundary_contract import load_bound_live_receipt
     from src.solvers.real_p4_probe import file_sha256
     if (report.get("status")!=P6_WORKER_STATUS or report.get("fresh_fixture_c1")!="p6-component"
@@ -99,6 +115,11 @@ def _fresh_p6_check(directory,report,provenance,summary,checker_source,checker_e
             or provenance.get("environment")!=checker_environment
             or summary.get("classification")!="COMPLETED"):
         raise ValueError("fresh p6 source/run/ABI authority is incomplete")
+    stored_budget=report.get("storage_budget_contract",{})
+    budget=resolve_storage_budget("p6-component",stored_budget.get("c1a_raw_budget_mib"))
+    if (stored_budget!=budget or provenance.get("storage_budget_contract")!=budget
+            or report["component"].get("storage_budget_contract")!=budget):
+        raise ValueError("fresh p6 storage contract detached from report/provenance/component")
     binding=_bind_worker_dependencies(report["source"],checker_source)
     resource=provenance["resource_contract"]
     if resource["tree_cap_bytes"]!=TREE_CAP_BYTES or resource["wall_seconds"]!=WALL_SECONDS:

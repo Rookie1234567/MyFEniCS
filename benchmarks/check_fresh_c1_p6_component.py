@@ -31,13 +31,35 @@ NATIVE_TENSOR_RECIPE = "DOLFINx.T_apply_C_order_then_T_apply_transpose_C_order; 
 NATIVE_ELEMENT = {"family": "N1curl", "cell": "hexahedron", "degree": 6,
                   "dtype": "float64", "map_type": "covariantPiola",
                   "basix_hash": 16913352432823651554,
-                  "coefficient_matrix_C_sha256": "780d9a4529041f8cb8138a78c8314d757822a1f5bc984f254c5790db208e911d",
+                  "coefficient_matrix_C_sha256": "c0be730f050c40e2333362ceac4fac0d656eaf029cf7454a1dbbc21253e064da",
                   "local_dimension": 882, "local_interiors": 450, "local_traces": 432}
+STORAGE_BUDGET_CONTRACTS = (
+    {"selector": "legacy_512MiB", "primitive_export_limit_bytes": 536870912,
+     "full_packet_uncompressed_limit_bytes": None, "c1a_raw_budget_mib": None},
+    {"selector": "c1a_768MiB_v1", "primitive_export_limit_bytes": 805306368,
+     "full_packet_uncompressed_limit_bytes": 1073741824, "c1a_raw_budget_mib": 768},
+)
 
 
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def _storage_budget_contract(report):
+    """Admit only the default or explicitly selected C1a storage contract."""
+    contract = report.get("storage_budget_contract")
+    require(isinstance(contract, dict)
+            and any(contract == expected and all(type(contract[key]) is type(value)
+                                                for key, value in expected.items())
+                    for expected in STORAGE_BUDGET_CONTRACTS),
+            "exact selected C1a storage budget contract required")
+    snapshot = report.get("snapshot")
+    require(isinstance(snapshot, dict)
+            and type(snapshot.get("archive_payload_limit_bytes")) is int
+            and snapshot["archive_payload_limit_bytes"] == contract["primitive_export_limit_bytes"],
+            "snapshot primitive cap must equal selected C1a storage budget")
+    return dict(contract)
 
 
 def _canonical(value):
@@ -854,6 +876,7 @@ def _check_component(report, load_array, gate, checkpoint, measures):
     require(isinstance(report, dict) and report.get("schema") == WORKER_SCHEMA
             and report.get("actual_inventory") == INVENTORY,
             "exact current fresh same80 p6 component schema/inventory required")
+    storage_budget_contract = _storage_budget_contract(report)
     # This allocation preadmission precedes numerical imports and all arrays.
     _gate(gate, "numerical_dependencies", workspace=64 << 20, FE_imports=False, JIT=False)
     import numpy as np
@@ -1073,6 +1096,9 @@ def _check_component(report, load_array, gate, checkpoint, measures):
     return {"schema": CHECKER_SCHEMA, "source_status": SOURCE_STATUS,
             "status": "independent_saved_component_controls_passed",
             "independent_component_pass": True, "durable_archive_verified": False,
+            "storage_budget_contract": storage_budget_contract,
+            "primitive_snapshot_limit_bound": True,
+            "full_packet_uncompressed_bytes_checked": False,
             "source_ABI_provenance_binding": "caller_required_not_checked_here", "external_supervision_required": True,
             "actual_inventory_recomputed": dict(INVENTORY), "cells_checked": sorted(cell_checks),
             "unique_classes_checked": class_checks, "physical_correction_support": support_checks,

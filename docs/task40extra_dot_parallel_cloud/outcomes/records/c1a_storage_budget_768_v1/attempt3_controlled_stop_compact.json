@@ -1,0 +1,23 @@
+{
+  "schema": "C1a_attempt3_controlled_storage_stop_compact.v1",
+  "status": "FAILED_CONTROLLED_PRIMITIVE_RAW_BUDGET_STOP",
+  "source_head": "a02744457cfdcc8c4794e066d194e2b478cb848e",
+  "published_equivalent": "077ec9c8386c976da232093779279fb9d1a93033",
+  "all16_raw_29_oriented_native_hash_controls_exported": true,
+  "stop_at": "carrier/port/348/projection_values",
+  "action_RHS_recovery_controls": "NOT_RUN",
+  "supervised_elapsed_seconds": 1321.4408732770003,
+  "tree_RSS_peak_bytes": 2182418432,
+  "tree_swap_peak_bytes": 0,
+  "descendants_cleared": true,
+  "files_uncompressed_bytes": 565226903,
+  "npy_file_bytes": 533128888,
+  "zip_compressed_bytes": 339542641,
+  "ZIP_sha256": "883061c70325f47cb62ad9f1c4e909f013f8c4d25e90ef2f6e3d0c93fcabce28",
+  "Library_full_readback_status": "PASS_ALL953_MEMBERS_942_NUMERIC_ARRAY_HASHES",
+  "Library_verification_receipt_sha256": "bf1f03b77ce4e0ee722b577373a0bd918a0aefdd8f74f773733823b886b40561",
+  "Library_durable_recovery_index": "libfile_e3ccb96279fc8191a4245c73daee90a0",
+  "new_budget_rationale": "complete primitive bound674420592B exceeds old512MiB; explicit768MiB selected only for C1a; no numerical tolerance changed",
+  "new_stage_qualification": "NOT_RUN",
+  "prior_attempts1_and2_raw": "UNAVAILABLE_AFTER_RESET; failures preserved in previous historical receipt"
+}

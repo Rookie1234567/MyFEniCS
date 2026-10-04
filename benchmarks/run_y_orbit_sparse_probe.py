@@ -240,8 +240,9 @@ def _validate_bridge(path, digest, expected_head, source, *, centered_extension=
 
 
 def _validate_fresh_component(path,digest,source,environment):
-    """Current p6 component, independent checker and exact same source/ABI."""
-    from src.solvers.fresh_c1_contract import (validate_component_packets,digest_json,validate_resource_receipt)
+    """Bind the actual producer, saved checker and current metadata consumer."""
+    from src.solvers.fresh_c1_contract import (validate_component_packets,digest_json,
+        validate_resource_receipt,validate_component_source_roles)
     path=Path(path).resolve()
     if not path.is_relative_to(ARTIFACT_ROOT.resolve()) or file_sha256(path)!=digest:
         raise ValueError("fresh p6 report path/hash mismatch")
@@ -249,24 +250,49 @@ def _validate_fresh_component(path,digest,source,environment):
     checker_path=directory/"independent_checker.json"
     provenance_path=directory/"provenance.json"
     checker=json.loads(checker_path.read_text());provenance=json.loads(provenance_path.read_text())
-    if provenance.get("source")!=source or provenance.get("environment")!=environment:
-        raise ValueError("fresh component provenance source/ABI differs")
-    receipt=validate_component_packets(report,checker,expected_source=source,
+    roles=validate_component_source_roles(report,checker,source,root=ROOT,
+        report_sha256=digest,checker_sha256=file_sha256(checker_path))
+    producer,saved_checker=roles["producer"],roles["saved_checker"]
+    if provenance.get("source")!=producer or provenance.get("environment")!=environment:
+        raise ValueError("fresh component provenance producer/ABI differs")
+    receipt=validate_component_packets(report,checker,expected_source=producer,
+        expected_checker_source=saved_checker if "checker_source" in checker else None,
         expected_environment=environment,report_sha256=digest,
         provenance_sha256=file_sha256(provenance_path),
         artifact_manifest_sha256=digest_json(report["artifacts"]))
-    for name in ("summary.json",checker["checker_watchdog_receipt"]["path"]):
+    for name,role in (("summary.json",producer),(checker["checker_watchdog_receipt"]["path"],saved_checker)):
         q=(directory/name).resolve()
         if not q.is_relative_to(directory): raise ValueError("component watchdog path escapes")
         item=json.loads(q.read_text())
-        validate_resource_receipt(item,provenance["resource_contract"],source)
+        validate_resource_receipt(item,provenance["resource_contract"],role)
         if name!="summary.json" and file_sha256(q)!=checker["checker_watchdog_receipt"]["sha256"]:
             raise ValueError("fresh component checker watchdog hash differs")
+    durability={}
+    if producer != source or saved_checker != source:
+        for name,sha in (("durability_worker_library_receipt.json",
+            "e9cd9af4628f4039e331e029429ef925c7a494ec6dd9f6476c5490d591d6de82"),
+            ("durability_checker_library_receipt.json",
+            "4e82a697550ea12c3c861466dd72fdb28359f7968e725eca63f4eaf019d14819")):
+            q=directory/name
+            if file_sha256(q)!=sha: raise ValueError("C1a Library durability receipt differs")
+            durability[name]={"sha256":sha,"receipt":json.loads(q.read_text())}
+        raw=durability["durability_worker_library_receipt.json"]["receipt"]
+        final=durability["durability_checker_library_receipt.json"]["receipt"]
+        if (raw.get("status")!="LIBRARY_COMPLETE_WORKER_PACKET_FULL_ROUNDTRIP_PASS"
+                or raw.get("original_files_verified")!=1627
+                or raw.get("NPYs_shape_dtype_numeric_hash_verified")!=1616
+                or raw.get("source_head")!=producer["head"]
+                or final.get("status")!="FRESH_LIBRARY_READBACK_ALL_HASHES_PASS"
+                or final.get("members_verified")!=19 or final.get("worker_head")!=producer["head"]
+                or final.get("checker_head")!=saved_checker["head"]
+                or final.get("checker_report_sha256")!=file_sha256(checker_path)):
+            raise ValueError("C1a complete Library readback is missing or detached")
     return {**receipt,"report_path":str(path.relative_to(ROOT)),
         "report_sha256":digest,"checker_sha256":file_sha256(checker_path),
         "fixture_input_sha256":report["input_sha256"],"axes_nm":report["axes_nm"],
         "physical_generator_manifest_sha256":report["physical_generator_manifest_sha256"],
         "shared_fixture_configuration":report["shared_fixture_configuration"],
+        "source_role_binding":roles["binding"],"Library_durability_binding":durability,
         "mathematical_component_only":True,"durability_required_before_qualification_claim":True}
 
 
@@ -280,6 +306,11 @@ def _fresh_resource(args):
         raise ValueError("fresh C1 requires explicit3GiB/4500s budget")
     return cap,wall
 
+
+def _fresh_storage_budget(args):
+    from src.solvers.fresh_c1_contract import resolve_storage_budget
+    return resolve_storage_budget(args.fresh_fixture_c1, getattr(args,"c1a_raw_budget_mib",None))
+
 def _worker(args):
     import numpy as np
     from time import perf_counter
@@ -291,6 +322,7 @@ def _worker(args):
     parent = int(os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID", "0"))
     cap = int(os.environ.get("PHYSICAL_WATCHDOG_LAUNCH_CAP_BYTES", "0"))
     admitted_cap,admitted_wall=_fresh_resource(args)
+    storage_budget=_fresh_storage_budget(args)
     if parent <= 0 or parent != os.getppid() or not 0 < cap <= admitted_cap:
         raise RuntimeError("worker requires its coordinated profile whole-tree watchdog")
     source = source_facts(args.expected_head)
@@ -395,6 +427,7 @@ def _worker(args):
                   "sparse_p2_bridge_receipt": bridge if args.fresh_fixture_c1 is None else None,
                   "fresh_p6_component_receipt":bridge if args.fresh_fixture_c1=="p4-chain" else None,
                   "fresh_fixture_c1":args.fresh_fixture_c1,
+                  "storage_budget_contract":storage_budget if args.fresh_fixture_c1 else None,
                   "resource_contract": {"tree_cap_bytes": cap, "wall_seconds": admitted_wall,
                       "swap_bytes": 0, "mpi": 1, "math_threads": 1,
                       "declared_factor_workspace_allowance_bytes": 512 * 1024**2,
@@ -406,11 +439,12 @@ def _worker(args):
     try:
         if args.fresh_fixture_c1=="p6-component":
             from src.solvers.y_orbit_sparse_probe import run_fresh_c1_p6_probe
-            from src.solvers.fresh_c1_contract import RAW_EXPORT_BYTES,P6_WORKER_STATUS
+            from src.solvers.fresh_c1_contract import P6_WORKER_STATUS
             report=run_fresh_c1_p6_probe(INPUT,event=event,save_array=save_array,
                 allocation_gate=allocation_gate,
                 live_component_record_path=args.run_directory/"live_component_receipt.json",
-                raw_export_budget_bytes=RAW_EXPORT_BYTES)
+                raw_export_budget_bytes=storage_budget["primitive_export_limit_bytes"])
+            report["component"]["storage_budget_contract"]=storage_budget
             report["status"]=P6_WORKER_STATUS
         else:
             report = run_sparse_probe(INPUT, degree=args.degree, event=event, save_array=save_array,
@@ -431,6 +465,7 @@ def _worker(args):
                       factor_raw_diagnostics=factor_diagnostics,
                       sparse_p2_bridge_receipt=bridge if args.fresh_fixture_c1 is None else None,
                       fresh_fixture_c1=args.fresh_fixture_c1,
+                      storage_budget_contract=storage_budget if args.fresh_fixture_c1 else None,
                       fresh_p6_component_receipt=bridge if args.fresh_fixture_c1=="p4-chain" else None,
                       cross_head_centered_authority=args.cross_head_centered_authority)
         if oracle is not None:
@@ -472,16 +507,20 @@ def main():
     parser.add_argument("--component-report-sha256")
     parser.add_argument("--research-memory-gib",type=int)
     parser.add_argument("--research-wall-seconds",type=int)
+    parser.add_argument("--c1a-raw-budget-mib",type=int,
+                        help="explicit reviewed768MiB primitive budget for fresh p6 component only")
     args = parser.parse_args()
     if args.fresh_fixture_c1 is not None:
         from src.solvers.fresh_c1_contract import validate_profile
         validate_profile(args.fresh_fixture_c1,degree=args.degree,auxiliary_gauge=args.auxiliary_gauge,
             dtn_phase_gauge=args.dtn_phase_gauge,live_component_oracle=args.live_component_oracle,
+            c1a_raw_budget_mib=args.c1a_raw_budget_mib,
             historical_authority_requested=any((args.dense_authority,args.dense_authority_report_sha256,
                 args.bridge_report,args.bridge_report_sha256,args.cross_head_centered_authority)))
     elif args.degree==6 or args.component_report or args.component_report_sha256:
         parser.error("degree6/component receipts require the named fresh-C1 admission")
     admitted_cap,admitted_wall=_fresh_resource(args)
+    storage_budget=_fresh_storage_budget(args)
     if args.dry_admission:
         if args.run or args.worker or args.fresh_fixture_c1 is None or not args.expected_head:
             parser.error("dry admission requires named fresh C1 and an exact HEAD, without run/worker")
@@ -494,6 +533,7 @@ def main():
             "source":source,"environment":environment,"fresh_fixture_c1":args.fresh_fixture_c1,
             "memory_envelope":envelope,"tree_cap_bytes":admitted_cap,
             "evidence_reserve_bytes":RESERVE_BYTES,"wall_seconds":admitted_wall,
+            "storage_budget_contract":storage_budget,
             "disk_free_bytes":disk,"admitted":enough and disk>=2*1024**3,
             "cold_JIT_and_actual_class_count_still_unmeasured":True,
             "raw_storage_approval_and_numerical_GO_required":True},allow_nan=False,indent=2))
@@ -571,6 +611,8 @@ def main():
     if args.fresh_fixture_c1 is not None:
         command += ["--fresh-fixture-c1",args.fresh_fixture_c1,"--research-memory-gib","3",
                     "--research-wall-seconds","4500"]
+        if args.c1a_raw_budget_mib is not None:
+            command += ["--c1a-raw-budget-mib",str(args.c1a_raw_budget_mib)]
         if args.fresh_fixture_c1=="p4-chain":
             command += ["--component-report",str(args.component_report),
                         "--component-report-sha256",args.component_report_sha256]

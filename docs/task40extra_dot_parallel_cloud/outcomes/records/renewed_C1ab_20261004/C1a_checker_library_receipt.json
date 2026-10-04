@@ -1,0 +1,13 @@
+{
+  "library_file_id": "libfile_8479ec542a008191b8b42264d072fd28",
+  "file_id": "file_00000000207882118558f84735b7e8bf",
+  "filename": "fresh_C1a_final_checker_checkpoint.zip",
+  "sha256": "1800c33cdcd2fb2d53940e935f3f38dc0fdccfe5f5fc4e0864d22dd00358bd58",
+  "members_verified": 19,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "scope": "fresh C1a worker/independent955checks passed; workerraw already fullyLibraryretrieved; finalchecker durability pending",
+  "worker_head": "a580c72a357006d2ce8cacc600b7391b89d6506d",
+  "checker_head": "164154279180356905956ed6e405f9406ba863f9",
+  "checker_report_sha256": "cbde5fbfd5c31474a78afb9c5dabe20d8e1e10e84f1f1c5499faaeb88c3cf5a1",
+  "worker_raw_index": "libfile_ac66834781108191a106e5517ae07c09"
+}

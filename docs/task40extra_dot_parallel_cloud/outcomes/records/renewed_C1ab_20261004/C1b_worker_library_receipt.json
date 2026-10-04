@@ -1,0 +1,77 @@
+{
+  "status": "LIBRARY_C1b_COMPLETE_WORKER_PACKET_FULL_ROUNDTRIP_PASS",
+  "independent_checker_status": "PENDING",
+  "C1b_full_qualification": false,
+  "archive_sha256": "5efbecbb74f526b9caf665be1c4df71e84b64f4720055cdc5184c0ea1a027f13",
+  "archive_bytes": 101510980,
+  "member_manifest_sha256": "b48a6e7ba7c5c4d180c22fec1f86ba7a94a53e3c21a41aefe4b4cf1cb5b785a8",
+  "split_manifest_sha256": "99d1fad20eb1c3896104fa8737f4808e0f53f0c1ef5f7bb2b9e9347af39ceae0",
+  "parts_verified": 4,
+  "zip_members_verified": 353,
+  "original_files_verified": 352,
+  "NPYs_shape_dtype_numeric_hash_verified": 327,
+  "uncompressed_bytes_with_manifest": 179821383,
+  "source_head": "dd26a1a9d1699e8cd7173c5d987496477db2152b",
+  "source_tree": "daaae32186bd420a801915a061b1c8fb378e370c",
+  "source_graph_scope": "new current local recovery graph only, not lost historical graph",
+  "elapsed_transfer_readback_seconds": 96.88755393028259,
+  "numeric_hash_recipe": "sha256(repr((shape,str(dtype))).encode()+C-order bytes)",
+  "library_files": [
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/c1b_terminal_packet/library_parts/fresh_C1b_WORKER_PASS.zip.part01",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_000000008a8081f5a1dd87aefb6b5785",
+      "library_file_id": "libfile_17d875910f4481918970535c76115433",
+      "file_name": "fresh_C1b_WORKER_PASS.zip.part01",
+      "local_metadata_applied": true,
+      "path": "/fresh_C1b_WORKER_PASS.zip.part01",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/c1b_terminal_packet/library_parts/fresh_C1b_WORKER_PASS.zip.part02",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000ec4481fd813bf04d4058c1e9",
+      "library_file_id": "libfile_388266911ad0819193bf42e16d4d961f",
+      "file_name": "fresh_C1b_WORKER_PASS.zip.part02",
+      "local_metadata_applied": true,
+      "path": "/fresh_C1b_WORKER_PASS.zip.part02",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/c1b_terminal_packet/library_parts/fresh_C1b_WORKER_PASS.zip.part03",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000f7b08230adcd2f2478e37fbc",
+      "library_file_id": "libfile_465a4b6d4dd881918029a6642f2de84d",
+      "file_name": "fresh_C1b_WORKER_PASS.zip.part03",
+      "local_metadata_applied": true,
+      "path": "/fresh_C1b_WORKER_PASS.zip.part03",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/c1b_terminal_packet/library_parts/fresh_C1b_WORKER_PASS.zip.part04",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000383881f69f18ec52a248c45d",
+      "library_file_id": "libfile_065286cd8e548191878e5c07fa8eb05c",
+      "file_name": "fresh_C1b_WORKER_PASS.zip.part04",
+      "local_metadata_applied": true,
+      "path": "/fresh_C1b_WORKER_PASS.zip.part04",
+      "current_version_number": 0
+    },
+    {
+      "local_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/c1b_terminal_packet/library_parts/C1b_split_manifest.json",
+      "purpose": "create_library_file",
+      "status": "succeeded",
+      "file_id": "file_00000000051082309a0ba17bd65d3867",
+      "library_file_id": "libfile_e6e41d7c44408191aef2cffd79e424d4",
+      "file_name": "C1b_split_manifest.json",
+      "local_metadata_applied": true,
+      "path": "/C1b_split_manifest.json",
+      "current_version_number": 0
+    }
+  ],
+  "extracted_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/c1b_terminal_packet/fresh_library_readback/extracted_verified"
+}

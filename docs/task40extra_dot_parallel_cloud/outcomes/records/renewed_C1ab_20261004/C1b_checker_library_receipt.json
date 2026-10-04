@@ -1,0 +1,16 @@
+{
+  "library_file_id": "libfile_d9ebe52606348191b6a6e1d1121419a5",
+  "file_id": "file_00000000f0b88207905677b77cf95dc3",
+  "filename": "C1b_final_checker_checkpoint.zip",
+  "sha256": "638e43c73937ede47ef019d0d2ccac8d1836a8d4f6e129e649a2d5268f082402",
+  "members_verified": 13,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "metadata": {
+    "checker_report_sha256": "96f64a10a64587ae867282d0d0116e1afabacfe985328b0a8354c877299a1beb",
+    "scope": "same80 scaled p4 dense-port fullNy allq regular/notch chain only; compact quotient and original target not qualified",
+    "source_head": "dd26a1a9d1699e8cd7173c5d987496477db2152b",
+    "status": "C1b_WORKER_AND_148_CHECKER_GATES_PASS_FINAL_CHECKER_DURABILITY_PENDING",
+    "worker_raw_Library_index": "libfile_6c5d9eaccaa081919951a2abf2611064",
+    "worker_report_sha256": "58448f050b223c36728e24bf5ecc985d6734ed77191a3dfd2a2917e435feef2c"
+  }
+}

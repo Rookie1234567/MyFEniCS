@@ -1,0 +1,224 @@
+{
+  "known_renewal_costs_seconds": {
+    "C1a_freeze": 21.69754190200001,
+    "C1a_raw_Library_readback": 116.35028743743896,
+    "C1a_worker": 1349.1348522389999,
+    "C1b_checker": 3.7788028809991374,
+    "C1b_freeze": 5.114605883998593,
+    "C1b_worker": 97.76589162399978,
+    "failed_actual_C1a_checker": 2.7730964139991556,
+    "gross_renewal_wall": "12:05 UTC onward; contains recovery, reviews, failures, transfers and engineering beyond recorded process times",
+    "passing_C1a_checker": 18.14231255699997,
+    "runtime_download_link_import_elapsed_total": "not fully recorded; recovery wall roughly12:05-12:24 in parallel"
+  },
+  "own_branch_only": true,
+  "preserved_failures": {
+    "attempt1_optional_plot_import": "historical failed, scientific raw lost in reset",
+    "attempt2_orientation_tensor_bitwise_gate": "historical failed, scientific raw lost in reset, exact native tensor repair preserved",
+    "attempt3_512MiB_raw_cap": "controlled failed, full packet Library-durable, no retrospective pass",
+    "old_new_basis_equivalence_claimed": false,
+    "renewed_checker_launches": [
+      "wrong CLI flag before numeric checker",
+      "exact interpreter string mismatch before numeric checker",
+      "first numeric checker stale native basis hash; exact saved failure Library-durable"
+    ]
+  },
+  "schema": "own_cloud.renewed_C1ab.v1",
+  "source_candidate_head": "dd26a1a9d1699e8cd7173c5d987496477db2152b",
+  "source_tree": "daaae32186bd420a801915a061b1c8fb378e370c",
+  "stages": {
+    "C1a": {
+      "actual_inventory": {
+        "active_trace_rows": 16992,
+        "cell_count": 80,
+        "degree": 6,
+        "independent_rows": 52992,
+        "interior_rows": 36000,
+        "local_dimension": 882,
+        "local_interiors": 450,
+        "local_traces": 432,
+        "port_rows": 532,
+        "storage_rows": 55950
+      },
+      "checker_checks": 955,
+      "checker_evidence_valid": true,
+      "checker_gate_pass": true,
+      "checker_head": "164154279180356905956ed6e405f9406ba863f9",
+      "checker_resource": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 18.14231255699997,
+        "sampled_process_tree_rss_peak_bytes": 519229440,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "checker_sha256": "cbde5fbfd5c31474a78afb9c5dabe20d8e1e10e84f1f1c5499faaeb88c3cf5a1",
+      "durability": "FULL_RAW_AND_FINAL_CHECKER_READBACK_PASS",
+      "finalchecker_index": "libfile_8479ec542a008191b8b42264d072fd28",
+      "fullraw_index": "libfile_ac66834781108191a106e5517ae07c09",
+      "official_RTA": false,
+      "original_dimensions": false,
+      "original_target_qualified": false,
+      "physical_correction_materially_sensitive": false,
+      "physical_correction_norm": 7.689087317060445e-27,
+      "producer_head": "a580c72a357006d2ce8cacc600b7391b89d6506d",
+      "provenance_sha256": "38a7e31e432c62fd2290d813bc7e31d20271d9488cf2e6c977580037eaa952da",
+      "report_sha256": "10d86ec26af7402178d1c840599559006cc6b2d0c04a223fbd013dd6a2dda235",
+      "scope": "same80 p6 compact action/RHS/recovery component only; no global p6 solve or quotient",
+      "source_clean_unchanged": true,
+      "synthetic_material_correction_norm": 0.5,
+      "unique_NPY_members": 1616,
+      "worker_resource": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 1349.1348522389999,
+        "sampled_process_tree_rss_peak_bytes": 2191613952,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "worker_status": "FRESH_C1_P6_COMPONENT_WORKER_PASS"
+    },
+    "C1b": {
+      "checker_checks": 148,
+      "checker_evidence_valid": true,
+      "checker_gate_pass": true,
+      "checker_head": "dd26a1a9d1699e8cd7173c5d987496477db2152b",
+      "checker_resource": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 3.7788028809991374,
+        "sampled_process_tree_rss_peak_bytes": 455397376,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "checker_sha256": "96f64a10a64587ae867282d0d0116e1afabacfe985328b0a8354c877299a1beb",
+      "durability": "FULL_WORKER_AND_FINAL_CHECKER_READBACK_PASS",
+      "finalchecker_index": "libfile_d9ebe52606348191b6a6e1d1121419a5",
+      "finalchecker_roundtrip_receipt_sha256": "c3ab43cde7798014ab41b053359fe2691e3c653716da381cc8cb77e6d5a16ab6",
+      "fullraw_index": "libfile_6c5d9eaccaa081919951a2abf2611064",
+      "independent_rows": 15872,
+      "interior_rows": 8640,
+      "notch_iterations": {
+        "generic": 4,
+        "interior_only": 4,
+        "notch_supported": 4,
+        "physical": 3
+      },
+      "notch_max_original_residual": 7.966816711619847e-12,
+      "official_RTA": false,
+      "original_dimensions": false,
+      "original_target_qualified": false,
+      "output_packets": {
+        "notched_sources/generic": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 15,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "notched_sources/interior_only": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 9,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "notched_sources/notch_supported": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 19,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "notched_sources/physical": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 15,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "regular_sources/generic": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 22,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "regular_sources/interior_only": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 16,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "regular_sources/notch_supported": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 15,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        },
+        "regular_sources/physical": {
+          "actual_degree": 4,
+          "analytic_zero_power_certificate_count": 10,
+          "finite_plane_mode_count": 532,
+          "full_physical_field_recovered": true,
+          "global_output_component_consistency_checked": true,
+          "official_results": false,
+          "solver_auxiliary_coordinate": "boundary_plane",
+          "status": "representable_global_output"
+        }
+      },
+      "ports": 532,
+      "producer_head": "dd26a1a9d1699e8cd7173c5d987496477db2152b",
+      "provenance_sha256": "a63ab74119d3e122c48bc62c69561aae83d5b3946ff15df4ee01b21dc232ec36",
+      "q_blocks": 4,
+      "q_factor_setup_seconds": 6.000991377997707,
+      "raw_numeric_array_bytes": 142955252,
+      "rawfactor_vector_count": 24,
+      "regular_max_original_residual": 5.415983208141829e-12,
+      "report_sha256": "58448f050b223c36728e24bf5ecc985d6734ed77191a3dfd2a2917e435feef2c",
+      "sampled_PC_defects": {
+        "generic": 0.002050675735481511,
+        "interior_only": 0.0015409115790921343,
+        "notch_supported": 0.0017875124636721272,
+        "physical": 0.00018696522720367908
+      },
+      "sampled_PC_defects_are_operator_norm_bound": false,
+      "scope": "same80 scaled p4 dense-port fullNy allq regular/notch solve chain; compact quotient not qualified",
+      "source_clean_unchanged": true,
+      "trace_rows": 7232,
+      "worker_resource": {
+        "classification": "COMPLETED",
+        "descendants_cleared": true,
+        "elapsed_seconds": 97.76589162399978,
+        "sampled_process_tree_rss_peak_bytes": 863150080,
+        "sampled_process_tree_swap_peak_bytes": 0
+      },
+      "worker_status": "SPARSE_CONDENSED_FULL3D_PROBE_PASS"
+    }
+  },
+  "unqualified": [
+    "C1c compact p4 quotient full chain",
+    "C2 public PETSc bounded AUTO cost",
+    "original50x25x140nm lambda0.7 complete solve/accuracy/2e12B172800s"
+  ]
+}

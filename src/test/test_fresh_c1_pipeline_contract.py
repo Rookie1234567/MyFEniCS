@@ -7,10 +7,10 @@ import pytest
 
 from src.solvers.fresh_c1_contract import (
     P6_WORKER_STATUS, P6_CHECKER_STATUS, P6_CORE_STATUS, FRESH_LIMITS,
-    TREE_CAP_BYTES, WALL_SECONDS, validate_profile, validate_component_packets,
+    TREE_CAP_BYTES, WALL_SECONDS, validate_profile, validate_component_packets,resolve_storage_budget,
     validate_shared_fixture, validate_resource_receipt, near_zero_output_check,
 )
-from benchmarks.run_y_orbit_sparse_probe import _fresh_resource
+from benchmarks.run_y_orbit_sparse_probe import _fresh_resource,_fresh_storage_budget
 
 
 def _packets():
@@ -19,13 +19,18 @@ def _packets():
     inventory={"degree":6,"cell_count":80,"local_dimension":882,
         "local_interiors":450,"local_traces":432,"storage_rows":55950,
         "independent_rows":52992,"interior_rows":36000,"active_trace_rows":16992,"port_rows":532}
+    budget=resolve_storage_budget("p6-component")
     core={"status":P6_CORE_STATUS,"same_system_and_carrier":True,
         "global_p6_matrix_created":False,"global_p6_factor_created":False,"quotient_constructed":False,
-        "actual_inventory":inventory,"limits":dict(FRESH_LIMITS),"snapshot":{"members":[{"name":"synthetic"}]}}
+        "actual_inventory":inventory,"limits":dict(FRESH_LIMITS),
+        "storage_budget_contract":budget,
+        "snapshot":{"members":[{"name":"synthetic"}],"archive_payload_limit_bytes":budget["primitive_export_limit_bytes"]}}
     report={"status":P6_WORKER_STATUS,"fresh_fixture_c1":"p6-component",
-        "source_clean_unchanged":True,"source":source,"environment":environment,"component":core}
+        "source_clean_unchanged":True,"source":source,"environment":environment,"component":core,
+        "storage_budget_contract":budget}
     checker={"status":P6_CHECKER_STATUS,"gate_pass":True,"evidence_valid":True,
-        "source":source,"environment":environment,"report_sha256":"r","provenance_sha256":"p",
+        "source":source,"environment":environment,"storage_budget_contract":budget,
+        "report_sha256":"r","provenance_sha256":"p",
         "artifact_manifest_sha256":"m","checks":[{"name":"synthetic","passed":True}],
         "cells_checked":list(range(80)),"q_alias_counts_recomputed":[76,152,152,152],
         "all_saved_members_hash_checked":True,"unique_saved_members_checked":1,
@@ -42,6 +47,35 @@ def test_explicit_fresh_profiles(stage,degree):
     assert receipt["limits"]==FRESH_LIMITS
     assert receipt["near_zero_output"]["existing_operation_scaled_limits_changed"] is False
     assert receipt["unknown_cold_JIT_and_fill"]
+
+
+def test_explicit_c1a768_budget_preserves_all_other_resource_and_math_limits():
+    args=SimpleNamespace(fresh_fixture_c1="p6-component",c1a_raw_budget_mib=768,
+                         research_memory_gib=3,research_wall_seconds=4500)
+    budget=_fresh_storage_budget(args)
+    assert budget=={"selector":"c1a_768MiB_v1","c1a_raw_budget_mib":768,
+        "primitive_export_limit_bytes":768*1024**2,
+        "full_packet_uncompressed_limit_bytes":1024**3}
+    assert _fresh_resource(args)==(TREE_CAP_BYTES,WALL_SECONDS)
+    receipt=validate_profile("p6-component",degree=6,auxiliary_gauge="positive-h",
+        dtn_phase_gauge="boundary_plane",live_component_oracle=True,c1a_raw_budget_mib=768)
+    assert receipt["storage_budget_contract"]==budget and receipt["limits"]==FRESH_LIMITS
+    assert receipt["uncompressed_raw_export_budget_bytes"]==768*1024**2
+
+
+@pytest.mark.parametrize("stage,flag",[(None,768),("p4-chain",768),("p6-component",512),
+    ("p6-component",1024),("p6-component",True),("p6-component",768.0)])
+def test_c1a_budget_cannot_expand_other_profiles_or_accept_arbitrary_values(stage,flag):
+    with pytest.raises(ValueError,match="C1a-only"):
+        _fresh_storage_budget(SimpleNamespace(fresh_fixture_c1=stage,c1a_raw_budget_mib=flag))
+
+
+def test_default_primitive_budget_stays512_even_on_fresh_p6():
+    for stage in (None,"p6-component","p4-chain"):
+        assert _fresh_storage_budget(SimpleNamespace(fresh_fixture_c1=stage))=={
+            "selector":"legacy_512MiB","c1a_raw_budget_mib":None,
+            "primitive_export_limit_bytes":512*1024**2,
+            "full_packet_uncompressed_limit_bytes":None}
 
 
 @pytest.mark.parametrize("changed",[{"degree":2},{"auxiliary_gauge":"raw"},

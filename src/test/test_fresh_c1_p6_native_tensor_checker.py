@@ -46,6 +46,50 @@ def test_wrong_native_basis_metadata_rejected_before_import(checker, key, value)
             checker._native_element(metadata, lambda *_: None)
 
 
+def test_historical_basis_byte_pin_is_not_accepted_for_fresh_qualified_factory(checker):
+    metadata = {**checker.NATIVE_ELEMENT, "coefficient_matrix_C_sha256":
+        "780d9a4529041f8cb8138a78c8314d757822a1f5bc984f254c5790db208e911d"}
+    with mock.patch("builtins.__import__", side_effect=AssertionError("unexpected import")):
+        with pytest.raises(ValueError, match="native element metadata"):
+            checker._native_element(metadata, lambda *_: None)
+
+
+def test_actual_public_factory_matches_fresh_producer_exact_byte_pin(checker):
+    admissions = []
+    element = checker._native_element(dict(checker.NATIVE_ELEMENT),
+        lambda name, facts: admissions.append((name, facts)))
+    assert checker._native_element_identity(element) == checker.NATIVE_ELEMENT
+    assert checker.NATIVE_ELEMENT["coefficient_matrix_C_sha256"] == (
+        "c0be730f050c40e2333362ceac4fac0d656eaf029cf7454a1dbbc21253e064da")
+    assert len(admissions) == 1 and admissions[0][1]["native_element_factory_only"]
+    assert not admissions[0][1]["mesh_created"] and not admissions[0][1]["JIT"]
+
+
+def test_rebuilt_native_factory_identity_must_still_match_every_saved_byte_field(checker):
+    wrong = {**checker.NATIVE_ELEMENT, "coefficient_matrix_C_sha256": "1" * 64}
+    with mock.patch.object(checker, "_native_element_identity", return_value=wrong):
+        with pytest.raises(ValueError, match="live native basis hash"):
+            checker._native_element(dict(checker.NATIVE_ELEMENT), lambda *_: None)
+
+
+def test_native_basis_pin_source_bridge_is_exact_hash_bounded():
+    from benchmarks.check_y_orbit_sparse_probe import _bind_worker_dependencies, NATIVE_BASIS_PIN_SOURCE_DELTA
+    old = {"head": "worker", "branch": "task40extra_dot_parallel_cloud", "dirty": "",
+           "files_sha256": {name: pair[0] for name, pair in NATIVE_BASIS_PIN_SOURCE_DELTA.items()}}
+    new = {"head": "checker", "branch": old["branch"], "dirty": "",
+           "files_sha256": {name: pair[1] for name, pair in NATIVE_BASIS_PIN_SOURCE_DELTA.items()}}
+    receipt = _bind_worker_dependencies(old, new)
+    assert set(receipt["native_basis_pin_hash_binding"]) == set(NATIVE_BASIS_PIN_SOURCE_DELTA)
+    for name, pair in NATIVE_BASIS_PIN_SOURCE_DELTA.items():
+        assert pair[1] == hashlib.sha256((SOURCE.parents[1] / name).read_bytes()).hexdigest()
+        bad = copy.deepcopy(new); bad["files_sha256"][name] = "0" * 64
+        with pytest.raises(RuntimeError, match="exact native basis pin"):
+            _bind_worker_dependencies(old, bad)
+    bad = copy.deepcopy(new); bad["files_sha256"]["src/solvers/fresh_c1_p6_component.py"] = "0" * 64
+    with pytest.raises(RuntimeError, match="byte-identical"):
+        _bind_worker_dependencies(old, bad)
+
+
 def test_native_basis_allocation_denial_precedes_import(checker):
     def denied(stage, facts):
         assert stage.endswith("native_basis_wrapper")

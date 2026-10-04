@@ -1,0 +1,38 @@
+{
+  "schema": "independent_saved_c1b_checker_launch_review.v1",
+  "record_kind": "post_review_record_of_read_only_inspection",
+  "review_completed_utc": "2026-10-04T14:53:36Z",
+  "decision": "PASS_FOR_FROZEN_C1b_SAVED_CHECKER_ORCHESTRATION_ONLY",
+  "source_head": "dd26a1a9d1699e8cd7173c5d987496477db2152b",
+  "source_tree": "daaae32186bd420a801915a061b1c8fb378e370c",
+  "source_worktree_clean": true,
+  "launcher": "launch_saved_c1b_checker.py",
+  "launcher_sha256": "503827f56d6a74292e37cbd64249cbe947fcadc7ceaa05e96c3d76e277c9a3e5",
+  "preflight_sha256": "615a4a381ae3bee27734da3ba4d9b420890f35dbccb06d4e4f4b2c3cb13b6200",
+  "producer_report_sha256": "58448f050b223c36728e24bf5ecc985d6734ed77191a3dfd2a2917e435feef2c",
+  "producer_summary_observed": {
+    "classification": "COMPLETED",
+    "elapsed_seconds": 97.76589162399978,
+    "sampled_process_tree_rss_peak_bytes": 863150080,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "process_tree_all_status_readable": true,
+    "process_tree_all_identity_complete": true
+  },
+  "review_findings": {
+    "delta_from_reviewed_orchestration_limited_to_run_report_source_profile_pins_and_metadata_flags": true,
+    "checker_source_unchanged_from_producer": true,
+    "qualified_relative_interpreter_argv_preserved": true,
+    "exact_parent_child_producer_environment_equality_verified": true,
+    "source_and_binary_identity_prechecks_preserved": true,
+    "unchanged_supervisor_3GiB_4500s_zero_swap_hard_stop_timebase_identity_cleanup_gates": true,
+    "post_source_environment_script_identity_and_validate_resource_receipt_preserved": true,
+    "hash_bound_checker_watchdog_receipt_preserved": true,
+    "no_numerical_gate_bypass": true
+  },
+  "preflight_dynamic_launch_cap_bytes": 4085497856,
+  "checker_status_at_review": "NOT_RUN",
+  "reviewer_performed_imports_tests_or_numerical_launch": false,
+  "worker_packet_Library_readback": "SEPARATE_PREREQUISITE_NOT_ESTABLISHED_BY_THIS_REVIEW",
+  "scope_limit": "Source and launch review only. Worker-packet durability must be verified before the separately authorized checker stage. Numerical checker and final checker durability remain pending."
+}

@@ -1,0 +1,22 @@
+{
+  "base_head": "a02744457cfdcc8c4794e066d194e2b478cb848e",
+  "scope": "explicit C1a-only primitive768MiB/fullpacket1GiB storage budget; no mathematical/resource/generator/mesh changes",
+  "files": {
+    "src/solvers/fresh_c1_contract.py": "de71e66fca4e679927fc75115a1e4e1985ab29a86f8afb3d9b4c5a15a8396d94",
+    "benchmarks/run_y_orbit_sparse_probe.py": "da3d3ceeb5f811bed45742ec48e768887444bbba38975dec9cb88924bb5dd2e8",
+    "benchmarks/check_y_orbit_sparse_probe.py": "fbc941bbb47b6c81f002c8b58226c1a39b5561906d519bad505dfbb89e1aa4ce",
+    "benchmarks/check_fresh_c1_p6_component.py": "fc048ed73fa71aaebe6ee741560febef064c9379140cd7798b394eef80a71a5f",
+    "src/test/test_fresh_c1_pipeline_contract.py": "7ff394d6fd6318e21a12e9fd479b2d6949d09068583bf938ad74f01298e38d09",
+    "src/test/test_fresh_c1_p6_checker_storage_budget.py": "e9996d74bd93a6521fe63c4913b992a5528ba07851f79c3be84c70608842b950"
+  },
+  "patch_sha256": "d020a1e032bd8e6cc944c025380dcad587b43e0023af5834501eb8e4e2e13a31",
+  "raw_bound_sha256": "fe6b259eccc1006b5f45bfec88783ec27c94b505b12efcbb8d8ae6ecf9adf5a7",
+  "tests": {
+    "passed": 122,
+    "skipped": 10,
+    "elapsed_seconds": 1.48,
+    "skips": "lost old saved-transform inputs; no FE/JIT/fullchecker/replay"
+  },
+  "mathematical_core_unchanged": true,
+  "new_execution_status": "NOT_RUN"
+}
