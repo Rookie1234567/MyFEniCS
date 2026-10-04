@@ -266,6 +266,22 @@ def test_joint_gate_requires_physical_flux_receipt():
     assert not joint_port_qualification(r)["passed"]
 
 
+def test_role_dependency_subset_preserves_p6_failure_and_never_bypasses_common_or_own_gate():
+    from benchmarks.fixed_phase_checker import joint_port_qualification
+
+    r = _joint_fixture()
+    r["affected_ports"][2]["quadrature_15_30"] = 4.275671921747731e-7
+    assert not joint_port_qualification(r)["passed"]
+    assert joint_port_qualification(r, required_degrees=(3,))["passed"]
+    assert joint_port_qualification(r, required_degrees=(3, 4))["passed"]
+    r["affected_ports"][1]["quadrature_15_30"] = 2e-8
+    assert not joint_port_qualification(r, required_degrees=(3, 4))["passed"]
+    r["base"]["details"]["plane"][0].pop("physical_flux")
+    assert not joint_port_qualification(r, required_degrees=(3,))["passed"]
+    with pytest.raises(ValueError, match="ONLY_EXPLICIT"):
+        joint_port_qualification(r, required_degrees=(6,))
+
+
 def test_corrupt_modes_background_and_physical_wavenumber():
     for name in ("incorrect_physical_ports_difference", "old_background_difference"):
         r = valid()

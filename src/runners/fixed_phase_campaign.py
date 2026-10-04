@@ -197,8 +197,7 @@ def launch(spec):
             raise RuntimeError("V20_A_NOT_QUALIFIED")
     if stage == "v20_e4":
         selected("v20_e3")
-    if version == 21:
-        v21_admission(stage,old)
+    dependency_proof = v21_admission(stage,old) if version==21 else None
     used = sum(r["seconds"] for r in old if r["group"] == group)
     if version==21 and group=="P01":
         # P0/P1 includes implementation, reading and tests since first-read;
@@ -248,6 +247,7 @@ def launch(spec):
         production_qualified=False,
         field_space="actual identity bound before any solve",
         prior_runs=old,
+        dependency_qualification=dependency_proof,
         group_used_seconds_at_launch=used,
     )
     write(directory / "run_manifest.json", state)
@@ -550,9 +550,28 @@ def v21_admission(stage,old):
     if stage != "v21_control_checks":
         selected("v21_control_checks")
     if stage not in ("v21_control_checks","v21_joint_qualification"):
-        joint = selected("v21_joint_qualification")
-        if not joint_port_qualification(joint["result"])["passed"]:
-            raise RuntimeError("V21_COMPLETE_JOINT_QUALIFICATION_REQUIRED")
+        # A p6 quadrature failure stops O6, but not the independently qualified
+        # p3/p4 recovery and finite-p comparison expressly authorized in P2.
+        # Preserve the whole-joint FAIL and all its raw arrays; no tolerance
+        # changes, selecting a best numerical result, or p6 solve permission.
+        paths = sorted(ARTIFACTS.glob("index_v21_joint_qualification_attempt*.json"))
+        if not paths:
+            raise RuntimeError("V21_JOINT_QUALIFICATION_EVIDENCE_REQUIRED")
+        path = paths[-1]
+        joint = json.loads(path.read_text())
+        for row in joint["files"].values():
+            if sha(row["path"])!=row["sha256"]:
+                raise ValueError("V21_QUALIFICATION_DEPENDENCY_CHANGED")
+        degrees = ((3,4,6) if stage=="v21_o6" else (3,4)
+                   if stage in ("v21_e4","v21_physical_compare","v21_saved_checker") else (3,))
+        gate = joint_port_qualification(joint["result"],required_degrees=degrees)
+        if not gate["passed"]:
+            raise RuntimeError("V21_ROLE_COMPLETE_QUALIFICATION_REQUIRED:"+str(gate["failed"]))
+        proof = dict(path=str(path),sha256=sha(path),source_sha=joint["source_sha"],
+                     required_role_qualification=gate,
+                     whole_joint_qualification=joint_port_qualification(joint["result"]))
+    else:
+        proof = None
     if stage in ("v21_e4","v21_o3_repair","v21_e3_repair"):
         index = selected("v21_saved_p3_recovery")
         role = "E3" if stage in ("v21_e4","v21_e3_repair") else "O3"
@@ -564,6 +583,7 @@ def v21_admission(stage,old):
     if stage in ("v21_o3_repair","v21_e3_repair","v21_e4","v21_o6"):
         if sum(r["role"] is not None for r in old)>=5:
             raise RuntimeError("V21_FIVE_NEW_REAL_SOLVE_LIFECYCLES_EXHAUSTED")
+    return proof
 
 
 def v21_retained_roles():

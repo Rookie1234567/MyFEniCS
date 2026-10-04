@@ -146,8 +146,10 @@ def solved(record, *, reference=False):
     )
 
 
-def joint_port_qualification(record):
+def joint_port_qualification(record, *, required_degrees=(3, 4, 6)):
     """Rebuild V21 admission from measurements, never just a passed flag."""
+    if required_degrees not in ((3,), (3, 4), (3, 4, 6)):
+        raise ValueError("ONLY_EXPLICIT_DEPENDENCY_SUBSETS")
     base = qualification(record.get("base", {}), joint_ports=True)
     failures = list(base["failed"])
     trace = record.get("trace", {})
@@ -174,6 +176,8 @@ def joint_port_qualification(record):
     if len(affected) != 3 or {r.get("degree") for r in affected} != {3, 4, 6}:
         failures.append("affected_degree_coverage")
     for r in affected:
+        if r.get("degree") not in required_degrees:
+            continue
         for name, limit in (
             ("quadrature_15_30", 1e-8),
             ("physical_rhs", 1e-10),
@@ -237,6 +241,9 @@ def joint_port_qualification(record):
         failed=failures,
         base_checker=base,
         complete_physical_air_flux_required=True,
+        required_degrees=list(required_degrees),
+        scope="common air/curl/background/trace plus all affected measurements of required roles",
+        whole_joint_qualification_claim=required_degrees == (3, 4, 6),
     )
 
 
