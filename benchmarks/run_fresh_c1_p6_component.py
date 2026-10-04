@@ -570,7 +570,7 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
     directory = root / "supervision" / phase
     env = {**os.environ, "XDG_CACHE_HOME": str(root / "jit"), "TMPDIR": str(root / "tmp"),
            "TMP": str(root / "tmp"), "TEMP": str(root / "tmp")}
-    command = [sys.executable, str(Path(__file__).resolve()),
+    command = [sys.executable, "-m", "benchmarks.run_fresh_c1_p6_component",
                "--worker" if phase == "worker" else "--checker-worker",
                "--output-dir", str(root), "--abi-receipt", str(abi_receipt)]
     deadline_guard_last_scan = [0.0]
