@@ -36,6 +36,15 @@
       "test": "guard_digit_event_repair targeted regression",
       "retry": "affine_saved attempt2, original attempt1 preserved",
       "numeric_math_changed": false
+    },
+    {
+      "round": 2,
+      "failure": "P2 attempt1 float(complex ky) metadata exception before first role publish or fixture LU",
+      "hypothesis": "SimulationConfig wavevector uses complex type for a real air tangential value",
+      "change": "record explicit real ky from the physically real air incidence",
+      "test": "complex_ky_metadata_repair targeted qualification; analytic moment/model physical tests unchanged",
+      "retry": "face_qualification attempt2, original raw surface partial and cost preserved",
+      "numeric_math_changed": false
     }
   ],
   "all_failed_costs_preserved": true

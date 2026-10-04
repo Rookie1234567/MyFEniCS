@@ -435,7 +435,7 @@ def face_qualification(design, artifact, marker, budget):
                 negative_controls_complete=all(controls.values()),
                 cutoff_witness=cutoff,
                 cutoff_witness_relative=cutoff["maximum"],
-                ky=float(model["cfg"].ky),
+                ky=float(np.real(model["cfg"].ky)),
                 nonidentity_orientation_count=int(
                     np.count_nonzero(
                         model["space"].mesh.topology.get_cell_permutation_info()
