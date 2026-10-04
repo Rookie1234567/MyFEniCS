@@ -902,3 +902,317 @@ def test_side_balh_modal_inner_explicitly_selects_real_coordinates(monkeypatch) 
         elif modal_action is not None and not modal_action._destroyed:
             modal_action.destroy()
         _destroy_side_block_fixture(fixture)
+
+
+def test_complex_qr_anderson_coefficients_match_independent_complex_lstsq() -> None:
+    delta_f = np.asarray(
+        [
+            [1.0 + 0.5j, -0.2 + 0.9j, 0.7 - 0.4j],
+            [0.3 - 0.8j, 1.1 + 0.2j, -0.6 + 0.5j],
+            [-0.4 + 0.6j, 0.8 - 0.3j, 0.2 + 1.0j],
+            [0.9 + 0.1j, -0.5 - 0.7j, 1.2 + 0.3j],
+        ],
+        dtype=np.complex128,
+    )
+    current_f = np.asarray(
+        [0.2 + 0.7j, -0.9 + 0.1j, 0.5 - 0.6j, 0.3 + 0.4j],
+        dtype=np.complex128,
+    )
+    original_matrix = delta_f.copy()
+    original_vector = current_f.copy()
+
+    coefficients, diagnostics = block_ldu._complex_anderson_qr_coefficients(
+        delta_f, current_f
+    )
+    expected = np.linalg.lstsq(delta_f, current_f, rcond=None)[0]
+    fit_residual = delta_f @ coefficients - current_f
+
+    assert diagnostics["effective_rank"] == delta_f.shape[1]
+    assert diagnostics["discarded_column_count"] == 0
+    assert np.allclose(coefficients, expected, rtol=2.0e-13, atol=2.0e-14)
+    assert np.linalg.norm(delta_f.conj().T @ fit_residual) <= 2.0e-13
+    assert np.linalg.norm(fit_residual) == pytest.approx(
+        np.linalg.norm(delta_f @ expected - current_f), rel=2.0e-13, abs=2.0e-14
+    )
+    assert np.array_equal(delta_f, original_matrix)
+    assert np.array_equal(current_f, original_vector)
+
+
+def test_complex_qr_anderson_startup_rank_deficiency_and_nonfinite_history() -> None:
+    modal = np.asarray([0.2 + 0.3j, -0.4 + 0.1j], dtype=np.complex128)
+    fixed_point = np.asarray([0.05 - 0.2j, 0.3 + 0.4j], dtype=np.complex128)
+    startup, startup_info = block_ldu._complex_anderson_candidate_update(
+        modal, fixed_point, None, None
+    )
+    assert np.array_equal(startup, modal + fixed_point)
+    assert startup_info["update"] == "fixed_point_startup"
+    assert startup_info["history_column_count"] == 0
+
+    independent = np.asarray([1.0 + 1.0j, 0.5 - 0.2j], dtype=np.complex128)
+    dependent_history = np.column_stack((independent, 2.0 * independent))
+    delta_m = np.column_stack(
+        (
+            np.asarray([0.3 + 0.2j, -0.1 + 0.5j]),
+            np.asarray([-0.2 + 0.4j, 0.7 - 0.3j]),
+        )
+    ).astype(np.complex128)
+    target = np.asarray([0.8 - 0.1j, -0.6 + 0.9j], dtype=np.complex128)
+    candidate, rank_info = block_ldu._complex_anderson_candidate_update(
+        modal, target, delta_m, dependent_history
+    )
+    expected_fit = np.linalg.lstsq(dependent_history, target, rcond=None)[0]
+    expected_fit_residual = dependent_history @ expected_fit - target
+    assert candidate is not None
+    assert rank_info["effective_rank"] == 1
+    assert rank_info["discarded_column_count"] == 1
+    assert rank_info["fit_residual_norm"] == pytest.approx(
+        np.linalg.norm(expected_fit_residual), rel=2.0e-13, abs=2.0e-14
+    )
+
+    zero_candidate, zero_info = block_ldu._complex_anderson_candidate_update(
+        modal,
+        fixed_point,
+        np.zeros((modal.size, 1), dtype=np.complex128),
+        np.zeros((modal.size, 1), dtype=np.complex128),
+    )
+    assert zero_candidate is None
+    assert zero_info["update"] == "rank_zero_history"
+    assert zero_info["effective_rank"] == 0
+    with pytest.raises(FloatingPointError, match="history is non-finite"):
+        block_ldu._complex_anderson_qr_coefficients(
+            np.asarray([[np.nan + 0.0j], [1.0 + 0.0j]]),
+            np.asarray([0.5 + 0.1j, -0.2 + 0.3j]),
+        )
+
+
+def test_side_balh_complex_qr_modal_inner_keeps_raw_gate_and_borrows_sides() -> None:
+    fixture = _side_block_fixture()
+    modal_action = None
+    modal_system = None
+    solution = None
+    rhs = np.asarray(
+        [0.2 + 0.4j, -0.5 + 0.1j, 0.7 - 0.3j, -0.2 - 0.6j],
+        dtype=np.complex128,
+    )
+    rhs_before = rhs.copy()
+    before = {
+        side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+        for side in ("bottom", "top")
+    }
+    try:
+        modal_action = block_ldu.HybridActionModalSchurApply(
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+        )
+        modal_system = block_ldu.HybridActionModalSchurAndersonSystem(
+            modal_action,
+            modal_owner=fixture["layout"].modal_owner,
+            complex_qr_research=True,
+        )
+        assert modal_system.diagnostics["mixing_method"] == (
+            "complex_qr_type_ii_research"
+        )
+        assert modal_system.diagnostics["real_coordinate_embedding"] is False
+        oversized_rhs = np.full(rhs.shape, 1.0e308 + 0.0j, dtype=np.complex128)
+        with pytest.raises(ValueError, match="RHS norm is non-finite"):
+            modal_system.solve(oversized_rhs)
+        assert {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        } == before
+        try:
+            solution = modal_system.solve(rhs)
+        except RuntimeError as exc:
+            assert "Modal Anderson inner solve did not converge" in str(exc)
+
+        diagnostics = modal_system.diagnostics
+        last_solve = diagnostics["last_solve"]
+        assert last_solve["mixing_method"] == "complex_qr_type_ii_research"
+        assert last_solve["mixing_beta"] == 1.0
+        assert last_solve["real_coordinate_embedding"] is False
+        assert last_solve["modal_coordinate_representation"] == "complex128_modal_values"
+        assert last_solve["max_iterations"] == 14
+        assert last_solve["anderson_history"] == 4
+        assert 1 <= last_solve["iterations"] <= 14
+        assert 2 <= last_solve["s_evaluation_count"] <= 16
+        assert last_solve["constraint_lu_solve_calls"] == last_solve[
+            "s_evaluation_count"
+        ]
+        assert last_solve["constraint_lu_factorizations"] == 0
+        assert last_solve["constraint_lu_borrowed"] is True
+        assert last_solve["residual_evaluation_history"][-1]["source"] == (
+            "final_validation"
+        )
+        assert last_solve["residual_evaluation_history"][0]["source"] == (
+            "complex_qr_iteration"
+        )
+        assert last_solve["complex_qr_mixing_history"][0]["update"] == (
+            "fixed_point_startup"
+        )
+        assert np.isfinite(last_solve["relative_residual"])
+        expected_success = (
+            last_solve["convergence_callback_target_reached"] is True
+            and last_solve["final_unscaled_target_reached"] is True
+            and last_solve["target_reached"] is True
+            and last_solve["budget_exhausted"] is False
+            and last_solve["invalid_failure"] is False
+            and last_solve["stop_reason"] == "unscaled_residual_target"
+        )
+        assert (solution is not None) is expected_success
+        if solution is not None:
+            assert np.all(np.isfinite(solution))
+            assert last_solve["status"] == "converged"
+            assert last_solve["relative_residual"] <= 1.0e-2
+        else:
+            assert last_solve["status"] == "not_converged"
+        assert np.array_equal(rhs, rhs_before)
+        after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        for side in ("bottom", "top"):
+            actual_calls = after[side] - before[side]
+            assert actual_calls == last_solve["side_action_calls"][side]
+            assert actual_calls == last_solve["s_evaluation_count"]
+            assert diagnostics["side_action_call_count"][side] == actual_calls
+        assert diagnostics["constraint_lu_factorizations"] == 1
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                "complex QR modal candidate: "
+                f"status={last_solve['status']}, raw={last_solve['relative_residual']:.6e}, "
+                f"iterations={last_solve['iterations']}, S={last_solve['s_evaluation_count']}, "
+                f"side_calls={last_solve['side_action_calls']}, "
+                f"mixing_steps={len(last_solve['complex_qr_mixing_history'])}",
+                flush=True,
+            )
+    finally:
+        if modal_system is not None:
+            modal_system.destroy()
+        elif modal_action is not None and not modal_action._destroyed:
+            modal_action.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_complex_qr_budget_reserves_real_final_check(monkeypatch) -> None:
+    fixture = _side_block_fixture()
+    modal_action = None
+    modal_system = None
+    rhs = np.asarray(
+        [0.2 + 0.4j, -0.5 + 0.1j, 0.7 - 0.3j, -0.2 - 0.6j],
+        dtype=np.complex128,
+    )
+    rhs_before = rhs.copy()
+    before = {
+        side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+        for side in ("bottom", "top")
+    }
+    monkeypatch.setattr(block_ldu, "_MODAL_ANDERSON_S_EVALUATION_LIMIT", 2)
+    try:
+        modal_action = block_ldu.HybridActionModalSchurApply(
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+        )
+        modal_system = block_ldu.HybridActionModalSchurAndersonSystem(
+            modal_action,
+            modal_owner=fixture["layout"].modal_owner,
+            complex_qr_research=True,
+        )
+        with pytest.raises(RuntimeError, match="did not converge"):
+            modal_system.solve(rhs)
+
+        last_solve = modal_system.diagnostics["last_solve"]
+        assert last_solve["status"] == "not_converged"
+        assert last_solve["stop_reason"] == "budget_exhausted"
+        assert last_solve["budget_exhausted"] is True
+        assert last_solve["budget_reason"] == "S_EVALUATION_LIMIT"
+        assert last_solve["invalid_failure"] is False
+        assert last_solve["convergence_callback_target_reached"] is False
+        assert last_solve["final_validation_evaluations"] == 1
+        assert last_solve["budget_callback_skipped"] is False
+        assert last_solve["function_evaluations"] == 1
+        assert last_solve["iterations"] == 1
+        assert last_solve["s_evaluation_count"] == 2
+        assert [
+            row["source"] for row in last_solve["residual_evaluation_history"]
+        ] == ["complex_qr_iteration", "final_validation"]
+        assert last_solve["constraint_lu_solve_calls"] == 2
+        assert last_solve["constraint_lu_borrowed"] is True
+        after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert last_solve["side_action_calls"] == {
+            side: after[side] - before[side] for side in ("bottom", "top")
+        }
+        assert last_solve["side_action_calls"] == {"bottom": 2, "top": 2}
+        assert np.array_equal(rhs, rhs_before)
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if modal_system is not None:
+            modal_system.destroy()
+        elif modal_action is not None and not modal_action._destroyed:
+            modal_action.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_complex_qr_zero_rhs_uses_absolute_raw_gate() -> None:
+    fixture = _side_block_fixture()
+    modal_action = None
+    modal_system = None
+    rhs = np.zeros(fixture["layout"].modal_count, dtype=np.complex128)
+    rhs_before = rhs.copy()
+    before = {
+        side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+        for side in ("bottom", "top")
+    }
+    try:
+        modal_action = block_ldu.HybridActionModalSchurApply(
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+        )
+        modal_system = block_ldu.HybridActionModalSchurAndersonSystem(
+            modal_action,
+            modal_owner=fixture["layout"].modal_owner,
+            complex_qr_research=True,
+        )
+        solution = modal_system.solve(rhs)
+        last_solve = modal_system.diagnostics["last_solve"]
+        assert np.array_equal(solution, np.zeros_like(solution))
+        assert last_solve["status"] == "converged"
+        assert last_solve["stop_reason"] == "unscaled_residual_target"
+        assert last_solve["zero_rhs_absolute_residual"] is True
+        assert last_solve["rhs_norm"] == 0.0
+        assert last_solve["relative_residual"] == 0.0
+        assert last_solve["convergence_callback_target_reached"] is True
+        assert last_solve["final_unscaled_target_reached"] is True
+        assert last_solve["budget_exhausted"] is False
+        assert last_solve["invalid_failure"] is False
+        assert last_solve["iterations"] == 0
+        assert last_solve["function_evaluations"] == 1
+        assert last_solve["final_validation_evaluations"] == 1
+        assert last_solve["s_evaluation_count"] == 2
+        assert last_solve["constraint_lu_solve_calls"] == 2
+        assert last_solve["constraint_lu_borrowed"] is True
+        after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert last_solve["side_action_calls"] == {
+            side: after[side] - before[side] for side in ("bottom", "top")
+        }
+        assert last_solve["side_action_calls"] == {"bottom": 2, "top": 2}
+        assert np.array_equal(rhs, rhs_before)
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if modal_system is not None:
+            modal_system.destroy()
+        elif modal_action is not None and not modal_action._destroyed:
+            modal_action.destroy()
+        _destroy_side_block_fixture(fixture)

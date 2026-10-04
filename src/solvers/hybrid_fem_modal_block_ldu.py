@@ -12,7 +12,8 @@ from typing import Any
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
-from scipy.linalg import lu_factor, lu_solve
+from scipy.linalg import lu_factor, lu_solve, solve_triangular
+from scipy.linalg import qr as pivoted_qr
 
 from ..coupling.hybrid_internal_modes import HybridInternalModeCoupling
 from .hybrid_fem_modal_augmented_direct import (
@@ -147,6 +148,128 @@ def _factor_modal_constraint(
         np.asarray(pivots),
         condition,
     )
+
+
+def _complex_anderson_qr_coefficients(
+    delta_f: np.ndarray, current_f: np.ndarray
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Solve a small complex Anderson least-squares problem by pivoted QR.
+
+    The returned coefficients are mapped back from the pivoted column order.
+    Numerically dependent trailing columns are omitted using a scale-relative
+    working-precision cutoff; no normal equations or pseudoinverse are used.
+    """
+
+    matrix = np.asarray(delta_f, dtype=np.complex128)
+    vector = np.asarray(current_f, dtype=np.complex128)
+    if matrix.ndim != 2 or vector.shape != (matrix.shape[0],):
+        raise ValueError("Complex Anderson history has incompatible shapes.")
+    if matrix.shape[1] < 1:
+        raise ValueError("Complex Anderson QR requires at least one history column.")
+    if not bool(np.all(np.isfinite(matrix))) or not bool(np.all(np.isfinite(vector))):
+        raise FloatingPointError("Complex Anderson history is non-finite.")
+
+    q_matrix, r_matrix, pivots = pivoted_qr(
+        matrix,
+        mode="economic",
+        pivoting=True,
+        check_finite=False,
+    )
+    diagonal = np.abs(np.diag(r_matrix))
+    qr_scale = float(np.max(diagonal)) if diagonal.size else 0.0
+    cutoff = (
+        np.finfo(np.float64).eps * max(matrix.shape) * qr_scale
+    )
+    rank = 0
+    for value in diagonal:
+        if float(value) <= cutoff:
+            break
+        rank += 1
+
+    coefficients = np.zeros(matrix.shape[1], dtype=np.complex128)
+    if rank:
+        projected = q_matrix[:, :rank].conj().T @ vector
+        pivoted_coefficients = solve_triangular(
+            r_matrix[:rank, :rank],
+            projected,
+            lower=False,
+            check_finite=False,
+        )
+        coefficients[np.asarray(pivots[:rank], dtype=np.intp)] = (
+            pivoted_coefficients
+        )
+    if not bool(np.all(np.isfinite(coefficients))):
+        raise FloatingPointError("Complex Anderson QR coefficients are non-finite.")
+    fit_residual = matrix @ coefficients - vector
+    if not bool(np.all(np.isfinite(fit_residual))):
+        raise FloatingPointError("Complex Anderson QR fit is non-finite.")
+    fit_residual_norm = float(np.linalg.norm(fit_residual))
+    if not np.isfinite(fit_residual_norm):
+        raise FloatingPointError("Complex Anderson QR fit norm is non-finite.")
+    return coefficients, {
+        "effective_rank": int(rank),
+        "history_column_count": int(matrix.shape[1]),
+        "discarded_column_count": int(matrix.shape[1] - rank),
+        "qr_scale": qr_scale,
+        "rank_cutoff": float(cutoff),
+        "fit_residual_norm": fit_residual_norm,
+    }
+
+
+def _complex_anderson_candidate_update(
+    modal: np.ndarray,
+    fixed_point_residual: np.ndarray,
+    delta_m: np.ndarray | None,
+    delta_f: np.ndarray | None,
+) -> tuple[np.ndarray | None, dict[str, Any]]:
+    """Make one beta=1 complex Type-II Anderson update or report rank zero."""
+
+    current = np.asarray(modal, dtype=np.complex128)
+    fixed_point = np.asarray(fixed_point_residual, dtype=np.complex128)
+    if current.ndim != 1 or fixed_point.shape != current.shape:
+        raise ValueError("Complex Anderson update vectors have incompatible shapes.")
+    if not bool(np.all(np.isfinite(current))) or not bool(
+        np.all(np.isfinite(fixed_point))
+    ):
+        raise FloatingPointError("Complex Anderson update vectors are non-finite.")
+    delta_f_values = (
+        None if delta_f is None else np.asarray(delta_f, dtype=np.complex128)
+    )
+    if delta_f_values is not None and delta_f_values.ndim != 2:
+        raise ValueError("Complex Anderson residual history must be a matrix.")
+    if (delta_m is None) != (delta_f_values is None):
+        raise ValueError("Complex Anderson iterate and residual histories must match.")
+    if delta_f_values is None or delta_f_values.shape[1] == 0:
+        candidate = current + fixed_point
+        if not bool(np.all(np.isfinite(candidate))):
+            raise FloatingPointError("Complex Anderson startup step is non-finite.")
+        return candidate, {
+            "update": "fixed_point_startup",
+            "history_column_count": 0,
+            "effective_rank": 0,
+            "discarded_column_count": 0,
+            "qr_scale": 0.0,
+            "rank_cutoff": 0.0,
+            "fit_residual_norm": None,
+        }
+    delta_m_values = np.asarray(delta_m, dtype=np.complex128)
+    delta_f_values = np.asarray(delta_f_values, dtype=np.complex128)
+    if (
+        delta_m_values.ndim != 2
+        or delta_f_values.ndim != 2
+        or delta_m_values.shape != delta_f_values.shape
+        or delta_m_values.shape[0] != current.size
+    ):
+        raise ValueError("Complex Anderson difference histories have incompatible shapes.")
+    coefficients, diagnostics = _complex_anderson_qr_coefficients(
+        delta_f_values, fixed_point
+    )
+    if diagnostics["effective_rank"] == 0:
+        return None, {"update": "rank_zero_history", **diagnostics}
+    candidate = current + fixed_point - (delta_m_values + delta_f_values) @ coefficients
+    if not bool(np.all(np.isfinite(candidate))):
+        raise FloatingPointError("Complex Anderson candidate is non-finite.")
+    return candidate, {"update": "complex_qr_type_ii", **diagnostics}
 
 
 @dataclass
@@ -925,6 +1048,278 @@ def solve_action_modal_schur_anderson(
         constraint_pivots = None
 
 
+def solve_action_modal_schur_anderson_complex_qr_research(
+    modal_action: HybridActionModalSchurApply,
+    rhs: np.ndarray,
+    *,
+    _borrowed_constraint_factor: Any,
+) -> dict[str, Any]:
+    """Bounded full-S Anderson research path with complex QR coefficients."""
+
+    if modal_action._destroyed:
+        raise RuntimeError("On-demand modal Schur action has been destroyed.")
+    modal_count = int(modal_action.modal_count)
+    comm = _action_operator(modal_action.bottom_action).getComm().tompi4py()
+    root = comm.size - 1
+    max_iterations, history_limit = 14, 4
+    evaluation_limit = _MODAL_ANDERSON_S_EVALUATION_LIMIT
+    beta = 1.0
+    rhs_values = np.asarray(rhs, dtype=np.complex128)
+    rhs_valid = rhs_values.shape == (modal_count,) and bool(np.all(np.isfinite(rhs_values)))
+    if not comm.allreduce(rhs_valid, op=MPI.LAND):
+        raise ValueError("Modal Anderson RHS must be a finite modal vector.")
+    rhs_hashes = comm.allgather(hashlib.sha256(rhs_values.tobytes()).hexdigest())
+    if len(set(rhs_hashes)) != 1:
+        raise ValueError("Modal Anderson RHS differs across MPI ranks.")
+    rhs_values = rhs_values.copy()
+    with np.errstate(over="ignore", invalid="ignore"):
+        rhs_norm = float(np.linalg.norm(rhs_values))
+    if not comm.allreduce(bool(np.isfinite(rhs_norm)), op=MPI.LAND):
+        raise ValueError("Modal Anderson RHS norm is non-finite.")
+
+    factor = _borrowed_constraint_factor
+    factor_lu = getattr(factor, "constraint_lu", None)
+    factor_pivots = getattr(factor, "constraint_pivots", None)
+    factor_valid = bool(
+        getattr(factor, "modal_action", None) is modal_action
+        and int(getattr(factor, "modal_count", -1)) == modal_count
+        and int(getattr(factor, "constraint_lu_owner_rank", -1)) == root
+        and np.isfinite(float(getattr(factor, "constraint_condition", np.nan)))
+    )
+    if comm.rank == root:
+        factor_valid = bool(
+            factor_valid
+            and isinstance(factor_lu, np.ndarray)
+            and factor_lu.shape == (modal_count, modal_count)
+            and isinstance(factor_pivots, np.ndarray)
+            and factor_pivots.shape == (modal_count,)
+        )
+    else:
+        factor_valid = bool(factor_valid and factor_lu is None and factor_pivots is None)
+    if not comm.allreduce(factor_valid, op=MPI.LAND):
+        raise ValueError("Borrowed C LU must be valid only on the modal owner.")
+
+    actions = {"bottom": modal_action.bottom_action, "top": modal_action.top_action}
+    counts_before = {side: _action_apply_count(action) for side, action in actions.items()}
+    residual_history: list[dict[str, Any]] = []
+    mixing_history: list[dict[str, Any]] = []
+    owner_states: list[tuple[np.ndarray, np.ndarray]] = []
+    modal_values = np.zeros(modal_count, dtype=np.complex128)
+    function_evaluations = total_evaluations = c_solves = iterations = 0
+    final_evaluations = 0
+    callback_target = final_target = evaluation_failed = False
+    budget_exhausted = False
+    stop_reason = "max_iterations"
+    last_raw_norm = last_raw_metric = last_scaled_norm = float("inf")
+
+    def evaluate(current: np.ndarray, source: str):
+        nonlocal function_evaluations, total_evaluations, c_solves
+        raw = np.asarray(modal_action.apply(current) - rhs_values, dtype=np.complex128)
+        total_evaluations += 1
+        if source == "complex_qr_iteration":
+            function_evaluations += 1
+        finite = raw.shape == (modal_count,) and bool(np.all(np.isfinite(raw)))
+        finite = bool(comm.allreduce(finite, op=MPI.LAND))
+        payload = None
+        if comm.rank == root:
+            if not finite:
+                payload = (False, None, "nonfinite_residual")
+            else:
+                try:
+                    raw_norm = float(np.linalg.norm(raw))
+                    raw_metric = raw_norm / rhs_norm if rhs_norm else raw_norm
+                    scaled = lu_solve((factor_lu, factor_pivots), raw, check_finite=True)
+                    fixed_point = -np.asarray(scaled, dtype=np.complex128)
+                    scaled_norm = float(np.linalg.norm(scaled))
+                    if (
+                        not np.isfinite(raw_norm)
+                        or not np.isfinite(raw_metric)
+                        or not np.isfinite(scaled_norm)
+                        or not np.all(np.isfinite(fixed_point))
+                    ):
+                        payload = (False, None, "nonfinite_residual")
+                    else:
+                        payload = (
+                            True,
+                            (raw_norm, raw_metric, scaled_norm, fixed_point),
+                            None,
+                        )
+                except (ValueError, np.linalg.LinAlgError, FloatingPointError) as exc:
+                    payload = (False, None, f"constraint_solve_failure: {exc}")
+        success, values, error = comm.bcast(payload, root=root)
+        if not success:
+            row = {
+                "evaluation": total_evaluations,
+                "source": source,
+                "raw_residual_norm": None,
+                "raw_target_metric": None,
+                "scaled_residual_norm": None,
+                "finite": False,
+            }
+            residual_history.append(row)
+            return None, row, error
+        c_solves += 1
+        raw_norm, raw_metric, scaled_norm, fixed_point = values
+        row = {
+            "evaluation": total_evaluations,
+            "source": source,
+            "raw_residual_norm": float(raw_norm),
+            "raw_target_metric": float(raw_metric),
+            "scaled_residual_norm": float(scaled_norm),
+            "finite": True,
+        }
+        residual_history.append(row)
+        return np.asarray(fixed_point, dtype=np.complex128), row, None
+
+    for _ in range(max_iterations + 1):
+        if total_evaluations >= evaluation_limit - 1:
+            budget_exhausted = True
+            stop_reason = "budget_exhausted"
+            break
+        fixed_point, row, error = evaluate(modal_values, "complex_qr_iteration")
+        if error is not None:
+            evaluation_failed = True
+            stop_reason = error.split(":", 1)[0]
+            break
+        last_raw_norm = row["raw_residual_norm"]
+        last_raw_metric = row["raw_target_metric"]
+        last_scaled_norm = row["scaled_residual_norm"]
+        if last_raw_metric <= 1.0e-2:
+            callback_target = True
+            stop_reason = "unscaled_residual_target"
+            break
+        if iterations == max_iterations:
+            stop_reason = "max_iterations"
+            break
+
+        update_payload = None
+        if comm.rank == root:
+            owner_states.append((modal_values.copy(), fixed_point.copy()))
+            if len(owner_states) > history_limit + 1:
+                del owner_states[0]
+            delta_m = delta_f = None
+            if len(owner_states) > 1:
+                delta_m = np.column_stack(
+                    [owner_states[i + 1][0] - owner_states[i][0] for i in range(len(owner_states) - 1)]
+                )
+                delta_f = np.column_stack(
+                    [owner_states[i + 1][1] - owner_states[i][1] for i in range(len(owner_states) - 1)]
+                )
+            try:
+                candidate, mix = _complex_anderson_candidate_update(
+                    modal_values, fixed_point, delta_m, delta_f
+                )
+                update_payload = (candidate is not None, candidate, mix, None)
+            except (FloatingPointError, ValueError, np.linalg.LinAlgError) as exc:
+                update_payload = (False, None, {}, str(exc))
+        update_ok, candidate, mix, update_error = comm.bcast(update_payload, root=root)
+        mixing_history.append(dict(mix))
+        if not update_ok:
+            stop_reason = (
+                "rank_zero_history"
+                if mix.get("update") == "rank_zero_history"
+                else "invalid_anderson_update"
+            )
+            if update_error:
+                stop_reason = "nonfinite_or_invalid_anderson_update"
+            break
+        modal_values = np.asarray(candidate, dtype=np.complex128)
+        iterations += 1
+
+    if not evaluation_failed and bool(np.all(np.isfinite(modal_values))):
+        _final_fixed_point, final_row, error = evaluate(
+            modal_values, "final_validation"
+        )
+        final_evaluations = 1
+        if error is None:
+            last_raw_norm = final_row["raw_residual_norm"]
+            last_raw_metric = final_row["raw_target_metric"]
+            last_scaled_norm = final_row["scaled_residual_norm"]
+            final_target = last_raw_metric <= 1.0e-2
+        else:
+            evaluation_failed = True
+            stop_reason = "final_validation_failure"
+
+    if total_evaluations > evaluation_limit:
+        raise RuntimeError("Complex modal Anderson exceeded its S-evaluation budget.")
+    status = (
+        "converged"
+        if callback_target and final_target and not evaluation_failed
+        and not budget_exhausted
+        and stop_reason == "unscaled_residual_target"
+        else "not_converged"
+    )
+    if status != "converged" and callback_target and final_evaluations:
+        stop_reason = "final_validation_failed"
+
+    side_calls = {}
+    for side, action in actions.items():
+        before, after = counts_before[side], _action_apply_count(action)
+        delta = None if before is None or after is None else after - before
+        rank_deltas = comm.allgather(delta if delta is not None and delta >= 0 else None)
+        side_calls[side] = int(delta) if delta is not None and all(x == delta for x in rank_deltas) else None
+    rank_state = (
+        function_evaluations,
+        total_evaluations,
+        c_solves,
+        iterations,
+        status,
+        stop_reason,
+        budget_exhausted,
+        last_raw_metric,
+        tuple(sorted(side_calls.items())),
+    )
+    if any(item != rank_state for item in comm.allgather(rank_state)):
+        raise RuntimeError("Complex modal Anderson control flow differs across MPI ranks.")
+
+    return {
+        "status": status,
+        "stop_reason": stop_reason,
+        "solution": modal_values.copy(),
+        "target_reached": bool(callback_target and final_target),
+        "convergence_callback_target_reached": bool(callback_target),
+        "final_unscaled_target_reached": bool(final_target),
+        "invalid_failure": bool(evaluation_failed),
+        "unscaled_residual_norm": last_raw_norm,
+        "rhs_norm": rhs_norm,
+        "relative_residual": last_raw_metric,
+        "scaled_residual_norm": last_scaled_norm,
+        "last_snes_function_norm": None,
+        "residual_evaluation_history": residual_history,
+        "complex_qr_mixing_history": mixing_history,
+        "mixing_method": "complex_qr_type_ii_research",
+        "mixing_beta": beta,
+        "constraint_scale_enabled": True,
+        "real_coordinate_embedding": False,
+        "modal_coordinate_representation": "complex128_modal_values",
+        "modal_coordinate_count": modal_count,
+        "modal_coordinate_extra_bytes_per_explicit_vec": 0,
+        "modal_coordinate_extra_bytes_two_explicit_vecs": 0,
+        "real_coordinate_subspace_violation": False,
+        "constraint_condition_2": float(factor.constraint_condition),
+        "constraint_lu_owner_rank": root,
+        "constraint_lu_factorizations": 0,
+        "constraint_lu_solve_calls": c_solves,
+        "constraint_lu_borrowed": True,
+        "zero_rhs_absolute_residual": rhs_norm == 0.0,
+        "iterations": iterations,
+        "max_iterations": max_iterations,
+        "function_evaluations": function_evaluations,
+        "s_evaluation_count": total_evaluations,
+        "s_evaluation_limit": evaluation_limit,
+        "final_validation_evaluations": final_evaluations,
+        "budget_callback_skipped": False,
+        "budget_callback_residual_state": None,
+        "budget_reason": "S_EVALUATION_LIMIT" if budget_exhausted else None,
+        "budget_exhausted": budget_exhausted,
+        "anderson_history": history_limit,
+        "snes_converged_reason": None,
+        "callback_converged_reason": None,
+        "raw_cache_iteration_mismatch": False,
+        "side_action_calls": side_calls,
+    }
+
+
 class HybridActionModalSchurAndersonSystem:
     """Owner-factored C scaling for a borrowed nonlinear modal action."""
 
@@ -933,9 +1328,18 @@ class HybridActionModalSchurAndersonSystem:
         modal_action: HybridActionModalSchurApply,
         *,
         modal_owner: int,
+        complex_qr_research: bool = False,
     ) -> None:
+        if not isinstance(complex_qr_research, (bool, np.bool_)):
+            raise TypeError("Complex QR research selection must be an explicit boolean.")
         self.modal_action = modal_action
         self.modal_count = int(modal_action.modal_count)
+        self.complex_qr_research = bool(complex_qr_research)
+        self.mixing_method = (
+            "complex_qr_type_ii_research"
+            if self.complex_qr_research
+            else "petsc_snes_anderson_default"
+        )
         self.modal_schur = None
         self.constraint_lu_owner_rank = int(modal_owner)
         self.constraint_lu: np.ndarray | None = None
@@ -998,19 +1402,32 @@ class HybridActionModalSchurAndersonSystem:
     @property
     def diagnostics(self) -> dict[str, Any]:
         return {
-            "method": "bounded_C_scaled_SNESANDERSON",
+            "method": (
+                "bounded_C_scaled_complex_QR_Anderson_research"
+                if self.complex_qr_research
+                else "bounded_C_scaled_SNESANDERSON"
+            ),
+            "mixing_method": self.mixing_method,
             "status": "destroyed" if self._destroyed else "ready",
             "modal_count": self.modal_count,
-            "real_coordinate_embedding": True,
+            "real_coordinate_embedding": not self.complex_qr_research,
             "modal_coordinate_representation": (
-                "real_parts_then_imag_parts_in_complex128"
+                "complex128_modal_values"
+                if self.complex_qr_research
+                else "real_parts_then_imag_parts_in_complex128"
             ),
-            "modal_coordinate_count": 2 * self.modal_count,
+            "modal_coordinate_count": (
+                self.modal_count if self.complex_qr_research else 2 * self.modal_count
+            ),
             "modal_coordinate_extra_bytes_per_explicit_vec": int(
-                self.modal_count * np.dtype(PETSc.ScalarType).itemsize
+                0
+                if self.complex_qr_research
+                else self.modal_count * np.dtype(PETSc.ScalarType).itemsize
             ),
             "modal_coordinate_extra_bytes_two_explicit_vecs": int(
-                2 * self.modal_count * np.dtype(PETSc.ScalarType).itemsize
+                0
+                if self.complex_qr_research
+                else 2 * self.modal_count * np.dtype(PETSc.ScalarType).itemsize
             ),
             "modal_schur_materialized": False,
             "modal_schur_column_count": 0,
@@ -1046,14 +1463,21 @@ class HybridActionModalSchurAndersonSystem:
         if self._destroyed:
             raise RuntimeError("On-demand modal Anderson system has been destroyed.")
         self._solve_count += 1
-        result = solve_action_modal_schur_anderson(
-            self.modal_action,
-            rhs,
-            scale_residual_by_constraint=True,
-            real_coordinate_embedding=True,
-            max_iterations=14,
-            _borrowed_constraint_factor=self,
-        )
+        if self.complex_qr_research:
+            result = solve_action_modal_schur_anderson_complex_qr_research(
+                self.modal_action,
+                rhs,
+                _borrowed_constraint_factor=self,
+            )
+        else:
+            result = solve_action_modal_schur_anderson(
+                self.modal_action,
+                rhs,
+                scale_residual_by_constraint=True,
+                real_coordinate_embedding=True,
+                max_iterations=14,
+                _borrowed_constraint_factor=self,
+            )
         side_calls = dict(result["side_action_calls"])
         for side in ("bottom", "top"):
             delta = side_calls.get(side)
@@ -1067,14 +1491,25 @@ class HybridActionModalSchurAndersonSystem:
         summary_keys = (
             "status",
             "stop_reason",
+            "anderson_history",
             "unscaled_residual_norm",
             "rhs_norm",
             "relative_residual",
             "max_iterations",
             "iterations",
             "function_evaluations",
+            "final_validation_evaluations",
             "s_evaluation_count",
+            "constraint_lu_factorizations",
             "constraint_lu_solve_calls",
+            "constraint_lu_borrowed",
+            "zero_rhs_absolute_residual",
+            "target_reached",
+            "convergence_callback_target_reached",
+            "final_unscaled_target_reached",
+            "invalid_failure",
+            "budget_reason",
+            "budget_callback_skipped",
             "snes_converged_reason",
             "callback_converged_reason",
             "budget_exhausted",
@@ -1086,8 +1521,13 @@ class HybridActionModalSchurAndersonSystem:
             "modal_coordinate_extra_bytes_per_explicit_vec",
             "modal_coordinate_extra_bytes_two_explicit_vecs",
             "real_coordinate_subspace_violation",
+            "mixing_method",
+            "mixing_beta",
+            "complex_qr_mixing_history",
         )
-        self._last_solve = {key: result[key] for key in summary_keys}
+        self._last_solve = {
+            key: result[key] for key in summary_keys if key in result
+        }
         solution = result.pop("solution")
         if result["status"] != "converged":
             self._not_converged_count += 1
