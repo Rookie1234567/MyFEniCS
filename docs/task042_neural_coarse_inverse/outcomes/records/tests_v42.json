@@ -1,0 +1,237 @@
+{
+  "snapshots": [
+    {
+      "count": 51,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre01/pytest.xml",
+        "sha256": "9e01a1e54eb8fae24424fbc8fa5bc8a3b5d59ba47ee2ad29e0b9e8003f54af2b",
+        "bytes": 13510
+      },
+      "failures": [
+        {
+          "name": "test_missing_stage_never_qualifies[TOPOLOGY]",
+          "kind": "failure",
+          "text": "missing = 'TOPOLOGY'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        },
+        {
+          "name": "test_missing_stage_never_qualifies[ORIENTATION]",
+          "kind": "failure",
+          "text": "missing = 'ORIENTATION'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        },
+        {
+          "name": "test_missing_stage_never_qualifies[ROUTING]",
+          "kind": "failure",
+          "text": "missing = 'ROUTING'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        },
+        {
+          "name": "test_missing_stage_never_qualifies[BRIDGE1]",
+          "kind": "failure",
+          "text": "missing = 'BRIDGE1'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        },
+        {
+          "name": "test_missing_stage_never_qualifies[BRIDGE2]",
+          "kind": "failure",
+          "text": "missing = 'BRIDGE2'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        },
+        {
+          "name": "test_missing_stage_never_qualifies[BRIDGE4]",
+          "kind": "failure",
+          "text": "missing = 'BRIDGE4'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        },
+        {
+          "name": "test_missing_stage_never_qualifies[ACTIONS]",
+          "kind": "failure",
+          "text": "missing = 'ACTIONS'\n\n    @pytest.mark.parametrize(\"missing\",list(inventory()))\n    def test_missing_stage_never_qualifies(missing):\n>       r=inventory();assert complete_native_checks(r)\nE       AssertionError: assert False\nE        +  where False = complete_native_checks({'ACTIONS': {'checks': [{'kind': 'adjoint', 'passed': True}, {'kind': 'amplitudes', 'passed': True}, {'kind': 'forward...s': {'checks': [{'passed': True}], 'passed': True}, 'fixtures': [{'checks': [{'passed': True}], 'passed': True}]}, ...})\n\nsrc/test/test_distributed_volume.py:28: AssertionError"
+        }
+      ]
+    },
+    {
+      "count": 51,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre02/pytest.xml",
+        "sha256": "db53937b1e6f887099f8ea4d033c55145ee766ab92aee3588ca94687840252c8",
+        "bytes": 7016
+      },
+      "failures": []
+    },
+    {
+      "count": 54,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre03/pytest.xml",
+        "sha256": "3b2905901b081108f62deccfbc48d04c65a85f0901a8cddb79988d60d90d7c6f",
+        "bytes": 7410
+      },
+      "failures": []
+    },
+    {
+      "count": 54,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre04/pytest.xml",
+        "sha256": "f1d13eeaf2cc9253a7c326b5183d1927eb1c578cc88f594f9acc38082b49d5ad",
+        "bytes": 7410
+      },
+      "failures": []
+    },
+    {
+      "count": 56,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre05/pytest.xml",
+        "sha256": "8c32617a79c3c76a9e128c166a3e021b6ff03cdd5ffddd8a1b9af6a44981a732",
+        "bytes": 7694
+      },
+      "failures": []
+    },
+    {
+      "count": 57,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre06/pytest.xml",
+        "sha256": "5ee72a8d110dbe945fbb272eb8454778990000e704335c99e7c99a68a6fe8009",
+        "bytes": 7835
+      },
+      "failures": []
+    },
+    {
+      "count": 57,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre07/pytest.xml",
+        "sha256": "7f646e9924ba968e7bb9642367f0e994524ab7dee1107c5980623b71042a2337",
+        "bytes": 7835
+      },
+      "failures": []
+    },
+    {
+      "count": 59,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre08/pytest.xml",
+        "sha256": "6c4bc09e47491875c6b713ff1d480443b547dbcf30c34871299cc89f98346177",
+        "bytes": 8123
+      },
+      "failures": []
+    },
+    {
+      "count": 60,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre09/pytest.xml",
+        "sha256": "ecf12d4f78c04b603efd638c30bb60c41c4463158594f3d34eb615599bd20e47",
+        "bytes": 8279
+      },
+      "failures": []
+    },
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre10/pytest.xml",
+        "sha256": "c9784ddf1d6d21f286435d5ec21a2131cdec3a89691ae99700a285abc790d65d",
+        "bytes": 9278
+      },
+      "failures": [
+        {
+          "name": "test_frozen_producer_and_consumer_permutation_names_are_not_interchangeable",
+          "kind": "failure",
+          "text": "def test_frozen_producer_and_consumer_permutation_names_are_not_interchangeable():\n        from src.solvers.distributed_volume_delivery import frozen_producer_codes\n    \n        codes = np.arange(8, dtype=np.uint32)\n>       assert np.array_equal(frozen_producer_codes({\"permutations\": codes}), codes)\n\nsrc/test/test_distributed_volume.py:91: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nliteral = {'permutations': array([0, 1, 2, 3, 4, 5, 6, 7], dtype=uint32)}\n\n    def frozen_producer_codes(literal):\n        \"\"\"V40 producer namespace differs from V41 cell_permutations.\"\"\"\n>       codes = np.asarray(literal[\"permutations\"])\nE       NameError: name 'np' is not defined\n\nsrc/solvers/distributed_volume_delivery.py:14: NameError"
+        }
+      ]
+    },
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre11/pytest.xml",
+        "sha256": "89f782eec6db006d0acfaad3a2b722e7734ab3217cac7c437d87a54152bd0cd5",
+        "bytes": 8432
+      },
+      "failures": []
+    },
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre12/pytest.xml",
+        "sha256": "0cc96742c2826d301bf09e02da2de93f2a4bc5b2b960cce2763db81cd6aabaa8",
+        "bytes": 8432
+      },
+      "failures": []
+    },
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre13/pytest.xml",
+        "sha256": "258354583bf9d5485759e2f64064dde026268e13b1d13e8dbda9d1057bbdf7d8",
+        "bytes": 8432
+      },
+      "failures": []
+    },
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v42/aux_pre_pre14/pytest.xml",
+        "sha256": "38e9584744450774248e69819d5effb6c0b0c7e0934824641a25c456831fe1a8",
+        "bytes": 8432
+      },
+      "failures": []
+    }
+  ],
+  "final_numerical_wiring": "pre14 clean committed final implementation, 61 passed; failures and pre13 HEAD-boundary event preserved",
+  "actual_native_MPI": [
+    1,
+    2,
+    4
+  ],
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN_UNRELATED_HEAVY_SCOPE",
+  "implementation_hashes": {
+    "benchmarks/check_distributed_volume.py": "6938240ddbafa67a64e090cf43e28b3a40ae35f10a2028d407a7ec6260e2c169",
+    "benchmarks/check_frozen_volume_dependencies.py": "2a079d4646c44a7d59caa13307ca6ba4ad3b810dcec8c1319705dced06d0a30f",
+    "benchmarks/check_native_entities.py": "a2885d265223b7a9cee87087ed29d0fc108ffe405371c47bdcb76c84cf7b6c84",
+    "benchmarks/qualify_distributed_volume.py": "94e1b5391bce9229179f7be7675648b31b92744842d2139336eafa27b6e5c4a1",
+    "benchmarks/qualify_native_entities.py": "4d19af35ed5f89dbb595379ee50b4497e02c81a8f1aef9c02c64b5230c53c148",
+    "input/task042_neural_coarse_inverse/distributed_volume_v42.json": "b718441024c5f6dc2da7724f3651aa2c0183f4f4dda5faa5b10d94437e7a9511",
+    "input/task042_neural_coarse_inverse/native_entities_v41.json": "2b50ec5bd51bc61ef348953ea1599cb6d6983d7dad4504e94998f48fe97bfa30",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "scripts/run_case.py": "8319de6de4c41ab819cc1f8db4396f6ac9a2a15890750ee68292b4a7c801b980",
+    "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+    "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/io/port_preparation.py": "c02c767868259a3871cda724614666db5dbd50495ce221cf03053147ad19af36",
+    "src/runners/port_preparation.py": "f38b235ab510f0ad60f0e661b910441b49c8b3a8fd21fdf5385e22ea8903d654",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/distributed_recovery_study.py": "eb22734e67fbdb644b3d16108ebe4d079c1030b8af487dc57ab3b6c844087c97",
+    "src/solvers/distributed_saved_recovery.py": "2bd5ba542e52dc43915746848add61f2f92d62fb6349878352b27e4a7cf9af02",
+    "src/solvers/distributed_volume_delivery.py": "76ed3a65ab5f2703c42bda43b08625f122816dc424815e396357c1abb4f9690b",
+    "src/solvers/distributed_volume_scope.py": "88828ab1e1957e6d9c3ca752ea85c3f04a4506e3822d97018519c8fd98fc7a77",
+    "src/solvers/distributed_volume_study.py": "7b7689bf57c416286dbe41a8da30cc89dc8b6a959219100c5726bbac7cd31a55",
+    "src/solvers/hcurl_affine_isotropic_tensor.py": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_entity_dependencies.py": "f380f3ba78f92b7f6d1d474f2f29cea80e8364bb45cfb6a3b954b7bc7f8cd2ba",
+    "src/solvers/native_entity_protocol.py": "57d1496cf3fe1b3c520dae22929569e199ea4a7f5a428b8c493a3a5b01a606a4",
+    "src/solvers/native_entity_qualification.py": "52c829a573c28e31bd02016bce1b09f374794d864e11d648a4b795a0fa12ff58",
+    "src/solvers/native_entity_scope.py": "108391488d2ed58184c302d156f18ba1baa7b698d03e5b4f313a490aab38edbb",
+    "src/solvers/native_entity_study.py": "5e8457f8c6a80c7051e98c99fbec1e37cf758f4a4f61993ead59649880d4bc20",
+    "src/solvers/native_entity_topology.py": "65755e5adbb71086c14821d86f689dae9eea48c94ec154efbc2896c3f4577a13",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "src/solvers/native_witness_csr.py": "e9cef5379aff1d25e398458bdd8040d37b1d1d729b9f8fb2f252516fcb0643ac",
+    "src/test/test_distributed_volume.py": "78d249859d7635af59bbf8a72a9eb49be61622888dd09f5d22ba5f8588b5044a",
+    "src/test/test_native_entities.py": "2037327d18de8a2306912655a58cdb9ab6b780481b20822757e79a33f7f52993"
+  },
+  "qualified_record": {
+    "path": "tmp/task042/v42/qualification.json",
+    "sha256": "072419128b0fc5adfbf486e858603f22778a6b96cb33bc680a246e48da1cc4c0",
+    "bytes": 3999
+  },
+  "final_source": "a7c6404265fda804392beecce60d9b6c12953f26",
+  "final_scientific_suite": "61 passed on clean committed source pre14",
+  "final_focused_tests": 61,
+  "documentation_tests": 15,
+  "final_receipt": {
+    "path": "tmp/task042/v42/aux_post_final03/final_checks.json",
+    "sha256": "55496d8b30e00275c11b786a0ca2895f05976185da4a541d49e31ef35100c217",
+    "bytes": 10820
+  },
+  "Ruff": "new/modified numerical modules, checker and parameterized runner PASS; scripts/run_case.py retains 10 independently verified baseline errors",
+  "compileall": "PASS",
+  "ABI_actual_math_getters": "PASS",
+  "latest_delivery_test_failures_preserved": [
+    "final01 inherited 10 dispatcher lint errors",
+    "final02 pure activation rejected by preflight before tests"
+  ],
+  "no_full_repository_test_or_CI": true
+}

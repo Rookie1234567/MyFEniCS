@@ -1,0 +1,67 @@
+{
+  "final_implementation_source": "a7c6404265fda804392beecce60d9b6c12953f26",
+  "numeric_actions_bound_to_each_actual_run": true,
+  "implementation_hashes": {
+    "benchmarks/check_distributed_volume.py": "6938240ddbafa67a64e090cf43e28b3a40ae35f10a2028d407a7ec6260e2c169",
+    "benchmarks/check_frozen_volume_dependencies.py": "2a079d4646c44a7d59caa13307ca6ba4ad3b810dcec8c1319705dced06d0a30f",
+    "benchmarks/check_native_entities.py": "a2885d265223b7a9cee87087ed29d0fc108ffe405371c47bdcb76c84cf7b6c84",
+    "benchmarks/qualify_distributed_volume.py": "94e1b5391bce9229179f7be7675648b31b92744842d2139336eafa27b6e5c4a1",
+    "benchmarks/qualify_native_entities.py": "4d19af35ed5f89dbb595379ee50b4497e02c81a8f1aef9c02c64b5230c53c148",
+    "input/task042_neural_coarse_inverse/distributed_volume_v42.json": "b718441024c5f6dc2da7724f3651aa2c0183f4f4dda5faa5b10d94437e7a9511",
+    "input/task042_neural_coarse_inverse/native_entities_v41.json": "2b50ec5bd51bc61ef348953ea1599cb6d6983d7dad4504e94998f48fe97bfa30",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "scripts/run_case.py": "8319de6de4c41ab819cc1f8db4396f6ac9a2a15890750ee68292b4a7c801b980",
+    "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+    "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/io/port_preparation.py": "c02c767868259a3871cda724614666db5dbd50495ce221cf03053147ad19af36",
+    "src/runners/port_preparation.py": "f38b235ab510f0ad60f0e661b910441b49c8b3a8fd21fdf5385e22ea8903d654",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/distributed_recovery_study.py": "eb22734e67fbdb644b3d16108ebe4d079c1030b8af487dc57ab3b6c844087c97",
+    "src/solvers/distributed_saved_recovery.py": "2bd5ba542e52dc43915746848add61f2f92d62fb6349878352b27e4a7cf9af02",
+    "src/solvers/distributed_volume_delivery.py": "76ed3a65ab5f2703c42bda43b08625f122816dc424815e396357c1abb4f9690b",
+    "src/solvers/distributed_volume_scope.py": "88828ab1e1957e6d9c3ca752ea85c3f04a4506e3822d97018519c8fd98fc7a77",
+    "src/solvers/distributed_volume_study.py": "7b7689bf57c416286dbe41a8da30cc89dc8b6a959219100c5726bbac7cd31a55",
+    "src/solvers/hcurl_affine_isotropic_tensor.py": "5dea5f7b723fb20d8a9b305e990ed7c8119c7d62b62d256a8fc076308b808bb3",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_entity_dependencies.py": "f380f3ba78f92b7f6d1d474f2f29cea80e8364bb45cfb6a3b954b7bc7f8cd2ba",
+    "src/solvers/native_entity_protocol.py": "57d1496cf3fe1b3c520dae22929569e199ea4a7f5a428b8c493a3a5b01a606a4",
+    "src/solvers/native_entity_qualification.py": "52c829a573c28e31bd02016bce1b09f374794d864e11d648a4b795a0fa12ff58",
+    "src/solvers/native_entity_scope.py": "108391488d2ed58184c302d156f18ba1baa7b698d03e5b4f313a490aab38edbb",
+    "src/solvers/native_entity_study.py": "5e8457f8c6a80c7051e98c99fbec1e37cf758f4a4f61993ead59649880d4bc20",
+    "src/solvers/native_entity_topology.py": "65755e5adbb71086c14821d86f689dae9eea48c94ec154efbc2896c3f4577a13",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "src/solvers/native_witness_csr.py": "e9cef5379aff1d25e398458bdd8040d37b1d1d729b9f8fb2f252516fcb0643ac",
+    "src/test/test_distributed_volume.py": "78d249859d7635af59bbf8a72a9eb49be61622888dd09f5d22ba5f8588b5044a",
+    "src/test/test_native_entities.py": "2037327d18de8a2306912655a58cdb9ab6b780481b20822757e79a33f7f52993"
+  },
+  "delivery_scripts": [
+    {
+      "path": "tmp/task042/v42/build_docs.py",
+      "sha256": "ad5fcf82ab17572cb7e4f04f324a3c00e696735916f7c33578802bc6b5fc215b"
+    },
+    {
+      "path": "tmp/task042/v42/collect.py",
+      "sha256": "2b030d3be638649c5879aa6ca1463dcfe383e424581ed6638c8f4eec40fddbc0",
+      "bytes": 12373
+    },
+    {
+      "path": "tmp/task042/v42/build_docs.py",
+      "sha256": "ad5fcf82ab17572cb7e4f04f324a3c00e696735916f7c33578802bc6b5fc215b",
+      "bytes": 26048
+    },
+    {
+      "path": "tmp/task042/v42/final_post.py",
+      "sha256": "a94fc6705a968635cfe3e912a9f8bb94a3a92da213c34c2a590ed5e410f761a2",
+      "bytes": 8085
+    },
+    {
+      "path": "tmp/task042/v42/settle_delivery.py",
+      "sha256": "1789ef49fb59cfe9ef904e6752e1c4abd62af8e0d3e916814cfecf6dbb9f5525",
+      "bytes": 11318
+    }
+  ],
+  "original_review_and_packets": "UNCHANGED",
+  "neural_mainline": "Task042的研究目的仍是神经网络突破：在相同原有限元正确性下，相对最佳合格非神经方法，完整耗时或同时峰内存至少改善20%，另一项合规。本轮没有神经训练或推理；分布式体积、伴随和残差接口用于以后核验神经场，不能记作神经贡献。用户本轮再次明确这一主线，下一轮建议必须回到神经接入与非神经对照，不能把接口准备无限延长为独立纯FE研究。"
+}

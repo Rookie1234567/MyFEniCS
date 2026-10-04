@@ -1,0 +1,129 @@
+{
+  "status": "10_INHERITED_ERRORS_UNCHANGED_AT_INCOMING_REVIEW",
+  "baseline": "31774b6282f61280fe33c162f9f48bf4ea526ce6",
+  "current_source": "a7c6404265fda804392beecce60d9b6c12953f26",
+  "changed_bytes": "only explicit task042_v42 marker",
+  "errors": [
+    [
+      "RUF100",
+      "Unused `noqa` directive (non-enabled: `E402`)",
+      {
+        "column": 55,
+        "row": 14
+      },
+      {
+        "column": 67,
+        "row": 14
+      }
+    ],
+    [
+      "RUF100",
+      "Unused `noqa` directive (non-enabled: `E402`)",
+      {
+        "column": 45,
+        "row": 15
+      },
+      {
+        "column": 57,
+        "row": 15
+      }
+    ],
+    [
+      "C408",
+      "Unnecessary `dict()` call (rewrite as a literal)",
+      {
+        "column": 34,
+        "row": 47
+      },
+      {
+        "column": 79,
+        "row": 48
+      }
+    ],
+    [
+      "C408",
+      "Unnecessary `dict()` call (rewrite as a literal)",
+      {
+        "column": 30,
+        "row": 52
+      },
+      {
+        "column": 89,
+        "row": 53
+      }
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted",
+      {
+        "column": 9,
+        "row": 66
+      },
+      {
+        "column": 69,
+        "row": 93
+      }
+    ],
+    [
+      "C408",
+      "Unnecessary `dict()` call (rewrite as a literal)",
+      {
+        "column": 40,
+        "row": 157
+      },
+      {
+        "column": 114,
+        "row": 157
+      }
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted",
+      {
+        "column": 17,
+        "row": 162
+      },
+      {
+        "column": 97,
+        "row": 162
+      }
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted",
+      {
+        "column": 13,
+        "row": 172
+      },
+      {
+        "column": 77,
+        "row": 174
+      }
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted",
+      {
+        "column": 17,
+        "row": 176
+      },
+      {
+        "column": 92,
+        "row": 176
+      }
+    ],
+    [
+      "I001",
+      "Import block is un-sorted or un-formatted",
+      {
+        "column": 17,
+        "row": 181
+      },
+      {
+        "column": 90,
+        "row": 181
+      }
+    ]
+  ],
+  "new_core_checker_runner_Ruff": "checked separately; no broad cleanup"
+}

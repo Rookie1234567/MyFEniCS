@@ -1,0 +1,1413 @@
+{
+  "stages": {
+    "VOLUME1": {
+      "status": "VOLUME_NOT_QUALIFIED",
+      "source_sha": "4d50b46fe7c52ea1c5b42672a9d5077dcbba4655",
+      "result": {
+        "path": "benchmarks/artifacts/task042/v42/task042_v42_volume1_20261004T120139934790Z/result.json",
+        "sha256": "c4a6c17e85430d1398d53a5af40e5079e8b4c57212b89ca0ff82467bfbab6676",
+        "bytes": 52630
+      },
+      "MPI_size": 1,
+      "checks": [
+        {
+          "kind": "global_dual",
+          "numerator": 9.547214793945162e-07,
+          "denominator": 9201289705.463968,
+          "relative": 1.0375952827869092e-16,
+          "passed": true,
+          "left": [
+            -2508466582.865261,
+            41580742.9472108
+          ],
+          "right": [
+            -2508466582.865262,
+            41580742.94721085
+          ]
+        },
+        {
+          "kind": "zero",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "complex_linearity",
+          "numerator": 2.290126546405031e-08,
+          "denominator": 43781733.271231376,
+          "relative": 5.230780910882427e-16,
+          "passed": true
+        },
+        {
+          "kind": "original_native_CSR_forward",
+          "numerator": 9.1392462835828e-08,
+          "denominator": 44568630.9935081,
+          "relative": 2.05060063094916e-15,
+          "passed": true
+        },
+        {
+          "kind": "original_native_CSR_adjoint",
+          "numerator": 9.20122251662576e-08,
+          "denominator": 44520754.31054451,
+          "relative": 2.0667265546411683e-15,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell0",
+          "numerator": 1.1455857197340338e-10,
+          "denominator": 21.21843393281789,
+          "relative": 5.399011648838947e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell1",
+          "numerator": 9.043639396503869e-10,
+          "denominator": 21.232308342505146,
+          "relative": 4.2593764420796995e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell2",
+          "numerator": 1.7391536481636783e-09,
+          "denominator": 21.223904025538054,
+          "relative": 8.194315457095027e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell3",
+          "numerator": 6.728286307806351e-10,
+          "denominator": 21.229903738359013,
+          "relative": 3.169249559831693e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell4",
+          "numerator": 8.175555524535319e-10,
+          "denominator": 21.221332096221673,
+          "relative": 3.852517592894617e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell5",
+          "numerator": 1.1899165465895456e-09,
+          "denominator": 21.23184334864143,
+          "relative": 5.60439584566587e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell6",
+          "numerator": 3.957727596235122e-09,
+          "denominator": 21.2278559011227,
+          "relative": 1.864402893382089e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell7",
+          "numerator": 1.8150744423215915e-09,
+          "denominator": 21.228314870841,
+          "relative": 8.550252120175396e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell8",
+          "numerator": 5.657531020912084e-10,
+          "denominator": 21.23199966131474,
+          "relative": 2.6646246755647107e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell9",
+          "numerator": 5.996023744451563e-10,
+          "denominator": 21.23168460586303,
+          "relative": 2.8240923203973127e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell10",
+          "numerator": 1.5590246543647021e-09,
+          "denominator": 21.199787252495632,
+          "relative": 7.353963678013675e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell11",
+          "numerator": 1.0440741286447643e-09,
+          "denominator": 21.21553792150094,
+          "relative": 4.921271063255223e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell12",
+          "numerator": 4.744071829261899e-09,
+          "denominator": 21.206751246866432,
+          "relative": 2.2370573286009076e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell13",
+          "numerator": 1.1727229865535788e-09,
+          "denominator": 21.22953411973835,
+          "relative": 5.524016589055664e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell14",
+          "numerator": 3.595843599496966e-10,
+          "denominator": 21.22329255433358,
+          "relative": 1.6942911144871965e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell15",
+          "numerator": 4.417408511863084e-09,
+          "denominator": 21.214904228059517,
+          "relative": 2.0822193983890235e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell16",
+          "numerator": 1.8930157715866215e-09,
+          "denominator": 21.231230152847044,
+          "relative": 8.916185063034483e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell17",
+          "numerator": 6.236228160834023e-10,
+          "denominator": 21.232235750079877,
+          "relative": 2.937150959625419e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell18",
+          "numerator": 5.509684307959214e-10,
+          "denominator": 21.22919151825887,
+          "relative": 2.59533402542458e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell19",
+          "numerator": 1.0226894672957082e-10,
+          "denominator": 21.22274522081617,
+          "relative": 4.818836850063162e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell20",
+          "numerator": 1.6604216113536485e-09,
+          "denominator": 21.19620383281222,
+          "relative": 7.833580128075939e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell21",
+          "numerator": 9.406484222576969e-09,
+          "denominator": 21.19405269084725,
+          "relative": 4.4382659417654474e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell22",
+          "numerator": 9.915927297589323e-10,
+          "denominator": 21.209513160630436,
+          "relative": 4.675226264031126e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell23",
+          "numerator": 3.743050613307896e-10,
+          "denominator": 21.201465931143623,
+          "relative": 1.7654678339055744e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell24",
+          "numerator": 5.133899705562322e-09,
+          "denominator": 21.195919857030923,
+          "relative": 2.422116964109652e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell25",
+          "numerator": 1.1479193670120327e-09,
+          "denominator": 21.225609107646466,
+          "relative": 5.40818103824638e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell26",
+          "numerator": 3.4152765655005986e-10,
+          "denominator": 21.217730989070002,
+          "relative": 1.609633267223497e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell27",
+          "numerator": 3.414449580502173e-10,
+          "denominator": 21.208890044460297,
+          "relative": 1.6099143205252356e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell28",
+          "numerator": 7.637259074792306e-10,
+          "denominator": 21.200969046790995,
+          "relative": 3.60231603467592e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell29",
+          "numerator": 4.947629716935829e-10,
+          "denominator": 21.23058876648266,
+          "relative": 2.3304251103703696e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell30",
+          "numerator": 6.176831099132497e-10,
+          "denominator": 21.2251165401672,
+          "relative": 2.9101517946642284e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell31",
+          "numerator": 9.524529984210488e-11,
+          "denominator": 21.21710935839106,
+          "relative": 4.489079932297033e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell32",
+          "numerator": 1.705665149504837e-09,
+          "denominator": 21.194304094421348,
+          "relative": 8.047752556092621e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell33",
+          "numerator": 7.45978384615045e-10,
+          "denominator": 21.194922089057187,
+          "relative": 3.519608996346296e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell34",
+          "numerator": 8.518306559888903e-09,
+          "denominator": 21.199426892917852,
+          "relative": 4.0181777568405094e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell35",
+          "numerator": 9.408413598389197e-10,
+          "denominator": 21.203854439085106,
+          "relative": 4.4371242150420776e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell36",
+          "numerator": 3.3210105042569397e-10,
+          "denominator": 21.197343637355576,
+          "relative": 1.5667106978463102e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell37",
+          "numerator": 3.714563753953087e-10,
+          "denominator": 21.19421137122593,
+          "relative": 1.7526312675149217e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell38",
+          "numerator": 8.107237462492306e-10,
+          "denominator": 21.195121963193063,
+          "relative": 3.825048743088687e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell39",
+          "numerator": 3.3697092994947615e-10,
+          "denominator": 21.2117217062873,
+          "relative": 1.588607160773732e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell40",
+          "numerator": 3.834419325900692e-10,
+          "denominator": 21.203303614785455,
+          "relative": 1.8084065556778997e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell41",
+          "numerator": 4.661885804314582e-11,
+          "denominator": 21.196995331706162,
+          "relative": 2.1993144459212104e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell42",
+          "numerator": 5.972994429857179e-10,
+          "denominator": 21.21986284515793,
+          "relative": 2.8148129294907912e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell43",
+          "numerator": 9.209198096111168e-11,
+          "denominator": 21.211087321968535,
+          "relative": 4.341690718784185e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell44",
+          "numerator": 1.667557384555744e-09,
+          "denominator": 21.194275222426803,
+          "relative": 7.867961357750096e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell45",
+          "numerator": 5.659362358782017e-10,
+          "denominator": 21.197598805051143,
+          "relative": 2.6698129400550106e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell46",
+          "numerator": 7.703769233073812e-10,
+          "denominator": 21.204235203618587,
+          "relative": 3.6331276082804126e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell47",
+          "numerator": 1.0963901044107636e-09,
+          "denominator": 21.212766701515477,
+          "relative": 5.168538926760721e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell48",
+          "numerator": 4.2454021124912293e-10,
+          "denominator": 21.194792354731344,
+          "relative": 2.003040200364842e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell49",
+          "numerator": 4.1225111065599427e-10,
+          "denominator": 21.194382800813464,
+          "relative": 1.9450960876302168e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell50",
+          "numerator": 4.8412909928870426e-11,
+          "denominator": 21.19797631525442,
+          "relative": 2.2838458355117456e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell51",
+          "numerator": 3.44662730654612e-10,
+          "denominator": 21.19869822745076,
+          "relative": 1.6258674327855615e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell52",
+          "numerator": 6.265105475964473e-11,
+          "denominator": 21.19462706941575,
+          "relative": 2.9559875979158603e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell53",
+          "numerator": 9.917211777463067e-11,
+          "denominator": 21.20527542309222,
+          "relative": 4.676766313850078e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell54",
+          "numerator": 5.787457151862122e-10,
+          "denominator": 21.201815895136694,
+          "relative": 2.729698805275287e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell55",
+          "numerator": 6.071343506852438e-10,
+          "denominator": 21.209924606270935,
+          "relative": 2.862501220328422e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell56",
+          "numerator": 9.1654501445517e-11,
+          "denominator": 21.21871612008848,
+          "relative": 4.319512119715131e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell57",
+          "numerator": 3.8075539171836807e-10,
+          "denominator": 21.196415620470145,
+          "relative": 1.79631971053945e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell58",
+          "numerator": 4.9448616432230864e-11,
+          "denominator": 21.202333468223753,
+          "relative": 2.332225200888394e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell59",
+          "numerator": 5.869937345590859e-11,
+          "denominator": 21.19409799528427,
+          "relative": 2.7696094199889665e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell60",
+          "numerator": 7.084443091597827e-10,
+          "denominator": 21.215931378441997,
+          "relative": 3.339209090201194e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell61",
+          "numerator": 8.261263027129515e-11,
+          "denominator": 21.22411405533734,
+          "relative": 3.892394757015552e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell62",
+          "numerator": 5.907633259169054e-11,
+          "denominator": 21.207760416565595,
+          "relative": 2.785599772503344e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell63",
+          "numerator": 9.029295818219409e-11,
+          "denominator": 21.228428513402612,
+          "relative": 4.253398131905404e-12,
+          "passed": true
+        }
+      ],
+      "packet_count": 1
+    },
+    "VOLUME2": {
+      "status": "VOLUME_NOT_QUALIFIED",
+      "source_sha": "4d50b46fe7c52ea1c5b42672a9d5077dcbba4655",
+      "result": {
+        "path": "benchmarks/artifacts/task042/v42/task042_v42_volume2_20261004T120220075025Z/result.json",
+        "sha256": "3010110eea18e1a97512f01ab004c8a32bf2efb69b7321cfd3122572710bb394",
+        "bytes": 67047
+      },
+      "MPI_size": 2,
+      "checks": [
+        {
+          "kind": "global_dual",
+          "numerator": 4.768953623117584e-07,
+          "denominator": 9201289705.463972,
+          "relative": 5.182918673113456e-17,
+          "passed": true,
+          "left": [
+            -2508466582.8652596,
+            41580742.94721078
+          ],
+          "right": [
+            -2508466582.86526,
+            41580742.94721079
+          ]
+        },
+        {
+          "kind": "zero",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "complex_linearity",
+          "numerator": 1.686618788839595e-08,
+          "denominator": 32122694.74870146,
+          "relative": 5.250551991463217e-16,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell0",
+          "numerator": 2.4335020483117493e-09,
+          "denominator": 21.218433932817415,
+          "relative": 1.1468810827494588e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell1",
+          "numerator": 2.284931466754639e-09,
+          "denominator": 21.223904025538054,
+          "relative": 1.0765839611813421e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell2",
+          "numerator": 6.728286307806351e-10,
+          "denominator": 21.229903738359013,
+          "relative": 3.169249559831693e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell3",
+          "numerator": 2.5141904598044673e-09,
+          "denominator": 21.228314870841,
+          "relative": 1.1843570604174212e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell4",
+          "numerator": 8.852599884120906e-09,
+          "denominator": 21.231999661311388,
+          "relative": 4.1694612025884557e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell5",
+          "numerator": 3.637800067514198e-09,
+          "denominator": 21.23168460626332,
+          "relative": 1.7133826801670986e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell6",
+          "numerator": 2.3212708000820915e-09,
+          "denominator": 21.231230152847044,
+          "relative": 1.0933284521767647e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell7",
+          "numerator": 5.4873610753978676e-09,
+          "denominator": 21.232235750499125,
+          "relative": 2.584448072204959e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell8",
+          "numerator": 8.326117947302107e-09,
+          "denominator": 21.22919151825887,
+          "relative": 3.9220136763762077e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell9",
+          "numerator": 2.0954906920311603e-09,
+          "denominator": 21.222745220952554,
+          "relative": 9.873796581049033e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell10",
+          "numerator": 1.2914309317629413e-08,
+          "denominator": 21.230588766886566,
+          "relative": 6.082878557645991e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell11",
+          "numerator": 1.3166983710632291e-08,
+          "denominator": 21.22511654019319,
+          "relative": 6.203491832753181e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell12",
+          "numerator": 9.524529984210488e-11,
+          "denominator": 21.21710935839106,
+          "relative": 4.489079932297033e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell13",
+          "numerator": 9.965827776418053e-09,
+          "denominator": 21.219862845196864,
+          "relative": 4.696461918307746e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell14",
+          "numerator": 9.209198096111168e-11,
+          "denominator": 21.211087321968535,
+          "relative": 4.341690718784185e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell15",
+          "numerator": 1.0170734542465459e-09,
+          "denominator": 21.205275423226855,
+          "relative": 4.7963227732119475e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell16",
+          "numerator": 1.7200687254522e-09,
+          "denominator": 21.221332096316715,
+          "relative": 8.105375843728228e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell17",
+          "numerator": 1.8679488616447323e-09,
+          "denominator": 21.215537921625906,
+          "relative": 8.80462644192798e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell18",
+          "numerator": 8.43977997073444e-09,
+          "denominator": 21.206751247392884,
+          "relative": 3.9797609130592365e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell19",
+          "numerator": 1.8299698315552736e-09,
+          "denominator": 21.20951316078659,
+          "relative": 8.628061463186391e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell20",
+          "numerator": 9.483046869808913e-09,
+          "denominator": 21.20146593168973,
+          "relative": 4.4728260302202256e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell21",
+          "numerator": 7.3967428064579396e-09,
+          "denominator": 21.195919857608008,
+          "relative": 3.4897012520091087e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell22",
+          "numerator": 1.5430739593983562e-09,
+          "denominator": 21.203854439154952,
+          "relative": 7.277327637888902e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell23",
+          "numerator": 6.303649627960627e-09,
+          "denominator": 21.19734363779382,
+          "relative": 2.9737922523091664e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell24",
+          "numerator": 1.0522959260263102e-08,
+          "denominator": 21.194211371673205,
+          "relative": 4.965015718550113e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell25",
+          "numerator": 1.0708014219160795e-09,
+          "denominator": 21.195121963198854,
+          "relative": 5.0521125746542756e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell26",
+          "numerator": 9.171480307325729e-09,
+          "denominator": 21.19479235489444,
+          "relative": 4.3272329135169807e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell27",
+          "numerator": 5.1592122148583135e-09,
+          "denominator": 21.19438280093088,
+          "relative": 2.4342356478678467e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell28",
+          "numerator": 1.0788980437224824e-09,
+          "denominator": 21.19797631525919,
+          "relative": 5.089627555371153e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell29",
+          "numerator": 1.2919086235230205e-08,
+          "denominator": 21.196415620470145,
+          "relative": 6.094939100341936e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell30",
+          "numerator": 1.835337014008668e-09,
+          "denominator": 21.20233346822338,
+          "relative": 8.656297273879531e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell31",
+          "numerator": 2.1545877039286358e-09,
+          "denominator": 21.207760416565595,
+          "relative": 1.0159430612228464e-10,
+          "passed": false
+        }
+      ],
+      "packet_count": 2
+    },
+    "VOLUME4": {
+      "status": "VOLUME_NOT_QUALIFIED",
+      "source_sha": "4d50b46fe7c52ea1c5b42672a9d5077dcbba4655",
+      "result": {
+        "path": "benchmarks/artifacts/task042/v42/task042_v42_volume4_20261004T120257263805Z/result.json",
+        "sha256": "ed61bf2375c199ed732fff5284040e71002eb71e08791c1d2fa11d986193f4e1",
+        "bytes": 106949
+      },
+      "MPI_size": 4,
+      "checks": [
+        {
+          "kind": "global_dual",
+          "numerator": 9.53936214919011e-07,
+          "denominator": 9201289705.46397,
+          "relative": 1.0367418540821928e-16,
+          "passed": true,
+          "left": [
+            -2508466582.86526,
+            41580742.94721081
+          ],
+          "right": [
+            -2508466582.865259,
+            41580742.94721079
+          ]
+        },
+        {
+          "kind": "zero",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "complex_linearity",
+          "numerator": 1.4531788819683925e-08,
+          "denominator": 28567470.06156982,
+          "relative": 5.086830856342686e-16,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell0",
+          "numerator": 2.4335020483117493e-09,
+          "denominator": 21.218433932817415,
+          "relative": 1.1468810827494588e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell1",
+          "numerator": 2.284931466754639e-09,
+          "denominator": 21.223904025538054,
+          "relative": 1.0765839611813421e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell2",
+          "numerator": 6.728286307806351e-10,
+          "denominator": 21.229903738359013,
+          "relative": 3.169249559831693e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell3",
+          "numerator": 2.928614391039247e-09,
+          "denominator": 21.228314870841,
+          "relative": 1.3795793066278484e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell4",
+          "numerator": 8.852599884120906e-09,
+          "denominator": 21.231999661311388,
+          "relative": 4.1694612025884557e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell5",
+          "numerator": 5.996023744451563e-10,
+          "denominator": 21.23168460586303,
+          "relative": 2.8240923203973127e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell6",
+          "numerator": 2.718464054796993e-09,
+          "denominator": 21.231230152847044,
+          "relative": 1.2804081700524805e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell7",
+          "numerator": 1.57911699024186e-08,
+          "denominator": 21.232235750240722,
+          "relative": 7.437356144766604e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell8",
+          "numerator": 8.327945065548655e-09,
+          "denominator": 21.22919151825887,
+          "relative": 3.9228743395083745e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell9",
+          "numerator": 7.927114240632841e-10,
+          "denominator": 21.222745220934627,
+          "relative": 3.735197382859473e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell10",
+          "numerator": 4.947629716935829e-10,
+          "denominator": 21.23058876648266,
+          "relative": 2.3304251103703696e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell11",
+          "numerator": 1.2581004605490042e-08,
+          "denominator": 21.225116540913756,
+          "relative": 5.927413675792435e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell12",
+          "numerator": 9.536537356805627e-10,
+          "denominator": 21.217109358539833,
+          "relative": 4.494739219962212e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell13",
+          "numerator": 7.199327770104405e-09,
+          "denominator": 21.21986284515793,
+          "relative": 3.3927305857903734e-10,
+          "passed": false
+        },
+        {
+          "kind": "internal_balance_cell14",
+          "numerator": 2.0067274800100375e-09,
+          "denominator": 21.211087322007483,
+          "relative": 9.46074781337572e-11,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell15",
+          "numerator": 1.0232058075749399e-09,
+          "denominator": 21.205275423134864,
+          "relative": 4.825241771953722e-11,
+          "passed": true
+        }
+      ],
+      "packet_count": 4
+    },
+    "RECOVERY2": {
+      "status": "FINITE_DISTRIBUTED_RECOVERY_SAVED",
+      "source_sha": "2a504d0b50165811c40a935d389dda7a42cb369c",
+      "result": {
+        "path": "benchmarks/artifacts/task042/v42/task042_v42_recovery2_20261004T121415519000Z/result.json",
+        "sha256": "01a5330a14ae8d7b70ad29f669c31cc710a15a96f3735a97273625b7ca2631fc",
+        "bytes": 53582
+      },
+      "MPI_size": 2,
+      "checks": [
+        {
+          "kind": "a_volume",
+          "numerator": 1.245640161856633e-11,
+          "denominator": 2206578.720702875,
+          "relative": 5.645119977681339e-18,
+          "passed": true
+        },
+        {
+          "kind": "a_adjoint_volume",
+          "numerator": 9.425626251058357e-12,
+          "denominator": 2206578.7328350157,
+          "relative": 4.271602055616796e-18,
+          "passed": true
+        },
+        {
+          "kind": "a_action",
+          "numerator": 1.2456928511012849e-11,
+          "denominator": 2206578.724743297,
+          "relative": 5.6453587498728514e-18,
+          "passed": true
+        },
+        {
+          "kind": "a_adjoint",
+          "numerator": 9.425626251058357e-12,
+          "denominator": 2206578.7274828968,
+          "relative": 4.271602065977687e-18,
+          "passed": true
+        },
+        {
+          "kind": "b_volume",
+          "numerator": 1.7076855119175046e-11,
+          "denominator": 2211660.908858927,
+          "relative": 7.721280893817304e-18,
+          "passed": true
+        },
+        {
+          "kind": "b_adjoint_volume",
+          "numerator": 7.586910521230484e-12,
+          "denominator": 2211660.8968185796,
+          "relative": 3.4304131036290734e-18,
+          "passed": true
+        },
+        {
+          "kind": "b_action",
+          "numerator": 1.7076855119175046e-11,
+          "denominator": 2211660.897302137,
+          "relative": 7.721280934164004e-18,
+          "passed": true
+        },
+        {
+          "kind": "b_adjoint",
+          "numerator": 7.586910521230484e-12,
+          "denominator": 2211660.907748307,
+          "relative": 3.4304130866764383e-18,
+          "passed": true
+        },
+        {
+          "kind": "zero_volume",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "zero_adjoint_volume",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "zero_action",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "zero_adjoint",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "scale_volume",
+          "numerator": 6.889041618529332e-12,
+          "denominator": 2167619.6651824513,
+          "relative": 3.1781597709160258e-18,
+          "passed": true
+        },
+        {
+          "kind": "scale_adjoint_volume",
+          "numerator": 9.044988548770245e-12,
+          "denominator": 2167619.6771003883,
+          "relative": 4.172774700435305e-18,
+          "passed": true
+        },
+        {
+          "kind": "scale_action",
+          "numerator": 6.889070932906171e-12,
+          "denominator": 2167619.6691515357,
+          "relative": 3.1781732888605583e-18,
+          "passed": true
+        },
+        {
+          "kind": "scale_adjoint",
+          "numerator": 9.045000410035982e-12,
+          "denominator": 2167619.671842766,
+          "relative": 4.172780182579966e-18,
+          "passed": true
+        },
+        {
+          "kind": "u_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 162.73763880482582,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "u2_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 165.1053424381149,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "u_difference_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 229.91256339752877,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "u_zero_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 11.258172257048646,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "homogeneous_recovery",
+          "numerator": 1.0558854493446752e-13,
+          "denominator": 229.53423768503828,
+          "relative": 4.600121794438081e-16,
+          "passed": true
+        },
+        {
+          "kind": "compressed_nonzero_f_g",
+          "numerator": 9.192026506475574e-15,
+          "denominator": 222.69304793922794,
+          "relative": 4.127666575825951e-17,
+          "passed": true
+        },
+        {
+          "kind": "rFE_original_reference",
+          "numerator": 7.982066950083298e-09,
+          "denominator": 46428.77933833816,
+          "relative": 1.7192067213130835e-13,
+          "passed": true
+        },
+        {
+          "kind": "rnative_original_reference",
+          "numerator": 7.98665377756414e-09,
+          "denominator": 46429.314622175385,
+          "relative": 1.720174816827812e-13,
+          "passed": true
+        },
+        {
+          "kind": "native_coupled_u_original_reference",
+          "numerator": 1.1362834084070377e-12,
+          "denominator": 46428.93946937146,
+          "relative": 2.447360248572183e-17,
+          "passed": true
+        },
+        {
+          "kind": "complete_12_port",
+          "numerator": 9.472266760366949e-14,
+          "denominator": 8.547351087723323,
+          "relative": 1.1082107969066692e-14,
+          "passed": true
+        },
+        {
+          "kind": "native_augmented_identity",
+          "numerator": 2.0708141862743083e-12,
+          "denominator": 46429.31462217534,
+          "relative": 4.46014377581455e-17,
+          "passed": true
+        },
+        {
+          "kind": "normalized_once_D",
+          "numerator": 9.475827834079803e-14,
+          "denominator": 0.4286066195515161,
+          "relative": 2.2108449570832778e-13,
+          "passed": true
+        },
+        {
+          "kind": "actual_native_MPC_recovery",
+          "numerator": 0.0,
+          "denominator": 165.44074360393765,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "actual_slave_zero",
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell3",
+          "numerator": 2.2026248721400485e-10,
+          "denominator": 30.363855155501327,
+          "relative": 7.25410149949611e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell4",
+          "numerator": 2.417876149093434e-10,
+          "denominator": 29.67069968549328,
+          "relative": 8.149036506461599e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell6",
+          "numerator": 2.5567358212732266e-10,
+          "denominator": 29.855148469700374,
+          "relative": 8.563802065389246e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell7",
+          "numerator": 2.628971668040624e-10,
+          "denominator": 29.76449239138362,
+          "relative": 8.832576861958083e-12,
+          "passed": true
+        }
+      ],
+      "packet_count": 2
+    },
+    "RECOVERY4": {
+      "status": "FINITE_DISTRIBUTED_RECOVERY_SAVED",
+      "source_sha": "2a504d0b50165811c40a935d389dda7a42cb369c",
+      "result": {
+        "path": "benchmarks/artifacts/task042/v42/task042_v42_recovery4_20261004T121730402934Z/result.json",
+        "sha256": "d3e21dad840694abd85e5836674b0586e0a3e91465ae696d30412955fa82a680",
+        "bytes": 97728
+      },
+      "MPI_size": 4,
+      "checks": [
+        {
+          "kind": "a_volume",
+          "numerator": 1.2458379376572445e-11,
+          "denominator": 1423267.9730005846,
+          "relative": 8.753361709044321e-18,
+          "passed": true
+        },
+        {
+          "kind": "a_adjoint_volume",
+          "numerator": 9.425797653191383e-12,
+          "denominator": 1423267.9918097784,
+          "relative": 6.62264429990157e-18,
+          "passed": true
+        },
+        {
+          "kind": "a_action",
+          "numerator": 1.2458387481492032e-11,
+          "denominator": 1423267.9723962904,
+          "relative": 8.753367407345239e-18,
+          "passed": true
+        },
+        {
+          "kind": "a_adjoint",
+          "numerator": 9.425797653191383e-12,
+          "denominator": 1423267.9903716492,
+          "relative": 6.622644306593365e-18,
+          "passed": true
+        },
+        {
+          "kind": "b_volume",
+          "numerator": 1.7076488513772592e-11,
+          "denominator": 1638938.7588830814,
+          "relative": 1.0419235265026028e-17,
+          "passed": true
+        },
+        {
+          "kind": "b_adjoint_volume",
+          "numerator": 7.587722326828634e-12,
+          "denominator": 1638938.742635271,
+          "relative": 4.629655843407689e-18,
+          "passed": true
+        },
+        {
+          "kind": "b_action",
+          "numerator": 1.7076488513772592e-11,
+          "denominator": 1638938.7534553898,
+          "relative": 1.0419235299531525e-17,
+          "passed": true
+        },
+        {
+          "kind": "b_adjoint",
+          "numerator": 7.587722326828634e-12,
+          "denominator": 1638938.7471573383,
+          "relative": 4.629655830633805e-18,
+          "passed": true
+        },
+        {
+          "kind": "zero_volume",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "zero_adjoint_volume",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "zero_action",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "zero_adjoint",
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "relative": null,
+          "passed": true
+        },
+        {
+          "kind": "scale_volume",
+          "numerator": 6.903800286849244e-12,
+          "denominator": 1398138.9461227634,
+          "relative": 4.9378499225663205e-18,
+          "passed": true
+        },
+        {
+          "kind": "scale_adjoint_volume",
+          "numerator": 9.058553255997149e-12,
+          "denominator": 1398138.9645998648,
+          "relative": 6.479007799192284e-18,
+          "passed": true
+        },
+        {
+          "kind": "scale_action",
+          "numerator": 6.903814912719738e-12,
+          "denominator": 1398138.9455291382,
+          "relative": 4.9378603856192045e-18,
+          "passed": true
+        },
+        {
+          "kind": "scale_adjoint",
+          "numerator": 9.058565099501287e-12,
+          "denominator": 1398138.963187127,
+          "relative": 6.479016276645234e-18,
+          "passed": true
+        },
+        {
+          "kind": "u_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 118.19507804390554,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "u2_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 118.0232871397816,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "u_difference_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 169.43777707630346,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "u_zero_immutable_reference",
+          "numerator": 0.0,
+          "denominator": 8.482028775615944,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "homogeneous_recovery",
+          "numerator": 7.702713831672087e-14,
+          "denominator": 169.40558051419944,
+          "relative": 4.546906783290089e-16,
+          "passed": true
+        },
+        {
+          "kind": "compressed_nonzero_f_g",
+          "numerator": 9.176592745019022e-15,
+          "denominator": 222.69304793922794,
+          "relative": 4.120736066948654e-17,
+          "passed": true
+        },
+        {
+          "kind": "rFE_original_reference",
+          "numerator": 4.287362063219228e-09,
+          "denominator": 30902.00160253564,
+          "relative": 1.3874059416485926e-13,
+          "passed": true
+        },
+        {
+          "kind": "rnative_original_reference",
+          "numerator": 4.288761683759977e-09,
+          "denominator": 30903.5200410257,
+          "relative": 1.3877906717637565e-13,
+          "passed": true
+        },
+        {
+          "kind": "native_coupled_u_original_reference",
+          "numerator": 1.1362999613901077e-12,
+          "denominator": 30901.441119959592,
+          "relative": 3.677174656609004e-17,
+          "passed": true
+        },
+        {
+          "kind": "complete_12_port",
+          "numerator": 9.472266760366949e-14,
+          "denominator": 8.547351087723323,
+          "relative": 1.1082107969066692e-14,
+          "passed": true
+        },
+        {
+          "kind": "native_augmented_identity",
+          "numerator": 1.401613818030289e-12,
+          "denominator": 30903.52004102556,
+          "relative": 4.5354503829000546e-17,
+          "passed": true
+        },
+        {
+          "kind": "normalized_once_D",
+          "numerator": 9.476942970441151e-14,
+          "denominator": 0.4286066195515161,
+          "relative": 2.2111051342038537e-13,
+          "passed": true
+        },
+        {
+          "kind": "actual_native_MPC_recovery",
+          "numerator": 0.0,
+          "denominator": 119.58230329533458,
+          "relative": 0.0,
+          "passed": true
+        },
+        {
+          "kind": "actual_slave_zero",
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell3",
+          "numerator": 2.2026248721400485e-10,
+          "denominator": 30.363855155501327,
+          "relative": 7.25410149949611e-12,
+          "passed": true
+        },
+        {
+          "kind": "internal_balance_cell4",
+          "numerator": 2.417876149093434e-10,
+          "denominator": 29.67069968549328,
+          "relative": 8.149036506461599e-12,
+          "passed": true
+        }
+      ],
+      "packet_count": 4
+    }
+  },
+  "A_recovery_failures_preserved": true,
+  "B_local_checks_pass_but_independent_CSR_internal_balance_fails": true,
+  "no_complete_recovery_qualification": true
+}

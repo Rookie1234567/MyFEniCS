@@ -1,3 +1,9 @@
+# V42测试与真实数值限制
+
+最终clean实现上61项接线／反例测试通过；真实MPI1/2/4原作用通过，独立内部恢复FAIL保留。15文档合同、Ruff、compile及ABI/getter另列；测试通过不等于物理求解通过。pre13提交时序和全部失败费用保留，pre14独立重验。无CI或全仓pytest声明，GitHub视觉NOT_VERIFIED。[测试](records/tests_v42.json) · [文档](records/documentation_checks_v42.json)。
+
+<!-- V42-LATEST-END -->
+
 # V41测试与独立验收
 
 最终已提交source上的38项相关测试与15项文档合同测试通过，ABI/真实compile/Ruff、真实native MPI1/2/4及全部保存向量checker通过。缺rank/owner/phase/face/方向/散布反例拒绝；失败全部保留。GitHub视觉NOT_VERIFIED，无CI声明。[测试](records/tests_v41.json) · [文档](records/documentation_checks_v41.json)。旧历史正文保留。

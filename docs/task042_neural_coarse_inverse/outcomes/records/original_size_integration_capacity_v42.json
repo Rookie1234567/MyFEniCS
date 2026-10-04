@@ -1,0 +1,73 @@
+{
+  "status": "CAPACITY_AND_NEURAL_BOUNDARY_RECORDED",
+  "parents": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_check_20261004T123031924925Z/result.json",
+      "sha256": "a758fc9e4304e5da511a26fb8eb400e92e6fdce6c0ca61562415780b7198bf84"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_target_gate_20261004T123937696613Z/result.json",
+      "sha256": "d008741da7e638759c9b855e72ed0dfc7f9f93fabb9139a2b32fa09260846672"
+    }
+  ],
+  "actual": {
+    "finite_action_passed": true,
+    "B_recovery_passed": false,
+    "A_recovery_passed": false,
+    "target_action": "NOT_RUN",
+    "full_PDE": "NOT_QUALIFIED",
+    "NN20": "NOT_DEMONSTRATED"
+  },
+  "payload_scenario_bytes": {
+    "one_native_vector_including_slaves": 5532337056,
+    "one_canonical_trace_plus_interior": 5506942464,
+    "four_canonical_vectors": 22027769856,
+    "raw270_matrices": 3360631680,
+    "rank_private306_matrices": 3808715904,
+    "unbuilt_oriented858_matrices": 10679340672
+  },
+  "target_peak_RSS_prediction": "unknown; payload is not a conservative RSS bound",
+  "target_setup_action_recovery_IO_seconds": "unknown; finite native numbering/router is not the target decoder",
+  "48h_K_budget": "unknown: T_setup, T_solve_action, T_PC, T_communication, T_recovery, T_audit, T_IO and required K missing",
+  "neural_scope": "FE action/adjoint and original residual are prerequisites for checking neural fields, not neural benefits",
+  "NN20_required": {
+    "correctness": "same full original equation, fields/channels/power",
+    "time": "T_NN_total <= 0.8*T_best_qualified_nonNN_total; memory compliant",
+    "memory": "M_NN_simultaneous_peak <= 0.8*M_best_qualified_nonNN_peak; time compliant",
+    "included": [
+      "data",
+      "training",
+      "construction",
+      "load",
+      "inference",
+      "correction",
+      "recovery",
+      "audit",
+      "IO"
+    ],
+    "best_qualified_full_nonNN_baseline": "unknown",
+    "current_neural_increment": "none"
+  },
+  "remaining_solver_fields": [
+    "target entity-volume backend",
+    "qualified target recovery",
+    "original physical incident RHS",
+    "matched PC/convergence strategy",
+    "h/p/mode accuracy",
+    "full original residual and fields/power"
+  ],
+  "next_minimum_proposal_only": "one frozen neural-trace to canonical-entity/original-residual/adjoint-gradient integration on the trusted finite action interfaces, with the unresolved recovery gate explicit and same-correctness non-neural cost control; no automatic training",
+  "reasons_not_run": [
+    "FINITE_NUMERICAL_GATE_FAILED",
+    "OTHER_HEAVY_PRESENT",
+    "MACHINE_EXCLUSIVITY_NOT_VERIFIED",
+    "TARGET_CANONICAL_VOLUME_BACKEND_NOT_IMPLEMENTED",
+    "CONSERVATIVE_TARGET_RSS_PREDICTION_UNKNOWN"
+  ],
+  "old_costs": "retain supervised lower bound and unmetered unknown",
+  "stage": "CAPACITY",
+  "source_sha": "a7c6404265fda804392beecce60d9b6c12953f26",
+  "elapsed_worker_seconds": 0.816807908937335,
+  "input_sha256": "1d20cf9939786c55c679489ccfa66f505bd432d073cc3b4de0e29e7f19581dbd",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

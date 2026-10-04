@@ -1,0 +1,102 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/native_entity_qualification.py",
+        "src/solvers/native_entity_dependencies.py",
+        "src/solvers/native_entity_adapter.py"
+      ],
+      "numerical_behavior": "fail-closed stage/live identity and correct inverse dual; requires review, no ordinary solver change",
+      "dependencies": [
+        "src/test/test_distributed_volume.py",
+        "src/test/test_native_entities.py"
+      ],
+      "evidence": "61 focused plus actual finite MPI1/2/4; full recovery not qualified",
+      "merge": "not approved"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/io/port_preparation.py"
+      ],
+      "numerical_behavior": "explicit V42 registry and inherited supervision only",
+      "dependencies": [
+        "scripts/run_case.py",
+        "scripts/activate_task042.sh"
+      ],
+      "evidence": "15 one-run schema registration tests, actual MPI manifests and process-tree cleanup",
+      "merge": "not approved"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_distributed_volume.py",
+        "benchmarks/check_frozen_volume_dependencies.py",
+        "benchmarks/qualify_distributed_volume.py"
+      ],
+      "numerical_behavior": "independent saved arrays, original CSR/internal balance, literal classes and provenance",
+      "dependencies": [
+        "src/solvers/distributed_volume_scope.py",
+        "src/test/test_distributed_volume.py"
+      ],
+      "evidence": "saved evidence numerical negative retained; native oracle independent",
+      "merge": "only after review"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v42.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*_v42.json",
+        "docs/task042_neural_coarse_inverse/outcomes/records/v42_raw/*"
+      ],
+      "numerical_behavior": "none",
+      "dependencies": [
+        "raw/source/array hash references"
+      ],
+      "evidence": "complete fees and failures; no whole-branch merge",
+      "merge": "possible documentation selection after review"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/distributed_entity_volume.py",
+        "src/solvers/distributed_saved_recovery.py",
+        "src/solvers/distributed_recovery_study.py",
+        "src/solvers/distributed_volume_study.py",
+        "src/solvers/distributed_volume_delivery.py",
+        "src/solvers/native_witness_csr.py",
+        "src/solvers/distributed_volume_scope.py",
+        "input/task042_neural_coarse_inverse/v42_*.dat"
+      ],
+      "numerical_behavior": "finite original action and recovery research; target stages not implemented/admitted",
+      "dependencies": [
+        "immutable V40/V41 native packets and local LU",
+        "hcurl_affine_isotropic_tensor"
+      ],
+      "evidence": "A/B recovery gate FAIL; no full PDE pass",
+      "merge": "do not promote to production/default"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v42/**",
+        "results/task042/task042_v42*/**",
+        "tmp/task042/v42/**"
+      ],
+      "numerical_behavior": "large arrays/oracle CSR/local factors/runtime caches and implementation scaffolds",
+      "dependencies": [],
+      "evidence": "refer by hashes; raw compact archives selected only",
+      "merge": "never commit scientific large payloads/caches"
+    }
+  ],
+  "recommended_order_if_later_authorized": [
+    "review safety/core",
+    "runner and checker",
+    "compact evidence"
+  ],
+  "fresh_full_PDE_evidence": "NOT_RUN",
+  "merge_approval": false,
+  "ordinary_default_unchanged": true
+}

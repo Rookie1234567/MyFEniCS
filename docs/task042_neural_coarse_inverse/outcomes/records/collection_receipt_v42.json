@@ -1,0 +1,39 @@
+{
+  "clock": {
+    "start_utc": "2026-10-04T11:23:46.596679260+00:00",
+    "start_utc_seconds": 1791113026.596679,
+    "start_monotonic": 1038021.45,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "31774b6282f61280fe33c162f9f48bf4ea526ce6",
+    "purpose": "first read-only observation; immutable V42 anchor; limits supplied by full Review V39",
+    "total_seconds": 86400,
+    "heavy_seconds": 82800,
+    "label": "V42",
+    "total_loaded_seconds": 14400,
+    "finite_seconds": 6000,
+    "target_seconds": 7200,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "heavy_limit_seconds": 82800,
+    "total_limit_seconds": 86400,
+    "observed_utc": "2026-10-04T12:40:57.837865+00:00",
+    "observed_monotonic": 1042652.698733271,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4631.24873327103,
+    "heavy_remaining_seconds": 78168.75126672897,
+    "total_remaining_seconds": 81768.75126672897
+  },
+  "seconds": 15.075652417959645,
+  "raw_files": 693,
+  "array_files": 33,
+  "all_member_hashes_verified": true,
+  "source": "a7c6404265fda804392beecce60d9b6c12953f26",
+  "storage_with_1GiB_reserve": {
+    "new_bytes": 888687620,
+    "task_artifact_bytes": 18026876314,
+    "free_bytes": 3356690452480,
+    "reserve_bytes": 1073741824
+  }
+}

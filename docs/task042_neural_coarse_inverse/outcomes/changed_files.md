@@ -1,3 +1,9 @@
+# V42变化与依赖范围
+
+数值核进入src/solvers，复用原runner／监督／one-run；新checker独立重算冻结数组，修复缺阶段放行及live消费依赖，不修改ordinary默认。A原作用可信、A/B内部恢复未资格化，目标backend未实现；全部研究opt-in，无神经训练或收益声明。[精确清单](records/changed_files_v42.json) · [依赖组](records/selective_merge_manifest_v42.json)。旧authority/raw及全文后缀保持。
+
+<!-- V42-LATEST-END -->
+
 # V41变更与依赖组
 
 opt-in实体协议/适配、阶段身份、真实拓扑研究核进src/solvers；runner复用旧监督，独立checker只重算保存数组，十个one-run入口明确stage。普通默认、原方程和旧证据不变，不碰dot/其他分支。[清单](records/changed_files_v41.json) · [依赖组](records/selective_merge_manifest_v41.json)。无production或merge批准，旧历史保留。

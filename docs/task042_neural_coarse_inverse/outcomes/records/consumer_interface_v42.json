@@ -1,0 +1,61 @@
+{
+  "status": "PARTIAL_INTERFACES_FROZEN_AFTER_NUMERICAL_GATE",
+  "passed": false,
+  "already_measured_consumers": [
+    {
+      "stage": "VOLUME1",
+      "source": "4d50b46fe7c52ea1c5b42672a9d5077dcbba4655",
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_volume1_20261004T120139934790Z/result.json",
+      "sha256": "c4a6c17e85430d1398d53a5af40e5079e8b4c57212b89ca0ff82467bfbab6676",
+      "MPI_size": 1,
+      "status": "VOLUME_NOT_QUALIFIED"
+    },
+    {
+      "stage": "VOLUME2",
+      "source": "4d50b46fe7c52ea1c5b42672a9d5077dcbba4655",
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_volume2_20261004T120220075025Z/result.json",
+      "sha256": "3010110eea18e1a97512f01ab004c8a32bf2efb69b7321cfd3122572710bb394",
+      "MPI_size": 2,
+      "status": "VOLUME_NOT_QUALIFIED"
+    },
+    {
+      "stage": "VOLUME4",
+      "source": "4d50b46fe7c52ea1c5b42672a9d5077dcbba4655",
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_volume4_20261004T120257263805Z/result.json",
+      "sha256": "ed61bf2375c199ed732fff5284040e71002eb71e08791c1d2fa11d986193f4e1",
+      "MPI_size": 4,
+      "status": "VOLUME_NOT_QUALIFIED"
+    },
+    {
+      "stage": "RECOVERY2",
+      "source": "2a504d0b50165811c40a935d389dda7a42cb369c",
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_recovery2_20261004T121415519000Z/result.json",
+      "sha256": "01a5330a14ae8d7b70ad29f669c31cc710a15a96f3735a97273625b7ca2631fc",
+      "MPI_size": 2,
+      "status": "FINITE_DISTRIBUTED_RECOVERY_SAVED"
+    },
+    {
+      "stage": "RECOVERY4",
+      "source": "2a504d0b50165811c40a935d389dda7a42cb369c",
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/task042_v42_recovery4_20261004T121730402934Z/result.json",
+      "sha256": "d3e21dad840694abd85e5836674b0586e0a3e91465ae696d30412955fa82a680",
+      "MPI_size": 4,
+      "status": "FINITE_DISTRIBUTED_RECOVERY_SAVED"
+    }
+  ],
+  "volume_action_passed": true,
+  "B_original_CSR_internal_balance_passed": false,
+  "original": "NativeDistributedAction.apply_original / SavedRecoveryConsumer.apply_original",
+  "adjoint": "apply_original_adjoint / apply_original(adjoint=True)",
+  "finite_recover": "SavedRecoveryConsumer.recover(z, full_rhs); NOT_QUALIFIED after independent balance",
+  "residual": "original r_FE-C*r_port; retained nonzero affine particular solution",
+  "new_action_calls": 0,
+  "new_LU": 0,
+  "target_callable": false,
+  "new_deploy_replay": "NOT_RUN_AFTER_TRUE_NUMERICAL_STOP",
+  "stage": "DEPLOY",
+  "source_sha": "a7c6404265fda804392beecce60d9b6c12953f26",
+  "elapsed_worker_seconds": 1.3915650490671396,
+  "input_sha256": "155466a53ddb1ac91cc75c26616ed308c7ef2d243d5373bd5b2077750667d6d9",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

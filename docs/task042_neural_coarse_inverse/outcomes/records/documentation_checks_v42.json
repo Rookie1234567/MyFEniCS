@@ -1,0 +1,212 @@
+{
+  "status": "LOCAL_EXACT_REVIEW_AND_NEW_RESULT_TABLE_MATH_LINK_HISTORY_PASS",
+  "actual_expected_reviews": [
+    "review_report_v38.md",
+    "review_report_v39.md"
+  ],
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v38.md",
+      "sha256": "e5b9a19c0cc747cc2e591afb829167cf29da71288e9af19269c31410c5b5938d",
+      "bytes": 28781,
+      "scope": "full exact file",
+      "tables": [
+        {
+          "line": 15,
+          "columns": 2
+        },
+        {
+          "line": 35,
+          "columns": 3
+        },
+        {
+          "line": 59,
+          "columns": 3
+        },
+        {
+          "line": 87,
+          "columns": 2
+        },
+        {
+          "line": 148,
+          "columns": 2
+        }
+      ],
+      "math_fences": [],
+      "links": 15,
+      "local_links": "PASS",
+      "actual_expected_filename": "review_report_v38.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v39.md",
+      "sha256": "39fd49939207f6014a40ce8b85af65cb4917e34050c778682866b3722673c314",
+      "bytes": 30916,
+      "scope": "full exact file",
+      "tables": [
+        {
+          "line": 15,
+          "columns": 2
+        },
+        {
+          "line": 33,
+          "columns": 3
+        },
+        {
+          "line": 75,
+          "columns": 3
+        },
+        {
+          "line": 94,
+          "columns": 2
+        },
+        {
+          "line": 171,
+          "columns": 2
+        }
+      ],
+      "math_fences": [
+        162
+      ],
+      "links": 18,
+      "local_links": "PASS",
+      "actual_expected_filename": "review_report_v39.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v42.md",
+      "sha256": "8e9620c860288b754c6e7211946f800ee44fd32b07e165a9c5a3abc80be8925e",
+      "bytes": 4044,
+      "scope": "full exact file",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 2
+        }
+      ],
+      "math_fences": [],
+      "links": 11,
+      "local_links": "PASS",
+      "actual_expected_filename": "response_v42.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/distributed_volume_recovery_v42.md",
+      "sha256": "1612f4d15a026d51719215305ab9f0cbfd33787a86c2cba73817a7a5a0c4845a",
+      "bytes": 11562,
+      "scope": "full exact file",
+      "tables": [
+        {
+          "line": 9,
+          "columns": 2
+        },
+        {
+          "line": 24,
+          "columns": 3
+        },
+        {
+          "line": 44,
+          "columns": 3
+        },
+        {
+          "line": 56,
+          "columns": 3
+        }
+      ],
+      "math_fences": [
+        69
+      ],
+      "links": 14,
+      "local_links": "PASS",
+      "actual_expected_filename": "distributed_volume_recovery_v42.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "sha256": "5d0f36e954dd317d42cc6533b68c03628cff02c376fe3f65fdd163b03bcde147",
+      "bytes": 62093,
+      "scope": "new prefix only; old suffix byte-exact",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "math_fences": [],
+      "links": 6,
+      "local_links": "PASS",
+      "actual_expected_filename": "README.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "sha256": "5b3a4d583774dbaee341b02e9aee4252810e8d6679f10d3a0a7b1c3bb3f828cc",
+      "bytes": 120691,
+      "scope": "new prefix only; old suffix byte-exact",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "math_fences": [],
+      "links": 6,
+      "local_links": "PASS",
+      "actual_expected_filename": "summary.md"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "a042a3de95d7d9d6440d6a52348b952063d1c27f686ff97927419e1027f51070",
+      "bytes": 246732,
+      "scope": "new prefix only; old suffix byte-exact",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "math_fences": [],
+      "links": 6,
+      "local_links": "PASS",
+      "actual_expected_filename": "development_progress.md"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "5ed8f48c11b392871f830a15de22ec099336899024fde23c03946b43a4e87d5a",
+      "bytes": 280525,
+      "scope": "new prefix only; old suffix byte-exact",
+      "tables": [
+        {
+          "line": 5,
+          "columns": 3
+        }
+      ],
+      "math_fences": [],
+      "links": 6,
+      "local_links": "PASS",
+      "actual_expected_filename": "development_model_registry.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "sha256": "554277c667f2d2be6dd89bc59c1662c4b08e68aa40482a8da19bc192a2ffe1fb",
+      "bytes": 68393,
+      "scope": "new prefix only; old suffix byte-exact",
+      "tables": [],
+      "math_fences": [],
+      "links": 2,
+      "local_links": "PASS",
+      "actual_expected_filename": "test_summary.md"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "sha256": "a6ed34d3771e5f8b53e4516855049ea69110645cfbffd6bb457fed955852d4b2",
+      "bytes": 67864,
+      "scope": "new prefix only; old suffix byte-exact",
+      "tables": [],
+      "math_fences": [],
+      "links": 2,
+      "local_links": "PASS",
+      "actual_expected_filename": "changed_files.md"
+    }
+  ],
+  "documentation_tests": 15,
+  "GitHub_visual": "NOT_VERIFIED",
+  "GitHub_fetch": "exact Review V39 page unavailable; no visual evidence",
+  "GitHub_URL": "https://github.com/Rookie1234567/MyFEniCS/blob/31774b6282f61280fe33c162f9f48bf4ea526ce6/docs/task042_neural_coarse_inverse/review_report_v39.md",
+  "CI": "NOT_RUN"
+}
