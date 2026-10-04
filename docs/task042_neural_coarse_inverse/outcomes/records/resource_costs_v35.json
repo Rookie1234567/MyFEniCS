@@ -1,0 +1,348 @@
+{
+  "measured_snapshot_UTC": "2026-10-04T01:36:06.196304+00:00",
+  "final_auxiliary_pending": false,
+  "actor_supervised_seconds": 188.16208866692614,
+  "auxiliary_supervised_seconds": 56.7378578648204,
+  "paid_probe_seconds": 16.63980286079459,
+  "new_supervised_probe_seconds": 261.5397493925411,
+  "limits": {
+    "total": 900,
+    "actor": 600,
+    "auxiliary": 250,
+    "probe": 20,
+    "cleanup_reserved": 30
+  },
+  "prior_closed_diagnostic_seconds": 212.19044355582446,
+  "review_measured_auxiliary_seconds": 3.666822421,
+  "combined_diagnostic_review_V35_lower_seconds": 477.3970153693656,
+  "historical_formal_lower_seconds": 77161.55713859801,
+  "historical_plus_new_formal_lower_seconds": 77349.71922726494,
+  "complete_historical_auxiliary_setup_N1": "UNKNOWN; do not double add lineage/campaign subsets",
+  "calendar_start": {
+    "schema": "task042.v35.immutable-window",
+    "start_utc": "2026-10-04T00:43:44.120839067+00:00",
+    "start_monotonic": 999618.98,
+    "monotonic_precision_seconds": 0.01,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_seconds": 86400,
+    "heavy_seconds": 82800,
+    "review_sha": "e1926a9cb42329276da4a26f4304f71cbbf97198",
+    "handoff": "review-execution-handoff-20261004-v32",
+    "prior_closed_seconds": 212.19044355582446,
+    "review_auxiliary_seconds": 3.666822421,
+    "numeric_probe_cap_seconds": 900,
+    "actor_cap_seconds": 600,
+    "auxiliary_cap_seconds": 250,
+    "probe_cap_seconds": 20,
+    "cleanup_reserve_seconds": 30
+  },
+  "calendar_elapsed_seconds": 3142.0771852170583,
+  "child_cleanup": true,
+  "tree_peak_bytes": 2108018688,
+  "own_swap_peak_bytes": 0,
+  "GPU_VRAM_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "cgroup_kernel_hard_limit": "NOT_AVAILABLE; sampled 0.5s enforced stop",
+  "planning": {
+    "qualified": true,
+    "simultaneous_planned_bytes": 5371055616,
+    "factor_array_bytes": 1591492608,
+    "largest_matrix_bytes": 241864704,
+    "packet_libraries_workspace_allowance": 3221225472,
+    "hash_norm_copy_reserve": 483729408,
+    "krylov_basis_upper_bytes": 74608128,
+    "derived_not_RSS": true
+  },
+  "factor_A_LU_bytes": 1591420032,
+  "pivot_bytes": 72576,
+  "budget_counts": {
+    "actions": 834,
+    "pc_apply": 264,
+    "factor_readers": 7,
+    "joint_lu_solve": 526,
+    "outer_lu_solve": 1584,
+    "explicit_triangular_pass": 4220,
+    "port_factors": 2,
+    "port_solves": 822,
+    "port_rhs_columns": 822,
+    "original_audits": 1,
+    "arnoldi": 256,
+    "cycles": 1
+  },
+  "exact_consumption": {
+    "status": "CONSUMPTION_CHECKED",
+    "counts": {
+      "actions": 834,
+      "pc_apply": 264,
+      "factor_readers": 7,
+      "joint_lu_solve": 526,
+      "outer_lu_solve": 1584,
+      "explicit_triangular_pass": 4220,
+      "port_factors": 2,
+      "port_solves": 822,
+      "port_rhs_columns": 822,
+      "original_audits": 1,
+      "arnoldi": 256,
+      "cycles": 1
+    },
+    "nonzero_PC_calls": 262,
+    "equivalent_actions": 834,
+    "field_recovery_calls_derived": 1,
+    "legacy_all_batch_equivalent_actions_scope": "old oracle only; not total deployment",
+    "legacy_field_recovery_calls_scope": "inherited adapter zero; reconstructed from original audits",
+    "full_hash_copy_scope": "reader whole-file container hash allocates; only canonical array hash streams64 rows",
+    "neural_gain": "NOT_DEMONSTRATED"
+  },
+  "nested_do_not_add": {
+    "launcher_seconds": 191.15673444897402,
+    "worker_seconds": 184.70902599801775,
+    "cycle_seconds": 155.22630215494428,
+    "PC_inclusive_seconds": 129.56581060239114,
+    "factor_reload_seconds": 14.685543118859641,
+    "factor_solve_exclusive_seconds": 56.79760609869845,
+    "original_action_costs": {
+      "S": 1.574887785478495,
+      "SH": 1.8731400129618123,
+      "audit": 0.19938758597709239
+    },
+    "fast_action_costs": {
+      "S": 15.010852926876396,
+      "SH": 0.13883171696215868
+    }
+  },
+  "aux_runs": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/summary.json",
+      "seconds": 7.732369013945572,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 208019456,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/summary.json",
+      "seconds": 4.648987191962078,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 73641984,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/summary.json",
+      "seconds": 2.043388408026658,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 64512000,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/summary.json",
+      "seconds": 2.1021432959241793,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 79192064,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/summary.json",
+      "seconds": 2.1179434729274362,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 67354624,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/summary.json",
+      "seconds": 2.734207909903489,
+      "status": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak": 130863104,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/summary.json",
+      "seconds": 7.811907795025036,
+      "status": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak": 195538944,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/summary.json",
+      "seconds": 6.008460561046377,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 180682752,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/summary.json",
+      "seconds": 2.7132151139667258,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 78405632,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/summary.json",
+      "seconds": 3.283732400974259,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 109731840,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/summary.json",
+      "seconds": 7.775702623068355,
+      "status": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak": 199540736,
+      "swap": 0,
+      "cleared": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/summary.json",
+      "seconds": 7.765800078050233,
+      "status": "COMPLETED",
+      "exit_code": 0,
+      "peak": 199524352,
+      "swap": 0,
+      "cleared": true
+    }
+  ],
+  "probes": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_001.json",
+      "elapsed_seconds": 1.2908219919772819,
+      "source_sha": "30f2b682c5ff99610f6af250c66a3a78c9497b53",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_002.json",
+      "elapsed_seconds": 1.2887665759772062,
+      "source_sha": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_003.json",
+      "elapsed_seconds": 1.2946538010146469,
+      "source_sha": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_004.json",
+      "elapsed_seconds": 1.2736517889425159,
+      "source_sha": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_005.json",
+      "elapsed_seconds": 1.2847072810400277,
+      "source_sha": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/formal_admission_receipt_001.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_006.json",
+      "elapsed_seconds": 1.276681282906793,
+      "source_sha": "6e17883a672d6166472bb80c27999afc46d4a059",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_007.json",
+      "elapsed_seconds": 1.2799837531056255,
+      "source_sha": "cd6c0db80587f8ae57ac4547b276876fe138f7ff",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_008.json",
+      "elapsed_seconds": 1.2717174859717488,
+      "source_sha": "fe9d2c730e8e725d92228409b5caa7ac50d1b393",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_009.json",
+      "elapsed_seconds": 1.2721312809735537,
+      "source_sha": "74e41320215c878c13fd35325695f4616a22cb6b",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_010.json",
+      "elapsed_seconds": 1.2706740099238232,
+      "source_sha": "be8b59a38eef2bfd73b811613eab7b79312b71b2",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_011.json",
+      "elapsed_seconds": 1.2763019329868257,
+      "source_sha": "fcbb3ea3edb70055165c97c285d63e58dde02da5",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_012.json",
+      "elapsed_seconds": 1.2692120680585504,
+      "source_sha": "54e6437f36956da499ae46ea85df64745eed1b82",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_013.json",
+      "elapsed_seconds": 1.29049960791599,
+      "source_sha": "54e6437f36956da499ae46ea85df64745eed1b82",
+      "receipt_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/admission.json",
+      "admitted": true,
+      "error": null,
+      "overlapped_supervised_interval": false
+    }
+  ],
+  "shared_workstation": true,
+  "neighbor_impact": "INCONCLUSIVE; no sustained pressure observed, no matching throughput baseline",
+  "old_native_oracle_only_actions": 45,
+  "all_original_fast_actions": 834,
+  "formal_reference_and_field_cost": "NOT_RUN; equation gate failed",
+  "metadata_only_read_write_seconds": "not scientific actor; included in calendar; no fabricated exact full historical bill"
+}

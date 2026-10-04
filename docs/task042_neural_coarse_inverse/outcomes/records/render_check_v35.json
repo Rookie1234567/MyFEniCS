@@ -1,0 +1,36 @@
+{
+  "local": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/response_v35.md",
+      "sha256": "3c42be7e02d459e547a8489a8902820113819527f06ea2b600ed13d2c9b33f0e",
+      "tables": 3,
+      "math_blocks": 0,
+      "local_table_fence_checks": "PASSED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/online_full_input_qualification_v35.md",
+      "sha256": "a91b68e1f5264e76dd6c7b4b4333bbeaeba85e03b0c9cba31116103f85670656",
+      "tables": 3,
+      "math_blocks": 0,
+      "local_table_fence_checks": "PASSED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/original_scale_bridge_v35.md",
+      "sha256": "c1db8e585315f5ed061ac6e8150e50d543e5158f3e3ff6214043f09086dc6993",
+      "tables": 2,
+      "math_blocks": 2,
+      "local_table_fence_checks": "PASSED"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/review_report_v32.md",
+      "sha256": "a3374f3291e9ec5799993f2ba924be9833cd5821d3bcad52cc291cdcd9a0325a",
+      "tables": 7,
+      "math_blocks": 2,
+      "local_table_fence_checks": "PASSED"
+    }
+  ],
+  "GitHub_visual": "NOT_VERIFIED",
+  "exact_review_URL": "https://github.com/Rookie1234567/MyFEniCS/blob/e1926a9cb42329276da4a26f4304f71cbbf97198/docs/task042_neural_coarse_inverse/review_report_v32.md",
+  "web_result": "Cache miss; no visual evidence",
+  "CI": "NOT_CLAIMED"
+}

@@ -1,0 +1,254 @@
+{
+  "numerical_source": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+  "current_packaging_source": "54e6437f36956da499ae46ea85df64745eed1b82",
+  "checker_source": "6e17883a672d6166472bb80c27999afc46d4a059",
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "review": "e1926a9cb42329276da4a26f4304f71cbbf97198",
+  "implementation_files": {
+    "benchmarks/check_full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/check_full_input_online.py",
+      "sha256": "db56dcae3a45f02e55fb75eb23c3aa2ef9a96da3e161dd7edf3ae5fe533aa94a",
+      "bytes": 8055
+    },
+    "benchmarks/finalize_full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/finalize_full_input_online.py",
+      "sha256": "97e3440f836e07be3858fc1c3fb447a0d49987001dcbde5ddbe2e31c1cc884ce",
+      "bytes": 3424
+    },
+    "benchmarks/package_full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/package_full_input_online.py",
+      "sha256": "e58c12d7e118e7fbeacf20af2bdd68a03804bbf5a09463307143d6c70cb64548",
+      "bytes": 27514
+    },
+    "benchmarks/qualify_full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/qualify_full_input_online.py",
+      "sha256": "9e96098ca082cde0e269d2e73607e63512d841820035dfc3cbac3d91d0a7a49a",
+      "bytes": 2994
+    },
+    "benchmarks/verify_full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/verify_full_input_online.py",
+      "sha256": "eccb5d18c48d969c198ecee01ea59494950968aa1b7916de4034c136ececea8c",
+      "bytes": 4219
+    },
+    "input/task042_neural_coarse_inverse/full_input_online_v35.json": {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/full_input_online_v35.json",
+      "sha256": "90c9ffcce7f71aa907f43c9731db011fbc174a11576d16a358236ab651d01e30",
+      "bytes": 2982
+    },
+    "input/task042_neural_coarse_inverse/v35_online_cold.dat": {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v35_online_cold.dat",
+      "sha256": "c87b6e8276d0a5f15f6fe1fc8571e54f9d225e5e091887fd7186cd6bafe70eef",
+      "bytes": 145
+    },
+    "input/task042_neural_coarse_inverse/v35_verify.dat": {
+      "path": "/home/fenics/Projects/NN-Lab/input/task042_neural_coarse_inverse/v35_verify.dat",
+      "sha256": "664eeefbcddb2779c67bad089e31ed73dbd89ee4a083cdfc39198e10edea9fb3",
+      "bytes": 140
+    },
+    "scripts/run_case.py": {
+      "path": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "sha256": "00880aba76cf8ac355db0f8f6cc0d57234e420f89ef3a05da18b178ff9d4e3fc",
+      "bytes": 12089
+    },
+    "src/io/full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/full_input_online.py",
+      "sha256": "937d2eb2f766789db30b5242d1559113f10ea11407354adcb0f0a6eb6651400b",
+      "bytes": 4540
+    },
+    "src/io/task042_profile.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/io/task042_profile.py",
+      "sha256": "170b9c2cfbfc3a79e8ef9853a573d63bdff051ee095788685c7034484d1eb541",
+      "bytes": 5941
+    },
+    "src/runners/diagnostic_storage.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/diagnostic_storage.py",
+      "sha256": "235ad2f91c04eebc21caa65e96ee2a3a1d55cd6fd1e08e6beb261f7e52bb36cf",
+      "bytes": 3867
+    },
+    "src/runners/full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/full_input_online.py",
+      "sha256": "2285a466408046fcbdcec0043362f73f786b46043163e3e0a42574701e339149",
+      "bytes": 6012
+    },
+    "src/runners/orthonormal_trace_reprofile.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/orthonormal_trace_reprofile.py",
+      "sha256": "8c8f8ccc0d94d1517321967b77ee4e75ebfb9a0643d9cf042882921e2ad4f847",
+      "bytes": 13350
+    },
+    "src/runners/task042_shared.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/runners/task042_shared.py",
+      "sha256": "4dbac95a7a341e8c6982e54ea992c413ad4604aa8760c3788833fc70aa5cc94d",
+      "bytes": 64532
+    },
+    "src/solvers/full_input_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/full_input_online.py",
+      "sha256": "cd1ffc22dde482b527b0156c585619f209ab4c64036c4e7a51fbc516bc0564e9",
+      "bytes": 2622
+    },
+    "src/solvers/full_input_online_study.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/full_input_online_study.py",
+      "sha256": "6ffa51d8b31d55a12f53ea2c7af0e78667640b3549a54ba4d663132362710f0a",
+      "bytes": 14168
+    },
+    "src/solvers/full_input_online_window.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/full_input_online_window.py",
+      "sha256": "db4252569953dc3ecbc33dfecbf6b9d13b1a2bb8fe0941afc0d637404536cfe7",
+      "bytes": 7490
+    },
+    "src/solvers/neural_fe_action_packet.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/neural_fe_action_packet.py",
+      "sha256": "ad191f38385cef297a2b4aff950091709b4d75960a0b1a1befb628d497694896",
+      "bytes": 14493
+    },
+    "src/solvers/neural_fe_blind_reference.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/solvers/neural_fe_blind_reference.py",
+      "sha256": "e0965d36e86b64fa19b4ecd2c08644494e58945e929c96e7a4809877686105d5",
+      "bytes": 25455
+    },
+    "src/test/test_task042_v35_cache.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v35_cache.py",
+      "sha256": "75cde2a1098c1c1ae437b91b28ae78ee6bb8a8459157731826192479066d912c",
+      "bytes": 2345
+    },
+    "src/test/test_task042_v35_online.py": {
+      "path": "/home/fenics/Projects/NN-Lab/src/test/test_task042_v35_online.py",
+      "sha256": "978d8e76664339ccc65ed2ccd79423455b9fccfa7d3010d7c8327f4dddd3310d",
+      "bytes": 11865
+    }
+  },
+  "environment": {
+    "status": "CHECKED",
+    "command": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/fixtures",
+      "src/test/test_task042_v35_online.py",
+      "src/test/test_task042_v35_cache.py",
+      "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/pytest.xml"
+    ],
+    "source_sha": "6e17883a672d6166472bb80c27999afc46d4a059",
+    "numerical_source": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+    "tests": {
+      "returncode": 0,
+      "stdout_sha256": "af90b4dd638f9e86a322dd95530d5d830c1fd1f1b257ee4c8f152a1c18275a2a"
+    },
+    "threads": [
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "affinity": [
+      0
+    ],
+    "new_actions": 0,
+    "new_factor_reads": 0,
+    "new_LU": 0,
+    "no_reference_read": true,
+    "analysis": {
+      "status": "SAVED_RESIDUAL_ANALYSIS",
+      "regions": [
+        {
+          "block": 0,
+          "rows": 2913,
+          "residual_norm": 0.005143563649600372,
+          "squared_fraction_of_full_residual": 0.09187215010567293
+        },
+        {
+          "block": 1,
+          "rows": 2676,
+          "residual_norm": 0.009562951464791582,
+          "squared_fraction_of_full_residual": 0.31757005679814976
+        },
+        {
+          "block": 2,
+          "rows": 2289,
+          "residual_norm": 0.0061873851902747665,
+          "squared_fraction_of_full_residual": 0.13294437005664703
+        },
+        {
+          "block": 3,
+          "rows": 2076,
+          "residual_norm": 0.007956966609261575,
+          "squared_fraction_of_full_residual": 0.2198622735987591
+        },
+        {
+          "block": 4,
+          "rows": 2439,
+          "residual_norm": 0.006060578196703063,
+          "squared_fraction_of_full_residual": 0.12755096883606143
+        },
+        {
+          "block": 5,
+          "rows": 2220,
+          "residual_norm": 0.0010799282438663424,
+          "squared_fraction_of_full_residual": 0.0040499106590007735
+        },
+        {
+          "block": 6,
+          "rows": 1863,
+          "residual_norm": 0.005422328357423035,
+          "squared_fraction_of_full_residual": 0.10210035928668153
+        },
+        {
+          "block": 7,
+          "rows": 1668,
+          "residual_norm": 0.0010799282438698344,
+          "squared_fraction_of_full_residual": 0.004049910659026964
+        }
+      ],
+      "J_norm": 0.0015272491688680097,
+      "O_norm": 0.016900757194375983,
+      "port_norm": 2.77556403109325e-17,
+      "total_norm": 0.01696962238139257,
+      "partition_squared_relative_error": 5.647512173758083e-16,
+      "J_squared_fraction": 0.008099821318027736,
+      "O_squared_fraction": 0.9919001786819721,
+      "scope": "canonical residual coefficients, not material energy or physical field integrals",
+      "no_new_actions": true,
+      "no_factor_or_reference_read": true,
+      "original_Schur": 0.20524886351900365,
+      "cold_initial_Schur": 1.0,
+      "residual_reduction_fraction": 0.7947511364809964,
+      "solver_cycle_inclusive_seconds": 155.22630215494428,
+      "original_and_fast_actions": 834
+    }
+  },
+  "actual_math_threads": [
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    },
+    {
+      "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+      "function": "openblas_get_num_threads",
+      "threads": 1
+    }
+  ],
+  "provenance": "actual formal clean source differs from document HEAD",
+  "same_native_environment": true,
+  "installation_changes": 0,
+  "GPU_used": false,
+  "FE_validation_run": false
+}

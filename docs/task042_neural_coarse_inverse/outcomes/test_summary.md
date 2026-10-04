@@ -1,3 +1,20 @@
+# V35测试：真实接线、缓存消费反例及最终静态复验
+
+本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。
+
+| 模型／结果身份 | measured或not_run结果 | 解释／边界 |
+|---|---|---|
+| .7nm／384hex／p3／q15／18144trace＋40port | 首256步Schur0.20524886351900365>0.01 | ONLINE_BLOCK_PC_PROGRESS_INSUFFICIENT，关闭固定七／八块追加预算 |
+| 原完整方程 | native/augmented0.07959628543991103、total augmented0.027619862207395922>1e-6 | port/恢复/MPC通过不足以授完整解资格 |
+| 费用／同时采样树峰 | actor188.162088667s／2108018688B／ownswap0；834次S/SH、264次PC | shared-workstation，全部aux/探针/旧费用另列，不双加嵌套计时 |
+| 原因／范围 | 保存残差平方99.19%在外域；第二周期与FE/REF7 NOT_RUN | 无official R/T/A、NN20%或原尺寸2TB/48h资格 |
+
+首次24pass/1fail保留，fixture结算修复后25pass；独立缓存26pass，含11项伪消费／状态变异拒绝。最终计数元数据修复后的相关suite、文档合同15项、真实编译与Ruff E9/F见[tests](records/tests_v35.json)。没有借用旧测试数量、full-repository／MPI2/4／FE／GPU或CI声明。Watchdog低成本超时测试真实清空自有后代，不操作邻任务。
+
+唯一下一建议是匹配外域Schur的周期／层次全局逆接口与容量资格；本轮不实现。历史后缀逐字保留。
+
+<!-- V35-LATEST-END -->
+
 # V34测试：修后13定点通过，真实保存数组独立审核完成
 
 | source／实际范围 | 原始结果 | 说明 |

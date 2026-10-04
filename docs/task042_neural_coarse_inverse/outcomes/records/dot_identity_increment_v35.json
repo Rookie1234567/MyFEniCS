@@ -1,0 +1,19 @@
+{
+  "parent": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/dot_identity_gap_v34.json",
+    "sha256": "7c3e73120afe47c98d25e92d52a266ca86048f6bc59aa35856152ca2333107bc",
+    "bytes": 5901
+  },
+  "previous_published": "3c7458fad7c002babac4e634be4788b664be9ee5",
+  "latest_read_only_ls_remote": "5be1210aa79f25c13a7677cc291a4a766a548650",
+  "latest_object_local": false,
+  "latest_content_read": false,
+  "branch_mutated": false,
+  "factor_or_field_reads": 0,
+  "changed_Task042_fields": {
+    "RHS": "one cold original physical b, not two consumed diagnostic residuals",
+    "cost_basis": "one actual online188.162088667s actor; qualified complete N1 remains unknown"
+  },
+  "old14_differences_not_relabelled_as_latest": true,
+  "wait_dot_is_precondition": false
+}

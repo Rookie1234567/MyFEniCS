@@ -1,0 +1,93 @@
+{
+  "review": "e1926a9cb42329276da4a26f4304f71cbbf97198",
+  "protected_files": 919,
+  "protected_mismatches": [],
+  "old_closed_verified": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/window.json",
+      "sha256": "da23cf6111ad664c62540844d09b8a1f038014e69c7fbc942549792126587d2f",
+      "bytes": 710
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v26/ledger.json",
+      "sha256": "93e059e96fdd0ed0fd43c1cd05f24db6e048004a84a98231e64821f63a0f3853",
+      "bytes": 2209
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/window.json",
+      "sha256": "efe33d8b6273086f70f3fdef8c2a91bfad7cde3b0dfe73376d0a4495fcd7d1bc",
+      "bytes": 647
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v27/ledger.json",
+      "sha256": "a2d63c1a82437b11ab17c582f9e18cc1f575451cb3b22889a78cb4157c009872",
+      "bytes": 507
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/window.json",
+      "sha256": "cf44902f535b392659c7fca6d95aab857df02f2a591f7ad6ff300f0a71e41403",
+      "bytes": 546
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v28/ledger.json",
+      "sha256": "679ac1fd23be99441c9afd13a7e81fdf32442c261bea553f1f29d463787cec3d",
+      "bytes": 1447
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/window.json",
+      "sha256": "65cd6cd7014bddbbe71ffc920587c47394615d6bc3ce38caedbc5b36db65718e",
+      "bytes": 676
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v29/ledger.json",
+      "sha256": "69d2173f90f1e51cee05ab6b2cc91a1d14b33e1f212eb50cc55b221ba5a68202",
+      "bytes": 403
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/window.json",
+      "sha256": "d07554e1e843b0c030fc76df923093b6dbbca6e94433eddafd40849efa8e8413",
+      "bytes": 437
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v30/ledger.json",
+      "sha256": "2e0c787d7ededfad76e8e1b95ee195a498abf896085851580235a52cf6679d6a",
+      "bytes": 540
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v31/window.json",
+      "sha256": "9008d7e487f5798b06da8142f92a2b0f3acfd142064fa91b4ea316b2086a030e",
+      "bytes": 520
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v31/ledger.json",
+      "sha256": "72205e683531ded77983d1952259efe53c70ceddef53b472d0f33841303e6626",
+      "bytes": 959
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/window.json",
+      "sha256": "e6b7df17dcdb96508e1c9f69d2906455c8ebfaef51dfb09027aadbcd7360c3b7",
+      "bytes": 311
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v32/ledger.json",
+      "sha256": "17b580078958114c255870bbd8cb83fc83e13963fc7bccab650b2de58041b4a2",
+      "bytes": 2216
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/window.json",
+      "sha256": "723b0cd25a7b528a39ad44379a664576931025096a7c1243fddc8c4c7d1dd436",
+      "bytes": 608
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v33/ledger.json",
+      "sha256": "44968aa61710e9591fb72d95b8744550502304113098003e77ce3952e89707a8",
+      "bytes": 663
+    }
+  ],
+  "old_campaign_reopened": false,
+  "current_ledger_closed": true,
+  "numeric_actor_cleanup": true,
+  "scope": "byte hashes, not complete semantic audit",
+  "dot_other_branches_master_modified": false,
+  "no_subagents_no_reset_cards": true
+}

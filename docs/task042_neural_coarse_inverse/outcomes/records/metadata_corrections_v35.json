@@ -1,0 +1,27 @@
+{
+  "source_raw_immutable": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/task042_v35_online_cold_20261004T010231752781Z/stage_result.json",
+    "sha256": "d1aac8d74e4c472eb32e1a2336bbf42843e932ba6df120c3964711037403b54a"
+  },
+  "all_batch_equivalent_actions": {
+    "raw": 45,
+    "correct": 834,
+    "rule": "sum original and fast S/SH; raw inherited field counted old oracle only"
+  },
+  "field_recovery_calls": {
+    "raw": 0,
+    "correct": 1,
+    "rule": "one original audit explicitly calls recover once"
+  },
+  "historical_formal_lower": {
+    "raw": 77102.629289102,
+    "correct": 77161.55713859801,
+    "source": "Review V32 audited historical lower; not complete N=1"
+  },
+  "reader_container_hash": {
+    "rule": "container read_bytes may copy largest file; canonical array hash streams64 rows",
+    "hash_norm_copy_reserve_bytes": 483729408
+  },
+  "corrective_source": "54e6437f36956da499ae46ea85df64745eed1b82",
+  "numerical_rerun": false
+}

@@ -1,0 +1,127 @@
+{
+  "schema": "task042.v35.minimum-frozen-result",
+  "status": "ONLINE_BLOCK_PC_PROGRESS_INSUFFICIENT",
+  "run_source": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+  "raw_result": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/task042_v35_online_cold_20261004T010231752781Z/stage_result.json",
+    "sha256": "d1aac8d74e4c472eb32e1a2336bbf42843e932ba6df120c3964711037403b54a"
+  },
+  "final_state": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/task042_v35_online_cold_20261004T010231752781Z/cycles/CYCLE_0001/numeric/slot1.npz",
+    "sha256": "721508ee3ac691a0a7b5651063484fe82ed1df56931f87413ae27f96f5cf4092",
+    "trace_sha256": "8b0ed6aeee6078927c60f95495c91a7d59b084b942ea21eb6b5207970e2fdfdf",
+    "port_sha256": "1ed3ad66947397c2057cffe90f0144554dbf3d5ed9ea8e12878db91b4030b318",
+    "z_sha256": "e24cd774c247e2e73c75b8d4ba8f78463cef21d07ca791bcd472b8528d4db3bb",
+    "residual_sha256": "07fa7b4e177fcc16aac4b325fa492a45172424393a604e918457fd015b82d76d",
+    "y_sha256": "9ffe1f315d3d6476cbbb7ec0471df1bbc90655053265c98d742120cd2792d9fc",
+    "By_sha256": "8b0ed6aeee6078927c60f95495c91a7d59b084b942ea21eb6b5207970e2fdfdf"
+  },
+  "audit": {
+    "schur_relative": 0.20524886351900365,
+    "augmented_relative": 0.07959628543991103,
+    "native_relative": 0.07959628543991103,
+    "original_total_augmented_relative": 0.027619862207395922,
+    "port_absolute": 2.77556403109325e-17,
+    "port_full_rhs_relative": 1.3018827520752422e-16,
+    "port_operation_relative": 7.037334124260932e-17,
+    "recovery_relative": 3.844299504353224e-13,
+    "schur_original_identity_operation_relative": 4.299640328602692e-13,
+    "slave_storage_max": 0.0,
+    "field_norm": 1.3337477736993941,
+    "port_unknown_norm": 0.13425955040265197,
+    "strict_pass": false
+  },
+  "original_gate": {
+    "status": "ORIGINAL_EQUATION_FAILED",
+    "rho": 0.20524886351900365,
+    "thresholds": {
+      "equation": 1e-06,
+      "recovery": 1e-10,
+      "slave_zero": 0,
+      "identity": 1e-10
+    }
+  },
+  "cycles": 1,
+  "Arnoldi": 256,
+  "actual_counts": {
+    "actions": 834,
+    "pc_apply": 264,
+    "factor_readers": 7,
+    "joint_lu_solve": 526,
+    "outer_lu_solve": 1584,
+    "explicit_triangular_pass": 4220,
+    "port_factors": 2,
+    "port_solves": 822,
+    "port_rhs_columns": 822,
+    "original_audits": 1,
+    "arnoldi": 256,
+    "cycles": 1
+  },
+  "actor": {
+    "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z",
+    "source_sha": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+    "classification": "COMPLETED",
+    "counts": {
+      "actions": 834,
+      "pc_apply": 264,
+      "factor_readers": 7,
+      "joint_lu_solve": 526,
+      "outer_lu_solve": 1584,
+      "explicit_triangular_pass": 4220,
+      "port_factors": 2,
+      "port_solves": 822,
+      "port_rhs_columns": 822,
+      "original_audits": 1,
+      "arnoldi": 256,
+      "cycles": 1
+    },
+    "completed": {
+      "actions": 834,
+      "pc_apply": 264,
+      "factor_readers": 7,
+      "joint_lu_solve": 526,
+      "outer_lu_solve": 1584,
+      "explicit_triangular_pass": 4220,
+      "port_factors": 2,
+      "port_solves": 822,
+      "port_rhs_columns": 822,
+      "original_audits": 1,
+      "arnoldi": 256,
+      "cycles": 1
+    },
+    "upper": {
+      "actions": 834,
+      "pc_apply": 264,
+      "factor_readers": 7,
+      "joint_lu_solve": 526,
+      "outer_lu_solve": 1584,
+      "explicit_triangular_pass": 4220,
+      "port_factors": 2,
+      "port_solves": 822,
+      "port_rhs_columns": 822,
+      "original_audits": 1,
+      "arnoldi": 256,
+      "cycles": 1
+    },
+    "exact_counts": true,
+    "actor_wall_seconds": 188.16208866692614,
+    "launch_wall_seconds": 191.15673444897402,
+    "rss_peak_bytes": 2108018688,
+    "swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "role": "ONLINE"
+  },
+  "remaining_solver_queue": "CLOSED_NUMERICAL_NEGATIVE",
+  "not_run": {
+    "cycle2": "first physical Schur .20524886351900365 > .01",
+    "FE_VERIFY": "original equation failed",
+    "E_H_curl_ports_power": "not measured; no reference read",
+    "NN": "no training",
+    "original_scale_PDE": "not authorized"
+  },
+  "old_closed_seconds": 212.19044355582446,
+  "review_aux_seconds": 3.666822421,
+  "no_official_R_T_A": true,
+  "no_new_large_LU": true,
+  "no_global_p4_factor": true
+}

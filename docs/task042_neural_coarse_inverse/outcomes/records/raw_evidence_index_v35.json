@@ -1,0 +1,1634 @@
+{
+  "raw": [
+    {
+      "original": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/independent_checker.json",
+      "original_sha256": "73f82bc0c319fee582cded6b97374289b1218b5d95919c884612adfd0290ed60",
+      "original_bytes": 2370,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_4db751cf_73f82bc0_independent_checker.json_v35.gz",
+        "sha256": "b55f6c850ecba67e2a5de05e58ca7ed69752de1b0beda0bc64618728486da820",
+        "bytes": 1198
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/task042_v35_online_cold_20261004T010231752781Z/saved_residual_analysis.json",
+      "original_sha256": "a4643533f0df38e81afbe93d580997f0d00ffc3e2231515a82f9517e91a1fd80",
+      "original_bytes": 2007,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_4fa3633b_a4643533_saved_residual_analysis.json_v35.gz",
+        "sha256": "ccc3a128a3eea9812a553a05973c42b143cd945bc84e7c1f040caee1135042b5",
+        "bytes": 790
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/task042_v35_online_cold_20261004T010231752781Z/stage_result.json",
+      "original_sha256": "d1aac8d74e4c472eb32e1a2336bbf42843e932ba6df120c3964711037403b54a",
+      "original_bytes": 243345,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_03fee222_d1aac8d7_stage_result.json_v35.gz",
+        "sha256": "35406126efb2135d4143a52dcb81ac30d411145faaca868701395db0c899dfd7",
+        "bytes": 26119
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/artifact_index.json",
+      "original_sha256": "5086afbf5ca847531e734794f611610a80de7b6685aee2e4fea25cb8af4d2348",
+      "original_bytes": 223,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_272fbd0e_5086afbf_artifact_index.json_v35.gz",
+        "sha256": "b276701ac4b3b73cdf19b6167d262a268e0eee8b3f68629b98ee2daaccc5cd77",
+        "bytes": 246
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/input_sha256.txt",
+      "original_sha256": "f2f78b0a72169137cadf09162dfce2a9e84b0f5ca84ed0cca1c50a25d1517a6c",
+      "original_bytes": 65,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_8ad32308_f2f78b0a_input_sha256.txt_v35.gz",
+        "sha256": "4b9c19dec32e194c453184d7d2cd9d19c60cceb2d5be624070e2e46c74ac28a9",
+        "bytes": 115
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/physical_model_sha256.txt",
+      "original_sha256": "721af8efb669ea6f038d9cf9bf74bda9f60f2db533540ef75495b4a3eda80460",
+      "original_bytes": 65,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_84ec66ae_721af8ef_physical_model_sha256.txt_v35.gz",
+        "sha256": "504f36069824a014866f9447c949e9c77972c94b90f20520fedf817b41c1af32",
+        "bytes": 125
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/resolved_config.json",
+      "original_sha256": "9f247f0a1cc97accb41e7613b44d2c82233898da3528f111526e53069d99ce1b",
+      "original_bytes": 3911,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_64102c75_9f247f0a_resolved_config.json_v35.gz",
+        "sha256": "52ba2d708acaad03d92c4e120e43ea0ba480834b060266fc2f6d5b3fa2a37268",
+        "bytes": 1691
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/resource_baseline.json",
+      "original_sha256": "f0a3ba0966bdf97035e29be6565660966b32d09e3be7a632fcc4edb8de7a3acb",
+      "original_bytes": 196747,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ead463ba_f0a3ba09_resource_baseline.json_v35.gz",
+        "sha256": "1aca60ead14c0f87881486f432c013830f9755c8991a8e08eef32d7c492e9768",
+        "bytes": 10462
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/run_manifest.json",
+      "original_sha256": "06a6770fb55ebf1e008ce1f2ff3adeefe2f74f7f8480419f7e3e9bde880a8f7e",
+      "original_bytes": 1933,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_4a34a0c8_06a6770f_run_manifest.json_v35.gz",
+        "sha256": "8a0c8cb3d68c6f2051dfceb39d73c5a6c23d6ca2c4f707fc6ea880a7769b8b23",
+        "bytes": 1061
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/run_summary.json",
+      "original_sha256": "99906bcb676b1e98778fd93ff5fed355f6a413a1fc8718e976969102698464e5",
+      "original_bytes": 5709,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_0cf8dd3f_99906bcb_run_summary.json_v35.gz",
+        "sha256": "1c212981beee6b03385744aa95c4c564d00ada3f9066e050882ccd1e21ce0ccc",
+        "bytes": 2297
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/settlement_counts.json",
+      "original_sha256": "b12d86349eeefb8dc8351ca7180084fb6cbf21df99e4137916ea186fe8d3a244",
+      "original_bytes": 807,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bb37f90c_b12d8634_settlement_counts.json_v35.gz",
+        "sha256": "b2028daaed87fc521a19f4c6fd7de106eda86cc908289173aae6effd899bf8e5",
+        "bytes": 377
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/results/task042/task042_v35_online_cold_20261004T010231752781Z/source_sha.txt",
+      "original_sha256": "81725b24178b654283b66c0f9de427199e0133e8d5826ec59524f92a06652652",
+      "original_bytes": 41,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_0aeabd6f_81725b24_source_sha.txt_v35.gz",
+        "sha256": "355238a173553c88e13ee989c55bb344d8eb7320bf68c47ba3ffc012b121208d",
+        "bytes": 100
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/final_cache_check.json",
+      "original_sha256": "ed5dfa19eded626f6abaf53b7784d14764b8fe0ae177a561453c80388f4aa0d5",
+      "original_bytes": 3435,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_88d50a43_ed5dfa19_final_cache_check.json_v35.gz",
+        "sha256": "0d0e17980b608f46d1afa9b5108271fb3ed89feed21d54197e6a89e706ba431f",
+        "bytes": 1277
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/pytest.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_53d03129_e3b0c442_pytest.stderr_v35.gz",
+        "sha256": "6b0dc2587f894aca33f5c5f961818397321f6ea5f5169e754ebfdf055a27275a",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/pytest.stdout",
+      "original_sha256": "af90b4dd638f9e86a322dd95530d5d830c1fd1f1b257ee4c8f152a1c18275a2a",
+      "original_bytes": 193,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_6434eec9_af90b4dd_pytest.stdout_v35.gz",
+        "sha256": "760a7d0f7ce338b14743729dc06e3528e23e65de4713303e3e215bca68beb6ec",
+        "bytes": 180
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/pytest.xml",
+      "original_sha256": "0a9039b2305967c7d385ffc94d02dc3dabb08b7f2dc27719f173b4d1642c0446",
+      "original_bytes": 4116,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bfce814e_0a9039b2_pytest.xml_v35.gz",
+        "sha256": "0d9b0e27da2714894590dd95b2f1db23e650ea2e57ced1120c57e972be9a4c29",
+        "bytes": 832
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/shared_health.jsonl",
+      "original_sha256": "8cf57f4b9d1d48bef0b1f824494edbc39c93e26607d9f7928487f5dc1869e21c",
+      "original_bytes": 11922,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_758fcaf0_8cf57f4b_shared_health.jsonl_v35.gz",
+        "sha256": "67fc40cb33bc2def8325c0280f78586e484d3566ab899efec4e327384c37a4e5",
+        "bytes": 1185
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/summary.json",
+      "original_sha256": "e761381054926b023a32c8ed04da8101753643756120402f62823cc6dfa77537",
+      "original_bytes": 3723,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_08936626_e7613810_summary.json_v35.gz",
+        "sha256": "1f7a2c6c02a55feb8ab1e2c63eb860e47e12d2104da239a462448f6f98550e12",
+        "bytes": 1442
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/supervision/resources.jsonl",
+      "original_sha256": "1fccb2a0cc11ac03699c4152a0aeec2febdcef4a4f15e5b53f566dab6cb94d15",
+      "original_bytes": 117228,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_83c24000_1fccb2a0_resources.jsonl_v35.gz",
+        "sha256": "d140cdaf9cc28f608d19453aa9d81b0722c4c4f0f5a907f39fdca6a4743ad936",
+        "bytes": 5584
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/supervision/summary.json",
+      "original_sha256": "e761381054926b023a32c8ed04da8101753643756120402f62823cc6dfa77537",
+      "original_bytes": 3723,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_934dff68_e7613810_summary.json_v35.gz",
+        "sha256": "11ed69bab742abecfefbf0d47edf86ca1d6216815c7a2b480308bbc5956f9459",
+        "bytes": 1442
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/supervision/worker.log",
+      "original_sha256": "8a5bdca78f793215425d8955e614cff9731addb5116fac87557ac0346f8fd652",
+      "original_bytes": 2030,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bcf1018f_8a5bdca7_worker.log_v35.gz",
+        "sha256": "8244ba6e0ec921a8dada7220a452edb23f7ab594673a66ea812c5e3d91647c8c",
+        "bytes": 1125
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/archive_manifest.json",
+      "original_sha256": "b1ed549f053a08b691b49716f12a18955d9aba446354ee0eaf00d8c55ee6d971",
+      "original_bytes": 317979,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bff6ef1f_b1ed549f_archive_manifest.json_v35.gz",
+        "sha256": "5e26c75eeb4709e9181effec284b4f547dcc93f5098d95f42663aea1ce4ee3fe",
+        "bytes": 91150
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/shared_health.jsonl",
+      "original_sha256": "5996d3f307565d07dedcf4b416e27dcdbc0fbccb0739d2fbc3ff5befccd8482e",
+      "original_bytes": 6226,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_4193b14b_5996d3f3_shared_health.jsonl_v35.gz",
+        "sha256": "080ae3a0aea9d743e4c1341e13cbd08167b7c4cf57453828d38d1548da2735d6",
+        "bytes": 1137
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/summary.json",
+      "original_sha256": "95d2494024b8e16bc6dac44df431e3e4623fa406fc491d683eca29eb23403953",
+      "original_bytes": 3596,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_32cefbba_95d24940_summary.json_v35.gz",
+        "sha256": "c55e01306f8c2bdba1634ca21aabe7f7e0b2b9f399d5276e64e412811cbbd33a",
+        "bytes": 1400
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/supervision/resources.jsonl",
+      "original_sha256": "0783b8e8bab831db125b46a1740ea65e687fc7ea5a7fd93258746e474d8f59a5",
+      "original_bytes": 76389,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ea3d5ca6_0783b8e8_resources.jsonl_v35.gz",
+        "sha256": "72ca3b950561fff1b80a08977482ce26c6bc95bf6963e576cce616f6cc076f5f",
+        "bytes": 4584
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/supervision/summary.json",
+      "original_sha256": "95d2494024b8e16bc6dac44df431e3e4623fa406fc491d683eca29eb23403953",
+      "original_bytes": 3596,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_9c7373f2_95d24940_summary.json_v35.gz",
+        "sha256": "38e8fa83942177d994f451383329c88907b3f71c10c57bababef49b562f966c1",
+        "bytes": 1400
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/supervision/worker.log",
+      "original_sha256": "fa8139ded11c33b4260c2dc7ed6da069412e13b1d444d41579715b8f7566b231",
+      "original_bytes": 368,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_53f03071_fa8139de_worker.log_v35.gz",
+        "sha256": "d5c616162c04897ed7b489a4bad5abede605b19204289dfc638344c53fb6b1f5",
+        "bytes": 309
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/admission.json",
+      "original_sha256": "7eead693e19cbfd70178440576ac5966434778b3abcf2952a0f4b80a6a3d2947",
+      "original_bytes": 464470,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_48c22320_7eead693_admission.json_v35.gz",
+        "sha256": "c8a981ec123985fe31ddbf389a21747c3c442956d2ca3825298d705c91886f0b",
+        "bytes": 25329
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/archive_manifest.json",
+      "original_sha256": "64bd788dcdf74f7d3022b988e10967312bdbec2d53700704d8768fdfc344a50c",
+      "original_bytes": 2299,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_95ad93f2_64bd788d_archive_manifest.json_v35.gz",
+        "sha256": "536e30c03cbd31e91fab450755ad9ee242de8f76c6c48ad36e70eb50bd5c94b5",
+        "bytes": 1074
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/baseline.json",
+      "original_sha256": "fe53a6d96451944af5c9c3c236f44b839e6ad6d626f24d7eb1025f85c8bbe92b",
+      "original_bytes": 196628,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_f1b40050_fe53a6d9_baseline.json_v35.gz",
+        "sha256": "8b728c6d3a3d1be49330aa6192ba7854edf415ed2875e951724782e37cb28442",
+        "bytes": 10351
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/shared_health.jsonl",
+      "original_sha256": "535336a54297afaf1ab61f1c0b9a2af2ba32fbd8f9e35bfc9ba0994f21d784e4",
+      "original_bytes": 5961,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b7f2e035_535336a5_shared_health.jsonl_v35.gz",
+        "sha256": "a840160715fcf84b82d8b5ad25b0ebfb87e57ee59074e9a495509257780194aa",
+        "bytes": 1083
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/summary.json",
+      "original_sha256": "cada6429316c466373cddc335f6f068ed91c61b58d0b8fc76a17721dbf4297ac",
+      "original_bytes": 3666,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_408f1f96_cada6429_summary.json_v35.gz",
+        "sha256": "0560f2a79f2b7c5fac40dfbc8634869540910e885a82ddc40c6678f3cdb95c02",
+        "bytes": 1426
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/supervision/resources.jsonl",
+      "original_sha256": "9525885a82d0f7ad20175f65c9e194b524d1fc15e8beaf3fa34865841b159691",
+      "original_bytes": 33641,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_be1e9586_9525885a_resources.jsonl_v35.gz",
+        "sha256": "3bfa9b8d69c67e795f3115316faccd737c5a9bcac95597eeba54cb931a84bde9",
+        "bytes": 2622
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/supervision/summary.json",
+      "original_sha256": "cada6429316c466373cddc335f6f068ed91c61b58d0b8fc76a17721dbf4297ac",
+      "original_bytes": 3666,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b0e9497f_cada6429_summary.json_v35.gz",
+        "sha256": "42bb10253f71e1f88fedc370171feab559882e09cfac8a991819ad525d503bdf",
+        "bytes": 1426
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/supervision/worker.log",
+      "original_sha256": "827c77610b79ee7a10b31eb184df945e55b80f93919c2b49e4535a7c04929036",
+      "original_bytes": 365,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_f649b85b_827c7761_worker.log_v35.gz",
+        "sha256": "6159549d4e1c8fd43fa62d0d89bd1db42c5d246453e12f33765cff9ec5eda08e",
+        "bytes": 315
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/archive_manifest.json",
+      "original_sha256": "b22954d39c2d920fddd2084b212ec0260b175064c8122e65e2de034fe84e9d66",
+      "original_bytes": 74385,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ad4f5157_b22954d3_archive_manifest.json_v35.gz",
+        "sha256": "2452b27c995b9250163e87c3a36d05c081ee6a4cbee9967cdd4f7671424d2872",
+        "bytes": 13988
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/shared_health.jsonl",
+      "original_sha256": "b3314c00609f07f5d657949514a46aa8051126e120eb06cf6c002a5640e6c415",
+      "original_bytes": 5960,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_883a5253_b3314c00_shared_health.jsonl_v35.gz",
+        "sha256": "17dd05d25ab43399e3db7a505e68709452d9492d5d69fb99d52973b654f7772f",
+        "bytes": 1084
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/summary.json",
+      "original_sha256": "dc592046132463f81bb1a145225643deaa8371f9577da3d1f7c915ca765004e6",
+      "original_bytes": 3667,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_5969ebed_dc592046_summary.json_v35.gz",
+        "sha256": "0d2a208a1f7cce5d86e885b1d937c32b60879c480cbe36de354e1d172b574fc2",
+        "bytes": 1424
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/supervision/resources.jsonl",
+      "original_sha256": "f0c91dbc77e9d8f5c5138f896e4390ba55e04541ac5440b93df20f5b04d2406f",
+      "original_bytes": 33829,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_9453dc06_f0c91dbc_resources.jsonl_v35.gz",
+        "sha256": "22c93876ab1b27b11f78a5b9dfc2e13ab34a3c8f02249cfdefc62547acc1f24e",
+        "bytes": 2663
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/supervision/summary.json",
+      "original_sha256": "dc592046132463f81bb1a145225643deaa8371f9577da3d1f7c915ca765004e6",
+      "original_bytes": 3667,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_8fe3acf7_dc592046_summary.json_v35.gz",
+        "sha256": "e48a4d83cff59dce873423d0a1665a66850ff06062a420e8caade42bf97c5b95",
+        "bytes": 1424
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/supervision/worker.log",
+      "original_sha256": "50bfd30ed7ae7a95e058c1ad1c21f574e0fd214f1d97feda3886242246091a25",
+      "original_bytes": 338,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_15f1565e_50bfd30e_worker.log_v35.gz",
+        "sha256": "dfe39022bb63129cb333832feb23551d2255afca889e079f680ca62d1ad3f00e",
+        "bytes": 294
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/archive_manifest.json",
+      "original_sha256": "64fddd9edb1cdc5c9501488a0d42f0d36c833811652c39690e37b23ade21cc88",
+      "original_bytes": 29631,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_1d00221e_64fddd9e_archive_manifest.json_v35.gz",
+        "sha256": "aef7997fd74f996e9bd08f5ef7a352c8c4df45f3f899b216b86822f6fde7e514",
+        "bytes": 5816
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/shared_health.jsonl",
+      "original_sha256": "5dab898d02d484dc9c536cf4e748418438337850e6c0f668ce3a244d15a91f70",
+      "original_bytes": 5961,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b06833bc_5dab898d_shared_health.jsonl_v35.gz",
+        "sha256": "0a248a18c52a6700c4ea1289c00f39e2a8a88b8f071cdc00273d214ccca15f58",
+        "bytes": 1082
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/summary.json",
+      "original_sha256": "92352e088cb843ed9377109b6a48feb1b7b62c77b1a97036d1703030bfab2bd9",
+      "original_bytes": 3648,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_5c4a9bf9_92352e08_summary.json_v35.gz",
+        "sha256": "600e5594d9beeb2647e639b28b0df30e9287be492118ac6d827b561ea89366bf",
+        "bytes": 1417
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/supervision/resources.jsonl",
+      "original_sha256": "26b443678af4238b066f0a147bcd6339aff5318129a968f3460b2d74e6d7073a",
+      "original_bytes": 33582,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_d034fe43_26b44367_resources.jsonl_v35.gz",
+        "sha256": "0fab58d2e8d891b94510d9d8a9fd83542f6d67016b1d03861c0dfc0b29806086",
+        "bytes": 2617
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/supervision/summary.json",
+      "original_sha256": "92352e088cb843ed9377109b6a48feb1b7b62c77b1a97036d1703030bfab2bd9",
+      "original_bytes": 3648,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_54909486_92352e08_summary.json_v35.gz",
+        "sha256": "c91d6f4baf578b875ce25f2780db5288ea594dcbfc54584cc04dda5b1971247e",
+        "bytes": 1417
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/supervision/worker.log",
+      "original_sha256": "6e87a6d79cb505b083b6f5bb1e0be199c96a8caf6490868d7522437bb7f15138",
+      "original_bytes": 362,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_9240ff7a_6e87a6d7_worker.log_v35.gz",
+        "sha256": "ab22267d88fcd6c34f1f05d5f52ef3ce45973f2e2dd78539910d2a7c8af67c8b",
+        "bytes": 316
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/check0.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_1218253f_e3b0c442_check0.stderr_v35.gz",
+        "sha256": "fc6f87b6a98997c4a2784cadabf7fe8fecb8f642e4e7652620e7b0584e3a865a",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/check0.stdout",
+      "original_sha256": "1424c2dc9fda1cb08b5f0d0f729469bd99e752a48e5414769ee7491bcfc3a49b",
+      "original_bytes": 4966,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_a575038f_1424c2dc_check0.stdout_v35.gz",
+        "sha256": "2b37ac12a0909fe4246224d9f5a3a4ace2c0d1f5a0810c21728b200b6582e613",
+        "bytes": 1335
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/final_static_tests.json",
+      "original_sha256": "0cb1fa0e31b09b723548ff51355dd7912ec7080871af589b6e66e33bd5443f14",
+      "original_bytes": 3134,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ebd11e61_0cb1fa0e_final_static_tests.json_v35.gz",
+        "sha256": "3ed403dff087c6ae8ebcba03cdfb40f3ba430baea458d680e7bc628efd197351",
+        "bytes": 836
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/shared_health.jsonl",
+      "original_sha256": "5581ef076487d937bc22180fb4af87f7c0362f36de53a5fd3c849739c727a20a",
+      "original_bytes": 5960,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_432841e3_5581ef07_shared_health.jsonl_v35.gz",
+        "sha256": "48bcee09ce2e94de327800e28fce62153d606101c3194dcdd44961e19ff9dd97",
+        "bytes": 1082
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/summary.json",
+      "original_sha256": "706d4c40eab5a8e369b5d11642b50cdb809ceac627095b6ceecb5cdbff7d0c93",
+      "original_bytes": 3684,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_29bfbe68_706d4c40_summary.json_v35.gz",
+        "sha256": "2490e37adea92d6874c1a3fc53ca953cf06e3178378ca3204b7dc685de3a1eb8",
+        "bytes": 1438
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/supervision/resources.jsonl",
+      "original_sha256": "9bcbcda20665ddb13c052cb56b21735ad843327fae1b88742077a7475463fe55",
+      "original_bytes": 42523,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_101dcc68_9bcbcda2_resources.jsonl_v35.gz",
+        "sha256": "e44df2c14de706299b2b127e539cf03083fe33c631ecfdd68e88e998c4461b84",
+        "bytes": 2948
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/supervision/summary.json",
+      "original_sha256": "706d4c40eab5a8e369b5d11642b50cdb809ceac627095b6ceecb5cdbff7d0c93",
+      "original_bytes": 3684,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_78fcbfa1_706d4c40_summary.json_v35.gz",
+        "sha256": "a2298ac4a06635870620e4409ee24c5dce4af8842c630936d81f14c91ea2f54e",
+        "bytes": 1438
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/supervision/worker.log",
+      "original_sha256": "74900b9b317471f8fb8bcb8e631415ada8c21c62409a833ee421a55b88856f9c",
+      "original_bytes": 114,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_73c248a7_74900b9b_worker.log_v35.gz",
+        "sha256": "5d27c0b8055c4357762b8d0c83cd47b3869ea38e2d1399da98ee901ba47f43d9",
+        "bytes": 167
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/check0.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_6d491591_e3b0c442_check0.stderr_v35.gz",
+        "sha256": "2f306f48a0510438373e8908a2baf4531605fa1abba1b16cc6976b7751b0dfdc",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/check0.stdout",
+      "original_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "original_bytes": 19,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_50fabc1f_82b3e6a6_check0.stdout_v35.gz",
+        "sha256": "f16feeb59ff301d5bce6414b250034214f9e7e8f7a98d30e875db29ace2545cb",
+        "bytes": 79
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/check1.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_8aed8489_e3b0c442_check1.stderr_v35.gz",
+        "sha256": "781cce149d04dcb2c76a8befd456ebc84716b759266179ec8014b1eb3757433c",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/check1.stdout",
+      "original_sha256": "31e61f1257c79d17c3af9fb491f998a54bd912d9f75d60fbbd18bfcc3f4d3ae4",
+      "original_bytes": 132,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_33609f4c_31e61f12_check1.stdout_v35.gz",
+        "sha256": "383d7e672408d16a8f84468d451591f3c437de3986f327ff1155469e523de4b2",
+        "bytes": 178
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/check2.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_a3ed009e_e3b0c442_check2.stderr_v35.gz",
+        "sha256": "713b543410ae98457cec180fae44c8a3f5583eec4b124ae4ab75d4becde0474b",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/check2.stdout",
+      "original_sha256": "bc297a43d50daf45d1e43a65ed80a452dff951243d1f9554b9098abe8b09a834",
+      "original_bytes": 16764,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_62b26428_bc297a43_check2.stdout_v35.gz",
+        "sha256": "8df667bea7fda57663f0cd09a6178b22ce29910a9481f3da8886342821bed1c6",
+        "bytes": 1458
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/final_static_tests.json",
+      "original_sha256": "e7bd8e64ebd15378c14abfd410fa32f4cc0852259d56cc74d899d8e3cb7289f1",
+      "original_bytes": 3352,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_8e0fc10c_e7bd8e64_final_static_tests.json_v35.gz",
+        "sha256": "251f971fc477718d6ac3336dee18fc4084ff41a849b6e0550af743e578b94091",
+        "bytes": 930
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/pytest.xml",
+      "original_sha256": "502250f17a096a0767f2401be3362ad15932474b70754c47d16d251dc7fcd24f",
+      "original_bytes": 22466,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_7d1ecdf4_502250f1_pytest.xml_v35.gz",
+        "sha256": "fc88153177e7b379598422bd2e734e975056dbbb89d1169519be7dfeb4203227",
+        "bytes": 2357
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/shared_health.jsonl",
+      "original_sha256": "91a8b62248ee99176ddc600421d871d2c5810fcfb5088bf7eb689c6ae22d14dc",
+      "original_bytes": 11922,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_9aa7aac0_91a8b622_shared_health.jsonl_v35.gz",
+        "sha256": "dadbffe64c93774cd0cc2d036ccc834a15f930e6a946e77de61a373909ba832a",
+        "bytes": 1180
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/summary.json",
+      "original_sha256": "d90682cc9087b8822d06d61ddcdf3b905813ff0a461a71ffcafa0e2f11ef837d",
+      "original_bytes": 3734,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_4a6c0316_d90682cc_summary.json_v35.gz",
+        "sha256": "45e5362ef79ac9bb3624ad3ed6f480392e567d2cbaba1b8f5d35371d22f85213",
+        "bytes": 1453
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/supervision/resources.jsonl",
+      "original_sha256": "dce25a72c3a34648cfbfe345d75fdd1355bffb6f1fa48c91d0d51e7d210b59af",
+      "original_bytes": 117371,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_7082d7af_dce25a72_resources.jsonl_v35.gz",
+        "sha256": "004190170108b896a67f572bfd302a687f54c6c1cbdf2f146d77ddbbb03a4a5f",
+        "bytes": 5592
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/supervision/summary.json",
+      "original_sha256": "d90682cc9087b8822d06d61ddcdf3b905813ff0a461a71ffcafa0e2f11ef837d",
+      "original_bytes": 3734,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b311f8a7_d90682cc_summary.json_v35.gz",
+        "sha256": "f5c19237ea0f75dc091b9de1d35693636b7ccf52a537ac570f567dff7184388d",
+        "bytes": 1453
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/supervision/worker.log",
+      "original_sha256": "f53f75d8fd14323065ad1d4b0117ccf4905740d59c346d604b51d6a16d483bfc",
+      "original_bytes": 114,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_4450e121_f53f75d8_worker.log_v35.gz",
+        "sha256": "50c3355873a28ff481467c95e562b3f059ff089f8993dcdcfec353e7335dafa8",
+        "bytes": 167
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/admission.json",
+      "original_sha256": "8b6e0132da815a2f946b51d742e852643c07e8b0d16c7ecb13e07731276b94dc",
+      "original_bytes": 464523,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_5d0e6e33_8b6e0132_admission.json_v35.gz",
+        "sha256": "bf7b54bae3ce2f3e356fcd6b3981dc65009be4a65b5583b431cc5049ad39f056",
+        "bytes": 25339
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/baseline.json",
+      "original_sha256": "341ed2999a5e8fccccfc299c8e1fb7d285e1e9af088f0650b29cf482b77c0ecc",
+      "original_bytes": 196646,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_61710aa3_341ed299_baseline.json_v35.gz",
+        "sha256": "f24221350586b55b2d3ebd6f623dc6b5d15d58820155334afeeff63dde3785d8",
+        "bytes": 10367
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/check0.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_3c015667_e3b0c442_check0.stderr_v35.gz",
+        "sha256": "6e81e5bf8e4716f16fecb458e39febf83896e9660fd976dda1ee6606f942f0aa",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/check0.stdout",
+      "original_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "original_bytes": 19,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_6b90e487_82b3e6a6_check0.stdout_v35.gz",
+        "sha256": "3471eb3d18a0e966229f83865c9ea96b2fdedc72ce750b8bb03d03ec6798c7d5",
+        "bytes": 79
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/check1.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_de3d9142_e3b0c442_check1.stderr_v35.gz",
+        "sha256": "fc3648896bbbc3f086562cf4ace819737e9812c3086ca8a1d7039adf14830924",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/check1.stdout",
+      "original_sha256": "2630e1c8fd4f1f6891c6a545197157d4222f01de84372cadbd71faa8d289af77",
+      "original_bytes": 132,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_508d1b51_2630e1c8_check1.stdout_v35.gz",
+        "sha256": "379274a95e248d3c1392269b96f6123e21bfc40ede5a8535a17048b7305f922b",
+        "bytes": 178
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/check2.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_db7867ca_e3b0c442_check2.stderr_v35.gz",
+        "sha256": "e7eddc133e8fb34dd345082a73e24abe3180aa4025a715b7a161d36af34fb12b",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/check2.stdout",
+      "original_sha256": "fb06927dd40dc806a4db86b9be4ecbd63307c7374dc7c1e0d8f1cb3fcf63f092",
+      "original_bytes": 191,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_e81858e3_fb06927d_check2.stdout_v35.gz",
+        "sha256": "68961fb4ab09fac67184d7589e3a2cd45c1b8487cb75136f819995be825cbb61",
+        "bytes": 177
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/final_static_tests.json",
+      "original_sha256": "4402ab064b94650d6a8202398a3a7fa716e1fc4be8329627b88b6ece48b71116",
+      "original_bytes": 3464,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_d1cde3ff_4402ab06_final_static_tests.json_v35.gz",
+        "sha256": "7635fdb6761a821792a91b2223c83f61fd6d94ee5422891d1d23bdf942c64f0d",
+        "bytes": 987
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/pytest.xml",
+      "original_sha256": "c48371dada4b545cd52f7b486fb3167a55fd547516c752d0e5bf1a62626bbd57",
+      "original_bytes": 1248,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_3dbcb191_c48371da_pytest.xml_v35.gz",
+        "sha256": "e6950c140fb8c53c3c5f5c3332653773bfa1f94eaf7ba971bea1f7bebfe6603c",
+        "bytes": 384
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/shared_health.jsonl",
+      "original_sha256": "623539010ffbbf8e975606b92a7b406da631c4ea3caa8c9fccb8cc355fffc9fe",
+      "original_bytes": 11920,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_e6373b2c_62353901_shared_health.jsonl_v35.gz",
+        "sha256": "af6cb1feec4ff8856f4a68ae4235fa6396490ff5e669fdb920486dc17c51f247",
+        "bytes": 1183
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/summary.json",
+      "original_sha256": "85a3cf4e6859d093dd31b6bece5792a3d755a81828e85b0092a615159b7e963a",
+      "original_bytes": 3730,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_7a68e1ba_85a3cf4e_summary.json_v35.gz",
+        "sha256": "2e393fc69aa043a3cd5f54b5ed4fff498cea1a4021e6aedcaea207f96c636b66",
+        "bytes": 1463
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/supervision/resources.jsonl",
+      "original_sha256": "2e34c5694fb9ba57d51973c665d5788ebe729d0fb81047c77965d62dd63f1840",
+      "original_bytes": 89059,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_0c523c89_2e34c569_resources.jsonl_v35.gz",
+        "sha256": "e0eb10fc5f1f6e269553f7142e9355341130a9e9eb838f906f8cfce6ce9fe103",
+        "bytes": 4655
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/supervision/summary.json",
+      "original_sha256": "85a3cf4e6859d093dd31b6bece5792a3d755a81828e85b0092a615159b7e963a",
+      "original_bytes": 3730,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_6cfe3241_85a3cf4e_summary.json_v35.gz",
+        "sha256": "a6d94e6e68fb1aae4be680a179bd17f906b4de43d4f6804d66ccdc5eec37efc6",
+        "bytes": 1463
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/supervision/worker.log",
+      "original_sha256": "5cf04aac4ac9eca8f3a8ab0f740eca18bc3c30a3ca677ebfad3ac14054ff8d4c",
+      "original_bytes": 114,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_f7f4ab43_5cf04aac_worker.log_v35.gz",
+        "sha256": "dd3afa7983112da9914fbf62d6fe60494a88d3723886d58378a78e03dcee5493",
+        "bytes": 166
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/admission.json",
+      "original_sha256": "76930235c3a8f0a7e9874ee292731b3ab1001c3b7f4652110b44872c1023bd96",
+      "original_bytes": 464356,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_65741bf0_76930235_admission.json_v35.gz",
+        "sha256": "40376b502a263cc85e6be8ecb1ff954618c02404b6156d88d65b65b1f0f18f00",
+        "bytes": 25383
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/baseline.json",
+      "original_sha256": "94d8bfeecce350e3c9add3b40f51309804e87b02b37111eb8a1ffcc7ce5c633f",
+      "original_bytes": 196587,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bf85016d_94d8bfee_baseline.json_v35.gz",
+        "sha256": "8905de075bb9aa004521bcb5b6108a613c486a3710d2d9d7f051832e689708f1",
+        "bytes": 10371
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/shared_health.jsonl",
+      "original_sha256": "4baa901b2b25a53241a6e9d093d3f4fb2ace6eafa3d19c0158362849d26cb699",
+      "original_bytes": 5961,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_a9a1d0b9_4baa901b_shared_health.jsonl_v35.gz",
+        "sha256": "8ea51e5305a32c5a49c3f8dc081ee6e77d862738f4d23b84cb42740c5ebefe8e",
+        "bytes": 1076
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/summary.json",
+      "original_sha256": "f9896a8838392e066a2f64289a469277a68144443ecdb6e67002fef0126eec88",
+      "original_bytes": 3675,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b7e25e59_f9896a88_summary.json_v35.gz",
+        "sha256": "2bbf788b2ace76f85b8d2abd61ff2bb54a3c86ae48ba3bc2236915d5127102e5",
+        "bytes": 1437
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/supervision/resources.jsonl",
+      "original_sha256": "0105070e5030586f72d4fd50dbd5e0a9b45c995f9ce86134c1ddc36fc65075a5",
+      "original_bytes": 42433,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_2a98a08f_0105070e_resources.jsonl_v35.gz",
+        "sha256": "d395a559bbe5f692f260de207673a3f284fcc11189e95e517b29dff54fbc192a",
+        "bytes": 2906
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/supervision/summary.json",
+      "original_sha256": "f9896a8838392e066a2f64289a469277a68144443ecdb6e67002fef0126eec88",
+      "original_bytes": 3675,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_fc2f0d2e_f9896a88_summary.json_v35.gz",
+        "sha256": "e3ba162e4581b76c3aa343ea6956a3f03907760dfcde1ac0aa4c32141c3501f6",
+        "bytes": 1437
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_006/supervision/worker.log",
+      "original_sha256": "6a9cbbad6f06a23b547f85afb7d9b58c0afbde1e64983b6210f2a9d5bdea510e",
+      "original_bytes": 132,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_38aa25e7_6a9cbbad_worker.log_v35.gz",
+        "sha256": "3f5dc32fb3e7ad9fb968b7575ad2369bb727ebee4eb9b02370ba73bf066833ae",
+        "bytes": 174
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/admission.json",
+      "original_sha256": "9eff9dc4e52582546961dde0f261b2d6cc3a12cf4c5d5fe1ef79115f33033a82",
+      "original_bytes": 651073,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b3d7ef0f_9eff9dc4_admission.json_v35.gz",
+        "sha256": "cf117f2c1309e3aa9ad98c4ce264313ae73cfb3dcbb8d978b94e8d80bb9afecc",
+        "bytes": 29426
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/baseline.json",
+      "original_sha256": "180adf95c47e9defa9704b732d785e937ef5d547db91af80b8ec96cffdec4b47",
+      "original_bytes": 280065,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_f0f24a51_180adf95_baseline.json_v35.gz",
+        "sha256": "ad0405442cfb602f7dda3063ff74b4747aa740a6ef8296173bbfdbf03409ac1f",
+        "bytes": 11992
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/package_qualification.json",
+      "original_sha256": "053d2703cc62b767cec8a7c5bdae96f6ace238bc7ce6d531ba38257da42f3ab7",
+      "original_bytes": 995,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_44489474_053d2703_package_qualification.json_v35.gz",
+        "sha256": "c5f1a6d5e59225ffb472fb33ab8e96f289ace48fc709cdccfd65a26396e9b22b",
+        "bytes": 514
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/package_ruff.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_02e4d70e_e3b0c442_package_ruff.stderr_v35.gz",
+        "sha256": "8b436aa6092420dfb6fe54c54414a5628c0de783a4537c2fdc4c83e6b2b00993",
+        "bytes": 66
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/package_ruff.stdout",
+      "original_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "original_bytes": 19,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ae68922d_82b3e6a6_package_ruff.stdout_v35.gz",
+        "sha256": "b3842d92d6f18eb935e848be33930c17e274f28e8e90d678b958eac46e0a2cba",
+        "bytes": 85
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/shared_health.jsonl",
+      "original_sha256": "ae9e6fd818b4c9875058b739ea461f7fc461802194ced1bd570ea99a079b2a38",
+      "original_bytes": 6139,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_084a664d_ae9e6fd8_shared_health.jsonl_v35.gz",
+        "sha256": "616028dae7d487468ba3db10d343855758419f5435892b778ff01e907ba7b807",
+        "bytes": 1119
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/summary.json",
+      "original_sha256": "f32b9c7c5122e0715f3fe5cd3e051533668d72f8d802107a1e52ddfb922452a9",
+      "original_bytes": 3670,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_9cd45fbe_f32b9c7c_summary.json_v35.gz",
+        "sha256": "f094dc7ec74134d0db886828fdb34b2fa3dfc9749ee11c090ba530bdfdd32b20",
+        "bytes": 1438
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/supervision/resources.jsonl",
+      "original_sha256": "6df95d32e892b452d87bce186eaa2014a2030def8cd4443150605d57c4bf3d8d",
+      "original_bytes": 52164,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_44114668_6df95d32_resources.jsonl_v35.gz",
+        "sha256": "eeca858b1c2721099621328ee44f5c62843fa3244881d262fb462e0b34b40825",
+        "bytes": 3266
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/supervision/summary.json",
+      "original_sha256": "f32b9c7c5122e0715f3fe5cd3e051533668d72f8d802107a1e52ddfb922452a9",
+      "original_bytes": 3670,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_fd5a7dfc_f32b9c7c_summary.json_v35.gz",
+        "sha256": "0607431e558f9e30fa6ed018f807409c40828f763ba2398fcd3736b03104729a",
+        "bytes": 1438
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_007/supervision/worker.log",
+      "original_sha256": "0db9d8565dbc6af594b2495f35999425d2b81d3689fd871cd17bae336d2aa6d5",
+      "original_bytes": 996,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_028fba06_0db9d856_worker.log_v35.gz",
+        "sha256": "9d6cc8bbaf40da19c7de4ef71aa7cf5da4216f573b449cfc247b5cb495721886",
+        "bytes": 528
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/pytest.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b27f8cf6_e3b0c442_pytest.stderr_v35.gz",
+        "sha256": "4e39e5cb27e4776e2c8d22503e4196399a2219cb79290ba3c8566f8ca5632fcc",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/pytest.stdout",
+      "original_sha256": "55e0011829d3b71abb854d6ecd925d3ed32ecc7e0fdbfaa50f4bc35624b9d193",
+      "original_bytes": 6951,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_d1bf9ea8_55e00118_pytest.stdout_v35.gz",
+        "sha256": "81babe322d6abe12fd1e2abb11871de9216f419fc7aed6a135bd09136ecb4057",
+        "bytes": 1939
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/pytest.xml",
+      "original_sha256": "b87e3a132975c3cacdd58e445140b48d3dde128eb631efd498f045320b0dba73",
+      "original_bytes": 9176,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_8d7222b7_b87e3a13_pytest.xml_v35.gz",
+        "sha256": "e9643373a245f7c8fdcdf57c84a4bc12741e963cb6707b5361291231375a9f0c",
+        "bytes": 2289
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/qualification.json",
+      "original_sha256": "97f8e371f12faa2c14edfcf6a2b536d99240c87000dc5263cd907c762cf77280",
+      "original_bytes": 5246,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_e375bf2c_97f8e371_qualification.json_v35.gz",
+        "sha256": "cf33bc6bce35dd0a25d0da05f35e567c1ef95aaba87a7de08d54bb1274460236",
+        "bytes": 2094
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/shared_health.jsonl",
+      "original_sha256": "fe6bed2576e42ef914edf18237162765418aad8c757e339fc91ac7bae2e98c99",
+      "original_bytes": 12271,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bb58c0cb_fe6bed25_shared_health.jsonl_v35.gz",
+        "sha256": "01e6719a47efff2b39c018fc58906fb0beb0aef3adb2bf4dc5a3e60c96b768a2",
+        "bytes": 1225
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/summary.json",
+      "original_sha256": "6042f0ba4256a00c34d5847c22d96c397a1a241d5b10195389c80097a175aa48",
+      "original_bytes": 3707,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_c71c756d_6042f0ba_summary.json_v35.gz",
+        "sha256": "ecfebfed678523b1f781d552a0f7f09eca0f293ab86043dca270b470c658e4a2",
+        "bytes": 1425
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/supervision/resources.jsonl",
+      "original_sha256": "d8af7a172cadf4f2de0a6cfaaf9da92f92d7b5dbea54f3f72615befbd224bf98",
+      "original_bytes": 122938,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_3975e0a1_d8af7a17_resources.jsonl_v35.gz",
+        "sha256": "0c0a0cf23226c35693260dc313f8dca103d7991a9692bd9bf8d2b42847ab6d42",
+        "bytes": 5820
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/supervision/summary.json",
+      "original_sha256": "6042f0ba4256a00c34d5847c22d96c397a1a241d5b10195389c80097a175aa48",
+      "original_bytes": 3707,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_a295c4b0_6042f0ba_summary.json_v35.gz",
+        "sha256": "fa486b165297196c1222820444e3745aaccc6a7f4bd1412820748ed36734f90e",
+        "bytes": 1425
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/supervision/worker.log",
+      "original_sha256": "799a4c2576a44ef74bb1e0034e9a5246a0e2e78934b05849af241a87f4adbdd9",
+      "original_bytes": 111,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b249b486_799a4c25_worker.log_v35.gz",
+        "sha256": "beced46be3e6c16cdbd04bb0d4f281e7f665bb9f32971fcbdc1cb5a64bed4f86",
+        "bytes": 165
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/pytest.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_e12530ea_e3b0c442_pytest.stderr_v35.gz",
+        "sha256": "c0d67a15be08774fc3f4ff3c56783056689b420ae537f111138f302cb2af9b56",
+        "bytes": 60
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/pytest.stdout",
+      "original_sha256": "60205ae975aa65aae7ffd48f199c48cb174458a90f7e27eece19365cd8a823c9",
+      "original_bytes": 191,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_074735c0_60205ae9_pytest.stdout_v35.gz",
+        "sha256": "075fdea33c520efe8c3d78686e93a6cb32d63ae32cb0d949447b564d279a6f79",
+        "bytes": 177
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/pytest.xml",
+      "original_sha256": "520facf627c6198451d2e2a2cae911901ffdcbecb15ee740778e871b71fe31d3",
+      "original_bytes": 3953,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b8a5ab60_520facf6_pytest.xml_v35.gz",
+        "sha256": "93f303ef1393363c9e81244fb4ccd4605ef398f1dc6d1fe3d0bfc009b08f3349",
+        "bytes": 894
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/qualification.json",
+      "original_sha256": "c93f553fab83245650b52350bc3f55c916a9925cb848fc3382fc5ff1a44934a9",
+      "original_bytes": 5246,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_de67d618_c93f553f_qualification.json_v35.gz",
+        "sha256": "7bb894ca7de23bae79ac20f5d59e8b67b6c9f655fe38838040a6815845b12a29",
+        "bytes": 2094
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/shared_health.jsonl",
+      "original_sha256": "0341ab6b8b2e8860f08abd34b5d240218ecd9dcda6f36453e27d92e51afecd6b",
+      "original_bytes": 12273,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_3de97317_0341ab6b_shared_health.jsonl_v35.gz",
+        "sha256": "7c7a016c696ffea46659c33daf4249f13b11187465e21f7b2bb25371b32cbea5",
+        "bytes": 1222
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/summary.json",
+      "original_sha256": "0186afcb7a27bdf79803049b19f1c883829a9e51721215815d78e3d82e2a822f",
+      "original_bytes": 3719,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bd4074b5_0186afcb_summary.json_v35.gz",
+        "sha256": "bb44fe7fafcd0249ff1b4badffd60cdfe320e937d7ca1fc9ddab17176b0a96ba",
+        "bytes": 1444
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/supervision/resources.jsonl",
+      "original_sha256": "d9d15879146b8d2becebe8e988d62a4af2273e038ef82892d4c51a5ece7af8e9",
+      "original_bytes": 122957,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bc7c724f_d9d15879_resources.jsonl_v35.gz",
+        "sha256": "1735befb10821014f2dcd3c358d5f2db087c744e71f14cafed484954819f4528",
+        "bytes": 5836
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/supervision/summary.json",
+      "original_sha256": "0186afcb7a27bdf79803049b19f1c883829a9e51721215815d78e3d82e2a822f",
+      "original_bytes": 3719,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_7458bee1_0186afcb_summary.json_v35.gz",
+        "sha256": "53674804adfd77902d57ee61d9fc24d136a32a30beb499b09f966f3663290dc6",
+        "bytes": 1444
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/supervision/worker.log",
+      "original_sha256": "5fb271833d2a6f3ad6f33b4f01323869011be1f68593ce63b7d2300123652a0b",
+      "original_bytes": 111,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_11dde16a_5fb27183_worker.log_v35.gz",
+        "sha256": "1bc4e131352086924e9fc85d7ea716c199ab95371f5619b15f89ee2c037feb5a",
+        "bytes": 165
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/formal_admission_attempt_001.json",
+      "original_sha256": "3713ad6062adc2d709cf663469da5010473f050a59fb2c505fa31bf6bcea52d6",
+      "original_bytes": 261,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_05c53c25_3713ad60_formal_admission_attempt_001.json_v35.gz",
+        "sha256": "dafa177a57174a1d4e000d9b3e4d358e3809a7f0b0f607eb6c1b2af7dacb1f61",
+        "bytes": 280
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/formal_admission_receipt_001.json",
+      "original_sha256": "0d3354c10f009af831a4ecbeadb0a075a80529e549ab9081b0c288a453ea4ac5",
+      "original_bytes": 464784,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_42592914_0d3354c1_formal_admission_receipt_001.json_v35.gz",
+        "sha256": "d1b2bc464834a4abfcba04274442150ed4bfa0a38b5a8b6b6b40c4b3b4b2120a",
+        "bytes": 25638
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/initial_host_processes.txt",
+      "original_sha256": "fcec6b9e3aa9ae6200f0ba1ebe6caa57e37eb5dbcd21a476bab73758168eb318",
+      "original_bytes": 2673,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_14d50e0a_fcec6b9e_initial_host_processes.txt_v35.gz",
+        "sha256": "54e74373a97c8d2b93abfa06cb75c0f0ac12990059d565188b0c8121deb276a2",
+        "bytes": 660
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/ledger.json",
+      "original_sha256": "7f6d23de1ed60d381e6908f946832b410a4a8879feaf7e61f36e97d6fbee434a",
+      "original_bytes": 2186,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_d9c8c717_7f6d23de_ledger.json_v35.gz",
+        "sha256": "499c1657704ffc5a260a89a72f3317359eafb99e5d45f3f02743efde38949983",
+        "bytes": 711
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/online_launch_003.stderr",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_76373174_e3b0c442_online_launch_003.stderr_v35.gz",
+        "sha256": "52fc0e4d54e8ffc9ed02ebd07895937440a65119a2939daa5cdea3d7ef68859f",
+        "bytes": 71
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/online_launch_003.stdout",
+      "original_sha256": "3d3faede94c96c005cd7c09efe26a0cd8dcdab35ba316213c5265639c8275191",
+      "original_bytes": 376,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_8e306728_3d3faede_online_launch_003.stdout_v35.gz",
+        "sha256": "cc804b62c8ff84da8c37c62348498360d597fbe5520fd90350b32318f7b84eda",
+        "bytes": 330
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/pre_qualification.json",
+      "original_sha256": "e08c4b99423481a55cbb3ba701ede42d4133162943a0b3826ee6c20011b82834",
+      "original_bytes": 2620,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_dd60cb2c_e08c4b99_pre_qualification.json_v35.gz",
+        "sha256": "b178eaca78316d872d677a2ed32c088600389cdebe9b2977871a973a85900085",
+        "bytes": 1384
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_001.json",
+      "original_sha256": "ea4f4fe46df2af15d12f095dc8d23f2d57b3328963737d934907a1a3388544db",
+      "original_bytes": 262,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_9d4ced04_ea4f4fe4_probe_001.json_v35.gz",
+        "sha256": "bf5110d5bb0017d67aeff22cc93d64a844366be73661861aff41735a30fc68e9",
+        "bytes": 262
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_002.json",
+      "original_sha256": "0ee5df45a3266be58a5ffc72fa67b3fd4f5fff2cba14d236683cdc7975a8de1c",
+      "original_bytes": 262,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_91b4aa8c_0ee5df45_probe_002.json_v35.gz",
+        "sha256": "256b9aa7159bbd83fc12010838b9969f2b484893ce1b5ad4b570cd7d94d59b59",
+        "bytes": 261
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_003.json",
+      "original_sha256": "73051745267e0337c7c3f7f61d9883822673e7cefb1ded1321900116d815121b",
+      "original_bytes": 266,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_43d9a987_73051745_probe_003.json_v35.gz",
+        "sha256": "caa7a4b79fd048cfc11122973d1537ededdc77696af615176a97b66fb9ed9049",
+        "bytes": 264
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_004.json",
+      "original_sha256": "0a22ea5e033d6c2a8fcbf04a182b2d12a181b9e87d004fd4edfcbf7d9f9ace06",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_d7c3fd78_0a22ea5e_probe_004.json_v35.gz",
+        "sha256": "fac2c8f23abd3c2088a0cd6b584128f65a1a41b96f3c1bc30ae1ea36d0ba6358",
+        "bytes": 261
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_005.json",
+      "original_sha256": "c5d3d0434c137b67f985657e2c4be0fd048bc2601307f2d58389a6b47c9a9ca8",
+      "original_bytes": 269,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_28e5b1eb_c5d3d043_probe_005.json_v35.gz",
+        "sha256": "34e628cb0cf9297167f0245f865cb0caa4ba05aeb84f3b45ef5352c13e4282b6",
+        "bytes": 263
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_006.json",
+      "original_sha256": "977fae964643b6013043ccc594aeab8e0bc48e366abba1822554207756ccf8a9",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b4b55a16_977fae96_probe_006.json_v35.gz",
+        "sha256": "c3000b67d4126be3e2321119ca4195760ce9e66331ed257ac5e37817f45002a4",
+        "bytes": 263
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_007.json",
+      "original_sha256": "38c759d90e977a9915a7ee85fc5c05eca3eff819c39185cc40d223b0d7aea84a",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_e857adb4_38c759d9_probe_007.json_v35.gz",
+        "sha256": "6d34fe2e9dd94d04be232e4e98cd2094fd8e2dd616e11d54cb33ae3666db79ac",
+        "bytes": 262
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_008.json",
+      "original_sha256": "47b93b0f204d940d5a26df2e9dd99c5d90000f7f71e2c21622c4e26677dd1bab",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_83fc5880_47b93b0f_probe_008.json_v35.gz",
+        "sha256": "15dc1f84cf3d12595bb4d6334dbd13176c90cdcec54fd23539d9902814411dd0",
+        "bytes": 259
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_009.json",
+      "original_sha256": "fa25165b14d1eb3e8acc9f4471fab522f5ac9af976d7a77997b7034db1524e2a",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_bd07562e_fa25165b_probe_009.json_v35.gz",
+        "sha256": "7a5704afc0d4860fb1f7ca754c4c114ee25fc69bdb8eaedcc448ef8f920c08c4",
+        "bytes": 262
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_010.json",
+      "original_sha256": "a1e8d17cece5e342478f477b677e866294969c899659b12f8548487c37805451",
+      "original_bytes": 266,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_de8e1401_a1e8d17c_probe_010.json_v35.gz",
+        "sha256": "514b76e830b1d718ace243fb56942d8e94254792005e22738abeb8574dcace85",
+        "bytes": 263
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_011.json",
+      "original_sha256": "9bb19546d5207f109237018add1485024c3ae20cc4ebd221cc3a2cd509090ee8",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ff575065_9bb19546_probe_011.json_v35.gz",
+        "sha256": "068b028a272726424bcf27cb05bdce6df8968d305a42e2f8cd71e95df1c51c7c",
+        "bytes": 261
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_012.json",
+      "original_sha256": "88fb695ca515f702b8beb8fd285038c91aed435bb6ad5d94ba95369a5a83470b",
+      "original_bytes": 263,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_11983dc0_88fb695c_probe_012.json_v35.gz",
+        "sha256": "7e4cf0c60dad8a5c3f1f8ac0e59116d8872c476514dc18bd30e22e8ef4b25d01",
+        "bytes": 261
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/probe_013.json",
+      "original_sha256": "5ec35b7b3a2d236c81e7410c455a81ec08ed05822c55ab437ee4f0106fd30a13",
+      "original_bytes": 261,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_81114869_5ec35b7b_probe_013.json_v35.gz",
+        "sha256": "ab1608c1caaa64cc9a0f769a84ba076f20a6bafe77421902c41e69a32c08bf3f",
+        "bytes": 260
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/progress_journal.jsonl",
+      "original_sha256": "97035f38476230eb8b7753529c44595152f809ba8e6cf70263fd575893700a11",
+      "original_bytes": 29601,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b78ecc96_97035f38_progress_journal.jsonl_v35.gz",
+        "sha256": "5bd848a1ae895ff43bbf0f62d4d49632cca7d0cec7744bb3e3b92ad6bdd58610",
+        "bytes": 3767
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/start.json",
+      "original_sha256": "fe5383ec405c366d3b0c60707b7df8258790534ccfee5840fa27e59850865f28",
+      "original_bytes": 636,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_6ec978ab_fe5383ec_start.json_v35.gz",
+        "sha256": "4b2ed497685b8f371ab47ebcfe0e1c0cddd1555d1b1129540f93ed9886510233",
+        "bytes": 398
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/window.json",
+      "original_sha256": "7138f8e6d8a3b01f44194dc2782a58616ca21dd238b439cc14ae3088744cd976",
+      "original_bytes": 205,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_94c97aad_7138f8e6_window.json_v35.gz",
+        "sha256": "2b3cbf7dab4602bdb5ea71e95949fdedab99892af208e8f5a9c56c8c7e8fdb56",
+        "bytes": 204
+      }
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/admission.json",
+      "original_sha256": "7cfeb863cdef71a9ae260aa49624ee7b7a90f03b81340def585a295e42120800",
+      "original_bytes": 464544,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_24caa74d_7cfeb863_admission.json_v35.gz",
+        "sha256": "7f7288459a9ebb78647dfe2d8c76874c30d92f0911e40a5bede8928c5f88a226",
+        "bytes": 25507
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/baseline.json",
+      "original_sha256": "670f8b5c8340160dd995c19fafab88566ead93db0e8f8ade09c8c6ecf087c5c9",
+      "original_bytes": 196631,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b35fc920_670f8b5c_baseline.json_v35.gz",
+        "sha256": "21dd1362c31e242ac0cfb12fc3ae41ca5615fb7396f8bde54f02631168532e4e",
+        "bytes": 10400
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/admission.json",
+      "original_sha256": "c5c0c13c6758e6cd57bd674013441aedddd6c9652760fc92b2e1c988ada25bfb",
+      "original_bytes": 481461,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_b11587d9_c5c0c13c_admission.json_v35.gz",
+        "sha256": "8e2cdb3c502ae60be63635143d40768cf276f8ed7c376386d0c975c4a30283f2",
+        "bytes": 26128
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/baseline.json",
+      "original_sha256": "1c870048d25c46956d9a3e5683e4df03f4f7600dd6ddd9d9f67b2f12238a35bd",
+      "original_bytes": 204260,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_f8eff921_1c870048_baseline.json_v35.gz",
+        "sha256": "d11e4e9ec1929021277dfdfdd4a2135a6a29770e79a543a3a20c0db97f4faa9f",
+        "bytes": 10693
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/admission.json",
+      "original_sha256": "b769d41e4f83fd5bf1eb7e3da9400f4f17925f942123a5335a0c694516446132",
+      "original_bytes": 649000,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_a950e1d0_b769d41e_admission.json_v35.gz",
+        "sha256": "99fce2bf9b2b11bab106bdf51526ba6f5ebbf05220426b6d8e08b2fbebc088f8",
+        "bytes": 29529
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/baseline.json",
+      "original_sha256": "8611dbba8880e0327894b322bbb5152f76ef552117682c5f95c5876d35e2a6b5",
+      "original_bytes": 279270,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_35eb3a62_8611dbba_baseline.json_v35.gz",
+        "sha256": "99223cb8bcc9741f29bcc6c048900cf3f36b1beb80d7bb82085927eac584adf0",
+        "bytes": 12055
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/admission.json",
+      "original_sha256": "2b3baf322abc8f0ac1e9ea0370dccb21fb85c4feea955da47c2976d0c6712211",
+      "original_bytes": 464545,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_df1faae3_2b3baf32_admission.json_v35.gz",
+        "sha256": "1002f2a45a65b5abeee19d9178639a10bf0b2387515d8d3a9026d8e515d92df1",
+        "bytes": 25482
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_003/baseline.json",
+      "original_sha256": "c1a021a663aa0b13a1e156b93d333ac64b5c6665e402d623c434c8da4e22bef0",
+      "original_bytes": 196640,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_599cd938_c1a021a6_baseline.json_v35.gz",
+        "sha256": "ef3e732e856f611bb4338c81d9014a710c71f18d0542ef3dbc557c30135c3fbd",
+        "bytes": 10395
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/admission.json",
+      "original_sha256": "d03d093508c70ce29b42e0d718e05e16395b6c5cb4f56c26417c53e67ce68669",
+      "original_bytes": 464572,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_46c431eb_d03d0935_admission.json_v35.gz",
+        "sha256": "83ef3002d08b3161d6857127541cd374f95a9ed069e060c66cf157f926e71ac2",
+        "bytes": 25537
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/baseline.json",
+      "original_sha256": "a2ce9be9a31a82cb483c678eb7269ec35c1a48a4eaaa8b3657e917c16b73a913",
+      "original_bytes": 196693,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ef1ed1fc_a2ce9be9_baseline.json_v35.gz",
+        "sha256": "d583a865de8a0180cfec84898fbf33e3fe6ef8fd2727fe07d8c8c922848d723d",
+        "bytes": 10432
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/admission.json",
+      "original_sha256": "8b0a9271bf1c8e558ecdd1b0d270f7fa5720d2dd9b4f6d0e4b2323b3719339b1",
+      "original_bytes": 464591,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_27bbcc4f_8b0a9271_admission.json_v35.gz",
+        "sha256": "147a3a7032fd9b59c5a56e9af8d02de88cc87159f0c495a7e5deb3fc8c9852c4",
+        "bytes": 25413
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/baseline.json",
+      "original_sha256": "afe67c95ffeea79c8d0511cb2dba515c631cb6fff88f2efaf5126a0c4ce3ce0c",
+      "original_bytes": 196666,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_ff414a67_afe67c95_baseline.json_v35.gz",
+        "sha256": "19831ac07e0aa7d358db305b8b3d9e1471478a2fb7dddb3105050fb33e1c55fc",
+        "bytes": 10392
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/admission.json",
+      "original_sha256": "08fdd89a0fc8e5b140810c4a5e3b0fa616770fde3ce1278691fbb25bbe3e3c0d",
+      "original_bytes": 481302,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_dcd6f5b5_08fdd89a_admission.json_v35.gz",
+        "sha256": "09ac39a2c5ab5880c1852925e4b280a3f2b200d2d2a61ff2f0589481f7dd55a5",
+        "bytes": 26034
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/baseline.json",
+      "original_sha256": "81fa4231b3b6c8477e7656a693c54d5138192f462d009917a619cb899593dd95",
+      "original_bytes": 204179,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_993abd44_81fa4231_baseline.json_v35.gz",
+        "sha256": "0ad0229cfae71e81b43867daad1c900ffb662351e43701ee4f9e1a2ebddea03e",
+        "bytes": 10659
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/admission.json",
+      "original_sha256": "1d0d3e06440264784c81b332ffeada984879003520fa575344394d0309510597",
+      "original_bytes": 464357,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_26c89fef_1d0d3e06_admission.json_v35.gz",
+        "sha256": "22a1d9b31a4d3231887bc2ef6e329a99080acd1f29f62a4967b8bce4520ca62d",
+        "bytes": 25546
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/baseline.json",
+      "original_sha256": "33d5c7be0dd765652bb4e342c3cd85ccb6b4fb3b5988682288cdf0d40ebe67db",
+      "original_bytes": 196592,
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/raw_63aafe6d_33d5c7be_baseline.json_v35.gz",
+        "sha256": "7e0a9698c4b07b015243dcabe4a7b485304d89987cadfe41dd51cbffb8731821",
+        "bytes": 10438
+      },
+      "lossless_source_archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/unchanged_completed_admission_snapshots.tar.gz"
+    }
+  ],
+  "archived_actor_resources": [
+    {
+      "original": "results/task042/task042_v35_online_cold_20261004T010231752781Z/supervision/resources.jsonl",
+      "original_sha256": "b2b4c00163cc917bb44a08b9a83a8cb0e624a76623469164123a8e3f9485438e",
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/actor_resources.jsonl_v35.gz",
+        "sha256": "306438eb6c1c0c0d06500c2d2408277de340fc5dd2971d36d6154da1dd9b7b56",
+        "bytes": 74390
+      }
+    },
+    {
+      "original": "results/task042/task042_v35_online_cold_20261004T010231752781Z/shared_health.jsonl",
+      "original_sha256": "1533dab193a4bfb6dda23734b85e78a2b381d27263cb3d703702233b8e9f68a5",
+      "stored": {
+        "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/actor_shared_health.jsonl_v35.gz",
+        "sha256": "4f8171b806a42476d0cc7e2ca67ec5ff66090ef1bd47a33adde43a136492f3e4",
+        "bytes": 3882
+      }
+    }
+  ],
+  "lossless_archives": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/archive_manifest.json",
+      "sha256": "b22954d39c2d920fddd2084b212ec0260b175064c8122e65e2de034fe84e9d66",
+      "bytes": 74385
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/archive_manifest.json",
+      "sha256": "b1ed549f053a08b691b49716f12a18955d9aba446354ee0eaf00d8c55ee6d971",
+      "bytes": 317979
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/archive_manifest.json",
+      "sha256": "64fddd9edb1cdc5c9501488a0d42f0d36c833811652c39690e37b23ade21cc88",
+      "bytes": 29631
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/archive_manifest.json",
+      "sha256": "64bd788dcdf74f7d3022b988e10967312bdbec2d53700704d8768fdfc344a50c",
+      "bytes": 2299
+    }
+  ],
+  "large_payloads_ignored": true,
+  "prelaunch_reservation_failures_original_stderr": "not persisted; terminal-only exceptions retained in repair record"
+}

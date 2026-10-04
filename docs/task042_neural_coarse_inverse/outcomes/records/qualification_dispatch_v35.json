@@ -1,0 +1,149 @@
+{
+  "decision": "ONLINE_BLOCK_PC_PROGRESS_INSUFFICIENT",
+  "original_equation_gate": {
+    "status": "ORIGINAL_EQUATION_FAILED",
+    "rho": 0.20524886351900365,
+    "thresholds": {
+      "equation": 1e-06,
+      "recovery": 1e-10,
+      "slave_zero": 0,
+      "identity": 1e-10
+    }
+  },
+  "first_cycle_progress_gate": {
+    "measured": 0.20524886351900365,
+    "maximum": 0.01,
+    "passed": false
+  },
+  "cycle2": "NOT_RUN",
+  "independent_FE": "NOT_RUN",
+  "reference": "NOT_READ",
+  "original_scale": "NOT_QUALIFIED",
+  "neural_gain_20_percent": "NOT_DEMONSTRATED",
+  "fixed_seven_eight_block_family": "CLOSED_FOR_ADDITIONAL_NUMERICAL_BUDGET",
+  "physical_qualification": "NOT_QUALIFIED_EQUATION_GATE_FAILED",
+  "original_audit": {
+    "schur_relative": 0.20524886351900365,
+    "augmented_relative": 0.07959628543991103,
+    "native_relative": 0.07959628543991103,
+    "original_total_augmented_relative": 0.027619862207395922,
+    "port_absolute": 2.77556403109325e-17,
+    "port_full_rhs_relative": 1.3018827520752422e-16,
+    "port_operation_relative": 7.037334124260932e-17,
+    "recovery_relative": 3.844299504353224e-13,
+    "schur_original_identity_operation_relative": 4.299640328602692e-13,
+    "slave_storage_max": 0.0,
+    "field_norm": 1.3337477736993941,
+    "port_unknown_norm": 0.13425955040265197,
+    "strict_pass": false
+  },
+  "PC_qualification": {
+    "zero_exact": true,
+    "repeat": {
+      "error_norm": 0.0,
+      "operation_scale": 683.9779565562576,
+      "operation_relative": 0.0
+    },
+    "complex_linearity": {
+      "error_norm": 4.8713410658815815e-11,
+      "operation_scale": 656.180646739154,
+      "operation_relative": 7.423780463641203e-14
+    },
+    "J_balance": [
+      {
+        "error_norm": 5.966074725061549e-11,
+        "operation_scale": 175.5435502458609,
+        "operation_relative": 3.3986294094574525e-13,
+        "rhs_J_norm": 87.7717751229299,
+        "image_J_norm": 87.771775122931,
+        "full_input_norm": 189.67571542088479,
+        "full_correction_norm": 341.9889782781288
+      },
+      {
+        "error_norm": 3.291486724661495e-11,
+        "operation_scale": 175.925909163386,
+        "operation_relative": 1.8709505270225e-13,
+        "rhs_J_norm": 87.96295458169324,
+        "image_J_norm": 87.96295458169277,
+        "full_input_norm": 190.13444138235317,
+        "full_correction_norm": 170.36001355396488
+      }
+    ],
+    "seeds": [
+      423511,
+      423513
+    ],
+    "support_rows": [
+      2913,
+      2676,
+      2289,
+      2076,
+      2439,
+      2220,
+      1863,
+      1668
+    ],
+    "qualified": true
+  },
+  "old_new_S_SH_pairs": [
+    {
+      "seed": 423501,
+      "adjoint": false,
+      "input_scale": 7.272549178636513e-07,
+      "full_b_relative": 2.32910129148306e-16,
+      "error_norm": 1.9256608161838524e-17,
+      "operation_scale": 0.16535655389703421,
+      "operation_relative": 1.1645506457415296e-16
+    },
+    {
+      "seed": 423501,
+      "adjoint": true,
+      "input_scale": 7.272549178636513e-07,
+      "full_b_relative": 2.333171800645893e-16,
+      "error_norm": 1.9290262430227145e-17,
+      "operation_scale": 0.16535725435708082,
+      "operation_relative": 1.1665809586176835e-16
+    },
+    {
+      "seed": 423502,
+      "adjoint": false,
+      "input_scale": 7.0827561908023e-07,
+      "full_b_relative": 2.338841459519946e-16,
+      "error_norm": 1.9337138192886403e-17,
+      "operation_scale": 0.1653565538970342,
+      "operation_relative": 1.169420729759973e-16
+    },
+    {
+      "seed": 423502,
+      "adjoint": true,
+      "input_scale": 7.0827561908023e-07,
+      "full_b_relative": 2.361782482308111e-16,
+      "error_norm": 1.9526810616442617e-17,
+      "operation_scale": 0.16535638376272865,
+      "operation_relative": 1.1808924561667853e-16
+    },
+    {
+      "seed": "PHYSICAL_RHS",
+      "adjoint": false,
+      "full_b_relative": 1.3949012820740332e-13,
+      "error_norm": 1.1532803451515848e-14,
+      "operation_scale": 171.4172992962836,
+      "operation_relative": 6.727911067821778e-17
+    },
+    {
+      "seed": "PHYSICAL_RHS",
+      "adjoint": true,
+      "full_b_relative": 1.4641563571062648e-13,
+      "error_norm": 1.2105392478876367e-14,
+      "operation_scale": 171.41729848046657,
+      "operation_relative": 7.06194333138193e-17
+    }
+  ],
+  "factors": "READONLY_SEVEN_REGION_DENSE_LU_PRESENT",
+  "global_p4": false,
+  "new_large_LU": 0,
+  "new_gecon": 0,
+  "new_image_QR": 0,
+  "new_training": 0,
+  "factors_existing_readonly": true
+}

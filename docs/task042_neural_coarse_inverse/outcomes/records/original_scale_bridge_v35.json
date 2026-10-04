@@ -1,0 +1,119 @@
+{
+  "schema": "task042.original-scale-bridge.v35",
+  "target": {
+    "period_nm": [
+      50,
+      25
+    ],
+    "z_nm": [
+      -10,
+      130
+    ],
+    "wavelength_nm": 0.7,
+    "time_limit_seconds": 172800,
+    "simultaneous_memory_limit_bytes": 2000000000000
+  },
+  "micro": {
+    "box_nm": [
+      1.4,
+      1.05,
+      1.4
+    ],
+    "cells": 384,
+    "h_nm": 0.175,
+    "p": 3,
+    "quadrature": 15,
+    "trace_rows": 18144,
+    "ports": 40,
+    "volume_nm3": 2.058,
+    "identity": {
+      "action_sha256": "9196edb807b534217d0c0eb78882125341342784a48ef20ebe2d9421fe636454",
+      "physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+      "mode_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+      "canonical_master_sha256": "edb31a5bbf505f1e3916d8491865905ab9a41a6254dcedf751e80607b8c38d0a",
+      "b_sha256": "b3a366ccb183d1a6ca401a178ff4c4ecee8786d601ea38d865d55f8f6648e56b"
+    }
+  },
+  "target_volume_nm3": 175000,
+  "box_volume_ratio": 85034.01360544219,
+  "ratio_is_DoF_ratio": false,
+  "unknowns": [
+    "target exact Si/notch geometry tags",
+    "target mesh/h/p/q",
+    "target canonical/MPC inventory",
+    "target complete port/reference plane inventory",
+    "target rhs/background/recover hash",
+    "global coupling cost and iteration count",
+    "complete qualified N1 setup/solve/physics/IO"
+  ],
+  "material": {
+    "canonical": {
+      "path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "bytes": 5236
+    },
+    "table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+    "source_wavelength": "0.699999988",
+    "nominal_wavelength": "0.7",
+    "n": [
+      0.999885140474,
+      4.32477054e-06
+    ],
+    "epsilon": [
+      0.9997702941220071,
+      8.648547597811433e-06
+    ],
+    "air_n": 1,
+    "mu_r": 1,
+    "convention": "exp(-i omega t)",
+    "interpolation": false
+  },
+  "seven_factor_A_LU_bytes": 1591420032,
+  "simultaneous_capacity": {
+    "qualified": true,
+    "simultaneous_planned_bytes": 5371055616,
+    "factor_array_bytes": 1591492608,
+    "largest_matrix_bytes": 241864704,
+    "packet_libraries_workspace_allowance": 3221225472,
+    "hash_norm_copy_reserve": 483729408,
+    "krylov_basis_upper_bytes": 74608128,
+    "derived_not_RSS": true
+  },
+  "fixed_seven_formula": {
+    "memory": "factor_A_LU_bytes*f^2 plus all simultaneous other objects",
+    "factorization": "f^3",
+    "per_solve": "f^2",
+    "f_target": "UNKNOWN",
+    "memory_only_f_ceiling": 35.45051817723597
+  },
+  "fixed_block_size_formula": "32*sum(n_b^2)+pivot+packet+Krylov+global_coupling+port+recover/audit+IO",
+  "necessary_global_inverse_interface": {
+    "operator": "A_OO-A_OJ*A_JJ^-1*A_JO",
+    "rhs": "r_O-A_OJ*A_JJ^-1*r_J",
+    "outer_rows": 14256,
+    "preserve": [
+      "canonical order",
+      "complex Floquet pullback",
+      "original cell contributions",
+      "all40 Hhat closure, Hp distinct",
+      "affine internal recover",
+      "old original full residual/audit"
+    ],
+    "implemented_this_batch": false
+  },
+  "NN_necessary_cost": {
+    "formula": "f*(1-1/s)-C/T>=0.2 plus iteration change and exact audit",
+    "qualified_T": "UNKNOWN",
+    "training_data_inference_C": "UNKNOWN",
+    "iteration_change": "UNKNOWN",
+    "failed_actor_proxy_solve_share": 0.30185467487682044,
+    "proxy_s_min_assuming_C0_same_iterations": 2.963581939089916,
+    "assumption_is_qualification": false,
+    "actor_peak_20_percent_bytes": 421603737.6,
+    "minimum_factor_payload_saving_fraction_if_no_replacement_memory": 0.2649229801827705
+  },
+  "original_scale_qualification": "NOT_QUALIFIED",
+  "neural20": "NOT_DEMONSTRATED",
+  "no_new_mesh_PDE_training": true,
+  "next_only": "matched periodic/hierarchical outer Schur interface and capacity qualification"
+}

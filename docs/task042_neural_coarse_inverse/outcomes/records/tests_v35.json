@@ -1,0 +1,294 @@
+{
+  "raw_JUnit": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/pytest.xml",
+      "cases": 26,
+      "failed": 0,
+      "case_names": [
+        "src.test.test_task042_v35_online::test_noncommuting_complex_explicit_block_product_and_actual_calls",
+        "src.test.test_task042_v35_online::test_single_step_amplification_does_not_imply_gmres_failure",
+        "src.test.test_task042_v35_online::test_paid_probe_WAIT_failed_consumption_and_closed_fixture",
+        "src.test.test_task042_v35_online::test_original_uncondensed_audit_reuses_only_original_Hp",
+        "src.test.test_task042_v35_online::test_actual_dat_kernel_runner_return_checkpoint_independent_checker",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[hash]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[member]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[gate]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[audit_pending]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[inventory]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[status]",
+        "src.test.test_task042_v35_online::test_prescribed_second_cycle_gate_uses_full_equation_and_physical_b",
+        "src.test.test_task042_v35_online::test_real_watchdog_timeout_clears_only_own_complete_descendant_tree",
+        "src.test.test_task042_v35_cache::test_actual_deployment_full_consumption_and_legacy_counter_scope",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[erase_fast]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[PC_zero]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[factor_order]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[unsafe_factor]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[factor_RHS]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[missing_SH]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[wrong_source]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[not_cleared]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[erased_charge]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[fake_Arnoldi]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[nan_PC]",
+        "src.test.test_task042_v35_cache::test_verify_barrier_does_not_read_reference_after_numeric_negative"
+      ],
+      "hash": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_check_001/pytest.xml",
+        "sha256": "0a9039b2305967c7d385ffc94d02dc3dabb08b7f2dc27719f173b4d1642c0446",
+        "bytes": 4116
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/pytest.xml",
+      "cases": 41,
+      "failed": 7,
+      "case_names": [
+        "src.test.test_task042_v35_online::test_noncommuting_complex_explicit_block_product_and_actual_calls",
+        "src.test.test_task042_v35_online::test_single_step_amplification_does_not_imply_gmres_failure",
+        "src.test.test_task042_v35_online::test_paid_probe_WAIT_failed_consumption_and_closed_fixture",
+        "src.test.test_task042_v35_online::test_original_uncondensed_audit_reuses_only_original_Hp",
+        "src.test.test_task042_v35_online::test_actual_dat_kernel_runner_return_checkpoint_independent_checker",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[hash]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[member]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[gate]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[audit_pending]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[inventory]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[status]",
+        "src.test.test_task042_v35_online::test_prescribed_second_cycle_gate_uses_full_equation_and_physical_b",
+        "src.test.test_task042_v35_online::test_real_watchdog_timeout_clears_only_own_complete_descendant_tree",
+        "src.test.test_task042_v35_cache::test_actual_deployment_full_consumption_and_legacy_counter_scope",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[erase_fast]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[PC_zero]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[factor_order]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[unsafe_factor]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[factor_RHS]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[missing_SH]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[wrong_source]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[not_cleared]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[erased_charge]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[fake_Arnoldi]",
+        "src.test.test_task042_v35_cache::test_saved_consumption_rejects_inventory_source_and_numeric_tampering[nan_PC]",
+        "src.test.test_task042_v35_cache::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_capability_status_does_not_overstate_stage2",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_case002_full_solve_equivalence_record",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_case003_lossy_records_keep_probe_diagnostic",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_core_walkthroughs_have_source_level_depth",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_demo_target_names_and_pycharm_mpi4_are_unambiguous",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_known_walkthrough_errors_do_not_regress",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_local_links_in_documentation_layers_resolve",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_numbered_benchmark_cases_use_case_contained_contracts",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_quick_start_files_are_followable_tutorials",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_recorded_and_test_backed_case_files_are_explicit",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_required_document_layers_exist",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_task032_review_closeout_artifacts_are_machine_readable",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_task032_summary_is_table_first_and_traceable",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_task035_planning_markdown_contract",
+        "src.test.test_26_documentation_contract.DocumentationContractTests::test_task038_v7_l0_preflight_hash_and_smoke_contract"
+      ],
+      "hash": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_004/pytest.xml",
+        "sha256": "502250f17a096a0767f2401be3362ad15932474b70754c47d16d251dc7fcd24f",
+        "bytes": 22466
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/pytest.xml",
+      "cases": 7,
+      "failed": 0,
+      "case_names": [
+        "src.test.test_task042_v35_online::test_actual_dat_kernel_runner_return_checkpoint_independent_checker",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[hash]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[member]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[gate]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[audit_pending]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[inventory]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[status]"
+      ],
+      "hash": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/pytest.xml",
+        "sha256": "c48371dada4b545cd52f7b486fb3167a55fd547516c752d0e5bf1a62626bbd57",
+        "bytes": 1248
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/pytest.xml",
+      "cases": 25,
+      "failed": 1,
+      "case_names": [
+        "src.test.test_task042_v35_online::test_noncommuting_complex_explicit_block_product_and_actual_calls",
+        "src.test.test_task042_v35_online::test_single_step_amplification_does_not_imply_gmres_failure",
+        "src.test.test_task042_v35_online::test_paid_probe_WAIT_failed_consumption_and_closed_fixture",
+        "src.test.test_task042_v35_online::test_original_uncondensed_audit_reuses_only_original_Hp",
+        "src.test.test_task042_v35_online::test_actual_dat_kernel_runner_return_checkpoint_independent_checker",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[hash]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[member]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[gate]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[audit_pending]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[inventory]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[status]",
+        "src.test.test_task042_v35_online::test_prescribed_second_cycle_gate_uses_full_equation_and_physical_b",
+        "src.test.test_task042_v35_online::test_real_watchdog_timeout_clears_only_own_complete_descendant_tree",
+        "src.test.test_neural_fe_action_packet::test_complex_adjoint_and_original_equations",
+        "src.test.test_neural_fe_action_packet::test_capacity_includes_original_cell_audit_and_temporary_copies",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[1-True]",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[65-False]",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[67-True]",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[130-False]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_proposed]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[before_close]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_closed]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[before_audit]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_audit]",
+        "src.test.test_task042_v18_completion::test_atomic_writer_failure_and_nonfinite_hash_rollback"
+      ],
+      "hash": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_001/pytest.xml",
+        "sha256": "b87e3a132975c3cacdd58e445140b48d3dde128eb631efd498f045320b0dba73",
+        "bytes": 9176
+      }
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/pytest.xml",
+      "cases": 25,
+      "failed": 0,
+      "case_names": [
+        "src.test.test_task042_v35_online::test_noncommuting_complex_explicit_block_product_and_actual_calls",
+        "src.test.test_task042_v35_online::test_single_step_amplification_does_not_imply_gmres_failure",
+        "src.test.test_task042_v35_online::test_paid_probe_WAIT_failed_consumption_and_closed_fixture",
+        "src.test.test_task042_v35_online::test_original_uncondensed_audit_reuses_only_original_Hp",
+        "src.test.test_task042_v35_online::test_actual_dat_kernel_runner_return_checkpoint_independent_checker",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[hash]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[member]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[gate]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[audit_pending]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[inventory]",
+        "src.test.test_task042_v35_online::test_independent_checker_rejects_hash_inventory_and_fakepass[status]",
+        "src.test.test_task042_v35_online::test_prescribed_second_cycle_gate_uses_full_equation_and_physical_b",
+        "src.test.test_task042_v35_online::test_real_watchdog_timeout_clears_only_own_complete_descendant_tree",
+        "src.test.test_neural_fe_action_packet::test_complex_adjoint_and_original_equations",
+        "src.test.test_neural_fe_action_packet::test_capacity_includes_original_cell_audit_and_temporary_copies",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[1-True]",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[65-False]",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[67-True]",
+        "src.test.test_task042_v21_recycling::test_class_batch_exact_complex_interleaved_singletons_tail_and_readonly[130-False]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_proposed]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[before_close]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_closed]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[before_audit]",
+        "src.test.test_task042_v18_completion::test_return_survives_close_audit_writer_failures_no_arnoldi_replay[after_audit]",
+        "src.test.test_task042_v18_completion::test_atomic_writer_failure_and_nonfinite_hash_rollback"
+      ],
+      "hash": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_pre_002/pytest.xml",
+        "sha256": "520facf627c6198451d2e2a2cae911901ffdcbecb15ee740778e871b71fe31d3",
+        "bytes": 3953
+      }
+    }
+  ],
+  "final_static": {
+    "status": "PASSED",
+    "source_sha": "fcbb3ea3edb70055165c97c285d63e58dde02da5",
+    "compiled_files": [
+      "benchmarks/check_full_input_online.py",
+      "benchmarks/finalize_full_input_online.py",
+      "benchmarks/package_full_input_online.py",
+      "benchmarks/qualify_full_input_online.py",
+      "benchmarks/verify_full_input_online.py",
+      "scripts/run_case.py",
+      "src/io/full_input_online.py",
+      "src/io/task042_profile.py",
+      "src/runners/diagnostic_storage.py",
+      "src/runners/full_input_online.py",
+      "src/runners/orthonormal_trace_reprofile.py",
+      "src/runners/task042_shared.py",
+      "src/solvers/class_batch_action.py",
+      "src/solvers/full_input_online.py",
+      "src/solvers/full_input_online_study.py",
+      "src/solvers/full_input_online_window.py",
+      "src/solvers/gmres_cycle_commit.py",
+      "src/solvers/neural_fe_action_packet.py",
+      "src/solvers/neural_fe_blind_reference.py",
+      "src/solvers/resumable_trace_gmres.py",
+      "src/solvers/return_block_direction.py",
+      "src/test/test_task042_v35_cache.py",
+      "src/test/test_task042_v35_online.py"
+    ],
+    "results": [
+      {
+        "command": [
+          "/home/fenics/Projects/Metrology/.venv/bin/ruff",
+          "check",
+          "--select",
+          "E9,F",
+          "benchmarks/check_full_input_online.py",
+          "benchmarks/finalize_full_input_online.py",
+          "benchmarks/package_full_input_online.py",
+          "benchmarks/qualify_full_input_online.py",
+          "benchmarks/verify_full_input_online.py",
+          "src/io/full_input_online.py",
+          "src/runners/full_input_online.py",
+          "src/solvers/full_input_online.py",
+          "src/solvers/full_input_online_study.py",
+          "src/solvers/full_input_online_window.py",
+          "src/test/test_task042_v35_cache.py",
+          "src/test/test_task042_v35_online.py"
+        ],
+        "returncode": 0
+      },
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "benchmarks.package_full_input_online"
+        ],
+        "returncode": 0
+      },
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/fixtures",
+          "src/test/test_task042_v35_online.py::test_actual_dat_kernel_runner_return_checkpoint_independent_checker",
+          "src/test/test_task042_v35_online.py::test_independent_checker_rejects_hash_inventory_and_fakepass",
+          "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_005/pytest.xml"
+        ],
+        "returncode": 0
+      }
+    ],
+    "threads": [
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "function": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "affinity": [
+      0
+    ],
+    "interpreter": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+    "ruff_binary_sha256": "03b22709bb8f62028a0732423eaac6f7792235bbcb05b3feaddaac3d992318d8",
+    "ruff_read_only_reuse": true,
+    "targeted_export_repair": true,
+    "new_real_actions": 0,
+    "new_factor_reads": 0,
+    "no_reference_read": true
+  },
+  "meaningful_unique_tests": 53,
+  "no_full_repository_suite": true,
+  "no_MPI_FE_GPU_tests_this_batch": true,
+  "CI": "NOT_CLAIMED"
+}

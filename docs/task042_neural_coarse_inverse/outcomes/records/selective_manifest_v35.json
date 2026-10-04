@@ -1,0 +1,60 @@
+{
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "changes": "no production default change; explicit cached original Hp solve only",
+      "tests": "original packet pair tests",
+      "fresh_FE": "NOT_RUN",
+      "merge": "NOT_APPROVED"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "changes": "new online window/paid probes/storage namespace, shared finish opt-in total hook",
+      "dependencies": [
+        "fixed PC",
+        "shared watchdog",
+        "atomic cycle writer"
+      ],
+      "evidence": "actual one-run and final fixture tests",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "changes": "saved y/By/t/port/z and all consumption independently reconstructed; cache partition, metadata correction",
+      "dependencies": [
+        "raw final arrays",
+        "ledger",
+        "original gate definitions"
+      ],
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "changes": "response35/result/scale/cost/source/raw/tests plus prefix navigation and registries",
+      "dependencies": [
+        "numeric af0 source",
+        "checker6e source",
+        "final metadata source"
+      ],
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "changes": "FullInputPC/arbitraryRHS seven-region study and explicit one-run inputs",
+      "dependencies": [
+        "V24 six outer factors",
+        "V26 J",
+        "old packet/class64/oracle"
+      ],
+      "order": 1,
+      "mathematical_behavior": "new fixed right PC, equation unchanged",
+      "production_qualification": false
+    },
+    {
+      "group": "do-not-merge",
+      "changes": "ignored factors, arrays, logs, bytecode/fixture archives; closed failed candidate as production default",
+      "merge_approval": false
+    }
+  ],
+  "no_merge_this_round": true
+}

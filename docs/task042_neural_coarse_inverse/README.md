@@ -1,3 +1,20 @@
+# V35最新交付：在线冷启动可信负结果，固定块族收口
+
+本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。
+
+| 模型／结果身份 | measured或not_run结果 | 解释／边界 |
+|---|---|---|
+| .7nm／384hex／p3／q15／18144trace＋40port | 首256步Schur0.20524886351900365>0.01 | ONLINE_BLOCK_PC_PROGRESS_INSUFFICIENT，关闭固定七／八块追加预算 |
+| 原完整方程 | native/augmented0.07959628543991103、total augmented0.027619862207395922>1e-6 | port/恢复/MPC通过不足以授完整解资格 |
+| 费用／同时采样树峰 | actor188.162088667s／2108018688B／ownswap0；834次S/SH、264次PC | shared-workstation，全部aux/探针/旧费用另列，不双加嵌套计时 |
+| 原因／范围 | 保存残差平方99.19%在外域；第二周期与FE/REF7 NOT_RUN | 无official R/T/A、NN20%或原尺寸2TB/48h资格 |
+
+[Review V32](review_report_v32.md)／[response](response_v35.md)／[完整结果](outcomes/online_full_input_qualification_v35.md)／[规模桥接](outcomes/original_scale_bridge_v35.md)／[run index](outcomes/records/run_index_v35.json)。
+
+唯一下一建议是匹配外域Schur的周期／层次全局逆接口与容量资格；本轮不实现。历史后缀逐字保留。
+
+<!-- V35-LATEST-END -->
+
 # 最新审阅：Review V32／唯一冷启动在线完整资格
 
 [Review V32](review_report_v32.md)独立重算V34两态保存数组、分区与费用，接受完整输入单位单步的负结果；不授予完整物理解、NN20%或原尺寸资格。[独立审阅证据](outcomes/records/review_v32_independent_checks.json)包含969份文件hash、61份原始包及本次3.666822s缓存审核；没有新PDE或真实因子求解。

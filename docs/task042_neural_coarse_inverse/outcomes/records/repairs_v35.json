@@ -1,0 +1,68 @@
+{
+  "failures": [
+    {
+      "source": "30f2b682c5ff99610f6af250c66a3a78c9497b53",
+      "cause": "fixture VERIFY before settling its own synthetic active actor",
+      "raw": "aux_pre_001/pytest.stdout",
+      "repair_source": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e",
+      "replay": "aux_pre_002",
+      "real_actor_restarted": false
+    },
+    {
+      "cause": "two12MiB storage reservations rejected before actual actor/reader/action",
+      "raw_stdout_original_not_persisted": true,
+      "terminal_exception": "V35 new/cumulative storage cap / reserved output",
+      "no_zero_cost_claim": true,
+      "remedy": "paid lossless archive and same cap, only one successful formal launch"
+    }
+  ],
+  "final_static_failure": {
+    "source": "fe9d2c730e8e725d92228409b5caa7ac50d1b393",
+    "folder": "aux_docs_003",
+    "no_actual_operator_calls": true,
+    "checker_previous_initialized": true,
+    "FAMILY_explicit_public_reexport_restored": true,
+    "unrelated_legacy_F401_not_cleaned": true,
+    "final_Ruff_scope": "new V35 files;23 dependency Python files still compiled"
+  },
+  "final_integration_failure": {
+    "source": "74e41320215c878c13fd35325695f4616a22cb6b",
+    "folder": "aux_docs_004",
+    "passed": 34,
+    "failed": 7,
+    "root_cause": "FAMILY dynamically read by shared runner was mistakenly removed for lint; restore explicit export",
+    "affected_replay": "synthetic stage/checker only",
+    "actual_numeric_rerun": false
+  },
+  "metadata_corrections": {
+    "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/metadata_corrections_v35.json",
+    "sha256": "73f246749ae76dd4f59965d9fbc92a3f57771cc7369afcba65d9419805163d92",
+    "bytes": 987
+  },
+  "archive_manifests": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_001/archive_manifest.json",
+      "sha256": "b1ed549f053a08b691b49716f12a18955d9aba446354ee0eaf00d8c55ee6d971",
+      "bytes": 317979
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_cleanup_002/archive_manifest.json",
+      "sha256": "64bd788dcdf74f7d3022b988e10967312bdbec2d53700704d8768fdfc344a50c",
+      "bytes": 2299
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_001/archive_manifest.json",
+      "sha256": "b22954d39c2d920fddd2084b212ec0260b175064c8122e65e2de034fe84e9d66",
+      "bytes": 74385
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v35/aux_docs_002/archive_manifest.json",
+      "sha256": "64fddd9edb1cdc5c9501488a0d42f0d36c833811652c39690e37b23ade21cc88",
+      "bytes": 29631
+    }
+  ],
+  "numeric_failure_not_a_bug": true,
+  "restarts": 0,
+  "resource_reentries": 0,
+  "ordinary_resource_waits": 0
+}

@@ -1,0 +1,60 @@
+{
+  "status": "CHECKED",
+  "rows": [
+    {
+      "cycle": 1,
+      "measured_schur_relative": 0.20524886351900365,
+      "original_equation_gate": {
+        "status": "ORIGINAL_EQUATION_FAILED",
+        "rho": 0.20524886351900365,
+        "thresholds": {
+          "equation": 1e-06,
+          "recovery": 1e-10,
+          "slave_zero": 0,
+          "identity": 1e-10
+        }
+      },
+      "full_state_sha256": "721508ee3ac691a0a7b5651063484fe82ed1df56931f87413ae27f96f5cf4092",
+      "state_members": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v35/task042_v35_online_cold_20261004T010231752781Z/cycles/CYCLE_0001/numeric/slot1.npz",
+        "sha256": "721508ee3ac691a0a7b5651063484fe82ed1df56931f87413ae27f96f5cf4092",
+        "trace_sha256": "8b0ed6aeee6078927c60f95495c91a7d59b084b942ea21eb6b5207970e2fdfdf",
+        "port_sha256": "1ed3ad66947397c2057cffe90f0144554dbf3d5ed9ea8e12878db91b4030b318",
+        "z_sha256": "e24cd774c247e2e73c75b8d4ba8f78463cef21d07ca791bcd472b8528d4db3bb",
+        "residual_sha256": "07fa7b4e177fcc16aac4b325fa492a45172424393a604e918457fd015b82d76d",
+        "y_sha256": "9ffe1f315d3d6476cbbb7ec0471df1bbc90655053265c98d742120cd2792d9fc",
+        "By_sha256": "8b0ed6aeee6078927c60f95495c91a7d59b084b942ea21eb6b5207970e2fdfdf"
+      },
+      "inner_iterations": 256
+    }
+  ],
+  "reference_read": false,
+  "new_actions": 0,
+  "new_factor_reads": 0,
+  "neural_gain": "NOT_DEMONSTRATED",
+  "consumption": {
+    "status": "CONSUMPTION_CHECKED",
+    "counts": {
+      "actions": 834,
+      "pc_apply": 264,
+      "factor_readers": 7,
+      "joint_lu_solve": 526,
+      "outer_lu_solve": 1584,
+      "explicit_triangular_pass": 4220,
+      "port_factors": 2,
+      "port_solves": 822,
+      "port_rhs_columns": 822,
+      "original_audits": 1,
+      "arnoldi": 256,
+      "cycles": 1
+    },
+    "nonzero_PC_calls": 262,
+    "equivalent_actions": 834,
+    "field_recovery_calls_derived": 1,
+    "legacy_all_batch_equivalent_actions_scope": "old oracle only; not total deployment",
+    "legacy_field_recovery_calls_scope": "inherited adapter zero; reconstructed from original audits",
+    "full_hash_copy_scope": "reader whole-file container hash allocates; only canonical array hash streams64 rows",
+    "neural_gain": "NOT_DEMONSTRATED"
+  },
+  "source_sha": "af0d3d3e7d2b05ab915902bbb66b6ddbd7ed912e"
+}

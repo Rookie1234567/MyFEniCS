@@ -1,3 +1,20 @@
+# V35统一结果：实际在线失败，原尺寸与神经资格仍未取得
+
+本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。
+
+| 模型／结果身份 | measured或not_run结果 | 解释／边界 |
+|---|---|---|
+| .7nm／384hex／p3／q15／18144trace＋40port | 首256步Schur0.20524886351900365>0.01 | ONLINE_BLOCK_PC_PROGRESS_INSUFFICIENT，关闭固定七／八块追加预算 |
+| 原完整方程 | native/augmented0.07959628543991103、total augmented0.027619862207395922>1e-6 | port/恢复/MPC通过不足以授完整解资格 |
+| 费用／同时采样树峰 | actor188.162088667s／2108018688B／ownswap0；834次S/SH、264次PC | shared-workstation，全部aux/探针/旧费用另列，不双加嵌套计时 |
+| 原因／范围 | 保存残差平方99.19%在外域；第二周期与FE/REF7 NOT_RUN | 无official R/T/A、NN20%或原尺寸2TB/48h资格 |
+
+[response](../response_v35.md)／[结果](online_full_input_qualification_v35.md)／[完整费用](records/resource_costs_v35.json)／[独立checker](records/online_checker_v35.json)／[规模桥接](original_scale_bridge_v35.md)。
+
+唯一下一建议是匹配外域Schur的周期／层次全局逆接口与容量资格；本轮不实现。历史后缀逐字保留。
+
+<!-- V35-LATEST-END -->
+
 # V34统一结果：可信单步负结果，原方程及神经资格不提升
 
 将外域残差直接送入已有六个外块，再用联合块抵消反馈，检验比旧回流更完整的信息传播。代价是局部因子和原作用；缓存省去历史读取并不省去任意RHS部署费用。这次只研究两个已消费冷末态，不新增正式有限元解。
