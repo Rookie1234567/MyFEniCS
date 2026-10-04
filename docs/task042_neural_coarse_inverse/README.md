@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V33 / 下一执行 V36
+
+[Review V33](review_report_v33.md)审阅交付HEAD `9a6cadff62771d63a4996a6dccc9424df431ee4c`。接受V35唯一冷启动GMRES256的可信负结果：原Schur残差0.2052488635，高于0.01继续门；不追加固定七／八块周期。完整原尺寸0.7nm、2TB／48h及神经20%均未资格化。
+
+V36执行一个连续工作包：原尺寸物理／完整mode／无装配容量合同，真正限制缓存大小的端口provider与既有真实micro边界作用对照，供全局solver消费的输入和验收接口。dot继续其完整3D参考逆、周期分块、共享存储及规模验证；不重跑其求解、不改其分支。普通bug在V36内修复，按报告预算与真实Gate一次收口，交付response_v36。本审阅不授予merge approval。
+
+[独立证据核查](outcomes/records/review_v33_independent_checks.json) · [本次文档验收](outcomes/records/review_v33_documentation_checks.json)。以下V35及此前历史全文保留。
+
+---
+
 # V35最新交付：在线冷启动可信负结果，固定块族收口
 
 本轮首次真实冷启动，用七区局部解处理任意新残差，并由GMRES选择修正组合。代价是每个非零输入八次局部solve和两次传播作用；这是传统块方法，没有神经训练。
