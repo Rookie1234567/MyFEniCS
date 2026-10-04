@@ -17,8 +17,8 @@
   "executor_formally_stopped": true,
   "report": {
     "path": "docs/task042extra_feinn_5nm/review_report_v22.md",
-    "sha256": "e4448c1dab01e5c8dd09a991860184c313dd9c3580299fb13636d8ba2ee661fb",
-    "bytes": 26867
+    "sha256": "c0b6645ef6372889ae2c19c4ee3f38b351f9b36a4081745ad5dda0310500452d",
+    "bytes": 26863
   },
   "delivery": {
     "path": "tmp/task42extra/v22/delivery_receipt.json",
@@ -1839,12 +1839,21 @@
     "report_body_frozen_before_render": true,
     "local_page_check": {
       "path": "docs/task042extra_feinn_5nm/review_report_v22.md",
-      "sha256": "e4448c1dab01e5c8dd09a991860184c313dd9c3580299fb13636d8ba2ee661fb",
+      "sha256": "c0b6645ef6372889ae2c19c4ee3f38b351f9b36a4081745ad5dda0310500452d",
       "checked_scope": "entire page",
       "markdown_tables": 7,
       "parsed_tables": 7,
       "math_fences": 1,
       "links": 13
-    }
+    },
+    "initial_visual": {
+      "publication": "6095d33c118f92236f544a69418e8f2fe80ef8d5",
+      "tables_complete": 7,
+      "formula": 1,
+      "captures_viewed": 9,
+      "issue": "One inline strong-emphasis delimiter remained literal in a paragraph; removed only those four asterisks; no scientific change.",
+      "record": "tmp/task42extra/render/review_v22_published/render_records.json"
+    },
+    "local_metadata_repair": "One page-check call passed relative path, raised ValueError before audit write; corrected absolute path and reran page check only. No numerical replay."
   }
 }
