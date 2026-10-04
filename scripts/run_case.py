@@ -36,6 +36,18 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        from src.runners.fresh_component_receiver import load_receiver
+        receiver = load_receiver(args.input_path)
+        if receiver is not None:
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('W0 receiver accepts one explicit dat stage')
+            if args.validate_only or args.dry_run:
+                print(json.dumps(receiver, sort_keys=True))
+                return 0
+            from src.runners.fresh_component_receiver import launch_receiver
+            result = launch_receiver(receiver)
+            print(json.dumps(result, sort_keys=True))
+            return 0 if result['cleared'] and result['receiver_exit_code'] == 0 else 3
         from src.io.feinn_pilot import load_pilot
         pilot = load_pilot(args.input_path)
         if pilot is not None:

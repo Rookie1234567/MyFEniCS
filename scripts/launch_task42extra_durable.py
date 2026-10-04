@@ -25,6 +25,14 @@ def main():
         raise SystemExit(
             "usage: launch_task42extra_durable.py <one-run.dat> [--attempt 2|3|4]"
         )
+    from src.runners.fresh_component_receiver import load_receiver, durable_launch
+    receiver = load_receiver(sys.argv[1])
+    if receiver is not None:
+        if len(sys.argv) != 2:
+            raise ValueError('W0 receiver retries require a recorded repair and new stage')
+        result = durable_launch(receiver)
+        print(json.dumps({k: result[k] for k in ('socket', 'session', 'output', 'scope')}))
+        return
     spec = load_pilot(sys.argv[1])
     stages = {
         "v7_p_transfer_checks": ("v7_p_transfer_checks", "task42extra-v7-checks"),

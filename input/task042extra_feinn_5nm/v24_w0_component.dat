@@ -1,0 +1,5 @@
+receiver_schema = 1
+component = "fresh_c1_same80_p6"
+mode = "w0"
+dependency_commit = "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382"
+input_sha256 = "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
