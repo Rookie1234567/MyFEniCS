@@ -29,14 +29,43 @@ from src.solvers.port_preparation_window import implementation_hashes, window
 
 
 def storage_limits(namespace):
+    if namespace == "v46":
+        from src.solvers.neural_decision_scope import plan_record
+
+        plan = plan_record()
+        return {
+            k: plan[k]
+            for k in (
+                "new_storage_bytes",
+                "task_storage_bytes",
+                "free_bytes",
+                "evidence_reserve_bytes",
+            )
+        }
     if namespace == "v45":
         from src.solvers.full_moment_scope import plan_record
+
         plan = plan_record()
-        return {k: plan[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes", "evidence_reserve_bytes")}
+        return {
+            k: plan[k]
+            for k in (
+                "new_storage_bytes",
+                "task_storage_bytes",
+                "free_bytes",
+                "evidence_reserve_bytes",
+            )
+        }
     return {
-        "new_storage_bytes": ((4 if namespace in ("v43", "v44") else 40)*2**30 if namespace in ("v42", "v43", "v44") else (2048 if namespace in ("v39", "v40", "v41") else 512)*2**20),
-        "task_storage_bytes": (64 if namespace == "v42" else 24 if namespace in ("v43", "v44") else 20)*2**30,
-        "free_bytes": (100 if namespace == "v42" else 50)*2**30,
+        "new_storage_bytes": (
+            (4 if namespace in ("v43", "v44") else 40) * 2**30
+            if namespace in ("v42", "v43", "v44")
+            else (2048 if namespace in ("v39", "v40", "v41") else 512) * 2**20
+        ),
+        "task_storage_bytes": (
+            64 if namespace == "v42" else 24 if namespace in ("v43", "v44") else 20
+        )
+        * 2**30,
+        "free_bytes": (100 if namespace == "v42" else 50) * 2**30,
         "evidence_reserve_bytes": 0,
     }
 
@@ -44,14 +73,27 @@ def storage_limits(namespace):
 class PreparationHealth:
     def __init__(self, folder, neighbors, namespace, *, limits=None):
         self.limits = storage_limits(namespace) if limits is None else limits
-        if namespace == "v45" and self.limits != storage_limits(namespace):
-            raise ValueError("live V45 guard must use the identical frozen plan")
-        self.shared = SharedHealth(folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"])
+        if namespace in ("v45", "v46") and self.limits != storage_limits(namespace):
+            raise ValueError("live guard must use the identical frozen plan")
+        self.shared = SharedHealth(
+            folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"]
+        )
         self.namespace, self.folder = namespace, folder
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace in ("v37", "v38", "v39", "v40", "v41", "v42", "v43", "v44", "v45"):
+        if self.namespace in (
+            "v37",
+            "v38",
+            "v39",
+            "v40",
+            "v41",
+            "v42",
+            "v43",
+            "v44",
+            "v45",
+            "v46",
+        ):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
                 ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
@@ -63,7 +105,12 @@ class PreparationHealth:
             row["new_preparation_bytes"] = size
             limit = self.limits["new_storage_bytes"]
             reserve = self.limits["evidence_reserve_bytes"]
-            if size + reserve > limit or row["artifact_bytes"] + reserve > self.limits["task_storage_bytes"] or row["disk_free_bytes"] < self.limits["free_bytes"] + reserve:
+            own_reserve = 0 if self.namespace == "v46" else reserve
+            if (
+                size + own_reserve > limit
+                or row["artifact_bytes"] + reserve > self.limits["task_storage_bytes"]
+                or row["disk_free_bytes"] < self.limits["free_bytes"] + reserve
+            ):
                 row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
             if self.namespace in ("v39", "v40"):
                 jit = ROOT / ("tmp/task042/" + self.namespace + "/formal/xdg/fenics")
@@ -87,11 +134,17 @@ FE_ROLES = (
 
 
 def context(namespace):
+    if namespace == "v46":
+        from src.solvers import neural_decision_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v45":
         from src.solvers import full_moment_scope as scope
+
         return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v44":
         from src.solvers import neighborhood_late_error_scope as scope
+
         return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace in ("v43", "v44", "v45"):
         from src.solvers import neighborhood_residual_scope as scope
@@ -134,15 +187,18 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
     limits = storage_limits(namespace)
-    limit, task_limit, free_limit = (limits[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes"))
-    if namespace == "v45":
+    limit, task_limit, free_limit = (
+        limits[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes")
+    )
+    if namespace in ("v45", "v46"):
         reserve = max(reserve, limits["evidence_reserve_bytes"])
+    new_reserve = 0 if namespace == "v46" else reserve
     if (
-        (new + reserve > limit and not cleanup)
+        (new + new_reserve > limit and not cleanup)
         or total + reserve > task_limit
         or free < free_limit + reserve
     ):
-        raise MemoryError("V36 new512MiB/task20GiB/free50GiB storage reserve")
+        raise MemoryError(f"{namespace} frozen new/task/free storage reserve")
     return {
         "new_bytes": new,
         "task_artifact_bytes": total,
@@ -225,7 +281,9 @@ def launch(
         is_fe = role in NATIVE
     if namespace in ("v43", "v44", "v45"):
         is_fe = specification is not None
-    if is_fe or (namespace in ("v41", "v42", "v43", "v44", "v45") and specification is not None):
+    if is_fe or (
+        namespace in ("v41", "v42", "v43", "v44", "v45") and specification is not None
+    ):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -251,7 +309,11 @@ def launch(
         if status:
             raise RuntimeError("V36 formal component/preparation requires clean source")
     limits = storage_limits(namespace)
-    if specification is not None and namespace == "v45" and dict(specification.derived["storage_limits"]) != limits:
+    if (
+        specification is not None
+        and namespace == "v45"
+        and dict(specification.derived["storage_limits"]) != limits
+    ):
         raise ValueError("V45 resolved/live budget mismatch")
     seconds = window.remaining(role)
     if specification is not None and namespace in ("v41", "v42", "v43", "v44", "v45"):
@@ -350,7 +412,9 @@ def launch(
                 physical_sha256=specification.physical_model_sha256,
                 plan_sha256=hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             )
-            if namespace in ("v44", "v45") and specification.derived.get("training_resume"):
+            if namespace in ("v44", "v45") and specification.derived.get(
+                "training_resume"
+            ):
                 state["training_resume"] = specification.derived["training_resume"]
             (folder / "source_sha.txt").write_text(source + "\n")
             command = [
@@ -389,7 +453,11 @@ def launch(
                 "PYTHONDONTWRITEBYTECODE": "1",
             },
             health_check=(
-                SharedHealth(folder, baseline["neighbor_processes"], artifact_limit_bytes=limits["task_storage_bytes"])
+                SharedHealth(
+                    folder,
+                    baseline["neighbor_processes"],
+                    artifact_limit_bytes=limits["task_storage_bytes"],
+                )
                 if role == "archive"
                 else PreparationHealth(
                     folder, baseline["neighbor_processes"], namespace, limits=limits

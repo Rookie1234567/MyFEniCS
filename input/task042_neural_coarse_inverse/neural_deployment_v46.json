@@ -1,0 +1,300 @@
+{
+  "schema": "myfenics.neural-deployment-decision.v46",
+  "review_commit": "0217f004a38f109a6253923f83a9a24b19d85362",
+  "numeric_actions": 0,
+  "new_storage_bytes": 67108864,
+  "task_storage_bytes": 25769803776,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 268435456,
+  "evidence_reserve_semantics": "256MiB task/free headroom separate from the 64MiB new-output quota",
+  "parents": {
+    "cost": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+      "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 76747
+    },
+    "comparison": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_candidate_comparison_v45.json",
+      "sha256": "6f80043897367b89898c8a9d88f1f526dd3155c12e294c13c2c7f32626fa63e5",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 352421
+    },
+    "checker": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_heldout_checker_v45.json",
+      "sha256": "a165551b3ea8b1744142cd6d5e3d0d831d91954dae708ae3ae01c29c112aa512",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 113451
+    },
+    "inherited_cost": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+      "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d",
+      "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+      "bytes": 67904
+    },
+    "readiness": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+      "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 5204
+    },
+    "review_checks": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+      "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+      "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "bytes": 95817
+    },
+    "dot_compact": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/dot_compact_snapshot_v46.json",
+      "sha256": "fd9bb9f2e77c64a8adbe8bc5b04ad1afd35a7e0c8419eac68ba06065e632ace3",
+      "source_sha": "39c5052476d48eb5d53870d80418e21c969980d8",
+      "bytes": 5308
+    },
+    "materials": {
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "source_sha": "c4fadde46978f2ba0ca3e25734311b6d3c8599c5",
+      "bytes": 5236
+    }
+  },
+  "dot_published_head": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+  "dot_snapshot_reads": 1,
+  "target_contract": {
+    "physics": {
+      "unit": "nm",
+      "scale": "1",
+      "period_nm": [
+        "50",
+        "25"
+      ],
+      "z_extent_nm": [
+        "-10",
+        "130"
+      ],
+      "Si_block_width_height_nm": [
+        "17",
+        "25",
+        "120"
+      ],
+      "nonseparable_3D_capable": true,
+      "wavelength_nm": "0.7",
+      "source_wavelength_nm": "0.699999988",
+      "material_table_id": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+      "material_table_hash": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "Si_n": [
+        "0.999885140474",
+        "0.00000432477054"
+      ],
+      "Si_epsilon": [
+        "0.9997702941220070727210241084",
+        "0.00000864854759781143367192"
+      ],
+      "time_convention": "exp(-i omega t)",
+      "grazing_degrees": "1",
+      "azimuth_degrees": "0",
+      "polarization": "s",
+      "k_parallel_definition": "k0*cos(grazing)*(cos(phi),sin(phi))",
+      "periodic_axes": [
+        "x",
+        "y"
+      ],
+      "exterior": "complete layered-background Fourier-DtN"
+    },
+    "discretization": {
+      "family": "Nedelec first kind hexahedron",
+      "degree": 6,
+      "target_cells": 530856,
+      "h_nm_upper": "0.7",
+      "quadrature_independently_qualified": true,
+      "native_canonical_dual_MPC_owner_complete": true,
+      "canonical_map_hash": null,
+      "orientation_hash": null,
+      "owner_hash": null,
+      "full_high_order_basis_qualified": true,
+      "Nedelec_version_hash": null,
+      "mesh_discretization_hash": null
+    },
+    "problem": {
+      "rhs_kind": "physical volume+port with nonzero interior particular solution",
+      "full_PDE_solved": true,
+      "full_A": true,
+      "full_AH": true,
+      "complete_DtN": true,
+      "ordered_port_count": 32060,
+      "ordered_port_hash": null,
+      "all_quotients_complete": true,
+      "normalization_hash": null,
+      "original_true_residual_semantics": "full original volume+port equations with affine recovery"
+    },
+    "correctness": {
+      "full_true_residual": true,
+      "full_field_curl_complex_channels": true,
+      "all_channel_power_energy": true,
+      "nonzero_interior_port_recovery": true,
+      "h_p_mode_accuracy": true,
+      "rho_limit": 1e-06,
+      "field_channel_limit": 0.0001,
+      "R_T_A_volume_limit": 1e-05,
+      "per_channel_power_limit": 1e-06,
+      "energy_limit": 1e-05
+    },
+    "engineering": {
+      "source_sha": null,
+      "ABI_hash": null,
+      "complex_dtype": "complex128",
+      "thread_policy": "one math thread per qualified actor",
+      "payload_consumable": true,
+      "public_restore_command_verified": true,
+      "cold_N1_cost_complete": true,
+      "simultaneous_peak_measured": true,
+      "full_time_at_most_seconds": 172800,
+      "full_tree_peak_at_most_bytes": 2000000000000,
+      "MPI_size": null,
+      "runtime_manifest_hash": null
+    },
+    "neural": {
+      "complete_residual_and_adjoint_interface": true,
+      "predict_input_output_order_bound": true,
+      "heldout_sealed_from_training": true,
+      "original_equation_auditor_available": true
+    }
+  },
+  "dot_offered_contract": {
+    "physics": {
+      "unit": "nm",
+      "scale": "7/135",
+      "wavelength_nm": "0.7",
+      "polarization": "unknown",
+      "period_nm": "scaled C1, exact compact geometry not supplied",
+      "material_table_hash": "unknown",
+      "exterior": "selected q0 sector component"
+    },
+    "discretization": {
+      "family": "Nedelec hexahedron",
+      "degree": 6,
+      "target_cells": 80,
+      "local_cells": 40,
+      "canonical_map_hash": "q0 bridge only",
+      "native_canonical_dual_MPC_owner_complete": false,
+      "quadrature_independently_qualified": false
+    },
+    "problem": {
+      "rhs_kind": "manufactured local/port witnesses",
+      "full_PDE_solved": false,
+      "full_A": false,
+      "full_AH": "unknown",
+      "complete_DtN": false,
+      "ordered_port_count": 532,
+      "all_quotients_complete": false,
+      "ordered_port_hash": "full532 manifest present but q0 only qualified",
+      "normalization_hash": "unknown",
+      "q0_rows": 1884,
+      "sector_modes": 228
+    },
+    "correctness": {
+      "full_true_residual": false,
+      "full_field_curl_complex_channels": false,
+      "all_channel_power_energy": false,
+      "nonzero_interior_port_recovery": "local q0 cached witness only",
+      "h_p_mode_accuracy": false
+    },
+    "engineering": {
+      "source_sha": "39c5052476d48eb5d53870d80418e21c969980d8",
+      "published_head": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+      "ABI_hash": "unknown",
+      "complex_dtype": "complex128",
+      "payload_consumable": false,
+      "public_restore_command_verified": false,
+      "cold_N1_cost_complete": false,
+      "simultaneous_peak_measured": "component only",
+      "library_index": "libfile_dff163270f648191adbd2e0288a8dd9d",
+      "whole_source_restore": "unknown public cache restore; no download in V46"
+    },
+    "neural": {
+      "complete_residual_and_adjoint_interface": false,
+      "predict_input_output_order_bound": false,
+      "heldout_sealed_from_training": "not applicable to dot component",
+      "original_equation_auditor_available": "finite q0 cached; full target unknown"
+    },
+    "evidence": {
+      "path": "tmp/task042/v46/dot_compact_snapshot.json",
+      "sha256": "fd9bb9f2e77c64a8adbe8bc5b04ad1afd35a7e0c8419eac68ba06065e632ace3",
+      "source_sha": "39c5052476d48eb5d53870d80418e21c969980d8",
+      "bytes": 5308
+    }
+  },
+  "closed_candidates": [
+    {
+      "route": "NN-L",
+      "selected_step": 0,
+      "status": "ZERO_CORRECTION_NO_DEPLOYMENT_BENEFIT",
+      "full_correctness": "0/8",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+        "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+        "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+        "bytes": 95817
+      }
+    },
+    {
+      "route": "NN-H",
+      "selected_step": 0,
+      "status": "ZERO_CORRECTION_NO_DEPLOYMENT_BENEFIT",
+      "full_correctness": "0/8",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+        "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+        "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+        "bytes": 95817
+      }
+    }
+  ],
+  "baseline_memory_objects": [
+    {
+      "name": "qualified full baseline solver objects",
+      "bytes": null,
+      "start": 0,
+      "end": 1,
+      "kind": "solver"
+    }
+  ],
+  "neural_memory_objects": [
+    {
+      "name": "full target independent complex coefficients",
+      "bytes": 5506942464,
+      "start": 0,
+      "end": 1,
+      "kind": "solver"
+    },
+    {
+      "name": "unknown qualified target backend/training lifetimes",
+      "bytes": null,
+      "start": 0,
+      "end": 1,
+      "kind": "solver"
+    }
+  ],
+  "reentry_requires": [
+    "new same-physics qualified complete traditional engine and independently consumable payload",
+    "complete correctness and cold N1 simultaneous cost measurements",
+    "one genuinely different learning object with nonzero useful unseen-physical-input correction and computable20%necessary opportunity",
+    "new formal authority; a documentation SHA or another partial component alone does not reopen numeric work"
+  ],
+  "zero_action_inventory": [
+    "A",
+    "AH",
+    "B",
+    "model_forward",
+    "model_backward",
+    "optimizer",
+    "solve",
+    "mesh",
+    "JIT",
+    "LU",
+    "QR",
+    "target_allocation"
+  ],
+  "local_payload_caveat": "metadata receipts refer to canonical local files; ignored payload presence is not remote deployment availability"
+}

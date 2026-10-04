@@ -79,6 +79,25 @@ def stage(name):
     return json.loads(path.read_text()), path
 
 
+def deployment_cost_contract():
+    """Consume preserved scalar scenarios through the same pure cost function."""
+    from src.solvers.neural_deployment_cost import frozen_v45_costs
+    from src.solvers.neural_engine_contract import read_metadata
+
+    plan = json.loads(
+        (
+            ROOT / "input/task042_neural_coarse_inverse/neural_deployment_v46.json"
+        ).read_text()
+    )
+    parents = plan["parents"]
+    return frozen_v45_costs(
+        read_metadata(parents["cost"], ROOT),
+        read_metadata(parents["comparison"], ROOT),
+        evidence=parents["cost"],
+        inherited_evidence=parents["inherited_cost"],
+    )
+
+
 def implementation_hashes():
     from src.solvers.neighborhood_late_error_scope import (
         implementation_hashes as legacy,

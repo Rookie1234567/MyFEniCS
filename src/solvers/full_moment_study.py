@@ -62,49 +62,9 @@ class FullMomentStudy(LateErrorStudy):
         return models
 
     def timing(self, folder, budget, kind):
-        gate, _ = self.scope.stage("CHECK")
-        frozen = self.frozen_models()
-        selected_nn = min(
-            ("NL", "NH"),
-            key=lambda c: tuple(
-                frozen[c]["selected"][k]
-                for k in ("median_qe", "max_qe", "median_qr", "update")
-            ),
-        )
-        if gate["full_pass_by_route"][self.routes[selected_nn]] != 8:
-            raise ValueError("validation-preselected NN lacks all-eight correctness")
-        controls = [
-            c
-            for c in ("R0", "CL44", "LH")
-            if gate["full_pass_by_route"][self.routes[c]] == 8
-        ]
-        if not controls:
-            raise ValueError("no matched all-eight nonneural correctness")
-        book = self.scope.window.ledger()
-        costs = {}
-        for code in controls:
-            online = self.scope.stage("EVAL_" + code)[0]
-            cost = sum(r["independent_online_seconds"] for r in online["rows"]) / 8
-            cost += sum(
-                r["elapsed_seconds"]
-                for r in book["runs"]
-                if r["role"] == "TRAIN_" + code
-            )
-            if code == "CL44":
-                inherited = self.scope.parent("CL44_cost")["route_costs"]["CL-E"]
-                cost += inherited["N1_known_lower_scenario_seconds"]
-            costs[code] = cost
-        code = selected_nn if kind == "NN" else min(controls, key=lambda c: costs[c])
-        result = self.evaluate(folder, budget, code)
-        result.update(
-            status="CONDITIONAL_INDEPENDENT_PROCESS_TIMING",
-            validation_preselected_NN=selected_nn,
-            selected_control=min(controls, key=lambda c: costs[c]),
-            control_known_cost_comparison=costs,
-            unknown_cold_FE_CSR_IO_cost="unknown; no complete NN20 qualification",
-            after_frozen_checker=True,
-        )
-        return result
+        from src.solvers.neural_deployment_cost import consume_timing
+
+        return consume_timing(self, folder, budget, kind)
 
     def group_changes(self, model, initial):
         names = ("encoder", "message", "decoder", "mix_local", "mix_context")
