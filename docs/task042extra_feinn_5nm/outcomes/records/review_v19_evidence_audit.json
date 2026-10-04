@@ -1,0 +1,712 @@
+{
+  "schema": "feinn.review-v19.evidence-audit.v1",
+  "checked_utc": "2026-10-04T01:20:58.526795+00:00",
+  "input_head": "9f8fe4ff1005d64875dd21265981a4d13c15b374",
+  "prior_review_publication": "a88c1be95e1b50760a69e0530c85ad78408a632e",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "scope": "Accept unchanged P0 evidence with qualifications; authorize one new deterministic FE-representation batch, not NN training",
+  "report": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+    "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4"
+  },
+  "script": {
+    "path": "tmp/task42extra/review_v19_evidence_check.py",
+    "sha256": "4ffed577cd7397e23b12bfed21f524840fb7c2185773c424f7034caa4cbce4c1"
+  },
+  "remote_refs": {
+    "task40extra_0p7nm_engineering": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+    "task40extra_dot_parallel_cloud": "5be1210aa79f25c13a7677cc291a4a766a548650",
+    "task42_neural_coarse_inverse": "e1926a9cb42329276da4a26f4304f71cbbf97198",
+    "task42extra_NN-V3-learned-iteration": "1f01ae46bbe21f17200350a46513ef5f33e5cf6a",
+    "task42extra_feinn_5nm": "9f8fe4ff1005d64875dd21265981a4d13c15b374"
+  },
+  "remote_probe": {
+    "path": "tmp/task42extra/review_v19_remote_refs.txt",
+    "sha256": "925e329af3440eab3dae70faea5b63a11abc136cac28896a617098cd7d91d222"
+  },
+  "final_target": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "full_3d_FE": true,
+    "whole_machine_bytes": 2000000000000,
+    "whole_workflow_seconds": 172800,
+    "own_swap_bytes": 0,
+    "status": "FULL_TARGET_NOT_QUALIFIED"
+  },
+  "unchanged_states": {
+    "main_solver": "FEINN_MAIN_SOLVER_ON_HOLD",
+    "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+    "target": "FULL_TARGET_NOT_QUALIFIED",
+    "D0": "COST_VETO",
+    "D1": "NOT_RUN_COST_VETO",
+    "production_initialization_allowed": false,
+    "merge_approved": false
+  },
+  "P0": {
+    "acceptance": "ACCEPT_WITH_RETAINED_QUALIFICATIONS",
+    "reviewer_check": {
+      "path": "tmp/task42extra/reviewer_p0_closeout_check.json",
+      "sha256": "ca039ce0ecb40d75a7c7d8d8308538bf7126a555ee009427ba287b9bdae4c78c"
+    },
+    "executor_receipt": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json",
+      "sha256": "217e85e355bde95236336376c2b1e4a4213b1abd6f7780c1d90a921275befe5e"
+    },
+    "executor_response": {
+      "path": "docs/task042extra_feinn_5nm/response_v19.md",
+      "sha256": "41b95190383952ddca900c0704cd3a7fd735e681f7af9735ec6d45ecbcae3f75"
+    },
+    "pages_checked": 7,
+    "bindings_checked": 24,
+    "original_visual_and_parser_nonrun": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE; do not rewrite prior executor result",
+    "followup_parser": "PASS; not an actual-browser claim"
+  },
+  "historical_scientific_reuse": {
+    "audit": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+      "sha256": "0f36c35ac7881046b8b36d1f079b6f46903a7e189b1014c348982de22ce60442"
+    },
+    "new_raw_array_replay": false,
+    "reason": "P0 changed no numerical source or data; independent V18 raw audit reused by hash",
+    "A": "FEASIBLE; optimality UNKNOWN",
+    "B": "Approximately 77% positive cross-term in old error increase",
+    "C": "Both R-minus-one exceed 1e-8; no verified NN increment",
+    "D0": "COST_VETO",
+    "D1": "NOT_RUN",
+    "qualifications_retained": [
+      "initial-development versus formal-repair-pool scope UNKNOWN",
+      "old lost 3284s retained",
+      "unmeasured historic tails: exact project total UNKNOWN",
+      "M3600 best and degraded final both retained"
+    ]
+  },
+  "unchanged_affected_sources": [
+    {
+      "path": "benchmarks/check_feinn_native_constraint.py",
+      "sha256": "119da065e428e74dc1fd28cf1d5b9ae0aa50f17699fb05b7ef435b030784e740"
+    },
+    {
+      "path": "benchmarks/check_feinn_native_witness.py",
+      "sha256": "c2be5030d788d74c76bafcef275bad93228978ce0b80ee8e84efe25e8d9ea5fe"
+    },
+    {
+      "path": "benchmarks/check_feinn_saved_integrals.py",
+      "sha256": "69bae39ee60c8afa2095641b3b8ae55a5378c9fa811da8138daf8ca57d1d78ab"
+    },
+    {
+      "path": "benchmarks/run_feinn_common_descent.py",
+      "sha256": "20c16a02c57dd5558196a713676dc5861f5ac0720552487b14653865e05842a2"
+    },
+    {
+      "path": "scripts/launch_task42extra_durable.py",
+      "sha256": "09e345261a5df447c3859c9c7d9f304439a1799a9446f445c9569c1d025902c6"
+    },
+    {
+      "path": "src/runners/feinn_attribution_campaign.py",
+      "sha256": "5a8b6bdf2832d57e003520f8d47b980131c20036626712ca7829f5f8a9830805"
+    },
+    {
+      "path": "src/runners/feinn_native_constraint_arrays.py",
+      "sha256": "952eac4ad52f93d3443bca81e7c01f9372cb806be6604162640e8fff979f4ae0"
+    },
+    {
+      "path": "src/runners/feinn_workflow.py",
+      "sha256": "cf8980f83687465b20b1148f1237430a14ca5751fef9757ff300dfb4ed4890a6"
+    },
+    {
+      "path": "src/solvers/feinn_native_constraint.py",
+      "sha256": "8cd40b519104455ff063970264a617421b90ea29d2a7c1afffbcbeeac202d068"
+    },
+    {
+      "path": "src/solvers/feinn_native_network_witness.py",
+      "sha256": "ab7abb0d9850624a7a6e899393d5690361b5e095e3f7ebb4743d7f47d56253b4"
+    },
+    {
+      "path": "src/solvers/feinn_saved_attribution.py",
+      "sha256": "7497ed73b9dbcfc5a00e2cdc7e83871b8e8a3cd8b054e17502dee552f2743a0b"
+    },
+    {
+      "path": "src/solvers/feinn_saved_field_diagnostics.py",
+      "sha256": "82de948ed1db4a12d84f1dc038150f6e2d6aca115093ae2a2245ecbe4e524f75"
+    },
+    {
+      "path": "src/test/test_feinn_native_constraint.py",
+      "sha256": "d97b1739e9f105dede4f624d9a2d9277ce6732b8d57fafd11a75f35b79457773"
+    },
+    {
+      "path": "src/test/test_feinn_v18_integrals.py",
+      "sha256": "5734b699516e847945900c5a33ede08bca04613e1df4ecc0f76fea19d5dbb1a9"
+    },
+    {
+      "path": "src/test/test_feinn_v18_launch.py",
+      "sha256": "e137703e49b6f54a3284bde93685afd97f730d02df31376703a628f1eb1bc3c8"
+    },
+    {
+      "path": "src/test/test_feinn_v18_witness.py",
+      "sha256": "bf3219f1679e397e072645f50539dab79e1bd0322613b8daed485f37ff400532"
+    }
+  ],
+  "reused_tests": {
+    "passed": 52,
+    "source": "ca7ad5d51fc6e3d10b635f7ca795092fabfd7ccb",
+    "logs_hash_checked": true,
+    "rerun": false
+  },
+  "sources_reread_for_new_mechanism": [
+    {
+      "path": "src/solvers/feinn_phase.py",
+      "sha256": "dd7e9772ee47eb1a2b2926b67a087015fc9f066b321d6d0e504cd49c1d97aa26",
+      "semantic_scope": "module and reviewed call chain"
+    },
+    {
+      "path": "src/solvers/feinn_interpolation.py",
+      "sha256": "00712ceebab7e3ee05e1c8ea5c35b0f0a0ad9717112cd714beef6cfb917eb218",
+      "semantic_scope": "module and reviewed call chain"
+    },
+    {
+      "path": "src/solvers/feinn_native.py",
+      "sha256": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+      "semantic_scope": "module and reviewed call chain"
+    },
+    {
+      "path": "src/solvers/feinn_fem.py",
+      "sha256": "c082a88a1dfc349b642be3befbbb318caf02cc449b9ecfa05e805b4ef91bd80d",
+      "semantic_scope": "relevant constructors, assembly or diagnostics; not every line"
+    },
+    {
+      "path": "src/solvers/feinn_authority_assembly.py",
+      "sha256": "0a762e69ba317645f3ae6605c4eaf60349f2da3db486213309ad73bea3eaeea5",
+      "semantic_scope": "relevant constructors, assembly or diagnostics; not every line"
+    },
+    {
+      "path": "src/solvers/feinn_exact_condensation.py",
+      "sha256": "6f1645ea2f229c6af973dba20231390ed387908939a50a9d4a2e378cc995e17f",
+      "semantic_scope": "relevant constructors, assembly or diagnostics; not every line"
+    },
+    {
+      "path": "src/solvers/feinn_local_reachability.py",
+      "sha256": "7038e92d4d0202f1cd8a2da00b3147aacac4eac1e3885b2c43aeed6337d169de",
+      "semantic_scope": "relevant constructors, assembly or diagnostics; not every line"
+    }
+  ],
+  "theory_navigation": [
+    {
+      "path": "notes/theory/maxwell_strong_weak_and_fem.md",
+      "sha256": "2fa4c34d9ad974527a1fb804ad6521cefabfece3c9d7333f17e7e2a2eeeba425"
+    },
+    {
+      "path": "notes/theory/floquet_periodicity.md",
+      "sha256": "ae497bae6e0690d62661a965995593139d12b29f010d53ca49b3b5bb100f9cc9"
+    },
+    {
+      "path": "notes/theory/dtn_auxiliary_and_auto_orders.md",
+      "sha256": "469daf3455e831718c58dbd7522b0e5680c863d5d131f45c47a46841d7fefc19"
+    },
+    {
+      "path": "notes/reference/code_walkthrough/21_3d_floquet_and_pml.md",
+      "sha256": "118529dbe7c35b04d80d155d72be3994edb1ac784aa5db9ae1f1ee3958fc3d35"
+    },
+    {
+      "path": "notes/reference/code_walkthrough/31_exact_condensation.md",
+      "sha256": "8e5e857a961a7a9283c895b1646a88b148f42c0af4f9ac927cbe53bd343968fc"
+    }
+  ],
+  "parallel_read_documents": [
+    {
+      "commit": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "path": "docs/task40extra_0p7nm_engineering/review_report_v6.md",
+      "sha256": "454800482c1c99629d0ce7bab38260037e204b44c29685c3ff89b5cae7e7453f",
+      "scope": "READ_ONLY_COMMITTED_EVIDENCE; no remote raw replay or transferable FE qualification"
+    },
+    {
+      "commit": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "path": "docs/task40extra_0p7nm_engineering/response_v6.md",
+      "sha256": "192652e6e1456aca2ff5a7becc44758e7064b9c41ad80d2ae3c576972cb42762",
+      "scope": "READ_ONLY_COMMITTED_EVIDENCE; no remote raw replay or transferable FE qualification"
+    },
+    {
+      "commit": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/summary.md",
+      "sha256": "0ae27005d4245541b1e693f3f4cd23ed5ff3a6eddf2ee9b698c6647ae754ee2a",
+      "scope": "READ_ONLY_COMMITTED_EVIDENCE; no remote raw replay or transferable FE qualification"
+    },
+    {
+      "commit": "3c7458fad7c002babac4e634be4788b664be9ee5",
+      "path": "docs/task40extra_dot_parallel_cloud/response_v15.md",
+      "sha256": "35f94010994a9894ac12527cf8f2775d0f73bd5f3b82e315308b19d260a5d246",
+      "scope": "READ_ONLY_COMMITTED_EVIDENCE; no remote raw replay or transferable FE qualification"
+    },
+    {
+      "commit": "3c7458fad7c002babac4e634be4788b664be9ee5",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/bounded_projection_candidate_v1_zh.md",
+      "sha256": "41371608765e82af58b3dd1c735972143d0d9b3e8a7ee089547ea02d4a63060c",
+      "scope": "READ_ONLY_COMMITTED_EVIDENCE; no remote raw replay or transferable FE qualification"
+    },
+    {
+      "commit": "3c7458fad7c002babac4e634be4788b664be9ee5",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/bounded_projection_v1/independent_review_final.json",
+      "sha256": "679098f3978d7040e4d74a7f8ba75344ecb99e3443d6efad55a4e91483643422",
+      "scope": "READ_ONLY_COMMITTED_EVIDENCE; no remote raw replay or transferable FE qualification"
+    },
+    {
+      "commit": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "path": "src/geometry/task40_nonseparable_plan.py",
+      "sha256": "90d5b83081194cb8f080d2ef6080138d37e5c9bfc5b9553af2d8a016d736b475",
+      "scope": "READ_ONLY; physical input and mesh identity"
+    },
+    {
+      "commit": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json",
+      "sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+      "scope": "READ_ONLY; physical input and mesh identity"
+    },
+    {
+      "commit": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json",
+      "sha256": "d56e042919d60fb6df7c4bb5dd22330f0d9d0743a850a14758d81962d7e2a9ee",
+      "scope": "READ_ONLY new publication; full response/compact and relevant source diff"
+    },
+    {
+      "commit": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+      "path": "docs/task40extra_0p7nm_engineering/response_v6.md",
+      "sha256": "079248e0c5cfcabbcc2082a7fa7b840d02fca29809df8897ed1b84be40971b55",
+      "scope": "READ_ONLY new publication; full response/compact and relevant source diff"
+    },
+    {
+      "commit": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+      "path": "src/runners/task038_launcher.py",
+      "sha256": "9d5bc3aecaab54ef414715a3f491929cfa15295f2db7766dc164d9965c15b85b",
+      "scope": "READ_ONLY new publication; full response/compact and relevant source diff"
+    },
+    {
+      "commit": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+      "path": "benchmarks/run_task40_v5_postprocess_service.py",
+      "sha256": "455dbc859399a785cde8b3865bc918717d171cb01f6ee29878b9628ead42a334",
+      "scope": "READ_ONLY new publication; full response/compact and relevant source diff"
+    },
+    {
+      "commit": "5be1210aa79f25c13a7677cc291a4a766a548650",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/raw_persistence_pilot_v1/member_manifest.json",
+      "sha256": "0df26182ce535f798cf077b108b38db27f728d5121a141bc82a4e823971e2f79",
+      "scope": "READ_ONLY synthetic-transfer manifest and committed archive bytes, no member or C1 verification"
+    }
+  ],
+  "main_new_local_report": {
+    "thread": "01a0ff0f-9b04-7df2-bd02-1c9a8b229ecf",
+    "host": "local",
+    "turn": "01a101da-cbb9-7820-ade8-c306004368ca",
+    "reported_head": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+    "reported_result": "Gx784 residual/recovery and tested_x_agreement_pass; 31 targeted tests and 14 hash bindings; clean ahead3",
+    "initial_status": "REPORTED_LOCAL_NOT_INDEPENDENTLY_VERIFIED",
+    "publication_recheck": "NOW_PUBLISHED; new commit and compact values read, see main_published_compact_check; raw fields not available here"
+  },
+  "main_published_compact_check": {
+    "commit": "b5f85c5976d5f37de1adf769be0243daa5f4e964",
+    "record_sha256": "d56e042919d60fb6df7c4bb5dd22330f0d9d0743a850a14758d81962d7e2a9ee",
+    "status": "PUBLISHED_COMPACT_ARITHMETIC_VERIFIED_NOT_RAW_FIELD_REPLAY",
+    "raw_integrals_recomputed": false,
+    "PDE_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+    "postprocess_source": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
+    "solver_gate_numeric_comparisons_recomputed": true,
+    "power_balance_recomputed": 0.01810655181430232,
+    "field_pair_checks": [
+      {
+        "pair": "Gx_to_Gx784",
+        "relative_field_difference": 0.0006419146264421262,
+        "published_limit": 0.01,
+        "published_comparison_pass_recomputed": true,
+        "is_below_this_branch_strict_1e_4": false
+      },
+      {
+        "pair": "F5_to_Gx784",
+        "relative_field_difference": 0.0006420202550004441,
+        "published_limit": 0.01,
+        "published_comparison_pass_recomputed": true,
+        "is_below_this_branch_strict_1e_4": false
+      }
+    ],
+    "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE",
+    "resources_as_reported_not_independently_sampled": {
+      "formal_run": {
+        "full_workflow_monotonic_seconds": 3431.6226415440906,
+        "run_summary_conservative_realtime_seconds": 3812.9144130120467,
+        "shared_ledger_settled_debit_seconds": 3812.953841459373,
+        "watchdog_elapsed_seconds": 3431.2005693890387,
+        "simultaneous_process_tree_rss_peak_bytes": 7782744064,
+        "process_tree_swap_peak_bytes": 0,
+        "process_tree_samples": 13507,
+        "identity_coverage": "complete",
+        "descendants_cleared": true,
+        "PSS": "disabled_by_profile",
+        "global_swap_note": "WSL-global pswpout increased by 151 pages; it cannot be attributed to this process tree; job tree swap remained 0 B."
+      },
+      "postprocess_attempt2": {
+        "status": "POSTPROCESS_WORKER_COMPLETED",
+        "source_sha": "fea2b6c01b34940a6393bd47a4f545d6d53d61b4",
+        "authorization_id": "review_v6_gx784_once",
+        "watchdog_elapsed_monotonic_seconds": 1442.1525664149085,
+        "conservative_ledger_settled_debit_seconds": 1601.0044167499855,
+        "simultaneous_process_tree_rss_peak_bytes": 946765824,
+        "process_tree_swap_peak_bytes": 0,
+        "PSS": "disabled_by_profile",
+        "descendants_cleared": true,
+        "postprocess_directory_attempt": 2,
+        "shared_ledger_attempt_index": 1
+      },
+      "shared_budget_after_settlement": {
+        "total_seconds": 172800.0,
+        "historical_prior_charge_seconds": 4.619253995631944,
+        "measured_elapsed_seconds": 5418.577512204991,
+        "policy_debit_seconds": 0.004821757087484002,
+        "conservative_allowance_seconds": 10.0,
+        "budget_used_seconds": 5428.582333962078,
+        "remaining_seconds": 167371.41766603792,
+        "active_reservations_seconds": 0.0,
+        "measured_and_debit_components": {
+          "formal_Q4_conservative_realtime_charge_seconds": 3812.953841459373,
+          "postprocess_attempt2_conservative_charge_seconds": 1601.0044167499855,
+          "preformal_snapshot_policy_debit_seconds": 0.004821757087484002
+        }
+      }
+    },
+    "limit": "1% paired-field gate cannot qualify this branch's 1e-4 field gate; no y/continuum/target proof; no new Gx784 run"
+  },
+  "dot_new_publication": {
+    "commit": "5be1210aa79f25c13a7677cc291a4a766a548650",
+    "archive_bytes": 63867,
+    "archive_sha256": "f8f21f876d61955641e8d89fadf5cb0a9ab8b5bff136ac10aca691770f6a3d4f",
+    "status": "COMMITTED_SYNTHETIC_TRANSFER_ONLY",
+    "not_qualified": [
+      "fresh backend roundtrip",
+      "large raw archive",
+      "C1",
+      "FE/JIT",
+      "solver"
+    ],
+    "new_member_replay": false,
+    "reason": "Do not repeat dot's storage contract"
+  },
+  "structure_refresh": {
+    "inventory": {
+      "path": "tmp/task42extra/review_v19_repository_structure.json",
+      "sha256": "da4ed6c39029231c2b3f4339a298253faa0e3790ceaabe6649ceea28cad0bed4"
+    },
+    "tracked_files": 4671,
+    "python_files": 944,
+    "bytes_read": 105357594,
+    "top_level": {
+      ".gitattributes": 1,
+      ".gitignore": 1,
+      "AGENTS.md": 1,
+      "Dockerfile.mpc": 1,
+      "README.md": 1,
+      "benchmarks": 519,
+      "docker": 2,
+      "docs": 3093,
+      "input": 203,
+      "notes": 100,
+      "scripts": 13,
+      "src": 736
+    },
+    "changed_since_v18_index": [
+      "docs/development_model_registry.md",
+      "docs/development_progress.md",
+      "docs/task042extra_feinn_5nm/README.md",
+      "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "docs/task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "docs/task042extra_feinn_5nm/response_v19.md",
+      "docs/task042extra_feinn_5nm/review_report_v18.md"
+    ],
+    "scope": "All tracked bytes/hash/paths and text navigation; semantic scope stated separately. Ignored large arrays only via frozen indices.",
+    "new_untracked_report_and_audit": "Separate from baseline inventory"
+  },
+  "scalar_precheck": {
+    "record": {
+      "path": "tmp/task42extra/review_v19_phase_precheck.json",
+      "sha256": "02836533ce7142f85ab301a75ba5f6a605e5a18ced41472d1dc0992179b39fe6"
+    },
+    "script": {
+      "path": "tmp/task42extra/review_v19_phase_precheck.py",
+      "sha256": "7766340b6444e77b9fe12bf744e4a63a9a601974512d1c0619a32a2f2e9308a3"
+    },
+    "raw_rows": [
+      {
+        "length_nm": 0.42777777777777776,
+        "scalar_polynomial_degree": 3,
+        "witness": "ordinary_incident",
+        "frequency_rad_per_nm": 8.97461192517716,
+        "best_relative_L2": 0.03710090853742532,
+        "analytic_relative_L2": 0.03710090853742176,
+        "quadrature_pair_difference": 2.3800406090401793e-15
+      },
+      {
+        "length_nm": 0.42777777777777776,
+        "scalar_polynomial_degree": 3,
+        "witness": "phase_envelope_incident",
+        "frequency_rad_per_nm": 0.0,
+        "best_relative_L2": 1.9698156297011408e-14,
+        "analytic_relative_L2": 0.0,
+        "quadrature_pair_difference": 1.014688735408793e-14
+      },
+      {
+        "length_nm": 0.42777777777777776,
+        "scalar_polynomial_degree": 3,
+        "witness": "phase_envelope_counterpropagating",
+        "frequency_rad_per_nm": -17.94922385035432,
+        "best_relative_L2": 0.37381905789718106,
+        "analytic_relative_L2": 0.37381905789719194,
+        "quadrature_pair_difference": 1.7763568394002505e-14
+      },
+      {
+        "length_nm": 0.42777777777777776,
+        "scalar_polynomial_degree": 6,
+        "witness": "ordinary_incident",
+        "frequency_rad_per_nm": 8.97461192517716,
+        "best_relative_L2": 0.00016576769293572273,
+        "analytic_relative_L2": 0.00016576769193313835,
+        "quadrature_pair_difference": 2.1955093992831465e-17
+      },
+      {
+        "length_nm": 0.42777777777777776,
+        "scalar_polynomial_degree": 6,
+        "witness": "phase_envelope_incident",
+        "frequency_rad_per_nm": 0.0,
+        "best_relative_L2": 5.229367071399736e-14,
+        "analytic_relative_L2": 0.0,
+        "quadrature_pair_difference": 2.0623200599695143e-14
+      },
+      {
+        "length_nm": 0.42777777777777776,
+        "scalar_polynomial_degree": 6,
+        "witness": "phase_envelope_counterpropagating",
+        "frequency_rad_per_nm": -17.94922385035432,
+        "best_relative_L2": 0.015562626641704897,
+        "analytic_relative_L2": 0.015562626641697106,
+        "quadrature_pair_difference": 1.9186041644303486e-15
+      },
+      {
+        "length_nm": 16.5,
+        "scalar_polynomial_degree": 3,
+        "witness": "ordinary_incident",
+        "frequency_rad_per_nm": 8.97461192517716,
+        "best_relative_L2": 0.9994175984915031,
+        "analytic_relative_L2": 0.999417598491503,
+        "quadrature_pair_difference": 0.0
+      },
+      {
+        "length_nm": 16.5,
+        "scalar_polynomial_degree": 3,
+        "witness": "phase_envelope_incident",
+        "frequency_rad_per_nm": 0.0,
+        "best_relative_L2": 1.9698156297011408e-14,
+        "analytic_relative_L2": 0.0,
+        "quadrature_pair_difference": 1.014688735408793e-14
+      },
+      {
+        "length_nm": 16.5,
+        "scalar_polynomial_degree": 3,
+        "witness": "phase_envelope_counterpropagating",
+        "frequency_rad_per_nm": -17.94922385035432,
+        "best_relative_L2": 0.9997911272164,
+        "analytic_relative_L2": 0.9997911272164,
+        "quadrature_pair_difference": 0.0
+      },
+      {
+        "length_nm": 16.5,
+        "scalar_polynomial_degree": 6,
+        "witness": "ordinary_incident",
+        "frequency_rad_per_nm": 8.97461192517716,
+        "best_relative_L2": 0.9976043708395069,
+        "analytic_relative_L2": 0.9976043708395077,
+        "quadrature_pair_difference": 1.7763568394002505e-15
+      },
+      {
+        "length_nm": 16.5,
+        "scalar_polynomial_degree": 6,
+        "witness": "phase_envelope_incident",
+        "frequency_rad_per_nm": 0.0,
+        "best_relative_L2": 5.229367071399736e-14,
+        "analytic_relative_L2": 0.0,
+        "quadrature_pair_difference": 2.0623200599695143e-14
+      },
+      {
+        "length_nm": 16.5,
+        "scalar_polynomial_degree": 6,
+        "witness": "phase_envelope_counterpropagating",
+        "frequency_rad_per_nm": -17.94922385035432,
+        "best_relative_L2": 0.9994716217079727,
+        "analytic_relative_L2": 0.9994716217079721,
+        "quadrature_pair_difference": 1.1102230246251565e-15
+      },
+      {
+        "length_nm": 50.0,
+        "scalar_polynomial_degree": 3,
+        "witness": "ordinary_incident",
+        "frequency_rad_per_nm": 8.97461192517716,
+        "best_relative_L2": 0.9999384223071334,
+        "analytic_relative_L2": 0.9999384223071334,
+        "quadrature_pair_difference": 1.1102230246251565e-16
+      },
+      {
+        "length_nm": 50.0,
+        "scalar_polynomial_degree": 3,
+        "witness": "phase_envelope_incident",
+        "frequency_rad_per_nm": 0.0,
+        "best_relative_L2": 1.9698156297011408e-14,
+        "analytic_relative_L2": 0.0,
+        "quadrature_pair_difference": 1.014688735408793e-14
+      },
+      {
+        "length_nm": 50.0,
+        "scalar_polynomial_degree": 3,
+        "witness": "phase_envelope_counterpropagating",
+        "frequency_rad_per_nm": -17.94922385035432,
+        "best_relative_L2": 0.9999774545707425,
+        "analytic_relative_L2": 0.9999774545707423,
+        "quadrature_pair_difference": 3.3306690738754696e-16
+      },
+      {
+        "length_nm": 50.0,
+        "scalar_polynomial_degree": 6,
+        "witness": "ordinary_incident",
+        "frequency_rad_per_nm": 8.97461192517716,
+        "best_relative_L2": 0.9997233477839628,
+        "analytic_relative_L2": 0.9997233477839625,
+        "quadrature_pair_difference": 7.771561172376096e-16
+      },
+      {
+        "length_nm": 50.0,
+        "scalar_polynomial_degree": 6,
+        "witness": "phase_envelope_incident",
+        "frequency_rad_per_nm": 0.0,
+        "best_relative_L2": 5.229367071399736e-14,
+        "analytic_relative_L2": 0.0,
+        "quadrature_pair_difference": 2.0623200599695143e-14
+      },
+      {
+        "length_nm": 50.0,
+        "scalar_polynomial_degree": 6,
+        "witness": "phase_envelope_counterpropagating",
+        "frequency_rad_per_nm": -17.94922385035432,
+        "best_relative_L2": 0.99994437377374,
+        "analytic_relative_L2": 0.9999443737737397,
+        "quadrature_pair_difference": 5.551115123125783e-16
+      }
+    ],
+    "k0": 8.975979010256552,
+    "physical_incident_vector": [
+      8.97461192517716,
+      0.0,
+      -0.15665243385952313
+    ],
+    "candidate_carrier": [
+      8.97461192517716,
+      0.0,
+      0.0
+    ],
+    "cycles_x_50nm": 71.41769251117081,
+    "limits": [
+      "1D scalar best approximation, not FE interpolation",
+      "Single carrier worsens a counterpropagating x wave",
+      "Does not bound heterogeneous 3D solution error, DtN cost, iterations or target memory/time"
+    ],
+    "supervisor": {
+      "path": "tmp/task42extra/checks/review_v19_phase_precheck_20261004T005436235297Z/summary.json",
+      "sha256": "db3259a92230e9370dee7b9dd356e0b5c058bb89f431c94eb76a6e05455aebb3"
+    },
+    "wall_seconds": 3.060215769917704,
+    "tree_RSS_bytes": 96227328,
+    "own_swap_bytes": 0,
+    "cleanup": true,
+    "new_operations": {
+      "FE": 0,
+      "network_forward": 0,
+      "training": 0,
+      "A": 0,
+      "AH": 0,
+      "G": 0,
+      "factor": 0
+    }
+  },
+  "derived_counts": {
+    "formula": "Nx*Ny*p^2*(3*Nz*p+2), periodic x/y, open z, FE only",
+    "G0_p3": 27648,
+    "GX560_p6": 365760,
+    "vector_ratio": 13.229166666666666,
+    "qualification": "DERIVED; not measured memory, speed or matched accuracy"
+  },
+  "authorization": {
+    "next_response": "response_v20.md",
+    "batch": "A->B->C->D; explicit phase-adapted FE space",
+    "whole_batch_seconds": 43200,
+    "delivery_reserve_seconds": 1800,
+    "pure_hard_bytes": 2147483648,
+    "FE_hard_bytes": 17179869184,
+    "stage_seconds": [
+      10800,
+      3600,
+      14400,
+      5400,
+      3600,
+      5400
+    ],
+    "training": false,
+    "NN_gain": "NOT_TESTED",
+    "target_full_solve": "NOT_AUTHORIZED_IN_THIS_BATCH",
+    "main_and_dot_write_access": false,
+    "B_normal_and_replay_lifecycles_max": 6,
+    "formal_repair_rounds_max": 2
+  },
+  "publication_render": "PENDING_ACTUAL_GITHUB_VIEW; separate immutable render receipt will record final scope",
+  "preserved_review_check_failure": {
+    "reason": "Remote refs advanced before publication; first checker rejected stale frozen-head assertion before any inventory or numerical work",
+    "script": {
+      "path": "tmp/task42extra/review_v19_evidence_check_before_remote_refresh.py",
+      "sha256": "bdd4f2b9117d616d7d5ffbbc58982b84befe9a97b743d28937e41b3c1d427d15"
+    },
+    "log": {
+      "path": "tmp/task42extra/review_v19_evidence_check.log",
+      "sha256": "576fb701f4115e8e67fc4ee268aa44e1ba52b13c21e5ca4de3b9ea970dea8a48"
+    },
+    "summary": {
+      "path": "tmp/task42extra/checks/review_v19_evidence_20261004T011510436312Z/summary.json",
+      "sha256": "5d70dccd9989c50c3df636e9d4eeb87fd392eb27d39052c24fb52088acb0d429"
+    },
+    "wall_seconds": 1.552005251054652,
+    "tree_RSS_bytes": 37945344,
+    "own_swap_bytes": 0,
+    "cleanup": true,
+    "resolution": "Read new committed main/dot evidence; update same unpublished report and refresh receipt once"
+  },
+  "new_FE_tests": "NOT_RUN_NOT_NEEDED_FOR_REVIEW_ONLY_CHANGE",
+  "new_CI_claim": false,
+  "reviewer_cost_scope": "This pure-check elapsed and separate scalar/browser workers are not a measured complete review or project wall; historical unknown tails retained",
+  "worker": {
+    "interpreter": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+    "affinity": [
+      12
+    ],
+    "own_elapsed_seconds": 0.668092573992908
+  },
+  "handoff": {
+    "executor_thread": "01a0ecaa-e6c1-7fe1-a29b-8484cab37908",
+    "review_thread": "01a0febf-cf06-7cf1-9da9-16a9f3f31af7",
+    "protocol": "Only reviewer active until final one-time notification; then reviewer stops tools while executor completes one batch"
+  },
+  "document_checks": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+    "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4",
+    "checked_scope": "entire page",
+    "markdown_tables": 7,
+    "parsed_tables": 7,
+    "math_fences": 2,
+    "links": 10
+  }
+}
