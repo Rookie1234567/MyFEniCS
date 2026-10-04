@@ -19,12 +19,14 @@ def main():
     paths.update(('src/runners/orthonormal_trace_reprofile.py',
                   'benchmarks/verify_full_input_online.py',
                   'benchmarks/finalize_full_input_online.py',
+                  'benchmarks/package_full_input_online.py',
                   'src/test/test_task042_v35_cache.py'))
     for name in sorted(paths):
         compile((ROOT / name).read_bytes(), name, 'exec')
     ruff = Path('/home/fenics/Projects/Metrology/.venv/bin/ruff')
     commands = [
         [str(ruff), 'check', '--select', 'E9,F', *sorted(paths)],
+        [sys.executable, '-m', 'benchmarks.package_full_input_online'],
         [sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider',
          '--basetemp=' + str(folder / 'fixtures'),
          'src/test/test_task042_v35_online.py', 'src/test/test_task042_v35_cache.py',
