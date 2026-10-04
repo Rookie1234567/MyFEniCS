@@ -37,6 +37,8 @@ class TileSource:
             cv *= np.exp(0.31j)
         if self.corrupt == "conjugate":
             pv = pv.conj()
+        if self.corrupt == "transpose":
+            cv, pv = pv.copy(), cv.copy()
         for a in (cr, pr, cv, pv):
             a.flags.writeable = False
         return PortTile(t, cr, cv, pr, pv)
@@ -75,7 +77,7 @@ def test_shared_tiles_complete_complex_actions():
     assert not a.apply(np.zeros(9, complex)).any()
 
 
-@pytest.mark.parametrize("fault", ["phase", "conjugate"])
+@pytest.mark.parametrize("fault", ["phase", "conjugate", "transpose"])
 def test_bad_phase_or_conjugate_is_numerically_detected(fault):
     s = TileSource()
     s.corrupt = fault
@@ -199,3 +201,55 @@ assert s['classification']!='COMPLETED' and s['descendants_cleared']
         check=False,
     )
     assert run.returncode == 0, run.stderr
+
+
+def test_saved_array_inventory_and_hash_negatives(tmp_path):
+    import hashlib
+
+    from benchmarks.check_boundary_witness import read_arrays
+
+    path = tmp_path / "witness.npz"
+    a = np.array([1 + 2j, 3 - 1j], dtype=np.complex128)
+    np.savez(path, a=a)
+    receipt = {
+        "path": str(path),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "members": {
+            "a": {
+                "shape": [2],
+                "dtype": a.dtype.str,
+                "sha256": hashlib.sha256(a.tobytes()).hexdigest(),
+            }
+        },
+    }
+    np.testing.assert_array_equal(read_arrays(receipt)["a"], a)
+    altered = copy.deepcopy(receipt)
+    altered["members"] = {}
+    with pytest.raises(ValueError, match="inventory"):
+        read_arrays(altered)
+    altered = copy.deepcopy(receipt)
+    altered["members"]["a"]["sha256"] = "bad"
+    with pytest.raises(ValueError, match="member identity"):
+        read_arrays(altered)
+    altered = copy.deepcopy(receipt)
+    altered["sha256"] = "bad"
+    with pytest.raises(ValueError, match="file hash"):
+        read_arrays(altered)
+
+
+def test_live_storage_guard_preserves_original_shared_health(monkeypatch, tmp_path):
+    from src.runners import port_preparation as runner
+
+    monkeypatch.setattr(
+        runner.SharedHealth,
+        "__call__",
+        lambda self: {"stop_reason": None, "original_psi_guard": "retained"},
+    )
+    monkeypatch.setattr(
+        runner, "inventory_paths", lambda *_: {"bytes": 512 * 2**20 + 1}
+    )
+    guard = runner.PreparationHealth(tmp_path, [], "v37")
+    assert guard()["stop_reason"] == "RESOURCE_CONTROLLED_STOP"
+    assert guard()["original_psi_guard"] == "retained"
+    # V36 ordinary behavior remains solely the existing shared health contract.
+    assert runner.PreparationHealth(tmp_path, [], "v36")()["stop_reason"] is None
