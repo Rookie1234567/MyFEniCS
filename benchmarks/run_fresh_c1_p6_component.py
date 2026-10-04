@@ -369,6 +369,15 @@ DISK_CAPS = {
 FREE_RESERVE_BYTES = 2 * 1024**3
 MINIMUM_START_FREE_BYTES = sum(DISK_CAPS.values()) + FREE_RESERVE_BYTES
 WHOLE_MACHINE_DECIMAL_MEMORY_CAP_BYTES = 2_000_000_000_000
+WORKER_CHECKER_WALL_SECONDS_MAX = 4500.0
+W0_SUBREAPER_GRACE_SECONDS = 2.0
+W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS = 30.0
+
+
+def _phase_wall_budget_seconds(total_deadline_epoch: float, now_epoch: float) -> float:
+    """Bound one phase and leave room for the watchdog's existing tree cleanup."""
+    remaining = total_deadline_epoch - now_epoch - W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS
+    return max(0.0, min(WORKER_CHECKER_WALL_SECONDS_MAX, remaining))
 
 
 def _whole_machine_memory_occupancy_upper(envelope: dict[str, Any]) -> tuple[int, int]:
@@ -560,20 +569,84 @@ def _checker_cli(root: Path, abi_receipt: Path) -> int:
     return 0
 
 
+def _control_smoke_leaf(root: Path, abi_receipt: Path, phase: str) -> int:
+    """No-FE sentinel leaf used only to exercise the native user-service controls."""
+    if phase not in {"worker", "checker"}:
+        raise ValueError("control-smoke leaf phase must be worker or checker")
+    _qualified_runtime(abi_receipt)
+    root = root.resolve()
+    contract = json.loads((root / "control_smoke_contract.json").read_text())
+    token = contract.get("token")
+    expected_parent = contract.get("service_pid")
+    actual_parent = os.environ.get("PHYSICAL_WATCHDOG_PARENT_PID")
+    if (not isinstance(token, str) or len(token) != 32
+            or not isinstance(expected_parent, int)
+            or actual_parent != str(expected_parent)
+            or os.getppid() != expected_parent):
+        raise RuntimeError("control-smoke sentinel is outside its live supervised service parent")
+    if phase == "worker":
+        report = {"status": "CONTROL_SMOKE_WORKER_SENTINEL_PASS", "token": token,
+                  "pid": os.getpid(), "parent_pid": os.getppid(),
+                  "PDE_solved": False, "official_results": False, "FE_or_JIT": "NOT_RUN"}
+        _atomic_json(root / "worker_report.json", report)
+        return 0
+    worker = json.loads((root / "worker_report.json").read_text())
+    if (worker.get("status") != "CONTROL_SMOKE_WORKER_SENTINEL_PASS"
+            or worker.get("token") != token or worker.get("PDE_solved") is not False
+            or worker.get("official_results") is not False
+            or worker.get("parent_pid") != expected_parent
+            or not isinstance(worker.get("pid"), int) or worker["pid"] <= 0):
+        raise RuntimeError("control-smoke checker did not receive the supervised worker sentinel")
+    report = {"status": "CONTROL_SMOKE_CHECKER_SENTINEL_PASS", "token": token,
+              "pid": os.getpid(), "parent_pid": os.getppid(), "worker_pid": worker["pid"],
+              "PDE_solved": False, "official_results": False, "FE_or_JIT": "NOT_RUN"}
+    _atomic_json(root / "checker_report.json", report)
+    return 0
+
+
+def _control_smoke_passes(contract: dict[str, Any], worker: dict[str, Any],
+                          checker: dict[str, Any], worker_supervisor: dict[str, Any],
+                          checker_supervisor: dict[str, Any]) -> bool:
+    """Require actual phase reports, distinct child PIDs and watchdog cleanup."""
+    def cleared(summary: dict[str, Any]) -> bool:
+        return (summary.get("classification") == "COMPLETED"
+                and summary.get("descendants_cleared") is True
+                and summary.get("remaining_child_pids") == [])
+
+    worker_pid, checker_pid = worker.get("pid"), checker.get("pid")
+    service_pid = contract.get("service_pid")
+    return (
+        contract.get("PDE_solved") is False
+        and worker.get("status") == "CONTROL_SMOKE_WORKER_SENTINEL_PASS"
+        and checker.get("status") == "CONTROL_SMOKE_CHECKER_SENTINEL_PASS"
+        and worker.get("token") == checker.get("token") == contract.get("token")
+        and isinstance(service_pid, int) and service_pid > 0
+        and isinstance(worker_pid, int) and worker_pid > 0
+        and isinstance(checker_pid, int) and checker_pid > 0
+        and worker_pid != checker_pid
+        and worker.get("parent_pid") == checker.get("parent_pid") == service_pid
+        and checker.get("worker_pid") == worker_pid
+        and worker.get("PDE_solved") is False and checker.get("PDE_solved") is False
+        and worker.get("official_results") is False and checker.get("official_results") is False
+        and cleared(worker_supervisor) and cleared(checker_supervisor)
+    )
+
+
 def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
-                     total_deadline_epoch: float) -> dict[str, Any]:
+                     total_deadline_epoch: float, *, control_smoke: bool = False) -> dict[str, Any]:
     from benchmarks.subreaper_watchdog import supervise
 
-    remaining = total_deadline_epoch - time.time()
+    remaining = _phase_wall_budget_seconds(total_deadline_epoch, time.time())
     if remaining <= 1:
-        raise TimeoutError("frozen total UTC deadline has expired before phase launch")
+        raise TimeoutError("fixed UTC deadline is inside the W0 settlement/cleanup reserve")
     directory = root / "supervision" / phase
     env = {**os.environ, "XDG_CACHE_HOME": str(root / "jit"), "TMPDIR": str(root / "tmp"),
            "TMP": str(root / "tmp"), "TEMP": str(root / "tmp"),
            "PHYSICAL_WATCHDOG_PARENT_PID": str(os.getpid())}
+    leaf_mode = (["--control-smoke-leaf", phase] if control_smoke else
+                 ["--worker" if phase == "worker" else "--checker-worker"])
     command = [sys.executable, "-m", "benchmarks.run_fresh_c1_p6_component",
-               "--worker" if phase == "worker" else "--checker-worker",
-               "--output-dir", str(root), "--abi-receipt", str(abi_receipt)]
+               *leaf_mode, "--output-dir", str(root), "--abi-receipt", str(abi_receipt)]
     deadline_guard_last_scan = [0.0]
     deadline_guard_cached = [{}]
 
@@ -586,12 +659,16 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
         facts = {**deadline_guard_cached[0],
                  "total_deadline_utc_epoch": total_deadline_epoch,
                  "utc_now_epoch": now,
-                 "remaining_total_seconds": max(0.0, total_deadline_epoch-now)}
-        if now >= total_deadline_epoch:
-            facts.update({"stop": True, "reason": "TOTAL_UTC_DEADLINE_CONTROLLED_STOP"})
+                 "remaining_total_seconds": max(0.0, total_deadline_epoch-now),
+                 "settlement_cleanup_reserve_seconds": W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS,
+                 "remaining_before_settlement_cleanup_reserve": _phase_wall_budget_seconds(
+                     total_deadline_epoch, now)}
+        if now >= total_deadline_epoch - W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS:
+            facts.update({"stop": True, "reason": "TOTAL_UTC_DEADLINE_SETTLEMENT_RESERVE"})
         return facts
 
-    summary = supervise(command, directory, wall_seconds=min(4500.0, remaining), interval=.25,
+    summary = supervise(command, directory, wall_seconds=remaining, interval=.25,
+                        grace_seconds=W0_SUBREAPER_GRACE_SECONDS,
                         tree_cap_bytes=3 * 1024**3, stop_on_global_swap=True,
                         worker_environment=env, cache_path=root / "jit",
                         external_guard=deadline_guard,
@@ -600,7 +677,8 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
     return summary
 
 
-def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str) -> int:
+def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str,
+                    *, control_smoke: bool = False) -> int:
     _qualified_runtime(abi_receipt)
     root = root.resolve()
     if not root.is_dir() or not abi_receipt.is_file():
@@ -650,40 +728,78 @@ def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str) -> i
         raise ValueError("frozen total deadline must be an explicit UTC Z timestamp")
     total_deadline_epoch = datetime.strptime(total_deadline_utc,
         "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
-    if time.time() >= total_deadline_epoch:
-        _atomic_json(root / "run_summary.json", {"status": "TOTAL_UTC_DEADLINE_EXPIRED_BEFORE_WORKER",
-            "total_deadline_utc": total_deadline_utc, "PDE_solved": False, "official_results": False})
-        return 6
-    worker_summary = _supervise_phase(root, "worker", abi_receipt, total_deadline_epoch)
-    if worker_summary.get("classification") != "COMPLETED" or not (root / "worker_report.json").is_file():
-        _atomic_json(root / "run_summary.json", {"status": "WORKER_NOT_COMPLETED",
-            "worker_supervisor": worker_summary, "PDE_solved": False, "official_results": False})
-        return 3
-    if time.time() >= total_deadline_epoch:
-        _atomic_json(root / "run_summary.json", {"status": "TOTAL_UTC_DEADLINE_BEFORE_CHECKER",
-            "worker_supervisor": worker_summary,
+    if _phase_wall_budget_seconds(total_deadline_epoch, time.time()) <= 1:
+        _atomic_json(root / "run_summary.json", {"status": "TOTAL_UTC_DEADLINE_SETTLEMENT_RESERVE_BEFORE_WORKER",
             "total_deadline_utc": total_deadline_utc,
+            "settlement_cleanup_reserve_seconds": W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS,
             "PDE_solved": False, "official_results": False})
         return 6
-    checker_summary = _supervise_phase(root, "checker", abi_receipt, total_deadline_epoch)
+    contract = None
+    if control_smoke:
+        contract = {"schema": "task40extra.w0-no-fe-control-smoke.v1",
+                    "token": os.urandom(16).hex(), "service_pid": os.getpid(),
+                    "total_deadline_utc": total_deadline_utc,
+                    "PDE_solved": False, "official_results": False}
+        _atomic_json(root / "control_smoke_contract.json", contract)
+    worker_summary = _supervise_phase(root, "worker", abi_receipt, total_deadline_epoch,
+                                      control_smoke=control_smoke)
+    worker_path = root / "worker_report.json"
+    if (worker_summary.get("classification") != "COMPLETED"
+            or not worker_path.is_file()
+            or (control_smoke and (worker_summary.get("descendants_cleared") is not True
+                                   or worker_summary.get("remaining_child_pids") != []))):
+        status = "CONTROL_SMOKE_WORKER_FAILED" if control_smoke else "WORKER_NOT_COMPLETED"
+        _atomic_json(root / "run_summary.json", {"status": status,
+            "worker_supervisor": worker_summary, "PDE_solved": False, "official_results": False})
+        return 3
+    worker = json.loads(worker_path.read_text())
+    if control_smoke and (worker.get("status") != "CONTROL_SMOKE_WORKER_SENTINEL_PASS"
+            or worker.get("token") != contract["token"]
+            or worker.get("parent_pid") != contract["service_pid"]
+            or worker.get("PDE_solved") is not False):
+        _atomic_json(root / "run_summary.json", {"status": "CONTROL_SMOKE_WORKER_FAILED",
+            "worker_supervisor": worker_summary, "worker_report": worker,
+            "PDE_solved": False, "official_results": False})
+        return 3
+    if _phase_wall_budget_seconds(total_deadline_epoch, time.time()) <= 1:
+        _atomic_json(root / "run_summary.json", {"status": "TOTAL_UTC_DEADLINE_SETTLEMENT_RESERVE_BEFORE_CHECKER",
+            "worker_supervisor": worker_summary,
+            "total_deadline_utc": total_deadline_utc,
+            "settlement_cleanup_reserve_seconds": W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS,
+            "PDE_solved": False, "official_results": False})
+        return 6
+    checker_summary = _supervise_phase(root, "checker", abi_receipt, total_deadline_epoch,
+                                        control_smoke=control_smoke)
     checker_path = root / "checker_report.json"
     if checker_summary.get("classification") != "COMPLETED" or not checker_path.is_file():
-        _atomic_json(root / "run_summary.json", {"status": "CHECKER_NOT_COMPLETED",
+        status = "CONTROL_SMOKE_CHECKER_FAILED" if control_smoke else "CHECKER_NOT_COMPLETED"
+        _atomic_json(root / "run_summary.json", {"status": status,
             "worker_supervisor": worker_summary, "checker_supervisor": checker_summary,
             "PDE_solved": False, "official_results": False})
         return 4
     checker = json.loads(checker_path.read_text())
-    status = "PASS_COMPONENT_ONLY" if checker.get("independent_component_pass") is True else "CHECKER_FAILED"
-    _atomic_json(root / "run_summary.json", {"status": status,
+    if control_smoke:
+        status = ("CONTROL_SMOKE_PASS_NO_FE"
+                  if _control_smoke_passes(contract, worker, checker, worker_summary, checker_summary)
+                  else "CONTROL_SMOKE_FAILED")
+    else:
+        status = "PASS_COMPONENT_ONLY" if checker.get("independent_component_pass") is True else "CHECKER_FAILED"
+    run_summary = {"status": status,
         "source_identity_manifest_sha256": sources["manifest_sha256"],
         "input_identity": input_identity,
         "native_abi_identity": admission["native_abi_identity"],
-        "worker_report_sha256": _sha256(root / "worker_report.json"),
-        "checker_report_sha256": _sha256(checker_path),
         "worker_supervisor": worker_summary, "checker_supervisor": checker_summary,
-        "PDE_solved": False, "official_results": False,
-        "raw_archive_created": False, "raw_member_directory": str(root / "raw")})
-    return 0 if status == "PASS_COMPONENT_ONLY" else 5
+        "PDE_solved": False, "official_results": False, "raw_archive_created": False}
+    if control_smoke:
+        run_summary.update({"total_deadline_utc": total_deadline_utc,
+            "settlement_cleanup_reserve_seconds": W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS,
+            "worker_report": worker, "checker_report": checker})
+    else:
+        run_summary.update({"worker_report_sha256": _sha256(worker_path),
+            "checker_report_sha256": _sha256(checker_path),
+            "raw_member_directory": str(root / "raw")})
+    _atomic_json(root / "run_summary.json", run_summary)
+    return 0 if status in {"PASS_COMPONENT_ONLY", "CONTROL_SMOKE_PASS_NO_FE"} else 5
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -696,8 +812,13 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--supervised", action="store_true")
     mode.add_argument("--worker", action="store_true")
     mode.add_argument("--checker-worker", action="store_true")
+    mode.add_argument("--control-smoke-leaf", choices=("worker", "checker"), help=argparse.SUPPRESS)
+    parser.add_argument("--control-smoke", action="store_true",
+                        help="run native admission/supervision with non-numerical worker/checker sentinels")
     args = parser.parse_args(argv)
     root, receipt = Path(args.output_dir).resolve(), Path(args.abi_receipt).resolve()
+    if args.control_smoke and not args.supervised:
+        parser.error("--control-smoke requires --supervised")
     if args.admission_only:
         print(json.dumps(validate_native_runtime(receipt), indent=2, sort_keys=True))
         return 0
@@ -705,9 +826,12 @@ def main(argv: list[str] | None = None) -> int:
         return _worker_cli(root, receipt)
     if args.checker_worker:
         return _checker_cli(root, receipt)
+    if args.control_smoke_leaf:
+        return _control_smoke_leaf(root, receipt, args.control_smoke_leaf)
     if not args.total_deadline_utc:
-        parser.error("--supervised requires the frozen --total-deadline-utc")
-    return _supervised_cli(root, receipt, args.total_deadline_utc)
+        parser.error("--supervised and --control-smoke require the frozen --total-deadline-utc")
+    return _supervised_cli(root, receipt, args.total_deadline_utc,
+                           control_smoke=args.control_smoke)
 
 
 if __name__ == "__main__":
