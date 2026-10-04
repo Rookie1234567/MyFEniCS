@@ -1,3 +1,21 @@
+# Task042 V43：真实神经残差训练及完整对照完成，严格代数资格仍为负
+
+网络根据相邻实体残差输出全部有限元修正，再用相同传统迭代清理；训练／推理／清理和原矩阵都计成本。本轮实际训练encoder、message和decoder，并对8未见右端比较NN、同邻域线性及零初值。不能只用训练loss下降宣称突破。
+
+| 固定问题／指标 | measured结果和原因 | 边界 |
+|---|---|---|
+| 64hex/p6/q15/3tag/0.7nm | 45000native，42624独立，2376slave；原A/Aᴴ配对通过 | A无完整DtN，有限代数，不是原尺寸模型 |
+| NN / LIN | 70144 / 74240实参数，两轮邻域消息宽32，各128更新，val选128 | 全系数直接loss，旧恢复FAIL保持；不是纯FE阶段 |
+| R0 / R-LIN / R-NN | 完整各0/8；ρ门8/4/8，但η范围0.00627..0.01678 / 0.03404..0.45859 / 0.05712..0.22704，均>1e-4 | NN没有相同正确性合格基线，NN20 NOT_DEMONSTRATED |
+| 同时树峰／swap／作用 | 2696056832B / 0；4090 A/Aᴴ，21 B；新mesh/JIT/LU/QR/target0 | 采样树峰非连续cgroup；有限CSR和AH副本计入 |
+| 完整原PDE／E/H/RTA/Avolume／2TB48h | NOT_RUN / NOT_QUALIFIED | 不把梯度或有限制造rhs当完整物理资格 |
+
+[Review V40](task042_neural_coarse_inverse/review_report_v40.md) · [response](task042_neural_coarse_inverse/response_v43.md) · [完整结果](task042_neural_coarse_inverse/outcomes/neighborhood_residual_correction_v43.md) · [独立checker](task042_neural_coarse_inverse/outcomes/records/neural_heldout_checker_v43.json) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v43.json) · [source](task042_neural_coarse_inverse/outcomes/records/run_index_v43.json)。唯一下一建议：只比较同一架构的零输出层初始化与本轮初始化，其他数据生成族、seed、128更新及清理规则不变；检验训练是否主要花在撤销有害初值。该对照需未来review授权，本轮不实施；即使改善，残差与完整系数误差仍须同时过门，不能因此授NN20%。
+
+以下历史全文逐字保留。
+
+<!-- V43-LATEST-END -->
+
 # Task042 V42：有限原作用可信，恢复门未过；保持神经突破主线
 
 Task042的研究目的仍是神经网络突破：在相同原有限元正确性下，相对最佳合格非神经方法，完整耗时或同时峰内存至少改善20%，另一项合规。本轮没有神经训练或推理；分布式体积、伴随和残差接口用于以后核验神经场，不能记作神经贡献。用户本轮再次明确这一主线，下一轮建议必须回到神经接入与非神经对照，不能把接口准备无限延长为独立纯FE研究。

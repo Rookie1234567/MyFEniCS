@@ -1,3 +1,11 @@
+# V43测试：真实神经链通过，完整候选资格仍为负
+
+最终27项focused测试（含真超时／自身后代清场），9项真实全向量FD、3方向VJP、batch1/batch2 loss梯度及非零非互伴12port通过；128次实际NN和LIN更新，24项终测及独立原残差／完整系数审核已运行。数学接线通过不能替代求解通过，终测全部η超过1e-4。
+
+失败fixture、依赖loader、线程query、active-worker预算与journal调用全部留证；无环境升级／CI／全仓昂贵测试声明。最终compile/Ruff/15文档合同及字节身份见新records，GitHub视觉NOT_VERIFIED。[focused](records/tests_v43.json) · [FD数组审核](records/saved_gradient_vector_audit_v43.json) · [文档](records/documentation_checks_v43.json)。以下历史逐字保留。
+
+<!-- V43-LATEST-END -->
+
 # V42测试与真实数值限制
 
 最终clean实现上61项接线／反例测试通过；真实MPI1/2/4原作用通过，独立内部恢复FAIL保留。15文档合同、Ruff、compile及ABI/getter另列；测试通过不等于物理求解通过。pre13提交时序和全部失败费用保留，pre14独立重验。无CI或全仓pytest声明，GitHub视觉NOT_VERIFIED。[测试](records/tests_v42.json) · [文档](records/documentation_checks_v42.json)。

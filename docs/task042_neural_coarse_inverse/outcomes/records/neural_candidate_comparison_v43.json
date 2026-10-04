@@ -1,0 +1,2703 @@
+{
+  "rows": [
+    {
+      "sample": 0,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 0.0001058550551533699,
+      "whole_RHS_seconds": 21.103003068943508,
+      "A_calls": 99,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 90,
+      "online_rho": 9.827479979103168e-07,
+      "cleanup_seconds": 20.369292072951794,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_0_R0.npz",
+        "sha256": "3ac3ff6b6b17b6e8a0916da44dad77b53e3332a07ed57e5f24b64fd096744853",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9d7f37edce918f8f2c4aa02b4522b0fd114025ef28e6906c429fa22a609d1732"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9d7f37edce918f8f2c4aa02b4522b0fd114025ef28e6906c429fa22a609d1732"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "689aa27deed739c7feb1ae66181896a640e0d6bf57640b3f046d464bc3077c90"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bf9f9fddc7be8f740022bb74509390658057c2e5573f35b5bd950e13f4edabf7"
+          }
+        }
+      },
+      "independent": {
+        "sample": 0,
+        "route": "R0",
+        "residual_numerator": 9.827479979103146e-07,
+        "rhs_norm": 0.9999999999999979,
+        "rho": 9.827479979103168e-07,
+        "coefficient_error_numerator": 6.247135886315583e-08,
+        "coefficient_reference_norm": 8.654840089586241e-06,
+        "eta": 0.007218083548224444,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2288541696,
+      "resource_samples": 19,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 0,
+      "route": "R-LIN",
+      "initial_rho": 4.469621990174452,
+      "inference_seconds": 0.016984988003969193,
+      "whole_RHS_seconds": 29.805486919009127,
+      "A_calls": 141,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 128,
+      "online_rho": 3.5989399343490057e-06,
+      "cleanup_seconds": 28.67877125600353,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_0_R_LIN.npz",
+        "sha256": "76b6cce9e8675a567304d7ca9d2dbabb5af250d5116fa45e4333cb62228ead0e",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9d7f37edce918f8f2c4aa02b4522b0fd114025ef28e6906c429fa22a609d1732"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6bfbaf02fddb94de079f7dbabf35bb455e3883252fb3e37ba595ee72ef978bdf"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dffe2b5e379765915cebc448430314e0b6854b70899860d70b970456f8bafdff"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a6f5f4cbbde49ea7d8c0945f193a759b7a8ea4dfd24f936cb1794ac73fc1ac7d"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "388290c0c0d3a774585b887616c1dd7712feef1e0a40b11d8429840e6369e5af"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b2acd08c5c63b5598f586347cfb5540125803e2ea77efe8f5861d0b3f5da46ac"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bcde6d5ed21fc60da3fa7b1410880c29dd43cbff319eac371ad9c1b293319d2b"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 0,
+        "route": "R-LIN",
+        "residual_numerator": 3.598939934348998e-06,
+        "rhs_norm": 0.9999999999999979,
+        "rho": 3.5989399343490057e-06,
+        "coefficient_error_numerator": 3.3580119786719753e-06,
+        "coefficient_reference_norm": 8.654840089586241e-06,
+        "eta": 0.38799237697209843,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 8.243447848529386e-18,
+            "denominator": 0.13872663436029292,
+            "relative": 5.942224351179725e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 3.7262043027507013e-16,
+            "denominator": 0.44392522995293865,
+            "relative": 8.393765551792862e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 8.243447848529386e-18,
+          "denominator": 0.13872663436029292,
+          "relative": 5.942224351179725e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 3.7262043027507013e-16,
+          "denominator": 0.44392522995293865,
+          "relative": 8.393765551792862e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 4.469621990174452,
+        "amplitude_original_initial_rho": 4.469621990174457,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2313633792,
+      "resource_samples": 26,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 0,
+      "route": "R-NN",
+      "initial_rho": 1.4005412846365293,
+      "inference_seconds": 0.012413401040248573,
+      "whole_RHS_seconds": 27.76390760904178,
+      "A_calls": 130,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 117,
+      "online_rho": 9.189282059764265e-07,
+      "cleanup_seconds": 26.543385626049712,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_0_R_NN.npz",
+        "sha256": "0ba49d2ffcb9f4a8783cb89118ac3521bc7127bf78a68fca7e994c7ee784539f",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9d7f37edce918f8f2c4aa02b4522b0fd114025ef28e6906c429fa22a609d1732"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "496085ef5c665700825a583543a9e542d6808beaac888820b72858aeac8c1699"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7b4d06fa0408b959b365e0326de8938a84d59b7492b82c748c3b9b7e4803c897"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "52935bb0278f2eea4077788a32cbb2308a60229bdb64fb6fb225e486d66f71fe"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7651850c7fe3f2e78c3fb8b4d038ee9fd9646da397714194bf16b0fd589f09c8"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5aaa283d85845c7ca9d0fffb8a195bf76282ecef5be40e69b40dea735c31f84f"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d4006259d63e8ff7880bffc669ac46d72f342ee57943e28862dcc0fd32e7d06e"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 0,
+        "route": "R-NN",
+        "residual_numerator": 9.189282059764246e-07,
+        "rhs_norm": 0.9999999999999979,
+        "rho": 9.189282059764265e-07,
+        "coefficient_error_numerator": 1.0701692367265916e-06,
+        "coefficient_reference_norm": 8.654840089586241e-06,
+        "eta": 0.12364979891589802,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.044816139156247624,
+            "denominator": 0.03241310538068568,
+            "relative": 1.3826549054739032,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 8.077673901192351e-17,
+            "denominator": 0.10372193721819403,
+            "relative": 7.787816268992162e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.044816139156247624,
+          "denominator": 0.03241310538068568,
+          "relative": 1.3826549054739032,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 8.077673901192351e-17,
+          "denominator": 0.10372193721819403,
+          "relative": 7.787816268992162e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 1.4956665159229607,
+        "amplitude_original_initial_rho": 1.4005412846365293,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2319859712,
+      "resource_samples": 25,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 1,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 0.00012851099018007517,
+      "whole_RHS_seconds": 20.992463129921816,
+      "A_calls": 100,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 91,
+      "online_rho": 9.842179991571058e-07,
+      "cleanup_seconds": 20.534796937019564,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_1_R0.npz",
+        "sha256": "b404bfd6f4025e48324b042b4722fff33f928992fb4442dd719e70080605788d",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "699fd02d7747fb35a7ac8ca6b998d173b117ec0510e5473749005d9a81d4a6b2"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "699fd02d7747fb35a7ac8ca6b998d173b117ec0510e5473749005d9a81d4a6b2"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6d93f107b7029a3b636fa6e7253fcfc254d419da2c221c5501583f129fdbbf55"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3d93f7f249934638a90dddc7e7af5b15df18ceaa1d85c7d20706f081f84ad333"
+          }
+        }
+      },
+      "independent": {
+        "sample": 1,
+        "route": "R0",
+        "residual_numerator": 9.842179991571051e-07,
+        "rhs_norm": 0.9999999999999994,
+        "rho": 9.842179991571058e-07,
+        "coefficient_error_numerator": 4.226758758155531e-08,
+        "coefficient_reference_norm": 6.743929148058752e-06,
+        "eta": 0.006267501726900865,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2319859712,
+      "resource_samples": 18,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 1,
+      "route": "R-LIN",
+      "initial_rho": 4.1369826887697805,
+      "inference_seconds": 0.012377743958495557,
+      "whole_RHS_seconds": 30.106927465996705,
+      "A_calls": 141,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 128,
+      "online_rho": 2.6835107196365963e-06,
+      "cleanup_seconds": 28.81171949999407,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_1_R_LIN.npz",
+        "sha256": "f5a8d88338c9c4839bf5be0d7c80e285592e8fd49c981c4d6e327f4782df64ca",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "699fd02d7747fb35a7ac8ca6b998d173b117ec0510e5473749005d9a81d4a6b2"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "04f573893df2deed42d311c42543dee7d53d253b13f635a30305f5a1de6a10c3"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9fee4ceafe25dcb5ba63fadfbb08eb62c13597c11d1ddcc2a6e2a2ad6d115f7b"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "875618881e988086443e1802b5c6de2542afdab0549954fcf3d67557d7758af5"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7970596ef4ae81fa7bef575ee88da34c97a145bb40667c05c9251c0b2629fc03"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a0ecc5d19c4e354916aa8f121d76d937bb16fd853e27f270af83a6592e978dd8"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29ac8a6ef56040d3aa986056211d959117060b2381c6866d4b73c6d557808205"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 1,
+        "route": "R-LIN",
+        "residual_numerator": 2.6835107196365946e-06,
+        "rhs_norm": 0.9999999999999994,
+        "rho": 2.6835107196365963e-06,
+        "coefficient_error_numerator": 3.092722380550457e-06,
+        "coefficient_reference_norm": 6.743929148058752e-06,
+        "eta": 0.45859354578787365,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 8.507673666452613e-18,
+            "denominator": 0.12228795172832913,
+            "relative": 6.957082481316705e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 2.793033422589758e-16,
+            "denominator": 0.3913214455306547,
+            "relative": 7.137440215683149e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 8.507673666452613e-18,
+          "denominator": 0.12228795172832913,
+          "relative": 6.957082481316705e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 2.793033422589758e-16,
+          "denominator": 0.3913214455306547,
+          "relative": 7.137440215683149e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 4.1369826887697805,
+        "amplitude_original_initial_rho": 4.1369826887697805,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2319859712,
+      "resource_samples": 27,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 1,
+      "route": "R-NN",
+      "initial_rho": 1.5258771844003989,
+      "inference_seconds": 0.012853384017944336,
+      "whole_RHS_seconds": 27.608159256051295,
+      "A_calls": 130,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 117,
+      "online_rho": 9.283078123217361e-07,
+      "cleanup_seconds": 26.43084050901234,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_1_R_NN.npz",
+        "sha256": "e444905edb0984a98de8bb7c378fcc0d9579e9faaee4c77425193581c8cc3ad3",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "699fd02d7747fb35a7ac8ca6b998d173b117ec0510e5473749005d9a81d4a6b2"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0dc041362034e0f3288051346698eb674540f5f33a6f52540af60b4a9511a898"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2279db4a9f9c78ccdfa52d85075a7bbe3f20bf8b72a8610932b2a211da0ccde"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "10e24a13b9b1d013f20d83fdb67784771fa2f146c25d695aa4c83ab9241d71b0"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f13c81f363a97453349580e33c9d5049913e11123486e144860aa8710a299381"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5f7c1eff5893fd6386e65457bdd4da83d3670ecd41a9f4e9a3d4fdc7848b0390"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4e9e4f75532ae9acdeba17ffee244d1129f42926fad0ea7bf4a29365fe8eb6ea"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 1,
+        "route": "R-NN",
+        "residual_numerator": 9.283078123217355e-07,
+        "rhs_norm": 0.9999999999999994,
+        "rho": 9.283078123217361e-07,
+        "coefficient_error_numerator": 1.186580410779747e-06,
+        "coefficient_reference_norm": 6.743929148058752e-06,
+        "eta": 0.17594793550304508,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.041995783300248814,
+            "denominator": 0.02957955993300809,
+            "relative": 1.419756865732994,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 6.764820594262988e-17,
+            "denominator": 0.094654591785626,
+            "relative": 7.146848839181488e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.041995783300248814,
+          "denominator": 0.02957955993300809,
+          "relative": 1.419756865732994,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 6.764820594262988e-17,
+          "denominator": 0.094654591785626,
+          "relative": 7.146848839181488e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 1.5714707861721597,
+        "amplitude_original_initial_rho": 1.525877184400401,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 24,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 2,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 0.00011918798554688692,
+      "whole_RHS_seconds": 21.156931404955685,
+      "A_calls": 99,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 90,
+      "online_rho": 9.88602489645491e-07,
+      "cleanup_seconds": 20.49321136402432,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_2_R0.npz",
+        "sha256": "da3a21a24cb3e085d1b12fd1f765d5346dcde2bc3912a19a8d3f9b58bad82152",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ef43cc8bae34639b186e80c4f6e32b3e1f2176a19dbf6fc9e1684dd8bd0dad5a"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ef43cc8bae34639b186e80c4f6e32b3e1f2176a19dbf6fc9e1684dd8bd0dad5a"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0bc07d8b9c8eb18e36d1c13218ef502063e9ffb9931de2d22a20814e20afae77"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "22c0f22abbfa8143b0a22438b35d416e7c828bde8b9865ed413e505799a5614c"
+          }
+        }
+      },
+      "independent": {
+        "sample": 2,
+        "route": "R0",
+        "residual_numerator": 9.886024896454907e-07,
+        "rhs_norm": 0.9999999999999999,
+        "rho": 9.88602489645491e-07,
+        "coefficient_error_numerator": 3.7397844418032026e-08,
+        "coefficient_reference_norm": 5.615261121779998e-06,
+        "eta": 0.006660036569444018,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 19,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 2,
+      "route": "R-LIN",
+      "initial_rho": 3.6768054672915347,
+      "inference_seconds": 0.024835576070472598,
+      "whole_RHS_seconds": 29.969983348972164,
+      "A_calls": 141,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 128,
+      "online_rho": 2.3828524212086663e-06,
+      "cleanup_seconds": 28.7264817339601,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_2_R_LIN.npz",
+        "sha256": "746761e39179b1d42af31623ec2a2d0c595b4cd579d0c8d872c0bdf372604a79",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ef43cc8bae34639b186e80c4f6e32b3e1f2176a19dbf6fc9e1684dd8bd0dad5a"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9ead44366e57f931c243f3fba3d292e79ea0c14dafe44c31f7802d77053ef447"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "95d42122625727a29b5875569353ef571a37f631b598a390c1dca24ed0ef3064"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "788212029d99c4d7a8b8ee55c13f1ea260784238b7dd652e035b91737a68a005"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "16152d06a84ebde2f4b6481ec25d26a5636dc4bb94e9527b436a944826950103"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "960844a77e40b72aec8ae74f8770b80ec86be7bdbcc7d9901d34a992fca49c65"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d29208907e9aae34069af00a8f11413e7b3a1814c20ddc3c1f50fa76bee67d50"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 2,
+        "route": "R-LIN",
+        "residual_numerator": 2.382852421208666e-06,
+        "rhs_norm": 0.9999999999999999,
+        "rho": 2.3828524212086663e-06,
+        "coefficient_error_numerator": 1.9718034460662222e-06,
+        "coefficient_reference_norm": 5.615261121779998e-06,
+        "eta": 0.351150801949024,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 6.97476570578584e-18,
+            "denominator": 0.0883065648140143,
+            "relative": 7.898354692514253e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 2.1735498114868584e-16,
+            "denominator": 0.2825810074048461,
+            "relative": 7.691776002386717e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 6.97476570578584e-18,
+          "denominator": 0.0883065648140143,
+          "relative": 7.898354692514253e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 2.1735498114868584e-16,
+          "denominator": 0.2825810074048461,
+          "relative": 7.691776002386717e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 3.6768054672915347,
+        "amplitude_original_initial_rho": 3.6768054672915444,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 26,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 2,
+      "route": "R-NN",
+      "initial_rho": 1.6129176526091071,
+      "inference_seconds": 0.012825771002098918,
+      "whole_RHS_seconds": 28.488061306998134,
+      "A_calls": 133,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 120,
+      "online_rho": 9.198232605951544e-07,
+      "cleanup_seconds": 27.323726892936975,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_2_R_NN.npz",
+        "sha256": "cc99c89e290adc0c0c725806c2b80a7425178076723feebc1df63a5bde13ca3d",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ef43cc8bae34639b186e80c4f6e32b3e1f2176a19dbf6fc9e1684dd8bd0dad5a"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6dcb9e0fd29c78fbd137c12ebf9b7e6d6566c1555a1043f4e59cf27d32300bdc"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a3a3ebf5ed0517bab80173ac7cfcd085c11f2011df99dc1845bc4c1c1040be9d"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "16eadb30a7299da4c62e52fc0cac52799988d3bcc44fcf5936c817c73a360a62"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5600a41b538e599c9f4e81c3ad09dd9b7ae19531572d8077c7d3aa04f6645b9a"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "80b29b12ac2208fe2afc7793db6082645cfb489e1dab507850969185fe031045"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "82c425157f2b4f59a1cb05b7dd53e51d1b081e488973247d23f8a0d54dc37a3f"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 2,
+        "route": "R-NN",
+        "residual_numerator": 9.198232605951543e-07,
+        "rhs_norm": 0.9999999999999999,
+        "rho": 9.198232605951544e-07,
+        "coefficient_error_numerator": 1.2748647732812387e-06,
+        "coefficient_reference_norm": 5.615261121779998e-06,
+        "eta": 0.22703570602200518,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.036024105930376804,
+            "denominator": 0.028966378127493943,
+            "relative": 1.2436524087277552,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 5.783605757998891e-17,
+            "denominator": 0.09269241000798056,
+            "relative": 6.239567789316232e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.036024105930376804,
+          "denominator": 0.028966378127493943,
+          "relative": 1.2436524087277552,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 5.783605757998891e-17,
+          "denominator": 0.09269241000798056,
+          "relative": 6.239567789316232e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 1.475333977786736,
+        "amplitude_original_initial_rho": 1.6129176526091078,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 25,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 3,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 0.00013339694123715162,
+      "whole_RHS_seconds": 21.036657595075667,
+      "A_calls": 99,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 90,
+      "online_rho": 9.139224145150198e-07,
+      "cleanup_seconds": 20.4709746040171,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_3_R0.npz",
+        "sha256": "0e1f61402ec5d0cd41768697d3bcac5b609fdacd116b7103898d87de2097e0b1",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8c6baf935a357539add205e8fe334fa5c08b525fd724455b4cdac0777399657b"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8c6baf935a357539add205e8fe334fa5c08b525fd724455b4cdac0777399657b"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1b7ac3001b02f2406f3b76fbd1c59e82194a2a754ce17ca56abe8207d2f92d8f"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4b643722391f30eb4fbd95b4a1d22f7223e1048bfd5ff7f00d27057c0c2ddea2"
+          }
+        }
+      },
+      "independent": {
+        "sample": 3,
+        "route": "R0",
+        "residual_numerator": 9.139224145150186e-07,
+        "rhs_norm": 0.9999999999999988,
+        "rho": 9.139224145150198e-07,
+        "coefficient_error_numerator": 4.1740298270748686e-08,
+        "coefficient_reference_norm": 6.219719223041842e-06,
+        "eta": 0.006710961825433496,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 19,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 3,
+      "route": "R-LIN",
+      "initial_rho": 3.669522742101033,
+      "inference_seconds": 0.025483186007477343,
+      "whole_RHS_seconds": 30.3705683411099,
+      "A_calls": 141,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 128,
+      "online_rho": 2.1388159621143595e-06,
+      "cleanup_seconds": 29.038538001012057,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_3_R_LIN.npz",
+        "sha256": "25cd8da40ace342e6fdd32ade6da2087da57204470f395c8b6a86fd6288de7ec",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8c6baf935a357539add205e8fe334fa5c08b525fd724455b4cdac0777399657b"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e119f8f852c80def01a44f2685be41fdeab5a6300e704603382c0d326831c452"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "34996653a28966af611232112b995e6c10ee4c21908daa3e3c76a6ebb15100b4"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "899a0ba1664691df1b0636184adfd750693e6e1f95a14b3f43eeab1741a1f3b5"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "aba1adfd2f51c7b48c2fed53ccda3f1e3dd26dd2b8525e81da2f0a3d49662aef"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b8e488492d13e0cf13781f43d25740925127303040f37a43cf5b24bc73c04d4a"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2d8230ae60aecd2599ee68e28025c5565d141414ecaacff095670e5b219a4c6c"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 3,
+        "route": "R-LIN",
+        "residual_numerator": 2.138815962114357e-06,
+        "rhs_norm": 0.9999999999999988,
+        "rho": 2.1388159621143595e-06,
+        "coefficient_error_numerator": 2.03694420264959e-06,
+        "coefficient_reference_norm": 6.219719223041842e-06,
+        "eta": 0.32749777435345284,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 5.905098952036026e-18,
+            "denominator": 0.09506079473914414,
+            "relative": 6.21191834997822e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 2.4017932549380465e-16,
+            "denominator": 0.30419454316526184,
+            "relative": 7.895582971168578e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 5.905098952036026e-18,
+          "denominator": 0.09506079473914414,
+          "relative": 6.21191834997822e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 2.4017932549380465e-16,
+          "denominator": 0.30419454316526184,
+          "relative": 7.895582971168578e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 3.669522742101033,
+        "amplitude_original_initial_rho": 3.6695227421010297,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 26,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 3,
+      "route": "R-NN",
+      "initial_rho": 1.5637657315419902,
+      "inference_seconds": 0.01275811402592808,
+      "whole_RHS_seconds": 28.13726864301134,
+      "A_calls": 132,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 119,
+      "online_rho": 9.470548722471489e-07,
+      "cleanup_seconds": 27.059698072029278,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_3_R_NN.npz",
+        "sha256": "4b93003d3207fcd160af788e41c75bc43d6ee05c058f83a47a7d2f0920391608",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8c6baf935a357539add205e8fe334fa5c08b525fd724455b4cdac0777399657b"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "eac14b9f00111bd9992161db54063e41be2049b29cb8e85eadb537be0f496141"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b2c77d3ae203efeb1d5dfc1eb21c21f9a9e38ab1e0f14ca196d2b448c133ee1d"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "93c8c8f8638a0e46d598ee24a8b5f8209ed89f7d0d00ca242f444809dad0b65e"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c169e845bc9511ab91c1802e2ae5fc2b3f0f6d97b9c7e663348af66c4faec4c"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fec98bcd306aabb5e21803a1f0c92aa650d6a456f8b7fe8f28eff268d76fddd"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "11659448e92a66bf20c836679b55291c283a0665a1933b4a361e5149a7dcb6cc"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 3,
+        "route": "R-NN",
+        "residual_numerator": 9.470548722471477e-07,
+        "rhs_norm": 0.9999999999999988,
+        "rho": 9.470548722471489e-07,
+        "coefficient_error_numerator": 1.3536767984763361e-06,
+        "coefficient_reference_norm": 6.219719223041842e-06,
+        "eta": 0.21764275040928638,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.037561449754561105,
+            "denominator": 0.02602425312071934,
+            "relative": 1.4433247932351367,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 6.791145775805933e-17,
+            "denominator": 0.0832776099863019,
+            "relative": 8.154827902629517e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.037561449754561105,
+          "denominator": 0.02602425312071934,
+          "relative": 1.4433247932351367,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 6.791145775805933e-17,
+          "denominator": 0.0832776099863019,
+          "relative": 8.154827902629517e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 1.5100435412937758,
+        "amplitude_original_initial_rho": 1.563765731541988,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2320580608,
+      "resource_samples": 24,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 4,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 0.00010940793436020613,
+      "whole_RHS_seconds": 20.510777032002807,
+      "A_calls": 97,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 88,
+      "online_rho": 8.992001487660733e-07,
+      "cleanup_seconds": 19.91741324600298,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_4_R0.npz",
+        "sha256": "25f882c0ea17c685edbd29090af4e18d685712820e3c95ac8020bfd59ece4fc0",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fd4fb66c16b92fa56221347d66fa223a35d7a6e0370c753286883debc721976"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fd4fb66c16b92fa56221347d66fa223a35d7a6e0370c753286883debc721976"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "97003bdeabf7a191139e54924196fe31a7b012a9d7fdb1c24a744dd6b153973c"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3582389dd771f6475a5c81ad43a980d3f379a2f441f0c3eb56a7bba892c11f89"
+          }
+        }
+      },
+      "independent": {
+        "sample": 4,
+        "route": "R0",
+        "residual_numerator": 8.992001487660718e-07,
+        "rhs_norm": 0.9999999999999982,
+        "rho": 8.992001487660733e-07,
+        "coefficient_error_numerator": 2.056199144673e-07,
+        "coefficient_reference_norm": 1.4201061682117376e-05,
+        "eta": 0.01447919311034512,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2321301504,
+      "resource_samples": 18,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 4,
+      "route": "R-LIN",
+      "initial_rho": 0.6453584897129131,
+      "inference_seconds": 0.024354379973374307,
+      "whole_RHS_seconds": 30.248289866023697,
+      "A_calls": 140,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 127,
+      "online_rho": 9.118262015384209e-07,
+      "cleanup_seconds": 28.967160122003406,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_4_R_LIN.npz",
+        "sha256": "2797915ce834cd6c70a2c67be11185966929e9b58ab141daca1591f4d1c0babc",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fd4fb66c16b92fa56221347d66fa223a35d7a6e0370c753286883debc721976"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac2654d76fe7022c5ba9f674f578e8bf27767957c828de130a03486896a16f71"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "325e6121f2efcc6c17575c6fba728327975966d266616f3d68bc25a78c52ee30"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "939bc7822122c2ad87816f410a95508df0f4ebd4225cb7948a62eda9801ae5bf"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "557783e17157d343ed3c528da6659d0a2958b3311b3da4032dd2b943dc51b796"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f05d7c9cd76dbf65a520cd58e39d1a4a448c5b6c22238d7622016591231ac6b1"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "70662acb2bbeacb9deda35b6e9be3ec22807ec37f9afc23993845ac3f519e891"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 4,
+        "route": "R-LIN",
+        "residual_numerator": 9.118262015384193e-07,
+        "rhs_norm": 0.9999999999999982,
+        "rho": 9.118262015384209e-07,
+        "coefficient_error_numerator": 5.05099692436752e-07,
+        "coefficient_reference_norm": 1.4201061682117376e-05,
+        "eta": 0.03556774160574181,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 2.0953266531275237e-18,
+            "denominator": 0.021824743725483285,
+            "relative": 9.600693045852134e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 1.023586044857928e-16,
+            "denominator": 0.06983917992154678,
+            "relative": 1.465632967064854e-15,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 2.0953266531275237e-18,
+          "denominator": 0.021824743725483285,
+          "relative": 9.600693045852134e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 1.023586044857928e-16,
+          "denominator": 0.06983917992154678,
+          "relative": 1.465632967064854e-15,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.6453584897129132,
+        "amplitude_original_initial_rho": 0.6453584897129132,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2321301504,
+      "resource_samples": 27,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 4,
+      "route": "R-NN",
+      "initial_rho": 0.6140317113467769,
+      "inference_seconds": 0.024672463070601225,
+      "whole_RHS_seconds": 27.815826473990455,
+      "A_calls": 129,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 116,
+      "online_rho": 9.21822427035689e-07,
+      "cleanup_seconds": 26.564268102054484,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_4_R_NN.npz",
+        "sha256": "38430e4724977803a1da5cfe581674f08993b5e8592e069823925c38ad943845",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fd4fb66c16b92fa56221347d66fa223a35d7a6e0370c753286883debc721976"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bcb5d596f18205b2dc01c0462b50dc05e9f0c6191b769900a00e05d14c4ac0dc"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7a4ff7b5d8b32532a5e351c3fec25e707808901236b2a167a130a82af59b21d4"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a09aa382ac3020a85ece5653f16aca33683e6a4b4ef1062c00b6c6e3e905c154"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f679d05eb21ce8ba577555ab908a3ef3794f5697497de456230fb69e1377d138"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "04296aaa1734c2b8c50872b017e68ee2a7ab9de6853d2d92fe2023b112f1661c"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9b9f46fae93c7f116b835bb211fcb68b2334c8eb818ac9c2e683a14f6ae5545b"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 4,
+        "route": "R-NN",
+        "residual_numerator": 9.218224270356875e-07,
+        "rhs_norm": 0.9999999999999982,
+        "rho": 9.21822427035689e-07,
+        "coefficient_error_numerator": 8.112175403393049e-07,
+        "coefficient_reference_norm": 1.4201061682117376e-05,
+        "eta": 0.05712372486634763,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.019422343197066795,
+            "denominator": 0.01515120750542123,
+            "relative": 1.2819006795410408,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 4.17776185067673e-17,
+            "denominator": 0.04848386401734791,
+            "relative": 8.616808778239899e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.019422343197066795,
+          "denominator": 0.01515120750542123,
+          "relative": 1.2819006795410408,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 4.17776185067673e-17,
+          "denominator": 0.04848386401734791,
+          "relative": 8.616808778239899e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.5758206620289333,
+        "amplitude_original_initial_rho": 0.6140317113467773,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2321301504,
+      "resource_samples": 24,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 5,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 0.00012897409033030272,
+      "whole_RHS_seconds": 20.68599740799982,
+      "A_calls": 96,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 87,
+      "online_rho": 9.5054196199315e-07,
+      "cleanup_seconds": 20.08382502302993,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_5_R0.npz",
+        "sha256": "4c15cc642e03d9b214a94af42433818dc719c46e90b7285428ad7e98fd9f443a",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ebf2bc9d32529d1d19e4873564d601a802007ea05bbe14347bb3e2a478dfd64c"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ebf2bc9d32529d1d19e4873564d601a802007ea05bbe14347bb3e2a478dfd64c"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fc924ef8ef14ed1c5e64d21932a795c5ff283b29a86770f077196c449db377d"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bc111b585f9137dd19c99b4723384df62a587cb5fc3d948b8ba1769ff006a49c"
+          }
+        }
+      },
+      "independent": {
+        "sample": 5,
+        "route": "R0",
+        "residual_numerator": 9.505419619931504e-07,
+        "rhs_norm": 1.0000000000000004,
+        "rho": 9.5054196199315e-07,
+        "coefficient_error_numerator": 2.246286841648537e-07,
+        "coefficient_reference_norm": 1.3547990608368455e-05,
+        "eta": 0.016580221426054344,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2321309696,
+      "resource_samples": 17,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 5,
+      "route": "R-LIN",
+      "initial_rho": 0.5958966287584878,
+      "inference_seconds": 0.024982076953165233,
+      "whole_RHS_seconds": 30.156026532989927,
+      "A_calls": 140,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 127,
+      "online_rho": 9.288287370014033e-07,
+      "cleanup_seconds": 28.889724110020325,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_5_R_LIN.npz",
+        "sha256": "e046c504d571477329968005fe3ad37a05e8d44d6c0940903ee36fe13318f692",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ebf2bc9d32529d1d19e4873564d601a802007ea05bbe14347bb3e2a478dfd64c"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "74358771e4137e320d70e1902ece0c3dc8719af366738bb834add38ccf07b7c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "53710ffd71c4834ff1b760409318c79e22ed31382fc9b090ebc4bdf4d9927301"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6ff90e7e2bdd50da332ddad5a38a7574fe36fe0e40d43bf82b63e4c80dd2eae1"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c2eef70f23a830eedaad8a1e436074a538466c0dbe3b0db439e40b5151801098"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c9661f0e73d91bc01df5d4aa1ba5bd608e73de1e2d441a7c15b13d840ad0af73"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "41c454f79ca35efd5947dc5bb7578441ba512e3bd3833d43045ad4e3557fdc56"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 5,
+        "route": "R-LIN",
+        "residual_numerator": 9.288287370014037e-07,
+        "rhs_norm": 1.0000000000000004,
+        "rho": 9.288287370014033e-07,
+        "coefficient_error_numerator": 4.763216552188271e-07,
+        "coefficient_reference_norm": 1.3547990608368455e-05,
+        "eta": 0.0351581034404178,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 2.106092170230831e-18,
+            "denominator": 0.022656499857525065,
+            "relative": 9.295752580826468e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 1.056037667875388e-16,
+            "denominator": 0.07250079954408022,
+            "relative": 1.4565876162970052e-15,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 2.106092170230831e-18,
+          "denominator": 0.022656499857525065,
+          "relative": 9.295752580826468e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 1.056037667875388e-16,
+          "denominator": 0.07250079954408022,
+          "relative": 1.4565876162970052e-15,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.5958966287584879,
+        "amplitude_original_initial_rho": 0.5958966287584877,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2321346560,
+      "resource_samples": 27,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 5,
+      "route": "R-NN",
+      "initial_rho": 0.570637572763481,
+      "inference_seconds": 0.02552184194792062,
+      "whole_RHS_seconds": 27.21469854202587,
+      "A_calls": 127,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 114,
+      "online_rho": 9.362037309625059e-07,
+      "cleanup_seconds": 25.86937859293539,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_5_R_NN.npz",
+        "sha256": "a0aa0923263326a63a73578fe19b14b6a250da5faa1b5330d6648d60e3dfd143",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ebf2bc9d32529d1d19e4873564d601a802007ea05bbe14347bb3e2a478dfd64c"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7c634b01a4625460d833de2f3c6b6eddf125e423a5b2564f94c2d0d239cdb434"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e7f3629ca649a2d047f2b9b0179dff893b980158e7744a7619f2c8ff9245f438"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0cca44a4aa23e477ab5abfa30f36111d3fc0a089e5a8c7bfb2cd4d410e71107f"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1095ca8f0131eb8f283a9d7599f5c7bb61d86b6be4d2e36449cec9621bc9b308"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5516e48f648c82e39aa84382374723e6db16bfed836f9f3ea67bf2024bfce379"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1f991d395b4d881cfd8d24262392e41518fa2c12537ddb811fda550edbd7f596"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 5,
+        "route": "R-NN",
+        "residual_numerator": 9.362037309625063e-07,
+        "rhs_norm": 1.0000000000000004,
+        "rho": 9.362037309625059e-07,
+        "coefficient_error_numerator": 8.613922689344143e-07,
+        "coefficient_reference_norm": 1.3547990608368455e-05,
+        "eta": 0.06358081385163797,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.01804903409374479,
+            "denominator": 0.010653447387112798,
+            "relative": 1.694196576741745,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 3.518115681196139e-17,
+            "denominator": 0.03409103163876097,
+            "relative": 1.031976890132036e-15,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.01804903409374479,
+          "denominator": 0.010653447387112798,
+          "relative": 1.694196576741745,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 3.518115681196139e-17,
+          "denominator": 0.03409103163876097,
+          "relative": 1.031976890132036e-15,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.5976655998288083,
+        "amplitude_original_initial_rho": 0.5706375727634809,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2321391616,
+      "resource_samples": 23,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 6,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 5.8140954934060574e-05,
+      "whole_RHS_seconds": 20.52590563404374,
+      "A_calls": 96,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 87,
+      "online_rho": 9.340678011103231e-07,
+      "cleanup_seconds": 19.99567980505526,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_6_R0.npz",
+        "sha256": "c0f143375657025c3d43a47269b9398da59306c535e1059c6748a3417f4a0d47",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "94426015d05e135151630bd5f65a9cbc3d7a979aa924f491ffb158243ff093b8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "94426015d05e135151630bd5f65a9cbc3d7a979aa924f491ffb158243ff093b8"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8a9d2837ddf66e8a1488afd9a3f5b0eb527d23da8610e079e646ad8b68e2c1e4"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "733ac89568018c03da0da1436c58eeb68b17fbf2a267ca77a9bf5f4f4b9c70ff"
+          }
+        }
+      },
+      "independent": {
+        "sample": 6,
+        "route": "R0",
+        "residual_numerator": 9.340678011103226e-07,
+        "rhs_norm": 0.9999999999999994,
+        "rho": 9.340678011103231e-07,
+        "coefficient_error_numerator": 2.245636249567386e-07,
+        "coefficient_reference_norm": 1.3510204180793815e-05,
+        "eta": 0.01662177876452671,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2321436672,
+      "resource_samples": 18,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 6,
+      "route": "R-LIN",
+      "initial_rho": 0.589125669238661,
+      "inference_seconds": 0.012581833056174219,
+      "whole_RHS_seconds": 30.09124521492049,
+      "A_calls": 140,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 127,
+      "online_rho": 8.848772535504427e-07,
+      "cleanup_seconds": 28.808062660042197,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_6_R_LIN.npz",
+        "sha256": "5ee35870d4e637d55bf34c5dc96ce2a285ac260e9e895cd25b702dcb4cb8705a",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "94426015d05e135151630bd5f65a9cbc3d7a979aa924f491ffb158243ff093b8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5cb00c15a67263f4a2b0413149407c107561066964c59141012aeab19246110f"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f8054bcafb7d4615fcf35f15d9aa0ffaf6ac3a32def38fe478181b88442af756"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "176ecdb6922240416cf86221c22b27d4d85d189daf6865b2556f76f6d8cee919"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1c4bbf542ff7bbbc762c62046d1103508f40ab48443cc5d429c39b4da2561833"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f03e8f1a90a0586d002dc7940c782ad1c8586f896331adab809a9f924dcf0cc6"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ec1dfb12468f0c38dd45247c8cf3ba7c753bb6d833d9ac2ad3c6a168802d5134"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 6,
+        "route": "R-LIN",
+        "residual_numerator": 8.848772535504422e-07,
+        "rhs_norm": 0.9999999999999994,
+        "rho": 8.848772535504427e-07,
+        "coefficient_error_numerator": 4.59844831362267e-07,
+        "coefficient_reference_norm": 1.3510204180793815e-05,
+        "eta": 0.034036852826842184,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 2.1137252928285533e-18,
+            "denominator": 0.02207449373221888,
+            "relative": 9.575419117057531e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 9.714950218053701e-17,
+            "denominator": 0.07063837994310049,
+            "relative": 1.3753076197216207e-15,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 2.1137252928285533e-18,
+          "denominator": 0.02207449373221888,
+          "relative": 9.575419117057531e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 9.714950218053701e-17,
+          "denominator": 0.07063837994310049,
+          "relative": 1.3753076197216207e-15,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.589125669238661,
+        "amplitude_original_initial_rho": 0.589125669238661,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2321473536,
+      "resource_samples": 26,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 6,
+      "route": "R-NN",
+      "initial_rho": 0.5668805742573702,
+      "inference_seconds": 0.012435702024959028,
+      "whole_RHS_seconds": 27.47198839392513,
+      "A_calls": 127,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 114,
+      "online_rho": 9.359625537658764e-07,
+      "cleanup_seconds": 26.259234669967555,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_6_R_NN.npz",
+        "sha256": "d37bade1d29d03b43e6b6d2be685224b90816d3bfbc63b927817ae497fc4e23d",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "94426015d05e135151630bd5f65a9cbc3d7a979aa924f491ffb158243ff093b8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8f12b95fcfc8ac0b429c8aa529783c61dd7d622abf528185307b1d578a015227"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c419a69ee1acd06f00251156bc1dfabb9b83340d56a3bbf11bbe91135a835d1e"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d0d907be1fbf5d42ddb9ca41606e21770e44b913fade524a7dc52ebcb0fa818a"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b6e3fc9441885603587fe86b58439792399787cd5d8724766d321719beed0282"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "167ca4936aaef1668ac36485161806eebaa49a1a2ceac8ea1f296afc64ae65af"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7f4909921f5f9c8f999adcf077d892525607f85d4bdeabe0d95599c7408e2eab"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 6,
+        "route": "R-NN",
+        "residual_numerator": 9.359625537658759e-07,
+        "rhs_norm": 0.9999999999999994,
+        "rho": 9.359625537658764e-07,
+        "coefficient_error_numerator": 8.32660715280003e-07,
+        "coefficient_reference_norm": 1.3510204180793815e-05,
+        "eta": 0.061631986026067495,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.018228115055486542,
+            "denominator": 0.01069970687731296,
+            "relative": 1.7036088244750316,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 3.0191454729442897e-17,
+            "denominator": 0.03423906200740144,
+            "relative": 8.817839321333167e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.018228115055486542,
+          "denominator": 0.01069970687731296,
+          "relative": 1.7036088244750316,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 3.0191454729442897e-17,
+          "denominator": 0.03423906200740144,
+          "relative": 8.817839321333167e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.5997335988154389,
+        "amplitude_original_initial_rho": 0.5668805742573706,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2321539072,
+      "resource_samples": 24,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 7,
+      "route": "R0",
+      "initial_rho": 1.0,
+      "inference_seconds": 6.606499664485455e-05,
+      "whole_RHS_seconds": 20.60652199096512,
+      "A_calls": 96,
+      "AH_calls": 0,
+      "initialization": "zero",
+      "steps": 87,
+      "online_rho": 9.504404463906356e-07,
+      "cleanup_seconds": 19.998615960008465,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_7_R0.npz",
+        "sha256": "9a0fb9255597616c2004a0169ae9dc88a17320a07313bd26b88237d811ea4707",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8fbeebcf7994c263c7424780f7a8ffa84eb32ce78375909d95cf8dcab564f5eb"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8fbeebcf7994c263c7424780f7a8ffa84eb32ce78375909d95cf8dcab564f5eb"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5113624a9f245d226c093e1e13ffb1a1d606f31e8a6c7cdeac8a7e984ef234e7"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "edcf6530a6a878ece2f53ed19470d6e8b9f1fb51460898425ec1747227a947a1"
+          }
+        }
+      },
+      "independent": {
+        "sample": 7,
+        "route": "R0",
+        "residual_numerator": 9.504404463906356e-07,
+        "rhs_norm": 1.0,
+        "rho": 9.504404463906356e-07,
+        "coefficient_error_numerator": 2.2650235399128587e-07,
+        "coefficient_reference_norm": 1.3496689778266251e-05,
+        "eta": 0.016782067137382315,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true
+      },
+      "frozen_behaviour": {},
+      "sampled_tree_peak_bytes": 2321604608,
+      "resource_samples": 18,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 7,
+      "route": "R-LIN",
+      "initial_rho": 0.5930864763765765,
+      "inference_seconds": 0.02492805093061179,
+      "whole_RHS_seconds": 29.982453022967093,
+      "A_calls": 140,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 127,
+      "online_rho": 8.771493114218924e-07,
+      "cleanup_seconds": 28.728763888939284,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_7_R_LIN.npz",
+        "sha256": "4a8b22ce88fe4e07ce36ee8f7dce07369fa87fb117653450641f13c59f538741",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8fbeebcf7994c263c7424780f7a8ffa84eb32ce78375909d95cf8dcab564f5eb"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "edd278f36c8f88548a231367a0de7cf4e6a6cf2485a3aa2bf33f7bc05d833862"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7f92d6dc148e4ce29caf58073ed46936ac187b3e2c6bd4293a50abdb4965b08d"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3dd512be34b2bf406899dbb22185efc307f1d82e43a2843d5a9120c7e0c802e1"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fb113af1791f77241029c38113d2658336c8074bd5b8f691ec19a50a8add8610"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e47fc5d5da6ea12b7e5ddef55af9698342108ba536d920048c96764371937e32"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c33bdf71aa4206f5b139da82918aebe97cb2d64cfb6070525fd051dd15ae4a8d"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 7,
+        "route": "R-LIN",
+        "residual_numerator": 8.771493114218924e-07,
+        "rhs_norm": 1.0,
+        "rho": 8.771493114218924e-07,
+        "coefficient_error_numerator": 4.922757141454475e-07,
+        "coefficient_reference_norm": 1.3496689778266251e-05,
+        "eta": 0.036473811151691446,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 2.008005646608619e-18,
+            "denominator": 0.022019404567442318,
+            "relative": 9.119254975575666e-17,
+            "passed": true
+          },
+          "amplitude": {
+            "numerator": 9.781209390597652e-17,
+            "denominator": 0.07046209461581532,
+            "relative": 1.3881519480691461e-15,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": true
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 2.008005646608619e-18,
+          "denominator": 0.022019404567442318,
+          "relative": 9.119254975575666e-17,
+          "passed": true
+        },
+        "positive_amplitude": {
+          "numerator": 9.781209390597652e-17,
+          "denominator": 0.07046209461581532,
+          "relative": 1.3881519480691461e-15,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.5930864763765765,
+        "amplitude_original_initial_rho": 0.5930864763765763,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": false
+      },
+      "sampled_tree_peak_bytes": 2321637376,
+      "resource_samples": 26,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    },
+    {
+      "sample": 7,
+      "route": "R-NN",
+      "initial_rho": 0.5676734145685127,
+      "inference_seconds": 0.024773091892711818,
+      "whole_RHS_seconds": 27.36070240405388,
+      "A_calls": 128,
+      "AH_calls": 0,
+      "initialization": "learned warm-start",
+      "steps": 115,
+      "online_rho": 9.560585993695394e-07,
+      "cleanup_seconds": 26.155529457959346,
+      "state": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_7_R_NN.npz",
+        "sha256": "e0b68fcd73a4249eeef018831e6da7b158b22813c905d4feff2658ef50d3c3db",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8fbeebcf7994c263c7424780f7a8ffa84eb32ce78375909d95cf8dcab564f5eb"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "260a43a3f2a45190080301f4838ec39d3abf1f00f8aae43915a1393152c06a5c"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3873122da0963a81b51b94e23ad95c8a696c6550a5015fbed8a7f7b5510a823e"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6710db693cbbd95a68027647b01617d663433c46fc180df8eb6c135f32349abd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "124492e883d7357c244ddf8e6cb3e6ea9db56298a69e3738156b724ae7a392db"
+          },
+          "phase_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4b67233e197c4544521b426e99abe7152c77af7db9948f3136b4334fc4c21747"
+          },
+          "amplitude_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "05fd0817254ee1011388c85df1b7ad1d04f25a6904eeb8bbff628278baa9f368"
+          },
+          "zero_correction": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "637991892f03a3a24827a99cd2d147c958bb36032b7a64e38ac8e78e5b4c37b0"
+          }
+        }
+      },
+      "independent": {
+        "sample": 7,
+        "route": "R-NN",
+        "residual_numerator": 9.560585993695394e-07,
+        "rhs_norm": 1.0,
+        "rho": 9.560585993695394e-07,
+        "coefficient_error_numerator": 8.701672160579933e-07,
+        "coefficient_reference_norm": 1.3496689778266251e-05,
+        "eta": 0.06447263961413897,
+        "slave_norm": 0.0,
+        "passed": false,
+        "numerical_gate": "finite algebra only; not full target physics",
+        "saved_residual_consistent": true,
+        "frozen_rhs_identity": true,
+        "complete_row_coverage": true,
+        "frozen_model_identity": true,
+        "frozen_behaviour_recomputed": {
+          "phase": {
+            "numerator": 0.01830208001261372,
+            "denominator": 0.0114288837274981,
+            "relative": 1.6013882413186675,
+            "passed": false
+          },
+          "amplitude": {
+            "numerator": 3.649055083409262e-17,
+            "denominator": 0.0365724279279939,
+            "relative": 9.977612343904953e-16,
+            "passed": true
+          },
+          "exact_zero": true,
+          "complex_linearity_required": false
+        }
+      },
+      "frozen_behaviour": {
+        "complex_phase": {
+          "numerator": 0.01830208001261372,
+          "denominator": 0.0114288837274981,
+          "relative": 1.6013882413186675,
+          "passed": false
+        },
+        "positive_amplitude": {
+          "numerator": 3.649055083409262e-17,
+          "denominator": 0.0365724279279939,
+          "relative": 9.977612343904953e-16,
+          "passed": true
+        },
+        "exact_zero": true,
+        "phase_original_initial_rho": 0.599503277496685,
+        "amplitude_original_initial_rho": 0.5676734145685127,
+        "NN_phase_linearity_is_not_a_required_inverse_claim": true
+      },
+      "sampled_tree_peak_bytes": 2321702912,
+      "resource_samples": 23,
+      "RSS_scope": "same EVALUATE process holding BOTH models and A/AH; route-resident upper, not minimal isolated R0"
+    }
+  ],
+  "qualification": {
+    "R0": false,
+    "R-LIN": false,
+    "R-NN": false
+  },
+  "timings_shared_workstation": true,
+  "reference_reads_training": 0,
+  "strict_residual": 1e-06,
+  "strict_coefficient_error": 0.0001,
+  "error_reference": "sealed manufactured e, first opened by CHECK after actor exit; no REF7 or physical target solution",
+  "no_qualified_common_correctness_no_NN20": true
+}

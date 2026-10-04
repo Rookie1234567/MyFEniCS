@@ -1,0 +1,24 @@
+{
+  "finite_operator_and_dual": "qualified against existing independent production/native oracle at frozen bytes",
+  "current_output_canonical_MPC": "complete trace+internal, 42624 independent / 45000 native / 2376 slave zero",
+  "real_NN_chain_and_training": "qualified gradient and actual encoder/message/decoder changes; 128 updates",
+  "strict_manufactured_heldout": "all routes fail full independent coefficient-error gate",
+  "trace_only_recovery": "old A/B FAIL retained",
+  "A_full_DtN": false,
+  "B_12_port_gradient_only": true,
+  "original_32060_port_solution": "NOT_RUN",
+  "E_H_curl_FE_weighted_error": "NOT_RUN; cached raw/q17 matrices have no independently consumable separate mass/curl matrix; new integration prohibited",
+  "official_R00_s_R00_p_R00_total_R_T_A_Avolume_energy": "NOT_RUN",
+  "original_size_2TB_48h": "NOT_QUALIFIED",
+  "NN20": "NOT_DEMONSTRATED",
+  "capacity_formula": {
+    "real_parameter_bytes_NN": 561152,
+    "Adam_parameter_gradient_two_moments_bytes": 2244608,
+    "real_feature_frame_bytes": "8*batch*32*(N_edge+N_face+N_cell), plus two-round saved activations, aggregation workspace and full moment output",
+    "full_coefficient_output_bytes": "16*batch*(6*N_edge+60*N_face+450*N_cell) plus native/slave/MPC storage",
+    "sparse_operator_and_adjoint_cost": "existing finite CSR 971189560 bytes plus explicit conjugate-transpose copy and loader temporaries; target form unknown",
+    "receptive_range": "two cell/entity adjacency exchanges; not a global inverse",
+    "target_allocations": 0
+  },
+  "scope": "bounded neural research, no production default, target backend permission from Review V39 is not inherited"
+}

@@ -1,3 +1,13 @@
+# 当前执行交付：Task042 V43 / Review V40
+
+已按Review V40完成真实共享实体残差NN训练、同邻域复线性控制、8个未见RHS三路线清理与独立封存误差审核。三路线完整0/8：小残差仍有超1e-4的系数误差；NN20%与原尺寸0.7nm/2TB48h未资格。旧trace-only恢复失败不改写。
+
+[response_v43](response_v43.md) · [完整结果](outcomes/neighborhood_residual_correction_v43.md) · [独立checker](outcomes/records/neural_heldout_checker_v43.json) · [全费用](outcomes/records/resource_costs_v43.json) · [就绪](outcomes/records/integration_readiness_v43.json) · [正式Review V40](review_report_v40.md)。本轮队列结束，closed/清场/推送后交回审阅；没有启动原尺寸或自动继续训练。
+
+以下完整旧导航保留。
+
+<!-- V43-LATEST-END -->
+
 # 当前审阅入口：Review V40 / 下一执行 Task042 V43
 
 [Review V40](review_report_v40.md)审阅V42交付`d8a464f1f05e15739448bb70ac452e81ee292dad`。接受有限原体积作用，保留A内部7.59147e-10与B原CSR内部1.01045e-10超1e-10的失败；原尺寸完整前向解、2TB／48h和NN20%未资格。

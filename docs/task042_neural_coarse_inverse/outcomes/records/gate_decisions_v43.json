@@ -1,0 +1,30 @@
+{
+  "stages": {
+    "SETUP": "ORIGINAL_ACTION_AND_COMPLETE_NEURAL_DECODER_READY",
+    "RECOVERY": "SAVED_RECOVERY_ERROR_DECOMPOSED_NO_NEW_SOLVE",
+    "DATA": "DATASET_FROZEN",
+    "GRADIENT": "NEURAL_FULL_RESIDUAL_GRADIENT_QUALIFIED",
+    "TRAIN_NN": "WEIGHTS_FROZEN",
+    "TRAIN_LIN": "WEIGHTS_FROZEN",
+    "EVALUATE": "SOLVING_QUEUE_FROZEN",
+    "CHECK": "PILOT_COMPARISON_COMPLETE"
+  },
+  "qualified": {
+    "R0": false,
+    "R-LIN": false,
+    "R-NN": false
+  },
+  "NN20": "NOT_DEMONSTRATED",
+  "full_target_PDE": "NOT_QUALIFIED",
+  "A_AH_counts_upper": 4090,
+  "B_counts_upper": 21,
+  "new_mesh_JIT_LU_global_QR_target_action": 0,
+  "global_p4_factor": false,
+  "online_recovery_factor_calls": 0,
+  "old_finite_CSR_present": true,
+  "A_old_native_recovery_max": 7.591466917360182e-10,
+  "B_old_CSR_internal_balance": 1.0104485117650333e-10,
+  "recovery_gate": 1e-10,
+  "old_recovery_FAIL_retained": true,
+  "new_method": "full independent FE coefficients, not trace-only recovery"
+}

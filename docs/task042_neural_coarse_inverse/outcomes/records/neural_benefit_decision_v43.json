@@ -1,0 +1,86 @@
+{
+  "comparison": {
+    "R0": {
+      "steps": [
+        90,
+        91,
+        90,
+        90,
+        88,
+        87,
+        87,
+        87
+      ],
+      "residual_gate_count": 8,
+      "coefficient_gate_count": 0,
+      "strict_count": 0,
+      "rho_min": 8.992001487660733e-07,
+      "rho_max": 9.88602489645491e-07,
+      "eta_min": 0.006267501726900865,
+      "eta_max": 0.016782067137382315,
+      "whole_8_RHS_seconds": 166.61825726390816,
+      "cleanup_8_RHS_seconds": 161.8638090121094,
+      "inference_8_RHS_seconds": 0.0008495389483869076,
+      "A_calls": 782,
+      "peak_same_shared_actor_bytes": 2321604608,
+      "isolated_minimal_peak_bytes": "unknown; common evaluation holds both frozen models and A/AH"
+    },
+    "R-LIN": {
+      "steps": [
+        128,
+        128,
+        128,
+        128,
+        127,
+        127,
+        127,
+        127
+      ],
+      "residual_gate_count": 4,
+      "coefficient_gate_count": 0,
+      "strict_count": 0,
+      "rho_min": 8.771493114218924e-07,
+      "rho_max": 3.5989399343490057e-06,
+      "eta_min": 0.034036852826842184,
+      "eta_max": 0.45859354578787365,
+      "whole_8_RHS_seconds": 240.7309807119891,
+      "cleanup_8_RHS_seconds": 230.64922127197497,
+      "inference_8_RHS_seconds": 0.16652783495374024,
+      "A_calls": 1124,
+      "peak_same_shared_actor_bytes": 2321637376,
+      "isolated_minimal_peak_bytes": "unknown; common evaluation holds both frozen models and A/AH"
+    },
+    "R-NN": {
+      "steps": [
+        117,
+        117,
+        120,
+        119,
+        116,
+        114,
+        114,
+        115
+      ],
+      "residual_gate_count": 8,
+      "coefficient_gate_count": 0,
+      "strict_count": 0,
+      "rho_min": 9.189282059764265e-07,
+      "rho_max": 9.560585993695394e-07,
+      "eta_min": 0.05712372486634763,
+      "eta_max": 0.22703570602200518,
+      "whole_8_RHS_seconds": 221.8606126290979,
+      "cleanup_8_RHS_seconds": 212.20606192294508,
+      "inference_8_RHS_seconds": 0.1382537690224126,
+      "A_calls": 1036,
+      "peak_same_shared_actor_bytes": 2321702912,
+      "isolated_minimal_peak_bytes": "unknown; common evaluation holds both frozen models and A/AH"
+    }
+  },
+  "NN20": "NOT_DEMONSTRATED",
+  "same_correctness_baseline": "none",
+  "residual_only_NN_vs_R0_step_ratio": 1.3126760563380282,
+  "nonlinear_vs_linear": "NN has smaller frozen coefficient error than LIN on four local heldout; LIN has smaller error on four smooth heldout; both fail, no universal NN superiority",
+  "reason": "actual 128-update training improved own validation but introduced cleanup components worse than zero; even R0 residual pass leaves 0.6-1.7 percent coefficient error",
+  "condition_number_or_unique_root_cause": "not determined; residual/error gap is direct evidence, not a spectral bound",
+  "next_only": "one same-architecture zero-output-decoder initialization control, subject to future review; no implementation in V43"
+}

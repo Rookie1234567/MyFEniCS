@@ -1,0 +1,28 @@
+{
+  "response": "docs/task042_neural_coarse_inverse/response_v43.md",
+  "outcome": "docs/task042_neural_coarse_inverse/outcomes/neighborhood_residual_correction_v43.md",
+  "strict_qualification": "all 3 routes fail independent coefficient-error gate; complete 0/8 each",
+  "real_training": {
+    "NN_updates": 128,
+    "LIN_updates": 128,
+    "parameter_group_changes": "neural_training_nn_v43.json / neural_training_linear_v43.json"
+  },
+  "tests": "27 focused plus 15 documentation contracts and real finite gradient; CI not run",
+  "raw_archives": 453,
+  "NPZ": 50,
+  "members": 242,
+  "weights_files": 13,
+  "closed": true,
+  "original_A_AH": 4090,
+  "finite_B": 21,
+  "managed_plus_measured_settlement_lower_seconds": 1343.4377749941777,
+  "unmetered_and_upstream_costs": "unknown, maintained as unknown",
+  "source_CHECK": "765f9899f2914931b4cf945c99f34eb516ff268c",
+  "source_EVALUATE": "9c223d99038605f606e8912ba23b1453896d2b9d",
+  "source_TRAIN": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+  "NN20": "NOT_DEMONSTRATED",
+  "original_size_PDE_2TB48h": "NOT_QUALIFIED",
+  "GitHub_visual": "NOT_VERIFIED",
+  "queue_handoff_identifier": "execution-review-handoff-20261004-v43",
+  "cleanup": "cleanup_v43.json"
+}

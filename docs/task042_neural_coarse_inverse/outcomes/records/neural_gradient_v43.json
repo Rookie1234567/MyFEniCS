@@ -1,0 +1,584 @@
+{
+  "status": "NEURAL_FULL_RESIDUAL_GRADIENT_QUALIFIED",
+  "passed": true,
+  "checks": [
+    {
+      "kind": "actual_batch1_batch2_full_loss_gradient",
+      "loss_difference": 8.881784197001252e-16,
+      "gradient_numerator": 2.626180339678684e-14,
+      "gradient_denominator": 79.13613836467,
+      "passed": true
+    },
+    {
+      "kind": "full_original_VJP_direction_0",
+      "numerator": 5.551115123125783e-17,
+      "denominator": 38725.60781126039,
+      "relative": 1.4334481592078884e-21,
+      "result_scale": 0.1230332346411585,
+      "left": -0.1230332346411585,
+      "right": -0.12303323464115845,
+      "passed": true
+    },
+    {
+      "kind": "full_vector_JVP_three_steps_direction_0",
+      "passed_steps": 3,
+      "passed": true
+    },
+    {
+      "kind": "full_original_VJP_direction_1",
+      "numerator": 1.3877787807814457e-16,
+      "denominator": 40382.732653539955,
+      "relative": 3.436564812707871e-21,
+      "result_scale": 0.16134899955850604,
+      "left": -0.1613489995585059,
+      "right": -0.16134899955850604,
+      "passed": true
+    },
+    {
+      "kind": "full_vector_JVP_three_steps_direction_1",
+      "passed_steps": 3,
+      "passed": true
+    },
+    {
+      "kind": "full_original_VJP_direction_2",
+      "numerator": 6.661338147750939e-16,
+      "denominator": 46211.70110122483,
+      "relative": 1.4414829986802587e-20,
+      "result_scale": 0.4822929046482585,
+      "left": 0.48229290464825786,
+      "right": 0.4822929046482585,
+      "passed": true
+    },
+    {
+      "kind": "full_vector_JVP_three_steps_direction_2",
+      "passed_steps": 3,
+      "passed": true
+    },
+    {
+      "kind": "complex_linear_control",
+      "numerator": 1.8440547212795165e-16,
+      "denominator": 0.22355115620372412,
+      "relative": 8.248916053912123e-16,
+      "passed": true
+    },
+    {
+      "kind": "NN_exact_zero",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    }
+  ],
+  "FD": [
+    {
+      "direction": 0,
+      "step": 0.0001,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 4.514305317388327e-13,
+      "denominator": 0.015199004885710556,
+      "relative": 2.9701321575549205e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_0_step_1e-04.npz",
+        "sha256": "5b612b2b0593ff019959ebced806509423859f0e39779edcd311138d26ee30c6",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5630c2c674cbfbf7571efa31158486e7c9af24c06a3f75bfeae71c9e109f6a73"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "aef52e76ffb302a100eb9ad6597cf062ec1f42982f249500fd8a759e4f51b966"
+          }
+        }
+      }
+    },
+    {
+      "direction": 0,
+      "step": 3e-05,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 1.1283353675261869e-12,
+      "denominator": 0.015199004885710556,
+      "relative": 7.423745014958175e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_0_step_3e-05.npz",
+        "sha256": "345ba42711f6300bc621313b265bb05c3f09c08724acfcc28ab10e4b44600aba",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "57124cd072bf3a50e7a0cfdc06d8900aa88c6bc4c5241a7b8fa998889f69a91a"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "aef52e76ffb302a100eb9ad6597cf062ec1f42982f249500fd8a759e4f51b966"
+          }
+        }
+      }
+    },
+    {
+      "direction": 0,
+      "step": 1e-05,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 3.1568043202711087e-12,
+      "denominator": 0.015199004885710556,
+      "relative": 2.0769809234280851e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_0_step_1e-05.npz",
+        "sha256": "641d6359033281fbd43cb799fe8e98079c3a88d1db9915a3777728975727386f",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "da5f762a25c9c4b547dfb11b40a1b5f6b41219729b9398f272eb62fb7ebcb3b7"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "aef52e76ffb302a100eb9ad6597cf062ec1f42982f249500fd8a759e4f51b966"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 0.0001,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 4.472997629815288e-13,
+      "denominator": 0.015849392316601076,
+      "relative": 2.8221887252611897e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_1_step_1e-04.npz",
+        "sha256": "ce4f4548090346f8840bbe4a0fb703654e4fa9da0ece05ca1fd7319f1326c27e",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7bbeb25cbe30827e98d8142b2e09d67ed7a8a3c6778eb9996987b80447ebc4d0"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "81be2119fc977b4d8b3cb20846260fd11b2147b5f9405c916fa2f26abdd1557e"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 3e-05,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 1.0522367246871168e-12,
+      "denominator": 0.015849392316601076,
+      "relative": 6.638972041754408e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_1_step_3e-05.npz",
+        "sha256": "0d500b6e4d5088d50ba3729fa4453f4344ffd1066f6c2f9283c00737ab43ee47",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bd39fa3a1ecbe5de3b518d87d478d2b954cd5b25c190180dcda2d8b64d61f67d"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "81be2119fc977b4d8b3cb20846260fd11b2147b5f9405c916fa2f26abdd1557e"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 1e-05,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 2.9846290216023498e-12,
+      "denominator": 0.015849392316601076,
+      "relative": 1.8831188994395514e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_1_step_1e-05.npz",
+        "sha256": "5f6b205c767e62c0f708b5235e88bac55e676f34ce34f1d76cad2371c542a28c",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23ec037d24ed96819d8aeb664815b6e8f75e02e8fddf80e7dfba339938fcd970"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "81be2119fc977b4d8b3cb20846260fd11b2147b5f9405c916fa2f26abdd1557e"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 0.0001,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 1.970767260179184e-13,
+      "denominator": 0.01813714259147873,
+      "relative": 1.0865919205515308e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_2_step_1e-04.npz",
+        "sha256": "aae14331548b3f27d4c469204767436174a0b72d4508f667f6dbc65b0206d2cd",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1711b12e4d8154649ac0837579e1f12bdf9ebfdb3ac260e04acae40ff889b897"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f413ab987d2b3f6be0e5abf687ad6dd0101f96f3882ecee423d38d71153a02cd"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 3e-05,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 7.255574078295068e-13,
+      "denominator": 0.01813714259147873,
+      "relative": 4.000395344360315e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_2_step_3e-05.npz",
+        "sha256": "11ce24d9785b0123cfbdcdd5e7af0064690ed0f148f3739355cee41567283c93",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "538108ccbcb00f9e15d33e1650d4d8e123c5e3ef71f167490d65380f7d036790"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f413ab987d2b3f6be0e5abf687ad6dd0101f96f3882ecee423d38d71153a02cd"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 1e-05,
+      "near_zero_rule": "if norm(Jd)=0 require exact zero; otherwise relative",
+      "numerator": 2.0264309473343814e-12,
+      "denominator": 0.01813714259147873,
+      "relative": 1.1172823597287304e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_2_step_1e-05.npz",
+        "sha256": "f86f7384950fe730c9700cad01d1c4fc6e0c3da0de729feaa22633840b49b8d5",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2a95e38a52c90bf286ca2228da19bfc373f04c13654745bd7fdbaab8c6909dde"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f413ab987d2b3f6be0e5abf687ad6dd0101f96f3882ecee423d38d71153a02cd"
+          }
+        }
+      }
+    }
+  ],
+  "initial_parameters_hash": "f5524f79ed20da1c9b180ecf376cf3358564018d5f21700ab440e1270ba6c20c",
+  "NN_parameters_real": 70144,
+  "LIN_parameters_real": 74240,
+  "phase_behavior": {
+    "numerator": 0.06310102265993205,
+    "denominator": 0.047878961804110894,
+    "relative": 1.3179279642298798,
+    "passed": false
+  },
+  "positive_amplitude_behavior": {
+    "numerator": 1.0324038563993562e-16,
+    "denominator": 0.1532126777731548,
+    "relative": 6.738370945568377e-16,
+    "passed": true
+  },
+  "loss": 7.322539741615549,
+  "B_port_gradient": {
+    "passed": true,
+    "nonzero_g_norm": 5.478914189069176,
+    "ports": 12,
+    "original_Hp": "identity",
+    "sign": "[V C; -D I]",
+    "not_C_H": 85.82886065225219,
+    "current_output_hash": "560e7f2f29dca0365668931dba24e5b950c843b114014f16f7f75a6c14c428fd",
+    "saved_producer_u_used_as_candidate": false,
+    "current_slave_norm": 0.0,
+    "current_MPC_dual": {
+      "numerator": 0.0,
+      "operation_scale": 117.95683633856565,
+      "passed": true
+    },
+    "current_arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/B_current_gradient.npz",
+      "sha256": "f35397ab13a2fe974f5fa93d01839cdfaea229843c1f7ea6ae07247c196a81bf",
+      "aliases": {},
+      "members": {
+        "z": {
+          "shape": [
+            7068
+          ],
+          "dtype": "<c16",
+          "sha256": "560e7f2f29dca0365668931dba24e5b950c843b114014f16f7f75a6c14c428fd"
+        },
+        "direction": {
+          "shape": [
+            7068
+          ],
+          "dtype": "<c16",
+          "sha256": "346c5b9cb39b51fd24cd068b8739b9bdb20989d7a8f0871da39bad292b199e17"
+        },
+        "rhs": {
+          "shape": [
+            7068
+          ],
+          "dtype": "<c16",
+          "sha256": "41324bd0345f030017f00ee1aec390dc5c20bfe12d077cc0d0cd58bb58bc0b14"
+        },
+        "residual": {
+          "shape": [
+            7068
+          ],
+          "dtype": "<c16",
+          "sha256": "8b1b07cd870454733107121d7d4c39353c02f7bd76991de882906c692fc4b18c"
+        },
+        "gradient": {
+          "shape": [
+            7068
+          ],
+          "dtype": "<c16",
+          "sha256": "2771666b31725f597d54f34659bc49f20217057b2b8e8f9ec854c6d24e397736"
+        },
+        "jvp": {
+          "shape": [
+            7068
+          ],
+          "dtype": "<c16",
+          "sha256": "7d43532410373ed53e1254edaee32ce3eb67afeafb780c7d75f03a0124fa9f02"
+        },
+        "current_expanded": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "1c4dbadbb7e0318c21270572d864ab6abd1c2860725044e06ed54fe83433e01e"
+        },
+        "current_dual": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "aba79052f5c90e9d63b1ea2a13dbd28c84c07a22fe1816aeeff84dafadbc9a9b"
+        }
+      }
+    },
+    "left": -283488.4613242562,
+    "right": -283488.4613242567,
+    "operation_scale": 6772659.644180638,
+    "relative_dual": 7.735054996766854e-17,
+    "FD_vector": [
+      {
+        "step": 0.0001,
+        "numerator": 1.263303241713828e-05,
+        "denominator": 27312.923691059346,
+        "relative": 4.625294809165229e-10,
+        "passed": true
+      },
+      {
+        "step": 3e-05,
+        "numerator": 4.239910692016141e-05,
+        "denominator": 27312.923691059346,
+        "relative": 1.5523459663177837e-09,
+        "passed": true
+      },
+      {
+        "step": 1e-05,
+        "numerator": 0.0001290226155071683,
+        "denominator": 27312.923691059346,
+        "relative": 4.7238668758629735e-09,
+        "passed": true
+      }
+    ],
+    "source_bytes": {
+      "Bcsr": "04f46d3cdb86a10b1fb378f772b80221614268bb8b3ea970c252672a8f36aca2",
+      "Brecovery": "712616ded0eee8b7a3c607c792a8834a50834007794a3b11ea877bac7dbf35f5"
+    },
+    "no_new_integral_factor_or_mesh": true
+  },
+  "budget_forecast": {
+    "kind": "predicted",
+    "seconds": 1058.1047649402171,
+    "available_seconds": 5298.838040929986,
+    "verification_reserve_fraction": 0.25,
+    "passed": true,
+    "measured_whole_batch2_gradient_seconds": 0.8295321819605306,
+    "measured_action_seconds_inside_step": 0.7829596661031246,
+    "measured_network_seconds_inside_step": 0.04657251585740596,
+    "measured_matrix_load_seconds": 10.260990920942277
+  },
+  "environment": {
+    "Torch": "2.7.1+cpu",
+    "intra": 1,
+    "interop": 1,
+    "device": "CPU",
+    "DataLoader_workers": 0,
+    "executable": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "NumPy": "1.26.4",
+    "SciPy": "1.11.4",
+    "NumPy_path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy/__init__.py",
+    "SciPy_path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+    "Torch_path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/__init__.py",
+    "loaded_threadpools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "symbol": "openblas_get_num_threads64_",
+        "threads": 1
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+        "symbol": "omp_get_max_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "affinity": [
+      0
+    ],
+    "FE_modules_loaded": [],
+    "CUDA_available": false
+  },
+  "full_coefficients_not_trace_recovery": true,
+  "numerical_counts": {
+    "completed": {
+      "actions": 12,
+      "B_actions": 9
+    },
+    "upper": {
+      "actions": 12,
+      "B_actions": 9
+    }
+  },
+  "actual_math_hashes": {
+    "scripts/run_case.py": "688e05bd67083a50caafce3e33db184428bb85b044a92e6a73e69c6ad954dd1e",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "d44e5fcb9800b269a778995cc6c3f3176d4998dc9909e90fdab7e2b617178028",
+    "src/runners/port_preparation.py": "1d030c424051658b8cefb67ca910dd8ad307e1f43b3417f2e2b064496a19f0f3",
+    "src/runners/task042_shared.py": "4dbac95a7a341e8c6982e54ea992c413ad4604aa8760c3788833fc70aa5cc94d",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "66a4e7a401cf78b64061c606511998fb7fcaa1ed8b36c8899c2f3f2f57d3b80a",
+    "src/solvers/neighborhood_residual_models.py": "8bff444ffc70f5f67ba95e21be954b8e760be35383378ffadaaeba0078696a4c",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "943c7a7b27cb46bbc8e851b50ababa49335747da00e9422b1be493de3dfccc59",
+    "src/test/test_neighborhood_residual.py": "d067dd191f7ad7a4af9bf72b946def3349008acc959aa2d43e3238f4ef0c2e6b",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_residual_v43.json": "ad91345e8d6985e647ca871ba1d4a69bd8d76e9da4201ea10962cb0efcf326b2"
+  },
+  "stage": "GRADIENT",
+  "source_sha": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+  "elapsed_worker_seconds": 24.042222350020893,
+  "input_sha256": "1fb7950b61315b411f5b01a998c1630b6fc93f50ec3163563c2dc117a0d364ca",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

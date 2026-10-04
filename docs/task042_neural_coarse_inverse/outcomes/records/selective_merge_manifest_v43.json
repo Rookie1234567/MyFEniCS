@@ -1,0 +1,75 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "name": "production numerical/core",
+      "files": [],
+      "decision": "no research candidate elevated to production, ordinary Maxwell equations unchanged"
+    },
+    {
+      "name": "reusable runner/watchdog",
+      "files": [
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "dependencies": [
+        "neighborhood_residual_scope.py",
+        "qualified activation and existing watchdog"
+      ],
+      "numerical_change": "explicit opt-in V43 dispatch/ML environment/resource envelope only",
+      "tests": "27 focused and existing process-tree timeout tests",
+      "fresh_PDE": "none",
+      "merge_order": "after future audited numerical packages"
+    },
+    {
+      "name": "checker/benchmark",
+      "files": [
+        "benchmarks/check_neighborhood_residual.py",
+        "benchmarks/qualify_neighborhood_residual.py",
+        "benchmarks/qualified_ml_pytest.py",
+        "src/test/test_neighborhood_residual.py"
+      ],
+      "numerical_change": "independent frozen input/coverage/hash/raw residual and error decisions, toy regressions",
+      "evidence": "heldout checker and raw tests, not CI",
+      "merge_order": "after core dependency audit"
+    },
+    {
+      "name": "compact evidence/docs",
+      "files": [
+        "response_v43.md",
+        "outcomes/neighborhood_residual_correction_v43.md",
+        "outcomes/records/*_v43.json",
+        "outcomes/records/v43_raw/"
+      ],
+      "numerical_change": false,
+      "dependencies": "hash-bound ignored arrays, weights, source and manifests",
+      "merge_order": "with approved evidence only"
+    },
+    {
+      "name": "research-only",
+      "files": [
+        "src/solvers/neighborhood_residual_*.py",
+        "src/solvers/neighborhood_port_gradient.py",
+        "src/solvers/neighborhood_recovery_diagnostic.py",
+        "src/solvers/isolated_ml_sparse.py",
+        "input/task042_neural_coarse_inverse/v43_*.dat",
+        "input/task042_neural_coarse_inverse/neighborhood_residual_v43.json"
+      ],
+      "numerical_change": "new fixed residual-neighborhood model, exact original sparse callbacks, learned warm-start and bounded 128-total-step cleanup",
+      "tests": "real gradient/128-update/24 heldout and 27 focused tests",
+      "fresh_PDE": "finite algebra only, no official field",
+      "merge_order": "not approved"
+    },
+    {
+      "name": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v43/",
+        "tmp/task042/v43/",
+        "results/task042/task042_v43_*/",
+        ".venv-ml/"
+      ],
+      "decision": "ignored large arrays, models, raw resource timelines and environments; references only, no other task edits"
+    }
+  ]
+}

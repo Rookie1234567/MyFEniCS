@@ -1,0 +1,197 @@
+{
+  "status": "WEIGHTS_FROZEN",
+  "selected": {
+    "update": 128,
+    "residuals": [
+      4.071390546934092,
+      3.6580289751308284,
+      0.6212975272727995,
+      0.6619738809675064
+    ],
+    "median": 2.1600014280491675,
+    "receipt": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_128.pt",
+      "sha256": "151e71bc29f0032b4ecdb2c475593b683ff2cb0b5e350066826be97fa288e9b8",
+      "committed": true
+    }
+  },
+  "all_checkpoints": [
+    {
+      "update": 0,
+      "residuals": [
+        11.32443232947844,
+        10.91178682309325,
+        17.21092760249584,
+        16.999736642793827
+      ],
+      "median": 14.162084486136134,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_0.pt",
+        "sha256": "7761fddbbded0ca0da8fd6d405389943232ef7e5f9ead83ef2a63373e9c2e1ae",
+        "committed": true
+      }
+    },
+    {
+      "update": 16,
+      "residuals": [
+        7.050254074123454,
+        6.516962032926244,
+        4.50580773842771,
+        4.47709262528548
+      ],
+      "median": 5.511384885676977,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_16.pt",
+        "sha256": "11408527b0ca94d0988213fe79e53cb3809e492c3d500f4c4c07fb85eb5e540d",
+        "committed": true
+      }
+    },
+    {
+      "update": 32,
+      "residuals": [
+        5.859000943666501,
+        5.3900173141433925,
+        2.4762967722504454,
+        2.4416286088649217
+      ],
+      "median": 3.933157043196919,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_32.pt",
+        "sha256": "402ed55d7b25963a560f5322c23c5d580496bf8bac63a132697a52bd5ef997b0",
+        "committed": true
+      }
+    },
+    {
+      "update": 64,
+      "residuals": [
+        4.974788848426596,
+        4.476200371682937,
+        1.2234492160861186,
+        1.2358519043431466
+      ],
+      "median": 2.856026138013042,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_64.pt",
+        "sha256": "dd48fa930c6ec8eb579bc49e361d2caf8776d137c3acb593eb8ec8aff294525f",
+        "committed": true
+      }
+    },
+    {
+      "update": 128,
+      "residuals": [
+        4.071390546934092,
+        3.6580289751308284,
+        0.6212975272727995,
+        0.6619738809675064
+      ],
+      "median": 2.1600014280491675,
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_128.pt",
+        "sha256": "151e71bc29f0032b4ecdb2c475593b683ff2cb0b5e350066826be97fa288e9b8",
+        "committed": true
+      }
+    }
+  ],
+  "training_updates": 128,
+  "stop_reason": "UPDATE_LIMIT_128",
+  "route": "R-LIN",
+  "history_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/training_history.jsonl",
+  "history_sha256": "7cd2a8ef20df1e85fc9b26bf0c17c6d32b3809da35761ea94e403870cded6ebc",
+  "parameter_group_changes_last": {
+    "encoder": 1.7823135901161096,
+    "message": 0.9935545049136435,
+    "decoder": 3.1693739162798256
+  },
+  "real_parameters": 74240,
+  "heldout_reads": 0,
+  "sealed_error_reads": 0,
+  "training_original_action_calls": {
+    "A": 276,
+    "AH": 256
+  },
+  "model_family": "residual-conditioned shared entity neighborhood",
+  "environment": {
+    "Torch": "2.7.1+cpu",
+    "intra": 1,
+    "interop": 1,
+    "device": "CPU",
+    "DataLoader_workers": 0,
+    "executable": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "NumPy": "1.26.4",
+    "SciPy": "1.11.4",
+    "NumPy_path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy/__init__.py",
+    "SciPy_path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+    "Torch_path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/__init__.py",
+    "loaded_threadpools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "symbol": "openblas_get_num_threads64_",
+        "threads": 1
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+        "symbol": "omp_get_max_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ],
+    "affinity": [
+      0
+    ],
+    "FE_modules_loaded": [],
+    "CUDA_available": false
+  },
+  "full_coefficients_not_trace_recovery": true,
+  "numerical_counts": {
+    "completed": {
+      "actions": 532,
+      "B_actions": 0
+    },
+    "upper": {
+      "actions": 532,
+      "B_actions": 0
+    }
+  },
+  "actual_math_hashes": {
+    "scripts/run_case.py": "688e05bd67083a50caafce3e33db184428bb85b044a92e6a73e69c6ad954dd1e",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "d44e5fcb9800b269a778995cc6c3f3176d4998dc9909e90fdab7e2b617178028",
+    "src/runners/port_preparation.py": "1d030c424051658b8cefb67ca910dd8ad307e1f43b3417f2e2b064496a19f0f3",
+    "src/runners/task042_shared.py": "4dbac95a7a341e8c6982e54ea992c413ad4604aa8760c3788833fc70aa5cc94d",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "66a4e7a401cf78b64061c606511998fb7fcaa1ed8b36c8899c2f3f2f57d3b80a",
+    "src/solvers/neighborhood_residual_models.py": "8bff444ffc70f5f67ba95e21be954b8e760be35383378ffadaaeba0078696a4c",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "943c7a7b27cb46bbc8e851b50ababa49335747da00e9422b1be493de3dfccc59",
+    "src/test/test_neighborhood_residual.py": "d067dd191f7ad7a4af9bf72b946def3349008acc959aa2d43e3238f4ef0c2e6b",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_residual_v43.json": "ad91345e8d6985e647ca871ba1d4a69bd8d76e9da4201ea10962cb0efcf326b2"
+  },
+  "stage": "TRAIN_LIN",
+  "source_sha": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+  "elapsed_worker_seconds": 117.06730483693536,
+  "input_sha256": "a502c069e6d42969f8b7792e81ed3bbf0e5df97f5f5e96795c11f3b131b8ada1",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

@@ -1,0 +1,183 @@
+{
+  "snapshots": [
+    {
+      "count": 1,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre04/pytest.xml",
+        "sha256": "75ee7113e782a421bbadd7a584d3bca6c93aa716f03d764615bf8d3d041a1ff8",
+        "bytes": 825
+      },
+      "source_sha": "84c38b882795c56fead54d75cd56389262c86e31",
+      "failures": [
+        {
+          "name": "src.test.test_neighborhood_residual",
+          "kind": "error",
+          "text": "ImportError while importing test module '/home/fenics/Projects/NN-Lab/src/test/test_neighborhood_residual.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n/usr/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\nsrc/test/test_neighborhood_residual.py:8: in <module>\n    from scipy.sparse import csr_matrix, eye\nE   ModuleNotFoundError: No module named 'scipy'"
+        }
+      ]
+    },
+    {
+      "count": 18,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre05/pytest.xml",
+        "sha256": "b8fd9dadd27b9d1d3b30626918a77892f42d34f2b6807ea47a46e4a86b96fcd3",
+        "bytes": 8320
+      },
+      "source_sha": "84c38b882795c56fead54d75cd56389262c86e31",
+      "failures": [
+        {
+          "name": "test_full_decoder_zero_parameter_capacity_and_original_gradient[False]",
+          "kind": "failure",
+          "text": "linear = False\n\n    @pytest.mark.parametrize(\"linear\", [False, True])\n    def test_full_decoder_zero_parameter_capacity_and_original_gradient(linear):\n        graph, action = toy()\n        model = NeighborhoodCorrector(\n            eye(516, dtype=complex, format=\"csr\"), graph, action.scale, linear=linear\n        )\n        assert model.real_parameters <= 100000\n        assert (\n            torch.count_nonzero(model(torch.zeros((2, 516), dtype=torch.complex128))) == 0\n        )\n        rng = np.random.default_rng(1)\n        r = torch.from_numpy(rng.normal(size=(2, 516)) + 1j * rng.normal(size=(2, 516)))\n        loss, delta, _ = original_loss(model, r, action)\n        direct = np.linalg.norm(\n            r.numpy() - (action.matrix @ delta.detach().numpy().T).T\n        ) ** 2 / (2 * np.linalg.norm(r.numpy()) ** 2)\n>       assert abs(float(loss) - direct) < 1e-14\nE       assert 0.00036076897105197236 < 1e-14\nE        +  where 0.00036076897105197236 = abs((0.5298700993347412 - 0.5295093303636892))\nE        +    where 0.5298700993347412 = float(tensor(0.5299, dtype=torch.float64, grad_fn=<MeanBackward0>))\n\nsrc/test/test_neighborhood_residual.py:56: AssertionError"
+        },
+        {
+          "name": "test_full_decoder_zero_parameter_capacity_and_original_gradient[True]",
+          "kind": "failure",
+          "text": "linear = True\n\n    @pytest.mark.parametrize(\"linear\", [False, True])\n    def test_full_decoder_zero_parameter_capacity_and_original_gradient(linear):\n        graph, action = toy()\n        model = NeighborhoodCorrector(\n            eye(516, dtype=complex, format=\"csr\"), graph, action.scale, linear=linear\n        )\n        assert model.real_parameters <= 100000\n        assert (\n            torch.count_nonzero(model(torch.zeros((2, 516), dtype=torch.complex128))) == 0\n        )\n        rng = np.random.default_rng(1)\n        r = torch.from_numpy(rng.normal(size=(2, 516)) + 1j * rng.normal(size=(2, 516)))\n        loss, delta, _ = original_loss(model, r, action)\n        direct = np.linalg.norm(\n            r.numpy() - (action.matrix @ delta.detach().numpy().T).T\n        ) ** 2 / (2 * np.linalg.norm(r.numpy()) ** 2)\n>       assert abs(float(loss) - direct) < 1e-14\nE       assert 0.0011937029397529608 < 1e-14\nE        +  where 0.0011937029397529608 = abs((0.7828984900947744 - 0.7840921930345274))\nE        +    where 0.7828984900947744 = float(tensor(0.7829, dtype=torch.float64, grad_fn=<MeanBackward0>))\n\nsrc/test/test_neighborhood_residual.py:56: AssertionError"
+        },
+        {
+          "name": "test_right_diagonal_gmres_and_128_inner_step_semantics",
+          "kind": "failure",
+          "text": "def test_right_diagonal_gmres_and_128_inner_step_semantics():\n        _, action = toy()\n        r = np.sin(np.arange(516)) + 1j * np.cos(np.arange(516))\n>       z, row = fixed_cleanup(action, r, np.zeros_like(r), max_steps=3, tol=1e-14)\n\nsrc/test/test_neighborhood_residual.py:88: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\naction = <src.solvers.neighborhood_residual_core.OriginalCSR object at 0x747fe9ff9910>\nrhs = array([ 0.00000000e+00+1.j        ,  8.41470985e-01+0.54030231j,\n        9.09297427e-01-0.41614684j,  1.41120008e-01-0...5184940e-02-0.99683339j, -7.95842349e-01-0.60550389j,\n       -9.39509407e-01+0.3425231j , -2.19395849e-01+0.97563593j])\ninitial = array([0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j,\n       0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, ... 0.+0.j,\n       0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j,\n       0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j])\n\n    def fixed_cleanup(action, rhs, initial, *, restart=32, max_steps=128, tol=1e-6):\n        \"\"\"Right diagonal GMRES; callback_type legacy caps total Arnoldi steps.\"\"\"\n        rhs = np.asarray(rhs, np.complex128)\n        initial = np.asarray(initial, np.complex128)\n        norm = float(np.linalg.norm(rhs))\n        began = perf_counter()\n        if norm == 0:\n            z = np.zeros_like(rhs)\n            return z, {\n                \"steps\": 0,\n                \"info\": 0,\n                \"history\": [],\n                \"rho\": 0.0,\n                \"seconds\": perf_counter() - began,\n            }\n        residual = rhs - action.apply(initial)\n        if np.linalg.norm(residual) <= tol * norm:\n            return initial.copy(), {\n                \"steps\": 0,\n                \"info\": 0,\n                \"history\": [],\n                \"rho\": float(np.linalg.norm(residual) / norm),\n                \"seconds\": perf_counter() - began,\n            }\n        count = action.calls.copy()\n        history = []\n        operator = LinearOperator(\n            (len(rhs), len(rhs)),\n            matvec=lambda y: action.apply(action.scale * y),\n            dtype=np.complex128,\n        )\n        # legacy maxiter counts inner Arnoldi iterations, NOT restart cycles.\n>       y, info = gmres(\n            operator,\n            residual,\n            x0=np.zeros_like(rhs),\n            M=None,\n            restart=restart,\n            maxiter=max_steps,\n            rtol=0.0,\n            atol=tol * norm,\n            callback=lambda value: history.append(float(value)),\n            callback_type=\"legacy\",\n        )\nE       TypeError: gmres() got an unexpected keyword argument 'rtol'\n\nsrc/solvers/neighborhood_residual_core.py:172: TypeError"
+        }
+      ]
+    },
+    {
+      "count": 22,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre06/pytest.xml",
+        "sha256": "cd022f2d0f76a2a9b6c468390e65f4330902a4a025aa87e4280add5ff7052306",
+        "bytes": 3725
+      },
+      "source_sha": "84c38b882795c56fead54d75cd56389262c86e31",
+      "failures": [
+        {
+          "name": "test_right_diagonal_gmres_and_128_inner_step_semantics",
+          "kind": "failure",
+          "text": "def test_right_diagonal_gmres_and_128_inner_step_semantics():\n        _, action = toy()\n        r = np.sin(np.arange(516)) + 1j * np.cos(np.arange(516))\n        z, row = fixed_cleanup(action, r, np.zeros_like(r), max_steps=3, tol=1e-14)\n        assert row[\"steps\"] <= 3\n        assert np.isclose(\n            row[\"rho\"], np.linalg.norm(r - action.matrix @ z) / np.linalg.norm(r)\n        )\n>       assert row[\"rho\"] < 1.0\nE       assert 1.0 < 1.0\n\nsrc/test/test_neighborhood_residual.py:95: AssertionError"
+        }
+      ]
+    },
+    {
+      "count": 22,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre07/pytest.xml",
+        "sha256": "1fcc83dabbaf9116ed8adecd20020cbeb2e54bc0f7af28203af54fb507add6d2",
+        "bytes": 3151
+      },
+      "source_sha": "84c38b882795c56fead54d75cd56389262c86e31",
+      "failures": []
+    },
+    {
+      "count": 22,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre08/pytest.xml",
+        "sha256": "6bf17a992ad7701b21011a44f6bc622e4a48e8990c1fa511884aeb747808d902",
+        "bytes": 3151
+      },
+      "source_sha": "84c38b882795c56fead54d75cd56389262c86e31",
+      "failures": []
+    },
+    {
+      "count": 22,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre09/pytest.xml",
+        "sha256": "206157b818661dbb30f2832337ef1d46f8757aa48b6dd6ec8470a0995a4ad15c",
+        "bytes": 3151
+      },
+      "source_sha": "84c38b882795c56fead54d75cd56389262c86e31",
+      "failures": []
+    },
+    {
+      "count": 23,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre10/pytest.xml",
+        "sha256": "97ce4f91cda07b0ef1449ebcc0e7aa280e660679f10f1c5e402d044426ae96f1",
+        "bytes": 3296
+      },
+      "source_sha": "5cc546a920f7557520395e505bb314cdb2c90a71",
+      "failures": []
+    },
+    {
+      "count": 24,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre11/pytest.xml",
+        "sha256": "5d22a61065cd8f5eedd8c4b5fc30f3fd3d0ee5955177ff4cffa3e3f6e72f2799",
+        "bytes": 5356
+      },
+      "source_sha": "582146016392567aecca89ab2142bbdf9ec5227a",
+      "failures": [
+        {
+          "name": "test_forecast_inside_own_active_worker_preserves_admission_guard",
+          "kind": "failure",
+          "text": "monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7845fb645550>\ntmp_path = PosixPath('/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre11/fixtures/test_forecast_inside_own_activ0')\n\n    def test_forecast_inside_own_active_worker_preserves_admission_guard(\n        monkeypatch, tmp_path\n    ):\n        import time\n    \n        from src.solvers.neighborhood_residual_scope import window\n    \n        fake = {\n            \"active\": {\n                \"role\": \"GRADIENT\",\n                \"folder\": str(tmp_path),\n                \"before_clock\": {\"observed_monotonic\": time.monotonic() - 10},\n            },\n            \"runs\": [{\"role\": \"DATA\", \"elapsed_seconds\": 30}],\n        }\n        monkeypatch.setenv(\"TASK042_V36_AUX_DIRECTORY\", str(tmp_path))\n        monkeypatch.setattr(window, \"guard_worker_parent\", lambda: None)\n        monkeypatch.setattr(window, \"ledger\", lambda: fake)\n        monkeypatch.setattr(window, \"charged_wall\", lambda: 50)\n        monkeypatch.setattr(window, \"snapshot\", lambda: {\"heavy_remaining_seconds\": 10000})\n        assert 5350 < window.worker_learning_remaining() < 5361\n        with pytest.raises(RuntimeError, match=\"closed/active\"):\n>           window.remaining(\"TRAIN_NN\")\n\nsrc/test/test_neighborhood_residual.py:281: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nsrc/solvers/neighborhood_residual_scope.py:31: in remaining\n    self.require_ready()\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <src.solvers.neighborhood_residual_scope.NeuralWindow object at 0x784605de6a80>\n\n    def require_ready(self):\n        self.require_live(margin=60)\n        book = self.ledger()\n>       if book[\"closed\"] or book[\"active\"] is not None:\nE       KeyError: 'closed'\n\nsrc/solvers/port_preparation_window.py:49: KeyError"
+        }
+      ]
+    },
+    {
+      "count": 24,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre12/pytest.xml",
+        "sha256": "b425d93e5c725332b4eed920ef74a3e24c1d64a42c00a6e70d9c620fa124a87d",
+        "bytes": 3441
+      },
+      "source_sha": "582146016392567aecca89ab2142bbdf9ec5227a",
+      "failures": []
+    },
+    {
+      "count": 26,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre13/pytest.xml",
+        "sha256": "f31c6dddd943308c43767c7092c7c24a4760fa5227c19e321ae1a3e1ac18ed4b",
+        "bytes": 3737
+      },
+      "source_sha": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+      "failures": []
+    },
+    {
+      "count": 27,
+      "junit": {
+        "path": "tmp/task042/v43/aux_pre_pre14/pytest.xml",
+        "sha256": "771224a2c370fa8952d8d285d4a37b1d58e3b461fce089463300bf6518d1e994",
+        "bytes": 3889
+      },
+      "source_sha": "9c223d99038605f606e8912ba23b1453896d2b9d",
+      "failures": []
+    }
+  ],
+  "final_numerical_wiring": "final targeted qualification and byte hashes, all failures preserved",
+  "actual_new_MPI": [
+    1
+  ],
+  "previous_MPI2_4": "not replayed; V41/V42 only hash-bound dependencies",
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN_UNRELATED_HEAVY_SCOPE",
+  "implementation_hashes": {
+    "scripts/run_case.py": "688e05bd67083a50caafce3e33db184428bb85b044a92e6a73e69c6ad954dd1e",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "d44e5fcb9800b269a778995cc6c3f3176d4998dc9909e90fdab7e2b617178028",
+    "src/runners/port_preparation.py": "1d030c424051658b8cefb67ca910dd8ad307e1f43b3417f2e2b064496a19f0f3",
+    "src/runners/task042_shared.py": "4dbac95a7a341e8c6982e54ea992c413ad4604aa8760c3788833fc70aa5cc94d",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "8bff444ffc70f5f67ba95e21be954b8e760be35383378ffadaaeba0078696a4c",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_residual_v43.json": "ad91345e8d6985e647ca871ba1d4a69bd8d76e9da4201ea10962cb0efcf326b2"
+  },
+  "qualified_record": {
+    "path": "tmp/task042/v43/qualification.json",
+    "sha256": "3a4ec6b4610dafae7030700a63125b3e0d7d0cecaaa36acc447979b77eecb53d",
+    "bytes": 2627
+  }
+}

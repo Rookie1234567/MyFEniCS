@@ -1,3 +1,11 @@
+# V43变更：共享实体残差修正、真实训练及完整控制
+
+新数值核位于src/solvers：canonical全系数桥／真实A/AH回调、两轮消息模型、复线性控制、受限总128步清理、分进程data/train/check。runner与dat只增加explicit V43入口，复用原监督／独立oracle／原子writer，ordinary默认物理不变。独立checker补冻结RHS/模型/完整覆盖，旧恢复仅做保存数据分解。
+
+[精确文件](records/changed_files_v43.json) · [依赖分组](records/selective_merge_manifest_v43.json) · [运行source](records/run_index_v43.json)。大数组、模型、timeline、环境保持ignored；没有production提升／merge approval。旧task/review/response/raw与以下旧全文保留。
+
+<!-- V43-LATEST-END -->
+
 # V42变化与依赖范围
 
 数值核进入src/solvers，复用原runner／监督／one-run；新checker独立重算冻结数组，修复缺阶段放行及live消费依赖，不修改ordinary默认。A原作用可信、A/B内部恢复未资格化，目标backend未实现；全部研究opt-in，无神经训练或收益声明。[精确清单](records/changed_files_v42.json) · [依赖组](records/selective_merge_manifest_v42.json)。旧authority/raw及全文后缀保持。
