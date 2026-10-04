@@ -82,3 +82,62 @@ def test_small_independent_physical_volume_and_ports():
             assert np.linalg.norm(C - fun(x)[2]) / np.linalg.norm(C) < 1e-10
     finally:
         destroy_same_mesh_physical_action(model["bundle"])
+
+
+def test_grazing_air_opposite_z_original_residual_and_fields():
+    from src.solvers.feinn_fem import export_native
+    from src.solvers.fixed_phase_audit import (
+        surface_blocks,
+        analytic_projections,
+        integrate_load,
+    )
+    from src.solvers.fixed_phase_qualification import solve_fixture, evaluate
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        destroy_same_mesh_physical_action,
+    )
+
+    model = build_model(fixture_design(), 3, True)
+    try:
+        p, _ = export_native(model)
+        B, _, _ = surface_blocks(model, p)
+        cfg = model["cfg"]
+        e = np.asarray(cfg.polarization_vector, complex)
+        for sign in (-1, 1):
+            k = np.asarray([cfg.kx, cfg.ky, sign * abs(cfg.wavevector[2])], complex)
+
+            def electric(x):
+                return np.exp(1j * (x @ k))[:, None] * e
+
+            def curl(x):
+                return np.exp(1j * (x @ k))[:, None] * 1j * np.cross(k, e)
+
+            a = analytic_projections(model, electric)
+            rhs = (
+                integrate_load(
+                    model,
+                    p,
+                    lambda x: np.zeros_like(x, dtype=complex),
+                    lambda x, side: np.cross(
+                        curl(x), [0, 0, 1 if side == "top" else -1]
+                    ),
+                )
+                + B @ a
+            )
+            audit = {}
+            c, alpha, r = solve_fixture(model, p, rhs, refinement_record=audit)
+            print(sign, audit, flush=True)
+            assert r <= 1e-10
+            assert audit["factor_count"] == 1
+            assert len(audit["original_relative_residuals"]) <= 4
+            E, C = evaluate(model, p, c, model["centers"])
+            for measured, expected in (
+                (E, electric(model["centers"])),
+                (C, curl(model["centers"])),
+                (alpha, a),
+            ):
+                assert (
+                    np.linalg.norm(measured - expected) / np.linalg.norm(expected)
+                    <= 1e-4
+                )
+    finally:
+        destroy_same_mesh_physical_action(model["bundle"])

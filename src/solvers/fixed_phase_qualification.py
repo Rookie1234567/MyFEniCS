@@ -2,7 +2,7 @@
 
 import gc
 import numpy as np
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import splu
 
 from src.solvers.fixed_phase_audit import (
     PhysicalVolumeAudit,
@@ -85,15 +85,41 @@ def manufactured(model):
     return values
 
 
-def solve_fixture(model, packet, load, alpha_load=None):
+def solve_fixture(model, packet, load, alpha_load=None, *, refinement_record=None):
     from src.solvers.feinn_authority_assembly import packet_csr
     from src.solvers.feinn_native import FullNativePacket
 
     alpha_load = np.zeros(packet.np, complex) if alpha_load is None else alpha_load
     custom = FullNativePacket(dict(packet.a, g=load, gp=alpha_load))
     M, _ = packet_csr(model, custom)
-    x = spsolve(M, np.r_[load, alpha_load])
-    r = M @ x - np.r_[load, alpha_load]
+    rhs = np.r_[load, alpha_load]
+    # One small-fixture LU, reused for bounded defect correction. The nearly
+    # grazing plane wave has a small rhs after cancellation of volume terms;
+    # sparse-direct success alone is insufficient for the original residual.
+    factor = splu(M.tocsc())
+    x = factor.solve(rhs)
+    residuals = [float(np.linalg.norm(M @ x - rhs) / np.linalg.norm(rhs))]
+    for _ in range(3):
+        if residuals[-1] <= 1e-10:
+            break
+        corrected = x + factor.solve(rhs - M @ x)
+        relative_residual = float(
+            np.linalg.norm(M @ corrected - rhs) / np.linalg.norm(rhs)
+        )
+        residuals.append(relative_residual)
+        if relative_residual >= residuals[-2]:
+            break
+        x = corrected
+    if refinement_record is not None:
+        refinement_record.update(
+            original_relative_residuals=residuals,
+            factor_count=1,
+            maximum_defect_corrections=3,
+            accepted_relative_residual=float(
+                np.linalg.norm(M @ x - rhs) / np.linalg.norm(rhs)
+            ),
+        )
+    r = M @ x - rhs
     return (
         x[: packet.size],
         x[packet.size :],
@@ -170,7 +196,10 @@ def qualify(design, marker=lambda *_: None):
         # Source is independently differentiated Maxwell, not packet.apply(c).
         gates["manufactured_original_weak"] = relative(p.volume(c) + B @ alpha, load)
         gates["manufactured_port"] = relative(D @ c, H * alpha)
-        solved, solved_alpha, residual = solve_fixture(model, p, load)
+        manufactured_refinement = {}
+        solved, solved_alpha, residual = solve_fixture(
+            model, p, load, refinement_record=manufactured_refinement
+        )
         gates["manufactured_solve_residual"] = residual
         gates["manufactured_solve_field"] = relative(solved, c)
         gates["manufactured_recovery"] = recovery
@@ -260,7 +289,10 @@ def qualify(design, marker=lambda *_: None):
                 )
                 + B @ a
             )
-            cp, ap, rp = solve_fixture(model, p, plane_load)
+            plane_refinement = {}
+            cp, ap, rp = solve_fixture(
+                model, p, plane_load, refinement_record=plane_refinement
+            )
             sample = model["centers"]
             ep, hp = evaluate(model, p, cp, sample)
             plane.append(
@@ -271,6 +303,7 @@ def qualify(design, marker=lambda *_: None):
                     physical_curl_H=relative(hp, curl(sample)),
                     complex_channels=relative(ap, a),
                     power_absolute=float(np.max(abs(abs(ap) ** 2 - abs(a) ** 2))),
+                    direct_refinement=plane_refinement,
                 )
             )
         gates["air_plane_residual"] = max(row["original_residual"] for row in plane)
@@ -316,6 +349,7 @@ def qualify(design, marker=lambda *_: None):
             plane=plane,
             identity=info,
             manufactured_source="analytic curl curl E-k0^2 E with independent physical boundary traction",
+            manufactured_direct_refinement=manufactured_refinement,
             negative_controls=dict(
                 omitted_curl_difference=max(bad_volume),
                 double_phase_difference=max(
