@@ -81,6 +81,9 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
     # Only the separately reviewed authority audit supplies these hooks.
     # Existing callers retain their historical lifecycle and packet schema.
     check_budget = (audit_options or {}).get("check_budget", lambda *_: None)
+    tolerance = (audit_options or {}).get("residual_tolerance", 1e-10)
+    final_ports = (audit_options or {}).get("final_port_recovery")
+    actual_audit = (audit_options or {}).get("full_equation_audit", lambda c,a: packet.audit(c))
     check_budget("reference assembly")
     reduced = (audit_options or {}).get("reduced_system")
     n = len(reduced.rhs) if reduced is not None else packet.size + packet.np
@@ -212,7 +215,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
             original_augmented_relative=relative,
             rss_with_numeric_factor_bytes=rss_bytes(),
         )
-        if relative > 1e-10 or not np.isfinite(x.array).all():
+        if (relative > tolerance and final_ports is None) or not np.isfinite(x.array).all():
             raise RuntimeError(f"INDEPENDENT_REFERENCE_RESIDUAL_FAILED: {relative}")
         if reduced is None:
             c = x.array[: packet.size].copy()
@@ -225,18 +228,54 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
                 condensed_rows=n,
                 local_interior_factors="exact reference-only; no training use",
             )
+        if final_ports is not None:
+            audit_options["save_raw_recovery"](c,alpha,record)
+            raw_alpha = alpha.copy()
+            alpha, recovery_record = final_ports(c,raw_alpha)
+            record["accurate_final_port_recovery"] = recovery_record
+            record["raw_LU_vs_accurate_port_relative"] = float(
+                np.linalg.norm(alpha-raw_alpha)/max(np.linalg.norm(raw_alpha),1e-12))
+            metrics = ("native_relative","augmented_relative","original_total_augmented_relative")
+            current = max(actual_audit(c,alpha)[k] for k in metrics)
+            improvements = [dict(iteration=0,full_true_relative=current,accepted=True)]
+            for iteration in range(1,4):
+                if current<=tolerance:
+                    break
+                check_budget("same held factor full-residual correction")
+                body = packet.a["g"]-packet.volume(c)-packet.B(alpha)
+                port = packet.a["gp"]+packet.D(c)-packet.a["H"]*alpha
+                rhs,ui = reduced.correction_rhs(body,port)
+                b.array[:] = rhs
+                factor.solve(b,x)
+                dc,_ = reduced.recover_correction(x.array,ui)
+                trial = c+dc
+                trial_alpha,work = final_ports(trial,raw_alpha)
+                value = max(actual_audit(trial,trial_alpha)[k] for k in metrics)
+                accepted = np.isfinite(value) and value<current
+                improvements.append(dict(iteration=iteration,full_true_relative=value,accepted=bool(accepted)))
+                marker("held_factor_true_residual_correction",improvements[-1])
+                if not accepted:
+                    # Persist the last accepted vector again; a rejected trial
+                    # must not become the published recovery checkpoint.
+                    alpha,recovery_record = final_ports(c,raw_alpha)
+                    break
+                c,alpha,current = trial,trial_alpha,value
+                recovery_record = work
+            record["same_factor_full_residual_corrections"] = improvements
+            record["accurate_final_port_recovery"] = recovery_record
         if (audit_options or {}).get('save_unqualified_recovery',False):
             # Preserve a real recovered state even when a later strict gate
             # fails; this is explicitly unqualified until all audits finish.
             audit_options['save_packet'](c,alpha,record)
             record['unqualified_recovery_saved_before_checks']=True
-        recovered = packet.alpha(c)
+        recovered = (audit_options["independent_port_recovery"](c)
+                     if final_ports is not None else packet.alpha(c))
         record["original_port_recovery_relative"] = float(
             np.linalg.norm(recovered - alpha) / max(np.linalg.norm(alpha), 1e-12)
         )
         if record["original_port_recovery_relative"] > 1e-10:
             raise RuntimeError("REFERENCE_PORT_RECOVERY_FAILED")
-        record["original_full_equation_audit"] = packet.audit(c)
+        record["original_full_equation_audit"] = actual_audit(c,alpha)
         if reduced is not None:
             record["condensed_augmented_relative"] = record[
                 "original_augmented_relative"
@@ -253,7 +292,7 @@ def exact_solve(model, packet, artifact, marker, *, audit_options=None):
                     "original_total_augmented_relative",
                 )
             )
-            > 1e-10
+            > tolerance
         ):
             raise RuntimeError("REFERENCE_NATIVE_RESIDUAL_FAILED")
         if audit_options is None:

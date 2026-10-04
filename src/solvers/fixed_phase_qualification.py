@@ -127,15 +127,16 @@ def solve_fixture(model, packet, load, alpha_load=None, *, refinement_record=Non
     )
 
 
-def qualify(design, marker=lambda *_: None):
+def qualify(design, marker=lambda *_: None, *, joint_ports=False):
     from src.solvers.feinn_fem import export_native, native_gate
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
         destroy_same_mesh_physical_action,
     )
 
     gates, details = {}, {}
-    zero = build_model(design, 3, False, marker=marker)
-    same = build_model(design, 3, True, fixture_zero_carrier=True, marker=marker)
+    zero = build_model(design, 3, False, marker=marker, topological_ports=joint_ports)
+    same = build_model(design, 3, True, fixture_zero_carrier=True, marker=marker,
+                       topological_ports=joint_ports)
     try:
         p0, _ = export_native(zero, marker)
         pz, _ = export_native(same, marker)
@@ -159,12 +160,22 @@ def qualify(design, marker=lambda *_: None):
             ]
         )
         details["zero_carrier_nonzero_vectors"] = rows
+        if joint_ports:
+            from src.solvers.fixed_phase_fem import physical_rhs
+            from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import build_physical_rhs
+            new, _ = physical_rhs(zero["bundle"])
+            old, _ = build_physical_rhs(zero["bundle"])
+            try:
+                details["zero_carrier_old_rhs_relative"] = relative(new.array,old.array)
+            finally:
+                new.destroy()
+                old.destroy()
     finally:
         destroy_same_mesh_physical_action(zero["bundle"])
         destroy_same_mesh_physical_action(same["bundle"])
     del zero, same, p0, pz
     gc.collect()
-    model = build_model(design, 3, True, marker=marker)
+    model = build_model(design, 3, True, marker=marker, topological_ports=joint_ports)
     try:
         p, info = export_native(model, marker)
         va = PhysicalVolumeAudit(model, p)
@@ -306,6 +317,8 @@ def qualify(design, marker=lambda *_: None):
                     direct_refinement=plane_refinement,
                 )
             )
+            if joint_ports:
+                plane[-1]["physical_flux"] = air_power_witness(model,ap,k,e,sign)
         gates["air_plane_residual"] = max(row["original_residual"] for row in plane)
         gates["air_plane_fields_channels"] = max(
             row[k]
@@ -313,6 +326,9 @@ def qualify(design, marker=lambda *_: None):
             for k in ("physical_E", "physical_curl_H", "complex_channels")
         )
         gates["air_plane_power"] = max(row["power_absolute"] for row in plane)
+        if joint_ports:
+            gates["air_plane_power"] = max(
+                row["physical_flux"]["all_mode_vs_analytic_max_absolute"] for row in plane)
         # Actual dangerous inputs: use the same independent reference to reject
         # omitted carrier curl, twice-applied phase and an incomplete volume load.
         wrong = dict(model, kappa=np.zeros(3))
@@ -377,3 +393,49 @@ def qualify(design, marker=lambda *_: None):
         return dict(schema="fixed_phase.qualification.v1", gates=gates, details=details)
     finally:
         destroy_same_mesh_physical_action(model["bundle"])
+
+
+def air_power_witness(model, actual, k, e, sign):
+    """Independent E cross H* Poynting power, all physical modes/directions."""
+    from src.common.modes_3d import incident_power_3d
+    from src.solvers.dtn_port_3d import _mode_power_at_boundary, _mode_carries_outward_power
+
+    cfg, modes = model["cfg"], model["bundle"]["modes"]
+    incoming_side = "top" if sign == -1 else "bottom"
+    outgoing_side = "bottom" if sign == -1 else "top"
+    incoming = np.zeros(len(modes),complex)
+    exact = np.zeros_like(incoming)
+    for j,m in enumerate(modes):
+        if m.m == 0 and m.n == 0:
+            z = cfg.physical_z_max if m.side == "top" else cfg.physical_z_min
+            value = (np.vdot(m.e_vector[:2],e[:2])
+                     / np.vdot(m.e_vector[:2],m.e_vector[:2]).real
+                     * np.exp(1j*(k[2]-m.k_vector[2])*z))
+            if m.side == incoming_side:
+                incoming[j] = value
+            else:
+                exact[j] = value
+    outgoing = actual-incoming
+    direct, expected, port = [], [], []
+    for j,m in enumerate(modes):
+        z = cfg.physical_z_max if m.side == "top" else cfg.physical_z_min
+
+        def flux(alpha):
+            E = alpha*np.exp(1j*m.k_vector[2]*z)*np.asarray(m.e_vector)
+            H = np.cross(m.k_vector,E)/(cfg.k0*cfg.mu_r)
+            return max(float(.5*np.cross(E,H.conj())[2].real
+                             *(1 if m.side == "top" else -1)
+                             *cfg.period_x*cfg.period_y/incident_power_3d(cfg)),0)
+        direct.append(flux(outgoing[j]))
+        expected.append(flux(exact[j]))
+        port.append(_mode_power_at_boundary(m,cfg,outgoing[j])/incident_power_3d(cfg)
+                    if _mode_carries_outward_power(m) else 0)
+    direct,expected,port = map(np.asarray,(direct,expected,port))
+    return dict(channels=len(modes),z_sign=sign,incoming_side=incoming_side,
+                outgoing_side=outgoing_side,
+                per_mode_physical_power=direct.tolist(),per_mode_analytic_power=expected.tolist(),
+                independent_Poynting_vs_port_max_absolute=float(max(abs(direct-port))),
+                all_mode_vs_analytic_max_absolute=float(max(abs(direct-expected))),
+                reflected=float(sum(direct[j] for j,m in enumerate(modes) if m.side==incoming_side)),
+                transmitted=float(sum(direct[j] for j,m in enumerate(modes) if m.side==outgoing_side)),
+                energy_closure=float(abs(sum(direct)-1)),physical_E_cross_H=True)

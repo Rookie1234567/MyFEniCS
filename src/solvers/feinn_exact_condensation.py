@@ -65,6 +65,26 @@ class ExactInteriorCondensation:
             c[self.ids[cell, self.i]] = self.ui0[cell] - self.X[cls] @ local_trace[cell]
         return c, np.asarray(reduced[len(self.trace) :], dtype=np.complex128).copy()
 
+    def correction_rhs(self, body, port):
+        """Exact reduction of a full residual using the already held local LU."""
+        p = self.packet
+        gi = np.asarray(body)[self.ids[:,self.i]]
+        ui = np.empty_like(gi)
+        gt = np.asarray(body)[self.trace].copy()
+        for cell,cls in enumerate(p.a["classes"]):
+            ui[cell] = linalg.lu_solve(self.lu[cls],gi[cell])
+            correction = p.a["F"][cls][np.ix_(self.t,self.i)]@ui[cell]
+            np.add.at(gt,self.trace_ids[cell],-self.phase[cell,self.t].conj()*correction)
+        return np.r_[gt,port],ui
+
+    def recover_correction(self, vector, ui):
+        c = np.zeros(self.packet.size,np.complex128)
+        c[self.trace] = vector[:len(self.trace)]
+        local = self.phase[:,self.t]*c[self.ids[:,self.t]]
+        for cell,cls in enumerate(self.packet.a["classes"]):
+            c[self.ids[cell,self.i]] = ui[cell]-self.X[cls]@local[cell]
+        return c,np.asarray(vector[len(self.trace):],np.complex128).copy()
+
     def assemble(self, model=None, packet=None, marker=lambda *_: None, *, save=None):
         start = perf_counter()
         p, a = self.packet, self.packet.a

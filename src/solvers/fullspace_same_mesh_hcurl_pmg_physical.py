@@ -104,6 +104,7 @@ def build_same_mesh_physical_action(
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
     phase_carrier=None,
+    topological_ports=False,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -163,8 +164,12 @@ def build_same_mesh_physical_action(
     volume_action = None
     physical_action = None
     try:
+        trace_support = None
+        if topological_ports:
+            from .topological_port_trace import boundary_master_rows
+            trace_support = boundary_master_rows(function_space, floquet.mpc, cfg)
         carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg
+            modes, assemblers, floquet.mpc, cfg, trace_support=trace_support
         )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the

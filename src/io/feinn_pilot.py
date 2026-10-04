@@ -87,7 +87,7 @@ def load_pilot(path):
     ):
         raise InputError("Task42extra accepts only one frozen explicit stage")
     item = config["task42extra"]
-    if item.get("stage", "").startswith("v20_"):
+    if item.get("stage", "").startswith(("v20_","v21_")):
         from src.io.fixed_phase_pilot import load
         return load(path, raw, config)
     authority = (

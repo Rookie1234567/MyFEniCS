@@ -29,7 +29,7 @@ LIMITS.update(
 )
 
 
-def qualification(record):
+def qualification(record, *, joint_ports=False):
     reasons = []
     if record.get("schema") != "fixed_phase.qualification.v1":
         reasons.append("schema")
@@ -78,6 +78,30 @@ def qualification(record):
     }
     if len(modes) != 36 or keys != expected:
         reasons.append("complete_fixture_mode_keys")
+    if joint_ports:
+        value = d.get("zero_carrier_old_rhs_relative")
+        if type(value) not in (int,float) or not 0 <= value <= 1e-10:
+            reasons.append("zero_carrier_old_rhs")
+        plane = d.get("plane",[])
+        if len(plane) != 2 or {p.get("z_sign") for p in plane} != {-1,1}:
+            reasons.append("bidirectional_air_flux")
+        for p in plane:
+            f = p.get("physical_flux",{})
+            if f.get("channels") != 36 or f.get("physical_E_cross_H") is not True:
+                reasons.append("physical_flux_missing_or_proxy")
+            for name,limit in (("independent_Poynting_vs_port_max_absolute",1e-12),
+                               ("all_mode_vs_analytic_max_absolute",1e-6),
+                               ("reflected",1e-5),("energy_closure",1e-5)):
+                v = f.get(name)
+                if type(v) not in (int,float) or not math.isfinite(v) or not 0<=v<=limit:
+                    reasons.append("air_flux_"+name)
+            if abs(f.get("transmitted",0)-1)>1e-5:
+                reasons.append("air_flux_transmitted")
+            for key in ("per_mode_physical_power","per_mode_analytic_power"):
+                values = f.get(key,[])
+                if len(values)!=36 or any(type(v) not in (float,int) or not math.isfinite(v)
+                                         or v<0 for v in values):
+                    reasons.append("air_flux_all_modes")
     return dict(
         status="PASS" if not reasons else "QUALIFICATION_FAILED",
         passed=not reasons,
@@ -111,6 +135,45 @@ def solved(record, *, reference=False):
         limits=limits,
         status="ALGEBRA_QUALIFIED" if not failed else "ALGEBRA_FAILED",
     )
+
+
+def joint_port_qualification(record):
+    """Rebuild V21 admission from measurements, never just a passed flag."""
+    base = qualification(record.get("base",{}),joint_ports=True)
+    failures = list(base["failed"])
+    trace = record.get("trace",{})
+    rows = trace.get("rows",[])
+    if {(r.get("degree"),r.get("facet")) for r in rows} != {
+            (p,f) for p in (3,4,6) for f in range(6)} or len(rows)!=18:
+        failures.append("trace_coverage")
+    if not any(r.get("actual_cell_permutation",0)!=0 for r in rows):
+        failures.append("actual_orientation")
+    for r in rows:
+        if (len(r.get("nodal_and_integral_relative",[]))!=2
+                or any(not isinstance(v,(float,int)) or not math.isfinite(v)
+                       or not 0<=v<=1e-10 for v in r.get("nodal_and_integral_relative",[]))
+                or r.get("omitted_boundary_dof_difference",0)<=1e-10):
+            failures.append("trace_moment_or_negative_control")
+    affected = record.get("affected_ports",[])
+    if len(affected)!=3 or {r.get("degree") for r in affected}!={3,4,6}:
+        failures.append("affected_degree_coverage")
+    for r in affected:
+        for name,limit in (("quadrature_15_30",1e-8),("physical_rhs",1e-10),
+                           ("condensed_action_recovery",1e-10),
+                           ("accurate_vs_independent_decimal",1e-10)):
+            v = r.get(name)
+            if type(v) not in (float,int) or not math.isfinite(v) or not 0<=v<=limit:
+                failures.append(name)
+        samples = r.get("physical_ports",{}).get("samples",[])
+        if len(samples)!=3 or any(len(s)!=3 or any(not 0<=v<=1e-10 for v in s) for s in samples):
+            failures.append("physical_ports")
+        if (r.get("generic_nonzero_interior_port_rejected") is not True
+                or r.get("nonzero_internal_and_port_rhs") is not True
+                or r.get("omitted_boundary_dof_negative",0)<=1e-10
+                or r.get("native_action",{}).get("status")!="PASS"):
+            failures.append("nonzero_and_negative_controls")
+    return dict(passed=not failures,failed=failures,base_checker=base,
+                complete_physical_air_flux_required=True)
 
 
 def physics_from_arrays(z):

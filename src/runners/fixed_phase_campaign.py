@@ -28,6 +28,7 @@ from src.runners.feinn_resources import (
 
 BATCH = ROOT / "tmp/task42extra/v20"
 CAPS = dict(implementation=10800, A=3600, B=14400, C=5400, D=3600)
+V21_CAPS = dict(P01=10800,P2=7200,P3=9000,P4=7200,D=3600)
 
 
 def sha(path):
@@ -73,17 +74,17 @@ def write(path, value):
             os.unlink(name)
 
 
-def batch_remaining(now=None):
-    c = json.loads((BATCH / "clock.json").read_text())
+def batch_remaining(now=None, *, version=20):
+    c = json.loads((ROOT / f"tmp/task42extra/v{version}" / "clock.json").read_text())
     return c["batch_limit_seconds"] - (
         (time.monotonic() if now is None else now) - c["start_monotonic"]
     )
 
 
-def prior_runs():
+def prior_runs(version=20):
     rows = []
     for path in sorted(
-        (ROOT / "results/task42extra").glob("task42extra_v20_*/run_manifest.json")
+        (ROOT / "results/task42extra").glob(f"task42extra_v{version}_*/run_manifest.json")
     ):
         m = json.loads(path.read_text())
         summary = path.with_name("run_summary.json")
@@ -98,6 +99,7 @@ def prior_runs():
                 group=m["group"],
                 seconds=row["launch_to_summary_seconds_monotonic"],
                 path=str(summary),
+                role=m.get("role"),
             )
         )
     return rows
@@ -158,7 +160,8 @@ def launch(spec):
     from benchmarks.subreaper_watchdog import supervise
     from src.runners.guarded_exec import ticks
 
-    origin = float(os.environ.get("TASK42EXTRA_V20_LAUNCH_ORIGIN_MONOTONIC", "0"))
+    version = spec.derived.get("campaign_version",20)
+    origin = float(os.environ.get(f"TASK42EXTRA_V{version}_LAUNCH_ORIGIN_MONOTONIC", "0"))
     if not 0 < origin <= time.monotonic():
         raise RuntimeError("V20_DURABLE_IMPORT_CLOCK_NOT_BOUND")
     stage = spec.derived["stage"]
@@ -183,7 +186,7 @@ def launch(spec):
     terminal = json.loads(proof.read_text())
     if (ARTIFACTS / f"index_{stage}_attempt{attempt}.json").exists():
         raise RuntimeError("V20_DUPLICATE_STAGE_FORBIDDEN")
-    old = prior_runs()
+    old = prior_runs(version)
     group = spec.derived["group"]
     if stage == "v20_phase_qualification":
         selected("v20_control_checks")
@@ -194,9 +197,17 @@ def launch(spec):
             raise RuntimeError("V20_A_NOT_QUALIFIED")
     if stage == "v20_e4":
         selected("v20_e3")
+    if version == 21:
+        v21_admission(stage,old)
     used = sum(r["seconds"] for r in old if r["group"] == group)
+    if version==21 and group=="P01":
+        # P0/P1 includes implementation, reading and tests since first-read;
+        # it is not a fresh 3h numerical allowance after preparation.
+        clock = json.loads((ROOT/"tmp/task42extra/v21/clock.json").read_text())
+        used = time.monotonic()-clock["start_monotonic"]
     limit = min(
-        spec.execution["timeout_seconds"], CAPS[group] - used, batch_remaining() - 1800
+        spec.execution["timeout_seconds"], (V21_CAPS if version==21 else CAPS)[group] - used,
+        batch_remaining(version=version) - 1800
     )
     if limit <= 150:
         raise RuntimeError("V20_SAVE_RESERVE_UNAVAILABLE")
@@ -214,13 +225,14 @@ def launch(spec):
         source_sha=source,
         branch=branch,
         stage=stage,
+        campaign_version=version,
         group=group,
         role=spec.derived["role"],
         attempt=attempt,
         stage_limit_seconds=limit,
         supervision_budget_origin_monotonic=origin,
         numerical_cutoff_monotonic=origin + limit - 150,
-        batch_remaining_seconds_at_launch=batch_remaining(),
+        batch_remaining_seconds_at_launch=batch_remaining(version=version),
         old_costs_preserved=True,
         design_sha256=sha(DESIGN),
         input_sha256=spec.input_sha256,
@@ -236,6 +248,7 @@ def launch(spec):
         production_qualified=False,
         field_space="actual identity bound before any solve",
         prior_runs=old,
+        group_used_seconds_at_launch=used,
     )
     write(directory / "run_manifest.json", state)
     try:
@@ -270,6 +283,11 @@ def launch(spec):
                     )
                 },
             )
+            if version==21:
+                abi_path = Path(state["ABI_record"]["path"])
+                state["ABI_record"]["sha256"] = sha(abi_path)
+                frozen = ROOT / "tmp/task42extra/v21/frozen_inputs.json"
+                state["frozen_inputs"] = dict(path=str(frozen),sha256=sha(frozen))
             write(directory / "run_manifest.json", state)
             command = [
                 sys.executable,
@@ -362,7 +380,12 @@ def worker(directory):
         ):
             raise RuntimeError("V20_SOURCE_OR_DESIGN_CHANGED")
         design = json.loads(DESIGN.read_text())
-        if m["stage"] == "v20_control_checks":
+        if m.get("campaign_version")==21:
+            if (sha(m["ABI_record"]["path"]) != m["ABI_record"]["sha256"]
+                    or sha(m["frozen_inputs"]["path"]) != m["frozen_inputs"]["sha256"]):
+                raise RuntimeError("V21_BOUND_ABI_OR_INPUT_CHANGED")
+            result,files = v21_worker(m,directory,artifact,design,marker,budget)
+        elif m["stage"] == "v20_control_checks":
             from benchmarks.fixed_phase_control_checks import control_checks
 
             result, files = control_checks(directory, artifact, marker, m), {}
@@ -519,6 +542,124 @@ def worker(directory):
         return 1
     finally:
         gc.collect()
+
+
+def v21_admission(stage,old):
+    from benchmarks.fixed_phase_checker import joint_port_qualification,solved
+
+    if stage != "v21_control_checks":
+        selected("v21_control_checks")
+    if stage not in ("v21_control_checks","v21_joint_qualification"):
+        joint = selected("v21_joint_qualification")
+        if not joint_port_qualification(joint["result"])["passed"]:
+            raise RuntimeError("V21_COMPLETE_JOINT_QUALIFICATION_REQUIRED")
+    if stage in ("v21_e4","v21_o3_repair","v21_e3_repair"):
+        index = selected("v21_saved_p3_recovery")
+        role = "E3" if stage in ("v21_e4","v21_e3_repair") else "O3"
+        record = index["result"]["roles"][role]
+        if stage=="v21_e4" and not record["stage_qualified"]:
+            raise RuntimeError("V21_E3R_NOT_QUALIFIED")
+        if stage!="v21_e4" and solved(record["full_equation"])["passed"]:
+            raise RuntimeError("V21_FRESH_P3_ONLY_AFTER_ACTUAL_RESIDUAL_FAILURE")
+    if stage in ("v21_o3_repair","v21_e3_repair","v21_e4","v21_o6"):
+        if sum(r["role"] is not None for r in old)>=5:
+            raise RuntimeError("V21_FIVE_NEW_REAL_SOLVE_LIFECYCLES_EXHAUSTED")
+
+
+def v21_retained_roles():
+    records = {}
+    paths = sorted(ARTIFACTS.glob("index_v21_saved_p3_recovery_attempt*.json"))
+    for path in paths:
+        idx = json.loads(path.read_text())
+        book = idx.get("files",{}).get("role_indices")
+        if book:
+            if sha(book["path"])!=book["sha256"]:
+                raise ValueError("V21_ROLE_BOOK_CHANGED")
+            rows = json.loads(Path(book["path"]).read_text())
+            if records:
+                raise ValueError("V21_AMBIGUOUS_P3_RECOVERY")
+            records.update(rows)
+    for role in ("O3","E3","E4","O6"):
+        stage = "v21_"+role.lower()+ ("_repair" if role in ("O3","E3") else "")
+        candidates = [json.loads(p.read_text()) for p in sorted(ARTIFACTS.glob("index_"+stage+"_attempt*.json"))]
+        if candidates:
+            good = [r for r in candidates if r["result"].get("stage_qualified")]
+            if len(good)>1:
+                raise ValueError("V21_AMBIGUOUS_ROLE")
+            records[role] = good[0] if good else candidates[-1]
+    for record in records.values():
+        for item in record["files"].values():
+            if (not Path(item["path"]).resolve().is_relative_to(ARTIFACTS.resolve())
+                    or sha(item["path"])!=item["sha256"]):
+                raise ValueError("V21_RETAINED_IDENTITY_CHANGED")
+    return records
+
+
+def v21_worker(m,directory,artifact,design,marker,budget):
+    stage = m["stage"]
+    bindings = json.loads(Path(m["frozen_inputs"]["path"]).read_text())
+    if stage=="v21_control_checks":
+        from benchmarks.fixed_phase_control_checks import control_checks
+        for row in bindings.values():
+            for item in row["files"].values():
+                if sha(item["path"])!=item["sha256"]:
+                    raise ValueError("V21_FROZEN_INPUT_HASH")
+        result = control_checks(directory,artifact,marker,m)
+        result["frozen_inputs_verified"] = bindings
+        return result,{}
+    if stage=="v21_joint_qualification":
+        from src.solvers.fixed_phase_port_qualification import joint_qualification
+        from benchmarks.fixed_phase_checker import joint_port_qualification
+        result = joint_qualification(design["fixture"],marker,budget)
+        result["checker"] = joint_port_qualification(result)
+        result["stage_qualified"] = result["checker"]["passed"]
+        return result,{}
+    if stage=="v21_saved_p3_recovery":
+        from src.solvers.fixed_phase_port_recovery import saved_p3
+        return saved_p3(design,bindings,artifact,marker,budget,m["source_sha"])
+    if m["role"] is not None:
+        from src.solvers.fixed_phase_reference import reference
+        return reference(design,m["role"],artifact,marker,budget,accurate_ports=True,
+                         reuse_binding=bindings["O6"] if m["role"]=="O6" else None)
+    if stage=="v21_physical_compare":
+        from src.solvers.fixed_phase_comparison import compare
+        indices = v21_retained_roles()
+        write(artifact/"role_indices.json",indices)
+        result,files = compare(indices,artifact,marker,budget)
+        files["role_indices"] = artifact/"role_indices.json"
+        return result,files
+    if stage=="v21_saved_checker":
+        import numpy as np
+        from benchmarks.fixed_phase_checker import compare_from_arrays
+        from benchmarks.accurate_port_checker import check_published
+        index = selected("v21_physical_compare")
+        indices = json.loads(Path(index["files"]["role_indices"]["path"]).read_text())
+        with np.load(index["files"]["integrals"]["path"],allow_pickle=False) as z:
+            raw = {k:np.array(z[k]) for k in z.files}
+        obs,algebra,recovery = {},{},{}
+        for role,record in indices.items():
+            for item in record["files"].values():
+                if sha(item["path"])!=item["sha256"]:
+                    raise ValueError("V21_CHECKER_INPUT_CHANGED")
+            with np.load(record["files"]["observables"]["path"],allow_pickle=False) as z:
+                obs[role] = {k:np.array(z[k]) for k in z.files}
+            with np.load(record["files"]["native"]["path"],allow_pickle=False) as z:
+                native = {k:np.array(z[k]) for k in ("H","dp","dr","dv","gp","masters","background","background_alpha")}
+            with np.load(record["files"]["field"]["path"],allow_pickle=False) as z:
+                state = {k:np.array(z[k]) for k in z.files}
+            identity = json.loads(Path(record["files"]["identity"]["path"]).read_text())
+            recovery[role] = check_published(native,state,
+                              expected_mode_hash=identity["mode_manifest_sha256"],
+                              mode_hash=identity["mode_manifest_sha256"])
+            algebra[role] = dict(record["result"]["full_equation"])
+            algebra[role]["recovery"] = max(algebra[role]["recovery"],
+                       recovery[role]["rows"]["scattered"]["original_coordinates_relative"],
+                       recovery[role]["background_original_coordinates_relative"])
+            del native,state
+        result = compare_from_arrays(raw,obs,algebra)
+        result.update(stage_qualified=True,independent_accurate_recovery=recovery)
+        return result,{}
+    raise RuntimeError("V21_EXPLICIT_STAGE_NOT_IMPLEMENTED")
 
 
 if __name__ == "__main__":

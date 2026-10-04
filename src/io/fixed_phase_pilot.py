@@ -20,6 +20,17 @@ STAGES = {
     "v20_physical_compare": ("fe", 5400, "C", None),
     "v20_saved_checker": ("pure", 1800, "C", None),
 }
+STAGES.update({
+    "v21_control_checks": ("pure",600,"P01",None),
+    "v21_joint_qualification": ("fe",9000,"P01",None),
+    "v21_saved_p3_recovery": ("fe",3600,"P2",None),
+    "v21_o3_repair": ("fe",3600,"P2","O3"),
+    "v21_e3_repair": ("fe",3600,"P2","E3"),
+    "v21_e4": ("fe",3600,"P2","E4"),
+    "v21_o6": ("fe",9000,"P3","O6"),
+    "v21_physical_compare": ("fe",5400,"P4",None),
+    "v21_saved_checker": ("pure",1800,"P4",None),
+})
 
 
 def load(path, raw, config):
@@ -39,7 +50,7 @@ def load(path, raw, config):
     ):
         raise InputError("REVIEW_V19_EXPLICIT_FE_ONLY_STAGE_REQUIRED")
     if (
-        not item["run_id"].startswith("task42extra_v20_")
+        not item["run_id"].startswith("task42extra_"+item["stage"].split("_",1)[0]+"_")
         or Path(item["run_id"]).name != item["run_id"]
     ):
         raise InputError("V20_RUN_ID_REQUIRED")
@@ -82,6 +93,7 @@ def load(path, raw, config):
             design_path=str(DESIGN),
             design_sha256=digest,
             neural_training_allowed=False,
+            campaign_version=int(item["stage"][1:3]),
         ),
         source_path=path,
         raw_input_bytes=raw,

@@ -59,6 +59,13 @@ class BoundaryPortCondensation:
     def recover(self, vector):
         return self.original.recover(self.right * np.asarray(vector))
 
+    def correction_rhs(self,body,port):
+        rhs,ui = self.original.correction_rhs(body,port)
+        return self.left*rhs,ui
+
+    def recover_correction(self,vector,ui):
+        return self.original.recover_correction(self.right*np.asarray(vector),ui)
+
     def assemble(self, model, packet, marker):
         from src.solvers.feinn_discretization_audit import atomic_npz
 

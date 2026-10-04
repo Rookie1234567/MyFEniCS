@@ -96,6 +96,7 @@ def build_model(
     q=None,
     fixture_zero_carrier=False,
     operators=True,
+    topological_ports=False,
     marker=lambda *_: None,
 ):
     import basix.ufl
@@ -232,6 +233,7 @@ def build_model(
             mode_inventory=(modes, rows, mode_hash),
             volume_quadrature_metadata=({"quadrature_degree": q},) * 2,
             phase_carrier=tuple(kappa) if phase else None,
+            topological_ports=topological_ports,
         )
     else:
         from src.solvers.dtn_port_3d import _incident_projection_onto_top_mode

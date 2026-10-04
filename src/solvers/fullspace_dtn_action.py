@@ -622,6 +622,7 @@ def build_fullspace_dtn_carrier_from_surface(
     surface_assemblers: Mapping[tuple[str, int], Any],
     mpc: Any,
     cfg: Any,
+    *, trace_support: Mapping[str, np.ndarray] | None = None,
 ) -> FullspaceDtnCarrier:
     """Build the carrier from the current MPC-reduced surface functionals."""
 
@@ -658,6 +659,12 @@ def build_fullspace_dtn_carrier_from_surface(
                 surface_assemblers[(mode.side, 0)].assemble_entries(mode, mpc),
                 surface_assemblers[(mode.side, 1)].assemble_entries(mode, mpc),
             )
+            if trace_support is not None:
+                allowed = trace_support[str(mode.side)]
+                components = tuple(
+                    (rows[np.isin(rows, allowed)], values[np.isin(rows, allowed)])
+                    for rows, values in components
+                )
             component_cache[key] = components
         return components
 

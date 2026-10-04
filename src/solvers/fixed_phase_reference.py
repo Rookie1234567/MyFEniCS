@@ -21,7 +21,8 @@ ROLES = dict(
 )
 
 
-def reference(design, role, artifact, marker, check_budget):
+def reference(design, role, artifact, marker, check_budget, *, accurate_ports=False,
+              reuse_binding=None):
     from src.solvers.feinn_fem import export_native, native_gate
     from src.solvers.feinn_reference import exact_solve
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
@@ -31,16 +32,45 @@ def reference(design, role, artifact, marker, check_budget):
 
     mesh, degree, phase = ROLES[role]
     frozen = design["models"][mesh]
-    pre = capacity(
-        int(np.prod(frozen["geometry"]["cells"])), degree, classes=48, ports=340
-    )
+    old_packet = None
+    if reuse_binding is not None:
+        from src.runners.fixed_phase_campaign import sha
+        from src.solvers.feinn_native import load_native
+        for item in reuse_binding["files"].values():
+            if sha(item["path"]) != item["sha256"]:
+                raise ValueError("REUSED_BODY_FROZEN_HASH_CHANGED")
+        old_packet = load_native(reuse_binding["files"]["native"]["path"])
+    pre = capacity(int(np.prod(frozen["geometry"]["cells"])), degree,
+                   classes=len(old_packet.a["F"]) if old_packet else 48, ports=340)
     marker("initial_derived_capacity", pre)
     if pre["allocation_upper_bytes"] + rss_bytes() >= 12 * 2**30:
         raise RuntimeError("REFERENCE_CAPACITY_REJECTED_BEFORE_ARRAYS")
     check_budget("build physical space")
-    model = build_model(frozen, degree, phase, marker=marker)
+    model = build_model(frozen, degree, phase, marker=marker,
+                        topological_ports=accurate_ports,operators=reuse_binding is None)
     try:
-        packet, identity = export_native(model, marker)
+        port_delta = None
+        if old_packet is not None:
+            from src.solvers.fixed_phase_port_recovery import rebuild_ports,verify_reused_model
+            from src.solvers.feinn_native import packet_hashes
+            verify_reused_model(model,reuse_binding)
+            packet,port_delta = rebuild_ports(model,old_packet,marker)
+            identity = dict(model["record"],packet_hashes=packet_hashes(packet),
+                            reused_body=reuse_binding)
+            native = dict(status="PASS",scope="hash-bound unchanged V20 F/MPC; independent new physical volume action follows",
+                          reused_qualified_body=True)
+            del old_packet
+        else:
+            packet,identity = export_native(model,marker)
+            if accurate_ports:
+                from src.solvers.accurate_ports import recover_ports
+                from src.solvers.feinn_native import FullNativePacket,packet_hashes
+                bg,_ = recover_ports(packet.a,packet.a["background"],gp=np.zeros_like(packet.a["gp"]))
+                a = dict(packet.a,background_alpha=bg,
+                         g=packet.a["total_g"]-packet.volume(packet.a["background"])-packet.B(bg))
+                packet = FullNativePacket(a)
+                identity["packet_hashes"] = packet_hashes(packet)
+            native = native_gate(model,packet)
         expected = (
             3 * np.prod(frozen["geometry"]["cells"]) * degree**3
             + 2 * np.prod(frozen["geometry"]["cells"][:2]) * degree**2
@@ -51,7 +81,6 @@ def reference(design, role, artifact, marker, check_budget):
             or not identity["nonseparable_y_z_witness"]
         ):
             raise ValueError("REAL_MODEL_IDENTITY_NOT_QUALIFIED")
-        native = native_gate(model, packet)
         if native["status"] != "PASS":
             raise ValueError("NATIVE_FULL_SPACE_ACTION_NOT_QUALIFIED")
         independent = PhysicalVolumeAudit(model, packet)
@@ -104,24 +133,38 @@ def reference(design, role, artifact, marker, check_budget):
                 masters=packet.a["masters"],
             )
 
+        options = dict(reduced_system=reduced,assembler=assemble,
+                       allocation_upper_bytes=plan["allocation_upper_bytes"],
+                       check_budget=check_budget,save_packet=save,save_unqualified_recovery=True)
+        if accurate_ports:
+            from src.solvers.accurate_ports import recover_ports,actual_vector_audit
+            from benchmarks.accurate_port_checker import decimal_ports
+
+            def raw_save(c,a,record):
+                atomic_npz(artifact/"raw_lu_recovery.npz",c_scattered=c,alpha_lu_raw=a,
+                           alpha_old_backsub=packet.alpha(c))
+
+            def final(c,raw):
+                alpha,work = recover_ports(packet.a,c)
+                atomic_npz(artifact/"port_recovery_vectors.npz",alpha_lu_raw=raw,
+                           alpha_old_backsub=packet.alpha(c),alpha_recovered=alpha)
+                return alpha,work
+            options.update(residual_tolerance=1e-10 if role=="O6" else 1e-6,
+                           save_raw_recovery=raw_save,final_port_recovery=final,
+                           independent_port_recovery=lambda c:decimal_ports(packet.a,c),
+                           full_equation_audit=lambda c,a:actual_vector_audit(packet,c,a))
+
         c, direct = exact_solve(
             model,
             packet,
             artifact,
             marker,
-            audit_options=dict(
-                reduced_system=reduced,
-                assembler=assemble,
-                allocation_upper_bytes=plan["allocation_upper_bytes"],
-                check_budget=check_budget,
-                save_packet=save,
-                save_unqualified_recovery=True,
-            ),
+            audit_options=options,
         )
         del reduced, assemble
         gc.collect()
-        alpha = packet.alpha(c)
-        audit = packet.audit(c)
+        alpha = (recover_ports(packet.a,c)[0] if accurate_ports else packet.alpha(c))
+        audit = actual_vector_audit(packet,c,alpha) if accurate_ports else packet.audit(c)
         total = c + packet.a["background"]
         atotal = alpha + packet.a["background_alpha"]
         independent_r = np.r_[
@@ -167,6 +210,10 @@ def reference(design, role, artifact, marker, check_budget):
             else "RESEARCH_DETERMINISTIC_FE_CONTROL",
             no_neural_network=True,
             Gram_factor_count=0,
+            explicit_role_contract=dict(residual_tolerance=1e-10 if role=="O6" else 1e-6,
+                                        recovery_tolerance=1e-10),
+            topological_port_rebuild=port_delta,
+            accurate_final_ports=accurate_ports,
             field_meaning=dict(
                 c_scattered="independent envelope FE coefficients, or ordinary FE when phase=false",
                 c_total="c_scattered+saved background in this same discrete space",
