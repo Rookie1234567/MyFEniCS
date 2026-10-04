@@ -36,6 +36,18 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        from src.io.w1_receiver_contract import load_w1
+        w1 = load_w1(args.input_path)
+        if w1 is not None:
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('W1 receiver accepts one explicit dat stage')
+            if args.validate_only or args.dry_run:
+                print(json.dumps(w1, sort_keys=True))
+                return 0
+            from src.runners.w1_component_receiver import launch_w1
+            result = launch_w1(w1)
+            print(json.dumps(result, sort_keys=True))
+            return 0 if result['cleared'] and result['receiver_exit_code'] == 0 else 3
         from src.runners.fresh_component_receiver import load_receiver
         receiver = load_receiver(args.input_path)
         if receiver is not None:

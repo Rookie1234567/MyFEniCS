@@ -1,0 +1,121 @@
+{
+  "schema": "frozen-component-source.v1",
+  "commit": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "closure": "transitive local import closure of five selected W1 modules and two native activation scripts; no clone",
+  "files": [
+    {
+      "path": "benchmarks/__init__.py",
+      "bytes": 67,
+      "sha256": "5678b6ce7ef13b9f82c7be455436f0e87d548acf436e13c7db995a2610142445",
+      "blob": "18ef70d73489bdb38f3d8f5dfed8c33bceaf84e0"
+    },
+    {
+      "path": "benchmarks/run_task40_w1_boundary_probe.py",
+      "bytes": 28051,
+      "sha256": "ef8915d86e132e6c22baa2e1c40525a4fcc21448484f18b446ba56453ec72a93",
+      "blob": "476cd9a1e0afa9846aae6b2175acf939ebe870f9"
+    },
+    {
+      "path": "benchmarks/task40_runtime_profile.py",
+      "bytes": 4644,
+      "sha256": "8ea3a6ac3072bc761cb9631b660734bce2ba8d4afa1c812e86b658832d4c5595",
+      "blob": "f092532f8247f3d9526640b5a6d4d2064fbb7fad"
+    },
+    {
+      "path": "scripts/task40_fresh_c1/activate_native_complex.sh",
+      "bytes": 2763,
+      "sha256": "405dd8bce1f35b02acc145a48f856690a2ffabb1b3144117c9e687da2692a915",
+      "blob": "fcf57cacd1fc1a03858d6b86dc2131d3f5a33d76"
+    },
+    {
+      "path": "scripts/task40_fresh_c1/qualify_imports_only.py",
+      "bytes": 4454,
+      "sha256": "bbab1b63d9414666173eb1744c7f4bbe1c721901caa4ebfe9e614e16c76c0c4f",
+      "blob": "f6c90aa0b364ab41cdb4a09045b179e39d80b4ff"
+    },
+    {
+      "path": "src/__init__.py",
+      "bytes": 68,
+      "sha256": "03b698bbb1fa349e86a99e29ccc436cd73f4fa9dc57d79e39bcdd6dddac4c021",
+      "blob": "bbf5ce53691220f79d233b9124ce9128a0d05176"
+    },
+    {
+      "path": "src/common/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "src/common/config_3d.py",
+      "bytes": 40908,
+      "sha256": "c4cf27346824767a1a5f6dbde396fd61391a29d6cdf66b66603fa369eefcc92e",
+      "blob": "cede2013463b6f421f7269559e567255b3642fb1"
+    },
+    {
+      "path": "src/common/pml_3d.py",
+      "bytes": 2676,
+      "sha256": "2ffafacf0df3a295c53d3679436435d8973db72744e13eb5fcaf39d2717c926f",
+      "blob": "242553873174bf597181a6c6df7d3247a3d20e7a"
+    },
+    {
+      "path": "src/common/units.py",
+      "bytes": 90,
+      "sha256": "a1406b9ee5b94716f48131d2ad3b98cd97fe098dad5fd10752fa20e3a23853be",
+      "blob": "67ba8604e50dc14f28da82016313f44b67cc496f"
+    },
+    {
+      "path": "src/solvers/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "src/solvers/common_3d_forms.py",
+      "bytes": 8951,
+      "sha256": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+      "blob": "a7826e0957874d8bcb5420b20d096b0cd2acf9ef"
+    },
+    {
+      "path": "src/solvers/directional_boundary.py",
+      "bytes": 19106,
+      "sha256": "8e743e4e97e5ede93bdb5a132f95230ec4b7080f7959fcfd1a4946936f33e2ac",
+      "blob": "c915a1dfa4e87ce5abb332e16c686ff61dd97adc"
+    },
+    {
+      "path": "src/solvers/hcurl_assembly_time_condensation.py",
+      "bytes": 101109,
+      "sha256": "0edd5478ef5c08649c95c0d1ade16436b4833e169f4cc6835731bdf1bc0f1e26",
+      "blob": "a0da1e798b29cbc11e6b032719b43951fe0aab8a"
+    },
+    {
+      "path": "src/solvers/native_boundary_adapter.py",
+      "bytes": 13523,
+      "sha256": "1965e5b7e21e8f4f0dfa8bb1a100d41b5f4cdc5f94813945e86c8d7364f97cfb",
+      "blob": "a65104e6ef1cd2a62c5afcd7e89ac8e1b7c62f20"
+    },
+    {
+      "path": "src/solvers/original_port_blocks.py",
+      "bytes": 11981,
+      "sha256": "de6940522d97343484851f7abe75dbb6302a3b64be2f0903cee3361bc9816645",
+      "blob": "c2b10f0b30d6f713650af232958f7370bc79d7e6"
+    },
+    {
+      "path": "src/solvers/p6_cell_condensed_action.py",
+      "bytes": 83935,
+      "sha256": "d80a1831248a0c75db45661e5b12a3322caf337ee8f057baa2339762cccc690f",
+      "blob": "bccbd574512d29e93d8e68d135fccab545d44352"
+    },
+    {
+      "path": "src/solvers/retained_port_block_layout.py",
+      "bytes": 13222,
+      "sha256": "1b074f6efbe5689df55d0e7e55fbd3e3b3861caab5e9e27695e1f48c53b6fb50",
+      "blob": "d957b63de7e39c85fddbbfe7aaf7a2440bb9026b"
+    },
+    {
+      "path": "src/solvers/task40_w1_local_probe.py",
+      "bytes": 30178,
+      "sha256": "fceca9d001a536cffc5b84870c4ef05e5d1395028badbae4276d26b765ec2d74",
+      "blob": "c8031f8b8be41036b898eb553725b6931b5fe10c"
+    }
+  ]
+}

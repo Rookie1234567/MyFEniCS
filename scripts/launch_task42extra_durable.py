@@ -25,6 +25,15 @@ def main():
         raise SystemExit(
             "usage: launch_task42extra_durable.py <one-run.dat> [--attempt 2|3|4]"
         )
+    from src.io.w1_receiver_contract import load_w1
+    w1 = load_w1(sys.argv[1])
+    if w1 is not None:
+        if len(sys.argv) != 2:
+            raise ValueError('W1 retries require evidence and a distinct explicit stage directory')
+        from src.runners.w1_component_receiver import durable_w1
+        result = durable_w1(w1, launch_origin=DURABLE_LAUNCH_ORIGIN)
+        print(json.dumps({k: result[k] for k in ('socket', 'session', 'output', 'scope')}))
+        return
     from src.runners.fresh_component_receiver import load_receiver, durable_launch
     receiver = load_receiver(sys.argv[1])
     if receiver is not None:
