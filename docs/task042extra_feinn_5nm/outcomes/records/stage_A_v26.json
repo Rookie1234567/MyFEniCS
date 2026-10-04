@@ -1,0 +1,462 @@
+{
+  "schema": "task42extra.w1-stage-A.v26",
+  "scope": "A_STAGE_ONLY_NOT_PACKAGE_CLOSEOUT",
+  "status": "A_PURE_LOGIC_QUALIFIED_B_WAITING_REAL_ORIGINALS",
+  "receiver_source_sha": "6e0913810d42450eb0b899b46389b8b014bd8883",
+  "input_review_seal": "afea8f4c7d0a9b6d42b5c3024e2ca47a026ee0ee",
+  "frozen_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "math_baseline_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "A_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/A_qualification.json",
+    "bytes": 2798,
+    "sha256": "9683928cb830291232f2d0416a996a110b52616219407fc0f81aaa676a773648"
+  },
+  "A_qualification_content": {
+    "schema": "w1-A-qualification.v1",
+    "scope": "PURE_LOGIC_ONLY",
+    "receiver_source_sha": "6e0913810d42450eb0b899b46389b8b014bd8883",
+    "input_review_seal": "afea8f4c7d0a9b6d42b5c3024e2ca47a026ee0ee",
+    "receiver_files": {
+      "src/io/finite_json.py": "2eb5e65f2493d24310924eb16ac84f9b93b7a4394c71ae9018a27969c9ae3de2",
+      "src/io/w1_evidence.py": "67109b2fbc7a6e0d88ff43edfc7f9491a327c639942ec3b3fece6425c2240d85",
+      "src/solvers/w1_saved_equations.py": "2e4e8786a573d04001a4409e0ffc08e8e4aeeb82dc554a3e736e77db7373fdf5",
+      "src/solvers/w1_local_export_patch.py": "7b130808a73511596342e802ac8b14e0382f3c527556b2b6a50cb02322a61ccd",
+      "src/io/w1_receiver_contract.py": "90ba18732abef03c923908ee90dd7b4be06b7ca509026825e6bd33c576483d37",
+      "src/runners/w1_component_receiver.py": "6d65ee259e242458edb8a52fc7decf6bab37d4204271493cdcc25252daca095d",
+      "src/runners/w1_component_payload.py": "85aa6f6f019da8ba9a1f0239dfe658f9f3f850a8830639f84ba7901ab6541a59",
+      "src/solvers/w1_boundary_components.py": "26657863018585acf743480177b960cd7174fdce8a0590fc94dce268bef28289",
+      "src/solvers/analytic_face_ports.py": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6",
+      "src/solvers/interval_facet_moments.py": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed",
+      "benchmarks/portable_facet_oracle.py": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f"
+    },
+    "junit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/junit.xml",
+      "bytes": 12465,
+      "sha256": "750d85853680d22b1eabbaeb3cafd97f54329aa15916402ae5a07989918ef1d1"
+    },
+    "supervision": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/summary.json",
+      "bytes": 3581,
+      "sha256": "ce185e12543e8aea17237099fff46505f6f456047d9e28d321600566522eb799"
+    },
+    "test_source_files": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_w1_scientific_chain.py",
+        "bytes": 29703,
+        "sha256": "00285a1e404a3a20c2f76a6ddca103ae2a90f91d0d729efb07cbd197ddeff2b1"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_w1_component_receiver.py",
+        "bytes": 11801,
+        "sha256": "c7bee66a0cbf4e9f7b2c66822fa0fc21ad8ac390976b5b0953eed1f2b59a5e7d"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_frozen_component_receiver.py",
+        "bytes": 9683,
+        "sha256": "be18d3bfd4ec44f60126f2459924dfd343ac5e9273d8ce8ea2365a59ff03896e"
+      }
+    ],
+    "A_window": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/A_window.json",
+      "bytes": 578,
+      "sha256": "6215e777369968f00121e7ca532465cb8d21cf11630aee1f84c528fd2502ad1d"
+    },
+    "native_physics_qualified": false,
+    "B_not_started": true
+  },
+  "tested_source_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/io/finite_json.py",
+      "bytes": 1743,
+      "sha256": "2eb5e65f2493d24310924eb16ac84f9b93b7a4394c71ae9018a27969c9ae3de2"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/io/w1_evidence.py",
+      "bytes": 8734,
+      "sha256": "67109b2fbc7a6e0d88ff43edfc7f9491a327c639942ec3b3fece6425c2240d85"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/w1_saved_equations.py",
+      "bytes": 12554,
+      "sha256": "2e4e8786a573d04001a4409e0ffc08e8e4aeeb82dc554a3e736e77db7373fdf5"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/w1_local_export_patch.py",
+      "bytes": 3378,
+      "sha256": "7b130808a73511596342e802ac8b14e0382f3c527556b2b6a50cb02322a61ccd"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/io/w1_receiver_contract.py",
+      "bytes": 8333,
+      "sha256": "90ba18732abef03c923908ee90dd7b4be06b7ca509026825e6bd33c576483d37"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/runners/w1_component_receiver.py",
+      "bytes": 19172,
+      "sha256": "6d65ee259e242458edb8a52fc7decf6bab37d4204271493cdcc25252daca095d"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/runners/w1_component_payload.py",
+      "bytes": 36119,
+      "sha256": "85aa6f6f019da8ba9a1f0239dfe658f9f3f850a8830639f84ba7901ab6541a59"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/w1_boundary_components.py",
+      "bytes": 17892,
+      "sha256": "26657863018585acf743480177b960cd7174fdce8a0590fc94dce268bef28289"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/analytic_face_ports.py",
+      "bytes": 9568,
+      "sha256": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/interval_facet_moments.py",
+      "bytes": 4652,
+      "sha256": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_oracle.py",
+      "bytes": 5414,
+      "sha256": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f"
+    }
+  ],
+  "inputs": [
+    {
+      "stage": "boundary",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_boundary.dat",
+      "bytes": 1283,
+      "sha256": "c34c518b5471c7b6ba9b1f02deb9ecb4040c275e1a36fe1cd10c2c79ed17c0e0"
+    },
+    {
+      "stage": "boundary_check",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_boundary_check.dat",
+      "bytes": 1289,
+      "sha256": "b132fab28a444686179205a12d8524ac0c1a9ccca773eeeed1092fa9a4cf07fb"
+    },
+    {
+      "stage": "control",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_control.dat",
+      "bytes": 1282,
+      "sha256": "f5928cbe113472600a84534b93b0649b053b55d50251cfd72c1a146c2adf598c"
+    },
+    {
+      "stage": "p4_bottom",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p4_bottom.dat",
+      "bytes": 1284,
+      "sha256": "c4eb150a6b2afc738425c630abdbe5083d16b00c4ca63ae0cdd5749412ab5112"
+    },
+    {
+      "stage": "p4_bottom_check",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p4_bottom_check.dat",
+      "bytes": 1290,
+      "sha256": "bc95ef30b6e24f61f6a5cb72f5e67cf959e7803f91f749e595d618de99f1f484"
+    },
+    {
+      "stage": "p4_top",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p4_top.dat",
+      "bytes": 1281,
+      "sha256": "64c897bf8b26b17eaf717965327834fafdde1462de943009722b3464301014ef"
+    },
+    {
+      "stage": "p4_top_check",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p4_top_check.dat",
+      "bytes": 1287,
+      "sha256": "d2f0c6b31c83f267c3c01ba13d57f2395013f67939f7ee99d63c2a679927574a"
+    },
+    {
+      "stage": "p6_bottom",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p6_bottom.dat",
+      "bytes": 1284,
+      "sha256": "bf544d37898d43f8ab1ae301e451c6be099c8f1d6c20e4088a2a74ff807ad3dd"
+    },
+    {
+      "stage": "p6_bottom_check",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p6_bottom_check.dat",
+      "bytes": 1290,
+      "sha256": "2ee730e83dcd65085e3f3a7dac670e8141682f3c1022e9edcea41c3cc258e167"
+    },
+    {
+      "stage": "p6_top",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p6_top.dat",
+      "bytes": 1281,
+      "sha256": "064d949c48a67f259a13671b7df2df92c0b2ab747fd735d512fff92710ddd1fb"
+    },
+    {
+      "stage": "p6_top_check",
+      "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/v26_w1_p6_top_check.dat",
+      "bytes": 1287,
+      "sha256": "1e1a031e89ec3c9d44d5e1071999ec04285f01c1f6ca309b5839143ac782b7a0"
+    }
+  ],
+  "tests": [
+    {
+      "name": "targeted_1",
+      "scope": "pure logic with explicitly stubbed Basix/direct-integral; no FE",
+      "counts": {
+        "tests": 81,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_sha": "UNCOMMITTED_INTERMEDIATE_SOURCE_NOT_RETAINED",
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 4.233924861997366,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 103972864,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "junit": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_1/junit.xml",
+        "bytes": 14638,
+        "sha256": "6b8f008418a49939f14dc4959281de4ffca1fe10cda077465e844abc31adac4c"
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_1/summary.json",
+        "bytes": 3600,
+        "sha256": "b88d2c8deb60fcf008d5f1a73a3213e1fb304a5677159fe3511b35572faecbe3"
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_1/admission.json",
+        "bytes": 261072,
+        "sha256": "195011f10e54dfb71bb27a43e7bd3ef22542e73af861c7803953fbc2e7f1e711"
+      },
+      "command": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_1/command.json",
+        "bytes": 1264,
+        "sha256": "c6f2e6ea1bf857fad931b80070ea7446c1e8df59128b0aa9fea11a4546743c32"
+      },
+      "worker_log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_1/supervision/worker.log",
+        "bytes": 4051,
+        "sha256": "92b4c7fb98efb065d9c6d3d96162a430163fa17a1b8f29668c14dfbc3c01daea"
+      }
+    },
+    {
+      "name": "targeted_2",
+      "scope": "pure logic with explicitly stubbed Basix/direct-integral; no FE",
+      "counts": {
+        "tests": 81,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_sha": "UNCOMMITTED_INTERMEDIATE_SOURCE_NOT_RETAINED",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 4.64175462606363,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 137330688,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "junit": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_2/junit.xml",
+        "bytes": 10960,
+        "sha256": "e3603cb1ec05ca1b823fa7beb2be594b60c8a198ee6d3e8cbcaf9134c9ce6162"
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_2/summary.json",
+        "bytes": 3593,
+        "sha256": "66593b3f42399b85b94c605a65e2f542b95414c0038cdb66b146b10ce35be40f"
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_2/admission.json",
+        "bytes": 261014,
+        "sha256": "2e248eec2805720a70aeff38de0f8454a147b99b92374a44436b28164afc8b00"
+      },
+      "command": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_2/command.json",
+        "bytes": 1620,
+        "sha256": "b07637598251c9ad63654914164f84e2683508b4605a03c6c8e82b092e344e7e"
+      },
+      "worker_log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_2/supervision/worker.log",
+        "bytes": 2268,
+        "sha256": "e68e85a0a9cc583990f577d02edc5a31b6bd8c14bc54c4ef1193216433d632ff"
+      }
+    },
+    {
+      "name": "targeted_final",
+      "scope": "pure logic with explicitly stubbed Basix/direct-integral; no FE",
+      "counts": {
+        "tests": 88,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_sha": "UNCOMMITTED_INTERMEDIATE_SOURCE_NOT_RETAINED",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 5.063199004158378,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 153104384,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "junit": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_final/junit.xml",
+        "bytes": 11910,
+        "sha256": "bffb99dcafcd86f096058244b4c7be2329380a8f755aeb6299e64b20ad99dd3c"
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_final/summary.json",
+        "bytes": 3584,
+        "sha256": "3baaa659bfc5bf34082a129a28d8cdb970445d8c94fc9ce02bfe132ef19ad6e7"
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_final/admission.json",
+        "bytes": 182504,
+        "sha256": "130f978daff3e5c76846546110a802322176e0895683516ab827b960ea86270a"
+      },
+      "command": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_final/command.json",
+        "bytes": 1624,
+        "sha256": "89120666e7191292bdfe2dec18d787242e50c4b91002c00b0822ddf331dcac6a"
+      },
+      "worker_log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/targeted_final/supervision/worker.log",
+        "bytes": 2273,
+        "sha256": "0764ac49a4b4177cfd17a2957936139c77335eff5e927cdf6f526f58eeec699e"
+      }
+    },
+    {
+      "name": "qualification",
+      "scope": "pure logic with explicitly stubbed Basix/direct-integral; no FE",
+      "counts": {
+        "tests": 92,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_sha": "6e0913810d42450eb0b899b46389b8b014bd8883",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 5.457588064018637,
+      "rss_hard_limit_bytes": 2147483648,
+      "sampled_process_tree_rss_peak_bytes": 153862144,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "junit": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/junit.xml",
+        "bytes": 12465,
+        "sha256": "750d85853680d22b1eabbaeb3cafd97f54329aa15916402ae5a07989918ef1d1"
+      },
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/summary.json",
+        "bytes": 3581,
+        "sha256": "ce185e12543e8aea17237099fff46505f6f456047d9e28d321600566522eb799"
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/admission.json",
+        "bytes": 182293,
+        "sha256": "0757224cde871d5b5bc326f78a45e8ea4c301dc5e23a4ca69db860b86296c170"
+      },
+      "command": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/command.json",
+        "bytes": 1623,
+        "sha256": "93389a14540a2ae1e1f6ed28f9d835694e1135a59b1a085bfff675b3ec2d91b0"
+      },
+      "worker_log": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/qualification/supervision/worker.log",
+        "bytes": 2272,
+        "sha256": "1272f15a3a6fed3e216c4b5b777f8c712544df1b0b8cc9123a47f8bbffde939f"
+      }
+    }
+  ],
+  "final_Ruff": "PASS",
+  "final_compileall": "PASS",
+  "full_pytest": "NOT_RUN",
+  "CI": "NOT_CLAIMED",
+  "repairs": [
+    {
+      "round": 1,
+      "failure": "targeted_1 failed only incident face-moment contraction: 2 tangential columns versus 3-vector traction",
+      "hypothesis": "FacetPolynomial emits tangential x/y only; the new incoming load passed all xyz traction entries",
+      "change": "contract every new physical/background load with traction[:2]; retain full vector for identity and curl",
+      "test": "same real helper/actual checker-writer-prerequisite fixtures; targeted_2 81 passed",
+      "retry": "new immutable test directory, prior failure preserved",
+      "affected_native_lifecycles": 0
+    }
+  ],
+  "formal_shared_repair_rounds_used": 1,
+  "formal_shared_repair_rounds_remaining": 1,
+  "scientific_fixes": [
+    "completed cleared supervision and raw/input/source/window evidence chain",
+    "actual qhat_alpha/affine RHS and full original/reduced trace/port recovery equations",
+    "finite NumPy JSON scalars; durable fsync/replace/reopen",
+    "actual centered/absolute integral, modal-alpha, B/D/H and adjoint pairing",
+    "fixed 1degree/phi0/s incident port RHS and flat air/Si background boundary witness",
+    "saved oracle values/Decimal strings and scope recomputed, not PASS tags",
+    "own swap stopping with system swap diagnostic only; control shares 7200s"
+  ],
+  "minimal_export_overlay": {
+    "baseline_path": "src/solvers/task40_w1_local_probe.py",
+    "baseline_sha256": "fceca9d001a536cffc5b84870c4ef05e5d1395028badbae4276d26b765ec2d74",
+    "preview": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/export_preview.py",
+      "bytes": 31327,
+      "sha256": "a2bb670a9b14e1509859651e699aa90ce8cebdec487bdbba6c2b9de7320dd9ae"
+    },
+    "delta": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/exports_only.diff",
+      "bytes": 3095,
+      "sha256": "76c0a386dbfa4625efced7eb3681830acef78977963a003a10250ae55d7d96e1"
+    },
+    "original_lu_solve_call_sites": 5,
+    "patched_lu_solve_call_sites": 5,
+    "extra_factor_solve_quadrature_calls": 0,
+    "preview_scope": "AST/exports-only preview, not a native execution; immutable snapshot not edited"
+  },
+  "B": {
+    "status": "NOT_STARTED_INPUT_UNAVAILABLE",
+    "B_window_created": false,
+    "native_worker_started": false,
+    "fresh_W1_ABI": "NOT_RUN",
+    "full_32060_q60": "NOT_RUN",
+    "physical_RHS_native": "NOT_RUN",
+    "p4_top_bottom_p6_top_bottom": "NOT_RUN",
+    "whole_target_MPC": "NOT_RUN",
+    "new_global_factor_solve_Gram_NN": 0,
+    "scope": "real original manifest/ledger still absent per Review V25; no repeat path scan or fabricated URL"
+  },
+  "resources": {
+    "A_T0_utc": "2026-10-04T19:00:40+00:00",
+    "A_deadline_utc": "2026-10-04T20:00:40+00:00",
+    "receipt_utc": "2026-10-04T19:30:53.647190+00:00",
+    "A_elapsed_through_this_receipt_seconds": 1813.64719,
+    "complete_A_final_tail": "see ignored A_delivery_receipt.json; includes publish/check/cleanup tail",
+    "sum_supervised_test_seconds": 19.39646655623801,
+    "test_sampled_tree_RSS_peak_bytes": 153862144,
+    "own_swap_peak_bytes": 0,
+    "OOC_bytes": 0,
+    "math_threads": 1,
+    "CPU": "actual per-run audited physical core in admission receipts",
+    "limit_kind": "sampled tree/envelope supervision, not continuous kernel/cgroup bound",
+    "A_limit_seconds": 3600,
+    "B_limit_seconds": 10800,
+    "B_numeric_checker_limit_seconds": 7200,
+    "B_tail_reserve_seconds": 1800,
+    "between_A_B_wait": "NOT_STARTED; real calendar interval to be charged separately on input arrival",
+    "previous_V25_execution_seconds": 2846.101466,
+    "project_exact_cumulative": "UNKNOWN",
+    "old_lost_3284_seconds": "PRESERVED"
+  },
+  "history_preserved": [
+    "M3600 better/Mfinal degeneration",
+    "D0 cost veto/D1 not run",
+    "all old failure/UNKNOWN/costs",
+    "old q30/q60 W1 numerical negative and V25 native not run"
+  ],
+  "status_boundaries": [
+    "FEINN_MAIN_SOLVER_ON_HOLD",
+    "NO_VERIFIED_NN_INCREMENT",
+    "FULL_TARGET_NOT_QUALIFIED"
+  ],
+  "final_target": "original 50x25x140 nm, Si17/120 nm, lambda0.7, full 3D FE; decimal2e12B; ownswap/OOC0; continuous172800s; original accuracy gates",
+  "response_v26": "DEFERRED_UNTIL_PACKAGE_CLOSEOUT_OR_NEW_SUBSTANTIVE_FAILURE_PER_REVIEW_V25",
+  "review_notification": "NOT_SENT_A_ONLY_WAITING_EXTERNAL_CHANGE"
+}
