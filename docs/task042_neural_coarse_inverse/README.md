@@ -1,3 +1,19 @@
+# Task042 V46最新交付：同一成本消费与引擎拒绝
+
+先确认算对，再比较从准备到审核的一次完整费用；unknown不能当0。本轮只修费用/身份决策，没有新PDE、模型推理或训练。原尺寸0.7nm完整解、2TB/48h和NN20仍未资格。
+
+| 对象 | 新决定／事实 | 证据 |
+|---|---|---|
+| R0/CL44/LIN-H/NN-L/NN-H | 历史完整均0/8，性能准入拒绝；NN-L/H选零修正 | [证据](response_v46.md) |
+| 冷N=1选择器 | 实际timing接统一九阶段费用；CL44继承493.748953s准备/训练，不重复旧在线；unknown→拒绝 | [证据](outcomes/records/cold_n1_cost_contract_v46.json) |
+| dot快照7f03a48d | 仅7/135缩尺q0组件，不是完整同物理引擎 | [证据](outcomes/records/engine_matching_v46.json) |
+| 原尺寸关键路径 | 完整引擎/正确性/冷成本→不同学习对象必要机会→fresh资格，依赖关闭 | [证据](outcomes/records/critical_path_v46.json) |
+| 下一步 | 仅有实质完整引擎或独立新学习对象/可核算20%机会才另立合同；不安排纯FE演示/同A微调 | [证据](outcomes/neural_deployment_decision_v46.md) |
+
+以下历史全文逐字保留。
+
+<!-- V46-LATEST-END -->
+
 # 当前审阅入口：Review V43 / 下一执行 V46
 
 [Review V43](review_report_v43.md)独立审阅V45交付`09a165a157cdb8291b290a43923c4429c5ca9ee0`：完整矩分层机制与3×128真实训练成立，但五路线完整资格均0/8，两神经模型由validation选回零输出。关闭此次固定A全矩分层资格；原尺寸0.7nm完整前向解、2TB／48h及同正确性NN20%仍未达成。

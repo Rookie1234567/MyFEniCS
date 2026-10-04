@@ -1,0 +1,32 @@
+{
+  "retained_failures": [
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_001",
+      "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "manifest_sha256": "8ba79273e70d61902a28772bb9ce28de5e5d285b5dfaf4ad5c9008d46c2626e6",
+      "summary_sha256": "0f39a779efa3686dfe64fe5ec1e664726081470c4c226f439c0ef58fa25b17f6",
+      "classification": "WORKER_FAILED",
+      "elapsed_seconds": 2.3047601499129087,
+      "launch_wall_seconds": 4.712309621041641,
+      "exit_code": 1,
+      "descendants_cleared": true
+    }
+  ],
+  "correction": "initial planned Ruff findings fixed locally, no numeric replay; final pure scope regression includes measured launcher/probe non-duplication",
+  "nonfatal_warning": "delivery helper initially warned about math escape; output bytes correct, executed source retained",
+  "numeric_failures_replayed": 0,
+  "metadata_inventory_bug": {
+    "exit_code": 1,
+    "classification": "FINAL_METADATA_INVENTORY_BUG",
+    "failed_source_sha256": "eefcb43857aff097087e7a4e59e6743086fd8c21d5dc89c4f41649419ab18c1e",
+    "source_sha": "109ad48d4625c1158cd70ce8d30605f2127de150",
+    "numerical_actions": 0,
+    "ledger_already_closed": true,
+    "fix": "filter tracked pre-existing M/D/R docs, not new A snapshot",
+    "stderr_capture": "transcribed from actual tool stderr; original command had no file redirection",
+    "stderr_sha256": "8097915a827c4f8d2ac0d8bcb77354d0d74abcca7bec9a801a59956af4860720"
+  },
+  "metadata_inventory_fixed": true,
+  "closed_ledger_reopened": false
+}

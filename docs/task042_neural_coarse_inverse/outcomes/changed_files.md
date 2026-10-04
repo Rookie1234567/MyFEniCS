@@ -1,3 +1,11 @@
+# V46改动及选择性合入
+
+费用/身份纯核心进入src/solvers，实际FullMomentStudy.timing和冻结scope消费统一函数；通用runner新增v46预算/live guard。参数化纯标量决策CLI、25相关测试和最小资格入口复用既有监督。输入只冻小metadata/hash，dot只读一次compact；无模型/算子数值修改、无新PDE。文档与关键路径、最终stdout新版本见[manifest](records/selective_merge_manifest_v46.json)。研究-only、merge_approval=false；旧task/review/response/raw与各历史closed保持。
+
+以下历史逐字保留。
+
+<!-- V46-LATEST-END -->
+
 # Task042 V45最新交付：完整矩分层NN与配对终测
 
 让实体保留全部实虚矩并传递远处残差信息；同信息线性和局部消融辨别贡献。三模型各128真实更新，validation拒绝非零NN head，完整资格与原尺寸/NN20仍未达成。

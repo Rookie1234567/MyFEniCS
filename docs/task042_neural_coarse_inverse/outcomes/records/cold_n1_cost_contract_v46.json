@@ -1,0 +1,1879 @@
+{
+  "routes": {
+    "R0": {
+      "route": "R0",
+      "boundary": "cold_N1_complete_lifecycle",
+      "terms": [
+        {
+          "phase": "data_teacher",
+          "value": 0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:data_teacher",
+          "consumed_object": "R0:frozen_current_data_teacher",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": 32.08623642195016,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:setup",
+          "consumed_object": "R0:frozen_current_setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "training",
+          "value": 0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:training",
+          "consumed_object": "R0:frozen_current_training",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "loading",
+          "value": 16.756025694776326,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:loading",
+          "consumed_object": "R0:frozen_current_loading",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "common_prefix",
+          "value": 14.822643908613827,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:common_prefix",
+          "consumed_object": "R0:frozen_current_common_prefix",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "inference",
+          "value": 8.305246592499316e-05,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:inference",
+          "consumed_object": "R0:frozen_current_inference",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "post_cleanup",
+          "value": 17.476470843801508,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:post_cleanup",
+          "consumed_object": "R0:frozen_current_post_cleanup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "audit_io",
+          "value": 43.54828201700002,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:audit_io",
+          "consumed_object": "R0:frozen_current_audit_io",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "failures",
+          "value": 0.0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:current:failures",
+          "consumed_object": "R0:frozen_current_failures",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:original FE/CSR cold setup",
+          "consumed_object": "R0:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:manual implementation",
+          "consumed_object": "R0:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:unsupervised Git/IO",
+          "consumed_object": "R0:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "R0:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:full physical validation",
+          "consumed_object": "R0:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:failure_attribution",
+          "consumed_object": "R0:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "scope": "frozen failed finite-A diagnostic; not qualified target baseline"
+    },
+    "CL44": {
+      "route": "CL44",
+      "boundary": "cold_N1_complete_lifecycle",
+      "terms": [
+        {
+          "phase": "data_teacher",
+          "value": 0.0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:data_teacher",
+          "consumed_object": "CL44:frozen_current_data_teacher",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": 32.08623642195016,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:setup",
+          "consumed_object": "CL44:frozen_current_setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "training",
+          "value": 0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:training",
+          "consumed_object": "CL44:frozen_current_training",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "loading",
+          "value": 16.916005830047652,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:loading",
+          "consumed_object": "CL44:frozen_current_loading",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "common_prefix",
+          "value": 14.822643908613827,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:common_prefix",
+          "consumed_object": "CL44:frozen_current_common_prefix",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "inference",
+          "value": 0.019818041939288378,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:inference",
+          "consumed_object": "CL44:frozen_current_inference",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "post_cleanup",
+          "value": 18.086649191158358,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:post_cleanup",
+          "consumed_object": "CL44:frozen_current_post_cleanup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "audit_io",
+          "value": 43.54828201700002,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:audit_io",
+          "consumed_object": "CL44:frozen_current_audit_io",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "failures",
+          "value": 0.0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:current:failures",
+          "consumed_object": "CL44:frozen_current_failures",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "data_teacher",
+          "value": 317.5761947168503,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:inherited:data_teacher",
+          "consumed_object": "V44:CL-E:data_teacher",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+            "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d",
+            "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+            "bytes": 67904
+          },
+          "semantics": "only old consumed preparation/training, excludes old online/loading/CHECK"
+        },
+        {
+          "phase": "setup",
+          "value": 42.301467596087605,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:inherited:setup",
+          "consumed_object": "V44:CL-E:setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+            "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d",
+            "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+            "bytes": 67904
+          },
+          "semantics": "only old consumed preparation/training, excludes old online/loading/CHECK"
+        },
+        {
+          "phase": "training",
+          "value": 133.8712910329923,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:inherited:training",
+          "consumed_object": "V44:CL-E:training",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+            "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d",
+            "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+            "bytes": 67904
+          },
+          "semantics": "only old consumed preparation/training, excludes old online/loading/CHECK"
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:original FE/CSR cold setup",
+          "consumed_object": "CL44:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:manual implementation",
+          "consumed_object": "CL44:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:unsupervised Git/IO",
+          "consumed_object": "CL44:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "CL44:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:full physical validation",
+          "consumed_object": "CL44:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:failure_attribution",
+          "consumed_object": "CL44:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "scope": "frozen failed finite-A diagnostic; not qualified target baseline"
+    },
+    "LIN-H": {
+      "route": "LIN-H",
+      "boundary": "cold_N1_complete_lifecycle",
+      "terms": [
+        {
+          "phase": "data_teacher",
+          "value": 339.4128620910924,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:data_teacher",
+          "consumed_object": "LIN-H:frozen_current_data_teacher",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": 59.1763365380466,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:setup",
+          "consumed_object": "LIN-H:frozen_current_setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "training",
+          "value": 210.16631410317495,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:training",
+          "consumed_object": "LIN-H:frozen_current_training",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "loading",
+          "value": 16.712690936634317,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:loading",
+          "consumed_object": "LIN-H:frozen_current_loading",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "common_prefix",
+          "value": 14.822643908613827,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:common_prefix",
+          "consumed_object": "LIN-H:frozen_current_common_prefix",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "inference",
+          "value": 0.0330667040834669,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:inference",
+          "consumed_object": "LIN-H:frozen_current_inference",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "post_cleanup",
+          "value": 17.65139857752365,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:post_cleanup",
+          "consumed_object": "LIN-H:frozen_current_post_cleanup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "audit_io",
+          "value": 43.54828201700002,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:audit_io",
+          "consumed_object": "LIN-H:frozen_current_audit_io",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "failures",
+          "value": 0.0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:current:failures",
+          "consumed_object": "LIN-H:frozen_current_failures",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:original FE/CSR cold setup",
+          "consumed_object": "LIN-H:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:manual implementation",
+          "consumed_object": "LIN-H:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:unsupervised Git/IO",
+          "consumed_object": "LIN-H:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "LIN-H:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:full physical validation",
+          "consumed_object": "LIN-H:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:failure_attribution",
+          "consumed_object": "LIN-H:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "scope": "frozen failed finite-A diagnostic; not qualified target baseline"
+    },
+    "NN-L": {
+      "route": "NN-L",
+      "boundary": "cold_N1_complete_lifecycle",
+      "terms": [
+        {
+          "phase": "data_teacher",
+          "value": 339.4128620910924,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:data_teacher",
+          "consumed_object": "NN-L:frozen_current_data_teacher",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": 59.1763365380466,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:setup",
+          "consumed_object": "NN-L:frozen_current_setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "training",
+          "value": 205.76211124798283,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:training",
+          "consumed_object": "NN-L:frozen_current_training",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "loading",
+          "value": 17.000450105872005,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:loading",
+          "consumed_object": "NN-L:frozen_current_loading",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "common_prefix",
+          "value": 14.822643908613827,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:common_prefix",
+          "consumed_object": "NN-L:frozen_current_common_prefix",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "inference",
+          "value": 0.029155308700865135,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:inference",
+          "consumed_object": "NN-L:frozen_current_inference",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "post_cleanup",
+          "value": 16.426016817451455,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:post_cleanup",
+          "consumed_object": "NN-L:frozen_current_post_cleanup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "audit_io",
+          "value": 43.54828201700002,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:audit_io",
+          "consumed_object": "NN-L:frozen_current_audit_io",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "failures",
+          "value": 0.0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:current:failures",
+          "consumed_object": "NN-L:frozen_current_failures",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:original FE/CSR cold setup",
+          "consumed_object": "NN-L:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:manual implementation",
+          "consumed_object": "NN-L:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:unsupervised Git/IO",
+          "consumed_object": "NN-L:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "NN-L:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:full physical validation",
+          "consumed_object": "NN-L:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:failure_attribution",
+          "consumed_object": "NN-L:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "scope": "frozen failed finite-A diagnostic; not qualified target baseline"
+    },
+    "NN-H": {
+      "route": "NN-H",
+      "boundary": "cold_N1_complete_lifecycle",
+      "terms": [
+        {
+          "phase": "data_teacher",
+          "value": 339.4128620910924,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:data_teacher",
+          "consumed_object": "NN-H:frozen_current_data_teacher",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": 59.1763365380466,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:setup",
+          "consumed_object": "NN-H:frozen_current_setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "training",
+          "value": 210.8860348870512,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:training",
+          "consumed_object": "NN-H:frozen_current_training",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "loading",
+          "value": 17.05663555767387,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:loading",
+          "consumed_object": "NN-H:frozen_current_loading",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "common_prefix",
+          "value": 14.822643908613827,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:common_prefix",
+          "consumed_object": "NN-H:frozen_current_common_prefix",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "inference",
+          "value": 0.02591159226722084,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:inference",
+          "consumed_object": "NN-H:frozen_current_inference",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "post_cleanup",
+          "value": 17.6944368207769,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:post_cleanup",
+          "consumed_object": "NN-H:frozen_current_post_cleanup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "audit_io",
+          "value": 43.54828201700002,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:audit_io",
+          "consumed_object": "NN-H:frozen_current_audit_io",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "failures",
+          "value": 0.0,
+          "unit": "s",
+          "classification": "derived",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:current:failures",
+          "consumed_object": "NN-H:frozen_current_failures",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "published conservative single-candidate allocation; not measured complete cold N1"
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:original FE/CSR cold setup",
+          "consumed_object": "NN-H:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:manual implementation",
+          "consumed_object": "NN-H:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:unsupervised Git/IO",
+          "consumed_object": "NN-H:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "NN-H:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:full physical validation",
+          "consumed_object": "NN-H:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:failure_attribution",
+          "consumed_object": "NN-H:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "scope": "frozen failed finite-A diagnostic; not qualified target baseline"
+    }
+  },
+  "correctness": {
+    "R0": 0,
+    "CL44": 0,
+    "LIN-H": 0,
+    "NN-L": 0,
+    "NN-H": 0
+  },
+  "selector": {
+    "status": "NO_ALL_EIGHT_CORRECT_ROUTE",
+    "selected": null,
+    "eligible": [],
+    "NN20": "NOT_QUALIFIED"
+  },
+  "summaries": {
+    "R0": {
+      "known_lower_seconds": 124.68974193860777,
+      "complete_seconds": null,
+      "unknown_terms": [
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:original FE/CSR cold setup",
+          "consumed_object": "R0:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:manual implementation",
+          "consumed_object": "R0:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:unsupervised Git/IO",
+          "consumed_object": "R0:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "R0:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:full physical validation",
+          "consumed_object": "R0:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "R0:unknown:failure_attribution",
+          "consumed_object": "R0:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "boundary": "cold_N1_complete_lifecycle"
+    },
+    "CL44": {
+      "known_lower_seconds": 619.2285887566395,
+      "complete_seconds": null,
+      "unknown_terms": [
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:original FE/CSR cold setup",
+          "consumed_object": "CL44:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:manual implementation",
+          "consumed_object": "CL44:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:unsupervised Git/IO",
+          "consumed_object": "CL44:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "CL44:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:full physical validation",
+          "consumed_object": "CL44:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "CL44:unknown:failure_attribution",
+          "consumed_object": "CL44:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "boundary": "cold_N1_complete_lifecycle"
+    },
+    "LIN-H": {
+      "known_lower_seconds": 701.5235948761692,
+      "complete_seconds": null,
+      "unknown_terms": [
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:original FE/CSR cold setup",
+          "consumed_object": "LIN-H:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:manual implementation",
+          "consumed_object": "LIN-H:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:unsupervised Git/IO",
+          "consumed_object": "LIN-H:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "LIN-H:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:full physical validation",
+          "consumed_object": "LIN-H:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "LIN-H:unknown:failure_attribution",
+          "consumed_object": "LIN-H:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "boundary": "cold_N1_complete_lifecycle"
+    },
+    "NN-L": {
+      "known_lower_seconds": 696.17785803476,
+      "complete_seconds": null,
+      "unknown_terms": [
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:original FE/CSR cold setup",
+          "consumed_object": "NN-L:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:manual implementation",
+          "consumed_object": "NN-L:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:unsupervised Git/IO",
+          "consumed_object": "NN-L:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "NN-L:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:full physical validation",
+          "consumed_object": "NN-L:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-L:unknown:failure_attribution",
+          "consumed_object": "NN-L:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "boundary": "cold_N1_complete_lifecycle"
+    },
+    "NN-H": {
+      "known_lower_seconds": 702.623143412522,
+      "complete_seconds": null,
+      "unknown_terms": [
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:original FE/CSR cold setup",
+          "consumed_object": "NN-H:original FE/CSR cold setup",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "original FE/CSR cold setup",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "setup",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:manual implementation",
+          "consumed_object": "NN-H:manual implementation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "manual implementation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:unsupervised Git/IO",
+          "consumed_object": "NN-H:unsupervised Git/IO",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "unsupervised Git/IO",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "data_teacher",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:fresh unseen RHS preparation/load",
+          "consumed_object": "NN-H:fresh unseen RHS preparation/load",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "fresh unseen RHS preparation/load",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "audit_io",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:full physical validation",
+          "consumed_object": "NN-H:full physical validation",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "full physical validation",
+          "common_unknown_proof": null
+        },
+        {
+          "phase": "failures",
+          "value": null,
+          "unit": "s",
+          "classification": "unknown",
+          "boundary": "cold_N1_complete_lifecycle",
+          "consumption_id": "NN-H:unknown:failure_attribution",
+          "consumed_object": "NN-H:unallocated_historical_failure_replays",
+          "evidence": {
+            "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+            "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+            "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+            "bytes": 76747
+          },
+          "semantics": "known scenario has no separate failure allocation; complete per-candidate historical failure cost is unknown, not zero",
+          "common_unknown_proof": null
+        }
+      ],
+      "boundary": "cold_N1_complete_lifecycle"
+    }
+  },
+  "all_model_research_total_separate": true,
+  "numeric_actions": 0
+}

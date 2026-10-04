@@ -1,0 +1,23 @@
+{
+  "target_time": {
+    "status": "UNKNOWN",
+    "minimum_variable_seconds": null,
+    "NN20": "NOT_QUALIFIED"
+  },
+  "selected_zero_correction": {
+    "fraction": 0,
+    "classification": "derived_from_frozen_zero_decoder",
+    "saving_identity": "f*V-H=-H<=0 for H>=0; no numerical work removed",
+    "target_costs": "unknown; no unit placeholder is a measured second",
+    "NN20": "NOT_DEMONSTRATED"
+  },
+  "selected_zero_semantics": "f=0 only for the frozen zero decoder; no numerical speedup from run-order noise",
+  "target_memory": {
+    "status": "UNKNOWN",
+    "NN20": "NOT_QUALIFIED",
+    "baseline_peak_bytes": null,
+    "neural_peak_bytes": null
+  },
+  "time_formula": "f*V-H >= .2*(C+U+V); necessary V >= .2*T_B+H; unknown common cost stays in percentage denominator",
+  "memory_formula": "M_N <= .8*M_B AND complete time <=172800s; simultaneous live objects, not archive bytes"
+}

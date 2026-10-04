@@ -1,0 +1,571 @@
+{
+  "status": "NO_MATCHED_QUALIFIED_ENGINE",
+  "accepted": false,
+  "rows": [
+    {
+      "layer": "physics",
+      "field": "unit",
+      "required": "nm",
+      "offered": "nm",
+      "passed": true,
+      "reason": "MATCH"
+    },
+    {
+      "layer": "physics",
+      "field": "scale",
+      "required": "1",
+      "offered": "7/135",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "period_nm",
+      "required": [
+        "50",
+        "25"
+      ],
+      "offered": "scaled C1, exact compact geometry not supplied",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "z_extent_nm",
+      "required": [
+        "-10",
+        "130"
+      ],
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "Si_block_width_height_nm",
+      "required": [
+        "17",
+        "25",
+        "120"
+      ],
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "nonseparable_3D_capable",
+      "required": true,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "wavelength_nm",
+      "required": "0.7",
+      "offered": "0.7",
+      "passed": true,
+      "reason": "MATCH"
+    },
+    {
+      "layer": "physics",
+      "field": "source_wavelength_nm",
+      "required": "0.699999988",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "material_table_id",
+      "required": "SI_OPTICAL_CONSTANTS_USER_20260929_V1",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "material_table_hash",
+      "required": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "offered": "unknown",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "Si_n",
+      "required": [
+        "0.999885140474",
+        "0.00000432477054"
+      ],
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "Si_epsilon",
+      "required": [
+        "0.9997702941220070727210241084",
+        "0.00000864854759781143367192"
+      ],
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "time_convention",
+      "required": "exp(-i omega t)",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "grazing_degrees",
+      "required": "1",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "azimuth_degrees",
+      "required": "0",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "polarization",
+      "required": "s",
+      "offered": "unknown",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "k_parallel_definition",
+      "required": "k0*cos(grazing)*(cos(phi),sin(phi))",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "periodic_axes",
+      "required": [
+        "x",
+        "y"
+      ],
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "physics",
+      "field": "exterior",
+      "required": "complete layered-background Fourier-DtN",
+      "offered": "selected q0 sector component",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "family",
+      "required": "Nedelec first kind hexahedron",
+      "offered": "Nedelec hexahedron",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "degree",
+      "required": 6,
+      "offered": 6,
+      "passed": true,
+      "reason": "MATCH"
+    },
+    {
+      "layer": "discretization",
+      "field": "target_cells",
+      "required": 530856,
+      "offered": 80,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "h_nm_upper",
+      "required": "0.7",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "quadrature_independently_qualified",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "native_canonical_dual_MPC_owner_complete",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "canonical_map_hash",
+      "required": null,
+      "offered": "q0 bridge only",
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "orientation_hash",
+      "required": null,
+      "offered": null,
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "owner_hash",
+      "required": null,
+      "offered": null,
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "full_high_order_basis_qualified",
+      "required": true,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "Nedelec_version_hash",
+      "required": null,
+      "offered": null,
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "discretization",
+      "field": "mesh_discretization_hash",
+      "required": null,
+      "offered": null,
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "problem",
+      "field": "rhs_kind",
+      "required": "physical volume+port with nonzero interior particular solution",
+      "offered": "manufactured local/port witnesses",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "full_PDE_solved",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "full_A",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "full_AH",
+      "required": true,
+      "offered": "unknown",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "complete_DtN",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "ordered_port_count",
+      "required": 32060,
+      "offered": 532,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "ordered_port_hash",
+      "required": null,
+      "offered": "full532 manifest present but q0 only qualified",
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "problem",
+      "field": "all_quotients_complete",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "problem",
+      "field": "normalization_hash",
+      "required": null,
+      "offered": "unknown",
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "problem",
+      "field": "original_true_residual_semantics",
+      "required": "full original volume+port equations with affine recovery",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "full_true_residual",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "full_field_curl_complex_channels",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "all_channel_power_energy",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "nonzero_interior_port_recovery",
+      "required": true,
+      "offered": "local q0 cached witness only",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "h_p_mode_accuracy",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "rho_limit",
+      "required": 1e-06,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "field_channel_limit",
+      "required": 0.0001,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "R_T_A_volume_limit",
+      "required": 1e-05,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "per_channel_power_limit",
+      "required": 1e-06,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "correctness",
+      "field": "energy_limit",
+      "required": 1e-05,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "source_sha",
+      "required": null,
+      "offered": "39c5052476d48eb5d53870d80418e21c969980d8",
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "ABI_hash",
+      "required": null,
+      "offered": "unknown",
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "complex_dtype",
+      "required": "complex128",
+      "offered": "complex128",
+      "passed": true,
+      "reason": "MATCH"
+    },
+    {
+      "layer": "engineering",
+      "field": "thread_policy",
+      "required": "one math thread per qualified actor",
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "payload_consumable",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "public_restore_command_verified",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "cold_N1_cost_complete",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "simultaneous_peak_measured",
+      "required": true,
+      "offered": "component only",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "full_time_at_most_seconds",
+      "required": 172800,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "full_tree_peak_at_most_bytes",
+      "required": 2000000000000,
+      "offered": null,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "MPI_size",
+      "required": null,
+      "offered": null,
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "engineering",
+      "field": "runtime_manifest_hash",
+      "required": null,
+      "offered": null,
+      "passed": false,
+      "reason": "UNRESOLVED_REQUIREMENT"
+    },
+    {
+      "layer": "neural",
+      "field": "complete_residual_and_adjoint_interface",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "neural",
+      "field": "predict_input_output_order_bound",
+      "required": true,
+      "offered": false,
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "neural",
+      "field": "heldout_sealed_from_training",
+      "required": true,
+      "offered": "not applicable to dot component",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    },
+    {
+      "layer": "neural",
+      "field": "original_equation_auditor_available",
+      "required": true,
+      "offered": "finite q0 cached; full target unknown",
+      "passed": false,
+      "reason": "MISSING_OR_DIFFERENT"
+    }
+  ],
+  "layer_pass": {
+    "physics": false,
+    "discretization": false,
+    "problem": false,
+    "correctness": false,
+    "engineering": false,
+    "neural": false
+  },
+  "numeric_actions": 0,
+  "solver_qualification_granted": false
+}

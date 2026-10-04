@@ -1,0 +1,135 @@
+{
+  "pure_final": "COMPLETED",
+  "pure_final_test_count": 26,
+  "pure_passed": 25,
+  "ML_fixture_skipped_in_pure": 1,
+  "ML_isolated_test_count": 1,
+  "ML_isolated_result": "PASS",
+  "ML_no_model_instantiation_or_forward": true,
+  "pure_stdout_archive_source": "tmp/task042/v46/aux_WINDOW_001/supervision/worker.log",
+  "ML_stdout_archive_source": "tmp/task042/v46/aux_QUALIFY_003/command1.stderr",
+  "Ruff_compile_final": {
+    "status": "PASSED",
+    "commands": [
+      {
+        "command": [
+          "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+          "check",
+          "--select",
+          "C408",
+          "--fix",
+          "--unsafe-fixes",
+          "src/solvers/neural_deployment_cost.py",
+          "src/solvers/neural_engine_contract.py",
+          "src/solvers/neural_decision_scope.py",
+          "src/solvers/full_moment_study.py",
+          "src/solvers/full_moment_scope.py",
+          "src/runners/port_preparation.py",
+          "benchmarks/neural_deployment_decision.py",
+          "src/test/test_neural_deployment_decision.py",
+          "benchmarks/qualify_neural_deployment.py"
+        ],
+        "returncode": 0
+      },
+      {
+        "command": [
+          "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+          "check",
+          "--fix",
+          "src/solvers/neural_deployment_cost.py",
+          "src/solvers/neural_engine_contract.py",
+          "src/solvers/neural_decision_scope.py",
+          "src/solvers/full_moment_study.py",
+          "src/solvers/full_moment_scope.py",
+          "src/runners/port_preparation.py",
+          "benchmarks/neural_deployment_decision.py",
+          "src/test/test_neural_deployment_decision.py",
+          "benchmarks/qualify_neural_deployment.py"
+        ],
+        "returncode": 0
+      },
+      {
+        "command": [
+          "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+          "format",
+          "src/solvers/neural_deployment_cost.py",
+          "src/solvers/neural_engine_contract.py",
+          "src/solvers/neural_decision_scope.py",
+          "src/solvers/full_moment_study.py",
+          "src/solvers/full_moment_scope.py",
+          "src/runners/port_preparation.py",
+          "benchmarks/neural_deployment_decision.py",
+          "src/test/test_neural_deployment_decision.py",
+          "benchmarks/qualify_neural_deployment.py"
+        ],
+        "returncode": 0
+      },
+      {
+        "command": [
+          "/home/fenics/.cache/uv/archive-v0/hnQ1fNWmbidp7eU4/ruff-0.16.6.data/scripts/ruff",
+          "check",
+          "src/solvers/neural_deployment_cost.py",
+          "src/solvers/neural_engine_contract.py",
+          "src/solvers/neural_decision_scope.py",
+          "src/solvers/full_moment_study.py",
+          "src/solvers/full_moment_scope.py",
+          "src/runners/port_preparation.py",
+          "benchmarks/neural_deployment_decision.py",
+          "src/test/test_neural_deployment_decision.py",
+          "benchmarks/qualify_neural_deployment.py"
+        ],
+        "returncode": 0
+      }
+    ],
+    "numeric_actions": 0,
+    "implementation_hashes": {
+      "src/solvers/neural_deployment_cost.py": "77fdaf6bc63669ce124edaa73fa5266ce3c73f65358c2cf2da7e50896a4a14f8",
+      "src/solvers/neural_engine_contract.py": "36d686fb00ade2b754b7487875b4eb9c240c6307304305a1eb90f7706c4b4c50",
+      "src/solvers/neural_decision_scope.py": "2efd39d1f0bffcd81f226229d0de6795e8748c53863eb147190d0204ff54d5e4",
+      "src/solvers/full_moment_study.py": "a780cd725b4e901d9c85b3c98db1c2848ca3887ddbd75744b09fb3d799a91536",
+      "src/solvers/full_moment_scope.py": "5dde724aeb5820779c257e4d545a2efade25ac6d932b6f22163f2ab4b1f98f3b",
+      "src/runners/port_preparation.py": "1c54a86d08364033011960bff8c569447041413da7cc74862f8e0e3201055710",
+      "benchmarks/neural_deployment_decision.py": "f28240ebf1297e13503d39467690ce8a150a0ab3d952e4fe4e18f347c9a452b6",
+      "src/test/test_neural_deployment_decision.py": "74dc6fef71bf298adea73abe1afd9f7d6cf434d6679cc0a6273591ea7818c53e",
+      "benchmarks/qualify_neural_deployment.py": "04ac26f57d88781146398f60e414480f43e8a0fcec10aeb7cb4c3f77a2503db4",
+      "input/task042_neural_coarse_inverse/neural_deployment_v46.json": "7cd38fef72a6f8581b777d62976e02bbf63c13667b6fcd89176e114e1815dd36"
+    }
+  },
+  "documentation_count": 15,
+  "documentation": {
+    "status": "PASSED",
+    "documentation_count": 15,
+    "returncode": 0,
+    "structures": [
+      {
+        "path": "docs/task042_neural_coarse_inverse/review_report_v43.md",
+        "tables": 8,
+        "links": 20,
+        "math_fences": 1,
+        "local_structure": "PASS"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/response_v46.md",
+        "tables": 1,
+        "links": 12,
+        "math_fences": 0,
+        "local_structure": "PASS"
+      },
+      {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/neural_deployment_decision_v46.md",
+        "tables": 5,
+        "links": 9,
+        "math_fences": 1,
+        "local_structure": "PASS"
+      }
+    ],
+    "github_exact_url": "https://github.com/Rookie1234567/MyFEniCS/blob/0217f004a38f109a6253923f83a9a24b19d85362/docs/task042_neural_coarse_inverse/review_report_v43.md",
+    "github_visual": "NOT_VERIFIED",
+    "fetch_result": "web open Cache miss; no screenshot evidence",
+    "CI_claimed": false,
+    "numeric_actions": 0
+  },
+  "CI_claimed": false,
+  "old62_learning_tests_repeated": false,
+  "new_numeric_actions": 0
+}

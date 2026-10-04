@@ -1,0 +1,153 @@
+{
+  "schema": "task042.v46.critical-path",
+  "status": "DEPENDENCY_CLOSED_NO_MATCHED_QUALIFIED_ENGINE",
+  "source_sha": "4c40128d100860e24a5f50e220361c26bd1180b9",
+  "old_numerical_source": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "target": "original 50x25nm, z=-10..130nm, 17x25x120nm Si block, lambda0.7nm, full3D",
+  "limits": {
+    "complete_seconds": 172800,
+    "simultaneous_tree_peak_bytes": 2000000000000,
+    "neural_minimum_improvement": 0.2
+  },
+  "evidence": {
+    "cost": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+      "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 76747
+    },
+    "comparison": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_candidate_comparison_v45.json",
+      "sha256": "6f80043897367b89898c8a9d88f1f526dd3155c12e294c13c2c7f32626fa63e5",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 352421
+    },
+    "checker": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_heldout_checker_v45.json",
+      "sha256": "a165551b3ea8b1744142cd6d5e3d0d831d91954dae708ae3ae01c29c112aa512",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 113451
+    },
+    "inherited_cost": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+      "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d",
+      "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+      "bytes": 67904
+    },
+    "readiness": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+      "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 5204
+    },
+    "review_checks": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+      "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+      "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "bytes": 95817
+    },
+    "dot_compact": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/dot_compact_snapshot_v46.json",
+      "sha256": "fd9bb9f2e77c64a8adbe8bc5b04ad1afd35a7e0c8419eac68ba06065e632ace3",
+      "source_sha": "39c5052476d48eb5d53870d80418e21c969980d8",
+      "bytes": 5308
+    },
+    "materials": {
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "source_sha": "c4fadde46978f2ba0ca3e25734311b6d3c8599c5",
+      "bytes": 5236
+    }
+  },
+  "path": [
+    {
+      "step": 1,
+      "owner": "dot: complete traditional engine; Task042: match identities/auditor",
+      "known": "q0 compact only, frozen publication7f03a48d; finite Task042 A/AH interfaces",
+      "gap": "no same-physics full operator, complete DtN, recoverable payload or exact canonical/owner/ABI identities",
+      "admission": "new substantive complete engine publication with ordered full ports and independently consumable payload; document SHA alone insufficient"
+    },
+    {
+      "step": 2,
+      "owner": "traditional engine publisher; Task042 independent qualification/cost consumer",
+      "known": "V45 finite rho passed40/40 but eta failed40/40; no qualifying baseline",
+      "gap": "full residual/field/curl/complex channels/all powers/discrete accuracy and coldN1 time/peak unknown",
+      "admission": "all unchanged correctness gates plus complete source-bound measurements, local factors/QR/Krylov/loading/failure/auditIO included"
+    },
+    {
+      "step": 3,
+      "owner": "Task042 learning research after explicit new contract",
+      "known": "NN-L/H selected zero decoder; f=0, fixed-A full-moment hierarchy closed",
+      "gap": "no measured costly hard error component V, no justified nonzero savings f or overhead H",
+      "admission": "one genuinely different learning object only after V>=.2*T_B+H can be assessed; labels origin and original-equation auditor stated; no new model proposed or run now"
+    },
+    {
+      "step": 4,
+      "owner": "Task042 independent validation, then scale authorization",
+      "known": "V43-V45 heldout consumed and cannot be reused as fresh qualification",
+      "gap": "nonzero useful correction on unseen physical inputs; same-correctness independent complete cost comparison",
+      "admission": "fresh unseen physical inputs, full h/p/mode/port qualification, NN20 time or simultaneous peak and other metric compliant before original scale"
+    }
+  ],
+  "cost_terms": {
+    "C": {
+      "value": null,
+      "unit": "s",
+      "classification": "unknown",
+      "reason": "same-engine common immutable preparation is not fully measured",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+        "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "bytes": 5204
+      }
+    },
+    "U": {
+      "value": null,
+      "unit": "s",
+      "classification": "unknown",
+      "reason": "same-engine unchangeable work and full physical auditing are not fully measured",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+        "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "bytes": 5204
+      }
+    },
+    "V": {
+      "value": null,
+      "unit": "s",
+      "classification": "unknown",
+      "reason": "qualified engine costly correctable component has not been identified/measured",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+        "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "bytes": 5204
+      }
+    },
+    "H": {
+      "value": null,
+      "unit": "s",
+      "classification": "unknown",
+      "reason": "complete data/train/inference/failure/audit cost for a new useful model is not measured",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+        "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "bytes": 5204
+      }
+    }
+  },
+  "non_reentry": [
+    "new documentation SHA",
+    "another partial component",
+    "FE interface demonstration",
+    "same-A seed/lr/tau/layer/step retuning"
+  ],
+  "next_single_action": "Only evaluate a new substantive complete matching engine/cost publication or an independently justified new learning opportunity under a new formal contract; otherwise keep numeric dependency closed",
+  "numeric_actions": 0,
+  "NN20": "NOT_DEMONSTRATED",
+  "target_qualification": "NOT_QUALIFIED"
+}

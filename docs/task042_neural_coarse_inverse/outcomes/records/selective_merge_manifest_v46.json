@@ -1,0 +1,86 @@
+{
+  "merge_approval": false,
+  "source_sha": "4c40128d100860e24a5f50e220361c26bd1180b9",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "fresh_PDE_evidence": null,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [],
+      "numerical_behavior_changed": false,
+      "production_upgrade": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/solvers/neural_decision_scope.py"
+      ],
+      "dependencies": [
+        "input/task042_neural_coarse_inverse/neural_deployment_v46.json"
+      ],
+      "tests": "new/old namespace limits, frozen live profile, synthetic closed-window refusal",
+      "change": "V46 scalar budget and 64MiB new/24GiB task/50GiB free with256MiB task/free reserve; no reopening old ledgers"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "src/solvers/neural_deployment_cost.py",
+        "src/solvers/neural_engine_contract.py",
+        "src/solvers/full_moment_study.py",
+        "src/solvers/full_moment_scope.py",
+        "benchmarks/neural_deployment_decision.py",
+        "benchmarks/qualify_neural_deployment.py",
+        "src/test/test_neural_deployment_decision.py"
+      ],
+      "change": "actual timing consumes unified costs and rejects incomplete engine/cost evidence; no changes to A/training/evaluate",
+      "tests": "26 scalar tests (one ML import-only case separately), Ruff/compile and15 document tests",
+      "suggested_merge_order": "pure cost/contract -> scope/tests -> actual timing consumer only after future review; not approved"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v46.md",
+        "docs/task042_neural_coarse_inverse/outcomes/neural_deployment_decision_v46.md",
+        "outcomes/records/*v46*"
+      ],
+      "change": "decision/refusal/critical-path evidence, no solver result"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "input/task042_neural_coarse_inverse/neural_deployment_v46.json"
+      ],
+      "production_default": false
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "frozen zero-output NN weights",
+        "ignored artifacts/caches/raw test fixtures"
+      ],
+      "reason": "no matched complete qualification or useful selected model"
+    }
+  ],
+  "previous_manifest_correction": {
+    "V45_old_defaults_unchanged_overbroad": true,
+    "previous_live_health_changes": {
+      "v43_task_GiB": {
+        "before": 20,
+        "after": 24
+      },
+      "v42_task_GiB": {
+        "before": 20,
+        "after": 64
+      }
+    },
+    "old_global_storage_guard_already_used": {
+      "v43_task_GiB": 24,
+      "v42_task_GiB": 64
+    },
+    "other_old_namespaces_not_changed_this_batch": true,
+    "all_old_ledgers_stay_closed": true,
+    "old_manifest_not_rewritten": true
+  },
+  "fee_guard_source_sha": "109ad48d4625c1158cd70ce8d30605f2127de150"
+}

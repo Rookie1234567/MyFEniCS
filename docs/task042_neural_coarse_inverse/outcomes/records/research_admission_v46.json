@@ -1,0 +1,41 @@
+{
+  "status": "DEPENDENCY_CLOSED_NO_MATCHED_QUALIFIED_ENGINE",
+  "closed_candidates": [
+    {
+      "route": "NN-L",
+      "selected_step": 0,
+      "status": "ZERO_CORRECTION_NO_DEPLOYMENT_BENEFIT",
+      "full_correctness": "0/8",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+        "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+        "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+        "bytes": 95817
+      }
+    },
+    {
+      "route": "NN-H",
+      "selected_step": 0,
+      "status": "ZERO_CORRECTION_NO_DEPLOYMENT_BENEFIT",
+      "full_correctness": "0/8",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "evidence": {
+        "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+        "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+        "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+        "bytes": 95817
+      }
+    }
+  ],
+  "future_numeric_admission": false,
+  "NN20": "NOT_DEMONSTRATED",
+  "target_complete_solution": "NOT_QUALIFIED",
+  "reentry_requires": [
+    "new same-physics qualified complete traditional engine and independently consumable payload",
+    "complete correctness and cold N1 simultaneous cost measurements",
+    "one genuinely different learning object with nonzero useful unseen-physical-input correction and computable20%necessary opportunity",
+    "new formal authority; a documentation SHA or another partial component alone does not reopen numeric work"
+  ],
+  "numeric_actions": 0
+}

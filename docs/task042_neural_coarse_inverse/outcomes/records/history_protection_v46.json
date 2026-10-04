@@ -1,0 +1,49 @@
+{
+  "base": "0217f004a38f109a6253923f83a9a24b19d85362",
+  "suffixes": [
+    {
+      "path": "docs/development_progress.md",
+      "old_sha256": "51de1df4e49d7060df59f96d9fed908d246cf8da338870ab245e278559cf8dc2",
+      "original_suffix_preserved": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "old_sha256": "cc95810e918233b9c1203f37d33c1188367a473bfff88ec3760edbc991aaa68d",
+      "original_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "old_sha256": "d0d6f3fcf48accf66941007fadcd664aebc081ff9365d7773ec233f5c894fe6c",
+      "original_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "old_sha256": "06966a21c6b597edd737edfdd9833b73dad299b44ece5fb566eaa4446c6a4a46",
+      "original_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "old_sha256": "cebf10fb47f6fcf61966f3404e50f95bdb92f0bbb3a01d010e63082232ae654d",
+      "original_suffix_preserved": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "old_sha256": "08ccf90dd9221497251c7b8ad5cf5c9fc0019a9565eb28ce5239faeee8e2c54c",
+      "original_suffix_preserved": true
+    }
+  ],
+  "tracked_old_task_review_response_records_unchanged": true,
+  "actual_modified_or_deleted_old_tracked_diff": [
+    "docs/development_model_registry.md",
+    "docs/development_progress.md",
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "src/runners/port_preparation.py",
+    "src/solvers/full_moment_scope.py",
+    "src/solvers/full_moment_study.py"
+  ],
+  "new_snapshot_not_misclassified_as_old": true,
+  "scope": "new A files separate; old M/D/R docs are only six permitted prepends"
+}

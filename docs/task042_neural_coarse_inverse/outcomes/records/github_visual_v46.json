@@ -1,0 +1,33 @@
+{
+  "status": "PASSED",
+  "documentation_count": 15,
+  "returncode": 0,
+  "structures": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v43.md",
+      "tables": 8,
+      "links": 20,
+      "math_fences": 1,
+      "local_structure": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v46.md",
+      "tables": 1,
+      "links": 12,
+      "math_fences": 0,
+      "local_structure": "PASS"
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/neural_deployment_decision_v46.md",
+      "tables": 5,
+      "links": 9,
+      "math_fences": 1,
+      "local_structure": "PASS"
+    }
+  ],
+  "github_exact_url": "https://github.com/Rookie1234567/MyFEniCS/blob/0217f004a38f109a6253923f83a9a24b19d85362/docs/task042_neural_coarse_inverse/review_report_v43.md",
+  "github_visual": "NOT_VERIFIED",
+  "fetch_result": "web open Cache miss; no screenshot evidence",
+  "CI_claimed": false,
+  "numeric_actions": 0
+}

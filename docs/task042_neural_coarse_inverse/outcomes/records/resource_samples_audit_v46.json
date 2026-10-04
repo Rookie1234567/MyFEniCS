@@ -1,0 +1,298 @@
+{
+  "runs": [
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_001",
+      "samples": 4,
+      "peak_bytes": 74100736,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8561658319085836,
+      "actual_interval_median": 0.6108824710827321,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_002",
+      "samples": 4,
+      "peak_bytes": 65900544,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.850299202138558,
+      "actual_interval_median": 0.6154860050883144,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "QUALIFY",
+      "folder": "tmp/task042/v46/aux_QUALIFY_001",
+      "samples": 9,
+      "peak_bytes": 306192384,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.9249435509555042,
+      "actual_interval_median": 0.7505890289321542,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_003",
+      "samples": 4,
+      "peak_bytes": 68833280,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8461331699509174,
+      "actual_interval_median": 0.6188861080445349,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_004",
+      "samples": 4,
+      "peak_bytes": 69496832,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8480336430948228,
+      "actual_interval_median": 0.6224956449586898,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 1,
+      "rank_cpus": [
+        1
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "QUALIFY",
+      "folder": "tmp/task042/v46/aux_QUALIFY_002",
+      "samples": 9,
+      "peak_bytes": 307077120,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.9409871669486165,
+      "actual_interval_median": 0.7634795350022614,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_005",
+      "samples": 4,
+      "peak_bytes": 69050368,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8419425268657506,
+      "actual_interval_median": 0.6239311278332025,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 3,
+      "rank_cpus": [
+        3
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "QUALIFY",
+      "folder": "tmp/task042/v46/aux_QUALIFY_003",
+      "samples": 9,
+      "peak_bytes": 306917376,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.9562209581490606,
+      "actual_interval_median": 0.7732936270767823,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "DECISION",
+      "folder": "tmp/task042/v46/aux_DECISION_001",
+      "samples": 4,
+      "peak_bytes": 69795840,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8115403219126165,
+      "actual_interval_median": 0.6287517598830163,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 1,
+      "rank_cpus": [
+        1
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "PREPARE",
+      "folder": "tmp/task042/v46/aux_PREPARE_001",
+      "samples": 4,
+      "peak_bytes": 70262784,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8002227318938822,
+      "actual_interval_median": 0.6427020421251655,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "STYLE",
+      "folder": "tmp/task042/v46/aux_STYLE_006",
+      "samples": 4,
+      "peak_bytes": 67293184,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.865090232109651,
+      "actual_interval_median": 0.632068675942719,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "WINDOW",
+      "folder": "tmp/task042/v46/aux_WINDOW_001",
+      "samples": 4,
+      "peak_bytes": 59703296,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8905417360365391,
+      "actual_interval_median": 0.6359374579042196,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "COLLECT",
+      "folder": "tmp/task042/v46/aux_COLLECT_001",
+      "samples": 4,
+      "peak_bytes": 64212992,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8928020179737359,
+      "actual_interval_median": 0.6362797389738262,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "DOCS",
+      "folder": "tmp/task042/v46/aux_DOCS_001",
+      "samples": 4,
+      "peak_bytes": 70389760,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.9030120291281492,
+      "actual_interval_median": 0.6402424408588558,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 0,
+      "rank_cpus": [
+        0
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    },
+    {
+      "role": "DOCS",
+      "folder": "tmp/task042/v46/aux_DOCS_002",
+      "samples": 4,
+      "peak_bytes": 70111232,
+      "swap_bytes": 0,
+      "actual_interval_max": 0.8921721139922738,
+      "actual_interval_median": 0.6345689478330314,
+      "configured_interval_seconds": 0.5,
+      "unreadable_samples": 0,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "cpu": 3,
+      "rank_cpus": [
+        3
+      ],
+      "full_PSI_max_avg10": 0.0,
+      "scope": "sampled simultaneous launcher/subreaper plus all descendants; not continuous cgroup peak"
+    }
+  ],
+  "runs_count": 15,
+  "samples": 75,
+  "sampled_simultaneous_tree_peak_bytes": 307077120,
+  "actual_interval_max": 0.9562209581490606,
+  "own_swap_bytes": 0,
+  "GPU_actions": 0,
+  "MPI_invocations": 0,
+  "shared_workstation": true,
+  "neighbor_policy": "read-only phases/affinity/pressure; no priority/affinity/lock/watchdog modifications, no assertion of absolute zero interference"
+}

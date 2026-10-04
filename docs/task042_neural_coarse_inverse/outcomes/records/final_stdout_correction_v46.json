@@ -1,0 +1,19 @@
+{
+  "new_final": {
+    "path": "tmp/task042/v45/delivery_refinement.stdout",
+    "sha256": "08548d517d163aa0c5470fb96fbf7ec07aeb2652070759f3a3fd119ed3467b99",
+    "bytes": 355,
+    "archive_path": "docs/task042_neural_coarse_inverse/outcomes/records/v46_raw/v45_delivery_refinement_final.gz",
+    "archive_sha256": "d7467121f065e2e5d04834e06305caf409fbab46c15f5b1d27ee66350aedc7db",
+    "archive_bytes": 284
+  },
+  "old_empty_archive": {
+    "path": "docs/task042_neural_coarse_inverse/outcomes/records/v45_raw/41494255d6e91621e27af592.gz",
+    "sha256": "59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2",
+    "logical_bytes": 0
+  },
+  "old_index_modified": false,
+  "producer_exited": true,
+  "source": "V43 independent audit plus current saved final355B",
+  "parent_console_policy": "final settlement and queue console excluded to avoid self-archiving recursion; all completed supervised workers archived after exit"
+}

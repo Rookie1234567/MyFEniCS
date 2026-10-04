@@ -1,0 +1,106 @@
+{
+  "source_sha": "4c40128d100860e24a5f50e220361c26bd1180b9",
+  "base_sha": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "review_commit": "0217f004a38f109a6253923f83a9a24b19d85362",
+  "V45_actual_numerical_source": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+  "source_semantics": "clean committed scalar implementation; document HEAD separate",
+  "stage": "DECISION",
+  "command": [
+    "python",
+    "-m",
+    "src.runners.port_preparation",
+    "--aux",
+    "DECISION",
+    "001",
+    "python",
+    "-m",
+    "benchmarks.neural_deployment_decision",
+    "--plan",
+    "input/task042_neural_coarse_inverse/neural_deployment_v46.json",
+    "--output",
+    "benchmarks/artifacts/task042/v46/decision"
+  ],
+  "implementation_hashes": {
+    "src/solvers/neural_deployment_cost.py": "77fdaf6bc63669ce124edaa73fa5266ce3c73f65358c2cf2da7e50896a4a14f8",
+    "src/solvers/neural_engine_contract.py": "36d686fb00ade2b754b7487875b4eb9c240c6307304305a1eb90f7706c4b4c50",
+    "src/solvers/neural_decision_scope.py": "0b5945873690b6b3c99c29a7b62e898790dd2972a1dc1a52e5aa92c52d9279df",
+    "src/solvers/full_moment_study.py": "a780cd725b4e901d9c85b3c98db1c2848ca3887ddbd75744b09fb3d799a91536",
+    "src/solvers/full_moment_scope.py": "5dde724aeb5820779c257e4d545a2efade25ac6d932b6f22163f2ab4b1f98f3b",
+    "src/runners/port_preparation.py": "1c54a86d08364033011960bff8c569447041413da7cc74862f8e0e3201055710",
+    "benchmarks/neural_deployment_decision.py": "f28240ebf1297e13503d39467690ce8a150a0ab3d952e4fe4e18f347c9a452b6",
+    "src/test/test_neural_deployment_decision.py": "99dc939d18020b4eab1ccdfe8e30cf872e0755a6f59f6e487c43f57dd6010b61",
+    "benchmarks/qualify_neural_deployment.py": "04ac26f57d88781146398f60e414480f43e8a0fcec10aeb7cb4c3f77a2503db4",
+    "input/task042_neural_coarse_inverse/neural_deployment_v46.json": "7cd38fef72a6f8581b777d62976e02bbf63c13667b6fcd89176e114e1815dd36"
+  },
+  "input_sha256": "7cd38fef72a6f8581b777d62976e02bbf63c13667b6fcd89176e114e1815dd36",
+  "decision_manifest": {
+    "path": "tmp/task042/v46/aux_DECISION_001/run_manifest.json",
+    "sha256": "d8b7b70f3900158e394465029a403b25b3613c8edb27d147e5b9abc0aedc92b3"
+  },
+  "parents": {
+    "cost": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v45.json",
+      "sha256": "4da12b6d90e61545abd8e8df665043664145b07a99837797e2ed70290fe3bd3c",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 76747
+    },
+    "comparison": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_candidate_comparison_v45.json",
+      "sha256": "6f80043897367b89898c8a9d88f1f526dd3155c12e294c13c2c7f32626fa63e5",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 352421
+    },
+    "checker": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/neural_heldout_checker_v45.json",
+      "sha256": "a165551b3ea8b1744142cd6d5e3d0d831d91954dae708ae3ae01c29c112aa512",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 113451
+    },
+    "inherited_cost": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+      "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d",
+      "source_sha": "9c6d8491a34ff3aae8e77fbe8c041a79a8ef0898",
+      "bytes": 67904
+    },
+    "readiness": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/integration_readiness_v45.json",
+      "sha256": "9f67c6e2b56b84f45fbba1c7071fa47b1ab333042bdaf366f1860eb4ac175275",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "bytes": 5204
+    },
+    "review_checks": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v43_independent_checks.json",
+      "sha256": "62696270eebb8e1242b92dbc488910083a0dfcf10f08709a1ee4de72a9754a54",
+      "source_sha": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "bytes": 95817
+    },
+    "dot_compact": {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/records/dot_compact_snapshot_v46.json",
+      "sha256": "fd9bb9f2e77c64a8adbe8bc5b04ad1afd35a7e0c8419eac68ba06065e632ace3",
+      "source_sha": "39c5052476d48eb5d53870d80418e21c969980d8",
+      "bytes": 5308
+    },
+    "materials": {
+      "path": "input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "source_sha": "c4fadde46978f2ba0ca3e25734311b6d3c8599c5",
+      "bytes": 5236
+    }
+  },
+  "dot_once_published_sha": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+  "new_numeric_counts": {
+    "A": 0,
+    "AH": 0,
+    "B": 0,
+    "model_forward": 0,
+    "model_backward": 0,
+    "optimizer": 0,
+    "solve": 0,
+    "mesh": 0,
+    "JIT": 0,
+    "LU": 0,
+    "QR": 0,
+    "target_allocation": 0
+  },
+  "actual_MPI_invocations": 0
+}
