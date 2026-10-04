@@ -1,0 +1,1636 @@
+{
+  "schema": "task42extra.review-v25-A-audit.v1",
+  "scope": "stage-A independent review incorporated in existing Review25; no new review number or package closeout",
+  "decision": "A_PURE_LOGIC_ACCEPTED / B_NOT_STARTED_INPUT_UNAVAILABLE",
+  "input_head": "4152f0e1fb4e2a20f65643adc82cee19f66e87b8",
+  "implementation": "6e0913810d42450eb0b899b46389b8b014bd8883",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "review_binding": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v25.md",
+    "bytes": 30146,
+    "sha256": "d68e3d9fabb58feb5a77985978134ab93f6b9d8ba37894b0c66f71a7375fb592"
+  },
+  "old_review_sections_0_6_unchanged": true,
+  "stage_record": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/stage_A_v26.json",
+    "bytes": 25148,
+    "sha256": "a9a46a9de99bf623587144f2fbda4362f0bccefd8d2c867a89653de5471cbc3b"
+  },
+  "delivery": {
+    "path": "tmp/task42extra/w1_receiver/v26/A_delivery_receipt.json",
+    "bytes": 2165,
+    "sha256": "efdb6b95ce894e0b0b55d459ecdaabeced0063e7c1c0e54e1013a0ba1bac645b"
+  },
+  "independent_script": {
+    "binding": {
+      "path": "tmp/task42extra/review_v25_A/audit.py",
+      "bytes": 8699,
+      "sha256": "3714e1e16827084e8ab268580d2533e1718595f296a1e7ed9342ce7cadb7de8e"
+    },
+    "text": "\"\"\"Stage-A independent record audit and regression witnesses; no native FE.\"\"\"\nfrom pathlib import Path\nimport ast\nimport datetime\nimport hashlib\nimport json\nimport os\nimport subprocess\nimport sys\nimport time\nimport xml.etree.ElementTree as ET\nfrom unittest.mock import patch\n\nimport numpy as np\nimport pytest\n\nROOT = Path.cwd()\nOUT = ROOT / \"tmp/task42extra/review_v25_A\"\nT0 = time.monotonic()\nassert os.environ[\"TASK42EXTRA_ENV_MODE\"] == \"pure\"\nassert sys.executable.startswith(str(ROOT / \".venv\"))\nassert not any(x in sys.modules for x in (\"dolfinx\", \"petsc4py\", \"torch\"))\nSOURCE = \"6e0913810d42450eb0b899b46389b8b014bd8883\"\nHEAD = \"4152f0e1fb4e2a20f65643adc82cee19f66e87b8\"\nassert subprocess.check_output([\"git\", \"rev-parse\", \"HEAD\"], text=True).strip() == HEAD\n\ndef read(path):\n    return json.loads(Path(path).read_text())\n\ndef binding(path):\n    p = Path(path).resolve()\n    return {\"path\": str(p.relative_to(ROOT)), \"bytes\": p.stat().st_size,\n            \"sha256\": hashlib.sha256(p.read_bytes()).hexdigest()}\n\nrecord = read(ROOT / \"docs/task042extra_feinn_5nm/outcomes/records/stage_A_v26.json\")\noccurrences = []\nfiles = {}\ndef walk(obj, at=\"stage_A\"):\n    if isinstance(obj, dict):\n        if {\"path\", \"bytes\", \"sha256\"} <= obj.keys():\n            p = Path(obj[\"path\"])\n            assert p.is_file(), at\n            b = binding(p)\n            assert (b[\"bytes\"], b[\"sha256\"]) == (obj[\"bytes\"], obj[\"sha256\"]), at\n            occurrences.append({\"source\": at, **b}); files[b[\"path\"]] = b\n        for k, v in obj.items():\n            walk(v, at + \"/\" + k)\n    elif isinstance(obj, list):\n        for i, v in enumerate(obj):\n            walk(v, at + \"/\" + str(i))\nwalk(record)\nsource_rows = record[\"tested_source_files\"] + record[\"A_qualification_content\"][\"test_source_files\"] + record[\"inputs\"]\nfor item in source_rows:\n    p = Path(item[\"path\"])\n    original = subprocess.check_output([\"git\", \"show\", SOURCE + \":\" + str(p.relative_to(ROOT))])\n    assert original == p.read_bytes()\njunit = []\nfor row in record[\"tests\"]:\n    tree = ET.parse(row[\"junit\"][\"path\"]).getroot()\n    suites = [tree] if tree.tag == \"testsuite\" else list(tree.findall(\"testsuite\"))\n    counts = {k: sum(int(s.attrib.get(k, 0)) for s in suites) for k in (\"tests\", \"failures\", \"errors\", \"skipped\")}\n    assert counts == row[\"counts\"]\n    summary = read(row[\"summary\"][\"path\"])\n    for k in (\"classification\", \"leader_exit_code\", \"descendants_cleared\", \"elapsed_seconds\",\n              \"sampled_process_tree_rss_peak_bytes\", \"sampled_process_tree_swap_peak_bytes\"):\n        assert summary[k] == row[k]\n    junit.append({\"name\": row[\"name\"], \"counts\": counts, \"classification\": summary[\"classification\"]})\nold = \"afea8f4c7d0a9b6d42b5c3024e2ca47a026ee0ee\"\nprotected = []\nfor name in subprocess.check_output([\"git\", \"ls-tree\", \"-r\", \"--name-only\", old, \"docs/task042extra_feinn_5nm\"], text=True).splitlines():\n    assert subprocess.check_output([\"git\", \"show\", old + \":\" + name]) == (ROOT / name).read_bytes()\n    protected.append(name)\n\nfrom src.io.w1_evidence import validate_A\nfrom src.io.w1_receiver_contract import load_w1\nfrom src.runners import w1_component_receiver as receiver\nfrom src.runners import w1_component_payload as payload\nfrom src.solvers import w1_boundary_components as component\nfrom src.solvers.w1_local_export_patch import export_source\nfrom src.test import test_w1_scientific_chain as fixtures\n\nqualification = validate_A(record[\"A_qualification\"][\"path\"], {p: receiver.digest(ROOT / p) for p in receiver.RECEIVER_FILES})\nassert qualification[\"scope\"] == \"PURE_LOGIC_ONLY\"\nbase = subprocess.check_output([\"git\", \"show\", receiver.MATH_COMMIT + \":src/solvers/task40_w1_local_probe.py\"], text=True)\nexported = export_source(base)\nassert exported.encode() == Path(record[\"minimal_export_overlay\"][\"preview\"][\"path\"]).read_bytes()\ndef solve_count(source):\n    return sum(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == \"lu_solve\"\n               for n in ast.walk(ast.parse(source)))\nassert solve_count(base) == solve_count(exported) == 5\n\n# Actual fixed consumer/writer on explicitly synthetic, non-Hermitian arrays.\n# The input-builder fixtures stub Basix/direct integrals; no native qualification.\nlocal = []\nfor p, side in ((4, \"top\"), (4, \"bottom\"), (6, \"top\"), (6, \"bottom\")):\n    folder = OUT / (\"case_p\" + str(p) + \"_\" + side); folder.mkdir(exist_ok=False)\n    with pytest.MonkeyPatch.context() as mp:\n        fixtures.directional.__wrapped__(mp)\n        arrays, modes, producer, save = fixtures.local_fixture(folder, mp, p, side)\n        state = fixtures.live_guard(f\"p{p}_{side}_check\")\n        positive = payload.check_local(component, producer, folder, state, modes)\n        assert positive[\"status\"] == \"P2_SAVED_LOCAL_PASS\"\n        payload.atomic_json(folder / \"positive.json\", positive)\n        assert read(folder / \"positive.json\")[\"status\"] == \"P2_SAVED_LOCAL_PASS\"\n        negatives = []\n        for key in (\"qhat_alpha\", \"affine_internal_rhs\", \"reduced_trace_matrix\", \"reduced_trace_rhs\"):\n            original = arrays[key].copy()\n            arrays[key].flat[0] += 1e6\n            save()\n            negative = payload.check_local(component, producer, folder, state, modes)\n            assert negative[\"status\"] == \"P2_SAVED_LOCAL_FAIL\"\n            payload.atomic_json(folder / (key + \"_negative.json\"), negative)\n            negatives.append({\"field\": key, \"status\": negative[\"status\"],\n                              \"failed_metrics\": {k: v for k, v in negative[\"metrics\"].items()\n                                                 if v[\"relative\"] > negative[\"metric_limits\"][k]}})\n            arrays[key] = original\n        save()\n        local.append({\"degree\": p, \"side\": side,\n                      \"positive_max_relative\": max(m[\"relative\"] for m in positive[\"metrics\"].values()),\n                      \"positive_status\": positive[\"status\"], \"negative_count\": len(negatives),\n                      \"negative_results\": negatives})\n\nchain = OUT / \"gate\"; chain.mkdir(exist_ok=False)\ngate = []\nwith pytest.MonkeyPatch.context() as mp:\n    output, spec, _, publish = fixtures.scientific_chain(chain, mp)\n    receiver.prerequisite(\"p4_top\", output, spec)\n    for name in (\"control\", \"boundary_check\"):\n        previous = {p.name: p.read_bytes() for p in (output / name).iterdir() if p.is_file()}\n        result = read(output / name / \"component_result.json\")\n        publish(name, result, {\"classification\":\"RSS_HARD_STOP\", \"leader_exit_code\":137,\n                              \"descendants_cleared\":False, \"remaining_child_pids\":[123],\n                              \"sampled_process_tree_swap_peak_bytes\":0})\n        try:\n            receiver.prerequisite(\"p4_top\", output, spec)\n        except ValueError as error:\n            gate.append({\"stage\":name, \"error\":str(error)})\n        else:\n            raise AssertionError(\"failed supervisor still accepted\")\n        for name2, data in previous.items():\n            (output / name / name2).write_bytes(data)\nassert len(gate) == 2\n\n# Missing-real-input public wrapper must not create its B clock or launch.\nspec = load_w1(ROOT / \"input/task042extra_feinn_5nm/v26_w1_control.dat\")\nassert not Path(spec[\"window_path\"]).exists()\nbefore = sorted(str(p) for p in (ROOT / \"tmp/task42extra/durable\").glob(\"*\"))\nmissing = receiver.durable_w1(spec)\nafter = sorted(str(p) for p in (ROOT / \"tmp/task42extra/durable\").glob(\"*\"))\nassert missing[\"scope\"] == \"B_NOT_STARTED_INPUT_UNAVAILABLE\"\nassert before == after and not Path(spec[\"window_path\"]).exists()\n\nreceipt = {\"schema\":\"review-v25-stage-A-independent.v1\", \"head\":HEAD, \"tested_source\":SOURCE,\n           \"bindings\":occurrences, \"binding_occurrences\":len(occurrences), \"unique_files\":len(files),\n           \"source_and_input_files_matching_tested_commit\":len(source_rows),\n           \"JUnit\":junit, \"old_task_files_unchanged\":len(protected), \"old_task_files\":protected,\n           \"A_qualification_read_back\":\"PURE_LOGIC_ONLY\", \"exported_source_exact\":True,\n           \"original_and_exported_solve_call_sites\":[solve_count(base),solve_count(exported)],\n           \"local_synthetic_actual_checker\":local, \"failed_supervision_rejected\":gate,\n           \"public_missing_input\":missing,\"B_window_created\":False,\"new_durable_directories\":0,\n           \"scope\":\"actual unmodified functions; synthetic algebra and explicit Basix/direct-integral stubs, not FE\",\n           \"new_native_FE_calls\":0,\"new_LU_or_solve_calls\":0,\"new_NN_calls\":0,\n           \"seconds\":time.monotonic()-T0}\npayload.atomic_json(OUT / \"audit_result.json\", receipt)\nprint(json.dumps({k:v for k,v in receipt.items() if k not in (\"bindings\",\"old_task_files\",\"local_synthetic_actual_checker\")}))\n\n"
+  },
+  "independent_results_binding": {
+    "path": "tmp/task42extra/review_v25_A/audit_result.json",
+    "bytes": 69387,
+    "sha256": "9b22cd90d109febef7e1f198dcf6b30b081a32c0d789b1e4f2baedbee857aaf6"
+  },
+  "independent_results": {
+    "schema": "review-v25-stage-A-independent.v1",
+    "head": "4152f0e1fb4e2a20f65643adc82cee19f66e87b8",
+    "tested_source": "6e0913810d42450eb0b899b46389b8b014bd8883",
+    "bindings": [
+      {
+        "source": "stage_A/A_qualification",
+        "path": "tmp/task42extra/w1_receiver/v26/A_qualification.json",
+        "bytes": 2798,
+        "sha256": "9683928cb830291232f2d0416a996a110b52616219407fc0f81aaa676a773648"
+      },
+      {
+        "source": "stage_A/A_qualification_content/junit",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/junit.xml",
+        "bytes": 12465,
+        "sha256": "750d85853680d22b1eabbaeb3cafd97f54329aa15916402ae5a07989918ef1d1"
+      },
+      {
+        "source": "stage_A/A_qualification_content/supervision",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/summary.json",
+        "bytes": 3581,
+        "sha256": "ce185e12543e8aea17237099fff46505f6f456047d9e28d321600566522eb799"
+      },
+      {
+        "source": "stage_A/A_qualification_content/test_source_files/0",
+        "path": "src/test/test_w1_scientific_chain.py",
+        "bytes": 29703,
+        "sha256": "00285a1e404a3a20c2f76a6ddca103ae2a90f91d0d729efb07cbd197ddeff2b1"
+      },
+      {
+        "source": "stage_A/A_qualification_content/test_source_files/1",
+        "path": "src/test/test_w1_component_receiver.py",
+        "bytes": 11801,
+        "sha256": "c7bee66a0cbf4e9f7b2c66822fa0fc21ad8ac390976b5b0953eed1f2b59a5e7d"
+      },
+      {
+        "source": "stage_A/A_qualification_content/test_source_files/2",
+        "path": "src/test/test_frozen_component_receiver.py",
+        "bytes": 9683,
+        "sha256": "be18d3bfd4ec44f60126f2459924dfd343ac5e9273d8ce8ea2365a59ff03896e"
+      },
+      {
+        "source": "stage_A/A_qualification_content/A_window",
+        "path": "tmp/task42extra/w1_receiver/v26/A_window.json",
+        "bytes": 578,
+        "sha256": "6215e777369968f00121e7ca532465cb8d21cf11630aee1f84c528fd2502ad1d"
+      },
+      {
+        "source": "stage_A/tested_source_files/0",
+        "path": "src/io/finite_json.py",
+        "bytes": 1743,
+        "sha256": "2eb5e65f2493d24310924eb16ac84f9b93b7a4394c71ae9018a27969c9ae3de2"
+      },
+      {
+        "source": "stage_A/tested_source_files/1",
+        "path": "src/io/w1_evidence.py",
+        "bytes": 8734,
+        "sha256": "67109b2fbc7a6e0d88ff43edfc7f9491a327c639942ec3b3fece6425c2240d85"
+      },
+      {
+        "source": "stage_A/tested_source_files/2",
+        "path": "src/solvers/w1_saved_equations.py",
+        "bytes": 12554,
+        "sha256": "2e4e8786a573d04001a4409e0ffc08e8e4aeeb82dc554a3e736e77db7373fdf5"
+      },
+      {
+        "source": "stage_A/tested_source_files/3",
+        "path": "src/solvers/w1_local_export_patch.py",
+        "bytes": 3378,
+        "sha256": "7b130808a73511596342e802ac8b14e0382f3c527556b2b6a50cb02322a61ccd"
+      },
+      {
+        "source": "stage_A/tested_source_files/4",
+        "path": "src/io/w1_receiver_contract.py",
+        "bytes": 8333,
+        "sha256": "90ba18732abef03c923908ee90dd7b4be06b7ca509026825e6bd33c576483d37"
+      },
+      {
+        "source": "stage_A/tested_source_files/5",
+        "path": "src/runners/w1_component_receiver.py",
+        "bytes": 19172,
+        "sha256": "6d65ee259e242458edb8a52fc7decf6bab37d4204271493cdcc25252daca095d"
+      },
+      {
+        "source": "stage_A/tested_source_files/6",
+        "path": "src/runners/w1_component_payload.py",
+        "bytes": 36119,
+        "sha256": "85aa6f6f019da8ba9a1f0239dfe658f9f3f850a8830639f84ba7901ab6541a59"
+      },
+      {
+        "source": "stage_A/tested_source_files/7",
+        "path": "src/solvers/w1_boundary_components.py",
+        "bytes": 17892,
+        "sha256": "26657863018585acf743480177b960cd7174fdce8a0590fc94dce268bef28289"
+      },
+      {
+        "source": "stage_A/tested_source_files/8",
+        "path": "src/solvers/analytic_face_ports.py",
+        "bytes": 9568,
+        "sha256": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6"
+      },
+      {
+        "source": "stage_A/tested_source_files/9",
+        "path": "src/solvers/interval_facet_moments.py",
+        "bytes": 4652,
+        "sha256": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed"
+      },
+      {
+        "source": "stage_A/tested_source_files/10",
+        "path": "benchmarks/portable_facet_oracle.py",
+        "bytes": 5414,
+        "sha256": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f"
+      },
+      {
+        "source": "stage_A/inputs/0",
+        "path": "input/task042extra_feinn_5nm/v26_w1_boundary.dat",
+        "bytes": 1283,
+        "sha256": "c34c518b5471c7b6ba9b1f02deb9ecb4040c275e1a36fe1cd10c2c79ed17c0e0"
+      },
+      {
+        "source": "stage_A/inputs/1",
+        "path": "input/task042extra_feinn_5nm/v26_w1_boundary_check.dat",
+        "bytes": 1289,
+        "sha256": "b132fab28a444686179205a12d8524ac0c1a9ccca773eeeed1092fa9a4cf07fb"
+      },
+      {
+        "source": "stage_A/inputs/2",
+        "path": "input/task042extra_feinn_5nm/v26_w1_control.dat",
+        "bytes": 1282,
+        "sha256": "f5928cbe113472600a84534b93b0649b053b55d50251cfd72c1a146c2adf598c"
+      },
+      {
+        "source": "stage_A/inputs/3",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p4_bottom.dat",
+        "bytes": 1284,
+        "sha256": "c4eb150a6b2afc738425c630abdbe5083d16b00c4ca63ae0cdd5749412ab5112"
+      },
+      {
+        "source": "stage_A/inputs/4",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p4_bottom_check.dat",
+        "bytes": 1290,
+        "sha256": "bc95ef30b6e24f61f6a5cb72f5e67cf959e7803f91f749e595d618de99f1f484"
+      },
+      {
+        "source": "stage_A/inputs/5",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p4_top.dat",
+        "bytes": 1281,
+        "sha256": "64c897bf8b26b17eaf717965327834fafdde1462de943009722b3464301014ef"
+      },
+      {
+        "source": "stage_A/inputs/6",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p4_top_check.dat",
+        "bytes": 1287,
+        "sha256": "d2f0c6b31c83f267c3c01ba13d57f2395013f67939f7ee99d63c2a679927574a"
+      },
+      {
+        "source": "stage_A/inputs/7",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p6_bottom.dat",
+        "bytes": 1284,
+        "sha256": "bf544d37898d43f8ab1ae301e451c6be099c8f1d6c20e4088a2a74ff807ad3dd"
+      },
+      {
+        "source": "stage_A/inputs/8",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p6_bottom_check.dat",
+        "bytes": 1290,
+        "sha256": "2ee730e83dcd65085e3f3a7dac670e8141682f3c1022e9edcea41c3cc258e167"
+      },
+      {
+        "source": "stage_A/inputs/9",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p6_top.dat",
+        "bytes": 1281,
+        "sha256": "064d949c48a67f259a13671b7df2df92c0b2ab747fd735d512fff92710ddd1fb"
+      },
+      {
+        "source": "stage_A/inputs/10",
+        "path": "input/task042extra_feinn_5nm/v26_w1_p6_top_check.dat",
+        "bytes": 1287,
+        "sha256": "1e1a031e89ec3c9d44d5e1071999ec04285f01c1f6ca309b5839143ac782b7a0"
+      },
+      {
+        "source": "stage_A/tests/0/junit",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_1/junit.xml",
+        "bytes": 14638,
+        "sha256": "6b8f008418a49939f14dc4959281de4ffca1fe10cda077465e844abc31adac4c"
+      },
+      {
+        "source": "stage_A/tests/0/summary",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_1/summary.json",
+        "bytes": 3600,
+        "sha256": "b88d2c8deb60fcf008d5f1a73a3213e1fb304a5677159fe3511b35572faecbe3"
+      },
+      {
+        "source": "stage_A/tests/0/admission",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_1/admission.json",
+        "bytes": 261072,
+        "sha256": "195011f10e54dfb71bb27a43e7bd3ef22542e73af861c7803953fbc2e7f1e711"
+      },
+      {
+        "source": "stage_A/tests/0/command",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_1/command.json",
+        "bytes": 1264,
+        "sha256": "c6f2e6ea1bf857fad931b80070ea7446c1e8df59128b0aa9fea11a4546743c32"
+      },
+      {
+        "source": "stage_A/tests/0/worker_log",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_1/supervision/worker.log",
+        "bytes": 4051,
+        "sha256": "92b4c7fb98efb065d9c6d3d96162a430163fa17a1b8f29668c14dfbc3c01daea"
+      },
+      {
+        "source": "stage_A/tests/1/junit",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_2/junit.xml",
+        "bytes": 10960,
+        "sha256": "e3603cb1ec05ca1b823fa7beb2be594b60c8a198ee6d3e8cbcaf9134c9ce6162"
+      },
+      {
+        "source": "stage_A/tests/1/summary",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_2/summary.json",
+        "bytes": 3593,
+        "sha256": "66593b3f42399b85b94c605a65e2f542b95414c0038cdb66b146b10ce35be40f"
+      },
+      {
+        "source": "stage_A/tests/1/admission",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_2/admission.json",
+        "bytes": 261014,
+        "sha256": "2e248eec2805720a70aeff38de0f8454a147b99b92374a44436b28164afc8b00"
+      },
+      {
+        "source": "stage_A/tests/1/command",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_2/command.json",
+        "bytes": 1620,
+        "sha256": "b07637598251c9ad63654914164f84e2683508b4605a03c6c8e82b092e344e7e"
+      },
+      {
+        "source": "stage_A/tests/1/worker_log",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_2/supervision/worker.log",
+        "bytes": 2268,
+        "sha256": "e68e85a0a9cc583990f577d02edc5a31b6bd8c14bc54c4ef1193216433d632ff"
+      },
+      {
+        "source": "stage_A/tests/2/junit",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_final/junit.xml",
+        "bytes": 11910,
+        "sha256": "bffb99dcafcd86f096058244b4c7be2329380a8f755aeb6299e64b20ad99dd3c"
+      },
+      {
+        "source": "stage_A/tests/2/summary",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_final/summary.json",
+        "bytes": 3584,
+        "sha256": "3baaa659bfc5bf34082a129a28d8cdb970445d8c94fc9ce02bfe132ef19ad6e7"
+      },
+      {
+        "source": "stage_A/tests/2/admission",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_final/admission.json",
+        "bytes": 182504,
+        "sha256": "130f978daff3e5c76846546110a802322176e0895683516ab827b960ea86270a"
+      },
+      {
+        "source": "stage_A/tests/2/command",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_final/command.json",
+        "bytes": 1624,
+        "sha256": "89120666e7191292bdfe2dec18d787242e50c4b91002c00b0822ddf331dcac6a"
+      },
+      {
+        "source": "stage_A/tests/2/worker_log",
+        "path": "tmp/task42extra/w1_receiver/v26/targeted_final/supervision/worker.log",
+        "bytes": 2273,
+        "sha256": "0764ac49a4b4177cfd17a2957936139c77335eff5e927cdf6f526f58eeec699e"
+      },
+      {
+        "source": "stage_A/tests/3/junit",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/junit.xml",
+        "bytes": 12465,
+        "sha256": "750d85853680d22b1eabbaeb3cafd97f54329aa15916402ae5a07989918ef1d1"
+      },
+      {
+        "source": "stage_A/tests/3/summary",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/summary.json",
+        "bytes": 3581,
+        "sha256": "ce185e12543e8aea17237099fff46505f6f456047d9e28d321600566522eb799"
+      },
+      {
+        "source": "stage_A/tests/3/admission",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/admission.json",
+        "bytes": 182293,
+        "sha256": "0757224cde871d5b5bc326f78a45e8ea4c301dc5e23a4ca69db860b86296c170"
+      },
+      {
+        "source": "stage_A/tests/3/command",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/command.json",
+        "bytes": 1623,
+        "sha256": "93389a14540a2ae1e1f6ed28f9d835694e1135a59b1a085bfff675b3ec2d91b0"
+      },
+      {
+        "source": "stage_A/tests/3/worker_log",
+        "path": "tmp/task42extra/w1_receiver/v26/qualification/supervision/worker.log",
+        "bytes": 2272,
+        "sha256": "1272f15a3a6fed3e216c4b5b777f8c712544df1b0b8cc9123a47f8bbffde939f"
+      },
+      {
+        "source": "stage_A/minimal_export_overlay/preview",
+        "path": "tmp/task42extra/w1_receiver/v26/export_preview.py",
+        "bytes": 31327,
+        "sha256": "a2bb670a9b14e1509859651e699aa90ce8cebdec487bdbba6c2b9de7320dd9ae"
+      },
+      {
+        "source": "stage_A/minimal_export_overlay/delta",
+        "path": "tmp/task42extra/w1_receiver/v26/exports_only.diff",
+        "bytes": 3095,
+        "sha256": "76c0a386dbfa4625efced7eb3681830acef78977963a003a10250ae55d7d96e1"
+      },
+      {
+        "source": "stage_A/rendered_view/render_receipt",
+        "path": "tmp/task42extra/render/v26_A_0f7fb9a8/render_records.json",
+        "bytes": 11334,
+        "sha256": "721389373324a2a56138248419f49d69fa1880f2290c62d112a26b2f5bedd47a"
+      },
+      {
+        "source": "stage_A/rendered_view/screenshots/0",
+        "path": "tmp/task42extra/render/v26_A_0f7fb9a8/00_top.png",
+        "bytes": 558682,
+        "sha256": "533da591278004654f45134c2180721da8290497be20831b78fb791d7c3dec8a"
+      },
+      {
+        "source": "stage_A/rendered_view/screenshots/1",
+        "path": "tmp/task42extra/render/v26_A_0f7fb9a8/01_top.png",
+        "bytes": 558682,
+        "sha256": "533da591278004654f45134c2180721da8290497be20831b78fb791d7c3dec8a"
+      },
+      {
+        "source": "stage_A/rendered_view/screenshots/2",
+        "path": "tmp/task42extra/render/v26_A_0f7fb9a8/02_top.png",
+        "bytes": 558682,
+        "sha256": "533da591278004654f45134c2180721da8290497be20831b78fb791d7c3dec8a"
+      },
+      {
+        "source": "stage_A/reused_review_visual/receipt",
+        "path": "tmp/task42extra/review_v25/publication_render_receipt.json",
+        "bytes": 6660,
+        "sha256": "8f044296c79762632e32c7ddea9ae0cb89a57293027c2cf87394ca68c24ecd29"
+      },
+      {
+        "source": "stage_A/auxiliary/0/summary",
+        "path": "tmp/task42extra/w1_receiver/v26/evidence_freeze/summary.json",
+        "bytes": 3559,
+        "sha256": "c954b0eab4eafceec516367c344e97eafb3336d12905e0450ab8fe51fa2e8b9f"
+      },
+      {
+        "source": "stage_A/auxiliary/0/admission",
+        "path": "tmp/task42extra/w1_receiver/v26/evidence_freeze/admission.json",
+        "bytes": 182327,
+        "sha256": "b79ed2643a38f95ed5f33ba7f7bf3112c30950b3cbd73396d3fd6b078f58f459"
+      },
+      {
+        "source": "stage_A/auxiliary/0/command",
+        "path": "tmp/task42extra/w1_receiver/v26/evidence_freeze/command.json",
+        "bytes": 112,
+        "sha256": "df16a86c6c8354af12ca69bd473bc4cafd1cb66a342363a5a5a1d69a07cc839c"
+      },
+      {
+        "source": "stage_A/auxiliary/1/summary",
+        "path": "tmp/task42extra/w1_receiver/v26/rendered_view/summary.json",
+        "bytes": 3719,
+        "sha256": "35665689fa5b1c93af51eaf621c6b82fc745b66e4c2fc7c9b09d372d1dabeb94"
+      },
+      {
+        "source": "stage_A/auxiliary/1/admission",
+        "path": "tmp/task42extra/w1_receiver/v26/rendered_view/admission.json",
+        "bytes": 182231,
+        "sha256": "2acf9c64f6e862cf82007e410c133c98f6e26a25f52ab7347c5fff02d6b2dc3c"
+      },
+      {
+        "source": "stage_A/auxiliary/1/command",
+        "path": "tmp/task42extra/w1_receiver/v26/rendered_view/command.json",
+        "bytes": 114,
+        "sha256": "d568399dc385332c332136b66d2d66860ffbc3b6d05bfbe5d94dcab147667b46"
+      }
+    ],
+    "binding_occurrences": 62,
+    "unique_files": 60,
+    "source_and_input_files_matching_tested_commit": 25,
+    "JUnit": [
+      {
+        "name": "targeted_1",
+        "counts": {
+          "tests": 81,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "WORKER_FAILED"
+      },
+      {
+        "name": "targeted_2",
+        "counts": {
+          "tests": 81,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "COMPLETED"
+      },
+      {
+        "name": "targeted_final",
+        "counts": {
+          "tests": 88,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "COMPLETED"
+      },
+      {
+        "name": "qualification",
+        "counts": {
+          "tests": 92,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "COMPLETED"
+      }
+    ],
+    "old_task_files_unchanged": 437,
+    "old_task_files": [
+      "docs/task042extra_feinn_5nm/AGENTS.md",
+      "docs/task042extra_feinn_5nm/README.md",
+      "docs/task042extra_feinn_5nm/outcomes/accuracy_performance_memory.md",
+      "docs/task042extra_feinn_5nm/outcomes/authority_recovery_v8.md",
+      "docs/task042extra_feinn_5nm/outcomes/auxiliary_role_decision_v12.md",
+      "docs/task042extra_feinn_5nm/outcomes/cached_gn_v10.md",
+      "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "docs/task042extra_feinn_5nm/outcomes/checker_integrity_v16.md",
+      "docs/task042extra_feinn_5nm/outcomes/common_descent_v15.md",
+      "docs/task042extra_feinn_5nm/outcomes/damped_gn_v9.md",
+      "docs/task042extra_feinn_5nm/outcomes/derivative_reuse_v10.md",
+      "docs/task042extra_feinn_5nm/outcomes/diagnostic_attribution_v12.md",
+      "docs/task042extra_feinn_5nm/outcomes/durable_replay_v4.md",
+      "docs/task042extra_feinn_5nm/outcomes/environment_and_isolation.md",
+      "docs/task042extra_feinn_5nm/outcomes/evidence_closure_v13.md",
+      "docs/task042extra_feinn_5nm/outcomes/frozen_feature_residual_v6.md",
+      "docs/task042extra_feinn_5nm/outcomes/frozen_hidden_readout_v5.md",
+      "docs/task042extra_feinn_5nm/outcomes/method_and_paper_mapping.md",
+      "docs/task042extra_feinn_5nm/outcomes/native_constraint_and_field_attribution_v18.md",
+      "docs/task042extra_feinn_5nm/outcomes/p3_p4_authority_v7.md",
+      "docs/task042extra_feinn_5nm/outcomes/p_ladder_v9.md",
+      "docs/task042extra_feinn_5nm/outcomes/parameter_metric_v11.md",
+      "docs/task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md",
+      "docs/task042extra_feinn_5nm/outcomes/phase_feinn_v8.md",
+      "docs/task042extra_feinn_5nm/outcomes/phase_port_recovery_v21.md",
+      "docs/task042extra_feinn_5nm/outcomes/phase_representation_plan_v7.md",
+      "docs/task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md",
+      "docs/task042extra_feinn_5nm/outcomes/records/PDE_comparison_channels_v8.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/PDE_comparison_v8.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/PDE_comparison_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/accepted_steps_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/affine_channels_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/affine_output_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/affine_recovery_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/affine_samples_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/alpha_recovery_modes_v21.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/archive_receipt_v14.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/assembly_profile_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/authority_preservation_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/authority_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/auxiliary_cost_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/background_conversion_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/blind_physics_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/cache_checks_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/campaign_design_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/candidate_permissions_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/channels_v20.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/channels_v21.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/checker_design_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/checkpoint_index_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/closure_design_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/common_descent_comparison_v15.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/common_descent_design_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/common_descent_results_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/common_work_comparison_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/comparison_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/convergence_audits_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/corrected_channels_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/corrected_mode_errors_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/corrected_regions_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/corrected_samples_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/correction_and_comparison_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/derivative_benchmark_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/design_binding_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/design_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/design_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/design_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/design_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/diagnostic_dependencies_v17.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/diagnostic_design_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/discretization_design_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/document_checks_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/durability_checks_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/durable_audits_v4.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/durable_readback_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/error_residual_geometry_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/evidence_inventory_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/evidence_inventory_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/face_block_modes_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/face_qualification_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/facet_qualification_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/field_integrals_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/final_checker_checks_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_channels_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_regions_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_samples_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_comparison_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_gn_channels_v9.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_gn_v9.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/fit_interruption_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/fixed_regions_v18.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/format_check_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/frozen_channel_changes_v22.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/frozen_operator_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/git_delivery_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/git_delivery_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/gn_checks_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/handoff_receipt_v17.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/historical_preservation_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/implementation_checks_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/inner_solver_history_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/inner_summary_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/input_receipt_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/integration_packet_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/interface_gates_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/linear_jvp_order_probe_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/local_case_errors_v23.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/local_cold_comparison_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/local_reachability_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/markdown_check_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/metric_checks_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/metric_comparison_channels_v11.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/metric_comparison_v11.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/metric_field_diagnostics_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/metric_trials_v11.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/minimal_integration_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/minimal_integration_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/mlp_layer_order_probe_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/mode_errors_v21.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/native_constraint_comparison_v18.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/native_constraint_results_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/native_direction_attribution_v16.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/network_witness_results_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/next_input_and_handoff_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_design_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/nonlinear_witness_repair_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/p3_p4_comparison_v7.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/p4_reference_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/p5_authority_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/p_check_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/p_ladder_comparison_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/p_transfer_checks_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/parameter_scale_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_channels_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_regions_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_samples_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_comparison_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_gn_channels_v9.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/pde_gn_v9.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/phase_checks_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/phase_jvp_order_probe_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/physical_comparison_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/physical_comparison_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/port_source_checks_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/post_fit_checks_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/pre_correction_checks_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/pre_correction_raw_admission_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/prefix_identity_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/pressure_and_state_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/process_limitations_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/process_limitations_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_gate_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_manifest_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/publication_notes_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/qualification_repair_checks_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/qualification_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/qualification_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/readout_checks_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/readout_comparison_v5.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/readout_design_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/readout_projection_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/recovery_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/reference_exposure_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/reference_fit_checks_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/regions_v20.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/regions_v21.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/render_check_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/replay_design_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_channels_v8.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v3.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v4.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v8.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/representation_comparison_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/representation_design_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/residual_readout_checks_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/residual_readout_comparison_v6.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/residual_readout_design_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/residual_readout_projection_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v11_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v12_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v13_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v14_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v15_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v16_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v17_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v19_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v20_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v21_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v22_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v23_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v24_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/review_v25_evidence_audit.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/route_comparison_v1.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v3.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v4.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v5.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/run_index_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/samples_v20.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/samples_v21.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_channels_v12.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_dimensions_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_field_geometry_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_integral_results_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_physical_attribution_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_physics_reuse_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_points_v12.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/saved_states_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/scaled_route_comparison_v2.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/scaling_checks_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/scaling_design_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/signed_residual_decomposition_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/state_diagnostics_v2.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/state_identity_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/status_mapping_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/strict_admission_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/target_capacity_v1.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v15.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v16.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v18.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v20.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v21.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v22.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v23.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v24.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v25.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v6.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v7.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/test_space_witness_v12.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/training_v10.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/training_v8.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/uncommitted_work_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/v9_outer_summary_v10.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/verification_receipt_v11.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/visual_inspection_v9.json",
+      "docs/task042extra_feinn_5nm/outcomes/records/w0_metrics_v24.csv",
+      "docs/task042extra_feinn_5nm/outcomes/records/witness_norm_reuse_v13.json",
+      "docs/task042extra_feinn_5nm/outcomes/reliable_affine_ports_v22.md",
+      "docs/task042extra_feinn_5nm/outcomes/representation_diagnostic_v3.md",
+      "docs/task042extra_feinn_5nm/outcomes/scaling_diagnostic_v2.md",
+      "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "docs/task042extra_feinn_5nm/outcomes/target_5nm_scale_plan.md",
+      "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+      "docs/task042extra_feinn_5nm/outcomes/w0_receiver_v24.md",
+      "docs/task042extra_feinn_5nm/outcomes/w1_receiver_v25.md",
+      "docs/task042extra_feinn_5nm/response_v1.md",
+      "docs/task042extra_feinn_5nm/response_v10.md",
+      "docs/task042extra_feinn_5nm/response_v11.md",
+      "docs/task042extra_feinn_5nm/response_v12.md",
+      "docs/task042extra_feinn_5nm/response_v13.md",
+      "docs/task042extra_feinn_5nm/response_v14.md",
+      "docs/task042extra_feinn_5nm/response_v15.md",
+      "docs/task042extra_feinn_5nm/response_v16.md",
+      "docs/task042extra_feinn_5nm/response_v17.md",
+      "docs/task042extra_feinn_5nm/response_v18.md",
+      "docs/task042extra_feinn_5nm/response_v19.md",
+      "docs/task042extra_feinn_5nm/response_v2.md",
+      "docs/task042extra_feinn_5nm/response_v20.md",
+      "docs/task042extra_feinn_5nm/response_v21.md",
+      "docs/task042extra_feinn_5nm/response_v22.md",
+      "docs/task042extra_feinn_5nm/response_v23.md",
+      "docs/task042extra_feinn_5nm/response_v24.md",
+      "docs/task042extra_feinn_5nm/response_v25.md",
+      "docs/task042extra_feinn_5nm/response_v3.md",
+      "docs/task042extra_feinn_5nm/response_v4.md",
+      "docs/task042extra_feinn_5nm/response_v5.md",
+      "docs/task042extra_feinn_5nm/response_v6.md",
+      "docs/task042extra_feinn_5nm/response_v7.md",
+      "docs/task042extra_feinn_5nm/response_v8.md",
+      "docs/task042extra_feinn_5nm/response_v9.md",
+      "docs/task042extra_feinn_5nm/review_report_v1.md",
+      "docs/task042extra_feinn_5nm/review_report_v10.md",
+      "docs/task042extra_feinn_5nm/review_report_v11.md",
+      "docs/task042extra_feinn_5nm/review_report_v12.md",
+      "docs/task042extra_feinn_5nm/review_report_v13.md",
+      "docs/task042extra_feinn_5nm/review_report_v14.md",
+      "docs/task042extra_feinn_5nm/review_report_v15.md",
+      "docs/task042extra_feinn_5nm/review_report_v16.md",
+      "docs/task042extra_feinn_5nm/review_report_v17.md",
+      "docs/task042extra_feinn_5nm/review_report_v18.md",
+      "docs/task042extra_feinn_5nm/review_report_v19.md",
+      "docs/task042extra_feinn_5nm/review_report_v2.md",
+      "docs/task042extra_feinn_5nm/review_report_v20.md",
+      "docs/task042extra_feinn_5nm/review_report_v21.md",
+      "docs/task042extra_feinn_5nm/review_report_v22.md",
+      "docs/task042extra_feinn_5nm/review_report_v23.md",
+      "docs/task042extra_feinn_5nm/review_report_v24.md",
+      "docs/task042extra_feinn_5nm/review_report_v25.md",
+      "docs/task042extra_feinn_5nm/review_report_v3.md",
+      "docs/task042extra_feinn_5nm/review_report_v4.md",
+      "docs/task042extra_feinn_5nm/review_report_v5.md",
+      "docs/task042extra_feinn_5nm/review_report_v6.md",
+      "docs/task042extra_feinn_5nm/review_report_v7.md",
+      "docs/task042extra_feinn_5nm/review_report_v8.md",
+      "docs/task042extra_feinn_5nm/review_report_v9.md",
+      "docs/task042extra_feinn_5nm/task.md"
+    ],
+    "A_qualification_read_back": "PURE_LOGIC_ONLY",
+    "exported_source_exact": true,
+    "original_and_exported_solve_call_sites": [
+      5,
+      5
+    ],
+    "local_synthetic_actual_checker": [
+      {
+        "degree": 4,
+        "side": "top",
+        "positive_max_relative": 3.233100253403857e-16,
+        "positive_status": "P2_SAVED_LOCAL_PASS",
+        "negative_count": 4,
+        "negative_results": [
+          {
+            "field": "qhat_alpha",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "qhat_alpha_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.000000674520283,
+                "denominator": 2.000000674520283,
+                "relative": 499999.83136998606,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0000000001,
+                "reference_norm": 2.021894081732312,
+                "denominator": 2.021894081732312,
+                "relative": 494585.74958744785,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 1000000.0000000001,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.0000000001,
+                "reference_norm": 1000000.0000000001,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 1000000.0000000001,
+                "denominator": 2.010494574651458,
+                "reference_norm": 2.010494574651458,
+                "relative": 497390.0514868892,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "affine_internal_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "affine_internal_rhs_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.021894081732312,
+                "denominator": 2.021894081732312,
+                "relative": 494585.7495874478,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000001.0407740922,
+                "denominator": 1000001.0407740922,
+                "relative": 0.999998959226991,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 999999.9999999999,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.0,
+                "reference_norm": 999999.9999999999,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 999999.9999999999,
+                "denominator": 2.010494574651458,
+                "reference_norm": 2.010494574651458,
+                "relative": 497390.0514868891,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_matrix",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1044030.6508910548,
+                "reference_norm": 50.852696655618175,
+                "denominator": 50.852696655618175,
+                "relative": 20530.487457949017,
+                "near_zero": false
+              },
+              "Schur_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 48.70495705498318,
+                "denominator": 48.70495705498318,
+                "relative": 20531.791022238183,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1044030.6508910548,
+                "denominator": 50.80704827112001,
+                "relative": 20548.933394434327,
+                "reference_norm": 1044030.6508910548,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1044030.6508910548,
+                "denominator": 50.84955404111776,
+                "reference_norm": 50.84955404111776,
+                "relative": 20531.756287318367,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000003.0574897918,
+                "denominator": 1000003.0574897918,
+                "relative": 0.9999969425195564,
+                "near_zero": false
+              },
+              "fhat_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 50.852696655618175,
+                "denominator": 50.852696655618175,
+                "relative": 19664.64053562675,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1000000.0,
+                "denominator": 50.80704827112001,
+                "relative": 19682.3085384479,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 50.84955404111776,
+                "reference_norm": 50.84955404111776,
+                "relative": 19665.855853748177,
+                "near_zero": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "degree": 4,
+        "side": "bottom",
+        "positive_max_relative": 3.2148449158418966e-16,
+        "positive_status": "P2_SAVED_LOCAL_PASS",
+        "negative_count": 4,
+        "negative_results": [
+          {
+            "field": "qhat_alpha",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "qhat_alpha_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.000000674520283,
+                "denominator": 2.000000674520283,
+                "relative": 499999.83136998606,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.0233043742142685,
+                "denominator": 2.0233043742142685,
+                "relative": 494241.01126077026,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 1000000.0,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.00000000006,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 2.030203424161567,
+                "reference_norm": 2.030203424161567,
+                "relative": 492561.4783715478,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "affine_internal_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "affine_internal_rhs_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.0233043742142685,
+                "denominator": 2.0233043742142685,
+                "relative": 494241.01126077026,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000001.0000015469,
+                "denominator": 1000001.0000015469,
+                "relative": 0.9999989999994531,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 1000000.0,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.00000000006,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 2.030203424161567,
+                "reference_norm": 2.030203424161567,
+                "relative": 492561.4783715478,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_matrix",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1044030.6508910547,
+                "reference_norm": 50.85196943486534,
+                "denominator": 50.85196943486534,
+                "relative": 20530.781059095854,
+                "near_zero": false
+              },
+              "Schur_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 48.70495705498318,
+                "denominator": 48.70495705498318,
+                "relative": 20531.791022238183,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1044030.6508910547,
+                "denominator": 50.80631109964111,
+                "relative": 20549.231548094616,
+                "reference_norm": 1044030.6508910547,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1044030.6508910547,
+                "denominator": 50.84955404111776,
+                "reference_norm": 50.84955404111776,
+                "relative": 20531.756287318367,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000003.0591220086,
+                "denominator": 1000003.0591220086,
+                "relative": 0.9999969408873496,
+                "near_zero": false
+              },
+              "fhat_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 50.85196943486534,
+                "denominator": 50.85196943486534,
+                "relative": 19664.921754522566,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1000000.0,
+                "denominator": 50.80631109964111,
+                "relative": 19682.59411786076,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 50.84955404111776,
+                "reference_norm": 50.84955404111776,
+                "relative": 19665.855853748177,
+                "near_zero": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "degree": 6,
+        "side": "top",
+        "positive_max_relative": 4.313280139866121e-16,
+        "positive_status": "P2_SAVED_LOCAL_PASS",
+        "negative_count": 4,
+        "negative_results": [
+          {
+            "field": "qhat_alpha",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "qhat_alpha_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.000088086951223,
+                "denominator": 2.000088086951223,
+                "relative": 499977.97923206544,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0000000001,
+                "reference_norm": 2.1576225115251986,
+                "denominator": 2.1576225115251986,
+                "relative": 463473.10275934765,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 1000000.0000000001,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.0000000001,
+                "reference_norm": 1000000.0000000001,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 1000000.0000000001,
+                "denominator": 2.126714246453442,
+                "reference_norm": 2.126714246453442,
+                "relative": 470208.9157805866,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "affine_internal_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "affine_internal_rhs_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.1576225115251986,
+                "denominator": 2.1576225115251986,
+                "relative": 463473.1027593476,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000001.1843782788,
+                "denominator": 1000001.1843782788,
+                "relative": 0.999998815623124,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 999999.9999999999,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.0,
+                "reference_norm": 999999.9999999999,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 999999.9999999999,
+                "denominator": 2.126714246453442,
+                "reference_norm": 2.126714246453442,
+                "relative": 470208.9157805865,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_matrix",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1044030.6508910543,
+                "reference_norm": 76.30740830272747,
+                "denominator": 76.30740830272747,
+                "relative": 13681.904209735,
+                "near_zero": false
+              },
+              "Schur_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 73.08755624461995,
+                "denominator": 73.08755624461995,
+                "relative": 13682.219674345879,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1044030.6508910543,
+                "denominator": 76.38880539887347,
+                "relative": 13667.325276780031,
+                "reference_norm": 1044030.6508910543,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1044030.6508910543,
+                "denominator": 76.38880539887347,
+                "reference_norm": 76.38880539887347,
+                "relative": 13667.325276780031,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000003.0686702083,
+                "denominator": 1000003.0686702083,
+                "relative": 0.9999969313392084,
+                "near_zero": false
+              },
+              "fhat_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 76.30740830272747,
+                "denominator": 76.30740830272747,
+                "relative": 13104.887483962115,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1000000.0,
+                "denominator": 76.38880539887347,
+                "relative": 13090.92339876737,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 76.38880539887347,
+                "reference_norm": 76.38880539887347,
+                "relative": 13090.92339876737,
+                "near_zero": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "degree": 6,
+        "side": "bottom",
+        "positive_max_relative": 4.3683671109356027e-16,
+        "positive_status": "P2_SAVED_LOCAL_PASS",
+        "negative_count": 4,
+        "negative_results": [
+          {
+            "field": "qhat_alpha",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "qhat_alpha_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.000088086951223,
+                "denominator": 2.000088086951223,
+                "relative": 499977.97923206544,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.1571161988409737,
+                "denominator": 2.1571161988409737,
+                "relative": 463581.88795638527,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 1000000.0,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.00000000006,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 2.129730447787865,
+                "reference_norm": 2.129730447787865,
+                "relative": 469542.9888973473,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "affine_internal_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "affine_internal_rhs_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 2.1571161988409737,
+                "denominator": 2.1571161988409737,
+                "relative": 463581.88795638527,
+                "near_zero": false
+              },
+              "port_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000001.0000018266,
+                "denominator": 1000001.0000018266,
+                "relative": 0.9999989999991734,
+                "near_zero": false
+              },
+              "saved_reduced_port_residual": {
+                "numerator": 1000000.0,
+                "denominator": 1.9999999999999998,
+                "relative": 500000.00000000006,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "port_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 2.129730447787865,
+                "reference_norm": 2.129730447787865,
+                "relative": 469542.9888973473,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_matrix",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1044030.6508910543,
+                "reference_norm": 76.31161626115983,
+                "denominator": 76.31161626115983,
+                "relative": 13681.149765169272,
+                "near_zero": false
+              },
+              "Schur_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 73.08755624461995,
+                "denominator": 73.08755624461995,
+                "relative": 13682.219674345879,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1044030.6508910543,
+                "denominator": 76.39310133747414,
+                "relative": 13666.556699654657,
+                "reference_norm": 1044030.6508910543,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1044030.6508910543,
+                "denominator": 76.39310133747414,
+                "reference_norm": 76.39310133747414,
+                "relative": 13666.556699654657,
+                "near_zero": false
+              }
+            }
+          },
+          {
+            "field": "reduced_trace_rhs",
+            "status": "P2_SAVED_LOCAL_FAIL",
+            "failed_metrics": {
+              "trace_reduced_equation": {
+                "numerator": 1000000.0,
+                "reference_norm": 1000003.0700836943,
+                "denominator": 1000003.0700836943,
+                "relative": 0.9999969299257311,
+                "near_zero": false
+              },
+              "fhat_actual": {
+                "numerator": 1000000.0,
+                "reference_norm": 76.31161626115983,
+                "denominator": 76.31161626115983,
+                "relative": 13104.16485712632,
+                "near_zero": false
+              },
+              "saved_reduced_trace_residual": {
+                "numerator": 1000000.0,
+                "denominator": 76.39310133747414,
+                "relative": 13090.187235394467,
+                "reference_norm": 1000000.0,
+                "near_zero": false
+              },
+              "trace_elimination_identity": {
+                "numerator": 1000000.0,
+                "denominator": 76.39310133747414,
+                "reference_norm": 76.39310133747414,
+                "relative": 13090.187235394467,
+                "near_zero": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "failed_supervision_rejected": [
+      {
+        "stage": "control",
+        "error": "W1_PREREQUISITE_SUCCESSFUL_CLEARED_SUPERVISION"
+      },
+      {
+        "stage": "boundary_check",
+        "error": "W1_PREREQUISITE_SUCCESSFUL_CLEARED_SUPERVISION"
+      }
+    ],
+    "public_missing_input": {
+      "scope": "B_NOT_STARTED_INPUT_UNAVAILABLE",
+      "socket": null,
+      "session": null,
+      "output": null
+    },
+    "B_window_created": false,
+    "new_durable_directories": 0,
+    "scope": "actual unmodified functions; synthetic algebra and explicit Basix/direct-integral stubs, not FE",
+    "new_native_FE_calls": 0,
+    "new_LU_or_solve_calls": 0,
+    "new_NN_calls": 0,
+    "seconds": 4.0093112899921834
+  },
+  "supervision": {
+    "summary_binding": {
+      "path": "tmp/task42extra/checks/review_v25_A_audit_20261004T224410106459Z/supervision/summary.json",
+      "bytes": 1904,
+      "sha256": "7ff92ffe37cd290ef3193695fd2b2b846da017205e071d26397170994102972e"
+    },
+    "worker_log": {
+      "path": "tmp/task42extra/checks/review_v25_A_audit_20261004T224410106459Z/supervision/worker.log",
+      "bytes": 1523,
+      "sha256": "e086b360a1e4872b5d6ff6fad7317a3375dd5e8d673e18b03f998ba58d182532"
+    },
+    "summary": {
+      "sampled_root_identity": null,
+      "workflow_deadline_seconds": 300.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        1976430
+      ],
+      "sampled_process_tree_rss_peak_bytes": 161132544,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139221,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139221,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2141557579776,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2141557579776,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 10,
+      "elapsed_seconds": 5.913217660970986,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    }
+  },
+  "source_review": [
+    "src/io/finite_json.py",
+    "src/io/w1_evidence.py",
+    "src/io/w1_receiver_contract.py",
+    "src/runners/w1_component_payload.py",
+    "src/runners/w1_component_receiver.py",
+    "src/solvers/w1_boundary_components.py",
+    "src/solvers/w1_local_export_patch.py",
+    "src/solvers/w1_saved_equations.py",
+    "src/test/test_w1_scientific_chain.py"
+  ],
+  "limitations": [
+    "pure synthetic fixtures explicitly stub Basix and direct face integral; no native physics pass",
+    "B full32060/physical integrals and full3D volume RHS not run",
+    "original A first development failure and missing intermediate source preserved",
+    "A README three screenshots identical: reuse one limited actual view, not three independent coverage claims",
+    "current input location still unavailable; no repeated declared-path sweep",
+    "whole project exact total UNKNOWN; own new FE/LU/solve/NN zero"
+  ],
+  "time": {
+    "start": {
+      "utc": "2026-10-04T22:41:39.914671+00:00",
+      "monotonic": 1078694.775559747,
+      "earlier_reading_allowance_seconds": 900,
+      "scope": "independent stage A review only; no B activation",
+      "final_goal": "original50x25x140nm Si17/120nm lambda0.7 full3D allinteriors doubleFloquet allports decimal2e12B ownswap/OOC0 continuous172800s originalgates"
+    },
+    "review_parent_observed_including_earlier_allowance_seconds": 1232.420242644148,
+    "scope": "review parent separate from A2361.839628s; nested supervision not added twice; external wait is separate project-calendar interval"
+  },
+  "A_final_wall_seconds": 2361.839628,
+  "common_engineering_repair_pool_remaining": 1,
+  "B_window_started": false,
+  "B_limits_unchanged": {
+    "total": 10800,
+    "worker_checker": 7200,
+    "tail": 1800
+  },
+  "render": {
+    "new_stage_section": "PENDING_PUBLICATION",
+    "old_review_tables": "same sections0-6 bytes, retain prior actual visual receipt",
+    "old_A_README": "single unique image viewed, limited scope; original three-image record unchanged"
+  },
+  "authoring_notes": [
+    "one append patch missed an exact paragraph anchor and made no append; reapplied to unique closing code fence, no source/numerical effect"
+  ],
+  "document_check": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v25.md",
+    "sha256": "d68e3d9fabb58feb5a77985978134ab93f6b9d8ba37894b0c66f71a7375fb592",
+    "checked_scope": "entire page",
+    "markdown_tables": 3,
+    "parsed_tables": 3,
+    "math_fences": 0,
+    "links": 6
+  }
+}
