@@ -569,7 +569,8 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
         raise TimeoutError("frozen total UTC deadline has expired before phase launch")
     directory = root / "supervision" / phase
     env = {**os.environ, "XDG_CACHE_HOME": str(root / "jit"), "TMPDIR": str(root / "tmp"),
-           "TMP": str(root / "tmp"), "TEMP": str(root / "tmp")}
+           "TMP": str(root / "tmp"), "TEMP": str(root / "tmp"),
+           "PHYSICAL_WATCHDOG_PARENT_PID": str(os.getpid())}
     command = [sys.executable, "-m", "benchmarks.run_fresh_c1_p6_component",
                "--worker" if phase == "worker" else "--checker-worker",
                "--output-dir", str(root), "--abi-receipt", str(abi_receipt)]
