@@ -1,0 +1,102 @@
+{
+  "numeric_source_sha": "5ca562a08bb9766d9ecd5c7f7660dd05e0a7a032",
+  "snapshot_HEAD": "5ca562a08bb9766d9ecd5c7f7660dd05e0a7a032",
+  "frozen_scientific_records": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/design_v21.json",
+      "sha256": "043c3df6adcc9b45fd76166d049554399d32a44788a12e7fb0111b944f5cc1b4",
+      "bytes": 4095
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/qualification_v21.json",
+      "sha256": "97212583d7327445287efc58aeaeb17883bfed8a36c702b0e4bb4ab9df590627",
+      "bytes": 23598
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v21.json",
+      "sha256": "0046a302e1f8484559abbf1b2b82b7c6520ee7a3ab897a42f6edbfea7f70a3c7",
+      "bytes": 142485
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/recovery_v21.json",
+      "sha256": "dc6bc6cb1d166afe4a5667b3f9332605403a684f8f5a1d7b9fdc2a8202f18322",
+      "bytes": 92678
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/physical_comparison_v21.json",
+      "sha256": "ff071c09bcbc731505fd069c9df40910a24c9948e378b175786d4cbb4c00edbc",
+      "bytes": 61271
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v21.json",
+      "sha256": "01f2ef659fdcc2ceff9173ff5c729fde45d0dc713c450ccd6801776a51b3e052",
+      "bytes": 17936
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v21.json",
+      "sha256": "32d3c2ccf112021304c24a126f74cdafd99028d47b0cdbc7bfde3490d1b58f91",
+      "bytes": 23360
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/process_limitations_v21.json",
+      "sha256": "b71e84ec5e03eb0029dcd94977d17b2fca8d8e68c3906a73f098a94c70ef9e57",
+      "bytes": 947
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v21.json",
+      "sha256": "a1d56778bf1a5ca6c1e8e4e0b5f5e1da0300a1121f4b11193077f29dafd177a9",
+      "bytes": 784
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v21.json",
+      "sha256": "3074a9e8f58fb1964a42181e4bb6bc3fd375c344b334776826414f5c13e18c23",
+      "bytes": 3623
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/channels_v21.csv",
+      "sha256": "5b961749c44651e299e6665843546dec1fd7bda3902f7bc7e7ff93b89f20f42f",
+      "bytes": 200492
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/samples_v21.csv",
+      "sha256": "450a7b0938527cb2c66cc08c7fda24464b115958e499de17a96f360e2f874012",
+      "bytes": 10993
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/regions_v21.csv",
+      "sha256": "a7c2d0d14d53040ff734f284a4029a127d26201ffde295ab03e2b2d477bcf7f5",
+      "bytes": 6614
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/mode_errors_v21.csv",
+      "sha256": "36feaaa64858541c880f34c4e8f90570d0aed8d49edaf7058fd39c7a78810798",
+      "bytes": 554257
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/alpha_recovery_modes_v21.csv",
+      "sha256": "bd6fff30b92c02620ec18b2ca22d0a222f254ad9427509cf934163a7299a0263",
+      "bytes": 202045
+    }
+  ],
+  "publication_pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v21.md",
+      "sha256": "c2774f6a9262caae01e789ca91d1d2da04bae9e6b7645ddbdce7b6ce1aacb7b1",
+      "bytes": 10260
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/phase_port_recovery_v21.md",
+      "sha256": "1cc62d583301f3fc182acd690a2dc68f688e22f9ced80da6ddf5c330079b6352",
+      "bytes": 10990
+    }
+  ],
+  "closeout_records_excluded_from_self_hash": [
+    "evidence_inventory_v21.json",
+    "resource_costs_v21.json",
+    "targeted_tests_v21.json",
+    "repair_log_v21.json",
+    "render_check_v21.json"
+  ],
+  "original_artifact_arrays_remain_ignored": true,
+  "numeric_source_not_document_HEAD": true
+}

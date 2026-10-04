@@ -1,0 +1,100 @@
+{
+  "original_target": {
+    "dimensions_nm": [
+      50,
+      25,
+      140
+    ],
+    "Si_width_nm": 17,
+    "Si_height_nm": 120,
+    "wavelength_nm": 0.7,
+    "whole_machine_limit_decimal_bytes": 2000000000000,
+    "whole_flow_limit_seconds": 172800,
+    "self_swap": 0,
+    "OOC": 0
+  },
+  "existing_geometry_interface": "2374d0d556aed7a415202757daa2b94b76ad399b",
+  "existing_main_candidate": [
+    272,
+    4,
+    14
+  ],
+  "coefficient_counts": [
+    {
+      "p": 3,
+      "cells": 15232,
+      "classification": "DERIVED_NOT_RUN",
+      "edge_FE": 143616,
+      "face_FE": 561408,
+      "interior_FE": 548352,
+      "all_independent_complex_FE": 1253376,
+      "trace_complex_FE": 705024,
+      "trace_and_ports_rows": 737084,
+      "ordered_ports_existing_main_inventory": 32060,
+      "complex128_coefficients_only_bytes": 20566976,
+      "factor_RSS": "UNKNOWN",
+      "full_workflow_seconds": "UNKNOWN"
+    },
+    {
+      "p": 4,
+      "cells": 15232,
+      "classification": "DERIVED_NOT_RUN",
+      "edge_FE": 191488,
+      "face_FE": 1122816,
+      "interior_FE": 1645056,
+      "all_independent_complex_FE": 2959360,
+      "trace_complex_FE": 1314304,
+      "trace_and_ports_rows": 1346364,
+      "ordered_ports_existing_main_inventory": 32060,
+      "complex128_coefficients_only_bytes": 47862720,
+      "factor_RSS": "UNKNOWN",
+      "full_workflow_seconds": "UNKNOWN"
+    },
+    {
+      "p": 6,
+      "cells": 15232,
+      "classification": "DERIVED_NOT_RUN",
+      "edge_FE": 287232,
+      "face_FE": 2807040,
+      "interior_FE": 6854400,
+      "all_independent_complex_FE": 9948672,
+      "trace_complex_FE": 3094272,
+      "trace_and_ports_rows": 3126332,
+      "ordered_ports_existing_main_inventory": 32060,
+      "complex128_coefficients_only_bytes": 159691712,
+      "factor_RSS": "UNKNOWN",
+      "full_workflow_seconds": "UNKNOWN"
+    }
+  ],
+  "vector_storage_not_process_RSS": true,
+  "no_inventory_reconstruction": true,
+  "no_target_assembly_or_solve": true,
+  "measured_anchor": "E4 on 336cell/p4/q15/340ports only; one factor tree peak and release in run_index/resource_costs",
+  "new_phase_volume_cost_model": "same local dimension; extra analytic product derivative and complex g at fixed quadrature, body cost roughly proportional to cell count only for evaluation. No factor extrapolation validated",
+  "trace_support_model": "face entity closure; port arithmetic cost proportional to retained D entry count and exact-integer bit length; 32060-port work not measured",
+  "unresolved": [
+    "strict original-point total rounding consistency",
+    "full O6 reference qualification",
+    "all 340 per-mode finite-p threshold",
+    "original-scale z/backward/diffracted variation",
+    "notch and regional accuracy",
+    "h/y/port-truncation/continuum convergence",
+    "32060 modes and factor fill/capacity",
+    "2e12 B whole-machine reserve and 172800s entire preparation-to-validation"
+  ],
+  "representation_status": "REFERENCE_LIMITED_NO_UNIQUE_ORIGINAL_SIZE_CANDIDATE",
+  "production_go": false,
+  "NN_increment": "NO_VERIFIED_NN_INCREMENT",
+  "cell_volume_evaluation_only_analytic_count": {
+    "classification": "DERIVED_NOT_RUN",
+    "q15_points_per_hex": 512,
+    "assumption": "tensor Gauss 8 per axis used in frozen local volume q15; cell-volume evaluation only",
+    "scaled_G0_cells": 336,
+    "original_cells": 15232,
+    "scaled_volume_points": 172032,
+    "original_volume_points": 7798784,
+    "cell_only_ratio": 45.333333333333336,
+    "NOT_a_factor_RSS_or_workflow_prediction": true,
+    "port_integrals_D_integer_bit_work_factor_fill_cold_compile": "UNKNOWN"
+  }
+}

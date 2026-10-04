@@ -269,3 +269,7 @@ Review V18最终公式及旧专题两张区域表右侧的实际浏览器资格�
 [测试/原日志](records/targeted_tests_v20.json)、[原资格和补验](records/qualification_v20.json)、[checker](records/independent_checker_v20.json)、[修复](records/repair_log_v20.json)。文档parser/实际GitHub关键页目视与完整费用另行封存，不把DOM检查冒称视觉。
 
 本批改变的8处文档parser/链接/表格/公式检查、716行原CSV逐值配对及旧正文保留已通过，另20项仓库原则/总账Markdown/回顾合同pure测试通过。旧全库总账测试仍按40任务限定并引用历史缺失文件，修改前后两项错误完全相同，记PREEXISTING_FAILURE_NOT_FIXED_OUT_OF_SCOPE；不改其他任务历史或声称全库测试通过。原失败与基线核对见测试收据。
+
+## V21：准确端口/拓扑资格与保存物理独立复验
+
+以原资源单核/2GiB运行受影响pure fixtures、真实E4保存MPC及损坏负控；新正式资格prefix/两轮修复、P2/E4与独立compare/checker逐项source绑定。纯测试/解析/CI口径区分，full pytest、无关MPI及昂贵旧资格不重跑。P2前legacy mock未及时检查的流程失败保留，修正后E4前通过；普通p6 q15/30负结果不当bug再次启动。详细测试/初始失败/本地文档和视觉见[tests](records/targeted_tests_v21.json)、[repair](records/repair_log_v21.json)、[render](records/render_check_v21.json)。

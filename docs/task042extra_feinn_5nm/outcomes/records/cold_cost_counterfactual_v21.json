@@ -1,0 +1,17 @@
+{
+  "measured": true,
+  "saved_reuse_is_not_cold_path": true,
+  "inherited_field_generation_full_launch_seconds": {
+    "O3": 154.9792955960147,
+    "E3": 176.59969027899206
+  },
+  "new_p3_recovery_shared_process_seconds": 211.60264073195867,
+  "new_p3_allocation": "shared process; per-role exact portion in events, not arbitrarily divided",
+  "E4_fresh_full_launch_seconds": 363.54399082507007,
+  "necessary_common_qualification_compare_checker_records": "run_index_v21.json",
+  "reference_O6": "NOT_RUN_P6_QUALIFICATION_FAILED; no precision-matched cold speed/RSS ratio",
+  "reused_V20_packet_body": "bytes/content hashes in design_v21.json and recovery_v21.json",
+  "entire_batch_new_cost_record": "resource_costs_v21.json",
+  "old_failed_costs_preserved": true,
+  "NN_gain": 0
+}

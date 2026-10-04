@@ -3264,3 +3264,7 @@ pure身份/hash检查3.00520s、57,675,776B树峰、swap0，通过后清场。�
 +唯一GX560p6导出365760独立FE后因B/D各2264内部非零项不符合严格凝聚前置而停止，无p6 global factor/solve；E4因E3恢复失败未准入。独立C仍完成未改保存负态的E/H/curl/六点/全部复通道/区域，2112公共子单元q15/q30漂移3.39e-12，两空间总E差1.00526、散射E差6.85671；energy小不证明精度。新纯数组checker source0ede17f4重新拒绝两态恢复门，缺参考为PARTIAL/UNKNOWN。峰4929130496B采样树RSS、swap0/CPU1/线程1；全部代码/失败/测试/因子/等待/保存/发布父墙钟另账。
 
 +原50×25×140nm λ0.7、十进制2e12B整机/172800s完整流程未资格化；13.23倍向量差不是同精度收益。FE表示未决、无production/merge，NN NOT_TESTED/FEINN_MAIN_SOLVER_ON_HOLD/NO_VERIFIED_NN_INCREMENT，旧M3600好态/Mfinal退化和D0成本否决/D1未运行不改。后续关键路径是保存p6 packet结构支撑及原端口恢复资格，非新增长训练或重复主线Gx784/dot存储。整批交棒后停止。[Response](task042extra_feinn_5nm/response_v20.md)、[专题](task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md)、[原Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v20.json)。
+
+## 2026-10-04 Task42extra V21：准确端口、相位p4与参考受限出口
+
+[Response V21](task042extra_feinn_5nm/response_v21.md)完成Review V20所有可运行部分：准确端口回代/拓扑支持和真实空气物理通量资格、保存p3派生O3R/E3R、唯一G0相位p4，独立E/H/curl/6点/340×4模式/区域和全部成本。p6 q15/30=4.27567e-7 >1e-8，两轮定位修复用尽后O6未准入；total原点舍入和有限p完整模式问题保留。REFERENCE_LIMITED，无严格同精度20%收益/原尺寸胜者，无NN训练，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；D0成本否决/D1未运行及所有旧负态保留。原50×25×140nm/λ.7完整3D、decimal2TB整机和48h全流程仍未资格化。不改主线/dot或master，[目标差距](task042extra_feinn_5nm/outcomes/records/target_cost_gap_v21.json)仅解析计数。

@@ -1,0 +1,199 @@
+{
+  "initial_local_log": [
+    {
+      "id": "V21-R1-P6-FIXTURE-ROLE",
+      "classification": "localized_fixture_role_binding",
+      "failure": "phase-p6 fixture q15/30=2.579472057405321e-8 exceeds 1e-8; true O6 is ordinary-p6",
+      "hypothesis": "new test accidentally tested an unrequested phase-p6 space, independent base and p3/p4/trace qualify",
+      "change": "ordinary p6 affected fixture; reuse unchanged prefix hash-bound; tighten checker native errors",
+      "old_index": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v21_joint_qualification_attempt1.json",
+      "old_index_sha256": "1ae3ac1e76e976a8398a9d6a7c297aeb0ae9f3ea804b258aa6b7369d77bec082",
+      "old_result_preserved": true,
+      "algorithm_or_quadrature_changed": false,
+      "formal_repair_round": 1,
+      "retry": "joint qualification attempt2 only affected p6, after targeted tests and clean commit"
+    },
+    {
+      "id": "V21-R2-P6-FIXTURE-BACKGROUND",
+      "failure": "near-null ordinary p6 air plane export affine shift=1.0106559194262813e-10 exceeds 1e-10; no solve/factor started",
+      "hypothesis": "p6 affected-block recovery fixture requires nonzero arbitrary loads, while the inherited near-null plane export denominator tests an unrelated ill-scaled comparison",
+      "change": "guarded nonzero manufactured full FE background only for ordinary p6 AIR8; original physical air qualification and real O6 background unchanged; add explicit MPC/seed/internal/role-isolation test",
+      "test": "tmp/task42extra/v21/fe_smoke_r2/pytest.log",
+      "retry": "attempt3 only affected ordinary p6, after targeted test and clean commit",
+      "formal_repair_round": 2,
+      "thresholds_changed": false,
+      "old_failure_retained": true,
+      "additional_local_schema_fix": "bind derived p3 result identity for existing independent comparison"
+    },
+    {
+      "failure": "new light helper KeyError neighbors before worker launch",
+      "hypothesis": "read-only resource audit schema names neighbor_processes",
+      "change": "/tmp/task42_v21_light.py uses neighbor_processes",
+      "test": "v21_saved_state_unit new namespace completed; no scientific producer replay",
+      "classification": "initial_local_orchestration_fix"
+    }
+  ],
+  "formal_qualification_replays": 2,
+  "mathematical_negative": "ordinary-p6 AIR8 q15/q30=4.275671921747731e-7; no additional p6 replay or O6 factor",
+  "dependency_adapter": "complete common and required P3/P4 gates separately enforced, full joint failure retained",
+  "legacy_test_failures": [
+    {
+      "path": "tmp/task42extra/checks/v21_compact_collection_20261004T065946213885Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 3.958821446984075,
+      "sampled_tree_rss_peak_bytes": 96804864,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_compact_collection_20261004T065946213885Z/summary.json",
+        "sha256": "5aaa4cfe2b829612f3c89c39b68b1713b5e745b19f6f9b9e4d32b5cb480fae02",
+        "bytes": 2088
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_compact_collection_20261004T065946213885Z/supervision/worker.log",
+        "sha256": "b5a89217dfef04dabe8e84904d0b8e2d6e2562c03802633bea86589933dbd58e",
+        "bytes": 424
+      },
+      "last_log_lines": [
+        "  File \"/tmp/task42_v21_collect.py\", line 63, in <module>",
+        "    air_flux=[dict(z_sign=p['z_sign'],**{k:v for k,v in p['physical_flux'].items() if not isinstance(v,list)}) for p in q['base']['details']['plane']],",
+        "              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "TypeError: dict() got multiple values for keyword argument 'z_sign'"
+      ],
+      "initial_sandbox_view_limited": false
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_pure_final_targeted_20261004T051007729579Z",
+      "classification": "PRE_WORKER_REFUSAL",
+      "summary": "NOT_RETAINED",
+      "reason": "earlier pre-worker light-helper exception; raw admission retained",
+      "admission": "NOT_RETAINED"
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_pure_implementation_tests_20261004T050737111196Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 5.606727355974726,
+      "sampled_tree_rss_peak_bytes": 106745856,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_pure_implementation_tests_20261004T050737111196Z/summary.json",
+        "sha256": "e367670ae71a5cdc7840a67e1fd0217dd0db64d363f4c8aae1ec5cbaba56810b",
+        "bytes": 1903
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_pure_implementation_tests_20261004T050737111196Z/supervision/worker.log",
+        "sha256": "6cb11a7d11d986c3052f1ecaa7de24eece8b9b6ae81a4d9c3816f610ba328f9e",
+        "bytes": 2742
+      },
+      "last_log_lines": [
+        "src/solvers/accurate_ports.py:92: AttributeError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_accurate_ports.py::test_actual_audit_does_not_replace_saved_alpha",
+        "1 failed, 34 passed in 3.85s"
+      ],
+      "initial_sandbox_view_limited": true
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_pure_test_capture_20261004T050840018732Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 5.60561896499712,
+      "sampled_tree_rss_peak_bytes": 118976512,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_pure_test_capture_20261004T050840018732Z/summary.json",
+        "sha256": "85df36d883754877300c6168575842f67f586c62fc2cf509fe03e44da21324fa",
+        "bytes": 1910
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_pure_test_capture_20261004T050840018732Z/supervision/worker.log",
+        "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+        "bytes": 2
+      },
+      "last_log_lines": [
+        "1"
+      ],
+      "initial_sandbox_view_limited": true
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_role_dependency_final_20261004T055706857269Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 6.451567134005018,
+      "sampled_tree_rss_peak_bytes": 108421120,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_role_dependency_final_20261004T055706857269Z/summary.json",
+        "sha256": "2cecb74b7f2aabfa29593a214d6d5e2f5a01ed8c3229ff7d37767549bd88fc20",
+        "bytes": 1908
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_role_dependency_final_20261004T055706857269Z/supervision/worker.log",
+        "sha256": "0eef541c7ea3bf47601d18fdfddaddb639367e7836124e25ce5c4002458c1812",
+        "bytes": 5483
+      },
+      "last_log_lines": [
+        "src/test/test_accurate_ports.py:192: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_accurate_ports.py::test_actual_launch_gate_rejects_proxy_even_with_passed_flag",
+        "1 failed, 42 passed in 4.48s"
+      ],
+      "initial_sandbox_view_limited": false
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_role_dependency_targeted_20261004T055152735242Z",
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "seconds": 6.520280451048166,
+      "sampled_tree_rss_peak_bytes": 109137920,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_role_dependency_targeted_20261004T055152735242Z/summary.json",
+        "sha256": "1617a6b094f988b79a0a95c12945d5437f7bc1579b19e909399b2723a1e8e4b4",
+        "bytes": 1908
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_role_dependency_targeted_20261004T055152735242Z/supervision/worker.log",
+        "sha256": "341d6816668f77f535ff6fa5931e507507af23ec80f47ef3cf4a7b8a1dd915bf",
+        "bytes": 3567
+      },
+      "last_log_lines": [
+        "src/test/test_accurate_ports.py:174: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED src/test/test_accurate_ports.py::test_actual_launch_gate_rejects_proxy_even_with_passed_flag",
+        "1 failed, 42 passed in 4.44s"
+      ],
+      "initial_sandbox_view_limited": false
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_saved_state_unit_20261004T061226420767Z",
+      "classification": "PRE_WORKER_REFUSAL",
+      "summary": "NOT_RETAINED",
+      "reason": "earlier pre-worker light-helper exception; raw admission retained",
+      "admission": {
+        "path": "tmp/task42extra/checks/v21_saved_state_unit_20261004T061226420767Z/admission.json",
+        "sha256": "6c2f838fbf2aa7ed374ac2230967246793b131e7365bea23bfa1bb3f9c94f007",
+        "bytes": 264602
+      }
+    }
+  ],
+  "process_sequence_error": "saved P3 launched before legacy test failure inspected; corrected before E4; no numerical replay",
+  "initial_packet_norm_name_fix": "norm_f -> bnorm, original failed tests retained",
+  "initial_unused_Path_Ruff_failure": "fixed before 98b8 implementation source; no numerical replay",
+  "compact_collection_metadata_fix": {
+    "failure": "TypeError: duplicate z_sign keyword while exporting physical air flux receipt",
+    "hypothesis": "z_sign already present in raw flux dictionary; duplicate metadata keyword, no physics failure",
+    "change": "nest original physical_flux unchanged and keep explicit side separately",
+    "test": "second v21_compact_collection completed, old failed output/log preserved",
+    "retry": "one bounded metadata-only collection, no producer/checker/FE replay",
+    "old_failure_seconds": 3.958821446984075,
+    "successful_collection_seconds": 5.864422628073953
+  },
+  "light_priority_metadata_fix": "future own light helper now nice10/idle IO; existing raw records unchanged, no numerical replay"
+}

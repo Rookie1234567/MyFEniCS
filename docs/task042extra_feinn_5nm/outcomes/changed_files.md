@@ -262,3 +262,7 @@ README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧�
 +src内新增固定几何计划、新空间构建/独立gψ审计/资格/参考与物理比较/保存负态诊断；已有体弱式/端口/物理action/export/exact_solve只加显式opt-in，ordinary/M5默认不改。准确边界端口换元保留原物理alpha和原门，未推广solver默认。新runner只做独立账本/资源/身份编排，durable入口包含import前时钟及监督tmux根，checker只读原数组重算。输入设计和八个one-run dat冻结新物理角色，未跑E4受Gate保护。
 
 +新Response/专题/设计/资格/运行/checker/Gate/完整成本/修复/模式样本区域CSV与依赖manifest；summary只前置V20，README当前入口更新，进度/模型总账/测试只追加本支事实。原task/reviews/历史响应与旧数组及其他分支不改。全部raw/F/CSR/场/资源轨迹/cache和浏览器图留ignored。production numerical/core无晋级：[六类依赖](records/selective_merge_manifest_v20.json)。
+
+## V21：准确原点端口与面闭包、独立保存比较
+
+新增src准确整数回代/拓扑迹/联合资格/冻结p3恢复内核，既有reference/condensation/physical默认不变，仅opt-in研究修复；参数化campaign支持V21阶段、角色子集明确Gate、source/ABI内容hash与durable白名单，不复制求解器或campaign。独立Decimal checker、MPC保存身份/模式近零负控与局部测试。新Response/专题/compact/CSV和原尺寸derived差距/依赖组；summary只前置，测试/进度/本支总账只追加，旧task/reviews/场/α/负结果不改。大数组与raw/浏览器图ignored；[六类依赖](records/selective_merge_manifest_v21.json)无production/merge授权。

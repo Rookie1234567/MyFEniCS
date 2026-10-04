@@ -1,0 +1,723 @@
+{
+  "schema": "fixed_phase.v21.qualification.v1",
+  "raw_index": {
+    "path": "benchmarks/artifacts/task42extra/index_v21_joint_qualification_attempt3.json",
+    "sha256": "53821a699be848b4ef7c0b48837c3df3c0eeebce5fb04a2e84433fbbde08c78b",
+    "bytes": 207398
+  },
+  "actual_source": "87175ae4029467b6dd75282e98ec0501ee6dd2f7",
+  "numerical_base_source": "98b8f8c4a0c75b22bc3e0a372fa2552fb0aad121",
+  "reuse": {
+    "index_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v21_joint_qualification_attempt1.json",
+    "index_sha256": "1ae3ac1e76e976a8398a9d6a7c297aeb0ae9f3ea804b258aa6b7369d77bec082",
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_joint_qualification_20261004T051427767817Z/result.json",
+      "sha256": "599ca68469abb6a1aaa8bbc6233828bc06f5370baa2d22d13f59f3f071f7586a"
+    },
+    "source_sha": "98b8f8c4a0c75b22bc3e0a372fa2552fb0aad121",
+    "components": [
+      "base",
+      "trace",
+      "phase_p3",
+      "phase_p4"
+    ],
+    "fresh_component": "ordinary_p6"
+  },
+  "base_gates": {
+    "zero_carrier": 0.0,
+    "physical_volume": 1.4087062374237056e-15,
+    "physical_B_D_H": 2.334658800016982e-15,
+    "physical_rhs": 1.2907628037465822e-15,
+    "native_adjoint_and_port_load": 1.790294078515527e-15,
+    "nonzero_port_rhs": 1.235046249710822e-16,
+    "manufactured_original_weak": 9.110930256684459e-14,
+    "manufactured_port": 1.9046426191578788e-15,
+    "manufactured_solve_residual": 6.072465052136826e-15,
+    "manufactured_solve_field": 9.258584496465557e-12,
+    "manufactured_recovery": 7.885533067767862e-16,
+    "physical_background": 9.512700254810861e-12,
+    "total_scattered_affine_closure": 5.795724225013787e-15,
+    "physical_floquet_x_y_corner": 1.2711349294695494e-14,
+    "physical_H_manufactured": 4.0848679934474626e-13,
+    "manufactured_Gauss_weak": 2.8262412120507525e-16,
+    "quadrature_15_30": 4.9550780648253735e-12,
+    "air_plane_residual": 8.527826100766301e-12,
+    "air_plane_fields_channels": 2.0145620181102026e-11,
+    "air_plane_power": 2.743361093848762e-12
+  },
+  "air_flux": [
+    {
+      "z_sign": -1,
+      "physical_flux": {
+        "channels": 36,
+        "z_sign": -1,
+        "incoming_side": "top",
+        "outgoing_side": "bottom",
+        "independent_Poynting_vs_port_max_absolute": 5.0958256412273143e-39,
+        "all_mode_vs_analytic_max_absolute": 2.743361093848762e-12,
+        "reflected": 1.8485330199905622e-22,
+        "transmitted": 0.9999999999970941,
+        "energy_closure": 2.9058977446538847e-12,
+        "physical_E_cross_H": true
+      }
+    },
+    {
+      "z_sign": 1,
+      "physical_flux": {
+        "channels": 36,
+        "z_sign": 1,
+        "incoming_side": "bottom",
+        "outgoing_side": "top",
+        "independent_Poynting_vs_port_max_absolute": 2.401125255736666e-39,
+        "all_mode_vs_analytic_max_absolute": 1.9984014443252818e-13,
+        "reflected": 1.6262515151954107e-22,
+        "transmitted": 0.9999999999996378,
+        "energy_closure": 3.6215475063272606e-13,
+        "physical_E_cross_H": true
+      }
+    }
+  ],
+  "trace_rows": [
+    {
+      "degree": 3,
+      "facet": 0,
+      "closure_size": 24,
+      "nodal_and_integral_relative": [
+        8.5108823348204615e-16,
+        6.179315997630003e-16
+      ],
+      "determining_nodes_per_axis": 4,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.42591707449558647,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 72,
+        "bottom": 72
+      }
+    },
+    {
+      "degree": 3,
+      "facet": 1,
+      "closure_size": 24,
+      "nodal_and_integral_relative": [
+        1.1777992204587369e-15,
+        9.826302850153367e-16
+      ],
+      "determining_nodes_per_axis": 4,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.5165003193821673,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 72,
+        "bottom": 72
+      }
+    },
+    {
+      "degree": 3,
+      "facet": 2,
+      "closure_size": 24,
+      "nodal_and_integral_relative": [
+        1.060944221235248e-15,
+        9.395788182962436e-16
+      ],
+      "determining_nodes_per_axis": 4,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.5050755186606244,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 72,
+        "bottom": 72
+      }
+    },
+    {
+      "degree": 3,
+      "facet": 3,
+      "closure_size": 24,
+      "nodal_and_integral_relative": [
+        1.186578113441338e-15,
+        1.0927736576354166e-15
+      ],
+      "determining_nodes_per_axis": 4,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.5050755186606242,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 72,
+        "bottom": 72
+      }
+    },
+    {
+      "degree": 3,
+      "facet": 4,
+      "closure_size": 24,
+      "nodal_and_integral_relative": [
+        1.1970175615633724e-15,
+        1.0868999572808958e-15
+      ],
+      "determining_nodes_per_axis": 4,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.5165003193821674,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 72,
+        "bottom": 72
+      }
+    },
+    {
+      "degree": 3,
+      "facet": 5,
+      "closure_size": 24,
+      "nodal_and_integral_relative": [
+        9.597967499204672e-16,
+        6.934023954361539e-16
+      ],
+      "determining_nodes_per_axis": 4,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.42591707449558647,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 72,
+        "bottom": 72
+      }
+    },
+    {
+      "degree": 4,
+      "facet": 0,
+      "closure_size": 40,
+      "nodal_and_integral_relative": [
+        1.7548677331567224e-15,
+        1.3407869333889743e-15
+      ],
+      "determining_nodes_per_axis": 5,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.3388235347196014,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 128,
+        "bottom": 128
+      }
+    },
+    {
+      "degree": 4,
+      "facet": 1,
+      "closure_size": 40,
+      "nodal_and_integral_relative": [
+        2.4931055013717104e-15,
+        1.7340236977370537e-15
+      ],
+      "determining_nodes_per_axis": 5,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.41088388885119115,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 128,
+        "bottom": 128
+      }
+    },
+    {
+      "degree": 4,
+      "facet": 2,
+      "closure_size": 40,
+      "nodal_and_integral_relative": [
+        2.1739408804474043e-15,
+        1.6697073335631062e-15
+      ],
+      "determining_nodes_per_axis": 5,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.4017952854686553,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 128,
+        "bottom": 128
+      }
+    },
+    {
+      "degree": 4,
+      "facet": 3,
+      "closure_size": 40,
+      "nodal_and_integral_relative": [
+        2.348137120512909e-15,
+        1.8834976106117746e-15
+      ],
+      "determining_nodes_per_axis": 5,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.4017952854686553,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 128,
+        "bottom": 128
+      }
+    },
+    {
+      "degree": 4,
+      "facet": 4,
+      "closure_size": 40,
+      "nodal_and_integral_relative": [
+        2.4016121632328163e-15,
+        1.6782779730580922e-15
+      ],
+      "determining_nodes_per_axis": 5,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.41088388885119115,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 128,
+        "bottom": 128
+      }
+    },
+    {
+      "degree": 4,
+      "facet": 5,
+      "closure_size": 40,
+      "nodal_and_integral_relative": [
+        1.780234023510884e-15,
+        1.2906005134127014e-15
+      ],
+      "determining_nodes_per_axis": 5,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.3388235347196014,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 128,
+        "bottom": 128
+      }
+    },
+    {
+      "degree": 6,
+      "facet": 0,
+      "closure_size": 84,
+      "nodal_and_integral_relative": [
+        3.741171648102505e-15,
+        2.763270152066761e-15
+      ],
+      "determining_nodes_per_axis": 7,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.2471142811898148,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 288,
+        "bottom": 288
+      }
+    },
+    {
+      "degree": 6,
+      "facet": 1,
+      "closure_size": 84,
+      "nodal_and_integral_relative": [
+        5.050322560047979e-15,
+        4.395928313641059e-15
+      ],
+      "determining_nodes_per_axis": 7,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.2996700832188792,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 288,
+        "bottom": 288
+      }
+    },
+    {
+      "degree": 6,
+      "facet": 2,
+      "closure_size": 84,
+      "nodal_and_integral_relative": [
+        5.4912614746690355e-15,
+        4.05947219352994e-15
+      ],
+      "determining_nodes_per_axis": 7,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.29304148909316946,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 288,
+        "bottom": 288
+      }
+    },
+    {
+      "degree": 6,
+      "facet": 3,
+      "closure_size": 84,
+      "nodal_and_integral_relative": [
+        5.24952271735545e-15,
+        4.113407014498731e-15
+      ],
+      "determining_nodes_per_axis": 7,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.29304148909316957,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 288,
+        "bottom": 288
+      }
+    },
+    {
+      "degree": 6,
+      "facet": 4,
+      "closure_size": 84,
+      "nodal_and_integral_relative": [
+        5.3174180845414666e-15,
+        4.5215957647657406e-15
+      ],
+      "determining_nodes_per_axis": 7,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.2996700832188792,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 288,
+        "bottom": 288
+      }
+    },
+    {
+      "degree": 6,
+      "facet": 5,
+      "closure_size": 84,
+      "nodal_and_integral_relative": [
+        4.144942901198407e-15,
+        3.2345192750202513e-15
+      ],
+      "determining_nodes_per_axis": 7,
+      "node_unisolvence": "tensor tangential degrees at most (p,p-1)/(p-1,p)",
+      "omitted_boundary_dof_difference": 0.24711428118981485,
+      "actual_cell_permutation": 36873,
+      "boundary_master_counts": {
+        "top": 288,
+        "bottom": 288
+      }
+    }
+  ],
+  "actual_557_558_562_are_interior": true,
+  "amplitude_threshold": null,
+  "affected_ports": [
+    {
+      "degree": 3,
+      "passed": true,
+      "physical_ports": {
+        "samples": [
+          [
+            2.334658800016982e-15,
+            1.940383382152833e-15,
+            0.0
+          ],
+          [
+            1.843620494306855e-15,
+            1.902335980131505e-15,
+            0.0
+          ],
+          [
+            1.9487453039370695e-15,
+            1.9753786878561498e-15,
+            0.0
+          ]
+        ],
+        "passed": true
+      },
+      "quadrature_15_30": 5.512851172945993e-12,
+      "physical_rhs": 1.2907628037465822e-15,
+      "native_action": {
+        "status": "PASS",
+        "samples": [
+          {
+            "original_native_relative": 1.4331215228958958e-15,
+            "adjoint_dot_relative": 3.95447535613533e-18,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 3.0816847102786694e-17,
+            "arbitrary_interior_norm": 23.85547235440459
+          },
+          {
+            "original_native_relative": 1.6721001214629783e-15,
+            "adjoint_dot_relative": 1.1028476324926911e-17,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 3.352370851893626e-17,
+            "arbitrary_interior_norm": 23.190310069406912
+          },
+          {
+            "original_native_relative": 1.790294078515527e-15,
+            "adjoint_dot_relative": 4.939887149540373e-18,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 4.99742468342424e-17,
+            "arbitrary_interior_norm": 24.291796870903326
+          }
+        ],
+        "nonzero_FE_and_port_load_relative": 1.235046249710822e-16,
+        "nonzero_port_load_operation_relative": 5.366140676756976e-17,
+        "actual_blocks": "[V B; -D H], A=V+B solve(H,D), f=g-B solve(H,gp)",
+        "port_original_diagonal_min": 1.790968563857945e-05,
+        "port_original_diagonal_max": 0.05880000000000002,
+        "explicit_port_inverse_created": false,
+        "full_FE_retained": 720
+      },
+      "nonzero_internal_and_port_rhs": true,
+      "condensed_action_recovery": 2.559594767906249e-15,
+      "generic_nonzero_interior_port_rejected": true,
+      "omitted_boundary_dof_negative": 0.33835720035277095,
+      "accurate_vs_independent_decimal": 0.0,
+      "phase": true,
+      "role": "E3"
+    },
+    {
+      "degree": 4,
+      "passed": true,
+      "physical_ports": {
+        "samples": [
+          [
+            2.672568540261371e-15,
+            2.5692116222477423e-15,
+            0.0
+          ],
+          [
+            2.8661366028496077e-15,
+            2.3150601086940323e-15,
+            0.0
+          ],
+          [
+            3.0909253087587786e-15,
+            2.9829713382361806e-15,
+            0.0
+          ]
+        ],
+        "passed": true
+      },
+      "quadrature_15_30": 7.055231911637235e-11,
+      "physical_rhs": 2.426252670852987e-15,
+      "native_action": {
+        "status": "PASS",
+        "samples": [
+          {
+            "original_native_relative": 1.860425291757462e-15,
+            "adjoint_dot_relative": 8.481024236459311e-18,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 2.7264614750479628e-17,
+            "arbitrary_interior_norm": 41.374059394296026
+          },
+          {
+            "original_native_relative": 2.1048247419570725e-15,
+            "adjoint_dot_relative": 1.2059828532740752e-17,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 3.4320484850953244e-17,
+            "arbitrary_interior_norm": 42.82735181961848
+          },
+          {
+            "original_native_relative": 1.6222028387414406e-15,
+            "adjoint_dot_relative": 1.4192249064017745e-17,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 3.5737370547423525e-17,
+            "arbitrary_interior_norm": 42.330379501590365
+          }
+        ],
+        "nonzero_FE_and_port_load_relative": 1.8955374146091746e-17,
+        "nonzero_port_load_operation_relative": 4.8183572228709267e-17,
+        "actual_blocks": "[V B; -D H], A=V+B solve(H,D), f=g-B solve(H,gp)",
+        "port_original_diagonal_min": 1.790968563857945e-05,
+        "port_original_diagonal_max": 0.05880000000000002,
+        "explicit_port_inverse_created": false,
+        "full_FE_retained": 1664
+      },
+      "nonzero_internal_and_port_rhs": true,
+      "condensed_action_recovery": 5.055300211719238e-15,
+      "generic_nonzero_interior_port_rejected": true,
+      "omitted_boundary_dof_negative": 0.2578874139377192,
+      "accurate_vs_independent_decimal": 0.0,
+      "phase": true,
+      "role": "E4"
+    },
+    {
+      "degree": 6,
+      "role": "O6",
+      "phase": false,
+      "fixture_background": "nonzero manufactured full FE field",
+      "passed": false,
+      "physical_ports": {
+        "samples": [
+          [
+            5.830228541446827e-15,
+            1.8660170868747e-14,
+            0.0
+          ],
+          [
+            5.899668625205371e-15,
+            1.5417187340419532e-14,
+            0.0
+          ],
+          [
+            5.33718591452219e-15,
+            1.2116331521185785e-14,
+            0.0
+          ]
+        ],
+        "passed": true
+      },
+      "quadrature_15_30": 4.275671921747731e-07,
+      "physical_rhs": 1.7505059260191935e-14,
+      "native_action": {
+        "status": "PASS",
+        "samples": [
+          {
+            "original_native_relative": 1.9533241144687866e-15,
+            "adjoint_dot_relative": 6.71671493796987e-18,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 1.772460033459529e-17,
+            "arbitrary_interior_norm": 85.47309461959084
+          },
+          {
+            "original_native_relative": 1.9197355824425326e-15,
+            "adjoint_dot_relative": 8.307291237283315e-18,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 4.529190249032329e-17,
+            "arbitrary_interior_norm": 84.92647479499783
+          },
+          {
+            "original_native_relative": 1.9464875297145328e-15,
+            "adjoint_dot_relative": 9.469317289263951e-18,
+            "augmented_native_relative": 0.0,
+            "original_port_operation_relative": 6.735711665266974e-18,
+            "arbitrary_interior_norm": 84.9784423615345
+          }
+        ],
+        "nonzero_FE_and_port_load_relative": 1.1591725428563116e-17,
+        "nonzero_port_load_operation_relative": 4.4972113209864986e-17,
+        "actual_blocks": "[V B; -D H], A=V+B solve(H,D), f=g-B solve(H,gp)",
+        "port_original_diagonal_min": 1.790968563857945e-05,
+        "port_original_diagonal_max": 0.05880000000000002,
+        "explicit_port_inverse_created": false,
+        "full_FE_retained": 5472
+      },
+      "nonzero_internal_and_port_rhs": true,
+      "condensed_action_recovery": 1.376950750485807e-14,
+      "generic_nonzero_interior_port_rejected": true,
+      "omitted_boundary_dof_negative": 0.21985542018296267,
+      "accurate_vs_independent_decimal": 0.0
+    }
+  ],
+  "whole": {
+    "passed": false,
+    "failed": [
+      "quadrature_15_30"
+    ],
+    "base_checker": {
+      "status": "PASS",
+      "passed": true,
+      "failed": [],
+      "limits": {
+        "zero_carrier": 1e-10,
+        "physical_volume": 1e-10,
+        "physical_B_D_H": 1e-10,
+        "physical_rhs": 1e-10,
+        "native_adjoint_and_port_load": 1e-10,
+        "nonzero_port_rhs": 1e-10,
+        "manufactured_original_weak": 1e-10,
+        "manufactured_port": 1e-10,
+        "manufactured_solve_residual": 1e-10,
+        "manufactured_solve_field": 1e-10,
+        "manufactured_recovery": 1e-10,
+        "physical_floquet_x_y_corner": 1e-10,
+        "physical_H_manufactured": 1e-10,
+        "manufactured_Gauss_weak": 1e-10,
+        "physical_background": 1e-10,
+        "total_scattered_affine_closure": 1e-10,
+        "air_plane_residual": 1e-10,
+        "quadrature_15_30": 1e-08,
+        "air_plane_fields_channels": 0.0001,
+        "air_plane_power": 1e-06
+      },
+      "recomputed_from_original_measurements": true
+    },
+    "complete_physical_air_flux_required": true,
+    "required_degrees": [
+      3,
+      4,
+      6
+    ],
+    "scope": "common air/curl/background/trace plus all affected measurements of required roles",
+    "whole_joint_qualification_claim": true
+  },
+  "P2": {
+    "passed": true,
+    "failed": [],
+    "base_checker": {
+      "status": "PASS",
+      "passed": true,
+      "failed": [],
+      "limits": {
+        "zero_carrier": 1e-10,
+        "physical_volume": 1e-10,
+        "physical_B_D_H": 1e-10,
+        "physical_rhs": 1e-10,
+        "native_adjoint_and_port_load": 1e-10,
+        "nonzero_port_rhs": 1e-10,
+        "manufactured_original_weak": 1e-10,
+        "manufactured_port": 1e-10,
+        "manufactured_solve_residual": 1e-10,
+        "manufactured_solve_field": 1e-10,
+        "manufactured_recovery": 1e-10,
+        "physical_floquet_x_y_corner": 1e-10,
+        "physical_H_manufactured": 1e-10,
+        "manufactured_Gauss_weak": 1e-10,
+        "physical_background": 1e-10,
+        "total_scattered_affine_closure": 1e-10,
+        "air_plane_residual": 1e-10,
+        "quadrature_15_30": 1e-08,
+        "air_plane_fields_channels": 0.0001,
+        "air_plane_power": 1e-06
+      },
+      "recomputed_from_original_measurements": true
+    },
+    "complete_physical_air_flux_required": true,
+    "required_degrees": [
+      3
+    ],
+    "scope": "common air/curl/background/trace plus all affected measurements of required roles",
+    "whole_joint_qualification_claim": false
+  },
+  "E4": {
+    "passed": true,
+    "failed": [],
+    "base_checker": {
+      "status": "PASS",
+      "passed": true,
+      "failed": [],
+      "limits": {
+        "zero_carrier": 1e-10,
+        "physical_volume": 1e-10,
+        "physical_B_D_H": 1e-10,
+        "physical_rhs": 1e-10,
+        "native_adjoint_and_port_load": 1e-10,
+        "nonzero_port_rhs": 1e-10,
+        "manufactured_original_weak": 1e-10,
+        "manufactured_port": 1e-10,
+        "manufactured_solve_residual": 1e-10,
+        "manufactured_solve_field": 1e-10,
+        "manufactured_recovery": 1e-10,
+        "physical_floquet_x_y_corner": 1e-10,
+        "physical_H_manufactured": 1e-10,
+        "manufactured_Gauss_weak": 1e-10,
+        "physical_background": 1e-10,
+        "total_scattered_affine_closure": 1e-10,
+        "air_plane_residual": 1e-10,
+        "quadrature_15_30": 1e-08,
+        "air_plane_fields_channels": 0.0001,
+        "air_plane_power": 1e-06
+      },
+      "recomputed_from_original_measurements": true
+    },
+    "complete_physical_air_flux_required": true,
+    "required_degrees": [
+      3,
+      4
+    ],
+    "scope": "common air/curl/background/trace plus all affected measurements of required roles",
+    "whole_joint_qualification_claim": false
+  },
+  "earlier_attempts": {
+    "index_v21_joint_qualification_attempt1.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v21_joint_qualification_attempt1.json",
+      "sha256": "1ae3ac1e76e976a8398a9d6a7c297aeb0ae9f3ea804b258aa6b7369d77bec082",
+      "bytes": 206403
+    },
+    "index_v21_joint_qualification_attempt3.json": {
+      "path": "benchmarks/artifacts/task42extra/index_v21_joint_qualification_attempt3.json",
+      "sha256": "53821a699be848b4ef7c0b48837c3df3c0eeebce5fb04a2e84433fbbde08c78b",
+      "bytes": 207398
+    }
+  },
+  "old_air_power_proxy_and_late_flux_limitation_unchanged": true
+}

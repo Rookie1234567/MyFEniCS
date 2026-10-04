@@ -1,0 +1,20 @@
+{
+  "status": "PENDING_NEW_PAGE_BROWSER_VISUAL",
+  "review_v20": {
+    "status": "REUSED_UNCHANGED_REVIEWER_VISUAL_PASS",
+    "review": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v20.md",
+      "sha256": "8b934f9d2e1347f88280ab892937f3d2a94b6ba4ede52a6eb35b12fa39569ac3",
+      "bytes": 32456
+    },
+    "source": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v20_evidence_audit.json",
+      "sha256": "479319d0914eaf80cf2617c1d13265487af15ee0ab0cac7570c20cf8a7192379",
+      "bytes": 201332
+    },
+    "accepted_visual_scope": "actual GitHub first screen and all seven tables, eight images; seal changed only receipt",
+    "visual_reinspection_this_batch": false
+  },
+  "new_page_visual_PASS_claim": false,
+  "old_formula_and_other_failure_records_preserved": true
+}

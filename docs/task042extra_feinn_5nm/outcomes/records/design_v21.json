@@ -1,0 +1,94 @@
+{
+  "schema": "fixed_phase.v21.design.v1",
+  "authority": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v20.md",
+    "sha256": "8b934f9d2e1347f88280ab892937f3d2a94b6ba4ede52a6eb35b12fa39569ac3",
+    "bytes": 32456
+  },
+  "review_input_head": "974a459fa2df290ff2c4459175d2c06255f0d9a1",
+  "reviewed_numeric_parent": "f5ae072d09816b899002fc45460dc4cd1840e1af",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "design": {
+    "path": "input/task042extra_feinn_5nm/design_v20.json",
+    "sha256": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+    "bytes": 8951
+  },
+  "frozen_inputs": {
+    "O3": {
+      "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "old_run": "task42extra_v20_o3_20261004T022559061402Z",
+      "files": {
+        "field": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/field_state.npz",
+          "sha256": "4e00c42335cd179529c88bcea2c8e4b8a5b27cf3bc415a4611fd9957c6dbac42"
+        },
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/native.npz",
+          "sha256": "639cebc3a5d093405226dd8deea4e632c81530b8dd60b1d1d3e72397180b54b9"
+        },
+        "identity": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/identity.json",
+          "sha256": "b5494717a0392302d4b1bcbe0e5f7375402e96d59fb859343375c09b7cb352c1"
+        }
+      },
+      "old_failure_preserved": true,
+      "old_launch_seconds": 154.9792955960147
+    },
+    "E3": {
+      "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "old_run": "task42extra_v20_e3_20261004T022926144000Z",
+      "files": {
+        "field": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/field_state.npz",
+          "sha256": "d95fb546834f09ea2d05209010b8c93a7d2066f9c947958e7b7af8512e82f1cf"
+        },
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/native.npz",
+          "sha256": "5b153fe537ee38b7c2394923c5da2611cfadbb90e4dae5386732df797aa6cc37"
+        },
+        "identity": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/identity.json",
+          "sha256": "b39c0707ddadb9b59d9090ff0b3bb11465990b2d5258a4196f6ce3ac0bcf99d8"
+        }
+      },
+      "old_failure_preserved": true,
+      "old_launch_seconds": 176.59969027899206
+    },
+    "O6": {
+      "source_sha": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+      "old_run": "task42extra_v20_o6_20261004T023256068972Z",
+      "files": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/native.npz",
+          "sha256": "dcbb858703562ee91c0cd318f7032400522eb1daa61d829dfba02b76338ccba1"
+        },
+        "identity": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/identity.json",
+          "sha256": "11772b2fc31c815b1faea78411a4bf3dc428f1d652d0d0713a69b5031dc7a509"
+        }
+      },
+      "old_failure_preserved": true,
+      "old_launch_seconds": 1752.7133576469496
+    }
+  },
+  "no_geometry_material_carrier_q_or_gate_change": true,
+  "Gram_and_NN": 0,
+  "original_target": {
+    "bounds_nm": [
+      50,
+      25,
+      140
+    ],
+    "line_width_nm": 17,
+    "line_height_nm": 120,
+    "wavelength_nm": 0.7,
+    "whole_machine_bytes": 2000000000000,
+    "whole_flow_seconds": 172800
+  },
+  "qualification_scope": "P6 small quadrature failure prevents O6; complete common+P3/P4 evidence admits independent P2 only",
+  "peer_heads_read_once": {
+    "main": "d68f5688e6d166aa6a2bc4b6a0dd015f9e31c77b",
+    "dot": "077ec9c8386c976da232093779279fb9d1a93033"
+  },
+  "peer_checkout_install_run_changes": 0
+}

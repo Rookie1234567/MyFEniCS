@@ -1827,6 +1827,13 @@ A小fixture联合资格通过；C完整物理比较1380.8117s/642138112B，total
 
 原目标50×25×140nm、λ0.7、2e12B整机、172800s完整三维FE及原门不变，NOT_RUN/NOT_QUALIFIED。NN NOT_TESTED，FEINN_MAIN_SOLVER_ON_HOLD/NO_VERIFIED_NN_INCREMENT，M3600改善/Mfinal退化、D0成本否决/D1未运行及全部旧UNKNOWN保留。无production/merge，不重复主线Gx784或dot C1/storage。
 
+
+## 3.44.19 Task42extra Review V20：相位p4及准确端口恢复（研究、参考受限）
+
+把原点端口的高度相消点积做准确计算，并用边/面拓扑确定真实切向支持；不改变ordinary默认、不按幅值裁零。G0保持7/135几何、λ.7、340模式/双Floquet；新相位p4保存全部65280独立复FE，准确回代后native7.7922369e-10、total弱式5.8494021e-11，候选方程门1e-6。R/T/A_volume=.0761271395/.9057668791/.01810598138，能量1.53932e-12，R00_s=.0761266939，R00_p=1.5607024e-24，R00_total由原记录相加；这些为离散候选diagnostic，非目标official精度。唯一新全局factor/solve父墙钟363.543991s，树峰2179440640B、swap/OOC0，local恢复与global生命周期范围分开。
+
+O3R/E3R保留旧c字节并重做端口/实际残差，独立MPC重建0；total rounded原点再回代未闭合，普通p6小资格q15/30=4.27567e-7 >1e-8，真实O6未启动。独立公共积分全场/6点/340×4模式/区域及原分母保留，有限p field_passed=False、reference UNKNOWN；没有同精度20%收益或原尺寸胜者。M3600改善/Mfinal退化、全部旧失败/费用/UNKNOWN、D0成本否决/D1未运行保留。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；无NN/Gram，原50×25×140nm/λ.7、2e12B整机、172800s完整流程未资格化。[完整Response](task042extra_feinn_5nm/response_v21.md)、[专题](task042extra_feinn_5nm/outcomes/phase_port_recovery_v21.md)、[raw绑定](task042extra_feinn_5nm/outcomes/records/run_index_v21.json)及[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v21.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

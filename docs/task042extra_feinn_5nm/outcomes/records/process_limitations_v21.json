@@ -1,0 +1,19 @@
+{
+  "source_sha": "5ca562a08bb9766d9ecd5c7f7660dd05e0a7a032",
+  "complete_joint_precondition_met": false,
+  "degree_scoped_admission_used": true,
+  "degree_scope_interpretation": "Continue p3/p4 branches independently of failed ordinary p6; not a complete joint PASS",
+  "strict_review_all_origin_recovery_met": false,
+  "E4_strict_solver_qualification": false,
+  "total_saved_origin_recovery": "Independent rounded total c recovery exceeds 1e-10 in all three states; affine total and actual full residual remain saved and checked",
+  "P2_started_before_legacy_mock_failure_inspected": true,
+  "P2_new_factor_or_solve": false,
+  "corrected_mock_passed_before_E4": true,
+  "no_retroactive_qualification": true,
+  "no_more_numeric_retry": true,
+  "preserved_failed_qualification_indices": [
+    "index_v21_joint_qualification_attempt1.json",
+    "index_v21_joint_qualification_attempt2.json",
+    "index_v21_joint_qualification_attempt3.json"
+  ]
+}

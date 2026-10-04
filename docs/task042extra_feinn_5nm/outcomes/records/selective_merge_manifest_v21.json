@@ -1,0 +1,99 @@
+{
+  "merge_approval": false,
+  "ordinary_defaults_changed": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "recommendation": "NO_PRODUCTION_PROMOTION",
+      "numeric_change": "none to defaults",
+      "dependencies": []
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "recommendation": "RESEARCH_OPT_IN_ONLY",
+      "files": [
+        "src/runners/fixed_phase_campaign.py",
+        "src/runners/durable_terminal.py",
+        "src/io/fixed_phase_pilot.py",
+        "scripts/launch_task42extra_durable.py"
+      ],
+      "tests": [
+        "test_fixed_phase_contract",
+        "control_checks"
+      ],
+      "fresh_PDE": "E4 V21; joint P6 failed"
+    },
+    {
+      "group": "checker/benchmark",
+      "recommendation": "REVIEW_BEFORE_REUSE",
+      "files": [
+        "benchmarks/accurate_port_checker.py",
+        "benchmarks/fixed_phase_checker.py"
+      ],
+      "dependencies": [
+        "saved original packet and all7 state identities"
+      ],
+      "tests": [
+        "test_accurate_ports",
+        "test_fixed_phase_mode_checks",
+        "test_fixed_phase_saved_diagnostics"
+      ],
+      "fresh_evidence": "independent V21 saved_checker"
+    },
+    {
+      "group": "compact evidence/docs",
+      "recommendation": "RETAIN_ALL_POSITIVE_NEGATIVE_UNKNOWN",
+      "files": [
+        "docs/task042extra_feinn_5nm/response_v21.md",
+        "outcomes records/CSV",
+        "progress own appended section",
+        "model registry own appended section"
+      ],
+      "tests": [
+        "scoped Markdown/history/CSV check"
+      ]
+    },
+    {
+      "group": "research-only",
+      "recommendation": "EXPLICIT_OPT_IN_NOT_DEFAULT",
+      "files": [
+        "src/solvers/accurate_ports.py",
+        "src/solvers/topological_port_trace.py",
+        "src/solvers/fixed_phase_port_qualification.py",
+        "src/solvers/fixed_phase_port_recovery.py",
+        "src/solvers/fixed_phase_reference.py",
+        "src/solvers/fixed_phase_comparison.py",
+        "src/solvers/feinn_reference.py",
+        "src/solvers/feinn_exact_condensation.py",
+        "src/solvers/fixed_phase_port_coordinates.py"
+      ],
+      "dependencies": [
+        "fixed_phase_fem/fullspace explicit physical/action hooks",
+        "correct packet/source/layout",
+        "complete common air/trace and degree-qualified gates"
+      ],
+      "tests": [
+        "targeted local and frozen E4/P2 comparison"
+      ],
+      "limitations": [
+        "P6 q15/q30 failed",
+        "total rounding unresolved",
+        "strict full-mode finite-p failure",
+        "no O6 reference"
+      ]
+    },
+    {
+      "group": "do-not-merge",
+      "recommendation": "KEEP_IGNORED_AND_HISTORICAL",
+      "files": [
+        "raw native/F/CSR/field/arithmetic timelines/screenshots",
+        "failed attempts and legacy NN weights"
+      ],
+      "numeric_change": "no training/reference promotion",
+      "dependencies": [
+        "hash-bound original files retained"
+      ]
+    }
+  ],
+  "suggested_order": "audit evidence+checker first, runner next, opt-in arithmetic/topology after their qualifications; no production default or master merge"
+}

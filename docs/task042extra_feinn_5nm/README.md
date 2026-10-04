@@ -1,8 +1,8 @@
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
-当前执行权威为 [Review V19](review_report_v19.md)，已按 [Response V20](response_v20.md) 完成整批：固定横向相位进入完整三维FE基函数；不是恢复旧M5网络训练。新空间解析资格通过，普通/相位p3保存物理全场已独立比较，但原端口恢复超门、p6参考凝聚前失败，严格精度及FE表示收益UNKNOWN。旧主求解器/生产初值仍为 FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED。本批NN收益NOT_TESTED，无production或merge approval。
+当前执行权威为 [Review V20](review_report_v20.md)，整批结果见 [Response V21](response_v21.md)：冻结p3系数的准确端口恢复及唯一相位p4已完成，独立全物理/逐模式比较完成。普通p6小积分资格失败，O6不启动；总场原点回代舍入与有限p完整模式仍单列，当前REFERENCE_LIMITED，未得同精度FE表示收益。旧FEINN主求解器/生产初值保持 FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED；无NN训练，无production/merge approval。
 
-当前证据见 [相位FE专题](outcomes/phase_adapted_fe_v20.md)、[运行索引](outcomes/records/run_index_v20.json)、[独立checker](outcomes/records/independent_checker_v20.json)、[完整费用](outcomes/records/resource_costs_v20.json)及[summary](outcomes/summary.md)。V18局部网络的额外G改善仅占实际改善0.07695%/0.42375%、R超门及V19暂停交接均作为历史保留；新FE收益不能记作NN收益。
+现有[相位FE端口专题](outcomes/phase_port_recovery_v21.md)、[运行索引](outcomes/records/run_index_v21.json)、[独立checker](outcomes/records/independent_checker_v21.json)、[资源](outcomes/records/resource_costs_v21.json)、[原尺寸差距](outcomes/records/target_cost_gap_v21.json)与[summary](outcomes/summary.md)为当前入口。V18局部网络0.07695%/0.42375%额外G改善、全部旧负结果及暂停边界保留，新FE算术/表示结果不算NN收益。
 
 | 项目 | 冻结身份 / 当前状态 |
 |---|---|
@@ -12,14 +12,15 @@
 | canonical / 工作树根 | `/home/fenics/Projects/Maxwell3D-Lab/task-repository.git` / 已登记 `/home/fenics/Projects/NN-Lab-V2` |
 | 首轮问题 | 5 nm、Si/air、非可分三维缺口、双Floquet/Fourier-DtN；384 hex/p3小型资格试验 |
 | 历史首轮方法 | 坐标网络→完整Nédélec边/面/内部矩→原native全FE残差；对比欧氏与Riesz对偶loss |
-| V20实际方法 | 固定横向相位直接进入完整FE基函数；准确线性FE对照和保存场独立比较，NN/Gram因子为0 |
-| 与Task042区别 | 不仅训练trace、不求p4逆；端口仅准确解析消元；内部FE系数由网络矩产生 |
+| V21实际方法 | 固定横向相位直接进入完整FE基函数；准确线性FE对照和保存场独立比较，NN/Gram因子为0 |
+| 历史与Task042区别 | 不仅训练trace、不求p4逆；端口仅准确解析消元；历史NN的内部FE系数由完整矩产生；本轮无网络 |
 | 历史Gram辅助成本 | 小型DUAL路线允许准确稀疏Gram因子，必须全程记账；不称无全局因子生产方案 |
 | 执行端 | 工作站原生Linux；独立worktree/环境/cache；已有项目只读，不改其运行 |
-| 本轮资源与预算 | Review V19完整43200s，最后预留1800s；单空闲物理核/线程1、CPU-only/MPI1；pure2GiB/FEwarn12-hard16GiB、自身swap/OOC0；系统max(128GiB,有效整机10%)+至少384GiB邻增长、磁盘50GiB。批次已完成，不能沿旧输入自动再跑 |
-| 当前结果 | V20新空间A通过，O3/E3原恢复FAIL，p6参考因子前失败，E4 NOT_RUN；C物理差完整记录、准确性/FE收益UNKNOWN。旧V18结果及NN暂停、D0成本否决/D1未运行不变 |
-| 本轮检查边界 | V20最终41 pure fixtures、Ruff/compileall、实际旧RHS与独立空气物理通量通过；一次冻结数组checker完成。新页parser/视觉和发布尾账单列，本页下方历史失败仍保留 |
-| 原数组分析源码 / 新checker源码 | `99f2968be8d715a6f2e6985f5b032c53ca505950` / `a14dd6187336c866f0a327760f10c4ece0140a8d`；[V16 run index](outcomes/records/run_index_v16.json)保留旧C1/数值身份，不以文档HEAD冒充source |
+| 本轮资源与预算 | Review V20完整43200s，最后留1800s；单空闲物理核/线程1、CPU-only/MPI1；pure2GiB/FEwarn12-hard16GiB、自身swap/OOC0；系统max(128GiB,有效整机10%)+384GiB邻增长。批次收口，不能自动再次运行 |
+| 当前结果 | O3R/E3R散射端口准确回代与实际原方程通过；唯一E4保存完整场；total恢复未闭合、p6资格负结果、严格比较/FE收益参考受限；NN暂停和D0/D1不变 |
+| 本轮检查边界 | 受影响pure fixtures、真实保存场MPC/损坏检查、空气Poynting、Ruff/compileall/局部文档与一次纯数组checker；full pytest/CI未运行，旧失败保留 |
+| 历史V16数组分析源码 / checker源码 | `99f2968be8d715a6f2e6985f5b032c53ca505950` / `a14dd6187336c866f0a327760f10c4ece0140a8d`；[V16 run index](outcomes/records/run_index_v16.json)保留旧C1/数值身份 |
+| V21实际source | 保存p3派生 `3c9ce15ec830bf3df4d023ab9d064494ef80b54e`；E4 `7e9abf3a98e7dbabc1eed6a4a48052f1ac6d5279`；独立比较/checker `5ca562a08bb9766d9ecd5c7f7660dd05e0a7a032`，不以文档HEAD冒充source |
 | 最终目标 | 原尺寸50×25×140nm、Si线宽17nm/高120nm、λ=0.7nm、完整三维FE；十进制2,000,000,000,000B整机、swap0、172800s完整流程；仍未运行/未资格化 |
 
 ## 历史M5冻结结论与最小证据
