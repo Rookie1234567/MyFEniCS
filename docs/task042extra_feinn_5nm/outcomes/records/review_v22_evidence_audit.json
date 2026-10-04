@@ -1757,6 +1757,224 @@
         "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "source_state": "development_worktree; not formal PDE provenance"
       }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v22_publication_check_20261004T124020443541Z/summary.json",
+        "sha256": "32f90bbc783961c39033f0ec0b0ffa7f021ae70f6640ea1ac849ac4b807fcb86",
+        "bytes": 1898
+      },
+      "measurements": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 120.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 38400000,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123749617664,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123749617664,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.5589624220738187,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v22_github_render_20261004T124204989967Z/summary.json",
+        "sha256": "438b097bcf7fff0009f92aadd187509d64bdaeb56c4a0463cb50bef554118777",
+        "bytes": 2074
+      },
+      "measurements": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1792597,
+          1792598,
+          1792601,
+          1792655,
+          1792658,
+          1792678,
+          1792686,
+          1792752,
+          1792791,
+          1792797,
+          1792799,
+          1792815,
+          1792864,
+          1792941
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1692078080,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123522252800,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123522252800,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 28,
+        "elapsed_seconds": 18.47150324098766,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v22_github_final_20261004T124438416259Z/summary.json",
+        "sha256": "3280b89763e68529b3888cd029a5a1b38db726e94b0b34680bd60d2e8df81dbf",
+        "bytes": 2074
+      },
+      "measurements": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1793928,
+          1793929,
+          1793932,
+          1793986,
+          1793989,
+          1794010,
+          1794018,
+          1794070,
+          1794123,
+          1794129,
+          1794134,
+          1794144,
+          1794163,
+          1794278
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1583104000,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123565662208,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123565662208,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 27,
+        "elapsed_seconds": 17.03163531096652,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
     }
   ],
   "scripts": {
@@ -1802,10 +2020,16 @@
     "review_first_read_utc": "2026-10-04T12:18:11Z",
     "monotonic_anchor": 1041560.764415897,
     "UTC_derived_prefix_seconds": 274.903550863266,
-    "monotonic_since_anchor_seconds": 1055.6973748860182,
+    "monotonic_since_anchor_seconds": 1421.6125248820754,
     "prefix_is_not_monotonic_measurement": true,
     "reading_reasoning_Git_render_in_monotonic_tail": true,
-    "project_total": "UNKNOWN_HISTORICAL_TAILS_AND_LOST_3284S_RETAINED"
+    "project_total": "UNKNOWN_HISTORICAL_TAILS_AND_LOST_3284S_RETAINED",
+    "observed_review_total_with_UTC_prefix_seconds": 1696.5160757453414,
+    "conservative_review_upper_through_final_notification_seconds": 2621.6125248820754,
+    "final_publish_and_notification_reserve_seconds": 900,
+    "reviewer_sampled_tree_peak_bytes": 1692078080,
+    "own_swap_zero": true,
+    "initial_unmonitored_control_peak": "UNKNOWN_NOT_REPLACED_BY_SUPERVISED_PEAK"
   },
   "accepted_research_evidence": true,
   "strict_role_qualified": false,
@@ -1834,8 +2058,8 @@
     "precision_unchanged": true
   },
   "publication": {
-    "actual_GitHub_render": "PENDING_AFTER_FIRST_PUSH",
-    "notification": "NOT_SENT",
+    "actual_GitHub_render": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
+    "notification": "READY_FOR_SINGLE_FINAL_SEND_AFTER_REMOTE_CLEANUP; actual queue receipt is in chat; no worktree writes after send",
     "report_body_frozen_before_render": true,
     "local_page_check": {
       "path": "docs/task042extra_feinn_5nm/review_report_v22.md",
@@ -1854,6 +2078,62 @@
       "issue": "One inline strong-emphasis delimiter remained literal in a paragraph; removed only those four asterisks; no scientific change.",
       "record": "tmp/task42extra/render/review_v22_published/render_records.json"
     },
-    "local_metadata_repair": "One page-check call passed relative path, raised ValueError before audit write; corrected absolute path and reran page check only. No numerical replay."
+    "local_metadata_repair": "One page-check call passed relative path, raised ValueError before audit write; corrected absolute path and reran page check only. No numerical replay.",
+    "rendered_publication_HEAD": "3f6b9499ee37bd7d134ce9ada30e7912f137d0e0",
+    "render_record": {
+      "path": "tmp/task42extra/render/review_v22_final_published/render_records.json",
+      "sha256": "3642281856889bf665da94548917054d0b3fcc585e07980750239d98554ad328",
+      "bytes": 10065
+    },
+    "screenshots": [
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_top.png",
+        "sha256": "b4edd4c672eedd61600daf11f5656f9323e2cdc015f9b4d76c1e8fe3b8991813",
+        "bytes": 393875
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_00.png",
+        "sha256": "3ecc3be401aa425801fad814ad93cc789060b5ae4147975b3c8fc5f5a4f96501",
+        "bytes": 459902
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_01.png",
+        "sha256": "acaa6f0872ae5a0fc66de9367016e7d57e59d738f25848f16d84f32eb75f4c28",
+        "bytes": 503475
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_02.png",
+        "sha256": "76c9703fc9cbe183ae5a71c85a9f8a1367d2107f95aa2fbb3d396485e36271f3",
+        "bytes": 485869
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_03.png",
+        "sha256": "3b8a6e1d658cb7d286e4549e2c458a5f1abc6854fa9c4b76441383da433d80eb",
+        "bytes": 488977
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_04.png",
+        "sha256": "1b00d35e478f420fb69bc5a8b4314eb33b5479bc1f32e295d95e5aaf4cb4a9d8",
+        "bytes": 546769
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_05.png",
+        "sha256": "4beab45e7d581b9d657354b577d9252c2aff42c3c601e246cfe85cbce857181d",
+        "bytes": 529063
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_table_06.png",
+        "sha256": "b13ceb3c82d0f7e86957d438fa2e0540294900b34478fa5ba88f8fa0d45c59b8",
+        "bytes": 546273
+      },
+      {
+        "path": "tmp/task42extra/render/review_v22_final_published/00_math-renderer_00.png",
+        "sha256": "a92e8007034087bde1bf17d2b7169a840c2b4b6b4310caf7d6df000daf3b8d72",
+        "bytes": 596845
+      }
+    ],
+    "visual_scope": "All 7 tables with every row/right edge, 1 formula, top/identity and repaired inline paragraph viewed in 9 screenshots; no numeric PASS implied.",
+    "final_seal_changes_only_audit_JSON": true,
+    "seal_prepared_utc": "2026-10-04T12:46:27.516096+00:00"
   }
 }
