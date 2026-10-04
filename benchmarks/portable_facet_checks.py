@@ -83,7 +83,8 @@ def admission_audit(root, artifact, marker, budget):
         # These are already accepted measurements, never a new dot/factor.
         metrics = dict(
             stored_operator_arithmetic=max(
-                r["original_coordinates_relative"] for r in arithmetic["rows"].values()
+                arithmetic["rows"][name]["original_coordinates_relative"]
+                for name in ("scattered", "background", "total")
             ),
             oracle_self_consistency=max(
                 v["oracle1_vs_oracle2"]
