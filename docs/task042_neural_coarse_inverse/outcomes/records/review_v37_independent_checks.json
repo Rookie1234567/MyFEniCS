@@ -1,0 +1,709 @@
+{
+  "reviewed_head": "6f7a5576c7f87dcb014d6ea993fc792b1ff884c9",
+  "previous_review": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+  "scope": "stdlib read-only raw metadata/resources/hash/source audit; no new numerical/PDE/operator/factor/solve",
+  "raw_archives_verified": 376,
+  "current_originals_matching_archived_version": 370,
+  "unmatched_current_originals": [],
+  "protected_files": 2437,
+  "history_files": [
+    "docs/task042_neural_coarse_inverse/response_v1.md",
+    "docs/task042_neural_coarse_inverse/response_v10.md",
+    "docs/task042_neural_coarse_inverse/response_v11.md",
+    "docs/task042_neural_coarse_inverse/response_v12.md",
+    "docs/task042_neural_coarse_inverse/response_v13.md",
+    "docs/task042_neural_coarse_inverse/response_v14.md",
+    "docs/task042_neural_coarse_inverse/response_v15.md",
+    "docs/task042_neural_coarse_inverse/response_v16.md",
+    "docs/task042_neural_coarse_inverse/response_v17.md",
+    "docs/task042_neural_coarse_inverse/response_v18.md",
+    "docs/task042_neural_coarse_inverse/response_v19.md",
+    "docs/task042_neural_coarse_inverse/response_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v20.md",
+    "docs/task042_neural_coarse_inverse/response_v21.md",
+    "docs/task042_neural_coarse_inverse/response_v22.md",
+    "docs/task042_neural_coarse_inverse/response_v23.md",
+    "docs/task042_neural_coarse_inverse/response_v24.md",
+    "docs/task042_neural_coarse_inverse/response_v25.md",
+    "docs/task042_neural_coarse_inverse/response_v26.md",
+    "docs/task042_neural_coarse_inverse/response_v27.md",
+    "docs/task042_neural_coarse_inverse/response_v28.md",
+    "docs/task042_neural_coarse_inverse/response_v29.md",
+    "docs/task042_neural_coarse_inverse/response_v3.md",
+    "docs/task042_neural_coarse_inverse/response_v30.md",
+    "docs/task042_neural_coarse_inverse/response_v31.md",
+    "docs/task042_neural_coarse_inverse/response_v32.md",
+    "docs/task042_neural_coarse_inverse/response_v33.md",
+    "docs/task042_neural_coarse_inverse/response_v34.md",
+    "docs/task042_neural_coarse_inverse/response_v35.md",
+    "docs/task042_neural_coarse_inverse/response_v36.md",
+    "docs/task042_neural_coarse_inverse/response_v37.md",
+    "docs/task042_neural_coarse_inverse/response_v38.md",
+    "docs/task042_neural_coarse_inverse/response_v4.md",
+    "docs/task042_neural_coarse_inverse/response_v5.md",
+    "docs/task042_neural_coarse_inverse/response_v6.md",
+    "docs/task042_neural_coarse_inverse/response_v7.md",
+    "docs/task042_neural_coarse_inverse/response_v8.md",
+    "docs/task042_neural_coarse_inverse/response_v9.md",
+    "docs/task042_neural_coarse_inverse/review_report_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v10.md",
+    "docs/task042_neural_coarse_inverse/review_report_v11.md",
+    "docs/task042_neural_coarse_inverse/review_report_v12.md",
+    "docs/task042_neural_coarse_inverse/review_report_v13.md",
+    "docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "docs/task042_neural_coarse_inverse/review_report_v15.md",
+    "docs/task042_neural_coarse_inverse/review_report_v16.md",
+    "docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "docs/task042_neural_coarse_inverse/review_report_v18.md",
+    "docs/task042_neural_coarse_inverse/review_report_v19.md",
+    "docs/task042_neural_coarse_inverse/review_report_v2.md",
+    "docs/task042_neural_coarse_inverse/review_report_v20.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md",
+    "docs/task042_neural_coarse_inverse/review_report_v22.md",
+    "docs/task042_neural_coarse_inverse/review_report_v23.md",
+    "docs/task042_neural_coarse_inverse/review_report_v24.md",
+    "docs/task042_neural_coarse_inverse/review_report_v25.md",
+    "docs/task042_neural_coarse_inverse/review_report_v26.md",
+    "docs/task042_neural_coarse_inverse/review_report_v27.md",
+    "docs/task042_neural_coarse_inverse/review_report_v28.md",
+    "docs/task042_neural_coarse_inverse/review_report_v29.md",
+    "docs/task042_neural_coarse_inverse/review_report_v3.md",
+    "docs/task042_neural_coarse_inverse/review_report_v30.md",
+    "docs/task042_neural_coarse_inverse/review_report_v31.md",
+    "docs/task042_neural_coarse_inverse/review_report_v32.md",
+    "docs/task042_neural_coarse_inverse/review_report_v33.md",
+    "docs/task042_neural_coarse_inverse/review_report_v34.md",
+    "docs/task042_neural_coarse_inverse/review_report_v35.md",
+    "docs/task042_neural_coarse_inverse/review_report_v36.md",
+    "docs/task042_neural_coarse_inverse/review_report_v4.md",
+    "docs/task042_neural_coarse_inverse/review_report_v5.md",
+    "docs/task042_neural_coarse_inverse/review_report_v6.md",
+    "docs/task042_neural_coarse_inverse/review_report_v7.md",
+    "docs/task042_neural_coarse_inverse/review_report_v8.md",
+    "docs/task042_neural_coarse_inverse/review_report_v9.md"
+  ],
+  "compiled": [
+    "benchmarks/check_boundary_structure.py",
+    "benchmarks/check_native_integration.py",
+    "benchmarks/qualify_port_preparation.py",
+    "scripts/run_case.py",
+    "src/io/port_preparation.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/directional_boundary.py",
+    "src/solvers/native_boundary_adapter.py",
+    "src/solvers/native_integration_scope.py",
+    "src/solvers/native_integration_study.py",
+    "src/test/test_boundary_structure.py",
+    "src/test/test_native_integration.py"
+  ],
+  "formal_source_checks": [
+    {
+      "role": "EVIDENCE",
+      "source_sha": "94e423b8a9dbed6505e016e548742e598d64eb5b",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_evidence_20261004T063949799089Z/run_manifest.json"
+    },
+    {
+      "role": "ADAPTER",
+      "source_sha": "94e423b8a9dbed6505e016e548742e598d64eb5b",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064015982193Z/run_manifest.json"
+    },
+    {
+      "role": "ADAPTER",
+      "source_sha": "a1795710697dcce1131f81fe2a82c7e1fd6ec0d5",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064205604582Z/run_manifest.json"
+    },
+    {
+      "role": "ADAPTER",
+      "source_sha": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064653461688Z/run_manifest.json"
+    },
+    {
+      "role": "COUPLED",
+      "source_sha": "79f8e25bda6e74d3222c23228360c3b1b9f5d519",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_coupled_recovery_20261004T064751743461Z/run_manifest.json"
+    },
+    {
+      "role": "CHECK",
+      "source_sha": "6fd4a43323e1aef7a4fd0df515eb63c1054aae2c",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_integration_check_20261004T070842606071Z/run_manifest.json"
+    },
+    {
+      "role": "DEPLOY",
+      "source_sha": "1987e51943a5e9027ddd41b951b7d19185e220a9",
+      "hashes": 22,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_consumer_20261004T071055392427Z/run_manifest.json"
+    }
+  ],
+  "final_source_hashes": {
+    "src/solvers/native_boundary_adapter.py": "9d84af368d7c1a48c19bf173451877242d95485d14fee45b6c835004b9ae72a2",
+    "src/solvers/native_integration_scope.py": "7413bbbe9b5e3b8eda407043ab87738b9d8433548559cc58a22704f5f3ede87d",
+    "src/solvers/native_integration_study.py": "fe560dcb8d320d4e46de8be256734e91497a731c88bdf0f5ef44278878ea6f60",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/boundary_structure_study.py": "cf736b56c52eb7f9254549e5477bd39b18a5a5b947ad8b6ff3ef575d7fe80576",
+    "src/solvers/target_boundary_witness.py": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+    "src/solvers/port_component_study.py": "b927214df3250f767e4cbe8813c7c844b8f8ce13a23165e31cbacb3fbb9c3238",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+    "src/solvers/hcurl_assembly_time_condensation.py": "c23e9d6f5fef9de82cfc277d2dc2da5d1012c8a4aec86b03d9d6a39ed3c07045",
+    "src/solvers/hcurl_canonical_vector_dolfinx.py": "a036dc053097c1218da12efd70760918ae56e53d2cd5d6988cbc3568dd17b17c",
+    "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+    "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+    "src/io/port_preparation.py": "c322192d3c6f4417d89f853df4e1fd0eefc0e17ffea3cd8fe693edae02e16faf",
+    "src/runners/port_preparation.py": "b087a72c83a6b07fab2c48dace96544cacf907a51bbab2063ea7a626c51e87af",
+    "scripts/run_case.py": "70969fd5042fbad1f204aaf34b7e6aeb460b32db2bd53f922be7eb0808bac2b4",
+    "benchmarks/qualify_port_preparation.py": "0950a6cf002e115f17848776415afc9535793bc73ead1ff6f9c8a2cb8d1dbc4c",
+    "benchmarks/check_boundary_structure.py": "ba75af5a19940da228ce70d901c1f98e945b9a259cd2697e761661c949425896",
+    "benchmarks/check_native_integration.py": "93cbb9dfaede5f9c4f27e8393e76d3d6fffe24eccc9fd42ee05363eadc2f17ba",
+    "src/test/test_native_integration.py": "ce4cceb74b305fca732cef772b7d98edeb60b28cc2459480984a81246fe7f22f",
+    "src/test/test_boundary_structure.py": "02c859f4674ab3dd18fee31c66253835b492c202a20eb33febe7e842e7114a06",
+    "input/task042_neural_coarse_inverse/native_integration_v39.json": "3b2c30ab6205a544f59a522921fbc0f436e24de0a8a508e07cd46717266d7afe"
+  },
+  "supervisions": [
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_01/supervision/summary.json",
+      "seconds": 9.472712895018049,
+      "peak": 373104640,
+      "samples": 15,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_02/supervision/summary.json",
+      "seconds": 27.654503377969377,
+      "peak": 464531456,
+      "samples": 34,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_03/supervision/summary.json",
+      "seconds": 29.580095804063603,
+      "peak": 465715200,
+      "samples": 35,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_04/supervision/summary.json",
+      "seconds": 30.98642321501393,
+      "peak": 464920576,
+      "samples": 36,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "EVIDENCE",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_evidence_20261004T063949799089Z/supervision/summary.json",
+      "seconds": 11.485942829051055,
+      "peak": 498888704,
+      "samples": 17,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ADAPTER",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064015982193Z/supervision/summary.json",
+      "seconds": 10.699517330969684,
+      "peak": 454094848,
+      "samples": 16,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_05/supervision/summary.json",
+      "seconds": 29.018220874946564,
+      "peak": 464379904,
+      "samples": 34,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ADAPTER",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064205604582Z/supervision/summary.json",
+      "seconds": 12.388118527946062,
+      "peak": 454152192,
+      "samples": 18,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "inspect",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_inspect_01/supervision/summary.json",
+      "seconds": 2.9489653341006488,
+      "peak": 93782016,
+      "samples": 5,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_06/supervision/summary.json",
+      "seconds": 28.230710012023337,
+      "peak": 464068608,
+      "samples": 33,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ADAPTER",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064653461688Z/supervision/summary.json",
+      "seconds": 29.2904765260173,
+      "peak": 646025216,
+      "samples": 40,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "COUPLED",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_coupled_recovery_20261004T064751743461Z/supervision/summary.json",
+      "seconds": 912.5918812180171,
+      "peak": 2073407488,
+      "samples": 1228,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_07/supervision/summary.json",
+      "seconds": 25.901532273972407,
+      "peak": 457310208,
+      "samples": 30,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "CHECK",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_integration_check_20261004T070842606071Z/supervision/summary.json",
+      "seconds": 8.91593464196194,
+      "peak": 396406784,
+      "samples": 13,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_08/supervision/summary.json",
+      "seconds": 28.185609651962295,
+      "peak": 462028800,
+      "samples": 31,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "DEPLOY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_consumer_20261004T071055392427Z/supervision/summary.json",
+      "seconds": 6.909676606068388,
+      "peak": 397029376,
+      "samples": 10,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_09/supervision/summary.json",
+      "seconds": 3.851434670970775,
+      "peak": 146137088,
+      "samples": 6,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_10/supervision/summary.json",
+      "seconds": 3.868468745960854,
+      "peak": 144748544,
+      "samples": 6,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_archive_01/supervision/summary.json",
+      "seconds": 6.068073783069849,
+      "peak": 226541568,
+      "samples": 10,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_11/supervision/summary.json",
+      "seconds": 3.0723930690437555,
+      "peak": 85438464,
+      "samples": 5,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "basis_audit",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_basis_audit_01/supervision/summary.json",
+      "seconds": 7.90785247203894,
+      "peak": 395390976,
+      "samples": 11,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_12/supervision/summary.json",
+      "seconds": 11.195951362024061,
+      "peak": 338063360,
+      "samples": 15,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_13/supervision/summary.json",
+      "seconds": 3.172700722934678,
+      "peak": 95473664,
+      "samples": 5,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_archive_02/supervision/summary.json",
+      "seconds": 6.062119569047354,
+      "peak": 265682944,
+      "samples": 10,
+      "status": "COMPLETED"
+    }
+  ],
+  "CPU_admissions": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064653461688Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_08/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_02/admission.json",
+      "cpu": 7
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_07/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_13/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_05/admission.json",
+      "cpu": 7
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_archive_01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_03/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064015982193Z/admission.json",
+      "cpu": 4
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_inspect_01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_06/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_09/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_consumer_20261004T071055392427Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_archive_02/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_04/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_basis_audit_01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_coupled_recovery_20261004T064751743461Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_native_adapter_20261004T064205604582Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_10/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_01/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_11/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_12/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_integration_check_20261004T070842606071Z/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v39_evidence_20261004T063949799089Z/admission.json",
+      "cpu": 9
+    }
+  ],
+  "costs": {
+    "supervised": 1249.459315514192,
+    "probes": 31.04950369836297,
+    "bootstrap": 3,
+    "close_upper": 5,
+    "total_upper": 1288.508819212555,
+    "native": 972.8778460749891
+  },
+  "array_byte_verification": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_consumer_20261004T071055392427Z/consumer_demo.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 340332
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064205604582Z/min_ordinary_literal.npz",
+      "members": 17,
+      "stored_members": 17,
+      "bytes": 197882
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064205604582Z/min_ordinary_adapter.npz",
+      "members": 6,
+      "stored_members": 6,
+      "bytes": 81374
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064205604582Z/min_ordinary_vectors.npz",
+      "members": 52,
+      "stored_members": 43,
+      "bytes": 34004038
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/min_ordinary_literal.npz",
+      "members": 17,
+      "stored_members": 17,
+      "bytes": 197882
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/min_ordinary_adapter.npz",
+      "members": 6,
+      "stored_members": 6,
+      "bytes": 81374
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/min_ordinary_vectors.npz",
+      "members": 52,
+      "stored_members": 43,
+      "bytes": 34004038
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/max_ordinary_literal.npz",
+      "members": 17,
+      "stored_members": 17,
+      "bytes": 197882
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/max_ordinary_adapter.npz",
+      "members": 6,
+      "stored_members": 6,
+      "bytes": 81374
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/max_ordinary_vectors.npz",
+      "members": 52,
+      "stored_members": 43,
+      "bytes": 34004038
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/x_seam_literal.npz",
+      "members": 17,
+      "stored_members": 17,
+      "bytes": 205642
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/x_seam_adapter.npz",
+      "members": 6,
+      "stored_members": 6,
+      "bytes": 13238
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/x_seam_vectors.npz",
+      "members": 52,
+      "stored_members": 43,
+      "bytes": 34190854
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/xy_corner_literal.npz",
+      "members": 17,
+      "stored_members": 17,
+      "bytes": 351418
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/xy_corner_adapter.npz",
+      "members": 6,
+      "stored_members": 6,
+      "bytes": 26774
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/task042_v39_native_adapter_20261004T064653461688Z/xy_corner_vectors.npz",
+      "members": 52,
+      "stored_members": 43,
+      "bytes": 38096902
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/storage_copy_audit/storage_copies.npz",
+      "members": 40,
+      "stored_members": 21,
+      "bytes": 1629566
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/basis_zero_audit/full_882_basis_trace.npz",
+      "members": 6,
+      "stored_members": 6,
+      "bytes": 32515714
+    }
+  ],
+  "scalar_ratio_checks": 185,
+  "pytest_snapshots": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_09/pytest.xml",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_10/pytest.xml",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_01/pytest.xml",
+      "tests": 18,
+      "failures": 3,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_02/pytest.xml",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_03/pytest.xml",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_04/pytest.xml",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_05/pytest.xml",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_06/pytest.xml",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_07/pytest.xml",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_pre_08/pytest.xml",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_11/pytest.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v39/aux_post_12/pytest.xml",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "previous_document_checker_scope_gap": {
+    "record": "review_v36_documentation_checks.json",
+    "actually_checked": [
+      "docs/task042_neural_coarse_inverse/review_report_v35.md",
+      "docs/task042_neural_coarse_inverse/README.md"
+    ],
+    "review36_not_checked_by_that_record": true
+  },
+  "replay_gate_record": {
+    "status": "COUPLED_REPLAY_NOT_ADMITTED_TIME_MODEL",
+    "native_spent_seconds": 964.9699936029501,
+    "native_limit_seconds": 1200,
+    "remaining_seconds": 235.03000639704987,
+    "prior_failed_actor_seconds": 912.5918812180171,
+    "local_setup_timestamp_span_seconds": 311.419277446,
+    "local_setup_timing": "derived file timestamp span; not independently saved exact sub-timer",
+    "basis": "same8hex/class/kernel path; observed local setup span alone exceeds remaining native wall; no budget extension",
+    "software_error": "redundant MPC slave rows sent to independent direct carriers",
+    "repair": "owned_active_original_dofs, exact-zero support validation; original public semantics retained",
+    "physical_volume_qualification": false,
+    "calendar": {
+      "start_utc": "2026-10-04T06:15:37+00:00",
+      "start_monotonic": 1019531.860872642,
+      "monotonic_anchor_method": "first tool UTC, conservatively back-projected at bootstrap using contemporaneous UTC/monotonic pair",
+      "bootstrap_utc": "2026-10-04T06:16:11.060499+00:00",
+      "bootstrap_monotonic": 1019565.921371642,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "initial_HEAD": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "review_commit": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+      "total_limit_seconds": 86400,
+      "heavy_limit_seconds": 82800,
+      "total_loaded_seconds": 7200,
+      "component_seconds": 5400,
+      "slow_oracle_seconds": 1200,
+      "cleanup_reserve_seconds": 180,
+      "new_storage_bytes": 2147483648,
+      "actors_before": [],
+      "observed_utc": "2026-10-04T07:07:53.800798+00:00",
+      "observed_monotonic": 1022668.661665619,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 3136.8007984161377,
+      "heavy_remaining_seconds": 79663.19920158386,
+      "total_remaining_seconds": 83263.19920158386
+    }
+  },
+  "repository_index_sha256": "53e40144bd5a0d9d26c69d6eb38978f87844a4b55017c255008cea5332d587ec",
+  "dot_head": "077ec9c8386c976da232093779279fb9d1a93033",
+  "source_changes": false,
+  "qualification": "NATIVE_BOUNDARY_ADAPTER_QUALIFIED_ON_WITNESSES; COUPLED AND AFFINE RECOVERY NOT_QUALIFIED",
+  "limitations": [
+    "not a whole-repository line-by-line semantic audit",
+    "native MPI1 only",
+    "unknown missing failed tensor/q15-q17 metrics/cache payload preserved",
+    "file timestamps support conservative admission only, not a certified replay lower bound",
+    "reviewer ordinary IO/human cost not supervised"
+  ]
+}

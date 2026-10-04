@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V37 / 下一执行 Task042 V40
+
+[Review V37](review_report_v37.md)审阅V39交付`6f7a5576c7f87dcb014d6ea993fc792b1ff884c9`。接受四类native边界接口；真实体积组合已尝试并失败，非零内部／port RHS恢复及原残差恒等式仍未资格化。原尺寸0.7nm完整三维解、2TB／48h和NN20%仍未达成。
+
+V40一次完成持久化体积／恢复证据包、有限native闭环、真实volume消费演示及原尺寸集成容量合同。先预检真实carrier、原子保存昂贵中间数据，修复稀疏构建中的全native长度稠密中间量和消费身份约束；普通bug同轮修复，从可信checkpoint继续。停止增加独立边界测速，不运行全局求解或dot实验。具体预算、允许的最小见证替代与验收以完整报告为准。
+
+[独立核验](outcomes/records/review_v37_independent_checks.json) · [文档检查与V36范围纠正](outcomes/records/review_v37_documentation_checks.json)。提交推送／清场后按原队列交接，两个窗口不并行；不merge。以下完整历史正文逐字保留。
+
+---
+
 # Task042 V39：原生边界接口资格通过，体积组合保留真实失败
 
 通过稀疏实体映射将体积系数取到边界，并按共轭周期相位把力加回；新增的是接线，不是神经训练。真实体积组合已运行并失败，接线修复通过小回归，但剩余慢oracle额度不足以完整重放，非零内部RHS恢复和完整解仍未资格化。
