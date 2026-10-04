@@ -16,6 +16,7 @@ from benchmarks.check_native_integration import (
     check_adapter_vectors,
     check_coupled_vectors,
     literal_layout_checks,
+    native_entity_map_checks,
 )
 from src.runners.task042_shared import write_json
 from src.solvers.boundary_structure_study import make_action, witness_plan
@@ -24,6 +25,7 @@ from src.solvers.native_boundary_adapter import (
     LocalNativeVolumeAction,
     NativeBoundaryAdapter,
     build_literal_adapter,
+    independent_trace_port_terms,
     literal_expansion,
 )
 from src.solvers.native_integration_scope import (
@@ -366,10 +368,7 @@ def coupled_stage(folder):
         _orient_cell_tensor,
         build_unconstrained_assembly_time_condensation,
     )
-    from src.solvers.p6_cell_condensed_action import (
-        P6CellCondensedAction,
-        P6DirectTracePortTerms,
-    )
+    from src.solvers.p6_cell_condensed_action import P6CellCondensedAction
     from src.solvers.target_boundary_witness import build_patch
     from src.solvers.target_port_preparation import target_config
 
@@ -519,13 +518,9 @@ def coupled_stage(folder):
         raise ValueError("native/volume quadrature gate")
     C, D = native["C_from_adapter"], native["D_from_adapter"]
     interior = lit["interiors"]
-    trace = np.setdiff1d(np.arange(n), interior)
     # No numerical clipping: the entity-supported map never contains cell
     # interior columns, independently checked against all original 882 bases.
-    terms = [
-        P6DirectTracePortTerms(m, trace, C[trace, m], trace, D[m, trace])
-        for m in range(nm)
-    ]
+    terms = independent_trace_port_terms(system, C, D)
     condensed = P6CellCondensedAction(
         system, H_p=np.eye(nm, dtype=np.complex128), direct_trace_terms=terms
     )
@@ -665,53 +660,85 @@ def coupled_stage(folder):
 
 def checker_stage(folder):
     adapter, _ = read_stage("ADAPTER")
-    coupled, _ = read_stage("COUPLED")
+    coupled = None
+    # A genuinely absent body result does not prevent the independent
+    # boundary audit. A present corrupt pointer must still fail loudly.
+    from src.solvers.native_integration_scope import ARTIFACT
+
+    if (ARTIFACT / "COUPLED.json").exists():
+        coupled, _ = read_stage("COUPLED")
     expected = witness_plan()["patches"]
     if [p["description"] for p in adapter["patches"]] != expected:
         raise ValueError("complete four native classes")
     checks = []
     action = selected_action()
+    bridge, _ = parent_stage("BRIDGE")
     for p in adapter["patches"]:
         checks.extend(
             dict(patch=p["description"]["name"], **c)
             for c in check_adapter_vectors(read_arrays(p["vectors"]))
         )
-        obj = NativeBoundaryAdapter.from_arrays(
-            read_arrays(p["adapter"]), identity=p["description"]["name"]
-        )
+        arrays = read_arrays(p["adapter"])
         lit = read_arrays(p["literal"])
-        rebuilt, _ = build_literal_adapter(
-            action.layout.polynomial.element,
-            lit,
-            p["description"],
-            action.layout,
-            obj.native_size,
-            lit["slaves"],
-        )
-        checks.append(
-            dict(
-                kind="saved_entity_map_reconstruction",
-                patch=p["description"]["name"],
-                **metric(obj.E.toarray(), rebuilt.E.toarray()),
+        checks.extend(
+            dict(patch=p["description"]["name"], **c)
+            for c in native_entity_map_checks(
+                action.layout.polynomial.element,
+                action.layout,
+                p["description"],
+                lit,
+                arrays,
             )
         )
-    checks.extend(check_coupled_vectors(read_arrays(coupled["vectors"])))
+        old = next(v for v in bridge["patches"] if v["description"] == p["description"])
+        original = read_arrays(old["native"])
+        vectors = read_arrays(p["vectors"])
+        H = np.array(
+            [m["projection_denominator"] for m in witness_plan()["selected_modes"]]
+        )
+        C = np.column_stack([original[f"C_{i}"] for i in range(12)])
+        D = np.row_stack([original[f"D_{i}"] for i in range(12)]) / H[:, None]
+        checks.extend(
+            [
+                dict(
+                    kind="original_native_C_link",
+                    patch=p["description"]["name"],
+                    **metric(vectors["C_native"], C),
+                ),
+                dict(
+                    kind="original_native_D_normalized_link",
+                    patch=p["description"]["name"],
+                    **metric(vectors["D_native"], D),
+                ),
+            ]
+        )
+    if coupled is not None:
+        checks.extend(check_coupled_vectors(read_arrays(coupled["vectors"])))
+    passed = all(c["passed"] for c in checks)
     return {
         "status": "NATIVE_INTEGRATION_SAVED_ARRAYS_QUALIFIED"
-        if all(c["passed"] for c in checks)
+        if passed and coupled is not None
+        else "BOUNDARY_ADAPTER_SAVED_ARRAYS_QUALIFIED_BODY_PARTIAL"
+        if passed
         else "SAVED_ARRAYS_NOT_QUALIFIED",
         "checks": checks,
         "complete_classes": 4,
         "selected_modes": 12,
         "reference_read": False,
         "PDE_solved": False,
+        "body_evidence_available": coupled is not None,
     }
 
 
 def deploy(folder):
-    require_stage("CHECK", "NATIVE_INTEGRATION_SAVED_ARRAYS_QUALIFIED")
+    checked, _ = read_stage("CHECK")
+    if checked["status"] not in (
+        "NATIVE_INTEGRATION_SAVED_ARRAYS_QUALIFIED",
+        "BOUNDARY_ADAPTER_SAVED_ARRAYS_QUALIFIED_BODY_PARTIAL",
+    ):
+        raise ValueError("independent adapter checker prerequisite")
     adapter, _ = read_stage("ADAPTER")
-    coupled, _ = read_stage("COUPLED")
+    coupled = read_stage("COUPLED")[0] if checked["body_evidence_available"] else None
     from scipy.sparse import csr_matrix
 
     p = next(p for p in adapter["patches"] if p["description"]["name"] == "xy_corner")
@@ -719,30 +746,43 @@ def deploy(folder):
         read_arrays(p["adapter"]), identity="xy_corner"
     )
     action = selected_action(p["description"])
-    d = read_arrays(coupled["oracle"])
-    oracle = csr_matrix((d["data"], d["indices"], d["indptr"]), shape=tuple(d["shape"]))
+    if coupled is not None:
+        d = read_arrays(coupled["oracle"])
+        oracle = csr_matrix(
+            (d["data"], d["indices"], d["indptr"]), shape=tuple(d["shape"])
+        )
+        callback = lambda x, adjoint=False: (
+            oracle.conjugate().T @ x if adjoint else oracle @ x
+        )
+        vectors = read_arrays(coupled["vectors"])
+        x, g, expected = vectors["x"], vectors["g"], vectors["full_action_oracle"]
+    else:
+        # Legal callback demo only. Zero volume is explicitly synthetic and
+        # confers no qualification on the missing physical volume coupling.
+        callback = lambda x, adjoint=False: np.zeros_like(x)
+        vectors = read_arrays(p["vectors"])
+        x, g, expected = vectors["a_x"], vectors["alpha"], vectors["a_oracle_forward"]
     wrapper = CoupledNativeBoundaryAction(
         a,
         action,
-        lambda x, adjoint=False: oracle.conjugate().T @ x if adjoint else oracle @ x,
+        callback,
     )
-    vectors = read_arrays(coupled["vectors"])
     began = perf_counter()
-    output = wrapper.apply(vectors["x"])
-    modal = wrapper.modal_rhs(vectors["g"])
+    output = wrapper.apply(x)
+    modal = wrapper.modal_rhs(g)
     receipt = array_file(
         folder / "consumer_demo.npz",
         action=output,
         modal=modal,
-        amplitudes=wrapper.port_extract(vectors["x"]),
+        amplitudes=wrapper.port_extract(x),
     )
-    checks = [
-        dict(
-            kind="frozen_callback_demo", **metric(output, vectors["full_action_oracle"])
-        )
-    ]
+    checks = [dict(kind="frozen_callback_demo", **metric(output, expected))]
     return {
-        "status": "WITNESS_INTEGRATION_CONSUMER_READY"
+        "status": (
+            "WITNESS_INTEGRATION_CONSUMER_READY"
+            if coupled is not None
+            else "BOUNDARY_CONSUMER_READY_VOLUME_QUALIFICATION_MISSING"
+        )
         if all(c["passed"] for c in checks)
         else "CONSUMER_NOT_QUALIFIED",
         "checks": checks,
@@ -765,6 +805,10 @@ def deploy(folder):
         "target_solve": False,
         "neural_training": False,
         "global_factor_or_QR": False,
+        "volume_callback_kind": "saved_native_sparse_oracle"
+        if coupled is not None
+        else "SYNTHETIC_ZERO_VOLUME_CALLABLE_DEMO_ONLY",
+        "physical_volume_qualification": coupled is not None,
     }
 
 

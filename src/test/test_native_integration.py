@@ -8,7 +8,11 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from benchmarks.check_boundary_structure import final_oracle_links
-from benchmarks.check_native_integration import literal_layout_checks
+from benchmarks.check_native_integration import (
+    check_adapter_vectors,
+    literal_layout_checks,
+    native_entity_map_checks,
+)
 from src.solvers.directional_boundary import (
     BoundaryLayout,
     DirectionalBoundaryAction,
@@ -18,6 +22,7 @@ from src.solvers.native_boundary_adapter import (
     CoupledNativeBoundaryAction,
     NativeBoundaryAdapter,
     build_literal_adapter,
+    independent_trace_port_terms,
     literal_expansion,
 )
 from src.solvers.port_component_study import array_file
@@ -150,6 +155,7 @@ def test_literal_mapping_audit_recomputes_periodic_and_orientation(tmp_path):
         "master_offsets": np.arange(883),
         "master_rows": np.arange(882),
         "master_dual_coefficients": np.ones(882, np.complex128),
+        "slaves": np.array([], np.int64),
     }
     conversion = {
         "native_rows": active.copy(),
@@ -191,6 +197,23 @@ def test_literal_mapping_audit_recomputes_periodic_and_orientation(tmp_path):
     )
     assert ownership["largest_entity_transform"] == 60
     assert ownership["small_linear_solves"] == 0
+    assert all(
+        c["passed"]
+        for c in native_entity_map_checks(e, layout, desc, literal, adapter.arrays())
+    )
+    for kind in ("coefficient", "orientation", "adapter"):
+        bad = {k: v.copy() for k, v in literal.items()}
+        bad_adapter = {k: v.copy() for k, v in adapter.arrays().items()}
+        if kind == "coefficient":
+            bad["master_dual_coefficients"][active[0]] = 1.1 + 0.2j
+        elif kind == "orientation":
+            bad["permutations"][0] = 1
+        else:
+            bad_adapter["E_data"][0] *= 1.01j
+        assert not all(
+            c["passed"]
+            for c in native_entity_map_checks(e, layout, desc, bad, bad_adapter)
+        )
     rng = np.random.default_rng(5)
     a = rng.normal(size=882) + 1j * rng.normal(size=882)
     t = adapter.extract(a)
@@ -309,6 +332,104 @@ def test_affine_recovery_error_removes_internal_particular_nonzero_ports():
     assert np.allclose(
         V[nt:, nt:] @ recover(a) + V[nt:, :nt] @ a[:nt] + B[nt:] @ a[nt:], fi
     )
+
+
+def test_direct_native_carrier_uses_independent_trace_not_slave_storage():
+    from types import SimpleNamespace
+
+    from src.solvers.p6_cell_condensed_action import (
+        P6CellCondensedAction,
+        P6DirectTracePortTerms,
+    )
+
+    rows = np.array([1, 4], np.int64)
+    system = SimpleNamespace(
+        trace_constraints=SimpleNamespace(
+            owned_active_original_dofs=rows, original_to_active={1: 0, 4: 1}
+        )
+    )
+    C = np.zeros((6, 40), np.complex128)
+    D = np.zeros((40, 6), np.complex128)
+    C[rows] = 1.0 + 0.7j
+    D[:, rows] = -0.6 + 0.2j  # non-mutual port coupling
+    terms = independent_trace_port_terms(system, C, D)
+    assert len(terms) == 40
+    for term in terms:
+        assert np.array_equal(term.B_original_rows, rows)
+        assert np.array_equal(term.D_original_rows, rows)
+    action = P6CellCondensedAction.__new__(P6CellCondensedAction)
+    action.condensed = system
+    action._direct_terms = terms
+    for name in (
+        "_direct_B_original",
+        "_direct_D_original",
+        "_direct_B_active",
+        "_direct_D_active",
+    ):
+        setattr(action, name, {})
+    action._prepare_direct_terms()  # the actual failed public carrier chain
+    old_rows = np.array([1, 3, 4], np.int64)  # slave3 had zero values too
+    action._direct_terms = [
+        P6DirectTracePortTerms(0, old_rows, C[old_rows, 0], rows, D[0, rows])
+    ]
+    with pytest.raises(ValueError, match="MPC slave"):
+        action._prepare_direct_terms()
+    bad = C.copy()
+    bad[3, 0] = 1e-30
+    with pytest.raises(ValueError, match="nonzero slave/interior"):
+        independent_trace_port_terms(system, bad, D)
+
+
+def test_saved_adapter_checker_enforces_actual_input_inventory_and_units():
+    C = np.array([[1 + 0.3j, 0], [0, 2 - 0.7j], [0, 0]], np.complex128)
+    D = np.array([[0.7j, 0, 0], [0, 1 + 0.8j, 0]], np.complex128)
+    a = np.array([0.2 + 0.1j, 0.7 - 0.8j, 0.3j], np.complex128)
+    b = np.array([-0.3j, 0.8 + 0.9j, 0.2], np.complex128)
+    values = {
+        "a": a,
+        "b": b,
+        "interior": np.array([0, 0, 1j]),
+        "zero": np.zeros(3, complex),
+        "scale": (0.37 - 0.91j) * a,
+    }
+    data = {
+        "C_native": C,
+        "D_native": D,
+        "C_from_adapter": C.copy(),
+        "D_from_adapter": D.copy(),
+        "slaves": np.array([], np.int64),
+        "interiors": np.array([2]),
+        "alpha": np.array([0.2j, 0.5]),
+        "boundary_dual": a.copy(),
+        "extract_inner": np.array([np.vdot(a[:2], a[:2])]),
+        "scatter_inner": np.array([np.vdot(a[:2], a[:2])]),
+    }
+    data["modal"] = data["oracle_modal"] = C @ data["alpha"]
+    for label, x in values.items():
+        data[label + "_x"] = x
+        t = x.copy()
+        t[2] = 0
+        data[label + "_t"] = t
+        for kind, out in (
+            ("forward", C @ D @ x),
+            ("adjoint", D.conj().T @ C.conj().T @ x),
+            ("amplitudes", D @ x),
+        ):
+            data[label + "_" + kind] = out
+            data[label + "_oracle_" + kind] = out.copy()
+    assert all(c["passed"] for c in check_adapter_vectors(data))
+    for kind in ("missing", "units", "scale", "nonfinite"):
+        bad = {k: v.copy() for k, v in data.items()}
+        if kind == "missing":
+            del bad["b_oracle_adjoint"]
+        elif kind == "units":
+            bad["interior_x"] *= 2
+        elif kind == "scale":
+            bad["scale_x"][0] += 0.01
+        else:
+            bad["C_native"][0, 0] = np.nan
+        with pytest.raises(ValueError):
+            check_adapter_vectors(bad)
 
 
 @pytest.mark.parametrize(

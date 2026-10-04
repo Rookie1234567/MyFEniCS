@@ -100,6 +100,34 @@ def check_adapter_vectors(data):
     }
     if not required <= set(data):
         raise ValueError("complete native adapter witness inventory")
+    C, D = data["C_native"], data["D_native"]
+    if C.ndim != 2 or D.shape != (C.shape[1], C.shape[0]):
+        raise ValueError("native adapter matrix inventory shape")
+    n, nm = C.shape
+    if any(not np.isfinite(value).all() for value in data.values()):
+        raise ValueError("nonfinite adapter evidence")
+    if (
+        data["C_from_adapter"].shape != C.shape
+        or data["D_from_adapter"].shape != D.shape
+    ):
+        raise ValueError("adapter versus native inventory shape")
+    if data["alpha"].shape != (nm,) or data["modal"].shape != (n,):
+        raise ValueError("complete native port witness shape")
+    for label in ("a", "b", "interior", "zero", "scale"):
+        for kind in ("x", "forward", "oracle_forward", "adjoint", "oracle_adjoint"):
+            if data[label + "_" + kind].shape != (n,):
+                raise ValueError("complete native input/output shape")
+        if data[label + "_amplitudes"].shape != (nm,):
+            raise ValueError("complete ordered amplitude shape")
+    # The unit-input structural-zero test is a new witness, not a relabeling
+    # of the historical unnormalized failure. Enforce its saved input too.
+    if abs(float(np.linalg.norm(data["interior_x"])) - 1.0) > 1e-14:
+        raise ValueError("unit internal input witness")
+    noninternal = np.setdiff1d(np.arange(n), data["interiors"])
+    if np.any(data["interior_x"][noninternal]) or np.any(data["zero_x"]):
+        raise ValueError("internal/zero input support")
+    if not np.array_equal(data["scale_x"], (0.37 - 0.91j) * data["a_x"]):
+        raise ValueError("complex scale input identity")
     checks = [
         dict(kind=k, **metric(data[k + "_native"], data[k + "_from_adapter"]))
         for k in ("C", "D")
@@ -159,6 +187,67 @@ def check_adapter_vectors(data):
             **metric(data["extract_inner"], data["scatter_inner"]),
         )
     )
+    return checks
+
+
+def native_entity_map_checks(element, layout, description, literal, adapter_arrays):
+    """Independent literal cell equations for the sparse adapter E.
+
+    Expand the literal MPC coefficients directly here. This never calls the
+    production map constructor or fits the saved map to modal observations.
+    """
+    from scipy.sparse import csr_matrix
+
+    n, nb = map(int, adapter_arrays["sizes"])
+    compact = adapter_arrays["compact_rows"]
+    E = csr_matrix(
+        (
+            adapter_arrays["E_data"],
+            adapter_arrays["E_indices"],
+            adapter_arrays["E_indptr"],
+        ),
+        shape=(len(compact), n),
+    )
+    if nb != layout.rows or E[:, literal["slaves"]].nnz:
+        raise ValueError("native adapter independent layout/slave identity")
+    checks = []
+    offsets = literal["master_offsets"]
+    masters = literal["master_rows"]
+    dual = literal["master_dual_coefficients"]
+    for cell, dofs in enumerate(literal["cell_dofs"]):
+        coords = literal["coordinates"][literal["geometry_dofmap"][cell]]
+        bounds = np.column_stack((coords.min(axis=0), coords.max(axis=0))).tolist()
+        found = [d for d in description["cells"] if d["bounds_nm"] == bounds]
+        if len(found) != 1:
+            raise ValueError("native checker cell/geometry inventory")
+        desc = found[0]
+        side = desc["side"]
+        i, j, _ = desc["indices"]
+        active = layout.polynomial.active[side]
+        orientation = np.zeros((element.dim, len(active)))
+        orientation[active, np.arange(len(active))] = 1
+        element.T_apply(
+            orientation.ravel(), len(active), int(literal["permutations"][cell])
+        )
+        expansion = np.zeros((len(active), n), np.complex128)
+        for a, row in enumerate(dofs[active]):
+            for k in range(int(offsets[row]), int(offsets[row + 1])):
+                expansion[a, int(masters[k])] += dual[k].conjugate()
+        expected = orientation[active].T @ expansion
+        rows = layout.maps[side][i, j]
+        positions = np.searchsorted(compact, rows)
+        if np.any(positions >= len(compact)) or not np.array_equal(
+            compact[positions], rows
+        ):
+            raise ValueError("native checker complete boundary entity inventory")
+        observed = layout.weights[side][i, j, :, None] * E[positions].toarray()
+        checks.append(
+            dict(
+                kind="independent_native_entity_equation",
+                cell=cell,
+                **metric(observed, expected),
+            )
+        )
     return checks
 
 

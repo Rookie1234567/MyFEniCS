@@ -36,6 +36,46 @@ def literal_expansion(literal, n):
     return csr_matrix((coeff, rows, offsets), shape=(n, n))
 
 
+def independent_trace_port_terms(system, C, D):
+    """Original direct carriers use independent trace rows, never slaves.
+
+    C/D have already undergone the conjugate/primal MPC maps. Excluding the
+    redundant storage rows is therefore an index conversion, not a second
+    constraint application or numerical deletion of small coefficients.
+    """
+    from src.solvers.p6_cell_condensed_action import P6DirectTracePortTerms
+
+    C, D = np.asarray(C), np.asarray(D)
+    if (
+        C.ndim != 2
+        or C.dtype != np.complex128
+        or D.dtype != np.complex128
+        or D.shape != (C.shape[1], C.shape[0])
+        or not np.isfinite(C).all()
+        or not np.isfinite(D).all()
+    ):
+        raise ValueError("native direct carrier shape/complex128/finite")
+    rows = np.asarray(
+        system.trace_constraints.owned_active_original_dofs, dtype=np.int64
+    )
+    if (
+        len(np.unique(rows)) != len(rows)
+        or np.any(rows < 0)
+        or np.any(rows >= C.shape[0])
+        or any(
+            int(row) not in system.trace_constraints.original_to_active for row in rows
+        )
+    ):
+        raise ValueError("complete independent trace inventory")
+    omitted = np.setdiff1d(np.arange(C.shape[0]), rows)
+    if np.any(C[omitted]) or np.any(D[:, omitted]):
+        raise ValueError("direct carrier has nonzero slave/interior support")
+    return [
+        P6DirectTracePortTerms(m, rows, C[rows, m], rows, D[m, rows])
+        for m in range(C.shape[1])
+    ]
+
+
 class NativeBoundaryAdapter:
     def __init__(
         self, E, compact_rows, native_size, boundary_size, slaves, *, identity
