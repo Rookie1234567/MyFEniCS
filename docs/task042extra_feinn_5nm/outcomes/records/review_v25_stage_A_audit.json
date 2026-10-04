@@ -1605,8 +1605,15 @@
       "scope": "independent stage A review only; no B activation",
       "final_goal": "original50x25x140nm Si17/120nm lambda0.7 full3D allinteriors doubleFloquet allports decimal2e12B ownswap/OOC0 continuous172800s originalgates"
     },
-    "review_parent_observed_including_earlier_allowance_seconds": 1232.420242644148,
-    "scope": "review parent separate from A2361.839628s; nested supervision not added twice; external wait is separate project-calendar interval"
+    "review_parent_observed_including_earlier_allowance_seconds": 1564.8028585461434,
+    "scope": "review parent separate from A2361.839628s; nested supervision not added twice; external wait is separate project-calendar interval",
+    "seal_observed_utc": "2026-10-04T22:52:44.717555+00:00",
+    "publication_notification_reserve_seconds": 600,
+    "review_conservative_upper_seconds": 2164.8028585461434,
+    "sum_supervised_child_seconds_not_added_to_parent": 47.461477290373296,
+    "sampled_supervised_tree_peak_bytes": 1604317184,
+    "own_sampled_swap_peak_bytes": 0,
+    "unsupervised_reading_and_metadata_peak": "NOT_MEASURED; included in parent wall upper account, not continuous kernel cap"
   },
   "A_final_wall_seconds": 2361.839628,
   "common_engineering_repair_pool_remaining": 1,
@@ -1617,9 +1624,299 @@
     "tail": 1800
   },
   "render": {
-    "new_stage_section": "PENDING_PUBLICATION",
-    "old_review_tables": "same sections0-6 bytes, retain prior actual visual receipt",
-    "old_A_README": "single unique image viewed, limited scope; original three-image record unchanged"
+    "status": "PARTIAL_FINITE_BODY_VISUAL_HEADER_NOT_FULLY_CLOSED",
+    "publication_commit": "ec34a3a326ffb13b436f7da438009e4954657b43",
+    "new_tables": 0,
+    "new_math": 0,
+    "local_full_document_parser": "PASS",
+    "old_tables": "sections0-6 unchanged; prior actual table views retained",
+    "actual_images_viewed": 3,
+    "scope": "New section7.1/7.2 body and tail readable in original second screenshot and prefix supplement. First screenshot was at old section4. Prefix h2/first sentence obscured by sticky header. Final bounded offset supplement failed before screenshot; no full new-section visual PASS.",
+    "attempts": [
+      {
+        "summary": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 300.0,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "legacy",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": null,
+          "swap_policy": "legacy_stop",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            1978348,
+            1978349,
+            1978352,
+            1978406,
+            1978409,
+            1978422,
+            1978430,
+            1978501,
+            1978537,
+            1978543,
+            1978548,
+            1978558,
+            1978578,
+            1978715
+          ],
+          "sampled_process_tree_rss_peak_bytes": 1604317184,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139221,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139221,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2141563121664,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2141563121664,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 25,
+          "elapsed_seconds": 16.715482574189082,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": "development_worktree; not formal PDE provenance"
+        },
+        "summary_binding": {
+          "path": "tmp/task42extra/checks/review_v25_A_render_20261004T224824033072Z/supervision/summary.json",
+          "bytes": 2075,
+          "sha256": "ea6995e9d53a6f6154865f0cb1b84ec80ffa53a924fbd79cc623d7eecaad43f7"
+        },
+        "worker_log": {
+          "path": "tmp/task42extra/checks/review_v25_A_render_20261004T224824033072Z/supervision/worker.log",
+          "bytes": 103,
+          "sha256": "7575e307e0ea438cb7f202a2642d448e0ac00e6b55a72d511ffeda08e61bb756"
+        },
+        "render_artifact": {
+          "path": "tmp/task42extra/render/review_v25_A_ec34a3a3/render_records.json",
+          "bytes": 3445,
+          "sha256": "9550d273035c697ff863b0c35ea43079dde7fd1baffdf4126d0066c7ed4d99dc"
+        },
+        "screenshots": [
+          {
+            "path": "tmp/task42extra/render/review_v25_A_ec34a3a3/00_section_00.png",
+            "bytes": 570299,
+            "sha256": "d39c6c3416f1c70c1348db65e1f6b2cb369cd6393547f3debd3ab1858780b588"
+          },
+          {
+            "path": "tmp/task42extra/render/review_v25_A_ec34a3a3/00_section_01.png",
+            "bytes": 635099,
+            "sha256": "e4cda2473700a763c4fe05bd0dbac0e57fba2c97a641f03fa5183318443ebecc"
+          }
+        ]
+      },
+      {
+        "summary": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 300.0,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "legacy",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": null,
+          "swap_policy": "legacy_stop",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            1979420,
+            1979426,
+            1979435,
+            1979489,
+            1979492,
+            1979513,
+            1979521,
+            1979586,
+            1979623,
+            1979628,
+            1979633,
+            1979655,
+            1979668,
+            1979781
+          ],
+          "sampled_process_tree_rss_peak_bytes": 1576398848,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139221,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139221,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2141543628800,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2141543628800,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 17,
+          "elapsed_seconds": 11.869771416066214,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": "development_worktree; not formal PDE provenance"
+        },
+        "summary_binding": {
+          "path": "tmp/task42extra/checks/review_v25_A_render_prefix_20261004T224947183878Z/supervision/summary.json",
+          "bytes": 2075,
+          "sha256": "d629dbf2ca941a21b6bcaec77ddc4a537a42cbb0a0d7d07f087d52615c73e16b"
+        },
+        "worker_log": {
+          "path": "tmp/task42extra/checks/review_v25_A_render_prefix_20261004T224947183878Z/supervision/worker.log",
+          "bytes": 110,
+          "sha256": "ec1ba4eb4a5b5c2b4d5cf2e7b2f1c4f4ab3171ee5b31832cea7670bbf74a2205"
+        },
+        "render_artifact": {
+          "path": "tmp/task42extra/render/review_v25_A_ec34a3a3_prefix/render_records.json",
+          "bytes": 3359,
+          "sha256": "ff51f262f210c01638988fe113c77423d23e8ad306925b4ca26fb87c8b6795bd"
+        },
+        "screenshots": [
+          {
+            "path": "tmp/task42extra/render/review_v25_A_ec34a3a3_prefix/00_verified_heading_view.png",
+            "bytes": 635879,
+            "sha256": "53d5a14573ceb7882d74fd5df03b3e56c868315e4d780100aebada08d3e31feb"
+          }
+        ]
+      },
+      {
+        "summary": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 300.0,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "legacy",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": null,
+          "swap_policy": "legacy_stop",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "WORKER_FAILED",
+          "leader_exit_code": 1,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            1979990,
+            1979991,
+            1979994,
+            1980048,
+            1980051,
+            1980069,
+            1980077,
+            1980150,
+            1980187,
+            1980193,
+            1980199,
+            1980208,
+            1980227,
+            1980332
+          ],
+          "sampled_process_tree_rss_peak_bytes": 1565274112,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139221,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139221,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2141490290688,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2141490290688,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 19,
+          "elapsed_seconds": 12.963005639147013,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": "development_worktree; not formal PDE provenance"
+        },
+        "summary_binding": {
+          "path": "tmp/task42extra/checks/review_v25_A_render_prefix_offset_20261004T225057165414Z/supervision/summary.json",
+          "bytes": 2079,
+          "sha256": "91749550c1b2bcca8ca9b7e25e8f5020c2ff64f1301c3308c570c4927f6293ae"
+        },
+        "worker_log": {
+          "path": "tmp/task42extra/checks/review_v25_A_render_prefix_offset_20261004T225057165414Z/supervision/worker.log",
+          "bytes": 427,
+          "sha256": "1062c38f5b37d218639e9144905315711910b9a612a5e92cf6973e54716137f8"
+        },
+        "render_artifact": {
+          "path": "tmp/task42extra/render/review_v25_A_ec34a3a3_prefix_offset/render_failure.json",
+          "bytes": 307,
+          "sha256": "84b46e617c11c762819609bf8eaa68562de07b938df2ddd7c850dfcaa33276e0"
+        },
+        "screenshots": []
+      }
+    ],
+    "A_README_receipt_reuse": "three image files same SHA; one unique view read; command/checker/RHS/resources visible; not three independent coverage claims",
+    "effect": "No implementation or scientific-gate failure; do not trigger standalone review, new A window or B launch for presentation alone."
   },
   "authoring_notes": [
     "one append patch missed an exact paragraph anchor and made no append; reapplied to unique closing code fence, no source/numerical effect"
@@ -1632,5 +1929,8 @@
     "parsed_tables": 3,
     "math_fences": 0,
     "links": 6
-  }
+  },
+  "publication_commit": "ec34a3a326ffb13b436f7da438009e4954657b43",
+  "seal_changes": "this JSON only; reviewed source and report unchanged after publication",
+  "numeric_lock_at_seal": "FREE"
 }
