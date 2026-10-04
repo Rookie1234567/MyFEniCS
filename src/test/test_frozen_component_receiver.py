@@ -139,6 +139,33 @@ def test_tracked_saved_checker_input_uses_public_validation():
     assert record["mode"] == "saved_check" and record["worker_report_sha256"] == WORKER_SHA
 
 
+def test_pinned_observer_compensation_keeps_external_work_and_other_cores():
+    from src.runners.task042_shared import compensate_pinned_observer, spare_cores
+
+    before = {1: (0,) * 8}
+    after = {1: (100, 0, 0, 0, 0, 0, 0, 0)}
+    busy = {1: .40, 24: 1.0}
+    adjusted, proof = compensate_pinned_observer(busy, before, after, 1, .38, 100)
+    assert abs(adjusted[1] - .04) < 1e-15 and adjusted[24] == 1
+    assert busy[1] == .40 and proof["subtracted_ticks"] == 36
+    topology = [{"cpu": 1, "siblings": [1]}]
+    neighbors = [{"threads": [{"tid": 9, "affinity": [1], "cpu": 1}]}]
+    assert spare_cores(topology, neighbors, adjusted, {}) == []
+    assert spare_cores(topology, [], adjusted, {}) == [1]
+
+
+def test_only_recorded_second_saved_checker_launch_allowed(tmp_path):
+    from src.runners.fresh_component_receiver import ROOT
+
+    path = ROOT / "input/task042extra_feinn_5nm/v24_w0_saved_check_repair.dat"
+    record = load_receiver(path)
+    assert record["repair_attempt"] == 2
+    altered = tmp_path / "altered.dat"
+    altered.write_text(path.read_text().replace("repair_attempt = 2", "repair_attempt = 3"))
+    with pytest.raises(ValueError, match="second checker"):
+        load_receiver(altered)
+
+
 def test_priority_only_lowers_self(monkeypatch):
     import src.runners.fresh_component_receiver as module
     actions = []

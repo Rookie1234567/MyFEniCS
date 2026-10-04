@@ -177,15 +177,32 @@ def spare_cores(topology, neighbors, cpu_busy_fraction, thread_deltas):
     return [t["cpu"] for t in topology if not set(t["siblings"]) & excluded]
 
 
-def audit(*, observed_activity=False):
+def compensate_pinned_observer(busy, before, after, cpu, cpu_seconds, ticks_per_second):
+    """Subtract only measured own CPU work, with two ticks kept conservatively."""
+    elapsed_ticks = max(sum(after[cpu]) - sum(before[cpu]), 1)
+    own_ticks = max(0, int(cpu_seconds * ticks_per_second) - 2)
+    adjusted = dict(busy)
+    adjusted[cpu] = max(0.0, busy[cpu] - own_ticks / elapsed_ticks)
+    return adjusted, {"cpu": cpu, "own_cpu_seconds": cpu_seconds,
+                      "subtracted_ticks": own_ticks, "retained_safety_ticks": 2,
+                      "scope": "this single-thread pinned observer only"}
+
+
+def audit(*, observed_activity=False, compensate_self=False):
     """Two short CPU samples; include worker parents, siblings and descendants."""
     before = proc_stats()
+    own_affinity = sorted(os.sched_getaffinity(0))
+    if compensate_self and (not observed_activity or len(own_affinity) != 1
+                            or len(list(Path("/proc/self/task").iterdir())) != 1):
+        raise ValueError("self compensation requires a single-thread pinned observer")
+    own_cpu_before = time.process_time()
     cpu_before = _cpu_ticks() if observed_activity else None
     threads_before = _thread_ticks() if observed_activity else None
     started = time.monotonic()
     time.sleep(1)
     after = proc_stats()
     cpu_after = _cpu_ticks() if observed_activity else None
+    own_cpu_seconds = time.process_time() - own_cpu_before
     threads_after = _thread_ticks() if observed_activity else None
     interval = time.monotonic() - started
     ticks_per_s = os.sysconf("SC_CLK_TCK")
@@ -270,6 +287,8 @@ def audit(*, observed_activity=False):
         )
     candidates = [t["cpu"] for t in topology if not set(t["siblings"]) & excluded]
     cpu_busy_fraction = {}
+    raw_cpu_busy_fraction = {}
+    self_compensation = None
     thread_deltas = {}
     if observed_activity:
         for cpu, first in cpu_before.items():
@@ -277,6 +296,13 @@ def audit(*, observed_activity=False):
             elapsed = max(sum(last) - sum(first), 1)
             idle = last[3] - first[3] + last[4] - first[4]
             cpu_busy_fraction[cpu] = 1.0 - idle / elapsed
+        raw_cpu_busy_fraction = dict(cpu_busy_fraction)
+        if compensate_self:
+            if sorted(os.sched_getaffinity(0)) != own_affinity:
+                raise ValueError("pinned observer affinity changed during the sample")
+            cpu_busy_fraction, self_compensation = compensate_pinned_observer(
+                cpu_busy_fraction, cpu_before, cpu_after, own_affinity[0],
+                own_cpu_seconds, ticks_per_s)
         thread_deltas = {
             tid: last[1] - threads_before[tid][1]
             for tid, last in threads_after.items()
@@ -348,6 +374,8 @@ def audit(*, observed_activity=False):
         if observed_activity
         else "V2 conservative last-PSR",
         "cpu_busy_fractions": cpu_busy_fraction,
+        "raw_cpu_busy_fractions": raw_cpu_busy_fraction,
+        "pinned_observer_self_compensation": self_compensation,
         "thread_delta_ticks": thread_deltas,
         "topology": topology,
         "neighbor_processes": rows,

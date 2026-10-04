@@ -87,6 +87,10 @@ def load_receiver(path):
         expected.add("worker_report_sha256")
         if record.get("worker_report_sha256") != WORKER_SHA:
             raise ValueError("saved checker requires the unique frozen completed worker")
+        if "repair_attempt" in record:
+            expected.add("repair_attempt")
+            if record["repair_attempt"] != 2:
+                raise ValueError("only the qualified second checker launch is admitted")
     if set(record) != expected or record["receiver_schema"] != 1:
         raise ValueError("receiver input schema/fields mismatch")
     if (record["component"] != "fresh_c1_same80_p6"
@@ -158,7 +162,8 @@ def launch_receiver(spec):
     lock_path = ROOT / "tmp/task42extra/numerical.lock"
     with lock_path.open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        name = spec["mode"]
+        mode = spec["mode"]
+        name = mode + ("_repair_02" if spec.get("repair_attempt") == 2 else "")
         run = ARTIFACTS / name
         if run.exists():
             raise ValueError("receiver stage already started; reconnect, do not restart")
@@ -166,7 +171,7 @@ def launch_receiver(spec):
             control = json.loads((ARTIFACTS / "control_smoke/receiver_result.json").read_text())
             if control["component_status"] != "CONTROL_SMOKE_PASS_NO_FE" or not control["cleared"]:
                 raise ValueError("full-tree control smoke must pass before real W0")
-        if name == "saved_check":
+        if mode == "saved_check":
             producer = ARTIFACTS / "w0"
             original = json.loads((producer / "worker_supervisor_summary.json").read_text())
             if (sha256(producer / "worker_report.json") != WORKER_SHA
@@ -174,11 +179,18 @@ def launch_receiver(spec):
                     or original.get("descendants_cleared") is not True
                     or original.get("remaining_child_pids") != []):
                 raise ValueError("only the frozen complete, cleared worker can be checked again")
+            if spec.get("repair_attempt") == 2:
+                prior = ARTIFACTS / "saved_check"
+                failed = ROOT / "tmp/task42extra/durable/w0-receiver-saved_check"
+                if (any((prior / "raw").iterdir()) or (prior / "abi_receipt.json").exists()
+                        or (prior / "checker_events.jsonl").exists()
+                        or "No audited unoccupied physical core" not in (failed / "launcher.log").read_text()):
+                    raise ValueError("second checker launch requires the preserved pre-numeric admission failure")
         run.mkdir(parents=True)
         for folder in ("raw", "logs", "jit", "tmp", "supervision"):
             (run / folder).mkdir()
         origin = time.monotonic()
-        facts = admission(HARD)
+        facts = admission(HARD, compensate_self=True)
         priority = set_own_low_priority()
         os.sched_setaffinity(0, {facts["cpu"]})
         atomic_json(run / "receiver_admission.json", facts)
@@ -206,10 +218,14 @@ def launch_receiver(spec):
             return result
 
         command = native_command(bundle, run, window["deadline_utc"], name == "control_smoke",
-                                 saved_check=name == "saved_check")
+                                 saved_check=mode == "saved_check")
         wall = remaining(window) - 600
-        if name == "saved_check":
+        if mode == "saved_check":
             prefix = json.loads((ARTIFACTS / "w0/checker_supervisor_summary.json").read_text())["elapsed_seconds"]
+            # Prior bootstrap had no numerical work; charge a conservative bound
+            # rather than treating its lost stage timer as free.
+            if spec.get("repair_attempt") == 2:
+                prefix += 600
             wall = min(wall, 4500 - prefix - (time.monotonic() - origin))
         environment = {**os.environ, "PHYSICAL_WATCHDOG_PARENT_PID": str(os.getpid())}
         summary = supervise(command, run / "receiver_supervision", wall_seconds=wall,
@@ -240,7 +256,7 @@ def durable_launch(spec):
 
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("receiver durable launch requires a clean implementation commit")
-    namespace = "w0-receiver-" + spec["mode"]
+    namespace = "w0-receiver-" + spec["mode"] + ("_repair_02" if spec.get("repair_attempt") == 2 else "")
     directory = ROOT / "tmp/task42extra/durable" / namespace
     if (directory / "launch.json").exists():
         raise ValueError("receiver already launched; reconnect to the same job")

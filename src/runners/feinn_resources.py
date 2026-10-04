@@ -29,8 +29,8 @@ def envelope(hard=16 * 2**30):
     return value
 
 
-def admission(hard=16 * 2**30):
-    value = observed_audit(observed_activity=True)
+def admission(hard=16 * 2**30, *, compensate_self=False):
+    value = observed_audit(observed_activity=True, compensate_self=compensate_self)
     value["memory"] = envelope(hard)
     if value["memory"]["launch_cap_bytes"] < hard:
         raise RuntimeError(
