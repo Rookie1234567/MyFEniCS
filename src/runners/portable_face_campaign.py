@@ -7,6 +7,10 @@ def run_stage(manifest, artifact, marker, budget):
 
     if manifest["stage"] == "v23_admission_audit":
         return admission_audit(ROOT, artifact, marker, budget)
+    if manifest["stage"] == "v23_saved_checker":
+        from benchmarks.portable_facet_audit import audit
+
+        return audit(ROOT, artifact, marker, budget)
     from benchmarks.portable_facet_lifecycle import qualify, cold_lifecycle
 
     if manifest["stage"] == "v23_facet_qualification":

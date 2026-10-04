@@ -87,9 +87,15 @@ def qualification(record, expected):
         gates[key] = record.get(key) is True
         if not gates[key]:
             errors.append(key)
-    readable = bool(identity_valid and files_valid and record.get("schema") == "strict_port_qualification.v1")
+    readable = bool(
+        identity_valid
+        and files_valid
+        and record.get("schema") == "strict_port_qualification.v1"
+    )
     return dict(
-        component_passed=bool(readable and gates["shared_physics"] and gates["role_component"]),
+        component_passed=bool(
+            readable and gates["shared_physics"] and gates["role_component"]
+        ),
         negative_field_readable=readable,
         strict_complete_qualified=bool(not errors and readable and all(gates.values())),
         solve_admitted=False,

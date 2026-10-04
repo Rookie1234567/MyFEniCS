@@ -47,6 +47,7 @@ STAGES.update({
     "v23_facet_qualification": ("fe", 3000, "P1", None),
     "v23_analytic_cold": ("fe", 1200, "P2", None),
     "v23_q60_cold": ("fe", 1200, "P2", None),
+    "v23_saved_checker": ("pure", 1200, "D", None),
 })
 
 

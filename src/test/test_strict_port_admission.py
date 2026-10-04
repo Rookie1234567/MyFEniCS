@@ -98,6 +98,7 @@ def test_low_bytes_corrupted_after_binding(tmp_path):
 @pytest.mark.parametrize("key", ["identity", "files", "metrics"])
 def test_corrupted_mapping_rejected_before_entry(tmp_path, key):
     from src.runners.fixed_phase_campaign import v22_admission
+
     r, e = fixture(tmp_path)
     r[key] = None
     with pytest.raises(ValueError, match="MAPPING"):
