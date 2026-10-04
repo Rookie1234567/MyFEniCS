@@ -198,13 +198,43 @@ def test_no_reference_training_reader_contract():
 
 
 def test_new_window_never_reopens_old_ledger():
-    from src.solvers.neighborhood_residual_scope import window
+    from src.solvers.neighborhood_residual_scope import PLAN, window
 
     assert window.label == "V43" and window.TMP.name == "v43" and window.total == 7200
     assert (
-        json.loads(window.WINDOW_PATH.read_text())["review_commit"]
+        json.loads(PLAN.read_text())["review_commit"]
         == "84c38b882795c56fead54d75cd56389262c86e31"
     )
+
+
+@pytest.mark.parametrize("linear", [False, True])
+def test_frozen_trained_terminal_amplitude_zero_and_linear_phase(linear):
+    graph, action = toy()
+    model = NeighborhoodCorrector(
+        eye(516, dtype=complex), graph, action.scale, linear=linear
+    )
+    rhs = torch.from_numpy(
+        np.random.default_rng(82).normal(size=(1, 516))
+        + 1j * np.random.default_rng(83).normal(size=(1, 516))
+    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    loss, _, _ = original_loss(model, rhs, action)
+    loss.backward()
+    optimizer.step()
+    with torch.no_grad():
+        initial = model(rhs)
+        assert (
+            torch.linalg.vector_norm(model(3.2 * rhs) - 3.2 * initial)
+            / torch.linalg.vector_norm(initial)
+            < 1e-10
+        )
+        assert not torch.count_nonzero(model(torch.zeros_like(rhs)))
+        if linear:
+            assert (
+                torch.linalg.vector_norm(model(1j * rhs) - 1j * initial)
+                / torch.linalg.vector_norm(initial)
+                < 1e-10
+            )
 
 
 def test_full_parameter_JVP_and_original_VJP_on_nonzero_loss():

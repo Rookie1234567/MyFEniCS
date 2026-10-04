@@ -672,6 +672,36 @@ def evaluate(folder, budget):
             initial_residual = r - action.apply(initial)
             z, result = fixed_cleanup(action, r, initial)
             residual = r - action.apply(z)
+            # Frozen terminal behavior: these are the same original sample's
+            # phase/amplitude probes, not additional solver runs or new splits.
+            behaviour, probe_arrays = {}, {}
+            probe_begin = perf_counter()
+            if route != "R0":
+                with torch.no_grad():
+                    rr = torch.from_numpy(r.copy())
+                    phase = models[route](1j * rr).numpy()[0]
+                    amplitude = models[route](3.2 * rr).numpy()[0]
+                    zero = models[route](torch.zeros_like(rr)).numpy()[0]
+                behaviour = {
+                    "complex_phase": ratio(phase, 1j * initial),
+                    "positive_amplitude": ratio(amplitude, 3.2 * initial),
+                    "exact_zero": bool(np.count_nonzero(zero) == 0),
+                    "phase_original_initial_rho": float(
+                        np.linalg.norm(1j * r - action.apply(phase)) / np.linalg.norm(r)
+                    ),
+                    "amplitude_original_initial_rho": float(
+                        np.linalg.norm(3.2 * r - action.apply(amplitude))
+                        / (3.2 * np.linalg.norm(r))
+                    ),
+                    "NN_phase_linearity_is_not_a_required_inverse_claim": route
+                    == "R-NN",
+                }
+                probe_arrays = {
+                    "phase_correction": phase,
+                    "amplitude_correction": amplitude,
+                    "zero_correction": zero,
+                }
+            behaviour_seconds = perf_counter() - probe_begin
             receipt = save(
                 folder,
                 f"heldout_{i}_{route.replace('-', '_')}",
@@ -680,6 +710,7 @@ def evaluate(folder, budget):
                 initial_residual=initial_residual,
                 z=z,
                 residual=residual,
+                **probe_arrays,
             )
             row = {
                 "split": "heldout",
@@ -698,6 +729,8 @@ def evaluate(folder, budget):
                 "AH_calls": action.calls["AH"] - calls["AH"],
                 "initialization": "zero" if route == "R0" else "learned warm-start",
                 "reference_reads": 0,
+                "frozen_model_behaviour": behaviour,
+                "behaviour_audit_seconds_inside_whole_RHS": behaviour_seconds,
             }
             rows.append(row)
             write_json(folder / "frozen_results.json", {"rows": rows})
@@ -753,6 +786,21 @@ def check(folder, budget):
         checks["saved_residual_consistent"] = ratio(
             arrays["residual"], arrays["rhs"] - actual
         )["passed"]
+        if item["route"] != "R0":
+            phase = ratio(arrays["phase_correction"], 1j * arrays["initial"])
+            amplitude = ratio(arrays["amplitude_correction"], 3.2 * arrays["initial"])
+            checks["frozen_behaviour_recomputed"] = {
+                "phase": phase,
+                "amplitude": amplitude,
+                "exact_zero": bool(np.count_nonzero(arrays["zero_correction"]) == 0),
+                "complex_linearity_required": item["route"] == "R-LIN",
+            }
+            if (
+                not amplitude["passed"]
+                or np.count_nonzero(arrays["zero_correction"])
+                or (item["route"] == "R-LIN" and not phase["passed"])
+            ):
+                checks["passed"] = False
         audited.append({"sample": item["sample"], "route": item["route"], **checks})
     qualified = {
         r: all(
