@@ -1,0 +1,153 @@
+{
+  "PDE_solved": false,
+  "all532_quotient_qualified": false,
+  "all_saved_NPY_count": 1887,
+  "checker_aggregate_checks": [
+    {
+      "absolute_Frobenius_error": 4.296003980730039e-11,
+      "absolute_max_error": 6.2340683340419066e-12,
+      "label": "saved_reference",
+      "limit": 1e-11,
+      "passed": true,
+      "reference_Frobenius_norm": 56452.64981885167,
+      "reference_maximum": 6299.882969692355,
+      "relative_Frobenius_error": 7.609924413672857e-16,
+      "relative_max_error": 9.895530383711775e-16
+    },
+    {
+      "absolute_Frobenius_error": 1.922842935287102e-15,
+      "absolute_max_error": 2.2247786310271853e-16,
+      "label": "independent_recipe_projection",
+      "limit": 1e-11,
+      "passed": true,
+      "reference_Frobenius_norm": 56452.64981885166,
+      "reference_maximum": 6299.882969692353,
+      "relative_Frobenius_error": 3.406116349643861e-20,
+      "relative_max_error": 3.5314602536748865e-20
+    },
+    {
+      "label": "independent_reduced_rhs",
+      "passed": true,
+      "relative": 1.1392219340849586e-16
+    },
+    {
+      "label": "independent_recovery",
+      "passed": true,
+      "relative": 0.0
+    },
+    {
+      "label": "manufactured_state",
+      "passed": true,
+      "relative": 1.5948927912628173e-13
+    },
+    {
+      "label": "complete_native_reduced_action",
+      "passed": true,
+      "relative": 2.6248898805655255e-16
+    },
+    {
+      "label": "manufactured_reduced_augmented_equation",
+      "passed": true,
+      "relative": 5.9843072992421446e-15
+    },
+    {
+      "label": "complete_q0_native_column_bridge",
+      "passed": true,
+      "relative": 1.7772239894833375e-16
+    },
+    {
+      "label": "complete_q2_native_column_bridge",
+      "passed": true,
+      "relative": 2.305551267378102e-16
+    },
+    {
+      "error_norm": 0.0,
+      "label": "original_carrier_C",
+      "limit": 1e-11,
+      "operation_scale": 403.62917338851486,
+      "passed": true
+    },
+    {
+      "error_norm": 0.0,
+      "label": "original_carrier_D",
+      "limit": 1e-11,
+      "operation_scale": 45.510006709997086,
+      "passed": true
+    },
+    {
+      "error_norm": 2.8419152420025744e-09,
+      "label": "full_original_FE_residual",
+      "limit": 1e-10,
+      "operation_scale": 1708199.6507396884,
+      "passed": true
+    },
+    {
+      "error_norm": 2.7729459659279246e-15,
+      "label": "original_port_residual",
+      "limit": 1e-10,
+      "operation_scale": 51.36358120387356,
+      "passed": true
+    }
+  ],
+  "checker_evidence_valid": true,
+  "checker_gate_pass": true,
+  "checker_report_sha256": "229c6571a6b62e5e097f55c72eb8dde899ca576f0766494eeb8c6a903a684192",
+  "checker_resource": {
+    "classification": "COMPLETED",
+    "descendants_cleared": true,
+    "elapsed_seconds": 6.54715380700145,
+    "sampled_process_tree_rss_peak_bytes": 307527680,
+    "sampled_process_tree_swap_peak_bytes": 0
+  },
+  "comparison": {
+    "absolute_Frobenius_error": 4.296003980730039e-11,
+    "absolute_max_error": 6.2340683340419066e-12,
+    "label": "fresh_C1b_q0_complete_CSR",
+    "limit": 1e-11,
+    "passed": true,
+    "reference_Frobenius_norm": 56452.64981885167,
+    "reference_maximum": 6299.882969692355,
+    "relative_Frobenius_error": 7.609924413672857e-16,
+    "relative_max_error": 9.895530383711775e-16
+  },
+  "complete_contribution_count": 509,
+  "final_checker_durability": "FULL_READBACK_PASS",
+  "final_checker_library_file": "libfile_1ec7d3bda3a48191b1b1dd5cc855f80e",
+  "full_C1c_qualified": false,
+  "full_packet_uncompressed_bytes": 459907760,
+  "global_q_factor_count": 0,
+  "historical_static_test_exception": "old expected helperbaf SHA unavailable; actual848a source identical to qualifiedC1b; failed old assertion preserved/deselected; no old/new equivalence claimed",
+  "inherited_cell_interior_LU_used": true,
+  "local_cells": 40,
+  "local_interiors": 4320,
+  "metadata_journal_cost": "full uncompressed packet459.9MB vs numeric73.1MB; repeated per-tile resource/JSON overhead is retained",
+  "numeric_raw_bytes": 73127404,
+  "original_live_volume_authority": "saved live FFCx action; independent checker reconstructs carrier/residual and cached RHS/recovery, not FFCx",
+  "original_target_qualified": false,
+  "owned_limit_is_whole_memory": false,
+  "owned_projection_limit_bytes": 134217728,
+  "projection_tile_width": 128,
+  "q0_rows": 1884,
+  "remaining": [
+    "b0 q2/cross controls",
+    "b1 q1/q3/cross and complete532 sector union",
+    "all4 factor and full original regular/notch inverse",
+    "public backend/AUTO/original target"
+  ],
+  "resident_Hhat_bytes": 0,
+  "scope": "selected local40/twist0/q0 compact prefactor only",
+  "selected_sector_modes": 228,
+  "source_head": "39c5052476d48eb5d53870d80418e21c969980d8",
+  "source_tree": "77189d94fe689e9f0ac2e9cfacc4fb059deef03d",
+  "worker_archive_bytes": 62002183,
+  "worker_library_index": "libfile_dff163270f648191adbd2e0288a8dd9d",
+  "worker_report_sha256": "0da425f04c6bd9d371fbc82fbf91dc3f45462c68bb2333973e13e9428dd1786f",
+  "worker_resource": {
+    "classification": "COMPLETED",
+    "descendants_cleared": true,
+    "elapsed_seconds": 287.63043524500245,
+    "sampled_process_tree_rss_peak_bytes": 475521024,
+    "sampled_process_tree_swap_peak_bytes": 0
+  },
+  "worker_status": "FRESH_C1c_B0_Q0_COMPACT_PREFACTOR_WORKER_PASS"
+}

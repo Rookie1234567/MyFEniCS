@@ -1,0 +1,8 @@
+{
+  "source_head": "39c5052476d48eb5d53870d80418e21c969980d8",
+  "driver_sha256": "af13b55e565642ec6ef1ec109e73ce38cdd6fdd4c2304e93117f8b0709185209",
+  "reader_sha256": "9ed661dfd438112cc3492cc564525f10c5eb682a01eb1162636e73c603c01f17",
+  "tests": ".............................................................. [ 51%]\n...........................................................              [100%]\n121 passed, 1 deselected, 10 subtests passed in 0.97s\n",
+  "stale_static_test_exception": "baf old expected SHA vs actual848a helper unchanged from qualifiedC1b; failure not numerical; no old/new equality claimed",
+  "FE_JIT_factor_PDE": false
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "independent_c1c_selected_prefactor_review.v1",
+  "record_kind": "post_review_record_of_read_only_source_inspection",
+  "review_completed_utc": "2026-10-04T15:42:06Z",
+  "decision": "PASS_FOR_SELECTED_B0_Q0_SOURCE_AND_ORCHESTRATION_ONLY",
+  "source_head": "39c5052476d48eb5d53870d80418e21c969980d8",
+  "source_tree": "77189d94fe689e9f0ac2e9cfacc4fb059deef03d",
+  "worktree_clean": true,
+  "existing_C1b_numerical_configuration_dependencies_unchanged": true,
+  "added_files_count": 4,
+  "reader_sha256": "9ed661dfd438112cc3492cc564525f10c5eb682a01eb1162636e73c603c01f17",
+  "driver_sha256": "af13b55e565642ec6ef1ec109e73ce38cdd6fdd4c2304e93117f8b0709185209",
+  "launcher_sha256": "a4de82ec1843200d7aa05b51930e83fcb2c9656f23137dd178d46f23b58e219d",
+  "preflight_sha256": "a51038ee8c4316660300006bcf95d4b49dacd792823b5b804f19189d6d0c3ae1",
+  "scope": "Selected b0/q0 compact projection, arbitrary interior/port RHS and recovery witness only",
+  "reviewed_fixes": [
+    "Reduced 3844-row equation is labeled reduced",
+    "Zero global/q factors are distinguished from inherited fresh cell-interior LU",
+    "Saved pivots require i <= pivots[i] < 108 before private writable int32 conversion",
+    "Raw receipt hash and full existing 228-mode same-live source/context validator retained",
+    "Complete current/saved environment equality required by outer admission",
+    "Saved-live original FFCx volume witness plus independently reconstructed carrier and residual are explicitly distinguished from an independent FFCx rebuild",
+    "Checker requires completed source-bound zero-swap readable/identity-complete cleaned worker supervision within 3GiB and 1800s, and records its hash",
+    "Candidate mmap header, CSR construction and sparse projection addition have explicit allocation callbacks"
+  ],
+  "numerical_limits_retained": {
+    "q0_reference_and_recipe": 1e-11,
+    "RHS_recovery": 1e-11,
+    "original_FE_and_port_residual": 1e-10,
+    "producer_native_column_control": 1e-12
+  },
+  "resource_contract": {
+    "tree_cap_bytes": 3221225472,
+    "wall_seconds": 1800,
+    "reserve_bytes": 134217728,
+    "preflight_dynamic_launch_cap_bytes": 3678441472,
+    "zero_swap_required": true,
+    "MPI_ranks": 1,
+    "math_threads": 1,
+    "subreaper_identity_cleanup_and_hard_time_memory_gates_preserved": true
+  },
+  "coverage_limits": [
+    "All-column q0/q2 error arrays are producer controls, not independently rebuilt maps",
+    "Original volume action is saved live FFCx authority; checker reconstructs carrier and residual, not FFCx",
+    "No full C1c, all532 quotient, global/q solve or target-scale qualification",
+    "No equality to unavailable historical helper bytes is claimed; the stale static helper-hash assertion remains a disclosed prior failure"
+  ],
+  "final_source_test_rerun": "COORDINATOR_TO_CONFIRM_AFTER_FINAL_ALLOCATION_EDITS",
+  "source_Library_checkpoint_readback": "SEPARATE_GO_PREREQUISITE",
+  "numerical_status_at_review": "NOT_RUN",
+  "reviewer_performed_FE_tests_or_numerical_launch": false
+}

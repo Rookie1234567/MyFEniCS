@@ -1,0 +1,15 @@
+{
+  "library_file_id": "libfile_1ec7d3bda3a48191b1b1dd5cc855f80e",
+  "file_id": "file_00000000f25c820785885f55d2e59370",
+  "filename": "selected_C1c_q0_final_checker.zip",
+  "sha256": "3b1bf4654bf7fc3c79d58f99d9152aac2fededa51a521b5d0973c45246056ef3",
+  "members_verified": 11,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "metadata": {
+    "status": "SELECTED_Q0_WORKER_AND_CHECKER_PASS_FINAL_CHECKER_DURABILITY_PENDING",
+    "source_head": "39c5052476d48eb5d53870d80418e21c969980d8",
+    "worker_raw_index": "libfile_dff163270f648191adbd2e0288a8dd9d",
+    "scope": "selected local40/twist0/q0 compact prefactor only; not fullallq quotient or target",
+    "checker_sha256": "229c6571a6b62e5e097f55c72eb8dde899ca576f0766494eeb8c6a903a684192"
+  }
+}
