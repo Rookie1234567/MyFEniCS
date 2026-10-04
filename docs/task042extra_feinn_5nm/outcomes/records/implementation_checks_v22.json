@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "tests": 38,
+  "xml_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/pure_tests.xml",
+  "xml_sha256": "9115a308b7db2c29af06888d3e1d76b9bd674fae67e1885eda63541bbce93b05",
+  "scope": "38 targeted V22 tests, final pre-source-freeze",
+  "CI": false,
+  "compileall_passed": true,
+  "Ruff_changed_python": "PASS"
+}

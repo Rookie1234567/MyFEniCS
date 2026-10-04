@@ -22,6 +22,11 @@ SAMPLE_ORIGINAL_NM = np.array(
 
 def local_fields(model, cell, coefficients, points):
     """Contract coefficients before Piola/derivative expansion (bounded memory)."""
+    from src.solvers.affine_field_output import SplitVector
+    if isinstance(coefficients, SplitVector):
+        eh,ch,x,det=local_fields(model,cell,coefficients.hi,points)
+        el,cl,_,_=local_fields(model,cell,coefficients.lo,points)
+        return eh.astype(np.clongdouble)+el.astype(np.clongdouble),ch.astype(np.clongdouble)+cl.astype(np.clongdouble),x,det
     import basix
     from scipy import sparse
 
@@ -98,14 +103,18 @@ def channels(model, alpha_scattered, alpha_total):
     return arrays, _port_power_metrics(cfg, modes, alpha_total, inc)
 
 
-def self_physics(model, packet, c, alpha, artifact, marker, budget):
+def self_physics(model, packet, c, alpha, artifact, marker, budget, *, affine_output=None):
     import basix
     from src.common.modes_3d import incident_power_3d
 
     start = perf_counter()
     qp, qw = basix.make_quadrature(basix.CellType.hexahedron, 15)
     local = packet.expand(c)
-    total = packet.expand(c + packet.a["background"])
+    if affine_output is None:
+        total = packet.expand(c + packet.a["background"])
+    else:
+        from src.solvers.affine_field_output import total_field
+        total = total_field(affine_output).map(packet.expand)
     norms = np.zeros(4)
     absorption = dict.fromkeys(("air", "substrate", "grating"), 0.0)
     cfg = model["cfg"]
@@ -122,10 +131,21 @@ def self_physics(model, packet, c, alpha, artifact, marker, budget):
     # Save physical full-field values at original volume quadrature, not only
     # coefficients or port traces. Bounded one-cell evaluation.
     rows_e, rows_c, rows_se, rows_sc, points, weights = [], [], [], [], [], []
+    low_e, low_c, high_e, high_c = [], [], [], []
     for cell in range(packet.nc):
         if cell % 8 == 0:
             budget("physical reconstruction")
-        E, C, x, det = local_fields(model, cell, total[cell], qp)
+        if affine_output is None:
+            E, C, x, det = local_fields(model, cell, total[cell], qp)
+        else:
+            EH, CH, x, det = local_fields(model, cell, total.hi[cell], qp)
+            EL, CL, _, _ = local_fields(model, cell, total.lo[cell], qp)
+            E = EH.astype(np.clongdouble) + EL.astype(np.clongdouble)
+            C = CH.astype(np.clongdouble) + CL.astype(np.clongdouble)
+            high_e.append(EH)
+            high_c.append(CH)
+            low_e.append(EL)
+            low_c.append(CL)
         SE, SC, _, _ = local_fields(model, cell, local[cell], qp)
         w = det * qw
         for i, values in enumerate((E, C / cfg.k0, SE, SC / cfg.k0)):
@@ -144,7 +164,9 @@ def self_physics(model, packet, c, alpha, artifact, marker, budget):
         rows_sc.append(SC)
         points.append(x)
         weights.append(w)
-    arrays, port = channels(model, alpha, alpha + packet.a["background_alpha"])
+    atotal = (alpha + packet.a["background_alpha"] if affine_output is None else
+              affine_output["alpha_total_hi"].astype(np.clongdouble) + affine_output["alpha_total_lo"].astype(np.clongdouble))
+    arrays, port = channels(model, alpha, atotal)
     modes = model["bundle"]["modes"]
     arrays.update(
         cell_material_tag=np.asarray(model["tags"]),
@@ -166,7 +188,22 @@ def self_physics(model, packet, c, alpha, artifact, marker, budget):
         ),
     )
     sample = SAMPLE_ORIGINAL_NM * 7 / 135
-    ET, CT = evaluate(model, packet, c + packet.a["background"], sample)
+    if affine_output is None:
+        ET, CT = evaluate(model, packet, c + packet.a["background"], sample)
+    else:
+        EHi, CHi = evaluate(model, packet, affine_output["total_hi"], sample)
+        ELo, CLo = evaluate(model, packet, affine_output["total_lo"], sample)
+        ET = EHi.astype(np.clongdouble) + ELo.astype(np.clongdouble)
+        CT = CHi.astype(np.clongdouble) + CLo.astype(np.clongdouble)
+        arrays.update(selected_total_E_hi=EHi, selected_total_E_lo=ELo,
+                      selected_total_curl_hi=CHi, selected_total_curl_lo=CLo,
+                      total_E_hi=np.asarray(high_e), total_E_lo=np.asarray(low_e),
+                      total_curl_hi=np.asarray(high_c), total_curl_lo=np.asarray(low_c),
+                      total_H_hi=np.asarray(high_c)/(1j*cfg.k0*cfg.mu_r),
+                      total_H_lo=np.asarray(low_c)/(1j*cfg.k0*cfg.mu_r),
+                      alpha_total_hi=affine_output["alpha_total_hi"],
+                      alpha_total_lo=affine_output["alpha_total_lo"],
+                      exact_affine_output_schema=affine_output["schema"])
     ES, CS = evaluate(model, packet, c, sample)
     arrays.update(
         selected_total_E=ET,
@@ -184,6 +221,13 @@ def self_physics(model, packet, c, alpha, artifact, marker, budget):
         scattered_H=np.asarray(rows_sc) / (1j * cfg.k0 * cfg.mu_r),
         physical_field_norms=np.sqrt(norms),
     )
+    if affine_output is not None:
+        arrays['total_H']=(arrays['total_H_hi'].astype(np.clongdouble)
+                           +arrays['total_H_lo'].astype(np.clongdouble))
+        arrays['selected_total_H_hi']=CHi/(1j*cfg.k0*cfg.mu_r)
+        arrays['selected_total_H_lo']=CLo/(1j*cfg.k0*cfg.mu_r)
+        arrays['selected_total_H']=(arrays['selected_total_H_hi'].astype(np.clongdouble)
+                                    +arrays['selected_total_H_lo'].astype(np.clongdouble))
     atomic_npz(artifact / "observables.npz", **arrays)
     av = float(sum(absorption.values()))
     energy = abs(port["R_total"] + port["T_total"] + av - 1)
@@ -206,6 +250,7 @@ def self_physics(model, packet, c, alpha, artifact, marker, budget):
         channels=len(alpha),
         postprocess_seconds=perf_counter() - start,
         physical_gate_passed=energy <= 1e-5,
+        exact_affine_both_components_consumed=affine_output is not None,
     )
     marker("physical_full_field_saved", value)
     return value
@@ -230,9 +275,17 @@ def saved_state_identity_and_MPC(model, packet, state):
     from src.solvers.fixed_phase_saved_diagnostics import inspect_state
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
 
-    inspect_state(packet, state)
+    if 'schema' in state:
+        from benchmarks.affine_output_checker import check_state
+        check=check_state(packet.a,state,mode_hash=model['record']['mode_manifest_sha256'],expected_mode_hash=model['record']['mode_manifest_sha256'])
+        if not check['passed']:
+            raise ValueError('COMPARE_EXACT_TOTAL_RECOVERY_FAILED')
+        names=('c_scattered','total_hi','total_lo')
+    else:
+        inspect_state(packet, state)
+        names=('c_scattered','c_total')
     residuals = {}
-    for name in ("c_scattered", "c_total"):
+    for name in names:
         local = packet.expand(state[name])
         field = restore_p0_full_field(model["floquet"], packet.storage(state[name]))
         residuals[name] = float(
@@ -251,7 +304,7 @@ def saved_state_identity_and_MPC(model, packet, state):
     )
 
 
-def compare(indices, artifact, marker, budget):
+def compare(indices, artifact, marker, budget, *, role_definitions=None, pair_definitions=None):
     import basix
     from src.geometry.fixed_phase_plan import physical_design
 
@@ -268,7 +321,7 @@ def compare(indices, artifact, marker, budget):
         ), dict(integrals=artifact / "comparison_integrals.npz")
     models, packets, states, obs, state_checks = {}, {}, {}, {}, {}
     for role, idx in indices.items():
-        mesh, degree, phase = ROLES[role]
+        mesh, degree, phase = (ROLES if role_definitions is None else role_definitions)[role]
         models[role] = build_model(
             physical_design(mesh), degree, phase, operators=False
         )
@@ -314,6 +367,9 @@ def compare(indices, artifact, marker, budget):
         state_checks[role] = saved_state_identity_and_MPC(
             models[role], packets[role], states[role]
         )
+        if 'schema' in states[role]:
+            from src.solvers.affine_field_output import total_field
+            states[role]['c_total']=total_field(states[role])
         marker(
             "independent_saved_state_identity_MPC",
             dict(role=role, **state_checks[role]),
@@ -326,7 +382,7 @@ def compare(indices, artifact, marker, budget):
     }
     if len(physical) != 1 or len(modes) != 1:
         raise ValueError("CROSS_SPACE_PHYSICS_OR_PORT_KEYS_NOT_IDENTICAL")
-    pairs = [
+    pairs = pair_definitions if pair_definitions is not None else [
         (a, b)
         for a, b in [(r, "O6") for r in ("O3", "E3", "E4")]
         + [("E3", "E4"), ("O3", "E3")]
@@ -347,7 +403,7 @@ def compare(indices, artifact, marker, budget):
         cuts = cuts[(cuts > axes[axis][0]) & (cuts < axes[axis][-1])]
         axes[axis] = np.unique(np.r_[axes[axis], cuts])
     local = {
-        r: {k: packets[r].expand(c) for k, c in states[r].items() if k.startswith("c_")}
+        r: {k: (c.map(packets[r].expand) if hasattr(c,'map') else packets[r].expand(c)) for k, c in states[r].items() if k.startswith("c_")}
         for r in indices
     }
     geometry_lookup = {}
@@ -520,7 +576,7 @@ def compare(indices, artifact, marker, budget):
                 / np.maximum(abs(q_results[30][key]), 1e-24)
             )
         )
-        threshold = 1e-3 if right == "E4" else 1e-4
+        threshold = 1e-3 if right.endswith("E4") else 1e-4
         field_pass = all(
             v["relative"] <= threshold for v in fields["all"].values()
         ) and all(v["relative"] <= threshold for v in complex_errors.values())
@@ -528,7 +584,7 @@ def compare(indices, artifact, marker, budget):
         pair_reference = (
             ref_qualified
             if right == "O6"
-            else right == "E4"
+            else right.endswith("E4")
             and all(
                 indices[r]["result"]["checker"]["passed"]
                 and indices[r]["result"]["physics"]["physical_gate_passed"]

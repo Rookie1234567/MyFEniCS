@@ -1,0 +1,32 @@
+{
+  "developmental_repairs": [
+    {
+      "phase": "developmental",
+      "failure": "surface D MPC phase broadcast (18,24)*(24,1)",
+      "hypothesis": "advanced-index axis ordering",
+      "change": "phase[cell,cl][None,:]",
+      "test": "third small FE smoke max B 2.5315587430489714e-15, D 2.757156824202612e-15, H 0",
+      "retry": "qualified, original failures retained",
+      "formal_repair_round": false
+    },
+    {
+      "phase": "developmental harness",
+      "failure": "json.dumps(np.bool_)",
+      "hypothesis": "numpy scalar is not builtin bool",
+      "change": "small helper prints bool/max, campaign write handles NumPy values",
+      "test": "same smoke completed/cleared/swap0",
+      "formal_repair_round": false
+    },
+    {
+      "phase": "developmental control",
+      "failure": "pure targeted tests started before FE smoke supervision returned final cleanup",
+      "hypothesis": "interpreted available log as completed prematurely",
+      "change": "all subsequent numerical stages await closed summary and clearance before next launch",
+      "test": "both developmental trees completed/cleared; total overlap <=6.464764241012745s; individual peaks 327991296B and 112865280B, no swap",
+      "formal_repair_round": false,
+      "process_limitations_preserved": true
+    }
+  ],
+  "formal_repairs": [],
+  "all_failed_costs_preserved": true
+}

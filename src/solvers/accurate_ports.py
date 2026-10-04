@@ -15,6 +15,15 @@ def _ratio(x):
 
 
 def recover_ports(a, c, *, gp=None):
+    return recover_ports_components(a, (c,), gp=gp)
+
+
+def recover_ports_components(a, components, *, gp=None):
+    """Accumulate every component before the one final original-H division."""
+    components = tuple(np.asarray(c) for c in components)
+    if not components:
+        raise ValueError("ACCURATE_PORT_COMPONENTS_REQUIRED")
+    c = components[0]
     c = np.asarray(c)
     H = np.asarray(a["H"])
     gp = np.asarray(a["gp"] if gp is None else gp)
@@ -39,6 +48,8 @@ def recover_ports(a, c, *, gp=None):
         or np.any(dr >= len(c))
     ):
         raise ValueError("ACCURATE_PORT_INPUT_INVALID")
+    if any(x.dtype != np.complex128 or x.shape != c.shape or not np.isfinite(x).all() for x in components):
+        raise ValueError("ACCURATE_PORT_COMPONENT_INVALID")
     bits = 2148  # Two least binary64 subnormals can multiply to 2**-2148.
     real, imag = [], []
     for z in gp:
@@ -54,12 +65,13 @@ def recover_ports(a, c, *, gp=None):
 
     terms = np.zeros(len(H), np.int64)
     absolute_sum = np.abs(gp).copy()
-    for j, row, d in zip(dp, dr, dv, strict=True):
-        z = c[row]
-        real[j] += product(d.real, z.real) - product(d.imag, z.imag)
-        imag[j] += product(d.real, z.imag) + product(d.imag, z.real)
-        terms[j] += 1
-        absolute_sum[j] += abs(d) * abs(z)
+    for c in components:
+        for j, row, d in zip(dp, dr, dv, strict=True):
+            z = c[row]
+            real[j] += product(d.real, z.real) - product(d.imag, z.imag)
+            imag[j] += product(d.real, z.imag) + product(d.imag, z.real)
+            terms[j] += 1
+            absolute_sum[j] += abs(d) * abs(z)
     result = np.empty(len(H), np.complex128)
     for j, h in enumerate(H):
         n, e = _ratio(h)
@@ -82,7 +94,8 @@ def recover_ports(a, c, *, gp=None):
         output_precision="complex128, one nearest-even rounding per component",
         sum_denominator_power=bits,
         term_counts=terms.tolist(),
-        complex_products=len(dv),
+        complex_products=len(dv)*len(components),
+        input_components=len(components),
         divisions=2 * len(H),
         per_mode_sum_absolute=absolute_sum.tolist(),
         per_mode_exact_numerator_absolute=abs(exact_numerator).tolist(),

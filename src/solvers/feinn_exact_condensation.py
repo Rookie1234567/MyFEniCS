@@ -37,8 +37,12 @@ class ExactInteriorCondensation:
         if np.any(self.trace_ids < 0):
             raise ValueError("CONDENSATION_TRACE_INTERIOR_OVERLAP")
         self.lu, self.X, self.S = [], [], []
-        for F in a["F"]:
+        self.local_factor_records = []
+        for class_id, F in enumerate(a["F"]):
+            start_factor = perf_counter()
             lu = linalg.lu_factor(F[np.ix_(self.i, self.i)])
+            self.local_factor_records.append(dict(class_id=class_id, factor_count=1,
+                                                 rows=len(self.i), seconds=perf_counter()-start_factor))
             X = linalg.lu_solve(lu, F[np.ix_(self.i, self.t)])
             S = F[np.ix_(self.t, self.t)] - F[np.ix_(self.t, self.i)] @ X
             self.lu.append(lu)

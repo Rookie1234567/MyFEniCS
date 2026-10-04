@@ -1,0 +1,59 @@
+{
+  "schema": "task42extra.v22.design.v1",
+  "input_head": "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "authority": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v21.md",
+    "sha256": "accb6348e651e6da2fdbaff45b7d224cfe019c59be44eb61065707240c2ba6cf"
+  },
+  "scope": "P0/P1 exact affine output; P2 planar Fourier-Legendre face; P3 original c/new ports; conditional same-model E3/E4 correction; P4 saved manifest only",
+  "ordinary_defaults_unchanged": true,
+  "reference_qualified": false,
+  "neural_training": false,
+  "NN_increment": false,
+  "total_budget_seconds": 43200,
+  "final_reserve_seconds": 1800,
+  "stage_caps_seconds": {
+    "P01": 7200,
+    "P2": 10800,
+    "P3": 7200,
+    "conditional_and_P4": 10800,
+    "D": 3600
+  },
+  "limits": {
+    "pure_tree_bytes": 2147483648,
+    "FE_tree_bytes": 17179869184,
+    "FE_warning_bytes": 12884901888,
+    "math_threads": 1,
+    "MPI": 1,
+    "own_swap_bytes": 0,
+    "OOC_bytes": 0,
+    "neighbor_growth_bytes": 412316860416
+  },
+  "algorithm": {
+    "face": "affine_tensor_Fourier_Legendre_v1",
+    "primary_identity": "https://dlmf.nist.gov/10.54.E2",
+    "polynomial_transform": "Gauss p+1, polynomial only",
+    "independent_oracle": "direct Basix physical basis Gauss; n=max(24,ceil(2*max_half_span)+p+8), paired n+8, cap160",
+    "amplitude_pruning": false,
+    "origin_alpha_not_beta": true
+  },
+  "conditional_solve": {
+    "roles": [
+      "E3",
+      "E4"
+    ],
+    "each_once": true,
+    "total_lifecycles": 3,
+    "new_native_residual_greater_than": 1e-06,
+    "shared_and_role_and_all_output_consumers_required": true,
+    "O3": false,
+    "O6": false
+  },
+  "source_binding": "formal manifests bind subsequent clean implementation source separately from document HEAD",
+  "frozen_inputs": {
+    "path": "tmp/task42extra/v22/frozen_inputs.json",
+    "sha256": "718350a4a887ed8a9e935d90967d6142bc400bbee070933e40bc1a9fa007093b"
+  },
+  "created_utc": "2026-10-04T08:44:54.890317+00:00"
+}

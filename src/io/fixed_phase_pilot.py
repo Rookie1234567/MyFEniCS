@@ -31,6 +31,17 @@ STAGES.update({
     "v21_physical_compare": ("fe",5400,"P4",None),
     "v21_saved_checker": ("pure",1800,"P4",None),
 })
+STAGES.update({
+    "v22_control_checks": ("pure",600,"P01",None),
+    "v22_affine_saved": ("fe",3600,"P01",None),
+    "v22_face_qualification": ("fe",9000,"P2",None),
+    "v22_frozen_port_audit": ("fe",7200,"P3",None),
+    "v22_e3_correction": ("fe",3600,"conditional","E3"),
+    "v22_e4_correction": ("fe",3600,"conditional","E4"),
+    "v22_corrected_compare": ("fe",5400,"conditional",None),
+    "v22_target_local_face": ("fe",7200,"conditional",None),
+    "v22_saved_checker": ("pure",1800,"D",None),
+})
 
 
 def load(path, raw, config):

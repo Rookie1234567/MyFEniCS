@@ -86,7 +86,7 @@ def main():
     if len(sys.argv) == 4:
         attempt = int(sys.argv[3])
         if not spec.derived["stage"].startswith(
-            ("v9_", "v10_", "v11_", "v12_", "v13_", "v18_", "v20_", "v21_")
+            ("v9_", "v10_", "v11_", "v12_", "v13_", "v18_", "v20_", "v21_", "v22_")
         ) or attempt not in (
             2,
             3,
@@ -105,6 +105,8 @@ def main():
             raise ValueError("V20_AT_MOST_TWO_EVIDENCED_IMPLEMENTATION_REPLAYS")
         if spec.derived["stage"].startswith("v21_") and attempt > 3:
             raise ValueError("V21_AT_MOST_TWO_EVIDENCED_FORMAL_REPLAYS")
+        if spec.derived["stage"].startswith("v22_") and attempt > 3:
+            raise ValueError("V22_AT_MOST_TWO_EVIDENCED_FORMAL_REPLAYS")
         # A prior attempt must be closed and cleared; never replace its files.
         previous = sorted(
             (ROOT / "results/task42extra").glob(spec.identity["run_id"] + "_*")
@@ -130,12 +132,12 @@ def main():
         + namespace
         + (" && export TASK42EXTRA_V"+str(spec.derived['campaign_version'])
            +"_LAUNCH_ORIGIN_MONOTONIC="+str(DURABLE_LAUNCH_ORIGIN)
-           if spec.derived["stage"].startswith(("v20_","v21_")) else "")
+           if spec.derived["stage"].startswith(("v20_","v21_","v22_")) else "")
         + " && exec python scripts/run_case.py "
         + str(spec.source_path.relative_to(ROOT)),
     ]
     result = launch_tmux(directory, session, command, ROOT,
-                        management_supervised=spec.derived["stage"].startswith(("v20_","v21_")))
+                        management_supervised=spec.derived["stage"].startswith(("v20_","v21_","v22_")))
     print(
         json.dumps(
             {k: result[k] for k in ("socket", "session", "output", "scope")},

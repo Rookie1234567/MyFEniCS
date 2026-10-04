@@ -29,6 +29,7 @@ from src.runners.feinn_resources import (
 BATCH = ROOT / "tmp/task42extra/v20"
 CAPS = dict(implementation=10800, A=3600, B=14400, C=5400, D=3600)
 V21_CAPS = dict(P01=10800,P2=7200,P3=9000,P4=7200,D=3600)
+V22_CAPS = dict(P01=7200,P2=10800,P3=7200,conditional=10800,D=3600)
 
 
 def sha(path):
@@ -43,6 +44,13 @@ def write(path, value):
     def convert(x):
         if isinstance(x, complex):
             return dict(real=x.real, imag=x.imag)
+        if hasattr(x, "dtype") and getattr(x,"ndim",None)==0:
+            if x.dtype.kind=='f':
+                return float(x)
+            if x.dtype.kind=='c':
+                return dict(real=float(x.real),imag=float(x.imag))
+            if x.dtype.kind in ('i','u'):
+                return int(x)
         if hasattr(x, "tolist"):
             return x.tolist()
         raise TypeError(type(x).__name__)
@@ -197,15 +205,16 @@ def launch(spec):
             raise RuntimeError("V20_A_NOT_QUALIFIED")
     if stage == "v20_e4":
         selected("v20_e3")
-    dependency_proof = v21_admission(stage,old) if version==21 else None
+    dependency_proof = (v22_admission(stage,old) if version==22 else
+                        v21_admission(stage,old) if version==21 else None)
     used = sum(r["seconds"] for r in old if r["group"] == group)
-    if version==21 and group=="P01":
+    if version in (21,22) and group=="P01":
         # P0/P1 includes implementation, reading and tests since first-read;
         # it is not a fresh 3h numerical allowance after preparation.
-        clock = json.loads((ROOT/"tmp/task42extra/v21/clock.json").read_text())
+        clock = json.loads((ROOT/f"tmp/task42extra/v{version}/clock.json").read_text())
         used = time.monotonic()-clock["start_monotonic"]
     limit = min(
-        spec.execution["timeout_seconds"], (V21_CAPS if version==21 else CAPS)[group] - used,
+        spec.execution["timeout_seconds"], (V22_CAPS if version==22 else V21_CAPS if version==21 else CAPS)[group] - used,
         batch_remaining(version=version) - 1800
     )
     if limit <= 150:
@@ -283,10 +292,10 @@ def launch(spec):
                     )
                 },
             )
-            if version==21:
+            if version in (21,22):
                 abi_path = Path(state["ABI_record"]["path"])
                 state["ABI_record"]["sha256"] = sha(abi_path)
-                frozen = ROOT / "tmp/task42extra/v21/frozen_inputs.json"
+                frozen = ROOT / f"tmp/task42extra/v{version}/frozen_inputs.json"
                 state["frozen_inputs"] = dict(path=str(frozen),sha256=sha(frozen))
             write(directory / "run_manifest.json", state)
             command = [
@@ -380,11 +389,11 @@ def worker(directory):
         ):
             raise RuntimeError("V20_SOURCE_OR_DESIGN_CHANGED")
         design = json.loads(DESIGN.read_text())
-        if m.get("campaign_version")==21:
+        if m.get("campaign_version") in (21,22):
             if (sha(m["ABI_record"]["path"]) != m["ABI_record"]["sha256"]
                     or sha(m["frozen_inputs"]["path"]) != m["frozen_inputs"]["sha256"]):
                 raise RuntimeError("V21_BOUND_ABI_OR_INPUT_CHANGED")
-            result,files = v21_worker(m,directory,artifact,design,marker,budget)
+            result,files = (v22_worker if m["campaign_version"]==22 else v21_worker)(m,directory,artifact,design,marker,budget)
         elif m["stage"] == "v20_control_checks":
             from benchmarks.fixed_phase_control_checks import control_checks
 
@@ -584,6 +593,71 @@ def v21_admission(stage,old):
         if sum(r["role"] is not None for r in old)>=5:
             raise RuntimeError("V21_FIVE_NEW_REAL_SOLVE_LIFECYCLES_EXHAUSTED")
     return proof
+
+
+def v22_admission(stage,old):
+    """V22 role-complete permit; no inherited generic passed shortcut."""
+    if stage!='v22_control_checks':
+        selected('v22_control_checks')
+    proof=dict(authority='review_report_v21.md',comparison_of_negative_fields_allowed=True,
+               legacy_subset_flags_used_for_solve=False)
+    if stage in ('v22_e3_correction','v22_e4_correction'):
+        from src.solvers.port_qualification_state import qualification_state
+        role='E3' if stage=='v22_e3_correction' else 'E4'
+        saved=selected('v22_affine_saved')['result']['roles'][role]
+        q=evidence_v22('v22_face_qualification')['result']
+        from benchmarks.reliable_port_checker import face_gates
+        checked=face_gates(q)
+        frozen=selected('v22_frozen_port_audit')['result']['roles'][role]
+        gate=qualification_state(shared=checked['shared'],role=checked['roles'][role] and frozen['reliable_operator_qualified'],output=saved['complete_output_qualified'],files_present=True,identity_matches=True)
+        if not gate['solve_admitted'] or not frozen['correction_triggered']:
+            raise RuntimeError('V22_COMPLETE_ROLE_OR_RESIDUAL_TRIGGER_NOT_QUALIFIED')
+        if any(r['role']==role for r in old) or sum(r['role'] is not None for r in old)>=3:
+            raise RuntimeError('V22_ROLE_ONCE_AND_THREE_SOLVE_LIFECYCLES')
+        proof.update(role=role,complete_gate=gate,trigger_residual=frozen['full_equation']['native_relative'])
+    return proof
+
+
+def evidence_v22(stage):
+    """One latest closed evidence record; negative readable, never a PASS alias."""
+    paths=sorted(ARTIFACTS.glob('index_'+stage+'_attempt*.json'))
+    if not paths:
+        raise ValueError('V22_CLOSED_EVIDENCE_REQUIRED:'+stage)
+    record=json.loads(paths[-1].read_text())
+    for b in record['files'].values():
+        if sha(b['path'])!=b['sha256']:
+            raise ValueError('V22_CLOSED_EVIDENCE_HASH')
+    return record
+
+
+def v22_worker(m,directory,artifact,design,marker,budget):
+    from src.solvers import fixed_phase_reliable_ports as work
+    stage=m['stage']
+    bindings=json.loads(Path(m['frozen_inputs']['path']).read_text())
+    if stage=='v22_control_checks':
+        test=ROOT/'tmp/task42extra/v22/pure_tests.json'
+        passed=json.loads(test.read_text())
+        if not passed['passed']:
+            raise ValueError('V22_TARGETED_TESTS_REQUIRED')
+        for binding in bindings.values():
+            work.load_bound(binding)
+        return dict(stage_qualified=True,complete_configuration_stubs=True,tests=dict(path=str(test),sha256=sha(test)),no_FE_or_factor=True),{}
+    if stage=='v22_affine_saved':
+        return work.affine_saved(design,bindings,artifact,marker,budget,m['source_sha'])
+    if stage=='v22_face_qualification':
+        return work.face_qualification(design,artifact,marker,budget)
+    if stage=='v22_frozen_port_audit':
+        return work.frozen_audit(design,bindings,artifact,marker,budget,m['source_sha'])
+    if stage in ('v22_e3_correction','v22_e4_correction'):
+        return work.correction(design,m['role'],artifact,marker,budget,m['source_sha'])
+    if stage=='v22_corrected_compare':
+        return work.corrected_compare(design,artifact,marker,budget)
+    if stage=='v22_target_local_face':
+        return work.target_local_face(artifact,marker,budget)
+    if stage=='v22_saved_checker':
+        from benchmarks.reliable_port_checker import check_campaign
+        return check_campaign(ROOT,artifact),{}
+    raise RuntimeError('V22_EXPLICIT_STAGE_REQUIRED')
 
 
 def v21_retained_roles():

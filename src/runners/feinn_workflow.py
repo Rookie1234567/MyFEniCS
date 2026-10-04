@@ -239,7 +239,7 @@ def budget():
 
 
 def launch(spec):
-    if spec.derived["stage"].startswith(("v20_","v21_")):
+    if spec.derived["stage"].startswith(("v20_","v21_","v22_")):
         from src.runners.fixed_phase_campaign import launch
         return launch(spec)
     launch_origin = perf_counter()
