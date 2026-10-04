@@ -28,13 +28,19 @@ def main():
     # unrelated historical imports in the shared cycle/old V14 runner.
     ruff_paths = [p for p in sorted(paths)
                   if 'full_input_online' in p or 'test_task042_v35_' in p]
+    targets = ['src/test/test_task042_v35_online.py', 'src/test/test_task042_v35_cache.py',
+               'src/test/test_26_documentation_contract.py']
+    if '--export-repair' in sys.argv:
+        targets = [
+            'src/test/test_task042_v35_online.py::test_actual_dat_kernel_runner_return_checkpoint_independent_checker',
+            'src/test/test_task042_v35_online.py::test_independent_checker_rejects_hash_inventory_and_fakepass',
+        ]
     commands = [
         [str(ruff), 'check', '--select', 'E9,F', *ruff_paths],
         [sys.executable, '-m', 'benchmarks.package_full_input_online'],
         [sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider',
          '--basetemp=' + str(folder / 'fixtures'),
-         'src/test/test_task042_v35_online.py', 'src/test/test_task042_v35_cache.py',
-         'src/test/test_26_documentation_contract.py',
+         *targets,
          '--junitxml=' + str(folder / 'pytest.xml')],
     ]
     results = []
@@ -50,6 +56,7 @@ def main():
                   compiled_files=sorted(paths), results=results, threads=_pure_blas_threads(),
                   affinity=sorted(os.sched_getaffinity(0)), interpreter=sys.executable,
                   ruff_binary_sha256=file_hash(ruff), ruff_read_only_reuse=True,
+                  targeted_export_repair='--export-repair' in sys.argv,
                   new_real_actions=0, new_factor_reads=0, no_reference_read=True)
     write_json(folder / 'final_static_tests.json', record)
     print(json.dumps(dict(status=record['status'], path=str(folder / 'final_static_tests.json'))))
