@@ -1,0 +1,104 @@
+{
+  "schema": "task40extra.review-v7.incremental-workflow-ledger.v1",
+  "status": "in_progress_elapsed_unverified",
+  "created_utc": "2026-10-04T03:11:59Z",
+  "historical_v6_ledger": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
+    "sha256": "df6041ad118c4abcc805e367e789f2bf113975bf82de718b15c65cb40a09689e",
+    "workflow_budget_seconds": 172800,
+    "measured_elapsed_seconds": 5418.577512204991,
+    "settled_historical_debit_seconds": 5428.582333962078,
+    "disposition": "immutable historical V6 ledger; not rewritten or combined with the separate V7 research cap"
+  },
+  "v7_research_cap": {
+    "total_seconds": 43200,
+    "includes": [
+      "preparation",
+      "failed attempts",
+      "authorized repair replay",
+      "checker",
+      "raw write and cleanup"
+    ],
+    "stages": {
+      "W0": {
+        "maximum_seconds": 14400
+      },
+      "W1": {
+        "maximum_seconds": 7200
+      },
+      "W2": {
+        "maximum_seconds": 21600
+      }
+    },
+    "stage_budgets_transferable": false
+  },
+  "v7_accounting_now": {
+    "charged_seconds": null,
+    "remaining_seconds": null,
+    "reason": "Native execution window has not provided a monotonic/boottime budget receipt. Elapsed time and spend are unknown, not zero; no debit or reservation is imputed.",
+    "local_metadata_and_documentation_elapsed_seconds": null,
+    "local_metadata_time_policy": "not captured as a V7 research-stage clock; reconcile from authoritative receipt if the task contract charges it"
+  },
+  "stage_status": {
+    "W0": {
+      "status": "preparation_active_actual_fe_not_started",
+      "maximum_seconds": 14400,
+      "elapsed_seconds": null,
+      "reserved_seconds": null,
+      "actual_fe": "not_run",
+      "reported_host_facts": "Controller reports x86-64-v4 CPU check passed, while unrelated heavy jobs remain active; final native host/resource/ABI receipt pending.",
+      "approved_dot_source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+      "new_dot_source_sha_pending_authorization": "077ec9c8386c976da232093779279fb9d1a93033",
+      "new_source_state": "observed but not used; broader than PyVista import repair because it also changes native direction-byte authority/checker; historical raw/cloud test logs unavailable; source-upgrade decision pending"
+    },
+    "W1": {
+      "status": "not_run_condition_W0_numerical_pass",
+      "maximum_seconds": 7200,
+      "elapsed_seconds": null,
+      "reserved_seconds": null
+    },
+    "W2": {
+      "status": "not_run_condition_W0_and_C1c_and_complete_p6_entry",
+      "maximum_seconds": 21600,
+      "elapsed_seconds": null,
+      "reserved_seconds": null
+    }
+  },
+  "source_authority": {
+    "review_report_path": "docs/task40extra_0p7nm_engineering/review_report_v7.md",
+    "review_report_sha256": "22313b2b2bc60e6178a35f77bd9e6584f7e2d9c2fd76e276004041de25a6b06e",
+    "execution_branch_head_at_recording": "66b151a72d4f837bfebc0aa9b9d854457b0fd93a",
+    "push_owner": "root; no local push"
+  },
+  "local_preflight_diagnostics": {
+    "classification": "agent_assertion_errors_before_pytest_not_repository_or_ABI_failures",
+    "attempts": [
+      {
+        "attempt": 1,
+        "misdiagnosis": "The checker required Path(sys.executable).resolve() to remain under the venv.",
+        "actual": "The qualified lexical executable is repo/.venv/bin/python and the standard venv symlink resolves to /usr/bin/python3.12.",
+        "pytest_started": false,
+        "elapsed_seconds": null
+      },
+      {
+        "attempt": 2,
+        "misdiagnosis": "The checker required slepc4py to share petsc4py’s filesystem prefix.",
+        "actual": "Debian installs SLEPc under /usr/lib/slepcdir while matching PETSc3.19 complex ABI; sys.prefix and earlier ABI assertions passed.",
+        "pytest_started": false,
+        "elapsed_seconds": null
+      }
+    ],
+    "cost_interpretation": "No monotonic receipt was captured for either diagnostic command; time and charge remain unknown, not zero."
+  },
+  "local_validation": {
+    "qualified_activation_preflight": "PASS: lexical interpreter under repository .venv; sys.prefix matches; PETSc complex128/int32; Linux PETSc/SLEPc/DOLFINx/Basix/mpi4py; Open MPI 4.1.6; MPI1",
+    "documentation_contract_tests": {
+      "command": "python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py",
+      "result": "24 passed",
+      "pytest_reported_seconds": 0.06,
+      "scope": "documentation contracts and retrospective/model registry only; no PDE"
+    },
+    "full_repository_pytest": "not_run",
+    "PDE_MPI_or_expensive_gate": "not_run"
+  }
+}

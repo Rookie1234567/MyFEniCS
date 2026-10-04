@@ -137,3 +137,14 @@ git diff --cached --check
 | full repository pytest / MPI4 / Ruff / CI | 未运行 | `not_run` | 不声称full pytest、MPI4、Ruff或CI通过 |
 
 Review V2的正式F1/F2/F3/F5/E1/E2计算发生在此前campaign阶段，见run_index与各自raw run summaries；“本轮文档收尾没有新PDE”不等于整个Review V2没有正式运行。P1和P4都是保存场offline后处理。
+
+## Review V7 文档与索引定向检查（2026-10-04）
+
+| 检查 | 命令/范围 | 结果 | 边界 |
+|---|---|---|---|
+| 资格化本地 WSL preflight | `source scripts/activate_myfenics_wsl.sh` 后核验 lexical `sys.executable` 位于仓库 `.venv`、`sys.prefix` 与 `.venv` 一致、PETSc complex128/int32、PETSc/SLEPc/DOLFINx complex Linux ABI、Basix/mpi4py Linux 路径、Open MPI 4.1.6、MPI1 | PASS | 仅本地文档测试环境，不是原生工作站 W0 收据 |
+| 文档合同与历史/模型注册合同 | `python -m pytest -q src/test/test_26_documentation_contract.py src/test/test_development_model_registry_contract.py src/test/test_29_task_retrospective_contract.py` | 24 passed；pytest 报告 0.06 s | 没有 FE、MPI 多进程、full-repository pytest 或 PDE |
+| 两次 preflight 脚本误报 | attempt 1 把 venv 符号链接目标误要求在 venv 内；attempt 2 把 SLEPc 安装目录误要求与 PETSc 同根。两次均在 pytest 启动前停止 | 保留为 agent assertion errors | 都不是项目/ABI 失败；单次耗时无 monotonic 收据，记 unknown，不记零或收费 |
+| compact JSON / index / diff | 新 V7 link 和增量账 JSON parse；run index stage/status pointers、原四角哈希和 Gx784/F5 输入身份断言；`git diff --check` | PASS | 只验证本地文档/evidence；没有触及 ignored raw、工作站 FE 或历史 V6 ledger |
+
+这组结果对应本轮新增文档与索引，不替代原生机器 ABI/resource Gate，也不改变 W0/W1/W2 状态。

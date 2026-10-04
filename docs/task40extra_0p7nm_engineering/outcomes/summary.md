@@ -1,4 +1,4 @@
-# Task40extra Review V6/V5/V4 收口总账（V2/R5 历史保留）
+# Task40extra Review V7 进行中 / V6-V4 历史总账
 
 ## Review V6：Gx784 单次运行与保存场后处理收口
 
@@ -346,3 +346,18 @@ attempt3 的独立 elapsed 和必要人工修复工时都是 unknown，不能由
 - [精度与容量](accuracy_and_capacity.md)
 - [测试摘要](test_summary.md)
 - ignored raw attempt4 artifacts 位于 run index 所列 results 路径。
+
+## Review V7 当前执行状态（尚未收口）
+
+| 项目 | 当前状态 | 结果与限制 |
+|---|---|---|
+| AUTO 清单 | `reused_verified_inventory` | original/repair 仍是同一 32,060-key 清单；manifest SHA256 `52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d`，ordered-key digest `03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec`；本轮未重跑生成器。 |
+| 单一原尺寸计数候选 | `derived_only` | 272×4×14=15,232 六面体；不是已生成或资格化的网格。 |
+| W0 工作站组件 | `preparation_active; FE not_run` | 控制窗口报告 CPU feature 核验通过，但已有重型作业，等待安全窗口；ABI、cgroup/实时内存/swap 和可用余量仍待本机收据。W0 暂用已审阅 source `5be1210…`；更广的 source `077ec9c…` 含 direction-byte authority/checker 变化，升级授权待定，不作为已通过源码。 |
+| W1 原尺寸 AUTO 成本 | `not_run; conditional` | 等待 W0 数值通过并补最小入口。读取存档 manifest，不生成清单；完整 keys 不抽样。16 GiB Gate 必须纳入 `Di@XiB/Hhat`、输入/借用/BLAS 暂存/输出/检查器的并存对象；若现有受限表示无法在界内测量，则 controlled stop。 |
+| W2 全阶 p6 周期对照 | `not_run; conditional` | 等待 W0、C1c raw 和完整 p6 链入口。 |
+| 原尺寸完整求解 | `NO-GO` | AUTO 接线、全 q 因子及并存、p6 完整恢复、精度与端到端成本尚未闭合。 |
+
+已把 Gx784 的独立 run/source/input/model/mesh 身份及它与 G10/Gx560、G11/F5 的两条已通过 tested-x 配对，链接到原四角接口包；原四角物理签名与四角结果没有改写。详见 [V7 Gx784/四角身份链接](records/review_v7_gx784_four_corner_link_v1.json)。V7 增量预算独立于 V6 历史账本，W0/W1/W2 上限分别为 14,400/7,200/21,600 s；原生单调时钟收据未到，所以已用和剩余均记为 unknown，未将 unknown 记零，也没有改写历史 V6 的 5,428.582334 s settled debit，见 [V7 增量工作流账本](records/review_v7_incremental_workflow_ledger.json)。
+
+W1 当前仍无真实 `--help`、无 FE 控制链和完整 keys 对照收据；完整 32,060×32,060 complex128 `Di@XiB/Hhat` 的单一结果载荷为 16,445,497,600 B，在 16 GiB W1 范围内不能脱离输入、副本、其他缓存和写出并存状况单独准入。完整执行状态及 known/derived/unknown 对象账见 [Response V7](../response_v7.md)。资格化 WSL activation 的文档合同定向测试 24 passed；本轮不运行 FE、MPI 多进程或全仓 pytest，不关闭 V7，也不由本地窗口推送。

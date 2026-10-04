@@ -1,0 +1,120 @@
+{
+  "schema": "task40extra.review-v7.gx784-four-corner-link.v1",
+  "status": "linked_existing_identity_no_recomputation",
+  "created_utc": "2026-10-04T03:11:59Z",
+  "four_corner_parent": {
+    "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v4_four_corner_interface_v1.json",
+    "file_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+    "physical_input_signature_sha256": "f7593863b1e4edafa2f5deb61834bd5df6b5c84252c1f6f76f24ecbd22220ade",
+    "ordered_mode_manifest_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+    "corners": {
+      "G00": {
+        "run_id": "task40extra_0p7nm_nonseparable_g0_manual_m2_f3_v1",
+        "grid_axis_cells": [
+          6,
+          4,
+          14
+        ]
+      },
+      "G10": {
+        "run_id": "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+        "grid_axis_cells": [
+          10,
+          4,
+          14
+        ]
+      },
+      "G01": {
+        "run_id": "task40extra_0p7nm_nonseparable_gz528_manual_m2_v3_v1",
+        "grid_axis_cells": [
+          6,
+          4,
+          22
+        ]
+      },
+      "G11": {
+        "run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
+        "grid_axis_cells": [
+          10,
+          4,
+          22
+        ]
+      }
+    }
+  },
+  "gx784_identity": {
+    "run_id": "task40extra_0p7nm_nonseparable_gx784_review_v5_v1",
+    "run_directory": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z",
+    "pde_source_sha": "2374d0d556aed7a415202757daa2b94b76ad399b",
+    "input_sha256": "12f2e0dbed831f56c6e41133cdad292d0b70bea828087348ca8ede13142da422",
+    "physical_model_sha256": "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8",
+    "run_manifest_sha256": "f3c79f65d2a7881a67aa3e0e663c1e3000723944b52fe983f491f508ce8c8e3f",
+    "grid_axis_cells": [
+      14,
+      4,
+      14
+    ],
+    "cell_count": 784,
+    "method": "Full3D p6 physical solve with exact p4 coarse correction; MPI1; complex128",
+    "p6_full_field_rows": 530400,
+    "p4_condensed_rows": 67988,
+    "p4_condensed_owned_row_stored_nnz": 26295924,
+    "mode_count": 340,
+    "ordered_mode_manifest_sha256": "7336482596276ee033f211ea84635d91678591f40705b208025622a0a35dd253",
+    "classification": "DISCRETE_SOLVE_AND_CONSISTENCY_PASS_AUTHORITY_LIMITED",
+    "A6_true_residual": 9.692115162625173e-07,
+    "A6_true_residual_limit": 1e-06,
+    "reference_authority": "MATCHED_REFERENCE_NOT_AVAILABLE"
+  },
+  "comparison_edges": {
+    "G10_Gx560_to_Gx784": {
+      "baseline_run_id": "task40extra_0p7nm_nonseparable_gx560_manual_m2_v3_v1",
+      "baseline_source_sha": "9fd295624444cf16b6ba393a0a7c3522f0070f73",
+      "baseline_input_sha256": "f5b30f26fa7b6e119dcfed139b7ac2a45cbd528dbdaef19bc0178030f78276ca",
+      "baseline_physical_model_sha256": "d1ba222b0fe8989f6f8758f4f7a776506691e393f596f41ed02d25d0a9781d98",
+      "baseline_run_manifest_sha256": "c1892ae63767e59f8afbac40b83e86576f01ccfe35f50041dd0ee7de1bb8fbcc",
+      "classification": "tested_x_agreement_pass",
+      "max_field_relative_difference": 0.0006419146264421262,
+      "max_significant_mode_relative_difference": 8.030064719462767e-05,
+      "R_T_A_balance_A_volume_abs_differences": [
+        2.4943069198285484e-06,
+        2.314543935733049e-06,
+        1.7976298405386615e-07,
+        1.8065518352788912e-07
+      ],
+      "same_ordered_mode_keys": true
+    },
+    "G11_F5_to_Gx784": {
+      "baseline_run_id": "task40extra_0p7nm_nonseparable_g1_manual_m2_f5_v1",
+      "baseline_source_sha": "63dd2a7378153f2ab5094eb5e7a98d05758a39bf",
+      "baseline_input_sha256": "3b0c7bc68cf1f991c1cd364eaf6079bbd4b745895315dcc85a7b2cfb39a8c5c7",
+      "baseline_physical_model_sha256": "ad9cb5ec64636755fba5135bc44d9d49940c4ae1de624536f7233da912e83ae7",
+      "baseline_run_manifest_sha256": "e1fe3cc2123039db86a3501fb11357c3780cfbae56972f0fbf178f4a04fbdc9a",
+      "classification": "tested_x_agreement_pass",
+      "max_field_relative_difference": 0.0006420202550004441,
+      "max_significant_mode_relative_difference": 8.148431581802385e-05,
+      "R_T_A_balance_A_volume_abs_differences": [
+        2.4936299092420677e-06,
+        2.3565318039153738e-06,
+        1.370981053128162e-07,
+        1.8195046935440273e-07
+      ],
+      "same_ordered_mode_keys": true
+    }
+  },
+  "comparison_artifacts": {
+    "pair_comparisons_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/gx784_pair_comparisons.json",
+    "pair_comparisons_sha256": "229ebced952efd5ecf1e696410fd084a58db8c6e67d3ef8694c667950eb4b882",
+    "independent_checker_path": "results/task40extra_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1__full3d_iterative__mpi1__Mna/20261003T113623.520807Z/postprocess_v5/attempt2/gx784_independent_check.json",
+    "independent_checker_sha256": "6d3efb845189d6c84665baaa35a5f43e2bc35d94e8a22b0165785b67e125bc99",
+    "closeout_record_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json",
+    "closeout_record_sha256": "d56e042919d60fb6df7c4bb5dd22330f0d9d0743a850a14758d81962d7e2a9ee"
+  },
+  "identity_boundary": {
+    "gx784_is_a_fifth_four_corner_run": false,
+    "gx784_inherits_four_corner_physical_input_signature": false,
+    "shared_ordered_mode_manifest_identity": true,
+    "distinct_input_and_physical_model_hashes_preserved": true,
+    "interpretation": "Gx784 extends the x-refinement evidence and is compared with the existing G10/Gx560 and G11/F5 fields. Its own input, model, mesh and solver-source identities remain separate; the common mode digest does not make the discretizations identical. This link does not claim y convergence, continuum convergence or original-size accuracy."
+  }
+}
