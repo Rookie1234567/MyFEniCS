@@ -1,0 +1,243 @@
+{
+  "schema": "task042.trace-selection.v47",
+  "review_commit": "93326fd0e4edc078c51da9af71bdc6f870e93c61",
+  "batch": "V47_FE_TRACE_SELECTION_WITNESS",
+  "classification": "SUBSPACE_WITNESS_ONLY",
+  "stages": [
+    "DATA",
+    "ORACLE",
+    "GRADIENT",
+    "TRAIN_NN",
+    "TRAIN_AFFINE",
+    "PREDICT",
+    "CHECK",
+    "ANALYSIS"
+  ],
+  "parents": {
+    "csr": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/checkpoints/native_csr.json",
+      "sha256": "d37f1173780b08ea79ecc69695dc323f5a0d43b4ffd555bd9430533704b25632"
+    },
+    "bridge": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge1_20261004T100337865573Z/result.json",
+      "sha256": "37c81a01c6b1ad4a4452a6f2b26c4bd9be1248bcf06d0340fe991f0368b4d93d"
+    },
+    "graph": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_setup_20261004T134304643860Z/result.json",
+      "sha256": "92966b2a3c1522e0530999de7991763a691cb6f9dbcd84a590afd6525f031caa"
+    },
+    "materials": {
+      "path": "/home/fenics/Projects/NN-Lab/input/materials/si_optical_constants_v1.json",
+      "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2"
+    },
+    "dot_compact": {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/dot_compact_snapshot_v46.json",
+      "sha256": "fd9bb9f2e77c64a8adbe8bc5b04ad1afd35a7e0c8419eac68ba06065e632ace3"
+    }
+  },
+  "new_storage_bytes": 1073741824,
+  "task_storage_bytes": 25769803776,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 268435456,
+  "loaded_seconds": 3600,
+  "science_seconds": 2400,
+  "diagnosis_seconds": 180,
+  "probe_seconds": 90,
+  "tail_reserve_seconds": 180,
+  "actions": 1200,
+  "B_actions": 0,
+  "rss_hard_bytes": 2147483648,
+  "rss_warning_bytes": 1610612736,
+  "resident_planning_bytes": 1932735283,
+  "shared_cap": "conservatively 2GiB for all stages irrespective of neighbor classification",
+  "forbidden_new": {
+    "mesh": 0,
+    "JIT": 0,
+    "LU": 0,
+    "QR": 0,
+    "Krylov": 0,
+    "target_action": 0,
+    "MPI_launch": 0,
+    "GPU": 0
+  },
+  "finite_identity": {
+    "cells": 64,
+    "degree": 6,
+    "volume_quadrature": 15,
+    "native_rows": 45000,
+    "independent_rows": 42624,
+    "slave_rows": 2376,
+    "trace_rows": 13824,
+    "interior_rows": 28800,
+    "DtN": "absent"
+  },
+  "split": {
+    "train": {
+      "seeds": [
+        427001,
+        427002,
+        427003,
+        427004,
+        427005,
+        427006,
+        427007,
+        427008,
+        427009,
+        427010,
+        427011,
+        427012,
+        427013,
+        427014,
+        427015,
+        427016
+      ],
+      "families": [
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves"
+      ]
+    },
+    "validation": {
+      "seeds": [
+        427101,
+        427102,
+        427103,
+        427104
+      ],
+      "families": [
+        "two_waves",
+        "two_waves",
+        "localized_two_waves",
+        "localized_two_waves"
+      ]
+    },
+    "heldout": {
+      "seeds": [
+        427201,
+        427202,
+        427203,
+        427204,
+        427205,
+        427206,
+        427207,
+        427208
+      ],
+      "families": [
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves",
+        "localized_two_waves"
+      ]
+    }
+  },
+  "generation": {
+    "k0": "2*pi/0.7 nm^-1",
+    "direction_rule": "two independently normalized isotropic normal 3-vectors",
+    "complex_polarization": "normalized independent real/imag normal 3-vectors",
+    "amplitude_range": [
+      0.5,
+      1.5
+    ],
+    "phase_range": [
+      -3.141592653589793,
+      3.141592653589793
+    ],
+    "center_fraction_range": [
+      0.2,
+      0.8
+    ],
+    "width_fraction_range": [
+      0.15,
+      0.4
+    ],
+    "interpolation": "complete original Basix N1E p6 Legendre x/M, covariant affine Piola, all 6/60/450 moments; q15 denotes frozen volume CSR quadrature",
+    "normalization": "common scale e,c,expanded by norm(native e), b computed from same scaled e",
+    "witness_seeds": [
+      427901,
+      427902
+    ]
+  },
+  "masks": {
+    "main_fraction": 0.5,
+    "diagnostic_fraction": 0.8,
+    "rounding": "floor(fraction*ntrace)",
+    "ties": "ascending canonical complex coefficient id",
+    "fixed_order": "moment_index then canonical id, no nested-p claim",
+    "rhs_score": "absolute canonical JH*b coefficient, same features used for ML",
+    "internal": "keep all 450/cell",
+    "real_imag": "single complex decision",
+    "heldout": "not read until predictor/rules freeze"
+  },
+  "error_action_groups": [
+    {
+      "sample": "train:0",
+      "kind": "omitted_edge_50"
+    },
+    {
+      "sample": "train:0",
+      "kind": "omitted_face_50"
+    }
+  ],
+  "conditional_training": {
+    "architecture": "shared 2hidden width32 tanh FP64 output1, <=10000 real parameters",
+    "control": "real affine same features",
+    "updates": 256,
+    "batch_problems": 2,
+    "lr": 0.001,
+    "seed": 427301,
+    "checkpoints": [
+      0,
+      32,
+      64,
+      128,
+      256
+    ],
+    "cycle": "train samples 0,1 then 2,3,... modulo16",
+    "label": "log(max(abs(c_trace)/entity_norm,1e-30))",
+    "selection": "number validation gate passes at 50%, then max rho, max trace error, earlier step",
+    "forecast_margin": 0.25
+  },
+  "features": [
+    "canonical_b_real/norm(b)",
+    "canonical_b_imag/norm(b)",
+    "abs(canonical_b)/norm(b)",
+    "entity_b_norm/norm(b)",
+    "adjacent_cell_b_norm/norm(b)",
+    "center_x/50",
+    "center_y/25",
+    "(center_z+10)/140",
+    "width_x/50",
+    "width_y/25",
+    "width_z/140",
+    "adjacent_material_onehot_air",
+    "adjacent_material_onehot_Si_block",
+    "adjacent_material_onehot_substrate",
+    "entity_dimension/2",
+    "entity_direction/2",
+    "moment_index/(entity_size-1)"
+  ],
+  "feature_normalization": "per-problem original RHS Euclidean norm; known geometry scales, no label/statistical normalization",
+  "dot_source": {
+    "commit": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+    "path": "src/solvers/fresh_c1c_compact_prefactor.py",
+    "blob": "8709e4e26ce15893b9296601bd542084d650074a"
+  },
+  "deployment_qualification": "not granted even if every subspace witness passes"
+}

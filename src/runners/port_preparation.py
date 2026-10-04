@@ -29,6 +29,11 @@ from src.solvers.port_preparation_window import implementation_hashes, window
 
 
 def storage_limits(namespace):
+    if namespace == "v47":
+        from src.solvers.trace_selection_scope import plan_record
+
+        plan = plan_record()
+        return {k: plan[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes", "evidence_reserve_bytes")}
     if namespace == "v46":
         from src.solvers.neural_decision_scope import plan_record
 
@@ -73,7 +78,7 @@ def storage_limits(namespace):
 class PreparationHealth:
     def __init__(self, folder, neighbors, namespace, *, limits=None):
         self.limits = storage_limits(namespace) if limits is None else limits
-        if namespace in ("v45", "v46") and self.limits != storage_limits(namespace):
+        if namespace in ("v45", "v46", "v47") and self.limits != storage_limits(namespace):
             raise ValueError("live guard must use the identical frozen plan")
         self.shared = SharedHealth(
             folder, neighbors, artifact_limit_bytes=self.limits["task_storage_bytes"]
@@ -93,6 +98,7 @@ class PreparationHealth:
             "v44",
             "v45",
             "v46",
+            "v47",
         ):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
@@ -134,6 +140,10 @@ FE_ROLES = (
 
 
 def context(namespace):
+    if namespace == "v47":
+        from src.solvers import trace_selection_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v46":
         from src.solvers import neural_decision_scope as scope
 
@@ -190,7 +200,7 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     limit, task_limit, free_limit = (
         limits[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes")
     )
-    if namespace in ("v45", "v46"):
+    if namespace in ("v45", "v46", "v47"):
         reserve = max(reserve, limits["evidence_reserve_bytes"])
     new_reserve = 0 if namespace == "v46" else reserve
     if (
@@ -229,7 +239,7 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
-    if namespace in ("v43", "v44", "v45"):
+    if namespace in ("v43", "v44", "v45", "v47"):
         return previous.get("status") == "FAILED"
     if namespace == "v42":
         # A failed attempt never counts as a published successful checkpoint.
@@ -261,7 +271,7 @@ def launch(
     if specification is not None:
         namespace = specification.derived.get("preparation_scope", "v36")
         if (
-            namespace in ("v43", "v44", "v45")
+            namespace in ("v43", "v44", "v45", "v47")
             and os.environ.get("TASK042_ENV_MODE")
             != specification.derived["environment_mode"]
         ):
@@ -279,10 +289,10 @@ def launch(
         from src.solvers.distributed_volume_scope import NATIVE
 
         is_fe = role in NATIVE
-    if namespace in ("v43", "v44", "v45"):
+    if namespace in ("v43", "v44", "v45", "v47"):
         is_fe = specification is not None
     if is_fe or (
-        namespace in ("v41", "v42", "v43", "v44", "v45") and specification is not None
+        namespace in ("v41", "v42", "v43", "v44", "v45", "v47") and specification is not None
     ):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
@@ -311,12 +321,12 @@ def launch(
     limits = storage_limits(namespace)
     if (
         specification is not None
-        and namespace == "v45"
+        and namespace in ("v45", "v47")
         and dict(specification.derived["storage_limits"]) != limits
     ):
         raise ValueError("V45 resolved/live budget mismatch")
     seconds = window.remaining(role)
-    if specification is not None and namespace in ("v41", "v42", "v43", "v44", "v45"):
+    if specification is not None and namespace in ("v41", "v42", "v43", "v44", "v45", "v47"):
         seconds = min(seconds, float(specification.execution["timeout_seconds"]))
     if seconds <= 5:
         raise RuntimeError("V36 phase paid wall exhausted")
@@ -340,7 +350,7 @@ def launch(
     folder.mkdir(parents=True, exist_ok=False)
     if (
         specification is not None
-        and namespace in ("v39", "v40", "v43", "v44", "v45")
+        and namespace in ("v39", "v40", "v43", "v44", "v45", "v47")
         and ARTIFACT.joinpath(role + ".json").exists()
     ):
         (folder / "superseded_partial_pointer.json").write_bytes(
@@ -399,7 +409,7 @@ def launch(
             "cpu": baseline["cpu"],
             "rank_cpus": cpus,
             "MPI_size": ranks,
-            "planned_bytes": 6 * 2**30 if is_fe else 2 * 2**30,
+            "planned_bytes": int(1.8 * 2**30) if namespace == "v47" else 6 * 2**30 if is_fe else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
             "storage_limits": limits,
@@ -440,8 +450,8 @@ def launch(
             interval=0.5,
             timebase_guard=True,
             hard_stop_immediate=True,
-            rss_hard_limit_bytes=(8 if is_fe else 2) * 2**30,
-            rss_warning_bytes=(6 if is_fe else 1) * 2**30,
+            rss_hard_limit_bytes=(2 if namespace == "v47" else 8 if is_fe else 2) * 2**30,
+            rss_warning_bytes=int(1.5 * 2**30) if namespace == "v47" else (6 if is_fe else 1) * 2**30,
             memory_envelope_provider=shared_envelope,
             include_pss=False,
             source_state=state,
@@ -526,7 +536,9 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v45":
+        if namespace == "v47":
+            from src.solvers.trace_selection_study import execute
+        elif namespace == "v45":
             from src.solvers.full_moment_study import execute
         elif namespace == "v44":
             from src.solvers.neighborhood_late_error_study import execute

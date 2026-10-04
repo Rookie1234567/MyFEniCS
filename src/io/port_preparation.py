@@ -16,6 +16,39 @@ ARTIFACT = ROOT / "benchmarks/artifacts/task042/v36"
 STAGES = ("INVENTORY", "COMPONENT", "CHECK", "DEPLOY")
 
 
+def load_trace_selection(path):
+    from src.solvers.trace_selection_scope import PLAN, STAGES, parent, plan_record
+
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    value = tomllib.loads(raw.decode())
+    item = value.get("task042_v47", {})
+    if (set(value) != {"schema_version", "task042_v47"} or value["schema_version"] != 1
+            or set(item) != {"stage", "run_id"} or item.get("stage") not in STAGES
+            or not re.fullmatch("task042_v47_[a-z0-9_]+", item.get("run_id", ""))):
+        raise InputError("V47 witness explicit stage schema")
+    plan = plan_record()
+    deps = parent("csr")["dependencies"]
+    return RunSpecification(
+        identity={"model_id": "task042_v47_trace_selection", "run_id": item["run_id"], "batch": plan["batch"]},
+        geometry={"cells": 64, "source": "saved literal V41 geometry; no new mesh"},
+        materials={"canonical_table": "input/materials/si_optical_constants_v1.json", "sha256": deps["material"]},
+        incidence={"wavelength_nm": 0.7, "RHS": "new manufactured discrete witness only"},
+        discretization={"degree": 6, "quadrature_degree": 15, "rows": 45000},
+        boundary={"double_Floquet": True, "DtN": "absent from qualified finite volume CSR"},
+        method={"kind": "trace_selection_witness_opt_in"},
+        solver={"target_solve": False, "new_Krylov": False},
+        execution={"mpi_size": 1, "timeout_seconds": 180 if item["stage"] == "ANALYSIS" else 2400,
+                   "warning_memory_gib": 1.5, "terminate_memory_gib": 2, "require_zero_swap": True},
+        output={"results_root": "results/task042"},
+        derived={"stage": item["stage"], "preparation_scope": "v47",
+                 "environment_mode": "fe" if item["stage"] == "DATA" else "ml" if item["stage"] in ("GRADIENT", "TRAIN_NN", "TRAIN_AFFINE", "PREDICT") else "pure",
+                 "storage_limits": {k: plan[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes", "evidence_reserve_bytes")},
+                 "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(), "target_solve": False},
+        source_path=path, raw_input_bytes=raw, input_sha256=hashlib.sha256(raw).hexdigest(),
+        physical_model_sha256=deps["physical"], expected_output_parent=ROOT / "results/task042")
+
+
 def load_neighborhood_residual(path):
     from src.solvers.neighborhood_residual_scope import PLAN, STAGES, plan_record
 
@@ -217,6 +250,8 @@ def load_full_moment(path):
 def load_preparation(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
+    if b"[task042_v47]" in raw:
+        return load_trace_selection(path)
     if b"[task042_v45]" in raw:
         return load_full_moment(path)
     if b"[task042_v44]" in raw:

@@ -1,0 +1,5 @@
+schema_version = 1
+
+[task042_v47]
+stage = "ANALYSIS"
+run_id = "task042_v47_analysis"
