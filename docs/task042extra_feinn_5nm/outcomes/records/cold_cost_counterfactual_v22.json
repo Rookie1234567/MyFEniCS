@@ -1,0 +1,40 @@
+{
+  "classification": "NO_MATCHED_PRECISION_FULL_WORKFLOW_GAIN_CERTIFICATE",
+  "fresh_formal_stage_costs": {
+    "P01": 209.02528266515583,
+    "P2": 669.4598867300665,
+    "P3": 1776.8297526059905,
+    "conditional": 5239.430457892944,
+    "D": 309.95817058801185
+  },
+  "reuse_prefix_not_free": true,
+  "old_p3_packet_generation_sources_and_costs": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v21.json",
+    "sha256": "a1d56778bf1a5ca6c1e8e4e0b5f5e1da0300a1121f4b11193077f29dafd177a9",
+    "bytes": 784
+  },
+  "new_global_Maxwell_factors": 2,
+  "small_fixture_LUs": 2,
+  "local_LUs": {
+    "E3": {
+      "count": 12,
+      "seconds": 0.0008012928301468492,
+      "raw_result": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/affine_state.npz",
+        "sha256": "e751b4acd960bfb50dcb212e66ceed880b8d54d9f8a9835d1f7a2c9e1b4f9f5f",
+        "bytes": 2015072
+      }
+    },
+    "E4": {
+      "count": 12,
+      "seconds": 0.003989714081399143,
+      "raw_result": {
+        "path": "benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/affine_state.npz",
+        "sha256": "ee16baaa6b4f9308ea09f7c185a1fedf8636905dc3931e4282d5c8b602a31a0c",
+        "bytes": 4724576
+      }
+    }
+  },
+  "cold_compile_all_original_modes_factor_fill_target": "UNKNOWN",
+  "local_cache_or_exact_zero_load_skip_not_whole_workflow_gain": true
+}

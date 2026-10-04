@@ -1,0 +1,131 @@
+{
+  "stage_qualified": true,
+  "functions": [
+    "src.solvers.analytic_face_ports.face_polynomial(model,cell,facet)",
+    "AffineFacePolynomial.blocks(modes,kappa,side)",
+    "original_normalization(modes,period_x,period_y,z_top,z_bottom)",
+    "src.solvers.affine_field_output.affine_state(packet,c,alpha)",
+    "SplitVector.map(action)",
+    "src.solvers.accurate_ports.recover_ports_components(a,components,gp=...)"
+  ],
+  "assumptions": [
+    "affine horizontal planar N1curl hex face",
+    "qualified Basix orientation",
+    "original k/e/side/reference phase",
+    "master-only MPC expansion exactly once",
+    "non-affine/complex tangential/phase-underflow rejected"
+  ],
+  "receiver": "main _ReusableSurfaceComponentAssembler / carrier; receiver owns full W1 lifecycle",
+  "forbidden": [
+    "full original carrier",
+    "dense 32060-square Hhat",
+    "AUTO regeneration",
+    "new PC/backend/storage"
+  ],
+  "original_geometry_derived": {
+    "x_breaks_nm": [
+      0,
+      16.5,
+      25,
+      33.5,
+      50
+    ],
+    "x_segments": [
+      78,
+      58,
+      58,
+      78
+    ],
+    "y_segments": 4,
+    "z_cells": 14
+  },
+  "manifest_required": {
+    "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "bytes": 36244923,
+    "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec"
+  },
+  "algorithm_source": {
+    "path": "src/solvers/analytic_face_ports.py",
+    "sha256": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6"
+  },
+  "data_layout": {
+    "local_B": "closure_dof x mode, complex128; already Piola/oriented, not yet global MPC",
+    "local_D": "mode x closure_dof, complex128",
+    "original_H": "mode real positive diagonal, whole cell area; not summed by local face",
+    "polynomial": "(p+1,p+1,closure_dof,3) tensor Legendre coefficients",
+    "global_MPC": "receiver applies conjugate C to B, C to D once; supports exact slave/master mapping",
+    "low_bits": "two separate complex128 coefficients; linear consumers apply both before guard-digit physical combination"
+  },
+  "ABI": {
+    "PETSc_scalar": "complex128",
+    "PETSc_int": "int64",
+    "MPI": 1
+  },
+  "lookup_paths": [
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.agents/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/notes/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/docs/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/src/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/docker/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.ruff_cache/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/scripts/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.venv/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/input/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.codex/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.pytest_cache/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/.agents/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task-control/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/preparation/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/coordination/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/.codex/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/.pytest_cache/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.agents/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/notes/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/docs/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/src/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/docker/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.ruff_cache/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/scripts/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.venv/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/input/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.codex/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/MyFEniCS/.pytest_cache/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/.agents/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task-control/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/preparation/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task-repository.git/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/coordination/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/.codex/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+    "/home/fenics/Projects/Maxwell3D-Lab/.pytest_cache/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json"
+  ],
+  "main_full_target_qualified": false,
+  "NN_increment": false,
+  "unavailable_without_manifest": [
+    "complete actual ordered mode keys",
+    "all wavevectors/polarizations/reference planes",
+    "original-size p4/p6 all-key independent oracle",
+    "same-accuracy complete local cold cost baseline"
+  ],
+  "status": "NOT_RUN_MISSING_HASH_BOUND_32060_MANIFEST",
+  "complete_key_oracle_qualified": false,
+  "local_speedup": "UNKNOWN_NO_SAME_ACCURACY_BASELINE",
+  "worker_wall_seconds": 0.12217157101258636,
+  "neural_gain": "NOT_TESTED",
+  "production_qualified": false
+}

@@ -1834,6 +1834,19 @@ A小fixture联合资格通过；C完整物理比较1380.8117s/642138112B，total
 
 O3R/E3R保留旧c字节并重做端口/实际残差，独立MPC重建0；total rounded原点再回代未闭合，普通p6小资格q15/30=4.27567e-7 >1e-8，真实O6未启动。独立公共积分全场/6点/340×4模式/区域及原分母保留，有限p field_passed=False、reference UNKNOWN；没有同精度20%收益或原尺寸胜者。M3600改善/Mfinal退化、全部旧失败/费用/UNKNOWN、D0成本否决/D1未运行保留。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；无NN/Gram，原50×25×140nm/λ.7、2e12B整机、172800s完整流程未资格化。[完整Response](task042extra_feinn_5nm/response_v21.md)、[专题](task042extra_feinn_5nm/outcomes/phase_port_recovery_v21.md)、[raw绑定](task042extra_feinn_5nm/outcomes/records/run_index_v21.json)及[成本](task042extra_feinn_5nm/outcomes/records/resource_costs_v21.json)。
 
+
+## 3.44.20 Task42extra Review V21：V22可靠输出、解析端口及修正算子有限p
+
+缩小7/135/λ.7/G0 336hex完整3D，p3 27648/p4 65280独立复FE/340模式，体q15不改。将总场舍入余量保存在第二complex128向量并实际消费；仿射面解析Fourier矩通过块/作用及空气/拓扑资格，E3/E4保存场新算子残差超门后各一次同配置直接修正。全部内部恢复、MPC与独立弱式保留；最终实际原点物理投影仍FAIL，不追认严格角色全资格，给定D/H算术成功与物理精度分列。
+
+| 新状态 / MPC后全独立复FE | native | 增广 | total增广 | 独立total弱式 | 给定D/H下total恢复 | MPC最大 |
+| --- | --- | --- | --- | --- | --- | --- |
+| E3 / 27648 | 6.291569235e-11 | 6.291464121e-11 | 4.383374959e-12 | 5.458992036e-12 | 9.677671955e-17 | 0 |
+| E4 / 65280 | 2.961389644e-10 | 2.961391913e-10 | 2.158049324e-11 | 2.654925696e-11 | 3.885370552e-17 | 0 |
+
+
+完整独立场/模式/功率比较STRICT_FINITE_P_FIELD_MODE_FAIL，无严格O6仍REFERENCE_LIMITED；旧single-array FAIL和p6 q15负项不追改。原尺寸32060-key本体不可访问，接口交付但全key/同精度20%成本UNKNOWN。全部初始失败/受控停止/重放/局部LU/global factor/等待/审核/存盘保留，source与文档HEAD分开；NN/ML/Gram0，无有效神经增量、production或merge批准，目标原尺寸2e12B/172800s未完成。[回执](task042extra_feinn_5nm/response_v22.md)、[运行/费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v22.json)、[checker](task042extra_feinn_5nm/outcomes/records/independent_checker_v22.json)。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

@@ -1,0 +1,99 @@
+{
+  "status": "MEASURED_FROZEN_COMMON_Q15_ARRAYS",
+  "common_grid_matched": true,
+  "no_new_FE_or_forward": true,
+  "raw_bindings": {
+    "old_E3": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/observables.npz",
+      "sha256": "b77fd62407828c3be269a8a3048f6e6908ebe0a1a2334b51b7be221ffe4ab899"
+    },
+    "new_E3": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/observables.npz",
+      "sha256": "9a820b4a5e0aa6080a5d432067923ed7117a14ba54d4512f7eb8ff35869d1198"
+    },
+    "old_E4": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/observables.npz",
+      "sha256": "0f1bade3360b8c96138cfb7d8561d3c2107eaa28adafa3b33e6345ec6b4e9f23"
+    },
+    "new_E4": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/observables.npz",
+      "sha256": "5f753842cc347930c71a3f3e91909aaeb10c9e07658bd4792dad36da892bc952"
+    }
+  },
+  "fields": {
+    "total_E": {
+      "signed_squared_L2_terms": {
+        "old_gap": 7.840781371959107e-06,
+        "E3_correction": 1.5879539543578263e-11,
+        "E4_correction": 4.154155508342245e-15,
+        "old_E3_cross": -1.5640042687665174e-08,
+        "old_E4_cross": -8.040376332863714e-14,
+        "E3_E4_correction_cross": 2.4277937264799694e-15
+      },
+      "new_gap_squared_L2": 7.825157134989172e-06,
+      "energy_identity_absolute": 1.6940658945086007e-21,
+      "old_gap_L2": 0.0028001395272305818,
+      "new_gap_L2": 0.0027973482326998853,
+      "gap_norm_signed_relative_change": -0.0009968412300715582,
+      "triangle_upper_correction_fraction": 0.0014461303423228143,
+      "cell_q15_not_new_space_or_reference": true
+    },
+    "total_curl": {
+      "signed_squared_L2_terms": {
+        "old_gap": 7.895075490042678e-06,
+        "E3_correction": 2.174152602111283e-11,
+        "E4_correction": 3.054529570507439e-14,
+        "old_E3_cross": -1.566278190483837e-08,
+        "old_E4_cross": -1.8956765546747248e-13,
+        "E3_E4_correction_cross": 2.1172622153140634e-14
+      },
+      "new_gap_squared_L2": 7.879434311814123e-06,
+      "energy_identity_absolute": 0.0,
+      "old_gap_L2": 0.0028098176969409737,
+      "new_gap_L2": 0.0028070330086791147,
+      "gap_norm_signed_relative_change": -0.0009910565603208582,
+      "triangle_upper_correction_fraction": 0.0017216608260689698,
+      "cell_q15_not_new_space_or_reference": true
+    },
+    "scattered_E": {
+      "signed_squared_L2_terms": {
+        "old_gap": 7.840781369250084e-06,
+        "E3_correction": 1.5879539543564973e-11,
+        "E4_correction": 4.1541555085025744e-15,
+        "old_E3_cross": -1.5640042687348082e-08,
+        "old_E4_cross": -8.040375066457232e-14,
+        "E3_E4_correction_cross": 2.4277936755314624e-15
+      },
+      "new_gap_squared_L2": 7.825157132280478e-06,
+      "energy_identity_absolute": 0.0,
+      "old_gap_L2": 0.002800139526746852,
+      "new_gap_L2": 0.0027973482322157313,
+      "gap_norm_signed_relative_change": -0.0009968412303952355,
+      "triangle_upper_correction_fraction": 0.001446130342572485,
+      "cell_q15_not_new_space_or_reference": true
+    },
+    "scattered_curl": {
+      "signed_squared_L2_terms": {
+        "old_gap": 7.895075479429223e-06,
+        "E3_correction": 2.1741526021213324e-11,
+        "E4_correction": 3.0545295707284346e-14,
+        "old_E3_cross": -1.5662781904394117e-08,
+        "old_E4_cross": -1.8956770899386475e-13,
+        "E3_E4_correction_cross": 2.117262236561331e-14
+      },
+      "new_gap_squared_L2": 7.87943430120106e-06,
+      "energy_identity_absolute": 0.0,
+      "old_gap_L2": 0.002809817695052336,
+      "new_gap_L2": 0.0028070330067886734,
+      "gap_norm_signed_relative_change": -0.0009910565616289236,
+      "triangle_upper_correction_fraction": 0.0017216608272322806,
+      "cell_q15_not_new_space_or_reference": true
+    }
+  },
+  "norm_definitions": {
+    "E": "weighted physical L2 using saved nm^3 quadrature weights",
+    "curl": "reported norm/cross terms use curl/k0; source array names remain total_curl/scattered_curl",
+    "absolute_units": "normalized E amplitude times nm^(3/2)",
+    "no_reference_denominator": true
+  }
+}

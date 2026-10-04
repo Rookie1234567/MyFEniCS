@@ -1,0 +1,1739 @@
+{
+  "actual_source": "ce358dff94aef86e14d3246be9f61a8e403f53ee",
+  "result": {
+    "stage_qualified": true,
+    "roles": {
+      "O3": {
+        "role": "O3",
+        "meta": {
+          "faces": 48,
+          "max_half_span": 6.250304562763756,
+          "polynomial_degree": 3,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 0.6570939980447292,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "reliable_operator_qualified": true,
+        "physical_pair": {
+          "B_absolute": {
+            "items": 340,
+            "minimum": 1.0659461650897113e-97,
+            "maximum": 4.613687005915478e-13,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 340,
+            "minimum": 4.802868335293197e-84,
+            "maximum": 29.98111915552981,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 340,
+            "minimum": 1.5208910920854841e-15,
+            "maximum": 8.011798782900945e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 340,
+            "minimum": 3.810841012123306e-98,
+            "maximum": 5.2792687088227545e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 340,
+            "minimum": 1.1684510733832782e-84,
+            "maximum": 3.502875959254138,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 340,
+            "minimum": 1.6695036458873215e-15,
+            "maximum": 7.992327215022548e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 340,
+            "minimum": 5.815941294018401e-168,
+            "maximum": 3.360768175582991,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              9.01275472932173e-15,
+              8.880991062399534e-15,
+              0.0
+            ],
+            [
+              9.179021117225582e-15,
+              8.691757004053255e-15,
+              0.0
+            ],
+            [
+              8.961833880791442e-15,
+              6.952659539110477e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 340,
+            "minimum": 3.02763464466668e-98,
+            "maximum": 4.533557309180283e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 340,
+            "minimum": 4.802868335293199e-84,
+            "maximum": 29.981119155529825,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 340,
+            "minimum": 5.37561808236018e-16,
+            "maximum": 2.7330096375569193e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 340,
+            "minimum": 1.1001968293207765e-98,
+            "maximum": 6.420377077350604e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 340,
+            "minimum": 1.168451073383271e-84,
+            "maximum": 3.5028759592541387,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 340,
+            "minimum": 1.1768567436368818e-15,
+            "maximum": 2.727772702486554e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 340,
+            "minimum": 5.815941294018401e-168,
+            "maximum": 3.360768175582991,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              9.968480422979151e-16,
+              1.6726310961026947e-15,
+              0.0
+            ],
+            [
+              9.288484136819493e-16,
+              1.5837068253115196e-15,
+              0.0
+            ],
+            [
+              8.328609399547255e-16,
+              1.754603164476658e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "incident_traction_frozen_pair": 8.342624281942853e-11,
+        "independent_reliable_traction_pair": 1.5357549477501394e-15,
+        "full_equation": {
+          "native_relative": 0.012671025490517514,
+          "augmented_relative": 0.012671025490517558,
+          "original_total_augmented_relative": 0.16213943042742024,
+          "total_origin_recovery": 3.04471078023476e-16,
+          "both_total_components_consumed": true,
+          "actual_output_used": true
+        },
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.8401988865200162e+75,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6549423628297436e+75,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 3.0447107802347597e-16,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 2.8107335952602366e-31,
+                "maximum": 1.5879950870733974e+59,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.215585983929852e+74,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 2.810733595260237e-19,
+                "maximum": 2.6387711080525272e-12,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 3.1494830009229225e-11,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "old_full_equation": {
+          "native_relative": 9.927704268283137e-12,
+          "augmented_relative": 9.927707515369077e-12,
+          "original_total_augmented_relative": 1.268962521156766e-10,
+          "total_origin_recovery": 2.8122473720166907e-16,
+          "both_total_components_consumed": true,
+          "actual_output_used": true
+        },
+        "correction_triggered": false,
+        "coefficient_bytes_unchanged": true,
+        "body_and_MPC_bytes_unchanged": true,
+        "operator_effect": 0.0506371718097881,
+        "RHS_effect": 0.04634224017410116,
+        "alpha_change": 1.0,
+        "actual_alpha_vs_independent_physical_oracle_relative": 3.1333077303876823e-08,
+        "actual_alpha_vs_independent_physical_oracle_per_mode": {
+          "items": 340,
+          "minimum": 2.5504209205511624e-16,
+          "maximum": 0.3200270281436561,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "channels": {
+          "total_projection": {
+            "old_real": {
+              "items": 340,
+              "minimum": -1.0232451255273926e+17,
+              "maximum": 396573496585720.94,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -7.55878804250921e+16,
+              "maximum": 356366245303682.9,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -2.1680682978372097e+69,
+              "maximum": 4.19539466518903e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -7.257860060617643e+68,
+              "maximum": 3.098548169557634e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 1.2325298542480853e-22,
+              "maximum": 5.215585983929853e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.215585983929853e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 1.225636109779901e-14,
+              "maximum": 1.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "scattered_projection": {
+            "old_real": {
+              "items": 340,
+              "minimum": -4.892604202826102e+17,
+              "maximum": 396573127825544.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -268528871304919.8,
+              "maximum": 2.6064641877494528e+17,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -2.1713098967002372e+69,
+              "maximum": 1.6687384430141647e+75,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -7.756571090089797e+74,
+              "maximum": 7.2592964534665e+68,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.7981836807015217e-20,
+              "maximum": 1.8401988865200162e+75,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.8401988865200162e+75,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 1.9085355544384865e-13,
+              "maximum": 1.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "outgoing_origin": {
+            "old_real": {
+              "items": 340,
+              "minimum": -1.0232451255273926e+17,
+              "maximum": 396573496585720.94,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -7.55878804250921e+16,
+              "maximum": 356366245303682.9,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -2.1680682978372097e+69,
+              "maximum": 4.19539466518903e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -7.257860060617643e+68,
+              "maximum": 3.098548169557634e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 1.2325298525551167e-22,
+              "maximum": 5.215585983929853e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.215585983929853e+74,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 1.2256361097799009e-14,
+              "maximum": 1.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "outgoing_boundary": {
+            "old_real": {
+              "items": 340,
+              "minimum": -0.6870709868997815,
+              "maximum": 0.00016723476922076656,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -0.0002520232370686811,
+              "maximum": 0.7265607409558271,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -0.6870709868967679,
+              "maximum": 0.0007223229040147457,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -0.006304875300566684,
+              "maximum": 0.7265607409580539,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 1.2325045927629317e-22,
+              "maximum": 0.010611639781843294,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 0.9999785254378292,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 1.2243633398795767e-14,
+              "maximum": 1.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          }
+        },
+        "mode_keys": {
+          "items": 340,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "old_power": {
+          "R_total": 0.9999742561941356,
+          "R00_total": 0.9999570513376846,
+          "R00_s": 0.9999570513376846,
+          "R00_p": 9.893145776311806e-26,
+          "R00_by_polarization": {
+            "s": 0.9999570513376846,
+            "p": 9.893145776311806e-26
+          },
+          "T_total": 1.661957963617677e-05,
+          "R_plus_T": 0.9999908757737718,
+          "A_balance": 9.12422622822096e-06,
+          "R_total_dtn_port_modal": 0.9999742561941356,
+          "T_total_dtn_port_modal": 1.661957963617677e-05,
+          "R_plus_T_dtn_port_modal": 0.9999908757737718,
+          "A_balance_dtn_port_modal": 9.12422622822096e-06,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "new_power": {
+          "R_total": 0.9999742561932309,
+          "R00_total": 0.9999570513367796,
+          "R00_s": 0.9999570513367796,
+          "R00_p": 1.0038431816068885e-25,
+          "R00_by_polarization": {
+            "s": 0.9999570513367796,
+            "p": 1.0038431816068885e-25
+          },
+          "T_total": 1.661957963617594e-05,
+          "R_plus_T": 0.999990875772867,
+          "A_balance": 9.124227132942533e-06,
+          "R_total_dtn_port_modal": 0.9999742561932309,
+          "T_total_dtn_port_modal": 1.661957963617594e-05,
+          "R_plus_T_dtn_port_modal": 0.999990875772867,
+          "A_balance_dtn_port_modal": 9.124227132942533e-06,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "accurate_recovery_cost": {
+          "method": "exact integer binary64 products/sums and rational division",
+          "input_precision": "binary64 frozen field, blocks and rhs",
+          "output_precision": "complex128, one nearest-even rounding per component",
+          "sum_denominator_power": 2148,
+          "term_counts": {
+            "items": 340,
+            "minimum": 432,
+            "maximum": 432,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "complex_products": 146880,
+          "input_components": 1,
+          "divisions": 680,
+          "per_mode_sum_absolute": {
+            "items": 340,
+            "minimum": 1.3846650694482221e-86,
+            "maximum": 6.214943606111961,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_exact_numerator_absolute": {
+            "items": 340,
+            "minimum": 2.039789791650965e-99,
+            "maximum": 4.363594371439957,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_cancellation_ratio": {
+            "items": 340,
+            "minimum": 1.196544053547876,
+            "maximum": 5284950698032555.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "changes_field_coefficients": false,
+          "global_factor_count": 0
+        },
+        "global_factor_count": 0,
+        "local_LU_count": 0,
+        "physical_body_comparison_reused_from_V21": true
+      },
+      "E3": {
+        "role": "E3",
+        "meta": {
+          "faces": 48,
+          "max_half_span": 4.272566008882123,
+          "polynomial_degree": 3,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 0.6337593470234424,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "reliable_operator_qualified": true,
+        "physical_pair": {
+          "B_absolute": {
+            "items": 340,
+            "minimum": 1.7523308704059708e-97,
+            "maximum": 4.79216149210355e-13,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 340,
+            "minimum": 1.3100830463482465e-83,
+            "maximum": 36.16132944936951,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 340,
+            "minimum": 1.5995029497304302e-15,
+            "maximum": 2.9763849773102044e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 340,
+            "minimum": 6.26773973231858e-98,
+            "maximum": 5.025653837665318e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 340,
+            "minimum": 4.390045774920832e-84,
+            "maximum": 3.7290331670309005,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 340,
+            "minimum": 1.7717472874093168e-15,
+            "maximum": 2.974240587729928e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 340,
+            "minimum": 5.815941294018401e-168,
+            "maximum": 3.360768175582991,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              8.426719936276307e-15,
+              7.411492428811353e-15,
+              0.0
+            ],
+            [
+              8.820773337946827e-15,
+              7.353109226411862e-15,
+              0.0
+            ],
+            [
+              7.644205023398536e-15,
+              8.512162459893875e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 340,
+            "minimum": 2.4550552302921034e-98,
+            "maximum": 5.871144319393414e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 340,
+            "minimum": 1.310083046348247e-83,
+            "maximum": 36.16132944936953,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 340,
+            "minimum": 4.3106762647396743e-16,
+            "maximum": 4.73142764119576e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 340,
+            "minimum": 9.983530708759098e-99,
+            "maximum": 7.671355424336475e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 340,
+            "minimum": 4.390045774920828e-84,
+            "maximum": 3.7290331670309005,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 340,
+            "minimum": 1.0541695888203737e-15,
+            "maximum": 4.85364642883964e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 340,
+            "minimum": 5.815941294018401e-168,
+            "maximum": 3.360768175582991,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              1.2270959980283557e-15,
+              1.8176976953584816e-15,
+              0.0
+            ],
+            [
+              1.2810738102839836e-15,
+              1.957580374438793e-15,
+              0.0
+            ],
+            [
+              1.2581018160859328e-15,
+              1.7797091104912154e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "incident_traction_frozen_pair": 1.8964689743022148e-14,
+        "independent_reliable_traction_pair": 7.639977607148967e-16,
+        "full_equation": {
+          "native_relative": 0.004417604162762992,
+          "augmented_relative": 0.0044176041627636995,
+          "original_total_augmented_relative": 0.0003034895996140249,
+          "total_origin_recovery": 5.940354379525613e-17,
+          "both_total_components_consumed": true,
+          "actual_output_used": true
+        },
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.2723329409908845e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.9956000674239118e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 5.940354379525613e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 4.068008835908611e+57,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.2723329408401236e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 4.1335988332550724e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 3.970878822991836e-08,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "old_full_equation": {
+          "native_relative": 9.971050874991134e-11,
+          "augmented_relative": 9.971165950012686e-11,
+          "original_total_augmented_relative": 6.8696628143161615e-12,
+          "total_origin_recovery": 5.759534635765436e-17,
+          "both_total_components_consumed": true,
+          "actual_output_used": true
+        },
+        "correction_triggered": true,
+        "coefficient_bytes_unchanged": true,
+        "body_and_MPC_bytes_unchanged": true,
+        "operator_effect": 0.004417591262669604,
+        "RHS_effect": 5.126177020171553e-07,
+        "alpha_change": 1.0,
+        "actual_alpha_vs_independent_physical_oracle_relative": 4.188808023515904e-08,
+        "actual_alpha_vs_independent_physical_oracle_per_mode": {
+          "items": 340,
+          "minimum": 4.577495304841371e-16,
+          "maximum": 0.4287976924237989,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "channels": {
+          "total_projection": {
+            "old_real": {
+              "items": 340,
+              "minimum": -3730838492635512.5,
+              "maximum": 3730837949691170.5,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -5899834734680960.0,
+              "maximum": 5899832719206552.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -1.1745099573917159e+73,
+              "maximum": 1.174509960615955e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -5.1398463940251635e+73,
+              "maximum": 5.139846397654484e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.9825714385243604e-20,
+              "maximum": 5.2723329408401236e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.2723329408401236e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 6.233090825162485e-16,
+              "maximum": 1.7258683949642952,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "scattered_projection": {
+            "old_real": {
+              "items": 340,
+              "minimum": -3730838540222110.0,
+              "maximum": 3730837475166646.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -5899834863356832.0,
+              "maximum": 5899832517792337.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -1.1745099573852396e+73,
+              "maximum": 1.1745099606240054e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -5.139846394009758e+73,
+              "maximum": 5.1398463978072905e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 6.911742014808943e-21,
+              "maximum": 5.2723329409908845e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.2723329409908845e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 5.776279635768295e-16,
+              "maximum": 1.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "outgoing_origin": {
+            "old_real": {
+              "items": 340,
+              "minimum": -3730838492635512.5,
+              "maximum": 3730837949691170.5,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -5899834734680960.0,
+              "maximum": 5899832719206552.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -1.1745099573917159e+73,
+              "maximum": 1.174509960615955e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -5.1398463940251635e+73,
+              "maximum": 5.139846397654484e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.9825714385181277e-20,
+              "maximum": 5.2723329408401236e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.2723329408401236e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 8.226655053271412e-16,
+              "maximum": 1.725868394964295,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "outgoing_boundary": {
+            "old_real": {
+              "items": 340,
+              "minimum": -3.8762488493229116e-05,
+              "maximum": 1.3402736675143103,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -0.16339885787326905,
+              "maximum": 0.12401438533098674,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -3.876248849271161e-05,
+              "maximum": 1.3402736675143114,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -0.16339885787326908,
+              "maximum": 0.12401438533098731,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.9825714385158364e-20,
+              "maximum": 4.93888593787473e-06,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.3501972783954763,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 8.225241843524799e-16,
+              "maximum": 1.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          }
+        },
+        "mode_keys": {
+          "items": 340,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "old_power": {
+          "R_total": 0.07612658363647834,
+          "R00_total": 0.07612595981019264,
+          "R00_s": 0.07612595981019264,
+          "R00_p": 1.5142522651793342e-26,
+          "R00_by_polarization": {
+            "s": 0.07612595981019264,
+            "p": 1.5142522651793342e-26
+          },
+          "T_total": 0.9057668087268692,
+          "R_plus_T": 0.9818933923633475,
+          "A_balance": 0.018106607636652394,
+          "R_total_dtn_port_modal": 0.07612658363647834,
+          "T_total_dtn_port_modal": 0.9057668087268692,
+          "R_plus_T_dtn_port_modal": 0.9818933923633475,
+          "A_balance_dtn_port_modal": 0.018106607636652394,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "new_power": {
+          "R_total": 0.07612658363658202,
+          "R00_total": 0.07612595981019266,
+          "R00_s": 0.07612595981019266,
+          "R00_p": 1.8245385249483533e-26,
+          "R00_by_polarization": {
+            "s": 0.07612595981019266,
+            "p": 1.8245385249483533e-26
+          },
+          "T_total": 0.9057668087265911,
+          "R_plus_T": 0.9818933923631731,
+          "A_balance": 0.01810660763682692,
+          "R_total_dtn_port_modal": 0.07612658363658202,
+          "T_total_dtn_port_modal": 0.9057668087265911,
+          "R_plus_T_dtn_port_modal": 0.9818933923631731,
+          "A_balance_dtn_port_modal": 0.01810660763682692,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "accurate_recovery_cost": {
+          "method": "exact integer binary64 products/sums and rational division",
+          "input_precision": "binary64 frozen field, blocks and rhs",
+          "output_precision": "complex128, one nearest-even rounding per component",
+          "sum_denominator_power": 2148,
+          "term_counts": {
+            "items": 340,
+            "minimum": 432,
+            "maximum": 432,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "complex_products": 146880,
+          "input_components": 1,
+          "divisions": 680,
+          "per_mode_sum_absolute": {
+            "items": 340,
+            "minimum": 9.754442889562464e-86,
+            "maximum": 0.6475591131057356,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_exact_numerator_absolute": {
+            "items": 340,
+            "minimum": 3.057749903871305e-99,
+            "maximum": 0.6434682441161194,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_cancellation_ratio": {
+            "items": 340,
+            "minimum": 1.0000679388975142,
+            "maximum": 7228634628235911.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "changes_field_coefficients": false,
+          "global_factor_count": 0
+        },
+        "global_factor_count": 0,
+        "local_LU_count": 0,
+        "physical_body_comparison_reused_from_V21": true
+      },
+      "E4": {
+        "role": "E4",
+        "meta": {
+          "faces": 48,
+          "max_half_span": 4.272566008882123,
+          "polynomial_degree": 4,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 1.4068958970019594,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "reliable_operator_qualified": true,
+        "physical_pair": {
+          "B_absolute": {
+            "items": 340,
+            "minimum": 2.6300654683707646e-97,
+            "maximum": 8.652954875859249e-13,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 340,
+            "minimum": 1.7509877986714396e-83,
+            "maximum": 39.267350324364315,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 340,
+            "minimum": 1.845071006585185e-15,
+            "maximum": 3.1769637596164485e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 340,
+            "minimum": 9.281143357039163e-98,
+            "maximum": 9.719247521711062e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 340,
+            "minimum": 6.215220009454459e-84,
+            "maximum": 4.234109322612009,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 340,
+            "minimum": 1.9781686638464308e-15,
+            "maximum": 3.176905559785911e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 340,
+            "minimum": 5.815941294018401e-168,
+            "maximum": 3.360768175582991,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              1.0567487591041784e-14,
+              1.1023484220445677e-14,
+              0.0
+            ],
+            [
+              1.1000703269503e-14,
+              1.3543300816251255e-14,
+              0.0
+            ],
+            [
+              1.3194539134282524e-14,
+              1.1697564148242636e-14,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 340,
+            "minimum": 4.5331141925974316e-98,
+            "maximum": 9.434888602550798e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 340,
+            "minimum": 1.7509877986714403e-83,
+            "maximum": 39.2673503243643,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 340,
+            "minimum": 1.0794062178933341e-15,
+            "maximum": 4.261030369120053e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 340,
+            "minimum": 1.7009398283854666e-98,
+            "maximum": 1.1873669940130586e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 340,
+            "minimum": 6.215220009454457e-84,
+            "maximum": 4.234109322612009,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 340,
+            "minimum": 1.3813743195108475e-15,
+            "maximum": 4.424675498307279e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 340,
+            "minimum": 5.815941294018401e-168,
+            "maximum": 3.360768175582991,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              1.9369674944153295e-15,
+              2.4914191388971053e-15,
+              0.0
+            ],
+            [
+              1.8255948419159665e-15,
+              2.5488948994257844e-15,
+              0.0
+            ],
+            [
+              1.961583777122516e-15,
+              2.930713815185683e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "incident_traction_frozen_pair": 2.7773932848083868e-14,
+        "independent_reliable_traction_pair": 1.803893954587997e-15,
+        "full_equation": {
+          "native_relative": 0.00027550316874396983,
+          "augmented_relative": 0.00027550316875168214,
+          "original_total_augmented_relative": 1.994881935599377e-05,
+          "total_origin_recovery": 7.908666095626969e-17,
+          "both_total_components_consumed": true,
+          "actual_output_used": true
+        },
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.1735456341522068e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6370695621590148e+68,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 7.908666095626969e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 9.436729386441285e+56,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.1735456341137216e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 6.109748279768429e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 6.852069494222289e-08,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "old_full_equation": {
+          "native_relative": 7.792236893742685e-10,
+          "augmented_relative": 7.79223574228334e-10,
+          "original_total_augmented_relative": 5.647749144712151e-11,
+          "total_origin_recovery": 9.596776000058503e-17,
+          "both_total_components_consumed": true,
+          "actual_output_used": true
+        },
+        "correction_triggered": true,
+        "coefficient_bytes_unchanged": true,
+        "body_and_MPC_bytes_unchanged": true,
+        "operator_effect": 0.00027550205294538555,
+        "RHS_effect": 7.00936101572801e-07,
+        "alpha_change": 1.0,
+        "actual_alpha_vs_independent_physical_oracle_relative": 4.0764155492535786e-07,
+        "actual_alpha_vs_independent_physical_oracle_per_mode": {
+          "items": 340,
+          "minimum": 7.009723229889204e-16,
+          "maximum": 0.18190170312047182,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "channels": {
+          "total_projection": {
+            "old_real": {
+              "items": 340,
+              "minimum": -126384700796522.03,
+              "maximum": 409029455367557.8,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -377675602199006.4,
+              "maximum": 37999370208340.61,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -6.7529873557609674e+72,
+              "maximum": 6.75298731317883e+72,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -9.597817349568328e+72,
+              "maximum": 9.597817319978028e+72,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.907959801236795e-20,
+              "maximum": 1.1735456341137216e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.1735456341137216e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 2.9101180474194924e-16,
+              "maximum": 1.2070887260326688,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "scattered_projection": {
+            "old_real": {
+              "items": 340,
+              "minimum": -126384576842562.53,
+              "maximum": 409029455212396.6,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -377675602474149.8,
+              "maximum": 36090040483918.586,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -6.752987357883289e+72,
+              "maximum": 6.752987312938795e+72,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -9.59781735057811e+72,
+              "maximum": 9.59781731505455e+72,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 6.952468443786482e-21,
+              "maximum": 1.1735456341522068e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.1735456341522068e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 3.730020617591537e-16,
+              "maximum": 1.2070870642082752,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "outgoing_origin": {
+            "old_real": {
+              "items": 340,
+              "minimum": -126384700796522.03,
+              "maximum": 409029455367557.8,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -377675602199006.4,
+              "maximum": 37999370208340.61,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -6.7529873557609674e+72,
+              "maximum": 6.75298731317883e+72,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -9.597817349568328e+72,
+              "maximum": 9.597817319978028e+72,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.9079598012259653e-20,
+              "maximum": 1.1735456341137217e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.1735456341137217e+73,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 1.1065586538573648e-15,
+              "maximum": 1.2070887260326688,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "outgoing_boundary": {
+            "old_real": {
+              "items": 340,
+              "minimum": -3.275119760850188e-05,
+              "maximum": 1.3402743964488246,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "old_imag": {
+              "items": 340,
+              "minimum": -0.16339452084590056,
+              "maximum": 0.12401829811279905,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_real": {
+              "items": 340,
+              "minimum": -3.275119760801705e-05,
+              "maximum": 1.3402743964488264,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "new_imag": {
+              "items": 340,
+              "minimum": -0.16339452084590073,
+              "maximum": 0.1240182981127989,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "absolute": {
+              "items": 340,
+              "minimum": 4.907959801261527e-20,
+              "maximum": 3.3597143178254067e-07,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.3501974771190794,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 340,
+              "minimum": 1.0610400170632596e-15,
+              "maximum": 1.2070887260326686,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          }
+        },
+        "mode_keys": {
+          "items": 340,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "old_power": {
+          "R_total": 0.07612713951357232,
+          "R00_total": 0.0761266939260513,
+          "R00_s": 0.0761266939260513,
+          "R00_p": 1.5607024131532e-24,
+          "R00_by_polarization": {
+            "s": 0.0761266939260513,
+            "p": 1.5607024131532e-24
+          },
+          "T_total": 0.9057668791043149,
+          "R_plus_T": 0.9818940186178872,
+          "A_balance": 0.018105981382112835,
+          "R_total_dtn_port_modal": 0.07612713951357232,
+          "T_total_dtn_port_modal": 0.9057668791043149,
+          "R_plus_T_dtn_port_modal": 0.9818940186178872,
+          "A_balance_dtn_port_modal": 0.018105981382112835,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "new_power": {
+          "R_total": 0.07612713951365722,
+          "R00_total": 0.07612669392605137,
+          "R00_s": 0.07612669392605137,
+          "R00_p": 1.5932278809655019e-24,
+          "R00_by_polarization": {
+            "s": 0.07612669392605137,
+            "p": 1.5932278809655019e-24
+          },
+          "T_total": 0.9057668791044797,
+          "R_plus_T": 0.981894018618137,
+          "A_balance": 0.018105981381863034,
+          "R_total_dtn_port_modal": 0.07612713951365722,
+          "T_total_dtn_port_modal": 0.9057668791044797,
+          "R_plus_T_dtn_port_modal": 0.981894018618137,
+          "A_balance_dtn_port_modal": 0.018105981381863034,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "accurate_recovery_cost": {
+          "method": "exact integer binary64 products/sums and rational division",
+          "input_precision": "binary64 frozen field, blocks and rhs",
+          "output_precision": "complex128, one nearest-even rounding per component",
+          "sum_denominator_power": 2148,
+          "term_counts": {
+            "items": 340,
+            "minimum": 768,
+            "maximum": 768,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "complex_products": 261120,
+          "input_components": 1,
+          "divisions": 680,
+          "per_mode_sum_absolute": {
+            "items": 340,
+            "minimum": 1.1277100732343595e-85,
+            "maximum": 0.8167282711815684,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_exact_numerator_absolute": {
+            "items": 340,
+            "minimum": 3.992615958986637e-100,
+            "maximum": 0.643453813073163,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_cancellation_ratio": {
+            "items": 340,
+            "minimum": 1.0000109098215015,
+            "maximum": 3194637202221489.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "changes_field_coefficients": false,
+          "global_factor_count": 0
+        },
+        "global_factor_count": 0,
+        "local_LU_count": 0,
+        "physical_body_comparison_reused_from_V21": true
+      }
+    },
+    "reference_qualified": false,
+    "readable_negative_fields": true,
+    "all_modes_preserved": true,
+    "no_factor_or_solve": true,
+    "worker_wall_seconds": 344.7148554320447,
+    "neural_gain": "NOT_TESTED",
+    "production_qualified": false
+  },
+  "coefficient_changes": 0,
+  "NN_increment": false
+}

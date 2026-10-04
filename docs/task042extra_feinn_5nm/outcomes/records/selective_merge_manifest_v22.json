@@ -1,0 +1,150 @@
+{
+  "source_snapshot": "0a49003c9af140144aaf07f48f0c81e1490b5500",
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "recommendation": "NO_PRODUCTION_PROMOTION",
+      "files": [],
+      "ordinary_defaults_changed": false
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "recommendation": "EXPLICIT_RESEARCH_STAGES_ONLY",
+      "files": [
+        "input/task042extra_feinn_5nm/v22_affine_saved.dat",
+        "input/task042extra_feinn_5nm/v22_control_checks.dat",
+        "input/task042extra_feinn_5nm/v22_corrected_compare.dat",
+        "input/task042extra_feinn_5nm/v22_e3_correction.dat",
+        "input/task042extra_feinn_5nm/v22_e4_correction.dat",
+        "input/task042extra_feinn_5nm/v22_face_qualification.dat",
+        "input/task042extra_feinn_5nm/v22_frozen_port_audit.dat",
+        "input/task042extra_feinn_5nm/v22_saved_checker.dat",
+        "input/task042extra_feinn_5nm/v22_target_local_face.dat",
+        "scripts/launch_task42extra_durable.py",
+        "src/io/feinn_pilot.py",
+        "src/io/fixed_phase_pilot.py",
+        "src/runners/feinn_workflow.py",
+        "src/runners/fixed_phase_campaign.py"
+      ],
+      "dependencies": [
+        "qualified activation, common resource gates, original source/clock/identity bindings"
+      ],
+      "fresh_evidence": "V22 serial durable control/qualification/frozen/correction/compare/P4/checker"
+    },
+    {
+      "group": "checker/benchmark",
+      "recommendation": "INDEPENDENT_READ_ONLY_GATES",
+      "files": [
+        "benchmarks/affine_output_checker.py",
+        "benchmarks/fixed_phase_checker.py",
+        "benchmarks/reliable_port_checker.py",
+        "src/test/test_analytic_face_moments.py",
+        "src/test/test_exact_affine_output.py",
+        "src/test/test_exact_zero_volume_load.py",
+        "src/test/test_reliable_comparison_roles.py",
+        "src/test/test_reliable_port_contract.py",
+        "src/test/test_reliable_raw_equation_checker.py",
+        "src/test/test_reliable_surface_saved_checker.py"
+      ],
+      "dependencies": [
+        "hash-bound native/state/CSR/observables/common integrals"
+      ],
+      "tests": "47 pre-correction targeted fixtures + 54 final checker fixtures; damaged-record fixtures; independent real saved checker"
+    },
+    {
+      "group": "compact evidence/docs",
+      "recommendation": "RETAIN_POSITIVE_NEGATIVE_UNKNOWN",
+      "files": [
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task042extra_feinn_5nm/README.md",
+        "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/design_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/final_checker_checks_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/implementation_checks_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/port_source_checks_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/pre_correction_checks_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/pre_correction_raw_admission_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/qualification_repair_checks_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
+        "docs/task042extra_feinn_5nm/outcomes/records/affine_channels_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/affine_output_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/affine_recovery_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/affine_samples_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/corrected_channels_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/corrected_mode_errors_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/corrected_regions_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/corrected_samples_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/correction_and_comparison_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/evidence_inventory_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/face_block_modes_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/face_qualification_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/frozen_channel_changes_v22.csv",
+        "docs/task042extra_feinn_5nm/outcomes/records/frozen_operator_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/minimal_integration_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/process_limitations_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/render_check_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/run_index_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/saved_dimensions_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/saved_physical_attribution_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/signed_residual_decomposition_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/reliable_affine_ports_v22.md",
+        "docs/task042extra_feinn_5nm/response_v22.md"
+      ],
+      "dependencies": [
+        "raw run/source/hash/ABI/resource records"
+      ],
+      "tests": "scoped Markdown/raw CSV/history binding; actual visual independent"
+    },
+    {
+      "group": "research-only",
+      "recommendation": "REVIEW_AND_REQUALIFY_RECEIVER_OPT_IN",
+      "files": [
+        "src/solvers/accurate_ports.py",
+        "src/solvers/affine_field_output.py",
+        "src/solvers/analytic_face_ports.py",
+        "src/solvers/feinn_exact_condensation.py",
+        "src/solvers/fixed_phase_audit.py",
+        "src/solvers/fixed_phase_comparison.py",
+        "src/solvers/fixed_phase_reliable_ports.py",
+        "src/solvers/port_qualification_state.py"
+      ],
+      "dependencies": [
+        "Basix orientation/Piola, physical planar face, original MPC/mode normalization; exact binary64 arithmetic"
+      ],
+      "fresh_PDE": "E3/E4 same-model reliable-port correction research data; actual physical-origin projection FAIL; no O3/O6/NN/Gram",
+      "tests": "analytic vs direct physical oracle p3/p4/p6 blocks/actions; bidirectional air; original residual/recovery and failed actual physical output gate separately"
+    },
+    {
+      "group": "do-not-merge",
+      "recommendation": "IGNORED_RAW_ARTIFACTS_AND_UNQUALIFIED_PATHS",
+      "files": [
+        "ignored native/NPZ/CSR/LU/raw history/resource samples/tmux/browser profile/screenshots",
+        "old unqualified NN/supervised weights and single-carrier target-shrink claims"
+      ],
+      "dependencies": [
+        "all old FAIL/UNKNOWN retained"
+      ],
+      "production_initialization_allowed": false
+    }
+  ],
+  "merge_approval": false,
+  "ordinary_defaults_changed": false,
+  "suggested_review_order": [
+    "pure affine/schema tests",
+    "analytic local face and physical oracle",
+    "optional qualified consumers",
+    "runner and exact dat dependency gates",
+    "raw checker and compact evidence"
+  ],
+  "receiver": "main existing surface/carrier owner qualifies integration under its own review; dot C1/backend/storage stays separate"
+}

@@ -1,0 +1,83 @@
+{
+  "roles": {
+    "E3": {
+      "independent_complex_FE": 27648,
+      "native_unconstrained_complex_FE": 30240,
+      "ports": 340,
+      "full_augmented_rows": 27988,
+      "internal_complex_FE": 12096,
+      "internal_index_array_shape": [
+        336,
+        36
+      ],
+      "internal_ids_unique_and_all_master": true,
+      "condensed_augmented_rows": 15892,
+      "cells": 336,
+      "classification": "MEASURED_SAVED_SHAPES; AUGMENTED/CONDENSED_COUNTS_DERIVED_FROM_MEASURED_LAYOUT",
+      "raw_bindings": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/native.npz",
+          "sha256": "f148f1001c620ea280a208b54ad3925e6c8dbb6ecee2ac905ec858c576c74b62"
+        },
+        "field": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/affine_state.npz",
+          "sha256": "e751b4acd960bfb50dcb212e66ceed880b8d54d9f8a9835d1f7a2c9e1b4f9f5f"
+        },
+        "identity": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/identity.json",
+          "sha256": "16e8e1dc4d77cad0c5d16783658e8e03f74295eade4304f449fb8a4f1c4869c6"
+        },
+        "observables": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/observables.npz",
+          "sha256": "9a820b4a5e0aa6080a5d432067923ed7117a14ba54d4512f7eb8ff35869d1198"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/result.json",
+          "sha256": "a0e8323129ab77e0a9151b424841f3ee205edac52cba1c2b2317bf5528d08f4a"
+        }
+      },
+      "native_rows_identity_preserved": true
+    },
+    "E4": {
+      "independent_complex_FE": 65280,
+      "native_unconstrained_complex_FE": 69856,
+      "ports": 340,
+      "full_augmented_rows": 65620,
+      "internal_complex_FE": 36288,
+      "internal_index_array_shape": [
+        336,
+        108
+      ],
+      "internal_ids_unique_and_all_master": true,
+      "condensed_augmented_rows": 29332,
+      "cells": 336,
+      "classification": "MEASURED_SAVED_SHAPES; AUGMENTED/CONDENSED_COUNTS_DERIVED_FROM_MEASURED_LAYOUT",
+      "raw_bindings": {
+        "native": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/native.npz",
+          "sha256": "c3897bde734343b47588d3f90e8a897f3119e0b877de386b18de1c91516cd4ec"
+        },
+        "field": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/affine_state.npz",
+          "sha256": "ee16baaa6b4f9308ea09f7c185a1fedf8636905dc3931e4282d5c8b602a31a0c"
+        },
+        "identity": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/identity.json",
+          "sha256": "41d872939cb58f7c9502a81cc84f7fcc20e26be5d71d9aba664f3e39846390bf"
+        },
+        "observables": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/observables.npz",
+          "sha256": "5f753842cc347930c71a3f3e91909aaeb10c9e07658bd4792dad36da892bc952"
+        },
+        "result": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/result.json",
+          "sha256": "15219fec941143c6d93d709896b618356e20e0e9d6a6629cba9549ce532ebcfb"
+        }
+      },
+      "native_rows_identity_preserved": true
+    }
+  },
+  "no_FE_or_matrix_action": true,
+  "model_identity_not_redefined": true,
+  "source": "metadata from frozen raw packet/vector, actual solve source remains c3844846435764cd0ca7a4351a1ba8374373b6ae"
+}

@@ -3268,3 +3268,9 @@ pure身份/hash检查3.00520s、57,675,776B树峰、swap0，通过后清场。�
 ## 2026-10-04 Task42extra V21：准确端口、相位p4与参考受限出口
 
 [Response V21](task042extra_feinn_5nm/response_v21.md)完成Review V20所有可运行部分：准确端口回代/拓扑支持和真实空气物理通量资格、保存p3派生O3R/E3R、唯一G0相位p4，独立E/H/curl/6点/340×4模式/区域和全部成本。p6 q15/30=4.27567e-7 >1e-8，两轮定位修复用尽后O6未准入；total原点舍入和有限p完整模式问题保留。REFERENCE_LIMITED，无严格同精度20%收益/原尺寸胜者，无NN训练，FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT；D0成本否决/D1未运行及所有旧负态保留。原50×25×140nm/λ.7完整3D、decimal2TB整机和48h全流程仍未资格化。不改主线/dot或master，[目标差距](task042extra_feinn_5nm/outcomes/records/target_cost_gap_v21.json)仅解析计数。
+
+## 2026-10-04 Task42extra V22：可靠总场与解析面端口实物推进
+
+Review V21授权P0/P1→P2→P3→条件E3/E4→P4整批执行。保存c不变时给定D/H下hi/lo恢复约1e-16；解析面p3/p4/p6块/作用与双向空气资格通过，新算子令E3/E4 native约.0044176/.000275503，启动链各执行一次同配置修正并先释放global factor/CSR再完整输出。最终独立保存向量复核揭示实际原点物理投影仍FAIL，启动前块/作用资格未覆盖该敏感性，不追认严格角色全资格。独立公共全场/6点/340×4模式/功率/区域结果STRICT_FINITE_P_FIELD_MODE_FAIL，旧体场差仅缩小约0.1%，仍无严格O6，REFERENCE_LIMITED。原尺寸manifest本体缺失，不制造32060库存，已交最小接入包。三正式失败/受控停止、旧single-array FAIL、所有旧负态/成本/UNKNOWN不删。
+
+这是确定性FE端口/输出组件，不是NN增益或2TB/48h目标证书。FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED，D0成本否决/D1未运行，中期好态/最终退化保留。原50×25×140nm、Si17/120nm、λ.7完整3D/全部内部/双Floquet/全端口/decimal2e12B/172800s与原精度门不变；不改主线/dot、不合并master。[Response](task042extra_feinn_5nm/response_v22.md)、[专题](task042extra_feinn_5nm/outcomes/reliable_affine_ports_v22.md)、[Gate](task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json)、[资源](task042extra_feinn_5nm/outcomes/records/resource_costs_v22.json)。

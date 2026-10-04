@@ -1,0 +1,3341 @@
+{
+  "actual_source": "0a49003c9af140144aaf07f48f0c81e1490b5500",
+  "result": {
+    "stage_qualified": true,
+    "audit_completed": true,
+    "strict_forward_solution_qualified": false,
+    "roles": {
+      "O3": {
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.543575691512839e+17,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.126137928784978e+17,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 2.81224737201669e-16,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 35.77708763999664,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.2721569689434445e+17,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 3.8621004104070235e-12,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 3.141352144984958e-07,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "physics": {
+          "R_total": 0.9999742561941356,
+          "T_total": 1.661957963617677e-05,
+          "A_balance": 9.12422622822096e-06,
+          "A_volume": 9.124226701676726e-06,
+          "R00_s": 0.9999570513376846,
+          "R00_p": 9.893145776311807e-26,
+          "R00_total": 0.9999570513376846,
+          "energy_closure": 4.733990977001667e-13,
+          "norms": [
+            0.2776750644287179,
+            0.2832695366906507,
+            5.854944212185264,
+            5.9141415350984365
+          ],
+          "norm_pair_relative": 3.371812290149066e-16,
+          "H_identity_relative": 7.035338384625102e-17,
+          "per_level_power_pair_absolute": 3.3881317890172014e-21,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9999570513376846,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "independent_equations": {
+          "native_relative": 9.927489327316588e-12,
+          "augmented_relative": 9.927490295231479e-12,
+          "original_total_augmented_relative": 1.268962848977187e-10
+        },
+        "complete_output_qualified": true
+      },
+      "E3": {
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6980487635408244.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5356997864323.082,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 5.759534635765436e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.49364395209932876,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6980487501219294.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 1.8218803861370083e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 1.5880823012228505e-05,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "physics": {
+          "R_total": 0.07612658363647833,
+          "T_total": 0.9057668087268692,
+          "A_balance": 0.018106607636652505,
+          "A_volume": 0.018106607640842695,
+          "R00_s": 0.07612595981019263,
+          "R00_p": 1.5142522651793342e-26,
+          "R00_total": 0.07612595981019263,
+          "energy_closure": 4.190203739540266e-12,
+          "norms": [
+            6.242118729661892,
+            6.241551233371391,
+            0.8963409048667212,
+            0.8962472274187464
+          ],
+          "norm_pair_relative": 1.9917127743872282e-16,
+          "H_identity_relative": 7.261918767198522e-17,
+          "per_level_power_pair_absolute": 5.293955920339377e-23,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9057663417527436,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "independent_equations": {
+          "native_relative": 9.97015925886108e-11,
+          "augmented_relative": 9.970259166164731e-11,
+          "original_total_augmented_relative": 6.84937260573099e-12
+        },
+        "complete_output_qualified": true
+      },
+      "E4": {
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 556726104952482.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6032075352913.417,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 9.596776000058503e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.06072455913940013,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 556726104879826.1,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 2.070942592710276e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 0.0004286104689262211,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "physics": {
+          "R_total": 0.07612713951357228,
+          "T_total": 0.9057668791043146,
+          "A_balance": 0.018105981382113057,
+          "A_volume": 0.01810598138057355,
+          "R00_s": 0.07612669392605126,
+          "R00_p": 1.5607024131532004e-24,
+          "R00_total": 0.07612669392605126,
+          "energy_closure": 1.5395462682477046e-12,
+          "norms": [
+            6.242114081143832,
+            6.241546591550253,
+            0.8963166074424131,
+            0.8962229614764483
+          ],
+          "norm_pair_relative": 3.433759047699953e-16,
+          "H_identity_relative": 7.256232052123706e-17,
+          "per_level_power_pair_absolute": 2.220446049250313e-16,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9057666083762459,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "independent_equations": {
+          "native_relative": 7.791984591202329e-10,
+          "augmented_relative": 7.791983605995687e-10,
+          "original_total_augmented_relative": 5.6514561181178704e-11
+        },
+        "complete_output_qualified": true
+      }
+    },
+    "independent_face_gate": {
+      "shared": true,
+      "roles": {
+        "O3": true,
+        "E3": true,
+        "E4": true,
+        "O6_LOCAL_ONLY": true
+      },
+      "whole": true
+    },
+    "independent_face_arrays": {
+      "O3": {
+        "physical": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 6.243348691658227e-17,
+              "maximum": 3.496199360148334e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.030371895203289746,
+              "maximum": 22.702785918270635,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.0051267357941404e-15,
+              "maximum": 2.5955215017010623e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 2.5955215017010623e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 1.4219116114024648e-17,
+              "maximum": 1.0996285555665052e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.005970963867391583,
+              "maximum": 0.5153174751668183,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.20276430409891e-15,
+              "maximum": 2.6176082355794245e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 2.6176082355794245e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              1.824960207206847e-15,
+              2.1784193053766883e-15,
+              0.0
+            ],
+            [
+              2.005436816614593e-15,
+              2.106081806166483e-15,
+              0.0
+            ],
+            [
+              1.8681866217944305e-15,
+              1.8239154517423227e-15,
+              0.0
+            ]
+          ]
+        },
+        "oracle": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 3.299885262299787e-17,
+              "maximum": 2.477178461243964e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.030371895203289728,
+              "maximum": 22.702785918270628,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 4.3721256632760975e-16,
+              "maximum": 1.1323829501684598e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 1.1323829501684598e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 6.999026716811654e-18,
+              "maximum": 8.173570275164784e-16,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.005970963867391581,
+              "maximum": 0.515317475166818,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.023185147066149e-15,
+              "maximum": 1.8786070548679397e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 1.8786070548679397e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              8.622218021124994e-16,
+              1.902511391803842e-15,
+              0.0
+            ],
+            [
+              1.0376078057262399e-15,
+              1.3023651713513087e-15,
+              0.0
+            ],
+            [
+              9.871013289455493e-16,
+              1.435882139931431e-15,
+              0.0
+            ]
+          ]
+        }
+      },
+      "E3": {
+        "physical": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 6.279975567466287e-17,
+              "maximum": 3.312980454350955e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.02783487085076078,
+              "maximum": 20.64994392529305,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.2034501673340807e-15,
+              "maximum": 2.5315587430489714e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 2.5315587430489714e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 1.4609237403282877e-17,
+              "maximum": 9.866870895738339e-16,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.005984420091781939,
+              "maximum": 0.48022737410355254,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.3365530384488642e-15,
+              "maximum": 2.757156824202612e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 2.757156824202612e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              1.744999110846703e-15,
+              2.4964550645419136e-15,
+              0.0
+            ],
+            [
+              2.0117187266811116e-15,
+              1.8691047440420135e-15,
+              0.0
+            ],
+            [
+              1.8484146063985076e-15,
+              1.450214028257119e-15,
+              0.0
+            ]
+          ]
+        },
+        "oracle": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 2.7500504109566315e-17,
+              "maximum": 2.1520038129665962e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.027834870850760772,
+              "maximum": 20.649943925293044,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 3.2874042363040574e-16,
+              "maximum": 1.0421354269784328e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 1.0421354269784328e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 4.4590344696329474e-18,
+              "maximum": 1.1266948335282615e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.005984420091781926,
+              "maximum": 0.4802273741035528,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 6.987078267817159e-16,
+              "maximum": 2.676106174850765e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 2.676106174850765e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              8.4852594750813675e-16,
+              1.7206848964741563e-15,
+              0.0
+            ],
+            [
+              1.1143113621412822e-15,
+              1.5525099400850665e-15,
+              0.0
+            ],
+            [
+              9.734811811202507e-16,
+              1.3072919093482284e-15,
+              0.0
+            ]
+          ]
+        }
+      },
+      "E4": {
+        "physical": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 1.0349504749986648e-16,
+              "maximum": 6.38042273427309e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.030860359945831372,
+              "maximum": 22.89447311656414,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.5626982808229297e-15,
+              "maximum": 3.76190476692832e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 3.76190476692832e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 1.7490993842223283e-17,
+              "maximum": 1.986805349820512e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.007569759186121927,
+              "maximum": 0.5494287737980936,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.5242479412245407e-15,
+              "maximum": 3.920363109285849e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 3.920363109285849e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              2.767015557442098e-15,
+              2.3036415327604312e-15,
+              0.0
+            ],
+            [
+              3.117965395921827e-15,
+              3.307233310390619e-15,
+              0.0
+            ],
+            [
+              2.937269239701879e-15,
+              2.4077928873190324e-15,
+              0.0
+            ]
+          ]
+        },
+        "oracle": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 5.338123754819212e-17,
+              "maximum": 3.889673882012272e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.0308603599458314,
+              "maximum": 22.894473116564168,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.0766290581726955e-15,
+              "maximum": 1.7297671719283634e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 1.7297671719283634e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 1.3604414699202715e-17,
+              "maximum": 1.2942418303083783e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.007569759186121921,
+              "maximum": 0.5494287737980932,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 1.1599983952098504e-15,
+              "maximum": 3.3946358218665575e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 3.3946358218665575e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              1.6299908364876565e-15,
+              1.6483914918854427e-15,
+              0.0
+            ],
+            [
+              1.548403044549671e-15,
+              2.0594521303690165e-15,
+              0.0
+            ],
+            [
+              1.613740717068136e-15,
+              1.84887652485226e-15,
+              0.0
+            ]
+          ]
+        }
+      },
+      "O6_LOCAL_ONLY": {
+        "physical": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 3.4959330604530487e-16,
+              "maximum": 2.4108117265264887e-13,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.036162453995375723,
+              "maximum": 26.8933239984113,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 6.9015925522397486e-15,
+              "maximum": 1.0260394658697406e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 1.0260394658697406e-14
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 7.319722341387559e-17,
+              "maximum": 6.289460324075669e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.009541463065135118,
+              "maximum": 0.6691455605026126,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 6.803062152843669e-15,
+              "maximum": 1.0296525033623447e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 1.0296525033623447e-14
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              9.658938661920414e-15,
+              1.0365134720548195e-14,
+              0.0
+            ],
+            [
+              7.996709719631068e-15,
+              9.158657370341653e-15,
+              0.0
+            ],
+            [
+              9.943509436772228e-15,
+              6.374083250059956e-15,
+              0.0
+            ]
+          ]
+        },
+        "oracle": {
+          "B": {
+            "absolute": {
+              "items": 36,
+              "minimum": 1.3041185682575937e-16,
+              "maximum": 9.76035765365991e-14,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.03616245399537575,
+              "maximum": 26.893323998411322,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 3.045243354712525e-15,
+              "maximum": 3.693653920929619e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 3.693653920929619e-15
+          },
+          "D": {
+            "absolute": {
+              "items": 36,
+              "minimum": 3.6228157354919775e-17,
+              "maximum": 2.6042228330770283e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 0.00954146306513513,
+              "maximum": 0.6691455605026134,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 3.121368312374534e-15,
+              "maximum": 4.1134291351916565e-15,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 4.1134291351916565e-15
+          },
+          "H": {
+            "absolute": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "denominator": {
+              "items": 36,
+              "minimum": 1.790968563857945e-05,
+              "maximum": 0.05880000000000002,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "relative": {
+              "items": 36,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "maximum": 0.0
+          },
+          "nonzero_actions": [
+            [
+              4.009989197851806e-15,
+              4.4034568860270895e-15,
+              0.0
+            ],
+            [
+              3.158066502646159e-15,
+              4.022550044649178e-15,
+              0.0
+            ],
+            [
+              3.5786158242951896e-15,
+              2.340346323952072e-15,
+              0.0
+            ]
+          ]
+        }
+      }
+    },
+    "frozen_native": {
+      "O3": {
+        "independent_equations": {
+          "native_relative": 0.012671025490517435,
+          "augmented_relative": 0.012671025490517462,
+          "original_total_augmented_relative": 0.16213943042741946
+        },
+        "correction_triggered": false,
+        "full_original_coordinates": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.8401988865200162e+75,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6549423628297436e+75,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 3.0447107802347597e-16,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 2.8107335952602366e-31,
+                "maximum": 1.5879950870733974e+59,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.215585983929852e+74,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 2.810733595260237e-19,
+                "maximum": 2.6387711080525272e-12,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 3.1494830009229225e-11,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "independent_surface_arrays": {
+          "physical": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.0659461650897113e-97,
+                "maximum": 4.613687005915478e-13,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 4.802868335293197e-84,
+                "maximum": 29.98111915552981,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.5208910920854841e-15,
+                "maximum": 8.011798782900944e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 8.011798782900944e-14
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 3.810841012123306e-98,
+                "maximum": 5.2792687088227545e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.1684510733832782e-84,
+                "maximum": 3.502875959254138,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.6695036458873215e-15,
+                "maximum": 7.992327215022548e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 7.992327215022548e-14
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                9.01275472932173e-15,
+                8.880991062399534e-15,
+                0.0
+              ],
+              [
+                9.179021117225582e-15,
+                8.691757004053255e-15,
+                0.0
+              ],
+              [
+                8.961833880791442e-15,
+                6.952659539110477e-15,
+                0.0
+              ]
+            ]
+          },
+          "oracle": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 3.02763464466668e-98,
+                "maximum": 4.533557309180284e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 4.802868335293199e-84,
+                "maximum": 29.981119155529825,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 5.37561808236018e-16,
+                "maximum": 2.7330096375569193e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 2.7330096375569193e-14
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.1001968293207765e-98,
+                "maximum": 6.420377077350604e-15,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.168451073383271e-84,
+                "maximum": 3.5028759592541387,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.1768567436368818e-15,
+                "maximum": 2.727772702486554e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 2.727772702486554e-14
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                9.968480422979151e-16,
+                1.6726310961026947e-15,
+                0.0
+              ],
+              [
+                9.288484136819493e-16,
+                1.5837068253115196e-15,
+                0.0
+              ],
+              [
+                8.328609399547255e-16,
+                1.754603164476658e-15,
+                0.0
+              ]
+            ]
+          },
+          "old_q15_change": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 4.8028683352932075e-84,
+                "maximum": 1.5648634183960755e-08,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 4.8028683352932075e-84,
+                "maximum": 29.981119155529793,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 2.0983997926274294e-15,
+                "maximum": 1.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 1.0
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.1684510733832775e-84,
+                "maximum": 7.445082044934324e-10,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.1684510733832775e-84,
+                "maximum": 3.5028759592541343,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 2.0838228296300663e-15,
+                "maximum": 1.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 1.0
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                2.767602377174803e-10,
+                1.0352339860808905e-10,
+                0.0
+              ],
+              [
+                1.8664057427175884e-10,
+                9.981402318918411e-11,
+                0.0
+              ],
+              [
+                1.7855964074661806e-10,
+                9.430907618071843e-11,
+                0.0
+              ]
+            ]
+          }
+        },
+        "reliable_surface_qualified": true,
+        "physical_origin_sensitivity": {
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 3.1333077303876823e-08,
+              "worst_mode_index": 158,
+              "worst_absolute": 3.840476005685284e+60,
+              "worst_reference_absolute": 1.2000473922350529e+61,
+              "worst_denominator": 1.200047392235053e+61,
+              "max_mode_relative": 0.3200270281436561,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.2857555967235196e-24,
+                "maximum": 4.927211203098239e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.8401988865169337e+75,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 2.5504209205511624e-16,
+                "maximum": 0.3200270281436561,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "background": {
+              "original_coordinates_relative": 3.191369472454877e-08,
+              "worst_mode_index": 110,
+              "worst_absolute": 4.746733193702432e+32,
+              "worst_reference_absolute": 2.019709053928201e+31,
+              "worst_denominator": 2.0197090539282008e+31,
+              "max_mode_relative": 23.502064242720255,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.835758927385695e-32,
+                "maximum": 4.5135061386850744e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.654942362826982e+75,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 1.8357589273856948e-20,
+                "maximum": 23.502064242720255,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "total": {
+              "original_coordinates_relative": 2.768885522321933e-08,
+              "worst_mode_index": 158,
+              "worst_absolute": 9.568052649750384e+59,
+              "worst_reference_absolute": 1.332660853392504e+61,
+              "worst_denominator": 1.3326608533925043e+61,
+              "max_mode_relative": 0.07179660620624785,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 3.0447107802347597e-16,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.285755440304771e-24,
+                "maximum": 1.232324956201487e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.215585983922257e+74,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 1.621793346986203e-16,
+                "maximum": 0.07179660620624785,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            }
+          },
+          "all_physical_projections_within_1e_10": false,
+          "supplied_binary64_physical_oracle": true,
+          "no_new_FE_or_reference": true,
+          "strict_forward_solution_qualified": false
+        },
+        "signed_frozen_decomposition": {
+          "identity_relative": 3.3528391119136415e-18,
+          "old_energy": 1.902782630411507e-20,
+          "delta_energy": 0.031063237209591435,
+          "cross": 3.93136266403934e-15,
+          "new_energy": 0.031063237209595366,
+          "no_field_change": true,
+          "identity_denominator": "original native RHS norm, no phase fit"
+        }
+      },
+      "E3": {
+        "independent_equations": {
+          "native_relative": 0.004417604162763212,
+          "augmented_relative": 0.00441760416276366,
+          "original_total_augmented_relative": 0.00030348959961326827
+        },
+        "correction_triggered": true,
+        "full_original_coordinates": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.2723329409908845e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.9956000674239118e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 5.940354379525613e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 4.068008835908611e+57,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.2723329408401236e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 4.1335988332550724e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 3.970878822991836e-08,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "independent_surface_arrays": {
+          "physical": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.7523308704059708e-97,
+                "maximum": 4.79216149210355e-13,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.3100830463482465e-83,
+                "maximum": 36.16132944936951,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.59950294973043e-15,
+                "maximum": 2.9763849773102044e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 2.9763849773102044e-14
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 6.26773973231858e-98,
+                "maximum": 5.025653837665318e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 4.390045774920832e-84,
+                "maximum": 3.7290331670309005,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.7717472874093168e-15,
+                "maximum": 2.9742405877299285e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 2.9742405877299285e-14
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                8.426719936276307e-15,
+                7.411492428811353e-15,
+                0.0
+              ],
+              [
+                8.820773337946827e-15,
+                7.353109226411862e-15,
+                0.0
+              ],
+              [
+                7.644205023398536e-15,
+                8.512162459893875e-15,
+                0.0
+              ]
+            ]
+          },
+          "oracle": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 2.4550552302921034e-98,
+                "maximum": 5.871144319393415e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.3100830463482472e-83,
+                "maximum": 36.16132944936953,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 4.3106762647396743e-16,
+                "maximum": 4.73142764119576e-15,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 4.73142764119576e-15
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 9.9835307087591e-99,
+                "maximum": 7.671355424336475e-15,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 4.390045774920828e-84,
+                "maximum": 3.7290331670309,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.0541695888203737e-15,
+                "maximum": 4.85364642883964e-15,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 4.85364642883964e-15
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                1.2270959980283557e-15,
+                1.8176976953584816e-15,
+                0.0
+              ],
+              [
+                1.2810738102839836e-15,
+                1.957580374438793e-15,
+                0.0
+              ],
+              [
+                1.2581018160859328e-15,
+                1.7797091104912154e-15,
+                0.0
+              ]
+            ]
+          },
+          "old_q15_change": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.310083046348249e-83,
+                "maximum": 3.8049286994776218e-06,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.310083046348249e-83,
+                "maximum": 36.1613294493695,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.2093845704464617e-15,
+                "maximum": 1.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 1.0
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 4.390045774920842e-84,
+                "maximum": 9.302952853811632e-07,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 4.390045774920842e-84,
+                "maximum": 3.729033167030899,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.1862912048974116e-15,
+                "maximum": 1.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 1.0
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                2.6754555701622706e-08,
+                4.737338334641331e-08,
+                0.0
+              ],
+              [
+                3.144910406666458e-08,
+                6.729410659699296e-08,
+                0.0
+              ],
+              [
+                4.648142057666258e-08,
+                3.803907711139309e-08,
+                0.0
+              ]
+            ]
+          }
+        },
+        "reliable_surface_qualified": true,
+        "physical_origin_sensitivity": {
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 4.188808023515904e-08,
+              "worst_mode_index": 118,
+              "worst_absolute": 1.6483859709288367e+32,
+              "worst_reference_absolute": 3.844204388347471e+32,
+              "worst_denominator": 3.844204388347471e+32,
+              "max_mode_relative": 0.4287976924237989,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 6.540812094862504e-23,
+                "maximum": 2.5163811224110564e+66,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.2723329410156314e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 4.577495304841371e-16,
+                "maximum": 0.4287976924237989,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "background": {
+              "original_coordinates_relative": 0.7732208520214483,
+              "worst_mode_index": 61,
+              "worst_absolute": 2.309492959234524,
+              "worst_reference_absolute": 0.14121969832777057,
+              "worst_denominator": 0.14121969832777054,
+              "max_mode_relative": 16.35390095420114,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.003824770269944e-32,
+                "maximum": 1.362691814408697e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.8425053352064563e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 1.003824770269944e-20,
+                "maximum": 16.35390095420114,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "total": {
+              "original_coordinates_relative": 2.6448101080220056e-07,
+              "worst_mode_index": 140,
+              "worst_absolute": 1.748505229773947e+53,
+              "worst_reference_absolute": 2.5055353323651967e+52,
+              "worst_denominator": 2.505535332365197e+52,
+              "max_mode_relative": 6.978569438585317,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 5.940354379525613e-17,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 6.540812088436455e-23,
+                "maximum": 1.5888697202694672e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 5.272332941054848e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 4.532653064282852e-16,
+                "maximum": 6.978569438585317,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            }
+          },
+          "all_physical_projections_within_1e_10": false,
+          "supplied_binary64_physical_oracle": true,
+          "no_new_FE_or_reference": true,
+          "strict_forward_solution_qualified": false
+        },
+        "signed_frozen_decomposition": {
+          "identity_relative": 3.4249752960803346e-19,
+          "old_energy": 5.1610055844597785e-23,
+          "delta_energy": 1.013038758639183e-07,
+          "cross": 1.948591223868996e-17,
+          "new_energy": 1.0130387588340425e-07,
+          "no_field_change": true,
+          "identity_denominator": "original native RHS norm, no phase fit"
+        }
+      },
+      "E4": {
+        "independent_equations": {
+          "native_relative": 0.00027550316874273975,
+          "augmented_relative": 0.0002755031687504642,
+          "original_total_augmented_relative": 1.9948819354383508e-05
+        },
+        "correction_triggered": true,
+        "full_original_coordinates": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.1735456341522068e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6370695621590148e+68,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 7.908666095626969e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 9.436729386441285e+56,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.1735456341137216e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 6.109748279768429e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 6.852069494222289e-08,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "independent_surface_arrays": {
+          "physical": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 2.6300654683707646e-97,
+                "maximum": 8.652954875859249e-13,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.7509877986714396e-83,
+                "maximum": 39.267350324364315,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.845071006585185e-15,
+                "maximum": 3.1769637596164485e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 3.1769637596164485e-14
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 9.281143357039163e-98,
+                "maximum": 9.719247521711062e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 6.215220009454459e-84,
+                "maximum": 4.234109322612009,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.9781686638464308e-15,
+                "maximum": 3.176905559785911e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 3.176905559785911e-14
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                1.0567487591041784e-14,
+                1.1023484220445677e-14,
+                0.0
+              ],
+              [
+                1.1000703269503e-14,
+                1.3543300816251255e-14,
+                0.0
+              ],
+              [
+                1.3194539134282524e-14,
+                1.1697564148242636e-14,
+                0.0
+              ]
+            ]
+          },
+          "oracle": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 4.5331141925974316e-98,
+                "maximum": 9.434888602550798e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.7509877986714403e-83,
+                "maximum": 39.2673503243643,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.0794062178933341e-15,
+                "maximum": 4.261030369120054e-15,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 4.261030369120054e-15
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.7009398283854666e-98,
+                "maximum": 1.1873669940130586e-14,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 6.215220009454457e-84,
+                "maximum": 4.234109322612009,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 1.3813743195108477e-15,
+                "maximum": 4.424675498307279e-15,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 4.424675498307279e-15
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                1.9369674944153295e-15,
+                2.4914191388971053e-15,
+                0.0
+              ],
+              [
+                1.8255948419159665e-15,
+                2.5488948994257844e-15,
+                0.0
+              ],
+              [
+                1.961583777122516e-15,
+                2.930713815185683e-15,
+                0.0
+              ]
+            ]
+          },
+          "old_q15_change": {
+            "B": {
+              "absolute": {
+                "items": 340,
+                "minimum": 1.7509877986714447e-83,
+                "maximum": 3.2625075273621856e-05,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 1.7509877986714447e-83,
+                "maximum": 39.26735032436434,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 2.146282922656611e-15,
+                "maximum": 1.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 1.0
+            },
+            "D": {
+              "absolute": {
+                "items": 340,
+                "minimum": 6.2152200094544765e-84,
+                "maximum": 7.97674703305587e-06,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 6.2152200094544765e-84,
+                "maximum": 4.234109322612013,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 2.1389409212461685e-15,
+                "maximum": 1.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 1.0
+            },
+            "H": {
+              "absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "denominator": {
+                "items": 340,
+                "minimum": 5.815941294018401e-168,
+                "maximum": 3.360768175582991,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "maximum": 0.0
+            },
+            "nonzero_actions": [
+              [
+                2.276054272267183e-07,
+                4.595709981336313e-07,
+                0.0
+              ],
+              [
+                1.7613674730974403e-07,
+                4.2419597814470215e-07,
+                0.0
+              ],
+              [
+                2.582753380777022e-07,
+                5.158055291104509e-07,
+                0.0
+              ]
+            ]
+          }
+        },
+        "reliable_surface_qualified": true,
+        "physical_origin_sensitivity": {
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 4.0764155492535786e-07,
+              "worst_mode_index": 160,
+              "worst_absolute": 5.0403680463865785e+66,
+              "worst_reference_absolute": 2.77092955146681e+67,
+              "worst_denominator": 2.77092955146681e+67,
+              "max_mode_relative": 0.18190170312047182,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 3.0205074597961363e-22,
+                "maximum": 5.0403680463865785e+66,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.1735456341593154e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 7.009723229889204e-16,
+                "maximum": 0.18190170312047182,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "background": {
+              "original_coordinates_relative": 0.17691378886740725,
+              "worst_mode_index": 98,
+              "worst_absolute": 7.651699702680483e+18,
+              "worst_reference_absolute": 4.226709782830821e+18,
+              "worst_denominator": 4.226709782830821e+18,
+              "max_mode_relative": 1.8103205793220536,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.6349148853500364e-32,
+                "maximum": 2.727966733066727e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6144485687233253e+68,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 1.6349148853500364e-20,
+                "maximum": 1.8103205793220536,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "total": {
+              "original_coordinates_relative": 2.5726982920253607e-06,
+              "worst_mode_index": 118,
+              "worst_absolute": 1.0697110045102337e+33,
+              "worst_reference_absolute": 1.619976128111945e+33,
+              "worst_denominator": 1.619976128111945e+33,
+              "max_mode_relative": 0.6603251652584312,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 7.908666095626969e-17,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 3.020507453224926e-22,
+                "maximum": 3.1809199806786776e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.1735456341489609e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 5.541979120996583e-16,
+                "maximum": 0.6603251652584312,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            }
+          },
+          "all_physical_projections_within_1e_10": false,
+          "supplied_binary64_physical_oracle": true,
+          "no_new_FE_or_reference": true,
+          "strict_forward_solution_qualified": false
+        },
+        "signed_frozen_decomposition": {
+          "identity_relative": 1.7843283785730754e-20,
+          "old_energy": 5.602268403635884e-21,
+          "delta_energy": 7.0031400849314e-10,
+          "cross": 9.174498838469625e-19,
+          "new_energy": 7.003140094161911e-10,
+          "no_field_change": true,
+          "identity_denominator": "original native RHS norm, no phase fit"
+        }
+      }
+    },
+    "corrected_native": {
+      "E3": {
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 3.7805086798649535e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.9956000674239118e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 9.677671955423449e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 4.9673485533996194e+57,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 3.780508679713383e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 1.8048266093739243e-16,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 1.6586658605443648e-08,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "physics": {
+          "R_total": 0.07612658319173408,
+          "T_total": 0.9057668092670815,
+          "A_balance": 0.018106607541184427,
+          "A_volume": 0.01810660754238611,
+          "R00_s": 0.07612596022440547,
+          "R00_p": 1.124201862002636e-26,
+          "R00_total": 0.07612596022440547,
+          "energy_closure": 1.2017054018542694e-12,
+          "norms": [
+            6.2421187306923915,
+            6.241551234401873,
+            0.8963408928354468,
+            0.8962472153883073
+          ],
+          "norm_pair_relative": 2.534949703841649e-16,
+          "H_identity_relative": 7.267959791443264e-17,
+          "per_level_power_pair_absolute": 2.6469779601696886e-23,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.905766342853466,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "independent_equations": {
+          "native_relative": 6.291790435715385e-11,
+          "augmented_relative": 6.29171561077065e-11,
+          "original_total_augmented_relative": 4.3570318346640536e-12
+        },
+        "origin_low_components_consumed": true,
+        "reference_qualified": false,
+        "production_qualified": false,
+        "independent_physical_weak": 5.458992035699431e-12,
+        "physical_origin_sensitivity": {
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 5.864731275844285e-08,
+              "worst_mode_index": 118,
+              "worst_absolute": 1.6484035108906257e+32,
+              "worst_reference_absolute": 4.417821661224086e+32,
+              "worst_denominator": 4.417821661224087e+32,
+              "max_mode_relative": 0.3731258609551675,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 6.579892886067907e-23,
+                "maximum": 2.5163615963570065e+66,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 3.7805086798887255e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 4.577495319993977e-16,
+                "maximum": 0.3731258609551675,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "background": {
+              "original_coordinates_relative": 0.7732208520214483,
+              "worst_mode_index": 61,
+              "worst_absolute": 2.309492959234524,
+              "worst_reference_absolute": 0.14121969832777057,
+              "worst_denominator": 0.14121969832777054,
+              "max_mode_relative": 16.35390095420114,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.003824770269944e-32,
+                "maximum": 1.362691814408697e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.8425053352064563e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 1.003824770269944e-20,
+                "maximum": 16.35390095420114,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "total": {
+              "original_coordinates_relative": 3.703001859430952e-07,
+              "worst_mode_index": 118,
+              "worst_absolute": 1.0404240685091721e+33,
+              "worst_reference_absolute": 1.823168662230882e+32,
+              "worst_denominator": 1.823168662230882e+32,
+              "max_mode_relative": 5.706680298223638,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 9.677671955423449e-17,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 6.57989288698871e-23,
+                "maximum": 1.5888686206363913e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 3.7805086799246155e+73,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 4.460803639924999e-16,
+                "maximum": 5.706680298223638,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            }
+          },
+          "all_physical_projections_within_1e_10": false,
+          "supplied_binary64_physical_oracle": true,
+          "no_new_FE_or_reference": true,
+          "strict_forward_solution_qualified": false
+        }
+      },
+      "E4": {
+        "arithmetic": {
+          "passed": true,
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6.5337601521601026e+72,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "background": {
+              "original_coordinates_relative": 0.0,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6370695621590148e+68,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 0.0,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "total": {
+              "original_coordinates_relative": 3.885370551605875e-17,
+              "all_modes": 340,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 2.721258593244814e+56,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6.533760154918924e+72,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 0.0,
+                "maximum": 2.138030008918023e-15,
+                "full": "hash-bound ignored original arrays/record"
+              }
+            },
+            "lossy_single_array_negative": {
+              "relative": 1.1648382594188086e-07,
+              "qualified": false
+            }
+          },
+          "exact_sum_identity": true,
+          "all_consumers_required": true
+        },
+        "physics": {
+          "R_total": 0.07612713950828143,
+          "T_total": 0.9057668791086486,
+          "A_balance": 0.018105981383069958,
+          "A_volume": 0.01810598138063097,
+          "R00_s": 0.07612669392711491,
+          "R00_p": 8.882135492044803e-25,
+          "R00_total": 0.07612669392711491,
+          "energy_closure": 2.438937940496544e-12,
+          "norms": [
+            6.242114081160803,
+            6.2415465915672215,
+            0.8963166074487818,
+            0.8962229614828036
+          ],
+          "norm_pair_relative": 5.94651377987446e-17,
+          "H_identity_relative": 7.257608584167293e-17,
+          "per_level_power_pair_absolute": 2.220446049250313e-16,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9057666083806595,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "independent_equations": {
+          "native_relative": 2.9620218220567407e-10,
+          "augmented_relative": 2.962024282978751e-10,
+          "original_total_augmented_relative": 2.1698723103129864e-11
+        },
+        "origin_low_components_consumed": true,
+        "reference_qualified": false,
+        "production_qualified": false,
+        "independent_physical_weak": 2.654925696072934e-11,
+        "physical_origin_sensitivity": {
+          "rows": {
+            "scattered": {
+              "original_coordinates_relative": 7.325435433685844e-07,
+              "worst_mode_index": 130,
+              "worst_absolute": 4.56068955353519e+45,
+              "worst_reference_absolute": 2.7244728987272144e+46,
+              "worst_denominator": 2.724472898727215e+46,
+              "max_mode_relative": 0.1673971341636687,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 3.0204681952756314e-22,
+                "maximum": 5.040376794603691e+66,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6.533760152205561e+72,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 5.878875330876219e-16,
+                "maximum": 0.1673971341636687,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "background": {
+              "original_coordinates_relative": 0.17691378886740725,
+              "worst_mode_index": 98,
+              "worst_absolute": 7.651699702680483e+18,
+              "worst_reference_absolute": 4.226709782830821e+18,
+              "worst_denominator": 4.226709782830821e+18,
+              "max_mode_relative": 1.8103205793220536,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 0.0,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 1.6349148853500364e-32,
+                "maximum": 2.727966733066727e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 1.6144485687233253e+68,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 1.6349148853500364e-20,
+                "maximum": 1.8103205793220536,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            },
+            "total": {
+              "original_coordinates_relative": 4.623207880310811e-06,
+              "worst_mode_index": 160,
+              "worst_absolute": 3.180920579228309e+67,
+              "worst_reference_absolute": 1.723605492750729e+67,
+              "worst_denominator": 1.7236054927507294e+67,
+              "max_mode_relative": 1.8455038537570607,
+              "natural_floor": 1e-12,
+              "native_arithmetic_relative": 3.885370551605875e-17,
+              "per_mode_absolute": {
+                "items": 340,
+                "minimum": 3.0204681964241636e-22,
+                "maximum": 3.180920579228309e+67,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_denominator": {
+                "items": 340,
+                "minimum": 1e-12,
+                "maximum": 6.5337601552704285e+72,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "per_mode_relative": {
+                "items": 340,
+                "minimum": 6.065841469662783e-16,
+                "maximum": 1.8455038537570607,
+                "full": "hash-bound ignored original arrays/record"
+              },
+              "all_modes": 340,
+              "independent_physical_projection_within_1e_10": false
+            }
+          },
+          "all_physical_projections_within_1e_10": false,
+          "supplied_binary64_physical_oracle": true,
+          "no_new_FE_or_reference": true,
+          "strict_forward_solution_qualified": false
+        }
+      }
+    },
+    "corrected_comparison": {
+      "schema": "fixed_phase.independent-comparison.v1",
+      "same_role_control_pairs": [
+        "old_E3_vs_new_E3",
+        "old_E4_vs_new_E4"
+      ],
+      "coverage": "PARTIAL",
+      "missing_roles": [
+        "O3",
+        "O6"
+      ],
+      "physics": {
+        "old_E3": {
+          "R_total": 0.07612658363647833,
+          "T_total": 0.9057668087268692,
+          "A_balance": 0.018106607636652505,
+          "A_volume": 0.018106607640842695,
+          "R00_s": 0.07612595981019263,
+          "R00_p": 1.5142522651793342e-26,
+          "R00_total": 0.07612595981019263,
+          "energy_closure": 4.190203739540266e-12,
+          "norms": [
+            6.242118729661892,
+            6.241551233371391,
+            0.8963409048667212,
+            0.8962472274187464
+          ],
+          "norm_pair_relative": 1.9917127743872282e-16,
+          "H_identity_relative": 7.261918767198522e-17,
+          "per_level_power_pair_absolute": 5.293955920339377e-23,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9057663417527436,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "new_E3": {
+          "R_total": 0.07612658319173408,
+          "T_total": 0.9057668092670815,
+          "A_balance": 0.018106607541184427,
+          "A_volume": 0.01810660754238611,
+          "R00_s": 0.07612596022440547,
+          "R00_p": 1.124201862002636e-26,
+          "R00_total": 0.07612596022440547,
+          "energy_closure": 1.2017054018542694e-12,
+          "norms": [
+            6.2421187306923915,
+            6.241551234401873,
+            0.8963408928354468,
+            0.8962472153883073
+          ],
+          "norm_pair_relative": 2.534949703841649e-16,
+          "H_identity_relative": 7.267959791443264e-17,
+          "per_level_power_pair_absolute": 2.6469779601696886e-23,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.905766342853466,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "old_E4": {
+          "R_total": 0.07612713951357228,
+          "T_total": 0.9057668791043146,
+          "A_balance": 0.018105981382113057,
+          "A_volume": 0.01810598138057355,
+          "R00_s": 0.07612669392605126,
+          "R00_p": 1.5607024131532004e-24,
+          "R00_total": 0.07612669392605126,
+          "energy_closure": 1.5395462682477046e-12,
+          "norms": [
+            6.242114081143832,
+            6.241546591550253,
+            0.8963166074424131,
+            0.8962229614764483
+          ],
+          "norm_pair_relative": 3.433759047699953e-16,
+          "H_identity_relative": 7.256232052123706e-17,
+          "per_level_power_pair_absolute": 2.220446049250313e-16,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9057666083762459,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        },
+        "new_E4": {
+          "R_total": 0.07612713950828143,
+          "T_total": 0.9057668791086486,
+          "A_balance": 0.018105981383069958,
+          "A_volume": 0.01810598138063097,
+          "R00_s": 0.07612669392711491,
+          "R00_p": 8.882135492044803e-25,
+          "R00_total": 0.07612669392711491,
+          "energy_closure": 2.438937940496544e-12,
+          "norms": [
+            6.242114081160803,
+            6.2415465915672215,
+            0.8963166074487818,
+            0.8962229614828036
+          ],
+          "norm_pair_relative": 5.94651377987446e-17,
+          "H_identity_relative": 7.257608584167293e-17,
+          "per_level_power_pair_absolute": 2.220446049250313e-16,
+          "raw_valid": true,
+          "per_level_power": {
+            "items": 340,
+            "minimum": 0.0,
+            "maximum": 0.9057666083806595,
+            "full": "hash-bound ignored original arrays/record"
+          }
+        }
+      },
+      "equations": {
+        "old_E3": {
+          "passed": false,
+          "failed": [
+            "independent_physical_weak"
+          ],
+          "limits": {
+            "native_relative": 1e-06,
+            "augmented_relative": 1e-06,
+            "original_total_augmented_relative": 1e-06,
+            "independent_physical_weak": 1e-06,
+            "recovery": 1e-10
+          },
+          "status": "ALGEBRA_FAILED"
+        },
+        "new_E3": {
+          "passed": true,
+          "failed": [],
+          "limits": {
+            "native_relative": 1e-06,
+            "augmented_relative": 1e-06,
+            "original_total_augmented_relative": 1e-06,
+            "independent_physical_weak": 1e-06,
+            "recovery": 1e-10
+          },
+          "status": "ALGEBRA_QUALIFIED"
+        },
+        "old_E4": {
+          "passed": false,
+          "failed": [
+            "independent_physical_weak"
+          ],
+          "limits": {
+            "native_relative": 1e-06,
+            "augmented_relative": 1e-06,
+            "original_total_augmented_relative": 1e-06,
+            "independent_physical_weak": 1e-06,
+            "recovery": 1e-10
+          },
+          "status": "ALGEBRA_FAILED"
+        },
+        "new_E4": {
+          "passed": true,
+          "failed": [],
+          "limits": {
+            "native_relative": 1e-06,
+            "augmented_relative": 1e-06,
+            "original_total_augmented_relative": 1e-06,
+            "independent_physical_weak": 1e-06,
+            "recovery": 1e-10
+          },
+          "status": "ALGEBRA_QUALIFIED"
+        }
+      },
+      "reference_qualified": false,
+      "comparisons": {
+        "old_E3_vs_new_E3": {
+          "field_relative": [
+            6.38391252460864e-07,
+            7.470548197138183e-07,
+            4.4457572184337074e-06,
+            5.202561137250937e-06
+          ],
+          "complex_relative": {
+            "selected_total_E": 5.037949287640376e-07,
+            "selected_total_E_point_0": 1.026458758124798e-07,
+            "selected_total_E_point_1": 5.853909136320776e-07,
+            "selected_total_E_point_2": 5.682428433110978e-07,
+            "selected_total_E_point_3": 6.099645320308237e-07,
+            "selected_total_E_point_4": 7.206339481785972e-07,
+            "selected_total_E_point_5": 2.7432459100886423e-08,
+            "selected_total_H": 4.1346271507602295e-07,
+            "selected_total_H_point_0": 1.1061101116279065e-07,
+            "selected_total_H_point_1": 4.3222877029938844e-07,
+            "selected_total_H_point_2": 4.5177089487196503e-07,
+            "selected_total_H_point_3": 5.864335574679809e-07,
+            "selected_total_H_point_4": 5.433800067967482e-07,
+            "selected_total_H_point_5": 4.196695204373268e-08,
+            "selected_scattered_E": 3.4976801673140444e-06,
+            "selected_scattered_E_point_0": 7.22281595673049e-07,
+            "selected_scattered_E_point_1": 4.123842651781376e-06,
+            "selected_scattered_E_point_2": 3.996730998621868e-06,
+            "selected_scattered_E_point_3": 4.301647839793628e-06,
+            "selected_scattered_E_point_4": 4.640363369200626e-06,
+            "selected_scattered_E_point_5": 1.8957308657675513e-07,
+            "selected_scattered_H": 2.8678020304263712e-06,
+            "selected_scattered_H_point_0": 7.781196894264302e-07,
+            "selected_scattered_H_point_1": 3.0385216773652944e-06,
+            "selected_scattered_H_point_2": 3.177528306971175e-06,
+            "selected_scattered_H_point_3": 4.125057145407075e-06,
+            "selected_scattered_H_point_4": 3.496834706033657e-06,
+            "selected_scattered_H_point_5": 2.900001533167946e-07,
+            "total_projection": 1.0,
+            "scattered_projection": 1.0,
+            "outgoing_origin": 1.0,
+            "outgoing_boundary": 2.2858792903917447e-06
+          },
+          "per_mode_complex": {
+            "total_projection": {
+              "count": 340,
+              "max_relative": 72.75277152810764,
+              "max_absolute": 3.780508679713382e+73,
+              "near_zero_count": 61,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "bottom",
+                "7",
+                "0",
+                "p"
+              ],
+              "worst_absolute": 1.6670380776005858e-09,
+              "worst_reference_absolute": 2.2913739814799145e-11,
+              "worst_denominator": 2.2913739814799145e-11
+            },
+            "scattered_projection": {
+              "count": 340,
+              "max_relative": 73.28958446164744,
+              "max_absolute": 3.7805086798649535e+73,
+              "near_zero_count": 61,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "bottom",
+                "7",
+                "0",
+                "p"
+              ],
+              "worst_absolute": 1.666949201808732e-09,
+              "worst_reference_absolute": 2.2744694407171177e-11,
+              "worst_denominator": 2.2744694407171177e-11
+            },
+            "outgoing_origin": {
+              "count": 340,
+              "max_relative": 72.75277152810764,
+              "max_absolute": 3.780508679713382e+73,
+              "near_zero_count": 61,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "bottom",
+                "7",
+                "0",
+                "p"
+              ],
+              "worst_absolute": 1.667038077600586e-09,
+              "worst_reference_absolute": 2.2913739814799145e-11,
+              "worst_denominator": 2.291373981479915e-11
+            },
+            "outgoing_boundary": {
+              "count": 340,
+              "max_relative": 1.0,
+              "max_absolute": 2.837562723471888e-06,
+              "near_zero_count": 170,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "2",
+                "-1",
+                "s"
+              ],
+              "worst_absolute": 5.507229987525558e-09,
+              "worst_reference_absolute": 5.507229987525557e-09,
+              "worst_denominator": 5.507229987525558e-09
+            }
+          },
+          "modes_aligned_by_physical_key": true,
+          "power_absolute": {
+            "R_total": 4.4474424143459146e-10,
+            "T_total": 5.402123193221087e-10,
+            "A_balance": 9.546807788751721e-11,
+            "A_volume": 9.845658663354406e-11,
+            "R00_s": 4.142128445794313e-10,
+            "R00_p": 3.900504031766982e-27,
+            "R00_total": 4.142128445794313e-10
+          },
+          "per_level_max_absolute": 1.1007224021142292e-09,
+          "quadrature_drift": 2.4125443404185e-11,
+          "field_passed": false,
+          "power_passed": true,
+          "qualified": false
+        },
+        "old_E4_vs_new_E4": {
+          "field_relative": [
+            1.0325466296764974e-08,
+            2.8001413195457035e-08,
+            7.190845068562616e-08,
+            1.9500964893811114e-07
+          ],
+          "complex_relative": {
+            "selected_total_E": 1.840030379887617e-09,
+            "selected_total_E_point_0": 5.484785395982486e-10,
+            "selected_total_E_point_1": 3.7498804581170545e-10,
+            "selected_total_E_point_2": 3.1147329901582405e-10,
+            "selected_total_E_point_3": 3.277851588535852e-10,
+            "selected_total_E_point_4": 5.206798573038631e-09,
+            "selected_total_E_point_5": 5.648241254899847e-10,
+            "selected_total_H": 6.785209554355753e-09,
+            "selected_total_H_point_0": 5.408802228700153e-10,
+            "selected_total_H_point_1": 3.4120548107055667e-10,
+            "selected_total_H_point_2": 2.4215166433614295e-10,
+            "selected_total_H_point_3": 3.480077041092627e-10,
+            "selected_total_H_point_4": 1.965019191489792e-08,
+            "selected_total_H_point_5": 6.004825403756169e-10,
+            "selected_scattered_E": 1.2772972135556341e-08,
+            "selected_scattered_E_point_0": 3.8588696109595515e-09,
+            "selected_scattered_E_point_1": 2.6384240294401373e-09,
+            "selected_scattered_E_point_2": 2.1934167366339614e-09,
+            "selected_scattered_E_point_3": 2.309076447043109e-09,
+            "selected_scattered_E_point_4": 3.351803112900139e-08,
+            "selected_scattered_E_point_5": 3.906352488450093e-09,
+            "selected_scattered_H": 4.7078176212306005e-08,
+            "selected_scattered_H_point_0": 3.804280186606158e-09,
+            "selected_scattered_H_point_1": 2.398316419149749e-09,
+            "selected_scattered_H_point_2": 1.7035264593642715e-09,
+            "selected_scattered_H_point_3": 2.4519297749474936e-09,
+            "selected_scattered_H_point_4": 1.26460518871389e-07,
+            "selected_scattered_H_point_5": 4.151661879575389e-09,
+            "total_projection": 1.0,
+            "scattered_projection": 1.0,
+            "outgoing_origin": 1.0,
+            "outgoing_boundary": 1.546869957583361e-07
+          },
+          "per_mode_complex": {
+            "total_projection": {
+              "count": 340,
+              "max_relative": 19.701477341329603,
+              "max_absolute": 6.533760154918924e+72,
+              "near_zero_count": 57,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "0",
+                "-2",
+                "s"
+              ],
+              "worst_absolute": 42253626770058.445,
+              "worst_reference_absolute": 2144693316039.7634,
+              "worst_denominator": 2144693316039.7634
+            },
+            "scattered_projection": {
+              "count": 340,
+              "max_relative": 21.71975044037478,
+              "max_absolute": 6.5337601521601026e+72,
+              "near_zero_count": 57,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "bottom",
+                "5",
+                "2",
+                "p"
+              ],
+              "worst_absolute": 2.7960396999831545e-10,
+              "worst_reference_absolute": 1.2873258869427914e-11,
+              "worst_denominator": 1.2873258869427912e-11
+            },
+            "outgoing_origin": {
+              "count": 340,
+              "max_relative": 19.701477341329603,
+              "max_absolute": 6.533760154918924e+72,
+              "near_zero_count": 57,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "0",
+                "-2",
+                "s"
+              ],
+              "worst_absolute": 42253626770058.445,
+              "worst_reference_absolute": 2144693316039.7634,
+              "worst_denominator": 2144693316039.7632
+            },
+            "outgoing_boundary": {
+              "count": 340,
+              "max_relative": 1.0,
+              "max_absolute": 1.703622081156214e-07,
+              "near_zero_count": 170,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "2",
+                "-1",
+                "s"
+              ],
+              "worst_absolute": 1.8679923703859918e-10,
+              "worst_reference_absolute": 1.8679923703859915e-10,
+              "worst_denominator": 1.8679923703859918e-10
+            }
+          },
+          "modes_aligned_by_physical_key": true,
+          "power_absolute": {
+            "R_total": 5.29085109057803e-12,
+            "T_total": 4.3339776212292236e-12,
+            "A_balance": 9.569012249244224e-13,
+            "A_volume": 5.742281650178427e-14,
+            "R00_s": 1.0636491687421312e-12,
+            "R00_p": 6.724888639487201e-25,
+            "R00_total": 1.0636491687421312e-12
+          },
+          "per_level_max_absolute": 6.434049797892062e-12,
+          "quadrature_drift": 1.4833340248990298e-08,
+          "field_passed": false,
+          "power_passed": true,
+          "qualified": false
+        },
+        "new_E3_vs_new_E4": {
+          "field_relative": [
+            0.00044814115800001313,
+            0.00044973356643235687,
+            0.003120937634055354,
+            0.003132069950701146
+          ],
+          "complex_relative": {
+            "selected_total_E": 0.000318938163612299,
+            "selected_total_E_point_0": 3.046132719018941e-05,
+            "selected_total_E_point_1": 0.00019837490402773827,
+            "selected_total_E_point_2": 0.00037267001916551354,
+            "selected_total_E_point_3": 0.0004848498983579532,
+            "selected_total_E_point_4": 5.824574526052248e-05,
+            "selected_total_E_point_5": 0.00043549797497070597,
+            "selected_total_H": 0.0002623681984966497,
+            "selected_total_H_point_0": 4.564582710264622e-05,
+            "selected_total_H_point_1": 0.00019891590406632438,
+            "selected_total_H_point_2": 0.0002130256168151003,
+            "selected_total_H_point_3": 0.0004819390995134182,
+            "selected_total_H_point_4": 4.1921528795893236e-05,
+            "selected_total_H_point_5": 0.00029161186083893827,
+            "selected_scattered_E": 0.0022139773499385736,
+            "selected_scattered_E_point_0": 0.00021430933058710642,
+            "selected_scattered_E_point_1": 0.0013957701044132445,
+            "selected_scattered_E_point_2": 0.0026243680819772277,
+            "selected_scattered_E_point_3": 0.0034155159648058212,
+            "selected_scattered_E_point_4": 0.00037488593486762145,
+            "selected_scattered_E_point_5": 0.003011926825144194,
+            "selected_scattered_H": 0.0018203962494838298,
+            "selected_scattered_H_point_0": 0.00032105856723917175,
+            "selected_scattered_H_point_1": 0.001398132965665283,
+            "selected_scattered_H_point_2": 0.0014986078024446208,
+            "selected_scattered_H_point_3": 0.0033955723178756207,
+            "selected_scattered_H_point_4": 0.00026975133874181475,
+            "selected_scattered_H_point_5": 0.0020161544366500885,
+            "total_projection": 6.654228964790388,
+            "scattered_projection": 6.654228963838447,
+            "outgoing_origin": 6.654228964790387,
+            "outgoing_boundary": 6.537698589977331e-05
+          },
+          "per_mode_complex": {
+            "total_projection": {
+              "count": 340,
+              "max_relative": 479.70939114037594,
+              "max_absolute": 4.255898818598482e+73,
+              "near_zero_count": 57,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "6",
+                "0",
+                "s"
+              ],
+              "worst_absolute": 1.2095718262856922e+58,
+              "worst_reference_absolute": 2.5214678899870414e+55,
+              "worst_denominator": 2.5214678899870414e+55
+            },
+            "scattered_projection": {
+              "count": 340,
+              "max_relative": 479.70954279671423,
+              "max_absolute": 4.255898818853998e+73,
+              "near_zero_count": 57,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "6",
+                "0",
+                "s"
+              ],
+              "worst_absolute": 1.2095718262397571e+58,
+              "worst_reference_absolute": 2.521467092749363e+55,
+              "worst_denominator": 2.521467092749363e+55
+            },
+            "outgoing_origin": {
+              "count": 340,
+              "max_relative": 479.70939114037594,
+              "max_absolute": 4.2558988185984817e+73,
+              "near_zero_count": 57,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "6",
+                "0",
+                "s"
+              ],
+              "worst_absolute": 1.209571826285692e+58,
+              "worst_reference_absolute": 2.521467889987042e+55,
+              "worst_denominator": 2.5214678899870414e+55
+            },
+            "outgoing_boundary": {
+              "count": 340,
+              "max_relative": 479.709391140376,
+              "max_absolute": 4.66320184144268e-05,
+              "near_zero_count": 170,
+              "natural_floor": 1e-12,
+              "denominator_definition": "max(abs(reference_j),1e-12), no phase fit",
+              "worst_key": [
+                "top",
+                "6",
+                "0",
+                "s"
+              ],
+              "worst_absolute": 2.8411813879595485e-06,
+              "worst_reference_absolute": 5.922713710493405e-09,
+              "worst_denominator": 5.922713710493405e-09
+            }
+          },
+          "modes_aligned_by_physical_key": true,
+          "power_absolute": {
+            "R_total": 5.563165473426723e-07,
+            "T_total": 6.984156708522704e-08,
+            "A_balance": 6.261581144695327e-07,
+            "A_volume": 6.261617551371612e-07,
+            "R00_s": 7.33702709435069e-07,
+            "R00_p": 8.76971530584454e-25,
+            "R00_total": 7.33702709435069e-07
+          },
+          "per_level_max_absolute": 7.33702709435069e-07,
+          "quadrature_drift": 4.674148258876492e-13,
+          "field_passed": false,
+          "power_passed": true,
+          "qualified": false
+        }
+      },
+      "no_solver_calls": true,
+      "neural_gain": "NOT_TESTED",
+      "target_qualified": false
+    },
+    "no_FE_or_factor": true,
+    "reference_qualified": false,
+    "production_qualified": false,
+    "NN_increment": false,
+    "worker_wall_seconds": 306.3722663510125,
+    "neural_gain": "NOT_TESTED"
+  },
+  "raw": {
+    "result": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_saved_checker_20261004T113319163183Z/result.json",
+      "sha256": "76b7d814ae813174dfdeb09214f1110fdca484d30f420109d8d3bb4b87c1e08d"
+    }
+  }
+}

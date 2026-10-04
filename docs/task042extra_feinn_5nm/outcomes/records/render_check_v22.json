@@ -1,0 +1,22 @@
+{
+  "status": "NOT_YET_RUN_NEW_PAGES",
+  "new_page_visual_PASS_claim": false,
+  "review_v21_reused": {
+    "review": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v21.md",
+      "sha256": "accb6348e651e6da2fdbaff45b7d224cfe019c59be44eb61065707240c2ba6cf",
+      "bytes": 29800
+    },
+    "audit": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v21_evidence_audit.json",
+      "sha256": "1437b77b56cc54cf0069e72dd78a7015bf413789f47a996a173c99258f06cb44",
+      "bytes": 134538
+    },
+    "report_publication_HEAD": "04bbf9fe634fb67764f622b78390d76b6c4b7166",
+    "tables": 7,
+    "formula": 1,
+    "captures": 9,
+    "actual_visual_previously_accepted": true
+  },
+  "old_failures_preserved": true
+}

@@ -1,0 +1,33 @@
+{
+  "goal": {
+    "size_nm": [
+      50,
+      25,
+      140
+    ],
+    "Si_width_height_nm": [
+      17,
+      120
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_decimal_bytes": 2000000000000,
+    "complete_workflow_seconds": 172800,
+    "own_swap_OOC": 0,
+    "complete_3D_all_interior_double_Floquet_all_ports": true
+  },
+  "qualification": "FULL_TARGET_NOT_QUALIFIED",
+  "no_NN_increment": true,
+  "frozen_main_source": "5f74e15fae6e01e4361325db162806a7319ba3f4",
+  "frozen_dot_source": "077ec9c8386c976da232093779279fb9d1a93033",
+  "original_manifest_status": "NOT_RUN_MISSING_HASH_BOUND_32060_MANIFEST",
+  "complete_original_key_oracle": "NOT_RUN_MISSING_HASH_BOUND_INPUT",
+  "matched_precision_complete_cold_cost_20_percent_gain": "UNKNOWN_NO_MATCHED_QUALIFIED_BASELINE",
+  "strict_reference": "REFERENCE_LIMITED_NO_O6",
+  "FEINN_main_and_fixed_carrier_target_shrink": "ON_HOLD",
+  "no_receiver_branch_modified": true,
+  "old_gap": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v21.json",
+    "sha256": "3074a9e8f58fb1964a42181e4bb6bc3fd375c344b334776826414f5c13e18c23",
+    "bytes": 3623
+  }
+}

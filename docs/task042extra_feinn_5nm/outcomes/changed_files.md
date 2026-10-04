@@ -266,3 +266,7 @@ README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧�
 ## V21：准确原点端口与面闭包、独立保存比较
 
 新增src准确整数回代/拓扑迹/联合资格/冻结p3恢复内核，既有reference/condensation/physical默认不变，仅opt-in研究修复；参数化campaign支持V21阶段、角色子集明确Gate、source/ABI内容hash与durable白名单，不复制求解器或campaign。独立Decimal checker、MPC保存身份/模式近零负控与局部测试。新Response/专题/compact/CSV和原尺寸derived差距/依赖组；summary只前置，测试/进度/本支总账只追加，旧task/reviews/场/α/负结果不改。大数组与raw/浏览器图ignored；[六类依赖](records/selective_merge_manifest_v21.json)无production/merge授权。
+
+## V22：可靠输出与解析面显式opt-in、独立比较
+
+新增src总场SplitVector/affine_state、资格状态机及解析Fourier-Legendre面组件，已有准确端口/物理比较/RHS/凝聚只加明确opt-in或计费，ordinary默认不改。既有参数化campaign/one-run与durable选择新独立V22 index，不复制runner/传统解；checker从原CSR/向量/物理数组重新判断，旧状态不覆盖。新增局部pure fixtures、9个dat、完整compact/CSV/Response/专题/导航/本任务总账；所有大场/CSR/原轨迹/浏览器图留ignored。六类依赖及测试/fresh数据/建议顺序见[manifest](records/selective_merge_manifest_v22.json)；production/core无晋级、没有merge授权。

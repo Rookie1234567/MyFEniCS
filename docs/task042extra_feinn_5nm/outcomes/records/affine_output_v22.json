@@ -1,0 +1,695 @@
+{
+  "actual_source": "df9925059215abd344f7dd884fafc04e639fbabb",
+  "roles": {
+    "O3": {
+      "role": "O3",
+      "arithmetic": {
+        "passed": true,
+        "rows": {
+          "scattered": {
+            "original_coordinates_relative": 0.0,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.543575691512839e+17,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "background": {
+            "original_coordinates_relative": 0.0,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5.126137928784978e+17,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "total": {
+            "original_coordinates_relative": 2.81224737201669e-16,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 35.77708763999664,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 1.2721569689434445e+17,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 3.8621004104070235e-12,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "lossy_single_array_negative": {
+            "relative": 3.141352144984958e-07,
+            "qualified": false
+          }
+        },
+        "exact_sum_identity": true,
+        "all_consumers_required": true
+      },
+      "MPC": {
+        "scattered": 1.2846651212449775e-17,
+        "background": 1.21477364068761e-17,
+        "total_hi": 6.265387408547008e-18,
+        "total_lo": 4.627006724177526e-23
+      },
+      "full_equation": {
+        "native_relative": 9.927704268283137e-12,
+        "augmented_relative": 9.927707515369077e-12,
+        "original_total_augmented_relative": 1.268962521156766e-10,
+        "total_origin_recovery": 2.8122473720166907e-16,
+        "both_total_components_consumed": true,
+        "actual_output_used": true
+      },
+      "physics": {
+        "port": {
+          "R_total": 0.9999742561941356,
+          "R00_total": 0.9999570513376846,
+          "R00_s": 0.9999570513376846,
+          "R00_p": 9.893145776311806e-26,
+          "R00_by_polarization": {
+            "s": 0.9999570513376846,
+            "p": 9.893145776311806e-26
+          },
+          "T_total": 1.661957963617677e-05,
+          "R_plus_T": 0.9999908757737718,
+          "A_balance": 9.12422622822096e-06,
+          "R_total_dtn_port_modal": 0.9999742561941356,
+          "T_total_dtn_port_modal": 1.661957963617677e-05,
+          "R_plus_T_dtn_port_modal": 0.9999908757737718,
+          "A_balance_dtn_port_modal": 9.12422622822096e-06,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "A_volume": 9.124226701676726e-06,
+        "absorption_regions": {
+          "air": 0.0,
+          "substrate": 8.315747587429558e-10,
+          "grating": 9.123395126917983e-06
+        },
+        "energy_closure": 4.733990977001667e-13,
+        "absorption_balance_gap": 4.73455765898404e-13,
+        "norms": [
+          0.2776750644287179,
+          0.28326953669065064,
+          5.854944212185265,
+          5.914141535098434
+        ],
+        "norm_order": [
+          "total_E",
+          "total_scaled_curl",
+          "scattered_E",
+          "scattered_scaled_curl"
+        ],
+        "physical_H_definition": "curl(E)/(i*k0*mu_r); code units",
+        "integration_degree": 15,
+        "full_complex_channel_families": 4,
+        "channels": 340,
+        "postprocess_seconds": 8.923034703009762,
+        "physical_gate_passed": true,
+        "exact_affine_both_components_consumed": true
+      },
+      "consumer_inventory": {
+        "serialization_reload": true,
+        "exact_origin_ports": true,
+        "full_uncondensed_total_equation": true,
+        "public_MPC_hi_and_lo": true,
+        "all_internal_FE_coefficients": true,
+        "physical_E_curl_H": true,
+        "six_complex_samples": true,
+        "four_all_mode_families": true,
+        "volume_absorption_energy": true
+      },
+      "complete_output_qualified": true,
+      "low_vector_norm": 4.224772919769038e-17,
+      "unchanged_scattered_coefficients": true,
+      "new_global_factor_count": 0,
+      "local_LU_count": 0,
+      "old_single_array_FAIL_preserved": true,
+      "independent_physical_consumption": {
+        "R_total": 0.9999742561941356,
+        "T_total": 1.661957963617677e-05,
+        "A_balance": 9.12422622822096e-06,
+        "A_volume": 9.124226701676726e-06,
+        "R00_s": 0.9999570513376846,
+        "R00_p": 9.893145776311807e-26,
+        "R00_total": 0.9999570513376846,
+        "energy_closure": 4.733990977001667e-13,
+        "norms": [
+          0.2776750644287179,
+          0.2832695366906507,
+          5.854944212185264,
+          5.9141415350984365
+        ],
+        "norm_pair_relative": 3.371812290149066e-16,
+        "H_identity_relative": 7.035338384625102e-17,
+        "per_level_power_pair_absolute": 3.3881317890172014e-21,
+        "raw_valid": true,
+        "per_level_power": {
+          "items": 340,
+          "minimum": 0.0,
+          "maximum": 0.9999570513376846,
+          "full": "hash-bound ignored original arrays/record"
+        }
+      }
+    },
+    "E3": {
+      "role": "E3",
+      "arithmetic": {
+        "passed": true,
+        "rows": {
+          "scattered": {
+            "original_coordinates_relative": 0.0,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 6980487635408244.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "background": {
+            "original_coordinates_relative": 0.0,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 5356997864323.082,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "total": {
+            "original_coordinates_relative": 5.759534635765436e-17,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.49364395209932876,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 6980487501219294.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 1.8218803861370083e-16,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "lossy_single_array_negative": {
+            "relative": 1.5880823012228505e-05,
+            "qualified": false
+          }
+        },
+        "exact_sum_identity": true,
+        "all_consumers_required": true
+      },
+      "MPC": {
+        "scattered": 0.0,
+        "background": 0.0,
+        "total_hi": 0.0,
+        "total_lo": 0.0
+      },
+      "full_equation": {
+        "native_relative": 9.971050874991134e-11,
+        "augmented_relative": 9.971165950012686e-11,
+        "original_total_augmented_relative": 6.8696628143161615e-12,
+        "total_origin_recovery": 5.759534635765436e-17,
+        "both_total_components_consumed": true,
+        "actual_output_used": true
+      },
+      "physics": {
+        "port": {
+          "R_total": 0.07612658363647834,
+          "R00_total": 0.07612595981019264,
+          "R00_s": 0.07612595981019264,
+          "R00_p": 1.5142522651793342e-26,
+          "R00_by_polarization": {
+            "s": 0.07612595981019264,
+            "p": 1.5142522651793342e-26
+          },
+          "T_total": 0.9057668087268692,
+          "R_plus_T": 0.9818933923633475,
+          "A_balance": 0.018106607636652394,
+          "R_total_dtn_port_modal": 0.07612658363647834,
+          "T_total_dtn_port_modal": 0.9057668087268692,
+          "R_plus_T_dtn_port_modal": 0.9818933923633475,
+          "A_balance_dtn_port_modal": 0.018106607636652394,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "A_volume": 0.018106607640842695,
+        "absorption_regions": {
+          "air": 0.0,
+          "substrate": 0.0042132820960688756,
+          "grating": 0.01389332554477382
+        },
+        "energy_closure": 4.190203739540266e-12,
+        "absorption_balance_gap": 4.1903008840549205e-12,
+        "norms": [
+          6.242118729661893,
+          6.241551233371393,
+          0.896340904866721,
+          0.8962472274187462
+        ],
+        "norm_order": [
+          "total_E",
+          "total_scaled_curl",
+          "scattered_E",
+          "scattered_scaled_curl"
+        ],
+        "physical_H_definition": "curl(E)/(i*k0*mu_r); code units",
+        "integration_degree": 15,
+        "full_complex_channel_families": 4,
+        "channels": 340,
+        "postprocess_seconds": 8.90447131707333,
+        "physical_gate_passed": true,
+        "exact_affine_both_components_consumed": true
+      },
+      "consumer_inventory": {
+        "serialization_reload": true,
+        "exact_origin_ports": true,
+        "full_uncondensed_total_equation": true,
+        "public_MPC_hi_and_lo": true,
+        "all_internal_FE_coefficients": true,
+        "physical_E_curl_H": true,
+        "six_complex_samples": true,
+        "four_all_mode_families": true,
+        "volume_absorption_energy": true
+      },
+      "complete_output_qualified": true,
+      "low_vector_norm": 9.625280093978676e-16,
+      "unchanged_scattered_coefficients": true,
+      "new_global_factor_count": 0,
+      "local_LU_count": 0,
+      "old_single_array_FAIL_preserved": true,
+      "independent_physical_consumption": {
+        "R_total": 0.07612658363647833,
+        "T_total": 0.9057668087268692,
+        "A_balance": 0.018106607636652505,
+        "A_volume": 0.018106607640842695,
+        "R00_s": 0.07612595981019263,
+        "R00_p": 1.5142522651793342e-26,
+        "R00_total": 0.07612595981019263,
+        "energy_closure": 4.190203739540266e-12,
+        "norms": [
+          6.242118729661892,
+          6.241551233371391,
+          0.8963409048667212,
+          0.8962472274187464
+        ],
+        "norm_pair_relative": 1.9917127743872282e-16,
+        "H_identity_relative": 7.261918767198522e-17,
+        "per_level_power_pair_absolute": 5.293955920339377e-23,
+        "raw_valid": true,
+        "per_level_power": {
+          "items": 340,
+          "minimum": 0.0,
+          "maximum": 0.9057663417527436,
+          "full": "hash-bound ignored original arrays/record"
+        }
+      }
+    },
+    "E4": {
+      "role": "E4",
+      "arithmetic": {
+        "passed": true,
+        "rows": {
+          "scattered": {
+            "original_coordinates_relative": 0.0,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 556726104952482.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "background": {
+            "original_coordinates_relative": 0.0,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 6032075352913.417,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.0,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "total": {
+            "original_coordinates_relative": 9.596776000058503e-17,
+            "all_modes": 340,
+            "per_mode_absolute": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 0.06072455913940013,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_denominator": {
+              "items": 340,
+              "minimum": 1e-12,
+              "maximum": 556726104879826.1,
+              "full": "hash-bound ignored original arrays/record"
+            },
+            "per_mode_relative": {
+              "items": 340,
+              "minimum": 0.0,
+              "maximum": 2.070942592710276e-16,
+              "full": "hash-bound ignored original arrays/record"
+            }
+          },
+          "lossy_single_array_negative": {
+            "relative": 0.0004286104689262211,
+            "qualified": false
+          }
+        },
+        "exact_sum_identity": true,
+        "all_consumers_required": true
+      },
+      "MPC": {
+        "scattered": 0.0,
+        "background": 0.0,
+        "total_hi": 0.0,
+        "total_lo": 0.0
+      },
+      "full_equation": {
+        "native_relative": 7.792236893742685e-10,
+        "augmented_relative": 7.79223574228334e-10,
+        "original_total_augmented_relative": 5.647749144712151e-11,
+        "total_origin_recovery": 9.596776000058503e-17,
+        "both_total_components_consumed": true,
+        "actual_output_used": true
+      },
+      "physics": {
+        "port": {
+          "R_total": 0.07612713951357232,
+          "R00_total": 0.0761266939260513,
+          "R00_s": 0.0761266939260513,
+          "R00_p": 1.5607024131532e-24,
+          "R00_by_polarization": {
+            "s": 0.0761266939260513,
+            "p": 1.5607024131532e-24
+          },
+          "T_total": 0.9057668791043149,
+          "R_plus_T": 0.9818940186178872,
+          "A_balance": 0.018105981382112835,
+          "R_total_dtn_port_modal": 0.07612713951357232,
+          "T_total_dtn_port_modal": 0.9057668791043149,
+          "R_plus_T_dtn_port_modal": 0.9818940186178872,
+          "A_balance_dtn_port_modal": 0.018105981382112835,
+          "R_plus_T_plus_A_volume": null,
+          "R_plus_T_plus_A_volume_dtn_port_modal": null,
+          "energy_closure_error_dtn_port_modal_volume": null,
+          "power_source": "dtn_port_modal_amplitudes",
+          "diffraction_total_power_source": "dtn_port_modal_amplitudes",
+          "dtn_port_modal_reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+          "dtn_port_top_reference_z": 6.7407407407407405,
+          "dtn_port_bottom_reference_z": -0.5185185185185185,
+          "dtn_port_modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+          "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the finite top and bottom port faces. Selected modes with positive outward real-Poynting flux contribute even when a below-critical lossy mode retains propagating=false; lossless evanescent modes carry zero modal power.",
+          "incident_power_code_units": 0.029326746070880844,
+          "stage4_dtn_order_policy": "manual",
+          "stage4_dtn_assembly": "auxiliary",
+          "dtn_port_mode_count": 340,
+          "dtn_port_top_mode_count": 170,
+          "dtn_port_bottom_mode_count": 170,
+          "dtn_port_propagating_mode_count": 80,
+          "dtn_port_rayleigh_warning_count": 0,
+          "port_power_file": "port_power.json",
+          "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+          "port_power_csv": "port_power.csv",
+          "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json"
+        },
+        "A_volume": 0.01810598138057355,
+        "absorption_regions": {
+          "air": 0.0,
+          "substrate": 0.004213283313478553,
+          "grating": 0.013892698067094995
+        },
+        "energy_closure": 1.5393242236427795e-12,
+        "absorption_balance_gap": 1.539286059726308e-12,
+        "norms": [
+          6.242114081143834,
+          6.241546591550251,
+          0.8963166074424131,
+          0.8962229614764485
+        ],
+        "norm_order": [
+          "total_E",
+          "total_scaled_curl",
+          "scattered_E",
+          "scattered_scaled_curl"
+        ],
+        "physical_H_definition": "curl(E)/(i*k0*mu_r); code units",
+        "integration_degree": 15,
+        "full_complex_channel_families": 4,
+        "channels": 340,
+        "postprocess_seconds": 16.85059926705435,
+        "physical_gate_passed": true,
+        "exact_affine_both_components_consumed": true
+      },
+      "consumer_inventory": {
+        "serialization_reload": true,
+        "exact_origin_ports": true,
+        "full_uncondensed_total_equation": true,
+        "public_MPC_hi_and_lo": true,
+        "all_internal_FE_coefficients": true,
+        "physical_E_curl_H": true,
+        "six_complex_samples": true,
+        "four_all_mode_families": true,
+        "volume_absorption_energy": true
+      },
+      "complete_output_qualified": true,
+      "low_vector_norm": 1.1357051563345564e-15,
+      "unchanged_scattered_coefficients": true,
+      "new_global_factor_count": 0,
+      "local_LU_count": 0,
+      "old_single_array_FAIL_preserved": true,
+      "independent_physical_consumption": {
+        "R_total": 0.07612713951357228,
+        "T_total": 0.9057668791043146,
+        "A_balance": 0.018105981382113057,
+        "A_volume": 0.01810598138057355,
+        "R00_s": 0.07612669392605126,
+        "R00_p": 1.5607024131532002e-24,
+        "R00_total": 0.07612669392605126,
+        "energy_closure": 1.5395462682477046e-12,
+        "norms": [
+          6.242114081143832,
+          6.241546591550253,
+          0.8963166074424131,
+          0.8962229614764483
+        ],
+        "norm_pair_relative": 3.433759047699953e-16,
+        "H_identity_relative": 7.256232052123706e-17,
+        "per_level_power_pair_absolute": 2.220446049250313e-16,
+        "raw_valid": true,
+        "per_level_power": {
+          "items": 340,
+          "minimum": 0.0,
+          "maximum": 0.9057666083762459,
+          "full": "hash-bound ignored original arrays/record"
+        }
+      }
+    }
+  },
+  "bindings": {
+    "O3": {
+      "field": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/O3/affine_state.npz",
+        "sha256": "27971ceb83af2c71849ff98b623047e5bee64b342f44396bf180dd96bab60197"
+      },
+      "observables": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/O3/observables.npz",
+        "sha256": "84164e904faf15515bbda4cfcab4846b9f759f08d7b0a1c3f221acb9035effdb"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/O3/result.json",
+        "sha256": "e1d750bef9d82482c663761c4059f1e292bbf14654225b22fac6e18476ddda93"
+      },
+      "native": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/O3/native.npz",
+        "sha256": "cbfc321edbf7825188bb2fdfc7feed80d36bc781fbc7cb581e1492764b5962d0"
+      },
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/O3/identity.json",
+        "sha256": "3aea7269503323055f51227a9abb7bc4e82ffd28e7156735ef3e17cb3c57d30a"
+      }
+    },
+    "E3": {
+      "field": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/affine_state.npz",
+        "sha256": "900a556f8c408efacb8bea931cd49d6a4eef7e7b5287a7e342af4b6f7335d299"
+      },
+      "observables": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/observables.npz",
+        "sha256": "b77fd62407828c3be269a8a3048f6e6908ebe0a1a2334b51b7be221ffe4ab899"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/result.json",
+        "sha256": "ad12bb745eda524f89180f596b9b8339d5c30143c913486f903b7b0f52168a9d"
+      },
+      "native": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/E3/native.npz",
+        "sha256": "1ff07a0ded4e8afbe2a6bbe7f7f49aed5ca58cc2278d54b3709e3650d75cbf6d"
+      },
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/E3/identity.json",
+        "sha256": "473af4630740c2d53079c25b94ddbcd6fcbd4ea1f69b2407cd42a335113c6645"
+      }
+    },
+    "E4": {
+      "field": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/affine_state.npz",
+        "sha256": "8e9509117ef775eacaa44d44afbb0eb33ecca7e44911187df8d6ac7c99c891f0"
+      },
+      "observables": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/observables.npz",
+        "sha256": "0f1bade3360b8c96138cfb7d8561d3c2107eaa28adafa3b33e6345ec6b4e9f23"
+      },
+      "result": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/result.json",
+        "sha256": "6460bc197fe06e93833fa98761e452e9f8332a69da4622364e7a799f5c41d685"
+      },
+      "native": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_e4_20261004T055937339255Z/native.npz",
+        "sha256": "d455824f6164bfd86bfb63db98e1fba3e26330318ddc47bc53641394ab922c8e"
+      },
+      "identity": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_e4_20261004T055937339255Z/identity.json",
+        "sha256": "2273a67c6a141d6931a7c6887d984700af8c05d78315d4b686cb21d0668f8a21"
+      }
+    }
+  },
+  "old_single_array_FAIL_unchanged": true
+}

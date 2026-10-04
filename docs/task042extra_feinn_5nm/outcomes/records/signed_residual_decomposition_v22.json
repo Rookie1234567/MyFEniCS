@@ -1,0 +1,62 @@
+{
+  "O3": {
+    "terms": {
+      "old_residual_squared": 9.83481045824216e-23,
+      "operator_delta_squared": 0.002558628386916123,
+      "RHS_delta_squared": 0.0021430010228545675,
+      "old_operator_cross": -1.7798568566936359e-16,
+      "old_RHS_cross": 1.9830550887222459e-16,
+      "operator_RHS_cross": -0.0045410745227893665
+    },
+    "new_residual_squared": 0.00016055488698134483,
+    "signed_energy_pairing_absolute": 3.5236570605778894e-19,
+    "vector_identity_relative": 4.111813763382267e-18,
+    "denominator_norm": 13.909502341935259,
+    "raw": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/frozen_residual_terms.npz",
+      "sha256": "d4eca54aa5bc8f02cf235ff0ed0209d236dabcacddb4b53cbe300c932eb6c055",
+      "bytes": 2672858
+    },
+    "coefficient_bytes_unchanged": true
+  },
+  "E3": {
+    "terms": {
+      "old_residual_squared": 9.942185555168737e-21,
+      "operator_delta_squared": 1.9515112564019946e-05,
+      "RHS_delta_squared": 2.6277690842141797e-13,
+      "old_operator_cross": 3.753104137968972e-15,
+      "old_RHS_cross": 6.712071330369608e-19,
+      "operator_RHS_cross": 1.1370831027410477e-10
+    },
+    "new_residual_squared": 1.9515226538860914e-05,
+    "signed_energy_pairing_absolute": 0.0,
+    "vector_identity_relative": 3.4249752964110553e-19,
+    "denominator_norm": 0.07204871381220344,
+    "raw": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/frozen_residual_terms.npz",
+      "sha256": "dc6544622157bb2582174f91e4ddd6b8b657d05033c0a9d6aa65576c0410d6a6",
+      "bytes": 2672858
+    },
+    "coefficient_bytes_unchanged": true
+  },
+  "E4": {
+    "terms": {
+      "old_residual_squared": 6.071895580823379e-19,
+      "operator_delta_squared": 7.590138117715841e-08,
+      "RHS_delta_squared": 4.913114184883122e-13,
+      "old_operator_cross": 1.0132594778084325e-16,
+      "old_RHS_cross": -1.8901568833213877e-18,
+      "operator_RHS_cross": 1.2339934761223554e-13
+    },
+    "new_residual_squared": 7.590199598796739e-08,
+    "signed_energy_pairing_absolute": 1.0587911840678754e-22,
+    "vector_identity_relative": 1.7843280564025185e-20,
+    "denominator_norm": 0.09605496294695356,
+    "raw": {
+      "path": "benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/frozen_residual_terms.npz",
+      "sha256": "cb97958c4734245118472a6f9b1ca9af409b3207c2d791b9120948ec351b9458",
+      "bytes": 6285530
+    },
+    "coefficient_bytes_unchanged": true
+  }
+}

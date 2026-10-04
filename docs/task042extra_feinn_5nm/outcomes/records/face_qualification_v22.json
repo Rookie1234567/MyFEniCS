@@ -1,0 +1,930 @@
+{
+  "actual_source": "d574e5a6f3a0bb7eb3dd234f72a2ccd8d639a1af",
+  "result": {
+    "stage_qualified": true,
+    "shared_qualified": true,
+    "roles": [
+      {
+        "role": "O3",
+        "degree": 3,
+        "phase": false,
+        "meta": {
+          "faces": 8,
+          "max_half_span": 2.171568811482761,
+          "polynomial_degree": 3,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 0.05780561501160264,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "physical_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 6.243348691658227e-17,
+            "maximum": 3.496199360148334e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.030371895203289746,
+            "maximum": 22.702785918270635,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 1.0051267357941404e-15,
+            "maximum": 2.595521501701062e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 1.4219116114024648e-17,
+            "maximum": 1.0996285555665052e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.005970963867391583,
+            "maximum": 0.5153174751668183,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 1.20276430409891e-15,
+            "maximum": 2.6176082355794245e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              1.824960207206847e-15,
+              2.1784193053766883e-15,
+              0.0
+            ],
+            [
+              2.005436816614593e-15,
+              2.106081806166483e-15,
+              0.0
+            ],
+            [
+              1.8681866217944305e-15,
+              1.8239154517423227e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 3.299885262299787e-17,
+            "maximum": 2.477178461243964e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.030371895203289728,
+            "maximum": 22.702785918270628,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 4.3721256632760985e-16,
+            "maximum": 1.13238295016846e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 6.999026716811653e-18,
+            "maximum": 8.173570275164784e-16,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.005970963867391581,
+            "maximum": 0.515317475166818,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 1.023185147066149e-15,
+            "maximum": 1.8786070548679393e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              8.622218021124994e-16,
+              1.902511391803842e-15,
+              0.0
+            ],
+            [
+              1.0376078057262399e-15,
+              1.3023651713513087e-15,
+              0.0
+            ],
+            [
+              9.871013289455493e-16,
+              1.435882139931431e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "nonzero_port_load_original_recovery": 0.0,
+        "internal_coefficient_norm": 24.429535813277685,
+        "negative_controls": {
+          "omitted_facet": true,
+          "wrong_conjugate": true,
+          "wrong_normal": true,
+          "wrong_mode_order": true,
+          "wrong_orientation": true
+        },
+        "negative_controls_complete": true,
+        "cutoff_witness": {
+          "relative": [
+            1.243461540695059e-15,
+            1.396293851117307e-15,
+            1.1947166013169432e-15,
+            1.1825972154857502e-15
+          ],
+          "maximum": 1.396293851117307e-15,
+          "offsets": [
+            -1e-08,
+            0.0,
+            1e-08
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "independent_physical_gauss": true
+        },
+        "cutoff_witness_relative": 1.396293851117307e-15,
+        "ky": 2.623922587789049,
+        "nonidentity_orientation_count": 4,
+        "mode_keys": {
+          "items": 36,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "omitted_real_facet_rejected": true,
+        "passed": true
+      },
+      {
+        "role": "E3",
+        "degree": 3,
+        "phase": true,
+        "meta": {
+          "faces": 8,
+          "max_half_span": 1.5707963267948968,
+          "polynomial_degree": 3,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 0.05645762092899531,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "physical_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 6.279975567466287e-17,
+            "maximum": 3.312980454350955e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.02783487085076078,
+            "maximum": 20.64994392529305,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 1.2034501673340807e-15,
+            "maximum": 2.5315587430489714e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 1.4609237403282877e-17,
+            "maximum": 9.866870895738339e-16,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.005984420091781938,
+            "maximum": 0.48022737410355254,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 1.3365530384488638e-15,
+            "maximum": 2.757156824202612e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              1.744999110846703e-15,
+              2.4964550645419136e-15,
+              0.0
+            ],
+            [
+              2.0117187266811116e-15,
+              1.8691047440420135e-15,
+              0.0
+            ],
+            [
+              1.8484146063985076e-15,
+              1.450214028257119e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 2.7500504109566315e-17,
+            "maximum": 2.1520038129665962e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.02783487085076077,
+            "maximum": 20.649943925293044,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 3.2874042363040574e-16,
+            "maximum": 1.0421354269784328e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 4.459034469632948e-18,
+            "maximum": 1.1266948335282617e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.005984420091781926,
+            "maximum": 0.48022737410355276,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 6.987078267817159e-16,
+            "maximum": 2.676106174850765e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              8.4852594750813675e-16,
+              1.7206848964741563e-15,
+              0.0
+            ],
+            [
+              1.1143113621412822e-15,
+              1.5525099400850665e-15,
+              0.0
+            ],
+            [
+              9.734811811202507e-16,
+              1.3072919093482284e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "nonzero_port_load_original_recovery": 0.0,
+        "internal_coefficient_norm": 24.429535813277685,
+        "negative_controls": {
+          "omitted_facet": true,
+          "wrong_conjugate": true,
+          "wrong_normal": true,
+          "wrong_mode_order": true,
+          "wrong_orientation": true
+        },
+        "negative_controls_complete": true,
+        "cutoff_witness": {
+          "relative": [
+            1.456357049066933e-15,
+            1.4787464951791273e-15,
+            1.250905425984495e-15,
+            2.1234023446338582e-15
+          ],
+          "maximum": 2.1234023446338582e-15,
+          "offsets": [
+            -1e-08,
+            0.0,
+            1e-08
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "independent_physical_gauss": true
+        },
+        "cutoff_witness_relative": 2.1234023446338582e-15,
+        "ky": 2.623922587789049,
+        "nonidentity_orientation_count": 4,
+        "mode_keys": {
+          "items": 36,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "omitted_real_facet_rejected": true,
+        "passed": true
+      },
+      {
+        "role": "E4",
+        "degree": 4,
+        "phase": true,
+        "meta": {
+          "faces": 8,
+          "max_half_span": 1.5707963267948968,
+          "polynomial_degree": 4,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 0.14543635793961585,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "physical_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 1.0349504749986648e-16,
+            "maximum": 6.380422734273089e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.03086035994583137,
+            "maximum": 22.89447311656414,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 1.5626982808229297e-15,
+            "maximum": 3.76190476692832e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 1.7490993842223283e-17,
+            "maximum": 1.9868053498205117e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.007569759186121926,
+            "maximum": 0.5494287737980936,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 1.5242479412245407e-15,
+            "maximum": 3.920363109285849e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              2.767015557442098e-15,
+              2.3036415327604312e-15,
+              0.0
+            ],
+            [
+              3.117965395921827e-15,
+              3.307233310390619e-15,
+              0.0
+            ],
+            [
+              2.937269239701879e-15,
+              2.4077928873190324e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 5.338123754819212e-17,
+            "maximum": 3.889673882012272e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.0308603599458314,
+            "maximum": 22.89447311656417,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 1.0766290581726955e-15,
+            "maximum": 1.7297671719283634e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 1.3604414699202713e-17,
+            "maximum": 1.2942418303083783e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.007569759186121921,
+            "maximum": 0.5494287737980932,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 1.1599983952098506e-15,
+            "maximum": 3.3946358218665575e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              1.6299908364876565e-15,
+              1.6483914918854427e-15,
+              0.0
+            ],
+            [
+              1.548403044549671e-15,
+              2.0594521303690165e-15,
+              0.0
+            ],
+            [
+              1.613740717068136e-15,
+              1.84887652485226e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "nonzero_port_load_original_recovery": 0.0,
+        "internal_coefficient_norm": 40.592166824486384,
+        "negative_controls": {
+          "omitted_facet": true,
+          "wrong_conjugate": true,
+          "wrong_normal": true,
+          "wrong_mode_order": true,
+          "wrong_orientation": true
+        },
+        "negative_controls_complete": true,
+        "cutoff_witness": {
+          "relative": [
+            9.829126525630763e-16,
+            1.4675828382944046e-15,
+            1.020738726180821e-15,
+            1.443884792959864e-15
+          ],
+          "maximum": 1.4675828382944046e-15,
+          "offsets": [
+            -1e-08,
+            0.0,
+            1e-08
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "independent_physical_gauss": true
+        },
+        "cutoff_witness_relative": 1.4675828382944046e-15,
+        "ky": 2.623922587789049,
+        "nonidentity_orientation_count": 4,
+        "mode_keys": {
+          "items": 36,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "omitted_real_facet_rejected": true,
+        "passed": true
+      },
+      {
+        "role": "O6_LOCAL_ONLY",
+        "degree": 6,
+        "phase": false,
+        "meta": {
+          "faces": 8,
+          "max_half_span": 2.171568811482761,
+          "polynomial_degree": 6,
+          "oracle_points": [
+            24,
+            32
+          ],
+          "seconds": 1.1127804800635204,
+          "amplitude_pruning": false,
+          "algorithm": "affine_tensor_Fourier_Legendre_v1"
+        },
+        "physical_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 3.4959330604530487e-16,
+            "maximum": 2.4108117265264887e-13,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.03616245399537572,
+            "maximum": 26.893323998411297,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 6.9015925522397486e-15,
+            "maximum": 1.0260394658697406e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 7.31972234138756e-17,
+            "maximum": 6.289460324075669e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.009541463065135118,
+            "maximum": 0.6691455605026125,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 6.803062152843669e-15,
+            "maximum": 1.0296525033623447e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              9.658938661920414e-15,
+              1.0365134720548195e-14,
+              0.0
+            ],
+            [
+              7.996709719631068e-15,
+              9.158657370341653e-15,
+              0.0
+            ],
+            [
+              9.943509436772228e-15,
+              6.374083250059956e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "oracle_pair": {
+          "B_absolute": {
+            "items": 36,
+            "minimum": 1.3041185682575937e-16,
+            "maximum": 9.76035765365991e-14,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_denominator": {
+            "items": 36,
+            "minimum": 0.03616245399537575,
+            "maximum": 26.89332399841132,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "B_relative": {
+            "items": 36,
+            "minimum": 3.0452433547125252e-15,
+            "maximum": 3.693653920929619e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_absolute": {
+            "items": 36,
+            "minimum": 3.6228157354919775e-17,
+            "maximum": 2.6042228330770283e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_denominator": {
+            "items": 36,
+            "minimum": 0.00954146306513513,
+            "maximum": 0.6691455605026134,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "D_relative": {
+            "items": 36,
+            "minimum": 3.121368312374534e-15,
+            "maximum": 4.1134291351916565e-15,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_absolute": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_denominator": {
+            "items": 36,
+            "minimum": 1.790968563857945e-05,
+            "maximum": 0.05880000000000002,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "H_relative": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.0,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "nonzero_actions": [
+            [
+              4.009989197851806e-15,
+              4.4034568860270895e-15,
+              0.0
+            ],
+            [
+              3.158066502646159e-15,
+              4.022550044649178e-15,
+              0.0
+            ],
+            [
+              3.5786158242951896e-15,
+              2.340346323952072e-15,
+              0.0
+            ]
+          ],
+          "passed": true
+        },
+        "nonzero_port_load_original_recovery": 0.0,
+        "internal_coefficient_norm": 85.65437743041558,
+        "negative_controls": {
+          "omitted_facet": true,
+          "wrong_conjugate": true,
+          "wrong_normal": true,
+          "wrong_mode_order": true,
+          "wrong_orientation": true
+        },
+        "negative_controls_complete": true,
+        "cutoff_witness": {
+          "relative": [
+            5.2144197157208304e-15,
+            5.231516377267257e-15,
+            5.396394250738086e-15,
+            5.332145310071405e-15
+          ],
+          "maximum": 5.396394250738086e-15,
+          "offsets": [
+            -1e-08,
+            0.0,
+            1e-08
+          ],
+          "sides": [
+            "top",
+            "bottom"
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "independent_physical_gauss": true
+        },
+        "cutoff_witness_relative": 5.396394250738086e-15,
+        "ky": 2.623922587789049,
+        "nonidentity_orientation_count": 4,
+        "mode_keys": {
+          "items": 36,
+          "full": "hash-bound ignored original arrays/record"
+        },
+        "omitted_real_facet_rejected": true,
+        "passed": true
+      }
+    ],
+    "air": [
+      {
+        "z_sign": -1,
+        "native": 9.81680266880981e-12,
+        "physical_E": 1.4519572470247445e-11,
+        "physical_curl_H": 1.4607433385074398e-11,
+        "complex_modes": 1.963418561685176e-11,
+        "flux": {
+          "channels": 36,
+          "z_sign": -1,
+          "incoming_side": "top",
+          "outgoing_side": "bottom",
+          "per_mode_physical_power": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 1.0000000000004245,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_analytic_power": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.9999999999998375,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "independent_Poynting_vs_port_max_absolute": 3.030626916418581e-39,
+          "all_mode_vs_analytic_max_absolute": 5.870859354217828e-13,
+          "reflected": 2.0950927284286254e-22,
+          "transmitted": 1.0000000000004245,
+          "energy_closure": 4.2454928461665986e-13,
+          "physical_E_cross_H": true
+        },
+        "factor": {
+          "original_relative_residuals": [
+            9.81680266880981e-12
+          ],
+          "factor_count": 1,
+          "maximum_defect_corrections": 3,
+          "accepted_relative_residual": 9.81680266880981e-12
+        }
+      },
+      {
+        "z_sign": 1,
+        "native": 1.004761529697182e-11,
+        "physical_E": 1.4521038777545679e-11,
+        "physical_curl_H": 1.4610045598561493e-11,
+        "complex_modes": 1.8535421933209226e-11,
+        "flux": {
+          "channels": 36,
+          "z_sign": 1,
+          "incoming_side": "bottom",
+          "outgoing_side": "top",
+          "per_mode_physical_power": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 1.0000000000006097,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "per_mode_analytic_power": {
+            "items": 36,
+            "minimum": 0.0,
+            "maximum": 0.9999999999998377,
+            "full": "hash-bound ignored original arrays/record"
+          },
+          "independent_Poynting_vs_port_max_absolute": 3.885262148227581e-39,
+          "all_mode_vs_analytic_max_absolute": 7.720490913243339e-13,
+          "reflected": 1.4752808013859881e-22,
+          "transmitted": 1.0000000000006097,
+          "energy_closure": 6.09734485124136e-13,
+          "physical_E_cross_H": true
+        },
+        "factor": {
+          "original_relative_residuals": [
+            1.004761529697182e-11
+          ],
+          "factor_count": 1,
+          "maximum_defect_corrections": 3,
+          "accepted_relative_residual": 1.004761529697182e-11
+        }
+      }
+    ],
+    "small_sparse_LU_count": 2,
+    "local_LU_count": 0,
+    "body_q15_unchanged": true,
+    "old_q15_FAIL_preserved": true,
+    "no_O6_solve_permission": true,
+    "worker_wall_seconds": 524.1188257059548,
+    "neural_gain": "NOT_TESTED",
+    "production_qualified": false
+  },
+  "raw_index": {
+    "path": "benchmarks/artifacts/task42extra/index_v22_face_qualification_attempt2.json",
+    "sha256": "65914d80a9352637de88b6dc7852d31d9b5bfb4cf97b4d01b0b2f920fdebee89",
+    "bytes": 111737
+  }
+}
