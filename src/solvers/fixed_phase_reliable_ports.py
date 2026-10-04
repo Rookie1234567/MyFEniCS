@@ -887,12 +887,15 @@ def correction(design, role, artifact, marker, budget, source):
         expected_mode_hash=model["record"]["mode_manifest_sha256"],
     )
     total = total_field(s)
-    at = s["alpha_total_hi"].astype(np.clongdouble) + s["alpha_total_lo"].astype(
-        np.clongdouble
-    )
+    from src.solvers.affine_field_output import SplitVector
+
+    at = SplitVector(s["alpha_total_hi"], s["alpha_total_lo"])
     weak = np.r_[
-        total.map(independent.volume).physical_values() + BB @ at - p.a["total_g"],
-        -(DD @ total.hi + DD @ total.lo) + HH * at,
+        total.map(independent.volume).physical_values()
+        + at.map(lambda x: BB @ x).physical_values()
+        - p.a["total_g"],
+        -total.map(lambda x: DD @ x).physical_values()
+        + at.map(lambda x: HH * x).physical_values(),
     ]
     equation["independent_physical_weak"] = float(
         np.linalg.norm(weak) / np.linalg.norm(p.a["total_g"])

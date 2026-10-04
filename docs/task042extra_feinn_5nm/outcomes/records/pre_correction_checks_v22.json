@@ -1,8 +1,9 @@
 {
   "passed": true,
-  "tests": 42,
+  "tests": 47,
   "scope": "final V22 opt-in code, raw/checker and exact-zero RHS; no full pytest",
-  "junit_sha256": "3e97f2a8bbd9216c12a222efc1a84cdbf48570f8ea6381d71e0dcab5da8d5659",
+  "junit_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/pre_correction_tests.xml",
+  "junit_sha256": "8ff4cbfb650019887a8e3eb59488eb6f932b165162bf5d40afa027717199d170",
   "Ruff": "PASS",
   "compileall": "PASS",
   "CI": false,
@@ -12,8 +13,12 @@
       "sha256": "5f9abeedb454684e91d5345c8a4c60f8666b45fbbefef6c510e202cf546f9aef"
     },
     {
+      "path": "benchmarks/fixed_phase_checker.py",
+      "sha256": "0214790abe23cc261cd860440ca241d489f2441c3caf4f1d4d0eb64fca2ace7c"
+    },
+    {
       "path": "benchmarks/reliable_port_checker.py",
-      "sha256": "ff7721317254da23dc85bfd7f26ad4e5ea7a4f88dd78577ca026ec5ff39ce733"
+      "sha256": "00cd9818585b1f883a3f57f689bfcbb1c654c8128e965230011bb5fcbe52af39"
     },
     {
       "path": "scripts/launch_task42extra_durable.py",
@@ -61,7 +66,7 @@
     },
     {
       "path": "src/solvers/fixed_phase_reliable_ports.py",
-      "sha256": "5b5ed74e9ca1d975fb772d806d8eec3ba367d2251f609d009116a533e87b50d3"
+      "sha256": "8c40a953dd80105c9bc2d108fe3100d934d9ea9ce997a95e0b76c5e0602184bd"
     },
     {
       "path": "src/solvers/port_qualification_state.py",
@@ -80,6 +85,10 @@
       "sha256": "080e5880a7253f8caac33c2e2af14bacee2e660448b4816a810effefaa5843af"
     },
     {
+      "path": "src/test/test_reliable_comparison_roles.py",
+      "sha256": "c3606702df92c378217b8ef5226c2943a302932ed22f3f891a7546f72b99abc7"
+    },
+    {
       "path": "src/test/test_reliable_port_contract.py",
       "sha256": "bffb23432d4b558fd7213ee0fb0ea580fed47875421c0cc91419c0c886118884"
     },
@@ -92,42 +101,9 @@
       "sha256": "0be0c25c5a2d1132a6c5dab817f382135d26bd65a218a51d8940ac92c77aecdf"
     }
   ],
-  "bindings": [
-    {
-      "path": "tmp/task42extra/v22/P3_engineering_controlled_stop.json",
-      "sha256": "fe093ca147378759dd18441f763ad4336fa2ab7a14fa57408f1b0bee62f2141d"
-    },
-    {
-      "path": "tmp/task42extra/v22/RHS_equivalence.json",
-      "sha256": "7c42adda1967195a2923c88c501abaf86c7353d5bef9f9c56e98b8640307c6bc"
-    }
-  ],
-  "actual_FE_RHS_equivalence": {
-    "status": "PASS_REAL_G0_PHASE_P3_RHS_EQUIVALENCE",
-    "ordinary_default_changed": false,
-    "exact_zero_source_proved_by_definition": true,
-    "volume_or_operator_q15_changed": false,
-    "ordinary_q15_seconds": 57.45884091500193,
-    "explicit_zero_q15_seconds": 0.9384199159685522,
-    "q15_relative": 0.0,
-    "reliable_traction_pair_relative": 3.8112406300131497e-16,
-    "reliable_rules": [
-      47,
-      63
-    ],
-    "reliable_pair_seconds": 25.504950481001288,
-    "native_bytes_unchanged": true,
-    "all_340_modes": true,
-    "factors": 0,
-    "source_pde_modified": false,
-    "FE_body_assembly": false,
-    "scope": "saved physical model and original B; only RHS verification"
-  },
-  "small_or_Maxwell_factors": 0,
-  "P2_unchanged_component_qualification_reused": true,
-  "historical_junit_original_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/source_final_tests.xml",
-  "junit_path": null,
-  "junit_retention": "NOT_RETAINED_ORIGINAL_XML_BYTES",
-  "retention_reason": "The developmental harness reused source_final_tests.xml for the later 47-test run. The original 42-test supervisor log/receipt and original expected SHA remain; its XML bytes were overwritten. No reconstruction or replay is claimed.",
-  "historical_implementation_commit": "ce358dff94aef86e14d3246be9f61a8e403f53ee"
+  "qualification_source_parent": "ce358dff94aef86e14d3246be9f61a8e403f53ee",
+  "resource_receipt": {
+    "path": "tmp/task42extra/checks/v22_pre_correction_source_freeze_20261004T095553911609Z/summary.json",
+    "sha256": "1fb37c3395fc261e03bbb8c851202bd4f53167397e22906f55a688da88bd452b"
+  }
 }

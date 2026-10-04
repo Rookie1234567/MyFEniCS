@@ -360,29 +360,44 @@ def physics_from_arrays(z):
     )
 
 
-def compare_from_arrays(integrals, observables, algebra):
+def compare_from_arrays(
+    integrals, observables, algebra, *, role_aliases=None, comparison_pairs=None
+):
     """Producer status/relative errors are ignored: Gate is independently rebuilt."""
     import numpy as np
 
-    allowed = ("O3", "E3", "E4", "O6")
+    original_roles = ("O3", "E3", "E4", "O6")
+    aliases = {r: r for r in original_roles} if role_aliases is None else role_aliases
+    if not aliases or any(v not in original_roles for v in aliases.values()):
+        raise ValueError("INVALID_COMPARISON_ROLE_ALIAS")
+    allowed = tuple(aliases)
     if set(observables) != set(algebra) or not set(observables) <= set(allowed):
         raise ValueError("RETAINED_ROLE_COVERAGE_INCONSISTENT")
     roles = tuple(r for r in allowed if r in observables)
-    missing = [r for r in allowed if r not in roles]
+    missing = [r for r in original_roles if r not in {aliases[k] for k in roles}]
     physics = {r: physics_from_arrays(observables[r]) for r in roles}
     equations = {r: solved(algebra[r], reference=r == "O6") for r in roles}
     reference = (
-        "O6" in roles
+        role_aliases is None
+        and "O6" in roles
         and equations["O6"]["passed"]
         and physics["O6"]["raw_valid"]
         and physics["O6"]["energy_closure"] <= 1e-5
     )
-    pairs = [
-        (a, b)
-        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")]
-        + [("E3", "E4"), ("O3", "E3")]
-        if a in roles and b in roles
-    ]
+    pairs = (
+        comparison_pairs
+        if comparison_pairs is not None
+        else [
+            (a, b)
+            for a, b in [(r, "O6") for r in ("O3", "E3", "E4")]
+            + [("E3", "E4"), ("O3", "E3")]
+            if a in roles and b in roles
+        ]
+    )
+    if len(set(pairs)) != len(pairs) or any(
+        a == b or a not in roles or b not in roles for a, b in pairs
+    ):
+        raise ValueError("INVALID_OR_DUPLICATE_COMPARISON_PAIR")
     expected = {f"{a}_vs_{b}_q{q}" for a, b in pairs for q in (15, 30)}
     if set(integrals) != expected:
         raise ValueError("COMMON_INTEGRAL_COVERAGE_INCOMPLETE")
@@ -400,7 +415,7 @@ def compare_from_arrays(integrals, observables, algebra):
             or np.min(second) < 0
         ):
             raise ValueError("COMMON_INTEGRALS_INVALID")
-        threshold = 1e-3 if b == "E4" else 1e-4
+        threshold = 1e-3 if aliases[b] == "E4" else 1e-4
         fields = np.sqrt(first[0, :, 0]) / np.maximum(np.sqrt(first[0, :, 1]), 1e-12)
         mode_alignment = align_physical_modes(observables[a], observables[b])
         complex_errors, mode_errors = {}, {}
@@ -479,7 +494,8 @@ def compare_from_arrays(integrals, observables, algebra):
                 (
                     reference
                     if b == "O6"
-                    else b == "E4"
+                    else aliases[a] == "E3"
+                    and aliases[b] == "E4"
                     and equations[b]["passed"]
                     and physics[b]["raw_valid"]
                     and physics[b]["energy_closure"] <= 1e-5
@@ -493,6 +509,9 @@ def compare_from_arrays(integrals, observables, algebra):
         )
     return dict(
         schema="fixed_phase.independent-comparison.v1",
+        same_role_control_pairs=[
+            f"{a}_vs_{b}" for a, b in pairs if aliases[a] == aliases[b]
+        ],
         coverage="COMPLETE" if not missing else "PARTIAL",
         missing_roles=missing,
         physics=physics,

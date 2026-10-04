@@ -1,0 +1,66 @@
+{
+  "independent_raw_gates": {
+    "shared": true,
+    "roles": {
+      "O3": true,
+      "E3": true,
+      "E4": true,
+      "O6_LOCAL_ONLY": true
+    },
+    "whole": true
+  },
+  "small_component_arrays": {
+    "O3": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/O3_surface_oracles.npz",
+      "sha256": "4585d4a3fb1ff14855cc27bc404a42b264287eb1ec358dff62782c5eed4e303a",
+      "expected_modes": 36,
+      "passed": true
+    },
+    "E3": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/E3_surface_oracles.npz",
+      "sha256": "72f767763e84205ee7701ccd60a37836542c453bdd4a9ea6b1c58b9078b106e5",
+      "expected_modes": 36,
+      "passed": true
+    },
+    "E4": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/E4_surface_oracles.npz",
+      "sha256": "3ac80ea6dca721fc6527bbaa1645390d4d8630451c76ffac9048ebed36fce6a4",
+      "expected_modes": 36,
+      "passed": true
+    },
+    "O6_LOCAL_ONLY": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/O6_LOCAL_ONLY_surface_oracles.npz",
+      "sha256": "d1c6be84cd95cfceecabe35c3c69516ab61ea08b3eaf5ff510533af8f15d9ce5",
+      "expected_modes": 36,
+      "passed": true
+    }
+  },
+  "frozen_physical_arrays": {
+    "O3": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/surface_oracles.npz",
+      "sha256": "b8b43e7ebc6c0a8322b4dad3f44015c7522c642ab722eeabe2357f39bc92c317",
+      "expected_modes": 340,
+      "passed": true,
+      "native": 0.012671025490517514,
+      "trigger": false
+    },
+    "E3": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/surface_oracles.npz",
+      "sha256": "f1303de30305fd1ac42c739e9b8e04ac937fedf742b1bd330bc09f97eef5c334",
+      "expected_modes": 340,
+      "passed": true,
+      "native": 0.004417604162762992,
+      "trigger": true
+    },
+    "E4": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/surface_oracles.npz",
+      "sha256": "2f72f1be42c660b21dc6e09af41b47e3a1efcf52c5def3387611d14412fc9178",
+      "expected_modes": 340,
+      "passed": true,
+      "native": 0.00027550316874396983,
+      "trigger": true
+    }
+  },
+  "no_factor_or_solve": true,
+  "resource_scope": "pure process tree <=2GiB, own swap0; source hashes bound at clean implementation commit"
+}

@@ -396,6 +396,95 @@ def check_campaign(root, artifact):
                     identity_denominator="original native RHS norm, no phase fit",
                 )
             del a, s
+    corrections = {}
+    for role in ("E3", "E4"):
+        candidates = sorted(
+            (root / "benchmarks/artifacts/task42extra").glob(
+                "index_v22_" + role.lower() + "_correction_attempt*.json"
+            )
+        )
+        if not candidates:
+            continue
+        index = evidence_v22("v22_" + role.lower() + "_correction")
+        b = index["files"]
+        with np.load(b["native"]["path"], allow_pickle=False) as z:
+            a = {k: np.array(z[k]) for k in z.files}
+        with np.load(b["field"]["path"], allow_pickle=False) as z:
+            s = {k: np.array(z[k]) for k in z.files}
+        with np.load(b["observables"]["path"], allow_pickle=False) as z:
+            obs = {k: np.array(z[k]) for k in z.files}
+        identity = json.loads(Path(b["identity"]["path"]).read_text())
+        mode = identity["mode_manifest_sha256"]
+        arithmetic = check_state(a, s, mode_hash=mode, expected_mode_hash=mode)
+        corrections[role] = dict(
+            arithmetic=arithmetic,
+            physics=split_physics(obs),
+            independent_equations=raw_equations(a, s),
+            origin_low_components_consumed=True,
+            reference_qualified=False,
+            production_qualified=False,
+            independent_physical_weak=index["result"]["full_equation"].get(
+                "independent_physical_weak"
+            ),
+        )
+        del a, s, obs
+    comparisons = None
+    paths = sorted(
+        (root / "benchmarks/artifacts/task42extra").glob(
+            "index_v22_corrected_compare_attempt*.json"
+        )
+    )
+    if paths:
+        from benchmarks.fixed_phase_checker import compare_from_arrays
+
+        idx = evidence_v22("v22_corrected_compare")
+        if "integrals" in idx["files"]:
+            book = json.loads(Path(idx["files"]["role_indices"]["path"]).read_text())
+            with np.load(idx["files"]["integrals"]["path"], allow_pickle=False) as z:
+                integrals = {k: np.array(z[k]) for k in z.files}
+            observations, algebra = {}, {}
+            for name, row in book.items():
+                for b in row["files"].values():
+                    if sha(b["path"]) != b["sha256"]:
+                        raise ValueError("COMPARISON_RAW_INPUT_HASH")
+                with np.load(
+                    row["files"]["observables"]["path"], allow_pickle=False
+                ) as z:
+                    observations[name] = {k: np.array(z[k]) for k in z.files}
+                stat = (
+                    corrections[name[4:]] if name.startswith("new_") else rows[name[4:]]
+                )
+                e = stat["independent_equations"]
+                recovery = max(
+                    stat["arithmetic"]["rows"][k]["original_coordinates_relative"]
+                    for k in ("total", "scattered", "background")
+                )
+                algebra[name] = dict(
+                    e,
+                    recovery=recovery,
+                    channels=len(stat["physics"]["per_level_power"]),
+                    full_FE_recovered=bool(stat["arithmetic"]["exact_sum_identity"]),
+                )
+                if name.startswith("new_"):
+                    # Reuse this independently assembled weak-form numeric
+                    # measurement, not a producer status or subset PASS.
+                    algebra[name]["independent_physical_weak"] = stat[
+                        "independent_physical_weak"
+                    ]
+            pairs = [
+                ("old_" + r, "new_" + r)
+                for r in ("E3", "E4")
+                if "new_" + r in observations
+            ]
+            if "new_E3" in observations and "new_E4" in observations:
+                pairs.append(("new_E3", "new_E4"))
+            comparisons = compare_from_arrays(
+                integrals,
+                observations,
+                algebra,
+                role_aliases={r: r[4:] for r in observations},
+                comparison_pairs=pairs,
+            )
     return dict(
         stage_qualified=True,
         audit_completed=True,
@@ -404,6 +493,8 @@ def check_campaign(root, artifact):
         independent_face_gate=q,
         independent_face_arrays=face_arrays,
         frozen_native=frozen,
+        corrected_native=corrections,
+        corrected_comparison=comparisons,
         no_FE_or_factor=True,
         reference_qualified=False,
         production_qualified=False,

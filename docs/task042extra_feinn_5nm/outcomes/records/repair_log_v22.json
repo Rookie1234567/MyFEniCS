@@ -31,6 +31,23 @@
       "change": "named def, then 42-tests/Ruff/compileall rerun",
       "formal_repair_round": false,
       "old_failed_costs_preserved": true
+    },
+    {
+      "phase": "developmental_checker_fixture",
+      "failure": "Initial role fixture lacked mandatory independent_physical_weak/channels/full_FE_recovered fields; 1 failed, 4 passed",
+      "hypothesis": "Fixture schema was incomplete, not a numerical failure",
+      "change": "Complete fixture fields; production checker carries actual independent weak-form measurement and checks old/new pairs separately",
+      "test": "5 targeted role tests, then 47 targeted tests/Ruff/compileall pass",
+      "formal_repair_round": false,
+      "old_failed_costs_preserved": true
+    },
+    {
+      "phase": "developmental_evidence_retention",
+      "failure": "A shared developmental XML output path overwrote the original 42-test XML with the 47-test output",
+      "change": "Keep original expected hash and supervisor receipt, explicitly mark original XML NOT_RETAINED; freeze latest XML at a unique immutable path",
+      "test": "All 47 tested source hashes and immutable XML hash checked before implementation commit",
+      "formal_repair_round": false,
+      "replayed_old_tests_for_history": false
     }
   ],
   "formal_repairs": [
