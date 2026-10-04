@@ -841,6 +841,7 @@ def _vec_nonzero_owned_entries(
     vec: PETSc.Vec,
     *,
     relative_tol: float = 1.0e-13,
+    absolute_floor: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return owned significant entries using a scale-homogeneous cutoff.
 
@@ -861,7 +862,7 @@ def _vec_nonzero_owned_entries(
             op=MPI.MAX,
         )
     )
-    cutoff = relative_tol * global_maximum
+    cutoff = max(float(absolute_floor), relative_tol * global_maximum)
     nz = np.flatnonzero(np.abs(values) > cutoff)
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
 
@@ -874,6 +875,7 @@ def _combine_owned_entries(
     *,
     comm: MPI.Intracomm,
     relative_tol: float = 1.0e-13,
+    absolute_floor: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Combine component functionals with a scale-homogeneous cutoff."""
     row_blocks: list[np.ndarray] = []
@@ -903,7 +905,7 @@ def _combine_owned_entries(
         summed_values = np.asarray([], dtype=np.complex128)
     local_maximum = float(np.max(np.abs(summed_values), initial=0.0))
     global_maximum = float(comm.allreduce(local_maximum, op=MPI.MAX))
-    cutoff = relative_tol * global_maximum
+    cutoff = max(float(absolute_floor), relative_tol * global_maximum)
     keep = np.abs(summed_values) > cutoff
     return _idx(unique_rows[keep]), summed_values[keep].copy()
 
@@ -1135,20 +1137,31 @@ class _ReusableSurfaceComponentAssembler:
         *,
         quadrature_degree: int | None = None,
         jit_options: Mapping[str, Any] | None = None,
+        boundary_reference_z: float | None = None,
+        verify_compiled_gauss: bool = False,
     ):
         if component not in {0, 1}:
             raise ValueError(
                 "Stage-4 DtN port component assembly only supports x/y tangential components."
             )
         self.comm = mesh_data.mesh.comm
+        self.quadrature_degree = quadrature_degree
+        self.boundary_tag = int(tag)
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         x = ufl.SpatialCoordinate(mesh_data.mesh)
+        self.boundary_reference_z = boundary_reference_z
+        if boundary_reference_z is None:
+            phase_z = x[2]
+        else:
+            if not np.isfinite(boundary_reference_z):
+                raise ValueError("boundary reference plane is nonfinite")
+            phase_z = x[2] - PETSc.ScalarType(boundary_reference_z)
         phase = ufl.exp(
             PETSc.ScalarType(1j) * self.alpha * x[0]
             + PETSc.ScalarType(1j) * self.gamma * x[1]
-            + PETSc.ScalarType(1j) * self.kz * x[2]
+            + PETSc.ScalarType(1j) * self.kz * phase_z
         )
         vector = [PETSc.ScalarType(0.0), PETSc.ScalarType(0.0), PETSc.ScalarType(0.0)]
         vector[component] = phase
@@ -1164,6 +1177,11 @@ class _ReusableSurfaceComponentAssembler:
             _with_quadrature_degree(form, quadrature_degree),
             **jit_kwargs,
         )
+        if boundary_reference_z is not None or verify_compiled_gauss:
+            from .dtn_boundary_phase_gauge import compiled_surface_quadrature_identity
+            self.compiled_gauss_identity = compiled_surface_quadrature_identity(
+                _with_quadrature_degree(form, quadrature_degree), self.form,
+                semantic_constants={"alpha": self.alpha, "gamma": self.gamma, "kz": self.kz})
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
         _set_scalar_constant(self.alpha, mode.alpha)
@@ -1171,7 +1189,7 @@ class _ReusableSurfaceComponentAssembler:
         _set_scalar_constant(self.kz, mode.k_vector[2])
         vec = _assemble_mpc_form_vector(self.form, mpc)
         try:
-            return _vec_nonzero_owned_entries(vec)
+            return _vec_nonzero_owned_entries(vec, absolute_floor=0.0)
         finally:
             vec.destroy()
 

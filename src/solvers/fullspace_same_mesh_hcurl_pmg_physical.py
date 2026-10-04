@@ -35,8 +35,13 @@ def _surface_assemblers(
     qdegree: int,
     *,
     jit_options: Mapping[str, Any] | None = None,
+    dtn_phase_gauge: str = "global_z",
+    verify_dtn_quadrature: bool = False,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
+    from .dtn_boundary_phase_gauge import BOUNDARY_PLANE, validate_phase_gauge
+
+    validate_phase_gauge(dtn_phase_gauge)
 
     return {
         (side, component): _ReusableSurfaceComponentAssembler(
@@ -46,6 +51,11 @@ def _surface_assemblers(
             component,
             quadrature_degree=qdegree,
             jit_options=jit_options,
+            boundary_reference_z=(
+                float(cfg.physical_z_max if side == "top" else cfg.physical_z_min)
+                if dtn_phase_gauge == BOUNDARY_PLANE else None
+            ),
+            verify_compiled_gauss=verify_dtn_quadrature,
         )
         for side in ("top", "bottom")
         for component in (0, 1)
@@ -96,6 +106,8 @@ def build_same_mesh_physical_action(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
+    dtn_phase_gauge: str = "global_z",
+    verify_dtn_quadrature: bool = False,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -108,6 +120,12 @@ def build_same_mesh_physical_action(
     """
 
     from .common_3d_forms import _validate_physical_split_profile
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        build_gauge_assembly_context,
+        incident_projection_in_solver_coordinates,
+        validate_phase_gauge,
+    )
     from .dtn_port_3d import _dtn_surface_quadrature_degree
     from .dtn_port_3d import _incident_projection_onto_top_mode
     from .fullspace_dtn_action import (
@@ -119,6 +137,7 @@ def build_same_mesh_physical_action(
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
     degree = int(degree)
+    validate_phase_gauge(dtn_phase_gauge)
     _validate_physical_split_profile(cfg)
     try:
         function_space = setup["spaces"][degree]
@@ -148,18 +167,33 @@ def build_same_mesh_physical_action(
         cfg,
         qdegree,
         jit_options=options,
+        dtn_phase_gauge=dtn_phase_gauge,
+        verify_dtn_quadrature=verify_dtn_quadrature,
     )
     carrier = None
     dtn_action = None
     volume_action = None
     physical_action = None
+    assembly_context = None
+    compiled_gauss = None
     try:
+        if dtn_phase_gauge == BOUNDARY_PLANE:
+            assembly_context = build_gauge_assembly_context(
+                function_space, setup["mesh_data"], floquet.mpc, cfg, qdegree, assemblers
+            )
         carrier = build_fullspace_dtn_carrier_from_surface(
-            modes, assemblers, floquet.mpc, cfg
+            modes, assemblers, floquet.mpc, cfg,
+            phase_gauge=dtn_phase_gauge,
+            assembly_context=assembly_context,
         )
     finally:
         # The carrier owns copied sparse functionals; assemblers own only the
         # temporary compiled surface forms and their phase constants.
+        if verify_dtn_quadrature or dtn_phase_gauge == BOUNDARY_PLANE:
+            compiled_gauss = {
+                f"{side}/{component}": assembler.compiled_gauss_identity
+                for (side, component), assembler in assemblers.items()
+            }
         del assemblers
     try:
         dtn_action = build_fullspace_dtn_action(
@@ -179,9 +213,20 @@ def build_same_mesh_physical_action(
         dtn_action = None
         volume_action = None
         incident_projections = tuple(
-            _incident_projection_onto_top_mode(mode, cfg) for mode in modes
+            incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
+            if dtn_phase_gauge == BOUNDARY_PLANE else _incident_projection_onto_top_mode(mode, cfg)
+            for mode in modes
         )
         return {
+            **({
+                "dtn_phase_gauge": dtn_phase_gauge,
+                "physical_generator_manifest_sha256": mode_sha,
+                "assembly_mode_manifest_sha256": carrier.mode_manifest_sha256,
+                "assembly_context_sha256": carrier.assembly_context_sha256,
+                "compiled_surface_gauss_identity": compiled_gauss,
+                "solver_auxiliary_coordinate": "boundary_plane",
+                "global_output_conversion": "explicit-representability-gated",
+            } if dtn_phase_gauge == BOUNDARY_PLANE else {}),
             "schema": "task038.same_mesh_hcurl_pmg.physical-action.v1",
             "setup": setup,
             "cfg": cfg,

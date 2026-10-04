@@ -32,6 +32,16 @@ from .hcurl_assembly_time_condensation import (
     _cell_trace_expansion,
     _strict_local_lu,
 )
+from .original_port_blocks import (
+    DenseOriginalPortBlock,
+    DiagonalOriginalPortBlock,
+)
+from .retained_port_block_layout import (
+    LEGACY_PORT_LAYOUT,
+    RESEARCH_PORT_LAYOUT,
+    build_cached_port_representation,
+    port_block_representation_identity,
+)
 
 
 P6_DIRECT_TERM_BUILD_CHUNK_ENTRIES = 32 * 1024
@@ -366,12 +376,14 @@ class P6CellCondensedAction:
         self,
         condensed: AssemblyTimeCondensedSystem,
         *,
-        H_p: Any,
+        H_p: Any | None,
         port_terms: Mapping[int, P6CellPortTerms] | None = None,
         direct_trace_terms: Sequence[P6DirectTracePortTerms] = (),
         direct_terms_are_owned: bool = False,
         owns_condensed: bool = False,
         port_coupling_mode: str = "cached",
+        port_block_layout: str = LEGACY_PORT_LAYOUT,
+        original_port_block: Any | None = None,
     ) -> None:
         if condensed.matrix is not None:
             raise ValueError("p6 action-only condensation cannot borrow a materialized matrix")
@@ -380,6 +392,11 @@ class P6CellCondensedAction:
             raise ValueError("p6 action-only condensation requires retained local Schur classes")
         if port_coupling_mode not in {"cached", "streamed"}:
             raise ValueError("port_coupling_mode must be 'cached' or 'streamed'")
+        if port_block_layout not in {LEGACY_PORT_LAYOUT, RESEARCH_PORT_LAYOUT}:
+            raise ValueError("unknown original/condensed port-block layout")
+        if port_block_layout == RESEARCH_PORT_LAYOUT and port_coupling_mode != "cached":
+            raise ValueError("cached representation requires cached local XiB data")
+        self.port_block_layout = str(port_block_layout)
         self.port_coupling_mode = str(port_coupling_mode)
         self.condensed = condensed
         self.owns_condensed = bool(owns_condensed)
@@ -390,9 +407,23 @@ class P6CellCondensedAction:
         # Hlocal contributions are merged into this original carrier block
         # below.  Own the copy explicitly so construction never mutates the
         # caller's carrier array; the large class payloads remain borrowed.
-        self._H_p = np.array(_complex_matrix(H_p, "H_p"), dtype=np.complex128, copy=True, order="C")
-        if self._H_p.shape != (condensed.appended_rows, condensed.appended_rows):
-            raise ValueError("H_p shape differs from the appended port block")
+        self._original_port_block = None
+        self._condensed_port_block = None
+        if self.port_block_layout == LEGACY_PORT_LAYOUT:
+            if H_p is None or original_port_block is not None:
+                raise ValueError("legacy layout requires dense H_p and no original_port_block")
+            self._H_p = np.array(_complex_matrix(H_p, "H_p"), dtype=np.complex128, copy=True, order="C")
+            if self._H_p.shape != (condensed.appended_rows, condensed.appended_rows):
+                raise ValueError("H_p shape differs from the appended port block")
+        else:
+            if H_p is not None or not isinstance(
+                original_port_block, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)
+            ):
+                raise ValueError("research layout requires an explicit diagonal/dense original_port_block and H_p=None")
+            if original_port_block.count != condensed.appended_rows:
+                raise ValueError("original_port_block size differs from the appended port rows")
+            self._H_p = None
+            self._original_port_block = original_port_block
         self._port_terms = dict(port_terms or {})
         unknown_cells = set(self._port_terms).difference(range(len(condensed.cell_recovery_maps)))
         if unknown_cells:
@@ -409,7 +440,15 @@ class P6CellCondensedAction:
         # Hhat then receives only the internal-elimination correction.
         for cell in self._cells:
             if len(cell.ports) and cell.Hlocal is not None:
-                self._H_p[np.ix_(cell.ports, cell.ports)] += cell.Hlocal
+                if self._H_p is None:
+                    # The opt-in representation helper admits only absent or
+                    # exactly-zero Hlocal; it must never silently drop a term.
+                    if np.any(cell.Hlocal != 0):
+                        raise NotImplementedError(
+                            "research original-H representation does not admit nonzero Hlocal"
+                        )
+                else:
+                    self._H_p[np.ix_(cell.ports, cell.ports)] += cell.Hlocal
         self._direct_terms = tuple(
             term
             if direct_terms_are_owned
@@ -437,7 +476,12 @@ class P6CellCondensedAction:
         direct_output_storage_count, direct_output_backing_bytes = (
             _unique_numpy_backing_inventory(direct_output_arrays)
         )
-        if self.port_coupling_mode == "cached":
+        if self.port_block_layout == RESEARCH_PORT_LAYOUT:
+            self._original_port_block, self._condensed_port_block = build_cached_port_representation(
+                self._original_port_block, self._cells
+            )
+            self._Hhat = None
+        elif self.port_coupling_mode == "cached":
             self._Hhat = self._H_p.copy()
             for cell in self._cells:
                 if len(cell.ports):
@@ -461,8 +505,13 @@ class P6CellCondensedAction:
             "active_trace_rows": int(condensed.active_rows),
             "appended_port_rows": int(condensed.appended_rows),
             "H_p_is_original_carrier_block": True,
-            "Hhat_is_retained_small_dense_block": self.port_coupling_mode == "cached",
-            "Hhat_is_resident": self.port_coupling_mode == "cached",
+            "port_block_layout": self.port_block_layout,
+            "Hhat_is_retained_small_dense_block": (
+                self.port_coupling_mode == "cached" and self.port_block_layout == LEGACY_PORT_LAYOUT
+            ),
+            "Hhat_is_resident": (
+                self.port_coupling_mode == "cached" and self.port_block_layout == LEGACY_PORT_LAYOUT
+            ),
             "port_coupling_mode": self.port_coupling_mode,
             "shared_S_V_buffer_count": len({id(cell.S_V) for cell in self._cells}),
             "shared_recovery_buffer_count": len({id(cell.recovery) for cell in self._cells}),
@@ -561,6 +610,8 @@ class P6CellCondensedAction:
             for values in (bhat, dhat, xib):
                 if values is not None and not np.isfinite(values).all():
                     raise ValueError("local p6 condensed port data contains non-finite values")
+            port_indices = np.asarray(ports, dtype=PETSc.IntType).copy()
+            port_indices.flags.writeable = False
             result.append(
                 _CellActionData(
                     original_interiors=np.asarray(cell.interior_original_dofs, dtype=PETSc.IntType).copy(),
@@ -576,7 +627,7 @@ class P6CellCondensedAction:
                     Bt=_readonly(bt),
                     Di=_readonly(di),
                     Dt=_readonly(dt),
-                    ports=np.asarray(ports, dtype=PETSc.IntType),
+                    ports=port_indices,
                     Bhat=None if bhat is None else _readonly(bhat),
                     Dhat=None if dhat is None else _readonly(dhat),
                     XiB=None if xib is None else _readonly(xib),
@@ -716,15 +767,54 @@ class P6CellCondensedAction:
 
     @property
     def H_p(self) -> np.ndarray:
-        """Borrow a readonly copy of the original carrier port block."""
+        """Return the dense legacy H_p copy when that representation exists."""
 
+        if self._H_p is None:
+            raise RuntimeError("H_p is stored by the explicit port-block representation")
         return self._H_p.copy()
 
+    def _apply_original_h(self, values: Any) -> np.ndarray:
+        if self._H_p is not None:
+            return np.ascontiguousarray(self._H_p @ values)
+        assert self._original_port_block is not None
+        return self._original_port_block.apply(values)
+
+    def _original_h_solve(self, values: Any) -> np.ndarray:
+        if self._H_p is not None:
+            return np.ascontiguousarray(np.linalg.solve(self._H_p, values))
+        assert self._original_port_block is not None
+        return self._original_port_block.solve(values)
+
+    @property
+    def port_block_representation_identity(self) -> Mapping[str, Any] | None:
+        if self.port_block_layout != RESEARCH_PORT_LAYOUT:
+            return None
+        assert self._original_port_block is not None and self._condensed_port_block is not None
+        return MappingProxyType(port_block_representation_identity(
+            self._original_port_block, self._condensed_port_block, layout=self.port_block_layout
+        ))
+
     def _materialize_Hhat(self) -> np.ndarray:
+        if self.port_block_layout == RESEARCH_PORT_LAYOUT:
+            if self._Hhat is not None:
+                return self._Hhat.copy()
+            assert self._original_port_block is not None and self._condensed_port_block is not None
+            if isinstance(self._original_port_block, DiagonalOriginalPortBlock):
+                result = self._original_port_block.materialize_for_small_oracle(
+                    max_bytes=16 * self.condensed.appended_rows**2
+                )
+            else:
+                result = np.array(self._original_port_block._matrix, copy=True, order="C")
+            for correction in self._condensed_port_block._corrections:
+                result[np.ix_(correction.port_indices, correction.port_indices)] += (
+                    correction.Di @ correction.XiB
+                )
+            return result
         if self._Hhat is not None:
             return self._Hhat.copy()
         # Explicit requests may build this block temporarily.  The streamed
         # apply path never calls this method and retains only the original H_p.
+        assert self._H_p is not None
         result = self._H_p.copy()
         for cell in self._cells:
             if not len(cell.ports):
@@ -850,7 +940,11 @@ class P6CellCondensedAction:
                 ),
                 "unique_port_payload_owner_count": len(owners),
                 "unique_port_payload_owner_bytes": int(sum(owners.values())),
-                "resident_H_p_bytes": int(self._H_p.nbytes),
+                "resident_H_p_bytes": int(
+                    self._H_p.nbytes if self._H_p is not None else
+                    sum(array.nbytes for array in self._original_port_block.numeric_arrays)
+                ),
+                "original_H_representation": self.port_block_layout,
                 "resident_Hhat_bytes": 0 if self._Hhat is None else int(self._Hhat.nbytes),
                 "Hhat_materialized": self._Hhat is not None,
                 "per_cell_transformed_arrays_resident": self.port_coupling_mode == "cached",
@@ -876,7 +970,14 @@ class P6CellCondensedAction:
             {
                 "schema_version": "task039extra.v19.p6-cell-condensed-cache-identity.v1",
                 "class_payloads": classes,
-                "H_p_sha256": _array_sha256(self._H_p),
+                "H_p_sha256": (
+                    _array_sha256(self._H_p) if self._H_p is not None
+                    else self._original_port_block.identity_sha256
+                ),
+                "port_block_representation_identity": (
+                    None if self.port_block_layout == LEGACY_PORT_LAYOUT
+                    else dict(self.port_block_representation_identity)
+                ),
                 "Hhat_sha256": None if self._Hhat is None else _array_sha256(self._Hhat),
                 "Hhat_materialized": self._Hhat is not None,
                 "port_coupling_mode": self.port_coupling_mode,
@@ -1005,7 +1106,7 @@ class P6CellCondensedAction:
             ).reshape(-1)
             del local_trace, local_action, port_action
 
-        hp_action = self._H_p @ alpha
+        hp_action = self._apply_original_h(alpha)
         self._streamed_max_local_scratch_bytes = max(
             self._streamed_max_local_scratch_bytes, int(hp_action.nbytes)
         )
@@ -1031,7 +1132,10 @@ class P6CellCondensedAction:
             result[cell.active_ids] += np.asarray(cell.expansion.conjugate().T @ local_action).reshape(-1)
             if len(cell.ports):
                 result[self.condensed.active_rows + cell.ports] += -cell.Dhat @ local_trace
-        result[self.condensed.active_rows :] += self._Hhat @ alpha
+        if self._Hhat is not None:
+            result[self.condensed.active_rows :] += self._Hhat @ alpha
+        else:
+            result[self.condensed.active_rows :] += self._condensed_port_block.apply(alpha)
         self._add_direct_reduced(result, alpha, active)
         self._apply_count += 1
         return np.ascontiguousarray(result)
@@ -1095,7 +1199,7 @@ class P6CellCondensedAction:
         """Solve with the original ``H_p`` (never with ``Hhat``)."""
 
         values = _complex_vector(rhs, "H_p RHS", size=self.condensed.appended_rows)
-        result = np.ascontiguousarray(np.linalg.solve(self._H_p, values))
+        result = self._original_h_solve(values)
         if not np.isfinite(result).all():
             raise FloatingPointError("H_p solve returned non-finite values")
         self._hp_solve_count += 1
@@ -1282,7 +1386,7 @@ class P6CellCondensedAction:
         native_effective_rhs = rhs - self.apply_B_full(hp_inverse_port_rhs)
         native_residual = native_effective_rhs - native_output
         port_action = self.apply_D_full(field)
-        augmented_port_residual = ports_rhs + port_action - self._H_p @ alpha
+        augmented_port_residual = ports_rhs + port_action - self._apply_original_h(alpha)
         reduced_rhs = self.reduce_rhs(
             rhs,
             port_rhs=ports_rhs,
@@ -1362,7 +1466,7 @@ class P6CellCondensedAction:
         native_scale = float(np.linalg.norm(native_effective_rhs))
         port_scale = (
             float(np.linalg.norm(port_action))
-            + float(np.linalg.norm(self._H_p @ alpha))
+            + float(np.linalg.norm(self._apply_original_h(alpha)))
             + float(np.linalg.norm(ports_rhs))
         )
         schur_operation_scale = float(
@@ -1410,7 +1514,7 @@ class P6CellCondensedAction:
             ),
             "native_rhs_norm": float(np.linalg.norm(rhs)),
             "port_action_norm": float(np.linalg.norm(port_action)),
-            "port_hp_solution_norm": float(np.linalg.norm(self._H_p @ alpha)),
+            "port_hp_solution_norm": float(np.linalg.norm(self._apply_original_h(alpha))),
             "hp_solve_count": int(self._hp_solve_count),
             "native_identity_formula": "e_FE-B*H_p^{-1}*e_p",
             "strict_zero_slave_storage": True,
@@ -1493,6 +1597,8 @@ def build_p6_cell_condensed_action_from_carrier(
     owns_condensed: bool = False,
     port_coupling_mode: str = "cached",
     bounded_direct_term_build: bool = False,
+    port_block_layout: str = LEGACY_PORT_LAYOUT,
+    original_port_block: Any | None = None,
 ) -> P6CellCondensedAction:
     """Translate a native carrier into local/internal and direct trace terms.
 
@@ -1506,12 +1612,25 @@ def build_p6_cell_condensed_action_from_carrier(
     entries = tuple(getattr(carrier, "entries", ()))
     if len(entries) != condensed.appended_rows:
         raise ValueError("carrier entry count differs from appended port rows")
-    if H_p is None:
-        hp = np.zeros((condensed.appended_rows, condensed.appended_rows), dtype=np.complex128)
-        for port, entry in enumerate(entries):
-            hp[port, port] = complex(getattr(entry, "normalization_h"))
+    if port_block_layout == LEGACY_PORT_LAYOUT:
+        if original_port_block is not None:
+            raise ValueError("legacy layout does not accept original_port_block")
+        if H_p is None:
+            hp = np.zeros((condensed.appended_rows, condensed.appended_rows), dtype=np.complex128)
+            for port, entry in enumerate(entries):
+                hp[port, port] = complex(getattr(entry, "normalization_h"))
+        else:
+            hp = _complex_matrix(H_p, "H_p", shape=(condensed.appended_rows, condensed.appended_rows))
+    elif port_block_layout == RESEARCH_PORT_LAYOUT:
+        if H_p is not None or not isinstance(
+            original_port_block, (DiagonalOriginalPortBlock, DenseOriginalPortBlock)
+        ):
+            raise ValueError("research layout requires H_p=None and an explicit original_port_block")
+        if original_port_block.count != condensed.appended_rows:
+            raise ValueError("original_port_block size differs from the carrier mode count")
+        hp = None
     else:
-        hp = _complex_matrix(H_p, "H_p", shape=(condensed.appended_rows, condensed.appended_rows))
+        raise ValueError("unknown original/condensed port-block layout")
     interior_locations: dict[int, tuple[int, int]] = {}
     for index, cell in enumerate(condensed.cell_recovery_maps):
         for local, original in enumerate(cell.interior_original_dofs):
@@ -1630,6 +1749,8 @@ def build_p6_cell_condensed_action_from_carrier(
         direct_terms_are_owned=bounded_direct_term_build,
         owns_condensed=owns_condensed,
         port_coupling_mode=port_coupling_mode,
+        port_block_layout=port_block_layout,
+        original_port_block=original_port_block,
     )
 
 

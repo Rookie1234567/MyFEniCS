@@ -24,7 +24,6 @@ from ..constraints.floquet_constraint import (
 )
 from ..geometry.mesh_builder import build_mesh
 from ..postprocessing.power_metrics import compute_power_metrics
-from ..postprocessing.postprocess import save_fields_and_plots
 
 
 def _petsc_to_csr(A: PETSc.Mat):
@@ -351,6 +350,11 @@ def run_case(
     E_total = fem.Function(E_scat.function_space, name="E_total")
     E_total.x.array[:] = E_inc_output.x.array[:] + E_scat.x.array[:]
     E_total.x.scatter_forward()
+
+    # Plotting is optional for solver-only imports (including headless
+    # benchmark/checker processes).  Import it only when this routine reaches
+    # the explicit field-output stage.
+    from ..postprocessing.postprocess import save_fields_and_plots
 
     field_metrics = save_fields_and_plots(
         mesh_data, cfg, E_inc_output, E_scat, E_total, out_dir

@@ -165,6 +165,18 @@ def global_swap_stop(baseline, current, *, enabled=False):
     return None
 
 
+def _external_guard_stop_reason(first_reason, facts):
+    """Apply an external stop without overwriting the first observed cause."""
+    if not isinstance(facts, dict) or type(facts.get('stop')) is not bool:
+        return first_reason or 'MONITORING_FAILED'
+    if facts['stop'] is not True:
+        return first_reason
+    reason = facts.get('reason')
+    if not isinstance(reason, str) or not reason.strip():
+        return first_reason or 'MONITORING_FAILED'
+    return first_reason or reason
+
+
 def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
     hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY', 'GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED', 'PC_TIME_CONTROLLED_STOP')
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
@@ -212,7 +224,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
               active_pc_seconds: float | None = None,
               time_policy: str = V14_TIME_POLICY_ENFORCE,
               memory_policy: str = LEGACY_MEMORY_POLICY,
-              pss_sampling_policy: str = 'sampled') -> dict:
+              pss_sampling_policy: str = 'sampled',
+              external_guard=None) -> dict:
     """Supervise one command, with an explicit workflow wall budget."""
     try:
         time_policy = normalize_v14_time_policy(time_policy)
@@ -246,6 +259,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
         raise ValueError(
             'swap observation-only mode cannot enforce the global swap gate'
         )
+    if external_guard is not None and not callable(external_guard):
+        raise TypeError('external_guard must be callable when supplied')
     if active_pc_seconds is not None and (
             not 0 < float(active_pc_seconds) < float('inf') or
             phase_path is None or not timebase_guard or not hard_stop_immediate):
@@ -489,6 +504,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                     sample['global_swap_stop_reason'] = swap_reason
                     if swap_reason is not None and reason not in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED'):
                         reason = swap_reason
+                if external_guard is not None:
+                    try:
+                        external_facts = external_guard()
+                        sample['external_guard'] = external_facts
+                        reason = _external_guard_stop_reason(reason, external_facts)
+                    except BaseException as exc:
+                        sample['external_guard'] = {
+                            'stop': True, 'reason': 'MONITORING_FAILED',
+                            'exception_type': type(exc).__name__, 'exception_message': str(exc),
+                        }
+                        reason = reason or 'MONITORING_FAILED'
                 sample.update({'elapsed_seconds': elapsed, 'memory_envelope': current,
                                'worker_phase': phase,
                                'launch_cap_bytes': current_cap,
