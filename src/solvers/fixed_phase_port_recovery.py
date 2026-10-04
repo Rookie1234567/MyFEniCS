@@ -255,6 +255,7 @@ def saved_p3(design, bindings, artifact, marker, budget, source):
         physics = self_physics(model, packet, c, alpha, out, marker, budget)
         result = dict(
             role=role,
+            identity=identity,
             stage_qualified=checker["passed"]
             and volume["passed"]
             and ports["passed"]

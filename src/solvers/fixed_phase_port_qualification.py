@@ -4,6 +4,28 @@ import gc
 import numpy as np
 
 
+def nonzero_fixture_background(model):
+    """Only the small ordinary-p6 recovery fixture uses this manufactured field."""
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+
+    if (
+        not model["design"].get("fixture")
+        or model["record"]["degree"] != 6
+        or model["record"]["cells"] != 8
+        or np.any(model["kappa"] != 0)
+    ):
+        raise ValueError("MANUFACTURED_BACKGROUND_ONLY_FOR_ORDINARY_P6_FIXTURE")
+    space, mpc = model["space"], model["floquet"].mpc
+    count = space.dofmap.index_map.size_local
+    masters = np.setdiff1d(np.arange(count), mpc.slaves)
+    rng = np.random.default_rng(422106)
+    storage = np.zeros(count, complex)
+    storage[masters] = rng.normal(size=len(masters)) + 1j * rng.normal(
+        size=len(masters)
+    )
+    return restore_p0_full_field(model["floquet"], storage)
+
+
 def joint_qualification(design, marker, budget, *, retained=None):
     from src.solvers.fixed_phase_qualification import qualify
     from src.solvers.topological_port_trace import trace_qualification
@@ -49,6 +71,16 @@ def joint_qualification(design, marker, budget, *, retained=None):
         model = build_model(
             design, degree, phase, topological_ports=True, marker=marker
         )
+        if degree == 6:
+            # This affected-block witness uses arbitrary nonzero FE/port loads,
+            # not another near-null air-plane solve. A manufactured background
+            # makes the exporter's native/packet affine identity well-scaled.
+            # The true physical air/background gate remains in the frozen base;
+            # real O6 retains its original background and must pass its own
+            # complete physical total-field equation. No role input is changed.
+            model["background_factory"] = lambda space, cfg: nonzero_fixture_background(
+                model
+            )
         try:
             p, _ = export_native(model, marker)
             B, D, H = surface_blocks(model, p)
@@ -111,6 +143,11 @@ def joint_qualification(design, marker, budget, *, retained=None):
                     degree=degree,
                     role=("E" if phase else "O") + str(degree),
                     phase=phase,
+                    fixture_background=(
+                        "nonzero manufactured full FE field"
+                        if degree == 6
+                        else "original physical plane background"
+                    ),
                     passed=passed,
                     physical_ports=pair,
                     quadrature_15_30=drift,
