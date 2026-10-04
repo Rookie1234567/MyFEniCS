@@ -224,7 +224,8 @@ def main():
         suite=ET.parse(p).getroot(); cases=list(suite.iter('testcase'))
         tests.append(dict(path=str(p), cases=len(cases), failed=sum(bool(list(c.iter('failure'))) for c in cases),
             case_names=[c.attrib.get('classname','')+'::'+c.attrib['name'] for c in cases], hash=receipt(p)))
-    write('tests_v35.json', dict(raw_JUnit=tests, final_static=(read(p) if (p:=TMP/'aux_docs_003/final_static_tests.json').exists() else 'PENDING'),
+    final_static_paths=sorted(TMP.glob('aux_docs_*/final_static_tests.json'))
+    write('tests_v35.json', dict(raw_JUnit=tests, final_static=(read(final_static_paths[-1]) if final_static_paths else 'PENDING'),
         meaningful_unique_tests=len(set(n for s in tests for n in s['case_names'])),
         no_full_repository_suite=True, no_MPI_FE_GPU_tests_this_batch=True, CI='NOT_CLAIMED'))
     write('repairs_v35.json', dict(
@@ -234,6 +235,10 @@ def main():
             dict(cause='two12MiB storage reservations rejected before actual actor/reader/action',
                 raw_stdout_original_not_persisted=True, terminal_exception='V35 new/cumulative storage cap / reserved output',
                 no_zero_cost_claim=True, remedy='paid lossless archive and same cap, only one successful formal launch')],
+        final_static_failure=dict(source='fe9d2c730e8e725d92228409b5caa7ac50d1b393',
+            folder='aux_docs_003', no_actual_operator_calls=True,
+            checker_previous_initialized=True, unused_new_FAMILY_import_removed=True,
+            unrelated_legacy_F401_not_cleaned=True, final_Ruff_scope='new V35 files;23 dependency Python files still compiled'),
         metadata_corrections=receipt(OUT/'metadata_corrections_v35.json'),
         archive_manifests=[receipt(p) for p in sorted(TMP.glob('aux_*/archive_manifest.json'))],
         numeric_failure_not_a_bug=True, restarts=0, resource_reentries=0, ordinary_resource_waits=0))

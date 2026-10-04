@@ -19,6 +19,7 @@ def check(record, b, *, root, nt=18144):
     if len(rows)==2 and not continue_after_cycle(rows[0]['audit'],1)[0]:
         raise ValueError('unauthorized second cycle')
     outputs=[]
+    previous=np.zeros(nt,complex)
     for row in rows:
         state=row['state']; path=Path(state['path']).resolve()
         if not path.is_relative_to(Path(root).resolve()) or file_hash(path)!=state['sha256']:

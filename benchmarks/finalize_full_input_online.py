@@ -24,8 +24,12 @@ def main():
     for name in sorted(paths):
         compile((ROOT / name).read_bytes(), name, 'exec')
     ruff = Path('/home/fenics/Projects/Metrology/.venv/bin/ruff')
+    # Compile dependencies, but lint the new V35 modules rather than cleaning
+    # unrelated historical imports in the shared cycle/old V14 runner.
+    ruff_paths = [p for p in sorted(paths)
+                  if 'full_input_online' in p or 'test_task042_v35_' in p]
     commands = [
-        [str(ruff), 'check', '--select', 'E9,F', *sorted(paths)],
+        [str(ruff), 'check', '--select', 'E9,F', *ruff_paths],
         [sys.executable, '-m', 'benchmarks.package_full_input_online'],
         [sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider',
          '--basetemp=' + str(folder / 'fixtures'),

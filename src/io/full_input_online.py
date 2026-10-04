@@ -9,7 +9,6 @@ from src.io.block_direction_diagnostic import checked_json
 from src.io.input_loader import InputError
 from src.io.run_specification import RunSpecification
 from src.solvers import full_input_online_window as window
-from src.solvers.full_input_online import FAMILY
 from src.solvers.neural_fe_action_packet import file_hash
 
 PLAN_PATH = ROOT/'input/task042_neural_coarse_inverse/full_input_online_v35.json'
