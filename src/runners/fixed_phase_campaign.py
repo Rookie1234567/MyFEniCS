@@ -30,6 +30,7 @@ BATCH = ROOT / "tmp/task42extra/v20"
 CAPS = dict(implementation=10800, A=3600, B=14400, C=5400, D=3600)
 V21_CAPS = dict(P01=10800,P2=7200,P3=9000,P4=7200,D=3600)
 V22_CAPS = dict(P01=7200,P2=10800,P3=7200,conditional=10800,D=3600)
+V23_CAPS = dict(P0=1800, P1=5400, P2=3600, D=1800)
 
 
 def sha(path):
@@ -223,7 +224,8 @@ def launch(spec):
             raise RuntimeError("V20_A_NOT_QUALIFIED")
     if stage == "v20_e4":
         selected("v20_e3")
-    dependency_proof = (v22_admission(stage,old) if version==22 else
+    dependency_proof = (dict(authority='review_report_v22.md',new_Maxwell_factor_solve_Gram_training=0,scope='portable local facet component only') if version==23 else
+                        v22_admission(stage,old) if version==22 else
                         v21_admission(stage,old) if version==21 else None)
     used = sum(r["seconds"] for r in old if r["group"] == group)
     if version in (21,22) and group=="P01":
@@ -231,8 +233,11 @@ def launch(spec):
         # it is not a fresh 3h numerical allowance after preparation.
         clock = json.loads((ROOT/f"tmp/task42extra/v{version}/clock.json").read_text())
         used = time.monotonic()-clock["start_monotonic"]
+    if version == 23 and group == "P0":
+        clock = json.loads((ROOT/'tmp/task42extra/v23/clock.json').read_text())
+        used = time.monotonic()-clock["start_monotonic"]+clock["initial_read_upper_allowance_seconds"]
     limit = min(
-        spec.execution["timeout_seconds"], (V22_CAPS if version==22 else V21_CAPS if version==21 else CAPS)[group] - used,
+        spec.execution["timeout_seconds"], (V23_CAPS if version==23 else V22_CAPS if version==22 else V21_CAPS if version==21 else CAPS)[group] - used,
         batch_remaining(version=version) - 1800
     )
     if limit <= 150:
@@ -310,7 +315,7 @@ def launch(spec):
                     )
                 },
             )
-            if version in (21,22):
+            if version in (21,22,23):
                 abi_path = Path(state["ABI_record"]["path"])
                 state["ABI_record"]["sha256"] = sha(abi_path)
                 frozen = ROOT / f"tmp/task42extra/v{version}/frozen_inputs.json"
@@ -388,7 +393,7 @@ def worker(directory):
             stream.write(
                 json.dumps(
                     row,
-                    default=(scientific_json_value if m['campaign_version']==22 else
+                    default=(scientific_json_value if m['campaign_version'] in (22,23) else
                              lambda x: x.tolist() if hasattr(x, "tolist") else str(x)),
                 )
                 + "\n"
@@ -408,11 +413,15 @@ def worker(directory):
         ):
             raise RuntimeError("V20_SOURCE_OR_DESIGN_CHANGED")
         design = json.loads(DESIGN.read_text())
-        if m.get("campaign_version") in (21,22):
+        if m.get("campaign_version") in (21,22,23):
             if (sha(m["ABI_record"]["path"]) != m["ABI_record"]["sha256"]
                     or sha(m["frozen_inputs"]["path"]) != m["frozen_inputs"]["sha256"]):
                 raise RuntimeError("V21_BOUND_ABI_OR_INPUT_CHANGED")
-            result,files = (v22_worker if m["campaign_version"]==22 else v21_worker)(m,directory,artifact,design,marker,budget)
+            if m["campaign_version"] == 23:
+                from src.runners.portable_face_campaign import run_stage
+                result,files = run_stage(m,artifact,marker,budget)
+            else:
+                result,files = (v22_worker if m["campaign_version"]==22 else v21_worker)(m,directory,artifact,design,marker,budget)
         elif m["stage"] == "v20_control_checks":
             from benchmarks.fixed_phase_control_checks import control_checks
 
@@ -614,8 +623,14 @@ def v21_admission(stage,old):
     return proof
 
 
-def v22_admission(stage,old):
+def v22_admission(stage,old, *, strict_evidence=None, current_expected=None):
     """V22 role-complete permit; no inherited generic passed shortcut."""
+    if stage in ('v22_e3_correction','v22_e4_correction'):
+        from src.solvers.strict_port_admission import require_no_maxwell_execution
+        # This check precedes dependency selection, loading and every factor.
+        # Historical V22 outcomes are immutable research data; the new review
+        # authorizes no replay. Actual-vector/oracle UNKNOWN rejects as well.
+        require_no_maxwell_execution(strict_evidence, current_expected)
     if stage!='v22_control_checks':
         selected('v22_control_checks')
     proof=dict(authority='review_report_v21.md',comparison_of_negative_fields_allowed=True,

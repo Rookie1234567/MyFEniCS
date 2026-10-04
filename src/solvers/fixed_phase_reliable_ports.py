@@ -797,8 +797,11 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
     ), dict(role_indices=artifact / "role_indices.json")
 
 
-def correction(design, role, artifact, marker, budget, source):
+def correction(design, role, artifact, marker, budget, source, *,
+               strict_evidence=None, current_expected=None):
     """Only the new contract's residual trigger can call this existing solver."""
+    from src.solvers.strict_port_admission import require_no_maxwell_execution
+    require_no_maxwell_execution(strict_evidence, current_expected)
     from src.runners.fixed_phase_campaign import selected, write
     from src.solvers.feinn_exact_condensation import ExactInteriorCondensation, capacity
     from src.solvers.fixed_phase_port_coordinates import BoundaryPortCondensation

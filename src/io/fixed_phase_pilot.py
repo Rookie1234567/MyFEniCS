@@ -42,6 +42,7 @@ STAGES.update({
     "v22_target_local_face": ("fe",7200,"conditional",None),
     "v22_saved_checker": ("pure",1800,"D",None),
 })
+STAGES.update({"v23_admission_audit": ("pure", 1200, "P0", None)})
 
 
 def load(path, raw, config):
@@ -91,8 +92,8 @@ def load(path, raw, config):
             mpi_size=1,
             math_threads=1,
             timeout_seconds=seconds,
-            warning_memory_gib=1.75 if mode == "pure" else 12,
-            terminate_memory_gib=2 if mode == "pure" else 16,
+            warning_memory_gib=1.75 if mode == "pure" or item["stage"].startswith("v23_") else 12,
+            terminate_memory_gib=2 if mode == "pure" or item["stage"].startswith("v23_") else 16,
             require_zero_swap=True,
         ),
         output=dict(results_root="results/task42extra"),
