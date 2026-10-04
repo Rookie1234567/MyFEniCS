@@ -35,21 +35,44 @@
   "v7_accounting_now": {
     "charged_seconds": null,
     "remaining_seconds": null,
-    "reason": "Native execution window has not provided a monotonic/boottime budget receipt. Elapsed time and spend are unknown, not zero; no debit or reservation is imputed.",
+    "reason": "Native W0 had an import-only attempt and ABI receipt, but no monotonic/boottime budget packet has been transferred. W0 elapsed/charge and total remaining are unknown, not zero; no debit or reservation is imputed.",
     "local_metadata_and_documentation_elapsed_seconds": null,
     "local_metadata_time_policy": "not captured as a V7 research-stage clock; reconcile from authoritative receipt if the task contract charges it"
   },
   "stage_status": {
     "W0": {
-      "status": "preparation_active_actual_fe_not_started",
+      "status": "controlled_stop_before_FE_import_closure_failure",
       "maximum_seconds": 14400,
       "elapsed_seconds": null,
       "reserved_seconds": null,
       "actual_fe": "not_run",
-      "reported_host_facts": "Controller reports x86-64-v4 CPU check passed, while unrelated heavy jobs remain active; final native host/resource/ABI receipt pending.",
+      "reported_host_facts": "Native independent ABI receipt reported PASS; active Metrology and Task42 formal jobs remain; host SwapUsed=21600 KiB, so whole-machine zero-swap is not established; full resource/process-tree packet pending.",
       "approved_dot_source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
       "new_dot_source_sha_pending_authorization": "077ec9c8386c976da232093779279fb9d1a93033",
-      "new_source_state": "observed but not used; broader than PyVista import repair because it also changes native direction-byte authority/checker; historical raw/cloud test logs unavailable; source-upgrade decision pending"
+      "new_source_state": "observed but not used; broader than PyVista import repair because it also changes native direction-byte authority/checker; historical raw/cloud test logs unavailable; source-upgrade decision pending",
+      "native_abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
+      "latest_import_attempt": {
+        "utc_window": [
+          "2026-10-04T03:24:37Z",
+          "2026-10-04T03:24:38Z"
+        ],
+        "source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+        "delayed_import_chain": [
+          "dtn_port_3d",
+          "common_3d_utils",
+          "solve_vector_maxwell",
+          "postprocess"
+        ],
+        "classification": "missing_pyvista_import_closure_failure_before_FE",
+        "exit_code": 1,
+        "fe_worker_or_checker_started": false,
+        "trace_sha256": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+        "closure_receipt_sha256": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
+        "full_native_packet": "pending no-loss transfer from controller"
+      },
+      "host_swap_used_kib_reported": 21600,
+      "whole_machine_zero_swap": "not_pass; host snapshot is nonzero",
+      "source_retry": "not authorized; remain on reviewed 5be source until user/root resolves broader 077 source change"
     },
     "W1": {
       "status": "not_run_condition_W0_numerical_pass",

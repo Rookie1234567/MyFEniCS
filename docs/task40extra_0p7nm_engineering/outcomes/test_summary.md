@@ -148,3 +148,5 @@ Review V2的正式F1/F2/F3/F5/E1/E2计算发生在此前campaign阶段，见run_
 | compact JSON / index / diff | 新 V7 link 和增量账 JSON parse；run index stage/status pointers、原四角哈希和 Gx784/F5 输入身份断言；`git diff --check` | PASS | 只验证本地文档/evidence；没有触及 ignored raw、工作站 FE 或历史 V6 ledger |
 
 这组结果对应本轮新增文档与索引，不替代原生机器 ABI/resource Gate，也不改变 W0/W1/W2 状态。
+
+原生 W0 的一次延迟导入闭包尝试由控制端报告，完整 packet 尚待无损移交，因此下列摘要字段还没有在本地对原始 packet 复算哈希：source `5be1210aa79f25c13a7677cc291a4a766a548650`，UTC 窗口 `2026-10-04T03:24:37Z–03:24:38Z`，导入链 `dtn_port_3d → common_3d_utils → solve_vector_maxwell → postprocess` 因缺少 `pyvista` 以 exit 1 停止；FE worker/checker、PDE、残差和 raw 场均未启动。控制端报告的 trace SHA256 为 `343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a`，closure receipt SHA256 为 `64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7`，ABI receipt SHA256 为 `4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102`。这些是 FE 前导入 blocker，不属于数值测试或 PDE 失败；完整 W0 elapsed/charge 仍 unknown。控制端同时报告宿主 `SwapUsed=21,600 KiB` 且 Metrology/Task42 作业仍活动，因此资源 Gate 未通过。该记录不改变上面 `24 passed` 的本地文档合同测试结果。

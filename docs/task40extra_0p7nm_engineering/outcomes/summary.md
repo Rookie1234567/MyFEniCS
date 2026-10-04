@@ -353,7 +353,7 @@ attempt3 的独立 elapsed 和必要人工修复工时都是 unknown，不能由
 |---|---|---|
 | AUTO 清单 | `reused_verified_inventory` | original/repair 仍是同一 32,060-key 清单；manifest SHA256 `52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d`，ordered-key digest `03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec`；本轮未重跑生成器。 |
 | 单一原尺寸计数候选 | `derived_only` | 272×4×14=15,232 六面体；不是已生成或资格化的网格。 |
-| W0 工作站组件 | `preparation_active; FE not_run` | 控制窗口报告 CPU feature 核验通过，但已有重型作业，等待安全窗口；ABI、cgroup/实时内存/swap 和可用余量仍待本机收据。W0 暂用已审阅 source `5be1210…`；更广的 source `077ec9c…` 含 direction-byte authority/checker 变化，升级授权待定，不作为已通过源码。 |
+| W0 工作站组件 | `controlled_stop_before_FE; import closure failure` | 独立 ABI 收据通过，但 `5be1210…` 延迟导入因缺 `pyvista` exit 1，FE 未启动；trace/closure SHA 已记录，完整 packet 待移交。仍有其他重型作业，主机 `SwapUsed=21,600 KiB`，不能宣称整机 swap=0。较新的 `077ec9c…` 修改超出窄导入修复，授权待定，不切换、不重放。 |
 | W1 原尺寸 AUTO 成本 | `not_run; conditional` | 等待 W0 数值通过并补最小入口。读取存档 manifest，不生成清单；完整 keys 不抽样。16 GiB Gate 必须纳入 `Di@XiB/Hhat`、输入/借用/BLAS 暂存/输出/检查器的并存对象；若现有受限表示无法在界内测量，则 controlled stop。 |
 | W2 全阶 p6 周期对照 | `not_run; conditional` | 等待 W0、C1c raw 和完整 p6 链入口。 |
 | 原尺寸完整求解 | `NO-GO` | AUTO 接线、全 q 因子及并存、p6 完整恢复、精度与端到端成本尚未闭合。 |

@@ -1396,7 +1396,7 @@
   "review_v7_progress": {
     "status": "in_progress_not_closed",
     "response": "docs/task40extra_0p7nm_engineering/response_v7.md",
-    "response_sha256_at_recording": "8a15066b4e9e001d2565e189e10feeef1e1b1a9166960f69201f83c35a97822e",
+    "response_sha256_at_recording": "8faef782d0a5cea355d4d692fe9a0de2e7510ae91fb31f29f7af7d497634f0f3",
     "review_report": "docs/task40extra_0p7nm_engineering/review_report_v7.md",
     "review_report_sha256": "22313b2b2bc60e6178a35f77bd9e6584f7e2d9c2fd76e276004041de25a6b06e",
     "branch_head_at_recording": "66b151a72d4f837bfebc0aa9b9d854457b0fd93a",
@@ -1406,7 +1406,7 @@
     "four_corner_parent_file_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
     "four_corner_physical_signature_sha256": "f7593863b1e4edafa2f5deb61834bd5df6b5c84252c1f6f76f24ecbd22220ade",
     "incremental_workflow_ledger": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json",
-    "incremental_workflow_ledger_sha256": "bd0dc62e32e29b257a0e9cd781b30f1acee19dd92c9862d1a01d22d85441881e",
+    "incremental_workflow_ledger_sha256": "39712a7aaae4da6f8a34048b55bf4cb01767e850e6024925c748319f489f2871",
     "historical_v6_workflow_ledger": "benchmarks/artifacts/task40extra_0p7nm_engineering/task40_nonseparable_0p7nm/task40extra_0p7nm_nonseparable_gx784_review_v5_v1/shared_workflow_ledger.json",
     "historical_v6_workflow_ledger_sha256": "df6041ad118c4abcc805e367e789f2bf113975bf82de718b15c65cb40a09689e",
     "auto_inventory_reuse": {
@@ -1425,10 +1425,25 @@
       "status": "derived_count_only_not_mesh_or_accuracy_qualification"
     },
     "stage_status": {
-      "W0": "native_preparation_active_actual_FE_not_started_heavy_jobs_active",
+      "W0": "controlled_stop_before_FE_import_closure_failure_no_FE",
       "W0_dot_source_used": "5be1210aa79f25c13a7677cc291a4a766a548650",
       "W0_new_source_observed": "077ec9c8386c976da232093779279fb9d1a93033",
       "W0_source_upgrade_authorization": "pending",
+      "W0_native_evidence_provenance": "controller_reported; complete original packet pending no-loss transfer and independent local hash verification",
+      "W0_native_abi_result": "reported_PASS",
+      "W0_native_abi_receipt_sha256": "4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102",
+      "W0_import_attempt": {
+        "source_sha": "5be1210aa79f25c13a7677cc291a4a766a548650",
+        "utc_window": ["2026-10-04T03:24:37Z", "2026-10-04T03:24:38Z"],
+        "classification": "missing_pyvista_import_closure_failure_before_FE",
+        "exit_code": 1,
+        "delayed_import_chain": ["dtn_port_3d", "common_3d_utils", "solve_vector_maxwell", "postprocess"],
+        "fe_worker_or_checker_started": false,
+        "trace_sha256_reported": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a",
+        "closure_receipt_sha256_reported": "64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7",
+        "full_native_packet": "pending no-loss transfer"
+      },
+      "W0_reported_host_swap_used_kib": 21600,
       "W1": "not_run_pending_W0_pass_and_minimal_entry",
       "W2": "not_run_pending_W0_C1c_and_complete_p6_entry",
       "original_size_full_solve": "NO_GO"

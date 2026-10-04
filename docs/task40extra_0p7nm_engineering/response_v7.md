@@ -1,18 +1,18 @@
 # Task40 Review V7 执行回应（进行中）
 
-**状态：本轮尚未收口。** 已复用原尺寸 AUTO 清单并复核计数候选和已有对象账；原生执行窗口仍在做只读宿主/环境核验。W0 的实际 FE 尚未启动，W1/W2 均为条件性 `not_run`。这些状态不表示数值失败，也不构成任何阶段通过。原尺寸完整求解继续 **NO-GO**。
+**状态：本轮尚未收口。** 已复用原尺寸 AUTO 清单并复核计数候选和已有对象账；原生独立 ABI 收据报告通过，但 W0 在 FE 前因缺少 `pyvista` 的延迟导入闭包失败而受控停止。没有启动 FE/PDE，W1/W2 均为条件性 `not_run`。这不是数值失败，也不构成任何阶段通过。原尺寸完整求解继续 **NO-GO**。
 
 ## 当前执行状态
 
 | 阶段 | 状态 | 已有证据与边界 |
 |---|---|---|
-| 原生工作站准入 | `in_progress` | 控制窗口报告 CPU 完整 x86-64-v4 特征核验通过；宿主最终资源、隔离 prefix 和 ABI 收据仍待执行窗口提交。已有其他重型作业在运行，故不启动 W0 FE。 |
-| W0 λ0.7/p6 组件 | `not_run`（准入等待） | 专用原生窗口正在检查环境和活动作业；没有 worker/checker、FE residual 或 fresh raw 结果。截止实际 FE 启动时间为 2026-10-04 10:07:14 UTC；没有把导入或 dry-admission 当 FE。 |
+| 原生工作站准入 | `ABI_PASS; resource_gate_not_passed` | 原生独立 ABI 收据已通过；活动作业仍在运行，宿主 `SwapUsed=21,600 KiB`，因此不能称整机 swap=0。实际余量/cgroup/进程树收据仍待无损移交。 |
+| W0 λ0.7/p6 组件 | `controlled_stop_before_FE`（导入闭包失败） | 2026-10-04T03:24:37–38Z 在 source `5be1210…` 的延迟导入链中因缺少 `pyvista` 以 exit 1 停止；FE worker/checker、PDE、残差和 raw 场均未启动。trace SHA256 `343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a`，closure receipt SHA256 `64f65b92b8379c432cf87c6f6d97b62108236e67512eade1699b22cdde9c20b7`；原始完整 packet 仍待无损移交。截止实际 FE 启动时间为 2026-10-04 10:07:14 UTC。 |
 | W1 原尺寸 AUTO 端口/局部修正成本 | `not_run`（有条件） | 必须先有 W0 数值通过；主线目前没有可运行的完整 W1 入口。只准备最小接口和缺口，不提前实现或运行。 |
 | W2 全阶 p6 周期参考对照 | `not_run`（有条件） | 还需 W0 本机资格、dot C1c raw 和新的完整 p6 链入口；p6 component probe 不等于完整求解链。 |
 | 50×25×140 nm 原尺寸完整求解 | `NO-GO` | 完整 AUTO 接线、全部 q 因子及并存、完整 p6 恢复、原尺寸精度与端到端成本均未闭合。 |
 
-控制窗口报告的宿主 CPU 核验和活动作业状态尚未由本机最终收据闭环；原生 ABI、实时内存/cgroup/swap、可用余量及实际进程树均记为 `unknown`。当前 W0 仍固定在已审阅的 dot source `5be1210aa79f25c13a7677cc291a4a766a548650`。控制窗口发现新 source `077ec9c8386c976da232093779279fb9d1a93033` 不止修复 PyVista 导入，还改变原生方向字节 authority/checker；历史 raw 与云端测试日志已丢失，不能继承 C1 通过。该改动超出窄修复范围，source 升级授权尚待主控/用户明确决定，因此不使用新 source，也不把它当成 FE 资格。此前本地 WSL 的 PETSc3.19/OpenMPI4.1.6 和旧内存快照不代替工作站证据，也不用于 W0 准入。Task41 的 dirty 工作树保持不动。
+原生 ABI 独立收据 SHA256 `4ef26bf3d4ea0b3c16170b030694e7de7a303108e5fd78b3309835d0c4aa5102` 已报告通过；其余物理内存/cgroup/可用余量和进程树指标等完整收据仍待移交。活动的 Metrology 训练和 Task42 正式作业继续保留；主机 `SwapUsed=21,600 KiB` 是非零主机快照，不满足“整机 swap=0”的表述，不能混作 Task40 进程树 swap。W0 暂固定在已审阅 dot source `5be1210aa79f25c13a7677cc291a4a766a548650`。新 source `077ec9c8386c976da232093779279fb9d1a93033` 不止修复 PyVista 导入，还改变原生方向字节 authority/checker；历史 raw 与云端测试日志已丢失，不能继承 C1 通过。该改动超出窄修复范围，升级授权仍待主控/用户明确决定，因此本次失败不自动切换新 source、不重放，也不形成 FE 资格。W0 attempt 的 monotonic/boottime 计费值仍 unknown，等完整原生 packet 核验后再记；不能用秒级 UTC 窗口推导计费。此前本地 WSL 的 PETSc3.19/OpenMPI4.1.6 和旧内存快照不替代工作站证据。Task41 的 dirty 工作树保持不动。
 
 ## AUTO 清单与离散成本账
 
@@ -46,4 +46,4 @@ W1 整组（准备、冷 JIT、p4/p6 对象、checker、写出）累计 ≤7,200
 
 ## 验证与后续
 
-本地资格化 WSL preflight 最终通过：原始 `sys.executable` 位于仓库 `.venv`、`sys.prefix` 与该环境一致；PETSc complex128/int32，PETSc/SLEPc/DOLFINx/Basix/mpi4py 均为 Linux ABI 路径（PETSc/SLEPc complex3.19、Open MPI 4.1.6、MPI1）。此前两次 preflight 都因我写的断言口径错误在 pytest 启动前停止：第一次错误要求解释器符号链接的最终目标仍位于 `.venv`，第二次错误要求 SLEPc 使用 PETSc 的安装根目录；实际为标准 venv symlink 和独立 `/usr/lib/slepcdir` 前缀。它们不是仓库环境失败，耗时没有 monotonic 收据，记为 unknown。修正后文档合同测试 24 passed（pytest 报告 0.06 s）。这只是本地文档检查，不是工作站 W0 资格。没有运行 FE、MPI 多进程、全仓 pytest 或昂贵 Gate，也未改写 V6 账本。下一步等待原生窗口给出 host、活动任务、隔离 ABI 和 W0 实际 FE 收据；只有 W0 通过后才开启 W1。若 W0 在期限前不能安全启动，后续 response 更新为精确 blocker 与 `not_run` 证据，不把资源等待说成数值失败。Gx784 身份已作为独立 x-refinement 对照接入四角接口包旁的 V7 link 记录，原四角签名和四角结果保持不变；现有 run index、outcomes summary 与 V7 增量账已登记本轮状态。工作站收据到达后仍须更新同一 response 和索引再收口；本文件当前为进度记录，不是最终审批或 merge 请求。
+本地资格化 WSL preflight 最终通过：原始 `sys.executable` 位于仓库 `.venv`、`sys.prefix` 与该环境一致；PETSc complex128/int32，PETSc/SLEPc/DOLFINx/Basix/mpi4py 均为 Linux ABI 路径（PETSc/SLEPc complex3.19、Open MPI 4.1.6、MPI1）。此前两次 preflight 都因我写的断言口径错误在 pytest 启动前停止：第一次错误要求解释器符号链接的最终目标仍位于 `.venv`，第二次错误要求 SLEPc 使用 PETSc 的安装根目录；实际为标准 venv symlink 和独立 `/usr/lib/slepcdir` 前缀。它们不是仓库环境失败，耗时没有 monotonic 收据，记为 unknown。修正后文档合同测试 24 passed（pytest 报告 0.06 s）。这只是本地文档检查，不是工作站 W0 资格。没有运行 FE、MPI 多进程、全仓 pytest 或昂贵 Gate，也未改写 V6 账本。下一步等待控制端无损移交原生完整 packet，核对单调时钟、资源与进程树原始记录；W0 已在 FE 前停止，W1/W2 继续 `not_run`。解决已审阅 source 的导入闭包问题、厘清较新 source 的授权，并重新满足宿主资源 Gate 之前，不重放 W0。此次 W0 的完整 elapsed/charge 仍 unknown，不从秒级 UTC 窗口推算为零或具体时长。Gx784 身份已作为独立 x-refinement 对照接入四角接口包旁的 V7 link 记录，原四角签名和四角结果保持不变；现有 run index、outcomes summary 与 V7 增量账已登记本轮状态。完整工作站 packet 到达后仍须更新同一 response 和索引再收口；本文件当前为进度记录，不是最终审批或 merge 请求。
