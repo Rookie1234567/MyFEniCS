@@ -8,6 +8,7 @@ recovery objects.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import importlib.util
 import json
@@ -4397,6 +4398,686 @@ def _task041_p4_backend_release_audit(
     }
 
 
+def _task041_same_g_modal_metric_pair_scope(
+    request: Mapping[str, Any] | None,
+    *,
+    identity: Mapping[str, Any],
+    candidate: bool,
+    mpi_size: int,
+    use_anderson_modal_inner: bool,
+    complex_qr_research: bool,
+    capture_modal_solve_trace: bool,
+    p4_inverse_backend: str,
+    p4_refinement_target_tolerance: float | None,
+    task041_resource_policy: str | None,
+    other_diagnostic_modes: bool,
+) -> bool:
+    if request is None:
+        return False
+    if not isinstance(request, Mapping) or request.get("schema") != (
+        "task041.same_g_modal_metric_pair.v2"
+    ):
+        raise Task041ModePrepError("same-g modal request schema is invalid")
+    from benchmarks.task041_balh_workflow import (
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_V8_SWAP_OBSERVE_CONTINUE,
+    )
+
+    if (
+        not candidate
+        or identity.get("model_id") != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+        or identity.get("mode_count") != 120
+        or mpi_size != 8
+        or not use_anderson_modal_inner
+        or not complex_qr_research
+        or capture_modal_solve_trace
+        or p4_inverse_backend != "cell_condensed"
+        or p4_refinement_target_tolerance is not None
+        or task041_resource_policy != TASK041_V8_SWAP_OBSERVE_CONTINUE
+        or other_diagnostic_modes
+    ):
+        raise Task041ModePrepError(
+            "same-g modal pairing is restricted to the 13.5 nm cell-condensed "
+            "complex-QR V8 research path"
+        )
+    return True
+
+
+def _task041_pair_canonical_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        _jsonable(value),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _task041_pair_complex(value: Any) -> complex:
+    if (
+        isinstance(value, Sequence)
+        and not isinstance(value, (str, bytes))
+        and len(value) == 2
+    ):
+        return complex(float(value[0]), float(value[1]))
+    return complex(value)
+
+
+def _task041_pair_array_signature(value: Any) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(value, dtype=np.complex128))
+    if not np.all(np.isfinite(array)):
+        raise ValueError("modal layout contains non-finite values")
+    return {
+        "dtype": str(array.dtype),
+        "shape": list(array.shape),
+        "sha256": hashlib.sha256(memoryview(array).cast("B")).hexdigest(),
+    }
+
+
+def _task041_validate_pair_source_evidence(
+    evidence: Mapping[str, Any], repository_root: Path
+) -> dict[str, str]:
+    if not isinstance(evidence.get("files"), list) or not evidence["files"]:
+        raise ValueError("reference source evidence is missing")
+    observed: dict[str, str] = {}
+    for item in evidence["files"]:
+        relative = Path(str(item["path"]))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError("source evidence path is not repository-relative")
+        symbols = item.get("relevant_symbols")
+        if not isinstance(symbols, list) or not symbols or any(
+            symbol.get("unchanged") is not True
+            or symbol.get("reference_ast_sha256")
+            != symbol.get("current_ast_sha256")
+            or not _valid_sha(symbol.get("reference_ast_sha256"), 64)
+            for symbol in symbols
+        ):
+            raise ValueError(f"relevant source changed since reference: {relative}")
+        actual = hashlib.sha256((repository_root / relative).read_bytes()).hexdigest()
+        if actual != item.get("current_file_sha256"):
+            raise ValueError(f"runtime source differs from prepared evidence: {relative}")
+        observed[str(relative)] = actual
+    return observed
+
+
+def _task041_prepare_same_g_modal_metric_pair(
+    request: Mapping[str, Any] | None,
+    *,
+    comm: MPI.Intracomm,
+    packet_manifest_sha256: str,
+    packet_identity_file_sha256: str,
+    packet_identity: Mapping[str, Any],
+    consumer_identity: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    if request is None:
+        return None
+
+    root_payload: dict[str, Any] | None = None
+    if comm.rank == 0:
+        try:
+            if set(request) != {"schema", "reference", "artifact_sha256"}:
+                raise ValueError("prepared same-g artifact fields are invalid")
+            if request.get("schema") != "task041.same_g_modal_metric_pair.v2":
+                raise ValueError("prepared same-g artifact schema is invalid")
+            artifact_digest = request.get("artifact_sha256")
+            unsigned = {key: value for key, value in request.items() if key != "artifact_sha256"}
+            if artifact_digest != _task041_pair_canonical_sha256(unsigned):
+                raise ValueError("prepared same-g artifact hash mismatch")
+            reference = request.get("reference")
+            if not isinstance(reference, Mapping):
+                raise TypeError("prepared same-g reference is missing")
+            packet = reference.get("packet")
+            mode_layout = reference.get("mode_layout")
+            baseline = reference.get("baseline")
+            descriptor = reference.get("g")
+            if not all(isinstance(item, Mapping) for item in (packet, mode_layout, baseline, descriptor)):
+                raise ValueError("prepared same-g reference sections are incomplete")
+            if mode_layout.get("mode_count") != 120:
+                raise ValueError("prepared modal layout has the wrong mode count")
+            shape = descriptor.get("shape")
+            if (
+                descriptor.get("dtype") != "complex128"
+                or shape != [2 * int(mode_layout["mode_count"])]
+                or descriptor.get("order") != "C"
+                or descriptor.get("encoding") != "base64"
+            ):
+                raise ValueError("prepared g descriptor is invalid")
+            encoded_g = descriptor.get("data")
+            g_bytes = base64.b64decode(encoded_g, validate=True)
+            if len(g_bytes) != int(np.prod(shape)) * np.dtype(np.complex128).itemsize:
+                raise ValueError("prepared g byte count differs from its shape")
+            g_sha256 = hashlib.sha256(g_bytes).hexdigest()
+            if g_sha256 != descriptor.get("sha256") or g_sha256 != baseline.get("g_sha256"):
+                raise ValueError("prepared g bytes do not match the reference SHA")
+            g = np.frombuffer(g_bytes, dtype=np.complex128).copy()
+            if not np.all(np.isfinite(g)):
+                raise ValueError("prepared g contains non-finite values")
+            history = baseline.get("history")
+            if (
+                type(baseline.get("s_evaluation_count")) is not int
+                or type(baseline.get("iterations")) is not int
+                or not isinstance(history, list)
+                or len(history) != baseline["s_evaluation_count"]
+                or any(row.get("evaluation") != i for i, row in enumerate(history, 1))
+            ):
+                raise ValueError("prepared baseline scalar history is incomplete")
+            for row in history:
+                if not all(
+                    np.isfinite(float(row[key]))
+                    for key in ("raw_residual_norm", "raw_target_metric", "scaled_residual_norm")
+                ):
+                    raise ValueError("prepared baseline history is non-finite")
+            root_payload = {"ok": True, "g": g}
+        except Exception as exc:  # noqa: BLE001 - broadcast rank-zero artifact errors
+            root_payload = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+    payload = comm.bcast(root_payload, root=0)
+    if not isinstance(payload, Mapping) or payload.get("ok") is not True:
+        detail = payload.get("error", "invalid rank-zero payload") if isinstance(payload, Mapping) else "invalid rank-zero payload"
+        raise Task041ModePrepError("same-g reference rejected: " + str(detail))
+
+    reference = None
+    local_error = None
+    local_signature = None
+    try:
+        if set(request) != {"schema", "reference", "artifact_sha256"}:
+            raise ValueError("rank-local prepared artifact fields are invalid")
+        artifact_digest = request.get("artifact_sha256")
+        unsigned = {key: value for key, value in request.items() if key != "artifact_sha256"}
+        if artifact_digest != _task041_pair_canonical_sha256(unsigned):
+            raise ValueError("rank-local prepared artifact hash differs")
+        reference = request["reference"]
+        packet = reference["packet"]
+        if not reference.get("source_evidence", {}).get("current_commit") or not reference.get(
+            "provenance", {}
+        ).get("source_commit"):
+            raise ValueError("source evidence is not bound to the reference run")
+        prepared_layout = dict(reference["mode_layout"])
+        prepared_layout.update(
+            {
+                "artifact_sha256": str(artifact_digest),
+                "source_evidence_sha256": _task041_pair_canonical_sha256(
+                    reference["source_evidence"]
+                ),
+                "packet_manifest_sha256": packet["producer_manifest_sha256"],
+                "packet_identity_canonical_sha256": packet[
+                    "identity_canonical_sha256"
+                ],
+                "selection_sha256": packet["selection_sha256"],
+                "cross_section_layout_sha256": packet[
+                    "cross_section_layout_sha256"
+                ],
+            }
+        )
+        reference = dict(reference)
+        reference["mode_layout"] = prepared_layout
+        source_hashes = _task041_validate_pair_source_evidence(
+            reference["source_evidence"], Path(__file__).resolve().parents[1]
+        )
+        if packet_manifest_sha256 != reference["packet"]["producer_manifest_sha256"]:
+            raise ValueError("current producer manifest differs from frozen packet")
+        if packet_identity_file_sha256 != reference["packet"]["identity_file_sha256"]:
+            raise ValueError("current packet identity file SHA differs from frozen packet")
+        if _task041_pair_canonical_sha256(packet_identity) != reference["packet"][
+            "identity_canonical_sha256"
+        ]:
+            raise ValueError("current producer identity differs from frozen packet")
+        expected_consumer = reference["consumer_identity"]
+        if any(consumer_identity.get(key) != value for key, value in expected_consumer.items()):
+            raise ValueError("current consumer identity differs from frozen input")
+        local_g_sha = hashlib.sha256(np.ascontiguousarray(payload["g"]).view(np.uint8)).hexdigest()
+        if local_g_sha != reference["baseline"]["g_sha256"]:
+            raise ValueError("broadcast g differs from its reference SHA")
+        local_signature = {
+            "artifact_sha256": artifact_digest,
+            "manifest_sha256": packet_manifest_sha256,
+            "identity_file_sha256": packet_identity_file_sha256,
+            "identity_sha256": _task041_pair_canonical_sha256(packet_identity),
+            "consumer_identity_sha256": _task041_pair_canonical_sha256(expected_consumer),
+            "g_sha256": local_g_sha,
+            "source_file_sha256": source_hashes,
+        }
+    except Exception as exc:  # noqa: BLE001 - converge before the next collective
+        local_error = f"{type(exc).__name__}: {exc}"
+    rank_checks = comm.allgather((local_error, local_signature))
+    failures = [f"rank {rank}: {error}" for rank, (error, _) in enumerate(rank_checks) if error]
+    signatures = [signature for _, signature in rank_checks if signature is not None]
+    if failures:
+        raise Task041ModePrepError("same-g current binding rejected: " + "; ".join(failures))
+    if len(signatures) != comm.size or any(
+        signature != signatures[0] for signature in signatures[1:]
+    ):
+        raise Task041ModePrepError("same-g packet/g/source binding differs across ranks")
+    return {
+        "g": np.asarray(payload["g"], dtype=np.complex128),
+        "g_sha256": str(reference["baseline"]["g_sha256"]),
+        "mode_layout": dict(reference["mode_layout"]),
+        "reference_baseline": dict(reference["baseline"]),
+        "artifact_sha256": str(request["artifact_sha256"]),
+    }
+
+
+def _task041_same_g_modal_layout_signatures(
+    coupling: Any,
+    layout: Any,
+    modal_system: Any,
+    descriptor: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    signatures = None
+    local_error = None
+    try:
+        mode_count = int(descriptor["mode_count"])
+        modal_action = modal_system.modal_action
+        if coupling.bottom.side != "bottom" or coupling.top.side != "top":
+            raise ValueError("projection rows are not bottom/top ordered")
+        branch_runtime: dict[str, str] = {}
+        for branch, basis in (("positive", coupling.positive_basis), ("negative", coupling.negative_basis)):
+            expected = descriptor["branches"][branch]
+            packet_normalization_sha = expected.get("normalization_sha256")
+            normalization_methods = expected.get("normalization_methods")
+            if basis is None or len(basis.modes) != mode_count:
+                raise ValueError(f"{branch} basis is unavailable or reordered")
+            if (
+                not isinstance(packet_normalization_sha, str)
+                or not _valid_sha(packet_normalization_sha, 64)
+                or not isinstance(normalization_methods, list)
+                or not normalization_methods
+                or any(not isinstance(method, str) for method in normalization_methods)
+                or any(
+                    not isinstance(expected.get(key), list)
+                    or len(expected[key]) != mode_count
+                    for key in (
+                        "mode_keys",
+                        "groups",
+                        "passive_branch_valid",
+                        "beta",
+                    )
+                )
+            ):
+                raise ValueError(f"{branch} packet normalization evidence is incomplete")
+            hydrated_groups: list[int | None] = [None] * mode_count
+            for group_id, group in enumerate(basis.groups):
+                for mode_index in group.indices:
+                    index = int(mode_index)
+                    if index < 0 or index >= mode_count or hydrated_groups[index] is not None:
+                        raise ValueError(f"{branch} hydrated mode groups are not a partition")
+                    hydrated_groups[index] = int(group_id)
+            for index, (mode, key) in enumerate(zip(basis.modes, expected["mode_keys"])):
+                if (
+                    hydrated_groups[index] != int(expected["groups"][index])
+                    or mode.direction != expected["direction"]
+                    or mode.direction != key.get("direction")
+                    or mode.kind != key.get("kind")
+                    or bool(mode.passive_branch_valid) != bool(expected["passive_branch_valid"][index])
+                    or _task041_pair_complex(mode.beta) != _task041_pair_complex(expected["beta"][index])
+                ):
+                    raise ValueError(f"{branch} ordered mode mismatch at {index}")
+            normalization_values = {
+                "right_scale": np.asarray(
+                    [mode.right_scale for mode in basis.modes], dtype=np.float64
+                ),
+                "poynting_z_after_normalization": np.asarray(
+                    [mode.poynting_z_after_normalization for mode in basis.modes],
+                    dtype=np.float64,
+                ),
+                "left_pair_relative_errors": np.asarray(
+                    basis.left_pair_relative_errors, dtype=np.float64
+                ),
+                "biorthogonality_matrix": np.asarray(
+                    basis.biorthogonality_matrix, dtype=np.complex128
+                ),
+                "max_identity_error": np.asarray(
+                    basis.max_identity_error, dtype=np.float64
+                ),
+                "max_entry_identity_error": np.asarray(
+                    basis.max_entry_identity_error, dtype=np.float64
+                ),
+            }
+            if normalization_values["biorthogonality_matrix"].shape != (
+                mode_count,
+                mode_count,
+            ):
+                raise ValueError(f"{branch} biorthogonality layout differs from packet")
+            if not all(np.all(np.isfinite(value)) for value in normalization_values.values()):
+                raise ValueError(f"{branch} hydrated normalization is non-finite")
+            normalization = {
+                key: (
+                    _task041_pair_array_signature(value)
+                    if key == "biorthogonality_matrix"
+                    else value.tolist() if value.ndim else float(value)
+                )
+                for key, value in normalization_values.items()
+            }
+            branch_runtime[branch] = _task041_pair_canonical_sha256(normalization)
+        if any(int(side.projection.getSize()[0]) != mode_count for side in (coupling.bottom, coupling.top)):
+            raise ValueError("bottom/top projection row coordinates differ")
+        mappings = {
+            "negative_trace_to_positive": np.asarray(coupling.negative_trace_to_positive, dtype=np.complex128),
+            "propagation_forward_factors": np.asarray(coupling.propagation.forward.factors, dtype=np.complex128),
+            "propagation_backward_factors": np.asarray(coupling.propagation.backward.factors, dtype=np.complex128),
+            "modal_constraint": np.asarray(modal_action.modal_constraint, dtype=np.complex128),
+        }
+        if (
+            mappings["negative_trace_to_positive"].shape != (mode_count, mode_count)
+            or mappings["propagation_forward_factors"].shape != (mode_count,)
+            or mappings["propagation_backward_factors"].shape != (mode_count,)
+            or mappings["modal_constraint"].shape != (2 * mode_count, 2 * mode_count)
+        ):
+            raise ValueError("runtime mapping shapes differ from packet layout")
+        runtime_values = {key: _task041_pair_array_signature(value) for key, value in mappings.items()}
+        ordered = {
+            branch: {
+                "mode_keys_sha256": _task041_pair_canonical_sha256(descriptor["branches"][branch]["mode_keys"]),
+                "beta_sha256": _task041_pair_canonical_sha256(descriptor["branches"][branch]["beta"]),
+                "groups_sha256": _task041_pair_canonical_sha256(descriptor["branches"][branch]["groups"]),
+                "packet_normalization_sha256": descriptor["branches"][branch]["normalization_sha256"],
+                "normalization_methods": list(descriptor["branches"][branch]["normalization_methods"]),
+                "normalization_sha256": branch_runtime[branch],
+            }
+            for branch in ("positive", "negative")
+        }
+        common = {
+            "artifact_sha256": descriptor["artifact_sha256"],
+            "source_evidence_sha256": descriptor["source_evidence_sha256"],
+            "packet_manifest_sha256": descriptor["packet_manifest_sha256"],
+            "packet_identity_canonical_sha256": descriptor["packet_identity_canonical_sha256"],
+            "selection_sha256": descriptor["selection_sha256"],
+            "cross_section_layout_sha256": descriptor["cross_section_layout_sha256"],
+            "mode_count_per_direction": mode_count,
+            "ordered_branches": ordered,
+        }
+        row = {
+            **common,
+            "coordinate_order": ["bottom_projection", "top_projection"],
+            "slices": {"bottom_projection": [0, mode_count], "top_projection": [mode_count, 2 * mode_count]},
+            "meaning": "g blocks are bottom/top projection equations using the positive basis",
+        }
+        column = {
+            **common,
+            "coordinate_order": ["positive", "negative"],
+            "slices": {"positive": [0, mode_count], "negative": [mode_count, 2 * mode_count]},
+            "meaning": "m blocks are positive/negative traction unknowns",
+            "negative_trace_mapping_source": descriptor["canonical_mapping_source"],
+            "trace_mapping_source": descriptor["trace_mapping_source"],
+            "propagation_source": "build_two_sided_propagation positive then negative basis",
+            "propagation_model": descriptor["physical_method"].get("propagation_model"),
+        }
+        signatures = {
+            "artifact_sha256": str(descriptor["artifact_sha256"]),
+            "row_layout_sha256": _task041_pair_canonical_sha256(row),
+            "column_layout_sha256": _task041_pair_canonical_sha256(column),
+            "runtime_mapping_values": runtime_values,
+            "signature_basis": "hash-bound prepared source evidence plus current hydrated mappings",
+        }
+    except Exception as exc:  # noqa: BLE001 - every rank reaches this allgather
+        local_error = f"{type(exc).__name__}: {exc}"
+    checks = comm.allgather((local_error, signatures))
+    failures = [f"rank {rank}: {error}" for rank, (error, _) in enumerate(checks) if error]
+    valid = [signature for _, signature in checks if signature is not None]
+    if failures:
+        raise Task041ModePrepError("same-g layout rejected: " + "; ".join(failures))
+    if len(valid) != comm.size or any(item != valid[0] for item in valid[1:]):
+        raise Task041ModePrepError("same-g layout signatures differ across ranks")
+    return valid[0]
+
+def _task041_execute_same_g_modal_metric_pair(
+    modal_system: Any,
+    g: np.ndarray,
+    *,
+    reference_baseline: Mapping[str, Any],
+    layout_signatures: Mapping[str, Any],
+    comm: MPI.Intracomm,
+    release_before_recovery: Callable[[], Mapping[str, Any]],
+    failure_evidence: dict[str, Any],
+) -> dict[str, Any]:
+    from src.solvers.hybrid_fem_modal_block_ldu import (
+        solve_action_modal_schur_anderson_complex_qr_research,
+    )
+
+    local_g_hash = None
+    local_error = None
+    try:
+        local_g_hash = hashlib.sha256(np.ascontiguousarray(g).view(np.uint8)).hexdigest()
+        if local_g_hash != reference_baseline.get("g_sha256"):
+            raise ValueError("pair input g differs from the frozen reference")
+    except Exception as exc:  # noqa: BLE001 - turn rank-local validation into allgather data
+        local_error = f"{type(exc).__name__}: {exc}"
+    g_checks = comm.allgather((local_error, local_g_hash))
+    errors = [f"rank {rank}: {error}" for rank, (error, _) in enumerate(g_checks) if error]
+    hashes = [value for _, value in g_checks]
+    if errors or len(set(hashes)) != 1:
+        raise Task041ModePrepError("same-g pair input rejected: " + "; ".join(errors or ["rank g hashes differ"]))
+
+    factor_object = modal_system.constraint_lu
+    setup_diagnostics = modal_system.diagnostics
+    pair_started = time.perf_counter()
+
+    def optional_count(value: Any) -> int | None:
+        return None if value is None else int(value)
+
+    pair: dict[str, Any] = {
+        "schema": "task041.same_g_modal_metric_pair.v2",
+        "qualification": "diagnostic_only_not_formal_qualification",
+        "g_sha256": local_g_hash,
+        "row_layout_sha256": layout_signatures["row_layout_sha256"],
+        "column_layout_sha256": layout_signatures["column_layout_sha256"],
+        "reference_artifact_sha256": layout_signatures["artifact_sha256"],
+        "layout_signature_basis": layout_signatures["signature_basis"],
+        "runtime_mapping_values": dict(layout_signatures["runtime_mapping_values"]),
+        "solve_order": ["C_scaled_residual", "raw_residual"],
+        "zero_initial_guess": "new_helper_call_initializes_zero_each_time",
+        "outer_and_recovery": "not_run",
+        "solves": [],
+    }
+    try:
+        for raw_metric, metric_name in ((False, "C_scaled_residual"), (True, "raw_residual")):
+            started = time.perf_counter()
+            solved = solve_action_modal_schur_anderson_complex_qr_research(
+                modal_system.modal_action,
+                g,
+                _borrowed_constraint_factor=modal_system,
+                raw_metric_mixing=raw_metric,
+            )
+            wall = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
+            local_record = None
+            local_error = None
+            try:
+                history = [
+                    {key: row.get(key) for key in (
+                        "evaluation", "source", "raw_residual_norm",
+                        "raw_target_metric", "scaled_residual_norm", "finite",
+                    )}
+                    for row in solved["residual_evaluation_history"]
+                ]
+                local_record = {
+                    "mixing_method": solved["mixing_method"],
+                    "mixing_metric": solved["mixing_metric"],
+                    "status": solved["status"],
+                    "stop_reason": solved["stop_reason"],
+                    "iterations": optional_count(solved.get("iterations")),
+                    "relative_raw_residual": float(solved["relative_residual"]),
+                    "raw_residual_norm": float(solved["unscaled_residual_norm"]),
+                    "scaled_residual_norm": float(solved["scaled_residual_norm"]),
+                    "s_evaluation_count": optional_count(solved.get("s_evaluation_count")),
+                    "constraint_lu_solve_calls": optional_count(solved.get("constraint_lu_solve_calls")),
+                    "constraint_lu_factorizations_in_solve": optional_count(solved.get("constraint_lu_factorizations")),
+                    "constraint_lu_borrowed": bool(solved["constraint_lu_borrowed"]),
+                    "side_action_calls": (
+                        None
+                        if solved.get("side_action_calls") is None
+                        else {
+                            side: optional_count(solved["side_action_calls"].get(side))
+                            for side in ("bottom", "top")
+                        }
+                    ),
+                    "wall_seconds_max_rank": wall,
+                    "residual_history": history,
+                }
+                if (
+                    local_record["iterations"] is not None
+                    and local_record["iterations"] > 14
+                ) or (
+                    local_record["s_evaluation_count"] is not None
+                    and local_record["s_evaluation_count"] > 16
+                ):
+                    raise ValueError("fixed iteration/S budget exceeded")
+                if local_record["mixing_method"] != "complex_qr_type_ii_research":
+                    raise ValueError("complex-QR helper did not report its actual method")
+                if local_record["status"] not in {"converged", "not_converged"}:
+                    raise ValueError("unknown helper status")
+                if raw_metric != (local_record["mixing_metric"] == "raw_residual"):
+                    raise ValueError("requested mixing metric was not applied")
+            except Exception as exc:  # noqa: BLE001 - synchronize record validation
+                local_error = f"{type(exc).__name__}: {exc}"
+            rank_records = comm.allgather((local_error, local_record))
+            record_errors = [f"rank {rank}: {error}" for rank, (error, _) in enumerate(rank_records) if error]
+            if record_errors:
+                raise Task041ModePrepError(f"same-g {metric_name} record rejected: " + "; ".join(record_errors))
+            records = [row for _, row in rank_records]
+            common_fields = (
+                "mixing_method",
+                "mixing_metric",
+                "status",
+                "stop_reason",
+                "iterations",
+                "s_evaluation_count",
+                "constraint_lu_solve_calls",
+                "side_action_calls",
+            )
+            if any(any(record[key] != records[0][key] for key in common_fields) for record in records[1:]):
+                raise Task041ModePrepError(f"same-g {metric_name} solver status differs across ranks")
+            records[0]["actual_calls"] = {
+                "per_rank": [
+                    {
+                        "S": row["s_evaluation_count"],
+                        "C_solve": row["constraint_lu_solve_calls"],
+                        "C_solve_accounting": "replicated_report",
+                        "side": row["side_action_calls"],
+                        "side_accounting": "replicated_report",
+                    }
+                    for row in records
+                ],
+                "totals": {
+                    "global_S_evaluations": records[0]["s_evaluation_count"],
+                    "C_solve": records[0]["constraint_lu_solve_calls"],
+                    "side": records[0]["side_action_calls"],
+                },
+                "semantics": (
+                    "S is a global collective evaluation count; C_solve is the owner LU solve count, "
+                    "and side values are collective apply counts. C and side values are replicated "
+                    "rank-consistent reports and are not summed across ranks."
+                ),
+            }
+            records[0]["wall_seconds_max_rank"] = max(row["wall_seconds_max_rank"] for row in records)
+            pair["solves"].append(records[0])
+        pair["constraint_lu_same_object_for_both_solves"] = bool(
+            comm.allreduce(factor_object is modal_system.constraint_lu, op=MPI.LAND)
+        )
+        scaled, raw = pair["solves"]
+        ref_history = list(reference_baseline["history"])
+        cur_history = scaled["residual_history"]
+        scalar_keys = ("raw_residual_norm", "raw_target_metric", "scaled_residual_norm")
+        differences = []
+        for ref, current in zip(ref_history, cur_history):
+            values = {}
+            for key in scalar_keys:
+                delta = float(current[key]) - float(ref[key])
+                scale = abs(float(ref[key]))
+                values[key] = {
+                    "signed_difference": delta,
+                    "absolute_difference": abs(delta),
+                    "normalized_absolute_difference": abs(delta) / scale if scale else None,
+                }
+            differences.append({"evaluation": current["evaluation"], **values})
+        final_differences = {}
+        current_final = {
+            "raw_residual_norm": scaled["raw_residual_norm"],
+            "raw_target_metric": scaled["relative_raw_residual"],
+            "scaled_residual_norm": scaled["scaled_residual_norm"],
+        }
+        for key, current in current_final.items():
+            reference = float(reference_baseline[key])
+            delta = float(current) - reference
+            final_differences[key] = {
+                "signed_difference": delta,
+                "absolute_difference": abs(delta),
+                "normalized_absolute_difference": abs(delta) / abs(reference) if reference else None,
+            }
+        exact_description = bool(
+            len(ref_history) == len(cur_history)
+            and all(
+                differences[i][key]["absolute_difference"] == 0.0
+                for i in range(len(differences)) for key in scalar_keys
+            )
+            and all(row["absolute_difference"] == 0.0 for row in final_differences.values())
+        )
+        pair["baseline_replay"] = {
+            "reference_g_sha256": reference_baseline["g_sha256"],
+            "status_matches": scaled["status"] == reference_baseline["status"],
+            "stop_reason_matches": scaled["stop_reason"] == reference_baseline["stop_reason"],
+            "iterations_match": scaled["iterations"] == reference_baseline["iterations"],
+            "s_evaluation_count_matches": scaled["s_evaluation_count"] == reference_baseline["s_evaluation_count"],
+            "reference_history_count": len(ref_history),
+            "current_history_count": len(cur_history),
+            "per_evaluation_differences": differences,
+            "final_residual_differences": final_differences,
+            "exact_values_match_descriptive_only": exact_description,
+            "replay_assessment": "pending_review",
+            "numeric_replay_gate_added": False,
+        }
+        pair["raw_metric_minus_scaled"] = {
+            key: float(raw[key]) - float(scaled[key])
+            for key in ("relative_raw_residual", "raw_residual_norm", "scaled_residual_norm")
+        }
+        scaled_calls = scaled["actual_calls"]["totals"]
+        raw_calls = raw["actual_calls"]["totals"]
+        pair["actual_call_differences_raw_minus_scaled"] = {
+            "global_S_evaluations": (
+                None
+                if raw_calls["global_S_evaluations"] is None
+                or scaled_calls["global_S_evaluations"] is None
+                else raw_calls["global_S_evaluations"]
+                - scaled_calls["global_S_evaluations"]
+            ),
+            "C_solve": (
+                None
+                if raw_calls["C_solve"] is None or scaled_calls["C_solve"] is None
+                else raw_calls["C_solve"] - scaled_calls["C_solve"]
+            ),
+            "side": {
+                side: (
+                    None
+                    if raw_calls["side"] is None
+                    or scaled_calls["side"] is None
+                    or raw_calls["side"].get(side) is None
+                    or scaled_calls["side"].get(side) is None
+                    else raw_calls["side"][side] - scaled_calls["side"][side]
+                )
+                for side in ("bottom", "top")
+            },
+        }
+        pair["g_unchanged_after_both_solves"] = bool(
+            comm.allreduce(hashlib.sha256(np.ascontiguousarray(g).view(np.uint8)).hexdigest() == local_g_hash, op=MPI.LAND)
+        )
+    except BaseException as exc:
+        failure_evidence["same_g_modal_metric_pair"] = {
+            **_jsonable(pair),
+            "status": "failed",
+            "error": {"type": type(exc).__name__, "message": str(exc)},
+        }
+        raise
+    pair["cleanup"] = dict(release_before_recovery())
+    pair["pair_wall_seconds_max_rank"] = float(comm.allreduce(time.perf_counter() - pair_started, op=MPI.MAX))
+    pair["constraint_lu_setup_factorizations"] = optional_count(
+        setup_diagnostics.get("constraint_lu_factorizations")
+    )
+    pair["constraint_lu_setup_solve_calls_before_pair"] = optional_count(
+        setup_diagnostics.get("constraint_lu_solve_calls")
+    )
+    pair["status"] = "pair_executed_not_formal_qualification"
+    return pair
+
 def _run_task041_balh_candidate_setup(
     setup: Any,
     layout: Any,
@@ -4437,6 +5118,7 @@ def _run_task041_balh_candidate_setup(
     use_anderson_modal_inner: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
+    same_g_modal_metric_pair: Mapping[str, Any] | None = None,
     physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -4483,6 +5165,14 @@ def _run_task041_balh_candidate_setup(
     if complex_qr_research and not use_anderson_modal_inner:
         raise Task041ModePrepError(
             "complex_qr_research requires use_anderson_modal_inner"
+        )
+    if same_g_modal_metric_pair is not None and (
+        not use_anderson_modal_inner
+        or not complex_qr_research
+        or capture_modal_solve_trace
+    ):
+        raise Task041ModePrepError(
+            "same-g modal pairing requires the prepared complex-QR inner path"
         )
     if use_anderson_modal_inner and (
         not isinstance(identity, Mapping)
@@ -12351,6 +13041,106 @@ def _run_task041_balh_candidate_setup(
                 "inventory": context_inventory_before,
             },
         )
+        if same_g_modal_metric_pair is not None:
+            modal_system = None
+            local_pair_ready = False
+            try:
+                pair_layout = same_g_modal_metric_pair["mode_layout"]
+                pair_mode_count = int(pair_layout["mode_count"])
+                modal_system = context.action_modal_schur_system
+                owner = int(modal_system.constraint_lu_owner_rank)
+                local_factor_valid = (
+                    modal_system.constraint_lu is not None
+                    and modal_system.constraint_pivots is not None
+                    if comm.rank == owner
+                    else modal_system.constraint_lu is None
+                    and modal_system.constraint_pivots is None
+                )
+                local_pair_ready = bool(
+                    local_factor_valid
+                    and owner == comm.size - 1
+                    and not modal_system._destroyed
+                    and modal_system.complex_qr_research
+                    and not modal_system.raw_metric_mixing
+                    and modal_system.modal_count == 2 * pair_mode_count
+                    and modal_system.modal_action.modal_count == 2 * pair_mode_count
+                    and int(modal_system.diagnostics.get("constraint_lu_factorizations", -1)) == 1
+                    and int(setup.coupling.mode_count_per_direction) == pair_mode_count
+                    and int(layout.modal_count) == 2 * pair_mode_count
+                    and int(layout.modal_owner) == comm.size - 1
+                )
+            except Exception:  # noqa: BLE001 - fold local readiness into allreduce
+                local_pair_ready = False
+            if not comm.allreduce(local_pair_ready, op=MPI.LAND):
+                raise Task041ModePrepError(
+                    "same-g modal system and borrowed C factor are not collectively ready"
+                )
+            layout_signatures = _task041_same_g_modal_layout_signatures(
+                setup.coupling,
+                layout,
+                modal_system,
+                pair_layout,
+                comm,
+            )
+            pair = _task041_execute_same_g_modal_metric_pair(
+                modal_system,
+                np.asarray(same_g_modal_metric_pair["g"], dtype=np.complex128),
+                reference_baseline=same_g_modal_metric_pair[
+                    "reference_baseline"
+                ],
+                layout_signatures=layout_signatures,
+                comm=comm,
+                release_before_recovery=release_before_recovery,
+                failure_evidence=failure_evidence,
+            )
+            pair["pre_pair_side_probe_apply_calls"] = {
+                side: int(cost_probe["side"][side]["probe_call_count"])
+                for side in ("bottom", "top")
+            }
+            candidate_inventory = {
+                "modal_block": "on_demand_nonlinear_modal_inner",
+                "research_mode": "same_g_modal_metric_pair_diagnostic",
+                "modal_schur_materialized": False,
+                "modal_schur_column_count": 0,
+                "early_sample_gate": context_inventory_before.get(
+                    "early_sample_gate"
+                ),
+                "p4_factor_count_at_setup": sum(
+                    p4_factor_counts_at_setup.values()
+                ),
+                "p4_factor_count_after_cleanup": {
+                    side: int(
+                        side_diagnostics_after[side].get("p4_factor_count", 0)
+                    )
+                    for side in side_diagnostics_after
+                },
+                "nested_iterative_ksp_count_at_setup": sum(
+                    nested_ksp_counts_at_setup.values()
+                ),
+                "nested_iterative_ksp_count_after_cleanup": {
+                    side: int(
+                        side_diagnostics_after[side].get(
+                            "nested_iterative_ksp_count", 0
+                        )
+                    )
+                    for side in side_diagnostics_after
+                },
+            }
+            result = {
+                "schema": "task041.side_balh.candidate_setup.v1",
+                "status": "same_g_modal_metric_pair_diagnostic_only",
+                "qualification_scope": qualification_scope,
+                "qualification_method": "on_demand_complex_qr_modal_inner",
+                "qualification": "not_formal_qualification",
+                "same_g_modal_metric_pair": pair,
+                "candidate_inventory": candidate_inventory,
+                "full_formal": {
+                    "status": "not_run_same_g_modal_metric_pair",
+                    "solve": "not_run",
+                    "recovery": "not_run",
+                },
+            }
+            return result
         for side in audit_phase:
             audit_phase[side] = "outer"
         marker_callback(
@@ -12490,6 +13280,7 @@ def run_task041_consumer(
     use_anderson_modal_inner: bool = False,
     complex_qr_research: bool = False,
     capture_modal_solve_trace: bool = False,
+    same_g_modal_metric_pair_request: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -12523,6 +13314,32 @@ def run_task041_consumer(
         raise Task041ModePrepError("complex_qr_research must be a boolean")
     if not isinstance(capture_modal_solve_trace, bool):
         raise Task041ModePrepError("capture_modal_solve_trace must be a boolean")
+    same_g_pair_enabled = _task041_same_g_modal_metric_pair_scope(
+        same_g_modal_metric_pair_request,
+        identity={
+            "model_id": normalized.get("model_id"),
+            "mode_count": contract.get("mode_count"),
+        },
+        candidate=candidate,
+        mpi_size=int(comm.size),
+        use_anderson_modal_inner=use_anderson_modal_inner,
+        complex_qr_research=complex_qr_research,
+        capture_modal_solve_trace=capture_modal_solve_trace,
+        p4_inverse_backend=str(contract.get("p4_inverse_backend", "full")),
+        p4_refinement_target_tolerance=p4_refinement_target_tolerance,
+        task041_resource_policy=task041_resource_policy,
+        other_diagnostic_modes=bool(
+            performance_profile is not None
+            or task041_rhs_probe_manifest is not None
+            or side_setup_schedule is not None
+            or comparison_mode is not None
+            or top_causal_replay
+            or p4_correction_replay_from is not None
+            or p4_response_correction_steps != 0
+            or p4_backend_pair_side is not None
+            or a6_response_pair
+        ),
+    )
     if complex_qr_research and not use_anderson_modal_inner:
         raise Task041ModePrepError(
             "complex_qr_research requires use_anderson_modal_inner"
@@ -13217,7 +14034,9 @@ def run_task041_consumer(
         resolved_sha = resolved_config_sha256(specification)
         identity_path = Path(packet_identity).resolve()
         manifest_path = Path(packet_manifest).resolve()
-        disk_identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        identity_bytes = identity_path.read_bytes()
+        packet_identity_file_sha256 = hashlib.sha256(identity_bytes).hexdigest()
+        disk_identity = json.loads(identity_bytes)
         if not isinstance(disk_identity, Mapping):
             raise Task041ModePrepError("Task041 packet identity is not a mapping")
         if representative_rhs_contract is not None:
@@ -13225,7 +14044,7 @@ def run_task041_consumer(
             if (
                 packet_binding["packet_manifest_sha256"] != packet_manifest_sha256
                 or packet_binding["packet_identity_sha256"]
-                != hashlib.sha256(identity_path.read_bytes()).hexdigest()
+                != packet_identity_file_sha256
             ):
                 raise Task041ModePrepError(
                     "representative RHS probe packet binding does not match the worker packet"
@@ -13303,6 +14122,18 @@ def run_task041_consumer(
             manifest_path,
             packet_manifest_sha256,
             legacy_native=legacy_native,
+        )
+        same_g_modal_metric_pair = (
+            _task041_prepare_same_g_modal_metric_pair(
+                same_g_modal_metric_pair_request,
+                comm=comm,
+                packet_manifest_sha256=packet_manifest_sha256,
+                packet_identity_file_sha256=packet_identity_file_sha256,
+                packet_identity=packet_identity,
+                consumer_identity=recomputed_identity,
+            )
+            if same_g_pair_enabled
+            else None
         )
         emit(
             "packet_manifest_validated",
@@ -13481,9 +14312,7 @@ def run_task041_consumer(
                 "resolved_config_sha256": resolved_sha,
                 "producer_source_sha": packet_source_sha,
                 "producer_packet_manifest_sha256": packet_manifest_sha256,
-                "producer_packet_identity_sha256": hashlib.sha256(
-                    identity_path.read_bytes()
-                ).hexdigest(),
+                "producer_packet_identity_sha256": packet_identity_file_sha256,
                 "model_id": recomputed_identity["model_id"],
                 "run_id": recomputed_identity["run_id"],
                 "mode_count": recomputed_identity["mode_count"],
@@ -13795,6 +14624,7 @@ def run_task041_consumer(
                 use_anderson_modal_inner=use_anderson_modal_inner,
                 complex_qr_research=complex_qr_research,
                 capture_modal_solve_trace=capture_modal_solve_trace,
+                same_g_modal_metric_pair=same_g_modal_metric_pair,
                 physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity
@@ -13840,7 +14670,74 @@ def run_task041_consumer(
         formal_result = setup_result.get("full_formal")
         if not isinstance(formal_result, Mapping):
             raise Task041ModePrepError("Task041 consumer did not return full-formal result")
-        if representative_rhs_contract is not None:
+        if same_g_pair_enabled:
+            pair_result = setup_result.get("same_g_modal_metric_pair")
+            candidate_inventory = setup_result.get("candidate_inventory")
+            if not isinstance(pair_result, Mapping) or not isinstance(
+                candidate_inventory, Mapping
+            ):
+                raise Task041ModePrepError(
+                    "same-g modal metric pairing returned no diagnostic record"
+                )
+            result["setup"] = _jsonable(
+                {
+                    "schema": setup_result.get("schema"),
+                    "status": setup_result.get("status"),
+                    "candidate_inventory": candidate_inventory,
+                    "same_g_modal_metric_pair_ref": "/same_g_modal_metric_pair",
+                }
+            )
+            result["same_g_modal_metric_pair"] = _jsonable(pair_result)
+            result["formal"] = {"status": "not_run", "reason": "diagnostic_pair"}
+            result["gates"] = {
+                "pass": False,
+                "status": "same_g_modal_metric_pair_diagnostic_only",
+                "full_formal": "not_run",
+                "outer_fgmres": "not_run",
+                "recovery": "not_run",
+                "official_rta": "not_run",
+            }
+            result["qualification_status"] = "not_formal_qualification"
+            result["qualification"] = {
+                "pass": False,
+                "reason": "same_g_modal_metric_pair_diagnostic_only",
+            }
+            result["official_rta"] = {
+                "status": "not_run",
+                "reason": "same_g_modal_metric_pair_diagnostic_only",
+            }
+            result["consumer_scope"] = {
+                "side_and_C_setup": "created_once_reused_for_both_methods",
+                "modal_solves": 2,
+                "outer_fgmres": "not_run",
+                "recovery": "not_run",
+                "official_rta": "not_run",
+            }
+            result["matrix_inventory"] = {
+                "qep_calls": qep_release.get("qep_calls"),
+                "consumer_qep_required": qep_release.get(
+                    "consumer_qep_required"
+                ),
+                "global_direct_factor_count": 0,
+                "global_coarse_factor_count": 0,
+                "setup_inventory_ref": "/setup/candidate_inventory",
+                "modal_schur_materialized": False,
+                "modal_schur_column_count": 0,
+                "direct_fallback": False,
+            }
+            result["status"] = "task041_same_g_modal_metric_pair_completed"
+            result["classification"] = (
+                "TASK041_SAME_G_MODAL_METRIC_PAIR_DIAGNOSTIC_ONLY"
+            )
+            callback(
+                "same_g_modal_metric_pair_completed",
+                {
+                    "status": result["status"],
+                    "qualification": "not_formal_qualification",
+                    "result_ref": "/same_g_modal_metric_pair",
+                },
+            )
+        elif representative_rhs_contract is not None:
             component_key = (
                 "common_layout_equivalence"
                 if comparison_mode == "common_layout_equivalence"

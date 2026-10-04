@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import base64
 import copy
 import hashlib
 import inspect
@@ -2184,6 +2185,42 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
             task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
         )
     )
+
+    pair_request = {"schema": "task041.same_g_modal_metric_pair.v2"}
+    prepared_pair = {
+        "g": np.zeros(240, dtype=np.complex128),
+        "mode_layout": {},
+        "reference_baseline": {},
+    }
+
+    def fake_same_g_reference(request, **_kwargs):
+        assert request is pair_request
+        return prepared_pair
+
+    monkeypatch.setattr(
+        worker,
+        "_task041_prepare_same_g_modal_metric_pair",
+        fake_same_g_reference,
+    )
+    captured.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_same_g_pair_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            use_anderson_modal_inner=True,
+            complex_qr_research=True,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+            same_g_modal_metric_pair_request=pair_request,
+        )
+    assert captured["same_g_modal_metric_pair"] is prepared_pair
 
     captured.clear()
     with pytest.raises(
@@ -8624,3 +8661,577 @@ def test_task041_cell_condensed_v5_service_ledger_uses_compat_view(
     assert error is None
     assert result["used_compute_wall_seconds"] == pytest.approx(12.5)
     assert observed["write"]["case_id"] == model_id
+
+
+def test_task041_same_g_modal_metric_pair_is_opt_in_and_scope_bound():
+    from benchmarks.task041_exact_side_workflow import (
+        _task041_same_g_modal_metric_pair_scope,
+    )
+
+    options = {
+        "candidate": False,
+        "mpi_size": 1,
+        "use_anderson_modal_inner": False,
+        "complex_qr_research": False,
+        "capture_modal_solve_trace": False,
+        "p4_inverse_backend": "full",
+        "p4_refinement_target_tolerance": None,
+        "task041_resource_policy": None,
+        "other_diagnostic_modes": False,
+    }
+    assert (
+        _task041_same_g_modal_metric_pair_scope(
+            None,
+            identity={"model_id": "unrelated", "mode_count": 1},
+            **options,
+        )
+        is False
+    )
+    with pytest.raises(Task041ModePrepError, match="restricted to the 13.5 nm"):
+        _task041_same_g_modal_metric_pair_scope(
+            {"schema": "task041.same_g_modal_metric_pair.v2"},
+            identity={"model_id": "unrelated", "mode_count": 120},
+            **{
+                **options,
+                "candidate": True,
+                "mpi_size": 8,
+                "use_anderson_modal_inner": True,
+                "complex_qr_research": True,
+                "p4_inverse_backend": "cell_condensed",
+                "task041_resource_policy": task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+            },
+        )
+
+
+def test_task041_same_g_modal_metric_pair_keeps_two_nonconverged_methods_and_cleanup(
+    monkeypatch,
+):
+    from benchmarks import task041_exact_side_workflow as worker
+    from src.solvers import hybrid_fem_modal_block_ldu as modal_ldu
+
+    class ReplicatedReportComm:
+        rank = 0
+        size = 8
+
+        @staticmethod
+        def allreduce(value, op=None):
+            return value
+
+        def allgather(self, value):
+            return [value] * self.size
+
+    comm = ReplicatedReportComm()
+    _, coupling, layout, modal_system, descriptor = _same_g_modal_layout_fixture()
+    layout_signatures = worker._task041_same_g_modal_layout_signatures(
+        coupling, layout, modal_system, descriptor, comm
+    )
+    assert layout_signatures["artifact_sha256"] == descriptor["artifact_sha256"]
+    rhs = np.asarray(
+        [1.0 + 0.5j, -0.25 + 0.75j, 0.125 - 0.5j, -0.75 - 0.25j],
+        dtype=np.complex128,
+    )
+    history = [
+        {
+            "evaluation": index,
+            "source": "snes_function",
+            "raw_residual_norm": 1.0,
+            "raw_target_metric": 1.25,
+            "scaled_residual_norm": 0.5,
+            "finite": True,
+        }
+        for index in range(1, 17)
+    ]
+    factor = object()
+    pivots = np.asarray([0, 1], dtype=np.int32)
+    modal_system._destroyed = False
+    modal_system.complex_qr_research = True
+    modal_system.raw_metric_mixing = False
+    modal_system.constraint_lu_owner_rank = 0
+    modal_system.constraint_lu = factor
+    modal_system.constraint_pivots = pivots
+    modal_system.diagnostics = {"constraint_lu_factorizations": 1}
+    calls = []
+
+    def fake_solve(action, actual_rhs, *, _borrowed_constraint_factor, raw_metric_mixing):
+        assert action is modal_system.modal_action
+        assert _borrowed_constraint_factor is modal_system
+        assert np.array_equal(actual_rhs, rhs)
+        calls.append(bool(raw_metric_mixing))
+        return {
+            "mixing_method": "complex_qr_type_ii_research",
+            "mixing_metric": "raw_residual" if raw_metric_mixing else "C_scaled_residual",
+            "status": "not_converged",
+            "stop_reason": "max_iterations",
+            "iterations": 14,
+            "relative_residual": 1.25,
+            "unscaled_residual_norm": 1.0,
+            "scaled_residual_norm": 0.5,
+            "s_evaluation_count": 16,
+            "constraint_lu_solve_calls": 16,
+            "constraint_lu_factorizations": 0,
+            "constraint_lu_borrowed": True,
+            "side_action_calls": {"bottom": 16, "top": 16},
+            "residual_evaluation_history": history,
+        }
+
+    monkeypatch.setattr(
+        modal_ldu,
+        "solve_action_modal_schur_anderson_complex_qr_research",
+        fake_solve,
+    )
+    cleanup_calls = []
+    failure_evidence = {}
+    pair = worker._task041_execute_same_g_modal_metric_pair(
+        modal_system,
+        rhs,
+        reference_baseline={
+            "g_sha256": hashlib.sha256(rhs.tobytes()).hexdigest(),
+            "status": "not_converged",
+            "stop_reason": "max_iterations",
+            "iterations": 14,
+            "s_evaluation_count": 16,
+            "raw_residual_norm": 1.0 + 1.0e-14,
+            "raw_target_metric": 1.25 + 1.0e-14,
+            "scaled_residual_norm": 0.5 + 1.0e-14,
+            "history": [
+                {
+                    **row,
+                    "raw_residual_norm": row["raw_residual_norm"] + 1.0e-14,
+                    "raw_target_metric": row["raw_target_metric"] + 1.0e-14,
+                    "scaled_residual_norm": row["scaled_residual_norm"] + 1.0e-14,
+                }
+                for row in history
+            ],
+        },
+        layout_signatures=layout_signatures,
+        comm=comm,
+        release_before_recovery=lambda: cleanup_calls.append("released") or {
+            "component_cleanup_pass": True
+        },
+        failure_evidence=failure_evidence,
+    )
+
+    assert calls == [False, True]
+    assert [item["status"] for item in pair["solves"]] == [
+        "not_converged",
+        "not_converged",
+    ]
+    assert [item["mixing_metric"] for item in pair["solves"]] == [
+        "C_scaled_residual",
+        "raw_residual",
+    ]
+    assert [item["s_evaluation_count"] for item in pair["solves"]] == [16, 16]
+    assert [item["side_action_calls"] for item in pair["solves"]] == [
+        {"bottom": 16, "top": 16},
+        {"bottom": 16, "top": 16},
+    ]
+    assert pair["baseline_replay"]["status_matches"] is True
+    assert pair["baseline_replay"]["stop_reason_matches"] is True
+    assert pair["baseline_replay"]["iterations_match"] is True
+    assert pair["baseline_replay"]["s_evaluation_count_matches"] is True
+    assert pair["baseline_replay"]["exact_values_match_descriptive_only"] is False
+    assert pair["baseline_replay"]["replay_assessment"] == "pending_review"
+    assert pair["baseline_replay"]["numeric_replay_gate_added"] is False
+    assert pair["baseline_replay"]["per_evaluation_differences"][0][
+        "raw_residual_norm"
+    ]["absolute_difference"] != 0.0
+    assert "input_failure" not in pair["baseline_replay"]
+    assert pair["solves"][0]["actual_calls"]["totals"][
+        "global_S_evaluations"
+    ] == 16
+    assert pair["solves"][0]["actual_calls"]["totals"]["C_solve"] == 16
+    assert pair["solves"][0]["actual_calls"]["totals"]["side"] == {
+        "bottom": 16,
+        "top": 16,
+    }
+    assert all(
+        row["C_solve_accounting"] == "replicated_report"
+        and row["side_accounting"] == "replicated_report"
+        for row in pair["solves"][0]["actual_calls"]["per_rank"]
+    )
+    assert pair["actual_call_differences_raw_minus_scaled"] == {
+        "global_S_evaluations": 0,
+        "C_solve": 0,
+        "side": {"bottom": 0, "top": 0},
+    }
+    assert pair["g_unchanged_after_both_solves"] is True
+    assert pair["reference_artifact_sha256"] == "a" * 64
+    assert pair["constraint_lu_same_object_for_both_solves"] is True
+    assert pair["constraint_lu_setup_factorizations"] == 1
+    assert pair["status"] == "pair_executed_not_formal_qualification"
+    assert pair["cleanup"]["component_cleanup_pass"] is True
+    assert cleanup_calls == ["released"]
+    assert "same_g_modal_metric_pair" not in failure_evidence
+
+
+def _same_g_pair_reference_fixture(worker):
+    g = np.zeros(240, dtype=np.complex128)
+    g_bytes = g.tobytes()
+    g_sha = hashlib.sha256(g_bytes).hexdigest()
+    packet_identity = {"fixture_identity": "selected-packet"}
+    consumer_identity = {"input_sha256": "c" * 64, "mode_count": 120}
+    source_path = Path(worker.__file__).resolve()
+    repository_root = source_path.parents[1]
+    relative_source = source_path.relative_to(repository_root).as_posix()
+    source_sha = hashlib.sha256(source_path.read_bytes()).hexdigest()
+    source_symbol_sha = "a" * 64
+    reference = {
+        "provenance": {"source_commit": "reference-commit"},
+        "packet": {
+            "identity_file_sha256": "b" * 64,
+            "identity_canonical_sha256": worker._task041_pair_canonical_sha256(
+                packet_identity
+            ),
+            "producer_manifest_sha256": "d" * 64,
+            "selection_sha256": "e" * 64,
+            "cross_section_layout_sha256": "f" * 64,
+        },
+        "consumer_identity": consumer_identity,
+        "mode_layout": {
+            "mode_count": 120,
+            "canonical_mapping_source": "fixture-mapping",
+            "trace_mapping_source": "fixture-trace",
+            "physical_method": {"propagation_model": "full3d_uniform_cg"},
+            "branches": {},
+        },
+        "g": {
+            "dtype": "complex128",
+            "shape": [240],
+            "order": "C",
+            "encoding": "base64",
+            "sha256": g_sha,
+            "data": base64.b64encode(g_bytes).decode("ascii"),
+        },
+        "baseline": {
+            "g_sha256": g_sha,
+            "status": "not_converged",
+            "stop_reason": "max_iterations",
+            "iterations": 1,
+            "s_evaluation_count": 1,
+            "raw_residual_norm": 1.0,
+            "raw_target_metric": 1.0,
+            "scaled_residual_norm": 1.0,
+            "history": [
+                {
+                    "evaluation": 1,
+                    "raw_residual_norm": 1.0,
+                    "raw_target_metric": 1.0,
+                    "scaled_residual_norm": 1.0,
+                }
+            ],
+        },
+        "source_evidence": {
+            "current_commit": "current-commit",
+            "files": [
+                {
+                    "path": relative_source,
+                    "reference_file_sha256": "1" * 64,
+                    "current_file_sha256": source_sha,
+                    "relevant_symbols": [
+                        {
+                            "name": "fixture_symbol",
+                            "reference_ast_sha256": source_symbol_sha,
+                            "current_ast_sha256": source_symbol_sha,
+                            "unchanged": True,
+                        }
+                    ],
+                }
+            ],
+        },
+    }
+    request = {"schema": "task041.same_g_modal_metric_pair.v2", "reference": reference}
+    request["artifact_sha256"] = worker._task041_pair_canonical_sha256(request)
+    return request, packet_identity, consumer_identity, g
+
+
+def test_task041_same_g_reference_bad_g_sha_is_broadcast_to_all_ranks():
+    from benchmarks import task041_exact_side_workflow as worker
+
+    request, packet_identity, consumer_identity, _ = _same_g_pair_reference_fixture(
+        worker
+    )
+    request["reference"]["g"]["sha256"] = "0" * 64
+    request.pop("artifact_sha256")
+    request["artifact_sha256"] = worker._task041_pair_canonical_sha256(request)
+    shared = {}
+
+    class SharedBcastComm:
+        size = 2
+
+        def __init__(self, rank):
+            self.rank = rank
+
+        def bcast(self, value, root):
+            assert root == 0
+            if self.rank == 0:
+                shared["root_payload"] = value
+                return value
+            return shared["root_payload"]
+
+        def allgather(self, _value):
+            raise AssertionError("rank-zero artifact failure must stop before layout checks")
+
+    errors = []
+    for rank in (0, 1):
+        with pytest.raises(Task041ModePrepError, match="same-g reference rejected") as exc:
+            worker._task041_prepare_same_g_modal_metric_pair(
+                request,
+                comm=SharedBcastComm(rank),
+                packet_manifest_sha256="d" * 64,
+                packet_identity_file_sha256="b" * 64,
+                packet_identity=packet_identity,
+                consumer_identity=consumer_identity,
+            )
+        errors.append(str(exc.value))
+    assert errors[0] == errors[1]
+    assert "prepared g bytes do not match" in errors[0]
+
+
+def test_task041_same_g_source_binding_rejects_a_changed_current_file(tmp_path):
+    from benchmarks.task041_exact_side_workflow import (
+        _task041_validate_pair_source_evidence,
+    )
+
+    source = tmp_path / "layout.py"
+    source.write_text("class Layout: pass\n", encoding="utf-8")
+    evidence = {
+        "files": [
+            {
+                "path": "layout.py",
+                "current_file_sha256": "0" * 64,
+                "relevant_symbols": [
+                    {
+                        "unchanged": True,
+                        "reference_ast_sha256": "a" * 64,
+                        "current_ast_sha256": "a" * 64,
+                    }
+                ],
+            }
+        ]
+    }
+    with pytest.raises(ValueError, match="runtime source differs"):
+        _task041_validate_pair_source_evidence(evidence, tmp_path)
+
+    evidence["files"][0]["current_file_sha256"] = hashlib.sha256(
+        source.read_bytes()
+    ).hexdigest()
+    evidence["files"][0]["relevant_symbols"][0]["current_ast_sha256"] = (
+        "c" * 64
+    )
+    with pytest.raises(ValueError, match="relevant source changed"):
+        _task041_validate_pair_source_evidence(evidence, tmp_path)
+
+
+def _same_g_modal_layout_fixture(*, reverse_positive=False):
+    from benchmarks import task041_exact_side_workflow as worker
+
+    mode_count = 2
+    expected = {}
+    bases = {}
+    for branch, direction in (("positive", "positive"), ("negative", "negative")):
+        kinds = ["propagating", "evanescent"]
+        beta = [[1.0, 0.0], [2.0, 0.0]]
+        mode_keys = [{"direction": direction, "kind": kind} for kind in kinds]
+        expected[branch] = {
+            "direction": direction,
+            "mode_keys": mode_keys,
+            "beta": beta,
+            "groups": [0, 0],
+            "passive_branch_valid": [True, True],
+            "normalization_methods": ["fixture_basis_scale"],
+            "normalization_sha256": "9" * 64,
+        }
+        order = [1, 0] if branch == "positive" and reverse_positive else [0, 1]
+        modes = [
+            SimpleNamespace(
+                direction=direction,
+                kind=kinds[index],
+                beta=complex(index + 1),
+                passive_branch_valid=True,
+                right_scale=1.0,
+                poynting_z_after_normalization=1.0,
+            )
+            for index in order
+        ]
+        bases[branch] = SimpleNamespace(
+            modes=modes,
+            groups=[SimpleNamespace(indices=[0, 1])],
+            left_pair_relative_errors=[0.0, 0.0],
+            biorthogonality_matrix=np.eye(mode_count, dtype=np.complex128),
+            max_identity_error=0.0,
+            max_entry_identity_error=0.0,
+        )
+
+    class Projection:
+        @staticmethod
+        def getSize():
+            return (mode_count, mode_count)
+
+    coupling = SimpleNamespace(
+        mode_count_per_direction=mode_count,
+        bottom=SimpleNamespace(side="bottom", projection=Projection()),
+        top=SimpleNamespace(side="top", projection=Projection()),
+        positive_basis=bases["positive"],
+        negative_basis=bases["negative"],
+        negative_trace_to_positive=np.eye(mode_count, dtype=np.complex128),
+        propagation=SimpleNamespace(
+            forward=SimpleNamespace(factors=np.ones(mode_count, dtype=np.complex128)),
+            backward=SimpleNamespace(factors=np.ones(mode_count, dtype=np.complex128)),
+        ),
+    )
+    modal_system = SimpleNamespace(
+        modal_action=SimpleNamespace(
+            modal_count=2 * mode_count,
+            modal_constraint=np.eye(2 * mode_count, dtype=np.complex128),
+        )
+    )
+    layout = SimpleNamespace(modal_count=2 * mode_count, modal_owner=0)
+    descriptor = {
+        "mode_count": mode_count,
+        "artifact_sha256": "a" * 64,
+        "source_evidence_sha256": "b" * 64,
+        "packet_manifest_sha256": "c" * 64,
+        "packet_identity_canonical_sha256": "d" * 64,
+        "selection_sha256": "e" * 64,
+        "cross_section_layout_sha256": "f" * 64,
+        "canonical_mapping_source": "fixture-negative-to-positive",
+        "trace_mapping_source": "fixture-selected-packet-traces",
+        "physical_method": {"propagation_model": "fixture-two-sided"},
+        "branches": expected,
+    }
+    return worker, coupling, layout, modal_system, descriptor
+
+
+def test_task041_same_g_modal_order_rejects_equal_length_reordering():
+    worker, coupling, layout, modal_system, descriptor = _same_g_modal_layout_fixture(
+        reverse_positive=True
+    )
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+    with pytest.raises(Task041ModePrepError, match="ordered mode mismatch"):
+        worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, SerialComm()
+        )
+
+
+def test_task041_same_g_remote_layout_error_is_collectively_rejected():
+    worker, coupling, layout, modal_system, descriptor = _same_g_modal_layout_fixture()
+
+    class RemoteFailureComm:
+        rank = 0
+        size = 2
+        allgather_calls = 0
+
+        def allgather(self, local):
+            self.allgather_calls += 1
+            return [local, ("ValueError: rank-local mode mismatch", None)]
+
+    comm = RemoteFailureComm()
+    with pytest.raises(Task041ModePrepError, match="rank 1: ValueError"):
+        worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, comm
+        )
+    assert comm.allgather_calls == 1
+
+
+def test_task041_same_g_modal_pair_mpi2_collectives_finish_after_protocol_errors():
+    from benchmarks import task041_exact_side_workflow as worker
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("same-g protocol communication check requires exactly two ranks")
+
+    def capture_call(call):
+        try:
+            return None, call()
+        except Exception as exc:  # noqa: BLE001 - report rank-local outcomes collectively
+            return f"{type(exc).__name__}: {exc}", None
+
+    _, coupling, layout, modal_system, descriptor = _same_g_modal_layout_fixture()
+    normal_error, normal_signature = capture_call(
+        lambda: worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, comm
+        )
+    )
+    normal_reports = comm.allgather(
+        (
+            normal_error,
+            None
+            if normal_signature is None
+            else (
+                normal_signature.get("artifact_sha256"),
+                normal_signature.get("row_layout_sha256"),
+                normal_signature.get("column_layout_sha256"),
+            ),
+        )
+    )
+    normal_values = [value for error, value in normal_reports if error is None]
+    normal_ok = (
+        len(normal_values) == comm.size
+        and len({tuple(value) for value in normal_values}) == 1
+        and normal_values[0][0] == descriptor["artifact_sha256"]
+    )
+    if not normal_ok:
+        raise AssertionError(f"successful layout signature was not common: {normal_reports}")
+
+    _, coupling, layout, modal_system, descriptor = _same_g_modal_layout_fixture(
+        reverse_positive=(comm.rank == 1)
+    )
+    layout_error, _ = capture_call(
+        lambda: worker._task041_same_g_modal_layout_signatures(
+            coupling, layout, modal_system, descriptor, comm
+        )
+    )
+    layout_errors = comm.allgather(layout_error)
+    layout_completed = comm.allgather("layout_error_captured")
+    expected_layout_error = (
+        all(isinstance(error, str) for error in layout_errors)
+        and len(set(layout_errors)) == 1
+        and "rank 1:" in layout_errors[0]
+        and "ordered mode mismatch" in layout_errors[0]
+        and layout_completed == ["layout_error_captured"] * comm.size
+    )
+    if not expected_layout_error:
+        raise AssertionError(
+            f"rank-local layout error did not converge on both ranks: {layout_errors}"
+        )
+
+    request, packet_identity, consumer_identity, _ = _same_g_pair_reference_fixture(
+        worker
+    )
+    if comm.rank == 0:
+        request["reference"]["g"]["sha256"] = "0" * 64
+        request.pop("artifact_sha256")
+        request["artifact_sha256"] = worker._task041_pair_canonical_sha256(
+            request
+        )
+    reference_error, _ = capture_call(
+        lambda: worker._task041_prepare_same_g_modal_metric_pair(
+            request,
+            comm=comm,
+            packet_manifest_sha256="d" * 64,
+            packet_identity_file_sha256="b" * 64,
+            packet_identity=packet_identity,
+            consumer_identity=consumer_identity,
+        )
+    )
+    reference_errors = comm.allgather(reference_error)
+    reference_completed = comm.allgather("reference_error_captured")
+    expected_reference_error = (
+        all(isinstance(error, str) for error in reference_errors)
+        and len(set(reference_errors)) == 1
+        and "same-g reference rejected" in reference_errors[0]
+        and "prepared g bytes do not match" in reference_errors[0]
+        and reference_completed == ["reference_error_captured"] * comm.size
+    )
+    if not expected_reference_error:
+        raise AssertionError(
+            f"rank-zero g rejection did not converge on both ranks: {reference_errors}"
+        )
