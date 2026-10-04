@@ -9,6 +9,36 @@ from benchmarks.check_boundary_witness import metric, read_arrays
 from src.solvers.boundary_structure_scope import plan_record, read_stage
 
 
+def require_action_inventory(data, inputs, n, nm):
+    required = {
+        f"q{q}_{label}_{kind}"
+        for q in (30, 60)
+        for label in ("a", "b")
+        for kind in ("amplitudes", "forward", "adjoint", "modal", "linear", "zero")
+    }
+    if set(data) != required | {"H_errors", "unit_power_errors"} or set(inputs) != {
+        "x",
+        "y",
+        "alpha",
+    }:
+        raise ValueError("complete action/input inventory")
+    for name, a in inputs.items():
+        if (
+            a.shape != ((nm,) if name == "alpha" else (n,))
+            or a.dtype != np.complex128
+            or not np.isfinite(a).all()
+        ):
+            raise ValueError("complete action input shape/dtype/finite")
+    for name in required:
+        a = data[name]
+        size = nm if name.endswith("amplitudes") else n
+        if a.shape != (size,) or a.dtype != np.complex128 or not np.isfinite(a).all():
+            raise ValueError("complete action vector shape/dtype/finite")
+    for name in ("H_errors", "unit_power_errors"):
+        if data[name].shape != (nm,) or not np.isfinite(data[name]).all():
+            raise ValueError("full modal physics inventory")
+
+
 def check_saved():
     b, _bp = read_stage("BRIDGE")
     plan = plan_record()
@@ -86,6 +116,7 @@ def check_saved():
     nm = c["mode_count"]
     data = read_arrays(c["outputs"])
     inputs = read_arrays(c["inputs"])
+    require_action_inventory(data, inputs, n, nm)
     if (n, nm) != (378432, 32060):
         raise ValueError("full surface/complete mode inventory")
     required = {
@@ -96,6 +127,12 @@ def check_saved():
     }
     if set(data) != required | {"H_errors", "unit_power_errors"}:
         raise ValueError("missing complete action inventory")
+    for key, seed in (("x", 423801), ("y", 423803)):
+        rng = np.random.default_rng(seed)
+        if not np.array_equal(
+            inputs[key], rng.normal(size=n) + 1j * rng.normal(size=n)
+        ):
+            raise ValueError("preregistered mixed boundary seed identity")
     fullchecks = []
     for label, x, y in [
         ("a", inputs["x"], inputs["y"]),
@@ -140,6 +177,11 @@ def check_saved():
         result.update(full_action="PARTIAL_MISSING_ORACLE", fullchecks=fullchecks)
         return result
     oracle, _ = read_stage("ORACLE")
+    if (
+        oracle["modes"] != [r["mode_index"] for r in wp["selected_modes"]]
+        or oracle["explicit_face_visits"] != 12 * 2628
+    ):
+        raise ValueError("fixed complete selected oracle coverage")
     o = read_arrays(oracle["outputs"])
     for label in ("a", "b"):
         for kind in ("amplitudes", "forward", "adjoint", "modal"):
@@ -150,6 +192,23 @@ def check_saved():
                     **metric(o[label + "_" + kind], o["new_" + label + "_" + kind]),
                 )
             )
+    for label in ("a", "b"):
+        a = data[f"q30_{label}_amplitudes"]
+        b = data[f"q60_{label}_amplitudes"]
+        den = np.maximum(abs(a), abs(b))
+        diff = abs(a - b)
+        rel = np.divide(diff, den, out=np.zeros_like(diff), where=den != 0)
+        fullchecks.append(
+            {
+                "kind": "all_channel_q30_q60",
+                "input": label,
+                "passed": bool((rel <= 1e-10).all()),
+                "maximum_relative": float(rel.max()),
+                "worst_original_index": int(rel.argmax()),
+                "numerator": float(diff[rel.argmax()]),
+                "denominator": float(den[rel.argmax()]),
+            }
+        )
     fullpass = (
         bridgepass
         and all(c["passed"] for c in fullchecks)

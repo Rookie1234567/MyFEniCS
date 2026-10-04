@@ -88,6 +88,7 @@ def implementation_hashes():
         )
     ]
     files += [
+        "src/solvers/port_component_study.py",
         "src/io/port_preparation.py",
         "src/runners/port_preparation.py",
         "scripts/run_case.py",

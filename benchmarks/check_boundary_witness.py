@@ -27,11 +27,17 @@ def read_arrays(receipt):
     if hashlib.sha256(path.read_bytes()).hexdigest() != receipt["sha256"]:
         raise ValueError("saved witness file hash")
     with np.load(path, allow_pickle=False) as data:
-        if set(data.files) != set(receipt["members"]):
+        aliases = receipt.get("aliases", {})
+        if not set(aliases) <= set(receipt["members"]) or any(
+            not isinstance(v, str) or v not in receipt["members"] or v in aliases
+            for v in aliases.values()
+        ):
+            raise ValueError("saved witness alias inventory")
+        if set(data.files) != set(receipt["members"]) - set(aliases):
             raise ValueError("saved witness inventory")
         result = {}
         for name, value in receipt["members"].items():
-            a = data[name]
+            a = data[aliases.get(name, name)]
             if (
                 list(a.shape) != value["shape"]
                 or a.dtype.str != value["dtype"]

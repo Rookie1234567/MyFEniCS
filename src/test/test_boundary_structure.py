@@ -193,3 +193,42 @@ def test_jit_archive_v38_exact_readback_and_scope():
         assert second["members"][0]["reused_immutable_archive"]
         with pytest.raises(ValueError, match="scope"):
             archive(cache, Path(path) / "bad", namespace="v39")
+
+
+def test_lossless_alias_receipt_and_negative_cycle(tmp_path):
+    from benchmarks.check_boundary_witness import read_arrays
+    from src.solvers.port_component_study import array_file
+
+    a = np.array([1 + 2j, 3 - 0.1j], np.complex128)
+    receipt = array_file(
+        tmp_path / "encoded.npz", compressed=True, deduplicate=True, a=a, b=a.copy()
+    )
+    assert receipt["aliases"] == {"b": "a"}
+    np.testing.assert_array_equal(read_arrays(receipt)["b"], a)
+    bad = copy.deepcopy(receipt)
+    bad["aliases"] = {"a": "b", "b": "a"}
+    with pytest.raises(ValueError, match="alias inventory"):
+        read_arrays(bad)
+
+
+def test_new_action_inventory_rejects_missing_q():
+    from benchmarks.check_boundary_structure import require_action_inventory
+
+    d = {
+        f"q{q}_{label}_{kind}": np.zeros(
+            2 if kind == "amplitudes" else 3, np.complex128
+        )
+        for q in (30, 60)
+        for label in ("a", "b")
+        for kind in ("amplitudes", "forward", "adjoint", "modal", "linear", "zero")
+    }
+    d.update(H_errors=np.zeros(2), unit_power_errors=np.zeros(2))
+    inp = {
+        "x": np.zeros(3, np.complex128),
+        "y": np.zeros(3, np.complex128),
+        "alpha": np.zeros(2, np.complex128),
+    }
+    require_action_inventory(d, inp, 3, 2)
+    del d["q60_a_forward"]
+    with pytest.raises(ValueError, match="inventory"):
+        require_action_inventory(d, inp, 3, 2)

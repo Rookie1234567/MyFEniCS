@@ -11,19 +11,34 @@ from src.runners.task042_shared import write_json
 from src.solvers.bounded_port_provider import content_hash, json_bytes
 
 
-def array_file(path, **arrays):
+def array_file(path, *, compressed=False, deduplicate=False, **arrays):
     """Atomic small witness file; callers keep arrays out of JSON."""
     from tempfile import NamedTemporaryFile
 
     with NamedTemporaryFile(dir=path.parent, prefix="." + path.name, delete=False) as f:
         temp = Path(f.name)
-        np.savez(f, **arrays)
+        stored = {}
+        aliases = {}
+        seen = {}
+        for name, a in arrays.items():
+            identity = (
+                a.dtype.str,
+                a.shape,
+                hashlib.sha256(np.ascontiguousarray(a).tobytes()).hexdigest(),
+            )
+            if deduplicate and identity in seen:
+                aliases[name] = seen[identity]
+            else:
+                stored[name] = a
+                seen[identity] = name
+        (np.savez_compressed if compressed else np.savez)(f, **stored)
         f.flush()
         os.fsync(f.fileno())
     os.replace(temp, path)
     return {
         "path": str(path),
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "aliases": aliases,
         "members": {
             k: {
                 "shape": list(v.shape),

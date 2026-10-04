@@ -465,7 +465,7 @@ def component(folder):
                     "admission": gate,
                     "target_solve": False,
                 }
-            storage(180 * 2**20, namespace="v38")
+            storage(144 * 2**20, namespace="v38")
         t = perf_counter()
         action = make_action(modes[:count], 30)
         setup = perf_counter() - t
@@ -542,7 +542,12 @@ def component(folder):
         all_outputs.update(
             H_errors=np.array(hcheck), unit_power_errors=np.array(powercheck)
         )
-        resultfile = array_file(folder / "complete_actions.npz", **all_outputs)
+        resultfile = array_file(
+            folder / "complete_actions.npz",
+            compressed=True,
+            deduplicate=True,
+            **all_outputs,
+        )
     return {
         "status": "COMPLETE_BOUNDARY_ACTIONS_FROZEN_PENDING_ORACLE",
         "inputs": receipt,
@@ -680,7 +685,9 @@ def explicit_oracle(folder):
         if all(c["pass_gate"] for c in checks)
         else "ORACLE_NUMERICAL_GATE_FAILED",
         "checks": checks,
-        "outputs": array_file(folder / "oracle.npz", **outputs),
+        "outputs": array_file(
+            folder / "oracle.npz", compressed=True, deduplicate=True, **outputs
+        ),
         "costs": costs,
         "explicit_face_visits": counter,
         "modes": [r["mode_index"] for r in selected],
