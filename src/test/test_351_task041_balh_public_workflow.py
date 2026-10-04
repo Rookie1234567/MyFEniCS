@@ -2407,11 +2407,12 @@ def test_task041_modal_inner_failure_history_is_snapshotted_before_release(
 
     class FakeCaptureSystem:
         def export_modal_solve_capture(
-            self, comm, *, writer_rank=0, side_audit_path=None
+            self, comm, *, writer_rank=0, side_audit_path=None, trace_records=None
         ):
             events.append("trace_export")
             assert comm.rank == 0
             assert writer_rank == 0
+            assert trace_records is None
             payload = copy.deepcopy(captured_modal_trace)
             payload["side_rhs_audit_path"] = side_audit_path
             return payload

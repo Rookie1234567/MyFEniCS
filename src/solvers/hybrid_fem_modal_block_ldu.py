@@ -1691,14 +1691,20 @@ class HybridActionModalSchurAndersonSystem:
         *,
         writer_rank: int = 0,
         side_audit_path: str | None = None,
+        trace_records: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any] | None:
         """Gather the bounded owner trace at an explicit all-rank boundary."""
         if not self.capture_modal_solve_trace:
             return None
         owner = self.constraint_lu_owner_rank
         payload = None
+        traces = None
         if int(comm.rank) == owner:
-            traces = list(self._modal_solve_trace_records)
+            traces = (
+                list(self._modal_solve_trace_records)
+                if trace_records is None
+                else trace_records
+            )
             array_bytes = sum(trace["captured_array_bytes"] for trace in traces)
             complete = [trace["solve_id"] for trace in traces] == [1, 2] and all(
                 trace["capture_complete"] for trace in traces
@@ -1755,7 +1761,14 @@ class HybridActionModalSchurAndersonSystem:
                     traces=[],
                     trace_arrays_omitted=True,
                 )
-        gathered = comm.gather(payload, root=writer_rank)
+        try:
+            gathered = comm.gather(payload, root=writer_rank)
+        except BaseException:
+            if int(comm.rank) == owner:
+                self._modal_solve_trace_records.clear()
+                if trace_records is not None:
+                    trace_records.clear()
+            raise
         if int(comm.rank) == writer_rank:
             result = gathered[owner] if owner < len(gathered) else None
             if result is None:
@@ -1771,7 +1784,21 @@ class HybridActionModalSchurAndersonSystem:
             result = None
         if int(comm.rank) == owner:
             self._modal_solve_trace_records.clear()
+            if trace_records is not None and (
+                int(comm.rank) != int(writer_rank)
+                or payload is None
+                or payload.get("traces") is not trace_records
+            ):
+                trace_records.clear()
         return result
+
+    def take_modal_solve_trace_records(self) -> list[dict[str, Any]] | None:
+        """Transfer the owner-only encoded trace list without copying it."""
+        if not self.capture_modal_solve_trace:
+            return None
+        records = self._modal_solve_trace_records
+        self._modal_solve_trace_records = []
+        return records if records else None
 
     def solve(self, rhs: np.ndarray) -> np.ndarray:
         if self._destroyed:
@@ -2655,6 +2682,7 @@ class HybridBlockLduPreconditioner:
         self.modal_schur = getattr(action_modal_schur_system, "modal_schur", None)
         self.modal_count = int(action_modal_schur_system.modal_count)
         self.defer_action_modal_schur_release = False
+        self._modal_solve_trace_handoff: list[dict[str, Any]] | None = None
         self._action_modal_schur_released = False
         self._destroyed = False
         self.mode_count = int(coupling.mode_count_per_direction)
@@ -2926,6 +2954,12 @@ class HybridBlockLduPreconditioner:
         self.action_modal_schur_system.destroy()
         self.modal_schur = None
         self._action_modal_schur_released = True
+
+    def release_modal_solve_trace_handoff(self) -> None:
+        handoff = self._modal_solve_trace_handoff
+        if isinstance(handoff, list):
+            handoff.clear()
+        self._modal_solve_trace_handoff = None
 
     def destroy(self, _pc: PETSc.PC | None = None) -> None:
         if self._destroyed:
@@ -3764,6 +3798,13 @@ def solve_hybrid_block_ldu_iterative(
         )
         returned = True
         return result
+    except BaseException:
+        modal_system = context.action_modal_schur_system
+        if getattr(modal_system, "capture_modal_solve_trace", False):
+            context._modal_solve_trace_handoff = (
+                modal_system.take_modal_solve_trace_records()
+            )
+        raise
     finally:
         if ksp is not None:
             ksp.destroy()

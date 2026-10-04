@@ -5,7 +5,9 @@ from __future__ import annotations
 import base64
 import copy
 import hashlib
+import inspect
 import json
+import linecache
 from types import SimpleNamespace
 
 import numpy as np
@@ -1628,4 +1630,234 @@ def test_side_balh_modal_trace_keeps_two_solves_and_gathers_owner_payload(
     finally:
         for system in owned_objects:
             system.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_modal_trace_handoff_survives_real_ksp_pc_cleanup(
+    monkeypatch,
+) -> None:
+    fixture = _side_block_fixture()
+    original_action = original_context = context = rhs = None
+    outer_result = None
+    try:
+        layout = fixture["layout"]
+        rhs = layout.pack(
+            fixture["bottom"].b,
+            fixture["top"].b,
+            internal_modal_rhs_correction(fixture["coupling"]),
+        )
+        original_action, original_context = create_hybrid_assembled_block_action(
+            fixture["bottom"], fixture["top"], fixture["coupling"]
+        )
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            layout,
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+            sampled_columns=None,
+            sampled_column_roles=None,
+            sampled_column_contract_sha256=None,
+            use_anderson_modal_inner=True,
+            complex_qr_research=True,
+            capture_modal_solve_trace=True,
+        )
+        real_context_destroy = block_ldu.HybridBlockLduPreconditioner.destroy
+        destroy_events = []
+
+        def observe_context_destroy(instance, pc=None):
+            if instance is context:
+                frame = inspect.currentframe()
+                caller = None
+                try:
+                    caller = None if frame is None else frame.f_back
+                    if caller is None:
+                        caller_function = "unknown"
+                        caller_filename = "unknown"
+                        caller_lineno = None
+                        caller_source_line = "unknown"
+                    else:
+                        caller_function = caller.f_code.co_name
+                        caller_filename = caller.f_code.co_filename
+                        caller_lineno = int(caller.f_lineno)
+                        caller_source_line = linecache.getline(
+                            caller_filename, caller_lineno
+                        ).strip()[:180]
+                    if "ksp.destroy()" in caller_source_line:
+                        cleanup_entry = "ksp_destroy_call"
+                    elif "context.destroy()" in caller_source_line:
+                        cleanup_entry = "context_destroy_fallback"
+                    else:
+                        cleanup_entry = "unknown"
+                    handoff = instance._modal_solve_trace_handoff
+                    destroy_events.append(
+                        {
+                            "rank": int(layout.comm.rank),
+                            "pc_argument_is_none": pc is None,
+                            "handoff_trace_count_before_destroy": (
+                                0 if handoff is None else len(handoff)
+                            ),
+                            "adapter_trace_count_before_destroy": len(
+                                instance.action_modal_schur_system._modal_solve_trace_records
+                            ),
+                            "caller_function": caller_function,
+                            "caller_filename": caller_filename,
+                            "caller_lineno": caller_lineno,
+                            "caller_source_line": caller_source_line,
+                            "cleanup_entry": cleanup_entry,
+                        }
+                    )
+                finally:
+                    del caller
+                    del frame
+            return real_context_destroy(instance, pc)
+
+        monkeypatch.setattr(
+            block_ldu.HybridBlockLduPreconditioner,
+            "destroy",
+            observe_context_destroy,
+        )
+        modal_system = context.action_modal_schur_system
+        real_candidate_update = block_ldu._complex_anderson_candidate_update
+        failure_triggered = {"value": False}
+
+        def fail_second_inner_update(*args, **kwargs):
+            if modal_system._solve_count == 2:
+                failure_triggered["value"] = True
+                raise np.linalg.LinAlgError("controlled bounded inner failure")
+            return real_candidate_update(*args, **kwargs)
+
+        monkeypatch.setattr(
+            block_ldu,
+            "_complex_anderson_candidate_update",
+            fail_second_inner_update,
+        )
+        side_calls_before = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        caught = None
+        try:
+            outer_result = block_ldu.solve_hybrid_block_ldu_iterative(
+                original_action,
+                rhs,
+                context,
+                config=block_ldu.HybridBlockLduIterativeConfig(
+                    restart=20,
+                    max_it=80,
+                    threshold=5.0e-9,
+                    ksp_type="fgmres",
+                ),
+            )
+        except (RuntimeError, PETSc.Error, ValueError) as exc:
+            caught = exc
+
+        assert caught is not None
+        assert "Modal Anderson inner solve did not converge" in str(caught)
+        failure_triggered_by_rank = MPI.COMM_WORLD.allgather(
+            bool(failure_triggered["value"])
+        )
+        assert [
+            rank for rank, triggered in enumerate(failure_triggered_by_rank) if triggered
+        ] == [layout.modal_owner]
+        assert modal_system._solve_count == 2
+        assert context._destroyed is True
+        destroy_call_counts = MPI.COMM_WORLD.allgather(len(destroy_events))
+        assert destroy_call_counts == [1] * MPI.COMM_WORLD.size
+        destroy_event = destroy_events[0]
+        destroy_handoff_counts = MPI.COMM_WORLD.allgather(
+            destroy_event["handoff_trace_count_before_destroy"]
+        )
+        assert destroy_handoff_counts == [
+            2 if rank == layout.modal_owner else 0
+            for rank in range(MPI.COMM_WORLD.size)
+        ]
+        destroy_adapter_trace_counts = MPI.COMM_WORLD.allgather(
+            destroy_event["adapter_trace_count_before_destroy"]
+        )
+        assert destroy_adapter_trace_counts == [0] * MPI.COMM_WORLD.size
+        destroy_events_by_rank = MPI.COMM_WORLD.allgather(destroy_event)
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                json.dumps(
+                    {"destroy_events_by_rank": destroy_events_by_rank},
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+        assert modal_system.diagnostics["destroyed"] is True
+        assert modal_system.constraint_lu is None
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+
+        handoff = context._modal_solve_trace_handoff
+        handoff_counts = MPI.COMM_WORLD.allgather(
+            0 if handoff is None else len(handoff)
+        )
+        assert handoff_counts == [
+            2 if rank == layout.modal_owner else 0
+            for rank in range(MPI.COMM_WORLD.size)
+        ]
+        assert modal_system._modal_solve_trace_records == []
+        s_evaluations_before_export = modal_system._s_evaluation_count
+        side_calls_before_export = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        capture = modal_system.export_modal_solve_capture(
+            MPI.COMM_WORLD,
+            writer_rank=0,
+            trace_records=handoff,
+        )
+        context._modal_solve_trace_handoff = None
+        assert modal_system._s_evaluation_count == s_evaluations_before_export
+        assert side_calls_before_export == {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        side_calls_for_solver = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            - side_calls_before[side]
+            for side in ("bottom", "top")
+        }
+        assert all(value > 0 for value in side_calls_for_solver.values())
+        if MPI.COMM_WORLD.rank == 0:
+            assert capture is not None
+            assert capture["owner_rank"] == layout.modal_owner
+            assert capture["writer_rank"] == 0
+            assert [trace["solve_id"] for trace in capture["traces"]] == [1, 2]
+            assert capture["traces"][0]["solver_status"] == "converged"
+            assert capture["traces"][0]["capture_complete"] is True
+            assert capture["traces"][1]["solver_status"] == "not_converged"
+            assert capture["traces"][1]["s_evaluation_count"] <= 16
+            assert capture["traces"][1]["solver_stop_reason"] == (
+                "nonfinite_or_invalid_anderson_update"
+            )
+            assert capture["traces"][1]["capture_incomplete_reason"] == (
+                "anderson_update_failed"
+            )
+            assert capture["array_payload_bytes"] > 0
+            assert capture["array_payload_bytes"] <= capture[
+                "array_payload_limit_bytes"
+            ]
+        else:
+            assert capture is None
+        assert context._modal_solve_trace_handoff is None
+        unconsumed = [{"solve_id": 99}]
+        context._modal_solve_trace_handoff = unconsumed
+        context.release_modal_solve_trace_handoff()
+        assert unconsumed == []
+        assert context._modal_solve_trace_handoff is None
+    finally:
+        if outer_result is not None:
+            outer_result.destroy()
+        if context is not None and not context._destroyed:
+            context.destroy()
+        if rhs is not None:
+            rhs.destroy()
+        if original_action is not None:
+            original_action.destroy()
+        if original_context is not None:
+            original_context.destroy()
         _destroy_side_block_fixture(fixture)

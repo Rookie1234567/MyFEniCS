@@ -13550,7 +13550,9 @@ def run_task041_consumer(
             modal_trace_capture = None
             modal_trace_capture_attempted = False
 
-            def capture_modal_trace() -> dict[str, Any] | None:
+            def capture_modal_trace(
+                *, preserve_primary_exception: bool = False
+            ) -> dict[str, Any] | None:
                 nonlocal modal_trace_capture, modal_trace_capture_attempted
                 if not capture_modal_solve_trace or modal_trace_capture_attempted:
                     return modal_trace_capture
@@ -13559,11 +13561,35 @@ def run_task041_consumer(
                 if candidate_context is None:
                     return None
                 modal_system = candidate_context.action_modal_schur_system
-                modal_trace_capture = modal_system.export_modal_solve_capture(
-                    comm,
-                    writer_rank=0,
-                    side_audit_path=str(candidate_audit_path),
+                trace_handoff = getattr(
+                    candidate_context, "_modal_solve_trace_handoff", None
                 )
+                export_failed = False
+                try:
+                    modal_trace_capture = modal_system.export_modal_solve_capture(
+                        comm,
+                        writer_rank=0,
+                        side_audit_path=str(candidate_audit_path),
+                        trace_records=trace_handoff,
+                    )
+                except BaseException as exc:
+                    export_failed = True
+                    if not preserve_primary_exception:
+                        raise
+                    modal_trace_capture = {
+                        "schema": "task041.modal_inner.solve_trace_capture.v1",
+                        "capture_status": "incomplete",
+                        "capture_complete": False,
+                        "capture_incomplete_reason": "owner_export_failed",
+                        "export_error_type": type(exc).__name__,
+                        "owner_rank": int(comm.size - 1),
+                        "writer_rank": 0,
+                        "traces": [],
+                    }
+                finally:
+                    if export_failed and isinstance(trace_handoff, list):
+                        trace_handoff.clear()
+                    candidate_context._modal_solve_trace_handoff = None
                 return modal_trace_capture
 
             def capture_modal_failure_snapshot() -> dict[str, Any] | None:
@@ -13682,7 +13708,7 @@ def run_task041_consumer(
                     **kwargs,
                 )
             except BaseException:
-                capture_modal_trace()
+                capture_modal_trace(preserve_primary_exception=True)
                 if modal_inner_failure_snapshot is None:
                     modal_inner_failure_snapshot = capture_modal_failure_snapshot()
                 if modal_inner_failure_snapshot is not None:
@@ -13696,6 +13722,21 @@ def run_task041_consumer(
                         candidate_failure_evidence["modal_inner_solver"] = snapshot
                     snapshot["bounded_solve_trace_capture"] = modal_trace_capture
                 raise
+            finally:
+                candidate_context = kwargs.get("context")
+                if candidate_context is not None:
+                    release_handoff = getattr(
+                        candidate_context, "release_modal_solve_trace_handoff", None
+                    )
+                    if callable(release_handoff):
+                        release_handoff()
+                    else:
+                        pending_trace = getattr(
+                            candidate_context, "_modal_solve_trace_handoff", None
+                        )
+                        if isinstance(pending_trace, list):
+                            pending_trace.clear()
+                        candidate_context._modal_solve_trace_handoff = None
 
         current_stage = "factor_setup"
         shortwave_batch_kwargs = (
