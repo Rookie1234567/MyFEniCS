@@ -72,7 +72,7 @@ def recompute_positive_apply_counts(pc_records: list[dict], cycles: list[dict]) 
         tail={key: sum(row[key] for row in per_pc[offset:]) for key in keys})
 
 
-def recompute_p4_decisions(decisions, pc_rows):
+def recompute_p4_decisions(decisions, pc_rows, *, coarse_degree=4):
     groups={};errors=[];external=0
     for row in decisions:
         logical=row['logical_rhs'];iteration=row['refinement_steps']
@@ -89,7 +89,7 @@ def recompute_p4_decisions(decisions, pc_rows):
     if list(groups)!=list(range(1,len(groups)+1)):
         errors.append('noncontiguous logical RHS')
     if any(g[-1]['true_residual_norm']/max(g[-1]['original_rhs_norm'],np.finfo(float).tiny)>1e-10 for g in groups.values()):
-        errors.append('final A4 residual missed')
+        errors.append(f'final A{int(coarse_degree)} residual missed')
     if external!=sum(r['p4_counts']['MatSolve'] for r in pc_rows) or len(groups)!=sum(r['p4_counts']['C'] for r in pc_rows):
         errors.append('PC/MatSolve totals differ')
     return dict(passed=not errors,errors=errors,logical_rhs=len(groups),MatSolve=external,
@@ -330,11 +330,12 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
     from src.io.physical_intermediate_profile import profile_facts
     from src.io.native_capacity_profile import (
         V5_EXPECTED_MODE_COUNTS, V6_BASE_PROFILES,
-        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES,
+        V5_NATIVE_PROFILES, V6_NATIVE_PROFILES, V6_P3_PROFILES,
     )
 
     identity = summary.get('profile', {}).get('identity')
     is_v5 = identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES)
+    p3_profile = identity in V6_P3_PROFILES
     expected_mode_count = (
         V5_EXPECTED_MODE_COUNTS.get(V6_BASE_PROFILES.get(identity, identity))
         if is_v5
@@ -344,10 +345,15 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
     require(expected_mode_count is not None,
             f'retained checker has no mode-count contract for {identity!r}')
     try:
-        require(summary['profile'] == profile_facts(identity),
+        retained_profile = profile_facts(identity)
+        require(summary['profile'] == retained_profile,
                 'retained resolved profile facts differ from native contract')
     except (KeyError, ValueError):
+        retained_profile = {}
         errors.append('retained profile identity is not resolvable')
+    coarse_degree = int(
+        retained_profile.get('retained_condensed_v20', {}).get('coarse_degree', 4)
+    )
     solve = summary.get('solve', {})
     require(solve.get('restart') == 32 and solve.get('max_it') == 2048,
             'retained outer restart/max_it contract mismatch')
@@ -363,6 +369,29 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
             'retained final A6 residual exceeds 1e-6')
 
     retained_runtime = summary.get('retained_runtime', {})
+    if p3_profile:
+        coarse_facts = retained_runtime.get('coarse_operator', {})
+        require(coarse_degree == 3, 'p3 profile did not resolve coarse_degree=3')
+        require(coarse_facts.get('degree') == 3 and
+                coarse_facts.get('name') == 'A3',
+                'p3 runtime summary does not identify the actual A3 operator')
+        try:
+            manifest = json.loads((directory / 'run_manifest.json').read_text())
+            manifest_coarse = manifest.get('native_capacity_contract', {}).get(
+                'coarse_operator', {}
+            )
+            require(manifest_coarse.get('degree') == 3 and
+                    manifest_coarse.get('name') == 'A3' and
+                    manifest_coarse.get('resolved_solver_degree') == 3,
+                    'p3 manifest does not identify the resolved A3 operator')
+        except (
+            OSError,
+            UnicodeError,
+            json.JSONDecodeError,
+            AttributeError,
+            TypeError,
+        ) as exc:
+            errors.append(f'p3 manifest coarse-operator check failed: {type(exc).__name__}: {exc}')
     jit = retained_runtime.get('postprocess_jit_prefactor', {})
     require(jit.get('status') == 'POSTPROCESS_JIT_PREFACTOR_PASS' and
             jit.get('compiled_before_p4_factor') is True and
@@ -525,6 +554,11 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
     physical_solves = 0
     max_refinements = 0
     for decision in decisions:
+        if p3_profile:
+            require(decision.get('coarse_degree') == 3 and
+                    decision.get('coarse_operator') == 'A3' and
+                    decision.get('p4_ledger_name_is_compatibility_alias') is True,
+                    'p3 correction audit does not bind the p4 compatibility alias to A3')
         rows = decision.get('rows', [])
         logical_numbers.append(int(decision.get('logical_apply', 0)))
         max_refinements = max(max_refinements, max(0, len(rows)-1))
@@ -546,7 +580,7 @@ def check_retained_v20(directory: Path, summary: dict) -> dict:
                         'retained p4 intermediate residual is non-finite')
             final_row = rows[-1]
             require(float(final_row.get('relative_residual', np.inf)) <= 1e-10,
-                    'retained p4 final A4 residual exceeds 1e-10')
+                    f'retained exact A{coarse_degree} residual exceeds 1e-10')
     if logical_numbers:
         require(logical_numbers == list(range(1, len(logical_numbers)+1)),
                 'retained p4 logical audit numbers are not contiguous')

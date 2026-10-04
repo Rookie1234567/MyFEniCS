@@ -391,11 +391,15 @@ class P4CellCondensedInverse:
     locally, performs one global factor solve, and returns exact slave zeros.
     """
 
-    def __init__(self, condensed: AssemblyTimeCondensedSystem, factor: Any, *, port_terms: Mapping[int, CellPortTerms] | None = None, owns_condensed: bool = False, owns_factor: bool = False, retain_through_postprocess_v18: bool = True) -> None:
+    def __init__(self, condensed: AssemblyTimeCondensedSystem, factor: Any, *, port_terms: Mapping[int, CellPortTerms] | None = None, coarse_degree: int = 4, owns_condensed: bool = False, owns_factor: bool = False, retain_through_postprocess_v18: bool = True) -> None:
         if condensed.matrix is None:
             raise ValueError("p4 inverse requires a materialized condensed matrix")
         if condensed.comm.Get_size() != 1:
             raise NotImplementedError("Review V18 U0 adapter is qualified for MPI1 only")
+        self.coarse_degree = int(coarse_degree)
+        if self.coarse_degree not in (3, 4):
+            raise ValueError("retained exact coarse inverse supports only A3/A4")
+        self.coarse_operator = f"A{self.coarse_degree}"
         self.condensed = condensed; self.factor = factor; self.port_terms = dict(port_terms or {})
         self.owns_condensed = bool(owns_condensed); self.owns_factor = bool(owns_factor)
         self.retain_through_postprocess_v18 = bool(retain_through_postprocess_v18)
@@ -482,6 +486,12 @@ class P4CellCondensedInverse:
             "solution_finite": None,
             "output_finite": None,
         }
+        if self.coarse_degree == 3:
+            audit.update(
+                coarse_degree=3,
+                coarse_operator="A3",
+                p4_class_name_is_compatibility_alias=True,
+            )
         reduced_rhs = None
         solution = None
         result = None
@@ -684,6 +694,9 @@ class P4RefinementLedger:
             raise ValueError("p4 refinement contract requires 0 <= max_refinements <= 2")
         self.inverse = inverse
         self.apply_a4 = apply_a4
+        self.coarse_degree = int(inverse.coarse_degree)
+        self.coarse_operator = str(inverse.coarse_operator)
+        self.p4_compatibility_alias = self.coarse_degree == 3
         if action_timing is not None and not callable(action_timing):
             raise TypeError("action_timing must be callable or None")
         self.action_timing = action_timing
@@ -735,6 +748,9 @@ class P4RefinementLedger:
                     status = "P4_NUMERICAL_UNQUALIFIED"
             facts["status"] = status
             facts.setdefault("tolerance", self.tolerance)
+            if self.p4_compatibility_alias:
+                facts.update(coarse_degree=3, coarse_operator="A3",
+                             p4_ledger_name_is_compatibility_alias=True)
             return facts
         except BaseException as error:
             return {
@@ -743,6 +759,9 @@ class P4RefinementLedger:
                 "error_type": type(error).__name__,
                 "error": str(error),
                 "tolerance": self.tolerance,
+                **({"coarse_degree": 3, "coarse_operator": "A3",
+                    "p4_ledger_name_is_compatibility_alias": True}
+                   if self.p4_compatibility_alias else {}),
             }
 
     @staticmethod
@@ -765,6 +784,9 @@ class P4RefinementLedger:
     ) -> None:
         facts = {
             "status": "P4_NUMERICAL_UNQUALIFIED",
+            **({"coarse_degree": 3, "coarse_operator": "A3",
+                "p4_ledger_name_is_compatibility_alias": True}
+               if self.p4_compatibility_alias else {}),
             "error_type": type(error).__name__,
             "error": str(error),
             "rows": rows,
@@ -800,8 +822,10 @@ class P4RefinementLedger:
         """Solve ``rhs`` and refine the same total state with one factor."""
 
         self._logical_started = perf_counter()
+        operator_timing = f"a{self.coarse_degree}"
         timing_keys = ("rhs_reduce_seconds", "actual_factor_solve_seconds", "internal_recovery_seconds",
-                       "a4_wall_seconds", "a4_volume_seconds", "a4_dtn_seconds", "port_closure_seconds")
+                       f"{operator_timing}_wall_seconds", f"{operator_timing}_volume_seconds",
+                       f"{operator_timing}_dtn_seconds", "port_closure_seconds")
         timings = {key: 0.0 for key in timing_keys}
         inverse_attempts = []
 
@@ -833,6 +857,9 @@ class P4RefinementLedger:
                 total.set(PETSc.ScalarType(0.0))
                 self.last_audit = {
                     "status": "P4_ZERO_RHS_DIRECT_ZERO",
+                    **({"coarse_degree": 3, "coarse_operator": "A3",
+                        "p4_ledger_name_is_compatibility_alias": True}
+                       if self.p4_compatibility_alias else {}),
                     "rhs_norm": rhs_norm,
                     "max_refinements": self.max_refinements,
                     "refinement_count": 0,
@@ -854,12 +881,12 @@ class P4RefinementLedger:
             for refinement in range(self.max_refinements + 1):
                 section_started = perf_counter()
                 applied = self.apply_a4(total, self.total_port_solution)
-                a4_wall = perf_counter()-section_started
+                action_wall = perf_counter()-section_started
                 action_cost = dict(self.action_timing() if self.action_timing else {})
-                timings["a4_wall_seconds"] += a4_wall
+                timings[f"{operator_timing}_wall_seconds"] += action_wall
                 for key in ("volume", "dtn"):
                     if action_cost.get(key+"_seconds") is not None:
-                        timings["a4_"+key+"_seconds"] += float(action_cost[key+"_seconds"])
+                        timings[f"{operator_timing}_{key}_seconds"] += float(action_cost[key+"_seconds"])
 
                 if not isinstance(applied, PETSc.Vec):
                     raise TypeError("apply_a4 must return a PETSc.Vec")
@@ -889,10 +916,14 @@ class P4RefinementLedger:
                         }
                     ),
                     "port_closure": port_facts,
-                    "a4_timing": dict(action_cost, measured_parent_wall_seconds=a4_wall),
+                    f"{operator_timing}_timing": dict(
+                        action_cost, measured_parent_wall_seconds=action_wall
+                    ),
                     "port_closure_wall_seconds": closure_wall,
-
                 }
+                if self.p4_compatibility_alias:
+                    row.update(coarse_degree=3, coarse_operator="A3",
+                               p4_ledger_name_is_compatibility_alias=True)
                 rows.append(row)
                 if port_facts.get("status") != "PASS":
                     error = FloatingPointError(
@@ -915,6 +946,9 @@ class P4RefinementLedger:
                     residual = None
                     self.last_audit = {
                         "status": "P4_RETURN_PASS",
+                        **({"coarse_degree": 3, "coarse_operator": "A3",
+                            "p4_ledger_name_is_compatibility_alias": True}
+                           if self.p4_compatibility_alias else {}),
                         "max_refinements": self.max_refinements,
                         "refinement_count": int(refinement),
                         "rows": rows,
@@ -966,9 +1000,21 @@ class P4RefinementLedger:
                 total.destroy()
             raise
         finally:
-            self.last_audit["timing"] = dict(timings,
-                a4_children_status="MEASURED" if self.action_timing else "UNKNOWN",
-                scope="children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds")
+            timing_facts = dict(timings)
+            if self.p4_compatibility_alias:
+                timing_facts.update(
+                    coarse_operator_children_status="MEASURED" if self.action_timing else "UNKNOWN",
+                    scope="children of logical_wall_seconds; a3 volume/DtN are children of a3_wall_seconds",
+                    coarse_degree=3,
+                    coarse_operator="A3",
+                    p4_ledger_name_is_compatibility_alias=True,
+                )
+            else:
+                timing_facts.update(
+                    a4_children_status="MEASURED" if self.action_timing else "UNKNOWN",
+                    scope="children of logical_wall_seconds; a4 volume/DtN are children of a4_wall_seconds",
+                )
+            self.last_audit["timing"] = timing_facts
             self.last_audit["inverse_attempts"] = inverse_attempts
 
 

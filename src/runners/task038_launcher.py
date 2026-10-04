@@ -217,6 +217,17 @@ def _base_manifest(
             ),
             'icntl23': profile['resources'].get('icntl23'),
         }
+        coarse_operator = profile.get('coarse_operator')
+        if coarse_operator is not None:
+            manifest['native_capacity_contract']['coarse_operator'] = dict(
+                coarse_operator,
+                resolved_solver_degree=int(snapshot['solver'].get('coarse_degree', -1)),
+                compatibility_storage_names=(
+                    ['p4_* aliases']
+                    if int(snapshot['solver'].get('coarse_degree', -1)) == 3
+                    else []
+                ),
+            )
         if profile.get('native_execution'):
             manifest['native_capacity_contract']['native_execution'] = profile[
                 'native_execution'

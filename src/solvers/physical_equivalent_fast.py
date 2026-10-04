@@ -148,6 +148,15 @@ def build_packed_physical_action(
             component_audits = [
                 dict(volume.audit["shared_fullspace_mpc_action"])
             ]
+        coarse_name = f"A{degree}"
+        coarse_identity = (
+            {
+                "operator_identity": "A3",
+                "compatibility_aliases": ["p4", "A4"],
+            }
+            if degree == 3
+            else {}
+        )
         facts = {
             "schema": (
                 "task039extra.v29.p4-fast-a4-action.v1"
@@ -155,18 +164,23 @@ def build_packed_physical_action(
                 else "task039extra.v24.packed-pc-physical-action.v1"
             ),
             "degree": degree,
+            **coarse_identity,
             "implementation_identity": (
-                "fused_sum_factorized_partial_assembly_full_A4"
+                f"fused_sum_factorized_partial_assembly_full_{coarse_name}"
                 if degree != 6 and fuse_components and sum_factorized_work
                 else "isotropic_partial_assembly_physical_action"
             ),
             "oracle_identity": (
-                "native_ffcx_full_A4_same_p4_forms_and_dtn"
+                (
+                    "native_ffcx_full_A3_same_A3_forms_and_dtn"
+                    if degree == 3
+                    else "native_ffcx_full_A4_same_p4_forms_and_dtn"
+                )
                 if degree != 6
                 else "independent_native_full_A6_authority"
             ),
             "action_role": (
-                "full_A4_verification_candidate"
+                f"full_{coarse_name}_verification_candidate"
                 if degree != 6
                 else "candidate_pc_internal_A6"
             ),

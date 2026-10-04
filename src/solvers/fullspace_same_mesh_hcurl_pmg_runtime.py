@@ -21,10 +21,11 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from .fullspace_same_mesh_hcurl_pmg import (
+    DEFAULT_TRACE_MAP_POLICY,
+    V6_P3_CANONICAL_TRACE_MAP_POLICY,
     SameMeshHcurlTransfer,
     build_same_mesh_hcurl_transfer,
 )
-
 
 ROW_CONSISTENCY_LIMIT = 1.0e-11
 OWNER_TRANSFER_BATCH_SIZE = 8
@@ -391,6 +392,7 @@ class SameMeshHcurlOwnerTransfer:
         cell_matrix_provider=None,
         fixed_serial_owner_route=False,
         optimized_owner_apply=False,
+        trace_map_policy: str = DEFAULT_TRACE_MAP_POLICY,
     ) -> None:
         pair = (_space_degree(fine_space), _space_degree(coarse_space))
         if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
@@ -399,6 +401,31 @@ class SameMeshHcurlOwnerTransfer:
             raise ValueError("owner transfer requires one shared mesh object")
         if local_transfer.audit["pair_fine_to_coarse"] != list(pair):
             raise ValueError("local transfer pair does not match spaces")
+        trace_map_policy = str(trace_map_policy)
+        if trace_map_policy not in {
+            DEFAULT_TRACE_MAP_POLICY,
+            V6_P3_CANONICAL_TRACE_MAP_POLICY,
+        }:
+            raise ValueError(f"unsupported owner trace map policy: {trace_map_policy}")
+        if (
+            trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+            and pair != (6, 3)
+        ):
+            raise ValueError("V6 canonical trace policy requires P6-to-P3 spaces")
+        local_policy = local_transfer.audit.get(
+            "trace_map_policy", DEFAULT_TRACE_MAP_POLICY
+        )
+        if local_policy != trace_map_policy:
+            raise ValueError(
+                "local transfer trace policy does not match the owner policy"
+            )
+        if (
+            trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+            and cell_matrix_provider is not None
+        ):
+            raise ValueError(
+                "canonical V6 P3 trace policy does not permit an overriding cell matrix provider"
+            )
         fine_variant = fine_space.element.basix_element.lagrange_variant.name
         coarse_variant = coarse_space.element.basix_element.lagrange_variant.name
         if (
@@ -417,6 +444,7 @@ class SameMeshHcurlOwnerTransfer:
         if fixed_serial_owner_route and int(self.comm.size) != 1:
             raise ValueError("fixed owner routing requires MPI1")
         self.local_transfer = local_transfer
+        self.trace_map_policy = trace_map_policy
         self._optimized_owner_apply = bool(optimized_owner_apply)
         self._destroyed = False
         self._last_apply_facts: dict[str, object] = {}
@@ -473,6 +501,7 @@ class SameMeshHcurlOwnerTransfer:
                     pair[0], pair[1],
                     coarse_cell_info=coarse_info,
                     fine_cell_info=fine_info,
+                    trace_map_policy=trace_map_policy,
                 )
             base_matrix = cache[key].matrix
             if self._optimized_owner_apply:
@@ -764,6 +793,61 @@ class SameMeshHcurlOwnerTransfer:
                 & (coarse_mpc_slaves < coarse_owned_scalar_size)
             )
         )
+        trace_policy_audit = (
+            {
+                "trace_map_policy": trace_map_policy,
+                "trace_policy_orientation_cache": [
+                    {
+                        "fine_cell_info": int(key[0]),
+                        "coarse_cell_info": int(key[1]),
+                        "trace_map_policy": str(
+                            transfer.audit.get(
+                                "trace_map_policy", DEFAULT_TRACE_MAP_POLICY
+                            )
+                        ),
+                        "oriented_matrix_sha256": transfer.audit.get(
+                            "oriented_matrix_sha256"
+                        ),
+                        "candidate_vs_unmodified_independent_max_abs": (
+                            transfer.audit.get(
+                                "candidate_vs_unmodified_independent_max_abs"
+                            )
+                        ),
+                        "edge_functional_relative": transfer.audit.get(
+                            "edge_functional_relative"
+                        ),
+                        "gradient_commuting_relative": transfer.audit.get(
+                            "gradient_commuting_relative"
+                        ),
+                        "curl_commuting_relative": transfer.audit.get(
+                            "curl_commuting_relative"
+                        ),
+                        "adjoint_work_relative": transfer.audit.get(
+                            "adjoint_work_relative"
+                        ),
+                        "gate_passed": transfer.audit.get("gate_passed"),
+                    }
+                    for key, transfer in sorted(cache.items())
+                ],
+                "trace_policy_orientation_cache_count": len(cache),
+                "trace_rows_replaced_per_local_map": (
+                    int(local_transfer.audit["trace_rows_replaced"])
+                    if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+                    else 0
+                ),
+                "trace_interior_rows_retained_per_local_map": (
+                    int(local_transfer.audit["interior_rows_retained_from_basix"])
+                    if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+                    else 0
+                ),
+                "primal_and_adjoint_derive_from_same_candidate_matrix": True,
+                "primal_adjoint_policy_note": (
+                    "P uses the cached candidate matrix; PH uses its conjugate transpose"
+                ),
+            }
+            if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+            else {}
+        )
         self._audit = MappingProxyType(
             {
                 "schema": OWNER_RUNTIME_SCHEMA,
@@ -838,6 +922,7 @@ class SameMeshHcurlOwnerTransfer:
                 "pde": False,
                 "ksp_created": False,
                 "vcycle_created": False,
+                **trace_policy_audit,
             }
         )
 
@@ -1125,14 +1210,18 @@ def build_same_mesh_hcurl_owner_transfer(
     cell_matrix_provider=None,
     fixed_serial_owner_route: bool = False,
     optimized_owner_apply: bool = False,
+    trace_map_policy: str = DEFAULT_TRACE_MAP_POLICY,
 ) -> SameMeshHcurlOwnerTransfer:
     """Build one owner-local same-mesh adapter without a global transfer."""
 
     pair = (_space_degree(fine_space), _space_degree(coarse_space))
     if pair not in SAME_MESH_EXTENDED_OWNER_TRANSFER_PAIRS:
         raise ValueError("unsupported same-mesh owner transfer pair")
+    trace_map_policy = str(trace_map_policy)
     if local_transfer is None:
-        local_transfer = build_same_mesh_hcurl_transfer(*pair)
+        local_transfer = build_same_mesh_hcurl_transfer(
+            *pair, trace_map_policy=trace_map_policy
+        )
     return SameMeshHcurlOwnerTransfer(
         fine_space,
         fine_floquet,
@@ -1142,6 +1231,7 @@ def build_same_mesh_hcurl_owner_transfer(
         cell_matrix_provider=cell_matrix_provider,
         fixed_serial_owner_route=fixed_serial_owner_route,
         optimized_owner_apply=optimized_owner_apply,
+        trace_map_policy=trace_map_policy,
     )
 
 

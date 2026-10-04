@@ -208,6 +208,7 @@ class RetainedCondensedRuntime:
         sum_factorized_work: bool = False,
         geometry_identity_policy: str = "raw_unrounded",
         component_options: Mapping[str, Any] | None = None,
+        profile_identity: str | None = None,
         marker: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> "RetainedCondensedRuntime":
         from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -225,11 +226,39 @@ class RetainedCondensedRuntime:
             raise ValueError("the D2 retained route is qualified for MPI1 only")
         coarse_degree = int(coarse_degree)
         options = dict(component_options or {})
+        trace_map_policy = options.get("same_mesh_trace_map_policy")
+        if trace_map_policy is not None:
+            from src.io.native_capacity_profile import (
+                V6_P3_PROFILES,
+                native_profile_facts,
+            )
+            from src.solvers.fullspace_same_mesh_hcurl_pmg import (
+                V6_P3_CANONICAL_TRACE_MAP_POLICY,
+            )
+
+            if trace_map_policy != V6_P3_CANONICAL_TRACE_MAP_POLICY:
+                raise ValueError(f"unsupported configured trace map policy: {trace_map_policy}")
+            if profile_identity not in V6_P3_PROFILES:
+                raise ValueError(
+                    "canonical shared trace transfer is restricted to V6 P3 profiles"
+                )
+            if coarse_degree != 3:
+                raise ValueError("canonical shared trace transfer requires coarse degree 3")
+            expected_options = native_profile_facts(profile_identity)["component_options"]
+            if expected_options.get("same_mesh_trace_map_policy") != trace_map_policy:
+                raise ValueError(
+                    "resolved profile does not explicitly enable canonical P3 traces"
+                )
         notify = (lambda name, facts: marker(name, dict(facts))) if marker else (lambda *_: None)
         levels = _build_same_mesh_levels(
             cfg, comm, (6, coarse_degree), include_positive_coefficients=True
         )
-        notify("retained_shared_mesh_complete", {"degrees": [6, coarse_degree]})
+        shared_mesh_facts = {"degrees": [6, coarse_degree]}
+        if coarse_degree == 3:
+            shared_mesh_facts.update(
+                coarse_operator="A3", p4_internal_names_are_compatibility_aliases=True
+            )
+        notify("retained_shared_mesh_complete", shared_mesh_facts)
         volume_quadrature_metadata, quadrature_records = fine_volume_quadrature_metadata(
             levels, cfg
         )
@@ -270,7 +299,19 @@ class RetainedCondensedRuntime:
                     {"levels": levels, "fine": fine, "p4": p4}, cfg,
                     degree=coarse_degree, sum_factorized_work=True,
                     fuse_components=True, share_readonly_geometry=True)
-                notify('retained_fast_complete_a4_action_complete', fast_a4['facts'])
+                marker_name = (
+                    'retained_fast_complete_a4_action_complete'
+                    if coarse_degree == 4
+                    else f'retained_fast_complete_a{coarse_degree}_action_complete'
+                )
+                if coarse_degree == 3:
+                    notify(marker_name, dict(
+                        fast_a4['facts'],
+                        operator_identity='A3',
+                        p4_internal_alias=True,
+                    ))
+                else:
+                    notify(marker_name, fast_a4['facts'])
             cell_tags = levels["mesh_data"].cell_tags
             p6_space = levels["spaces"][6]
             p4_space = levels["spaces"][coarse_degree]
@@ -278,7 +319,13 @@ class RetainedCondensedRuntime:
             p4_carrier = p4["dtn_action"].carrier
             p6_form = _compile_volume_form(fine["volume_action"])
             p4_form = _compile_volume_form(p4["volume_action"])
-            notify("retained_forms_compiled", {"p6": True, "p4": True})
+            form_facts = {"p6": True, "p4": True}
+            if coarse_degree == 3:
+                form_facts = {
+                    "p6": True, "coarse": True, "coarse_degree": 3,
+                    "coarse_operator": "A3", "p4_compatibility_alias": True,
+                }
+            notify("retained_forms_compiled", form_facts)
             evaluators = {}
             if options.get('blocked_gram'):
                 from src.solvers.hcurl_blocked_gram_tensor import HcurlBlockedGramTensor
@@ -328,17 +375,19 @@ class RetainedCondensedRuntime:
             # the one retained AIJ only after its complete augmented pattern
             # is present.
             p4_system.matrix.assemble()
-            notify(
-                "retained_condensed_components_complete",
-                {
-                    "p6_build": p6_system.build_audit,
-                    "p4_build": p4_system.build_audit,
-                    "p4_matrix_identity": petsc_csr_content_identity(p4_system.matrix),
-                    "coarse_degree": coarse_degree,
-                    "mode_count": len(fine["modes"]),
-                    "mode_sha256": fine["mode_sha256"],
-                },
-            )
+            condensed_facts = {
+                "p6_build": p6_system.build_audit,
+                "p4_build": p4_system.build_audit,
+                "p4_matrix_identity": petsc_csr_content_identity(p4_system.matrix),
+                "coarse_degree": coarse_degree,
+                "mode_count": len(fine["modes"]),
+                "mode_sha256": fine["mode_sha256"],
+            }
+            if coarse_degree == 3:
+                condensed_facts.update(
+                    coarse_operator="A3", p4_compatibility_alias=True
+                )
+            notify("retained_condensed_components_complete", condensed_facts)
             return cls(
                 levels=levels,
                 fine=fine,
@@ -384,7 +433,7 @@ class RetainedCondensedRuntime:
         failure_sink: Callable[[dict[str, Any]], None] | None = None,
         future_bytes: int = 0,
     ) -> dict[str, Any]:
-        """Run the existing symbolic/numeric lifecycle on the p4 matrix."""
+        """Factor the selected exact coarse operator (p4_* fields are aliases)."""
 
         from src.solvers.fullspace_p4_reference import reference_budget
         from src.solvers.fullspace_v17_p3_oracle import _MumpsFactor
@@ -393,11 +442,19 @@ class RetainedCondensedRuntime:
         if matrix is None:
             raise RuntimeError("p4 condensed matrix was not materialized")
         factor = _MumpsFactor(matrix)
+        coarse_identity = (
+            {"coarse_degree": 3, "coarse_operator": "A3",
+             "p4_compatibility_alias": True}
+            if self.coarse_degree == 3 else {}
+        )
         try:
             pre = sample()
             if pre.get("icntl23") == 0:
                 factor.set_icntl(23, 0)
-            marker("reference_symbolic_started", {"route": "retained_v20_p4"})
+            marker("reference_symbolic_started", {
+                "route": "retained_v20_A3" if self.coarse_degree == 3 else "retained_v20_p4",
+                **coarse_identity,
+            })
             api_wall, api_cpu = perf_counter(), process_time()
             factor.symbolic(matrix)
             symbolic_cost = {"api_wall_seconds": perf_counter()-api_wall, "process_cpu_seconds": process_time()-api_cpu}
@@ -411,7 +468,7 @@ class RetainedCondensedRuntime:
             }
             if pre.get("icntl23") == 0 and symbolic["icntl23"] != 0:
                 raise RuntimeError("MUMPS ICNTL(23) readback was not zero")
-            marker("reference_symbolic_complete", symbolic)
+            marker("reference_symbolic_complete", dict(symbolic, **coarse_identity))
             budget = reference_budget(
                 sample(), symbolic["info"], int(future_bytes), marker=marker
             )
@@ -426,11 +483,12 @@ class RetainedCondensedRuntime:
                 "budget": budget,
                 "timing": numeric_cost,
             }
-            marker("reference_numeric_complete", numeric)
+            marker("reference_numeric_complete", dict(numeric, **coarse_identity))
             inverse = P4CellCondensedInverse(
                 self.p4_system,
                 factor,
                 port_terms=self.p4_terms,
+                coarse_degree=self.coarse_degree,
                 owns_condensed=True,
                 owns_factor=True,
                 retain_through_postprocess_v18=False,
@@ -445,7 +503,7 @@ class RetainedCondensedRuntime:
                 failure_sink=failure_sink,
             )
             factor = None
-            return {"symbolic": symbolic, "numeric": numeric}
+            return dict(symbolic=symbolic, numeric=numeric, **coarse_identity)
         finally:
             if factor is not None:
                 factor.destroy()
@@ -661,6 +719,10 @@ class RetainedCondensedRuntime:
         from src.solvers.fullspace_same_mesh_hcurl_pmg_runtime import (
             build_same_mesh_hcurl_owner_transfer,
         )
+        from src.solvers.fullspace_same_mesh_hcurl_pmg import (
+            DEFAULT_TRACE_MAP_POLICY,
+            V6_P3_CANONICAL_TRACE_MAP_POLICY,
+        )
         from src.solvers.fullspace_physical_intermediate_runtime import (
             AlgebraicOwnerTransfer,
         )
@@ -683,6 +745,18 @@ class RetainedCondensedRuntime:
         # Transfer construction can fail after H6 setup.  Make its existing
         # owner visible to runtime.destroy as soon as it is created.
         self.h6 = positive
+        trace_map_policy = str(
+            (self.component_options or {}).get(
+                "same_mesh_trace_map_policy", DEFAULT_TRACE_MAP_POLICY
+            )
+        )
+        if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY:
+            if self.coarse_degree != 3:
+                raise ValueError(
+                    "V6 P3 canonical trace policy requires the A3 coarse operator"
+                )
+        elif trace_map_policy != DEFAULT_TRACE_MAP_POLICY:
+            raise ValueError(f"unsupported configured trace map policy: {trace_map_policy}")
         transfer_owner = build_same_mesh_hcurl_owner_transfer(
             self.levels["spaces"][6],
             self.levels["floquets"][6],
@@ -690,8 +764,14 @@ class RetainedCondensedRuntime:
             self.levels["floquets"][self.coarse_degree],
             fixed_serial_owner_route=self.sum_factorized_work,
             optimized_owner_apply=self.sum_factorized_work,
+            trace_map_policy=trace_map_policy,
         )
         self.transfer_owner = transfer_owner
+        if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY:
+            marker(
+                "retained_owner_transfer_complete",
+                dict(transfer_owner.audit),
+            )
         transfer = AlgebraicOwnerTransfer(transfer_owner)
         self.transfer = transfer
 
@@ -704,15 +784,18 @@ class RetainedCondensedRuntime:
             try:
                 value = self.p4_ledger.solve(rhs)
                 audit = dict(self.p4_ledger.last_audit)
-                audit.update(
-                    {
-                        "logical_apply": int(self.p4_ledger.logical_apply_calls),
-                        "logical_apply_delta": int(
-                            self.p4_ledger.logical_apply_calls - logical_before
-                        ),
-                        "source": "retained_bal_h_coarse",
-                    }
-                )
+                audit.update({
+                    "logical_apply": int(self.p4_ledger.logical_apply_calls),
+                    "logical_apply_delta": int(
+                        self.p4_ledger.logical_apply_calls - logical_before
+                    ),
+                    "source": "retained_bal_h_coarse",
+                })
+                if self.coarse_degree == 3:
+                    audit.update(
+                        coarse_degree=3, coarse_operator="A3",
+                        p4_compatibility_alias=True,
+                    )
                 p_started = perf_counter()
                 result = transfer.apply_primal(value)
                 audit.update(ph_restriction_seconds=ph_seconds,
@@ -1221,6 +1304,7 @@ def run_retained_condensed_workflow(
             geometry_identity_policy=geometry_identity_policy,
             marker=ledger.marker,
             component_options=contract.get("component_options"),
+            profile_identity=profile_identity,
         )
         provenance = payload["provenance"]
         if profile_identity in (V5_NATIVE_PROFILES | V6_NATIVE_PROFILES):
@@ -1272,6 +1356,25 @@ def run_retained_condensed_workflow(
             "postprocess_jit_release_before_factor": postprocess_jit_release,
             "p6_cache_before_setup": cache_before,
         }
+        if runtime.coarse_degree == 3:
+            summary["retained_runtime"]["coarse_operator"] = {
+                "degree": int(runtime.coarse_degree),
+                "name": "A3",
+                "exact_per_cell_condensation": True,
+                "global_factor": "one_exact_MUMPS_factor",
+                "relative_residual_limit": 1.0e-10,
+                "maximum_extra_same_factor_refinements": 2,
+                "p4_internal_fields_are_compatibility_aliases": True,
+            }
+            trace_map_policy = str(
+                (runtime.component_options or {}).get(
+                    "same_mesh_trace_map_policy", "basix_full_cell_interpolation_v1"
+                )
+            )
+            if trace_map_policy != "basix_full_cell_interpolation_v1":
+                summary["retained_runtime"]["same_mesh_trace_map_policy"] = (
+                    trace_map_policy
+                )
         if sum_factorized_work:
             coarse_space = runtime.levels["spaces"][runtime.coarse_degree]
             fine_space = runtime.levels["spaces"][6]
@@ -1288,14 +1391,28 @@ def run_retained_condensed_workflow(
                 "fine_mode_sha256": str(runtime.fine["mode_sha256"]),
             }
         ledger.marker("retained_p4_factor_complete", p4_facts)
+        if runtime.coarse_degree == 3:
+            ledger.marker("retained_coarse_a3_factor_complete", p4_facts)
         bridge = runtime.build_bal_h(
             marker=ledger.marker, audit_append=ledger.append
         )
+        transfer_audit = dict(runtime.transfer_owner.audit)
+        if "trace_map_policy" in transfer_audit:
+            summary["retained_runtime"]["same_mesh_transfer_audit"] = (
+                transfer_audit
+            )
         summary["retained_runtime"]["bal_h"] = {
             "bridge": "P6RetainedBALHBridge",
             "outer_pc_logical_p4_contract": 2,
             "physical_matsolve_refinements": "ledger-recorded; up to 2 refinements per logical solve",
         }
+        if runtime.coarse_degree == 3:
+            summary["retained_runtime"]["bal_h"].update(
+                outer_pc_logical_coarse_contract=2,
+                coarse_degree=3,
+                coarse_operator="A3",
+                p4_compatibility_alias=True,
+            )
         aq_projection_check = None
         if sum_factorized_work:
             aq_projection_check = _native_aq_projection_check(runtime)

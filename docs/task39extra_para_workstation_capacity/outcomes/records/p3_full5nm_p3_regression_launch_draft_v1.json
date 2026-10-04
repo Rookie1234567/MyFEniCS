@@ -1,0 +1,156 @@
+{
+  "schema": "task39extra.p3_full5nm_launch_draft.v1",
+  "status": "DRAFT_NOT_APPROVED_NOT_STARTED",
+  "created_utc": "2026-10-04T08:27:03.657756+00:00",
+  "scope": "唯一的5 nm p6 fine / exact p3 A3 coarse完整场数值、收敛及物理回归；这是启动审阅草案，不是启动许可。",
+  "post_v6_authorization": "Review V6关闭后用户追加p6 fine / exact p3 coarse授权；不是Review V7，也不回写V6历史结论。",
+  "source_binding": {
+    "branch": "task39extra_para_workstation_capacity",
+    "base_head": "e312ff721f0918c20d9b87ed1d72928b23d349df",
+    "current_wip_patch_sha256": "41c0fddd633d09fe5bd0d706ca3a8e39ee7e1dc1ccd51215a79d8bfbb7a0650a",
+    "required_clean_source_sha256": "PENDING_MAIN_REVIEW_AND_CLEAN_COMMIT",
+    "required_clean_worktree": true,
+    "formal_run_source_sha_must_be_recorded_by_manifest": true,
+    "origin_head_last_verified": "e312ff721f0918c20d9b87ed1d72928b23d349df",
+    "source_note": "The source used by the future run must be the final clean commit SHA; e312 is only the current base/documentation-closeout head, not the required run source."
+  },
+  "input_identity": {
+    "path": "input/task39extra_para_workstation_capacity/v6_5nm_p3_full.dat",
+    "input_sha256": "4ca279159a4b391fe4b05f47c5ef13891db3eade68993db71ade806158a42818",
+    "physical_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+    "resolved_sha256": "17a9657bd9cfb76baeed5aec07453057026ca20c1725c10fa44096bbab35d4d1",
+    "resolved_identity": "v6_interleave_5nm_p6h4_q3",
+    "resolved_profile": "dual_condensed_balh_native_5nm_p3_v6",
+    "execution_mode": "full_solve",
+    "coarse_operator": "A3",
+    "coarse_degree": 3,
+    "coarse_inverse": "one exact global MUMPS factor",
+    "outer": "right FGMRES(32), zero initial guess, max 2048",
+    "mode_count": 600,
+    "mode_sha256": "dde3aee7ee25bc5d68617a503eebec720a1527c9d044125bfb09acaa6d0b6645",
+    "mesh_cells": {
+      "expected_same_discrete_reference_cells": 3780,
+      "runtime_must_record_actual_boundary_fitted_mesh": true,
+      "nominal_initial_mesh_cells": [
+        13,
+        7,
+        35
+      ],
+      "warning": "The 13x7x35 values are nominal initial subdivisions, not the actual boundary-fitted cell count. Record the runtime mesh audit; only claim same-discrete comparison if actual cells equal the accepted 3780-cell F5 reference."
+    },
+    "outer_solve_space": "p6 condensed trace plus all 600 port unknowns"
+  },
+  "exact_command": {
+    "working_directory": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity",
+    "shell": "bash -lc",
+    "command": "cd /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity && export TASK39EXTRA_INT64_STACK_ROOT=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base && export TASK39EXTRA_PORD64_ROOT=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay && source scripts/activate_task39extra_pord64.sh && export TASK39EXTRA_V6_HEAVY_WINDOW=coordinated OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 && /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python scripts/run_case.py input/task39extra_para_workstation_capacity/v6_5nm_p3_full.dat",
+    "claim": "Synchronous official scripts/run_case.py command; do not call it detached or infer a session/PPID. Record actual launcher/root/worker PID, start_ticks, PPID, affinity, session and exec result after a future approved launch."
+  },
+  "fresh_admission_required_at_launch": {
+    "no_active_same_task_run_launcher_or_HEAVY_window_conflict": true,
+    "fresh_host_proc_identity_and_neighbor_load": true,
+    "parent_cpu": 9,
+    "worker_cpu": 24,
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "numa_policy": "interleave nodes 0-1",
+    "allowed_cpu_cpuset_and_mems_readback_required": true,
+    "effective_available_bytes_minimum": 1437438953472,
+    "fresh_RAM_cgroup_disk_inode_and_heavy_lock_check": true,
+    "PORD64_activation": "scripts/activate_task39extra_pord64.sh",
+    "Petsc_scalar": "complex128",
+    "Petsc_int": "int64",
+    "unique_PETSc_overlay_map_required": true,
+    "PSS_USS_sampling": "disabled through full process chain",
+    "rss_warning_bytes": 1170000000000,
+    "rss_hard_limit_bytes": 1300000000000,
+    "stop_policy": "measured full process-tree RSS only",
+    "swap": "observe only",
+    "time_limit_mode": "none",
+    "neighbor_tasks": "do not alter, signal, or move them"
+  },
+  "numerical_and_physical_gates": {
+    "same_mesh_transfer": "new V6 p3-only canonical trace policy, owner-row absolute difference <=1e-11; no threshold change",
+    "coarse_each_A3_return_relative_true_residual_max": 1e-10,
+    "extra_same_factor_refinements_max": 2,
+    "native_full_A6_relative_true_residual_max": 1e-06,
+    "Aq_projection_gate": "retain original component/full-run contract",
+    "fine": "p6 fine discretization with the original direction/Floquet/complex MPC/full DtN/local recovery. The outer unknown lives in condensed trace+port space; the uncondensed original full A6 action remains for the independent full residual and related checks.",
+    "outer": "right FGMRES(32), zero initial guess, max 2048, solving the p6 condensed trace+600-port system; no step-count promise or alternate PC.",
+    "physical_energy": "abs(R+T+A_volume-1)<=1e-5 and abs(A_balance-A_volume)<=1e-5",
+    "field_and_mode_outputs": "full complex E/H plus all 600 channel amplitudes/powers; mode identity and completeness checked",
+    "comparison": "The automatic same-discrete physical witness is the existing original 5 nm p6/h4/H6/p4-native run at results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z (source 85a681...; 3780 runtime cells/600 modes). Compare full same-discrete FE/EH/mode/R/T/A/A_volume observables under existing gates, not only a scalar residual. V6 F5 run 20261002T153058.967208Z (source 1828bc675f2862025e0eaed0beccf15982eb09e6) is a separate accepted performance/result comparison and is not an automatic direct p3-versus-V6-F5 pair gate.",
+    "comparison_boundary": "If full reference field arrays are unavailable, report comparison partial; never infer full vector agreement from compact scalars.",
+    "official_outputs": "Only outputs from a completed field passing all original full A6 and physical gates are qualified.",
+    "full_original_A6": {
+      "gate": "independent original full A6 relative true residual <= 1e-6",
+      "actual_path": "The retained runner _a6_fact/final packet applies runtime.fine[physical_action], the original native full p6 A6 action to the reconstructed/full field as required.",
+      "separation": "The fused A6 action used inside the PC is reported separately and does not replace the original native A6 qualification residual."
+    },
+    "automatic_reference_policy": {
+      "runner_route": "V6_BASE_PROFILES -> compare_retained_v5_output -> compare_retained_5nm_output",
+      "automatic_comparator": "The existing old same-physical 5nm witness described in comparison_reference.same_discrete_physical_witness.",
+      "not_an_automatic_pair_gate": "V6 F5 run 20261002T153058.967208Z is a separate accepted p4 performance/result record. It itself used the same old witness; this draft does not claim an automatic direct p3-vs-V6-F5 pair comparison."
+    }
+  },
+  "comparison_reference": {
+    "same_discrete_physical_witness": {
+      "role": "Actual old same-physical full-field and 600-mode witness used by compare_retained_5nm_output.",
+      "run_directory": "results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z",
+      "run_manifest_path": "results/euv_grazing1_phi0/original_5nm_si_p6h4_balanced_h6_p4_native__full3d_iterative__mpi1__Mna/20260911T065955.813489Z/run_manifest.json",
+      "run_manifest_sha256": "51d6613ddd50409b25ec08354eed31aa2a2b79739b2a4f5713ff520d6d9ceb28",
+      "run_manifest_source_sha256": "85a681b9bd61104466888546b83df87c27806169",
+      "run_manifest_input_sha256": "773b5f3ac5f3636a31209b2150c0de9109899514805db13008d35f942281ecf8",
+      "physical_sha256": "96b548e4cd7fbec7f5397d6be7fa22cf5f9e0faaaeb2f70ff95cf01f0f8af88d",
+      "resolved_sha256": "6f529f67b179bad64fa12b06f5b06428abe5fc8477bcec1c037d2a73922de058",
+      "small_required_files": {
+        "physical_intermediate_summary.json": {
+          "exists": true,
+          "sha256": "2b3d81cac194c40c3b0ef29bb6f307580267c6e0b0bf744447477c5faef340a4"
+        },
+        "notch_reference_witness.json": {
+          "exists": true
+        },
+        "numerical_output/dtn_port_diffraction_orders_3d.json": {
+          "exists": true,
+          "bytes": 831740,
+          "read_scope": "existence/size checked; full modal values not parsed for this draft"
+        },
+        "numerical_output/dtn_auxiliary_amplitudes_3d.json": {
+          "exists": true
+        },
+        "numerical_output/full3d_reference_samples.npz": {
+          "exists": true,
+          "bytes": 411474,
+          "read_scope": "stat only"
+        }
+      },
+      "historical_manifest_status_caveat": "manifest status=launching is a historical placeholder; it is not the run terminal status or qualification receipt.",
+      "automatic_gates": {
+        "full_FE_L2_relative": "<=1e-4",
+        "full_FE_scaled_curl_relative": "<=1e-4",
+        "selected_E_H_same_coordinates_complex_relative_L2": "<=1e-4; exact coordinate identity; no phase fitting",
+        "selected_E_H_near_zero": "Retain existing comparator near-zero mask/absolute-difference reporting rule; do not invent a new threshold.",
+        "600_complex_modal_amplitude_vector_relative": "<=1e-4; no phase fitting",
+        "per_mode_R_or_T_power_max_absolute": "<=1e-6",
+        "scalar_R_T_A_A_volume_max_absolute": "<=1e-5",
+        "mode_identity_and_completeness": "exact expected 600 modes",
+        "energy_closure": "abs(R+T+A_volume-1)<=1e-5 and abs(A_balance-A_volume)<=1e-5"
+      },
+      "data_read_scope": "Only small manifest/summary and required-file existence were checked for this draft; no large field/canonical arrays were read or compared."
+    },
+    "accepted_v6_f5_performance_and_result_record": {
+      "role": "Separate accepted V6 p4 full-run/performance result; not the automatic p3 reference pair.",
+      "record": "docs/task39extra_para_workstation_capacity/outcomes/records/v6_5nm_terminal.json",
+      "tracked_record_sha256": "1812c3f8fd368f6783277b3e95df45abfb994591add7f5a0ff75c5302de7f71c",
+      "run_id": "20261002T153058.967208Z",
+      "source_sha256": "1828bc675f2862025e0eaed0beccf15982eb09e6",
+      "main_terminal_receipt_sha256": "b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3",
+      "reference_relationship": "The V6 F5 itself passed against the old same-physical witness above; it is retained here as a separately qualified performance/result context."
+    },
+    "direct_p3_vs_v6_f5_pair": "NOT_CLAIMED_AS_AN_AUTOMATIC_RUNNER_GATE"
+  },
+  "run_destination": "results/euv_grazing1_phi0/<input-derived case id>/<launcher-generated unique timestamp>",
+  "current_status": "NOT_STARTED; this draft itself is not run authorization. A newly frozen package must bind the eventual clean source SHA, preserve this input identity, and receive main review before launch.",
+  "forbidden_follow_on": "No automatic 2 nm full run, P2, 0.7 nm field/capacity PDE, alternate p4 inverse, or second 5 nm run."
+}

@@ -1,6 +1,20 @@
-# 原生迁移与容量任务：本轮执行结果
+# 原生迁移与容量任务：执行结果总账
 
-## Review V6 当前状态：F5通过、P2限域pilot验收、R48容量目标未建立（2026-10-04）
+## V6收口后用户追加的p3候选（S3，2026-10-04）
+
+本节只记录用户追加的p6细层/p3准确粗修正候选；这是Review V6之后的补充执行范围，不是Review V7，也不改变下面保存的V6历史结论。正式路线的FGMRES作用于p6凝聚trace加全部port未知量（5 nm 600个、2 nm 3904个），完整未凝聚p6 A6仍用于原残差/相关作用。本次18-cell组件只做固定PC见证，没有运行FGMRES外层步；A3准确MUMPS因子与既有数值门保持不变。
+
+| 阶段 | 结果 | 限定 |
+|---|---|---|
+| 5 nm p3真实FE/MPC组件 | 18 cells、600 modes；三次完整PC，每次C1/C2均PASS；主审接受 | 组件通过，不是3780-cell完整场或物理资格；保留两次失败attempt |
+| 2 nm p3真实FE/MPC组件 | 18 cells、3904 modes；三次完整PC，每次两次C均PASS；主审接受 | 组件通过，不是完整2 nm/P2/收敛资格 |
+| setup与小组件PC | build 221.760 s（非完整setup）；2 nm mean PC 5.145069 s | 旧q4比值仅非配对小组件工程对照；不外推完整步数或0.7 nm ETA |
+| 5 nm正式回归 | 输入/物理/模式身份及旧reference路线已整理成草案 | `DRAFT_NOT_APPROVED_NOT_STARTED`；source最终clean SHA、主审包与fresh准入仍待完成 |
+| 2 nm full/P2、0.7 nm场/容量资格 | `NOT_RUN` | 不自动继续；低内存p4逆新增试验0 |
+
+详见[S3结果](p3_mid_order_s3.md)、[S3 compact](records/p3_mid_order_s3_components_v1.json)、[5 nm启动草案](records/p3_full5nm_p3_regression_launch_draft_v1.json)和[post-V6回应](../response_post_v6_p3.md)。当前source patch SHA `41c0fddd633d09fe5bd0d706ca3a8e39ee7e1dc1ccd51215a79d8bfbb7a0650a`绑定15个冻结文件；commit后的clean source SHA尚未产生，正式场必须另绑定完整clean SHA。5 nm旧失败和方向原型的负结果均保留在compact与ignored attempt路径。
+
+## Review V6历史收口（2026-10-04；下文保留V6当时的结论）
 
 P2在2 nm硅模型上完成预先限定的16步计算，主审按28项检查接受其“范围内完成”记录。它没有收敛、没有通过完整求解器残差门，也没有运行official R/T/A或物理checker；因此状态为 `NOT_SOLVER_QUALIFICATION`。16步是计划停止点，不是收敛证据，不从残差外推总步数，也不续跑。
 

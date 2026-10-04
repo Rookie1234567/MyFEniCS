@@ -11,8 +11,9 @@ solver is involved here.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
+from hashlib import sha256
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -24,7 +25,6 @@ from .hcurl_affine_isotropic_tensor import (
     AffineIsotropicMaxwellTensorFactory,
     AffineIsotropicMaxwellTensorSpec,
 )
-
 
 SAME_MESH_METHOD = "same_mesh_hcurl_pmg_v1"
 # Public pair convention is (fine_degree, coarse_degree); prolongation runs
@@ -45,6 +45,8 @@ LINEARITY_LIMIT = 1.0e-12
 REPEAT_LIMIT = 1.0e-13
 MATERIAL_HERMITIAN_LIMIT = 1.0e-12
 MATERIAL_ENERGY_LIMIT = 1.0e-9
+DEFAULT_TRACE_MAP_POLICY = "basix_full_cell_interpolation_v1"
+V6_P3_CANONICAL_TRACE_MAP_POLICY = "v6_p3_canonical_shared_trace_v1"
 
 
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
@@ -63,6 +65,221 @@ def _n1e(degree: int):
         int(degree),
         basix.LagrangeVariant.legendre,
     )
+
+
+def _n1e_quadrilateral(degree: int):
+    return basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.quadrilateral,
+        int(degree),
+        basix.LagrangeVariant.legendre,
+    )
+
+
+def _p_interval_legendre(degree: int):
+    return basix.create_element(
+        basix.ElementFamily.P,
+        basix.CellType.interval,
+        int(degree),
+        basix.LagrangeVariant.legendre,
+        discontinuous=True,
+    )
+
+
+def _canonical_quadrilateral_n1e_transfer(
+    coarse_element: Any, fine_element: Any
+) -> np.ndarray:
+    """Return the shared canonical quadrilateral N1E interpolation map."""
+
+    if coarse_element.cell_type != basix.CellType.quadrilateral or (
+        fine_element.cell_type != basix.CellType.quadrilateral
+    ):
+        raise ValueError("canonical face transfer requires quadrilateral N1E spaces")
+    if (int(coarse_element.degree), int(fine_element.degree)) != (3, 6):
+        raise ValueError("canonical face transfer is restricted to P3-to-P6")
+    matrix = np.asarray(
+        basix.compute_interpolation_operator(coarse_element, fine_element),
+        dtype=np.float64,
+    )
+    if matrix.shape != (int(fine_element.dim), int(coarse_element.dim)):
+        raise RuntimeError("canonical quadrilateral transfer shape is not closed")
+    if not np.isfinite(matrix).all():
+        raise RuntimeError("canonical quadrilateral transfer is non-finite")
+    return np.ascontiguousarray(matrix)
+
+
+def _quadrilateral_trace_embedding(
+    hex_element: Any, quad_element: Any, face: int
+) -> np.ndarray:
+    """Embed the complete quad trace closure into one hex face by topology."""
+
+    hex_topology = basix.topology(basix.CellType.hexahedron)
+    quad_topology = basix.topology(basix.CellType.quadrilateral)
+    face_vertices = hex_topology[2][face]
+    edge_by_vertices = {
+        frozenset(edge): edge_id
+        for edge_id, edge in enumerate(hex_topology[1])
+    }
+    result = np.zeros(
+        (int(hex_element.dim), int(quad_element.dim)), dtype=np.float64
+    )
+    mapped_quad_edge_dofs: set[int] = set()
+
+    for quad_edge, quad_vertices in enumerate(quad_topology[1]):
+        va, vb = (int(face_vertices[int(vertex)]) for vertex in quad_vertices)
+        hex_edge = edge_by_vertices[frozenset((va, vb))]
+        same_direction = list(hex_topology[1][hex_edge]) == [va, vb]
+        hex_dofs = hex_element.entity_dofs[1][hex_edge]
+        quad_dofs = quad_element.entity_dofs[1][quad_edge]
+        if len(hex_dofs) != len(quad_dofs):
+            raise RuntimeError("reference edge DOF counts do not agree")
+        for moment, (hex_dof, quad_dof) in enumerate(
+            zip(hex_dofs, quad_dofs, strict=True)
+        ):
+            # Reversing the tangent also reverses the Legendre parameter.  The
+            # sign follows the edge moment functional, not a fitted value.
+            sign = 1.0 if same_direction else float((-1) ** (moment + 1))
+            result[int(hex_dof), int(quad_dof)] = sign
+            mapped_quad_edge_dofs.add(int(quad_dof))
+
+    hex_face_dofs = hex_element.entity_dofs[2][face]
+    quad_face_dofs = quad_element.entity_dofs[2][0]
+    if len(hex_face_dofs) != len(quad_face_dofs):
+        raise RuntimeError("reference face DOF counts do not agree")
+    for hex_dof, quad_dof in zip(hex_face_dofs, quad_face_dofs, strict=True):
+        result[int(hex_dof), int(quad_dof)] = 1.0
+
+    closure = {
+        int(value) for value in hex_element.entity_closure_dofs[2][face]
+    }
+    mapped_hex_rows = {
+        int(value)
+        for value in np.flatnonzero(np.any(result != 0.0, axis=1))
+    }
+    mapped_quad_columns = {
+        int(value)
+        for value in np.flatnonzero(np.any(result != 0.0, axis=0))
+    }
+    if mapped_hex_rows != closure or mapped_quad_columns != set(
+        range(int(quad_element.dim))
+    ):
+        raise RuntimeError("topological trace embedding is not a closure bijection")
+    if len(mapped_quad_edge_dofs) != sum(
+        len(dofs) for dofs in quad_element.entity_dofs[1]
+    ):
+        raise RuntimeError("not all quadrilateral edge moments were mapped")
+    return result
+
+
+def _canonical_p63_trace_rows(
+    coarse_element: Any,
+    fine_element: Any,
+    basix_interpolation: np.ndarray,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Replace only P6 edge and face-owned rows using canonical shared traces.
+
+    Edge inclusion is the exact nested inclusion of Basix's scalar Legendre
+    interval moments.  Face-owned rows use one shared quadrilateral N1E map
+    embedded over the complete edge-plus-face closure.  All cell-interior
+    rows retain the original full-hexahedron Basix interpolation values.
+    """
+
+    if (
+        int(coarse_element.degree) != 3
+        or int(fine_element.degree) != 6
+        or coarse_element.cell_type != basix.CellType.hexahedron
+        or fine_element.cell_type != basix.CellType.hexahedron
+    ):
+        raise ValueError("canonical shared trace construction is restricted to P6<-P3")
+
+    coarse_edge_moments = _p_interval_legendre(2)
+    fine_edge_moments = _p_interval_legendre(5)
+    if (
+        int(coarse_edge_moments.dim) != 3
+        or int(fine_edge_moments.dim) != 6
+        or coarse_edge_moments.lagrange_variant != basix.LagrangeVariant.legendre
+        or fine_edge_moments.lagrange_variant != basix.LagrangeVariant.legendre
+        or not coarse_edge_moments.discontinuous
+        or not fine_edge_moments.discontinuous
+    ):
+        raise RuntimeError("Basix NCE edge moment metadata changed")
+    edge_map = np.zeros((6, 3), dtype=np.float64)
+    np.fill_diagonal(edge_map, 1.0)
+
+    coarse_quad = _n1e_quadrilateral(3)
+    fine_quad = _n1e_quadrilateral(6)
+    face_map = _canonical_quadrilateral_n1e_transfer(coarse_quad, fine_quad)
+
+    candidate = np.asarray(basix_interpolation, dtype=np.complex128).copy()
+    edge_rows: set[int] = set()
+    for fine_dofs, coarse_dofs in zip(
+        fine_element.entity_dofs[1],
+        coarse_element.entity_dofs[1],
+        strict=True,
+    ):
+        if (len(fine_dofs), len(coarse_dofs)) != edge_map.shape:
+            raise RuntimeError("hex edge moments do not match the nested P2/P5 map")
+        candidate[np.asarray(fine_dofs, dtype=np.int64), :] = 0.0
+        candidate[np.ix_(fine_dofs, coarse_dofs)] = edge_map
+        edge_rows.update(int(value) for value in fine_dofs)
+
+    face_rows: set[int] = set()
+    for face in range(6):
+        coarse_embedding = _quadrilateral_trace_embedding(
+            coarse_element, coarse_quad, face
+        )
+        fine_embedding = _quadrilateral_trace_embedding(
+            fine_element, fine_quad, face
+        )
+        face_transfer = fine_embedding @ face_map @ coarse_embedding.T
+        rows = [int(value) for value in fine_element.entity_dofs[2][face]]
+        if face_rows.intersection(rows):
+            raise RuntimeError("face-owned P6 rows are duplicated")
+        face_rows.update(rows)
+        candidate[rows, :] = face_transfer[rows, :]
+
+    trace_rows = edge_rows | face_rows
+    expected_edge_rows = 72
+    expected_face_rows = 360
+    expected_trace_rows = 432
+    if (
+        len(edge_rows) != expected_edge_rows
+        or len(face_rows) != expected_face_rows
+        or len(trace_rows) != expected_trace_rows
+    ):
+        raise RuntimeError("P6 trace row inventory differs from the reviewed 72+360 map")
+    interior_rows = sorted(set(range(int(fine_element.dim))) - trace_rows)
+    if len(interior_rows) != 450:
+        raise RuntimeError("P6 internal row inventory differs from the reviewed 450 rows")
+    if not np.array_equal(
+        candidate[interior_rows, :],
+        np.asarray(basix_interpolation)[interior_rows, :],
+    ):
+        raise RuntimeError("canonical trace construction changed a P6 interior row")
+    if not np.isfinite(candidate).all():
+        raise RuntimeError("canonical shared trace map contains non-finite values")
+
+    canonical_reference = np.ascontiguousarray(candidate, dtype=np.complex128)
+    facts = {
+        "trace_map_policy": V6_P3_CANONICAL_TRACE_MAP_POLICY,
+        "coarse_operator": "A3",
+        "edge_moment_definition": "Basix scalar P_(degree-1), Legendre, discontinuous interval moments",
+        "edge_map_shape": [6, 3],
+        "face_map_definition": "one canonical quadrilateral N1E P3-to-P6 transfer embedded over each complete face closure",
+        "face_map_shape": [int(face_map.shape[0]), int(face_map.shape[1])],
+        "edge_trace_rows_replaced": len(edge_rows),
+        "face_owned_trace_rows_replaced": len(face_rows),
+        "trace_rows_replaced": len(trace_rows),
+        "interior_rows_retained_from_basix": len(interior_rows),
+        "interior_rows_bitwise_unchanged": True,
+        "full_cell_basix_map_preserved": False,
+        "canonical_reference_map_sha256": sha256(
+            canonical_reference.view(np.uint8)
+        ).hexdigest(),
+        "edge_moment_ordering": "Basix entity DOF order; exact nested moment inclusion",
+        "face_orientation_policy": "Basix full-cell T_apply after canonical trace construction",
+    }
+    return canonical_reference, facts
 
 
 def _scalar(degree: int):
@@ -329,6 +546,7 @@ def build_same_mesh_hcurl_transfer(
     *,
     coarse_cell_info: int = 0,
     fine_cell_info: int = 0,
+    trace_map_policy: str = DEFAULT_TRACE_MAP_POLICY,
 ) -> SameMeshHcurlTransfer:
     """Build and independently audit one fixed same-mesh N1E transfer."""
 
@@ -337,6 +555,19 @@ def build_same_mesh_hcurl_transfer(
         raise ValueError(
             "same-mesh transfer supports only fine/coarse pairs "
             f"{SAME_MESH_EXTENDED_TRANSFER_PAIRS}"
+        )
+    trace_map_policy = str(trace_map_policy)
+    if trace_map_policy not in {
+        DEFAULT_TRACE_MAP_POLICY,
+        V6_P3_CANONICAL_TRACE_MAP_POLICY,
+    }:
+        raise ValueError(f"unsupported same-mesh trace map policy: {trace_map_policy}")
+    if (
+        trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY
+        and pair != (6, 3)
+    ):
+        raise ValueError(
+            "canonical shared trace transfer is restricted to the explicit P6-to-P3 policy"
         )
     coarse_element = _n1e(coarse_degree)
     fine_element = _n1e(fine_degree)
@@ -357,8 +588,16 @@ def build_same_mesh_hcurl_transfer(
             "Basix N1E interpolation shape is not closed: "
             f"{basix_interpolation.shape} != {expected_shape}"
         )
+    trace_map_facts: dict[str, Any] = {}
+    reference_interpolation = basix_interpolation
+    if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY:
+        reference_interpolation, trace_map_facts = _canonical_p63_trace_rows(
+            coarse_element,
+            fine_element,
+            basix_interpolation,
+        )
     matrix = np.ascontiguousarray(
-        fine_transform @ basix_interpolation @ coarse_inverse,
+        fine_transform @ reference_interpolation @ coarse_inverse,
         dtype=np.complex128,
     )
 
@@ -470,6 +709,19 @@ def build_same_mesh_hcurl_transfer(
         "global_dense_transfer": False,
         "numeric_allgather": False,
     }
+    if trace_map_policy == V6_P3_CANONICAL_TRACE_MAP_POLICY:
+        audit.update(trace_map_facts)
+        audit["orientation_pair"] = [
+            int(fine_cell_info), int(coarse_cell_info)
+        ]
+        audit["oriented_matrix_sha256"] = sha256(
+            np.ascontiguousarray(matrix).view(np.uint8)
+        ).hexdigest()
+        audit["candidate_vs_unmodified_independent_max_abs"] = float(
+            np.max(np.abs(matrix - direct_matrix))
+        )
+        audit["absolute_owner_row_limit"] = 1.0e-11
+        audit["absolute_owner_row_limit_changed"] = False
     gate = same_mesh_transfer_gate(audit)
     audit["gate_passed"] = bool(gate["passed"])
     audit["gate_failures"] = list(gate["failures"])

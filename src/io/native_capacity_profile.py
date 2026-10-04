@@ -32,8 +32,28 @@ V6_BASE_PROFILES = {
     'dual_condensed_balh_native_5nm_v6': 'dual_condensed_balh_native_5nm_v5',
     'dual_condensed_balh_native_2nm_h6_only_v6': 'dual_condensed_balh_native_2nm_v5',
     'dual_condensed_balh_native_2nm_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
+    # Explicit opt-in p3 experiments retain the same V6 physical/material
+    # contracts while selecting a degree-3 coarse operator.
+    'dual_condensed_balh_native_5nm_p3_v6': 'dual_condensed_balh_native_5nm_v5',
+    'dual_condensed_balh_native_2nm_p3_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
 }
 V6_NATIVE_PROFILES = frozenset(V6_BASE_PROFILES)
+V6_P3_PROFILES = frozenset(
+    {
+        'dual_condensed_balh_native_5nm_p3_v6',
+        'dual_condensed_balh_native_2nm_p3_pilot16_v6',
+    }
+)
+V6_PILOT16_PROFILES = frozenset(
+    {
+        'dual_condensed_balh_native_2nm_pilot16_v6',
+        'dual_condensed_balh_native_2nm_p3_pilot16_v6',
+    }
+)
+V6_COARSE_DEGREES = {
+    identity: 3 if identity in V6_P3_PROFILES else 4
+    for identity in V6_NATIVE_PROFILES
+}
 V6_MATH_THREADS = 1  # Updated only after the bounded E3 comparison and clean freeze.
 NATIVE_CASES.update(
     {
@@ -132,7 +152,8 @@ def native_profile_facts(identity):
     if identity in V6_NATIVE_PROFILES:
         facts = native_profile_facts(V6_BASE_PROFILES[identity])
         h6_only = identity == 'dual_condensed_balh_native_2nm_h6_only_v6'
-        pilot = identity == 'dual_condensed_balh_native_2nm_pilot16_v6'
+        pilot = identity in V6_PILOT16_PROFILES
+        coarse_degree = V6_COARSE_DEGREES[identity]
         threads = 1 if h6_only else V6_MATH_THREADS
         facts.update(identity=identity, execution_mode=('h6_only' if h6_only else
                      'pilot_16' if pilot else 'full_solve'))
@@ -150,12 +171,69 @@ def native_profile_facts(identity):
             reuse_projection_work=False)
         facts['outer']['planned_stop_iteration'] = 16 if pilot else None
         facts['outer']['screen']['enabled'] = False
-        facts['campaign_authorization'].update(source='Review V6 exact p4 speed batch',
+        facts['campaign_authorization'].update(source=(
+            'user-authorized p6/p3 intermediate coarse exploration'
+            if coarse_degree == 3 else 'Review V6 exact p4 speed batch'),
             threads_per_process=threads, execution_mode=facts['execution_mode'],
             exclusive_heavy_window_required=True, low_memory_p4_inverse_trials=0)
-        facts['backend'].update(h6='reference_metric_direct_sum_factorized_natural',
+        facts['backend'].update(
+            h6='reference_metric_direct_sum_factorized_natural',
             original_a4='fused_original_volume_plus_complete_DtN',
-            local_tensor='blocked_gram_original_FFCx_rules')
+            local_tensor='blocked_gram_original_FFCx_rules',
+        )
+        if identity in V6_P3_PROFILES:
+            coarse_operator = {
+                'degree': coarse_degree,
+                'name': f'A{coarse_degree}',
+                'same_mesh_trace_map_policy': (
+                    'v6_p3_canonical_shared_trace_v1'
+                ),
+                'matrix': 'exact_per_cell_static_condensation_plus_ports',
+                'inverse': 'one_exact_global_MUMPS_factor',
+                'relative_residual_limit': 1.0e-10,
+                'maximum_extra_same_factor_refinements': 2,
+            }
+            facts['coarse_operator'] = dict(coarse_operator)
+            facts['backend']['coarse_operator'] = dict(coarse_operator)
+            facts['retained_condensed_v20'] = dict(
+                facts['retained_condensed_v20'],
+                coarse_degree=coarse_degree,
+                coarse_operator=dict(coarse_operator),
+                same_mesh_trace_map_policy=(
+                    'v6_p3_canonical_shared_trace_v1'
+                ),
+                p4_internal_names_are_compatibility_aliases=True,
+                factory_qualification=(
+                    'p3 profile opt-in; bounded FE/MPC component qualification required'
+                ),
+            )
+            facts['backend']['original_a3'] = (
+                'fused_original_volume_plus_complete_DtN'
+            )
+            facts['backend']['coarse_transfer'] = (
+                'canonical_shared_edge_and_quadrilateral_face_trace_rows; '
+                'Basix cell-interior rows retained; V6 P3 profile opt-in'
+            )
+            facts['backend'].pop('original_a4')
+            facts['backend']['p4_compatibility_alias'] = (
+                'legacy p4_* storage/helper names only; actual operator is A3'
+            )
+            facts['condensed_route'].update(
+                coarse_degree=coarse_degree,
+                coarse_operator=f'A{coarse_degree}',
+                same_mesh_trace_map_policy=(
+                    'v6_p3_canonical_shared_trace_v1'
+                ),
+                coarse='assembly_time_condensed_exact_A3_inverse',
+                p4='compatibility alias to the selected exact A3 inverse',
+                coarse_factor='one_exact_global_MUMPS_factor',
+                coarse_relative_residual_limit=1.0e-10,
+                coarse_max_refinements=2,
+                p4_internal_names_are_compatibility_aliases=True,
+            )
+            facts['component_options']['same_mesh_trace_map_policy'] = (
+                'v6_p3_canonical_shared_trace_v1'
+            )
         return facts
     wavelength, meshes, screen, solve, workflow = NATIVE_CASES[identity]
     time_limit_mode = NATIVE_TIME_LIMIT_MODES[identity]
@@ -415,8 +493,19 @@ def validate_native_case(config):
         from copy import deepcopy
         if config['execution'].get('native_memory_policy') != 'interleave_nodes0_1':
             raise InputError(f'{identity} fixes native_memory_policy=interleave_nodes0_1')
+        expected_degree = V6_COARSE_DEGREES[identity]
+        if int(config['solver'].get('coarse_degree', -1)) != expected_degree:
+            raise InputError(
+                f'{identity} fixes solver.coarse_degree={expected_degree}'
+            )
         legacy = deepcopy(config)
         legacy['solver']['preconditioner'] = V6_BASE_PROFILES[identity]
+        # Validate the inherited V5 physical campaign independently of the
+        # explicit V6 coarse-degree identity.  The base profile is a frozen
+        # physical validator and retains its original q4/q3 setting.
+        legacy['solver']['coarse_degree'] = V5_NATIVE_CASES[
+            V6_BASE_PROFILES[identity]
+        ][2]
         legacy['execution']['native_memory_policy'] = 'preferred_node1'
         validate_native_case(legacy)
         return

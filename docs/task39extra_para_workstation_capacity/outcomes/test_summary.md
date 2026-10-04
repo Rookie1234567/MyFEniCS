@@ -72,3 +72,18 @@ checker no-deadline 修复提交为 `d64398cb1fecd90867071688dca94e501235cf7a`�
 44 passed in 240.32s (0:04:00)。包含真实MUMPS小矩阵越过大预测值、实测内存分配超限清场、原p4和native/subreaper回归。ABI为PORD64、complex128/int64，原PETSc库hash不变。启动器完整Ruff、受影响模块严重错误规则及compileall、diff whitespace检查通过；未运行全库或CI。详细命令和日志hash见 [compact](records/2nm_h1p5_measured_retry_v1.json)。
 
 文档检查为20 passed、1 failed。唯一失败来自基线已引用但HEAD及磁盘均缺失的 `docs/task038_extra_full3d_iterative_0p7nm/outcomes/memory_first_small_v2_checker.json`；不是本轮新增路径，不伪造缺失历史证据。本轮表格Markdown和任务文档合同通过。
+
+
+## V6收口后追加p3候选：focused验证与组件见证（2026-10-04）
+
+| 验证 | 结果 | 边界 / 证据 |
+|---|---|---|
+| 方向/实体/保存C2结构检查 | 首轮4项中的3项通过，覆盖已保存矩阵方向、结构见证和C2同序重放；C2原映射最大差0，原门超限8行，候选超限0行、最大差`3.637978807091713e-12` | 这是首轮已通过的结构与保存包检查；不把后续9项重试当作这些方向见证的重跑。owner绝对门`1e-11`未改；hash见[S3 compact](records/p3_mid_order_s3_components_v1.json) |
+| 首轮focused测试 | `1 failed / 3 passed` | 三项结构/保存包检查通过；唯一失败为旧V5 profile测试假设`component_options`字段存在。修正后另跑政策/profile定向case；保留首轮日志SHA `7c2a307f1ec18c1410d222c70a737bb0f98e02f076c41881922d173f785591eb` |
+| 5 nm组件attempt 1 | worker exit1，非数值Gate失败 | `Di>0`及诱导RHS非零是无效夹具前提；实际零值对该拓扑合法。报告SHA `e8298657ad854e5c2ac5ff9f15f006c62da14945d316d3dc25a54505be149d23` |
+| 5 nm组件attempt 2 | owner绝对差`3.253907165344266e-11`，8行超过`1e-11`；worker exit1 | A3/Aq见证通过；失败原件保留，不调Gate。报告SHA `cbe6479262682318a8bccffc916237586b9e69ce4b3ca15f2292419ed392de68` |
+| 5 nm组件attempt 3 | `COMPONENT_PASS`；三次完整PC，每次两个C均过A3/port Gate；factor `1/1/8`，额外精化0 | 18 cells/600 modes；worker报告SHA `1a2c2544f23340a04e1ff06c51e7fb518295af7fcdc1f0c6a248ed288658a1ce`，主审receipt见S3 compact |
+| 2 nm组件attempt 1 | `COMPONENT_PASS`；3次完整PC/每PC两次C均PASS；factor `1/1/8`，额外精化0 | 18 cells/3904 modes；worker报告SHA `f8ae31208c32c2960570d8c18a569d9161eca6010bccec3b6fb836f81aeaec33`，资源receipt由主审接受 |
+| 政策/profile定向重试 | `9 passed / 5.87 s` | 只覆盖修正后的V6_P3显式policy与旧V5 profile兼容case；不表示重新运行全部方向/实体/负例/C2见证。改动行Ruff、相关`py_compile`和`git diff --check`按已审launch package记录通过；无全仓pytest/CI声明 |
+
+完整场5 nm、完整2 nm/P2和0.7 nm场仍`NOT_RUN`。上表真实FE仅指18-cell组件见证；不等同于solver收敛、R/T/A资格或continuum精度。

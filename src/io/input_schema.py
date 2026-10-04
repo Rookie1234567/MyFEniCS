@@ -1018,10 +1018,10 @@ FIELD_SPECS: Final = (
         "integer",
         "Nedelec degree",
         ("full3d_iterative",),
-        "V5 retained BAL_H 粗空间 Nedelec 阶次 q（不是积分阶）",
+        "显式 retained BAL_H 粗空间 Nedelec 阶次 q（不是积分阶）",
         "coarse_degree",
         None,
-        constraints=("V5 retained profile only; q3/q4 stage identity",),
+        constraints=("only an explicit retained V5/V6 profile; q3/q4 operator identity",),
     ),
     _f(
         "solver.max_iterations",

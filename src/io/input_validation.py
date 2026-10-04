@@ -625,12 +625,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             if "coarse_degree" in solver and preconditioner not in retained_profiles:
                 raise _error(
                     "solver.coarse_degree",
-                    "coarse_degree is reserved for the explicit V5 retained profiles",
+                    "coarse_degree is reserved for explicit retained V5/V6 profiles",
                 )
             if preconditioner in retained_profiles and "coarse_degree" not in solver:
                 raise _error(
                     "solver.coarse_degree",
-                    "V5 retained profiles require an explicit coarse Nedelec degree",
+                    "retained V5/V6 profiles require an explicit coarse Nedelec degree",
                 )
             frozen_mesh_fields = (
                 "mesh_axis_cell_counts", "mesh_axis_x_values",
