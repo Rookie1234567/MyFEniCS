@@ -333,6 +333,19 @@ def main():
                 with (OUT/target_name).open('wb') as stream:
                     with gzip.GzipFile(fileobj=stream,mode='wb',mtime=0) as gz:gz.write(data)
                 archived_resources.append(dict(original=name, original_sha256=digest(data), stored=receipt(OUT/target_name)))
+    snapshot_archive=read(TMP/'aux_cleanup_002/archive_manifest.json')
+    with tarfile.open(snapshot_archive['archive'],'r:gz') as tar:
+        for name, expected in snapshot_archive['members'].items():
+            data=tar.extractfile(name).read()
+            if digest(data)!=expected:raise ValueError('admission archive original hash')
+            stored_name=f'raw_{digest(name.encode())[:8]}_{digest(data)[:8]}_{Path(name).name}_v35.gz'
+            stored=OUT/stored_name
+            if not stored.exists():
+                with stored.open('wb') as stream:
+                    with gzip.GzipFile(fileobj=stream,mode='wb',mtime=0) as gz:gz.write(data)
+            if gzip.decompress(stored.read_bytes())!=data:raise ValueError('archived admission gzip mismatch')
+            raw_entries.append(dict(original=str(ROOT/name), original_sha256=expected,
+                original_bytes=len(data), stored=receipt(stored), lossless_source_archive=snapshot_archive['archive']))
     write('raw_evidence_index_v35.json', dict(raw=raw_entries, archived_actor_resources=archived_resources,
         lossless_archives=[receipt(p) for p in TMP.glob('aux_*/archive_manifest.json')],
         large_payloads_ignored=True, prelaunch_reservation_failures_original_stderr='not persisted; terminal-only exceptions retained in repair record'))
