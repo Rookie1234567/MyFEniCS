@@ -36,21 +36,23 @@ def modes():
     return rows
 
 
-def test_tensor_matches_independent_complete_facet_sum():
+@pytest.mark.parametrize("side_only", [None, "top", "bottom"])
+def test_tensor_matches_independent_complete_facet_sum(side_only):
     import basix
 
     p = FacetPolynomial(element())
     l = BoundaryLayout(
         [0.0, 0.6, 1.5], [0.0, 0.8, 1.9], p, (np.exp(0.3j), np.exp(-0.2j))
     )
-    action = DirectionalBoundaryAction(l, modes(), 30)
+    rows = [r for r in modes() if side_only is None or r["side"] == side_only]
+    action = DirectionalBoundaryAction(l, rows, 30)
     rng = np.random.default_rng(423801)
     x = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)
     y = rng.normal(size=l.rows) + 1j * rng.normal(size=l.rows)
     rule, w = basix.make_quadrature(basix.CellType.quadrilateral, 60)
-    C = np.zeros((l.rows, len(modes())), complex)
-    D = np.zeros((len(modes()), l.rows), complex)
-    for m, r in enumerate(modes()):
+    C = np.zeros((l.rows, len(rows)), complex)
+    D = np.zeros((len(rows), l.rows), complex)
+    for m, r in enumerate(rows):
         side = r["side"]
         z = 0 if side == "bottom" else 1
         tab = p.element.tabulate(0, np.column_stack((rule, np.full(len(rule), z))))[0][
@@ -70,17 +72,19 @@ def test_tensor_matches_independent_complete_facet_sum():
                 integral = np.einsum(
                     "q,qjc->jc", w * np.exp(1j * (pts @ r["k_vector"])), tab
                 ) * [dy, dx]
-                rows = l.maps[side][i, j]
+                row_ids = l.maps[side][i, j]
                 ph = l.weights[side][i, j]
                 np.add.at(
                     C[:, m],
-                    rows,
+                    row_ids,
                     (integral @ (-np.asarray(r["traction_vector"][:2]))) * ph.conj(),
                 )
                 np.add.at(
-                    D[m], rows, (integral @ np.asarray(r["e_vector"][:2])).conj() * ph
+                    D[m],
+                    row_ids,
+                    (integral @ np.asarray(r["e_vector"][:2])).conj() * ph,
                 )
-    H = np.array([r["projection_denominator"] for r in modes()])
+    H = np.array([r["projection_denominator"] for r in rows])
     A = C @ (D / H[:, None])
     np.testing.assert_allclose(action.recover(x), D @ x / H, rtol=1e-10, atol=1e-10)
     np.testing.assert_allclose(action.apply(x), A @ x, rtol=1e-10, atol=1e-10)

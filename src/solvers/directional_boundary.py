@@ -195,7 +195,9 @@ class DirectionalBoundaryAction:
                     v,
                     optimize=True,
                 )
-                mats.append(mat.reshape(len(ks), -1))
+                # A frozen ordered prefix can contain modes from one side
+                # only. Keep the other side's empty table well shaped.
+                mats.append(mat.reshape(len(ks), (len(coords) - 1) * (layout.p + 1)))
             lookupx = {k: i for i, k in enumerate(ax)}
             lookupy = {k: i for i, k in enumerate(ay)}
             ix = np.array([lookupx[zvalue(modes[i]["k_vector"][0])] for i in indices])
