@@ -241,6 +241,33 @@ def test_component_same_live_wrapper_rejects_metadata_only_receipt():
                               identity=identity)
 
 
+def test_literal532_mode_identity_normalizes_tuple_and_rejects_missing_duplicate_or_reordered_keys():
+    from src.solvers.fresh_c1_live_contract import (
+        _json_plain, _validate_ordered_mode_identity,
+    )
+
+    tuple_keys = tuple((i, "top", 0, 0, "s") for i in range(532))
+    tuple_identity = _json_plain({"ordered_mode_keys": tuple_keys})
+    list_identity = _json_plain({"ordered_mode_keys": [list(key) for key in tuple_keys]})
+    assert tuple_identity == list_identity
+    modes = [{"index": i, "key": list(key)} for i, key in enumerate(tuple_keys)]
+    assert _validate_ordered_mode_identity(tuple_identity, modes) == list_identity["ordered_mode_keys"]
+
+    missing = {"ordered_mode_keys": tuple_identity["ordered_mode_keys"][:-1]}
+    with pytest.raises(ValueError, match="incomplete or repeated"):
+        _validate_ordered_mode_identity(missing, modes)
+
+    duplicated_keys = list(tuple_identity["ordered_mode_keys"])
+    duplicated_keys[1] = duplicated_keys[0]
+    with pytest.raises(ValueError, match="incomplete or repeated"):
+        _validate_ordered_mode_identity({"ordered_mode_keys": duplicated_keys}, modes)
+
+    reordered_keys = list(tuple_identity["ordered_mode_keys"])
+    reordered_keys[0], reordered_keys[1] = reordered_keys[1], reordered_keys[0]
+    with pytest.raises(ValueError, match="key order changed"):
+        _validate_ordered_mode_identity({"ordered_mode_keys": reordered_keys}, modes)
+
+
 def test_dense_and_compact_original_H_keep_the_same_action_without_dense_Hhat():
     import numpy as np
     from src.solvers.original_port_blocks import DiagonalOriginalPortBlock

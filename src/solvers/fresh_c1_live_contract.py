@@ -52,6 +52,21 @@ def _json_plain(value: Any) -> Any:
     raise TypeError(f"unsupported receipt value type: {type(value).__name__}")
 
 
+def _validate_ordered_mode_identity(identity: Mapping[str, Any], modes: Any) -> list[Any]:
+    """Validate the serialized literal532 key sequence and its per-mode ledger."""
+    keys = identity.get("ordered_mode_keys")
+    if not isinstance(keys, list) or len(keys) != 532 or len({tuple(key) for key in keys}) != 532:
+        raise ValueError("same-live receipt ordered mode identity is incomplete or repeated")
+    for index, item in enumerate(modes):
+        if (not isinstance(item, dict) or item.get("index") != index or item.get("key") != keys[index]
+                or len(item.get("key", [])) != 5
+                or keys[index][0] != index or keys[index][1] not in {"top", "bottom"}
+                or type(keys[index][2]) is not int or type(keys[index][3]) is not int
+                or keys[index][4] not in {"s", "p", "x", "y"}):
+            raise ValueError("same-live literal532 mode key order changed")
+    return keys
+
+
 def validate_live_receipt(receipt: Mapping[str, Any], *, identity: Mapping[str, Any]) -> None:
     """Recheck the complete saved numeric ledger before admitting a worker."""
     receipt = _json_plain(receipt)
@@ -189,16 +204,8 @@ def validate_live_receipt(receipt: Mapping[str, Any], *, identity: Mapping[str, 
 
     tolerance = float(tolerance)
     modes = receipt["per_mode"]
-    keys = identity.get("ordered_mode_keys")
-    if not isinstance(keys, list) or len(keys) != 532 or len({tuple(key) for key in keys}) != 532:
-        raise ValueError("same-live receipt ordered mode identity is incomplete or repeated")
+    _validate_ordered_mode_identity(json_identity, modes)
     for index, item in enumerate(modes):
-        if (not isinstance(item, dict) or item.get("index") != index or item.get("key") != keys[index]
-                or len(item.get("key", [])) != 5
-                or keys[index][0] != index or keys[index][1] not in {"top", "bottom"}
-                or type(keys[index][2]) is not int or type(keys[index][3]) is not int
-                or keys[index][4] not in {"s", "p", "x", "y"}):
-            raise ValueError("same-live literal532 mode key order changed")
         equivalence = item.get("equivalence")
         if not isinstance(equivalence, dict):
             raise ValueError("same-live mode lacks raw coefficient/action equivalence metrics")
