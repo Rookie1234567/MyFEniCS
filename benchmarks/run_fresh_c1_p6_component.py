@@ -12,6 +12,7 @@ import json
 import os
 import argparse
 import importlib
+import subprocess
 import shutil
 import sys
 import time
@@ -27,6 +28,8 @@ from src.solvers.fresh_c1_manifest_identity import require_literal532_manifest_i
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CHECKER_ONLY_WORKER_ROOT = (ROOT / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+                            "local_w0_wsl/continuation_attempt4")
 INPUT = ROOT / "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat"
 INPUT_SHA256 = "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
 BUDGET_PATH = Path(__file__).with_name("fresh_c1_p6_w0_budget.json")
@@ -452,9 +455,10 @@ def _size_tree(path: Path) -> int:
     return total
 
 
-def _disk_facts(root: Path, *, include_stop: bool = True) -> dict[str, Any]:
+def _disk_facts(root: Path, *, include_stop: bool = True,
+                raw_root: Path | None = None) -> dict[str, Any]:
     categories = {
-        "raw": _size_tree(root / "raw"),
+        "raw": _size_tree(root / "raw" if raw_root is None else raw_root),
         "control": sum(path.stat().st_size for pattern in ("*.json", "*.jsonl")
                         for path in root.glob(pattern) if path.is_file()),
         "logs": _size_tree(root / "logs") + _size_tree(root / "supervision"),
@@ -470,7 +474,9 @@ def _disk_facts(root: Path, *, include_stop: bool = True) -> dict[str, Any]:
             "free_bytes": free, "free_reserve_bytes": FREE_RESERVE_BYTES,
             "over_cap_categories": over,
             "raw_archive_created": False,
-            "scope": "one canonical raw-member directory; control/log/JIT/tmp caps are separately monitored"}
+            "scope": ("one canonical raw-member directory; control/log/JIT/tmp caps are separately monitored"
+                      if raw_root is None else
+                      "immutable worker raw-member directory plus separate checker control/log/JIT/tmp output caps")}
 
 
 def _atomic_json(path: Path, value: Any) -> None:
@@ -483,7 +489,8 @@ def _atomic_json(path: Path, value: Any) -> None:
     temporary.replace(path)
 
 
-def _native_callbacks(root: Path, *, checker: bool = False):
+def _native_callbacks(root: Path, *, checker: bool = False,
+                      raw_root: Path | None = None):
     import numpy as np
 
     stage = "checker" if checker else "worker"
@@ -496,7 +503,7 @@ def _native_callbacks(root: Path, *, checker: bool = False):
         now = time.monotonic()
         facts = guard_cache["facts"]
         if facts is None or now - guard_cache["sampled_monotonic"] >= 1.0:
-            facts = _disk_facts(root)
+            facts = _disk_facts(root, raw_root=raw_root)
             guard_cache["facts"] = facts
             guard_cache["sampled_monotonic"] = now
         else:
@@ -592,31 +599,206 @@ def _worker_cli(root: Path, abi_receipt: Path) -> int:
     return 0
 
 
-def _checker_cli(root: Path, abi_receipt: Path) -> int:
+def _checker_cli(root: Path, abi_receipt: Path, *, worker_root: Path | None = None,
+                 checker_git_sha: str | None = None) -> int:
     _mpi, _petsc, abi_identity = _qualified_runtime(abi_receipt)
     runtime_profile = abi_identity["runtime_profile"]
-    report = json.loads((root / "worker_report.json").read_text())
-    allocation_gate, _save_array, checkpoint, _guard = _native_callbacks(root, checker=True)
+    input_root = root if worker_root is None else worker_root.resolve()
+    raw_root = None if worker_root is None else input_root / "raw"
+    allocation_gate, _save_array, checkpoint, _guard = _native_callbacks(
+        root, checker=True, raw_root=raw_root)
     import numpy as np
-    from benchmarks.check_fresh_c1_p6_component import check_component
+    from benchmarks import check_fresh_c1_p6_component as checker
+
+    continuation_record = None
+    worker_report_sha256 = None
+    failure_stage = "worker_report_and_runtime_identity"
+    try:
+        worker_report_path = input_root / "worker_report.json"
+        report_bytes = worker_report_path.read_bytes()
+        worker_report_sha256 = hashlib.sha256(report_bytes).hexdigest()
+        report = json.loads(report_bytes)
+        if worker_root is not None:
+            failure_stage = "checker_only_root_and_report_binding"
+            if input_root != CHECKER_ONLY_WORKER_ROOT.resolve():
+                raise ValueError("checker-only mode accepts only the immutable attempt4 worker root")
+            if worker_report_sha256 != checker.CHECKER_CONTINUATION_WORKER_REPORT_SHA256:
+                raise ValueError("attempt4 worker_report byte SHA256 differs from the frozen checker-only binding")
+            failure_stage = "checker_only_clean_source_binding"
+            live_git = _current_clean_git_identity()
+            if checker_git_sha != live_git["git_sha"]:
+                raise ValueError("checker-only leaf HEAD differs from the supervised clean source HEAD")
+            failure_stage = "checker_only_raw_manifest"
+            manifest = _raw_member_manifest(raw_root, report)
+            continuation_record = checker.build_checker_continuation_record(
+                report, worker_root=input_root,
+                worker_report_bytes_sha256=worker_report_sha256,
+                runtime_profile=runtime_profile, raw_member_manifest=manifest,
+                checker_git_sha=checker_git_sha or _current_clean_git_identity()["git_sha"])
+            binding_path = root / "checker_continuation_binding.json"
+            _atomic_json(binding_path, continuation_record)
+            continuation_binding_sha256 = _sha256(binding_path)
+        else:
+            report = json.loads((root / "worker_report.json").read_text())
+        load_array = _checker_raw_loader(
+            input_root, None if continuation_record is None else manifest, np)
+
+        failure_stage = "independent_numerical_checker"
+        result = checker.check_component(
+            report, load_array, allocation_gate=allocation_gate, checkpoint=checkpoint,
+            runtime_profile=runtime_profile,
+            source_compatibility_record=continuation_record,
+            worker_report_bytes_sha256=(worker_report_sha256 if continuation_record else None))
+        if continuation_record is not None:
+            result = {**result, "runtime_profile": runtime_profile,
+                "source_compatibility": {
+                    "worker_git_sha": continuation_record["worker_git_sha"],
+                    "worker_report_bytes_sha256": continuation_record["worker_report_bytes_sha256"],
+                    "worker_source_manifest_sha256": continuation_record["worker_source_manifest_sha256"],
+                    "checker_git_sha": continuation_record["checker_git_sha"],
+                    "checker_source_sha256": continuation_record["checker_source_sha256"],
+                    "checker_source_manifest_sha256": continuation_record["checker_source_manifest_sha256"],
+                    "changed_files": continuation_record["changed_files"],
+                    "raw_member_manifest_sha256": manifest["manifest_sha256"],
+                    "raw_member_count": manifest["member_count"],
+                    "raw_file_bytes": manifest["file_bytes"],
+                    "binding_sha256": continuation_binding_sha256,
+                },
+                "source_status": checker.SOURCE_STATUS,
+                "PDE_solved": False, "official_results": False}
+        _atomic_json(root / "checker_report.json", result)
+        return 0
+    except BaseException as error:
+        checkpoint("checker_failure", {
+            "stage": failure_stage,
+            "status": "failed", "exception_type": type(error).__name__,
+            "message": str(error), "worker_root_read_only": worker_root is not None,
+            "PDE_solved": False, "official_results": False})
+        failure = {"schema": checker.CHECKER_SCHEMA, "status": "failed",
+                   "independent_component_pass": False,
+                   "exception_type": type(error).__name__, "message": str(error),
+                   "failure_stage": failure_stage,
+                   "runtime_profile": runtime_profile,
+                   "source_status": checker.SOURCE_STATUS,
+                   "PDE_solved": False, "official_results": False}
+        _atomic_json(root / "checker_report.json", failure)
+        raise
+
+
+def _raw_member_manifest(raw_root: Path, report: dict[str, Any]) -> dict[str, Any]:
+    """Hash the preserved .npy files in place; never copy or write into worker raw."""
+    import stat
+
+    if raw_root.is_symlink():
+        raise ValueError("checker-only worker raw root must not be a symlink")
+    raw_root = raw_root.resolve(strict=True)
+    if not raw_root.is_dir():
+        raise ValueError("checker-only worker raw root must be a real directory")
+    snapshot = report.get("snapshot")
+    members = snapshot.get("members") if isinstance(snapshot, dict) else None
+    if not isinstance(members, list) or not members:
+        raise ValueError("checker-only worker requires its complete saved-member manifest")
+    expected = {}
+    for member in members:
+        name = member.get("name") if isinstance(member, dict) else None
+        if not isinstance(name, str) or not name or name in expected:
+            raise ValueError("checker-only worker member names must be unique strings")
+        expected[hashlib.sha256(name.encode("utf-8")).hexdigest()+".npy"] = member
+    actual_names = set()
+    for entry in os.scandir(raw_root):
+        if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
+            raise ValueError("checker-only worker raw directory contains a non-regular member")
+        actual_names.add(entry.name)
+    if actual_names != set(expected):
+        raise ValueError("checker-only raw directory does not exactly match the worker member inventory")
+    files, total_bytes = [], 0
+    for filename, member in sorted(expected.items(), key=lambda item: item[1]["name"]):
+        path = raw_root / filename
+        metadata = path.stat(follow_symlinks=False)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ValueError("checker-only raw inventory contains a non-regular .npy member")
+        total_bytes += metadata.st_size
+        files.append({"name": member["name"], "filename": filename,
+            "file_size_bytes": metadata.st_size, "file_sha256": _sha256(path),
+            "array_sha256": member.get("sha256"), "shape": member.get("shape"),
+            "dtype": member.get("dtype"), "numeric_bytes": member.get("numeric_bytes")})
+    if (total_bytes > DISK_CAPS["raw"]
+            or type(snapshot.get("archive_members_bytes_upper")) is not int
+            or snapshot["archive_members_bytes_upper"] > DISK_CAPS["raw"]):
+        raise ValueError("checker-only existing raw member inventory exceeds the frozen 8 GiB cap")
+    canonical = json.dumps(files, sort_keys=True, separators=(",", ":"),
+                           allow_nan=False).encode("ascii")
+    return {"schema": "task40extra.w0-checker-only-raw-manifest.v1",
+        "raw_root": str(raw_root), "files": files, "member_count": len(files),
+        "file_bytes": total_bytes, "manifest_sha256": hashlib.sha256(canonical).hexdigest(),
+        "raw_files_copied": False}
+
+
+def _checker_raw_loader(worker_root: Path, raw_manifest: dict[str, Any] | None, numpy_module):
+    """Resolve checker callbacks against one worker raw root and verify bound file bytes."""
+    worker_root = worker_root.resolve(strict=True)
+    raw_root = worker_root / "raw"
+    if raw_manifest is not None:
+        if raw_manifest.get("raw_root") != str(raw_root.resolve(strict=True)):
+            raise ValueError("checker-only raw manifest points outside its worker root")
+        raw_files = {item["name"]: item for item in raw_manifest["files"]}
+    else:
+        raw_files = None
+    checked_file_hashes: set[str] = set()
 
     def load_array(reference: dict[str, Any]):
         name = reference.get("name")
         location = reference.get("callback_reference")
         if not isinstance(name, str) or not isinstance(location, str):
             raise ValueError("raw member reference lacks its worker-exported path")
-        expected = (root / "raw" / (hashlib.sha256(name.encode("utf-8")).hexdigest()+".npy")).resolve()
-        if Path(location).resolve() != expected or not expected.is_file():
-            raise ValueError("worker raw member path is outside the canonical artifact directory")
-        value = np.load(expected, mmap_mode="r", allow_pickle=False)
+        filename = hashlib.sha256(name.encode("utf-8")).hexdigest() + ".npy"
+        candidate = raw_root / filename
+        if candidate.is_symlink() or not candidate.is_file():
+            raise ValueError("worker raw member must be a regular file, not a symlink")
+        expected = candidate.resolve(strict=True)
+        if Path(location).resolve() != expected:
+            raise ValueError("worker raw member path is outside its canonical artifact directory")
+        if raw_files is not None:
+            bound = raw_files.get(name)
+            if (bound is None or bound["filename"] != filename
+                    or bound["shape"] != reference.get("shape")
+                    or bound["dtype"] != reference.get("dtype")
+                    or bound["numeric_bytes"] != reference.get("numeric_bytes")
+                    or bound["array_sha256"] != reference.get("sha256")):
+                raise ValueError("raw member reference differs from the checker-only byte manifest")
+            if name not in checked_file_hashes:
+                stat = expected.stat(follow_symlinks=False)
+                if (expected.is_symlink() or not expected.is_file()
+                        or stat.st_size != bound["file_size_bytes"]
+                        or _sha256(expected) != bound["file_sha256"]):
+                    raise ValueError("immutable worker raw file bytes changed after binding")
+                checked_file_hashes.add(name)
+        value = numpy_module.load(expected, mmap_mode="r", allow_pickle=False)
         if list(value.shape) != reference.get("shape") or str(value.dtype) != reference.get("dtype"):
             raise ValueError("raw member shape/dtype differs from worker descriptor")
         return value
 
-    result = check_component(report, load_array, allocation_gate=allocation_gate,
-                             checkpoint=checkpoint, runtime_profile=runtime_profile)
-    _atomic_json(root / "checker_report.json", result)
-    return 0
+    return load_array
+
+
+def _current_clean_git_identity() -> dict[str, str]:
+    def git(*arguments: str) -> str:
+        result = subprocess.run(["git", *arguments], cwd=ROOT, check=True,
+                                 capture_output=True, text=True)
+        return result.stdout.strip()
+
+    git_sha = git("rev-parse", "HEAD")
+    branch = git("branch", "--show-current")
+    dirty = git("status", "--porcelain", "--untracked-files=all")
+    if (len(git_sha) != 40 or any(char not in "0123456789abcdef" for char in git_sha)
+            or branch != "task40extra_0p7nm_engineering" or dirty):
+        raise RuntimeError("checker-only execution requires the reviewed clean Task40 branch HEAD")
+    from benchmarks.check_fresh_c1_p6_component import CHECKER_CONTINUATION_WORKER_GIT_SHA
+    ancestor = subprocess.run(["git", "merge-base", "--is-ancestor",
+        CHECKER_CONTINUATION_WORKER_GIT_SHA, git_sha], cwd=ROOT)
+    if ancestor.returncode != 0:
+        raise RuntimeError("checker-only source HEAD must descend from its bound d4b6 worker")
+    return {"git_sha": git_sha, "branch": branch}
 
 
 def _control_smoke_leaf(root: Path, abi_receipt: Path, phase: str) -> int:
@@ -683,7 +865,9 @@ def _control_smoke_passes(contract: dict[str, Any], worker: dict[str, Any],
 
 
 def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
-                     total_deadline_epoch: float, *, control_smoke: bool = False) -> dict[str, Any]:
+                     total_deadline_epoch: float, *, control_smoke: bool = False,
+                     checker_worker_root: Path | None = None,
+                     checker_git_sha: str | None = None) -> dict[str, Any]:
     from benchmarks.subreaper_watchdog import supervise
 
     remaining = _phase_wall_budget_seconds(total_deadline_epoch, time.time())
@@ -697,6 +881,11 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
                  ["--worker" if phase == "worker" else "--checker-worker"])
     command = [sys.executable, "-m", "benchmarks.run_fresh_c1_p6_component",
                *leaf_mode, "--output-dir", str(root), "--abi-receipt", str(abi_receipt)]
+    if checker_worker_root is not None:
+        if phase != "checker" or not checker_git_sha:
+            raise ValueError("checker-only worker-root binding is valid only for the checker phase")
+        command.extend(("--worker-root", str(checker_worker_root),
+                        "--checker-git-sha", checker_git_sha))
     deadline_guard_last_scan = [0.0]
     deadline_guard_cached = [{}]
 
@@ -704,7 +893,9 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
         now = time.time()
         monotonic_now = time.monotonic()
         if monotonic_now - deadline_guard_last_scan[0] >= 1.0:
-            deadline_guard_cached[0] = _disk_facts(root)
+            deadline_guard_cached[0] = _disk_facts(
+                root, raw_root=(None if checker_worker_root is None
+                                else checker_worker_root / "raw"))
             deadline_guard_last_scan[0] = monotonic_now
         facts = {**deadline_guard_cached[0],
                  "total_deadline_utc_epoch": total_deadline_epoch,
@@ -725,6 +916,117 @@ def _supervise_phase(root: Path, phase: str, abi_receipt: Path,
                         pss_sampling_policy="disabled_by_profile")
     _atomic_json(root / f"{phase}_supervisor_summary.json", summary)
     return summary
+
+
+def _checker_only_supervised_cli(root: Path, worker_root: Path, abi_receipt: Path,
+                                 total_deadline_utc: str) -> int:
+    from datetime import datetime, timezone
+    from benchmarks.check_fresh_c1_p6_component import (
+        CHECKER_CONTINUATION_WORKER_GIT_SHA,
+        CHECKER_CONTINUATION_WORKER_REPORT_SHA256,
+        CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256,
+    )
+
+    root = root.resolve(strict=True)
+    worker_root = worker_root.resolve(strict=True)
+    canonical_worker_root = CHECKER_ONLY_WORKER_ROOT.resolve(strict=True)
+    receipt = abi_receipt.resolve(strict=True)
+    if worker_root != canonical_worker_root:
+        raise ValueError("checker-only mode is pinned to the immutable attempt4 worker root")
+    if root == worker_root or root in worker_root.parents or worker_root in root.parents:
+        raise ValueError("checker-only output and immutable worker roots must be disjoint")
+    if receipt.parent != root or not root.is_dir():
+        raise ValueError("checker-only mode requires its own ABI receipt inside the new output root")
+    forbidden_existing = ("admission.json", "checker_report.json", "checker_events.jsonl",
+                          "checker_supervisor_summary.json", "checker_continuation_binding.json",
+                          "run_summary.json")
+    if any((root / name).exists() for name in forbidden_existing):
+        raise FileExistsError("checker-only output root already contains a continuation result")
+    raw_output = root / "raw"
+    if raw_output.exists() or raw_output.is_symlink():
+        raise FileExistsError("checker-only output root must not contain a duplicate raw directory")
+    for name in ("logs", "jit", "tmp", "supervision"):
+        path = root / name
+        if path.is_symlink() or (path.exists() and not path.is_dir()):
+            raise ValueError("checker-only output subdirectories must be real directories: " + name)
+        path.mkdir(exist_ok=True)
+    report_path = worker_root / "worker_report.json"
+    report_bytes = report_path.read_bytes()
+    report_sha = hashlib.sha256(report_bytes).hexdigest()
+    if report_sha != CHECKER_CONTINUATION_WORKER_REPORT_SHA256:
+        raise ValueError("preserved attempt4 worker report bytes do not match the authorized hash")
+    worker = json.loads(report_bytes)
+    source = worker.get("source_identity", {})
+    if (worker.get("status") != "worker_component_controls_passed_independent_checker_pending"
+            or worker.get("PDE_solved") is not False or worker.get("official_results") is not False
+            or source.get("manifest_sha256") != CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256):
+        raise ValueError("preserved worker is not the exact pending checker-only input")
+    git_identity = _current_clean_git_identity()
+    current_sources = source_identity()
+    admission = validate_fresh_runtime(receipt)
+    if admission.get("runtime_profile") != LOCAL_WSL2_PROFILE:
+        raise RuntimeError("checker-only attempt4 continuation requires its authorized local WSL2 profile")
+    if not total_deadline_utc.endswith("Z"):
+        raise ValueError("checker-only mode requires the original fixed UTC Z deadline")
+    deadline_epoch = datetime.strptime(total_deadline_utc,
+        "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    initial_disk = _disk_facts(root, raw_root=worker_root / "raw")
+    admission_record = {"schema": "task40extra.w0-checker-only-admission.v1",
+        "status": "CHECKER_ONLY_LOCAL_WSL2_ADMISSION_PASS_NO_FE_ACTION",
+        "worker_git_sha": CHECKER_CONTINUATION_WORKER_GIT_SHA,
+        "worker_report_bytes_sha256": report_sha,
+        "worker_source_manifest_sha256": source["manifest_sha256"],
+        "checker_git_sha": git_identity["git_sha"],
+        "checker_source_identity": current_sources,
+        "runtime_profile": LOCAL_WSL2_PROFILE,
+        "runtime_abi_identity": admission["runtime_abi_identity"],
+        "worker_root": str(worker_root), "worker_raw_root_read_only": True,
+        "output_root": str(root), "total_deadline_utc": total_deadline_utc,
+        "phase_wall_limit_seconds": WORKER_CHECKER_WALL_SECONDS_MAX,
+        "process_tree_ram_cap_bytes": 3 * 1024**3,
+        "raw_member_payload_limit_bytes": DISK_CAPS["raw"],
+        "zero_task_tree_swap_required": True,
+        "initial_disk_facts": initial_disk,
+        "PDE_solved": False, "official_results": False}
+    _atomic_json(root / "admission.json", admission_record)
+    if initial_disk["stop"]:
+        _atomic_json(root / "run_summary.json", {"status": "CHECKER_ONLY_CONTROLLED_STOP_DISK",
+            "admission": admission_record, "PDE_solved": False, "official_results": False})
+        return 2
+    if _phase_wall_budget_seconds(deadline_epoch, time.time()) <= 1:
+        _atomic_json(root / "run_summary.json", {"status": "CHECKER_ONLY_DEADLINE_RESERVE_BEFORE_CHECKER",
+            "admission": admission_record,
+            "settlement_cleanup_reserve_seconds": W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS,
+            "PDE_solved": False, "official_results": False})
+        return 6
+    checker_summary = _supervise_phase(root, "checker", receipt, deadline_epoch,
+        checker_worker_root=worker_root, checker_git_sha=git_identity["git_sha"])
+    checker_path = root / "checker_report.json"
+    if checker_summary.get("classification") != "COMPLETED" or not checker_path.is_file():
+        status = "CHECKER_ONLY_NOT_COMPLETED"
+        checker_report = None
+    else:
+        checker_report = json.loads(checker_path.read_text())
+        status = ("CHECKER_ONLY_PASS_COMPONENT_ONLY"
+                  if checker_report.get("independent_component_pass") is True
+                  else "CHECKER_ONLY_FAILED")
+    run_summary = {"schema": "task40extra.w0-checker-only-run-summary.v1",
+        "status": status, "scope": "checker_only_reuse_of_preserved_attempt4_worker",
+        "worker_git_sha": CHECKER_CONTINUATION_WORKER_GIT_SHA,
+        "worker_report_bytes_sha256": report_sha,
+        "worker_source_manifest_sha256": source["manifest_sha256"],
+        "checker_git_sha": git_identity["git_sha"],
+        "checker_source_identity": current_sources,
+        "runtime_profile": LOCAL_WSL2_PROFILE,
+        "runtime_abi_identity": admission["runtime_abi_identity"],
+        "worker_root": str(worker_root), "worker_report_modified": False,
+        "raw_root_read_only": True, "raw_archive_created": False,
+        "checker_supervisor": checker_summary,
+        "checker_report": checker_report,
+        "PDE_solved": False, "official_results": False,
+        "full_w0_pass_claimed": False}
+    _atomic_json(root / "run_summary.json", run_summary)
+    return 0 if status == "CHECKER_ONLY_PASS_COMPONENT_ONLY" else 5
 
 
 def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str,
@@ -865,24 +1167,44 @@ def main(argv: list[str] | None = None) -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--admission-only", action="store_true")
     mode.add_argument("--supervised", action="store_true")
+    mode.add_argument("--checker-only-supervised", action="store_true")
     mode.add_argument("--worker", action="store_true")
     mode.add_argument("--checker-worker", action="store_true")
     mode.add_argument("--control-smoke-leaf", choices=("worker", "checker"), help=argparse.SUPPRESS)
     parser.add_argument("--control-smoke", action="store_true",
                         help="run the selected runtime-profile admission/supervision with non-numerical worker/checker sentinels")
+    parser.add_argument("--worker-root",
+                        help="read-only preserved W0 attempt4 root for checker-only continuation")
+    parser.add_argument("--checker-git-sha",
+                        help="clean source HEAD passed by the checker-only supervisor")
     args = parser.parse_args(argv)
     root, receipt = Path(args.output_dir).resolve(), Path(args.abi_receipt).resolve()
     if args.control_smoke and not args.supervised:
         parser.error("--control-smoke requires --supervised")
+    if args.checker_only_supervised and (not args.worker_root or not args.total_deadline_utc):
+        parser.error("--checker-only-supervised requires --worker-root and the frozen --total-deadline-utc")
+    if args.worker_root and not (args.checker_only_supervised or args.checker_worker):
+        parser.error("--worker-root is valid only for checker-only-supervised/checker-worker")
+    if args.checker_git_sha and not args.checker_worker:
+        parser.error("--checker-git-sha is valid only for a supervised checker-worker leaf")
+    if args.checker_git_sha and not args.worker_root:
+        parser.error("--checker-git-sha requires the checker-only worker root")
+    if args.checker_only_supervised and args.control_smoke:
+        parser.error("checker-only continuation cannot use the no-FE two-leaf control-smoke mode")
     if args.admission_only:
         print(json.dumps(validate_fresh_runtime(receipt), indent=2, sort_keys=True))
         return 0
     if args.worker:
         return _worker_cli(root, receipt)
     if args.checker_worker:
-        return _checker_cli(root, receipt)
+        return _checker_cli(root, receipt,
+            worker_root=None if args.worker_root is None else Path(args.worker_root),
+            checker_git_sha=args.checker_git_sha)
     if args.control_smoke_leaf:
         return _control_smoke_leaf(root, receipt, args.control_smoke_leaf)
+    if args.checker_only_supervised:
+        return _checker_only_supervised_cli(root, Path(args.worker_root), receipt,
+                                            args.total_deadline_utc)
     if not args.total_deadline_utc:
         parser.error("--supervised and --control-smoke require the frozen --total-deadline-utc")
     return _supervised_cli(root, receipt, args.total_deadline_utc,

@@ -36,6 +36,18 @@ NATIVE_ELEMENT = {"family": "N1curl", "cell": "hexahedron", "degree": 6,
                   "basix_hash": 16913352432823651554,
                   "coefficient_matrix_C_sha256": "780d9a4529041f8cb8138a78c8314d757822a1f5bc984f254c5790db208e911d",
                   "local_dimension": 882, "local_interiors": 450, "local_traces": 432}
+LOCAL_WSL2_ELEMENT = {**NATIVE_ELEMENT,
+                      "coefficient_matrix_C_sha256": "1b22898a8793c497d4e7bb5083c69b0049b696c7513b899953cf79223911918a"}
+CHECKER_CONTINUATION_SCHEMA = "task40extra.w0-checker-only-source-compatibility.v1"
+CHECKER_CONTINUATION_WORKER_GIT_SHA = "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382"
+CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256 = "1be35b2fef3e2809cd58f9730deba548bad7260c5496669f69dfe332383af0c2"
+CHECKER_CONTINUATION_WORKER_REPORT_SHA256 = "c9b46c395aff867f2a8c1a167a7620e4091b9904e015a435fc7d104f41b840d4"
+CHECKER_CONTINUATION_ALLOWED_OLD_SOURCE_SHA256 = {
+    "benchmarks/check_fresh_c1_p6_component.py":
+        "59766663b1e9e66f8cb0ce64407772ad952468693ad9ca42aef95dc0bfababfe",
+    "benchmarks/run_fresh_c1_p6_component.py":
+        "cc1510af4d272d36b7a8727f642c9524eae52455e001047116a0cce83699a796",
+}
 LIVE_COMPONENT_GATES = (
     "loaded_kernel_provenance_and_constant_restoration",
     "compiled_primary_literal_same_gauss",
@@ -89,6 +101,14 @@ def _profile_manifest_identity(runtime_profile):
     profile = NATIVE_LINUX_PROFILE if runtime_profile is None else runtime_profile
     require(isinstance(profile, str), "checker runtime profile must be a string")
     return profile, literal532_manifest_sha256(profile)
+
+
+def _native_element_metadata(runtime_profile=None):
+    profile = "native_linux" if runtime_profile is None else runtime_profile
+    selected = {"native_linux": NATIVE_ELEMENT,
+                "local_wsl2_authorized": LOCAL_WSL2_ELEMENT}.get(profile)
+    require(selected is not None, "native element requires a qualified Task40 runtime profile")
+    return dict(selected)
 
 
 def _canonical(value):
@@ -186,7 +206,30 @@ def _validate_same_live_binding(report, *, runtime_profile=None):
             "mode_count": 532, "completed_gates": list(LIVE_COMPONENT_GATES)}
 
 
-def _validate_source_identity(report):
+def _source_manifest_sha256(files):
+    canonical = json.dumps(files, sort_keys=True, separators=(",", ":")).encode("ascii")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _source_change_allowlist_deltas(worker_files, checker_files):
+    require(isinstance(worker_files, dict) and isinstance(checker_files, dict)
+            and set(worker_files) == set(checker_files),
+            "worker/checker source inventories must contain the same complete file set")
+    changed = {}
+    for name in sorted(worker_files):
+        before, after = worker_files[name], checker_files[name]
+        require(isinstance(before, str) and re.fullmatch(r"[0-9a-f]{64}", before)
+                and isinstance(after, str) and re.fullmatch(r"[0-9a-f]{64}", after),
+                "worker/checker source inventory contains a malformed SHA256: " + name)
+        if before != after:
+            require(name in CHECKER_CONTINUATION_ALLOWED_OLD_SOURCE_SHA256,
+                    "checker-only continuation changed a non-allowlisted source: " + name)
+            changed[name] = {"worker_sha256": before, "checker_sha256": after}
+    return changed
+
+
+def _validate_source_identity(report, *, continuation_record=None,
+                              worker_report_bytes_sha256=None):
     source = report.get("source_identity")
     require(isinstance(source, dict)
             and source.get("schema") == "task40extra.fresh-c1-p6-source-identity.v1"
@@ -194,18 +237,178 @@ def _validate_source_identity(report):
             and set(source["files"]) == set(W0_SOURCE_FILES),
             "complete W0 source-file identity manifest required")
     root = Path(__file__).resolve().parents[1]
+    original_files = source["files"]
     for name in W0_SOURCE_FILES:
-        expected = source["files"].get(name)
+        expected = original_files.get(name)
         require(isinstance(expected, str) and re.fullmatch(r"[0-9a-f]{64}", expected),
                 "source identity SHA256 missing: " + name)
-        digest = hashlib.sha256((root / name).read_bytes()).hexdigest()
-        require(digest == expected, "current source differs from worker source identity: " + name)
-    canonical = json.dumps(source["files"], sort_keys=True, separators=(",", ":")).encode("ascii")
-    manifest_sha = hashlib.sha256(canonical).hexdigest()
+    manifest_sha = _source_manifest_sha256(original_files)
     require(source.get("manifest_sha256") == manifest_sha,
             "W0 source manifest digest differs from its file inventory")
+    if continuation_record is None:
+        for name in W0_SOURCE_FILES:
+            digest = hashlib.sha256((root / name).read_bytes()).hexdigest()
+            require(digest == original_files[name],
+                    "current source differs from worker source identity: " + name)
+        return {"manifest_sha256": manifest_sha, "file_count": len(W0_SOURCE_FILES),
+                "source_status": source.get("source_status")}
+
+    require(worker_report_bytes_sha256 == CHECKER_CONTINUATION_WORKER_REPORT_SHA256
+            and continuation_record.get("schema") == CHECKER_CONTINUATION_SCHEMA
+            and continuation_record.get("worker_git_sha") == CHECKER_CONTINUATION_WORKER_GIT_SHA
+            and continuation_record.get("worker_report_bytes_sha256") == worker_report_bytes_sha256
+            and continuation_record.get("worker_source_manifest_sha256")
+                == CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256
+            and manifest_sha == CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256
+            and continuation_record.get("worker_source_files") == original_files,
+            "checker-only continuation is not bound to the frozen d4b6 worker report/source")
+    allowlist = set(CHECKER_CONTINUATION_ALLOWED_OLD_SOURCE_SHA256)
+    require(set(original_files) == set(W0_SOURCE_FILES)
+            and all(original_files[name] == digest
+                    for name, digest in CHECKER_CONTINUATION_ALLOWED_OLD_SOURCE_SHA256.items()),
+            "checker-only continuation old allowlist does not match the frozen worker")
+    current_files = continuation_record.get("checker_source_files")
+    require(isinstance(current_files, dict) and set(current_files) == set(W0_SOURCE_FILES),
+            "checker-only continuation requires a complete current 26-file source map")
+    require(isinstance(continuation_record.get("checker_git_sha"), str)
+            and re.fullmatch(r"[0-9a-f]{40}", continuation_record["checker_git_sha"]) is not None,
+            "checker-only continuation must record the full new clean checker Git HEAD")
+    actual_current_files = {}
+    for name in W0_SOURCE_FILES:
+        digest = hashlib.sha256((root / name).read_bytes()).hexdigest()
+        require(current_files.get(name) == digest,
+                "checker-only current source hash differs from its binding: " + name)
+        actual_current_files[name] = digest
+    actual_files = _source_change_allowlist_deltas(original_files, actual_current_files)
+    require(continuation_record.get("changed_files") == actual_files
+            and set(actual_files).issubset(allowlist)
+            and continuation_record.get("allowlisted_source_files") == sorted(allowlist),
+            "checker-only changed-file allowlist is not exact")
+    current_manifest_sha = _source_manifest_sha256(current_files)
+    require(continuation_record.get("checker_source_manifest_sha256") == current_manifest_sha
+            and continuation_record.get("checker_source_sha256")
+                == current_files["benchmarks/check_fresh_c1_p6_component.py"],
+            "checker-only source manifest/checker SHA binding differs")
     return {"manifest_sha256": manifest_sha, "file_count": len(W0_SOURCE_FILES),
-            "source_status": source.get("source_status")}
+            "source_status": source.get("source_status"),
+            "checker_source_manifest_sha256": current_manifest_sha,
+            "checker_source_sha256": continuation_record["checker_source_sha256"],
+            "changed_files": actual_files}
+
+
+def _raw_member_manifest_sha256(files):
+    return hashlib.sha256(_canonical(files)).hexdigest()
+
+
+def _validate_checker_continuation_record(report, record, *, runtime_profile,
+                                          worker_report_bytes_sha256):
+    from benchmarks.task40_runtime_profile import LOCAL_WSL2_PROFILE
+
+    require(isinstance(record, dict)
+            and record.get("schema") == CHECKER_CONTINUATION_SCHEMA
+            and runtime_profile == LOCAL_WSL2_PROFILE
+            and record.get("runtime_profile") == runtime_profile
+            and worker_report_bytes_sha256 == CHECKER_CONTINUATION_WORKER_REPORT_SHA256
+            and record.get("worker_report_bytes_sha256") == worker_report_bytes_sha256,
+            "checker-only continuation requires the frozen report and local WSL2 profile")
+    root = Path(__file__).resolve().parents[1]
+    expected_worker_root = (root / "benchmarks/artifacts/task40extra_0p7nm_engineering/"
+                            "local_w0_wsl/continuation_attempt4").resolve()
+    worker_root = Path(record.get("worker_root", "")).resolve()
+    require(worker_root == expected_worker_root
+            and record.get("worker_git_sha") == CHECKER_CONTINUATION_WORKER_GIT_SHA
+            and record.get("worker_source_manifest_sha256")
+                == CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256,
+            "checker-only source/raw binding does not identify the immutable attempt4 worker")
+    raw = record.get("raw_member_manifest")
+    snapshot = report.get("snapshot", {})
+    members = snapshot.get("members")
+    require(isinstance(raw, dict)
+            and raw.get("schema") == "task40extra.w0-checker-only-raw-manifest.v1"
+            and raw.get("raw_root") == str((worker_root / "raw").resolve())
+            and isinstance(raw.get("files"), list)
+            and isinstance(members, list)
+            and len(raw["files"]) == len(members) == snapshot.get("unique_member_count"),
+            "checker-only raw manifest must cover every frozen worker member")
+    by_name = {item.get("name"): item for item in members if isinstance(item, dict)}
+    require(len(by_name) == len(members), "worker raw member names must be unique")
+    listed = {}
+    for item in raw["files"]:
+        require(isinstance(item, dict) and isinstance(item.get("name"), str)
+                and item["name"] not in listed,
+                "checker-only raw manifest has duplicate or invalid member names")
+        reference = by_name.get(item["name"])
+        filename = hashlib.sha256(item["name"].encode("utf-8")).hexdigest() + ".npy"
+        require(reference is not None and item.get("filename") == filename
+                and item.get("array_sha256") == reference.get("sha256")
+                and item.get("shape") == reference.get("shape")
+                and item.get("dtype") == reference.get("dtype")
+                and item.get("numeric_bytes") == reference.get("numeric_bytes")
+                and type(item.get("file_size_bytes")) is int and item["file_size_bytes"] > 0
+                and isinstance(item.get("file_sha256"), str)
+                and re.fullmatch(r"[0-9a-f]{64}", item["file_sha256"]),
+                "checker-only raw file identity differs from the worker descriptor")
+        listed[item["name"]] = item
+    require(set(listed) == set(by_name)
+            and raw.get("files") == sorted(raw["files"], key=lambda item: item["name"])
+            and raw.get("member_count") == len(listed)
+            and raw.get("file_bytes") == sum(item["file_size_bytes"] for item in listed.values())
+            and raw.get("file_bytes") <= W0_ARCHIVE_PAYLOAD_LIMIT_BYTES
+            and raw.get("manifest_sha256") == _raw_member_manifest_sha256(raw["files"]),
+            "checker-only raw manifest digest, coverage, ordering, or 8 GiB cap differs")
+    return raw
+
+
+def build_checker_continuation_record(report, *, worker_root, worker_report_bytes_sha256,
+                                      runtime_profile, raw_member_manifest, checker_git_sha):
+    """Bind one frozen pending worker to this exact source and its read-only raw files."""
+    from benchmarks.task40_runtime_profile import LOCAL_WSL2_PROFILE
+
+    require(runtime_profile == LOCAL_WSL2_PROFILE
+            and worker_report_bytes_sha256 == CHECKER_CONTINUATION_WORKER_REPORT_SHA256
+            and isinstance(checker_git_sha, str)
+            and re.fullmatch(r"[0-9a-f]{40}", checker_git_sha) is not None
+            and isinstance(report, dict)
+            and report.get("schema") == WORKER_SCHEMA
+            and report.get("status") == "worker_component_controls_passed_independent_checker_pending"
+            and report.get("PDE_solved") is False and report.get("official_results") is False,
+            "checker-only continuation accepts only the exact pending local WSL2 worker")
+    source = report.get("source_identity", {})
+    root = Path(__file__).resolve().parents[1]
+    current_files = {name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+                     for name in W0_SOURCE_FILES}
+    old_files = source.get("files")
+    require(isinstance(old_files, dict)
+            and source.get("manifest_sha256") == CHECKER_CONTINUATION_WORKER_SOURCE_MANIFEST_SHA256,
+            "checker-only continuation worker source manifest is not the frozen d4b6 source")
+    changed = _source_change_allowlist_deltas(old_files, current_files)
+    require(all(old_files.get(name) == digest for name, digest
+                in CHECKER_CONTINUATION_ALLOWED_OLD_SOURCE_SHA256.items()),
+            "checker-only worker checker/runner hashes differ from frozen d4b6")
+    current_manifest_sha256 = _source_manifest_sha256(current_files)
+    record = {
+        "schema": CHECKER_CONTINUATION_SCHEMA,
+        "worker_git_sha": CHECKER_CONTINUATION_WORKER_GIT_SHA,
+        "checker_git_sha": checker_git_sha,
+        "worker_root": str(Path(worker_root).resolve()),
+        "worker_report_bytes_sha256": worker_report_bytes_sha256,
+        "worker_source_manifest_sha256": source["manifest_sha256"],
+        "worker_source_files": old_files,
+        "runtime_profile": runtime_profile,
+        "allowlisted_source_files": sorted(CHECKER_CONTINUATION_ALLOWED_OLD_SOURCE_SHA256),
+        "checker_source_files": current_files,
+        "changed_files": changed,
+        "checker_source_manifest_sha256": current_manifest_sha256,
+        "checker_source_sha256": current_files["benchmarks/check_fresh_c1_p6_component.py"],
+        "raw_member_manifest": raw_member_manifest,
+        "PDE_solved": False,
+        "official_results": False,
+    }
+    _validate_source_identity(report, continuation_record=record,
+                              worker_report_bytes_sha256=worker_report_bytes_sha256)
+    _validate_checker_continuation_record(report, record, runtime_profile=runtime_profile,
+                                         worker_report_bytes_sha256=worker_report_bytes_sha256)
+    return record
 
 
 def _sha(array, *, header=True):
@@ -759,8 +962,9 @@ def _native_element_identity(element):
             "local_traces": int(element.space_dimension) - interiors}
 
 
-def _native_element(metadata, gate):
-    require(metadata == NATIVE_ELEMENT, "exact native element metadata required")
+def _native_element(metadata, gate, runtime_profile=None):
+    expected_metadata = _native_element_metadata(runtime_profile)
+    require(metadata == expected_metadata, "exact profile-specific native element metadata required")
     # Admission precedes every FE-stack import and the public basis factory.
     _gate(gate, "native_basis_wrapper", payload=882*1029*8, workspace=64 << 20,
           FE_imports=True, native_element_factory_only=True, mesh_created=False,
@@ -773,7 +977,7 @@ def _native_element(metadata, gate):
     element = finiteelement(CellType.hexahedron,
                             basix.ufl.element("N1curl", "hexahedron", 6, dtype=np.float64),
                             np.dtype(np.float64))
-    require(_native_element_identity(element) == metadata,
+    require(_native_element_identity(element) == expected_metadata,
             "live native basis hash/coefficient matrix or element metadata differs")
     return element
 
@@ -797,7 +1001,8 @@ def _native_row_transpose_row(element, raw, cell_info):
     return tensor
 
 
-def _original_tensor(reader, report, entry, raw_record, gate, measures, ipos, tpos, native_element):
+def _original_tensor(reader, report, entry, raw_record, gate, measures, ipos, tpos,
+                     native_element, runtime_profile=None):
     import numpy as np
     from scipy.sparse import csr_matrix
     _gate(gate, "unique_class_tensor/" + str(entry["class_index"]),
@@ -819,9 +1024,10 @@ def _original_tensor(reader, report, entry, raw_record, gate, measures, ipos, tp
             and descriptor.get("raw_tensor") == entry["raw_tensor"]
             and descriptor.get("shape") == [882, 882] and descriptor.get("dtype") == "complex128",
             "exact original raw/oriented tensor descriptor required")
-    require(descriptor.get("native_element") == NATIVE_ELEMENT
+    expected_metadata = _native_element_metadata(runtime_profile)
+    require(descriptor.get("native_element") == expected_metadata
             and _native_element_identity(native_element) == descriptor["native_element"],
-            "live native basis must bind exact original tensor metadata")
+            "live native basis must bind exact profile-specific original tensor metadata")
     orient = descriptor.get("orientation", {})
     require(orient.get("representation") == "actual_Basix_T_apply_CSR"
             and orient.get("shape") == [882, 882] and orient.get("cell_info") == entry["class_key"][-1]
@@ -971,7 +1177,8 @@ def _material(reader, report, class_index, vii, solve, gate, measures):
             "physical_case": False, "allfour_negative_controls_separated": True}
 
 
-def check_component(report, load_array, *, allocation_gate, checkpoint, runtime_profile=None):
+def check_component(report, load_array, *, allocation_gate, checkpoint, runtime_profile=None,
+                    source_compatibility_record=None, worker_report_bytes_sha256=None):
     """Recompute component evidence from current-run immutable saved arrays.
 
     load_array(reference) receives the exact canonical member descriptor; the
@@ -983,7 +1190,9 @@ def check_component(report, load_array, *, allocation_gate, checkpoint, runtime_
     measures = _Measurements(checkpoint)
     try:
         result = _check_component(report, load_array, allocation_gate, checkpoint, measures,
-                                  runtime_profile=runtime_profile)
+                                  runtime_profile=runtime_profile,
+                                  source_compatibility_record=source_compatibility_record,
+                                  worker_report_bytes_sha256=worker_report_bytes_sha256)
         json.dumps(result, allow_nan=False)
         checkpoint("component_checker_receipt", result)
         return result
@@ -996,14 +1205,21 @@ def check_component(report, load_array, *, allocation_gate, checkpoint, runtime_
         raise
 
 
-def _check_component(report, load_array, gate, checkpoint, measures, *, runtime_profile=None):
+def _check_component(report, load_array, gate, checkpoint, measures, *, runtime_profile=None,
+                     source_compatibility_record=None, worker_report_bytes_sha256=None):
     require(isinstance(report, dict) and report.get("schema") == WORKER_SCHEMA
             and report.get("actual_inventory") == INVENTORY,
             "exact current fresh same80 p6 component schema/inventory required")
-    source_binding = _validate_source_identity(report)
+    source_binding = _validate_source_identity(
+        report, continuation_record=source_compatibility_record,
+        worker_report_bytes_sha256=worker_report_bytes_sha256)
     # This allocation preadmission precedes numerical imports and all arrays.
     _gate(gate, "numerical_dependencies", workspace=64 << 20, FE_imports=False, JIT=False)
     runtime_profile, _ = _profile_manifest_identity(runtime_profile)
+    if source_compatibility_record is not None:
+        _validate_checker_continuation_record(
+            report, source_compatibility_record, runtime_profile=runtime_profile,
+            worker_report_bytes_sha256=worker_report_bytes_sha256)
     same_live = _validate_same_live_binding(report, runtime_profile=runtime_profile)
     import numpy as np
     from scipy.linalg import lu_factor, lu_solve
@@ -1025,7 +1241,9 @@ def _check_component(report, load_array, gate, checkpoint, measures, *, runtime_
     cells, ipos, tpos = _cell_inventory(reader, report, maps, gate)
     classes, raw_by_key = _class_inventory(report, cells, reader)
     _role_inventory(reader, report)
-    native_element = _native_element(classes[0].get("original_tensor", {}).get("native_element"), gate)
+    native_element = _native_element(
+        classes[0].get("original_tensor", {}).get("native_element"), gate,
+        runtime_profile=runtime_profile)
     native_ipos = np.asarray(native_element.basix_element.entity_dofs[3][0], dtype=np.int32)
     native_tpos = np.setdiff1d(np.arange(882, dtype=np.int32), native_ipos, assume_unique=True)
     require(np.array_equal(ipos, native_ipos) and np.array_equal(tpos, native_tpos),
@@ -1087,7 +1305,8 @@ def _check_component(report, load_array, gate, checkpoint, measures, *, runtime_
         class_index = entry["class_index"]
         tensor, tensor_sha = _original_tensor(reader, report, entry,
                                               raw_by_key[_canonical(entry["class_key"][:-1])], gate,
-                                              measures, ipos, tpos, native_element)
+                                              measures, ipos, tpos, native_element,
+                                              runtime_profile=runtime_profile)
         vii, vit = tensor[np.ix_(ipos, ipos)], tensor[np.ix_(ipos, tpos)]
         vti, vtt = tensor[np.ix_(tpos, ipos)], tensor[np.ix_(tpos, tpos)]
         # A fresh original-tensor local450 factor is independent of saved LU.
@@ -1221,6 +1440,7 @@ def _check_component(report, load_array, gate, checkpoint, measures, *, runtime_
                      reader.role("manufactured/chosen_actual_MPC_field", shape=(55950,), dtype="complex128"), chosen_expanded)
     reader.verify_remaining()
     return {"schema": CHECKER_SCHEMA, "source_status": SOURCE_STATUS,
+            "source_compatibility": source_binding,
             "status": "independent_saved_component_controls_passed",
             "independent_component_pass": True, "durable_archive_verified": False,
             "source_ABI_provenance_binding": "source_manifest_recomputed_here; ABI_and_native_supervision_bound_by_caller",
