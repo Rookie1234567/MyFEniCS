@@ -22,6 +22,7 @@ from .hybrid_fem_modal_augmented_direct import (
 from .hybrid_fem_modal_schur_direct import modal_coupling_action
 
 __all__ = (
+    "HybridActionModalSchurApply",
     "HybridActionModalSchurSystem",
     "HybridBlockLduIterativeConfig",
     "HybridBlockLduIterativeResult",
@@ -166,6 +167,77 @@ class HybridActionModalSchurSystem:
         self.modal_constraint = None
         self.lu = None
         self.pivots = None
+        self._destroyed = True
+
+
+@dataclass
+class HybridActionModalSchurApply:
+    """Apply one modal Schur action without assembling its columns.
+
+    The side actions and coupling are borrowed.  This object does not assert
+    that they define a fixed linear map: adaptive side actions may make each
+    call nonlinear or call-dependent, so this is not itself a PETSc Mat/KSP.
+    """
+
+    coupling: HybridInternalModeCoupling
+    bottom_action: Any
+    top_action: Any
+    modal_constraint: np.ndarray = field(init=False, repr=False)
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.mode_count = int(self.coupling.mode_count_per_direction)
+        self.modal_count = 2 * self.mode_count
+        self.modal_constraint = np.asarray(
+            internal_modal_constraint_matrix(self.coupling), dtype=np.complex128
+        )
+        if self.modal_constraint.shape != (self.modal_count, self.modal_count):
+            raise ValueError("Modal constraint has the wrong shape.")
+
+    def _subtract_side_response(self, side: str, modal: np.ndarray, result: np.ndarray) -> None:
+        action = self.bottom_action if side == "bottom" else self.top_action
+        projection = (
+            self.coupling.bottom.projection
+            if side == "bottom"
+            else self.coupling.top.projection
+        )
+        traction = modal_coupling_action(side, self.coupling, modal)
+        response = projected = None
+        try:
+            response = _action_operator(action).createVecLeft()
+            projected = projection.createVecLeft()
+            action.apply(traction, response)
+            projection.mult(response, projected)
+            start = 0 if side == "bottom" else self.mode_count
+            result[start : start + self.mode_count] -= _replicated_modal_values(
+                projected
+            )
+        finally:
+            if projected is not None:
+                projected.destroy()
+            if response is not None:
+                response.destroy()
+            traction.destroy()
+
+    def apply(self, modal: np.ndarray) -> np.ndarray:
+        """Return ``C modal - projected(bottom) - projected(top)``."""
+
+        if self._destroyed:
+            raise RuntimeError("On-demand modal Schur action has been destroyed.")
+        values = np.asarray(modal, dtype=np.complex128)
+        if values.shape != (self.modal_count,):
+            raise ValueError("Modal Schur input has the wrong shape.")
+        result = np.asarray(self.modal_constraint @ values, dtype=np.complex128)
+        self._subtract_side_response("bottom", values, result)
+        self._subtract_side_response("top", values, result)
+        return result
+
+    def destroy(self) -> None:
+        """Release owned modal data without destroying borrowed actions."""
+
+        if self._destroyed:
+            return
+        self.modal_constraint = None
         self._destroyed = True
 
 

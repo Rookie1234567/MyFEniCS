@@ -17,6 +17,7 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
     internal_modal_constraint_matrix,
 )
 from src.solvers.hybrid_fem_modal_block_ldu import (
+    HybridActionModalSchurApply,
     build_hybrid_action_modal_schur,
     create_action_block_ldu_preconditioner,
     create_research_exact_side_lu_block_ldu_preconditioner,
@@ -320,6 +321,58 @@ def test_action_modal_schur_is_repeated_and_borrowed():
         assert bottom.diagnostics["destroyed"] is False
         assert top.diagnostics["destroyed"] is False
     finally:
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_apply_matches_fixed_linear_oracle_and_borrows_actions():
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    explicit = None
+    on_demand = None
+    try:
+        explicit = build_hybrid_action_modal_schur(
+            fixture["coupling"], bottom, top
+        )
+        before = {
+            "bottom": bottom.diagnostics["apply_count"],
+            "top": top.diagnostics["apply_count"],
+        }
+        on_demand = HybridActionModalSchurApply(
+            fixture["coupling"], bottom, top
+        )
+        assert bottom.diagnostics["apply_count"] == before["bottom"]
+        assert top.diagnostics["apply_count"] == before["top"]
+
+        first = np.asarray(
+            [0.3 + 0.7j, -0.2 + 0.4j, 0.9 - 0.1j, -0.5 - 0.6j],
+            dtype=np.complex128,
+        )
+        second = np.asarray(
+            [-0.8 + 0.2j, 0.1 - 0.9j, 0.4 + 0.3j, 0.6 - 0.5j],
+            dtype=np.complex128,
+        )
+        zero = np.zeros(4, dtype=np.complex128)
+        for modal in (first, second, first, zero):
+            original = modal.copy()
+            actual = on_demand.apply(modal)
+            expected = explicit.modal_schur @ modal
+            assert _relative_array_error(actual, expected) <= 1.0e-13
+            assert np.array_equal(modal, original)
+
+        assert bottom.diagnostics["apply_count"] - before["bottom"] == 4
+        assert top.diagnostics["apply_count"] - before["top"] == 4
+        on_demand.destroy()
+        assert bottom.diagnostics["destroyed"] is False
+        assert top.diagnostics["destroyed"] is False
+        with pytest.raises(RuntimeError, match="has been destroyed"):
+            on_demand.apply(first)
+    finally:
+        if on_demand is not None:
+            on_demand.destroy()
+        if explicit is not None:
+            explicit.destroy()
         bottom.destroy()
         top.destroy()
         _destroy_fixture(fixture)
