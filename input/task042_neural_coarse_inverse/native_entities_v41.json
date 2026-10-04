@@ -82,5 +82,13 @@
   "new_assembly": 0,
   "new_QR": 0,
   "new_Krylov": 0,
-  "new_training": 0
+  "new_training": 0,
+  "resume_bridge_packets": {
+    "BRIDGE1": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge1_20261004T100117721462Z/fixture_rank0.json",
+        "sha256": "0327c7f88979679dc0ff57faf298b2a3df02ef83419916612ab3226da2a0cd36"
+      }
+    ]
+  }
 }

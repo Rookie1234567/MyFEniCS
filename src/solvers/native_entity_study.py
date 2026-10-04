@@ -227,6 +227,50 @@ def fixture_bridge(folder, ranks):
     require_envelope()
     if comm.size != ranks:
         raise ValueError("actual requested native MPI identity")
+    resume = plan_record().get("resume_bridge_packets", {}).get("BRIDGE" + str(ranks))
+    if resume is not None:
+        from dolfinx.fem.element import finiteelement
+        from dolfinx.mesh import CellType
+
+        from benchmarks.check_native_entities import check_packets
+
+        # A failed last direction step cannot invalidate the already atomic
+        # native MPC packet. Validate it independently and repeat only the
+        # affected direction API; no new mesh/dofmap/form/factor.
+        records = []
+        for item in resume:
+            if sha(item["path"]) != item["sha256"]:
+                raise ValueError("bridge resume source/hash")
+            records.append(json.loads(Path(item["path"]).read_text()))
+        audited = check_packets(records, fixture=True)
+        if not audited["passed"] or any(r["MPI_size"] != ranks for r in records):
+            raise ValueError("bridge resume literal numeric identity")
+        results = [{"relabel": False, "packets": records}]
+        native_element = finiteelement(
+            CellType.hexahedron,
+            basix.ufl.element("N1curl", "hexahedron", 6),
+            np.float64,
+        )
+        directions = (
+            direction_witness(folder, results, native_element)
+            if comm.rank == 0
+            else None
+        )
+        directions = comm.bcast(directions, root=0)
+        return {
+            "status": "DISTRIBUTED_NATIVE_ENTITY_BRIDGE_QUALIFIED_ON_FIXTURE"
+            if directions["passed"]
+            else "NATIVE_ENTITY_BRIDGE_NOT_QUALIFIED",
+            "results": results,
+            "direction_witness": directions,
+            "fixture_hex": 64,
+            "MPI_size": ranks,
+            "resume": resume,
+            "new_mesh": 0,
+            "independent_checkpoint_checks": audited,
+            "environment": environment(),
+            "qualified_solver_MPI": "NOT_QUALIFIED",
+        }
     cfg, _ = target_config()
     axes = [np.array(a, np.float64) for a in plan_record()["fixture_axes_nm"]]
     results = []
@@ -522,9 +566,9 @@ def direction_witness(folder, results, native_element):
         # cover both axes, each on real and imaginary channels.
         for part in ("real", "imag"):
             x = np.ascontiguousarray(getattr(native, part))
-            native_element.T_apply(x, np.array([code], np.uint32), 882)
+            native_element.T_apply(x.ravel(), np.array([code], np.uint32), 882)
             x = np.ascontiguousarray(x.T)
-            native_element.T_apply(x, np.array([code], np.uint32), 882)
+            native_element.T_apply(x.ravel(), np.array([code], np.uint32), 882)
             getattr(native, part)[:] = x.T
         checks.append(
             {"kind": "actual_native_p6_two_axis_" + str(code), **metric(manual, native)}

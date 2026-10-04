@@ -198,6 +198,22 @@ def test_actual_complete_entity_workflow_nonzero_complex_and_failure():
             )
 
 
+def test_native_p6_actual_T_apply_requires_flat_contiguous_channels():
+    import basix.ufl
+    from dolfinx.fem.element import finiteelement
+    from dolfinx.mesh import CellType
+
+    element = finiteelement(
+        CellType.hexahedron, basix.ufl.element("N1curl", "hexahedron", 6), np.float64
+    )
+    value = np.arange(882 * 2, dtype=np.float64).reshape(882, 2)
+    with pytest.raises(TypeError, match="incompatible function arguments"):
+        element.T_apply(value, np.array([0], np.uint32), 2)
+    original = value.copy()
+    element.T_apply(value.ravel(), np.array([0], np.uint32), 2)
+    assert np.array_equal(value, original)
+
+
 def test_short_deadline_clears_only_own_descendant_tree(tmp_path):
     import subprocess
     import sys
