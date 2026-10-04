@@ -19,13 +19,22 @@ STAGES = (
     "BRIDGE2",
     "BRIDGE4",
     "TOPOLOGY",
+    "ORIENTATION",
     "ROUTING",
     "CHECK",
     "DEPLOY",
     "CAPACITY",
 )
-NATIVE = ("BRIDGE1", "BRIDGE2", "BRIDGE4", "TOPOLOGY", "ROUTING", "DEPLOY")
-TARGET = ("TOPOLOGY", "ROUTING", "DEPLOY")
+NATIVE = (
+    "BRIDGE1",
+    "BRIDGE2",
+    "BRIDGE4",
+    "TOPOLOGY",
+    "ORIENTATION",
+    "ROUTING",
+    "DEPLOY",
+)
+TARGET = ("TOPOLOGY", "ORIENTATION", "ROUTING", "DEPLOY")
 
 
 class EntityWindow(PreparationWindow):

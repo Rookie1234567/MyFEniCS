@@ -37,6 +37,7 @@
     "BRIDGE2",
     "BRIDGE4",
     "TOPOLOGY",
+    "ORIENTATION",
     "ROUTING",
     "CHECK",
     "DEPLOY",
@@ -90,5 +91,6 @@
         "sha256": "0327c7f88979679dc0ff57faf298b2a3df02ef83419916612ab3226da2a0cd36"
       }
     ]
-  }
+  },
+  "orientation_audit_scope": "only actually encountered unknown target cell codes; old raw882 and native element transforms; no mesh/space/kernel/LU"
 }

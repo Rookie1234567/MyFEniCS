@@ -532,7 +532,7 @@ def fixture_bridge(folder, ranks):
     }
 
 
-def direction_witness(folder, results, native_element):
+def direction_witness(folder, results, native_element, *, codes=None):
     import basix.ufl
 
     # The actual FiniteElement from the completed fixture isn't retained.
@@ -547,13 +547,17 @@ def direction_witness(folder, results, native_element):
     )
     with np.load(saved["arrays"]["path"], allow_pickle=False) as a:
         raw = a["raw_tensor"].copy()
-    codes = sorted(
-        {
-            int(code)
-            for result in results
-            for p in result["packets"]
-            for code in read_arrays(p["numeric"])["cell_permutations"]
-        }
+    codes = (
+        sorted(
+            {
+                int(code)
+                for result in results
+                for p in result["packets"]
+                for code in read_arrays(p["numeric"])["cell_permutations"]
+            }
+        )
+        if codes is None
+        else sorted(set(map(int, codes)))
     )
     arrays, checks = (
         {
@@ -820,11 +824,16 @@ def target_routing(folder):
     comm = MPI.COMM_WORLD
     require_envelope()
     topology, _ = stage("TOPOLOGY")
-    if (
-        topology["status"] != "TARGET_NATIVE_TOPOLOGY_INVENTORY_QUALIFIED"
-        or topology["new_unqualified_direction_codes"]
-    ):
+    if topology["status"] != "TARGET_NATIVE_TOPOLOGY_INVENTORY_QUALIFIED":
         raise ValueError("target inventory or nonzero p6 direction gate")
+    if topology["new_unqualified_direction_codes"]:
+        orientation, _ = stage("ORIENTATION")
+        if (
+            orientation["status"] != "TARGET_ENCOUNTERED_P6_DIRECTIONS_QUALIFIED"
+            or orientation["direction_witness"]["codes"]
+            != topology["new_unqualified_direction_codes"]
+        ):
+            raise ValueError("new target direction qualification still stopped")
     own = topology["packets"][comm.rank]
     a = read_arrays(own["numeric"])
     component, _ = parent("V38_COMPONENT")
@@ -1014,6 +1023,9 @@ def finish(role, folder):
         t, _ = stage("TOPOLOGY")
         if "packets" in t:
             checks["TOPOLOGY"] = check_packets(t["packets"])
+    if (ARTIFACT / "ORIENTATION.json").exists():
+        o, _ = stage("ORIENTATION")
+        checks["ORIENTATION"] = check_directions(o["direction_witness"]["numeric"])
     if (ARTIFACT / "ROUTING.json").exists():
         r, _ = stage("ROUTING")
         checks["ROUTING"] = check_routing(r["packets"])
@@ -1156,6 +1168,38 @@ def execute(role, folder, state):
         return fixture_bridge(folder, int(role[-1]))
     if role == "TOPOLOGY":
         return target_topology(folder)
+    if role == "ORIENTATION":
+        import basix.ufl
+        from dolfinx.fem.element import finiteelement
+        from dolfinx.mesh import CellType
+
+        require_envelope()
+        t, path = stage("TOPOLOGY")
+        if t["status"] != "TARGET_NATIVE_TOPOLOGY_INVENTORY_QUALIFIED":
+            raise ValueError(
+                "actual topology identity before necessary direction audit"
+            )
+        codes = t["new_unqualified_direction_codes"]
+        if not codes:
+            raise ValueError("no new target direction; reuse fixture evidence")
+        element = finiteelement(
+            CellType.hexahedron,
+            basix.ufl.element("N1curl", "hexahedron", 6),
+            np.float64,
+        )
+        d = direction_witness(folder, [], element, codes=codes)
+        return {
+            "status": "TARGET_ENCOUNTERED_P6_DIRECTIONS_QUALIFIED"
+            if d["passed"]
+            else "TARGET_NEW_DIRECTION_NOT_QUALIFIED",
+            "direction_witness": d,
+            "target_parent": {"path": str(path), "sha256": sha(path)},
+            "new_mesh": 0,
+            "target_p6_function_space": "NOT_CONSTRUCTED",
+            "new_kernel": 0,
+            "new_LU": 0,
+            "scope": "necessary p6 native two-axis audit on actually encountered new directions; qualification paused until pass",
+        }
     if role == "ROUTING":
         return target_routing(folder)
     if role in ("CHECK", "DEPLOY", "CAPACITY"):
