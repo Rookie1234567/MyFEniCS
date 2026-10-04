@@ -782,11 +782,10 @@ def execute(role, folder, state):
         import sys
 
         import scipy
-        from threadpoolctl import threadpool_info
 
-        pools = threadpool_info()
-        if any(p["num_threads"] != 1 for p in pools):
-            raise RuntimeError("actual BLAS/OpenMP thread limit")
+        from src.solvers.isolated_ml_sparse import loaded_math_threads
+
+        pools = loaded_math_threads()
         environment.update(
             executable=sys.executable,
             NumPy=np.__version__,

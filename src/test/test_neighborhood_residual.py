@@ -246,6 +246,16 @@ def test_full_parameter_JVP_and_original_VJP_on_nonzero_loss():
     )
 
 
+def test_actual_ML_runtime_math_pools_without_optional_threadpoolctl():
+    import sys
+
+    from src.solvers.isolated_ml_sparse import loaded_math_threads
+
+    pools = loaded_math_threads()
+    assert pools and all(p["threads"] == 1 for p in pools)
+    assert not any(n in sys.modules for n in ("dolfinx", "mpi4py", "petsc4py"))
+
+
 def test_actual_dat_run_case_validate_registration():
     import subprocess
     import sys
