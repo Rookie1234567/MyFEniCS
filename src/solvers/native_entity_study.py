@@ -274,7 +274,14 @@ def fixture_bridge(folder, ranks):
     cfg, _ = target_config()
     axes = [np.array(a, np.float64) for a in plan_record()["fixture_axes_nm"]]
     results = []
-    for relabel in (False, True) if ranks == 4 else (False,):
+    # Use the one legal relabel only if natural numbering lacks a required
+    # direction. MPI2 may already supply all three direction kinds.
+    prior_directions = stage("BRIDGE2")[0]["direction_witness"] if ranks == 4 else None
+    need_copy = ranks == 4 and not all(
+        prior_directions[k]
+        for k in ("edge_reverse", "face_rotation", "face_reflection")
+    )
+    for relabel in (False, True) if need_copy else (False,):
         if comm.rank == 0:
             mesh_reservation(64)
         comm.barrier()
@@ -730,7 +737,12 @@ def target_topology(folder):
     }
     raw_pass = {k: v["count"] for k, v in raw_global.items()} == expected
     actual_codes = {r["permutation"] for r in oriented_global.values()}
-    new_codes = sorted(actual_codes - set(directions["codes"]))
+    qualified_codes = {
+        code
+        for name in ("BRIDGE1", "BRIDGE2", "BRIDGE4")
+        for code in stage(name)[0]["direction_witness"]["codes"]
+    }
+    new_codes = sorted(actual_codes - qualified_codes)
     meta_counts = [p["metadata"]["entity_sizes"] for p in packets]
     exact_counts = all(
         sum(m[str(d)]["owned"] for m in meta_counts) == forecast["counts"][name]

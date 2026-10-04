@@ -409,6 +409,10 @@ def worker(folder, namespace="v36"):
             else f"result_rank{comm.rank}.json"
         )
         write_json(result_path, result)
+        if namespace == "v41" and comm.size > 1 and result["status"] == "FAILED":
+            # Keep the failed rank's result, then terminate only this MPI job
+            # instead of waiting in MPI_Finalize with blocked peers.
+            comm.Abort(1)
         if result["status"] != "FAILED" and (namespace != "v41" or comm.rank == 0):
             write_json(
                 ARTIFACT / (role + ".json"),
