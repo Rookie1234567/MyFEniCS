@@ -20,7 +20,7 @@
 
 ## Review V6：P2终态与R48/Z文档收口（2026-10-04）
 
-本次仅归档既有P2主审接受结果，并整理R48纯metadata planner、完整external-mode inventory和条件容量账；求解器源码、输入、运行参数均未改动。没有重跑FE、矩阵、factor、PDE、性能或既有H6测试，也没有重扫P2的3.38 GB resources日志。P2资源结果来自已完成的一次流式审计receipt；R48依赖已由主审复核的planner/inventory hashes。新增JSON/Markdown的本地结构、身份、哈希、链接、围栏与表格检查属于文档静态校验，不是数值测试。GitHub richText/表格检查须在实际push后的文档commit执行；在检查前不把它写成PASS，也不声称已人工视觉查看。
+本次仅归档既有P2主审接受结果，并整理R48纯metadata planner、完整external-mode inventory和条件容量账；求解器源码、输入、运行参数均未改动。没有重跑FE、矩阵、factor、PDE、性能或既有H6测试，也没有重扫P2的3.38 GB resources日志。P2资源结果来自已完成的一次流式审计receipt；R48依赖已由主审复核的planner/inventory hashes。新增JSON/Markdown的本地结构、身份、哈希、链接、围栏与表格检查属于文档静态校验，不是数值测试。实际提交 `b06865d89c0b6a1a4c8480ed62622fbeddb91f6a` 的7个GitHub blob页面均为HTTP 200；服务生成的richText中189张表与该提交本地Markdown的列数及表体宽度一致，详见[渲染结构回执](records/v6_github_render_closeout.json)。本次仅补充response与本文件后，会在新提交推送后复核这两页；另外5页沿用b068提交的原字节哈希。人工视觉检查和CI均为 `NOT_RUN`。
 
 ## Review V5：5 nm rounded-tensor representative bounded component
 

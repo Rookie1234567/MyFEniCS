@@ -81,4 +81,4 @@ P2资源主审已对resources.jsonl完成一次全量审计：332532样本、raw
 | research-only | 保留H6-only、E3和pilot的scope标签 | 不提升为solver或physics qualification |
 | do-not-merge | 低内存p4逆实验、0.7 nm PDE、邻任务和其他分支 | 本批未开展或触碰 |
 
-提交前完成本地JSON/hash/link/fence/table/diff静态检查；正式push后将按实际文档commit使用既有GitHub richText/table路径核对，并同时绑定V6运行source SHA `584d6e406e6e1ed552fff4fd311b51549c984825`。目前尚未检查最终push后的GitHub渲染，因此不宣称rendered-view或人工视觉PASS。本任务本阶段结果为`PASS_WITH_QUALIFICATIONS`，等待主审Z文档复核；未获merge approval，不合并master。
+实际提交 `b06865d89c0b6a1a4c8480ed62622fbeddb91f6a` 的GitHub richText结构核验覆盖7页、189张表，HTTP均为200，表头列数和各表体行宽均与该提交本地Markdown一致；页面来源、bytes与rendered-richText SHA见[结构回执](outcomes/records/v6_github_render_closeout.json)。本次窄补充仅改response与test summary；对应新提交推送后，将复核这两页并把新页面及richText哈希写入ignored最终回执，其余5页以b068下原bytes SHA不变作为覆盖依据。人工视觉检查和CI均为`NOT_RUN`。本任务本阶段结果为`PASS_WITH_QUALIFICATIONS`，等待主审Z文档复核；未获merge approval，不合并master。
