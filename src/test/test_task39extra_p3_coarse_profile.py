@@ -7,6 +7,9 @@ from benchmarks.physical_intermediate_checker import check_retained_v20
 from src.io import load_and_resolve
 from src.io.input_loader import InputError
 from src.io.native_capacity_profile import native_profile_facts, validate_native_case
+from src.runners.physical_retained_condensed_v20 import (
+    _geometry_identity_policy_for_profile,
+)
 from src.runners.task038_launcher import _base_manifest
 from src.solvers.fullspace_same_mesh_hcurl_pmg import (
     V6_P3_CANONICAL_TRACE_MAP_POLICY,
@@ -18,6 +21,12 @@ ROOT = Path(__file__).resolve().parents[2]
 @pytest.mark.parametrize(
     ("p3_input", "p4_input", "expected_mode_count", "expected_profile"),
     [
+        (
+            "v6_13p5_p3_anchor.dat",
+            "v5_node1_13p5nm_p6h7p5_q4.dat",
+            80,
+            "dual_condensed_balh_native_13p5_p3_v6",
+        ),
         (
             "v6_5nm_p3_full.dat",
             "v6_5nm_full.dat",
@@ -48,6 +57,10 @@ def test_explicit_p3_input_resolves_a3_without_changing_physics(
     assert p3.method == p4.method
 
     profile = native_profile_facts(expected_profile)
+    assert (
+        profile["condensed_route"]["geometry_identity_policy"]
+        == _geometry_identity_policy_for_profile(expected_profile)
+    )
     assert profile["retained_condensed_v20"]["coarse_degree"] == 3
     assert profile["coarse_operator"]["name"] == "A3"
     assert profile["coarse_operator"]["degree"] == 3
@@ -80,7 +93,15 @@ def test_explicit_p3_input_resolves_a3_without_changing_physics(
     assert contract["degree"] == contract["resolved_solver_degree"] == 3
     assert contract["name"] == "A3"
     assert contract["compatibility_storage_names"] == ["p4_* aliases"]
-    assert expected_mode_count == (600 if "5nm" in p3_input else 3904)
+    assert expected_mode_count == (
+        600 if "5nm" in p3_input else 80 if "13p5" in p3_input else 3904
+    )
+    if "13p5" in p3_input:
+        assert profile["execution_mode"] == "full_solve"
+        assert profile["outer"]["planned_stop_iteration"] is None
+        assert profile["resources"]["rss_hard_limit_bytes"] == 1_300_000_000_000
+        assert profile["native_execution"]["mpi_size"] == 1
+        assert profile["native_execution"]["math_threads"] == 1
 
     wrong_degree = snapshot
     wrong_degree["solver"]["coarse_degree"] = 4
@@ -114,6 +135,42 @@ def test_v5_p3_does_not_enable_v6_trace_policy():
     facts = native_profile_facts("dual_condensed_balh_native_13p5_q3_v5")
     assert facts["retained_condensed_v20"]["coarse_degree"] == 3
     assert "same_mesh_trace_map_policy" not in facts.get("component_options", {})
+    assert facts["condensed_route"]["geometry_identity_policy"] == "raw_unrounded"
+    assert (
+        facts["condensed_route"]["geometry_identity_policy"]
+        == _geometry_identity_policy_for_profile("dual_condensed_balh_native_13p5_q3_v5")
+    )
+
+
+def test_frozen_r13_axes_are_rejected_for_non_anchor_v6_profile(tmp_path):
+    source = ROOT / "input/task39extra_para_workstation_capacity/v6_5nm_p3_full.dat"
+    original = source.read_text(encoding="utf-8")
+    section = "[discretization]\n"
+    assert original.count(section) == 1
+    modified = original.replace(
+        section,
+        section + "mesh_axis_cell_counts = [7, 4, 19]\n",
+        1,
+    )
+    invalid_input = tmp_path / "v6_5nm_p3_with_frozen_r13_axes.dat"
+    invalid_input.write_text(modified, encoding="utf-8")
+
+    with pytest.raises(InputError, match="frozen x/y/z mesh axes are reserved"):
+        load_and_resolve(invalid_input)
+
+
+def test_v6_13p5_p3_identity_is_opt_in_and_keeps_q4_profile_unchanged():
+    from src.io.native_capacity_profile import V6_BASE_PROFILES, V6_P3_PROFILES
+
+    identity = "dual_condensed_balh_native_13p5_p3_v6"
+    assert V6_BASE_PROFILES[identity] == "dual_condensed_balh_native_13p5_q3_v5"
+    assert identity in V6_P3_PROFILES
+    old_facts = native_profile_facts("dual_condensed_balh_native_13p5_q3_v5")
+    assert "same_mesh_trace_map_policy" not in old_facts.get("component_options", {})
+    facts = native_profile_facts(identity)
+    runtime_policy = _geometry_identity_policy_for_profile(identity)
+    assert facts["condensed_route"]["geometry_identity_policy"] == runtime_policy
+    assert runtime_policy == "rounded_12_representative"
 
 
 def test_checker_still_resolves_the_legacy_v3_profile_contract(tmp_path):

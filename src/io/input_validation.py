@@ -620,7 +620,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
             from .native_capacity_profile import NATIVE_PROFILES, validate_native_case
             preconditioner = solver["preconditioner"]
-            from .native_capacity_profile import V5_NATIVE_PROFILES, V5_R13_PROFILES, V6_NATIVE_PROFILES
+            from .native_capacity_profile import (
+                V5_NATIVE_PROFILES,
+                V5_R13_PROFILES,
+                V6_NATIVE_PROFILES,
+                V6_R13_ANCHOR_PROFILES,
+            )
             retained_profiles = V5_NATIVE_PROFILES | V6_NATIVE_PROFILES
             if "coarse_degree" in solver and preconditioner not in retained_profiles:
                 raise _error(
@@ -640,10 +645,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
             if any(
                 discretization.get(key) is not None for key in frozen_mesh_fields
-            ) and preconditioner not in V5_R13_PROFILES:
+            ) and preconditioner not in (
+                V5_R13_PROFILES | V6_R13_ANCHOR_PROFILES
+            ):
                 raise _error(
                     "discretization",
-                    "frozen x/y/z mesh axes are reserved for R13 V5 profiles",
+                    "frozen x/y/z mesh axes are reserved for R13 V5/V6 anchor profiles",
                 )
             if preconditioner not in {
                 *NATIVE_PROFILES,

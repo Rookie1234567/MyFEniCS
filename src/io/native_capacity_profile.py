@@ -29,6 +29,7 @@ V5_EXPECTED_MODE_COUNTS = {
 }
 # Separate identities keep all V5 inputs and policies immutable.
 V6_BASE_PROFILES = {
+    'dual_condensed_balh_native_13p5_p3_v6': 'dual_condensed_balh_native_13p5_q3_v5',
     'dual_condensed_balh_native_5nm_v6': 'dual_condensed_balh_native_5nm_v5',
     'dual_condensed_balh_native_2nm_h6_only_v6': 'dual_condensed_balh_native_2nm_v5',
     'dual_condensed_balh_native_2nm_pilot16_v6': 'dual_condensed_balh_native_2nm_v5',
@@ -40,10 +41,12 @@ V6_BASE_PROFILES = {
 V6_NATIVE_PROFILES = frozenset(V6_BASE_PROFILES)
 V6_P3_PROFILES = frozenset(
     {
+        'dual_condensed_balh_native_13p5_p3_v6',
         'dual_condensed_balh_native_5nm_p3_v6',
         'dual_condensed_balh_native_2nm_p3_pilot16_v6',
     }
 )
+V6_R13_ANCHOR_PROFILES = frozenset({'dual_condensed_balh_native_13p5_p3_v6'})
 V6_PILOT16_PROFILES = frozenset(
     {
         'dual_condensed_balh_native_2nm_pilot16_v6',
@@ -233,6 +236,10 @@ def native_profile_facts(identity):
             )
             facts['component_options']['same_mesh_trace_map_policy'] = (
                 'v6_p3_canonical_shared_trace_v1'
+            )
+        if identity in V6_R13_ANCHOR_PROFILES:
+            facts['condensed_route']['geometry_identity_policy'] = (
+                'rounded_12_representative'
             )
         return facts
     wavelength, meshes, screen, solve, workflow = NATIVE_CASES[identity]
