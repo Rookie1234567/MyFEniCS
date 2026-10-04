@@ -19,6 +19,8 @@ STAGES = ("INVENTORY", "COMPONENT", "CHECK", "DEPLOY")
 def load_preparation(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
+    if b"[task042_v37]" in raw:
+        return load_boundary_witness(path)
     if b"[task042_v36]" not in raw:
         return None
     try:
@@ -105,3 +107,78 @@ def read_stage(name):
     ):
         raise ValueError("V36 stage source/path/content identity")
     return json.loads(path.read_text()), path
+
+
+def load_boundary_witness(path):
+    from src.solvers.boundary_witness_scope import PLAN
+
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    value = tomllib.loads(raw.decode())
+    item = value.get("task042_v37", {})
+    stages = ("IDENTITY", "PATCH", "CHECK", "DEPLOY")
+    if (
+        set(value) != {"schema_version", "task042_v37"}
+        or value["schema_version"] != 1
+        or set(item) != {"stage", "run_id"}
+        or item.get("stage") not in stages
+        or not re.fullmatch("task042_v37_[a-z0-9_]+", item.get("run_id", ""))
+    ):
+        raise InputError("V37 boundary-only explicit stage schema")
+    plan = json.loads(PLAN.read_text())
+    if (
+        plan["review_commit"] != "02fe5f860562f6a7ef689f9d53b061cfaf30a43b"
+        or plan["target_solve_authorized"] is not False
+    ):
+        raise InputError("V37 immutable authorization")
+    pointer = json.loads(
+        (ROOT / "benchmarks/artifacts/task042/v36/INVENTORY.json").read_text()
+    )
+    parent = Path(pointer["path"])
+    if (
+        hashlib.sha256(parent.read_bytes()).hexdigest() != pointer["sha256"]
+        or pointer != plan["inventory_parent"]
+    ):
+        raise InputError("V37 frozen V36 inventory parent")
+    contract = json.loads(parent.read_text())["contract"]
+    stage = item["stage"]
+    return RunSpecification(
+        identity={
+            "model_id": "task042_v37_boundary_witness",
+            "run_id": item["run_id"],
+            "batch": "V37_TARGET_P6_BOUNDARY_WITNESS",
+        },
+        geometry=contract["regular_geometry"],
+        materials=contract["materials"],
+        incidence=contract["incidence"],
+        discretization={
+            "degree": 6,
+            "quadrature_degrees": [15, 30, 60],
+            "max_native_hex": 32,
+            "max_classes": 4,
+            "max_modes": 24,
+        },
+        boundary=contract["boundary"],
+        method={"kind": "boundary_witness_only_opt_in"},
+        solver={"preconditioner": "none", "target_solve": False},
+        execution={
+            "mpi_size": 1,
+            "timeout_seconds": 2400 if stage == "PATCH" else 600,
+            "warning_memory_gib": 6 if stage == "PATCH" else 1,
+            "terminate_memory_gib": 8 if stage == "PATCH" else 2,
+            "require_zero_swap": True,
+        },
+        output={"results_root": "results/task042"},
+        derived={
+            "stage": stage,
+            "preparation_scope": "v37",
+            "environment_mode": "fe" if stage == "PATCH" else "pure",
+            "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
+            "target_solve": False,
+        },
+        source_path=path,
+        raw_input_bytes=raw,
+        input_sha256=hashlib.sha256(raw).hexdigest(),
+        physical_model_sha256=contract["physical_contract_sha256"],
+        expected_output_parent=ROOT / "results/task042",
+    )

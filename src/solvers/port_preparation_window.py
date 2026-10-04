@@ -14,8 +14,21 @@ TMP = ROOT / "tmp/task042/v36"
 
 
 class PreparationWindow(DiagnosticWindow):
-    def __init__(self, folder):
-        super().__init__(folder, {"actions": 0}, "V36")
+    def __init__(
+        self,
+        folder,
+        *,
+        label="V36",
+        total=1800,
+        component=900,
+        auxiliary=300,
+        probe=30,
+        reserve=60,
+        bootstrap=0.326941663,
+    ):
+        super().__init__(folder, {"actions": 0}, label)
+        self.total, self.component, self.auxiliary = total, component, auxiliary
+        self.probe, self.reserve, self.bootstrap = probe, reserve, bootstrap
 
     def probe_wall(self):
         return sum(
@@ -27,7 +40,7 @@ class PreparationWindow(DiagnosticWindow):
         return (
             self.probe_wall()
             + sum(r["elapsed_seconds"] for r in self.ledger()["runs"])
-            + 0.326941663
+            + self.bootstrap
         )
 
     def require_ready(self):
@@ -41,7 +54,7 @@ class PreparationWindow(DiagnosticWindow):
             and time.monotonic() < json.loads(wait.read_text())["next_probe_monotonic"]
         ):
             raise RuntimeError("V36 RESOURCE_WAIT minimum 120s interval")
-        if self.charged_wall() >= 1740:
+        if self.charged_wall() >= self.total - self.reserve:
             raise RuntimeError("V36 paid wall reserve reached")
 
     def remaining(self, role):
@@ -49,18 +62,21 @@ class PreparationWindow(DiagnosticWindow):
         used = sum(
             r["elapsed_seconds"]
             for r in self.ledger()["runs"]
-            if r["role"] == "COMPONENT"
+            if r["role"] in ("COMPONENT", "PATCH")
         )
         return min(
-            900 - used if role == "COMPONENT" else 300,
-            1740 - self.charged_wall(),
+            self.component - used if role in ("COMPONENT", "PATCH") else self.auxiliary,
+            self.total - self.reserve - self.charged_wall(),
             self.snapshot()["heavy_remaining_seconds"],
         )
 
     def admission(self, probe, *, receipt_path, **kwargs):
         self.require_ready()
         began = time.monotonic()
-        seconds = min(30 - self.probe_wall(), 1740 - self.charged_wall())
+        seconds = min(
+            self.probe - self.probe_wall(),
+            self.total - self.reserve - self.charged_wall(),
+        )
         if seconds <= 0:
             raise RuntimeError("V36 paid probe budget exhausted")
         old = signal.getsignal(signal.SIGALRM)

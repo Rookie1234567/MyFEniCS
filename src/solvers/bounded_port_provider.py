@@ -96,6 +96,7 @@ class BoundedPortProvider:
     ):
         self.keys = tuple(tuple(k) for k in keys)
         self.identities = tuple(dict(i) for i in identities)
+        self._identity_bytes = tuple(json_bytes(i) for i in self.identities)
         if not self.keys or len(set(self.keys)) != len(self.keys):
             raise ValueError("ordered mode inventory: empty/duplicate keys")
         if len(self.keys) != len(self.identities):
@@ -174,9 +175,17 @@ class BoundedPortProvider:
         self.source_identity = str(source_identity)
 
     def _load(self, index):
+        if json_bytes(self.identities[index]) != self._identity_bytes[index]:
+            raise ValueError("ordered identity mutated without a new provider")
         if index in self.cache:
+            f = self.cache[index]
+            if (
+                self._receipt_identity(index, f)
+                != self._mode_receipts[index]["identity_sha256"]
+            ):
+                raise ValueError("cached H/source/ordered identity changed")
             self.stats["hits"] += 1
-            return self.cache[index]
+            return f
         upper = int(self.loader.upper_bytes(index))
         if upper > self.cache_bytes:
             raise MemoryError(
@@ -200,6 +209,9 @@ class BoundedPortProvider:
             raise ValueError("source/schema/ordered functional identity mismatch")
         if not 0 < f.normalization_h < float("inf") or f.nbytes > upper:
             raise ValueError("normalization/declared single-mode capacity")
+        declared_h = self.identities[index].get("projection_denominator")
+        if declared_h is not None and f.normalization_h != declared_h:
+            raise ValueError("H differs from ordered physical identity")
         a, b = self.ownership_range
         for side in ("coupling", "projection"):
             rows, values = getattr(f, side + "_rows"), getattr(f, side + "_values")
@@ -224,7 +236,10 @@ class BoundedPortProvider:
         if expected is not None and expected != digest:
             raise ValueError("functional numeric content hash mismatch")
         prior = self._mode_receipts.get(index)
-        if prior is not None and prior["sha256"] != digest:
+        identity_digest = self._receipt_identity(index, f)
+        if prior is not None and (
+            prior["sha256"] != digest or prior["identity_sha256"] != identity_digest
+        ):
             raise ValueError(
                 "immutable source changed numeric content without invalidation"
             )
@@ -246,6 +261,8 @@ class BoundedPortProvider:
                 "sha256": digest,
                 "numeric_bytes": f.nbytes,
                 "source_identity": self.source_identity,
+                "normalization_h": f.normalization_h,
+                "identity_sha256": identity_digest,
                 "loads": 1,
             }
         else:
@@ -254,6 +271,19 @@ class BoundedPortProvider:
             self.stats["mode_receipt_count_peak"], len(self._mode_receipts)
         )
         return f
+
+    def _receipt_identity(self, index, f):
+        return hashlib.sha256(
+            json_bytes(
+                {
+                    "source": self.source_identity,
+                    "ordered_identity": self.identities[index],
+                    "functional_identity": f.mode_identity,
+                    "key": list(f.mode_key),
+                    "H": f.normalization_h,
+                }
+            )
+        ).hexdigest()
 
     @contextmanager
     def batch(self, start):

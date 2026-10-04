@@ -22,9 +22,20 @@ from src.runners.task042_shared import SharedHealth, audit, shared_envelope, wri
 from src.solvers.port_preparation_window import implementation_hashes, window
 
 
-def storage(reserve=0):
-    own = [ROOT / "tmp/task042/v36", ARTIFACT]
-    own.extend((ROOT / "results/task042").glob("task042_v36_*"))
+def context(namespace):
+    if namespace == "v37":
+        from src.solvers import boundary_witness_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
+    if namespace != "v36":
+        raise ValueError("explicit preparation namespace")
+    return window, ARTIFACT, PLAN, implementation_hashes
+
+
+def storage(reserve=0, *, namespace="v36"):
+    _, artifact, _, _ = context(namespace)
+    own = [ROOT / ("tmp/task042/" + namespace), artifact]
+    own.extend((ROOT / "results/task042").glob("task042_" + namespace + "_*"))
     new = inventory_paths(own, ROOT)["bytes"]
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
@@ -42,7 +53,8 @@ def storage(reserve=0):
     }
 
 
-def require_component_gate():
+def require_component_gate(*, namespace="v36"):
+    window, _, _, implementation_hashes = context(namespace)
     q = json.loads((window.TMP / "qualification.json").read_text())
     if q["status"] != "PASSED" or q["implementation_hashes"] != implementation_hashes():
         raise ValueError("V36 final implementation focused qualification missing")
@@ -62,13 +74,19 @@ def require_component_gate():
     return q
 
 
-def launch(specification=None, *, command=None, phase=None, attempt=None):
+def launch(
+    specification=None, *, command=None, phase=None, attempt=None, namespace="v36"
+):
+    if specification is not None:
+        namespace = specification.derived.get("preparation_scope", "v36")
+    window, ARTIFACT, PLAN, implementation_hashes = context(namespace)
     started = time.monotonic()
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
-    if role == "COMPONENT":
-        require_component_gate()
-        read_stage("INVENTORY")
+    if role in ("COMPONENT", "PATCH"):
+        require_component_gate(namespace=namespace)
+        if namespace == "v36":
+            read_stage("INVENTORY")
     if specification is not None:
         if ARTIFACT.joinpath(role + ".json").exists():
             raise ValueError(
@@ -100,7 +118,7 @@ def launch(specification=None, *, command=None, phase=None, attempt=None):
             )
         )
     folder.mkdir(parents=True, exist_ok=False)
-    storage(32 * 2**20)
+    storage(32 * 2**20, namespace=namespace)
     with (ROOT / "tmp/task042/task042_shared.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = window.admission(
@@ -118,13 +136,14 @@ def launch(specification=None, *, command=None, phase=None, attempt=None):
         hashes = implementation_hashes()
         state = {
             "source_sha": source,
-            "stage": "V36-" + role,
+            "stage": namespace.upper() + "-" + role,
+            "scope": namespace,
             "window": window.snapshot(),
             "implementation_hashes": hashes,
             "shared_workstation": True,
             "environment_mode": os.environ.get("TASK042_ENV_MODE"),
             "cpu": baseline["cpu"],
-            "planned_bytes": 6 * 2**30 if role == "COMPONENT" else 2 * 2**30,
+            "planned_bytes": 6 * 2**30 if role in ("COMPONENT", "PATCH") else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
         }
@@ -143,6 +162,7 @@ def launch(specification=None, *, command=None, phase=None, attempt=None):
                 "src.runners.port_preparation",
                 "--worker",
                 str(folder),
+                namespace,
             ]
         write_json(folder / "run_manifest.json", state)
         window.begin(role, folder, source)
@@ -153,14 +173,15 @@ def launch(specification=None, *, command=None, phase=None, attempt=None):
             interval=0.5,
             timebase_guard=True,
             hard_stop_immediate=True,
-            rss_hard_limit_bytes=(8 if role == "COMPONENT" else 2) * 2**30,
-            rss_warning_bytes=(6 if role == "COMPONENT" else 1) * 2**30,
+            rss_hard_limit_bytes=(8 if role in ("COMPONENT", "PATCH") else 2) * 2**30,
+            rss_warning_bytes=(6 if role in ("COMPONENT", "PATCH") else 1) * 2**30,
             memory_envelope_provider=shared_envelope,
             include_pss=False,
             source_state=state,
             worker_environment={
                 "TASK042_WATCHDOG_PARENT_PID": str(os.getpid()),
                 "TASK042_V36_AUX_DIRECTORY": str(folder),
+                "TASK042_PREPARATION_SCOPE": namespace,
                 "PYTHONDONTWRITEBYTECODE": "1",
             },
             health_check=SharedHealth(folder, baseline["neighbor_processes"]),
@@ -194,11 +215,12 @@ def launch(specification=None, *, command=None, phase=None, attempt=None):
                     ).hexdigest(),
                 },
             )
-        storage()
+        storage(namespace=namespace)
         return result
 
 
-def worker(folder):
+def worker(folder, namespace="v36"):
+    window, ARTIFACT, _plan, implementation_hashes = context(namespace)
     window.guard_worker_parent()
     state = json.loads((folder / "run_manifest.json").read_text())
     if (
@@ -207,13 +229,16 @@ def worker(folder):
         or state["implementation_hashes"] != implementation_hashes()
     ):
         raise RuntimeError("V36 active source changed")
-    role = state["stage"].removeprefix("V36-")
+    role = state["stage"].removeprefix(namespace.upper() + "-")
     artifact = ARTIFACT / folder.name
     artifact.mkdir(parents=True, exist_ok=False)
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        from src.solvers.port_component_study import execute
+        if namespace == "v37":
+            from src.solvers.target_boundary_witness import execute
+        else:
+            from src.solvers.port_component_study import execute
 
         os.environ["TASK042_RUN_SOURCE"] = state["source_sha"]
         result = execute(role, artifact, state)
@@ -244,10 +269,15 @@ def worker(folder):
 
 def main():
     if sys.argv[1] == "--worker":
-        worker(Path(sys.argv[2]).resolve())
+        worker(Path(sys.argv[2]).resolve(), sys.argv[3] if len(sys.argv) > 3 else "v36")
         return 0
     if sys.argv[1] == "--aux":
-        result = launch(command=sys.argv[4:], phase=sys.argv[2], attempt=sys.argv[3])
+        result = launch(
+            command=sys.argv[4:],
+            phase=sys.argv[2],
+            attempt=sys.argv[3],
+            namespace=os.environ.get("TASK042_PREPARATION_SCOPE", "v36"),
+        )
         print(
             json.dumps(
                 {

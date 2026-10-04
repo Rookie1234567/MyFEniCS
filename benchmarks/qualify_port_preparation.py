@@ -13,10 +13,18 @@ from src.solvers.port_preparation_window import ROOT, implementation_hashes, win
 
 
 def main():
-    window.guard_worker_parent()
+    namespace = os.environ.get("TASK042_PREPARATION_SCOPE", "v36")
+    if namespace == "v37":
+        from src.solvers.boundary_witness_scope import (
+            implementation_hashes as selected_hashes,
+        )
+        from src.solvers.boundary_witness_scope import window as selected_window
+    else:
+        selected_window, selected_hashes = window, implementation_hashes
+    selected_window.guard_worker_parent()
     folder = Path(os.environ["TASK042_V36_AUX_DIRECTORY"])
     began = perf_counter()
-    before_style = implementation_hashes()
+    before_style = selected_hashes()
     if "--finish-style" in sys.argv:
         # Optional authoring pass, before compilation or any numerical test.
         # Only new files are changed. Before/after identities remain explicit.
@@ -46,7 +54,7 @@ def main():
             (folder / f"authoring{i}.stderr").write_text(run.stderr)
             if run.returncode:
                 raise RuntimeError("final new-file style check failed")
-    hashes = implementation_hashes()
+    hashes = selected_hashes()
     for file in hashes:
         if file.endswith(".py"):
             compile((ROOT / file).read_bytes(), file, "exec")
@@ -79,6 +87,7 @@ def main():
             "--basetemp=" + str(folder / "fixtures"),
             "src/test/test_task042_v36_ports.py",
             "src/test/test_task042_v36_checker.py",
+            *(["src/test/test_boundary_witness.py"] if namespace == "v37" else []),
             "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
             "--junitxml=" + str(folder / "pytest.xml"),
         ]
@@ -92,7 +101,9 @@ def main():
             str(n),
             sys.executable,
             "-m",
-            "src.test.port_provider_mpi_fixture",
+            "src.test.tiled_port_mpi_fixture"
+            if namespace == "v37"
+            else "src.test.port_provider_mpi_fixture",
             str(folder / f"mpi{n}.json"),
         ]
         for n in (2, 4)
