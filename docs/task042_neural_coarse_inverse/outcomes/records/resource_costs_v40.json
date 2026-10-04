@@ -1,0 +1,211 @@
+{
+  "status": "FINAL_ACCOUNTED_CLOSED_NO_ACTIVE_NUMERICAL_QUEUE",
+  "immutable_start": {
+    "start_utc_seconds": 1791101485.681001,
+    "start_monotonic": 1026480.5418683187,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_seconds": 86400,
+    "heavy_seconds": 82800,
+    "label": "V40",
+    "first_observation_utc": "2026-10-04T08:11:25.681001319+00:00",
+    "paired_utc_seconds": 1791101697.4742558,
+    "paired_monotonic": 1026692.335123171,
+    "monotonic_anchor_method": "first observation UTC conservatively back-projected using contemporaneous pair; unchanged original start",
+    "bootstrap_utc": 1791101697.4742558,
+    "bootstrap_monotonic": 1026692.335123171,
+    "initial_HEAD": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+    "review_commit": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "component_seconds": 5400,
+    "slow_oracle_seconds": 2400,
+    "cleanup_reserve_seconds": 180,
+    "new_storage_bytes": 2147483648,
+    "actors_before": [],
+    "start_utc": "2026-10-04T08:11:25.681001+00:00"
+  },
+  "settlement_clock": {
+    "observed_UTC": "2026-10-04T09:11:09.192651+00:00",
+    "observed_monotonic": 1030064.053505629,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "elapsed_seconds": 3583.5116374492645,
+    "total_remaining_seconds": 82816.48836255074,
+    "heavy_remaining_seconds": 79216.48836255074
+  },
+  "shared_workstation": true,
+  "supervised_seconds": 1260.375694643939,
+  "paid_probe_seconds": 24.51426520117093,
+  "bootstrap_conservative_seconds": 3,
+  "delivery_close_charge_upper_seconds": 5,
+  "charged_total_upper_seconds": 1292.8899598451098,
+  "formal_component_seconds": 966.4548192659859,
+  "native_and_slow_oracle_seconds": 934.3315227549756,
+  "limits": {
+    "total_loaded": 7200,
+    "component": 5400,
+    "native": 2400,
+    "probes": 60
+  },
+  "runs": [
+    {
+      "role": "pre",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_pre_01",
+      "seconds": 40.72261619602796,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_pre_02",
+      "seconds": 43.00687519996427,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_pre_03",
+      "seconds": 43.06230158195831,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_pre_04",
+      "seconds": 15.156842492055148,
+      "classification": "RESOURCE_CONTROLLED_STOP"
+    },
+    {
+      "role": "archive",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_archive_01",
+      "seconds": 23.449780758935958,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_pre_05",
+      "seconds": 28.433801762992516,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "folder": "tmp/task042/v40/aux_pre_06",
+      "seconds": 47.6245176140219,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "PREFLIGHT",
+      "source_sha": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "folder": "results/task042/task042_v40_preflight_20261004T084017723687Z",
+      "seconds": 17.90820497192908,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "BUILD",
+      "source_sha": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "folder": "results/task042/task042_v40_build_20261004T084054547649Z",
+      "seconds": 860.3628998380154,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "source_sha": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "folder": "tmp/task042/v40/aux_pre_07",
+      "seconds": 7.0861428279895335,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "BUILD",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "results/task042/task042_v40_build_20261004T085721927315Z",
+      "seconds": 34.73582494503353,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "RECOVER",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "results/task042/task042_v40_recover_20261004T085815523163Z",
+      "seconds": 21.32459299999755,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "CHECK",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "results/task042/task042_v40_check_20261004T085853350426Z",
+      "seconds": 12.832949172938243,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "DEPLOY",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "results/task042/task042_v40_deploy_20261004T085921265270Z",
+      "seconds": 14.798617633990943,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "CAPACITY",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "results/task042/task042_v40_capacity_20261004T085954735502Z",
+      "seconds": 4.491729704081081,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "tmp/task042/v40/aux_archive_02",
+      "seconds": 6.8001344200456515,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "tmp/task042/v40/aux_post_01",
+      "seconds": 31.483599115977995,
+      "classification": "WORKER_FAILED"
+    },
+    {
+      "role": "post",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "tmp/task042/v40/aux_post_02",
+      "seconds": 3.667392681003548,
+      "classification": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+      "folder": "tmp/task042/v40/aux_archive_03",
+      "seconds": 3.426870726980269,
+      "classification": "COMPLETED"
+    }
+  ],
+  "historical_research_lower_seconds": 78517.88650908363,
+  "V39_supervised_seconds": 1249.459315514192,
+  "retained_supervised_research_lower_seconds": 81027.72151924176,
+  "historical_unknown": [
+    "full old end-to-end overhead, unsupervised implementation and metadata",
+    "full target setup/K/PC/solve/recovery/audit/IO"
+  ],
+  "no_nested_timing_double_count": true,
+  "whole_tree_sampled_peak_bytes": 1265823744,
+  "own_swap_peak_bytes": 0,
+  "storage_snapshot": {
+    "new": {
+      "bytes": 480869421,
+      "files": 1110,
+      "docs_bytes": 2076810,
+      "including_docs_bytes": 482946231
+    },
+    "task_artifacts": {
+      "bytes": 15589782476,
+      "files": 6339
+    },
+    "free_bytes": 3362260193280
+  },
+  "source": "920527707948c2325f0750af1d50cdc479551f69",
+  "ancestor_raw_index": "raw_evidence_index_v39.json; unchanged closed ledger and failures",
+  "final_stage_subtimings": "checkpoint_inventory_v40.json/deployment_package_v40.json; subsets, not added to supervised total"
+}

@@ -1,0 +1,75 @@
+{
+  "merge_approved": false,
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/native_boundary_adapter.py",
+        "src/solvers/hcurl_assembly_time_condensation.py",
+        "src/solvers/native_recovery_packets.py"
+      ],
+      "changes": "bounded entity packets/compact transpose and opt-in atomic class callback; original equations/default solver unchanged",
+      "dependencies": [
+        "matching native basis/MPC/source contract"
+      ],
+      "tests": "39+real Basix targeted; component_checker_v40.json",
+      "fresh_PDE": "NOT_RUN",
+      "order": 1,
+      "status": "opt-in candidate, not production promotion"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/io/port_preparation.py",
+        "scripts/run_case.py",
+        "src/solvers/native_recovery_scope.py"
+      ],
+      "changes": "explicit V40 one-run/window/storage/guard binding",
+      "tests": "schema6 inputs, savedCPU/own-tree checks",
+      "fresh_PDE": "NOT_RUN",
+      "order": 2
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_native_recovery.py",
+        "benchmarks/check_native_integration.py",
+        "benchmarks/archive_native_fixtures.py",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_native_recovery.py"
+      ],
+      "changes": "independent unfactored CSR/raw tensor/RHS/MPC audit and exact fixture compression",
+      "tests": "tests_v40.json",
+      "order": 3
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "response_v40.md",
+        "outcomes/native_volume_affine_recovery_v40.md",
+        "outcomes/records/*v40*"
+      ],
+      "changes": "retain positive/negative measured evidence and conditional capacity",
+      "order": 4
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/native_recovery_study.py",
+        "input/task042_neural_coarse_inverse/v40_*.dat",
+        "input/task042_neural_coarse_inverse/native_recovery_v40.json"
+      ],
+      "changes": "single finite8hex witness, not target production solver"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v40",
+        "tmp/task042/v40",
+        "results/task042/task042_v40_*"
+      ],
+      "changes": "large arrays, local factors, JIT and runtime caches stay ignored"
+    }
+  ]
+}

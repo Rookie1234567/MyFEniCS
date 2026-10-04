@@ -1,0 +1,236 @@
+{
+  "status": "REAL_VOLUME_RECOVERY_CONSUMER_QUALIFIED",
+  "actual_source": "920527707948c2325f0750af1d50cdc479551f69",
+  "checkpoint_root": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints",
+  "packet": {
+    "schema": "native-recovery-packet.v1",
+    "name": "consumer",
+    "arrays": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/consumer.npz",
+      "sha256": "7f313c4c330557e9a408114c3afe3d8ee64cc208e74920e9bbbe0a11b1739fd7",
+      "aliases": {},
+      "members": {
+        "forward": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "672ebc9a40a6089aff2da14a03a201ebb8e0f1cfb4eebf27550f961c002041e9"
+        },
+        "adjoint": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "d24c13bc12af2d22c98a269f3170be982f3e05e45ab6497c919689f66c58692b"
+        },
+        "u": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "94109dbac73a74623b61c411b3efff6c3df298728079854bb9390b8894e0fef8"
+        },
+        "reduced_rhs": {
+          "shape": [
+            2808
+          ],
+          "dtype": "<c16",
+          "sha256": "5d30b68e84613341c7bee8104b9f4b09ac050b490c236cd59cc224141e38d4b8"
+        },
+        "rFE": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "43b7f42bc00677a29acc71995bee533e36dba2231c4df168542842976c067109"
+        },
+        "rport": {
+          "shape": [
+            12
+          ],
+          "dtype": "<c16",
+          "sha256": "e14275a0083c96056b486c5078cbcfaf33594461951a89edab0db9f1c6c5c4d4"
+        },
+        "rnative": {
+          "shape": [
+            7056
+          ],
+          "dtype": "<c16",
+          "sha256": "65a4f54cd59e75dd264721fa4243a5f4ab446ddc1acf197627394de9fe25eec0"
+        }
+      }
+    },
+    "dependencies": {
+      "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+      "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "numeric_sources": {
+        "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+        "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+        "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+        "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+        "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+      },
+      "ABI": {
+        "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scalar": "complex128",
+        "IntType": "int64",
+        "module_paths": {
+          "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+          "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+          "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+          "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+          "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+        },
+        "MPI_size": 1
+      }
+    },
+    "source_sha": "920527707948c2325f0750af1d50cdc479551f69",
+    "metadata": {
+      "costs": {
+        "hash_decode_load_setup": 10.884129978017882,
+        "two_full_native_actions": 0.170527548994869,
+        "nonzero_rhs_reduce_recover": 0.061962799984030426,
+        "independent_original_CSR_residual_audit": 0.09477506100665778,
+        "save_hash_IO": 0.05570662207901478
+      },
+      "contract": {
+        "schema": "native-volume-boundary-consumer.v1",
+        "boundary": "0206e921cfbe74898bb8a18730bba836212b27deb6ad420bfcd4ce7a068ba5a2",
+        "native": "b8df9c67674f6d89eceaa5742b41fa79e41d2ebb111293924bcdb198fe86b8d4",
+        "physical": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "dependencies": {
+          "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+          "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "numeric_sources": {
+            "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+            "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+            "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+            "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+            "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+          },
+          "ABI": {
+            "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+            "scalar": "complex128",
+            "IntType": "int64",
+            "module_paths": {
+              "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+              "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+              "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+              "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+              "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+            },
+            "MPI_size": 1
+          }
+        },
+        "basis": "N1E-hexahedron-p6-Legendre-882",
+        "q_volume": 15,
+        "Hp": "IMPLICIT_IDENTITY",
+        "port_D": "normalized_once"
+      },
+      "callback": "REAL_SAVED_NATIVE_CLASS_TENSORS",
+      "fresh_process": true
+    },
+    "save_hash_seconds": 0.051078448072075844,
+    "unique_payload_bytes": 609600,
+    "commit": true
+  },
+  "calls": {
+    "forward": 1,
+    "adjoint": 1
+  },
+  "times": {
+    "hash_decode_load_setup": 10.884129978017882,
+    "two_full_native_actions": 0.170527548994869,
+    "nonzero_rhs_reduce_recover": 0.061962799984030426,
+    "independent_original_CSR_residual_audit": 0.09477506100665778,
+    "save_hash_IO": 0.05570662207901478
+  },
+  "volume_seconds": {
+    "forward": 0.014466943102888763,
+    "adjoint": 0.028271251008845866
+  },
+  "adapter": {
+    "extract_calls": 2,
+    "scatter_calls": 2,
+    "extract_seconds": 0.0007987889694049954,
+    "scatter_seconds": 0.0052741579711437225
+  },
+  "checks": [
+    {
+      "kind": "forward",
+      "numerator": 0.0,
+      "denominator": 3174785.1168991216,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "adjoint",
+      "numerator": 0.0,
+      "denominator": 3198029.124865957,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "u",
+      "numerator": 0.0,
+      "denominator": 227.84280428842814,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "reduced_rhs",
+      "numerator": 0.0,
+      "denominator": 222.69304793922794,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "kind": "fresh_consumer_native_augmented_identity",
+      "numerator": 3.6076703887972033e-12,
+      "denominator": 65724.5009641912,
+      "relative": 5.4890799258601855e-17,
+      "passed": true
+    }
+  ],
+  "contract": {
+    "schema": "native-volume-boundary-consumer.v1",
+    "boundary": "0206e921cfbe74898bb8a18730bba836212b27deb6ad420bfcd4ce7a068ba5a2",
+    "native": "b8df9c67674f6d89eceaa5742b41fa79e41d2ebb111293924bcdb198fe86b8d4",
+    "physical": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+    "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "dependencies": {
+      "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+      "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "numeric_sources": {
+        "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+        "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+        "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+        "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+        "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+      },
+      "ABI": {
+        "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "scalar": "complex128",
+        "IntType": "int64",
+        "module_paths": {
+          "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+          "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+          "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+          "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+          "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+        },
+        "MPI_size": 1
+      }
+    },
+    "basis": "N1E-hexahedron-p6-Legendre-882",
+    "q_volume": 15,
+    "Hp": "IMPLICIT_IDENTITY",
+    "port_D": "normalized_once"
+  },
+  "callable_core": "LocalNativeVolumeAction + CoupledNativeBoundaryAction; original P6CellCondensedAction.reduce_rhs/recover_storage",
+  "MPI": 1,
+  "Hp": "implicit identity; native=B*normalized_D; nonzero effective f-B*g",
+  "physical_PDE_solved": false
+}

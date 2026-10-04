@@ -1,0 +1,19 @@
+{
+  "native": "COUPLED_ACTION_AND_AFFINE_RECOVERY_QUALIFIED_ON_WITNESSES",
+  "independent_checker": "SAVED_NATIVE_RECOVERY_QUALIFIED",
+  "consumer": "REAL_VOLUME_RECOVERY_CONSUMER_QUALIFIED",
+  "actual_new_hex": 8,
+  "actual_local_internal_LU": 4,
+  "cache_bytes": 56274336,
+  "global_p4_LU": false,
+  "local_p6_LU_present": true,
+  "tiny_CSR_unfactored": true,
+  "global_target_mesh_matrix_LU_QR_Krylov_training": false,
+  "old_unnormalized_internal_zero_FAIL_retained": {
+    "l2": 6.423614109330073e-12,
+    "absolute_limit": 1e-12
+  },
+  "target_full_PDE": "NOT_RUN_NOT_QUALIFIED",
+  "NN20": "NOT_DEMONSTRATED",
+  "shared_workstation": true
+}

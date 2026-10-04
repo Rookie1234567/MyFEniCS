@@ -1,0 +1,1118 @@
+{
+  "packets": [
+    {
+      "name": "build_costs",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/build_costs.json",
+        "sha256": "55fee010674d3d4261a8c52aec32695725b595d19c2dc931212dea33fc1d21d5",
+        "bytes": 2404
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 0,
+      "compressed_file_bytes": 22,
+      "hash_IO_seconds": 0.0008999599376693368,
+      "metadata": {
+        "native_geometry_constraints_carrier": 4.420294041046873,
+        "native_volume_compile_or_exact_cache_load": 0.010471521993167698,
+        "original_class_build_with_atomic_save": 282.0056391169783
+      }
+    },
+    {
+      "name": "class_attempt_0_0",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/class_attempt_0_0.json",
+        "sha256": "d19f6905c34145e3ed7519828da536beeabc16c5b17ed6ccdd68f18cd9d50001",
+        "bytes": 4330
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 26518896,
+      "compressed_file_bytes": 19344631,
+      "hash_IO_seconds": 1.561955087003298,
+      "metadata": {
+        "original_key": "(2, 0.6875, 0.6944444444444444, 0.6666666666666661, 0)",
+        "class_compute_seconds": 0.25239848997443914
+      }
+    },
+    {
+      "name": "class_attempt_0_1",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/class_attempt_0_1.json",
+        "sha256": "75182764e09b0e00937eb446e6e6474ee26a6e6d75fa062f3c94a35559774d9a",
+        "bytes": 4330
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 26518896,
+      "compressed_file_bytes": 19346165,
+      "hash_IO_seconds": 1.5436727739870548,
+      "metadata": {
+        "original_key": "(2, 0.6875, 0.6944444444444464, 0.6666666666666661, 0)",
+        "class_compute_seconds": 0.1464389719767496
+      }
+    },
+    {
+      "name": "class_attempt_0_2",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/class_attempt_0_2.json",
+        "sha256": "4f8103bd860269dff8211d7b99c804692dc35e4d034c148c4778b7c066c5da9c",
+        "bytes": 4330
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 26518896,
+      "compressed_file_bytes": 10638314,
+      "hash_IO_seconds": 1.2395260219927877,
+      "metadata": {
+        "original_key": "(1, 0.6875, 0.6944444444444444, 0.6666666666666572, 0)",
+        "class_compute_seconds": 0.1455818690592423
+      }
+    },
+    {
+      "name": "class_attempt_0_3",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/class_attempt_0_3.json",
+        "sha256": "a88f6bd666f3b87478cd0ee32be958daa61c2ae4855e278a919e55216c399236",
+        "bytes": 4331
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 26518896,
+      "compressed_file_bytes": 10638345,
+      "hash_IO_seconds": 1.2293665319448337,
+      "metadata": {
+        "original_key": "(1, 0.6875, 0.6944444444444464, 0.6666666666666572, 0)",
+        "class_compute_seconds": 0.23372853291220963
+      }
+    },
+    {
+      "name": "consumer",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/consumer.json",
+        "sha256": "15d049dc5e438f971c04f047f3a2c9342bc6a4e6c68ed3f6d4477e0588a47159",
+        "bytes": 6188
+      },
+      "actual_source": "920527707948c2325f0750af1d50cdc479551f69",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 609600,
+      "compressed_file_bytes": 507179,
+      "hash_IO_seconds": 0.051078448072075844,
+      "metadata": {
+        "costs": {
+          "hash_decode_load_setup": 10.884129978017882,
+          "two_full_native_actions": 0.170527548994869,
+          "nonzero_rhs_reduce_recover": 0.061962799984030426,
+          "independent_original_CSR_residual_audit": 0.09477506100665778
+        },
+        "contract": {
+          "schema": "native-volume-boundary-consumer.v1",
+          "boundary": "0206e921cfbe74898bb8a18730bba836212b27deb6ad420bfcd4ce7a068ba5a2",
+          "native": "b8df9c67674f6d89eceaa5742b41fa79e41d2ebb111293924bcdb198fe86b8d4",
+          "physical": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+          "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "dependencies": {
+            "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+            "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "numeric_sources": {
+              "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+              "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+              "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+              "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+              "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+            },
+            "ABI": {
+              "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+              "scalar": "complex128",
+              "IntType": "int64",
+              "module_paths": {
+                "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+                "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+                "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+                "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+                "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+              },
+              "MPI_size": 1
+            }
+          },
+          "basis": "N1E-hexahedron-p6-Legendre-882",
+          "q_volume": 15,
+          "Hp": "IMPLICIT_IDENTITY",
+          "port_D": "normalized_once"
+        },
+        "callback": "REAL_SAVED_NATIVE_CLASS_TENSORS",
+        "fresh_process": true
+      }
+    },
+    {
+      "name": "geometry",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/geometry.json",
+        "sha256": "b8cf886f932d2db2dacd84ca96aea2d6c8eb300a11c4ac92c0e976bcd25855d6",
+        "bytes": 13106
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 346888,
+      "compressed_file_bytes": 70322,
+      "hash_IO_seconds": 0.015773315099067986,
+      "metadata": {
+        "description": {
+          "name": "xy_corner",
+          "cells": [
+            {
+              "indices": [
+                0,
+                0,
+                0
+              ],
+              "side": "bottom",
+              "bounds_nm": [
+                [
+                  0.0,
+                  0.6875
+                ],
+                [
+                  0.0,
+                  0.6944444444444444
+                ],
+                [
+                  -10.0,
+                  -9.333333333333334
+                ]
+              ]
+            },
+            {
+              "indices": [
+                0,
+                35,
+                0
+              ],
+              "side": "bottom",
+              "bounds_nm": [
+                [
+                  0.0,
+                  0.6875
+                ],
+                [
+                  24.305555555555554,
+                  25.0
+                ],
+                [
+                  -10.0,
+                  -9.333333333333334
+                ]
+              ]
+            },
+            {
+              "indices": [
+                72,
+                0,
+                0
+              ],
+              "side": "bottom",
+              "bounds_nm": [
+                [
+                  49.3125,
+                  50.0
+                ],
+                [
+                  0.0,
+                  0.6944444444444444
+                ],
+                [
+                  -10.0,
+                  -9.333333333333334
+                ]
+              ]
+            },
+            {
+              "indices": [
+                72,
+                35,
+                0
+              ],
+              "side": "bottom",
+              "bounds_nm": [
+                [
+                  49.3125,
+                  50.0
+                ],
+                [
+                  24.305555555555554,
+                  25.0
+                ],
+                [
+                  -10.0,
+                  -9.333333333333334
+                ]
+              ]
+            },
+            {
+              "indices": [
+                0,
+                0,
+                201
+              ],
+              "side": "top",
+              "bounds_nm": [
+                [
+                  0.0,
+                  0.6875
+                ],
+                [
+                  0.0,
+                  0.6944444444444444
+                ],
+                [
+                  129.33333333333334,
+                  130.0
+                ]
+              ]
+            },
+            {
+              "indices": [
+                0,
+                35,
+                201
+              ],
+              "side": "top",
+              "bounds_nm": [
+                [
+                  0.0,
+                  0.6875
+                ],
+                [
+                  24.305555555555554,
+                  25.0
+                ],
+                [
+                  129.33333333333334,
+                  130.0
+                ]
+              ]
+            },
+            {
+              "indices": [
+                72,
+                0,
+                201
+              ],
+              "side": "top",
+              "bounds_nm": [
+                [
+                  49.3125,
+                  50.0
+                ],
+                [
+                  0.0,
+                  0.6944444444444444
+                ],
+                [
+                  129.33333333333334,
+                  130.0
+                ]
+              ]
+            },
+            {
+              "indices": [
+                72,
+                35,
+                201
+              ],
+              "side": "top",
+              "bounds_nm": [
+                [
+                  49.3125,
+                  50.0
+                ],
+                [
+                  24.305555555555554,
+                  25.0
+                ],
+                [
+                  129.33333333333334,
+                  130.0
+                ]
+              ]
+            }
+          ]
+        },
+        "contract": {
+          "schema": "native-volume-boundary-consumer.v1",
+          "boundary": "0206e921cfbe74898bb8a18730bba836212b27deb6ad420bfcd4ce7a068ba5a2",
+          "native": "b8df9c67674f6d89eceaa5742b41fa79e41d2ebb111293924bcdb198fe86b8d4",
+          "physical": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8",
+          "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+          "dependencies": {
+            "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+            "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+            "numeric_sources": {
+              "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+              "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+              "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+              "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+              "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+            },
+            "ABI": {
+              "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+              "scalar": "complex128",
+              "IntType": "int64",
+              "module_paths": {
+                "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+                "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+                "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+                "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+                "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+              },
+              "MPI_size": 1
+            }
+          },
+          "basis": "N1E-hexahedron-p6-Legendre-882",
+          "q_volume": 15,
+          "Hp": "IMPLICIT_IDENTITY",
+          "port_D": "normalized_once"
+        },
+        "class_keys": [
+          "(2, 0.6875, 0.6944444444444444, 0.6666666666666661, 0)",
+          "(2, 0.6875, 0.6944444444444464, 0.6666666666666661, 0)",
+          "(2, 0.6875, 0.6944444444444444, 0.6666666666666661, 0)",
+          "(2, 0.6875, 0.6944444444444464, 0.6666666666666661, 0)",
+          "(1, 0.6875, 0.6944444444444444, 0.6666666666666572, 0)",
+          "(1, 0.6875, 0.6944444444444464, 0.6666666666666572, 0)",
+          "(1, 0.6875, 0.6944444444444444, 0.6666666666666572, 0)",
+          "(1, 0.6875, 0.6944444444444464, 0.6666666666666572, 0)"
+        ],
+        "independent_trace_carrier": {
+          "constructor": "P6CellCondensedAction",
+          "rows": 2796,
+          "terms": 12,
+          "audit": {
+            "schema_version": "task039extra.v19.p6-cell-condensed-action.v1",
+            "matrix_materialized": false,
+            "global_s6_allocated": false,
+            "global_a6_allocated": false,
+            "global_dense_trace_port_block_allocated": false,
+            "local_cell_count": 0,
+            "local_class_count": 0,
+            "active_trace_rows": 2796,
+            "appended_port_rows": 12,
+            "H_p_is_original_carrier_block": true,
+            "Hhat_is_retained_small_dense_block": true,
+            "shared_S_V_buffer_count": 0,
+            "shared_recovery_buffer_count": 0,
+            "shared_LU_factor_buffer_count": 0,
+            "class_cache_shared_across_cells": true,
+            "direct_trace_B_entry_count": 33552,
+            "direct_trace_D_entry_count": 33552,
+            "apply_count": 0,
+            "hp_solve_count": 0
+          },
+          "new_LU": 0
+        },
+        "costs": {
+          "native_geometry_constraints_carrier": 4.420294041046873
+        },
+        "class_count": 4,
+        "n": 7056,
+        "ports": 12
+      }
+    },
+    {
+      "name": "oracle",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/oracle.json",
+        "sha256": "72ae0cfbbf878267ef4110d46678e44da5d2584a573066c6a582cd11a8b6c2a4",
+        "bytes": 3028
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 177943704,
+      "compressed_file_bytes": 58588740,
+      "hash_IO_seconds": 7.032965542981401,
+      "metadata": {
+        "original_native_assembly_seconds": 550.1451303429203,
+        "unfactored": true,
+        "hex": 8
+      }
+    },
+    {
+      "name": "quadrature",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/quadrature.json",
+        "sha256": "4a821e26b6eeab4e2b10e6aaf99f922c1760d2e60802eda3889fbd2b97ba5b9b",
+        "bytes": 4734
+      },
+      "actual_source": "920527707948c2325f0750af1d50cdc479551f69",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 74680736,
+      "compressed_file_bytes": 36408881,
+      "hash_IO_seconds": 3.8666939079994336,
+      "metadata": {
+        "checks": [
+          {
+            "kind": "tag2_q15_q17",
+            "numerator": 3.0545052822342803e-09,
+            "denominator": 818442.9524527291,
+            "relative": 3.732093083678547e-15,
+            "passed": true
+          },
+          {
+            "kind": "tag2_native_q17",
+            "numerator": 3.3835195961645755e-09,
+            "denominator": 818442.9524527291,
+            "relative": 4.13409338552524e-15,
+            "passed": true
+          },
+          {
+            "kind": "tag1_q15_q17",
+            "numerator": 3.0573731724511086e-09,
+            "denominator": 818432.9579580125,
+            "relative": 3.735642782616239e-15,
+            "passed": true
+          },
+          {
+            "kind": "tag1_native_q17",
+            "numerator": 3.2111551121028795e-09,
+            "denominator": 818432.9579580125,
+            "relative": 3.923540811595248e-15,
+            "passed": true
+          }
+        ],
+        "seconds": 19.802860854077153,
+        "tags": [
+          1,
+          2
+        ],
+        "orientation": "Basix T on both native tensor axes"
+      }
+    },
+    {
+      "name": "recovery",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/recovery.json",
+        "sha256": "cbb931f30f2c00014e9a0b3fe7284eeb465c893915f7ffba9cb8f6f66a9bab94",
+        "bytes": 11084
+      },
+      "actual_source": "920527707948c2325f0750af1d50cdc479551f69",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 8534592,
+      "compressed_file_bytes": 3099056,
+      "hash_IO_seconds": 0.1788334889570251,
+      "metadata": {
+        "seconds": 1.1553420400014147,
+        "input_norms": {
+          "f": 112.78070312832392,
+          "g": 5.478914189069176
+        },
+        "volume_calls": {
+          "forward": 9,
+          "adjoint": 8
+        },
+        "volume_seconds": {
+          "forward": 0.16175688593648374,
+          "adjoint": 0.25392780581023544
+        },
+        "condensed_calls": {
+          "schema_version": "task039extra.v19.p6-cell-condensed-action.v1",
+          "matrix_materialized": false,
+          "global_s6_allocated": false,
+          "global_a6_allocated": false,
+          "global_dense_trace_port_block_allocated": false,
+          "local_cell_count": 8,
+          "local_class_count": 4,
+          "active_trace_rows": 2796,
+          "appended_port_rows": 12,
+          "H_p_is_original_carrier_block": true,
+          "Hhat_is_retained_small_dense_block": true,
+          "shared_S_V_buffer_count": 4,
+          "shared_recovery_buffer_count": 4,
+          "shared_LU_factor_buffer_count": 4,
+          "class_cache_shared_across_cells": true,
+          "direct_trace_B_entry_count": 33552,
+          "direct_trace_D_entry_count": 33552,
+          "apply_count": 1,
+          "hp_solve_count": 0
+        },
+        "physical_solution": false
+      }
+    },
+    {
+      "name": "system",
+      "manifest": {
+        "path": "benchmarks/artifacts/task042/v40/checkpoints/system.json",
+        "sha256": "1cb0f340f7edb0544101a1848e8d6a34a33981759f5adeef8f38d630f5f00ea4",
+        "bytes": 15377
+      },
+      "actual_source": "48e4c0d8fdcea0a37e03cdc5812e58b03d4fa1d3",
+      "dependencies": {
+        "plan": "3449b7b7f28d17d8e38631239f1423e50ded4ac777f3b87b35606d24e0dd7511",
+        "material": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "numeric_sources": {
+          "src/solvers/common_3d_forms.py": "4f2b8054d1069b4b1c9c9f910c9bebf19c2ee5cf0b6ead085b64d4d099760dec",
+          "src/solvers/hcurl_assembly_time_condensation.py": "324e7abbd65455a26287fc2d4de596b0447e0065bbabd8e528b8a1d5d36871fa",
+          "src/solvers/p6_cell_condensed_action.py": "700e7bbe880c064ace30bc1fd4fe711b2d47e9e4f21fbf356321d845243b00c2",
+          "src/solvers/native_boundary_adapter.py": "8572121c7e58f32cb64d0a08718ceb9038364a28b855918245706e0f1757aff5",
+          "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f"
+        },
+        "ABI": {
+          "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "scalar": "complex128",
+          "IntType": "int64",
+          "module_paths": {
+            "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+            "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+            "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+            "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+            "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+          },
+          "MPI_size": 1
+        }
+      },
+      "unique_payload_bytes": 317160,
+      "compressed_file_bytes": 54827,
+      "hash_IO_seconds": 0.017102712066844106,
+      "metadata": {
+        "sizes": {
+          "full_rows": 7056,
+          "trace_rows": 3456,
+          "active_rows": 2796,
+          "appended_rows": 12,
+          "interior_rows": 3600,
+          "active_interior_rows": 3600,
+          "owned_active_rows": 2796,
+          "owned_appended_rows": 12
+        },
+        "constraint_sizes": {
+          "full_trace_rows": 3456,
+          "active_rows": 2796,
+          "slave_rows": 660
+        },
+        "classes": [
+          {
+            "name": "class_attempt_0_0",
+            "sha256": "d19f6905c34145e3ed7519828da536beeabc16c5b17ed6ccdd68f18cd9d50001"
+          },
+          {
+            "name": "class_attempt_0_1",
+            "sha256": "75182764e09b0e00937eb446e6e6474ee26a6e6d75fa062f3c94a35559774d9a"
+          },
+          {
+            "name": "class_attempt_0_2",
+            "sha256": "4f8103bd860269dff8211d7b99c804692dc35e4d034c148c4778b7c066c5da9c"
+          },
+          {
+            "name": "class_attempt_0_3",
+            "sha256": "a88f6bd666f3b87478cd0ee32be958daa61c2ae4855e278a919e55216c399236"
+          }
+        ],
+        "build_audit": {
+          "schema_version": "task035b.assembly-time-cell-condensation.v1",
+          "status": "unconstrained_trace_schur_built_without_full_matrix",
+          "full_rows": 7056,
+          "trace_rows": 3456,
+          "active_rows": 2796,
+          "appended_rows": 12,
+          "matrix_rows": 2808,
+          "matrix_materialized": false,
+          "global_active_F_allocated": false,
+          "trace_preallocation_status": "not_run_action_only",
+          "trace_insertion_status": "not_run_action_only",
+          "final_assembly_status": "not_run_action_only",
+          "interior_rows": 3600,
+          "owned_cell_count_global": 8,
+          "local_tensor_dimension": 882,
+          "local_trace_dimension": 432,
+          "local_interior_dimension": 450,
+          "active_cell_interior_modes": 3600,
+          "active_full3d_equivalent_dofs": 7056,
+          "storage_function_space_dofs": 7056,
+          "inactive_max_p_rows_retained_in_matrix": false,
+          "full_global_matrix_allocated": false,
+          "full_trace_matrix_allocated": false,
+          "embedded_mpc_slave_identity_rows_allocated": false,
+          "assembly_cost_avoided": true,
+          "final_matrix_assembly_deferred_for_appended_rows": false,
+          "axis_aligned_affine_geometry_verified": true,
+          "geometry_identity_policy": "raw_unrounded",
+          "geometry_identity_rounding": "none",
+          "retained_local_schur_enabled": true,
+          "retained_original_audit_bytes_local": 49787136,
+          "shared_readonly_identity_cache": true,
+          "shared_identity_cache_dimensions": [
+            450
+          ],
+          "dense_appended_block": false,
+          "sum_duplicate_cell_integrals": false,
+          "strict_local_checks": true,
+          "action_only_complete_tensor_identities": {
+            "(2, 0.6875, 0.6944444444444444, 0.6666666666666661, 0)": {
+              "shape": [
+                882,
+                882
+              ],
+              "dtype": "complex128",
+              "raw_sha256": "6140deb4006983b2b0f223f2339b4d3f3595a20a6f768ea3d03f5c3cce77942a",
+              "oriented_sha256": "6140deb4006983b2b0f223f2339b4d3f3595a20a6f768ea3d03f5c3cce77942a"
+            },
+            "(2, 0.6875, 0.6944444444444464, 0.6666666666666661, 0)": {
+              "shape": [
+                882,
+                882
+              ],
+              "dtype": "complex128",
+              "raw_sha256": "ff1a94950a8d0c213c47c3ead915266b7aed6dd126c9b7443f29fcbe370f59c8",
+              "oriented_sha256": "ff1a94950a8d0c213c47c3ead915266b7aed6dd126c9b7443f29fcbe370f59c8"
+            },
+            "(1, 0.6875, 0.6944444444444444, 0.6666666666666572, 0)": {
+              "shape": [
+                882,
+                882
+              ],
+              "dtype": "complex128",
+              "raw_sha256": "42dacc72965c6f9c7a25b70245e9f2faeb93c0d857b476c106961edc2220fb87",
+              "oriented_sha256": "42dacc72965c6f9c7a25b70245e9f2faeb93c0d857b476c106961edc2220fb87"
+            },
+            "(1, 0.6875, 0.6944444444444464, 0.6666666666666572, 0)": {
+              "shape": [
+                882,
+                882
+              ],
+              "dtype": "complex128",
+              "raw_sha256": "05955f02b5e1052e3eb5ae3401e92c127a5505e51eb3f72463d7b6e0cf47866d",
+              "oriented_sha256": "05955f02b5e1052e3eb5ae3401e92c127a5505e51eb3f72463d7b6e0cf47866d"
+            }
+          },
+          "local_lu_identity_relative_residual_max": 8.538710790539979e-19,
+          "retained_local_schur_class_count_local": 4,
+          "retained_local_schur_class_count_sum": 4,
+          "retained_local_schur_bytes_local": 11943936,
+          "retained_local_schur_bytes_sum": 11943936,
+          "assembly_temporary_cache_bytes_local": {
+            "raw_tensor_bytes": 49787136,
+            "oriented_schur_bytes": 11943936,
+            "scope": "assembly-time peak components; raw/oriented arrays are released after return"
+          },
+          "assembly_temporary_cache_bytes_sum": {
+            "raw_tensor_bytes": 49787136,
+            "oriented_schur_bytes": 11943936
+          },
+          "assembly_temporary_cache_bytes_max": {
+            "raw_tensor_bytes": 49787136,
+            "oriented_schur_bytes": 11943936
+          },
+          "retained_numeric_cache_bytes_local": {
+            "lu_bytes": 12967200,
+            "recovery_bytes": 12441600,
+            "rhs_trace_bytes": 12441600,
+            "rhs_projection_bytes": 1620000,
+            "solution_embedding_bytes": 0,
+            "residual_projection_bytes": 0,
+            "retained_schur_bytes": 11943936,
+            "retained_numeric_cache_bytes": 51414336
+          },
+          "retained_numeric_cache_bytes_sum": {
+            "lu_bytes": 12967200,
+            "recovery_bytes": 12441600,
+            "rhs_trace_bytes": 12441600,
+            "rhs_projection_bytes": 1620000,
+            "solution_embedding_bytes": 0,
+            "residual_projection_bytes": 0,
+            "retained_schur_bytes": 11943936,
+            "retained_numeric_cache_bytes": 51414336
+          },
+          "retained_numeric_cache_bytes_max": {
+            "lu_bytes": 12967200,
+            "recovery_bytes": 12441600,
+            "rhs_trace_bytes": 12441600,
+            "rhs_projection_bytes": 1620000,
+            "solution_embedding_bytes": 0,
+            "residual_projection_bytes": 0,
+            "retained_schur_bytes": 11943936,
+            "retained_numeric_cache_bytes": 51414336
+          },
+          "raw_tensor_class_count_sum": 4,
+          "raw_tensor_class_use_count_sum": 4,
+          "raw_tensor_class_count_global_unique": 4,
+          "raw_tensor_global_owner_policy": "deterministic_dimension_squared_greedy_all_mpi_ranks",
+          "raw_tensor_owner_cost_loads": [
+            3111696
+          ],
+          "raw_tensor_policy_signatures_identical": true,
+          "raw_tensor_owner_evaluation_sync_seconds_max": 0.00012741901446133852,
+          "raw_tensor_cross_rank_dedup_active": false,
+          "raw_tensor_class_owner_ranks": {
+            "('actual_space', 1, 0.6875, 0.6944444444444444, 0.6666666666666572)": 0,
+            "('actual_space', 1, 0.6875, 0.6944444444444464, 0.6666666666666572)": 0,
+            "('actual_space', 2, 0.6875, 0.6944444444444444, 0.6666666666666661)": 0,
+            "('actual_space', 2, 0.6875, 0.6944444444444464, 0.6666666666666661)": 0
+          },
+          "raw_tensor_class_user_rank_counts": {
+            "('actual_space', 1, 0.6875, 0.6944444444444444, 0.6666666666666572)": 1,
+            "('actual_space', 1, 0.6875, 0.6944444444444464, 0.6666666666666572)": 1,
+            "('actual_space', 2, 0.6875, 0.6944444444444444, 0.6666666666666661)": 1,
+            "('actual_space', 2, 0.6875, 0.6944444444444464, 0.6666666666666661)": 1
+          },
+          "raw_tensor_classes": [
+            {
+              "policy": "actual_space",
+              "material_tag": 1,
+              "cell_widths": [
+                0.6875,
+                0.6944444444444444,
+                0.6666666666666572
+              ],
+              "dimension": 882,
+              "active_kernel_ids": [
+                1
+              ],
+              "owner_rank": 0,
+              "consumer_rank_count": 1,
+              "tensor_bytes": 12446784,
+              "canonical_coordinates_sha256": "c09884ad26b2733bbbbf63067f946485e513c4cb4c77a934e18333bc573642e9"
+            },
+            {
+              "policy": "actual_space",
+              "material_tag": 1,
+              "cell_widths": [
+                0.6875,
+                0.6944444444444464,
+                0.6666666666666572
+              ],
+              "dimension": 882,
+              "active_kernel_ids": [
+                1
+              ],
+              "owner_rank": 0,
+              "consumer_rank_count": 1,
+              "tensor_bytes": 12446784,
+              "canonical_coordinates_sha256": "22f85623d7c18bb315d1aab34425a96cb2e5d83e2d3cef34aaf319d8b5d35066"
+            },
+            {
+              "policy": "actual_space",
+              "material_tag": 2,
+              "cell_widths": [
+                0.6875,
+                0.6944444444444444,
+                0.6666666666666661
+              ],
+              "dimension": 882,
+              "active_kernel_ids": [
+                2
+              ],
+              "owner_rank": 0,
+              "consumer_rank_count": 1,
+              "tensor_bytes": 12446784,
+              "canonical_coordinates_sha256": "b833082bbfa2e33bb90c7b859139dbe98435a3ec9cb9c5ae192f851f1c00a522"
+            },
+            {
+              "policy": "actual_space",
+              "material_tag": 2,
+              "cell_widths": [
+                0.6875,
+                0.6944444444444464,
+                0.6666666666666661
+              ],
+              "dimension": 882,
+              "active_kernel_ids": [
+                2
+              ],
+              "owner_rank": 0,
+              "consumer_rank_count": 1,
+              "tensor_bytes": 12446784,
+              "canonical_coordinates_sha256": "b946d069e2c4d60a84f6dd03504b785789761d0f3873a65c86e2269d28ed5af2"
+            }
+          ],
+          "raw_tensor_logical_broadcast_bytes": 0,
+          "raw_tensor_broadcast_seconds_max": 4.869408439844847e-05,
+          "oriented_schur_class_count_sum": 4,
+          "cell_kernel_evaluation_fraction": 0.5,
+          "kernel_seconds_max": 275.5953454268165,
+          "local_schur_seconds_max": 0.7773382749874145,
+          "local_insert_seconds_max": null,
+          "pre_final_assembly_sync_seconds_max": null,
+          "final_assembly_seconds": null,
+          "trace_preallocation_seconds": null,
+          "trace_preallocation": {
+            "status": "not_run_action_only",
+            "build_seconds": null
+          },
+          "trace_constraints": {
+            "schema_version": "task035b.trace-constraint-map.v1",
+            "status": "exact_mpc_trace_expansion_built",
+            "full_trace_rows": 3456,
+            "active_rows": 2796,
+            "slave_rows": 660,
+            "maximum_masters_per_slave": 1,
+            "constraint_applied_before_global_matrix_insertion": true,
+            "embedded_identity_slave_rows_allocated": false
+          },
+          "total_build_seconds": 282.00422439095564
+        },
+        "constraint_audit": {
+          "schema_version": "task035b.trace-constraint-map.v1",
+          "status": "exact_mpc_trace_expansion_built",
+          "full_trace_rows": 3456,
+          "active_rows": 2796,
+          "slave_rows": 660,
+          "maximum_masters_per_slave": 1,
+          "constraint_applied_before_global_matrix_insertion": true,
+          "embedded_identity_slave_rows_allocated": false
+        },
+        "original_class_keys": [
+          "(2, 0.6875, 0.6944444444444444, 0.6666666666666661, 0)",
+          "(2, 0.6875, 0.6944444444444464, 0.6666666666666661, 0)",
+          "(1, 0.6875, 0.6944444444444444, 0.6666666666666572, 0)",
+          "(1, 0.6875, 0.6944444444444464, 0.6666666666666572, 0)"
+        ]
+      }
+    }
+  ],
+  "status": "IMMUTABLE_COMMITTED_STAGE_PACKETS",
+  "dependencies": "numeric core/plan/material/ABI must be exact; orchestration fixes preserve original payload source",
+  "builds": {
+    "hex": 8,
+    "attempts": 1
+  },
+  "local_LU": {
+    "upper": 4,
+    "attempts": [
+      {
+        "reserved": 4,
+        "completed": 4,
+        "settled": true
+      }
+    ]
+  },
+  "current_final_helper_source": "920527707948c2325f0750af1d50cdc479551f69"
+}

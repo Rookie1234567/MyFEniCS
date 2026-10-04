@@ -1,0 +1,850 @@
+{
+  "status": "OWN_TREE_AND_CPU_SMT_ADMISSION_INDEPENDENTLY_RECOMPUTED",
+  "runs": [
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_01",
+      "samples": 52,
+      "peak_bytes": 464867328,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 569988035,
+      "JIT_sampled_peak": 0,
+      "cpu": 0,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.6874957350082695,
+        "observed_max_seconds": 1.4359725429676473,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_02",
+      "samples": 53,
+      "peak_bytes": 465506304,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 1220903497,
+      "JIT_sampled_peak": 0,
+      "cpu": 1,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.7235094460193068,
+        "observed_max_seconds": 1.553866756032221,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_03",
+      "samples": 50,
+      "peak_bytes": 465920000,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 1871830384,
+      "JIT_sampled_peak": 0,
+      "cpu": 6,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.7661640970036387,
+        "observed_max_seconds": 1.639720619074069,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_04",
+      "samples": 20,
+      "peak_bytes": 397320192,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 2169240480,
+      "JIT_sampled_peak": 0,
+      "cpu": 0,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "RESOURCE_CONTROLLED_STOP",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.7789491231087595,
+        "observed_max_seconds": 0.9525527330115438,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "archive",
+      "folder": "tmp/task042/v40/aux_archive_01",
+      "samples": 36,
+      "peak_bytes": 99069952,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 0,
+      "JIT_sampled_peak": 0,
+      "cpu": 1,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.6471789990318939,
+        "observed_max_seconds": 0.8194372380385175,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_05",
+      "samples": 35,
+      "peak_bytes": 386666496,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 78259299,
+      "JIT_sampled_peak": 0,
+      "cpu": 0,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "WORKER_FAILED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.8140600160695612,
+        "observed_max_seconds": 0.991731193033047,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_06",
+      "samples": 48,
+      "peak_bytes": 461307904,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 94929357,
+      "JIT_sampled_peak": 0,
+      "cpu": 0,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.8583991599734873,
+        "observed_max_seconds": 1.857442102045752,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "PREFLIGHT",
+      "folder": "results/task042/task042_v40_preflight_20261004T084017723687Z",
+      "samples": 21,
+      "peak_bytes": 528879616,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 95642013,
+      "JIT_sampled_peak": 0,
+      "cpu": 0,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.870852479536552,
+        "observed_max_seconds": 1.0529322740621865,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "BUILD",
+      "folder": "results/task042/task042_v40_build_20261004T084054547649Z",
+      "samples": 952,
+      "peak_bytes": 1265823744,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 415257501,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 1,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "WORKER_FAILED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.8780115379486233,
+        "observed_max_seconds": 1.0780986829195172,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "pre",
+      "folder": "tmp/task042/v40/aux_pre_07",
+      "samples": 9,
+      "peak_bytes": 223645696,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 416305282,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 12,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.8485762659693137,
+        "observed_max_seconds": 1.057466286001727,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "BUILD",
+      "folder": "results/task042/task042_v40_build_20261004T085721927315Z",
+      "samples": 39,
+      "peak_bytes": 657121280,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 453944588,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 0,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.8888381595606916,
+        "observed_max_seconds": 1.0774015359347686,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "RECOVER",
+      "folder": "results/task042/task042_v40_recover_20261004T085815523163Z",
+      "samples": 24,
+      "peak_bytes": 1086541824,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 458309657,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 3,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.9095687660155818,
+        "observed_max_seconds": 1.0875520509434864,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "CHECK",
+      "folder": "results/task042/task042_v40_check_20261004T085853350426Z",
+      "samples": 15,
+      "peak_bytes": 656551936,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 459192760,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 1,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.9018868595012464,
+        "observed_max_seconds": 1.0677512530237436,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "DEPLOY",
+      "folder": "results/task042/task042_v40_deploy_20261004T085921265270Z",
+      "samples": 17,
+      "peak_bytes": 652709888,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 460685716,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 0,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.9011610705638304,
+        "observed_max_seconds": 1.0809693720657378,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "CAPACITY",
+      "folder": "results/task042/task042_v40_capacity_20261004T085954735502Z",
+      "samples": 6,
+      "peak_bytes": 178737152,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0,
+      "new_storage_sampled_peak": 461818446,
+      "JIT_sampled_peak": 196161322,
+      "cpu": 1,
+      "warning_bytes": 6442450944,
+      "hard_bytes": 8589934592,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous process-tree RSS, not continuous cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.8245158840436488,
+        "observed_max_seconds": 1.0812222430249676,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "archive",
+      "folder": "tmp/task042/v40/aux_archive_02",
+      "samples": 11,
+      "peak_bytes": 333664256,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0.0,
+      "cpu": 0,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous own process tree RSS, not cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.6469692030223086,
+        "observed_max_seconds": 0.8554827489424497,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v40/aux_post_01",
+      "samples": 34,
+      "peak_bytes": 335392768,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0.0,
+      "cpu": 3,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "WORKER_FAILED",
+      "cleared": true,
+      "scope": "sampled simultaneous own process tree RSS, not cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.9392528049647808,
+        "observed_max_seconds": 1.1192310659680516,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v40/aux_post_02",
+      "samples": 5,
+      "peak_bytes": 67719168,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0.0,
+      "cpu": 0,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "classification": "COMPLETED",
+      "cleared": true,
+      "scope": "sampled simultaneous own process tree RSS, not cgroup peak",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.7240180700318888,
+        "observed_max_seconds": 1.1252171479864046,
+        "scope": "actual watchdog/sample scheduling plus health-check cost, not exact periodicity"
+      }
+    },
+    {
+      "role": "archive",
+      "folder": "tmp/task042/v40/aux_archive_03",
+      "samples": 6,
+      "peak_bytes": 208793600,
+      "swap_bytes": 0,
+      "unreadable_samples": 0,
+      "full_PSI_max_avg10": 0.0,
+      "cpu": 5,
+      "warning_bytes": 1073741824,
+      "hard_bytes": 2147483648,
+      "cleared": true,
+      "classification": "COMPLETED",
+      "sample_cadence": {
+        "configured_seconds": 0.5,
+        "observed_median_seconds": 0.5746764709474519,
+        "observed_max_seconds": 0.8318195049650967
+      }
+    }
+  ],
+  "CPU_admissions": [
+    {
+      "folder": "tmp/task042/v40/aux_pre_01",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        1,
+        4,
+        8,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        20
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_01/admission.json",
+        "sha256": "60a03fbefbbbc652966d76d2a1377dbd216883f60467b29d4928515cd25990fe",
+        "bytes": 457728
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_pre_02",
+      "selected_cpu": 1,
+      "eligible_cpus": [
+        1,
+        3,
+        4,
+        5,
+        9,
+        14,
+        16,
+        19,
+        24,
+        34,
+        47
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_02/admission.json",
+        "sha256": "2c49722820687313758d3bfe9e75e9c95ed63444f945068e5fd40b1a11abf2ba",
+        "bytes": 458004
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_pre_03",
+      "selected_cpu": 6,
+      "eligible_cpus": [
+        6,
+        7,
+        9,
+        11,
+        15,
+        16,
+        17,
+        18,
+        19,
+        21,
+        23,
+        43
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_03/admission.json",
+        "sha256": "9d225d0bdd9182a2f035b391b16fe9245bfe3f890eb24bc9d0ac82e60ff98a5e",
+        "bytes": 458328
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_pre_04",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        11,
+        12,
+        13,
+        16,
+        17,
+        18,
+        21,
+        22
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_04/admission.json",
+        "sha256": "9411588cc17aadff5b0c9b8122cc9b387035e7b44b55b6c9806fc789cf74bce6",
+        "bytes": 457825
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_archive_01",
+      "selected_cpu": 1,
+      "eligible_cpus": [
+        1,
+        2,
+        6,
+        7,
+        10,
+        22
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_archive_01/admission.json",
+        "sha256": "c045e715a559736e8fa92389806ab133273c60618ec855cb07c8bd641b780e88",
+        "bytes": 646279
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_pre_05",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        1,
+        2,
+        4,
+        15,
+        16,
+        23,
+        37,
+        38
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_05/admission.json",
+        "sha256": "ef442fc86a0fba2bad723e6b4030edef38364b39702c83aa574bcfaa41bfbd53",
+        "bytes": 463605
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_pre_06",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        1,
+        2,
+        3,
+        9,
+        15,
+        20,
+        23,
+        24,
+        35
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_06/admission.json",
+        "sha256": "9e7bd7e2c0694f43d0ee344aa68238d6427b007145c58f6b331cd1e25783f64d",
+        "bytes": 457390
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_preflight_20261004T084017723687Z",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        2,
+        10,
+        12,
+        13,
+        14,
+        15,
+        17,
+        19,
+        20,
+        33
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_preflight_20261004T084017723687Z/admission.json",
+        "sha256": "bc186323f572b653e5f3d386153132ae333a115556a3aec32473d5e8aedeb1db",
+        "bytes": 457703
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_build_20261004T084054547649Z",
+      "selected_cpu": 1,
+      "eligible_cpus": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        10,
+        12,
+        13,
+        22,
+        23,
+        33
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_build_20261004T084054547649Z/admission.json",
+        "sha256": "91f4924a32195843b272d24a027a4a91ad5b654e8daeb54e4540fcd84d76620a",
+        "bytes": 457637
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_pre_07",
+      "selected_cpu": 12,
+      "eligible_cpus": [
+        12,
+        15,
+        21
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_pre_07/admission.json",
+        "sha256": "ca7b3eeb16822a32d18b3e1d62c78e813f6411402778800c69edb9091761b2e0",
+        "bytes": 656548
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_build_20261004T085721927315Z",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        5,
+        7,
+        10,
+        17,
+        20,
+        21
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_build_20261004T085721927315Z/admission.json",
+        "sha256": "96f972708abe04422e7a8b5087fe87ab222d62b50ebb8412c723f1da580a5298",
+        "bytes": 469753
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_recover_20261004T085815523163Z",
+      "selected_cpu": 3,
+      "eligible_cpus": [
+        3,
+        7,
+        10,
+        15,
+        16
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_recover_20261004T085815523163Z/admission.json",
+        "sha256": "9f50aaa495d0a7ffcd5bd62682e06c7dbd3dbb0fc55d8bb4ac698ad81a94552a",
+        "bytes": 656366
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_check_20261004T085853350426Z",
+      "selected_cpu": 1,
+      "eligible_cpus": [
+        1,
+        3,
+        10,
+        11,
+        14,
+        19,
+        21
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_check_20261004T085853350426Z/admission.json",
+        "sha256": "f3846fdaa82cd3d1cb9070d5da879192767e4e44c2c7d5550eb8187411b2c28f",
+        "bytes": 465162
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_deploy_20261004T085921265270Z",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        2,
+        5,
+        10,
+        14,
+        19,
+        21,
+        34,
+        41
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_deploy_20261004T085921265270Z/admission.json",
+        "sha256": "a0918f4ed5bc969aab8933f58c16101c97dcd1fe1578c63a9d0002043b3475b8",
+        "bytes": 469621
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "results/task042/task042_v40_capacity_20261004T085954735502Z",
+      "selected_cpu": 1,
+      "eligible_cpus": [
+        1,
+        2,
+        15,
+        17,
+        22
+      ],
+      "raw": {
+        "path": "results/task042/task042_v40_capacity_20261004T085954735502Z/admission.json",
+        "sha256": "d7d5901e6007a4276adf6e32affebe661387e9006487cb51b603a4f426c56b19",
+        "bytes": 654216
+      },
+      "rechecked": "CPU ticks, active/narrow neighbor thread exclusion, all SMT siblings"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_archive_02",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        12,
+        16
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_archive_02/admission.json",
+        "sha256": "3aff87a3034f16de5019058c03d30f21c1165dc2445af645d3243cac657383ce",
+        "bytes": 465091
+      },
+      "rechecked": "tick/thread/SMT exclusion"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_post_01",
+      "selected_cpu": 3,
+      "eligible_cpus": [
+        3,
+        5,
+        6,
+        14,
+        18,
+        19,
+        20,
+        23,
+        40
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_post_01/admission.json",
+        "sha256": "9cbafc7f0e39daa686b7f46a06190e341d591fd942119407818eb9dcf8b192be",
+        "bytes": 471244
+      },
+      "rechecked": "tick/thread/SMT exclusion"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_post_02",
+      "selected_cpu": 0,
+      "eligible_cpus": [
+        0,
+        3,
+        8,
+        11,
+        12,
+        14,
+        22
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_post_02/admission.json",
+        "sha256": "f66fb796d53175905e71d5f0ab249ffa90957a896b2d89a9a41eecd1fcd24672",
+        "bytes": 471526
+      },
+      "rechecked": "tick/thread/SMT exclusion"
+    },
+    {
+      "folder": "tmp/task042/v40/aux_archive_03",
+      "selected_cpu": 5,
+      "eligible_cpus": [
+        5,
+        6,
+        12,
+        14,
+        21,
+        23,
+        37,
+        45
+      ],
+      "raw": {
+        "path": "tmp/task042/v40/aux_archive_03/admission.json",
+        "sha256": "a4ee892b2a10debee4a659f073c2911c1911d890fbaa7f6f2c262da25b71d62b",
+        "bytes": 475941
+      },
+      "rechecked": "tick/thread/SMT exclusion"
+    }
+  ],
+  "peak_bytes": 1265823744,
+  "swap_bytes": 0,
+  "sample_interval_config_seconds": 0.5,
+  "cgroup_hard_cap": "NOT_AVAILABLE; independent subreaper/watchdog, not kernel cgroup hard cap",
+  "impact": "INCONCLUSIVE: no sampled PSI sustained pressure; no comparable neighbor stage metric; no claim of zero interference",
+  "sample_cadence_note": "configured .5s; actual median/max per-run measured and retained, never continuous hard peak",
+  "final_source": "920527707948c2325f0750af1d50cdc479551f69",
+  "own_supervised_processes_cleared": true,
+  "final_runs": 19,
+  "CPU_receipts": 19,
+  "storage_snapshot": {
+    "new": {
+      "bytes": 480869421,
+      "files": 1110,
+      "docs_bytes": 2076810,
+      "including_docs_bytes": 482946231
+    },
+    "task_artifacts": {
+      "bytes": 15589782476,
+      "files": 6339
+    },
+    "free_bytes": 3362260193280
+  },
+  "storage_earlier_stop": {
+    "measured_new_bytes": 2169240480,
+    "limit_bytes": 2147483648,
+    "classification": "RESOURCE_CONTROLLED_STOP",
+    "source": "aux_pre_04; preserved"
+  }
+}

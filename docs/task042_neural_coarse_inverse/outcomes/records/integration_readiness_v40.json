@@ -1,0 +1,53 @@
+{
+  "items": [
+    {
+      "item": "complete32060 boundary q30",
+      "status": "QUALIFIED_REUSED_V38",
+      "evidence": "component_checker_v38.json; no repeated full boundary action"
+    },
+    {
+      "item": "sparse native E/EH constructor and caller-owned scatter",
+      "status": "QUALIFIED_ON_FOUR_SAVED_WITNESSES",
+      "evidence": "PREFLIGHT48 checks; 345771066-wide synthetic bounded construction"
+    },
+    {
+      "item": "real native volume/affine nonzero f_i/g recovery",
+      "status": "SAVED_NATIVE_RECOVERY_QUALIFIED",
+      "evidence": "component_checker_v40.json; real MPI1 8hex xy_corner"
+    },
+    {
+      "item": "fresh real-volume consumer",
+      "status": "REAL_VOLUME_RECOVERY_CONSUMER_QUALIFIED",
+      "evidence": "deployment_package_v40.json"
+    },
+    {
+      "item": "raw target geometric/material classes",
+      "status": "DERIVED270_WITHOUT_ROUNDING",
+      "evidence": "original_size_integration_capacity_v40.json; sum530856; orientation unknown"
+    },
+    {
+      "item": "complete target native row/MPC/owner map",
+      "status": "NOT_RUN_UNKNOWN",
+      "evidence": "no full volume mesh or native vector allocated"
+    },
+    {
+      "item": "target global volume callback/cache/PC/iteration count",
+      "status": "NOT_QUALIFIED",
+      "evidence": "capacity contract specifies required fields; finite packets not universally reusable"
+    },
+    {
+      "item": "complete original target solve/field/power/hp",
+      "status": "NOT_RUN",
+      "evidence": "no official E/H/curl/RTA/A_volume"
+    },
+    {
+      "item": "2e12B/172800s and NN20%",
+      "status": "NOT_QUALIFIED_NOT_DEMONSTRATED",
+      "evidence": "unknown full costs and no qualified nonneural baseline"
+    }
+  ],
+  "new_global_LU_QR_Krylov_training": 0,
+  "local_p6_internal_LU_classes": 4,
+  "no_dot_execution": true,
+  "next": "资格化同物理全体积引擎的native owner/MPC映射与精确class缓存容量；消费本轮有限非零RHS包作接口anchor，不先启动完整求解或另开边界测速"
+}

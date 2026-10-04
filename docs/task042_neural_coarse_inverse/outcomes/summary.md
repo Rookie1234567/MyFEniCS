@@ -1,3 +1,22 @@
+# Task042 V40：真实有限体积与非零载荷恢复闭环通过
+
+先保存每个昂贵阶段，再将原体积、完整有限端口与内部非零载荷连接并独立审核。这样接线错误只补未完成阶段。本轮通过有限接口，不是完整PDE解，也没有神经训练。
+
+| 对象／数据身份 | 实际结果及原因 | 资格边界 |
+|---|---|---|
+| .7nm／8hex xy_corner／p6／q30-q15-q17／12冻结mode | 原数组66/66；最大内部平衡4.06091e-12<1e-10；两tag求积max4.13409e-15 | COUPLED_ACTION_AND_AFFINE_RECOVERY_QUALIFIED_ON_WITNESSES，真实MPI1 |
+| 昂贵checkpoint与真实消费 | 4类882原张量/450局部LU，小CSR/q/RHS/恢复11包；新进程volume+恢复PASS | 4LU/cache56274336B，无global p4逆；不是factor-free |
+| 初次失败及继续 | Basix complex接线失败860.3629s，随后只补求积34.7358s | mesh/JIT/LU/CSR未重建；pre04存储停止及全部费用保留 |
+| 同时整树峰／ownswap／预算 | 1265823744B／0；native934.331523s<2400 | 0.5s采样、shared-workstation，全费用见账 |
+| 原尺寸容量 | raw精确几何/tag270键；E单实体workspace86880B | native方向/owner/MPC未知，单向量5.53GB、逐cell缓存4.96TB不可直接部署 |
+| 完整PDE／E/H/RTA/2TB48h/NN20% | NOT_RUN／NOT_QUALIFIED／NOT_DEMONSTRATED | 不把接口或传统存储优化称神经收益 |
+
+[Review V37](../review_report_v37.md) · [response](../response_v40.md) · [结果](native_volume_affine_recovery_v40.md) · [checker](records/component_checker_v40.json) · [费用](records/resource_costs_v40.json) · [容量](records/original_size_integration_capacity_v40.json)
+
+唯一下一建议：资格化同物理全体积引擎的native owner/MPC映射与精确class缓存容量，以本轮非零RHS包作接口anchor；本轮不自动启动。以下旧历史正文逐字保留。
+
+<!-- V40-LATEST-END -->
+
 # Task042 V39：原生边界接口资格通过，体积组合保留真实失败
 
 通过稀疏实体映射将体积系数取到边界，并按共轭周期相位把力加回；新增的是接线，不是神经训练。真实体积组合已运行并失败，接线修复通过小回归，但剩余慢oracle额度不足以完整重放，非零内部RHS恢复和完整解仍未资格化。

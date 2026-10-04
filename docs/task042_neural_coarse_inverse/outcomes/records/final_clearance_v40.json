@@ -1,0 +1,20 @@
+{
+  "status": "NO_CANONICAL_TASK042_ACTOR_OWN_LOCK_FREE",
+  "UTC": "2026-10-04T09:13:06.026823+00:00",
+  "canonical": "/home/fenics/Projects/NN-Lab",
+  "own_actors": [],
+  "other_worktree_run_case_observed": [
+    {
+      "pid": 1700785,
+      "comm": "python",
+      "cwd": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity"
+    },
+    {
+      "pid": 1706666,
+      "comm": "python",
+      "cwd": "/home/fenics/Projects/NN-Lab-V2"
+    }
+  ],
+  "earlier_scan_false_positive": "matched generic scripts/run_case.py in Task39 and NN-Lab-V2; scope corrected using actual cwd; no process was stopped or changed",
+  "closed": true
+}
