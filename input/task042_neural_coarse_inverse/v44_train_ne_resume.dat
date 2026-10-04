@@ -1,0 +1,6 @@
+schema_version = 1
+[task042_v44]
+stage = "TRAIN_NE"
+run_id = "task042_v44_train_ne_resume"
+resume_manifest = "tmp/task042/v44/train_NE_resume.json"
+resume_sha256 = "e6f9571cd50cba6c636eaa31eac7ae5c5c1b2119815ce6812cacdaad3eb77200"

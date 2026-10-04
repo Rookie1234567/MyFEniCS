@@ -87,13 +87,19 @@ def load_neighborhood_late_error(path):
     if (
         set(value) != {"schema_version", "task042_v44"}
         or value["schema_version"] != 1
-        or set(item) != {"stage", "run_id"}
+        or set(item) not in ({"stage", "run_id"}, {"stage", "run_id", "resume_manifest", "resume_sha256"})
         or item.get("stage") not in STAGES
         or not re.fullmatch("task042_v44_[a-z0-9_]+", item.get("run_id", ""))
     ):
         raise InputError("V44 neural pilot explicit stage schema")
     plan_record()
     stage = item["stage"]
+    resume = None
+    if "resume_manifest" in item:
+        manifest = (ROOT / item["resume_manifest"]).resolve()
+        if stage != "TRAIN_NE" or not manifest.is_relative_to(ROOT / "tmp/task042/v44") or hashlib.sha256(manifest.read_bytes()).hexdigest() != item["resume_sha256"]:
+            raise InputError("V44 explicit repair transaction hash/path/stage")
+        resume = {"path":str(manifest),"sha256":item["resume_sha256"]}
     csr = json.loads(Path(plan_record()["parents"]["csr"]["path"]).read_text())
     deps = csr["dependencies"]
     return RunSpecification(
@@ -126,7 +132,8 @@ def load_neighborhood_late_error(path):
         derived={
             "stage": stage,
             "preparation_scope": "v44",
-            "environment_mode": "fe" if False else "ml",
+            "environment_mode": "ml",
+            "training_resume": resume,
             "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             "target_solve": False,
         },

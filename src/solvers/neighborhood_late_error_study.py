@@ -409,7 +409,7 @@ def validation(model, values, action, graph, mixed):
     }
 
 
-def train(folder, budget, code):
+def train(folder, budget, code, resume=None):
     import torch
 
     from src.solvers.neighborhood_residual_models import group_changes, parameters_hash
@@ -436,7 +436,17 @@ def train(folder, budget, code):
             receipt=save_model(folder, "checkpoint_0", model, opt, {"update": 0}),
         )
     ]
-    for step in range(1, 129):
+    prior_update = 0
+    if resume is not None:
+        from src.solvers.neighborhood_training_transaction import restore
+
+        if code != "NE" or sha(resume["path"]) != resume["sha256"]:
+            raise ValueError("explicit V44 NN-E repair transaction identity")
+        record = json.loads(Path(resume["path"]).read_text())
+        if sha(record["prior_history"]["path"]) != record["prior_history"]["sha256"]:
+            raise ValueError("immutable prior accepted update history")
+        prior_update = restore(model, opt, record)
+    for step in range(prior_update + 1, 129):
         began = perf_counter()
         before = parameters_hash(model)
         committed = save_model(
@@ -508,6 +518,9 @@ def train(folder, budget, code):
         "selected": selected,
         "all_checkpoints": checkpoints,
         "training_updates": 128,
+        "prior_complete_updates": prior_update,
+        "new_complete_updates": 128 - prior_update,
+        "resume_manifest": resume,
         "stop_reason": "FIXED_128_UPDATES",
         "parameter_group_changes_last": group_changes(model, initial),
         "real_parameters": model.real_parameters,
@@ -852,7 +865,7 @@ def execute(role, folder, state):
         raise RuntimeError("FE ABI injection")
     budget = ActionBudget(Path(os.environ["TASK042_V36_AUX_DIRECTORY"]))
     if role.startswith("TRAIN_"):
-        result = train(folder, budget, role[6:])
+        result = train(folder, budget, role[6:], state.get("training_resume"))
     elif role.startswith("EVAL_"):
         result = evaluate(folder, budget, role[5:])
     else:

@@ -134,6 +134,7 @@ def implementation_hashes():
         "src/solvers/neighborhood_late_error_scope.py",
         "src/solvers/neighborhood_late_error.py",
         "src/solvers/neighborhood_late_error_study.py",
+        "src/solvers/neighborhood_training_transaction.py",
         "src/test/test_neighborhood_late_error.py",
         "benchmarks/qualify_neighborhood_late_error.py",
         "src/solvers/neighborhood_residual_core.py",

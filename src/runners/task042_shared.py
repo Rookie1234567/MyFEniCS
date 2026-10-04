@@ -444,8 +444,9 @@ def _audit(*, observed_activity=False, observation=None):
 
 
 class SharedHealth:
-    def __init__(self, directory, neighbors=()):
+    def __init__(self, directory, neighbors=(), *, artifact_limit_bytes=20 * 2**30):
         self.directory = directory
+        self.artifact_limit_bytes = artifact_limit_bytes
         self.neighbors = list(neighbors)
         self.last = 0.0
         self.pressure_count = 0
@@ -460,7 +461,7 @@ class SharedHealth:
         payload = sum(p.stat().st_size for p in ARTIFACTS.rglob("*") if p.is_file())
         pressured = psi["some"]["avg10"] >= 1.0 or psi["full"]["avg10"] >= 0.1
         self.pressure_count = self.pressure_count + 1 if pressured else 0
-        stop = self.pressure_count >= 3 or disk < 50 * 2**30 or payload > 20 * 2**30
+        stop = self.pressure_count >= 3 or disk < 50 * 2**30 or payload > self.artifact_limit_bytes
         neighbor_samples = []
         for n in self.neighbors:
             try:
@@ -490,6 +491,7 @@ class SharedHealth:
             "pressure_consecutive_samples": self.pressure_count,
             "disk_free_bytes": disk,
             "artifact_bytes": payload,
+            "artifact_limit_bytes": self.artifact_limit_bytes,
             "neighbor_short_stage_observations": neighbor_samples,
             "stop_reason": "RESOURCE_CONTROLLED_STOP" if stop else None,
         }

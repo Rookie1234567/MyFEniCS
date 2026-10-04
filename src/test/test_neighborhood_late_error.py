@@ -1,5 +1,7 @@
 """Small non-Hermitian V44 opt-in regression; never loads real action or old errors."""
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 import torch
@@ -232,3 +234,70 @@ def test_actual_stage_schema(stage, tmp_path):
         and spec.derived["environment_mode"] == "ml"
         and spec.derived["preparation_scope"] == "v44"
     )
+
+
+def test_storage_health_opt_in_preserves_default_and_pressure(monkeypatch, tmp_path):
+    from src.runners import task042_shared as shared
+
+    fake = SimpleNamespace(
+        stat=lambda: SimpleNamespace(st_size=21 * 2**30), is_file=lambda: True
+    )
+    monkeypatch.setattr(shared, "ARTIFACTS", SimpleNamespace(rglob=lambda _: [fake]))
+    monkeypatch.setattr(
+        shared.shutil, "disk_usage", lambda _: SimpleNamespace(free=100 * 2**30)
+    )
+    monkeypatch.setattr(
+        shared, "pressure", lambda: {"some": {"avg10": 0}, "full": {"avg10": 0}}
+    )
+    assert shared.SharedHealth(tmp_path)()["stop_reason"] == "RESOURCE_CONTROLLED_STOP"
+    current = shared.SharedHealth(tmp_path, artifact_limit_bytes=24 * 2**30)
+    assert current()["stop_reason"] is None
+    assert current.result["artifact_limit_bytes"] == 24 * 2**30
+    monkeypatch.setattr(
+        shared, "pressure", lambda: {"some": {"avg10": 2}, "full": {"avg10": 0.2}}
+    )
+    for _ in range(3):
+        current.last = 0
+        current()
+    assert current.result["stop_reason"] == "RESOURCE_CONTROLLED_STOP"
+
+
+def test_consistent_adam_restore_independent_reload(tmp_path):
+    from src.solvers.neighborhood_residual_models import parameters_hash
+    from src.solvers.neighborhood_residual_study import save_model
+    from src.solvers.neighborhood_training_transaction import restore
+
+    graph, action = toy()
+    make = lambda: NeighborhoodCorrector(
+        eye(516, dtype=complex), graph, action.scale, zero_decoder=True
+    )
+    model = make()
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+    s = torch.complex(
+        torch.sin(torch.arange(516, dtype=torch.float64)),
+        torch.cos(torch.arange(516, dtype=torch.float64)),
+    )[None, :]
+
+    def step(m, o):
+        o.zero_grad()
+        late_loss(m, s, None, action, mixed=False, independent=np.arange(516))[
+            0
+        ].backward()
+        o.step()
+
+    for _ in range(3):
+        step(model, opt)
+    receipt = save_model(tmp_path, "complete", model, opt, {"update": 3})
+    record = {
+        "checkpoint": receipt,
+        "completed_update": 3,
+        "last_parameter_hash": parameters_hash(model),
+    }
+    other = make()
+    otheropt = torch.optim.Adam(other.parameters(), lr=1e-3)
+    assert restore(other, otheropt, record) == 3
+    step(model, opt)
+    step(other, otheropt)
+    assert parameters_hash(model) == parameters_hash(other)
+    with pytest.raises(ValueError, match="boundary"):
+        restore(other, otheropt, dict(record, completed_update=4))

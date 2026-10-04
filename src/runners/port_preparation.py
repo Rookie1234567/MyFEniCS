@@ -24,7 +24,7 @@ from src.solvers.port_preparation_window import implementation_hashes, window
 
 class PreparationHealth:
     def __init__(self, folder, neighbors, namespace):
-        self.shared = SharedHealth(folder, neighbors)
+        self.shared = SharedHealth(folder, neighbors, artifact_limit_bytes=(24 if namespace == "v44" else 20) * 2**30)
         self.namespace, self.folder = namespace, folder
 
     def __call__(self):
@@ -329,6 +329,8 @@ def launch(
                 physical_sha256=specification.physical_model_sha256,
                 plan_sha256=hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             )
+            if namespace == "v44" and specification.derived.get("training_resume"):
+                state["training_resume"] = specification.derived["training_resume"]
             (folder / "source_sha.txt").write_text(source + "\n")
             command = [
                 sys.executable,
@@ -362,7 +364,7 @@ def launch(
                 "PYTHONDONTWRITEBYTECODE": "1",
             },
             health_check=(
-                SharedHealth(folder, baseline["neighbor_processes"])
+                SharedHealth(folder, baseline["neighbor_processes"], artifact_limit_bytes=(24 if namespace == "v44" else 20) * 2**30)
                 if role == "archive"
                 else PreparationHealth(
                     folder, baseline["neighbor_processes"], namespace
