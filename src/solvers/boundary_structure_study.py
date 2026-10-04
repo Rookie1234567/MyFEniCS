@@ -96,8 +96,23 @@ def bridge(folder):
     )
     capacity = json.loads(Path(plan_record()["parent_capacity"]["path"]).read_text())
     complete = []
+    resume = window.TMP / "bridge_resume.json"
+    if resume.exists():
+        pointer = json.loads(resume.read_text())
+        raw = Path(pointer["path"])
+        if hashlib.sha256(raw.read_bytes()).hexdigest() != pointer["sha256"]:
+            raise ValueError("bridge resume immutable prefix hash")
+        complete = json.loads(raw.read_text())
+        for done in complete:
+            done.setdefault("record_source_sha", pointer["source_sha"])
+            if done["description"] not in wp["patches"]:
+                raise ValueError("bridge resume geometry")
+            for field in ("native", "directional", "independent", "literal"):
+                read_arrays(done[field])
     for desc in wp["patches"]:
         name = desc["name"]
+        if any(p["description"] == desc for p in complete):
+            continue
         native_counter(len(desc["cells"]))
         start = perf_counter()
         data, V, mpc = build_patch(desc, cfg)
@@ -121,13 +136,14 @@ def bridge(folder):
             # C/o losslessly before the next form; .so stays loaded/reusable.
             # Reserve covers 4 resident so, one C/o pair, compression overlap
             # and hashes/evidence, with no q60 UFL generation.
-            cost["storage_before_JIT"] = storage(288 * 2**20, namespace="v38")
+            cost["storage_before_JIT"] = storage(128 * 2**20, namespace="v38")
             from benchmarks.archive_jit_cache import archive
 
             assemblers = {}
             archives = []
             for side in ("top", "bottom"):
                 for j in (0, 1):
+                    storage(128 * 2**20, namespace="v38")
                     assemblers[(side, j)] = _ReusableSurfaceComponentAssembler(
                         V,
                         data,
@@ -205,6 +221,12 @@ def bridge(folder):
                 )
         for (i, t), a in src.local_records.items():
             local[f"local_{i}_{t}"] = a
+        offsets = np.r_[0, np.cumsum([len(m[0]) for m in src.maps])].astype(np.int64)
+        local.update(
+            master_offsets=offsets,
+            master_rows=np.concatenate([m[0] for m in src.maps]),
+            master_dual_coefficients=np.concatenate([m[1] for m in src.maps]),
+        )
         local.update(
             permutations=src.permutations,
             cell_dofs=np.array(
@@ -224,6 +246,7 @@ def bridge(folder):
                 src, rows, n, native, folder, name, mpc.mpc.slaves, cfg
             )
         record = {
+            "record_source_sha": os.environ["TASK042_RUN_SOURCE"],
             "description": desc,
             "checks": checks,
             "native": native_receipt,
@@ -257,7 +280,10 @@ def bridge(folder):
         "q_native": 30,
         "q_independent": 60,
         "native_q60": "NOT_RUN_STORAGE_GATE_PRESERVED",
-        "native_hex_count": 20,
+        "completed_native_hex_count": 20,
+        "native_hex_count": json.loads(
+            (window.TMP / "native_construct_count.json").read_text()
+        )["count"],
         "MPI_qualification": 1,
         "shared_dependency": "Basix native basis; q60 direct 2D tabulation independent of directional contraction",
         "volume_action_count": 0,
@@ -291,6 +317,7 @@ def layout_stage(folder):
     l = action.layout
     if l.rows != 378432:
         raise ValueError("derived complete trace entity count")
+    adapter = qualify_patch_layout(l, b, folder)
     numeric = {s + "_rows": l.maps[s] for s in ("bottom", "top")}
     numeric.update({s + "_primal_phases": l.weights[s] for s in ("bottom", "top")})
     numeric.update(
@@ -300,6 +327,7 @@ def layout_stage(folder):
     return {
         "status": "BOUNDARY_LAYOUT_ONLY_QUALIFIED",
         "layout": receipt,
+        "native_patch_adapter": adapter,
         "rows": l.rows,
         "side_rows": l.side_rows,
         "faces_per_side": l.nx * l.ny,
@@ -655,4 +683,143 @@ def explicit_oracle(folder):
         "environment": environment(fe=True),
         "target_solve": False,
         "reference_read": False,
+    }
+
+
+def qualify_patch_layout(layout, bridge_record, folder):
+    """Bounded local coordinate adapters, not full-volume canonical row IDs."""
+    from benchmarks.check_boundary_witness import read_arrays
+
+    checks = []
+    receipts = []
+    for patch in bridge_record["patches"]:
+        desc = patch["description"]
+        lit = read_arrays(patch["literal"])
+        native = read_arrays(patch["native"])
+        if "master_offsets" in lit:
+            offsets = lit["master_offsets"]
+            mr = lit["master_rows"]
+            mc = lit["master_dual_coefficients"].conj()
+        elif not patch["slaves"]:
+            offsets = np.arange(patch["storage_rows"] + 1)
+            mr = np.arange(patch["storage_rows"])
+            mc = np.ones(len(mr), complex)
+        else:
+            raise ValueError("missing actual MPC map for local adapter")
+        blocks = []
+        ownblocks = []
+        indices = []
+        transforms = []
+        for c, raw_rows in enumerate(lit["cell_dofs"]):
+            coords = lit["coordinates"][lit["geometry_dofmap"][c]]
+            bounds = np.column_stack((coords.min(axis=0), coords.max(axis=0))).tolist()
+            found = [a for a in desc["cells"] if a["bounds_nm"] == bounds]
+            if len(found) != 1:
+                raise ValueError("literal native cell geometry bijection")
+            side = found[0]["side"]
+            i, j, _ = found[0]["indices"]
+            active = layout.polynomial.active[side]
+            T = np.zeros((882, len(active)))
+            T[active, np.arange(len(active))] = 1
+            layout.polynomial.element.T_apply(
+                T.ravel(), len(active), int(lit["permutations"][c])
+            )
+            Ta = T[active]
+            transforms.append(Ta)
+            G = np.zeros((len(active), patch["storage_rows"]), complex)
+            for a, row in enumerate(raw_rows[active]):
+                q = slice(offsets[row], offsets[row + 1])
+                G[a, mr[q]] = mc[q]
+            blocks.append(Ta.T @ G)
+            rows = layout.maps[side][i, j]
+            indices.extend(rows)
+            ownblocks.append((rows, layout.weights[side][i, j]))
+        compact = np.unique(indices)
+        left = np.row_stack(blocks)
+        master = np.flatnonzero(np.any(left != 0, axis=0))
+        left = left[:, master]
+        right = np.zeros((left.shape[0], len(compact)), complex)
+        cursor = 0
+        for rows, ph in ownblocks:
+            right[cursor + np.arange(len(rows)), np.searchsorted(compact, rows)] = ph
+            cursor += len(rows)
+        # This is a small fragment coordinate conversion only, independently
+        # checked in both primal and dual. It is not a volume solve or PC.
+        X, _, rank, _ = np.linalg.lstsq(left, right, rcond=None)
+        identity = relative(left @ X, right)
+        if (
+            rank != len(master)
+            or len(master) != len(compact)
+            or not identity["pass_gate"]
+        ):
+            raise RuntimeError("native boundary local coordinate bijection gate")
+        checks.append(
+            dict(
+                patch=desc["name"],
+                kind="primal_bijection",
+                rank=int(rank),
+                native_rows=len(master),
+                compact_rows=len(compact),
+                **identity,
+            )
+        )
+        # Independent full native fields paired with direct compact decoding.
+        for mi, r in enumerate(witness_plan()["selected_modes"]):
+            expected = np.zeros((len(compact), 2), complex)
+            for c, a in enumerate(desc["cells"]):
+                # Use original description order for geometry; compact local
+                # coefficients do not depend on native cell renumbering.
+                side = a["side"]
+                i, j, _kidx = a["indices"]
+                bounds = np.array(a["bounds_nm"])
+                J = np.diag(bounds[:, 1] - bounds[:, 0])
+                o = bounds[:, 0]
+                local = layout.polynomial.integral(
+                    side, np.array([zvalue(v) for v in r["k_vector"]]), J, o, 30
+                )
+                if r["side"] != side:
+                    continue
+                act = layout.polynomial.active[side]
+                rows = layout.maps[side][i, j]
+                np.add.at(
+                    expected,
+                    np.searchsorted(compact, rows),
+                    local[act] * layout.weights[side][i, j, :, None].conj(),
+                )
+            e = np.array([zvalue(v) for v in r["e_vector"][:2]])
+            tr = np.array([zvalue(v) for v in r["traction_vector"][:2]])
+            for kind, desired in [
+                ("C", expected @ (-tr)),
+                ("D", (expected @ e).conj()),
+            ]:
+                actual = (
+                    X.conj().T @ native[f"C_{mi}"][master]
+                    if kind == "C"
+                    else native[f"D_{mi}"][master] @ X
+                )
+                checks.append(
+                    dict(
+                        patch=desc["name"],
+                        mode=r["mode_index"],
+                        kind=kind,
+                        **relative(actual, desired),
+                    )
+                )
+        receipts.append(
+            array_file(
+                folder / (desc["name"] + "_row_adapter.npz"),
+                compact_rows=compact,
+                native_rows=master,
+                primal_map=X,
+                restricted_transforms=np.array(transforms),
+            )
+        )
+    if not all(c["pass_gate"] for c in checks):
+        raise RuntimeError("native compact extract/scatter gate")
+    return {
+        "status": "NATIVE_PATCH_BOUNDARY_ROW_BIJECTION_QUALIFIED",
+        "checks": checks,
+        "arrays": receipts,
+        "full_volume_adapter": "NOT_QUALIFIED_NOT_CONSTRUCTED",
+        "native_MPI_size": 1,
     }

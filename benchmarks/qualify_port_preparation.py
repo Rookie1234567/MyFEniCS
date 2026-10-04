@@ -102,6 +102,21 @@ def main():
             "--junitxml=" + str(folder / "pytest.xml"),
         ]
     ]
+    if "--targeted-new" in sys.argv:
+        if namespace != "v38":
+            raise ValueError("targeted qualification scope")
+        commands[0] = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=" + str(folder / "fixtures"),
+            "src/test/test_boundary_structure.py",
+            "src/test/test_boundary_witness.py",
+            "--junitxml=" + str(folder / "pytest.xml"),
+        ]
     commands += [
         [
             "mpiexec",
