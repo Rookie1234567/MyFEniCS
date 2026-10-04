@@ -1,0 +1,2335 @@
+{
+  "schema": "task42extra.review_v23.evidence_audit.v1",
+  "created_utc": "2026-10-04T14:00:23.511186+00:00",
+  "canonical": "/home/fenics/Projects/NN-Lab-V2",
+  "branch": "task42extra_feinn_5nm",
+  "reviewed_HEAD": "54da65a2c24515acb851dbd404e14ffc5ff78b4f",
+  "input_review_seal": "e1635d7f2c461a5e1a019bd38f84412968930be5",
+  "numeric_parent": "d5df65f320b2a82f49e87f3bf021eb89074109af",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "initial_git": {
+    "clean": true,
+    "exact_remote_tracking_HEAD_same": true,
+    "ahead_behind": [
+      0,
+      0
+    ],
+    "upstream_literal_remote": "origin",
+    "upstream_literal_merge": "refs/heads/task42extra_feinn_5nm",
+    "upstream_rev_parse": 128,
+    "shared_fetch_configuration_unchanged": true
+  },
+  "report": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v23.md",
+    "sha256": "8790ddb071e2e938432a5c4719b8a785bbdf47a5b51adc7a7042c6935e7e2c8c",
+    "bytes": 21332
+  },
+  "executor_delivery": {
+    "path": "tmp/task42extra/v23/delivery_receipt.json",
+    "sha256": "b37e73d4f422c0787464c07674724f58fe338d82c632175ee35501e61d741857",
+    "bytes": 4342
+  },
+  "executor_stopped_before_review": true,
+  "initial_lock": "FREE",
+  "repository_refresh": {
+    "binding": {
+      "path": "tmp/task42extra/review_v23/repository_refresh.json",
+      "sha256": "b8ac05f003843314294c05b912f5962ca0e5a3f32389181edcb43ce0e82deef2",
+      "bytes": 1847737
+    },
+    "files": 4860,
+    "bytes": 112078207,
+    "scope": "Every tracked file bytes and heading/definition quick navigation; not all-line semantic review"
+  },
+  "semantic_review_scope": "Current rules/task/README/review/response/topic/summary; all12 V23 compact JSON, five selected original indices, changed mathematical kernels/dispatch/guards/checkers/tests and exact peer documents. Unchanged NN/history accepted prior reviews reused, not rerun.",
+  "history_check": {
+    "authority_response_unchanged_count": 44,
+    "changed_old": [],
+    "summary_exact_old_suffix": true,
+    "numerical_lock": "FREE"
+  },
+  "history_reused": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+      "sha256": "0f36c35ac7881046b8b36d1f079b6f46903a7e189b1014c348982de22ce60442",
+      "bytes": 55097
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v20_evidence_audit.json",
+      "sha256": "479319d0914eaf80cf2617c1d13265487af15ee0ab0cac7570c20cf8a7192379",
+      "bytes": 201332
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v21_evidence_audit.json",
+      "sha256": "1437b77b56cc54cf0069e72dd78a7015bf413789f47a996a173c99258f06cb44",
+      "bytes": 134538
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v22_evidence_audit.json",
+      "sha256": "778f9ec294e82dbd03f8b85f5b909980305076ad7d9ab04c634fbf3becdc8fa1",
+      "bytes": 142338
+    }
+  ],
+  "independent_saved_recomputation": {
+    "bindings": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_e3_correction_attempt1.json",
+        "expected": "7e9c1ca58c2089806927c5df4bfcfb98229e9fdcc587c7f0601d538289cfe763",
+        "actual": "7e9c1ca58c2089806927c5df4bfcfb98229e9fdcc587c7f0601d538289cfe763",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_e4_correction_attempt1.json",
+        "expected": "535e7bfd569c31553211d54b09ffc9ecbb073882944d236b0c719fdf4eebf5a2",
+        "actual": "535e7bfd569c31553211d54b09ffc9ecbb073882944d236b0c719fdf4eebf5a2",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v23_admission_audit_attempt3.json",
+        "expected": "7341cd25802ef98967941bbab0caa70ed079b600e4c7e30432022c4901d9c0a2",
+        "actual": "7341cd25802ef98967941bbab0caa70ed079b600e4c7e30432022c4901d9c0a2",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v23_analytic_cold_attempt1.json",
+        "expected": "28f2e521f8191e3c20f70300e9f4ac5c2e1e1fa30e9ff459563e4a25bcbf6244",
+        "actual": "28f2e521f8191e3c20f70300e9f4ac5c2e1e1fa30e9ff459563e4a25bcbf6244",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v23_facet_qualification_attempt1.json",
+        "expected": "e53b59f95d6642ba042e3a7818195d5bbd4137ce909f032cdb3c72a7acd64010",
+        "actual": "e53b59f95d6642ba042e3a7818195d5bbd4137ce909f032cdb3c72a7acd64010",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v23_q60_cold_attempt1.json",
+        "expected": "e583644a7a9bb3bec450031a0101cce5c172c6c0e79494074e3a7cefa847f3ce",
+        "actual": "e583644a7a9bb3bec450031a0101cce5c172c6c0e79494074e3a7cefa847f3ce",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v23_saved_checker_attempt1.json",
+        "expected": "9bed8d72bcb408e0255ea6179db73ed1778cb2654549c996992e6a7d1d23f409",
+        "actual": "9bed8d72bcb408e0255ea6179db73ed1778cb2654549c996992e6a7d1d23f409",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/affine_state.npz",
+        "expected": "e751b4acd960bfb50dcb212e66ceed880b8d54d9f8a9835d1f7a2c9e1b4f9f5f",
+        "actual": "e751b4acd960bfb50dcb212e66ceed880b8d54d9f8a9835d1f7a2c9e1b4f9f5f",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/native.npz",
+        "expected": "f148f1001c620ea280a208b54ad3925e6c8dbb6ecee2ac905ec858c576c74b62",
+        "actual": "f148f1001c620ea280a208b54ad3925e6c8dbb6ecee2ac905ec858c576c74b62",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/observables.npz",
+        "expected": "9a820b4a5e0aa6080a5d432067923ed7117a14ba54d4512f7eb8ff35869d1198",
+        "actual": "9a820b4a5e0aa6080a5d432067923ed7117a14ba54d4512f7eb8ff35869d1198",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/affine_state.npz",
+        "expected": "ee16baaa6b4f9308ea09f7c185a1fedf8636905dc3931e4282d5c8b602a31a0c",
+        "actual": "ee16baaa6b4f9308ea09f7c185a1fedf8636905dc3931e4282d5c8b602a31a0c",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/native.npz",
+        "expected": "c3897bde734343b47588d3f90e8a897f3119e0b877de386b18de1c91516cd4ec",
+        "actual": "c3897bde734343b47588d3f90e8a897f3119e0b877de386b18de1c91516cd4ec",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/observables.npz",
+        "expected": "5f753842cc347930c71a3f3e91909aaeb10c9e07658bd4792dad36da892bc952",
+        "actual": "5f753842cc347930c71a3f3e91909aaeb10c9e07658bd4792dad36da892bc952",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_admission_audit_20261004T131047327849Z/result.json",
+        "expected": "29a5a84de38cb0457df7b19d179f5f852ee62d2d64b0cb7854dcc1bd32c8ac21",
+        "actual": "29a5a84de38cb0457df7b19d179f5f852ee62d2d64b0cb7854dcc1bd32c8ac21",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_admission_audit_20261004T131047327849Z/strict_roles.json",
+        "expected": "b75766befaf1a523429552f86682eaf2a022157d5f83ef909cea8a4a4ffcf934",
+        "actual": "b75766befaf1a523429552f86682eaf2a022157d5f83ef909cea8a4a4ffcf934",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/cold_arrays.npz",
+        "expected": "f8e382a8a676c821dcceb9c9397abb2f63a27ae525b47623c16dc8634b93755d",
+        "actual": "f8e382a8a676c821dcceb9c9397abb2f63a27ae525b47623c16dc8634b93755d",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/cold_result.json",
+        "expected": "db144f914c05fcd637aa8fa2f5bf5834f9630ad480e5095ba39f0da52b82538d",
+        "actual": "db144f914c05fcd637aa8fa2f5bf5834f9630ad480e5095ba39f0da52b82538d",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/result.json",
+        "expected": "2bdf0fef11971dceaf1825505a51660a439e26502c82222ac55e9a69718837f5",
+        "actual": "2bdf0fef11971dceaf1825505a51660a439e26502c82222ac55e9a69718837f5",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/moment_decimal110.json",
+        "expected": "5d1a9cce12533c14d500a0d343af384df944da8fe418536a619ef629ec44db68",
+        "actual": "5d1a9cce12533c14d500a0d343af384df944da8fe418536a619ef629ec44db68",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/oracle.npz",
+        "expected": "12c174d1d7d67fa5441e0f0bf114c1a076949a86a79dc35db5d37e3b625cb7e6",
+        "actual": "12c174d1d7d67fa5441e0f0bf114c1a076949a86a79dc35db5d37e3b625cb7e6",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/qualification.json",
+        "expected": "99c3cdf89f00d9d6aa23ac03f0f43d36e8dda96fd20d9f476a3df39ead2421df",
+        "actual": "99c3cdf89f00d9d6aa23ac03f0f43d36e8dda96fd20d9f476a3df39ead2421df",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/result.json",
+        "expected": "47e7cd293380ff54295dfbab2c5b1739f59eae543629ff5aa6e7811586cdcad7",
+        "actual": "47e7cd293380ff54295dfbab2c5b1739f59eae543629ff5aa6e7811586cdcad7",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/cold_arrays.npz",
+        "expected": "7287242fe374f291e44f5b3ffcf1d41294bf7fae7c60251deda4d63873c11b25",
+        "actual": "7287242fe374f291e44f5b3ffcf1d41294bf7fae7c60251deda4d63873c11b25",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/cold_result.json",
+        "expected": "e4c5c5248619ee5b3be11bc929d210b83308a097d82a6e909010237daf53ea3c",
+        "actual": "e4c5c5248619ee5b3be11bc929d210b83308a097d82a6e909010237daf53ea3c",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/result.json",
+        "expected": "4576597f94fb6d12f4b8e11cbaeb2e7c002f124a83d6bdaa6f97b953e622107a",
+        "actual": "4576597f94fb6d12f4b8e11cbaeb2e7c002f124a83d6bdaa6f97b953e622107a",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/audit.json",
+        "expected": "d8ff3c3e53cb26fe30f41affa64c03065edb97c5bf799c3372fd3e9017220b90",
+        "actual": "d8ff3c3e53cb26fe30f41affa64c03065edb97c5bf799c3372fd3e9017220b90",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/local_case_errors.csv",
+        "expected": "a644f2109ffdf6fa904f8e832b7cbe3d23aa7d21d7b12cf8e39dceb09f086b16",
+        "actual": "a644f2109ffdf6fa904f8e832b7cbe3d23aa7d21d7b12cf8e39dceb09f086b16",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/result.json",
+        "expected": "18cea4641b2770b9be1110a8230dc594e5699ad9f18b7f9912af2f6968f8fd3d",
+        "actual": "18cea4641b2770b9be1110a8230dc594e5699ad9f18b7f9912af2f6968f8fd3d",
+        "status": "PASS"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/cases/portable_interval_facet/README.md",
+        "expected": "7b7cf0c96e581475d1e5aa34f4f0d59f7ec8f63e4b58238a337f5b4157fd57d5",
+        "actual": "7b7cf0c96e581475d1e5aa34f4f0d59f7ec8f63e4b58238a337f5b4157fd57d5",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/cases/portable_interval_facet/config.json",
+        "expected": "0e28d0613088c9deb84ec010a3f521f5ae001a8c501d9dc403ebfbfaf049577e",
+        "actual": "0e28d0613088c9deb84ec010a3f521f5ae001a8c501d9dc403ebfbfaf049577e",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/cases/portable_interval_facet/receiver_opt_in.patch",
+        "expected": "7dc900f7637635daf2ea251f62de302d16e0bcd567825bfed611fb1737df6534",
+        "actual": "7dc900f7637635daf2ea251f62de302d16e0bcd567825bfed611fb1737df6534",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_audit.py",
+        "expected": "5edf1a830968a5b7c9441a0e81707fef42a005ea91cee2dc24b1f6d745f6cc6f",
+        "actual": "5edf1a830968a5b7c9441a0e81707fef42a005ea91cee2dc24b1f6d745f6cc6f",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_lifecycle.py",
+        "expected": "ae4205792a1e566cbf43755b65a2cb2d77b744ece6acc006e9e47890ca7b0cba",
+        "actual": "ae4205792a1e566cbf43755b65a2cb2d77b744ece6acc006e9e47890ca7b0cba",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_oracle.py",
+        "expected": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f",
+        "actual": "322335c64ef992a179f3362f2aaae83812a8cd21e97d0e4b3ebd4c150643618f",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/portable_facet_result_checker.py",
+        "expected": "49ea516a60e77f8f29f0436ab79caa8260f43d0d35ad80662a9412afa6630758",
+        "actual": "49ea516a60e77f8f29f0436ab79caa8260f43d0d35ad80662a9412afa6630758",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md",
+        "expected": "5d7bbec0e8bd53400709081ec702b449540fd8caf6b7908577031daf4c02953e",
+        "actual": "5d7bbec0e8bd53400709081ec702b449540fd8caf6b7908577031daf4c02953e",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json",
+        "expected": "c950b7ac05923fe751faa164cdc709b1c9410d85588f04323ac05bd8cc1f68fc",
+        "actual": "c950b7ac05923fe751faa164cdc709b1c9410d85588f04323ac05bd8cc1f68fc",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/render_check_v23.json",
+        "expected": "44900889557dc4fa5da1c183b42cbe456cc8409f711f000ec831f9a451dbe7e2",
+        "actual": "44900889557dc4fa5da1c183b42cbe456cc8409f711f000ec831f9a451dbe7e2",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v22_evidence_audit.json",
+        "expected": "778f9ec294e82dbd03f8b85f5b909980305076ad7d9ab04c634fbf3becdc8fa1",
+        "actual": "778f9ec294e82dbd03f8b85f5b909980305076ad7d9ab04c634fbf3becdc8fa1",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/response_v23.md",
+        "expected": "da974c0250e65ab0ea30e0c623355e8d832f41e84a5d84eaa4eab3842d20608d",
+        "actual": "da974c0250e65ab0ea30e0c623355e8d832f41e84a5d84eaa4eab3842d20608d",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/facet_component_v23.json",
+        "expected": "00e1efebc576e50155a0684a15bdf2b5fc45f40cf8a6e3396a9544756c5b846c",
+        "actual": "00e1efebc576e50155a0684a15bdf2b5fc45f40cf8a6e3396a9544756c5b846c",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T130833298193Z/run_summary.json",
+        "expected": "3753730150de44ace3193a64100ec6ac20198833a3cf6fb4dd93b718d5c577a5",
+        "actual": "3753730150de44ace3193a64100ec6ac20198833a3cf6fb4dd93b718d5c577a5",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T130958240051Z/run_manifest.json",
+        "expected": "8d3ab0da6ad0c79ce6db6eaf42288d9861a8f76c40c338973ef53c0ce955e290",
+        "actual": "8d3ab0da6ad0c79ce6db6eaf42288d9861a8f76c40c338973ef53c0ce955e290",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T130958240051Z/run_summary.json",
+        "expected": "02868dfb03557109e6326e39b8af8b09e9cd730198532ee48ad6d86718c0ef1a",
+        "actual": "02868dfb03557109e6326e39b8af8b09e9cd730198532ee48ad6d86718c0ef1a",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T131047327849Z/run_manifest.json",
+        "expected": "f79cd801b65b0222a47977b7e43179d9295cff85f18a16c93b049fbd1019f027",
+        "actual": "f79cd801b65b0222a47977b7e43179d9295cff85f18a16c93b049fbd1019f027",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T131047327849Z/run_summary.json",
+        "expected": "b613dff4f8400a296f668f3b404be511031b2a1086ff13657914f12c9894f875",
+        "actual": "b613dff4f8400a296f668f3b404be511031b2a1086ff13657914f12c9894f875",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_initial_dispatch_failure/run_summary.json",
+        "expected": "e82ffa8eb4a7387833354f77613e4947883da63defd423c508b172be58643d8c",
+        "actual": "e82ffa8eb4a7387833354f77613e4947883da63defd423c508b172be58643d8c",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/run_manifest.json",
+        "expected": "ba6ed103d6d3a7a19c441907c0102f632a228aa73f92b05fe32a3187d9ae6ed7",
+        "actual": "ba6ed103d6d3a7a19c441907c0102f632a228aa73f92b05fe32a3187d9ae6ed7",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/run_summary.json",
+        "expected": "add7b2ab828fc67eb63bc4accefe7e0f36ffa374dffd7bed92ab829f9b27fcdf",
+        "actual": "add7b2ab828fc67eb63bc4accefe7e0f36ffa374dffd7bed92ab829f9b27fcdf",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/run_manifest.json",
+        "expected": "8e1911f81ac8b83cc36fc3b404c646f1787cc2069947521b28138f0d64431be1",
+        "actual": "8e1911f81ac8b83cc36fc3b404c646f1787cc2069947521b28138f0d64431be1",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/run_summary.json",
+        "expected": "e7bc0a873cd0489050a9a01af74f7d4a124a18d0a1406af81649e2944b3f3bed",
+        "actual": "e7bc0a873cd0489050a9a01af74f7d4a124a18d0a1406af81649e2944b3f3bed",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/run_manifest.json",
+        "expected": "f4359258a6fd0a4a06c56d681c8cc09349d6e28bd85f5a8aaf0a278ca355d499",
+        "actual": "f4359258a6fd0a4a06c56d681c8cc09349d6e28bd85f5a8aaf0a278ca355d499",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/run_summary.json",
+        "expected": "04e2ff7a669c60ebf09598295d92c66b94399ca5fdd22b1de84acfd615787d4d",
+        "actual": "04e2ff7a669c60ebf09598295d92c66b94399ca5fdd22b1de84acfd615787d4d",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/run_manifest.json",
+        "expected": "46e0eb3844da956e055676f8fccec6b20c36c66e6bdb03e2ba42cde9aed70c38",
+        "actual": "46e0eb3844da956e055676f8fccec6b20c36c66e6bdb03e2ba42cde9aed70c38",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/run_summary.json",
+        "expected": "ab7bb6ee0767b25b453bc07ca88bbcce5766efddd17ee5931d7efdaa2ef47a40",
+        "actual": "ab7bb6ee0767b25b453bc07ca88bbcce5766efddd17ee5931d7efdaa2ef47a40",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/interval_facet_moments.py",
+        "expected": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed",
+        "actual": "1f0efd7926a6dcc220e4a3f9eba0bffdb738824b7995288cc228c1213209a4ed",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/local_facet_functionals.py",
+        "expected": "3396f7737cc48a24432d3fca250687cd1a238d6c694cd27fa97cefecc6202890",
+        "actual": "3396f7737cc48a24432d3fca250687cd1a238d6c694cd27fa97cefecc6202890",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/strict_port_admission.py",
+        "expected": "5d744d5ff83b6e34af3b542aa3dabe41737b5281e7fffdad93cbf44fc9f58dc0",
+        "actual": "5d744d5ff83b6e34af3b542aa3dabe41737b5281e7fffdad93cbf44fc9f58dc0",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_interval_facet_moments.py",
+        "expected": "70019e4928b400aa8bef6467542f5061553324903716ed5a5b0bf9bc0018e9f6",
+        "actual": "70019e4928b400aa8bef6467542f5061553324903716ed5a5b0bf9bc0018e9f6",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_portable_facet_oracle.py",
+        "expected": "2bbd2356b8b91bccf61d73b0a8e5154152b7446f1fde23719f875303f6e94ba5",
+        "actual": "2bbd2356b8b91bccf61d73b0a8e5154152b7446f1fde23719f875303f6e94ba5",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_strict_port_admission.py",
+        "expected": "6422d8a08e6969b9192f5c455f7393b82568e1b2acf0aef7f882d5ed8a2c95af",
+        "actual": "6422d8a08e6969b9192f5c455f7393b82568e1b2acf0aef7f882d5ed8a2c95af",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_arithmetic_schema_fix_20261004T131043664842Z/summary.json",
+        "expected": "404973eb3a84ddc93209429a54208d13afc3c02f9fc648dc267cab5d590b0376",
+        "actual": "404973eb3a84ddc93209429a54208d13afc3c02f9fc648dc267cab5d590b0376",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_checker_final_fixture_20261004T132455861822Z/summary.json",
+        "expected": "b326a0f1de89fa9dc3fce3f929837763e2c2ef42d7204ba98b0e5cbe33fa0391",
+        "actual": "b326a0f1de89fa9dc3fce3f929837763e2c2ef42d7204ba98b0e5cbe33fa0391",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_20261004T131512249881Z/summary.json",
+        "expected": "61c46dcc470832731d93d7ce1b2a3ecd201bee011e353aa60208c0566c758929",
+        "actual": "61c46dcc470832731d93d7ce1b2a3ecd201bee011e353aa60208c0566c758929",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_fixed_20261004T131557751298Z/summary.json",
+        "expected": "b24bbd375e8d2a0d013fb68a58e775185def1a44fa45a7e95c79e60f2bbb7113",
+        "actual": "b24bbd375e8d2a0d013fb68a58e775185def1a44fa45a7e95c79e60f2bbb7113",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_decimal_oracle_fixture_20261004T131743220879Z/summary.json",
+        "expected": "52046ba358347b7fce5b7a4129bd3408eb83325552dc1e3448ba69f4ca2ee73c",
+        "actual": "52046ba358347b7fce5b7a4129bd3408eb83325552dc1e3448ba69f4ca2ee73c",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_evidence_freeze_20261004T132717996050Z/summary.json",
+        "expected": "00003dfda627162d4faf323cfe36adceeb2bb7d6732f1248fdcfaf9bf3365ae7",
+        "actual": "00003dfda627162d4faf323cfe36adceeb2bb7d6732f1248fdcfaf9bf3365ae7",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_final_component_fixture_20261004T131843851802Z/summary.json",
+        "expected": "5479a566314259e9bf5e3e66ca3e410804197515006869666c2b1daeb21a0394",
+        "actual": "5479a566314259e9bf5e3e66ca3e410804197515006869666c2b1daeb21a0394",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_first_resource_readmission_checks_20261004T130018727323Z/admission_refusal.json",
+        "expected": "7a0797260a1873f347ec65da7f440a74b544d0cbe317e39a91310dbee06e0cdb",
+        "actual": "7a0797260a1873f347ec65da7f440a74b544d0cbe317e39a91310dbee06e0cdb",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_format_recheck_20261004T130737263147Z/summary.json",
+        "expected": "854dd9292137fdda161d1ccf994b48e04875ec58c8d759cec41da13c8bc22ae3",
+        "actual": "854dd9292137fdda161d1ccf994b48e04875ec58c8d759cec41da13c8bc22ae3",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_full_entry_routing_20261004T130901375015Z/summary.json",
+        "expected": "b75afe284f542eac812c345ea4ee00b9af908c7b50bee1139fe0a4793591e5c8",
+        "actual": "b75afe284f542eac812c345ea4ee00b9af908c7b50bee1139fe0a4793591e5c8",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_github_visual_capture_20261004T133920354797Z/summary.json",
+        "expected": "85ed7ec911ef0f2be7e567f755f9f51d21d6b6a16f2d6a9054dd96e70f3ce8f8",
+        "actual": "85ed7ec911ef0f2be7e567f755f9f51d21d6b6a16f2d6a9054dd96e70f3ce8f8",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_dispatch_closeout_20261004T130932211929Z/summary.json",
+        "expected": "a7c62ec9e68d89d140a8c61789007ccbf6072baea36a554738bc95fcb272e237",
+        "actual": "a7c62ec9e68d89d140a8c61789007ccbf6072baea36a554738bc95fcb272e237",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_read_snapshot_20261004T125426323578Z/summary.json",
+        "expected": "50c8545dacbe62a81adfec427236b20f67de1daabf33524189f3012ee903d10e",
+        "actual": "50c8545dacbe62a81adfec427236b20f67de1daabf33524189f3012ee903d10e",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_native_abi_20261004T131111660284Z/summary.json",
+        "expected": "b5568a5847df553dd48a53ea8dd0bc23e9f5fc7089c35afe58147c0964a09a60",
+        "actual": "b5568a5847df553dd48a53ea8dd0bc23e9f5fc7089c35afe58147c0964a09a60",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_own_navigation_20261004T133222884782Z/summary.json",
+        "expected": "91ad7ed72738f55fcb1f7730fe2bf58ed27fc0883d793d5047952f65a527abc1",
+        "actual": "91ad7ed72738f55fcb1f7730fe2bf58ed27fc0883d793d5047952f65a527abc1",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_prepublication_metadata_20261004T133758354231Z/summary.json",
+        "expected": "ae58b0627583654c6243a15ebecad58fb7cbeca6c3d9c5d4ca0d45da8a314bc2",
+        "actual": "ae58b0627583654c6243a15ebecad58fb7cbeca6c3d9c5d4ca0d45da8a314bc2",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_scoped_publication_checks_20261004T133539145119Z/summary.json",
+        "expected": "26bb3520037655d9f2119826eb3ffdea3d069e6ec9983c28f60c1b8f7de94ddc",
+        "actual": "26bb3520037655d9f2119826eb3ffdea3d069e6ec9983c28f60c1b8f7de94ddc",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_second_resource_readmission_20261004T130331009752Z/summary.json",
+        "expected": "f5ce4a80a25d96a64e2045757d8099b56801793d36b894b522095bf963bb7d76",
+        "actual": "f5ce4a80a25d96a64e2045757d8099b56801793d36b894b522095bf963bb7d76",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_stage_schema_repair_20261004T130822351828Z/summary.json",
+        "expected": "c9050554821af2755bc62379a7957b0e85385eddc40d515fc4246d1dbf97c73c",
+        "actual": "c9050554821af2755bc62379a7957b0e85385eddc40d515fc4246d1dbf97c73c",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/00_table_00.png",
+        "expected": "c55d8767b13f76b74e652d01d07389e7e2d4dc651fedeb9f4fe32b9c6cdbae19",
+        "actual": "c55d8767b13f76b74e652d01d07389e7e2d4dc651fedeb9f4fe32b9c6cdbae19",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/00_table_00_bottom.png",
+        "expected": "a76fca5bef1bb1d0f4ee3c49a8586f85710ee359c707862188ef7c17fb664c31",
+        "actual": "a76fca5bef1bb1d0f4ee3c49a8586f85710ee359c707862188ef7c17fb664c31",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/00_top.png",
+        "expected": "e681c446234d1c1cc869895fae3eaeeffa1292e93022f1e6e8a356dc8bbe7012",
+        "actual": "e681c446234d1c1cc869895fae3eaeeffa1292e93022f1e6e8a356dc8bbe7012",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_math-renderer_00.png",
+        "expected": "95225c63a2a7361e274ebd91e5c67d276fd1f02d6848d66775fcf75f558fd341",
+        "actual": "95225c63a2a7361e274ebd91e5c67d276fd1f02d6848d66775fcf75f558fd341",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_00.png",
+        "expected": "23d650799c623a897a40451b3034e72acdf0b8c3b76d8b0a225e78a548e7f1b2",
+        "actual": "23d650799c623a897a40451b3034e72acdf0b8c3b76d8b0a225e78a548e7f1b2",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_00_bottom.png",
+        "expected": "ccda7b2dffea72c758ea5066c3ee6e14054ee49ae93b6a5f59b64a4ba32a0945",
+        "actual": "ccda7b2dffea72c758ea5066c3ee6e14054ee49ae93b6a5f59b64a4ba32a0945",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_01.png",
+        "expected": "00cb80b354000221f420271531c86b5c356b4d8dc0f4cad7218c9986cfeb004f",
+        "actual": "00cb80b354000221f420271531c86b5c356b4d8dc0f4cad7218c9986cfeb004f",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_01_bottom.png",
+        "expected": "1cfec555d0decb5315bb207f545b8b7d981487c42727bc5933079833692227cb",
+        "actual": "1cfec555d0decb5315bb207f545b8b7d981487c42727bc5933079833692227cb",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_top.png",
+        "expected": "0435af0140b8702c07fe7d9b681033b99ba950eea14383c1e037b2d35ab08128",
+        "actual": "0435af0140b8702c07fe7d9b681033b99ba950eea14383c1e037b2d35ab08128",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/render_records.json",
+        "expected": "f10764bae14d355d377b13998f26bc8fd453ab142ad08a9eea5d3f1f6553e08e",
+        "actual": "f10764bae14d355d377b13998f26bc8fd453ab142ad08a9eea5d3f1f6553e08e",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/document_checks.json",
+        "expected": "3c664f2a1f5416b739098675c27e28f5a0ef3e5d654b967fa7e6d8710bab08c3",
+        "actual": "3c664f2a1f5416b739098675c27e28f5a0ef3e5d654b967fa7e6d8710bab08c3",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/final_tests_unique.xml",
+        "expected": "e901581c232f294c1ca5831c5cbf7a7135f84baaaf264677b81ee8068eeb6b03",
+        "actual": "e901581c232f294c1ca5831c5cbf7a7135f84baaaf264677b81ee8068eeb6b03",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/native_abi_current.json",
+        "expected": "633090fb41d719d22bff0e6fbf2042213523d303d05de7811d06bede746617af",
+        "actual": "633090fb41d719d22bff0e6fbf2042213523d303d05de7811d06bede746617af",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/receiver_directional_boundary.py",
+        "expected": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+        "actual": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+        "status": "PASS",
+        "bytes_match": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/receiver_reference.json",
+        "expected": "fe87e29de1b600a5b89ce8d343dabfad8255581288bd5e6266d3b5ee65433c48",
+        "actual": "fe87e29de1b600a5b89ce8d343dabfad8255581288bd5e6266d3b5ee65433c48",
+        "status": "PASS",
+        "bytes_match": true
+      }
+    ],
+    "compact_records_read": [
+      "facet_qualification_v23.json",
+      "gate_decisions_v23.json",
+      "independent_checker_v23.json",
+      "local_cold_comparison_v23.json",
+      "minimal_integration_v23.json",
+      "render_check_v23.json",
+      "repair_log_v23.json",
+      "resource_costs_v23.json",
+      "run_index_v23.json",
+      "selective_merge_manifest_v23.json",
+      "strict_admission_v23.json",
+      "targeted_tests_v23.json"
+    ],
+    "indices_read": [
+      "v23_admission_audit",
+      "v23_facet_qualification",
+      "v23_analytic_cold",
+      "v23_q60_cold",
+      "v23_saved_checker"
+    ],
+    "raw_shapes": {
+      "frequencies": {
+        "shape": [
+          1213
+        ],
+        "dtype": "float64"
+      },
+      "moment_oracle80": {
+        "shape": [
+          1213,
+          7
+        ],
+        "dtype": "complex128"
+      },
+      "moment_oracle110": {
+        "shape": [
+          1213,
+          7
+        ],
+        "dtype": "complex128"
+      },
+      "p4_directions": {
+        "shape": [
+          3,
+          300
+        ],
+        "dtype": "complex128"
+      },
+      "p4_load": {
+        "shape": [
+          24
+        ],
+        "dtype": "complex128"
+      },
+      "p4_B80": {
+        "shape": [
+          24,
+          300
+        ],
+        "dtype": "complex128"
+      },
+      "p4_D80": {
+        "shape": [
+          24,
+          300
+        ],
+        "dtype": "complex128"
+      },
+      "p4_H80": {
+        "shape": [
+          24
+        ],
+        "dtype": "float64"
+      },
+      "p4_B": {
+        "shape": [
+          24,
+          300
+        ],
+        "dtype": "complex128"
+      },
+      "p4_D": {
+        "shape": [
+          24,
+          300
+        ],
+        "dtype": "complex128"
+      },
+      "p4_H": {
+        "shape": [
+          24
+        ],
+        "dtype": "float64"
+      },
+      "p6_directions": {
+        "shape": [
+          3,
+          882
+        ],
+        "dtype": "complex128"
+      },
+      "p6_load": {
+        "shape": [
+          24
+        ],
+        "dtype": "complex128"
+      },
+      "p6_B80": {
+        "shape": [
+          24,
+          882
+        ],
+        "dtype": "complex128"
+      },
+      "p6_D80": {
+        "shape": [
+          24,
+          882
+        ],
+        "dtype": "complex128"
+      },
+      "p6_H80": {
+        "shape": [
+          24
+        ],
+        "dtype": "float64"
+      },
+      "p6_B": {
+        "shape": [
+          24,
+          882
+        ],
+        "dtype": "complex128"
+      },
+      "p6_D": {
+        "shape": [
+          24,
+          882
+        ],
+        "dtype": "complex128"
+      },
+      "p6_H": {
+        "shape": [
+          24
+        ],
+        "dtype": "float64"
+      }
+    },
+    "moment80_110_max": 0.0,
+    "decimal_strings_round_to_saved_array": true,
+    "implementations": {
+      "analytic": {
+        "source": "b5034e5ffab657146024ac429fe410f005049d3d",
+        "interval_max_absolute": 3.554447978966673e-16,
+        "worst_interval": {
+          "index": 741,
+          "degree": 1,
+          "omega": 1.8308993694169082
+        },
+        "per_degree": {
+          "4": {
+            "full_columns": 300,
+            "case_count": 24,
+            "direction_count": 3,
+            "worst": {
+              "numerator": 8.497345905402043e-17,
+              "reference_norm": 0.0005127537835060143,
+              "denominator": 0.0005127537835060143,
+              "relative": 1.6571980897538075e-13,
+              "near_zero": false,
+              "key": [
+                -70,
+                1,
+                "top",
+                "s",
+                0.21153846153846154
+              ],
+              "quantity": "projection",
+              "direction": 0,
+              "row": 10
+            },
+            "whole": {
+              "B": {
+                "numerator": 1.7210772101519923e-11,
+                "reference_norm": 327.68502597825665,
+                "denominator": 327.68502597825665,
+                "relative": 5.252230262929968e-14,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 1.916361675825588e-12,
+                "reference_norm": 24.776208657634058,
+                "denominator": 24.776208657634058,
+                "relative": 7.734684924180753e-14,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "forward": {
+                "numerator": 1.7540129046428284e-12,
+                "reference_norm": 27.916232425168953,
+                "denominator": 27.916232425168953,
+                "relative": 6.283129033778321e-14,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 1.8568418660030052e-16,
+                "reference_norm": 0.21837380288967992,
+                "denominator": 0.21837380288967992,
+                "relative": 8.503043137189224e-16,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 8.581373014039591e-12,
+                "reference_norm": 471.8715941468068,
+                "denominator": 471.8715941468068,
+                "relative": 1.8185822415429798e-14,
+                "near_zero": false
+              }
+            },
+            "own_action_identity": {
+              "forward": {
+                "numerator": 0.0,
+                "reference_norm": 27.916232425168964,
+                "denominator": 27.916232425168964,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 0.0,
+                "reference_norm": 0.2183738028896799,
+                "denominator": 0.2183738028896799,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 0.0,
+                "reference_norm": 471.87159414680224,
+                "denominator": 471.87159414680224,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "oracle80_110": {
+              "B": {
+                "numerator": 0.0,
+                "reference_norm": 327.68502597825665,
+                "denominator": 327.68502597825665,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 0.0,
+                "reference_norm": 24.776208657634058,
+                "denominator": 24.776208657634058,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "adjoint_dot": {
+              "numerator": 7.640399661428378e-15,
+              "reference_norm": 6.962388106716179,
+              "denominator": 6.962388106716179,
+              "relative": 1.0973820396565029e-15,
+              "near_zero": false
+            },
+            "H_min": 29.44377804032904,
+            "H_max": 1250.0,
+            "near_zero_csv_rows": 0
+          },
+          "6": {
+            "full_columns": 882,
+            "case_count": 24,
+            "direction_count": 3,
+            "worst": {
+              "numerator": 2.6690214094908625e-13,
+              "reference_norm": 2.3939843683159094,
+              "denominator": 2.3939843683159094,
+              "relative": 1.1148867322673592e-13,
+              "near_zero": false,
+              "key": [
+                -70,
+                1,
+                "top",
+                "s",
+                0.21153846153846154
+              ],
+              "quantity": "forward",
+              "direction": 2,
+              "row": 10
+            },
+            "whole": {
+              "B": {
+                "numerator": 2.1251716548953857e-11,
+                "reference_norm": 397.1801444438488,
+                "denominator": 397.1801444438488,
+                "relative": 5.350649282509214e-14,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 2.3666203224835603e-12,
+                "reference_norm": 30.591066947138405,
+                "denominator": 30.591066947138405,
+                "relative": 7.736311801654706e-14,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "forward": {
+                "numerator": 7.944835685386806e-13,
+                "reference_norm": 18.932366266264665,
+                "denominator": 18.932366266264665,
+                "relative": 4.1964303741279315e-14,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 9.577474772508056e-17,
+                "reference_norm": 0.1986869904068759,
+                "denominator": 0.1986869904068759,
+                "relative": 4.820383434715618e-16,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 2.966640533746865e-11,
+                "reference_norm": 546.1029784475847,
+                "denominator": 546.1029784475847,
+                "relative": 5.432382995200244e-14,
+                "near_zero": false
+              }
+            },
+            "own_action_identity": {
+              "forward": {
+                "numerator": 0.0,
+                "reference_norm": 18.932366266264676,
+                "denominator": 18.932366266264676,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 0.0,
+                "reference_norm": 0.1986869904068759,
+                "denominator": 0.1986869904068759,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 0.0,
+                "reference_norm": 546.1029784475847,
+                "denominator": 546.1029784475847,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "oracle80_110": {
+              "B": {
+                "numerator": 0.0,
+                "reference_norm": 397.1801444438488,
+                "denominator": 397.1801444438488,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 0.0,
+                "reference_norm": 30.591066947138405,
+                "denominator": 30.591066947138405,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "adjoint_dot": {
+              "numerator": 6.217248937900877e-15,
+              "reference_norm": 5.851250067006627,
+              "denominator": 5.851250067006627,
+              "relative": 1.0625505433373977e-15,
+              "near_zero": false
+            },
+            "H_min": 29.44377804032904,
+            "H_max": 1250.0,
+            "near_zero_csv_rows": 0
+          }
+        },
+        "full_seconds": 64.46514550200664,
+        "worker_seconds": 0.6543973919469863,
+        "peak_bytes": 175190016
+      },
+      "q60": {
+        "source": "b5034e5ffab657146024ac429fe410f005049d3d",
+        "interval_max_absolute": 9.082805012334877e-14,
+        "worst_interval": {
+          "index": 1141,
+          "degree": 6,
+          "omega": -54.97787143782138
+        },
+        "per_degree": {
+          "4": {
+            "full_columns": 300,
+            "case_count": 24,
+            "direction_count": 3,
+            "worst": {
+              "numerator": 2.907246561725945e-13,
+              "reference_norm": 0.44538313880710934,
+              "denominator": 0.44538313880710934,
+              "relative": 6.527518238594664e-13,
+              "near_zero": false,
+              "key": [
+                -71,
+                35,
+                "bottom",
+                "s",
+                0.14655172413793102
+              ],
+              "quantity": "B",
+              "direction": -1,
+              "row": 16
+            },
+            "whole": {
+              "B": {
+                "numerator": 1.7195891589766043e-11,
+                "reference_norm": 327.68502597825665,
+                "denominator": 327.68502597825665,
+                "relative": 5.2476891607818134e-14,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 1.9409828793172363e-12,
+                "reference_norm": 24.776208657634058,
+                "denominator": 24.776208657634058,
+                "relative": 7.834059303174216e-14,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "forward": {
+                "numerator": 1.748093557239277e-12,
+                "reference_norm": 27.916232425168953,
+                "denominator": 27.916232425168953,
+                "relative": 6.261925071462065e-14,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 1.8780646475675095e-16,
+                "reference_norm": 0.21837380288967992,
+                "denominator": 0.21837380288967992,
+                "relative": 8.600228702873703e-16,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 8.449457493856395e-12,
+                "reference_norm": 471.8715941468068,
+                "denominator": 471.8715941468068,
+                "relative": 1.7906264328400394e-14,
+                "near_zero": false
+              }
+            },
+            "own_action_identity": {
+              "forward": {
+                "numerator": 0.0,
+                "reference_norm": 27.916232425168964,
+                "denominator": 27.916232425168964,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 0.0,
+                "reference_norm": 0.2183738028896799,
+                "denominator": 0.2183738028896799,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 0.0,
+                "reference_norm": 471.87159414680247,
+                "denominator": 471.87159414680247,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "oracle80_110": {
+              "B": {
+                "numerator": 0.0,
+                "reference_norm": 327.68502597825665,
+                "denominator": 327.68502597825665,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 0.0,
+                "reference_norm": 24.776208657634058,
+                "denominator": 24.776208657634058,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "adjoint_dot": {
+              "numerator": 9.739636741317752e-15,
+              "reference_norm": 6.9623881067161895,
+              "denominator": 6.9623881067161895,
+              "relative": 1.3988931085186878e-15,
+              "near_zero": false
+            },
+            "H_min": 29.44377804032904,
+            "H_max": 1250.0,
+            "near_zero_csv_rows": 0
+          },
+          "6": {
+            "full_columns": 882,
+            "case_count": 24,
+            "direction_count": 3,
+            "worst": {
+              "numerator": 1.2266064042583932e-13,
+              "reference_norm": 0.0062051539405001445,
+              "denominator": 0.0062051539405001445,
+              "relative": 1.9767541885665564e-11,
+              "near_zero": false,
+              "key": [
+                -71,
+                35,
+                "top",
+                "s",
+                0.21153846153846154
+              ],
+              "quantity": "forward",
+              "direction": 0,
+              "row": 6
+            },
+            "whole": {
+              "B": {
+                "numerator": 2.4510855639935764e-11,
+                "reference_norm": 397.1801444438488,
+                "denominator": 397.1801444438488,
+                "relative": 6.171218773853126e-14,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 7.183508168886621e-12,
+                "reference_norm": 30.591066947138405,
+                "denominator": 30.591066947138405,
+                "relative": 2.348237209672934e-13,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "forward": {
+                "numerator": 1.0979224621378953e-12,
+                "reference_norm": 18.932366266264665,
+                "denominator": 18.932366266264665,
+                "relative": 5.79918245134666e-14,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 3.0384697972855503e-16,
+                "reference_norm": 0.1986869904068759,
+                "denominator": 0.1986869904068759,
+                "relative": 1.529274660139197e-15,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 3.273336326618798e-11,
+                "reference_norm": 546.1029784475847,
+                "denominator": 546.1029784475847,
+                "relative": 5.993990979364296e-14,
+                "near_zero": false
+              }
+            },
+            "own_action_identity": {
+              "forward": {
+                "numerator": 0.0,
+                "reference_norm": 18.932366266264676,
+                "denominator": 18.932366266264676,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "projection": {
+                "numerator": 0.0,
+                "reference_norm": 0.1986869904068759,
+                "denominator": 0.1986869904068759,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "adjoint": {
+                "numerator": 0.0,
+                "reference_norm": 546.1029784475865,
+                "denominator": 546.1029784475865,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "oracle80_110": {
+              "B": {
+                "numerator": 0.0,
+                "reference_norm": 397.1801444438488,
+                "denominator": 397.1801444438488,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "D": {
+                "numerator": 0.0,
+                "reference_norm": 30.591066947138405,
+                "denominator": 30.591066947138405,
+                "relative": 0.0,
+                "near_zero": false
+              },
+              "H": {
+                "numerator": 0.0,
+                "reference_norm": 4999.853633782607,
+                "denominator": 4999.853633782607,
+                "relative": 0.0,
+                "near_zero": false
+              }
+            },
+            "adjoint_dot": {
+              "numerator": 3.794299872214038e-15,
+              "reference_norm": 5.851250067007273,
+              "denominator": 5.851250067007273,
+              "relative": 6.484597015616358e-16,
+              "near_zero": false
+            },
+            "H_min": 29.44377804032904,
+            "H_max": 1250.0,
+            "near_zero_csv_rows": 0
+          }
+        },
+        "full_seconds": 64.61506059695967,
+        "worker_seconds": 0.5033658549655229,
+        "peak_bytes": 114491392
+      }
+    },
+    "csv_rows": 864,
+    "csv_max_absolute_recomputation_difference": {
+      "numerator": 1.6155871338926322e-27,
+      "reference_norm": 1.4210854715202004e-14,
+      "denominator": 1.4210854715202004e-14,
+      "relative": 6.462348535570529e-27
+    },
+    "strict_roles": {
+      "E3": {
+        "metrics": {
+          "stored_operator_arithmetic": 9.677671955423449e-17,
+          "oracle_self_consistency": 1.9582095252434673,
+          "actual_vector_projection": 0.7732208520214483,
+          "original_equation": 6.291569234957843e-11,
+          "MPC": 0.0,
+          "affine": null
+        },
+        "independently_failed": [
+          "oracle_self_consistency",
+          "actual_vector_projection",
+          "affine"
+        ],
+        "entry_rejections": {
+          "campaign": "STRICT_PORT_ROLE_REJECTED:oracle_self_consistency,actual_vector_projection,affine",
+          "direct": "STRICT_PORT_ROLE_REJECTED:oracle_self_consistency,actual_vector_projection,affine"
+        }
+      },
+      "E4": {
+        "metrics": {
+          "stored_operator_arithmetic": 3.885370551605875e-17,
+          "oracle_self_consistency": 0.26114046721666273,
+          "actual_vector_projection": 0.17691378886740725,
+          "original_equation": 2.961391913468408e-10,
+          "MPC": 0.0,
+          "affine": null
+        },
+        "independently_failed": [
+          "oracle_self_consistency",
+          "actual_vector_projection",
+          "affine"
+        ],
+        "entry_rejections": {
+          "campaign": "STRICT_PORT_ROLE_REJECTED:oracle_self_consistency,actual_vector_projection,affine",
+          "direct": "STRICT_PORT_ROLE_REJECTED:oracle_self_consistency,actual_vector_projection,affine"
+        }
+      }
+    },
+    "tests": {
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "tested_blobs_match_source": [
+      "src/test/test_portable_facet_oracle.py",
+      "src/test/test_interval_facet_moments.py",
+      "src/test/test_strict_port_admission.py",
+      "src/solvers/interval_facet_moments.py",
+      "src/solvers/strict_port_admission.py",
+      "src/solvers/local_facet_functionals.py",
+      "benchmarks/portable_facet_oracle.py",
+      "benchmarks/portable_facet_result_checker.py",
+      "benchmarks/portable_facet_lifecycle.py",
+      "benchmarks/portable_facet_audit.py"
+    ],
+    "costs": {
+      "time_gain": 0.002320126199186534,
+      "rss_gain": -0.5301588437321121,
+      "worker_ratio": 1.3000432697045134,
+      "mandatory60s_fraction": {
+        "analytic": 0.9307355088205355,
+        "q60": 0.9285760849820077
+      },
+      "no_retiming": true
+    },
+    "operations": {
+      "new_native_basis": 0,
+      "new_quadrature": 0,
+      "FE_action": 0,
+      "factor": 0,
+      "solve": 0,
+      "NN": 0,
+      "saved_local_array_products": true
+    },
+    "elapsed_seconds": 1.0024216959718615
+  },
+  "reviewer_supervised_runs": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v23_saved_audit_20261004T135303066746Z/summary.json",
+        "sha256": "27ac41415fdfde16e37955d5e21221a494dd3c6715fb51ae896d3633c35334d0",
+        "bytes": 1903
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1822721
+        ],
+        "sampled_process_tree_rss_peak_bytes": 77025280,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123805143040,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123805143040,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 5,
+        "elapsed_seconds": 2.5630491769406945,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    }
+  ],
+  "script": {
+    "binding": {
+      "path": "tmp/task42extra/review_v23/audit_saved.py",
+      "sha256": "cc4235d1a85b8f3c3e3efa8434f32e25fedab888b22daa1a528271077055c1be",
+      "bytes": 9215
+    },
+    "source": "\"\"\"Review-only independent audit of persisted V23 data; no producer or PDE.\"\"\"\nimport csv\nimport hashlib\nimport json\nimport pathlib\nimport subprocess\nimport time\nimport xml.etree.ElementTree as ET\n\nimport numpy as np\n\nROOT = pathlib.Path('/home/fenics/Projects/NN-Lab-V2')\nOUT = ROOT / 'tmp/task42extra/review_v23'\nREC = ROOT / 'docs/task042extra_feinn_5nm/outcomes/records'\nstart = time.monotonic()\ndef read(p):\n    return json.loads(pathlib.Path(p).read_text())\ndef digest(p):\n    with pathlib.Path(p).open('rb') as f:\n        return hashlib.file_digest(f, 'sha256').hexdigest()\nrecords = {p.name: read(p) for p in sorted(REC.glob('*_v23.json'))}\nbindings = {}\ndef collect(obj):\n    if isinstance(obj, dict):\n        if isinstance(obj.get('path'), str) and isinstance(obj.get('sha256'), str):\n            p = pathlib.Path(obj['path']); p = p if p.is_absolute() else ROOT / p\n            bindings[(str(p), obj['sha256'])] = obj\n        for v in obj.values(): collect(v)\n    elif isinstance(obj, list):\n        for v in obj: collect(v)\nfor d in records.values(): collect(d)\nindex = {k: read(v['path']) for k, v in records['run_index_v23.json']['indices'].items()}\nfor d in index.values(): collect(d)\nchecks = []\nfor (p, expected), entry in sorted(bindings.items()):\n    exists = pathlib.Path(p).is_file()\n    actual = digest(p) if exists else None\n    row = dict(path=p, expected=expected, actual=actual, status='PASS' if actual == expected else 'UNRESOLVED')\n    if exists and 'bytes' in entry: row['bytes_match'] = pathlib.Path(p).stat().st_size == entry['bytes']\n    checks.append(row)\n\ndef arrays(p):\n    with np.load(p, allow_pickle=False) as z:\n        return {k: np.array(z[k]) for k in z.files}\nqidx = index['v23_facet_qualification']\noracle = arrays(qidx['files']['oracle']['path'])\ndigits = read(qidx['files']['decimal_moments']['path'])\nconverted = np.array([[complex(float(r),float(i)) for r,i in row] for row in digits])\nassert np.array_equal(converted, oracle['moment_oracle110'])\nassert len(oracle['frequencies']) == 1213\nassert np.isfinite(oracle['frequencies']).all()\nmom_self = float(np.max(abs(oracle['moment_oracle80']-oracle['moment_oracle110'])))\ncsv_rows = list(csv.DictReader((REC/'local_case_errors_v23.csv').open()))\ncsv_index = {(r['implementation'],int(r['degree']),int(r['local_mode_index']),r['quantity'],int(r['direction'])):r for r in csv_rows}\nassert len(csv_rows) == len(csv_index) == 864\ndef measure(a,b):\n    numerator = float(np.sqrt(np.sum(np.abs(np.asarray(a)-b)**2)))\n    norm = float(np.sqrt(np.sum(np.abs(b)**2)))\n    return dict(numerator=numerator, reference_norm=norm, denominator=max(norm,1e-12), relative=numerator/max(norm,1e-12), near_zero=bool(norm<1e-12))\nimplementations = {}; compared=0; csv_abs={k:0. for k in ('numerator','reference_norm','denominator','relative')}\nfor name in ('analytic','q60'):\n    idx = index['v23_'+name+'_cold']; a = arrays(idx['files']['cold_arrays']['path'])\n    assert all(np.isfinite(x).all() for x in a.values())\n    interval = np.abs(a['moment_values']-oracle['moment_oracle110'])\n    wi = np.unravel_index(int(interval.argmax()),interval.shape)\n    per_degree={}\n    for p,dim in ((4,300),(6,882)):\n        c=oracle[f'p{p}_directions']; g=oracle[f'p{p}_load']\n        B,D,H=(oracle[f'p{p}_{x}'] for x in ('B','D','H'))\n        assert B.shape == D.shape == (24,dim) and c.shape == (3,dim) and g.shape == H.shape == (24,)\n        assert np.isfinite(B).all() and np.isfinite(D).all() and np.all(H>0)\n        expected=dict(B=B,D=D,H=H,forward=B@c.T,projection=(D@c.T+g[:,None])/H[:,None],adjoint=B.conj().T@g)\n        own_B,own_D,own_H=(a[f'p{p}_{x}'] for x in ('B','D','H'))\n        own_expected=dict(forward=own_B@c.T,projection=(own_D@c.T+g[:,None])/own_H[:,None],adjoint=own_B.conj().T@g)\n        own_identity={k:measure(a[f'p{p}_{k}'],v) for k,v in own_expected.items()}\n        assert all(x['relative']<1e-13 for x in own_identity.values())\n        whole={k:measure(a[f'p{p}_{k}'],v) for k,v in expected.items()}\n        worst=dict(relative=-1.); nears=0\n        for row,key in enumerate(qidx['result']['local'][str(p)]['case_keys']):\n            for quantity in ('B','D','H','forward','projection'):\n                av,bv=a[f'p{p}_{quantity}'][row],expected[quantity][row]\n                pairs=[(-1,av,bv)] if quantity in ('B','D','H') else [(d,av[d],bv[d]) for d in range(3)]\n                for direction,x,y in pairs:\n                    m=measure(x,y); r=csv_index[(name,p,row,quantity,direction)]; compared+=1\n                    assert json.loads(r['mode_key']) == key\n                    assert (r['near_zero']=='True') == m['near_zero']; nears+=m['near_zero']\n                    for col in csv_abs:\n                        csv_abs[col]=max(csv_abs[col],abs(m[col]-float(r[col])))\n                        assert np.isclose(m[col],float(r[col]),rtol=1e-11,atol=2e-14)\n                    if m['relative']>worst['relative']: worst=dict(**m,key=key,quantity=quantity,direction=direction,row=row)\n        oracle_pair={k:measure(oracle[f'p{p}_{k}80'],oracle[f'p{p}_{k}']) for k in ('B','D','H')}\n        dot_l=np.vdot(a[f'p{p}_forward'][:,0],g);dot_r=np.vdot(c[0],a[f'p{p}_adjoint'])\n        dot=measure(dot_l,dot_r)\n        per_degree[str(p)]=dict(full_columns=dim,case_count=24,direction_count=3,worst=worst,whole=whole,own_action_identity=own_identity,oracle80_110=oracle_pair,adjoint_dot=dot,H_min=float(H.min()),H_max=float(H.max()),near_zero_csv_rows=nears)\n    cost=read(pathlib.Path(idx['run_directory'])/'run_summary.json')\n    declared=records['local_cold_comparison_v23.json']['implementations'][name]\n    for k,key in [('full_launch_seconds','launch_to_summary_seconds_monotonic'),('simultaneous_tree_peak_bytes','sampled_process_tree_rss_peak_bytes')]: assert declared[k]==cost[key]\n    assert cost['classification']=='COMPLETED' and cost['descendants_cleared'] and cost['sampled_process_tree_swap_peak_bytes']==0\n    implementations[name]=dict(source=idx['source_sha'],interval_max_absolute=float(interval.max()),worst_interval=dict(index=int(wi[0]),degree=int(wi[1]),omega=float(oracle['frequencies'][wi[0]])),per_degree=per_degree,full_seconds=cost['launch_to_summary_seconds_monotonic'],worker_seconds=idx['result']['worker_cold_seconds'],peak_bytes=cost['sampled_process_tree_rss_peak_bytes'])\n    assert interval.max() <= 1e-12\n    assert all(v['worst']['relative']<=1e-10 and all(x['relative']<=1e-10 for x in v['whole'].values()) for v in per_degree.values())\ntest=records['targeted_tests_v23.json'];junit=test['final_XML'];jp=pathlib.Path(junit['path'])\nassert digest(jp)==junit['sha256']\nsuites=list(ET.parse(jp).getroot().iter('testsuite'))\ntotals={k:sum(int(x.attrib.get(k,0)) for x in suites) for k in ('tests','failures','errors','skipped')}\nassert totals==dict(tests=47,failures=0,errors=0,skipped=0)\ntested_blobs=[]\nfor item in test['tested_files']:\n    p=str(pathlib.Path(item['path']).relative_to(ROOT))\n    b=subprocess.check_output(['git','show','7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c:'+p])\n    assert hashlib.sha256(b).hexdigest()==item['sha256']==digest(item['path'])\n    tested_blobs.append(p)\nstrict={}\nfor role,v in records['strict_admission_v23.json'].items():\n    metrics=v['evidence']['metrics']; thresholds={'stored_operator_arithmetic':1e-10,'oracle_self_consistency':1e-10,'actual_vector_projection':1e-10,'original_equation':1e-6,'MPC':1e-10,'affine':1e-10}\n    failed=[k for k,t in thresholds.items() if type(metrics.get(k)) not in (float,int) or not np.isfinite(metrics[k]) or not 0<=metrics[k]<=t]\n    assert set(failed).issubset(set(v['derived']['failed']))\n    assert not v['derived']['strict_complete_qualified'] and not v['derived']['solve_admitted']\n    strict[role]=dict(metrics=metrics,independently_failed=failed,entry_rejections=v['entry_rejections'])\na,b=implementations['analytic'],implementations['q60']\ncosts=dict(time_gain=1-a['full_seconds']/b['full_seconds'],rss_gain=1-a['peak_bytes']/b['peak_bytes'],worker_ratio=a['worker_seconds']/b['worker_seconds'],mandatory60s_fraction={k:60/v['full_seconds'] for k,v in implementations.items()},no_retiming=True)\nassert costs['time_gain']<.2 and costs['rss_gain']<.2\ndata=dict(bindings=checks,compact_records_read=list(records),indices_read=list(index),raw_shapes={k:dict(shape=list(v.shape),dtype=str(v.dtype)) for k,v in oracle.items()},moment80_110_max=mom_self,decimal_strings_round_to_saved_array=True,implementations=implementations,csv_rows=compared,csv_max_absolute_recomputation_difference=csv_abs,strict_roles=strict,tests=totals,tested_blobs_match_source=tested_blobs,costs=costs,operations=dict(new_native_basis=0,new_quadrature=0,FE_action=0,factor=0,solve=0,NN=0,saved_local_array_products=True),elapsed_seconds=time.monotonic()-start)\n(OUT/'saved_audit.json').write_text(json.dumps(data,indent=2)+'\\n')\nprint(json.dumps({k:data[k] for k in ('csv_rows','moment80_110_max','csv_max_absolute_recomputation_difference','tests','costs','elapsed_seconds')},indent=2))\nprint('bindings',len(checks),'unresolved',[(x['path'],x['expected'],x['actual']) for x in checks if x['status']!='PASS'])\nprint('worst', {name:{p:v['worst'] for p,v in imp['per_degree'].items()} for name,imp in implementations.items()})\n"
+  },
+  "peers": {
+    "main": {
+      "branch": "task40extra_0p7nm_engineering",
+      "head": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+      "documents": [
+        {
+          "path": "docs/task40extra_0p7nm_engineering/review_report_v8.md",
+          "sha256": "4bbe06d3d4378384d2e89c9988c93007475f77baa71ef0ffdbae550971db1bb4",
+          "bytes": 36556
+        },
+        {
+          "path": "docs/task40extra_0p7nm_engineering/response_v8.md",
+          "sha256": "5a3877dd00cc6f2c831aca93151f6274e294aeb4d4b8be41fd187cdf8ce545db",
+          "bytes": 10851
+        },
+        {
+          "path": "src/solvers/dtn_boundary_plane_qualification.py",
+          "sha256": "08adf9eb4061489337fd55709fbe4761f679b910dd96299b9ac17836c7dd5f42",
+          "bytes": 42721
+        },
+        {
+          "path": "src/solvers/fresh_c1_live_contract.py",
+          "sha256": "fcb89383f1375a28590c3a15b591a2e5aa478d37ba69ed4b2f008dddfec8a509",
+          "bytes": 24014
+        }
+      ],
+      "scope": "Exact remote ref/committed text and source only, no independent peer FE-array recomputation"
+    },
+    "dot": {
+      "branch": "task40extra_dot_parallel_cloud",
+      "head": "077ec9c8386c976da232093779279fb9d1a93033",
+      "documents": [
+        {
+          "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/native_tensor_authority_recovery_20261004/historical_recovery_receipt.json",
+          "sha256": "58a9e745b26165dbb18a11a2deb320261e7cd7eb178f1e7e83152416feb87c1c",
+          "bytes": 6064
+        },
+        {
+          "path": "docs/task40extra_dot_parallel_cloud/response_v15.md",
+          "sha256": "35f94010994a9894ac12527cf8f2775d0f73bd5f3b82e315308b19d260a5d246",
+          "bytes": 4889
+        }
+      ],
+      "scope": "Exact remote ref/committed text and source only, no independent peer FE-array recomputation"
+    },
+    "Task042_readonly_no_transfer_of_authority": {
+      "branch": "task42_neural_coarse_inverse",
+      "head": "84c38b882795c56fead54d75cd56389262c86e31",
+      "documents": [
+        {
+          "path": "docs/task042_neural_coarse_inverse/review_report_v40.md",
+          "sha256": "6c32dc0058c3515ab5ea051a4e2f58a704948cbcc1307ba81dd1879211150292",
+          "bytes": 26593
+        },
+        {
+          "path": "docs/task042_neural_coarse_inverse/response_v42.md",
+          "sha256": "8e9620c860288b754c6e7211946f800ee44fd32b07e165a9c5a3abc80be8925e",
+          "bytes": 4044
+        }
+      ],
+      "scope": "Exact remote ref/committed text and source only, no independent peer FE-array recomputation"
+    }
+  },
+  "NN_V3_excluded": "1f01ae46bbe21f17200350a46513ef5f33e5cf6a",
+  "findings": [
+    "Real V22 correction entrances reject failed/unknown physical evidence and prohibit new solves even for fully passing fixtures.",
+    "Both local integration implementations meet fixed original-denominator gates, 864 CSV rows independently recomputed.",
+    "Analytic full local time benefit 0.232 percent/RSS worse53.016 percent; no20 percent benefit. Mandatory60s resource window dominates total; no stable timing rank claimed.",
+    "Qualified existing q60 is preferred within tested scope; full32060 actual material/RHS/strong cancellation/target field not qualified.",
+    "Prior FEINN/finite-p/reference failures remain. Stop same-line numerical repetition; main owns real W0/W1/W2 and dot owns C1/backend/storage.",
+    "Main published runtime identity fixes have no newly published complete W0 result at frozen review head; Task042 finite recovery failures and newly authorized neural experiment are separate."
+  ],
+  "qualification": {
+    "auxiliary_batch": "PASS_WITH_QUALIFICATIONS",
+    "strict_field": false,
+    "NN_increment": false,
+    "full_target": false,
+    "production": false,
+    "merge_approved": false
+  },
+  "operations": {
+    "new_FE_basis_quadrature": 0,
+    "new_FE_action": 0,
+    "Maxwell_local_global_factor_solve": 0,
+    "Gram": 0,
+    "NN_training": 0,
+    "saved_local_array_products": true
+  },
+  "executor_costs": {
+    "clock": {
+      "start_monotonic": 1043164.180689392,
+      "initial_read_upper_allowance_seconds": 120,
+      "total_seconds": 14400,
+      "tail_reserve_seconds": 1800,
+      "start_utc": "2026-10-04T12:54:26.322061+00:00",
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "batch_limit_seconds": 14280
+    },
+    "first_read_UTC_derived": "2026-10-04T12:49:29.319813+00:00",
+    "original_clock_start_utc_was_later_recorded": true,
+    "observation_utc": "2026-10-04T13:44:04.437887+00:00",
+    "observed_complete_batch_seconds": 3395.118073508027,
+    "conservative_complete_batch_upper_seconds": 5195.118073508027,
+    "tail_reserve_seconds": 1800,
+    "total_limit_seconds": 14400,
+    "includes_read_code_failure_wait_IO_tests_Git_render_notification": true,
+    "nested_seconds_not_added_twice": true,
+    "development": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_admission_targeted_tests_20261004T125635340407Z",
+        "classification": "RESOURCE_ADMISSION_REFUSAL_TRACEBACK_ONLY",
+        "tree_peak_bytes": "NOT_MEASURED",
+        "seconds": "NOT_RETAINED",
+        "worker_started": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_arithmetic_schema_fix_20261004T131043664842Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_arithmetic_schema_fix_20261004T131043664842Z/summary.json",
+          "sha256": "404973eb3a84ddc93209429a54208d13afc3c02f9fc648dc267cab5d590b0376",
+          "bytes": 2533
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.8440031319623813,
+        "tree_peak_bytes": 40112128,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_checker_final_fixture_20261004T132455861822Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_checker_final_fixture_20261004T132455861822Z/summary.json",
+          "sha256": "b326a0f1de89fa9dc3fce3f929837763e2c2ef42d7204ba98b0e5cbe33fa0391",
+          "bytes": 2871
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.6324755189707503,
+        "tree_peak_bytes": 120406016,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_20261004T131512249881Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_20261004T131512249881Z/summary.json",
+          "sha256": "61c46dcc470832731d93d7ce1b2a3ecd201bee011e353aa60208c0566c758929",
+          "bytes": 2028
+        },
+        "classification": "WORKER_FAILED",
+        "seconds": 1.9382144769188017,
+        "tree_peak_bytes": 70262784,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_fixed_20261004T131557751298Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_fixed_20261004T131557751298Z/summary.json",
+          "sha256": "b24bbd375e8d2a0d013fb68a58e775185def1a44fa45a7e95c79e60f2bbb7113",
+          "bytes": 2028
+        },
+        "classification": "WORKER_FAILED",
+        "seconds": 2.5980920359725133,
+        "tree_peak_bytes": 68145152,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_decimal_oracle_fixture_20261004T131743220879Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_decimal_oracle_fixture_20261004T131743220879Z/summary.json",
+          "sha256": "52046ba358347b7fce5b7a4129bd3408eb83325552dc1e3448ba69f4ca2ee73c",
+          "bytes": 2037
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.558669345919043,
+        "tree_peak_bytes": 142929920,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_evidence_freeze_20261004T132717996050Z",
+        "classification": "RESOURCE_ADMISSION_REFUSAL_TRACEBACK_ONLY",
+        "tree_peak_bytes": "NOT_MEASURED",
+        "seconds": "NOT_RETAINED",
+        "worker_started": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_final_component_fixture_20261004T131843851802Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_final_component_fixture_20261004T131843851802Z/summary.json",
+          "sha256": "5479a566314259e9bf5e3e66ca3e410804197515006869666c2b1daeb21a0394",
+          "bytes": 2037
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.613234455930069,
+        "tree_peak_bytes": 143036416,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_first_resource_readmission_checks_20261004T130018727323Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_first_resource_readmission_checks_20261004T130018727323Z/admission_refusal.json",
+          "sha256": "7a0797260a1873f347ec65da7f440a74b544d0cbe317e39a91310dbee06e0cdb",
+          "bytes": 229
+        },
+        "classification": "RESOURCE_ADMISSION_REFUSAL_WORKER_NOT_STARTED",
+        "tree_peak_bytes": "NOT_MEASURED",
+        "seconds": "NOT_RETAINED"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_format_recheck_20261004T130737263147Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_format_recheck_20261004T130737263147Z/summary.json",
+          "sha256": "854dd9292137fdda161d1ccf994b48e04875ec58c8d759cec41da13c8bc22ae3",
+          "bytes": 2018
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.5128974789986387,
+        "tree_peak_bytes": 52895744,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_full_entry_routing_20261004T130901375015Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_full_entry_routing_20261004T130901375015Z/summary.json",
+          "sha256": "b75afe284f542eac812c345ea4ee00b9af908c7b50bee1139fe0a4793591e5c8",
+          "bytes": 2385
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9680299219908193,
+        "tree_peak_bytes": 68337664,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_dispatch_closeout_20261004T130932211929Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_dispatch_closeout_20261004T130932211929Z/summary.json",
+          "sha256": "a7c62ec9e68d89d140a8c61789007ccbf6072baea36a554738bc95fcb272e237",
+          "bytes": 2030
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9788508000783622,
+        "tree_peak_bytes": 68423680,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_read_snapshot_20261004T125426323578Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_read_snapshot_20261004T125426323578Z/summary.json",
+          "sha256": "50c8545dacbe62a81adfec427236b20f67de1daabf33524189f3012ee903d10e",
+          "bytes": 2015
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.000059223966673,
+        "tree_peak_bytes": 61870080,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_native_abi_20261004T131111660284Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_native_abi_20261004T131111660284Z/summary.json",
+          "sha256": "b5568a5847df553dd48a53ea8dd0bc23e9f5fc7089c35afe58147c0964a09a60",
+          "bytes": 2034
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.658104411093518,
+        "tree_peak_bytes": 179499008,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_second_resource_readmission_20261004T130331009752Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_second_resource_readmission_20261004T130331009752Z/summary.json",
+          "sha256": "f5ce4a80a25d96a64e2045757d8099b56801793d36b894b522095bf963bb7d76",
+          "bytes": 1948
+        },
+        "classification": "WORKER_FAILED",
+        "seconds": 2.5912765859393403,
+        "tree_peak_bytes": 70066176,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_stage_schema_repair_20261004T130822351828Z",
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_stage_schema_repair_20261004T130822351828Z/summary.json",
+          "sha256": "c9050554821af2755bc62379a7957b0e85385eddc40d515fc4246d1dbf97c73c",
+          "bytes": 2235
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9406814840622246,
+        "tree_peak_bytes": 68501504,
+        "own_swap": 0,
+        "cleared": true
+      }
+    ],
+    "runs": [
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T130833298193Z/run_summary.json",
+          "sha256": "3753730150de44ace3193a64100ec6ac20198833a3cf6fb4dd93b718d5c577a5",
+          "bytes": 918
+        },
+        "manifest": null,
+        "source_sha": "029e37b5cef2daa11a5ad6920f4963348ec02236",
+        "stage": "v23_admission_audit",
+        "classification": "INITIAL_STAGE_DISPATCH_FAILURE",
+        "attempt": null,
+        "seconds": "NOT_RETAINED",
+        "tree_peak_bytes": "NOT_MEASURED",
+        "swap": "NOT_MEASURED",
+        "cleared": true,
+        "duplicated_failure_companion": true
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T130958240051Z/run_summary.json",
+          "sha256": "02868dfb03557109e6326e39b8af8b09e9cd730198532ee48ad6d86718c0ef1a",
+          "bytes": 2745
+        },
+        "manifest": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T130958240051Z/run_manifest.json",
+          "sha256": "8d3ab0da6ad0c79ce6db6eaf42288d9861a8f76c40c338973ef53c0ce955e290",
+          "bytes": 1900
+        },
+        "source_sha": "1000427a8154a1b149a8df8bc165a48a5af9ec40",
+        "stage": "v23_admission_audit",
+        "classification": "WORKER_FAILED",
+        "attempt": 2,
+        "seconds": 3.9137743529863656,
+        "tree_peak_bytes": 65044480,
+        "swap": 0,
+        "cleared": true,
+        "duplicated_failure_companion": false
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T131047327849Z/run_summary.json",
+          "sha256": "b613dff4f8400a296f668f3b404be511031b2a1086ff13657914f12c9894f875",
+          "bytes": 2740
+        },
+        "manifest": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_20261004T131047327849Z/run_manifest.json",
+          "sha256": "f79cd801b65b0222a47977b7e43179d9295cff85f18a16c93b049fbd1019f027",
+          "bytes": 2170
+        },
+        "source_sha": "765aeafc615ebfb0c842bd2fdad195a696271a71",
+        "stage": "v23_admission_audit",
+        "classification": "COMPLETED",
+        "attempt": 3,
+        "seconds": 6.911092487978749,
+        "tree_peak_bytes": 105369600,
+        "swap": 0,
+        "cleared": true,
+        "duplicated_failure_companion": false
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_admission_audit_initial_dispatch_failure/run_summary.json",
+          "sha256": "e82ffa8eb4a7387833354f77613e4947883da63defd423c508b172be58643d8c",
+          "bytes": 755
+        },
+        "manifest": null,
+        "source_sha": "029e37b5cef2daa11a5ad6920f4963348ec02236",
+        "stage": "v23_admission_audit",
+        "classification": "INITIAL_STAGE_DISPATCH_FAILURE",
+        "attempt": null,
+        "seconds": "NOT_RETAINED",
+        "tree_peak_bytes": "NOT_MEASURED",
+        "swap": "NOT_MEASURED",
+        "cleared": true,
+        "duplicated_failure_companion": false
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/run_summary.json",
+          "sha256": "add7b2ab828fc67eb63bc4accefe7e0f36ffa374dffd7bed92ab829f9b27fcdf",
+          "bytes": 2734
+        },
+        "manifest": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_analytic_cold_20261004T132041294868Z/run_manifest.json",
+          "sha256": "ba6ed103d6d3a7a19c441907c0102f632a228aa73f92b05fe32a3187d9ae6ed7",
+          "bytes": 3111
+        },
+        "source_sha": "b5034e5ffab657146024ac429fe410f005049d3d",
+        "stage": "v23_analytic_cold",
+        "classification": "COMPLETED",
+        "attempt": 1,
+        "seconds": 64.46514550200664,
+        "tree_peak_bytes": 175190016,
+        "swap": 0,
+        "cleared": true,
+        "duplicated_failure_companion": false
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/run_summary.json",
+          "sha256": "e7bc0a873cd0489050a9a01af74f7d4a124a18d0a1406af81649e2944b3f3bed",
+          "bytes": 2750
+        },
+        "manifest": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_facet_qualification_20261004T131906722438Z/run_manifest.json",
+          "sha256": "8e1911f81ac8b83cc36fc3b404c646f1787cc2069947521b28138f0d64431be1",
+          "bytes": 2852
+        },
+        "source_sha": "b5034e5ffab657146024ac429fe410f005049d3d",
+        "stage": "v23_facet_qualification",
+        "classification": "COMPLETED",
+        "attempt": 1,
+        "seconds": 66.54550737305544,
+        "tree_peak_bytes": 162152448,
+        "swap": 0,
+        "cleared": true,
+        "duplicated_failure_companion": false
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/run_summary.json",
+          "sha256": "04e2ff7a669c60ebf09598295d92c66b94399ca5fdd22b1de84acfd615787d4d",
+          "bytes": 2719
+        },
+        "manifest": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_q60_cold_20261004T132206103017Z/run_manifest.json",
+          "sha256": "f4359258a6fd0a4a06c56d681c8cc09349d6e28bd85f5a8aaf0a278ca355d499",
+          "bytes": 3374
+        },
+        "source_sha": "b5034e5ffab657146024ac429fe410f005049d3d",
+        "stage": "v23_q60_cold",
+        "classification": "COMPLETED",
+        "attempt": 1,
+        "seconds": 64.61506059695967,
+        "tree_peak_bytes": 114491392,
+        "swap": 0,
+        "cleared": true,
+        "duplicated_failure_companion": false
+      },
+      {
+        "summary": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/run_summary.json",
+          "sha256": "ab7bb6ee0767b25b453bc07ca88bbcce5766efddd17ee5931d7efdaa2ef47a40",
+          "bytes": 2734
+        },
+        "manifest": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v23_saved_checker_20261004T132526970215Z/run_manifest.json",
+          "sha256": "46e0eb3844da956e055676f8fccec6b20c36c66e6bdb03e2ba42cde9aed70c38",
+          "bytes": 3428
+        },
+        "source_sha": "7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c",
+        "stage": "v23_saved_checker",
+        "classification": "COMPLETED",
+        "attempt": 1,
+        "seconds": 4.447603000095114,
+        "tree_peak_bytes": 83894272,
+        "swap": 0,
+        "cleared": true,
+        "duplicated_failure_companion": false
+      }
+    ],
+    "sampled_tree_peak_bytes": 1780613120,
+    "own_swap": 0,
+    "unmeasured_startup_refusal_peak": "NOT_MEASURED",
+    "new_artifact_bytes_measured": 70137479,
+    "new_artifact_limit_bytes": 2147483648,
+    "global_Maxwell_factor": 0,
+    "local_Maxwell_factor": 0,
+    "solve": 0,
+    "Gram": 0,
+    "NN": 0,
+    "coordinate_change_solves": "8 bounded p+1 Vandermonde solves per P1/analytic/q60 lifecycle, included; not Maxwell factors",
+    "no_OOC": true,
+    "reserve_system": "max(128GiB,effective total*0.10)",
+    "reserve_neighbors_bytes": 412316860416,
+    "warning_bytes": 1879048192,
+    "hard_bytes": 2147483648,
+    "sampling_seconds": 0.5,
+    "memory_semantics": "sampled simultaneous tree RSS, not continuous kernel cap; tree sampling covers numerical/fixture/browser worker intervals, startup refusal not measured",
+    "V22_old_cost_upper_seconds": 16872.594866087078,
+    "old_interrupted_3284s_preserved": true,
+    "exact_project_total": "UNKNOWN_UNMEASURED_HISTORICAL_TAILS",
+    "resource_new_window_readmissions": 2,
+    "resource_wait_limit_seconds": 600,
+    "stable_windows_seconds_measured": 240,
+    "resource_old_refusals_preserved": true,
+    "all_measured_trees_cleared": true,
+    "earlier_evidence_snapshot": {
+      "observation_utc": "2026-10-04T13:27:19.608361+00:00",
+      "observed_complete_batch_seconds": 2390.288537214976,
+      "conservative_complete_batch_upper_seconds": 4190.288537214976,
+      "sampled_tree_peak_bytes": 179499008,
+      "new_artifact_bytes_measured": 8164744
+    },
+    "final_tail_bound_seconds": 1800,
+    "final_tail_scope": "Subsequent scoped checks, Git commit/push/fetch, exact identity/clean/lock verification, one controlled official notification and clearing. Actual observed receipt is frozen before notification; delivery stdout includes final observed cost.",
+    "new_artifact_scope": "Current V23 outputs, indices and bound payloads, test/control records, browser isolated profile and captures; unique paths; existing shared caches excluded",
+    "new_artifact_file_count": 503,
+    "final_light_stage_records": [
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_native_abi_20261004T131111660284Z/summary.json",
+          "sha256": "b5568a5847df553dd48a53ea8dd0bc23e9f5fc7089c35afe58147c0964a09a60",
+          "bytes": 2034
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.658104411093518,
+        "tree_peak_bytes": 179499008,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_final_component_fixture_20261004T131843851802Z/summary.json",
+          "sha256": "5479a566314259e9bf5e3e66ca3e410804197515006869666c2b1daeb21a0394",
+          "bytes": 2037
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.613234455930069,
+        "tree_peak_bytes": 143036416,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_prepublication_metadata_20261004T133758354231Z/summary.json",
+          "sha256": "ae58b0627583654c6243a15ebecad58fb7cbeca6c3d9c5d4ca0d45da8a314bc2",
+          "bytes": 2023
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9410145290894434,
+        "tree_peak_bytes": 68431872,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_20261004T131512249881Z/summary.json",
+          "sha256": "61c46dcc470832731d93d7ce1b2a3ecd201bee011e353aa60208c0566c758929",
+          "bytes": 2028
+        },
+        "classification": "WORKER_FAILED",
+        "seconds": 1.9382144769188017,
+        "tree_peak_bytes": 70262784,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_scoped_publication_checks_20261004T133539145119Z/summary.json",
+          "sha256": "26bb3520037655d9f2119826eb3ffdea3d069e6ec9983c28f60c1b8f7de94ddc",
+          "bytes": 2017
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.938619213993661,
+        "tree_peak_bytes": 68919296,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_decimal_oracle_fixture_20261004T131743220879Z/summary.json",
+          "sha256": "52046ba358347b7fce5b7a4129bd3408eb83325552dc1e3448ba69f4ca2ee73c",
+          "bytes": 2037
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.558669345919043,
+        "tree_peak_bytes": 142929920,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_read_snapshot_20261004T125426323578Z/summary.json",
+          "sha256": "50c8545dacbe62a81adfec427236b20f67de1daabf33524189f3012ee903d10e",
+          "bytes": 2015
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.000059223966673,
+        "tree_peak_bytes": 61870080,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_checker_final_fixture_20261004T132455861822Z/summary.json",
+          "sha256": "b326a0f1de89fa9dc3fce3f929837763e2c2ef42d7204ba98b0e5cbe33fa0391",
+          "bytes": 2871
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.6324755189707503,
+        "tree_peak_bytes": 120406016,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_evidence_freeze_20261004T132717996050Z/summary.json",
+          "sha256": "00003dfda627162d4faf323cfe36adceeb2bb7d6732f1248fdcfaf9bf3365ae7",
+          "bytes": 2016
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9327052350854501,
+        "tree_peak_bytes": 68911104,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_arithmetic_schema_fix_20261004T131043664842Z/summary.json",
+          "sha256": "404973eb3a84ddc93209429a54208d13afc3c02f9fc648dc267cab5d590b0376",
+          "bytes": 2533
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.8440031319623813,
+        "tree_peak_bytes": 40112128,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_full_entry_routing_20261004T130901375015Z/summary.json",
+          "sha256": "b75afe284f542eac812c345ea4ee00b9af908c7b50bee1139fe0a4793591e5c8",
+          "bytes": 2385
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9680299219908193,
+        "tree_peak_bytes": 68337664,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_second_resource_readmission_20261004T130331009752Z/summary.json",
+          "sha256": "f5ce4a80a25d96a64e2045757d8099b56801793d36b894b522095bf963bb7d76",
+          "bytes": 1948
+        },
+        "classification": "WORKER_FAILED",
+        "seconds": 2.5912765859393403,
+        "tree_peak_bytes": 70066176,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_github_visual_capture_20261004T133920354797Z/summary.json",
+          "sha256": "85ed7ec911ef0f2be7e567f755f9f51d21d6b6a16f2d6a9054dd96e70f3ce8f8",
+          "bytes": 2256
+        },
+        "classification": "COMPLETED",
+        "seconds": 21.283559518982656,
+        "tree_peak_bytes": 1780613120,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_own_navigation_20261004T133222884782Z/summary.json",
+          "sha256": "91ad7ed72738f55fcb1f7730fe2bf58ed27fc0883d793d5047952f65a527abc1",
+          "bytes": 2012
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9355927989818156,
+        "tree_peak_bytes": 68280320,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_format_recheck_20261004T130737263147Z/summary.json",
+          "sha256": "854dd9292137fdda161d1ccf994b48e04875ec58c8d759cec41da13c8bc22ae3",
+          "bytes": 2018
+        },
+        "classification": "COMPLETED",
+        "seconds": 2.5128974789986387,
+        "tree_peak_bytes": 52895744,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_fixed_20261004T131557751298Z/summary.json",
+          "sha256": "b24bbd375e8d2a0d013fb68a58e775185def1a44fa45a7e95c79e60f2bbb7113",
+          "bytes": 2028
+        },
+        "classification": "WORKER_FAILED",
+        "seconds": 2.5980920359725133,
+        "tree_peak_bytes": 68145152,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_stage_schema_repair_20261004T130822351828Z/summary.json",
+          "sha256": "c9050554821af2755bc62379a7957b0e85385eddc40d515fc4246d1dbf97c73c",
+          "bytes": 2235
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9406814840622246,
+        "tree_peak_bytes": 68501504,
+        "own_swap": 0,
+        "cleared": true
+      },
+      {
+        "record": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_dispatch_closeout_20261004T130932211929Z/summary.json",
+          "sha256": "a7c62ec9e68d89d140a8c61789007ccbf6072baea36a554738bc95fcb272e237",
+          "bytes": 2030
+        },
+        "classification": "COMPLETED",
+        "seconds": 1.9788508000783622,
+        "tree_peak_bytes": 68423680,
+        "own_swap": 0,
+        "cleared": true
+      }
+    ],
+    "component_and_native_tree_peak_bytes": 179499008,
+    "browser_tree_peak_bytes": 1780613120,
+    "seal_final_observed_cost_is_bounded_not_future_measurement": true
+  },
+  "reviewer_clock": {
+    "utc": "2026-10-04T13:49:30.070076+00:00",
+    "monotonic": 1046764.930962754,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "initial_read_upper_seconds": 600,
+    "branch": "task42extra_feinn_5nm",
+    "head": "54da65a2c24515acb851dbd404e14ffc5ff78b4f",
+    "monotonic_since_anchor_seconds": 653.453642666107,
+    "first_read_before_anchor_not_exactly_measured": true,
+    "conservative_read_prefix_seconds": 600,
+    "reading_reasoning_IO_Git_render_in_tail": true,
+    "tail_reserved_seconds": 900,
+    "old_project_exact_total": "UNKNOWN"
+  },
+  "goal": {
+    "geometry_nm": [
+      50,
+      25,
+      140
+    ],
+    "Si_line_width_height_nm": [
+      17,
+      120
+    ],
+    "wavelength_nm": 0.7,
+    "full_3D_all_interiors_double_Floquet_complete_ports": true,
+    "whole_machine_decimal_bytes": 2000000000000,
+    "own_swap_OOC": 0,
+    "complete_cold_workflow_seconds": 172800,
+    "precision_unchanged": true
+  },
+  "next_action": {
+    "no_new_FEINN_numerical_or_archive_batch": true,
+    "no_response_v24_for_acknowledgement": true,
+    "main_receives_existing_q60_local_evidence_under_own_authority": true,
+    "real_new_receiver_gap_requires_explicit_package": true
+  },
+  "publication": {
+    "local_page_check": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v23.md",
+      "sha256": "8790ddb071e2e938432a5c4719b8a785bbdf47a5b51adc7a7042c6935e7e2c8c",
+      "checked_scope": "entire page",
+      "markdown_tables": 6,
+      "parsed_tables": 6,
+      "math_fences": 0,
+      "links": 14
+    },
+    "actual_GitHub_render": "PENDING_AFTER_PUSH",
+    "previous_V23_render_reused": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v23.json",
+      "sha256": "44900889557dc4fa5da1c183b42cbe456cc8409f711f000ec831f9a451dbe7e2",
+      "bytes": 4695
+    },
+    "previous_V23_render_status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
+    "notification": "NOT_SENT"
+  }
+}
