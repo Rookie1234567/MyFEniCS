@@ -19,9 +19,14 @@ from .dtn_boundary_plane_qualification import (
     qualify_fresh_c1_p6_boundary_plane_bundle,
     validate_fresh_c1_bundle_profile,
 )
+from .fresh_c1_manifest_identity import (
+    NATIVE_LINUX_PROFILE,
+    NATIVE_LITERAL532_MANIFEST_SHA256,
+    literal532_manifest_sha256,
+)
 
 
-PHYSICAL_GENERATOR_SHA256 = "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951"
+PHYSICAL_GENERATOR_SHA256 = NATIVE_LITERAL532_MANIFEST_SHA256
 LIVE_RECEIPT_SCHEMA = "task40extra.same-live-boundary-component.v1"
 
 
@@ -67,16 +72,22 @@ def _validate_ordered_mode_identity(identity: Mapping[str, Any], modes: Any) -> 
     return keys
 
 
-def validate_live_receipt(receipt: Mapping[str, Any], *, identity: Mapping[str, Any]) -> None:
+def validate_live_receipt(receipt: Mapping[str, Any], *, identity: Mapping[str, Any],
+                          runtime_profile: str | None = None) -> None:
     """Recheck the complete saved numeric ledger before admitting a worker."""
     receipt = _json_plain(receipt)
     json_identity = _json_plain(identity)
+    if runtime_profile is None:
+        runtime_profile = receipt.get("runtime_profile", NATIVE_LINUX_PROFILE)
+    expected_physical = literal532_manifest_sha256(runtime_profile)
     if (receipt.get("schema") != LIVE_RECEIPT_SCHEMA
             or receipt.get("status") != "PASS_COMPONENT_ONLY"
             or receipt.get("full_case_pass") is not True
             or receipt.get("PDE_solved") is not False
             or receipt.get("official_results") is not False
-            or receipt.get("physical_generator_manifest_sha256") != PHYSICAL_GENERATOR_SHA256
+            or receipt.get("runtime_profile", NATIVE_LINUX_PROFILE) != runtime_profile
+            or receipt.get("physical_generator_manifest_sha256") != expected_physical
+            or identity.get("physical_generator_manifest_sha256") != expected_physical
             or json.loads(json.dumps(receipt.get("identity"))) != json_identity
             or receipt.get("carrier_digest_before") != identity.get("carrier_numeric_sha256")
             or receipt.get("carrier_digest_after") != identity.get("carrier_numeric_sha256")
@@ -96,8 +107,11 @@ def validate_live_receipt(receipt: Mapping[str, Any], *, identity: Mapping[str, 
         "independent_trace_rows": 16992, "native_slave_rows": 2958,
         "quadrature_degree": 27, "primary_facet_points": 196,
         "mode_count": 532, "manual_M": 9, "manual_N": 3,
-        "physical_generator_manifest_sha256": PHYSICAL_GENERATOR_SHA256,
+        "runtime_profile": runtime_profile,
+        "physical_generator_manifest_sha256": expected_physical,
     }
+    if runtime_profile == NATIVE_LINUX_PROFILE:
+        expected_profile.pop("runtime_profile")
     actual_profile = {name: profile.get(name) if isinstance(profile, dict) else None
                       for name in expected_profile}
     actual_inventory = {name: actual.get(name) if isinstance(actual, dict) else None
@@ -324,17 +338,19 @@ def qualify_live_identity(bundle: Mapping[str, Any], *, record_path: str | Path,
         raise TypeError("same-live qualification requires allocation/checkpoint callbacks")
     carrier = bundle["dtn_action"].carrier
     before = carrier_numeric_identity(carrier)
+    runtime_profile = bundle.get("runtime_profile", NATIVE_LINUX_PROFILE)
     profile = validate_fresh_c1_bundle_profile(bundle)
     if (profile["degree"] != 6 or profile["fresh_fixture_c1"] is not True
             or bundle.get("dtn_phase_gauge") != BOUNDARY_PLANE
-            or before["physical_generator_manifest_sha256"] != PHYSICAL_GENERATOR_SHA256
+            or before["physical_generator_manifest_sha256"]
+            != profile["physical_generator_manifest_sha256"]
             or before["mode_count"] != 532):
         raise ValueError("same-live qualification accepts only the fresh same80 p6 boundary-plane bundle")
     from .fullspace_dtn_action import build_dynamic_mode_inventory
     expected_modes, _rows, expected_physical = build_dynamic_mode_inventory(bundle["cfg"])
     expected_keys = tuple((i, mode.side, mode.m, mode.n, mode.polarization)
                           for i, mode in enumerate(expected_modes))
-    if (expected_physical != PHYSICAL_GENERATOR_SHA256
+    if (expected_physical != profile["physical_generator_manifest_sha256"]
             or tuple(before["ordered_mode_keys"]) != expected_keys):
         raise ValueError("live carrier differs from an independently regenerated ordered literal532 inventory")
     checkpoint("same_live_component_before_qualification", {
@@ -357,13 +373,13 @@ def qualify_live_identity(bundle: Mapping[str, Any], *, record_path: str | Path,
         expected_ordered_keys=expected_keys,
     )
     after = require_live_carrier_unchanged(bundle, carrier, before, checkpoint)
-    validate_live_receipt(receipt, identity=before)
+    validate_live_receipt(receipt, identity=before, runtime_profile=runtime_profile)
     stored = json.loads(path.read_text())
     if stored != receipt:
         # The writer canonicalizes tuples/NumPy scalars; compare that durable
         # representation with a JSON round-trip of the in-memory packet.
         receipt = stored
-        validate_live_receipt(receipt, identity=before)
+        validate_live_receipt(receipt, identity=before, runtime_profile=runtime_profile)
     checkpoint("same_live_component_pass_before_worker", {
         "status": receipt["status"], "identity": before, "after_identity": after,
         "receipt_path": str(path), "receipt_sha256": file_sha256(path),

@@ -240,6 +240,7 @@ def build_gauge_assembly_context(space, mesh_data, mpc, cfg, qdegree, surface_as
                     Path(__file__).with_name("fullspace_dtn_action.py"),
                     Path(__file__).with_name("fullspace_same_mesh_hcurl_pmg_physical.py"),
                     Path(__file__).with_name("dtn_boundary_plane_qualification.py"),
+                    Path(__file__).with_name("fresh_c1_manifest_identity.py"),
                     Path(__file__).parent.parent/"common"/"modes_3d.py",
                     Path(__file__).parent.parent/"common"/"config_3d.py"]
     payload = {

@@ -20,6 +20,10 @@ from .dtn_boundary_phase_gauge import (
     boundary_mode_power_from_solver, prepare_boundary_plane_outputs,
     compiled_surface_quadrature_identity,
 )
+from .fresh_c1_manifest_identity import (
+    NATIVE_LINUX_PROFILE,
+    literal532_manifest_sha256,
+)
 
 
 LIVE_COMPONENT_GATES = (
@@ -106,7 +110,7 @@ def _check_loaded_primary_provenance(primary_gauss):
             assert digest.hexdigest() == kernel[hash_key], (path_key, "loaded provenance artifact changed")
 
 
-def fresh_c1_degree_profile(degree=6):
+def fresh_c1_degree_profile(degree=6, runtime_profile=NATIVE_LINUX_PROFILE):
     """Derived same80 p4/p6 metadata; every inventory still needs a live gate."""
     if type(degree) is not int or degree not in (4, 6):
         raise ValueError("fresh C1 admits only integer degree 4 or 6")
@@ -122,16 +126,18 @@ def fresh_c1_degree_profile(degree=6):
             "independent_trace_rows": 16992, "native_slave_rows": 2958,
             "quadrature_degree": 27, "primary_facet_points": 196},
     }[degree]
-    return {"schema": "task40extra.fresh-C1-same80-degree-profile.v1",
+    profile = {"schema": "task40extra.fresh-C1-same80-degree-profile.v1",
             "degree": degree, "cell_count": 80, **counts,
             "expected_inventory_classification": "derived_not_measured",
             "nominal_gauss_points_require_actual_compiled_gate": True,
             "mode_count": 532, "manual_M": 9, "manual_N": 3,
-            "physical_generator_manifest_sha256":
-                "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+            "physical_generator_manifest_sha256": literal532_manifest_sha256(runtime_profile),
             "action_recovery_limit": 1e-11, "original_residual_limit": 1e-10,
             "pure_algebra_limit": 1e-12,
             "p6_full_chain_qualified": False, "compact_p4_quotient_qualified": False}
+    if runtime_profile != NATIVE_LINUX_PROFILE:
+        profile["runtime_profile"] = runtime_profile
+    return profile
 
 
 def validate_fresh_c1_bundle_profile(bundle):
@@ -140,7 +146,9 @@ def validate_fresh_c1_bundle_profile(bundle):
     This is metadata admission only. It neither assembles a form nor grants a
     numerical PASS; the unchanged literal532 oracle must subsequently finish.
     """
-    profile = fresh_c1_degree_profile(bundle["degree"])
+    profile = fresh_c1_degree_profile(
+        bundle["degree"], bundle.get("runtime_profile", NATIVE_LINUX_PROFILE)
+    )
     degree = profile["degree"]
     cfg, levels = bundle["cfg"], bundle["setup"]
     if set(levels["spaces"]) != {degree} or set(levels["floquets"]) != {degree}:
@@ -334,7 +342,10 @@ def qualify_fresh_c1_p6_boundary_plane_bundle(
         base_identity.update(profile)
         modes = tuple(bundle["modes"])
         assert len(modes) == len(carrier.entries) == 532
-        assert bundle["mode_sha256"] == expected_physical_manifest == carrier.physical_generator_manifest_sha256
+        if (expected_physical_manifest != profile["physical_generator_manifest_sha256"]
+                or bundle["mode_sha256"] != expected_physical_manifest
+                or carrier.physical_generator_manifest_sha256 != expected_physical_manifest):
+            raise ValueError("same-live expected literal532 manifest differs from the qualified runtime profile")
         expected_keys = tuple(tuple(key) for key in expected_ordered_keys)
         actual_keys = tuple(entry.mode_key for entry in carrier.entries)
         semantic_keys = tuple((index, mode.side, mode.m, mode.n, mode.polarization)

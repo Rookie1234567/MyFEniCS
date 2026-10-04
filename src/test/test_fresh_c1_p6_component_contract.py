@@ -4,6 +4,7 @@ Staged only.  These tests do not qualify the p6 component algorithm or live PDE.
 """
 
 import ast
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -183,6 +184,65 @@ def test_worker_and_runner_do_not_route_through_y_orbit_solver_or_probe():
     by_name = {name: line for line, name in calls}
     assert by_name["qualify_live_identity"] < by_name["run_fresh_p6_component"]
     assert by_name["run_fresh_p6_component"] < by_name["require_live_carrier_unchanged"]
+    profile_binding = next(node for node in ast.walk(run) if isinstance(node, ast.Assign)
+                           and any(isinstance(target, ast.Subscript)
+                                   and isinstance(target.value, ast.Name)
+                                   and target.value.id == "bundle"
+                                   and isinstance(target.slice, ast.Constant)
+                                   and target.slice.value == "runtime_profile"
+                                   for target in node.targets))
+    assert isinstance(profile_binding.value, ast.Subscript)
+    assert isinstance(profile_binding.value.value, ast.Name)
+    assert profile_binding.value.value.id == "abi_identity"
+    assert profile_binding.lineno < by_name["qualify_live_identity"]
+
+
+def test_literal532_profile_identity_accepts_only_exact_profile_scoped_hashes():
+    from benchmarks.run_fresh_c1_p6_component import require_fresh_c1_mode_identity
+    from src.solvers.fresh_c1_manifest_identity import (
+        LOCAL_WSL2_LITERAL532_MANIFEST_SHA256,
+        LOCAL_WSL2_PROFILE,
+        NATIVE_LITERAL532_MANIFEST_SHA256,
+        NATIVE_LINUX_PROFILE,
+    )
+
+    require_fresh_c1_mode_identity(532, NATIVE_LITERAL532_MANIFEST_SHA256, NATIVE_LINUX_PROFILE)
+    require_fresh_c1_mode_identity(532, LOCAL_WSL2_LITERAL532_MANIFEST_SHA256, LOCAL_WSL2_PROFILE)
+    with pytest.raises(ValueError, match="identity mismatch"):
+        require_fresh_c1_mode_identity(532, LOCAL_WSL2_LITERAL532_MANIFEST_SHA256, NATIVE_LINUX_PROFILE)
+    with pytest.raises(ValueError, match="identity mismatch"):
+        require_fresh_c1_mode_identity(532, NATIVE_LITERAL532_MANIFEST_SHA256, LOCAL_WSL2_PROFILE)
+    with pytest.raises(ValueError, match="exactly 532"):
+        require_fresh_c1_mode_identity(531, LOCAL_WSL2_LITERAL532_MANIFEST_SHA256, LOCAL_WSL2_PROFILE)
+    with pytest.raises(ValueError, match="qualified Task40 runtime profile"):
+        require_fresh_c1_mode_identity(532, LOCAL_WSL2_LITERAL532_MANIFEST_SHA256, "unqualified")
+
+    # Synthetic digests outside the two-entry allowlist fail closed. These are
+    # digest negatives, not regenerated row-level mutation fixtures.
+    for changed_manifest in ("material", "phase_or_vector", "row_order", "missing_field"):
+        changed_sha = hashlib.sha256(
+            f"{LOCAL_WSL2_LITERAL532_MANIFEST_SHA256}:{changed_manifest}".encode("ascii")
+        ).hexdigest()
+        with pytest.raises(ValueError, match="identity mismatch"):
+            require_fresh_c1_mode_identity(532, changed_sha, LOCAL_WSL2_PROFILE)
+
+
+def test_profile_specific_degree_metadata_preserves_native_shape():
+    from src.solvers.dtn_boundary_plane_qualification import fresh_c1_degree_profile
+    from src.solvers.fresh_c1_manifest_identity import (
+        LOCAL_WSL2_LITERAL532_MANIFEST_SHA256,
+        LOCAL_WSL2_PROFILE,
+        NATIVE_LITERAL532_MANIFEST_SHA256,
+        NATIVE_LINUX_PROFILE,
+    )
+
+    native = fresh_c1_degree_profile(6, NATIVE_LINUX_PROFILE)
+    local = fresh_c1_degree_profile(6, LOCAL_WSL2_PROFILE)
+    assert native["physical_generator_manifest_sha256"] == NATIVE_LITERAL532_MANIFEST_SHA256
+    assert "runtime_profile" not in native
+    assert local["physical_generator_manifest_sha256"] == LOCAL_WSL2_LITERAL532_MANIFEST_SHA256
+    assert local["runtime_profile"] == LOCAL_WSL2_PROFILE
+
 
 
 def test_pyvista_postprocessing_import_is_deferred_to_plot_callsite():
@@ -214,6 +274,18 @@ def test_budget_manifest_is_a_finite_complete_member_bound():
     assert budget["remaining_limit_margin_bytes"] == 1_689_903_656
     sources = module.source_identity()
     assert "benchmarks/fresh_c1_p6_w0_dependencies.json" in sources["files"]
+    assert "src/solvers/fresh_c1_manifest_identity.py" in sources["files"]
+    dependencies = json.loads((Path(__file__).parents[2]
+                               / "benchmarks" / "fresh_c1_p6_w0_dependencies.json").read_text())
+    assert "src/solvers/fresh_c1_manifest_identity.py" in dependencies["source_sha_manifest_binds"]
+    checker_path = Path(__file__).parents[2] / "benchmarks" / "check_fresh_c1_p6_component.py"
+    checker_tree = ast.parse(checker_path.read_text())
+    checker_source_files = next(ast.literal_eval(node.value) for node in checker_tree.body
+                                if isinstance(node, ast.Assign) and any(
+                                    isinstance(target, ast.Name) and target.id == "W0_SOURCE_FILES"
+                                    for target in node.targets))
+    assert set(sources["files"]) == set(checker_source_files)
+    assert set(sources["files"]) == set(dependencies["source_sha_manifest_binds"])
     assert sources["source_status"] == "NEW_UNQUALIFIED"
 
 

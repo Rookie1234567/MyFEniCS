@@ -23,6 +23,7 @@ from benchmarks.task40_runtime_profile import (
     NATIVE_LINUX_PROFILE,
     validate_runtime_receipt,
 )
+from src.solvers.fresh_c1_manifest_identity import require_literal532_manifest_identity
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,6 +82,7 @@ def source_identity() -> dict[str, Any]:
         "benchmarks/task40_runtime_profile.py",
         "src/solvers/fresh_c1_p6_component.py",
         "src/solvers/fresh_c1_live_contract.py",
+        "src/solvers/fresh_c1_manifest_identity.py",
         "src/solvers/dtn_boundary_plane_qualification.py",
         "src/solvers/dtn_boundary_phase_gauge.py",
         "src/solvers/dtn_port_3d.py",
@@ -98,6 +100,13 @@ def source_identity() -> dict[str, Any]:
     return {"schema": "task40extra.fresh-c1-p6-source-identity.v1",
             "files": records, "manifest_sha256": hashlib.sha256(canonical).hexdigest(),
             "source_status": "NEW_UNQUALIFIED"}
+
+
+def require_fresh_c1_mode_identity(
+    mode_count: int, mode_sha256: str, runtime_profile: str
+) -> None:
+    """Require the exact full-manifest digest frozen for the receipt profile."""
+    require_literal532_manifest_identity(mode_count, mode_sha256, runtime_profile)
 
 
 def pilot_config(input_path: str | Path = INPUT):
@@ -310,8 +319,7 @@ def run(*, output_dir: str | Path, allocation_gate: Callable,
     from src.solvers.fresh_c1_p6_component import run_fresh_p6_component
 
     modes, _mode_rows, mode_sha = build_dynamic_mode_inventory(cfg)
-    if len(modes) != 532 or mode_sha != "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951":
-        raise ValueError("fresh C1 requires the independently regenerated ordered literal532 physical inventory")
+    require_fresh_c1_mode_identity(len(modes), mode_sha, abi_identity["runtime_profile"])
     levels = bundle = None
     try:
         checkpoint("fresh_p6_cold_setup_begin", {"degrees": [6], "cell_count": 80,
@@ -328,6 +336,8 @@ def run(*, output_dir: str | Path, allocation_gate: Callable,
             levels, cfg, 6, dtn_phase_gauge=BOUNDARY_PLANE,
             verify_dtn_quadrature=True,
         )
+        # This value comes only from the verified imports-only ABI receipt above.
+        bundle["runtime_profile"] = abi_identity["runtime_profile"]
         checkpoint("same_live_boundary_plane_bundle_complete", {
             "assembly_context_sha256": bundle["assembly_context_sha256"],
             "physical_generator_manifest_sha256": bundle["physical_generator_manifest_sha256"],
