@@ -52,12 +52,16 @@ def load(path, raw, config):
             raise InputError("FROZEN_PHYSICAL_DESIGN_CHANGED")
     mode, seconds, group, role = STAGES[item["stage"]]
     m = design["models"]["GX560" if role == "O6" else "G0"]
+    discretization = dict(m["finite_element"])
+    if role == "E4":
+        # The frozen G0 geometry is shared, but the unrun E4 role is p4.
+        discretization["degree"] = 4
     return RunSpecification(
         identity=dict(model_id="fixed_transverse_phase_0p7nm", run_id=item["run_id"]),
         geometry=m["geometry"],
         materials=m["materials"],
         incidence=m["incidence"],
-        discretization=m["finite_element"],
+        discretization=discretization,
         boundary=m["boundary"],
         method=dict(kind="research_fixed_phase_FE", stage=item["stage"]),
         solver=dict(preconditioner="none", role=role),

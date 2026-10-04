@@ -154,6 +154,16 @@ def test_design_fixture_is_frozen_in_input():
     assert d["models"] == {m: physical_design(m) for m in ("G0", "GX560")}
 
 
+def test_unrun_e4_descriptor_binds_p4_without_changing_frozen_g0():
+    spec = load_pilot(ROOT / "input/task042extra_feinn_5nm/v20_e4.dat")
+    assert spec.discretization["degree"] == 4
+    assert spec.derived["role"] == "E4"
+    assert physical_design("G0")["finite_element"] == {
+        "family": "N1curl",
+        "quadrature_degree": 15,
+    }
+
+
 def test_corrupt_modes_background_and_physical_wavenumber():
     for name in ("incorrect_physical_ports_difference", "old_background_difference"):
         r = valid()
@@ -213,6 +223,7 @@ def _saved_physics_fixture():
         mode_keys=keys,
         mode_k=waves,
         mode_e=e,
+        mode_boundary_z=np.where(keys[:, 0] == "top", 1, -1).astype(float),
         outgoing_boundary=a,
         per_level_power=power,
         physical_field_norms=np.asarray([1, 1, 0, 0]),

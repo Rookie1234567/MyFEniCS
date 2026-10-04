@@ -268,7 +268,8 @@ def compare_from_arrays(integrals, observables, algebra):
             raise ValueError("COMMON_INTEGRALS_INVALID")
         threshold = 1e-3 if b == "E4" else 1e-4
         fields = np.sqrt(first[0, :, 0]) / np.maximum(np.sqrt(first[0, :, 1]), 1e-12)
-        complex_errors = {}
+        mode_alignment = align_physical_modes(observables[a], observables[b])
+        complex_errors, mode_errors = {}, {}
         for name in (
             "selected_total_E",
             "selected_total_H",
@@ -280,6 +281,16 @@ def compare_from_arrays(integrals, observables, algebra):
             "outgoing_boundary",
         ):
             ref = observables[b][name]
+            if name in (
+                "total_projection",
+                "scattered_projection",
+                "outgoing_origin",
+                "outgoing_boundary",
+            ):
+                ref = ref[mode_alignment]
+                mode_errors[name] = complex_mode_differences(
+                    observables[a][name], ref, observables[a]["mode_keys"]
+                )
             diff = observables[a][name] - ref
             complex_errors[name] = float(
                 np.linalg.norm(diff) / max(np.linalg.norm(ref), 1e-12)
@@ -305,13 +316,15 @@ def compare_from_arrays(integrals, observables, algebra):
             np.max(
                 abs(
                     np.asarray(physics[a]["per_level_power"])
-                    - physics[b]["per_level_power"]
+                    - np.asarray(physics[b]["per_level_power"])[mode_alignment]
                 )
             )
         )
         drift = float(np.max(abs(second - first) / np.maximum(abs(second), 1e-24)))
         fieldpass = bool(
-            np.max(fields) <= threshold and max(complex_errors.values()) <= threshold
+            np.max(fields) <= threshold
+            and max(complex_errors.values()) <= threshold
+            and all(v["max_relative"] <= threshold for v in mode_errors.values())
         )
         powerpass = (
             max(powers.values()) <= 1e-5
@@ -321,6 +334,8 @@ def compare_from_arrays(integrals, observables, algebra):
         results[key] = dict(
             field_relative=fields.tolist(),
             complex_relative=complex_errors,
+            per_mode_complex=mode_errors,
+            modes_aligned_by_physical_key=True,
             power_absolute=powers,
             per_level_max_absolute=level,
             quadrature_drift=drift,
@@ -467,4 +482,57 @@ def interior_port_support(arrays):
         no_terms_removed=True,
         no_FE_or_action_or_factor_or_solve=True,
         accuracy_or_recovery_qualified=False,
+    )
+
+
+def align_physical_modes(left, right):
+    """Key/side/polarization/reference-plane alignment, with no phase fitting."""
+    import numpy as np
+
+    keys = [tuple(row) for row in right["mode_keys"]]
+    lookup = {key: j for j, key in enumerate(keys)}
+    if len(lookup) != 340:
+        raise ValueError("MODE_ALIGNMENT_DUPLICATE_OR_INCOMPLETE")
+    try:
+        order = np.asarray([lookup[tuple(row)] for row in left["mode_keys"]])
+    except KeyError as error:
+        raise ValueError("MODE_ALIGNMENT_PHYSICAL_KEYS") from error
+    for name in ("mode_k", "mode_e", "mode_boundary_z"):
+        if (
+            name not in left
+            or name not in right
+            or not np.array_equal(left[name], right[name][order])
+        ):
+            raise ValueError("MODE_ALIGNMENT_PHYSICAL_IDENTITY:" + name)
+    return order
+
+
+def complex_mode_differences(candidate, reference, keys):
+    """All 340 complex entries; denominator=max(abs(reference),1e-12)."""
+    import numpy as np
+
+    if (
+        candidate.shape != (340,)
+        or reference.shape != (340,)
+        or candidate.dtype != np.complex128
+        or reference.dtype != np.complex128
+        or not np.isfinite(candidate).all()
+        or not np.isfinite(reference).all()
+    ):
+        raise ValueError("FULL_COMPLEX_MODE_LAYOUT")
+    absolute = abs(candidate - reference)
+    denominator = np.maximum(abs(reference), 1e-12)
+    relative = absolute / denominator
+    worst = int(np.argmax(relative))
+    return dict(
+        count=340,
+        max_relative=float(relative[worst]),
+        max_absolute=float(absolute.max()),
+        near_zero_count=int(np.sum(abs(reference) < 1e-12)),
+        natural_floor=1e-12,
+        denominator_definition="max(abs(reference_j),1e-12), no phase fit",
+        worst_key=keys[worst].tolist(),
+        worst_absolute=float(absolute[worst]),
+        worst_reference_absolute=float(abs(reference[worst])),
+        worst_denominator=float(denominator[worst]),
     )
