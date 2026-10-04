@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from src.runners.saved_component_checker import canonical_saved_path, descriptor_budget
+from src.runners.saved_component_checker import SavedArrayLoader, canonical_saved_path, descriptor_budget
 
 
 def test_descriptor_budget_does_not_raise_hard(monkeypatch):
@@ -16,12 +16,33 @@ def test_descriptor_budget_does_not_raise_hard(monkeypatch):
     monkeypatch.setattr(module.resource, "getrlimit", lambda _: (1024, 1048576))
     monkeypatch.setattr(module.resource, "setrlimit", lambda *args: actions.append(args))
     result = descriptor_budget(1619)
-    assert result["soft_after"] == 2048 and result["hard_unchanged"] == 1048576
-    assert actions == [(module.resource.RLIMIT_NOFILE, (2048, 1048576))]
+    assert result["soft_after"] == 4096 and result["hard_unchanged"] == 1048576
+    assert actions == [(module.resource.RLIMIT_NOFILE, (4096, 1048576))]
     monkeypatch.setattr(module.resource, "getrlimit", lambda _: (512, 1024))
     with pytest.raises(RuntimeError, match="FD_CAPACITY_UNAVAILABLE"):
         descriptor_budget(1619)
     assert len(actions) == 1
+
+
+def test_repeated_aliases_do_not_open_new_mappings(tmp_path):
+    import numpy as np
+
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    name = "frozen_canonical_member"
+    path = raw / (hashlib.sha256(name.encode()).hexdigest() + ".npy")
+    np.save(path, np.asarray([1 + 2j, 3 - 4j]), allow_pickle=False)
+    reference = {"name": name, "callback_reference": str(path), "shape": [2], "dtype": "complex128"}
+    loader = SavedArrayLoader(tmp_path)
+    try:
+        first = loader(reference)
+        for _ in range(5000):
+            assert loader(reference) is first
+        assert len(loader.cache) == 1 and loader.requests == 5001 and not first.flags.writeable
+        assert first[0] == 1 + 2j
+    finally:
+        loader.close()
+    assert not loader.cache and first._mmap.closed
 
 
 def test_original_raw_paths_reject_escape_and_symlink(tmp_path):

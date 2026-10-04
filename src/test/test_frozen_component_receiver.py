@@ -161,8 +161,8 @@ def test_only_recorded_second_saved_checker_launch_allowed(tmp_path):
     record = load_receiver(path)
     assert record["repair_attempt"] == 2
     altered = tmp_path / "altered.dat"
-    altered.write_text(path.read_text().replace("repair_attempt = 2", "repair_attempt = 3"))
-    with pytest.raises(ValueError, match="second checker"):
+    altered.write_text(path.read_text().replace("repair_attempt = 2", "repair_attempt = 4"))
+    with pytest.raises(ValueError, match="second/third checker"):
         load_receiver(altered)
 
 

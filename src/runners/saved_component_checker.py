@@ -18,7 +18,7 @@ def descriptor_budget(member_count, *, reserve=128):
     if type(member_count) is not int or member_count <= 0:
         raise ValueError("positive actual saved member count required")
     soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    required = member_count + reserve
+    required = 2 * member_count + reserve
     target = 1 << (required - 1).bit_length()
     if hard != resource.RLIM_INFINITY and required > hard:
         raise RuntimeError("FD_CAPACITY_UNAVAILABLE_WITHIN_EXISTING_HARD_LIMIT")
@@ -26,6 +26,7 @@ def descriptor_budget(member_count, *, reserve=128):
     resource.setrlimit(resource.RLIMIT_NOFILE, (target, hard))
     return {"soft_before": soft, "soft_after": target, "hard_unchanged": hard,
             "member_count": member_count, "reserved_descriptors": reserve,
+            "conservative_descriptors_per_member": 2,
             "scope": "this checker process and its children only"}
 
 
@@ -37,6 +38,31 @@ def canonical_saved_path(producer, reference):
     if Path(location) != expected or expected.is_symlink() or not expected.is_file():
         raise ValueError("saved raw path is outside the frozen producer")
     return expected
+
+
+class SavedArrayLoader:
+    """Map each frozen canonical member once; aliases reuse readonly storage."""
+    def __init__(self, producer):
+        self.producer, self.cache, self.requests = Path(producer), {}, 0
+
+    def __call__(self, reference):
+        import numpy as np
+
+        path = canonical_saved_path(self.producer, reference)
+        self.requests += 1
+        value = self.cache.get(reference["name"])
+        if value is None:
+            value = np.load(path, mmap_mode="r", allow_pickle=False)
+            self.cache[reference["name"]] = value
+        if (list(value.shape) != reference.get("shape") or str(value.dtype) != reference.get("dtype")
+                or value.flags.writeable):
+            raise ValueError("saved array shape/dtype/readonly binding changed")
+        return value
+
+    def close(self):
+        for value in self.cache.values():
+            value._mmap.close()
+        self.cache.clear()
 
 
 def main(argv=None):
@@ -61,23 +87,22 @@ def main(argv=None):
     if disk["stop"]:
         raise RuntimeError("frozen producer raw/disk budget is not admissible")
     allocation_gate, _unused, checkpoint, _guard = _native_callbacks(output, checker=True)
-    import numpy as np
     from benchmarks.check_fresh_c1_p6_component import check_component
-
-    def load_array(reference):
-        value = np.load(canonical_saved_path(producer, reference), mmap_mode="r", allow_pickle=False)
-        if list(value.shape) != reference.get("shape") or str(value.dtype) != reference.get("dtype"):
-            raise ValueError("saved array shape/dtype changed")
-        return value
-
-    result = check_component(report, load_array, allocation_gate=allocation_gate,
-                             checkpoint=checkpoint, runtime_profile=identity["runtime_profile"])
+    loader = SavedArrayLoader(producer)
+    try:
+        result = check_component(report, loader, allocation_gate=allocation_gate,
+                                 checkpoint=checkpoint, runtime_profile=identity["runtime_profile"])
+        io_cost = {"load_requests": loader.requests, "unique_mappings": len(loader.cache),
+                   "open_descriptors_before_release": len(list(Path("/proc/self/fd").iterdir()))}
+    finally:
+        loader.close()
     _atomic_json(output / "checker_report.json", result)
     _atomic_json(output / "run_summary.json", {
         "status": "PASS_SAVED_COMPONENT_CHECK" if result["independent_component_pass"] else "CHECKER_FAILED",
         "producer": str(producer.resolve()), "worker_report_sha256": args.worker_sha256,
         "math_checker_file_sha256": hashlib.sha256((source / "benchmarks/check_fresh_c1_p6_component.py").read_bytes()).hexdigest(),
         "descriptor_budget": fd, "FE_worker_replayed": False,
+        "saved_array_IO": io_cost,
         "PDE_solved": False, "official_results": False,
         "parent_pid": os.getppid(), "checker_pid": os.getpid(),
     })

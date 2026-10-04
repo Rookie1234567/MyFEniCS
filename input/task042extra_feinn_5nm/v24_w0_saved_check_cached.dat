@@ -1,0 +1,8 @@
+receiver_schema = 1
+# 原 canonical 原件只读映射一次；原数学 checker 不改，继承全部费用。
+component = "fresh_c1_same80_p6"
+mode = "saved_check"
+repair_attempt = 3
+dependency_commit = "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382"
+input_sha256 = "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e"
+worker_report_sha256 = "324d59624b8cb7837d7dc0251e60cc060b292dccea05002d07710d6c205318bf"
