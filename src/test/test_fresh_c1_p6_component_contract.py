@@ -111,3 +111,46 @@ def test_original_geometry_helper_receives_same_mandatory_tolerance_as_builder()
     assert isinstance(exporter["tolerance"], ast.Name)
     assert exporter["tolerance"].id == "GEOMETRY_TOLERANCE"
     assert COMPONENT.GEOMETRY_TOLERANCE == 1e-11
+
+
+def test_pre_elimination_authority_is_checkpointed_before_any_export_and_in_failure():
+    tree = ast.parse(SOURCE.read_text())
+    runner = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                  and node.name == "run_fresh_p6_component")
+    checkpoint = next(node for node in ast.walk(runner)
+                      if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                      and node.func.id == "checkpoint" and node.args
+                      and isinstance(node.args[0], ast.Constant)
+                      and node.args[0].value == "pre_elimination_tensor_identities")
+    exported = next(node for node in ast.walk(runner)
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                    and node.func.id == "_export_original_tensors")
+    first_snapshot = next(node for node in ast.walk(runner)
+                          if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                          and node.func.id == "_save_native_maps")
+    assert checkpoint.lineno < first_snapshot.lineno < exported.lineno
+    failure = next(node for node in ast.walk(runner)
+                   if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                   and node.func.id == "checkpoint" and node.args
+                   and isinstance(node.args[0], ast.Constant)
+                   and node.args[0].value == "component_control_failure")
+    fields = {key.value: value for key, value in zip(failure.args[1].keys, failure.args[1].values)}
+    assert ast.dump(fields["pre_elimination_tensor_identities"]) == ast.dump(
+        ast.Name(id="pre_elimination_tensor_identities", ctx=ast.Load()))
+
+
+def test_native_integrity_and_CSR_equivalence_are_separate_at_existing_limit():
+    tree = ast.parse(SOURCE.read_text())
+    exporter = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                    and node.name == "_export_original_tensors")
+    source = ast.get_source_segment(SOURCE.read_text(), exporter)
+    assert 'actual_hashes["oriented_sha256"] != identity["oriented_sha256"]' in source
+    assert '_sha(reconstructed' not in source
+    assert '"native_Basix_row_transpose_row_v2"' in source
+    assert '"pre_elimination_tensor_identities": _jsonable(identities)' in source
+    comparisons = [node for node in ast.walk(exporter) if isinstance(node, ast.Call)
+                   and isinstance(node.func, ast.Name) and node.func.id == "_compare"]
+    assert len(comparisons) == 1
+    assert isinstance(comparisons[0].args[-1], ast.Name)
+    assert comparisons[0].args[-1].id == "ALGEBRA_LIMIT"
+    assert COMPONENT.ALGEBRA_LIMIT == 1e-12

@@ -301,8 +301,26 @@ def _export_original_tensors(bundle, compiled, system, snapshot, gate):
           raw_class_count=len(groups), oriented_class_count=sum(len(g["classes"]) for g in groups.values()),
           simultaneous_raw_tensor_count=1, simultaneous_oriented_tensor_count=1,
           no_global_FE_matrix=True, no_new_FFI_or_kernel=True)
-    originals, classes, orientation_refs = [], [], {}
+    originals, classes, orientation_refs, orientation_maps = [], [], {}, {}
     identities = system.build_audit["action_only_complete_tensor_identities"]
+    basis = element.basix_element
+    native_element = {
+        "family": "N1curl", "cell": "hexahedron", "degree": int(basis.degree),
+        "dtype": str(np.dtype(basis.dtype)), "map_type": basis.map_type.name,
+        "basix_hash": int(basis.hash()),
+        "coefficient_matrix_C_sha256": _sha(basis.coefficient_matrix, header=False),
+        "local_dimension": int(basis.dim),
+        "local_interiors": len(basis.entity_dofs[3][0]),
+        "local_traces": int(basis.dim) - len(basis.entity_dofs[3][0]),
+    }
+    positions = np.asarray(basis.entity_dofs[3][0], dtype=np.int32)
+    traces = np.setdiff1d(np.arange(882, dtype=np.int32), positions, assume_unique=True)
+    if (basis.family.name != "N1E" or basis.cell_type.name != "hexahedron"
+            or native_element["degree"] != 6 or native_element["dtype"] != "float64"
+            or native_element["map_type"] != "covariantPiola"
+            or native_element["local_dimension"] != 882
+            or len(positions) != 450 or len(traces) != 432):
+        raise ValueError("actual native p6 element identity or partition differs")
     for raw_index, (raw_key, group) in enumerate(sorted(groups.items())):
         raw = _tabulate_raw_tensor_class(compiled, kernels, group["coordinates"],
                                          tag=int(raw_key[0]), dimension=882)
@@ -315,8 +333,13 @@ def _export_original_tensors(bundle, compiled, system, snapshot, gate):
             oriented = raw.copy()
             _orient_cell_tensor(element, oriented, np.asarray([class_key[-1]], dtype=np.uint32))
             identity = identities[repr(class_key)]
-            if (_sha(raw, header=False) != identity["raw_sha256"]
-                    or _sha(oriented, header=False) != identity["oriented_sha256"]):
+            actual_hashes = {"raw_sha256": _sha(raw, header=False),
+                             "oriented_sha256": _sha(oriented, header=False)}
+            snapshot.checkpoint("original_tensor_native_identity", {
+                "class_key": _jsonable(class_key), "expected": _jsonable(identity),
+                "actual": actual_hashes, "native_element": native_element})
+            if (actual_hashes["raw_sha256"] != identity["raw_sha256"]
+                    or actual_hashes["oriented_sha256"] != identity["oriented_sha256"]):
                 raise ValueError("fresh original tensor differs from actual pre-elimination tensor identity")
             cell_info = int(class_key[-1])
             if cell_info not in orientation_refs:
@@ -343,14 +366,38 @@ def _export_original_tensors(bundle, compiled, system, snapshot, gate):
                     "data": snapshot.array(f"original/orientation/{cell_info}/data", transform_csr.data),
                     "small_entry_threshold": None,
                 }
-                reconstructed = np.asarray(transform_csr @ raw)
-                reconstructed = np.asarray(transform_csr @ reconstructed.T).T
-                if _sha(reconstructed, header=False) != identity["oriented_sha256"]:
-                    raise ValueError("actual raw+Basix orientation recipe does not reconstruct the complete original tensor")
-                del transform, transform_csr, reconstructed
-            original_ref = {"representation": "raw_tensor_congruence",
-                            "recipe": "T@raw@T.T; no conjugation",
+                orientation_maps[cell_info] = transform_csr
+                del transform
+            # The prepared native T_apply and a materialized CSR product use
+            # different floating-point operation orders. Native bytes bind the
+            # original tensor; the complete unthresholded CSR is a numerical
+            # witness at the existing algebra limit, including every block.
+            transform_csr = orientation_maps[cell_info]
+            _gate(gate, "CSR_native_orientation_equivalence", 2 * 882**2 * 16,
+                  4 * 882**2 * 16, class_index=index, cell_info=cell_info,
+                  cached_sparse_orientation_bytes=sum(
+                      value.data.nbytes + value.indices.nbytes + value.indptr.nbytes
+                      for value in orientation_maps.values()),
+                  native_raw_and_oriented_already_resident=True,
+                  all_four_partition_blocks=True, numerical_limit=ALGEBRA_LIMIT)
+            reconstructed = np.asarray(transform_csr @ raw)
+            reconstructed = np.asarray(transform_csr @ reconstructed.T).T
+            orientation_metrics = {}
+            for label, rows, columns in (("full", None, None),
+                                         ("ii", positions, positions),
+                                         ("it", positions, traces),
+                                         ("ti", traces, positions),
+                                         ("tt", traces, traces)):
+                reference = oriented if rows is None else oriented[np.ix_(rows, columns)]
+                candidate = reconstructed if rows is None else reconstructed[np.ix_(rows, columns)]
+                _compare(snapshot.checkpoint, orientation_metrics, label,
+                         candidate, reference, ALGEBRA_LIMIT)
+            del reconstructed
+            original_ref = {"representation": "native_Basix_row_transpose_row_v2",
+                            "recipe": "DOLFINx.T_apply_C_order_then_T_apply_transpose_C_order; no conjugation",
                             "raw_tensor": raw_ref, "orientation": orientation_refs[cell_info],
+                            "native_element": native_element,
+                            "CSR_native_equivalence_metrics": orientation_metrics,
                             "shape": [882, 882], "dtype": "complex128",
                             "C_order_bytes_sha256": identity["oriented_sha256"]}
             caches = {"S_V": system.retained_local_schur_by_class[class_key],
@@ -368,10 +415,6 @@ def _export_original_tensors(bundle, compiled, system, snapshot, gate):
                 cells[cell_index]["class_index"] = index
             del oriented
         del raw
-    positions = np.asarray(element.basix_element.entity_dofs[3][0], dtype=np.int32)
-    traces = np.setdiff1d(np.arange(882, dtype=np.int32), positions, assume_unique=True)
-    if len(positions) != 450 or len(traces) != 432:
-        raise ValueError("actual p6 element position inventory differs")
     snapshot.array("original/interior_positions", positions)
     snapshot.array("original/trace_positions", traces)
     return {"raw_classes": originals, "classes": classes, "cells": cells,
@@ -380,9 +423,10 @@ def _export_original_tensors(bundle, compiled, system, snapshot, gate):
             "original_helper_source": "_tabulate_raw_tensor_class + _orient_cell_tensor",
             "geometry_tolerance": GEOMETRY_TOLERANCE,
             "geometry_tolerance_matches_condensation_builder": True,
+            "pre_elimination_tensor_identities": _jsonable(identities),
             "oriented_full_tensor_exported": False,
-            "orientation_proof": "actual T_apply identity witness + exact streamed raw/oriented condensation hash",
-            "original_tensor_checker_recipe": "reconstruct one T@raw@T.T class, verify C-byte hash, release before next class",
+            "orientation_proof": "exact native operation-order raw/oriented hash; complete CSR numerical witness",
+            "original_tensor_checker_recipe": "native row/transpose/row T_apply; verify original C-byte hash; separately compare unthresholded CSR full/ii/it/ti/tt at 1e-12",
             "no_new_factorization_in_export": True}
 
 
@@ -612,6 +656,7 @@ def run_fresh_p6_component(action_bundle: Mapping[str, Any], *,
     carrier_before = carrier_numeric_identity(carrier)
     snapshot = _Snapshot(save_array, allocation_gate, checkpoint, archive_payload_limit_bytes)
     system = dense = compact = compiled = None
+    pre_elimination_tensor_identities = None
     metrics = {}
     try:
         groups, row_groups, support = _boundary_support(action_bundle)
@@ -629,6 +674,14 @@ def run_fresh_p6_component(action_bundle: Mapping[str, Any], *,
             retain_local_schur_for_matrix_free=True, geometry_tolerance=GEOMETRY_TOLERANCE,
             preserve_exact_geometry=True,
             share_identity_cache=True, allocation_gate=allocation_gate)
+        # Retain the exact original authority before any array export or later
+        # control can fail. This is the actual inherited pre-elimination hash
+        # inventory, never a hash derived from the CSR witness.
+        pre_elimination_tensor_identities = _jsonable(
+            system.build_audit["action_only_complete_tensor_identities"])
+        checkpoint("pre_elimination_tensor_identities", {
+            "identities": pre_elimination_tensor_identities,
+            "hash_scope": "actual_raw_and_native_oriented_C_order_bytes_before_local_elimination"})
         actual = {"degree": degree, "cell_count": len(system.cell_recovery_maps),
                   "local_dimension": int(space.element.space_dimension),
                   "local_interiors": len(space.element.basix_element.entity_dofs[3][0]),
@@ -796,6 +849,7 @@ def run_fresh_p6_component(action_bundle: Mapping[str, Any], *,
                     "status": "controlled_stop" if budget_stop else "failed",
                     "stop_reason": "uncompressed_raw_member_budget_exceeded" if budget_stop else None,
                     "exception_type": type(error).__name__, "message": str(error),
+                    "pre_elimination_tensor_identities": pre_elimination_tensor_identities,
                     "completed_metrics": metrics, "snapshot": snapshot.identity(),
                     "independent_checker_pass": False, "durable_archive_verified": False})
         raise

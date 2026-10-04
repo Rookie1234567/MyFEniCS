@@ -24,7 +24,6 @@ from ..constraints.floquet_constraint import (
 )
 from ..geometry.mesh_builder import build_mesh
 from ..postprocessing.power_metrics import compute_power_metrics
-from ..postprocessing.postprocess import save_fields_and_plots
 
 
 def _petsc_to_csr(A: PETSc.Mat):
@@ -238,6 +237,8 @@ def _solve_manual(A_csr, b_np, constraints):
 def run_case(
     cfg: SimulationConfig, out_dir: Path, constraint_backend: str = "manual"
 ) -> dict[str, object]:
+    from ..postprocessing.postprocess import save_fields_and_plots
+
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
     start = time.perf_counter()

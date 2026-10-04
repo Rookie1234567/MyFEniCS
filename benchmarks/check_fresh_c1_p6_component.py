@@ -1,8 +1,10 @@
 """Independent saved-only fresh same80 p6 component checker.
 
 Import is standard-library only. The explicit entry point requires external
-resource supervision and only then loads NumPy/SciPy. It never imports the
-worker, FE stack, historical raw artifacts, or a canonical solver. This is new,
+resource supervision and only then loads numerical dependencies. It imports
+the public DOLFINx/Basix element wrapper only to reproduce native orientation;
+it creates no mesh, form, FFCx kernel, or PDE. It never imports the worker,
+historical raw artifacts, or a canonical solver. This is new,
 unqualified source; a result is numerical component evidence only. The caller
 owns source, ABI, provenance, archive, Library and supervision bindings.
 """
@@ -14,7 +16,7 @@ import math
 import re
 
 WORKER_SCHEMA = "fresh-c1.same80.p6-component.v1"
-CHECKER_SCHEMA = "fresh-c1.same80.p6-component-saved-checker.v1"
+CHECKER_SCHEMA = "fresh-c1.same80.p6-component-saved-checker.v2"
 SOURCE_STATUS = "NEW_UNQUALIFIED"
 PIVOT_HELPER_PROVENANCE_SHA256 = "27df99ddc6df1997beffff03be0866e8648cbd1b4c1e1e756f79cd9717f2f869"
 INVENTORY = {"degree": 6, "cell_count": 80, "local_dimension": 882,
@@ -24,6 +26,13 @@ INVENTORY = {"degree": 6, "cell_count": 80, "local_dimension": 882,
 PHYSICAL_GENERATOR = "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951"
 ACTION_LIMIT, RESIDUAL_LIMIT, ALGEBRA_LIMIT = 1.e-11, 1.e-10, 1.e-12
 NEGATIVE_SEPARATION = 1.e-3
+NATIVE_TENSOR_REPRESENTATION = "native_Basix_row_transpose_row_v2"
+NATIVE_TENSOR_RECIPE = "DOLFINx.T_apply_C_order_then_T_apply_transpose_C_order; no conjugation"
+NATIVE_ELEMENT = {"family": "N1curl", "cell": "hexahedron", "degree": 6,
+                  "dtype": "float64", "map_type": "covariantPiola",
+                  "basix_hash": 16913352432823651554,
+                  "coefficient_matrix_C_sha256": "780d9a4529041f8cb8138a78c8314d757822a1f5bc984f254c5790db208e911d",
+                  "local_dimension": 882, "local_interiors": 450, "local_traces": 432}
 
 
 def require(condition, message):
@@ -536,6 +545,11 @@ def _class_inventory(report, cells, reader):
         covered.update(ids); seen_keys.add(_canonical(key)); used_raw.add(raw_key)
     require(covered == set(range(80)) and used_raw == set(raw_by_key),
             "class/source inventory omits cells or contains unused raw classes")
+    identities = source.get("pre_elimination_tensor_identities")
+    require(isinstance(identities, dict)
+            and identities == report.get("condensation_audit", {}).get("action_only_complete_tensor_identities")
+            and set(identities) == {repr(tuple(entry["class_key"])) for entry in classes},
+            "complete exact pre-elimination raw/native identity inventory required")
     return classes, raw_by_key
 
 
@@ -586,7 +600,59 @@ def _role_inventory(reader, report):
             + "; extra=" + str(sorted(set(reader.roles)-expected)))
 
 
-def _original_tensor(reader, report, entry, raw_record, gate):
+def _native_element_identity(element):
+    """Read the public basis identity, without a mesh, form, or kernel."""
+    import numpy as np
+    basis = element.basix_element
+    interiors = len(basis.entity_dofs[3][0])
+    require(basis.family.name == "N1E", "native element family must be N1curl/N1E")
+    return {"family": "N1curl", "cell": basis.cell_type.name, "degree": int(basis.degree),
+            "dtype": str(np.dtype(basis.dtype)), "map_type": basis.map_type.name,
+            "basix_hash": int(basis.hash()),
+            "coefficient_matrix_C_sha256": _sha(basis.coefficient_matrix, header=False),
+            "local_dimension": int(element.space_dimension), "local_interiors": interiors,
+            "local_traces": int(element.space_dimension) - interiors}
+
+
+def _native_element(metadata, gate):
+    require(metadata == NATIVE_ELEMENT, "exact native element metadata required")
+    # Admission precedes every FE-stack import and the public basis factory.
+    _gate(gate, "native_basis_wrapper", payload=882*1029*8, workspace=64 << 20,
+          FE_imports=True, native_element_factory_only=True, mesh_created=False,
+          form_created=False, FFCx_kernel_created=False, JIT=False, PDE=False,
+          local_schur_factor_count=0)
+    import numpy as np
+    import basix.ufl
+    from dolfinx.fem.element import finiteelement
+    from dolfinx.mesh import CellType
+    element = finiteelement(CellType.hexahedron,
+                            basix.ufl.element("N1curl", "hexahedron", 6, dtype=np.float64),
+                            np.dtype(np.float64))
+    require(_native_element_identity(element) == metadata,
+            "live native basis hash/coefficient matrix or element metadata differs")
+    return element
+
+
+def _native_row_transpose_row(element, raw, cell_info):
+    """Reproduce native arithmetic and C-order buffers; preserve every bit."""
+    import numpy as np
+    tensor = np.array(raw, dtype=np.complex128, order="C", copy=True)
+    dimension = tensor.shape[0]
+    info = np.asarray([cell_info], dtype=np.uint32)
+    if hasattr(element, "space_dimension"):
+        element.T_apply(tensor.ravel(), info, dimension)
+    else:
+        element.T_apply(tensor.ravel(), dimension, int(info[0]))
+    transpose = np.ascontiguousarray(tensor.T)
+    if hasattr(element, "space_dimension"):
+        element.T_apply(transpose.ravel(), info, dimension)
+    else:
+        element.T_apply(transpose.ravel(), dimension, int(info[0]))
+    tensor[:] = transpose.T
+    return tensor
+
+
+def _original_tensor(reader, report, entry, raw_record, gate, measures, ipos, tpos, native_element):
     import numpy as np
     from scipy.sparse import csr_matrix
     _gate(gate, "unique_class_tensor/" + str(entry["class_index"]),
@@ -603,15 +669,19 @@ def _original_tensor(reader, report, entry, raw_record, gate):
                     for axis, value in enumerate(point)),
             "actual raw tensor class canonical hexahedral geometry differs")
     descriptor = entry.get("original_tensor", {})
-    require(descriptor.get("representation") == "raw_tensor_congruence"
-            and descriptor.get("recipe") == "T@raw@T.T; no conjugation"
+    require(descriptor.get("representation") == NATIVE_TENSOR_REPRESENTATION
+            and descriptor.get("recipe") == NATIVE_TENSOR_RECIPE
             and descriptor.get("raw_tensor") == entry["raw_tensor"]
             and descriptor.get("shape") == [882, 882] and descriptor.get("dtype") == "complex128",
             "exact original raw/oriented tensor descriptor required")
+    require(descriptor.get("native_element") == NATIVE_ELEMENT
+            and _native_element_identity(native_element) == descriptor["native_element"],
+            "live native basis must bind exact original tensor metadata")
     orient = descriptor.get("orientation", {})
     require(orient.get("representation") == "actual_Basix_T_apply_CSR"
             and orient.get("shape") == [882, 882] and orient.get("cell_info") == entry["class_key"][-1]
-            and type(orient.get("basis_hash")) is int and orient.get("small_entry_threshold") is None,
+            and orient.get("basis_hash") == descriptor["native_element"]["basix_hash"]
+            and orient.get("small_entry_threshold") is None,
             "actual complete no-threshold Basix orientation witness required")
     role = "original/orientation/" + str(orient["cell_info"]) + "/"
     ptr = reader.bound(role + "indptr", orient.get("indptr"), shape=(883,))
@@ -624,19 +694,39 @@ def _original_tensor(reader, report, entry, raw_record, gate):
     for row in range(882):
         _indices(indices[int(ptr[row]):int(ptr[row+1])], 882, name="orientation row")
     transform = csr_matrix((data, indices, ptr), shape=(882, 882), copy=False)
-    intermediate = np.asarray(transform @ raw)
-    tensor = np.asarray(transform @ intermediate.T).T
-    del intermediate, transform
-    require(bool(np.isfinite(tensor).all()), "reconstructed original tensor is nonfinite")
+    native_transform = np.eye(882, dtype=np.complex128)
+    info = np.asarray([orient["cell_info"]], dtype=np.uint32)
+    if hasattr(native_element, "space_dimension"):
+        native_element.T_apply(native_transform.ravel(), info, 882)
+    else:
+        native_element.T_apply(native_transform.ravel(), 882, int(info[0]))
+    dense_transform = transform.toarray()
+    require(np.array_equal(dense_transform != 0, native_transform != 0),
+            "unthresholded saved CSR must preserve every native nonzero orientation entry")
+    prefix = f"class/{entry['class_index']}/orientation/"
+    measures.compare(prefix + "CSR_native_identity", dense_transform, native_transform, ALGEBRA_LIMIT)
+    del native_transform, dense_transform
+    tensor = _native_row_transpose_row(native_element, raw, orient["cell_info"])
+    require(bool(np.isfinite(tensor).all()), "reconstructed native original tensor is nonfinite")
     byte_hash = _sha(tensor, header=False)
-    identity = report.get("condensation_audit", {}).get("action_only_complete_tensor_identities", {}).get(
-        repr(tuple(entry["class_key"])))
-    require(isinstance(identity, dict) and identity.get("shape") == [882, 882]
-            and identity.get("dtype") == "complex128"
+    identity_key = repr(tuple(entry["class_key"]))
+    identity = report.get("original_sources", {}).get("pre_elimination_tensor_identities", {}).get(identity_key)
+    require(isinstance(identity, dict)
+            and identity == report.get("condensation_audit", {}).get("action_only_complete_tensor_identities", {}).get(identity_key)
+            and identity.get("shape") == [882, 882] and identity.get("dtype") == "complex128"
             and identity.get("raw_sha256") == _sha(raw, header=False)
             and identity.get("oriented_sha256") == byte_hash
             and descriptor.get("C_order_bytes_sha256") == byte_hash,
-            "actual pre-elimination raw/oriented tensor hashes differ")
+            "actual pre-elimination raw/native tensor hashes differ")
+    intermediate = np.asarray(transform @ raw)
+    csr_tensor = np.asarray(transform @ intermediate.T).T
+    del intermediate, transform
+    measures.compare(prefix + "CSR_native_tensor", csr_tensor, tensor, ALGEBRA_LIMIT)
+    for name, rows, columns in (("ii", ipos, ipos), ("it", ipos, tpos),
+                                ("ti", tpos, ipos), ("tt", tpos, tpos)):
+        measures.compare(prefix + "CSR_native_tensor_" + name,
+                         csr_tensor[np.ix_(rows, columns)], tensor[np.ix_(rows, columns)], ALGEBRA_LIMIT)
+    del csr_tensor
     return tensor, byte_hash
 
 
@@ -786,6 +876,11 @@ def _check_component(report, load_array, gate, checkpoint, measures):
     cells, ipos, tpos = _cell_inventory(reader, report, maps, gate)
     classes, raw_by_key = _class_inventory(report, cells, reader)
     _role_inventory(reader, report)
+    native_element = _native_element(classes[0].get("original_tensor", {}).get("native_element"), gate)
+    native_ipos = np.asarray(native_element.basix_element.entity_dofs[3][0], dtype=np.int32)
+    native_tpos = np.setdiff1d(np.arange(882, dtype=np.int32), native_ipos, assume_unique=True)
+    require(np.array_equal(ipos, native_ipos) and np.array_equal(tpos, native_tpos),
+            "saved complete interior/trace positions differ from live native basis")
     carrier = _carrier(reader, report, maps, cells, gate, measures)
     _gate(gate, "all_component_control_vectors", payload=96*55950*16 + 8*532**2*16,
           workspace=24*55950*16 + (16 << 20))
@@ -841,7 +936,8 @@ def _check_component(report, load_array, gate, checkpoint, measures):
     for entry in classes:
         class_index = entry["class_index"]
         tensor, tensor_sha = _original_tensor(reader, report, entry,
-                                              raw_by_key[_canonical(entry["class_key"][:-1])], gate)
+                                              raw_by_key[_canonical(entry["class_key"][:-1])], gate,
+                                              measures, ipos, tpos, native_element)
         vii, vit = tensor[np.ix_(ipos, ipos)], tensor[np.ix_(ipos, tpos)]
         vti, vtt = tensor[np.ix_(tpos, ipos)], tensor[np.ix_(tpos, tpos)]
         # A fresh original-tensor local450 factor is independent of saved LU.
@@ -910,6 +1006,8 @@ def _check_component(report, load_array, gate, checkpoint, measures):
             del bi, di, xib, bhat, dhat, correction
         class_checks.append({"class_index": class_index, "cell_indices": entry["cell_indices"],
                              "oriented_tensor_C_bytes_sha256": tensor_sha,
+                             "original_tensor_representation": NATIVE_TENSOR_REPRESENTATION,
+                             "original_tensor_recipe": NATIVE_TENSOR_RECIPE,
                              "original_dense_local_solve_checked": True, "saved_LU_private_pivots_checked": True})
         del tensor, vii, vit, vti, vtt, factor, solve, recovery, projection, schur
     require(sorted(cell_checks) == list(range(80)) and material_result is not None,
@@ -992,6 +1090,10 @@ def _check_component(report, load_array, gate, checkpoint, measures):
                        "pure_algebra": ALGEBRA_LIMIT, "zero_scale_rule": "error_must_be_exactly_zero"},
             "arbitrary_retained_state_claimed_solved": False, "manufactured_consistent_state_checked": True,
             "global_p6_matrix_created": False, "global_p6_factor_created": False,
+            "original_tensor_representation": NATIVE_TENSOR_REPRESENTATION,
+            "original_tensor_recipe": NATIVE_TENSOR_RECIPE,
+            "native_element_recomputed": _native_element_identity(native_element),
+            "native_basis_factory_only": True, "mesh_form_FFCx_PDE_created": False,
             "p6_full_chain_claim": False, "physical_outputs_claim": False,
             "durability_and_compacted_archive_measurements_owned_by_caller": True}
 
