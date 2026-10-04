@@ -1,0 +1,1228 @@
+{
+  "window": {
+    "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+    "start_utc_seconds": 1791131641.208579,
+    "start_monotonic": 1056636.069450649,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "label": "V45",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "learning_seconds": 5400,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh"
+  },
+  "base": "ccd357885f7f9be84efe3be07868cc94f13d93fc",
+  "review": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+  "final_implementation_source": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+  "documentation_HEAD_not_run_source": true,
+  "runs": [
+    {
+      "role": "pre",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 22.985648036934435,
+      "seconds_measured_lower": 22.985648036934435,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_pre_001",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_pre_001/run_manifest.json",
+        "sha256": "a38dacf3ac1cafff6221cb8c1cfde2ee4c732e137d1f19a84d64bc67698204bf",
+        "bytes": 5669
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_pre_001/supervision/summary.json",
+        "sha256": "33c55685029921785595898f5cc52b6734e7422372413d1bf96b804b4160deef",
+        "bytes": 9437
+      },
+      "result": null
+    },
+    {
+      "role": "pre",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 34.14379260200076,
+      "seconds_measured_lower": 34.14379260200076,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_pre_002",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_pre_002/run_manifest.json",
+        "sha256": "145ebfcc0cb0ac06df1a71805c042d7067b355db8c7a1726fc91cf7d2c3e5470",
+        "bytes": 5671
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_pre_002/supervision/summary.json",
+        "sha256": "36008d984686391afc350d58bd3f32c5924abd061d32418a6b52c0d56d65e34e",
+        "bytes": 9454
+      },
+      "result": null
+    },
+    {
+      "role": "style",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "WORKER_FAILED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 2.7310758780222386,
+      "seconds_measured_lower": 2.7310758780222386,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 1,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_style_001",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_style_001/run_manifest.json",
+        "sha256": "3bf922f177a46cb6d5b1ad7d2a072efa72ba645de21312a0cda4ece42da79803",
+        "bytes": 5677
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_style_001/supervision/summary.json",
+        "sha256": "88c5c6de2382b8213de38c730613b4d0976838012eceec28991d762e3794ec1f",
+        "bytes": 9316
+      },
+      "result": null
+    },
+    {
+      "role": "style",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 2.990894024958834,
+      "seconds_measured_lower": 2.990894024958834,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_style_002",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_style_002/run_manifest.json",
+        "sha256": "145b642d062e72e19b532df509cc25c58562808c157324651359be3f811f88b4",
+        "bytes": 5676
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_style_002/supervision/summary.json",
+        "sha256": "ce2ba57df20f0bfb49d9a92e89fb8812bcb680e6e9743020ef276b9909463b32",
+        "bytes": 9314
+      },
+      "result": null
+    },
+    {
+      "role": "pre",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 27.18646274600178,
+      "seconds_measured_lower": 27.18646274600178,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_pre_003",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_pre_003/run_manifest.json",
+        "sha256": "0c6ed83f5e3644d385dabd42e54f5b7742e60452c1a240fa208f18552f206994",
+        "bytes": 5674
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_pre_003/supervision/summary.json",
+        "sha256": "88926c00a3d89b963664492c3ce5b0487c86b04b56718797f0fabd0e143d8856",
+        "bytes": 9408
+      },
+      "result": null
+    },
+    {
+      "role": "style",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.1883692368865013,
+      "seconds_measured_lower": 3.1883692368865013,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_style_003",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_style_003/run_manifest.json",
+        "sha256": "15cbe262c3955d908825f89c87cb7fa615fd1477a91ec413d46e2cdfab50e5a6",
+        "bytes": 5674
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_style_003/supervision/summary.json",
+        "sha256": "99b0d58189af5afd5d3ae4f35503741b097f24f9610f223f35413e378f1bbd8b",
+        "bytes": 9309
+      },
+      "result": null
+    },
+    {
+      "role": "pre",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 38.59213637793437,
+      "seconds_measured_lower": 38.59213637793437,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_pre_004",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_pre_004/run_manifest.json",
+        "sha256": "8db7090ba999f264aecf5f8fed18ca509cb95c5c2c35cd1a038850656a1a6c65",
+        "bytes": 5670
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_pre_004/supervision/summary.json",
+        "sha256": "d22d1356f751f7102b8930697174af3912c44ad8c41529438992ca983db9955e",
+        "bytes": 9406
+      },
+      "result": null
+    },
+    {
+      "role": "SETUP",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "V45_FULL_MOMENT_CALIBRATED",
+      "seconds_budget_charge_upper": 32.08623642195016,
+      "seconds_measured_lower": 32.08623642195016,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 15,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 15,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 8,
+          "seconds": 1.520452433032915
+        },
+        "AH": {
+          "RHS": 7,
+          "seconds": 1.3524022069759667
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_setup_20261004T165928866881Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_setup_20261004T165928866881Z/run_manifest.json",
+        "sha256": "e2eff8772b49c9b32a1db915a6e8685fb0f598fabacb81823e933c864d6a8522",
+        "bytes": 5936
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_setup_20261004T165928866881Z/supervision/summary.json",
+        "sha256": "cfcf4b2d5e850e4e929b86e4a1b72f3e885ea117a77df04b24dfbcd14085944c",
+        "bytes": 9583
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_setup_20261004T165928866881Z/result.json",
+        "sha256": "e2a59fd64bb1bc7c8a82f8ae061a24a047df87bf9f9c99b53ff08cdb82c08eeb",
+        "bytes": 47981
+      }
+    },
+    {
+      "role": "DATA",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "V45_POST64_DATA_FROZEN",
+      "seconds_budget_charge_upper": 457.994013360003,
+      "seconds_measured_lower": 457.994013360003,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 2016,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 2016,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 2016,
+          "seconds": 420.84372229943983
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_data_20261004T170029626829Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_data_20261004T170029626829Z/run_manifest.json",
+        "sha256": "ee1f576f03b775c43de22610cab9d2a5cee5cd99730690624762eba65a1be81e",
+        "bytes": 5933
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_data_20261004T170029626829Z/supervision/summary.json",
+        "sha256": "75eb1a89e9cc341737ec35706925041ce9520fcf93dc9969c9020aa04557ca4b",
+        "bytes": 9591
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/result.json",
+        "sha256": "931df5ecaf3b421c186f9432149d5ca6fe1f8d4a3b0fc880510c946e90c54bec",
+        "bytes": 105708
+      }
+    },
+    {
+      "role": "GRADIENT",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "V45_MIXED_FULL_GRADIENT_READY",
+      "seconds_budget_charge_upper": 27.090100116096437,
+      "seconds_measured_lower": 27.090100116096437,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 12,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 12,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 6,
+          "seconds": 1.1647541518323123
+        },
+        "AH": {
+          "RHS": 6,
+          "seconds": 0.9790709058288485
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_gradient_20261004T170850973963Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_gradient_20261004T170850973963Z/run_manifest.json",
+        "sha256": "e9c9784139b1329d3c130b807a3928f4ccfc967861cf161621a131b1c0c3f9ab",
+        "bytes": 5935
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_gradient_20261004T170850973963Z/supervision/summary.json",
+        "sha256": "29408f1323ab84e70095c170617b7127ec2ad307c52ec7dddd14e3f1c457dc24",
+        "bytes": 9599
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/result.json",
+        "sha256": "852947ed8521294f4dd502cd84b84a83baad51f976a6435416240b43a9c2f273",
+        "bytes": 16905
+      }
+    },
+    {
+      "role": "TRAIN_LH",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "WEIGHTS_FROZEN",
+      "seconds_budget_charge_upper": 210.16631410317495,
+      "seconds_measured_lower": 210.16631410317495,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 532,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 532,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 276,
+          "seconds": 45.88050903263502
+        },
+        "AH": {
+          "RHS": 256,
+          "seconds": 43.59793442673981
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_train_lh_20261004T170954640203Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_train_lh_20261004T170954640203Z/run_manifest.json",
+        "sha256": "42cf15407efde4e446da361c1d46ce6bca0fd5961d06c83dead18afa443c1eb1",
+        "bytes": 5933
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_train_lh_20261004T170954640203Z/supervision/summary.json",
+        "sha256": "1ac7b78f8f03ce7bf7ab52ea9369f5af516da4fa4a9031eede1dae7df10dafc0",
+        "bytes": 9595
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/result.json",
+        "sha256": "546db1dca197fb1db295a38e9a015e8ae8526ec4b985fce3a9feac0f0a5e969b",
+        "bytes": 30030
+      }
+    },
+    {
+      "role": "TRAIN_NL",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "WEIGHTS_FROZEN",
+      "seconds_budget_charge_upper": 205.76211124798283,
+      "seconds_measured_lower": 205.76211124798283,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 532,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 532,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 276,
+          "seconds": 45.73683154769242
+        },
+        "AH": {
+          "RHS": 256,
+          "seconds": 43.01887335837819
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_train_nl_20261004T171344281245Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_train_nl_20261004T171344281245Z/run_manifest.json",
+        "sha256": "88640ae62c4fccd53f7cb7f82efc46230e4f8d9ae03c6b6fe0a8ccf01827b399",
+        "bytes": 5936
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_train_nl_20261004T171344281245Z/supervision/summary.json",
+        "sha256": "3e0986ae4f7f8c39c5e3688d3596991e443ba054d74335a88756a3d42d6a230b",
+        "bytes": 9596
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/result.json",
+        "sha256": "e265be02dff8b2dea9dc63ac6ff1890be4065e073ddf8d46afd23fd52e3f341b",
+        "bytes": 32947
+      }
+    },
+    {
+      "role": "TRAIN_NH",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "WEIGHTS_FROZEN",
+      "seconds_budget_charge_upper": 210.8860348870512,
+      "seconds_measured_lower": 210.8860348870512,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 532,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 532,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 276,
+          "seconds": 45.76060047582723
+        },
+        "AH": {
+          "RHS": 256,
+          "seconds": 43.19935810496099
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_train_nh_20261004T171714251384Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_train_nh_20261004T171714251384Z/run_manifest.json",
+        "sha256": "8b564596bd4853dcc8f4b4c32d9d10d1d8b0d02085241785bd7a8727560be839",
+        "bytes": 5934
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_train_nh_20261004T171714251384Z/supervision/summary.json",
+        "sha256": "c752cbbdd60b48d42cc7f64a76f0c20da681b0d619776079d38108a934ba1312",
+        "bytes": 9594
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/result.json",
+        "sha256": "a821fb4a2329133c7346d46195dc8dca71a86981846dc6f8e4104455681d01a0",
+        "bytes": 32951
+      }
+    },
+    {
+      "role": "EVAL_R0",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "ROUTE_FROZEN",
+      "seconds_budget_charge_upper": 156.56844418682158,
+      "seconds_measured_lower": 156.56844418682158,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 568,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 568,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 568,
+          "seconds": 133.30359145859256
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_eval_r0_20261004T172127894984Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_eval_r0_20261004T172127894984Z/run_manifest.json",
+        "sha256": "33b51e3229c304a28880664f5d9a25f0a1e3bee4781d54e2e8cd00dec4ea77e8",
+        "bytes": 5936
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_eval_r0_20261004T172127894984Z/supervision/summary.json",
+        "sha256": "e2b931b52b4e12c07741ca3141015db179ae50242c2889bc08de99351a87f458",
+        "bytes": 9600
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/result.json",
+        "sha256": "c01e93787f1c32b75053e1181c4e4dd24060bcb88953a87f35d9fbbf92c47299",
+        "bytes": 48616
+      }
+    },
+    {
+      "role": "EVAL_CL44",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "ROUTE_FROZEN",
+      "seconds_budget_charge_upper": 161.7677314018365,
+      "seconds_measured_lower": 161.7677314018365,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 568,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 568,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 568,
+          "seconds": 137.1103511475958
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_eval_cl44_20261004T172408960984Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_eval_cl44_20261004T172408960984Z/run_manifest.json",
+        "sha256": "211054952ab1a7f65e966393c816d80220df20a645ff220379e140b83d5f32d2",
+        "bytes": 5936
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_eval_cl44_20261004T172408960984Z/supervision/summary.json",
+        "sha256": "bcb52ecc6d51fb156106ed02506386895b9fc548352adf20270f143d494759a2",
+        "bytes": 9593
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/result.json",
+        "sha256": "2157381286c7b647a2a7c83fe9a2dfabfb66710a05b3cf49911d67db28cd692a",
+        "bytes": 50668
+      }
+    },
+    {
+      "role": "EVAL_LH",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "ROUTE_FROZEN",
+      "seconds_budget_charge_upper": 158.18840065784752,
+      "seconds_measured_lower": 158.18840065784752,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 568,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 568,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 568,
+          "seconds": 133.50707941991277
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_eval_lh_20261004T172655194691Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_eval_lh_20261004T172655194691Z/run_manifest.json",
+        "sha256": "befbd3d436509b908891e4d68b6893c692265a1c0816c6a2f15bddc6dfa4003a",
+        "bytes": 5934
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_eval_lh_20261004T172655194691Z/supervision/summary.json",
+        "sha256": "1ffd5e57ff7e396487b87a9a4d351eb795db4c774264cbd01d58943c7cfa85a2",
+        "bytes": 9601
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/result.json",
+        "sha256": "88da6cd04474a5b4f72acd2a76e0e933e59913f0a32a083462f57b3c46f2ddac",
+        "bytes": 53872
+      }
+    },
+    {
+      "role": "EVAL_NL",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "ROUTE_FROZEN",
+      "seconds_budget_charge_upper": 148.64181437389925,
+      "seconds_measured_lower": 148.64181437389925,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 568,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 568,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 568,
+          "seconds": 124.0060324515216
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_eval_nl_20261004T172937864343Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_eval_nl_20261004T172937864343Z/run_manifest.json",
+        "sha256": "e0fc503855e222b448a67eecad0c63155448879d7d58cf7a9457330705f1de5c",
+        "bytes": 5936
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_eval_nl_20261004T172937864343Z/supervision/summary.json",
+        "sha256": "8e0031768a0a0794821a0976d413d9d51da58ed7875cc9d8c47a274a9cdb4d8a",
+        "bytes": 9598
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/result.json",
+        "sha256": "f167f05dc93fc10bd3c2c4396fa5e6e078d99cb15256b45dabaef104b395f994",
+        "bytes": 53931
+      }
+    },
+    {
+      "role": "EVAL_NH",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "ROUTE_FROZEN",
+      "seconds_budget_charge_upper": 158.8194088570308,
+      "seconds_measured_lower": 158.8194088570308,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 568,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 568,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 568,
+          "seconds": 134.9099837532267
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_eval_nh_20261004T173211041425Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_eval_nh_20261004T173211041425Z/run_manifest.json",
+        "sha256": "76f4773247b1cca9b520ac99f98efc63b15d2d0d9ed2a466c5396714652b516e",
+        "bytes": 5936
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_eval_nh_20261004T173211041425Z/supervision/summary.json",
+        "sha256": "82a7fa5dbd0329320817f798650d0a9c2fee9a1a1b0c97db69a2d5e6992ddc73",
+        "bytes": 9597
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/result.json",
+        "sha256": "59120c51e1f57d4461e0f72eafbe5fd98d70928c43e65513f9d9f3c3f7106e11",
+        "bytes": 53932
+      }
+    },
+    {
+      "role": "CHECK",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "INDEPENDENT_HELDOUT_FROZEN_AUDIT",
+      "seconds_budget_charge_upper": 43.54828201700002,
+      "seconds_measured_lower": 43.54828201700002,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 40,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 40,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {
+        "A": {
+          "RHS": 40,
+          "seconds": 8.463680961634964
+        }
+      },
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_check_20261004T173454536425Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_check_20261004T173454536425Z/run_manifest.json",
+        "sha256": "b6760c08955100004861b5e8e4218d95a6057fe6bede9d0b4a510a17d7210ff2",
+        "bytes": 5932
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_check_20261004T173454536425Z/supervision/summary.json",
+        "sha256": "4daa566d070edbae62dd8b690a2810657267e936799612c0988da952785c1a28",
+        "bytes": 9593
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/result.json",
+        "sha256": "a165551b3ea8b1744142cd6d5e3d0d831d91954dae708ae3ae01c29c112aa512",
+        "bytes": 113451
+      }
+    },
+    {
+      "role": "DIAGNOSTIC",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": "FULL_MOMENT_FROZEN_ERROR_DIAGNOSTIC",
+      "seconds_budget_charge_upper": 6.599136967910454,
+      "seconds_measured_lower": 6.599136967910454,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "CLEAN_COMMITTED_RUN_SOURCE_VERIFIED",
+      "folder": "results/task042/task042_v45_diagnostic_20261004T173604103129Z",
+      "manifest": {
+        "path": "results/task042/task042_v45_diagnostic_20261004T173604103129Z/run_manifest.json",
+        "sha256": "9c773df44274244b8f9be1de7ef74d203d0fafe7428ac25d7f735a6ac347f1d6",
+        "bytes": 5941
+      },
+      "summary": {
+        "path": "results/task042/task042_v45_diagnostic_20261004T173604103129Z/supervision/summary.json",
+        "sha256": "4cb6ffe3c28390a0e76d76f3d0fbaa86c7e642cdd279bdbab3df6a2766670056",
+        "bytes": 9582
+      },
+      "result": {
+        "path": "benchmarks/artifacts/task042/v45/task042_v45_diagnostic_20261004T173604103129Z/result.json",
+        "sha256": "58e899165ff39e1b186b9c36cc26ea487601d83b029a3a4597c83f8e53c83b3a",
+        "bytes": 711246
+      }
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 19.014352774014696,
+      "seconds_measured_lower": 19.014352774014696,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_collect01",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_collect01/run_manifest.json",
+        "sha256": "09704b05bc9719da592fa616078cf0f8848345f88501fe3b2917037396ea1c11",
+        "bytes": 5673
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_collect01/supervision/summary.json",
+        "sha256": "1221f15ebdc04fd185e79f64539f0ba8f59db57a0d8ec5190d336e2817478908",
+        "bytes": 9310
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 15.5928135861177,
+      "seconds_measured_lower": 15.5928135861177,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_arrays01",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_arrays01/run_manifest.json",
+        "sha256": "aff4ffa014c79fbc6bf9a443536e22dc931e8c5f4534f70674e7a3ccd18b8042",
+        "bytes": 5672
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_arrays01/supervision/summary.json",
+        "sha256": "bfd93aeadf433f03076a317a9997c3050841ef3073ae718ad363fa9d6c5d3e92",
+        "bytes": 9305
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.0461530298925936,
+      "seconds_measured_lower": 3.0461530298925936,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_report01",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_report01/run_manifest.json",
+        "sha256": "cfea6e21d2f529109833e55c7a6555b0febee3ee9ee0670ba70947aa143ce7bb",
+        "bytes": 5672
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_report01/supervision/summary.json",
+        "sha256": "3579014ccc07a68a7c764b340db346899de3477d06171f6fd36f4b1e4e3f7b41",
+        "bytes": 9287
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.347470389911905,
+      "seconds_measured_lower": 3.347470389911905,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_docs01",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_docs01/run_manifest.json",
+        "sha256": "9b37a7c32fe41d5673684e44ecdff1fabcf6cd5f4fc02517844492e77b62bcaf",
+        "bytes": 5674
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_docs01/supervision/summary.json",
+        "sha256": "9f18efce00f61df9525b3c925f9a008392b69a657eb12c13e51d69ae4ab8e6cb",
+        "bytes": 9313
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.1266953439917415,
+      "seconds_measured_lower": 3.1266953439917415,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_report02",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_report02/run_manifest.json",
+        "sha256": "574ee40a5146fde6be2d028bba34c542b2a6d715713392370d5077a822f3627e",
+        "bytes": 5675
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_report02/supervision/summary.json",
+        "sha256": "b2fb4c31bb33f944c88a0b1897544a05e074b73edbc32e90f4244a15aee8ec7d",
+        "bytes": 9310
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "WORKER_FAILED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.5958012740593404,
+      "seconds_measured_lower": 3.5958012740593404,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 1,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_docs02",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_docs02/run_manifest.json",
+        "sha256": "75647da610307c4244b3872835216e07f891117715c671216ff95b7bf7dee027",
+        "bytes": 5673
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_docs02/supervision/summary.json",
+        "sha256": "606a5c364b05318aca07dd9c89b35c9a6052998cf9cab957bd7625b3a6aeb14b",
+        "bytes": 9293
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "WORKER_FAILED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.6009696170222014,
+      "seconds_measured_lower": 3.6009696170222014,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 1,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_docs03",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_docs03/run_manifest.json",
+        "sha256": "3e107b0d5f5583f44377aa3692e8620ccba9e7266234a008cc3fab2157d3a7e0",
+        "bytes": 5674
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_docs03/supervision/summary.json",
+        "sha256": "1eded7e0f2dc544deed9a158659663c1086af4fbe2d55b0a807fe5868e82caf6",
+        "bytes": 9296
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 3.3126636298839003,
+      "seconds_measured_lower": 3.3126636298839003,
+      "seconds_semantics": "measured supervisor elapsed",
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "TRACKED_DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal_HEAD_not_clean_source; ignored helper source is archived current snapshot, early launch byte snapshot not separately captured",
+      "folder": "tmp/task042/v45/aux_post_docs04",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_docs04/run_manifest.json",
+        "sha256": "e4f8289b9ba68400d63461f84c0b0a0c94e5127eab99da7911ba9fda74e72a15",
+        "bytes": 5672
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_docs04/supervision/summary.json",
+        "sha256": "b2536dcfecf633ba77799d0e979935e5f4c6e87ec57553fd53af7cf5a1302432",
+        "bytes": 9291
+      },
+      "result": null
+    },
+    {
+      "role": "post",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "COMPLETED",
+      "numeric_status": null,
+      "seconds_budget_charge_upper": 19.429666836047545,
+      "seconds_measured_lower": 19.429666836047545,
+      "exit_code": 0,
+      "numerical_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "action_breakdown": {},
+      "source_semantics": "DEPENDENCY_BYTES_BOUND_BY_HASHES; auxiliary nominal HEAD is not formal clean numerical source",
+      "folder": "tmp/task042/v45/aux_post_collect02",
+      "manifest": {
+        "path": "tmp/task042/v45/aux_post_collect02/run_manifest.json",
+        "sha256": "59fdced36c54adb40ff8fbda7dd4d61164b7395220a5f920309693c800e5e08b",
+        "bytes": 5673
+      },
+      "summary": {
+        "path": "tmp/task042/v45/aux_post_collect02/supervision/summary.json",
+        "sha256": "1a9b7acfffbe17ae1750fc3614989f74a26fdfbf0edd7a31d008d4d7799c0579",
+        "bytes": 9305
+      },
+      "result": null
+    }
+  ],
+  "plan": {
+    "path": "input/task042_neural_coarse_inverse/full_moment_hierarchy_v45.json",
+    "sha256": "de3068c8fa105f587a0f75944969d194687a9813ea2ba31c5d461fe7ef7f5dfb",
+    "bytes": 4601
+  },
+  "material": {
+    "path": "input/materials/si_optical_constants_v1.json",
+    "sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+    "bytes": 5236
+  },
+  "one_run_inputs": [
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_check.dat",
+      "sha256": "b24dc09510f36fbc17219c0676d39fcbcb2cc962c379526a55f7048667445084",
+      "bytes": 78
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_data.dat",
+      "sha256": "af3a64e1a20395dddcebaeac4fe47cb177c25f811b4a916b65cfdb71fc6e4d7a",
+      "bytes": 76
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_diagnostic.dat",
+      "sha256": "9f6a56e98543a981826564d49f7531e3080e68765c9ff547fe618eabc909d27a",
+      "bytes": 88
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_eval_cl44.dat",
+      "sha256": "35cbd49a21d4cbad40f284cb47c389c5866aa22b3ee172deb19ef374d4a20429",
+      "bytes": 86
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_eval_lh.dat",
+      "sha256": "530868284d8dfcec5969c35d009dd05a039d690741106bd0bcd73cad75758c7d",
+      "bytes": 82
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_eval_nh.dat",
+      "sha256": "0eedbe49b73ffcab019fbc27757650018dde35f3eeb5500a8345fd7abb0e1896",
+      "bytes": 82
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_eval_nl.dat",
+      "sha256": "3ad7ddaeaf861203ae2219c90e00cf7ce5c3f7f7813cc1472df9b0daad6dd94f",
+      "bytes": 82
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_eval_r0.dat",
+      "sha256": "3fc576797917623f561580f9379bce5bfc1ed690725daf4d3e76791fa8a1f21f",
+      "bytes": 82
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_gradient.dat",
+      "sha256": "1fe53c4d687ada817a86cf74a8640bcb239653507424b505668d1b64b668109f",
+      "bytes": 84
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_setup.dat",
+      "sha256": "bcdb5282860472716d817fe455c6c6fa626b12a3e939322016575c8ef0c49ed3",
+      "bytes": 78
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_timing_control.dat",
+      "sha256": "85e44d04f97cc9a296dab729743914c4f2dbb76da644746f6f5b2b6c095b6cf9",
+      "bytes": 96
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_timing_nn.dat",
+      "sha256": "64bb9e1e9a60bd5083683e553dcd0fa41dab88337d4d7dd7998a603616a0e383",
+      "bytes": 86
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_train_lh.dat",
+      "sha256": "06e027527ca6ce5cf659e25fb9a84f1bac7998a89c7a18f26a293fcb6642fc26",
+      "bytes": 84
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_train_nh.dat",
+      "sha256": "d67da6ba3b084e00c075a1f769a3b2f4aa3aa289fb3509bce6078c72d00f67c3",
+      "bytes": 84
+    },
+    {
+      "path": "input/task042_neural_coarse_inverse/v45_train_nl.dat",
+      "sha256": "71a4656ff8237c03be9a862638f6e3de0d08ebea0a77050e6e59c3389753f189",
+      "bytes": 84
+    }
+  ]
+}

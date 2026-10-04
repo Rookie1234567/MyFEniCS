@@ -1,0 +1,9 @@
+{
+  "actual_batch_unchanged": true,
+  "CL44_excluded_unused_new_preparation_seconds": 366.50296220718883,
+  "old_scenario_snapshot": "prior raw/derived record versions preserved",
+  "closed_ledger_reopened": false,
+  "original_actions": 0,
+  "original_states_weights_changed": false,
+  "reference_used_for_cost_selection": false
+}

@@ -1,0 +1,94 @@
+{
+  "snapshots": [
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v45/aux_pre_001/pytest.xml",
+        "sha256": "21f46a7a560f2f9c600c059f0e730498cefb3be565077e322264ae4a2e378432",
+        "bytes": 8338
+      },
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "failures": []
+    },
+    {
+      "count": 61,
+      "junit": {
+        "path": "tmp/task042/v45/aux_pre_002/pytest.xml",
+        "sha256": "b9589ba7b6900db704c99f8c1f155ea69520f789818b6b2acaa1ebfc7564d878",
+        "bytes": 8338
+      },
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "failures": []
+    },
+    {
+      "count": 62,
+      "junit": {
+        "path": "tmp/task042/v45/aux_pre_003/pytest.xml",
+        "sha256": "b7ed9dad915316c855231cc131c0b0aeb87e51bb7cfab2ffacd59021b4665a01",
+        "bytes": 8476
+      },
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "failures": []
+    },
+    {
+      "count": 62,
+      "junit": {
+        "path": "tmp/task042/v45/aux_pre_004/pytest.xml",
+        "sha256": "f245f084c5d8077a173cfdeb0b99c42b5f24c8bd78e84716864cd353d516e6cd",
+        "bytes": 8476
+      },
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "failures": []
+    }
+  ],
+  "final_numerical_wiring": "final targeted qualification and byte hashes, all failures preserved",
+  "actual_new_MPI": [
+    1
+  ],
+  "previous_MPI2_4": "not replayed; V41/V42 only hash-bound dependencies",
+  "CI": "NOT_RUN",
+  "full_repository_pytest": "NOT_RUN_UNRELATED_HEAVY_SCOPE",
+  "implementation_hashes": {
+    "scripts/run_case.py": "f04ca174537b2e42ab97b01a44c35465ea6db70b3035635acf17c8465d74e3fc",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "dd251728b4ab8f07377c214c92ae6d6a468134620f184d680008ddfee1f3d642",
+    "src/runners/port_preparation.py": "3b41c023a91f19458014436383748f4a01672d90773eccf3ac9c7b708c1a3c6f",
+    "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_late_error_scope.py": "80eae1fe73dd861e13f4f2c63593ec46562c6d9c506d6897d4776a0e0a837524",
+    "src/solvers/neighborhood_late_error.py": "a59bb8ae7be0facc157815dec3c7a7bdd4983ae5ec29a69ee8af61a840545924",
+    "src/solvers/neighborhood_late_error_study.py": "0b2052ef82c839cbb31c826c92f483803e303585a07d6e699afecd7c532fd551",
+    "src/solvers/neighborhood_training_transaction.py": "f273d67f2cc4abcccfcee17e2c2878a29ab8691d2ae20f62d89e0d7d617e7fc0",
+    "src/test/test_neighborhood_late_error.py": "1b90e76db24114e1b47c8d2d367fff99f5aeb3ca25d9de9d177161b0fd3a0910",
+    "benchmarks/qualify_neighborhood_late_error.py": "be7c4ea2f8c83ae85a57114ffb805262273ad5e2cd99eb5f120677c67c21a7f6",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "92508a0ad65972010791ea9f59ab8ef94c46152ea886b704938a72d018629118",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "benchmarks/check_neighborhood_late_error.py": "ceed7cdb8724c241bc2c70f4e249f128b6ce4797fece7ef048aa7318c504e40f",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json": "c1cf1034964305a87c0ac42627f7067e6fbf4a3328feedeeeba9feb4dd832b14",
+    "src/solvers/full_moment_hierarchy.py": "15925c8072fa60c5cce48cecb433c6b2c0f6b4a42fcd3cf8db709fd3a94e6b50",
+    "src/solvers/full_moment_scope.py": "bfc4a816f3a57fc53e6bb2c17c33b13143745f6e364e28b71997ba21074bbbe6",
+    "src/solvers/full_moment_study.py": "2085d6c9fdae251cce4fec257d19dabd5a51a1de807342e8ad375ea215920867",
+    "src/solvers/neighborhood_pilot_workflow.py": "1a4fd6c9785fa06ce0b335eaf367f2ca7d8b498bf6dfbfddecf23b602571d8bb",
+    "src/test/test_full_moment_hierarchy.py": "31ba436f3c2e081e454f2cac9d770f250342005cc4908574e980fdade10b7b4f",
+    "benchmarks/qualify_full_moment.py": "3db2ad7c8dc3f69400168df5b1abf970e87d7d2ca33ddf95e51b2fd2a35001e3",
+    "benchmarks/check_full_moment.py": "6b5052d5e174d5db88eb3428ccaf2d848f420a3972a74754dba7c7629fe04a2e",
+    "input/task042_neural_coarse_inverse/full_moment_hierarchy_v45.json": "de3068c8fa105f587a0f75944969d194687a9813ea2ba31c5d461fe7ef7f5dfb"
+  },
+  "qualified_record": {
+    "path": "tmp/task042/v45/qualification.json",
+    "sha256": "974fd4d0d830ba5ca2b5e61b2b8d29f3842a7249fb730f6478b81e5cb292a9e0",
+    "bytes": 4379
+  }
+}

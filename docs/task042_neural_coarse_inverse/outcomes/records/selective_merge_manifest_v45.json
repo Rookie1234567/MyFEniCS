@@ -1,0 +1,77 @@
+{
+  "merge_approval": false,
+  "groups": [
+    {
+      "name": "production numerical/core",
+      "files": [],
+      "decision": "no unqualified research candidate promoted"
+    },
+    {
+      "name": "reusable runner/watchdog",
+      "files": [
+        "src/io/port_preparation.py",
+        "src/runners/port_preparation.py",
+        "scripts/run_case.py"
+      ],
+      "behavior": "new opt-in V45 storage plan/dispatcher; old defaults unchanged",
+      "tests": "62focused; real deadline/orphan tests",
+      "dependencies": [
+        "qualified activation",
+        "existing subreaper",
+        "V45 scope"
+      ],
+      "fresh_PDE": "no new assembly",
+      "order": "with approved scope only"
+    },
+    {
+      "name": "checker/benchmark",
+      "files": [
+        "benchmarks/check_full_moment.py",
+        "benchmarks/qualify_full_moment.py",
+        "src/test/test_full_moment_hierarchy.py"
+      ],
+      "behavior": "exact frozen inventory, vector and source checks",
+      "tests": "synthetic real workflow, original gradient and40 states",
+      "dependencies": [
+        "original independent audit"
+      ],
+      "order": "after scope review"
+    },
+    {
+      "name": "compact evidence/docs",
+      "files": [
+        "response_v45.md",
+        "outcomes/full_moment_hierarchy_v45.md",
+        "outcomes/records/*v45*"
+      ],
+      "behavior": false,
+      "dependencies": [
+        "hash-bound ignored arrays/weights/raw"
+      ],
+      "order": "only approved evidence"
+    },
+    {
+      "name": "research-only",
+      "files": [
+        "src/solvers/full_moment*.py",
+        "src/solvers/neighborhood_pilot_workflow.py",
+        "src/solvers/neighborhood_training_transaction.py",
+        "input/task042_neural_coarse_inverse/v45_*.dat"
+      ],
+      "behavior": "three real-trained complete-moment models, exact matched controls; new opt-in scope",
+      "tests": "3x128,40heldout,actual gradient",
+      "fresh_PDE": "finite saved original action only",
+      "order": "not production approved"
+    },
+    {
+      "name": "do-not-merge",
+      "files": [
+        "benchmarks/artifacts/task042/v45/",
+        "tmp/task042/v45/",
+        "results/task042/task042_v45_*/",
+        ".venv-ml/"
+      ],
+      "decision": "ignored large arrays/models/caches; no other branch or default changes"
+    }
+  ]
+}

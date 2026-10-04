@@ -1,0 +1,78 @@
+{
+  "rows": [
+    {
+      "route": "LIN-H",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 128,
+      "resume_prior_updates": 0,
+      "new_updates": 128,
+      "group_changes": {
+        "encoder": 3.3672210409256413,
+        "message": 3.274853652010476,
+        "decoder": 3.097408397078715,
+        "mix_local": 1.0131304136712365,
+        "mix_context": 0.805370084068613
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "aeb8bfe77a08a4f6d6075f1af047de5b5c32a2160e511b88eb1f61bcf3810f0c"
+    },
+    {
+      "route": "NN-L",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 0,
+      "resume_prior_updates": 0,
+      "new_updates": 128,
+      "group_changes": {
+        "encoder": 5.597216687809507,
+        "message": 4.567852546844612,
+        "decoder": 3.6056954935171683,
+        "mix_local": 1.8704636925169256,
+        "mix_context": 1.5144912243266742
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "aeb8bfe77a08a4f6d6075f1af047de5b5c32a2160e511b88eb1f61bcf3810f0c"
+    },
+    {
+      "route": "NN-H",
+      "updates": 128,
+      "contiguous_parameter_transactions": true,
+      "checkpoint_updates": [
+        0,
+        16,
+        32,
+        64,
+        128
+      ],
+      "selected": 0,
+      "resume_prior_updates": 0,
+      "new_updates": 128,
+      "group_changes": {
+        "encoder": 7.341717068656902,
+        "message": 5.980334839638041,
+        "decoder": 4.145834058331389,
+        "mix_local": 1.9548323934507934,
+        "mix_context": 1.550354829459023
+      },
+      "optimizer_payload": "producer save/restore and exact small Adam resume test; not deserialized by metadata audit",
+      "initial_parameter_hash": "aeb8bfe77a08a4f6d6075f1af047de5b5c32a2160e511b88eb1f61bcf3810f0c"
+    }
+  ],
+  "three_new_initial_parameter_bytes_equal": true,
+  "no_old_V43_V44_labels_or_NN_weights; explicitly-authorized_CL44_control_only": "new V45 opt-in reader/source evidence, not OS audit claim"
+}

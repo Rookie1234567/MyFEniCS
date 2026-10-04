@@ -1,0 +1,212 @@
+{
+  "finite_original_action": "64hex/p6/q15/3tag/45000native/42624independent/2376slave; original A no complete DtN",
+  "architecture": "complete moment square decoder and count-weighted distant hierarchy; shared parameters, no global coarse inverse",
+  "real_parameters": 1817040,
+  "training": "LIN-H/NN-L/NN-H each128 Adam; CL44 explicitly frozen control",
+  "full_correctness": {
+    "R0": 0,
+    "CL44": 0,
+    "LIN-H": 0,
+    "NN-L": 0,
+    "NN-H": 0
+  },
+  "original_CSR_and_explicit_AH_present": true,
+  "new_mesh_JIT_LU_global_factor_QR_target_action": 0,
+  "global_p4_factor": false,
+  "old_recovery": {
+    "A": 7.591466917360182e-10,
+    "B": 1.0104485117650333e-10,
+    "threshold": 1e-10,
+    "status": "FAIL_RETAINED; new model emits all independent coefficients"
+  },
+  "original_size_E_H_curl_DtN_32060_ports_power": "NOT_RUN / NOT_QUALIFIED",
+  "target_2TB_48h": "NOT_QUALIFIED",
+  "NN20": "NOT_DEMONSTRATED",
+  "capacity": {
+    "real_parameters": 1817040,
+    "weights_bytes": 14536320,
+    "parameter_gradient_Adam_bytes_at_least": 58145280,
+    "finite_single_full_real_activation_batch2_bytes": 1363968,
+    "target_single_full_real_activation_batch2_bytes": 11013884928,
+    "target_single_independent_complex_vector_bytes": 5506942464,
+    "target_internal_forward_encoder_decoder_MACs": 859986720000,
+    "finite_forward_encoder_decoder_MACs": 109734912,
+    "target_to_finite_coefficient_ratio": 8074.885135135135,
+    "levels_actual": [
+      {
+        "buckets": 12,
+        "group_counts": [
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            4,
+            4,
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            4,
+            4,
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            4,
+            4,
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          [
+            4,
+            4,
+            0,
+            0,
+            0,
+            4,
+            0
+          ]
+        ]
+      },
+      {
+        "buckets": 2,
+        "group_counts": [
+          [
+            64,
+            64,
+            64,
+            64,
+            64,
+            64,
+            64
+          ],
+          [
+            16,
+            16,
+            0,
+            0,
+            0,
+            16,
+            0
+          ]
+        ]
+      },
+      {
+        "buckets": 1,
+        "group_counts": [
+          [
+            80,
+            80,
+            64,
+            64,
+            64,
+            80,
+            64
+          ]
+        ]
+      }
+    ],
+    "lifecycle": "one model, encoder state, one running entity context and current level means; backward graph saves required operations; no persistent entity-times-level-times-moment table",
+    "extra_objects": [
+      "original A and explicit conjugate-data AH",
+      "J and JH",
+      "bucket/count/parent indices",
+      "multiple real/complex activations and reverse graph",
+      "Krylov restart32 arrays",
+      "Adam and consistent checkpoint clone/workspace",
+      "RHS/labels/IO"
+    ],
+    "target_A_AH_backend_cost": "unknown",
+    "target_training_steps": "unknown",
+    "target_communication": "unknown; MPI1 finite calibration only",
+    "target_matmul_paper_lower_mechanism": "internal type alone exceeds 8.60e11 multiply-adds per forward; shared small-mesh timings cannot establish target throughput",
+    "target_allocations": 0,
+    "target_2TB_48h": "NOT_QUALIFIED",
+    "NN20": "NOT_DEMONSTRATED_WITHOUT_MATCHED_ALL_EIGHT_CORRECTNESS",
+    "source": "Review V42 target independent moment inventory; measured finite model/group counts"
+  },
+  "inference_contract": {
+    "input": "complete native residual, qualified J/JH/right diagonal/entity key order",
+    "output": "complete independent trace and interior coefficient correction, slave-zero; one warm correction after64 steps",
+    "adjoint": "original fixed A conjugate transpose for full loss; matrix action, not an extra adjoint solve",
+    "dependencies": "hash-bound original finite CSR/graph and frozen variant/weights; target backend requires separate qualification"
+  }
+}

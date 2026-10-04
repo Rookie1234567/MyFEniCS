@@ -1,0 +1,286 @@
+{
+  "FD_recomputed_from_actual_vectors": [
+    {
+      "direction": 0,
+      "step": 0.0001,
+      "numerator": 3.856074597958183e-18,
+      "denominator": 3.461566477167004e-08,
+      "relative": 1.1139680902832323e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_0_1e-04.npz",
+        "sha256": "16a0aecc90072fdebe4fe43153c35dc1f7f6d7109225de253a242e8dccd0cd1d",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dce54bdbabfb7669f0d25b88c0c3664e509f1237a9fe2a12fe4c2ac0a389d6de"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0262b7b43a4f4f0e601aaf154e96492117af33ed45e94e70c43ad8f1551ca2f4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 0,
+      "step": 3e-05,
+      "numerator": 1.307400541175915e-17,
+      "denominator": 3.461566477167004e-08,
+      "relative": 3.7769043287185706e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_0_3e-05.npz",
+        "sha256": "2127c3189600cb03a7c00cf3ec15a24240d85c4f8a753cb0a6499756a56607d5",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ce6f0998c6966f5b857fb28b769b23fb189b96d37439f05dde441176100c4416"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0262b7b43a4f4f0e601aaf154e96492117af33ed45e94e70c43ad8f1551ca2f4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 0,
+      "step": 1e-05,
+      "numerator": 3.9852029163807645e-17,
+      "denominator": 3.461566477167004e-08,
+      "relative": 1.1512715248046635e-09,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_0_1e-05.npz",
+        "sha256": "1473bc4072e084c9891bfc5eed2f65fd8dd0b59da895c9a0c593a69773afcfaf",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "faf661c9d7904ec41277099b63dfd9f52c6d8987353f1843368eba06868910b7"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0262b7b43a4f4f0e601aaf154e96492117af33ed45e94e70c43ad8f1551ca2f4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 0.0001,
+      "numerator": 2.7416479483339292e-18,
+      "denominator": 3.466160604091876e-08,
+      "relative": 7.90975451367532e-11,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_1_1e-04.npz",
+        "sha256": "c3c3fd0635d79b42953d5f7f8ebd80f34c7a75d6afcb144f13d324dcb580059f",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7e1dfc142242abb5a9f3dde7876189193cf0dbb3fe22927ec6c62ab3187914b3"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "070d3422de1aa17f60ff484eb72cb7594bc9f1d963a12cdf8cf7a8b506a9b72c"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 3e-05,
+      "numerator": 9.35521667329548e-18,
+      "denominator": 3.466160604091876e-08,
+      "relative": 2.699014195202452e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_1_3e-05.npz",
+        "sha256": "b69d74acb7cb05f71d52180e955d38e860a4e5e733b004de8c3a4004ebad32c6",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5ef35782b39e8a0e7e61d7a489f790000160ad96467bcaae9432e17cdbcfb10b"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "070d3422de1aa17f60ff484eb72cb7594bc9f1d963a12cdf8cf7a8b506a9b72c"
+          }
+        }
+      }
+    },
+    {
+      "direction": 1,
+      "step": 1e-05,
+      "numerator": 2.789184406370184e-17,
+      "denominator": 3.466160604091876e-08,
+      "relative": 8.046898932142649e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_1_1e-05.npz",
+        "sha256": "388ed973b49995c3864e0c1b528e4841817394de38e9916446b245b03b4af8f3",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "92820e1fe37af9fc85f4f6400bd3e26a2e6a4ef9f36b8e5dc062099eba05db77"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "070d3422de1aa17f60ff484eb72cb7594bc9f1d963a12cdf8cf7a8b506a9b72c"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 0.0001,
+      "numerator": 2.8197612762225814e-18,
+      "denominator": 9.492343275734548e-09,
+      "relative": 2.9705639527710605e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_2_1e-04.npz",
+        "sha256": "29ad6ec04bc7a4c783d77383564209bd6f6aa0d26a2fc7f09e0839c973159c67",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7e265292047862c481be6a688f53e86ec969769b44d9e09db82d566d849328a"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "15aa3976a23b97336872d47b2ab4b947c88f4506d3b2cbfd2ed7e902902028c4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 3e-05,
+      "numerator": 9.286892408529488e-18,
+      "denominator": 9.492343275734548e-09,
+      "relative": 9.783561486097686e-10,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_2_3e-05.npz",
+        "sha256": "075e4170b901aa7294cf985ffe3849bbd6e5dbe516bffc891012fc398c0a5ec3",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fe1a0906a773d7d9a05ac4d015c98e63edd91970cb042bb6d2ca691759e8d6cb"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "15aa3976a23b97336872d47b2ab4b947c88f4506d3b2cbfd2ed7e902902028c4"
+          }
+        }
+      }
+    },
+    {
+      "direction": 2,
+      "step": 1e-05,
+      "numerator": 2.85794587886239e-17,
+      "denominator": 9.492343275734548e-09,
+      "relative": 3.0107906929242746e-09,
+      "passed": true,
+      "arrays": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_2_1e-05.npz",
+        "sha256": "2540b77e429635b749368d4edf88a040735a4ab972ca9f1130a50768a9528bf3",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "efa6070e810e4892c7daa66df101afab8de840762bbf5c79e5de8f63d1111a39"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "15aa3976a23b97336872d47b2ab4b947c88f4506d3b2cbfd2ed7e902902028c4"
+          }
+        }
+      }
+    }
+  ],
+  "original_A_AH_replays": 0,
+  "JVP_implementation": "bounded Torch directional JVP, independently paired to saved whole-vector central difference",
+  "VJP_scope": "operation and result scales recorded during real gate; not falsely called a new parameter-gradient replay"
+}

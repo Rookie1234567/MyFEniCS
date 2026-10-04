@@ -1,0 +1,181 @@
+{
+  "real_parameters": 1817040,
+  "weights_bytes": 14536320,
+  "parameter_gradient_Adam_bytes_at_least": 58145280,
+  "finite_single_full_real_activation_batch2_bytes": 1363968,
+  "target_single_full_real_activation_batch2_bytes": 11013884928,
+  "target_single_independent_complex_vector_bytes": 5506942464,
+  "target_internal_forward_encoder_decoder_MACs": 859986720000,
+  "finite_forward_encoder_decoder_MACs": 109734912,
+  "target_to_finite_coefficient_ratio": 8074.885135135135,
+  "levels_actual": [
+    {
+      "buckets": 12,
+      "group_counts": [
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          4,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          4,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          4,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        [
+          4,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0
+        ]
+      ]
+    },
+    {
+      "buckets": 2,
+      "group_counts": [
+        [
+          64,
+          64,
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        [
+          16,
+          16,
+          0,
+          0,
+          0,
+          16,
+          0
+        ]
+      ]
+    },
+    {
+      "buckets": 1,
+      "group_counts": [
+        [
+          80,
+          80,
+          64,
+          64,
+          64,
+          80,
+          64
+        ]
+      ]
+    }
+  ],
+  "lifecycle": "one model, encoder state, one running entity context and current level means; backward graph saves required operations; no persistent entity-times-level-times-moment table",
+  "extra_objects": [
+    "original A and explicit conjugate-data AH",
+    "J and JH",
+    "bucket/count/parent indices",
+    "multiple real/complex activations and reverse graph",
+    "Krylov restart32 arrays",
+    "Adam and consistent checkpoint clone/workspace",
+    "RHS/labels/IO"
+  ],
+  "target_A_AH_backend_cost": "unknown",
+  "target_training_steps": "unknown",
+  "target_communication": "unknown; MPI1 finite calibration only",
+  "target_matmul_paper_lower_mechanism": "internal type alone exceeds 8.60e11 multiply-adds per forward; shared small-mesh timings cannot establish target throughput",
+  "target_allocations": 0,
+  "target_2TB_48h": "NOT_QUALIFIED",
+  "NN20": "NOT_DEMONSTRATED_WITHOUT_MATCHED_ALL_EIGHT_CORRECTNESS",
+  "source": "Review V42 target independent moment inventory; measured finite model/group counts"
+}

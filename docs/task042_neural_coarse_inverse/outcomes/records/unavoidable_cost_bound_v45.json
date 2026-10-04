@@ -1,0 +1,46 @@
+{
+  "rows": [
+    {
+      "route": "LIN-H",
+      "known_fixed_preparation_training_IO_audit_seconds": 669.0164856859483,
+      "unavoidable_common_prefix_per_RHS_seconds": 14.822643908613827,
+      "free_inference_and_zero_cleanup_N1_floor_seconds": 683.8391295945621,
+      "R0_N1_known_lower_scenario_seconds": 124.68974193860777,
+      "required_for_20percent_seconds": 99.75179355088622,
+      "free_model_floor_already_exceeds_observed_scenario_target": true,
+      "common_nonnegative_unknown_cold_cost_C_necessary_inequality": "0.2*C + model_floor - 0.8*R0_scenario <= 0",
+      "inference_and_cleanup_assumed_free_only_for_bound": true
+    },
+    {
+      "route": "NN-L",
+      "known_fixed_preparation_training_IO_audit_seconds": 664.9000419999938,
+      "unavoidable_common_prefix_per_RHS_seconds": 14.822643908613827,
+      "free_inference_and_zero_cleanup_N1_floor_seconds": 679.7226859086077,
+      "R0_N1_known_lower_scenario_seconds": 124.68974193860777,
+      "required_for_20percent_seconds": 99.75179355088622,
+      "free_model_floor_already_exceeds_observed_scenario_target": true,
+      "common_nonnegative_unknown_cold_cost_C_necessary_inequality": "0.2*C + model_floor - 0.8*R0_scenario <= 0",
+      "inference_and_cleanup_assumed_free_only_for_bound": true
+    },
+    {
+      "route": "NN-H",
+      "known_fixed_preparation_training_IO_audit_seconds": 670.0801510908641,
+      "unavoidable_common_prefix_per_RHS_seconds": 14.822643908613827,
+      "free_inference_and_zero_cleanup_N1_floor_seconds": 684.9027949994779,
+      "R0_N1_known_lower_scenario_seconds": 124.68974193860777,
+      "required_for_20percent_seconds": 99.75179355088622,
+      "free_model_floor_already_exceeds_observed_scenario_target": true,
+      "common_nonnegative_unknown_cold_cost_C_necessary_inequality": "0.2*C + model_floor - 0.8*R0_scenario <= 0",
+      "inference_and_cleanup_assumed_free_only_for_bound": true
+    }
+  ],
+  "scope": "conditional arithmetic lower bound of this measured preparation/training lifecycle only; no matched qualified baseline",
+  "unknown": [
+    "a different qualified engine",
+    "target A/AH cost",
+    "target full cold preparation and complete physical audit"
+  ],
+  "NN20": "NOT_DEMONSTRATED",
+  "target_impossibility_claim": false,
+  "N1_training_not_amortized": true
+}

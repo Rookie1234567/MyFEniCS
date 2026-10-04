@@ -1,0 +1,182 @@
+{
+  "routes": {
+    "R0": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.5059601391108218e-08,
+      "rho_max": 3.847077002643491e-08,
+      "eta_min": 0.00036615223944430386,
+      "eta_max": 0.0005538544985209263,
+      "median_qe": 1.0,
+      "median_qr": 1.0,
+      "total_Arnoldi": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "inference_seconds": 0.0006644197273999453,
+      "independent_group_seconds": 258.3935824390501,
+      "process_tree_peak": 2273366016,
+      "families": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.00046426459224834296,
+          "qe_median": 1.0
+        },
+        "local_uniform": {
+          "eta_median": 0.0004637210462939736,
+          "qe_median": 1.0
+        }
+      }
+    },
+    "CL44": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.5819754824714685e-08,
+      "rho_max": 3.788533990006688e-08,
+      "eta_min": 0.0003508615010509883,
+      "eta_max": 0.000540508164623978,
+      "median_qe": 0.9563569903819685,
+      "median_qr": 0.7951516800975764,
+      "total_Arnoldi": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "inference_seconds": 0.15854433551430702,
+      "independent_group_seconds": 263.4328891336918,
+      "process_tree_peak": 2306945024,
+      "families": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.0004293975183939342,
+          "qe_median": 0.9109114426579614
+        },
+        "local_uniform": {
+          "eta_median": 0.0004562247301694788,
+          "qe_median": 1.0157176304639772
+        }
+      }
+    },
+    "LIN-H": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.6154738704575698e-08,
+      "rho_max": 3.861573113662091e-08,
+      "eta_min": 0.000348480964375206,
+      "eta_max": 0.0005296573543349977,
+      "median_qe": 0.9987939634054563,
+      "median_qr": 0.849720627880421,
+      "total_Arnoldi": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "inference_seconds": 0.2645336326677352,
+      "independent_group_seconds": 260.05687352176756,
+      "process_tree_peak": 2322456576,
+      "families": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.0004334923749216009,
+          "qe_median": 0.9894809567798505
+        },
+        "local_uniform": {
+          "eta_median": 0.0004500354514816199,
+          "qe_median": 1.0079403899870643
+        }
+      }
+    },
+    "NN-L": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.5059601391108218e-08,
+      "rho_max": 3.847077002643491e-08,
+      "eta_min": 0.00036615223944430386,
+      "eta_max": 0.0005538544985209263,
+      "median_qe": 1.0,
+      "median_qr": 1.0,
+      "total_Arnoldi": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "inference_seconds": 0.23324246960692108,
+      "independent_group_seconds": 250.22252827812918,
+      "process_tree_peak": 2323861504,
+      "families": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.00046426459224834296,
+          "qe_median": 1.0
+        },
+        "local_uniform": {
+          "eta_median": 0.0004637210462939736,
+          "qe_median": 1.0
+        }
+      }
+    },
+    "NN-H": {
+      "rho_pass": 8,
+      "eta_pass": 0,
+      "full_pass": 0,
+      "rho_min": 2.5059601391108218e-08,
+      "rho_max": 3.847077002643491e-08,
+      "eta_min": 0.00036615223944430386,
+      "eta_max": 0.0005538544985209263,
+      "median_qe": 1.0,
+      "median_qr": 1.0,
+      "total_Arnoldi": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "inference_seconds": 0.20729273813776672,
+      "independent_group_seconds": 260.3439385732636,
+      "process_tree_peak": 2324844544,
+      "families": {
+        "cross_mixed_smooth": {
+          "eta_median": 0.00046426459224834296,
+          "qe_median": 1.0
+        },
+        "local_uniform": {
+          "eta_median": 0.0004637210462939736,
+          "qe_median": 1.0
+        }
+      }
+    }
+  },
+  "qualified_routes": [],
+  "NN20": "NOT_DEMONSTRATED_WITHOUT_MATCHED_FULL_CORRECTNESS",
+  "nonlinear_gain": "NOT_DEMONSTRATED",
+  "far_content_path": "MECHANISM_PASSED; trained NN-H validation selected zero decoder",
+  "classification": "CLOSE_FIXED_A_FULL_MOMENT_HIERARCHY_QUALIFICATION",
+  "next_only": "唯一下一建议：把本轮冻结输入／完整系数／原残差／伴随／全部费用接口交给同物理合格传统引擎做一次匹配，先判断难误差与冷N=1是否存在20%空间；不再在同一A上换seed、加层、调tau或延长128步。本批不重建传统引擎、不复制dot求解器。",
+  "shared_workstation": true,
+  "no_new_target_solve": true
+}

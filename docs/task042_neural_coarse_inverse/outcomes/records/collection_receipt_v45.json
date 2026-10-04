@@ -1,0 +1,41 @@
+{
+  "clock": {
+    "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+    "start_utc_seconds": 1791131641.208579,
+    "start_monotonic": 1056636.069450649,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "label": "V45",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "learning_seconds": 5400,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+    "observed_utc": "2026-10-04T17:45:18.780320+00:00",
+    "observed_monotonic": 1060913.641187283,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4277.571740627289,
+    "heavy_remaining_seconds": 78522.42825937271,
+    "total_remaining_seconds": 82122.42825937271
+  },
+  "seconds": 13.887300875969231,
+  "raw_files": 450,
+  "array_files": 96,
+  "all_member_hashes_verified": true,
+  "source": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+  "collector": {
+    "path": "tmp/task042/v45/collect.py",
+    "sha256": "1064116cabda07cb97ba98e46aeb66e0034e320a202f5228cc0109858c18968a",
+    "bytes": 24559
+  },
+  "storage_with_256MiB_reserve": {
+    "new_bytes": 1503241050,
+    "task_artifact_bytes": 20040463454,
+    "free_bytes": 3350029692928,
+    "reserve_bytes": 268435456
+  }
+}

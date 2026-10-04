@@ -1,0 +1,149 @@
+{
+  "rows": [
+    {
+      "route": "NN-L",
+      "sample": 0,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 1,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 2,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 3,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 4,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 5,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 6,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-L",
+      "sample": 7,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 0,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 1,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 2,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 3,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 4,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 5,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 6,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    },
+    {
+      "route": "NN-H",
+      "sample": 7,
+      "actual_delta_norm": 0.0,
+      "final_z_minus_R0_norm": 0.0,
+      "relative_final_difference": 0.0,
+      "total_Arnoldi": 128,
+      "baseline_Arnoldi": 128
+    }
+  ],
+  "scope": "saved arrays only; training did occur, validation discarded the nonzero learned head; no coefficient calibration"
+}

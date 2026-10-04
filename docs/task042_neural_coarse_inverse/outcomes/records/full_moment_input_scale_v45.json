@@ -1,0 +1,201 @@
+{
+  "rows": [
+    {
+      "split": "train",
+      "sample": 0,
+      "gamma": 4.4515865159332026e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 1,
+      "gamma": 4.0357771284663567e-08,
+      "real_channel_RMS": 0.707106781186548,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 2,
+      "gamma": 4.229730383342607e-08,
+      "real_channel_RMS": 0.7071067811865472,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 3,
+      "gamma": 4.807879920522403e-08,
+      "real_channel_RMS": 0.7071067811865475,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 4,
+      "gamma": 4.324576573164109e-08,
+      "real_channel_RMS": 0.707106781186547,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 5,
+      "gamma": 4.205048937746381e-08,
+      "real_channel_RMS": 0.7071067811865475,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 6,
+      "gamma": 4.409299796080675e-08,
+      "real_channel_RMS": 0.7071067811865471,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 7,
+      "gamma": 4.557440002944754e-08,
+      "real_channel_RMS": 0.7071067811865479,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 8,
+      "gamma": 2.9354845031511813e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 9,
+      "gamma": 2.8879171703449188e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 10,
+      "gamma": 2.8245267254580492e-08,
+      "real_channel_RMS": 0.7071067811865483,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 11,
+      "gamma": 2.9232578636553352e-08,
+      "real_channel_RMS": 0.7071067811865475,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 12,
+      "gamma": 3.021082292724674e-08,
+      "real_channel_RMS": 0.7071067811865478,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 13,
+      "gamma": 2.9105747660732635e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 14,
+      "gamma": 3.021872233859894e-08,
+      "real_channel_RMS": 0.7071067811865479,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "train",
+      "sample": 15,
+      "gamma": 3.0489093032950716e-08,
+      "real_channel_RMS": 0.7071067811865455,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "validation",
+      "sample": 0,
+      "gamma": 4.294257531566086e-08,
+      "real_channel_RMS": 0.7071067811865483,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "validation",
+      "sample": 1,
+      "gamma": 3.93735983730457e-08,
+      "real_channel_RMS": 0.707106781186548,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "validation",
+      "sample": 2,
+      "gamma": 2.9170036082249117e-08,
+      "real_channel_RMS": 0.707106781186547,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "validation",
+      "sample": 3,
+      "gamma": 2.8252456202963444e-08,
+      "real_channel_RMS": 0.7071067811865481,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 0,
+      "gamma": 4.773992276722985e-08,
+      "real_channel_RMS": 0.707106781186547,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 1,
+      "gamma": 4.3710037393107866e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 2,
+      "gamma": 4.5519985999741e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 3,
+      "gamma": 4.213779209852628e-08,
+      "real_channel_RMS": 0.7071067811865475,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 4,
+      "gamma": 2.8435938994915166e-08,
+      "real_channel_RMS": 0.7071067811865469,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 5,
+      "gamma": 2.8443240741020308e-08,
+      "real_channel_RMS": 0.7071067811865475,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 6,
+      "gamma": 3.092976108405359e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    },
+    {
+      "split": "heldout",
+      "sample": 7,
+      "gamma": 2.817244085218139e-08,
+      "real_channel_RMS": 0.7071067811865476,
+      "input": "frozen residual only; no reference used"
+    }
+  ],
+  "scalar_only_normalization": true
+}

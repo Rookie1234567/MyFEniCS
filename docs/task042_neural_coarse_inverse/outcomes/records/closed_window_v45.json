@@ -1,0 +1,1380 @@
+{
+  "window": {
+    "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+    "start_utc_seconds": 1791131641.208579,
+    "start_monotonic": 1056636.069450649,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "label": "V45",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "learning_seconds": 5400,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh"
+  },
+  "ledger": {
+    "charged": {
+      "actions": 0
+    },
+    "runs": [
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_pre_001",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:46:19.840559+00:00",
+          "observed_monotonic": 1057374.701426206,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 738.6319801807404,
+          "heavy_remaining_seconds": 82061.36801981926,
+          "total_remaining_seconds": 85661.36801981926
+        },
+        "elapsed_seconds": 22.985648036934435,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 490553344,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_pre_002",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:49:18.145628+00:00",
+          "observed_monotonic": 1057553.006495956,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 916.9370491504669,
+          "heavy_remaining_seconds": 81883.06295084953,
+          "total_remaining_seconds": 85483.06295084953
+        },
+        "elapsed_seconds": 34.14379260200076,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 485769216,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "style",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_style_001",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:50:28.931963+00:00",
+          "observed_monotonic": 1057623.792829901,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 987.723384141922,
+          "heavy_remaining_seconds": 81812.27661585808,
+          "total_remaining_seconds": 85412.27661585808
+        },
+        "elapsed_seconds": 2.7310758780222386,
+        "classification": "WORKER_FAILED",
+        "exit_code": 1,
+        "descendants_cleared": true,
+        "peak_bytes": 78249984,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "style",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_style_002",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:51:47.071230+00:00",
+          "observed_monotonic": 1057701.932097258,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1065.862651348114,
+          "heavy_remaining_seconds": 81734.13734865189,
+          "total_remaining_seconds": 85334.13734865189
+        },
+        "elapsed_seconds": 2.990894024958834,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 70254592,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_pre_003",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:52:40.421337+00:00",
+          "observed_monotonic": 1057755.282204353,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1119.2127583026886,
+          "heavy_remaining_seconds": 81680.78724169731,
+          "total_remaining_seconds": 85280.78724169731
+        },
+        "elapsed_seconds": 27.18646274600178,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 484794368,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "style",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_style_003",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:57:52.267067+00:00",
+          "observed_monotonic": 1058067.127933616,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1431.0584876537323,
+          "heavy_remaining_seconds": 81368.94151234627,
+          "total_remaining_seconds": 84968.94151234627
+        },
+        "elapsed_seconds": 3.1883692368865013,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 70238208,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "pre",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_pre_004",
+        "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:58:12.120385+00:00",
+          "observed_monotonic": 1058086.981251605,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1450.9118056297302,
+          "heavy_remaining_seconds": 81349.08819437027,
+          "total_remaining_seconds": 84949.08819437027
+        },
+        "elapsed_seconds": 38.59213637793437,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 484999168,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "SETUP",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_setup_20261004T165928866881Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T16:59:31.549863+00:00",
+          "observed_monotonic": 1058166.410729891,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1530.3412837982178,
+          "heavy_remaining_seconds": 81269.65871620178,
+          "total_remaining_seconds": 84869.65871620178
+        },
+        "elapsed_seconds": 32.08623642195016,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2505007104,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 15,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 15,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "DATA",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_data_20261004T170029626829Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:00:32.354816+00:00",
+          "observed_monotonic": 1058227.215683256,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 1591.1462371349335,
+          "heavy_remaining_seconds": 81208.85376286507,
+          "total_remaining_seconds": 84808.85376286507
+        },
+        "elapsed_seconds": 457.994013360003,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2355638272,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 2016,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 2016,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "GRADIENT",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_gradient_20261004T170850973963Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:08:53.521274+00:00",
+          "observed_monotonic": 1058728.382140596,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2092.312694787979,
+          "heavy_remaining_seconds": 80707.68730521202,
+          "total_remaining_seconds": 84307.68730521202
+        },
+        "elapsed_seconds": 27.090100116096437,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2559238144,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 12,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 12,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_LH",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_train_lh_20261004T170954640203Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:09:57.247025+00:00",
+          "observed_monotonic": 1058792.107891815,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2156.0384459495544,
+          "heavy_remaining_seconds": 80643.96155405045,
+          "total_remaining_seconds": 84243.96155405045
+        },
+        "elapsed_seconds": 210.16631410317495,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2857488384,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 532,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 532,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_NL",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_train_nl_20261004T171344281245Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:13:46.904321+00:00",
+          "observed_monotonic": 1059021.765188091,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2385.6957421302795,
+          "heavy_remaining_seconds": 80414.30425786972,
+          "total_remaining_seconds": 84014.30425786972
+        },
+        "elapsed_seconds": 205.76211124798283,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2792808448,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 532,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 532,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "TRAIN_NH",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_train_nh_20261004T171714251384Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:17:16.899593+00:00",
+          "observed_monotonic": 1059231.760459545,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2595.6910135746,
+          "heavy_remaining_seconds": 80204.3089864254,
+          "total_remaining_seconds": 83804.3089864254
+        },
+        "elapsed_seconds": 210.8860348870512,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2882494464,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 532,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 532,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_R0",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_eval_r0_20261004T172127894984Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:21:30.685714+00:00",
+          "observed_monotonic": 1059485.546580454,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 2849.47713470459,
+          "heavy_remaining_seconds": 79950.52286529541,
+          "total_remaining_seconds": 83550.52286529541
+        },
+        "elapsed_seconds": 156.56844418682158,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2273366016,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_CL44",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_eval_cl44_20261004T172408960984Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:24:11.713846+00:00",
+          "observed_monotonic": 1059646.57471338,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3010.505267381668,
+          "heavy_remaining_seconds": 79789.49473261833,
+          "total_remaining_seconds": 83389.49473261833
+        },
+        "elapsed_seconds": 161.7677314018365,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2306945024,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_LH",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_eval_lh_20261004T172655194691Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:26:57.951700+00:00",
+          "observed_monotonic": 1059812.812566676,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3176.7431206703186,
+          "heavy_remaining_seconds": 79623.25687932968,
+          "total_remaining_seconds": 83223.25687932968
+        },
+        "elapsed_seconds": 158.18840065784752,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2322456576,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_NL",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_eval_nl_20261004T172937864343Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:29:40.631149+00:00",
+          "observed_monotonic": 1059975.492016066,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3339.422569990158,
+          "heavy_remaining_seconds": 79460.57743000984,
+          "total_remaining_seconds": 83060.57743000984
+        },
+        "elapsed_seconds": 148.64181437389925,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2323861504,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "EVAL_NH",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_eval_nh_20261004T173211041425Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:32:13.853813+00:00",
+          "observed_monotonic": 1060128.714680397,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3492.6452343463898,
+          "heavy_remaining_seconds": 79307.35476565361,
+          "total_remaining_seconds": 82907.35476565361
+        },
+        "elapsed_seconds": 158.8194088570308,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2324844544,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 568,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 568,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "CHECK",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_check_20261004T173454536425Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:34:57.455782+00:00",
+          "observed_monotonic": 1060292.316648795,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3656.24720287323,
+          "heavy_remaining_seconds": 79143.75279712677,
+          "total_remaining_seconds": 82743.75279712677
+        },
+        "elapsed_seconds": 43.54828201700002,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 2280407040,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 40,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 40,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "DIAGNOSTIC",
+        "folder": "/home/fenics/Projects/NN-Lab/results/task042/task042_v45_diagnostic_20261004T173604103129Z",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:36:07.003020+00:00",
+          "observed_monotonic": 1060361.863886259,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3725.794440507889,
+          "heavy_remaining_seconds": 79074.20555949211,
+          "total_remaining_seconds": 82674.20555949211
+        },
+        "elapsed_seconds": 6.599136967910454,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 325361664,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_collect01",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:38:04.882414+00:00",
+          "observed_monotonic": 1060479.743281261,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3843.6738352775574,
+          "heavy_remaining_seconds": 78956.32616472244,
+          "total_remaining_seconds": 82556.32616472244
+        },
+        "elapsed_seconds": 19.014352774014696,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 109498368,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_arrays01",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:38:28.520365+00:00",
+          "observed_monotonic": 1060503.38123182,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3867.311785697937,
+          "heavy_remaining_seconds": 78932.68821430206,
+          "total_remaining_seconds": 82532.68821430206
+        },
+        "elapsed_seconds": 15.5928135861177,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 360095744,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_report01",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:38:48.911731+00:00",
+          "observed_monotonic": 1060523.772598438,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3887.7031524181366,
+          "heavy_remaining_seconds": 78912.29684758186,
+          "total_remaining_seconds": 82512.29684758186
+        },
+        "elapsed_seconds": 3.0461530298925936,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 67039232,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_docs01",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:39:28.620206+00:00",
+          "observed_monotonic": 1060563.481072672,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 3927.411626815796,
+          "heavy_remaining_seconds": 78872.5883731842,
+          "total_remaining_seconds": 82472.5883731842
+        },
+        "elapsed_seconds": 3.347470389911905,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 78168064,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_report02",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:41:56.531936+00:00",
+          "observed_monotonic": 1060711.392802668,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 4075.323356628418,
+          "heavy_remaining_seconds": 78724.67664337158,
+          "total_remaining_seconds": 82324.67664337158
+        },
+        "elapsed_seconds": 3.1266953439917415,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 66469888,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_docs02",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:42:04.363777+00:00",
+          "observed_monotonic": 1060719.2246443,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 4083.1551983356476,
+          "heavy_remaining_seconds": 78716.84480166435,
+          "total_remaining_seconds": 82316.84480166435
+        },
+        "elapsed_seconds": 3.5958012740593404,
+        "classification": "WORKER_FAILED",
+        "exit_code": 1,
+        "descendants_cleared": true,
+        "peak_bytes": 71786496,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_docs03",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:43:22.327975+00:00",
+          "observed_monotonic": 1060797.188841731,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 4161.11939573288,
+          "heavy_remaining_seconds": 78638.88060426712,
+          "total_remaining_seconds": 82238.88060426712
+        },
+        "elapsed_seconds": 3.6009696170222014,
+        "classification": "WORKER_FAILED",
+        "exit_code": 1,
+        "descendants_cleared": true,
+        "peak_bytes": 71741440,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_docs04",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:44:56.348264+00:00",
+          "observed_monotonic": 1060891.209131549,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 4255.13968539238,
+          "heavy_remaining_seconds": 78544.86031460762,
+          "total_remaining_seconds": 82144.86031460762
+        },
+        "elapsed_seconds": 3.3126636298839003,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 71905280,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      },
+      {
+        "role": "post",
+        "folder": "/home/fenics/Projects/NN-Lab/tmp/task042/v45/aux_post_collect02",
+        "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+        "before_clock": {
+          "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+          "start_utc_seconds": 1791131641.208579,
+          "start_monotonic": 1056636.069450649,
+          "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "label": "V45",
+          "branch": "task42_neural_coarse_inverse",
+          "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+          "total_limit_seconds": 86400,
+          "heavy_limit_seconds": 82800,
+          "total_loaded_seconds": 7200,
+          "learning_seconds": 5400,
+          "probe_seconds": 90,
+          "cleanup_reserve_seconds": 180,
+          "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+          "observed_utc": "2026-10-04T17:45:04.519454+00:00",
+          "observed_monotonic": 1060899.380321108,
+          "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+          "monotonic_same_boot": true,
+          "elapsed_seconds": 4263.310875177383,
+          "heavy_remaining_seconds": 78536.68912482262,
+          "total_remaining_seconds": 82136.68912482262
+        },
+        "elapsed_seconds": 19.429666836047545,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "descendants_cleared": true,
+        "peak_bytes": 95105024,
+        "swap_bytes": 0,
+        "numerical_counts": {
+          "completed": {
+            "actions": 0,
+            "B_actions": 0
+          },
+          "upper": {
+            "actions": 0,
+            "B_actions": 0
+          }
+        }
+      }
+    ],
+    "active": null,
+    "closed": true,
+    "actor_wall_seconds": 0.0,
+    "numerical_counts_total": {
+      "upper": {
+        "actions": 6519,
+        "B_actions": 0
+      },
+      "completed": {
+        "actions": 6519,
+        "B_actions": 0
+      }
+    },
+    "closure": {
+      "classification": "REAL_TRAINING_COMPLETE_STRICT_ALGEBRA_NEGATIVE",
+      "clock": {
+        "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+        "start_utc_seconds": 1791131641.208579,
+        "start_monotonic": 1056636.069450649,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "label": "V45",
+        "branch": "task42_neural_coarse_inverse",
+        "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+        "total_limit_seconds": 86400,
+        "heavy_limit_seconds": 82800,
+        "total_loaded_seconds": 7200,
+        "learning_seconds": 5400,
+        "probe_seconds": 90,
+        "cleanup_reserve_seconds": 180,
+        "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+        "observed_utc": "2026-10-04T17:46:50.609347+00:00",
+        "observed_monotonic": 1061005.470213785,
+        "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "monotonic_same_boot": true,
+        "elapsed_seconds": 4369.400768041611,
+        "heavy_remaining_seconds": 78430.59923195839,
+        "total_remaining_seconds": 82030.59923195839
+      },
+      "paid_seconds_lower": 2221.895000238437,
+      "budget_charge_upper_seconds": 2221.895000238437,
+      "future_actor_or_training_reentry": false,
+      "all_run_descendants_cleared": true
+    }
+  },
+  "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+  "historical_windows_reopened": false,
+  "all_actors_cleared": true,
+  "closure": {
+    "classification": "REAL_TRAINING_COMPLETE_STRICT_ALGEBRA_NEGATIVE",
+    "clock": {
+      "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+      "start_utc_seconds": 1791131641.208579,
+      "start_monotonic": 1056636.069450649,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "label": "V45",
+      "branch": "task42_neural_coarse_inverse",
+      "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "total_limit_seconds": 86400,
+      "heavy_limit_seconds": 82800,
+      "total_loaded_seconds": 7200,
+      "learning_seconds": 5400,
+      "probe_seconds": 90,
+      "cleanup_reserve_seconds": 180,
+      "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+      "observed_utc": "2026-10-04T17:46:50.609347+00:00",
+      "observed_monotonic": 1061005.470213785,
+      "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "monotonic_same_boot": true,
+      "elapsed_seconds": 4369.400768041611,
+      "heavy_remaining_seconds": 78430.59923195839,
+      "total_remaining_seconds": 82030.59923195839
+    },
+    "paid_seconds_lower": 2221.895000238437,
+    "budget_charge_upper_seconds": 2221.895000238437,
+    "future_actor_or_training_reentry": false,
+    "all_run_descendants_cleared": true
+  },
+  "own_lock_acquired_and_released": true,
+  "final_settlement_measured_seconds_lower": 0.4923237201292068,
+  "final_paid_seconds_lower_including_settlement": 2222.3873239585664
+}

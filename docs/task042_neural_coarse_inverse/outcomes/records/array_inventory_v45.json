@@ -1,0 +1,5345 @@
+{
+  "files": 96,
+  "logical_members": 568,
+  "actual_members": 568,
+  "aliases": 0,
+  "packets": [
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_0_CL44.npz",
+        "sha256": "3e0b11905718d23e4c9e5d8909b7ebadf790878e890097bb2414ecfa489f088b",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bce29c0a4de7882502244152bb7fbc1fcc6190c4167cf8c59f12a3a66e4edee6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6a1cadf91295d5801ddae6e31079298af3a260c30c15fa2fe6c18bf4285b1bb5"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0bbb7183b8a94bd86ab4436118d5508439444982c7c0a7c7bbf5d3b4118c70ba"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5a827dc38af467767115bb1c7fda52948713d30da204f431232eb89858b3d143"
+          }
+        }
+      },
+      "file_bytes": 2666755,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_0_LIN_H.npz",
+        "sha256": "9c7d9eb4af5800ef187be0e08f46a3b2f065659eeae48fcbefd7de5586ad1c02",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bce29c0a4de7882502244152bb7fbc1fcc6190c4167cf8c59f12a3a66e4edee6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5e454d7fb1690de1acf83f8d921242d3b65efe77992aa3b711b4265b08ac413c"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "552d65b6161ce503735d13f855756daa2a7ec1d9d3cdd702a309c45378de1376"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "86dc38cb8a95f6b271b867517bf15e5cfbc3803eed49234710997e5f08a3429a"
+          }
+        }
+      },
+      "file_bytes": 2666454,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_0_NN_H.npz",
+        "sha256": "a59a507425be1c8bf262f6f7058dd9cff899f19766d3a2fab4bb056031657385",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bce29c0a4de7882502244152bb7fbc1fcc6190c4167cf8c59f12a3a66e4edee6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8f414b77dd8f2d87a611b6e027f5601ba9e07fae0b90d848d933656dd57639a2"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "786c4891ceadd619fddcacf34b7fdaa7851981d6fb8031047e42dc453b54ceef"
+          }
+        }
+      },
+      "file_bytes": 2662448,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_0_NN_L.npz",
+        "sha256": "a59a507425be1c8bf262f6f7058dd9cff899f19766d3a2fab4bb056031657385",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bce29c0a4de7882502244152bb7fbc1fcc6190c4167cf8c59f12a3a66e4edee6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8f414b77dd8f2d87a611b6e027f5601ba9e07fae0b90d848d933656dd57639a2"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "786c4891ceadd619fddcacf34b7fdaa7851981d6fb8031047e42dc453b54ceef"
+          }
+        }
+      },
+      "file_bytes": 2662448,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_0_R0.npz",
+        "sha256": "a59a507425be1c8bf262f6f7058dd9cff899f19766d3a2fab4bb056031657385",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bce29c0a4de7882502244152bb7fbc1fcc6190c4167cf8c59f12a3a66e4edee6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a46fa67410125ba8786686fa27ec5332170cca645debfba1e7779bd66bc49f40"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8f414b77dd8f2d87a611b6e027f5601ba9e07fae0b90d848d933656dd57639a2"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "786c4891ceadd619fddcacf34b7fdaa7851981d6fb8031047e42dc453b54ceef"
+          }
+        }
+      },
+      "file_bytes": 2662448,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_1_CL44.npz",
+        "sha256": "e64d6a8a6d61568e6d8d36f998206e36867b6e47c1875cf392bccea6db8907c1",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "41c0067ba26d75698f30d17293f677b3ff1d7f6221dab101564ca368724cb88f"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "780e29040e97e701864544b3234a07c8e1c0e3db3da93560d7c7fc0a6d6b9a70"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8d50e0fddb8cb17d2ecbd241021e96b7b2c32b07adaeb99ed5f37296ecab9b4e"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a678e208932649c9524d55ab27d65b91b51a0267270a23631605cfd017a1473b"
+          }
+        }
+      },
+      "file_bytes": 2697400,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_1_LIN_H.npz",
+        "sha256": "7a3a3671fc9f8045182fd76ff205444283d141d9508b9e8922f8e6f33fb23826",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "41c0067ba26d75698f30d17293f677b3ff1d7f6221dab101564ca368724cb88f"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2706d6e7283d6e7d47e0fec37d1a26a974ae97592a28ecb34386031613f059c5"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d819b8bcb9b3cb517a6ca0fa0fd6c7cc2622945026c78edfed9844dd8db76fac"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "847be89e2bb283fa2628b7315b39154fe90b90d18309552800b8840aebec167a"
+          }
+        }
+      },
+      "file_bytes": 2697604,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_1_NN_H.npz",
+        "sha256": "395352f2c0f5cca2222e1d5d5037236b39b1284654394d946391d5dffd9f98af",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "41c0067ba26d75698f30d17293f677b3ff1d7f6221dab101564ca368724cb88f"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6a7fd0b079083060c13cc97b1dcd1f0981f2e1b1da7c77ef141e96ab2f027079"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6b5887a8d4ba4eec83b8d76b151d8b82cdd0a355a49f134c9fe561b2302247"
+          }
+        }
+      },
+      "file_bytes": 2693216,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_1_NN_L.npz",
+        "sha256": "395352f2c0f5cca2222e1d5d5037236b39b1284654394d946391d5dffd9f98af",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "41c0067ba26d75698f30d17293f677b3ff1d7f6221dab101564ca368724cb88f"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6a7fd0b079083060c13cc97b1dcd1f0981f2e1b1da7c77ef141e96ab2f027079"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6b5887a8d4ba4eec83b8d76b151d8b82cdd0a355a49f134c9fe561b2302247"
+          }
+        }
+      },
+      "file_bytes": 2693216,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_1_R0.npz",
+        "sha256": "395352f2c0f5cca2222e1d5d5037236b39b1284654394d946391d5dffd9f98af",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "41c0067ba26d75698f30d17293f677b3ff1d7f6221dab101564ca368724cb88f"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2fa52f7a7f86f3e1b77b2dc12256a7bbe0aa533be068a442c8bb0a2b37dbede4"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6a7fd0b079083060c13cc97b1dcd1f0981f2e1b1da7c77ef141e96ab2f027079"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6b5887a8d4ba4eec83b8d76b151d8b82cdd0a355a49f134c9fe561b2302247"
+          }
+        }
+      },
+      "file_bytes": 2693216,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_2_CL44.npz",
+        "sha256": "087ea248405ba3718ea4b4438a16a1c5fb4293803d6ea5a1ab3d9f865e3977fa",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "269b604bdc2c9f2e0bf655a7e87fd928259ed7a237b1428b6970e3591e13f082"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3c23fe37bb81cf424c4dc5c81d059e53350aead0daf58ed05e6a5c11022599aa"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fb206e0f9278808592fa5a9b2b96f6a81e626eb56884ff4b95ffe43dc568250e"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "030af197acc26ebccc77e1b679a78fc07ff76348c36f114c2a5be89cce94dcf1"
+          }
+        }
+      },
+      "file_bytes": 2664708,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_2_LIN_H.npz",
+        "sha256": "e3e95b7b7b866b700a68b26e9720deaf576e774d297efa6c688911a7e747e5ed",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "269b604bdc2c9f2e0bf655a7e87fd928259ed7a237b1428b6970e3591e13f082"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bdc2d8690f974f06c6dae2b9ed418d5eb9c33a157952a6c1bb14d06efbd8ef6e"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "84c0075fcbb88d317e3382f220c37aba9eaacc65bb5520f14f3d94a122006909"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "acea58a2391568defa56de4fdbfa00ba31184020bb83ce220aba2215b3931cde"
+          }
+        }
+      },
+      "file_bytes": 2664622,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_2_NN_H.npz",
+        "sha256": "ff1b56ee0c049b25e9c4c31a66715bda2e079321274641c72c736d2d861daf91",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "269b604bdc2c9f2e0bf655a7e87fd928259ed7a237b1428b6970e3591e13f082"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7989a091536545698da00c48c8b98ac5b03758a1c277d3768509e9f16e8f5c0e"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c5f9e58a15c6c05c8f7fe59feb33017190fba7d124d367089008eb15b49be699"
+          }
+        }
+      },
+      "file_bytes": 2661302,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_2_NN_L.npz",
+        "sha256": "ff1b56ee0c049b25e9c4c31a66715bda2e079321274641c72c736d2d861daf91",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "269b604bdc2c9f2e0bf655a7e87fd928259ed7a237b1428b6970e3591e13f082"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7989a091536545698da00c48c8b98ac5b03758a1c277d3768509e9f16e8f5c0e"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c5f9e58a15c6c05c8f7fe59feb33017190fba7d124d367089008eb15b49be699"
+          }
+        }
+      },
+      "file_bytes": 2661302,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_2_R0.npz",
+        "sha256": "ff1b56ee0c049b25e9c4c31a66715bda2e079321274641c72c736d2d861daf91",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "269b604bdc2c9f2e0bf655a7e87fd928259ed7a237b1428b6970e3591e13f082"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06772128a97e85cdd3761bf6f35b761c950057866b2abad0b39799928749fb6f"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7989a091536545698da00c48c8b98ac5b03758a1c277d3768509e9f16e8f5c0e"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c5f9e58a15c6c05c8f7fe59feb33017190fba7d124d367089008eb15b49be699"
+          }
+        }
+      },
+      "file_bytes": 2661302,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_3_CL44.npz",
+        "sha256": "5750d6a6f5d9c37d0515a35677bb21b1e66d6c3813cabcf172eae99dd15395ab",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "495167f1ad3f69a68da1043899e0efa51ddbaed1b0109d8a790831a61c522275"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a0dccf0508b35baaad1030957af2ed74e5b288fe6fbf300314b680e6e3a13329"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f310da131e24daba9542b5ff7f34fef57e3c4ef18a3c7d8b89e59b1c11cbc635"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "42b600fe587060e0e67346008296a8cd3526e14a5bf9a84ebb744cb444b2efcc"
+          }
+        }
+      },
+      "file_bytes": 2683981,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_3_LIN_H.npz",
+        "sha256": "65008c4b50adc64247a3cc100e557dc5ddc22257e5bcc6be0a1998cbda832e28",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "495167f1ad3f69a68da1043899e0efa51ddbaed1b0109d8a790831a61c522275"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0f5e4d4eb8fe3fdc64bfe86f49f59e8a25b1dcf55a22d47133900024b23cbb92"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d295a951dd0c4a0a79be1c6aacf3c5be91f1679e46f3a312675cd8520f1f6ede"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0fab39348fcefa280021de4d2df6eb7ebf3ad3bbcf3b428eccbb2d3e735a263d"
+          }
+        }
+      },
+      "file_bytes": 2683908,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_3_NN_H.npz",
+        "sha256": "bd35b10d143b5ef7203b40010d42663df43b177e84e7e16e3b4416bf5344b93d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "495167f1ad3f69a68da1043899e0efa51ddbaed1b0109d8a790831a61c522275"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c02264c30c83fe517f0f50035743bf15d38a56f3af5ca0ec198c5a4bff9d1842"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32b2e1ac3baa1d2449150f87b94c831e51c64a597716cb0d86d28bbd6e8b3b2"
+          }
+        }
+      },
+      "file_bytes": 2679448,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_3_NN_L.npz",
+        "sha256": "bd35b10d143b5ef7203b40010d42663df43b177e84e7e16e3b4416bf5344b93d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "495167f1ad3f69a68da1043899e0efa51ddbaed1b0109d8a790831a61c522275"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c02264c30c83fe517f0f50035743bf15d38a56f3af5ca0ec198c5a4bff9d1842"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32b2e1ac3baa1d2449150f87b94c831e51c64a597716cb0d86d28bbd6e8b3b2"
+          }
+        }
+      },
+      "file_bytes": 2679448,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_3_R0.npz",
+        "sha256": "bd35b10d143b5ef7203b40010d42663df43b177e84e7e16e3b4416bf5344b93d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "495167f1ad3f69a68da1043899e0efa51ddbaed1b0109d8a790831a61c522275"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d05c9491d314f6dfd6bf9e4c937c263c33fbedefe448b6687e5c02ff661284a0"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c02264c30c83fe517f0f50035743bf15d38a56f3af5ca0ec198c5a4bff9d1842"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32b2e1ac3baa1d2449150f87b94c831e51c64a597716cb0d86d28bbd6e8b3b2"
+          }
+        }
+      },
+      "file_bytes": 2679448,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_4_CL44.npz",
+        "sha256": "a9583da45f9d59e3070c1f6b61bb35b5a2423262518532561704cefcb4c0c2b2",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2d68f53c535cb9ef26b04a0fbab9c62f7b64b62360a843f40c00d3adc36f858e"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6e58c418b2c7e8e1fec3c0d0c7a668508b5e9029bd93cbd4f0a6c703ab0c32"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3ec4b0895d01e95aa95658b8f8e4be3a9f024d61508b8e019166e694256b8b10"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ffca8f4a280bb3782becf1ec65daf4ac83e37b0273da1d7f8aa0541cfb9d3bd7"
+          }
+        }
+      },
+      "file_bytes": 2824093,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_4_LIN_H.npz",
+        "sha256": "c1d08ccd3dff0fbeb29e94b8985ce8dcf57f72a5aa9374504bb73c4df0fd78ee",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2d68f53c535cb9ef26b04a0fbab9c62f7b64b62360a843f40c00d3adc36f858e"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "85d3764178b84b89e7eba2097f55e65bc9c712db65c3a445e4609677808cbac8"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b40b9289f6e1b0501a92eb0a95b3dc61a975d3bf98c1c5125b7798874ace9e7e"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68e0f2216831eb6e2c268d9cbf3c2cc447be39667bf33d08f0b448452f56ea0e"
+          }
+        }
+      },
+      "file_bytes": 2823791,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_4_NN_H.npz",
+        "sha256": "315c8e252d68923bd969040f01dc17106e1c5f8ffc649929e8e22651454aed9d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2d68f53c535cb9ef26b04a0fbab9c62f7b64b62360a843f40c00d3adc36f858e"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29658dfcaf170dd5f8703ce26875d4155527f19f8e9c058ddf2ba0f21ef307a0"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "860b97c578f4bfcb61fc0293014a2d658d0b160402d2182aa3bcc9061e47cfb4"
+          }
+        }
+      },
+      "file_bytes": 2819477,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_4_NN_L.npz",
+        "sha256": "315c8e252d68923bd969040f01dc17106e1c5f8ffc649929e8e22651454aed9d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2d68f53c535cb9ef26b04a0fbab9c62f7b64b62360a843f40c00d3adc36f858e"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29658dfcaf170dd5f8703ce26875d4155527f19f8e9c058ddf2ba0f21ef307a0"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "860b97c578f4bfcb61fc0293014a2d658d0b160402d2182aa3bcc9061e47cfb4"
+          }
+        }
+      },
+      "file_bytes": 2819477,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_4_R0.npz",
+        "sha256": "315c8e252d68923bd969040f01dc17106e1c5f8ffc649929e8e22651454aed9d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2d68f53c535cb9ef26b04a0fbab9c62f7b64b62360a843f40c00d3adc36f858e"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e81217b8ebddfbbcf94d51c0d05d7d3abb6d9302898b2bc61119cc891894dbe8"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29658dfcaf170dd5f8703ce26875d4155527f19f8e9c058ddf2ba0f21ef307a0"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "860b97c578f4bfcb61fc0293014a2d658d0b160402d2182aa3bcc9061e47cfb4"
+          }
+        }
+      },
+      "file_bytes": 2819477,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_5_CL44.npz",
+        "sha256": "81ba7244d08ee89e3f4b1f29a2307fb5676207b752fc17474f72993d6ffc911d",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0606481280bad70dcb0193de93a4e68ca545a42791fca4d883273e9e41a822b2"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2f143bf3e305384d9e8f2882c480c0cf7df3cbd1f56ba3a13fc8be943116162a"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "56a5bc0d47d3e081daa142fc02f75e2466fdc73929c53375dcccbee8866f609b"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e0d8a2f3aa95e6ca63d4666e7cad17b52f712f7b1374afea0542b30f9c27c03d"
+          }
+        }
+      },
+      "file_bytes": 2829901,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_5_LIN_H.npz",
+        "sha256": "69c7da7b14f2fdd784c7a91e406446bfc047c812c1a60c9b31e8c5a641afab48",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0606481280bad70dcb0193de93a4e68ca545a42791fca4d883273e9e41a822b2"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "717996ee0786c0f0a59d765213e5067044a675aff86c2a3cb8f7b6a94b30655f"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b9211e8623bef776b427c36769c38900d1be3140f94ebeb976688e18b3a69151"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac44a0e19718f00d3ecb625ba9def5f97bee90c5544ec2646bf8ab8135b5d241"
+          }
+        }
+      },
+      "file_bytes": 2830061,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_5_NN_H.npz",
+        "sha256": "2aa19f98af20222de9f736d74744d5a575741d58c95149fbf622d5720e337c05",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0606481280bad70dcb0193de93a4e68ca545a42791fca4d883273e9e41a822b2"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a31963212a9bc1686df4f4c866ed1697940ad8c75c0d26f15dea1ad21687b183"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0aad41330659f2020b8e423eaf540e346e490e6e965670c85107139d4c73fc"
+          }
+        }
+      },
+      "file_bytes": 2825150,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_5_NN_L.npz",
+        "sha256": "2aa19f98af20222de9f736d74744d5a575741d58c95149fbf622d5720e337c05",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0606481280bad70dcb0193de93a4e68ca545a42791fca4d883273e9e41a822b2"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a31963212a9bc1686df4f4c866ed1697940ad8c75c0d26f15dea1ad21687b183"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0aad41330659f2020b8e423eaf540e346e490e6e965670c85107139d4c73fc"
+          }
+        }
+      },
+      "file_bytes": 2825150,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_5_R0.npz",
+        "sha256": "2aa19f98af20222de9f736d74744d5a575741d58c95149fbf622d5720e337c05",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0606481280bad70dcb0193de93a4e68ca545a42791fca4d883273e9e41a822b2"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "01f659817575e2b897debc36a7510bc402f59254f71d0e8ae1ddf5bd9031417a"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a31963212a9bc1686df4f4c866ed1697940ad8c75c0d26f15dea1ad21687b183"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0aad41330659f2020b8e423eaf540e346e490e6e965670c85107139d4c73fc"
+          }
+        }
+      },
+      "file_bytes": 2825150,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_6_CL44.npz",
+        "sha256": "969669629efd7a800bd0de90fe8cfe94f46806890ea01aa648e5b5fb8dcb21bc",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29fe7e15cca6f39dd3137d653309f0ebb417470a425885cc99a4111555fcfa19"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "69e6b7d3f22736257c2287dced391c6a21f541be0260dc2cbae6b8614fb553c6"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0110ed5d4f6fe2a8268780f55d687e563f269f9653cf23ce1e144ce0850bb6c4"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3cb5e845de47ec5d56851952ce05e1a866a348ee0dbd451e22fffcdedec04b08"
+          }
+        }
+      },
+      "file_bytes": 2846685,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_6_LIN_H.npz",
+        "sha256": "f303d4b43d92c38ce53975d930e9a6fd11e89c55770d2ac4db4c1b3c5e417bf7",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29fe7e15cca6f39dd3137d653309f0ebb417470a425885cc99a4111555fcfa19"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6d4d8829cbfe3d9724366bd31ef4d4cb5bd716eff2b8d6f87e2318f8f47c2e66"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bf71a22209e976a5e931ab5de739afcb6e0bd63bca16863f1da2c14659316b69"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e16bb40167ea7211413941b611d5581bd0d2afb5e201f4b3e9c46acd8e22c752"
+          }
+        }
+      },
+      "file_bytes": 2846497,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_6_NN_H.npz",
+        "sha256": "51e1ea92326d1db38bcd84c0c2e7beafbb6a11220883e48ea1ddedf9230e0fdc",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29fe7e15cca6f39dd3137d653309f0ebb417470a425885cc99a4111555fcfa19"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5193b77575da92bbdb6ce81846e9fd781cd118aec7a6550178b084dd433bfbc4"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4bb1c00e5811f2a5035bb52486af98bc7331359db0c15a4f53dc34479461baf5"
+          }
+        }
+      },
+      "file_bytes": 2841440,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_6_NN_L.npz",
+        "sha256": "51e1ea92326d1db38bcd84c0c2e7beafbb6a11220883e48ea1ddedf9230e0fdc",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29fe7e15cca6f39dd3137d653309f0ebb417470a425885cc99a4111555fcfa19"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5193b77575da92bbdb6ce81846e9fd781cd118aec7a6550178b084dd433bfbc4"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4bb1c00e5811f2a5035bb52486af98bc7331359db0c15a4f53dc34479461baf5"
+          }
+        }
+      },
+      "file_bytes": 2841440,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_6_R0.npz",
+        "sha256": "51e1ea92326d1db38bcd84c0c2e7beafbb6a11220883e48ea1ddedf9230e0fdc",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "29fe7e15cca6f39dd3137d653309f0ebb417470a425885cc99a4111555fcfa19"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a2291d639486bed4a486f34afbc577d910a9345c8af9dc784e88474afcb2da81"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5193b77575da92bbdb6ce81846e9fd781cd118aec7a6550178b084dd433bfbc4"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4bb1c00e5811f2a5035bb52486af98bc7331359db0c15a4f53dc34479461baf5"
+          }
+        }
+      },
+      "file_bytes": 2841440,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_7_CL44.npz",
+        "sha256": "417b45ccc872847fc8681d680549599ddde5763952ea7169ede97b1d31e8cd93",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "175fed76318cf2c9eb19c46a9746d52b9bd0c74f8653c366b2c28f50d2a702e6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "02b01078f1a23c84d91f8d15d01ac77f92366c1ee773fafef50960ba5d4d3b16"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b11e44605350ee1050fbd07da28d7f4cdfe208b5b2e21526ebccd81cbbd3d117"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "388c47e69f2a0da2bb80e8cc99ab8f50ee826033d3f2d63520d216f8eca7354c"
+          }
+        }
+      },
+      "file_bytes": 2822433,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_7_LIN_H.npz",
+        "sha256": "f622d3c185fae62315169232facf34755244894a06da1a595f8a6d0999b603e9",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "175fed76318cf2c9eb19c46a9746d52b9bd0c74f8653c366b2c28f50d2a702e6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "51f5191b678967f11c4a55833174e2b9435d077a7111d2dbe443d742d016329a"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fa66c650418c5aa8106051314e373d081316e9319e145e2cb724c95db713b60d"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fe9f431096137fbc0ff5f6167e22106d40eb07d2940e2723362ba5ab88ac7dae"
+          }
+        }
+      },
+      "file_bytes": 2822316,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_7_NN_H.npz",
+        "sha256": "3556bd7364f6bea2be2ee7eb3b4909e05499b73c55df58a54f4e5ce3ec7a3403",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "175fed76318cf2c9eb19c46a9746d52b9bd0c74f8653c366b2c28f50d2a702e6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "acd03252cd475aa462e7c98c141a93f8e492265890bfa01ebf4986695a9efa01"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23d439ce21c53de2a9786d02ce1c1dad5fb8c55a31643cac6f82d56436b47745"
+          }
+        }
+      },
+      "file_bytes": 2817696,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_7_NN_L.npz",
+        "sha256": "3556bd7364f6bea2be2ee7eb3b4909e05499b73c55df58a54f4e5ce3ec7a3403",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "175fed76318cf2c9eb19c46a9746d52b9bd0c74f8653c366b2c28f50d2a702e6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "acd03252cd475aa462e7c98c141a93f8e492265890bfa01ebf4986695a9efa01"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23d439ce21c53de2a9786d02ce1c1dad5fb8c55a31643cac6f82d56436b47745"
+          }
+        }
+      },
+      "file_bytes": 2817696,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_check_20261004T173454536425Z/error_7_R0.npz",
+        "sha256": "3556bd7364f6bea2be2ee7eb3b4909e05499b73c55df58a54f4e5ce3ec7a3403",
+        "aliases": {},
+        "members": {
+          "reference_manufactured": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "175fed76318cf2c9eb19c46a9746d52b9bd0c74f8653c366b2c28f50d2a702e6"
+          },
+          "prefix_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "corrected_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b47106189ad832d4819c2024bd4a6cfbc494aa6fb759a41866ec5e5e2ae40e88"
+          },
+          "final_error": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "acd03252cd475aa462e7c98c141a93f8e492265890bfa01ebf4986695a9efa01"
+          },
+          "recomputed_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23d439ce21c53de2a9786d02ce1c1dad5fb8c55a31643cac6f82d56436b47745"
+          }
+        }
+      },
+      "file_bytes": 2817696,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/authorized_labels_train.npz",
+        "sha256": "79df0113aa17d4ac4726827a0bd5f9d6c44c581290fce47cca1b2ae5e72f9c2c",
+        "aliases": {},
+        "members": {
+          "error": {
+            "shape": [
+              16,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "64d93e6cbed1f38c463b0aa1323ab85d82ba5f6d57cc81519f0aa756a5539985"
+          },
+          "label": {
+            "shape": [
+              16,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1020affadd86f2053c05a45c039a22ccda4a348904d76c3a4d1793b98d83dda8"
+          }
+        }
+      },
+      "file_bytes": 15329567,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/authorized_labels_validation.npz",
+        "sha256": "59253fecf5f1eb13bc727656e163b88b4394d20a49d20ca03502e088ea8d7453",
+        "aliases": {},
+        "members": {
+          "error": {
+            "shape": [
+              4,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c19af6b7f90b75ef68f5e3c59f4ff62c6aecf8b6f615dc357ea42778df149bea"
+          },
+          "label": {
+            "shape": [
+              4,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "60ccf46e90ac5f19c28a9ed9b1a4dad14679cd2e5bbbbae3a7f05df889926c74"
+          }
+        }
+      },
+      "file_bytes": 3712960,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/prefix_heldout.npz",
+        "sha256": "37535eaef0eb9bd33552e0be0e5f730c0e44917dbf1925cf4a39c42f0b5844bd",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              8,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06bdaf71df05bfa84eaa33e8efdd3b24115c8e6405a3b59494bbc40663b4aa0d"
+          },
+          "prefix": {
+            "shape": [
+              8,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b790f740675b5960e1a97058978bc32c59952d510b2766db5ea98722f13de518"
+          },
+          "residual": {
+            "shape": [
+              8,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "20e04dd454c5ee5b1e38131237505f02f371b11f84707f1a586dc76035a2c72b"
+          }
+        }
+      },
+      "file_bytes": 14076668,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/prefix_train.npz",
+        "sha256": "e53e352f555ccc0f2cc0ce547e449c20fba212012ee8d6d5124870cf45dc5826",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              16,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ab3889452890d841db5cc34359005563435d4bdd867d656184dae182cb5a0b96"
+          },
+          "prefix": {
+            "shape": [
+              16,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6735f89f57138a46c786ffd6528760c1b0509e3669055cb24fc4a7b531c10733"
+          },
+          "residual": {
+            "shape": [
+              16,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "487e56f16c396ab46719cc16cff401f2fd92a84c51ed0ed0276cca3f9c1ecb0f"
+          }
+        }
+      },
+      "file_bytes": 28766876,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/prefix_validation.npz",
+        "sha256": "84ea6446c16b08ee2d13cfdb8d5f2309836be8196815106028026e0022ec3c4f",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              4,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ab172c9122cc2031d7686b06de9cb94accfa9fb0e9cc71de090d3491ecda34c9"
+          },
+          "prefix": {
+            "shape": [
+              4,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9fe872684b9aa9687d01911f25fa2f0f103d517afcaf4d6a29e56dee3ebbd267"
+          },
+          "residual": {
+            "shape": [
+              4,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "415168c828247ff7a841ccdb1cd69fcc21912f2d77cef105b9312815d1c23a8b"
+          }
+        }
+      },
+      "file_bytes": 7125130,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_data_20261004T170029626829Z/sealed_heldout.npz",
+        "sha256": "20ec3690a238dda4a9afdc020e6de0a9be113a51a1ae00e1f11709e2c17c1461",
+        "aliases": {},
+        "members": {
+          "error": {
+            "shape": [
+              8,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1abca29f0203c48ecde7bcd79931c8f0f97d2aefae6e861f1adca64e8ba15548"
+          }
+        }
+      },
+      "file_bytes": 2433684,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_0_CL44.npz",
+        "sha256": "845c1f0d66bf49a2f4a468d0188d77edacdf0a844dd98e7931b1aac3f57ac499",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8939e8eff1a0975d67c216f400023e3184e02219d9bb6ff9e5245475520f98f0"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "99cf241afd20bb6dfda1587e7de1a0b0915f41acfeddc1061656101293bde181"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e043fb10442e2ff04b31c82841f0cf439fb204215aae090a6a6c4a5743e2329f"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5057148418b4f9ba6d9a06f5993771c7347a6847939f1a5e948be1b08bb30ff8"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b71b09c5c7f8ee4978b522de3714249c3c9512007f033e686886c4c404387e77"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5a827dc38af467767115bb1c7fda52948713d30da204f431232eb89858b3d143"
+          }
+        }
+      },
+      "file_bytes": 4814486,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_1_CL44.npz",
+        "sha256": "b4bcdedb2bccd99dc2b1ef6cd4bcf19ac7eff860202506a98b16b97b085064e7",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c7fd571367e8edbbff3061a28409ad318b9a61214d809538c5e0ea07b63559b2"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "17d36f7575b4f54d0d03f43a5e12829a1792796d4dbb91439e4d802b8c5e2934"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ed71afad4ea200f041ebc63ba8f46e772d5cf9146d1d7497948a483427e80ab7"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6e1a7c53f8dca4b30547cd544ad2a5de533ebcc43e9d831ddaef0243a9814c43"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6bea7588ca8afce1cd8372dce798c03d1d584d0ec49ff3864088b2507ff27129"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a678e208932649c9524d55ab27d65b91b51a0267270a23631605cfd017a1473b"
+          }
+        }
+      },
+      "file_bytes": 4771904,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_2_CL44.npz",
+        "sha256": "eda505ab44218ceca19709507ec45d48b21eebfbf6bddea35c64ddbcfaa6f2be",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b7ce907a0a7df7836eec8ef25916a84caa39bd3aba1efb6c104ec3c06531c00f"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "70437c1f64e95bae1aca317986043cb0628c31cd2ddc478e34aa4c0b6b645ee7"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8d1f1f72693f362b1860d4c1b57fa3c896522fec597946b2b4030b4a6e07d264"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f2010ab111f9b14fdfa513827606b67109401254246afb53d6a557a97d10a8b3"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "6e6a1e3e8e73453374476d90702e29bac14b81d104c0c815d64092bc1cdc4b9e"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "030af197acc26ebccc77e1b679a78fc07ff76348c36f114c2a5be89cce94dcf1"
+          }
+        }
+      },
+      "file_bytes": 4880227,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_3_CL44.npz",
+        "sha256": "3391636e2601706f513a5193b69939f54d6a1fa1341623c6794d0c7bf6c2c649",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bbf325ac824879f422836d861314335faa25b49b6d13b32fabf018a86afa0326"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bd7363814e3a6781b16b4153126a897999d364af2ec8f7b5a295eb9636c4b0df"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5d5970b10ca8d43fc09e9736fbf0564444f15c5f42abb60ad5f496cd5eb8aa53"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "96fdc7d9898b99b2df0c76a63451e2857d3a0547463d63a23041c97cb30d93c1"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b6459f5141c54e05427e4a97ed2b5452b01aefa802d6de995cd3451cb356f84c"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "42b600fe587060e0e67346008296a8cd3526e14a5bf9a84ebb744cb444b2efcc"
+          }
+        }
+      },
+      "file_bytes": 4857135,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_4_CL44.npz",
+        "sha256": "f2afef443fa261f90ae6a310d0fdcfc2e880226256dc75f325a2d659740c12d8",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac1461763d1a15c182bdbd2d67e15a8d80c93f1d047738917298e607f26b8de9"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a740611e289c352a8fbf4482c2d28ab85be7d71a160093fdc1070cdbe83444c3"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "35f01a08bf30caac7478f9d4884c0fbf6c9a2000030419bb338bd4602b54e1a3"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88fe37e6e913f22ba9509ee502f21dc970e893dcce6d26f6032666fe804c9496"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "99a37764dd27af22072e1d2ac12fdf724efe519d4e5251868f80c30cc5e53b2e"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ffca8f4a280bb3782becf1ec65daf4ac83e37b0273da1d7f8aa0541cfb9d3bd7"
+          }
+        }
+      },
+      "file_bytes": 4923293,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_5_CL44.npz",
+        "sha256": "89a8eba0bbd88c5406c027c27e73445e5be95240e4b5ebd7e909a9d9836839d9",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0f009fb6ae015eb9c4d473c274e6b8c14458328339209ba92cf894c0f74a9629"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8550a3fcaacdde1d5a5348188579265a397724e03f1c619afe0767212d4c0297"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d9c03efa385c409e980dc8afdb772556d144e57ed73b492d8f44ea27b159e8fd"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c197c04da445a83ee72995f52e7b3d4b7441501a1fc171a724877f05b71d577a"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0aa38f580e364ec98fa9ee8a324817dd2a02ccce3e991c17cbeb43d873b3fcd1"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e0d8a2f3aa95e6ca63d4666e7cad17b52f712f7b1374afea0542b30f9c27c03d"
+          }
+        }
+      },
+      "file_bytes": 4930475,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_6_CL44.npz",
+        "sha256": "36723ab7576fb93745d85d14822d8417be1fdcf0a8f29645a414a48334f85844",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "555b9dc6dbcd366e086546bcb8a2138f2071e851eb1989e265206dcb3a2ef214"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "30d3dba68d2dd1a4bab7a559e07c50201509d2c38d65c231fbcc2c555679278f"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "86af02000090b04a66c5540735fc946fffd137df5e50053324cc266b1c0fcc08"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e0da04827d9bc33f834592ade8224ccb11d6e988ea2e9ce09db346fbe4565f1"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "2dd22389cd0581a92eb88f8ef83342a8dfd97ad4891fa717be0d315e1e86dc8d"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3cb5e845de47ec5d56851952ce05e1a866a348ee0dbd451e22fffcdedec04b08"
+          }
+        }
+      },
+      "file_bytes": 4962116,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_cl44_20261004T172408960984Z/heldout_7_CL44.npz",
+        "sha256": "aeeff78b69118ce3416145445cee93bcd4e6fd51a0c7036eeafd4645d2c3c497",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3d65e47342c890bd923677fad7460d1aa03f3d36b25d2a9692b488210a673d01"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ad77bb1af7ece0c22ae69e3c77de7e7f5f29e5d70f56b3871a45252a69aabb11"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "796430bfa657780a3152b39c939bac975fe99af208982b967ecc90c417036d86"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "902a3bfd79573831d0397ebc7ac9c731f08f85073d10c01c2cdbe99b94eebf59"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4edc3b0844606d25d90b6013c4ab9c0c70f08aaf1f54ce5c7da399ccaff2fe6f"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "388c47e69f2a0da2bb80e8cc99ab8f50ee826033d3f2d63520d216f8eca7354c"
+          }
+        }
+      },
+      "file_bytes": 4921590,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_0_LH.npz",
+        "sha256": "f6fc99f80a672012b73f19406042c840cb3882c2a78a532530f61edb529a6f0f",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8939e8eff1a0975d67c216f400023e3184e02219d9bb6ff9e5245475520f98f0"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4d641c334acc9bebdc0dc01799f440001e0ced25f9a408975e8520f5d7fe1c79"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3562f5f2b979a6079573ac3a070bbb484de45e6af24caba85ef4fe8c453db737"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a303820fd684c5c25724bde06c27cff04dd1cc4b00abf28a30644b0d137db989"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3b964756b7033471ffdee57c3d7af25a6e05ea62c3c9776bee586bac5e889778"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "86dc38cb8a95f6b271b867517bf15e5cfbc3803eed49234710997e5f08a3429a"
+          }
+        }
+      },
+      "file_bytes": 4812910,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_1_LH.npz",
+        "sha256": "c777630d39137e0c42a1a15b0d3b71af5038f0d72c47a3ca9511df78b4d06a53",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c7fd571367e8edbbff3061a28409ad318b9a61214d809538c5e0ea07b63559b2"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32d45170591e60db7737f84faf71a755f2d5316cd014fdbd109a5af08290378"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "52596dc94a714b3210b7713e4004c556cc5c8f4dedfc08d81f6e7639ec06ff2a"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "735cb730d1a32ef05acd68901bade8dafd750d8511ed72a659fbd271dfd5fa5c"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "770eca9d922d6818523dec5dfd1a0e65f37da585d546246b1901d1d039801b56"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "847be89e2bb283fa2628b7315b39154fe90b90d18309552800b8840aebec167a"
+          }
+        }
+      },
+      "file_bytes": 4770916,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_2_LH.npz",
+        "sha256": "14b7728510622ae0c206d2645e7f7037df6660a56855cee3181203acc4508d42",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b7ce907a0a7df7836eec8ef25916a84caa39bd3aba1efb6c104ec3c06531c00f"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b3d686e5fa90f1d95a325ca67d3984a9b9a9ef5486ed5ce51a116aecf4f60649"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "93b69e16bb150dbbfc0fd419aaa7508a30511844b377ffd2141a53ebbca4659e"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9f0ff151148f4c90ed3ebb03bb1eeae4079f0bc838c22f1053ad4f7c40244002"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "79d3c4a88ab0f459904b74d7ae77abe7012ae0bb73780a023c822f6b77c956b3"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "acea58a2391568defa56de4fdbfa00ba31184020bb83ce220aba2215b3931cde"
+          }
+        }
+      },
+      "file_bytes": 4878861,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_3_LH.npz",
+        "sha256": "361618f8aa6ed8285faca21d298f142b9714937d015821f442638fbdb08eac0b",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bbf325ac824879f422836d861314335faa25b49b6d13b32fabf018a86afa0326"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b41c5964ddbda9e6b276d9312e88b6f680ffd7d64ed74ce5b158849eabd95a06"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "446bd2d459a017cd13f0cb0c1a789c75145e87c4b556992d137b55c10fac6223"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e023548ae909e56247330efad3bb10d8c840c5af30c5437861dcdc3e98d34c22"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "def998f3dd8e8cb0a64dc70512a606c7d86ff50b353a3a606adc09d0bc0031f3"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0fab39348fcefa280021de4d2df6eb7ebf3ad3bbcf3b428eccbb2d3e735a263d"
+          }
+        }
+      },
+      "file_bytes": 4855754,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_4_LH.npz",
+        "sha256": "fcf12ab55005512213fccf4033635e59aab9fcc76a26b41df67aeb719db873d2",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac1461763d1a15c182bdbd2d67e15a8d80c93f1d047738917298e607f26b8de9"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fc6b09502cc1fe0b32aff03eefb45e490cd13617da985f677a0e88685cf60e9a"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0e3a3da116446fdd31cc1f636ecd0dbd98a6ad823f5e974074a82cdb0306a8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4b180f7f3c6819ebaddb1b230527362c7c7819f43f4828f345bfa5a08a769015"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "068a7be9b0c1e9917c106fe77d79bbb431c6c33066870cb9592f4d5b5fb3aaa9"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68e0f2216831eb6e2c268d9cbf3c2cc447be39667bf33d08f0b448452f56ea0e"
+          }
+        }
+      },
+      "file_bytes": 4924802,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_5_LH.npz",
+        "sha256": "2e2257ff1d0fbcb2889268dc0e6b36fca4dbeba03e7e69263d7265ee0b667fb6",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0f009fb6ae015eb9c4d473c274e6b8c14458328339209ba92cf894c0f74a9629"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "581fdf7d5c8acacb3ab972a4f62d2d1bb3cc370fe479d7c0d041a57506f1fa55"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f48638eeed2e3cb169b611f0dbe2137235e0a8849d6153d7ee36f1d8f5116012"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d55f4ab5f331217b0ceeaa6ebc6d82068c4f246973a51520570997c0e049f89d"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b0e7ea679114f31f91706716143674882bbe8c5b0880fb8231bb01580f644ac7"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac44a0e19718f00d3ecb625ba9def5f97bee90c5544ec2646bf8ab8135b5d241"
+          }
+        }
+      },
+      "file_bytes": 4931799,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_6_LH.npz",
+        "sha256": "579e7c02c2b0591e7f3a53f2955c9cc5811c6c5c9b56eb2421a2c4a14d77eeb5",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "555b9dc6dbcd366e086546bcb8a2138f2071e851eb1989e265206dcb3a2ef214"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4899c05d9faa5071b19328549fe68f3f66b82b081f1cc68464b183aa9f7fceca"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d24d560f243500f914be7537fe61137445db4531e951bfc1756453679c896b45"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9105278eeaa212e9e943cfce68e2ac8d8b153e65241288edf5c6c2a46ff6f428"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1b0e944f25a75255894f6b1790550e612f7310787c641518127a5a7e9ba7c5c3"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "e16bb40167ea7211413941b611d5581bd0d2afb5e201f4b3e9c46acd8e22c752"
+          }
+        }
+      },
+      "file_bytes": 4964800,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_lh_20261004T172655194691Z/heldout_7_LH.npz",
+        "sha256": "a3cdb07af75f9555482c8c28ed4ae75206937d3b357dbe3b93e3599686ac9cfe",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3d65e47342c890bd923677fad7460d1aa03f3d36b25d2a9692b488210a673d01"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "a5ad548a503728d107b0eaa34801b43562c72def1b6deb36481f5b0e3af92cdb"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "67526773412657d16f8814deb3baf2a37da277890c68ac3417a48aa3d257186e"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88d736eecefaf5b21c08804afd25bf016c4c5b4d27c83f71df0bfd0308a8c88a"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8183a5ccd4840ca57d7c53648569a64c211fd6d7abaf4d74722d95de532f3e2b"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fe9f431096137fbc0ff5f6167e22106d40eb07d2940e2723362ba5ab88ac7dae"
+          }
+        }
+      },
+      "file_bytes": 4923018,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_0_NH.npz",
+        "sha256": "3260a945d0332ee2ccd0b9698e7fc938e65f91bb674154a6783023e267a20838",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8939e8eff1a0975d67c216f400023e3184e02219d9bb6ff9e5245475520f98f0"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fb58c58ddc6df51396e071da0927e3c4a6967e73dea49552a77c3d017d62d29"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "786c4891ceadd619fddcacf34b7fdaa7851981d6fb8031047e42dc453b54ceef"
+          }
+        }
+      },
+      "file_bytes": 4148523,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_1_NH.npz",
+        "sha256": "58a643b629e2ddea6e2e0367080b21d28919ddab59f454db4c834fd002f6b087",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c7fd571367e8edbbff3061a28409ad318b9a61214d809538c5e0ea07b63559b2"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "381e16364db8bb18c9eb0f2945f8fd411f84d0f598155bd9b1797ba64f027bbe"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6b5887a8d4ba4eec83b8d76b151d8b82cdd0a355a49f134c9fe561b2302247"
+          }
+        }
+      },
+      "file_bytes": 4104897,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_2_NH.npz",
+        "sha256": "fc54efc741b783be5d13c1f383001ca6965c1044dd6302d90400adb9d34e4163",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b7ce907a0a7df7836eec8ef25916a84caa39bd3aba1efb6c104ec3c06531c00f"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "60d007eec180c42baeca58a6b90de3cab379c79fbf0f6d63999e97c02f1604cd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c5f9e58a15c6c05c8f7fe59feb33017190fba7d124d367089008eb15b49be699"
+          }
+        }
+      },
+      "file_bytes": 4214080,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_3_NH.npz",
+        "sha256": "c55d005e03c70f1e2192934e3ac04c2551f65cdc1e68d36cae52158dba93d66b",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bbf325ac824879f422836d861314335faa25b49b6d13b32fabf018a86afa0326"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d3db7714571f1de7c09416aeb3ed241037d200b50d6c01d4d6fdfdcb099cbb11"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32b2e1ac3baa1d2449150f87b94c831e51c64a597716cb0d86d28bbd6e8b3b2"
+          }
+        }
+      },
+      "file_bytes": 4188218,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_4_NH.npz",
+        "sha256": "70e758ae16d508929c44ff29222632551afe8c860f21c2a8e5562734c02b1743",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac1461763d1a15c182bdbd2d67e15a8d80c93f1d047738917298e607f26b8de9"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c830b9196b0fb84298de1e27128053840307b07020adcd7425cfd0101fb206dd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "860b97c578f4bfcb61fc0293014a2d658d0b160402d2182aa3bcc9061e47cfb4"
+          }
+        }
+      },
+      "file_bytes": 4256338,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_5_NH.npz",
+        "sha256": "253de46c64bf068fb2cc9d58a8ac1c75a5e435da753cd4b9ed0c390dfa316917",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0f009fb6ae015eb9c4d473c274e6b8c14458328339209ba92cf894c0f74a9629"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "888a624e5bc04e8fcff1a333746a500e47cd4ac7fe6daa2f34b335fd402d206b"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0aad41330659f2020b8e423eaf540e346e490e6e965670c85107139d4c73fc"
+          }
+        }
+      },
+      "file_bytes": 4263648,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_6_NH.npz",
+        "sha256": "a6640061d3cc8176763f33272bceba6f5332c74de56a66666651faa49e69e154",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "555b9dc6dbcd366e086546bcb8a2138f2071e851eb1989e265206dcb3a2ef214"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "153c33a8d893c7740be67e77c54dbd683e9761018d1b787f48b502995e0f2abb"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4bb1c00e5811f2a5035bb52486af98bc7331359db0c15a4f53dc34479461baf5"
+          }
+        }
+      },
+      "file_bytes": 4295255,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nh_20261004T173211041425Z/heldout_7_NH.npz",
+        "sha256": "0f91388b426dfe5240efe90daec6d876e56625b2af54220d194e395256a13df9",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3d65e47342c890bd923677fad7460d1aa03f3d36b25d2a9692b488210a673d01"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f2a6e6f399bc32837fe0ad84f870c1f10c3d91e593b88bca3bb589f31b883b0c"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23d439ce21c53de2a9786d02ce1c1dad5fb8c55a31643cac6f82d56436b47745"
+          }
+        }
+      },
+      "file_bytes": 4254344,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_0_NL.npz",
+        "sha256": "3260a945d0332ee2ccd0b9698e7fc938e65f91bb674154a6783023e267a20838",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8939e8eff1a0975d67c216f400023e3184e02219d9bb6ff9e5245475520f98f0"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fb58c58ddc6df51396e071da0927e3c4a6967e73dea49552a77c3d017d62d29"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "786c4891ceadd619fddcacf34b7fdaa7851981d6fb8031047e42dc453b54ceef"
+          }
+        }
+      },
+      "file_bytes": 4148523,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_1_NL.npz",
+        "sha256": "58a643b629e2ddea6e2e0367080b21d28919ddab59f454db4c834fd002f6b087",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c7fd571367e8edbbff3061a28409ad318b9a61214d809538c5e0ea07b63559b2"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "381e16364db8bb18c9eb0f2945f8fd411f84d0f598155bd9b1797ba64f027bbe"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6b5887a8d4ba4eec83b8d76b151d8b82cdd0a355a49f134c9fe561b2302247"
+          }
+        }
+      },
+      "file_bytes": 4104897,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_2_NL.npz",
+        "sha256": "fc54efc741b783be5d13c1f383001ca6965c1044dd6302d90400adb9d34e4163",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b7ce907a0a7df7836eec8ef25916a84caa39bd3aba1efb6c104ec3c06531c00f"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "60d007eec180c42baeca58a6b90de3cab379c79fbf0f6d63999e97c02f1604cd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c5f9e58a15c6c05c8f7fe59feb33017190fba7d124d367089008eb15b49be699"
+          }
+        }
+      },
+      "file_bytes": 4214080,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_3_NL.npz",
+        "sha256": "c55d005e03c70f1e2192934e3ac04c2551f65cdc1e68d36cae52158dba93d66b",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bbf325ac824879f422836d861314335faa25b49b6d13b32fabf018a86afa0326"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d3db7714571f1de7c09416aeb3ed241037d200b50d6c01d4d6fdfdcb099cbb11"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32b2e1ac3baa1d2449150f87b94c831e51c64a597716cb0d86d28bbd6e8b3b2"
+          }
+        }
+      },
+      "file_bytes": 4188218,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_4_NL.npz",
+        "sha256": "70e758ae16d508929c44ff29222632551afe8c860f21c2a8e5562734c02b1743",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac1461763d1a15c182bdbd2d67e15a8d80c93f1d047738917298e607f26b8de9"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c830b9196b0fb84298de1e27128053840307b07020adcd7425cfd0101fb206dd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "860b97c578f4bfcb61fc0293014a2d658d0b160402d2182aa3bcc9061e47cfb4"
+          }
+        }
+      },
+      "file_bytes": 4256338,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_5_NL.npz",
+        "sha256": "253de46c64bf068fb2cc9d58a8ac1c75a5e435da753cd4b9ed0c390dfa316917",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0f009fb6ae015eb9c4d473c274e6b8c14458328339209ba92cf894c0f74a9629"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "888a624e5bc04e8fcff1a333746a500e47cd4ac7fe6daa2f34b335fd402d206b"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0aad41330659f2020b8e423eaf540e346e490e6e965670c85107139d4c73fc"
+          }
+        }
+      },
+      "file_bytes": 4263648,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_6_NL.npz",
+        "sha256": "a6640061d3cc8176763f33272bceba6f5332c74de56a66666651faa49e69e154",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "555b9dc6dbcd366e086546bcb8a2138f2071e851eb1989e265206dcb3a2ef214"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "153c33a8d893c7740be67e77c54dbd683e9761018d1b787f48b502995e0f2abb"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4bb1c00e5811f2a5035bb52486af98bc7331359db0c15a4f53dc34479461baf5"
+          }
+        }
+      },
+      "file_bytes": 4295255,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_nl_20261004T172937864343Z/heldout_7_NL.npz",
+        "sha256": "0f91388b426dfe5240efe90daec6d876e56625b2af54220d194e395256a13df9",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3d65e47342c890bd923677fad7460d1aa03f3d36b25d2a9692b488210a673d01"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7d3decc4431030fed647b9a00d41c08c260ad51346ffde3fef6a274a6df8d8d"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f2a6e6f399bc32837fe0ad84f870c1f10c3d91e593b88bca3bb589f31b883b0c"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23d439ce21c53de2a9786d02ce1c1dad5fb8c55a31643cac6f82d56436b47745"
+          }
+        }
+      },
+      "file_bytes": 4254344,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_0_R0.npz",
+        "sha256": "bfea9e3e021589834123331d007ffea8f9acdd5b074fe5c7c376eaf7b2b3d994",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8939e8eff1a0975d67c216f400023e3184e02219d9bb6ff9e5245475520f98f0"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8861e035daa0fd6785b83e048dcca5607155fcc248e1417948ae335e857b7eb1"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "88acfa1250316d55bcf6e10c29d09c7641785caddd7d9125e8169b1f1b0a4b96"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "1fb58c58ddc6df51396e071da0927e3c4a6967e73dea49552a77c3d017d62d29"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "786c4891ceadd619fddcacf34b7fdaa7851981d6fb8031047e42dc453b54ceef"
+          }
+        }
+      },
+      "file_bytes": 4147058,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_1_R0.npz",
+        "sha256": "5a69383d8d8dec1a63f6269578f320ea9bfbb2912f4914bf89f3d2a12f685706",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c7fd571367e8edbbff3061a28409ad318b9a61214d809538c5e0ea07b63559b2"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "68c267dd0f16f1d966b10161ff544fcd004714b91bbca41eb6c9351ac5caca05"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "90868f926177a0a2fff7fc780625ef32528a74ea2f816dce144e9bce39e8cf87"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "381e16364db8bb18c9eb0f2945f8fd411f84d0f598155bd9b1797ba64f027bbe"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dd6b5887a8d4ba4eec83b8d76b151d8b82cdd0a355a49f134c9fe561b2302247"
+          }
+        }
+      },
+      "file_bytes": 4103432,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_2_R0.npz",
+        "sha256": "2b42378f860662fcffb2c4d43e7264228ca2eefa82d87c7b884c069923960677",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "b7ce907a0a7df7836eec8ef25916a84caa39bd3aba1efb6c104ec3c06531c00f"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "818d05707994266363999a097f0cc537ab99780d7647f71fdaf0e00294a50c98"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0c1ac456f7f32ef2a9af84c50e60562b761b98260db2dbd805a497eccb210bba"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "60d007eec180c42baeca58a6b90de3cab379c79fbf0f6d63999e97c02f1604cd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c5f9e58a15c6c05c8f7fe59feb33017190fba7d124d367089008eb15b49be699"
+          }
+        }
+      },
+      "file_bytes": 4212615,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_3_R0.npz",
+        "sha256": "d0e91e09594ec7c4c6c3edd377eb7c1a4255b039e73a22ef4d57013adf7fa598",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "bbf325ac824879f422836d861314335faa25b49b6d13b32fabf018a86afa0326"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "06b305e7267cf3f44ee8cd0217d50789a9d45805b17a2967669b327989f65bc8"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "8e1490a55f8edda71cfc47f467b2cc9f8edebb9d98eff3824f3bd92a2cd640d8"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d3db7714571f1de7c09416aeb3ed241037d200b50d6c01d4d6fdfdcb099cbb11"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c32b2e1ac3baa1d2449150f87b94c831e51c64a597716cb0d86d28bbd6e8b3b2"
+          }
+        }
+      },
+      "file_bytes": 4186753,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_4_R0.npz",
+        "sha256": "05fd467750714b93e481a24e4d9051f7d8c4089b15839d3c4dd85a780d232460",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ac1461763d1a15c182bdbd2d67e15a8d80c93f1d047738917298e607f26b8de9"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "063a272c2a8df600db50fbb84a3047c3e7a8f2342326d7dc17b752f2bc44ee6a"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "715874cd55f19be7915beaba35e2da35a2c6640615787da131df0f5d516ed855"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "c830b9196b0fb84298de1e27128053840307b07020adcd7425cfd0101fb206dd"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "860b97c578f4bfcb61fc0293014a2d658d0b160402d2182aa3bcc9061e47cfb4"
+          }
+        }
+      },
+      "file_bytes": 4254873,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_5_R0.npz",
+        "sha256": "046efff3d86cc95bc675d920e1305a6056114a08bd7e5a03bc5de3c8c5d94742",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0f009fb6ae015eb9c4d473c274e6b8c14458328339209ba92cf894c0f74a9629"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "9dce1ad833a628bf1b25584f06bc849290da471be611c3176348fec4bab21577"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7599a23ec61bb2e2b116f02e2f39e4261a8c9fa72b118176b3fb8609b64f67ef"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "888a624e5bc04e8fcff1a333746a500e47cd4ac7fe6daa2f34b335fd402d206b"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3f0aad41330659f2020b8e423eaf540e346e490e6e965670c85107139d4c73fc"
+          }
+        }
+      },
+      "file_bytes": 4262183,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_6_R0.npz",
+        "sha256": "b659a5c475aaaf12b4104cb057737a22e5682d1ac4c1ae82be23f9da7bd302aa",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "555b9dc6dbcd366e086546bcb8a2138f2071e851eb1989e265206dcb3a2ef214"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d2e91a1e98a2c5c59e4cc64a3733c182eb8e70f606650551490d18cbf3f0b9ad"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7152aaa9bc1d80118c79de68acc53629ec90b1d3a1bdd131e594aad1e76691f4"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "153c33a8d893c7740be67e77c54dbd683e9761018d1b787f48b502995e0f2abb"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "4bb1c00e5811f2a5035bb52486af98bc7331359db0c15a4f53dc34479461baf5"
+          }
+        }
+      },
+      "file_bytes": 4293790,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_eval_r0_20261004T172127894984Z/heldout_7_R0.npz",
+        "sha256": "7a56a769958a968b54de00e0c96af6610fc3ea72b28334fef5142176e7c678f2",
+        "aliases": {},
+        "members": {
+          "rhs": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "3d65e47342c890bd923677fad7460d1aa03f3d36b25d2a9692b488210a673d01"
+          },
+          "prefix": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "prefix_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "delta": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "943696a366338cdf1765680dd633ef600abb4a015c7c6bd3d41cd7d585bc98c8"
+          },
+          "initial": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "62463adecdbfa29daaa5228d720b329d5ed6a746d2bb6ed11306dfd78e850a4c"
+          },
+          "initial_residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dbdc518fdb41d12f9547fafdd2ba09875c480a1491fa9a045837b9438252f97c"
+          },
+          "z": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "f2a6e6f399bc32837fe0ad84f870c1f10c3d91e593b88bca3bb589f31b883b0c"
+          },
+          "residual": {
+            "shape": [
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "23d439ce21c53de2a9786d02ce1c1dad5fb8c55a31643cac6f82d56436b47745"
+          }
+        }
+      },
+      "file_bytes": 4252879,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_0_1e-04.npz",
+        "sha256": "16a0aecc90072fdebe4fe43153c35dc1f7f6d7109225de253a242e8dccd0cd1d",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "dce54bdbabfb7669f0d25b88c0c3664e509f1237a9fe2a12fe4c2ac0a389d6de"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0262b7b43a4f4f0e601aaf154e96492117af33ed45e94e70c43ad8f1551ca2f4"
+          }
+        }
+      },
+      "file_bytes": 2596946,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_0_1e-05.npz",
+        "sha256": "1473bc4072e084c9891bfc5eed2f65fd8dd0b59da895c9a0c593a69773afcfaf",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "faf661c9d7904ec41277099b63dfd9f52c6d8987353f1843368eba06868910b7"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0262b7b43a4f4f0e601aaf154e96492117af33ed45e94e70c43ad8f1551ca2f4"
+          }
+        }
+      },
+      "file_bytes": 2581695,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_0_3e-05.npz",
+        "sha256": "2127c3189600cb03a7c00cf3ec15a24240d85c4f8a753cb0a6499756a56607d5",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "ce6f0998c6966f5b857fb28b769b23fb189b96d37439f05dde441176100c4416"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "0262b7b43a4f4f0e601aaf154e96492117af33ed45e94e70c43ad8f1551ca2f4"
+          }
+        }
+      },
+      "file_bytes": 2614930,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_1_1e-04.npz",
+        "sha256": "c3c3fd0635d79b42953d5f7f8ebd80f34c7a75d6afcb144f13d324dcb580059f",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "7e1dfc142242abb5a9f3dde7876189193cf0dbb3fe22927ec6c62ab3187914b3"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "070d3422de1aa17f60ff484eb72cb7594bc9f1d963a12cdf8cf7a8b506a9b72c"
+          }
+        }
+      },
+      "file_bytes": 2594995,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_1_1e-05.npz",
+        "sha256": "388ed973b49995c3864e0c1b528e4841817394de38e9916446b245b03b4af8f3",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "92820e1fe37af9fc85f4f6400bd3e26a2e6a4ef9f36b8e5dc062099eba05db77"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "070d3422de1aa17f60ff484eb72cb7594bc9f1d963a12cdf8cf7a8b506a9b72c"
+          }
+        }
+      },
+      "file_bytes": 2579705,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_1_3e-05.npz",
+        "sha256": "b69d74acb7cb05f71d52180e955d38e860a4e5e733b004de8c3a4004ebad32c6",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "5ef35782b39e8a0e7e61d7a489f790000160ad96467bcaae9432e17cdbcfb10b"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "070d3422de1aa17f60ff484eb72cb7594bc9f1d963a12cdf8cf7a8b506a9b72c"
+          }
+        }
+      },
+      "file_bytes": 2613835,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_2_1e-04.npz",
+        "sha256": "29ad6ec04bc7a4c783d77383564209bd6f6aa0d26a2fc7f09e0839c973159c67",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "d7e265292047862c481be6a688f53e86ec969769b44d9e09db82d566d849328a"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "15aa3976a23b97336872d47b2ab4b947c88f4506d3b2cbfd2ed7e902902028c4"
+          }
+        }
+      },
+      "file_bytes": 2579502,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_2_1e-05.npz",
+        "sha256": "2540b77e429635b749368d4edf88a040735a4ab972ca9f1130a50768a9528bf3",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "efa6070e810e4892c7daa66df101afab8de840762bbf5c79e5de8f63d1111a39"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "15aa3976a23b97336872d47b2ab4b947c88f4506d3b2cbfd2ed7e902902028c4"
+          }
+        }
+      },
+      "file_bytes": 2563971,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/FD_2_3e-05.npz",
+        "sha256": "075e4170b901aa7294cf985ffe3849bbd6e5dbe516bffc891012fc398c0a5ec3",
+        "aliases": {},
+        "members": {
+          "finite_difference": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "fe1a0906a773d7d9a05ac4d015c98e63edd91970cb042bb6d2ca691759e8d6cb"
+          },
+          "jvp": {
+            "shape": [
+              2,
+              45000
+            ],
+            "dtype": "<c16",
+            "sha256": "15aa3976a23b97336872d47b2ab4b947c88f4506d3b2cbfd2ed7e902902028c4"
+          }
+        }
+      },
+      "file_bytes": 2602652,
+      "all_member_hashes": "PASS"
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_setup_20261004T165928866881Z/canonical_bucket_inventory.npz",
+        "sha256": "8f3292e52a7c1e0f6966833c5589812931ab271797d25a4d661a92f17c196787",
+        "aliases": {},
+        "members": {
+          "entity_group": {
+            "shape": [
+              496
+            ],
+            "dtype": "<i8",
+            "sha256": "870a3360676323e0543467dda3a7e452e05f3994a0257619764f7ba87b77c71d"
+          },
+          "canonical_offsets": {
+            "shape": [
+              497
+            ],
+            "dtype": "<i8",
+            "sha256": "8c8da6a6f5f2331381cf335cc527d5232bb16cd4a80795a3bd3661a4f84cab44"
+          },
+          "level0_keys": {
+            "shape": [
+              12,
+              3
+            ],
+            "dtype": "<i8",
+            "sha256": "4e75005eced8a50ac9ca4d2f30125a742212dfedddcfaf22fa5610ec8d7f9944"
+          },
+          "level0_ids": {
+            "shape": [
+              496
+            ],
+            "dtype": "<i8",
+            "sha256": "3c3f22de8149e49099bf3dbf75028accb9e01c313b0201806f3f3ebc63de699a"
+          },
+          "level0_counts": {
+            "shape": [
+              12,
+              7
+            ],
+            "dtype": "<i8",
+            "sha256": "b0d5a4a1d80ae29b966a9d2998c82361504ce61d2ef9d2968da338eee78c7be7"
+          },
+          "level1_keys": {
+            "shape": [
+              2,
+              3
+            ],
+            "dtype": "<i8",
+            "sha256": "47ebc1df7b8ccc0aaf3506224e6916e847c04466c2dfb986934d19350faac7e3"
+          },
+          "level1_ids": {
+            "shape": [
+              496
+            ],
+            "dtype": "<i8",
+            "sha256": "4ebc6d4da70135e79c345fb218a41b6ff1b48867e4a37ac50fcc72a6f9b1b39d"
+          },
+          "level1_counts": {
+            "shape": [
+              2,
+              7
+            ],
+            "dtype": "<i8",
+            "sha256": "b5beac69eabd81826798b8f9d1a03608525d10ff69da86f0378611aae6c7cdd1"
+          },
+          "level2_keys": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "<i8",
+            "sha256": "9d908ecfb6b256def8b49a7c504e6c889c4b0e41fe6ce3e01863dd7b61a20aa0"
+          },
+          "level2_ids": {
+            "shape": [
+              496
+            ],
+            "dtype": "<i8",
+            "sha256": "12525d303b667ee3d0917d8257a21fa0ae80a706be72d4fe8fa4b06739bdbe38"
+          },
+          "level2_counts": {
+            "shape": [
+              1,
+              7
+            ],
+            "dtype": "<i8",
+            "sha256": "a4e6998ac7b99fb93334ab0cc28ddfee2ad82762b13d3fb2f5bacbdc24c07d74"
+          },
+          "parent0": {
+            "shape": [
+              12
+            ],
+            "dtype": "<i8",
+            "sha256": "7c4a7b1b688fd748ddbba9bac54783014f7e99a181257bedaaeeb5e24fdf478c"
+          },
+          "parent1": {
+            "shape": [
+              2
+            ],
+            "dtype": "<i8",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+          },
+          "keys": {
+            "shape": [
+              496,
+              5
+            ],
+            "dtype": "<i8",
+            "sha256": "c18b7dfac142a591a1aca050fa8775d17395c4764d91b60639ff6daf22942af3"
+          },
+          "independent": {
+            "shape": [
+              42624
+            ],
+            "dtype": "<i8",
+            "sha256": "abec9a9db71d0fb4e9f57076d62b0105d5b17b947744abbd1e20180cd36e9ab1"
+          },
+          "slaves": {
+            "shape": [
+              2376
+            ],
+            "dtype": "<i4",
+            "sha256": "89d4d39a31ccd27348350eb1e87ad844a299b490121675fe84a73afd9803affe"
+          }
+        }
+      },
+      "file_bytes": 73859,
+      "all_member_hashes": "PASS"
+    }
+  ],
+  "unique_payload_bytes": 240871496,
+  "model_files": [
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_gradient_20261004T170850973963Z/nonzero_gradient_witness.pt",
+        "sha256": "67504446cdd4a1a2d1eac6b841e22d3b15836196ab20214487959d0b5c9ded43",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 14541709,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_setup_20261004T165928866881Z/calibration_transaction.pt",
+        "sha256": "f9a7642906b5a0e18abad3542f29bc74a3c1928630cedd7c553e3116315fbb15",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625883,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/checkpoint_0.pt",
+        "sha256": "17ead570d4fa3a84fe3539452d78ef915d16ffcd681c045916c6977d5b33775a",
+        "committed": true
+      },
+      "bytes": 14541725,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/checkpoint_128.pt",
+        "sha256": "d4dd63896dc5e183d65bf1ef31b9fb80198b356cd18cd10d432dbbbb6ea7aea1",
+        "committed": true
+      },
+      "bytes": 43625197,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/checkpoint_16.pt",
+        "sha256": "1e61659e13b9e836b7b2ed7ad1f895a08449197865cdae76fadc3b3ad6fcd7b9",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/checkpoint_32.pt",
+        "sha256": "3f4a885482edee894daf64cf534aca7e98e061935619e066cbfd2a9a0ba57aa5",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/checkpoint_64.pt",
+        "sha256": "6cf21c27c203e568eca2147189770dc1649e2be5cd094ffcd22a47e13013d543",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/committed_slot_0.pt",
+        "sha256": "776a46fbb988a0c1dc3dc439ebe9c591e2d23b5309e12e1a3c5b9e3aab633c74",
+        "committed": true
+      },
+      "bytes": 43625385,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/committed_slot_1.pt",
+        "sha256": "621eec78a635c8a6c25f237562ffcef28c5ed03a9299746308b89d7f9e3a8d45",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625385,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_lh_20261004T170954640203Z/last_committed.pt",
+        "sha256": "e9eb07c9013d7f6a630aebe87021343068ba2a586f917d7db5f727efd7b144ee",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625197,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/checkpoint_0.pt",
+        "sha256": "17ead570d4fa3a84fe3539452d78ef915d16ffcd681c045916c6977d5b33775a",
+        "committed": true
+      },
+      "bytes": 14541725,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/checkpoint_128.pt",
+        "sha256": "74037d1efe9e23128e85be9834f972439899f395e07819258dd1cf6a69238a4e",
+        "committed": true
+      },
+      "bytes": 43625197,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/checkpoint_16.pt",
+        "sha256": "5e965dc056912ef709a1842a4787d9faba699d63d764c0bcde65b31c4932a7b2",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/checkpoint_32.pt",
+        "sha256": "46a85e9afbf8232e3258b0a3a627f0b637884ef5145c9ef16ea5e9248209ebc1",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/checkpoint_64.pt",
+        "sha256": "40a461cca5e2ea56e9983243372a709118968b4703393ba0c49714eab8861484",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/committed_slot_0.pt",
+        "sha256": "f71453c07ab81cb69e34542a7fb5db9312144b31e9c7f06761485c1e458e6aae",
+        "committed": true
+      },
+      "bytes": 43625385,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/committed_slot_1.pt",
+        "sha256": "4774c1fe502e7c408ef99eec70aa7b4bf0a65b936835140afacf26ac1d78a2b5",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625385,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nh_20261004T171714251384Z/last_committed.pt",
+        "sha256": "33740399b6b2838dbf78dbfc91413cd7b580a65b83a923c488bb0e5a8c4ff0b2",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625197,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_0.pt",
+        "sha256": "17ead570d4fa3a84fe3539452d78ef915d16ffcd681c045916c6977d5b33775a",
+        "committed": true
+      },
+      "bytes": 14541725,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_128.pt",
+        "sha256": "bc9ae92e83929b77b9f58c13edca0e84d38e14eda30f320e00dbaba73bb715bb",
+        "committed": true
+      },
+      "bytes": 43625197,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_16.pt",
+        "sha256": "090e2c95c68ca196720e988e572444dee2377f05722010878df759279b16b6ef",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_32.pt",
+        "sha256": "f360e78aea15055fdace7b47ef059e0ec72efdcf5022ad8ed338d8a606a04b18",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_64.pt",
+        "sha256": "464247d72a3af002437eaf569fab7444d3370be7c6d11ac02832b06f9599e63d",
+        "committed": true
+      },
+      "bytes": 43625135,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/committed_slot_0.pt",
+        "sha256": "9d8369725eee2b8a1e6957b294e1fc0fa6b8be4c932c642fd418bfcd41e2684e",
+        "committed": true
+      },
+      "bytes": 43625385,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/committed_slot_1.pt",
+        "sha256": "88c5b3c31cca8c204437b255f6b4b536f80abdb3b3dbce7c8904d1c4c2e41744",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625385,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    },
+    {
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/last_committed.pt",
+        "sha256": "62504722570242779154f3d4ea2e3d5fd97290fc8f5c766269817fefe3a03b8a",
+        "classification": "PRESENT_BYTES_SNAPSHOT; origin witness or rolling pre-update transaction, not selected checkpoint"
+      },
+      "bytes": 43625197,
+      "file_hash": "PASS",
+      "optimizer_payload_not_deserialized_by_metadata_audit": true
+    }
+  ],
+  "array_bytes_are_not_RSS": true,
+  "upstream_arrays": "hash-bound references only, not copied or rewritten",
+  "unpublished_byte_snapshots": []
+}

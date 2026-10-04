@@ -1,0 +1,32 @@
+{
+  "UTC": "2026-10-04T17:49:21.571637+00:00",
+  "clock": {
+    "start_utc": "2026-10-04T16:34:01.208579075+00:00",
+    "start_utc_seconds": 1791131641.208579,
+    "start_monotonic": 1056636.069450649,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "label": "V45",
+    "branch": "task42_neural_coarse_inverse",
+    "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 7200,
+    "learning_seconds": 5400,
+    "probe_seconds": 90,
+    "cleanup_reserve_seconds": 180,
+    "monotonic_start_semantics": "derived conservatively from first shell UTC and contemporaneous UTC/monotonic; no deadline refresh",
+    "observed_utc": "2026-10-04T17:49:21.571699+00:00",
+    "observed_monotonic": 1061156.43256645,
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 4520.3631200790405,
+    "heavy_remaining_seconds": 78279.63687992096,
+    "total_remaining_seconds": 81879.63687992096
+  },
+  "closed": true,
+  "active": null,
+  "own_actor_pids": [],
+  "lock_acquired_released": true,
+  "neighbors_not_modified": true,
+  "source": "53b7a109160e52caf6a712b1d4059b6adbb049ce"
+}

@@ -1,0 +1,886 @@
+{
+  "status": "WEIGHTS_FROZEN",
+  "route": "NN-L",
+  "initial_parameter_hash": "aeb8bfe77a08a4f6d6075f1af047de5b5c32a2160e511b88eb1f61bcf3810f0c",
+  "selected": {
+    "update": 0,
+    "qr": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "qe": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "median_qr": 1.0,
+    "median_qe": 1.0,
+    "max_qe": 1.0,
+    "activation_statistics": [
+      {
+        "name": "encoder_6",
+        "input_RMS": 0.011759813759070217,
+        "derivative_min": 0.9741025605155123,
+        "derivative_mean": 0.9998619401353627,
+        "derivative_max": 0.9999999999999997,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 10752
+      },
+      {
+        "name": "encoder_60",
+        "input_RMS": 0.2513058724269425,
+        "derivative_min": 0.011830688447551752,
+        "derivative_mean": 0.9553506699726263,
+        "derivative_max": 0.9999999999976603,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 99840
+      },
+      {
+        "name": "encoder_450",
+        "input_RMS": 0.47353869728362663,
+        "derivative_min": 0.00016907692322043477,
+        "derivative_mean": 0.8799284747273044,
+        "derivative_max": 0.9999999999999841,
+        "saturation_fraction_derivative_lt_0p01": 0.0008289930555555556,
+        "samples": 230400
+      },
+      {
+        "name": "cross_type_64",
+        "input_RMS": 0.09124745911659046,
+        "derivative_min": 0.7205359140899956,
+        "derivative_mean": 0.9919834912653313,
+        "derivative_max": 0.9999999999993275,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 3072
+      },
+      {
+        "name": "combine_0",
+        "input_RMS": 0.05826996934677639,
+        "derivative_min": 0.9225466184199528,
+        "derivative_mean": 0.9966574939501217,
+        "derivative_max": 0.9999999997721352,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 3840
+      },
+      {
+        "name": "combine_1",
+        "input_RMS": 0.0634447984399849,
+        "derivative_min": 0.946611548964809,
+        "derivative_mean": 0.9960246489613919,
+        "derivative_max": 0.9999999999949583,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 3840
+      },
+      {
+        "name": "combine_2",
+        "input_RMS": 0.06443114319039789,
+        "derivative_min": 0.9511043727894656,
+        "derivative_mean": 0.9959025093059702,
+        "derivative_max": 0.9999999998627321,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 3072
+      },
+      {
+        "name": "combine_3",
+        "input_RMS": 0.35961347580669123,
+        "derivative_min": 0.12863347259794622,
+        "derivative_mean": 0.9050398417021397,
+        "derivative_max": 0.999999999984481,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 30720
+      },
+      {
+        "name": "combine_4",
+        "input_RMS": 0.1712773236772867,
+        "derivative_min": 0.47558301771663736,
+        "derivative_mean": 0.9732658680676617,
+        "derivative_max": 0.9999999999955008,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 30720
+      },
+      {
+        "name": "combine_5",
+        "input_RMS": 0.39506143080271433,
+        "derivative_min": 0.08254908756447488,
+        "derivative_mean": 0.8986994537323301,
+        "derivative_max": 0.9999999999999971,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 38400
+      },
+      {
+        "name": "combine_6",
+        "input_RMS": 0.4905908672986942,
+        "derivative_min": 0.09444697462753271,
+        "derivative_mean": 0.8399594947925336,
+        "derivative_max": 0.9999999999971615,
+        "saturation_fraction_derivative_lt_0p01": 0.0,
+        "samples": 230400
+      }
+    ],
+    "receipt": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_0.pt",
+      "sha256": "17ead570d4fa3a84fe3539452d78ef915d16ffcd681c045916c6977d5b33775a",
+      "committed": true
+    }
+  },
+  "all_checkpoints": [
+    {
+      "update": 0,
+      "qr": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "qe": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "median_qr": 1.0,
+      "median_qe": 1.0,
+      "max_qe": 1.0,
+      "activation_statistics": [
+        {
+          "name": "encoder_6",
+          "input_RMS": 0.011759813759070217,
+          "derivative_min": 0.9741025605155123,
+          "derivative_mean": 0.9998619401353627,
+          "derivative_max": 0.9999999999999997,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 10752
+        },
+        {
+          "name": "encoder_60",
+          "input_RMS": 0.2513058724269425,
+          "derivative_min": 0.011830688447551752,
+          "derivative_mean": 0.9553506699726263,
+          "derivative_max": 0.9999999999976603,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 99840
+        },
+        {
+          "name": "encoder_450",
+          "input_RMS": 0.47353869728362663,
+          "derivative_min": 0.00016907692322043477,
+          "derivative_mean": 0.8799284747273044,
+          "derivative_max": 0.9999999999999841,
+          "saturation_fraction_derivative_lt_0p01": 0.0008289930555555556,
+          "samples": 230400
+        },
+        {
+          "name": "cross_type_64",
+          "input_RMS": 0.09124745911659046,
+          "derivative_min": 0.7205359140899956,
+          "derivative_mean": 0.9919834912653313,
+          "derivative_max": 0.9999999999993275,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_0",
+          "input_RMS": 0.05826996934677639,
+          "derivative_min": 0.9225466184199528,
+          "derivative_mean": 0.9966574939501217,
+          "derivative_max": 0.9999999997721352,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_1",
+          "input_RMS": 0.0634447984399849,
+          "derivative_min": 0.946611548964809,
+          "derivative_mean": 0.9960246489613919,
+          "derivative_max": 0.9999999999949583,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_2",
+          "input_RMS": 0.06443114319039789,
+          "derivative_min": 0.9511043727894656,
+          "derivative_mean": 0.9959025093059702,
+          "derivative_max": 0.9999999998627321,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_3",
+          "input_RMS": 0.35961347580669123,
+          "derivative_min": 0.12863347259794622,
+          "derivative_mean": 0.9050398417021397,
+          "derivative_max": 0.999999999984481,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_4",
+          "input_RMS": 0.1712773236772867,
+          "derivative_min": 0.47558301771663736,
+          "derivative_mean": 0.9732658680676617,
+          "derivative_max": 0.9999999999955008,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_5",
+          "input_RMS": 0.39506143080271433,
+          "derivative_min": 0.08254908756447488,
+          "derivative_mean": 0.8986994537323301,
+          "derivative_max": 0.9999999999999971,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 38400
+        },
+        {
+          "name": "combine_6",
+          "input_RMS": 0.4905908672986942,
+          "derivative_min": 0.09444697462753271,
+          "derivative_mean": 0.8399594947925336,
+          "derivative_max": 0.9999999999971615,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 230400
+        }
+      ],
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_0.pt",
+        "sha256": "17ead570d4fa3a84fe3539452d78ef915d16ffcd681c045916c6977d5b33775a",
+        "committed": true
+      }
+    },
+    {
+      "update": 16,
+      "qr": [
+        1.3269749045894794,
+        1.2765816650525368,
+        2.6189022277951652,
+        3.9465156330491262
+      ],
+      "qe": [
+        1.0151260850212394,
+        1.0240328261074851,
+        0.9985322239347691,
+        0.9965473271126672
+      ],
+      "median_qr": 1.9729385661923224,
+      "median_qe": 1.0068291544780044,
+      "max_qe": 1.0240328261074851,
+      "activation_statistics": [
+        {
+          "name": "encoder_6",
+          "input_RMS": 0.011657074988862974,
+          "derivative_min": 0.9749816954884024,
+          "derivative_mean": 0.9998643355432641,
+          "derivative_max": 0.9999999999998789,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 10752
+        },
+        {
+          "name": "encoder_60",
+          "input_RMS": 0.234723055457848,
+          "derivative_min": 0.01348948588025245,
+          "derivative_mean": 0.9600831182511175,
+          "derivative_max": 0.9999999999995512,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 99840
+        },
+        {
+          "name": "encoder_450",
+          "input_RMS": 0.45605177310774286,
+          "derivative_min": 0.00018726694063475602,
+          "derivative_mean": 0.8852158841573032,
+          "derivative_max": 0.999999999998699,
+          "saturation_fraction_derivative_lt_0p01": 0.0006814236111111112,
+          "samples": 230400
+        },
+        {
+          "name": "cross_type_64",
+          "input_RMS": 0.11634900670944985,
+          "derivative_min": 0.5196544682267256,
+          "derivative_mean": 0.9873681445408709,
+          "derivative_max": 0.999999999996235,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_0",
+          "input_RMS": 0.06590452522502865,
+          "derivative_min": 0.931536257327681,
+          "derivative_mean": 0.9957221706056525,
+          "derivative_max": 0.999999999999988,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_1",
+          "input_RMS": 0.06373661804054513,
+          "derivative_min": 0.9229261662483975,
+          "derivative_mean": 0.9959983011886568,
+          "derivative_max": 0.9999999999995715,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_2",
+          "input_RMS": 0.07233234649304293,
+          "derivative_min": 0.878908844534934,
+          "derivative_mean": 0.9948675246425043,
+          "derivative_max": 0.9999999985655005,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_3",
+          "input_RMS": 0.32957044874725466,
+          "derivative_min": 0.14603351733469971,
+          "derivative_mean": 0.9175159676494986,
+          "derivative_max": 0.9999999999832103,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_4",
+          "input_RMS": 0.1666722811473838,
+          "derivative_min": 0.48925254627228776,
+          "derivative_mean": 0.9745223586027765,
+          "derivative_max": 0.9999999999997473,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_5",
+          "input_RMS": 0.36733452948606005,
+          "derivative_min": 0.07145080923377578,
+          "derivative_mean": 0.9100355052715978,
+          "derivative_max": 0.9999999999942821,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 38400
+        },
+        {
+          "name": "combine_6",
+          "input_RMS": 0.46367068567844116,
+          "derivative_min": 0.0862759714246053,
+          "derivative_mean": 0.852615531935934,
+          "derivative_max": 0.9999999999999872,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 230400
+        }
+      ],
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_16.pt",
+        "sha256": "090e2c95c68ca196720e988e572444dee2377f05722010878df759279b16b6ef",
+        "committed": true
+      }
+    },
+    {
+      "update": 32,
+      "qr": [
+        1.1766058408525857,
+        1.172319544525106,
+        2.670740398646923,
+        3.331107670076081
+      ],
+      "qe": [
+        1.0106589344629209,
+        1.0182363630907385,
+        0.9980026624829292,
+        1.0063833387021912
+      ],
+      "median_qr": 1.9236731197497543,
+      "median_qe": 1.008521136582556,
+      "max_qe": 1.0182363630907385,
+      "activation_statistics": [
+        {
+          "name": "encoder_6",
+          "input_RMS": 0.011510669634816116,
+          "derivative_min": 0.975355724731338,
+          "derivative_mean": 0.9998677186252211,
+          "derivative_max": 0.9999999999999942,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 10752
+        },
+        {
+          "name": "encoder_60",
+          "input_RMS": 0.22304048416114558,
+          "derivative_min": 0.013934426979698156,
+          "derivative_mean": 0.9634438128134708,
+          "derivative_max": 0.9999999999999921,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 99840
+        },
+        {
+          "name": "encoder_450",
+          "input_RMS": 0.4889222814678301,
+          "derivative_min": 9.701300824072057e-05,
+          "derivative_mean": 0.8727047654081301,
+          "derivative_max": 0.9999999999762057,
+          "saturation_fraction_derivative_lt_0p01": 0.0008376736111111111,
+          "samples": 230400
+        },
+        {
+          "name": "cross_type_64",
+          "input_RMS": 0.15264773536229298,
+          "derivative_min": 0.4741918428874642,
+          "derivative_mean": 0.9791950803747361,
+          "derivative_max": 0.9999999998729959,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_0",
+          "input_RMS": 0.08648765850416194,
+          "derivative_min": 0.9094268504124904,
+          "derivative_mean": 0.9927067541548958,
+          "derivative_max": 0.9999999999875343,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_1",
+          "input_RMS": 0.08842982078120178,
+          "derivative_min": 0.8510561630356142,
+          "derivative_mean": 0.9924197412261055,
+          "derivative_max": 0.9999999999512634,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_2",
+          "input_RMS": 0.09977336922281524,
+          "derivative_min": 0.8454208753409624,
+          "derivative_mean": 0.9903372600736186,
+          "derivative_max": 0.999999999979233,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_3",
+          "input_RMS": 0.31955221007680445,
+          "derivative_min": 0.0888373868401906,
+          "derivative_mean": 0.9219667143585568,
+          "derivative_max": 0.9999999999963587,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_4",
+          "input_RMS": 0.16455276627570947,
+          "derivative_min": 0.5207564401245286,
+          "derivative_mean": 0.9751133904535586,
+          "derivative_max": 0.9999999999449601,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_5",
+          "input_RMS": 0.3504522626122411,
+          "derivative_min": 0.08210155767080196,
+          "derivative_mean": 0.9161968013324814,
+          "derivative_max": 0.9999999999999934,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 38400
+        },
+        {
+          "name": "combine_6",
+          "input_RMS": 0.4922363588346189,
+          "derivative_min": 0.06634016901069673,
+          "derivative_mean": 0.8392068654831155,
+          "derivative_max": 0.999999999992812,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 230400
+        }
+      ],
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_32.pt",
+        "sha256": "f360e78aea15055fdace7b47ef059e0ec72efdcf5022ad8ed338d8a606a04b18",
+        "committed": true
+      }
+    },
+    {
+      "update": 64,
+      "qr": [
+        1.2093461335087656,
+        1.335468251810083,
+        3.519112202608221,
+        2.889884054904137
+      ],
+      "qe": [
+        1.0137337240849076,
+        1.03098476553994,
+        0.9964106417174473,
+        1.0000409539856685
+      ],
+      "median_qr": 2.11267615335711,
+      "median_qe": 1.0068873390352882,
+      "max_qe": 1.03098476553994,
+      "activation_statistics": [
+        {
+          "name": "encoder_6",
+          "input_RMS": 0.011301184210661053,
+          "derivative_min": 0.977206300846926,
+          "derivative_mean": 0.9998724805070958,
+          "derivative_max": 0.9999999999999818,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 10752
+        },
+        {
+          "name": "encoder_60",
+          "input_RMS": 0.2080287037686259,
+          "derivative_min": 0.016228304369793833,
+          "derivative_mean": 0.9674670113449871,
+          "derivative_max": 0.9999999999999913,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 99840
+        },
+        {
+          "name": "encoder_450",
+          "input_RMS": 0.5403226857605414,
+          "derivative_min": 3.9797593542334475e-05,
+          "derivative_mean": 0.8538834674227918,
+          "derivative_max": 0.9999999999939357,
+          "saturation_fraction_derivative_lt_0p01": 0.0011675347222222222,
+          "samples": 230400
+        },
+        {
+          "name": "cross_type_64",
+          "input_RMS": 0.17507595385007177,
+          "derivative_min": 0.34732225627436486,
+          "derivative_mean": 0.974121651356227,
+          "derivative_max": 0.9999999999990921,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_0",
+          "input_RMS": 0.10457607795483566,
+          "derivative_min": 0.7255271566419733,
+          "derivative_mean": 0.9896869674855487,
+          "derivative_max": 0.9999999999999952,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_1",
+          "input_RMS": 0.10326784393131445,
+          "derivative_min": 0.7612148460915744,
+          "derivative_mean": 0.9898978179903752,
+          "derivative_max": 0.9999999999786944,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_2",
+          "input_RMS": 0.10285421744832801,
+          "derivative_min": 0.7343019407736425,
+          "derivative_mean": 0.989904302185589,
+          "derivative_max": 0.99999999991715,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_3",
+          "input_RMS": 0.29874478778445807,
+          "derivative_min": 0.11679852938131974,
+          "derivative_mean": 0.9303857775550134,
+          "derivative_max": 0.999999999879,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_4",
+          "input_RMS": 0.15259853756393263,
+          "derivative_min": 0.5264278837712296,
+          "derivative_mean": 0.9783266258061096,
+          "derivative_max": 0.9999999999967712,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_5",
+          "input_RMS": 0.3202502672814401,
+          "derivative_min": 0.057284968506275846,
+          "derivative_mean": 0.9270675429643711,
+          "derivative_max": 0.9999999999997679,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 38400
+        },
+        {
+          "name": "combine_6",
+          "input_RMS": 0.5138059103967494,
+          "derivative_min": 0.05381088665688194,
+          "derivative_mean": 0.8291800510013143,
+          "derivative_max": 0.9999999999996829,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 230400
+        }
+      ],
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_64.pt",
+        "sha256": "464247d72a3af002437eaf569fab7444d3370be7c6d11ac02832b06f9599e63d",
+        "committed": true
+      }
+    },
+    {
+      "update": 128,
+      "qr": [
+        1.106107084264161,
+        1.0677463474437656,
+        2.3543708160489105,
+        2.2089435709586875
+      ],
+      "qe": [
+        1.0094878994427412,
+        1.013952417358468,
+        0.9969734826033244,
+        0.994325795914202
+      ],
+      "median_qr": 1.6575253276114243,
+      "median_qe": 1.0032306910230329,
+      "max_qe": 1.013952417358468,
+      "activation_statistics": [
+        {
+          "name": "encoder_6",
+          "input_RMS": 0.010751667714769262,
+          "derivative_min": 0.9799077359699857,
+          "derivative_mean": 0.9998845631977699,
+          "derivative_max": 0.9999999999999996,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 10752
+        },
+        {
+          "name": "encoder_60",
+          "input_RMS": 0.17883447088473287,
+          "derivative_min": 0.026646018608638466,
+          "derivative_mean": 0.9748109486934382,
+          "derivative_max": 0.9999999999971125,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 99840
+        },
+        {
+          "name": "encoder_450",
+          "input_RMS": 0.6180329607384671,
+          "derivative_min": 3.3444754412581545e-05,
+          "derivative_mean": 0.8284372404430029,
+          "derivative_max": 0.999999999999948,
+          "saturation_fraction_derivative_lt_0p01": 0.001953125,
+          "samples": 230400
+        },
+        {
+          "name": "cross_type_64",
+          "input_RMS": 0.20253601362262177,
+          "derivative_min": 0.1954886016493267,
+          "derivative_mean": 0.9665711283260894,
+          "derivative_max": 0.9999999999987227,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_0",
+          "input_RMS": 0.10892067263871207,
+          "derivative_min": 0.8268370519455102,
+          "derivative_mean": 0.9886602827656034,
+          "derivative_max": 0.9999999999999419,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_1",
+          "input_RMS": 0.10524838361753867,
+          "derivative_min": 0.7464485971384653,
+          "derivative_mean": 0.9894155885678307,
+          "derivative_max": 0.99999999998152,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3840
+        },
+        {
+          "name": "combine_2",
+          "input_RMS": 0.11458775382630272,
+          "derivative_min": 0.804415442544709,
+          "derivative_mean": 0.9873930611205081,
+          "derivative_max": 0.9999999999133979,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 3072
+        },
+        {
+          "name": "combine_3",
+          "input_RMS": 0.26263020330345954,
+          "derivative_min": 0.1604560563134244,
+          "derivative_mean": 0.9431534999986265,
+          "derivative_max": 0.9999999999998702,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_4",
+          "input_RMS": 0.15118818877316603,
+          "derivative_min": 0.5438285115260244,
+          "derivative_mean": 0.978586261426211,
+          "derivative_max": 0.9999999999835438,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 30720
+        },
+        {
+          "name": "combine_5",
+          "input_RMS": 0.26895545916262875,
+          "derivative_min": 0.08534846676446217,
+          "derivative_mean": 0.9436580618516528,
+          "derivative_max": 0.9999999999671704,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 38400
+        },
+        {
+          "name": "combine_6",
+          "input_RMS": 0.5340960228072987,
+          "derivative_min": 0.0632973107021636,
+          "derivative_mean": 0.8181030417373103,
+          "derivative_max": 0.9999999999949241,
+          "saturation_fraction_derivative_lt_0p01": 0.0,
+          "samples": 230400
+        }
+      ],
+      "receipt": {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/checkpoint_128.pt",
+        "sha256": "bc9ae92e83929b77b9f58c13edca0e84d38e14eda30f320e00dbaba73bb715bb",
+        "committed": true
+      }
+    }
+  ],
+  "training_updates": 128,
+  "prior_complete_updates": 0,
+  "new_complete_updates": 128,
+  "resume_manifest": null,
+  "stop_reason": "FIXED_128_UPDATES",
+  "parameter_group_changes_last": {
+    "encoder": 5.597216687809507,
+    "message": 4.567852546844612,
+    "decoder": 3.6056954935171683,
+    "mix_local": 1.8704636925169256,
+    "mix_context": 1.5144912243266742
+  },
+  "real_parameters": 1817040,
+  "heldout_reads": 0,
+  "labels_reads": "train/validation only",
+  "history_path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v45/task042_v45_train_nl_20261004T171344281245Z/training_history.jsonl",
+  "history_sha256": "23876a64529b80c29d149dfa30671ba18e1fa6452b5964a0e75bc656f7e656ad",
+  "actual_action_calls": {
+    "A": 276,
+    "AH": 256
+  },
+  "model_forward_subcomponents_seconds": {
+    "JH_input_copy": 0.9596156582701951,
+    "encoder_phi": 0.9686966543085873,
+    "bucket_mean": 0.14804659527726471,
+    "bucket_broadcast_copy": 0.12826207466423512,
+    "cross_type_phi": 0.1238066281657666,
+    "combine_phi_decoder": 1.0349259064532816,
+    "canonical_output_copy": 0.31187368696555495,
+    "DJ_output_copy": 1.0162030223291367
+  },
+  "model_forward_subcomponents_calls": {
+    "JH_input_copy": 133,
+    "encoder_phi": 399,
+    "bucket_mean": 931,
+    "bucket_broadcast_copy": 1862,
+    "cross_type_phi": 133,
+    "combine_phi_decoder": 931,
+    "canonical_output_copy": 133,
+    "DJ_output_copy": 133
+  },
+  "environment": {
+    "executable": "/home/fenics/Projects/NN-Lab/.venv-ml/bin/python",
+    "Torch": "2.7.1+cpu",
+    "NumPy": "1.26.4",
+    "intra": 1,
+    "interop": 1,
+    "CUDA_available": false,
+    "GPU": 0,
+    "DataLoader": 0,
+    "affinity": [
+      2
+    ],
+    "loaded_threadpools": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/numpy.libs/libopenblas64_p-r0-0cf96a72.3.23.dev.so",
+        "symbol": "openblas_get_num_threads64_",
+        "threads": 1
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/.venv-ml/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+        "symbol": "omp_get_max_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+        "symbol": "openblas_get_num_threads",
+        "threads": 1
+      }
+    ]
+  },
+  "numerical_counts": {
+    "completed": {
+      "actions": 532,
+      "B_actions": 0
+    },
+    "upper": {
+      "actions": 532,
+      "B_actions": 0
+    }
+  },
+  "actual_math_hashes": {
+    "scripts/run_case.py": "f04ca174537b2e42ab97b01a44c35465ea6db70b3035635acf17c8465d74e3fc",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "dd251728b4ab8f07377c214c92ae6d6a468134620f184d680008ddfee1f3d642",
+    "src/runners/port_preparation.py": "3b41c023a91f19458014436383748f4a01672d90773eccf3ac9c7b708c1a3c6f",
+    "src/runners/task042_shared.py": "7ed8ff4cd2a57ba816f504e67d44c62e1da55d823d562a8e96c982b1930b096a",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_late_error_scope.py": "80eae1fe73dd861e13f4f2c63593ec46562c6d9c506d6897d4776a0e0a837524",
+    "src/solvers/neighborhood_late_error.py": "a59bb8ae7be0facc157815dec3c7a7bdd4983ae5ec29a69ee8af61a840545924",
+    "src/solvers/neighborhood_late_error_study.py": "0b2052ef82c839cbb31c826c92f483803e303585a07d6e699afecd7c532fd551",
+    "src/solvers/neighborhood_training_transaction.py": "f273d67f2cc4abcccfcee17e2c2878a29ab8691d2ae20f62d89e0d7d617e7fc0",
+    "src/test/test_neighborhood_late_error.py": "1b90e76db24114e1b47c8d2d367fff99f5aeb3ca25d9de9d177161b0fd3a0910",
+    "benchmarks/qualify_neighborhood_late_error.py": "be7c4ea2f8c83ae85a57114ffb805262273ad5e2cd99eb5f120677c67c21a7f6",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "92508a0ad65972010791ea9f59ab8ef94c46152ea886b704938a72d018629118",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "benchmarks/check_neighborhood_late_error.py": "ceed7cdb8724c241bc2c70f4e249f128b6ce4797fece7ef048aa7318c504e40f",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_late_error_v44.json": "c1cf1034964305a87c0ac42627f7067e6fbf4a3328feedeeeba9feb4dd832b14",
+    "src/solvers/full_moment_hierarchy.py": "15925c8072fa60c5cce48cecb433c6b2c0f6b4a42fcd3cf8db709fd3a94e6b50",
+    "src/solvers/full_moment_scope.py": "bfc4a816f3a57fc53e6bb2c17c33b13143745f6e364e28b71997ba21074bbbe6",
+    "src/solvers/full_moment_study.py": "2085d6c9fdae251cce4fec257d19dabd5a51a1de807342e8ad375ea215920867",
+    "src/solvers/neighborhood_pilot_workflow.py": "1a4fd6c9785fa06ce0b335eaf367f2ca7d8b498bf6dfbfddecf23b602571d8bb",
+    "src/test/test_full_moment_hierarchy.py": "31ba436f3c2e081e454f2cac9d770f250342005cc4908574e980fdade10b7b4f",
+    "benchmarks/qualify_full_moment.py": "3db2ad7c8dc3f69400168df5b1abf970e87d7d2ca33ddf95e51b2fd2a35001e3",
+    "benchmarks/check_full_moment.py": "6b5052d5e174d5db88eb3428ccaf2d848f420a3972a74754dba7c7629fe04a2e",
+    "input/task042_neural_coarse_inverse/full_moment_hierarchy_v45.json": "de3068c8fa105f587a0f75944969d194687a9813ea2ba31c5d461fe7ef7f5dfb"
+  },
+  "full_coefficients_not_trace_recovery": true,
+  "stage": "TRAIN_NL",
+  "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+  "elapsed_worker_seconds": 202.3973032250069,
+  "input_sha256": "71a4656ff8237c03be9a862638f6e3de0d08ebea0a77050e6e59c3389753f189",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

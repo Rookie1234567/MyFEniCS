@@ -1,0 +1,87 @@
+{
+  "rows": [
+    {
+      "role": "style",
+      "folder": "tmp/task042/v45/aux_style_001",
+      "source_sha": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+      "classification": "WORKER_FAILED",
+      "seconds": 2.7310758780222386,
+      "action_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "stderr": "tmp/task042/v45/aux_style_001/supervision/worker.log",
+      "actual_formal_numerical_failure": false
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v45/aux_post_docs02",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "WORKER_FAILED",
+      "seconds": 3.5958012740593404,
+      "action_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "stderr": "tmp/task042/v45/aux_post_docs02/supervision/worker.log",
+      "actual_formal_numerical_failure": false
+    },
+    {
+      "role": "post",
+      "folder": "tmp/task042/v45/aux_post_docs03",
+      "source_sha": "53b7a109160e52caf6a712b1d4059b6adbb049ce",
+      "classification": "WORKER_FAILED",
+      "seconds": 3.6009696170222014,
+      "action_counts": {
+        "completed": {
+          "actions": 0,
+          "B_actions": 0
+        },
+        "upper": {
+          "actions": 0,
+          "B_actions": 0
+        }
+      },
+      "stderr": "tmp/task042/v45/aux_post_docs03/supervision/worker.log",
+      "actual_formal_numerical_failure": false
+    }
+  ],
+  "root_causes": [
+    "early refactor missing self caught before formal source commit; actual dispatcher regression added",
+    "extra old registry checker retains two incoming errors; classified without modifying history",
+    "baseline comparator JSON list versus Python tuple; schema normalized and local recheck passed"
+  ],
+  "formal_numerical_replays": 0,
+  "training_restarts": 0,
+  "loss_or_gate_threshold_changes": 0,
+  "separate_manual_read_errors": [
+    {
+      "event": "read_only_helper_failed",
+      "UTC": "2026-10-04T17:00:03Z",
+      "error": "bare python unavailable in default shell; read command only, SETUP unaffected",
+      "numeric_consumption": 0,
+      "elapsed_semantics": "manual unsupervised read preparation; exact elapsed unknown"
+    },
+    {
+      "event": "read_only_helper_failed",
+      "UTC": "2026-10-04T17:08:36.796287350+00:00",
+      "error": "KeyError checks: DATA result uses identity_checks; shell set-e stopped before gradient launch",
+      "numeric_consumption": 0,
+      "observed_command_wall_seconds": 0.106672156,
+      "repair": "read passed/status, next authorized GRADIENT dat; no DATA replay"
+    }
+  ],
+  "additional_read_only_path_errors": "wrong guessed worker.log/documentation helper paths; no actor launched, exact manual cost unknown"
+}
