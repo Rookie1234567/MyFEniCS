@@ -33,14 +33,18 @@ CAPS = {"actions": 12000, "B_actions": 12}
 
 
 class NeuralWindow(PreparationWindow):
+    learning_stages = LEARNING
+
     def remaining(self, role):
         self.require_ready()
         runs = self.ledger()["runs"]
-        learn = sum(r["elapsed_seconds"] for r in runs if r["role"] in LEARNING)
+        learn = sum(
+            r["elapsed_seconds"] for r in runs if r["role"] in self.learning_stages
+        )
         sum(r["elapsed_seconds"] for r in runs if r["role"] == "RECOVERY")
         return min(
             5400 - learn
-            if role in LEARNING
+            if role in self.learning_stages
             else (
                 120
                 - sum(r["elapsed_seconds"] for r in runs if r["role"] == "DIAGNOSTIC")
@@ -63,8 +67,12 @@ class NeuralWindow(PreparationWindow):
         ):
             raise RuntimeError("V44 forecast must belong to its active worker")
         elapsed = time.monotonic() - active["before_clock"]["observed_monotonic"]
-        learn = sum(r["elapsed_seconds"] for r in book["runs"] if r["role"] in LEARNING)
-        if active["role"] in LEARNING:
+        learn = sum(
+            r["elapsed_seconds"]
+            for r in book["runs"]
+            if r["role"] in self.learning_stages
+        )
+        if active["role"] in self.learning_stages:
             learn += elapsed
         return min(
             5400 - learn,
@@ -159,27 +167,29 @@ def implementation_hashes():
 class ActionBudget:
     """Write ahead before each *RHS* action, including rejected and failed calls."""
 
-    def __init__(self, folder):
+    def __init__(self, folder, *, campaign=None, caps=None):
+        self.window = campaign if campaign is not None else window
+        self.caps = caps if caps is not None else CAPS
         self.folder = Path(folder)
         self.path = self.folder / "counts.json"
         self.counts = {
-            "completed": dict.fromkeys(CAPS, 0),
-            "upper": dict.fromkeys(CAPS, 0),
+            "completed": dict.fromkeys(self.caps, 0),
+            "upper": dict.fromkeys(self.caps, 0),
         }
         self.used = {
             k: sum(
                 r.get("numerical_counts", {}).get("upper", {}).get(k, 0)
-                for r in window.ledger()["runs"]
+                for r in self.window.ledger()["runs"]
             )
-            for k in CAPS
+            for k in self.caps
         }
         write_json(self.path, self.counts)
 
     def call(self, function, x, *, kind="A", key="actions"):
         n = 1 if x.ndim == 1 else x.shape[1]
-        if self.used[key] + self.counts["upper"][key] + n > CAPS[key]:
+        if self.used[key] + self.counts["upper"][key] + n > self.caps[key]:
             raise RuntimeError("V44 immutable original action cap")
-        window.require_live(margin=180)
+        self.window.require_live(margin=180)
         self.counts["upper"][key] += int(n)
         write_json(self.path, self.counts)
         began = time.perf_counter()

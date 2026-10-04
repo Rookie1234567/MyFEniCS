@@ -145,9 +145,80 @@ def load_neighborhood_late_error(path):
     )
 
 
+def load_full_moment(path):
+    from src.solvers.full_moment_scope import PLAN, STAGES, plan_record
+
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    value = tomllib.loads(raw.decode())
+    item = value.get("task042_v45", {})
+    if (
+        set(value) != {"schema_version", "task042_v45"}
+        or value["schema_version"] != 1
+        or set(item) not in ({"stage", "run_id"}, {"stage", "run_id", "resume_manifest", "resume_sha256"})
+        or item.get("stage") not in STAGES
+        or not re.fullmatch("task042_v45_[a-z0-9_]+", item.get("run_id", ""))
+    ):
+        raise InputError("V45 neural pilot explicit stage schema")
+    plan_record()
+    stage = item["stage"]
+    resume = None
+    if "resume_manifest" in item:
+        manifest = (ROOT / item["resume_manifest"]).resolve()
+        if stage not in ("TRAIN_LH", "TRAIN_NL", "TRAIN_NH") or not manifest.is_relative_to(ROOT / "tmp/task042/v45") or hashlib.sha256(manifest.read_bytes()).hexdigest() != item["resume_sha256"]:
+            raise InputError("V45 explicit repair transaction hash/path/stage")
+        resume = {"path":str(manifest),"sha256":item["resume_sha256"]}
+    csr = json.loads(Path(plan_record()["parents"]["csr"]["path"]).read_text())
+    deps = csr["dependencies"]
+    return RunSpecification(
+        identity={
+            "model_id": "task042_v45_neighborhood_late_error",
+            "run_id": item["run_id"],
+            "batch": "V45_NEIGHBORHOOD_RESIDUAL_CORRECTION",
+        },
+        geometry={"cells": 64, "source": "saved V41 connected three-tag witness"},
+        materials={
+            "canonical_table": "input/materials/si_optical_constants_v1.json",
+            "sha256": deps["material"],
+        },
+        incidence={"wavelength_nm": 0.7, "RHS": "manufactured frozen split"},
+        discretization={"degree": 6, "quadrature_degree": 15, "rows": 45000},
+        boundary={
+            "double_Floquet": True,
+            "DtN": "A has no DtN; B twelve-port derivative witness only",
+        },
+        method={"kind": "full_moment_opt_in"},
+        solver={"preconditioner": "original_right_diagonal", "target_solve": False},
+        execution={
+            "mpi_size": 1,
+            "timeout_seconds": 180 if stage == "RECOVERY" else 5400,
+            "warning_memory_gib": 6,
+            "terminate_memory_gib": 8,
+            "require_zero_swap": True,
+        },
+        output={"results_root": "results/task042"},
+        derived={
+            "stage": stage,
+            "preparation_scope": "v45",
+            "environment_mode": "ml",
+            "training_resume": resume,
+            "storage_limits": {k: plan_record()[k] for k in ("new_storage_bytes", "task_storage_bytes", "free_bytes", "evidence_reserve_bytes")},
+            "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
+            "target_solve": False,
+        },
+        source_path=path,
+        raw_input_bytes=raw,
+        input_sha256=hashlib.sha256(raw).hexdigest(),
+        physical_model_sha256=deps["physical"],
+        expected_output_parent=ROOT / "results/task042",
+    )
+
+
 def load_preparation(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
+    if b"[task042_v45]" in raw:
+        return load_full_moment(path)
     if b"[task042_v44]" in raw:
         return load_neighborhood_late_error(path)
     if b"[task042_v43]" in raw:

@@ -1,0 +1,173 @@
+{
+  "schema": "full-moment-hierarchy.v45.v1",
+  "review_commit": "2e5bfc593716d82ccbca4cc2061b50fe491186cd",
+  "stages": [
+    "SETUP",
+    "DATA",
+    "GRADIENT",
+    "TRAIN_LH",
+    "TRAIN_NL",
+    "TRAIN_NH",
+    "EVAL_R0",
+    "EVAL_CL44",
+    "EVAL_LH",
+    "EVAL_NL",
+    "EVAL_NH",
+    "CHECK",
+    "TIMING_NN",
+    "TIMING_CONTROL",
+    "DIAGNOSTIC"
+  ],
+  "parents": {
+    "csr": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/checkpoints/native_csr.json",
+      "sha256": "d37f1173780b08ea79ecc69695dc323f5a0d43b4ffd555bd9430533704b25632"
+    },
+    "qualified_graph": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/SETUP.json",
+      "sha256": "ffa695abce6634df2537cfae096e34311e3999988f5e9c778da5865dac497c32"
+    },
+    "B": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/system.json",
+      "sha256": "1cb0f340f7edb0544101a1848e8d6a34a33981759f5adeef8f38d630f5f00ea4"
+    },
+    "Bcsr": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/oracle.json",
+      "sha256": "72ae0cfbbf878267ef4110d46678e44da5d2584a573066c6a582cd11a8b6c2a4"
+    },
+    "Brecovery": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/recovery.json",
+      "sha256": "cbb931f30f2c00014e9a0b3fe7284eeb465c893915f7ffba9cb8f6f66a9bab94"
+    },
+    "Bgeometry": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/geometry.json",
+      "sha256": "b8cf886f932d2db2dacd84ca96aea2d6c8eb300a11c4ac92c0e976bcd25855d6"
+    },
+    "CL44": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/checkpoint_128.pt",
+      "sha256": "5bd5e82965247d341edce9081dff8928c48fc983778965ab879e05c70667f277"
+    },
+    "CL44_training": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v44/task042_v44_train_cl_20261004T153305504825Z/result.json",
+      "sha256": "ed6bfaa84632a2854cb68c7688862d3e5cd6be811d0196fc06cbd90223acb2ac"
+    },
+    "CL44_cost": {
+      "path": "/home/fenics/Projects/NN-Lab/docs/task042_neural_coarse_inverse/outcomes/records/resource_costs_v44.json",
+      "sha256": "8d60bb1a7cc4b594cbb374dd3de1481b5b6e7a5829ee9a6ae5f31552e3ca087d"
+    }
+  },
+  "seed": 425101,
+  "FD_seeds": [
+    425151,
+    425153,
+    425157
+  ],
+  "FD_steps": [
+    0.0001,
+    3e-05,
+    1e-05
+  ],
+  "architecture": "complete2m-square type encoder+decoder; seven-group count-weighted hierarchy;1296->64->1296 cross-type; channel a/b; no biases",
+  "real_parameters": 1817040,
+  "real_parameter_cap": 2000000,
+  "dtype": "float64/complex128",
+  "batch": 2,
+  "updates": 128,
+  "Adam_lr": 0.001,
+  "Adam_betas": [
+    0.9,
+    0.999
+  ],
+  "Adam_eps": 1e-08,
+  "checkpoints": [
+    0,
+    16,
+    32,
+    64,
+    128
+  ],
+  "routes": [
+    "R0",
+    "CL44",
+    "LIN-H",
+    "NN-L",
+    "NN-H"
+  ],
+  "checkpoint_selection": "median_qe, max_qe, median_qr, earliest_step",
+  "normalization": "gamma=norm(JH s)/sqrt(42624); exact zero bypass; gamma*D*J*y",
+  "split": {
+    "train": {
+      "seeds": [
+        425201,
+        425202,
+        425203,
+        425204,
+        425205,
+        425206,
+        425207,
+        425208,
+        425209,
+        425210,
+        425211,
+        425212,
+        425213,
+        425214,
+        425215,
+        425216
+      ],
+      "families": [
+        "local_gaussian",
+        "cross_cosine"
+      ]
+    },
+    "validation": {
+      "seeds": [
+        425301,
+        425302,
+        425303,
+        425304
+      ],
+      "families": [
+        "local_laplace",
+        "cross_sine"
+      ]
+    },
+    "heldout": {
+      "seeds": [
+        425401,
+        425402,
+        425403,
+        425404,
+        425405,
+        425406,
+        425407,
+        425408
+      ],
+      "families": [
+        "local_uniform",
+        "cross_mixed_smooth"
+      ]
+    }
+  },
+  "Arnoldi_steps": 128,
+  "prefix_steps": 64,
+  "restart": 32,
+  "inner_tolerance": 1e-10,
+  "true_residual_tolerance": 1e-06,
+  "coefficient_tolerance": 0.0001,
+  "new_storage_bytes": 4294967296,
+  "task_storage_bytes": 25769803776,
+  "free_bytes": 53687091200,
+  "evidence_reserve_bytes": 268435456,
+  "forecast_reserve_fraction": 0.25,
+  "no_new_mesh_JIT_LU_QR": true,
+  "frozen_config": true,
+  "capacity": "limited 64hex/p6/q15; originalA has no completeDtN; not target qualification",
+  "no_target_vectors_or_graph": true,
+  "NN_benefit_gate": 0.2,
+  "training_order": [
+    "LH",
+    "NL",
+    "NH"
+  ]
+}
