@@ -5,7 +5,7 @@ import pytest
 import torch
 from scipy.sparse import csr_matrix, eye
 
-from benchmarks.check_neighborhood_late_error import require_inventory
+from benchmarks.check_neighborhood_late_error import require_inventory, require_model
 from src.solvers.neighborhood_late_error import (
     choose_checkpoint,
     frozen_reader,
@@ -134,6 +134,12 @@ def test_zero_denominator_is_absolute_not_floor():
         model, z, z, action, mixed=True, independent=np.arange(516)
     )
     assert float(loss) == 0 and torch.all(qr == 0) and torch.all(qe == 0)
+    no_label, _, _, _ = late_loss(
+        model, z, None, action, mixed=False, independent=np.arange(516)
+    )
+    assert float(no_label) == 0
+    with pytest.raises(ValueError, match="requires"):
+        late_loss(model, z, None, action, mixed=True, independent=np.arange(516))
 
 
 def test_label_reader_whitelist_and_selection():
@@ -189,6 +195,9 @@ def test_complete_checker_rejects_missing_duplicate_wrong_split():
     ):
         with pytest.raises(ValueError):
             require_inventory(bad)
+    assert require_model(None, None) is None
+    with pytest.raises(ValueError, match="validation"):
+        require_model({"sha256": "other"}, {"sha256": "frozen"})
 
 
 @pytest.mark.parametrize(

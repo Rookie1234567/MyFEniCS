@@ -22,9 +22,16 @@ def late_loss(model, residual, label, action, *, mixed, independent):
     delta = model(residual)
     equation_error = residual - _OriginalAction.apply(delta, action)
     qr2 = squared_ratio(equation_error, residual)
-    qe2 = squared_ratio(
-        delta[:, independent] - label[:, independent], label[:, independent]
-    )
+    if label is None:
+        if mixed:
+            raise ValueError(
+                "mixed loss requires the authorized train/validation label"
+            )
+        qe2 = torch.zeros_like(qr2)
+    else:
+        qe2 = squared_ratio(
+            delta[:, independent] - label[:, independent], label[:, independent]
+        )
     per = (qr2 + qe2 if mixed else qr2) / 2
     return per.mean(), delta, qr2, qe2
 

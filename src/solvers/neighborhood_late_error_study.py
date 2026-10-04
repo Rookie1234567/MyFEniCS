@@ -422,8 +422,12 @@ def train(folder, budget, code):
     model = model_for(code, action)
     initial = {n: p.detach().clone() for n, p in model.named_parameters()}
     init_hash = parameters_hash(model)
-    tv, vv = training_values("train"), training_values("validation")
-    s, d = (torch.from_numpy(tv[k].copy()) for k in ("residual", "label"))
+    tv, vv = (
+        training_values("train", labels=code != "NR"),
+        training_values("validation"),
+    )
+    s = torch.from_numpy(tv["residual"].copy())
+    d = torch.from_numpy(tv["label"].copy()) if code != "NR" else None
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     checkpoints = [
         dict(
@@ -443,7 +447,7 @@ def train(folder, budget, code):
         loss, _, qr, qe = late_loss(
             model,
             s[ids],
-            d[ids],
+            d[ids] if d is not None else None,
             action,
             mixed=code != "NR",
             independent=graph["independent"],
@@ -466,7 +470,7 @@ def train(folder, budget, code):
             "batch_samples": ids,
             "loss_before_update": float(loss.detach()),
             "qr_before": qr.detach().tolist(),
-            "qe_before": qe.detach().tolist(),
+            "qe_before": qe.detach().tolist() if d is not None else None,
             "gradient_norm": gn,
             "parameter_before_hash": before,
             "parameter_after_hash": parameters_hash(model),
@@ -508,7 +512,9 @@ def train(folder, budget, code):
         "parameter_group_changes_last": group_changes(model, initial),
         "real_parameters": model.real_parameters,
         "heldout_reads": 0,
-        "labels_reads": "train/validation only",
+        "labels_reads": "validation diagnostics only"
+        if code == "NR"
+        else "train/validation only",
         "history_path": str(folder / "training_history.jsonl"),
         "history_sha256": sha(folder / "training_history.jsonl"),
         "actual_action_calls": action.calls,
@@ -609,7 +615,10 @@ def evaluate(folder, budget, code):
 
 
 def check(folder, budget):
-    from benchmarks.check_neighborhood_late_error import require_inventory
+    from benchmarks.check_neighborhood_late_error import (
+        require_inventory,
+        require_model,
+    )
     from benchmarks.check_neighborhood_residual import audit_state, require_frozen_input
 
     ds, _ = stage("DATA")
@@ -621,11 +630,20 @@ def check(folder, budget):
     require_inventory(rows)
     frozen = read_arrays(ds["prefix"]["heldout"])
     error = read_arrays(ds["sealed"]["heldout"])["error"]
+    if error.shape != (8, int(graph["shape"][0])) or not np.isfinite(error).all():
+        raise ValueError("complete finite sealed error inventory")
+    if np.count_nonzero(error[:, graph["slaves"]]):
+        raise ValueError("manufactured error slave-zero identity")
+    models = {
+        ROUTES[c]: stage("TRAIN_" + c)[0]["selected"]["receipt"]
+        for c in ("NR", "NE", "RL", "CL")
+    }
     result = []
     for row in rows:
         a = read_arrays(row["state"])
         i = row["sample"]
         e = error[i]
+        require_model(row["frozen_model"], models.get(row["route"]))
         require_frozen_input(a, frozen["rhs"][i], graph["independent"], graph["slaves"])
         if not np.array_equal(a["rhs"], frozen["rhs"][i]) or not np.array_equal(
             a["prefix"], frozen["prefix"][i]
@@ -789,10 +807,23 @@ def diagnostic(folder, budget):
                 }
             )
         del model
+    neighbors = [set() for _ in graph["sizes"]]
+    for a, b in zip(graph["src"], graph["dst"], strict=True):
+        neighbors[a].add(int(b))
+    two_hop = [
+        len({i} | n | set().union(*(neighbors[j] for j in n)))
+        for i, n in enumerate(neighbors)
+    ]
     return {
         "status": "FIXED_DECODER_DIAGNOSTIC",
         "rows": rows,
         "small_SVD_calls": 12,
+        "two_hop_visible_nodes": {
+            "min": min(two_hop),
+            "max": max(two_hop),
+            "median": float(np.median(two_hop)),
+            "total_nodes": len(two_hop),
+        },
         "conclusion": "CLOSE_FIXED_A_TWO_HOP_WIDTH32_QUALIFICATION"
         if all(v == 0 for v in gate["full_pass_by_route"].values())
         else "BOUNDED_PILOT_ONLY",
