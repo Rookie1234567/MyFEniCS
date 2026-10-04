@@ -42,12 +42,14 @@ def check_recovery():
     from scipy.sparse import csr_matrix
 
     from src.solvers.distributed_recovery_study import producer_store
+    from src.solvers.distributed_volume_delivery import frozen_producer_codes
     from src.solvers.distributed_volume_scope import stage
 
     s, _ = producer_store()
     _, saved = s.read("recovery")
     _, sparse = s.read("oracle")
     _, literal = s.read("geometry")
+    producer_codes = frozen_producer_codes(literal)
     _, numbering = s.read("system")
     element = basix.create_element(
         basix.ElementFamily.N1E,
@@ -115,7 +117,7 @@ def check_recovery():
                 old_t = np.eye(882)
                 new_t = np.eye(882)
                 element.T_apply(
-                    old_t.ravel(), 882, int(literal["cell_permutations"][cell])
+                    old_t.ravel(), 882, int(producer_codes[cell])
                 )
                 element.T_apply(new_t.ravel(), 882, int(a["consumer_permutations"][j]))
                 checks.append(

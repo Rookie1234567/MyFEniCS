@@ -84,6 +84,17 @@ def test_target_gate_cannot_promote_finite_action_or_payload_to_full_qualificati
         assert not result["admitted"] and expected in result["reasons"]
 
 
+def test_frozen_producer_and_consumer_permutation_names_are_not_interchangeable():
+    from src.solvers.distributed_volume_delivery import frozen_producer_codes
+
+    codes = np.arange(8, dtype=np.uint32)
+    assert np.array_equal(frozen_producer_codes({"permutations": codes}), codes)
+    with pytest.raises(KeyError, match="permutations"):
+        frozen_producer_codes({"cell_permutations": codes})
+    with pytest.raises(ValueError, match="eight-cell"):
+        frozen_producer_codes({"permutations": codes[:-1]})
+
+
 def test_checker_recomputes_oriented_class_and_rank_consumption():
     from collections import Counter
 

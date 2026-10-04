@@ -4,9 +4,19 @@ import json
 import os
 from pathlib import Path
 
+import numpy as np
+
 from benchmarks.check_boundary_witness import metric, read_arrays
 from src.solvers.distributed_volume_scope import ROOT, stage, window
 from src.solvers.native_recovery_packets import sha
+
+
+def frozen_producer_codes(literal):
+    """V40 producer namespace differs from V41 cell_permutations."""
+    codes = np.asarray(literal["permutations"])
+    if codes.shape != (8,) or codes.dtype.kind not in "iu":
+        raise ValueError("immutable V40 eight-cell permutation inventory")
+    return codes
 
 
 def target_decision(
@@ -128,6 +138,7 @@ def deploy(folder):
     saved_bridge = read_arrays(bp["numeric"])
     old, _ = producer_store()
     _, literal = old.read("geometry")
+    producer_codes = frozen_producer_codes(literal)
     system, numbering = old.read("system")
     _, saved = old.read("recovery")
     factors = [old.read(c["name"])[1] for c in system["metadata"]["classes"]]
@@ -138,7 +149,7 @@ def deploy(folder):
         "owned_cells": int(saved_bridge["owned_cells"][0]),
         "producer_owner": saved_bridge["producer_row_owners"],
         "transfer": [
-            native_transfer(e, literal["cell_permutations"][c], p)
+                native_transfer(e, producer_codes[c], p)
             for c, p in zip(cells, perms, strict=True)
         ],
         "native_transforms": [cell_transform(e, p) for p in perms],
