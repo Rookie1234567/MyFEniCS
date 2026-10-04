@@ -12,7 +12,7 @@
 | 文件描述符失败与修复 | 首次 checker-only errno24，6.205 s，树RSS 351,285,248 B；仅重试服务限制4096；fixture测得24个mmap FD增量、预计总FD 2,118/limit 4,096，余量1,978 | service范围限制；direct checker leaf `/proc` limit未采样，不伪造读数；其他失败/成本均保留 |
 | 资源/时间 | worker和checker树VmSwap峰均0；有记录的 global `pswpin/out` 区间增量0，基线/末值783/3167页；checker RSS见上；窗口T0=`2026-10-04T13:04:57Z`，deadline=`2026-10-04T17:04:57Z` | 不宣称整机swap为零。checker完成时UTC推导elapsed `7515 s`，不是monotonic或费用；整窗准备/空档/charge仍unknown |
 
-完整哈希和非合并边界见[W0 compact record](records/review_v8_w0_component_closeout_v1.json)、[W0增量账](records/review_v8_w0_incremental_workflow_ledger.json)、[run index](records/run_index.json)及[Response V8](../response_v8.md)。W1 FE尚未运行；唯一7200秒窗口已冻结为T0=2026-10-04T15:24:35.195396Z、deadline=2026-10-04T17:24:35.195396Z。Task042两模块接线、定向测试、源码提交准备/主控审查、资源准入、代表面q30/q60和最大支持内部修正探针、checker及清理均计入本窗，不刷新、不排除已花时间；32,060有序keys必须原样复用，正式探针使用主控审查提交的clean source。W2、dot保持HELD，原尺寸仍NO-GO。
+完整哈希和非合并边界见[W0 compact record](records/review_v8_w0_component_closeout_v1.json)、[W0增量账](records/review_v8_w0_incremental_workflow_ledger.json)、[run index](records/run_index.json)及[Response V8](../response_v8.md)。此前attempt2和attempt3的worker phase分别为`44.26769974210765 s`和`113.90223937504925 s`，attempt4自动checker失败为`3.137978855986148 s`；RSS及原失败记录路径见W0增量账，这些是独立phase wall值而非总费用。W1 FE尚未运行；唯一7200秒窗口已冻结为T0=2026-10-04T15:24:35.195396Z、deadline=2026-10-04T17:24:35.195396Z。Task042两模块接线、定向测试、源码提交准备/主控审查、资源准入、代表面q30/q60和最大支持内部修正探针、checker及清理均计入本窗，不刷新、不排除已花时间；32,060有序keys必须原样复用，正式探针使用主控审查提交的clean source。W2、dot保持HELD，原尺寸仍NO-GO。
 
 ---
 

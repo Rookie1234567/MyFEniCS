@@ -1839,7 +1839,7 @@
   },
   "review_v8_progress": {
     "status": "W0_FULL_COMPONENT_AND_INDEPENDENT_CHECK_PASS_W1_FIXED_WINDOW_ACTIVE",
-    "updated_utc": "2026-10-04T15:30:13+00:00",
+    "updated_utc": "2026-10-04T15:32:01+00:00",
     "source_sha": "0a15ac550a37196aa2941cc3c0a3a3d37ccf0158",
     "response": "docs/task40extra_0p7nm_engineering/response_v8.md",
     "w0": {
@@ -1917,9 +1917,9 @@
       "record_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json",
       "record_sha256": "760384fedb2aeca031e0bcd3b448ea23dc19435859951e8de259790d1b628fce",
       "incremental_ledger_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_incremental_workflow_ledger.json",
-      "incremental_ledger_sha256": "54c15487cebe71e76cef51fc8b9a8388591c7a38223ff04a2241846e4d135dac",
+      "incremental_ledger_sha256": "4d840ad684750abd23879aab1f8aa47f5dfd75c76774402a2c6a35f33f372687",
       "ignored_receipt_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/w0_component_closeout_receipt.json",
-      "ignored_receipt_sha256": "b801c8dff923fdd59b71cebcc3089409f5b7ba723ea2a604feb4697accc715f9",
+      "ignored_receipt_sha256": "8c83119fbc786a510d0b95263107586444272c04084c1aa182a7cbba7ad9185d",
       "worker_source_sha": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
       "checker_source_sha": "0a15ac550a37196aa2941cc3c0a3a3d37ccf0158",
       "worker_report_sha256": "c9b46c395aff867f2a8c1a167a7620e4091b9904e015a435fc7d104f41b840d4",

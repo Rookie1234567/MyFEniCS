@@ -58,7 +58,7 @@
     "prior_window_unchanged": true
   },
   "receipt_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json",
-  "receipt_sha256": "b007213fae0436015caf6fee712c1f27b7892fb349fd51ee85e08f973d019318",
+  "receipt_sha256": "760384fedb2aeca031e0bcd3b448ea23dc19435859951e8de259790d1b628fce",
   "event_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_events.jsonl",
   "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
   "prior_measured_failure_phases": [
