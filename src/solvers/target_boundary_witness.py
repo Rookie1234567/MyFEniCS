@@ -388,7 +388,7 @@ class NativeFacetTiles:
         self.costs["phase_integral"] += perf_counter() - began
         began = perf_counter()
         local = np.ascontiguousarray(local)
-        self.V.element.T_apply(local.view(np.float64), self.permutations[c : c + 1], 4)
+        self.V.element.T_apply(local.view(np.float64).ravel(), self.permutations[c : c + 1], 4)
         self.costs["orientation"] += perf_counter() - began
         began = perf_counter()
         rows = []
