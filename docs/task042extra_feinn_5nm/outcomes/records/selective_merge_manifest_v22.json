@@ -1,5 +1,5 @@
 {
-  "source_snapshot": "f8727b0e6d110ccd5fafa00e49178ec6bb6eb6bc",
+  "source_snapshot": "d340c14b7c83b7968f4521edab82317b61760267",
   "groups": [
     {
       "group": "production numerical/core",
@@ -74,6 +74,7 @@
         "docs/task042extra_feinn_5nm/outcomes/records/face_block_modes_v22.csv",
         "docs/task042extra_feinn_5nm/outcomes/records/face_qualification_v22.json",
         "docs/task042extra_feinn_5nm/outcomes/records/final_checker_checks_v22.json",
+        "docs/task042extra_feinn_5nm/outcomes/records/format_check_v22.json",
         "docs/task042extra_feinn_5nm/outcomes/records/frozen_channel_changes_v22.csv",
         "docs/task042extra_feinn_5nm/outcomes/records/frozen_operator_v22.json",
         "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json",
@@ -98,8 +99,7 @@
         "docs/task042extra_feinn_5nm/outcomes/reliable_affine_ports_v22.md",
         "docs/task042extra_feinn_5nm/outcomes/summary.md",
         "docs/task042extra_feinn_5nm/outcomes/test_summary.md",
-        "docs/task042extra_feinn_5nm/response_v22.md",
-        "docs/task042extra_feinn_5nm/outcomes/records/format_check_v22.json"
+        "docs/task042extra_feinn_5nm/response_v22.md"
       ],
       "dependencies": [
         "raw run/source/hash/ABI/resource records"

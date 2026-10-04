@@ -207,6 +207,15 @@
       ]
     },
     {
+      "run": "v22_final_resource_snapshot_20261004T121307979975Z",
+      "classification": "NO_CLOSED_SUMMARY",
+      "raw_admission": {
+        "path": "tmp/task42extra/checks/v22_final_resource_snapshot_20261004T121307979975Z/admission.json",
+        "sha256": "0528471c743a5db84cbe2fcca4c789425d2c309ed6e5bdb9ed13f023da3d2d4b",
+        "bytes": 273423
+      }
+    },
+    {
       "run": "v22_finish_records_20261004T115916428094Z",
       "classification": "WORKER_FAILED",
       "exit_code": 1,
@@ -277,15 +286,6 @@
         "    raise CalledProcessError(retcode, process.args,",
         "subprocess.CalledProcessError: Command '['/home/fenics/Projects/NN-Lab-V2/.venv/bin/python', '-m', 'ruff', 'check', 'benchmarks/affine_output_checker.py', 'benchmarks/reliable_port_checker.py', 'scripts/launch_task42extra_durable.py', 'src/io/feinn_pilot.py', 'src/io/fixed_phase_pilot.py', 'src/runners/feinn_workflow.py', 'src/runners/fixed_phase_campaign.py', 'src/solvers/accurate_ports.py', 'src/solvers/affine_field_output.py', 'src/solvers/analytic_face_ports.py', 'src/solvers/feinn_exact_condensation.py', 'src/solvers/fixed_phase_audit.py', 'src/solvers/fixed_phase_comparison.py', 'src/solvers/fixed_phase_reliable_ports.py', 'src/solvers/port_qualification_state.py', 'src/test/test_analytic_face_moments.py', 'src/test/test_exact_affine_output.py', 'src/test/test_exact_zero_volume_load.py', 'src/test/test_reliable_port_contract.py', 'src/test/test_reliable_raw_equation_checker.py', 'src/test/test_reliable_surface_saved_checker.py']' returned non-zero exit status 1."
       ]
-    },
-    {
-      "run": "v22_publication_format_seal_20261004T120538606522Z",
-      "classification": "NO_CLOSED_SUMMARY",
-      "raw_admission": {
-        "path": "tmp/task42extra/checks/v22_publication_format_seal_20261004T120538606522Z/admission.json",
-        "sha256": "95d98727f1945452345b66956c4877e4e29fecd2c9f2ed07d00e93e52e0baa6f",
-        "bytes": 269799
-      }
     }
   ],
   "late_light_resource_gate": {
