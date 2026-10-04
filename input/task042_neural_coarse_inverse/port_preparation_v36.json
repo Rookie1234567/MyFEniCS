@@ -1,0 +1,16 @@
+{
+  "schema": "task042.port-preparation.v36",
+  "review_commit": "cc5d9823a66fb5090618705114093998a647e40c",
+  "component_seeds": [423611, 423613],
+  "component_max_modes": 2,
+  "component_cache_bytes": 1048576,
+  "production_provider_max_modes": 64,
+  "production_provider_cache_bytes": 67108864,
+  "micro_design_path": "input/task042_neural_coarse_inverse/neural_fe_design_v7.json",
+  "micro_design_sha256": "17792c1b5f003e7114d9a69fea8481cd195e92666e46ef950302e3dc85308c3b",
+  "micro_physical_sha256": "2b532f91550316b16a304f3be9ae78605816b5a2aba556f548b5bd794f82e6de",
+  "micro_mode_sha256": "93795b53d7c5aef69af66b4ff0a56fa46515771f1ec43332ec929970270ea262",
+  "target_solve_authorized": false,
+  "old_windows": "permanently closed",
+  "target_scenario": {"p": 6, "max_h_nm": 0.7, "q": 15, "accuracy_qualified": false}
+}

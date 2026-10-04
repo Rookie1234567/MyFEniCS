@@ -36,6 +36,22 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        # Independent preparation opt-in: no historical live window and no
+        # full-target solver dispatch. Ordinary inputs keep the existing path.
+        if b'[task042_v36]' in args.input_path.read_bytes():
+            from src.io.port_preparation import load_preparation
+            preparation = load_preparation(args.input_path)
+            if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:
+                raise InputError('V36 accepts only one explicit preparation stage')
+            if args.validate_only or args.dry_run:
+                print(json.dumps(dict(status='valid', stage=preparation.derived['stage'],
+                    input_sha256=preparation.input_sha256, target_solve=False)))
+                return 0
+            from src.runners.port_preparation import launch as launch_preparation
+            result = launch_preparation(preparation)
+            print(json.dumps(dict(directory=result['directory'], classification=result['classification'],
+                seconds=result['elapsed_seconds'], exit_code=result['leader_exit_code'])))
+            return 0 if result['classification']=='COMPLETED' and result['leader_exit_code']==0 else 3
         if args.profile_recovery_from is not None and args.physical_pc_profile is None:
             raise InputError('--profile-recovery-from requires --physical-pc-profile')
         if args.setup_only and (
