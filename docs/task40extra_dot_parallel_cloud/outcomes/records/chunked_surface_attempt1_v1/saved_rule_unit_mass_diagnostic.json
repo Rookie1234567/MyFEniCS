@@ -1,0 +1,30 @@
+{
+  "schema": "task40extra.saved-rule-unit-mass-diagnosis.v1",
+  "scope": "saved arrays only; no mesh/form/JIT/factor/PDE/newquadrature",
+  "points_byte_equal": true,
+  "weights_byte_equal": true,
+  "nodes": 6561,
+  "np_sum": 0.9999999999997333,
+  "math_fsum": 0.9999999999997333,
+  "longdouble_sum_decimal": "0.99999999999973331456",
+  "longdouble_mantissa_bits": 63,
+  "ordinary_vs_fsum_abs": 0.0,
+  "stored_weight_mass_vs_exact_unit_integral": 2.666755705149626e-13,
+  "old_32epsilon": 7.105427357601002e-15,
+  "positive_weights_abs_sum": 0.9999999999997333,
+  "Npoint_naive_summation_gamma": 1.456612608310327e-12,
+  "naive_summation_forward_error_bound_for_STORED_inputs": 1.4566126083099387e-12,
+  "warning": "This summation bound does not certify the Gauss weight construction algorithm. The accurate input mass discrepancy must be reported as construction/integral sanity error separately.",
+  "proposed_auxiliary_constant_moment_contract": {
+    "construction_moment_absolute_bound": 1.456612608310327e-12,
+    "reason": "Explicit N-node float64 constant-moment accuracy budget, stricter than unchanged1e-10 physical integral action gates; policy not a theorem of all Basix construction errors",
+    "no_weight_renormalization_or_nodes_change": true,
+    "existing_action_limit": 1e-10
+  },
+  "saved_array_sha256": {
+    "rule_default_points.npy": "41762d1128bb1fde5b8f5f3c29e89d66955d7c963e7d42ec6df8dda4af2ce5d8",
+    "rule_gauss_weights.npy": "49580f79f41105650dcb598ae9b1241cd5ba300375172936f34801ce6d53bf56",
+    "rule_gauss_points.npy": "41762d1128bb1fde5b8f5f3c29e89d66955d7c963e7d42ec6df8dda4af2ce5d8",
+    "rule_default_weights.npy": "49580f79f41105650dcb598ae9b1241cd5ba300375172936f34801ce6d53bf56"
+  }
+}

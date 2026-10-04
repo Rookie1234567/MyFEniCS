@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "library_file_id": "libfile_4f32d6e2ee3c8191a06daf79a9625f39",
+  "file_id": "file_0000000085908207a9d3d46c28771f18",
+  "file_name": "target_chunked_selected_surface_source_checkpoint.zip",
+  "version": 0,
+  "archive_bytes": 156782,
+  "archive_sha256": "66df900d1f12e05bcd6b119d69e9b5369b81845a622f23353e45c3b19f006313",
+  "members_verified": 23,
+  "full_uncompressed_bytes": 475104,
+  "member_manifest_sha256": "324a3897456ad6724995c0987633fd003d0a332ef89ca41539868ddff1b52e49",
+  "source_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "source_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "external_source": {
+    "helper_sha256": "16b824ff9cc39921ffa00f049cd4ddefbde15d8014c547414aa2e73db30332a0",
+    "runner_sha256": "8f0f1a13036ceb028e216886324761b2db63a83a5fb14d595940cab743616abb",
+    "launcher_sha256": "661f13fe02b8569aef94cee94935345d276356e0fc0f76943aeb3dd70b4e555e"
+  },
+  "qualification": "FINAL_SOURCE_REVIEW_PASS_NUMERICAL_NOT_RUN",
+  "scope": "small rule27 fullnative mechanism before original160 selected action; no fullC/D/PDE",
+  "fresh_readback_path": "/workspace/scratch/9c465670b46b/recovery_staging/resume_20261004T1205Z/target_auto_surface_cost_candidate/chunked_source_fresh_readback/target_chunked_selected_surface_source_checkpoint.zip"
+}

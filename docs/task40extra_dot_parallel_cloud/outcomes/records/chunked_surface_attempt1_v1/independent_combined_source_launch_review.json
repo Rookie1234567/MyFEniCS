@@ -1,0 +1,63 @@
+{
+  "schema": "task40extra.chunked-selected-surface-combined-review.v1",
+  "status": "PASS_WITH_SCOPE",
+  "review_kind": "read-only source/API inspection and existing byte-hash/JSON/log evidence",
+  "canonical_head": "6dba8257053c6b2e474b7808b708a745f202733b",
+  "canonical_tree": "63313e3f820418dc7394deced09d3db9068c6e52",
+  "canonical_worktree_observed_clean": true,
+  "frozen_sources": {
+    "core_sha256": "748e925d42b0da1e27240b10d47bf586173ced8ee44a93cd78ea4368a6dbae24",
+    "reference_sha256": "cace8b9b472b9f8b7187f4cde1d028219041483a29cfc1981f9e6801c661737a",
+    "helper_sha256": "16b824ff9cc39921ffa00f049cd4ddefbde15d8014c547414aa2e73db30332a0",
+    "runner_sha256": "8f0f1a13036ceb028e216886324761b2db63a83a5fb14d595940cab743616abb",
+    "launcher_sha256": "661f13fe02b8569aef94cee94935345d276356e0fc0f76943aeb3dd70b4e555e"
+  },
+  "observed_evidence": {
+    "helper_review_sha256": "b45a5964728b319e4d8029d0076a011ad8f3e1f6c53345bdfe8d4a21634b361f",
+    "helper_tests_passed": 11,
+    "helper_test_log_sha256": "dce7d9567bdc1b5789104bb2537d4c6b04534ea759b1490aa5194af08a66aa35",
+    "runner_test_source_sha256": "7fce18afaf781ee3d86e486607ee02b3b11ec5e8756d3c80ffac12600492ab14",
+    "runner_tests_reported_by_author": {"passed": 14, "seconds": 0.039, "reviewer_executed": false},
+    "launcher_test_source_sha256": "e289ad299bac85f9b914ff8b72feddfbbee175245a49e37e3e1952c694333037",
+    "launcher_test_log": "../chunked_launcher_tests_final2.log",
+    "launcher_test_log_sha256": "cafd955d783640f0127d8a6e39aaa574f495e93edd369205796ffd848d383cb2",
+    "launcher_tests_passed": 26,
+    "launcher_test_seconds": 0.187,
+    "preflight_path": "../surface_launcher_preflight_20261004T232334Z_2.json",
+    "preflight_sha256": "fffcc95ccf0e0b951c77642d57cf40f63fe708d7d25f09c9d00aa2d17bd47f9f",
+    "preflight_status": "SOURCE_ABI_METADATA_LIBRARY_RESOURCE_PREFLIGHT_ONLY_PASS",
+    "preflight_dynamic_launch_cap_bytes": 3727183872,
+    "preflight_exact_metadata_current_parent_child_source_and_environment": true,
+    "preflight_surface_executed": false
+  },
+  "reviewed_contract": [
+    "Frozen full original AUTO metadata, actual Library archive/member/xattr/seal identities and old worker watchdog remain required before mesh",
+    "Installed public native standard T on basis rows, affine coordinate pull-back/roundtrip, covariant Piola and exact conjugated MPC scatter; no unitary assumption",
+    "All full FE/raw vectors retained before the unchanged cutoff; unthresholded native basis and no compiler-clamp emulation",
+    "Single degree27 production FFCx mechanism form; all six complete FE/MPC/masked vector pairs must pass 1e-11 against BOTH operand norms before degree160 begins",
+    "Mechanism actual compiled-rule bytes, native ordering/MPC hashes, Constant-slot/restoration and ownership gates are retained",
+    "Degree160 uses 6561-point native chunked assembly only; degree168/176 public Function.eval reference uses 7225/7921 points on six top facets with three nonzero states",
+    "Target/reference and reference-convergence gates remain 1e-10 against the independent integral operation scale with exact-zero and finite checks",
+    "128 MiB helper owned-plus-workspace limit counts persistent outputs, simultaneous rule arrays, actual MPC nnz temporaries, save buffers and bounded native tabulation estimates",
+    "Outer measured-tree RSS admissions include helper-result persistence, full-mask/vector comparisons and native-sized contraction workspaces",
+    "Owned PETSc Vecs are destroyed and mechanism vector arrays released before the target stage",
+    "Saved FE/MPC/masked replay validates hashes and exact NPY headers before read-only mmap under a 64 MiB admission; stable norms reject tiny wrong vectors",
+    "Original relative-interpreter/full-ABI/source guards, 3 GiB whole-tree cap, 4500 s strict wall, zero swap, 128 MiB reserve, readable complete identities and descendant cleanup remain",
+    "External helper/runner/wrapper hashes are checked before imports and after supervision; failures and partial artifacts remain preserved"
+  ],
+  "closed_findings": [
+    "MPC nnz-sized validation temporaries and simultaneous quadrature-rule persistence are now included in helper ownership accounting",
+    "Runner full-vector/save/contraction allocations now have explicit current-RSS admission and sparse tuple payloads are counted",
+    "Saved mechanism norm underflow is fixed with scaled norm computation and a tiny wrong-vector regression",
+    "Prior loaded-kernel and reference native/facet/phase/field-point record gates are restored"
+  ],
+  "remaining_concrete_blocker": null,
+  "scope_limits": [
+    "Source readiness only; this is not an actual numerical qualification or launch authorization",
+    "Six selected top/x components only, with degree27 a mechanism witness rather than target accuracy",
+    "No full C/D, carrier, H matrix, volume, factor, PDE or physical-output qualification",
+    "Native/compiler workspace allowances do not replace the whole-process watchdog; controlled stops remain valid outcomes",
+    "Source Library durability and fresh admission remain separate coordinator gates"
+  ],
+  "reviewer_ran_project_imports_tests_FE_JIT_or_numerics": false
+}
