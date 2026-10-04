@@ -1,0 +1,45 @@
+{
+  "schema": "github-small-raw-persistence-transfer-pilot.v1",
+  "scope": "deterministic synthetic typed transfer sentinel only; no FE/JIT/action/solver evidence",
+  "matrix_seed": 4053202,
+  "source_head": "32847dfa3371b9b0e43796a7675a4379c9ee6fb8",
+  "archive_filename": "github_raw_transfer_pilot.npz",
+  "archive_bytes": 63867,
+  "archive_sha256": "f8f21f876d61955641e8d89fadf5cb0a9ab8b5bff136ac10aca691770f6a3d4f",
+  "uncompressed_member_bytes": 66400,
+  "members": [
+    {
+      "name": "complex_matrix.npy",
+      "bytes": 65664,
+      "sha256": "564e230667d01795fe2e627575080ae5d32c8228a7a26519366b5147cb5bbcc0",
+      "shape": [
+        64,
+        64
+      ],
+      "dtype": "complex128",
+      "numeric_payload_sha256": "dc3c5f638c57330799af666a2159ad3fabdaf271352044af1ea6d10a1bd4d235"
+    },
+    {
+      "name": "native_field.npy",
+      "bytes": 448,
+      "sha256": "e274a2ee7c163c5fbc064b3b13f935c61e533f77514413f412d863b6a7d6c930",
+      "shape": [
+        20
+      ],
+      "dtype": "complex128",
+      "numeric_payload_sha256": "d0d40e2617cf54752512fa8db7e933919d1669d51395979013c8fc6af0881ada"
+    },
+    {
+      "name": "native_rows.npy",
+      "bytes": 288,
+      "sha256": "23e2a6c05b68c26a66f958ad39be3045c2a84901611fb83fa44ce8cfa582f018",
+      "shape": [
+        20
+      ],
+      "dtype": "int64",
+      "numeric_payload_sha256": "f5c4cb24f4c9b43e624e0a83cb11934f932dbd5db24eee67fed696354ac88a61"
+    }
+  ],
+  "required_readback": "fetch archived bytes into a fresh empty directory; validate archive and each NPY shape/dtype/member/numeric hash",
+  "compression_is_not_size_guarantee_for_C1": true
+}
