@@ -87,7 +87,9 @@ def _install_supervised_cli_fakes(monkeypatch, phase_runner):
     import benchmarks.subreaper_watchdog as watchdog
 
     monkeypatch.setattr(runner, "_qualified_runtime", lambda _receipt: None)
-    monkeypatch.setattr(runner, "validate_native_runtime", lambda _receipt: {
+    monkeypatch.setattr(runner, "validate_fresh_runtime", lambda _receipt: {
+        "runtime_profile": "native_linux",
+        "runtime_abi_identity": {"fixture": "no-fe"},
         "native_abi_identity": {"fixture": "no-fe"},
     })
     monkeypatch.setattr(watchdog, "memory_envelope", lambda: {"launch_cap_bytes": 1})
@@ -168,6 +170,43 @@ def test_control_smoke_cleanup_failure_is_saved_and_stops_before_checker(tmp_pat
     assert summary["worker_supervisor"]["remaining_child_pids"] == [22002]
     assert calls == [("worker", True)]
     assert not (root / "checker_report.json").exists()
+
+
+def test_local_wsl_service_entry_accepts_profile_and_control_smoke(tmp_path):
+    repo = Path(__file__).parents[2]
+    source_entry = repo / "scripts" / "task40_fresh_c1" / "native_service_entry.sh"
+    fake_repo = tmp_path / "repo"
+    script_dir = fake_repo / "scripts" / "task40_fresh_c1"
+    script_dir.mkdir(parents=True)
+    entry = script_dir / "native_service_entry.sh"
+    entry.write_bytes(source_entry.read_bytes())
+    (script_dir / "activate_local_wsl_complex.sh").write_text(
+        '#!/usr/bin/env bash\nset -euo pipefail\n[[ $# -eq 3 && -f "$2" ]]\nprintf local >"$TASK40_TEST_ACTIVATION"\n')
+    prefix = tmp_path / "prefix"
+    (prefix / "bin").mkdir(parents=True)
+    arg_record = tmp_path / "runner-argv.txt"
+    python_shim = prefix / "bin" / "python"
+    python_shim.write_text("#!/usr/bin/env bash\nprintf '%s\\0' \"$@\" >\"$TASK40_TEST_ARGV\"\n")
+    python_shim.chmod(0o755)
+    receipt = tmp_path / "abi_receipt.json"
+    receipt.write_text("{}")
+    run_dir = tmp_path / "run"
+    (run_dir / "jit").mkdir(parents=True)
+    (run_dir / "tmp").mkdir()
+    env = os.environ.copy()
+    env["TASK40_TEST_ARGV"] = str(arg_record)
+    env["TASK40_TEST_ACTIVATION"] = str(tmp_path / "activation.txt")
+    completed = subprocess.run(
+        ["bash", str(entry), str(fake_repo), str(prefix), str(receipt), str(run_dir),
+         FIXED_DEADLINE, "local_wsl2_authorized", "--control-smoke"],
+        cwd=fake_repo, env=env, text=True, capture_output=True, check=False)
+
+    assert completed.returncode == 0, completed.stderr
+    assert (tmp_path / "activation.txt").read_text() == "local"
+    argv = arg_record.read_bytes().decode().rstrip("\0").split("\0")
+    assert argv == ["-m", "benchmarks.run_fresh_c1_p6_component", "--supervised",
+                    "--output-dir", str(run_dir), "--abi-receipt", str(receipt),
+                    "--total-deadline-utc", FIXED_DEADLINE, "--control-smoke"]
 
 
 def test_native_service_entry_passes_fixed_deadline_and_smoke_to_runner(tmp_path):

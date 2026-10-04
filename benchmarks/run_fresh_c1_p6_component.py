@@ -12,12 +12,17 @@ import json
 import os
 import argparse
 import importlib
-import platform
 import shutil
 import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
+
+from benchmarks.task40_runtime_profile import (
+    LOCAL_WSL2_PROFILE,
+    NATIVE_LINUX_PROFILE,
+    validate_runtime_receipt,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,10 +72,13 @@ def source_identity() -> dict[str, Any]:
         "benchmarks/fresh_c1_p6_w0_budget.json",
         "benchmarks/fresh_c1_p6_w0_dependencies.json",
         "benchmarks/subreaper_watchdog.py",
+        "scripts/run_fresh_c1_p6_local_wsl.sh",
         "scripts/run_fresh_c1_p6_native.sh",
+        "scripts/task40_fresh_c1/activate_local_wsl_complex.sh",
         "scripts/task40_fresh_c1/activate_native_complex.sh",
         "scripts/task40_fresh_c1/native_service_entry.sh",
         "scripts/task40_fresh_c1/qualify_imports_only.py",
+        "benchmarks/task40_runtime_profile.py",
         "src/solvers/fresh_c1_p6_component.py",
         "src/solvers/fresh_c1_live_contract.py",
         "src/solvers/dtn_boundary_plane_qualification.py",
@@ -162,26 +170,28 @@ def integer_admission(index_dtype: Any) -> dict[str, Any]:
 
 
 def _qualified_runtime(abi_receipt_path: str | Path):
-    """Fail before setup unless live modules match a fresh native ABI receipt."""
+    """Fail before setup unless modules match this run's explicit local profile receipt."""
     receipt_path = Path(abi_receipt_path).resolve()
     receipt_bytes = receipt_path.read_bytes()
     receipt = json.loads(receipt_bytes)
     receipt_sha = hashlib.sha256(receipt_bytes).hexdigest()
+    runtime_profile = receipt.get("runtime_profile", NATIVE_LINUX_PROFILE)
     if (os.environ.get("_MYFENICS_CLOUD_QUALIFIED_ACTIVATION") != "1"
             or Path(os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST", "")).resolve() != receipt_path
-            or os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256") != receipt_sha):
-        raise RuntimeError("use the tracked native activation with this fresh local ABI receipt")
-    if (sys.platform != "linux" or platform.system() != "Linux"
-            or "microsoft" in platform.release().lower()
+            or os.environ.get("_MYFENICS_CLOUD_ABI_MANIFEST_SHA256") != receipt_sha
+            or os.environ.get("_MYFENICS_CLOUD_RUNTIME_PROFILE") != runtime_profile):
+        raise RuntimeError("use the tracked Task40 profile activation with this fresh local ABI receipt")
+    runtime_host = validate_runtime_receipt(receipt, requested_profile=runtime_profile)
+    if (sys.platform != "linux"
             or receipt.get("schema") != "fresh-runtime-imports-only.v1"
             or receipt.get("status") != "IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION"
             or receipt.get("FE_action") != "NOT_RUN"):
-        raise RuntimeError("native Linux imports-only ABI receipt is missing or failed")
+        raise RuntimeError("fresh Task40 imports-only ABI receipt is missing or failed")
     prefix = Path(sys.prefix).resolve()
     if (Path(sys.executable).resolve() != Path(receipt.get("executable", "")).resolve()
             or prefix != Path(receipt.get("prefix", "")).resolve()
             or sys.version_info[:2] != (3, 12)):
-        raise RuntimeError("live interpreter differs from the qualified native prefix")
+        raise RuntimeError("live interpreter differs from the qualified independent prefix")
     from mpi4py import MPI
     from petsc4py import PETSc
     import dolfinx
@@ -198,7 +208,7 @@ def _qualified_runtime(abi_receipt_path: str | Path):
         module_file = Path(getattr(module, "__file__", "")).resolve()
         if (not module_file.is_relative_to(prefix)
                 or Path(recorded.get("file", "")).resolve() != module_file):
-            raise RuntimeError(f"live {name} module differs from the qualified native prefix/receipt")
+            raise RuntimeError(f"live {name} module differs from the qualified independent prefix/receipt")
     mpc_version = version("dolfinx_mpc")
     if (MPI.COMM_WORLD.size != 1 or MPI.COMM_WORLD.rank != 0
             or np.dtype(PETSc.ScalarType) != np.dtype(np.complex128)
@@ -208,7 +218,7 @@ def _qualified_runtime(abi_receipt_path: str | Path):
             or mpc_version != "0.10.5"
             or receipt.get("MPC_package_version") != mpc_version
             or tuple(PETSc.Sys.getVersion()) != (3, 25, 6)):
-        raise RuntimeError("native p6 requires MPI1, complex128/int32, DOLFINx/Basix 0.10.0, MPC 0.10.5 and PETSc 3.25.6")
+        raise RuntimeError("Task40 p6 requires MPI1, complex128/int32, DOLFINx/Basix 0.10.0, MPC 0.10.5 and PETSc 3.25.6")
     mpi = receipt.get("MPI", {})
     if (MPI.Get_library_version() != mpi.get("library_version")
             or "MPICH" not in MPI.Get_library_version()
@@ -222,14 +232,16 @@ def _qualified_runtime(abi_receipt_path: str | Path):
     if (os.environ.get("UCX_TLS") != "self"
             or any(os.environ.get(name) != "1" for name in
                    ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"))):
-        raise RuntimeError("native MPI/BLAS thread profile differs from the admitted one-rank receipt")
+        raise RuntimeError("MPI/BLAS thread profile differs from the admitted one-rank receipt")
     loaded = {Path(line.split()[-1]).resolve() for line in Path("/proc/self/maps").read_text().splitlines()
               if "/" in line and any(token in line for token in
               ("libmpi", "libpetsc", "mumps", "dolfinx", "basix", "openblas"))}
     if any(not path.is_relative_to(prefix) for path in loaded):
-        raise RuntimeError("live native numerical libraries were loaded outside the qualified prefix")
+        raise RuntimeError("live numerical libraries were loaded outside the qualified prefix")
     return MPI, PETSc, {"path": str(receipt_path), "sha256": receipt_sha,
                         "prefix": str(prefix), "executable": str(Path(sys.executable).resolve()),
+                        "runtime_profile": runtime_profile,
+                        "runtime_host": runtime_host,
                         "MPI_library_version": MPI.Get_library_version(),
                         "PETSc_version": list(PETSc.Sys.getVersion()),
                         "PETSc_scalar": str(np.dtype(PETSc.ScalarType)),
@@ -274,14 +286,18 @@ def run(*, output_dir: str | Path, allocation_gate: Callable,
         "watchdog_and_process_group_termination_owned_by_caller": True,
         "raw_member_payload_limit_bytes": W0_ARCHIVE_PAYLOAD_LIMIT_BYTES,
     })
-    checkpoint("fresh_p6_admission", {
+    admission_record = {
         "input": input_identity, "integer_admission": integer_identity,
         "w0_budget": budget, "source_identity": sources,
         "MPI_size": int(MPI.COMM_WORLD.size),
         "PETSc_scalar": str(PETSc.ScalarType), "PETSc_integer": str(PETSc.IntType),
-        "native_abi_identity": abi_identity,
+        "runtime_profile": abi_identity["runtime_profile"],
+        "runtime_abi_identity": abi_identity,
         "PDE_solved": False,
-    })
+    }
+    if abi_identity["runtime_profile"] == NATIVE_LINUX_PROFILE:
+        admission_record["native_abi_identity"] = abi_identity
+    checkpoint("fresh_p6_admission", admission_record)
     from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
     from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
@@ -349,14 +365,36 @@ def run(*, output_dir: str | Path, allocation_gate: Callable,
         levels = None
 
 
-def validate_native_runtime(abi_receipt_path: str | Path) -> dict[str, Any]:
-    """Public, no-FE admission check used by the native service launcher."""
-    _mpi, _petsc, identity = _qualified_runtime(abi_receipt_path)
-    budget = frozen_budget_identity()
+def _native_runtime_admission(identity: dict[str, Any], budget: dict[str, Any]) -> dict[str, Any]:
+    """Keep the original native admission schema and status for existing callers."""
     return {"schema": "task40extra.fresh-c1-p6-native-admission.v1",
             "status": "NATIVE_ABI_AND_SOURCE_ADMISSION_PASS_NO_FE_ACTION",
             "native_abi_identity": identity, "w0_budget": budget,
             "FE_action": "NOT_RUN", "PDE_solved": False}
+
+
+def validate_native_runtime(abi_receipt_path: str | Path) -> dict[str, Any]:
+    """Native-only public admission check; WSL receipts are rejected."""
+    _mpi, _petsc, identity = _qualified_runtime(abi_receipt_path)
+    if identity["runtime_profile"] != NATIVE_LINUX_PROFILE:
+        raise RuntimeError("validate_native_runtime accepts only the native_linux profile")
+    return _native_runtime_admission(identity, frozen_budget_identity())
+
+
+def validate_fresh_runtime(abi_receipt_path: str | Path) -> dict[str, Any]:
+    """No-FE admission check for the selected native or explicitly local WSL2 profile."""
+    _mpi, _petsc, identity = _qualified_runtime(abi_receipt_path)
+    budget = frozen_budget_identity()
+    profile = identity["runtime_profile"]
+    if profile == NATIVE_LINUX_PROFILE:
+        return {**_native_runtime_admission(identity, budget),
+                "runtime_profile": profile, "runtime_abi_identity": identity}
+    if profile == LOCAL_WSL2_PROFILE:
+        return {"schema": "task40extra.fresh-c1-p6-local-wsl2-admission.v1",
+                "status": "LOCAL_WSL2_ABI_AND_SOURCE_ADMISSION_PASS_NO_FE_ACTION",
+                "runtime_profile": profile, "runtime_abi_identity": identity,
+                "w0_budget": budget, "FE_action": "NOT_RUN", "PDE_solved": False}
+    raise RuntimeError(f"unsupported Task40 runtime profile: {profile!r}")
 
 
 DISK_CAPS = {
@@ -682,18 +720,18 @@ def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str,
     _qualified_runtime(abi_receipt)
     root = root.resolve()
     if not root.is_dir() or not abi_receipt.is_file():
-        raise FileNotFoundError("native service requires the newly created run directory and local ABI receipt")
+        raise FileNotFoundError("Task40 service requires the new run directory and local ABI receipt")
     for name in ("raw", "logs", "jit", "tmp", "supervision"):
         (root / name).mkdir(exist_ok=True)
     initial_free = shutil.disk_usage(root).free
-    admission = validate_native_runtime(abi_receipt)
+    admission = validate_fresh_runtime(abi_receipt)
     from benchmarks.subreaper_watchdog import memory_envelope
     initial_memory = memory_envelope()
     initial_machine_used, physical_total = _whole_machine_memory_occupancy_upper(initial_memory)
     sources = source_identity()
     input_identity = {"path": str(INPUT.resolve()), "sha256": _sha256(INPUT)}
     if input_identity["sha256"] != INPUT_SHA256:
-        raise ValueError("frozen original review-v1 input bytes changed before native worker admission")
+        raise ValueError("frozen original review-v1 input bytes changed before worker admission")
     disk_caps_and_reserve = MINIMUM_START_FREE_BYTES
     if initial_free < disk_caps_and_reserve:
         _atomic_json(root / "admission.json", {**admission, "source_identity": sources,
@@ -713,7 +751,9 @@ def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str,
         return 7
     _atomic_json(root / "admission.json", {**admission, "source_identity": sources,
         "input_identity": input_identity,
-        "status": "NATIVE_ABI_AND_DISK_ADMISSION_PASS_NO_FE_ACTION",
+            "status": ("NATIVE_ABI_AND_DISK_ADMISSION_PASS_NO_FE_ACTION"
+                       if admission["runtime_profile"] == NATIVE_LINUX_PROFILE else
+                       "LOCAL_WSL2_ABI_AND_DISK_ADMISSION_PASS_NO_FE_ACTION"),
         "initial_free_bytes": initial_free,
         "minimum_start_free_bytes_for_all_separate_caps_and_reserve": disk_caps_and_reserve,
         "disk_category_caps_bytes": DISK_CAPS,
@@ -787,9 +827,12 @@ def _supervised_cli(root: Path, abi_receipt: Path, total_deadline_utc: str,
     run_summary = {"status": status,
         "source_identity_manifest_sha256": sources["manifest_sha256"],
         "input_identity": input_identity,
-        "native_abi_identity": admission["native_abi_identity"],
+        "runtime_profile": admission["runtime_profile"],
+        "runtime_abi_identity": admission["runtime_abi_identity"],
         "worker_supervisor": worker_summary, "checker_supervisor": checker_summary,
         "PDE_solved": False, "official_results": False, "raw_archive_created": False}
+    if admission["runtime_profile"] == NATIVE_LINUX_PROFILE:
+        run_summary["native_abi_identity"] = admission["native_abi_identity"]
     if control_smoke:
         run_summary.update({"total_deadline_utc": total_deadline_utc,
             "settlement_cleanup_reserve_seconds": W0_SETTLEMENT_CLEANUP_RESERVE_SECONDS,
@@ -814,13 +857,13 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--checker-worker", action="store_true")
     mode.add_argument("--control-smoke-leaf", choices=("worker", "checker"), help=argparse.SUPPRESS)
     parser.add_argument("--control-smoke", action="store_true",
-                        help="run native admission/supervision with non-numerical worker/checker sentinels")
+                        help="run the selected runtime-profile admission/supervision with non-numerical worker/checker sentinels")
     args = parser.parse_args(argv)
     root, receipt = Path(args.output_dir).resolve(), Path(args.abi_receipt).resolve()
     if args.control_smoke and not args.supervised:
         parser.error("--control-smoke requires --supervised")
     if args.admission_only:
-        print(json.dumps(validate_native_runtime(receipt), indent=2, sort_keys=True))
+        print(json.dumps(validate_fresh_runtime(receipt), indent=2, sort_keys=True))
         return 0
     if args.worker:
         return _worker_cli(root, receipt)
@@ -840,4 +883,5 @@ if __name__ == "__main__":
 
 __all__ = ("INPUT", "INPUT_SHA256", "W0_ARCHIVE_PAYLOAD_LIMIT_BYTES",
            "W0_EXPECTED_DERIVED_UPPER_BYTES", "pilot_config", "integer_admission",
-           "frozen_budget_identity", "source_identity", "run", "validate_native_runtime", "main")
+           "frozen_budget_identity", "source_identity", "run", "validate_fresh_runtime",
+           "validate_native_runtime", "main")

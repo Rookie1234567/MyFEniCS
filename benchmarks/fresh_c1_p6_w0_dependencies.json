@@ -17,7 +17,7 @@
     "native_command": "scripts/run_fresh_c1_p6_native.sh NATIVE_PREFIX NEW_RUN_DIRECTORY TOTAL_DEADLINE_UTC",
     "total_deadline_utc_source": "The caller passes the deadline from the single persisted W0 window record; this wrapper never computes now-plus-duration or rolls the deadline on retry.",
     "total_deadline_utc_cli_format": "%Y-%m-%dT%H:%M:%SZ (UTC, whole seconds), passed unchanged through the user service to --total-deadline-utc",
-    "fractional_window_deadline_handling": "Floor the exact frozen deadline once before CLI entry and preserve the original T0/deadline plus the lost fractional second in the native window record; never round up.",
+    "fractional_window_deadline_handling": "Floor the exact frozen deadline once before CLI entry and preserve the original T0/deadline plus the lost fractional second in the runtime window record; never round up.",
     "service_entry": "scripts/task40_fresh_c1/native_service_entry.sh",
     "runner": "benchmarks/run_fresh_c1_p6_component.py",
     "fresh_receipt_is_run_local": true,
@@ -35,7 +35,8 @@
     "admission_authority": "MemAvailable plus effective cgroup limits/current use, sampled process-tree RSS, declared additional allocations and evidence reserve; the worker cap remains the stricter 3 GiB",
     "stop_on_global_swap_activity": true,
     "external_stop_reason_preserves_first_observed_reason": true,
-    "no_fe_control_smoke": "Set TASK40_W0_NO_FE_CONTROL_SMOKE=1 to use the same fresh-ABI, admission, user-service, worker/checker subreaper, fixed-deadline, swap, PID and descendant-cleanup gates with explicit non-numerical worker/checker sentinels. A pass is CONTROL_SMOKE_PASS_NO_FE and is not a PDE result."
+    "no_fe_control_smoke": "Set TASK40_W0_NO_FE_CONTROL_SMOKE=1 to use the same fresh-ABI, admission, user-service, worker/checker subreaper, fixed-deadline, swap, PID and descendant-cleanup gates with explicit non-numerical worker/checker sentinels. A pass is CONTROL_SMOKE_PASS_NO_FE and is not a PDE result.",
+    "local_wsl2_command": "scripts/run_fresh_c1_p6_local_wsl.sh LOCAL_WSL2_PREFIX NEW_RUN_DIRECTORY TOTAL_DEADLINE_UTC"
   },
   "fixture": {
     "input": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
@@ -106,6 +107,19 @@
     "src/solvers/hcurl_assembly_time_condensation.py",
     "src/solvers/original_port_blocks.py",
     "src/solvers/retained_port_block_layout.py",
-    "src/solvers/solve_vector_maxwell.py"
-  ]
+    "src/solvers/solve_vector_maxwell.py",
+    "benchmarks/task40_runtime_profile.py",
+    "scripts/run_fresh_c1_p6_local_wsl.sh",
+    "scripts/task40_fresh_c1/activate_local_wsl_complex.sh"
+  ],
+  "local_wsl2_authorized_runtime": {
+    "authorization": "explicit opt-in local WSL2 execution profile; native_linux remains the default",
+    "platform": "local WSL2 kernel only; rejects native Linux, WSL1, and other hosts",
+    "host_binding": "fresh imports-only receipt binds runtime profile, WSL2 kernel release, execution platform, and exact local boot ID; execution must match the same host and boot",
+    "prefix": "independent run-qualified prefix under the local Task40 artifact directory; repository .venv is not accepted",
+    "activation": "scripts/task40_fresh_c1/activate_local_wsl_complex.sh PREFIX OWN_RUN/abi_receipt.json OWN_RUN/jit",
+    "abi": "same frozen ABI as native_runtime: Python 3.12, MPICH MPI1, PETSc 3.25.6 complex128/int32, DOLFINx/Basix 0.10.0, dolfinx_mpc 0.10.5, one thread",
+    "math_and_resource_gates_changed": false
+  },
+  "required_targeted_local_wsl2_test_command": "After local WSL2 qualified-activation pure tests pass, run the no-FE control smoke with TASK40_W0_NO_FE_CONTROL_SMOKE=1 bash scripts/run_fresh_c1_p6_local_wsl.sh \"$T40_LOCAL_PREFIX\" \"$T40_CONTROL_SMOKE_RUN_DIR\" \"$T40_FIXED_DEADLINE_UTC\"; inspect CONTROL_SMOKE_PASS_NO_FE, both supervised phase summaries, nonempty/distinct worker and checker PIDs, descendants_cleared=true and remaining_child_pids=[]. Then immediately run the same local WSL2 command in a new run directory with TASK40_W0_NO_FE_CONTROL_SMOKE unset and the exact same TOTAL_DEADLINE_UTC. Do not recompute the deadline; record the explicit local WSL2 profile and same-boot receipt."
 }

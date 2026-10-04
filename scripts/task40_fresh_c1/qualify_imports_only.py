@@ -1,10 +1,18 @@
 """Fresh installed runtime import/scalar/MPI/API witness; no FE/PDE/factor."""
 import argparse, hashlib, importlib, json, os, pathlib, platform, sys, time, traceback
-parser=argparse.ArgumentParser();parser.add_argument('--record',required=True);args=parser.parse_args()
-r={'schema':'fresh-runtime-imports-only.v1','status':'PARTIAL','started_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'python':sys.version,'executable':sys.executable,'prefix':sys.prefix,'platform':platform.platform(),'modules':{},'FE_action':'NOT_RUN','C1':'NOT_RUN','matrix_creation_calls':0,'factor_calls':0,'PDE_calls':0,'old_ABI_inherited':False,'process_local_UCX_TLS':os.environ.get('UCX_TLS'),'threads':{k:os.environ.get(k) for k in ['OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']}}
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+from benchmarks.task40_runtime_profile import NATIVE_LINUX_PROFILE, RUNTIME_PROFILES, current_runtime_identity
+
+parser=argparse.ArgumentParser()
+parser.add_argument('--record',required=True)
+parser.add_argument('--runtime-profile',choices=RUNTIME_PROFILES,default=NATIVE_LINUX_PROFILE)
+args=parser.parse_args()
+r={'schema':'fresh-runtime-imports-only.v1','status':'PARTIAL','started_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'python':sys.version,'executable':sys.executable,'prefix':sys.prefix,'platform':platform.platform(),'runtime_profile':args.runtime_profile,'runtime_host':None,'modules':{},'FE_action':'NOT_RUN','C1':'NOT_RUN','matrix_creation_calls':0,'factor_calls':0,'PDE_calls':0,'old_ABI_inherited':False,'process_local_UCX_TLS':os.environ.get('UCX_TLS'),'threads':{k:os.environ.get(k) for k in ['OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']}}
 def save():
  pathlib.Path(args.record).write_text(json.dumps(r,indent=2,default=str)+'\n')
 try:
+ r['runtime_host']=current_runtime_identity(args.runtime_profile)
  for name in ['numpy','scipy','mpi4py','petsc4py','basix','ufl','ffcx','dolfinx','dolfinx_mpc','pytest','psutil']:
   m=importlib.import_module(name);r['modules'][name]={'version':getattr(m,'__version__',None),'file':getattr(m,'__file__',None)};save()
  import numpy as np

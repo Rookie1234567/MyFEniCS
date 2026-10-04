@@ -2,6 +2,12 @@
 
 **先取得真实0.7nm、三维非可分缩小模型的完整FE解；再以误差与资源证据决定面向约2TB目标规模的下一项工程方法。**
 
+## 本机执行目录与平台身份
+
+旧控制端入口位于 `/home/shenjh/Projects/MyFEniCSx_task37_extra`；Task40 实际执行 checkout 是同一 canonical clone 登记的 `/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering`，分支为 `task40extra_0p7nm_engineering`。Task39 checkout 保持独立。
+
+原 `native_linux` profile 仍拒绝 WSL。只有显式使用 `scripts/run_fresh_c1_p6_local_wsl.sh` 时才采用 `local_wsl2_authorized`；每次运行的 imports-only 收据记录 WSL2 平台、内核版本和 boot ID，后续 admission 必须匹配同一环境。该 profile 复用冻结的 Python/MPI/PETSc/DOLFINx ABI、数学模型、资源 Gate 和原始截止时间，不改变任务范围。
+
 执行分支：`task40extra_0p7nm_engineering`。B线沿用既有远端分支，不创建新分支。该分支原始base为`95dacd01e86f0f7f1d29ee2d5e5a16039bb41871`，续作前远端HEAD为`ffd89005096590c106324b6bb39a8d17c96a87ff`；Task39收口提交`7bb3243e657cbeecfff974f985f09569bfa6e094`已作为第二父提交合并，成为祖先。完整关系记录在`branch_provenance.json`中。
 
 | 先读什么 | 用途 |

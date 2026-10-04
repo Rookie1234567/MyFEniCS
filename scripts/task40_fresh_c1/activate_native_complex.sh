@@ -6,8 +6,12 @@ cloud_c1_repo="$(cd "$cloud_c1_script_dir/../.." && pwd)"
 cloud_c1_prefix="${1:?pass the explicit native independent prefix}"
 cloud_c1_manifest="${2:?run-local imports-only ABI receipt required}"
 cloud_c1_cache="${3:?run-local JIT cache directory required}"
+cloud_c1_runtime_profile="${4:-native_linux}"
+if [[ "$cloud_c1_runtime_profile" != "native_linux" && "$cloud_c1_runtime_profile" != "local_wsl2_authorized" ]]; then
+  echo "unsupported Task40 runtime profile: $cloud_c1_runtime_profile" >&2; return 1
+fi
 if [[ ! -x "$cloud_c1_prefix/bin/python" || ! -f "$cloud_c1_manifest" ]]; then
-  echo "fresh native prefix or run-local imports-only ABI receipt missing" >&2; return 1
+  echo "fresh independent prefix or run-local imports-only ABI receipt missing" >&2; return 1
 fi
 export PATH="$cloud_c1_prefix/bin:$PATH"
 unset PYTHONPATH PYTHONHOME LD_PRELOAD LD_LIBRARY_PATH
@@ -15,13 +19,17 @@ export UCX_TLS=self
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 export XDG_CACHE_HOME="$cloud_c1_cache"
 mkdir -p "$XDG_CACHE_HOME"
-if ! python - "$cloud_c1_manifest" "$cloud_c1_prefix" <<'PYCODE'
+if ! python - "$cloud_c1_manifest" "$cloud_c1_prefix" "$cloud_c1_runtime_profile" "$cloud_c1_repo" <<'PYCODE'
 import json,pathlib,sys
+sys.path.insert(0, sys.argv[4])
+from benchmarks.task40_runtime_profile import validate_runtime_receipt
 from petsc4py import PETSc
 from mpi4py import MPI
 import numpy as np
-p=pathlib.Path(sys.argv[1]);prefix=pathlib.Path(sys.argv[2]).resolve();r=json.loads(p.read_text())
+p=pathlib.Path(sys.argv[1]);prefix=pathlib.Path(sys.argv[2]).resolve();profile=sys.argv[3];r=json.loads(p.read_text())
 assert r['status']=='IMPORT_SCALAR_MPI_API_PASS_NO_FE_ACTION'
+assert r.get('runtime_profile','native_linux')==profile
+validate_runtime_receipt(r, requested_profile=profile)
 assert pathlib.Path(sys.prefix).resolve()==prefix==pathlib.Path(r['prefix']).resolve()
 assert np.dtype(PETSc.ScalarType)==np.dtype(np.complex128)
 assert np.dtype(PETSc.IntType).name==r['PETSc']['int_dtype']=='int32'
@@ -41,4 +49,5 @@ export _MYFENICS_CLOUD_QUALIFIED_ACTIVATION=1
 export _MYFENICS_CLOUD_ABI_MANIFEST="$cloud_c1_manifest"
 export _MYFENICS_CLOUD_ABI_MANIFEST_SHA256="$cloud_c1_hash"
 export _MYFENICS_CLOUD_QUALIFICATION_SCOPE=imports_only_C1_FE_JIT_NOT_RUN
-unset cloud_c1_script_dir cloud_c1_repo cloud_c1_prefix cloud_c1_manifest cloud_c1_hash cloud_c1_cache
+export _MYFENICS_CLOUD_RUNTIME_PROFILE="$cloud_c1_runtime_profile"
+unset cloud_c1_script_dir cloud_c1_repo cloud_c1_prefix cloud_c1_manifest cloud_c1_hash cloud_c1_cache cloud_c1_runtime_profile
