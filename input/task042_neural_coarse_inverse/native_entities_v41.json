@@ -197,5 +197,11 @@
         "sha256": "6a1cbb1d750a78b29a0aaf1f4c6766118ca218766327735fa6017d067763b921"
       }
     }
+  },
+  "diagnosed_routing_replay": {
+    "failed_source": "4a25c8c05e9c39e2caa8dfe7d28acaea23d256fd",
+    "root_cause": "frozen_adjoint_wrong_input",
+    "evidence_path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/repair_04_adjoint_input.json",
+    "evidence_sha256": "db1dc3b7aa65350fc28133b5161081b35ba9ffba78ee4b9fb13cfd2fb5c6ab10"
   }
 }

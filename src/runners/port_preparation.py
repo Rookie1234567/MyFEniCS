@@ -137,6 +137,25 @@ def require_component_gate(*, namespace="v36"):
     return q
 
 
+def diagnosed_phase_repair(namespace, role, previous, plan):
+    if namespace in ("v39", "v40"):
+        return previous["status"] in (
+            "NATIVE_ADAPTER_NOT_QUALIFIED", "COUPLED_INTERFACE_NOT_QUALIFIED",
+            "NATIVE_RECOVERY_NOT_QUALIFIED",
+        )
+    if namespace == "v41" and role == "ROUTING":
+        repair = plan.get("diagnosed_routing_replay", {})
+        return (
+            previous["status"] == "TARGET_BOUNDARY_OWNER_ROUTING_NOT_QUALIFIED"
+            and repair.get("failed_source") == previous["source_sha"]
+            and repair.get("root_cause") == "frozen_adjoint_wrong_input"
+            and repair.get("evidence_path") is not None
+            and hashlib.sha256(Path(repair["evidence_path"]).read_bytes()).hexdigest()
+            == repair.get("evidence_sha256")
+        )
+    return False
+
+
 def launch(
     specification=None, *, command=None, phase=None, attempt=None, namespace="v36"
 ):
@@ -159,14 +178,10 @@ def launch(
         if ARTIFACT.joinpath(role + ".json").exists():
             pointer = ARTIFACT.joinpath(role + ".json")
             previous = json.loads(pointer.read_text())
-            prior_status = json.loads(
+            prior_result = json.loads(
                 __import__("pathlib").Path(previous["path"]).read_text()
-            )["status"]
-            if namespace not in ("v39", "v40") or prior_status not in (
-                "NATIVE_ADAPTER_NOT_QUALIFIED",
-                "COUPLED_INTERFACE_NOT_QUALIFIED",
-                "NATIVE_RECOVERY_NOT_QUALIFIED",
-            ):
+            )
+            if not diagnosed_phase_repair(namespace, role, prior_result, json.loads(PLAN.read_text())):
                 raise ValueError(
                     "completed qualified phase already published; reuse pointer, no restart"
                 )

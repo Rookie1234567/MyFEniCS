@@ -42,6 +42,26 @@ def test_complete_boundary_adjoint_uses_saved_independent_dual():
     assert not np.array_equal(apply_frozen_boundary_adjoint(Action(), inputs), inputs["x"] * (2 - 3j))
 
 
+@pytest.mark.parametrize("fault", ["none", "qualified", "source", "hash", "namespace"])
+def test_only_documented_nonqualified_routing_repair_can_reenter(tmp_path, fault):
+    from src.runners.port_preparation import diagnosed_phase_repair
+    from src.solvers.native_recovery_packets import sha
+
+    p = tmp_path / "repair.json"
+    p.write_text('{"root_cause":"frozen_adjoint_wrong_input"}')
+    previous = {"status": "TARGET_BOUNDARY_OWNER_ROUTING_NOT_QUALIFIED", "source_sha": "actual-source"}
+    repair = {"failed_source": "actual-source", "root_cause": "frozen_adjoint_wrong_input",
+              "evidence_path": str(p), "evidence_sha256": sha(p)}
+    if fault == "qualified":
+        previous["status"] = "TARGET_BOUNDARY_OWNER_ROUTING_QUALIFIED"
+    if fault == "source":
+        repair["failed_source"] = "other-source"
+    if fault == "hash":
+        repair["evidence_sha256"] = "wrong"
+    assert diagnosed_phase_repair("v40" if fault == "namespace" else "v41", "ROUTING", previous,
+                                  {"diagnosed_routing_replay": repair}) == (fault == "none")
+
+
 @pytest.mark.parametrize(
     "key",
     [

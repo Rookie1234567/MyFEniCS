@@ -38,6 +38,9 @@ def main():
     if "--focused-owner-checker" in sys.argv:
         i = commands[1].index("src/test/test_native_entities.py")
         commands[1][i] += "::test_literal_owner_checker_end_to_end_inventory_faults"
+    if "--focused-replay" in sys.argv:
+        i = commands[1].index("src/test/test_native_entities.py")
+        commands[1][i] += "::test_only_documented_nonqualified_routing_repair_can_reenter"
     commands.append(
         [
             "/home/fenics/Projects/Metrology/.venv/bin/ruff",
