@@ -1,5 +1,8 @@
 """Independent V41 literal inventory/vector checker, no solver or FE runtime."""
 
+import hashlib
+from pathlib import Path
+
 import numpy as np
 
 from benchmarks.check_boundary_witness import metric, read_arrays
@@ -295,29 +298,132 @@ def check_directions(receipt):
     return {"passed": all(c["passed"] for c in checks), "checks": checks}
 
 
-def check_routing(packets, rows=378432):
-    ranks(packets, 2)
+def selected_arrays(receipt, names):
+    """Hash the complete packet, decode only the bounded audit operands."""
+    p = Path(receipt["path"])
+    h = hashlib.sha256()
+    with p.open("rb") as stream:
+        for block in iter(lambda: stream.read(2**20), b""):
+            h.update(block)
+    if h.hexdigest() != receipt["sha256"]:
+        raise ValueError("selected literal packet hash")
+    out = {}
+    with np.load(p, allow_pickle=False) as archive:
+        aliases = receipt.get("aliases", {})
+        if set(archive.files) != set(receipt["members"]) - set(aliases):
+            raise ValueError("selected literal inventory")
+        for name in names:
+            a = archive[aliases.get(name, name)]
+            m = receipt["members"][name]
+            if (list(a.shape) != m["shape"] or a.dtype.str != m["dtype"] or
+                hashlib.sha256(np.ascontiguousarray(a).tobytes()).hexdigest() != m["sha256"]):
+                raise ValueError("selected literal member hash")
+            out[name] = a
+    return out
+
+
+def literal_entity_transforms(direction_receipt):
+    """Independent native P1 permutation labels plus saved p6 generators.
+
+    Basix basis data are the declared shared dependency; no adapter or solver
+    transform function is called. Coefficients use the transpose of the
+    independently composed basis transformations.
+    """
+    import basix
+
+    a = selected_arrays(direction_receipt, ["interval_transform", "quadrilateral_transform"])
+    p1 = basix.create_element(basix.ElementFamily.P, basix.CellType.hexahedron, 1,
+                              basix.LagrangeVariant.equispaced)
+    reference = np.array(p1.entity_closure_dofs[2][0], np.int32)
+    tables = {1: {(0, 1): np.eye(6), (1, 0): a["interval_transform"][0].T}, 2: {}}
+    for bits in range(8):
+        perm = reference.copy()
+        p1.permute_subentity_closure(perm, bits, basix.CellType.quadrilateral)
+        key = tuple(int(np.flatnonzero(reference == v)[0]) for v in perm)
+        transform = np.eye(60)
+        if bits & 1:
+            transform = a["quadrilateral_transform"][1] @ transform
+        for _ in range(bits // 2):
+            transform = a["quadrilateral_transform"][0] @ transform
+        tables[2][key] = transform.T
+    return tables
+
+
+def check_routing(packets, rows=378432, *, topology, actions, directions, expected_ranks=2):
+    ranks(packets, expected_ranks)
+    ranks(topology, expected_ranks)
     coverage = np.zeros(rows, np.int8)
     checks = []
-    for p in packets:
-        a = read_arrays(p["numeric"])
-        for d in (1, 2):
+    data = [read_arrays(p["numeric"]) for p in packets]
+    transforms = literal_entity_transforms(directions)
+    frozen = selected_arrays(actions, ["frozen_input"])["frozen_input"]
+    shape = topology[0]["metadata"]["axis_cells"]
+    phases = [complex(*p) for p in topology[0]["metadata"]["phases"]]
+    if rows != 144 * shape[0] * shape[1] or frozen.shape != (rows,):
+        raise ValueError("full boundary physical row identity")
+    left = right = 0j
+    for d in (1, 2):
+        owned_ids = np.concatenate([a[f"boundary{d}_owned_native_ids"] for a in data])
+        owned_values = np.concatenate([a[f"boundary{d}_owned_values"] for a in data])
+        owned_ranks = np.concatenate([np.full(len(a[f"boundary{d}_owned_native_ids"]), p["rank"])
+                                      for p, a in zip(packets, data, strict=True)])
+        order = np.argsort(owned_ids)
+        sorted_ids = owned_ids[order]
+        if len(np.unique(sorted_ids)) != len(sorted_ids):
+            raise ValueError("duplicate boundary native owner")
+        pullback = np.zeros_like(owned_values)
+        for p, top, a in zip(packets, topology, data, strict=True):
+            names = [f"entity{d}_" + n for n in ("native_ids", "keys", "master_ids", "master_owners", "vertex_permutations")]
+            literal = selected_arrays(top["numeric"], names)
+            n = top["metadata"]["entity_sizes"][str(d)]["owned"]
+            keys = literal[f"entity{d}_keys"][:n]
+            boundary = ((keys[:, 4] == 0) | (keys[:, 4] == shape[2])) & (
+                keys[:, 1] != 2 if d == 1 else keys[:, 1] == 2)
+            physical = np.flatnonzero(boundary)
+            if not np.array_equal(literal[f"entity{d}_native_ids"][physical], a[f"boundary{d}_physical_native_ids"]):
+                raise ValueError("missing/duplicate complete physical boundary entity")
+            for old, new in (("keys", "physical_keys"), ("master_ids", "requested_master_ids"),
+                             ("master_owners", "requested_master_owners"), ("vertex_permutations", "permutation")):
+                if not np.array_equal(literal[f"entity{d}_{old}"][physical], a[f"boundary{d}_{new}"]):
+                    raise ValueError("boundary literal native identity mismatch")
             ids = a[f"boundary{d}_canonical_rows"]
             if ids.ndim != 2 or np.any(ids < 0) or np.any(ids >= rows):
                 raise ValueError("complete boundary row inventory")
             np.add.at(coverage, ids.ravel(), 1)
-            checks.append(
-                {
-                    "kind": f"boundary{d}_owner_extract_rank{p['rank']}",
-                    **metric(a[f"boundary{d}_extracted"], a[f"boundary{d}_expected"]),
-                }
-            )
-        checks.append(
-            {
-                "kind": "complete_owner_duality_rank" + str(p["rank"]),
-                **metric(a["global_duality_left"], a["global_duality_right"]),
-            }
-        )
+            checks.append({"kind": f"frozen_input_dim{d}_rank{p['rank']}",
+                           **metric(a[f"boundary{d}_owned_values"], frozen[ids])})
+            pk = a[f"boundary{d}_physical_keys"]
+            phase = np.ones(len(pk), np.complex128)
+            for axis in (0, 1):
+                hit = (pk[:, 2 + axis] == shape[axis]) & ((d == 2) | (pk[:, 1] != axis))
+                phase[hit] *= phases[axis]
+            checks.append({"kind": f"literal_boundary_phase_dim{d}_rank{p['rank']}",
+                           **metric(phase, a[f"boundary{d}_phase"])})
+            take = np.searchsorted(sorted_ids, a[f"boundary{d}_requested_master_ids"])
+            if np.any(take >= len(sorted_ids)) or not np.array_equal(sorted_ids[take], a[f"boundary{d}_requested_master_ids"]):
+                raise ValueError("missing boundary canonical master")
+            index = order[take]
+            if not np.array_equal(owned_ranks[index], a[f"boundary{d}_requested_master_owners"]):
+                raise ValueError("wrong boundary native owner")
+            prediction = np.empty_like(a[f"boundary{d}_extracted"])
+            for i, perm in enumerate(a[f"boundary{d}_permutation"]):
+                transform = transforms[d][tuple(perm)]
+                prediction[i] = phase[i] * (transform @ owned_values[index[i]])
+                pullback[index[i]] += phase[i].conjugate() * (
+                    transform.conjugate().T @ a[f"boundary{d}_physical_dual"][i])
+            checks.append({"kind": f"independent_literal_extract_dim{d}_rank{p['rank']}",
+                           **metric(prediction, a[f"boundary{d}_extracted"])})
+            left += np.vdot(a[f"boundary{d}_physical_dual"], a[f"boundary{d}_extracted"])
+        for p, a in zip(packets, data, strict=True):
+            take = np.searchsorted(sorted_ids, a[f"boundary{d}_owned_native_ids"])
+            checks.append({"kind": f"independent_literal_dual_dim{d}_rank{p['rank']}",
+                           **metric(pullback[order[take]], a[f"boundary{d}_scattered_dual"])})
+        right += np.vdot(pullback, owned_values)
+    for p, a in zip(packets, data, strict=True):
+        checks.append({"kind": "recomputed_owner_duality_rank" + str(p["rank"]),
+                       **metric(np.array([left]), np.array([right]))})
+        checks.append({"kind": "stored_left_duality_rank" + str(p["rank"]),
+                       **metric(np.array([left]), a["global_duality_left"])})
     if not np.all(coverage == 1):
         raise ValueError("missing/duplicate full boundary entity/face moments")
     return {"passed": all(c["passed"] for c in checks), "checks": checks, "rows": rows}

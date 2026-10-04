@@ -771,6 +771,16 @@ def target_topology(folder):
     }
 
 
+def ordered_modes_from_receipt(receipt, *, expected_count=32060):
+    path = Path(receipt["path"])
+    if sha(path) != receipt["sha256"]:
+        raise ValueError("complete ordered mode bytes hash")
+    modes = json.loads(path.read_text())
+    if not isinstance(modes, list) or len(modes) != expected_count:
+        raise ValueError("complete frozen ordered modes")
+    return modes
+
+
 def saved_boundary_action():
     """Rehydrate saved polynomial, using the existing exact-q30 action."""
     import basix
@@ -785,9 +795,7 @@ def saved_boundary_action():
     inventory, _ = parent("V36_INVENTORY")
     layout, _ = parent("V38_LAYOUT")
     data = read_arrays(layout["layout"])
-    modes = inventory["ordered_modes"]
-    if len(modes) != 32060:
-        raise ValueError("complete frozen ordered modes")
+    modes = ordered_modes_from_receipt(inventory["ordered_modes"])
     polynomial = FacetPolynomial.__new__(FacetPolynomial)
     polynomial.element = basix.ufl.element("N1curl", "hexahedron", 6).basix_element
     polynomial.p = 6
@@ -834,11 +842,37 @@ def target_routing(folder):
             != topology["new_unqualified_direction_codes"]
         ):
             raise ValueError("new target direction qualification still stopped")
+    resume = plan_record().get("resume_routing_packets")
+    if resume is not None:
+        _, topology_path = stage("TOPOLOGY")
+        if resume["topology_sha256"] != sha(topology_path):
+            raise ValueError("routing resume topology identity")
+        packets = []
+        for record in resume["records"]:
+            if sha(record["path"]) != record["sha256"]:
+                raise ValueError("routing resume packet manifest")
+            packets.append(json.loads(Path(record["path"]).read_text()))
+        if [p["rank"] for p in packets] != list(range(comm.size)):
+            raise ValueError("routing resume actual MPI rank inventory")
+        a = read_arrays(packets[comm.rank]["numeric"])
+        reconstructed = np.zeros(378432, np.complex128)
+        for d in (1, 2):
+            ids = a[f"boundary{d}_physical_native_ids"]
+            order = np.argsort(ids)
+            take = np.searchsorted(ids[order], a[f"boundary{d}_owned_native_ids"])
+            if not np.array_equal(ids[order[take]], a[f"boundary{d}_owned_native_ids"]):
+                raise ValueError("routing resume canonical owner coverage")
+            reconstructed[a[f"boundary{d}_canonical_rows"]] = a[
+                f"boundary{d}_canonical_extracted"
+            ][order[take]]
+        output = np.empty_like(reconstructed) if comm.rank == 0 else None
+        comm.Reduce(reconstructed, output, op=MPI.SUM, root=0)
+        return complete_routed_boundary(folder, packets, output)
     own = topology["packets"][comm.rank]
     a = read_arrays(own["numeric"])
     component, _ = parent("V38_COMPONENT")
     inputs = read_arrays(component["inputs"])
-    x, y = inputs["x"], inputs["y"]
+    x = inputs["x"]
     shape = tuple(len(axis) - 1 for axis in frozen_axes())
     numeric, meta = (
         {},
@@ -943,8 +977,18 @@ def target_routing(folder):
     output = np.empty_like(reconstructed) if comm.rank == 0 else None
     comm.Reduce(reconstructed, output, op=MPI.SUM, root=0)
     packets = save_rank(folder, numeric, meta, name="boundary")
+    return complete_routed_boundary(folder, packets, output)
+
+
+def complete_routed_boundary(folder, packets, output):
+    from mpi4py import MPI
+
+    comm = MPI.COMM_WORLD
+    component, _ = parent("V38_COMPONENT")
     checks, actions = [], None
     if comm.rank == 0:
+        inputs = read_arrays(component["inputs"])
+        x, y = inputs["x"], inputs["y"]
         checks.append(
             {"kind": "complete_canonical_378432_extract", **metric(output, x)}
         )
@@ -998,8 +1042,6 @@ def target_routing(folder):
 
 
 def finish(role, folder):
-    from mpi4py import MPI
-
     from benchmarks.check_native_entities import (
         check_directions,
         check_packets,
@@ -1008,6 +1050,11 @@ def finish(role, folder):
 
     require_envelope()
     checks = {}
+    if role in ("DEPLOY", "CAPACITY"):
+        checked, checked_path = stage("CHECK")
+        if checked["status"] != "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE" or not checked["passed"]:
+            raise ValueError("independent saved-array qualification gate")
+        return finish_after_checks(role, folder, checked["checks"], checked_path)
     for name in ("BRIDGE1", "BRIDGE2", "BRIDGE4"):
         if not (ARTIFACT / (name + ".json")).exists():
             checks[name] = {"status": "NOT_RUN"}
@@ -1028,14 +1075,36 @@ def finish(role, folder):
         checks["ORIENTATION"] = check_directions(o["direction_witness"]["numeric"])
     if (ARTIFACT / "ROUTING.json").exists():
         r, _ = stage("ROUTING")
-        checks["ROUTING"] = check_routing(r["packets"])
+        checks["ROUTING"] = check_routing(
+            r["packets"], topology=t["packets"], actions=r["complete_actions"],
+            directions=o["direction_witness"]["numeric"]
+        )
         a = read_arrays(r["complete_actions"])
         checks["ACTIONS"] = [
             {"kind": n, **metric(a[n], a["frozen_" + n])}
             for n in ("amplitudes", "forward", "adjoint", "modal")
         ]
+    def qualified(value):
+        if isinstance(value, dict):
+            return value.get("passed", True) and all(qualified(v) for v in value.values())
+        if isinstance(value, list):
+            return all(qualified(v) for v in value)
+        return True
+
+    passed = qualified(checks)
+    return {
+        "status": "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE" if passed else "INDEPENDENT_NATIVE_ENTITY_CHECKS_FAILED",
+        "passed": passed,
+        "checks": checks,
+        "solver_qualified": False,
+    }
+
+
+def finish_after_checks(role, folder, checks, checked_path):
+    from mpi4py import MPI
+
     if role == "CAPACITY":
-        return capacity_record(folder, checks)
+        return capacity_record(folder, {"path": str(checked_path), "sha256": sha(checked_path)})
     if role == "DEPLOY":
         r, _ = stage("ROUTING")
         comm = MPI.COMM_WORLD
@@ -1073,7 +1142,7 @@ def finish(role, folder):
             if all(c["passed"] for c in errors)
             else "OWNER_CONSUMPTION_NOT_QUALIFIED",
             "checks": errors,
-            "upstream_independent": checks,
+            "upstream_independent": {"path": str(checked_path), "sha256": sha(checked_path)},
             "volume_consumer": "NOT_CONNECTED_MATCHING_DISTRIBUTED_VOLUME_CALLBACK_REQUIRED",
             "required_volume_fields": [
                 "native_entity_binding",
@@ -1088,11 +1157,7 @@ def finish(role, folder):
             "V40_nonzero_RHS_anchor": plan_record()["parents"]["V40_RECOVER"],
             "target_PDE": "NOT_RUN",
         }
-    return {
-        "status": "INDEPENDENT_NATIVE_ENTITY_CHECKS_COMPLETE",
-        "checks": checks,
-        "solver_qualified": False,
-    }
+    raise ValueError("post-check stage")
 
 
 def capacity_record(folder, checks):

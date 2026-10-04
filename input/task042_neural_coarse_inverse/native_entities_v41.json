@@ -92,5 +92,19 @@
       }
     ]
   },
-  "orientation_audit_scope": "only actually encountered unknown target cell codes; old raw882 and native element transforms; no mesh/space/kernel/LU"
+  "orientation_audit_scope": "only actually encountered unknown target cell codes; old raw882 and native element transforms; no mesh/space/kernel/LU",
+  "resume_routing_packets": {
+    "topology_sha256": "18b0d0b17e1e665c760890f0dfe7ea1a99e4e95963fc35c2fc0526fd90863097",
+    "records": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T102752014232Z/boundary_rank0.json",
+        "sha256": "d4d75a8886bdd7d3562eeae49d9dd531692f119cb8f43efa147ec94e70d5f6a3"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T102752014232Z/boundary_rank1.json",
+        "sha256": "60999b155d933b0165e2f181c1389f902d56a9e7a97f77e8e77ad690c50c0b9e"
+      }
+    ],
+    "reason": "saved full owner extract/scatter before ordered-mode receipt reader error; no array regenerated"
+  }
 }

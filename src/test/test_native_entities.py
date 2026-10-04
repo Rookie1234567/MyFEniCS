@@ -13,6 +13,22 @@ from src.solvers.native_entity_protocol import (
 )
 
 
+def test_ordered_mode_receipt_reads_literal_list_and_rejects_hash(tmp_path):
+    from src.solvers.native_entity_study import ordered_modes_from_receipt
+    from src.solvers.native_recovery_packets import sha
+
+    p = tmp_path / "modes.json"
+    modes = [{"side": "top", "mode_index": 0}, {"side": "bottom", "mode_index": 1}]
+    p.write_text(json.dumps(modes))
+    receipt = {"path": str(p), "sha256": sha(p)}
+    assert ordered_modes_from_receipt(receipt, expected_count=2) == modes
+    with pytest.raises(ValueError, match="complete frozen"):
+        ordered_modes_from_receipt(receipt)
+    p.write_text("[]")
+    with pytest.raises(ValueError, match="bytes hash"):
+        ordered_modes_from_receipt(receipt, expected_count=2)
+
+
 @pytest.mark.parametrize(
     "key",
     [
@@ -290,6 +306,87 @@ def test_literal_owner_checker_end_to_end_inventory_faults(tmp_path, fault):
             check_packets([] if fault == "missing_rank" else [record])
     else:
         assert check_packets([record])["passed"] == (fault == "none")
+
+
+@pytest.mark.parametrize("fault", ["none", "phase", "owner", "missing_face", "missing_rank", "permutation", "dual"])
+def test_full_saved_boundary_routing_checker_from_actual_adapter(tmp_path, fault):
+    import basix.ufl
+    from mpi4py import MPI
+
+    from benchmarks.check_native_entities import check_routing
+    from src.solvers.native_entity_adapter import CompleteEntityAdapter, boundary_rows
+    from src.solvers.port_component_study import array_file
+
+    x = np.arange(144, dtype=float) * (0.1 + 0.2j) + 1 - 0.7j
+    phases = (np.exp(0.3j), np.exp(-0.2j))
+    arrays, top_arrays, sizes = {}, {}, {}
+    left = right = 0j
+    for d, moments in ((1, 6), (2, 60)):
+        keys = []
+        for side in (0, 1):
+            if d == 2:
+                keys.append([2, 2, 0, 0, side])
+            else:
+                for axis in (0, 1):
+                    for endpoint in (0, 1):
+                        low = [0, 0, side]
+                        low[1 - axis] = endpoint
+                        keys.append([1, axis, *low])
+        keys = np.array(keys, np.int64)
+        masters, phase = periodic_master(keys, (1, 1, 1), phases)
+        gid = np.arange(len(keys), dtype=np.int64)
+        lookup = {tuple(k): i for i, k in enumerate(keys)}
+        requested = np.array([lookup[tuple(k)] for k in masters], np.int64)
+        canonical = np.flatnonzero(np.all(keys == masters, axis=1))
+        rows = boundary_rows(keys[canonical], (1, 1, 1), d)
+        perm = np.tile([1, 0] if d == 1 else [0, 2, 1, 3], (len(keys), 1)).astype(np.int8)
+        owner = np.zeros(len(keys), np.int32)
+        adapter = CompleteEntityAdapter(MPI.COMM_SELF, gid[canonical], requested, owner, phase, perm, d)
+        values = np.ascontiguousarray(x[rows])
+        extracted = adapter.extract(values)
+        dual = np.arange(len(keys) * moments).reshape(len(keys), moments) * (0.01 - 0.02j) + 0.5j
+        scatter = np.zeros_like(values)
+        adapter.scatter_into(dual, scatter)
+        left += np.vdot(dual, extracted)
+        right += np.vdot(scatter, values)
+        for name, value in (("canonical_rows", rows), ("owned_native_ids", gid[canonical]),
+                            ("physical_native_ids", gid), ("physical_keys", keys),
+                            ("requested_master_ids", requested), ("requested_master_owners", owner),
+                            ("permutation", perm), ("phase", phase), ("owned_values", values),
+                            ("extracted", extracted), ("physical_dual", dual), ("scattered_dual", scatter)):
+            arrays[f"boundary{d}_" + name] = value
+        for name, value in (("native_ids", gid), ("keys", keys), ("master_ids", requested),
+                            ("master_owners", owner), ("vertex_permutations", perm)):
+            top_arrays[f"entity{d}_" + name] = value
+        sizes[str(d)] = {"owned": len(keys), "ghost": 0, "global": len(keys)}
+    arrays.update(global_duality_left=np.array([left]), global_duality_right=np.array([right]))
+    if fault == "phase":
+        arrays["boundary1_phase"][1] *= np.exp(0.1j)
+    if fault == "owner":
+        arrays["boundary1_requested_master_owners"] = np.ones(8, np.int32)
+    if fault == "missing_face":
+        arrays["boundary2_physical_native_ids"] = arrays["boundary2_physical_native_ids"][:-1]
+    if fault == "permutation":
+        arrays["boundary2_permutation"] = np.tile([0, 1, 2, 3], (2, 1)).astype(np.int8)
+    if fault == "dual":
+        arrays["boundary1_scattered_dual"][0, 0] += 1
+    packet = {"rank": 0, "MPI_size": 1, "commit": True,
+              "numeric": array_file(tmp_path / "routing.npz", **arrays)}
+    topology = {"rank": 0, "MPI_size": 1, "commit": True,
+                "numeric": array_file(tmp_path / "topology.npz", **top_arrays),
+                "metadata": {"axis_cells": [1, 1, 1], "phases": [[p.real, p.imag] for p in phases], "entity_sizes": sizes}}
+    generators = basix.ufl.element("N1curl", "hexahedron", 6).basix_element.entity_transformations()
+    direction = array_file(tmp_path / "directions.npz", interval_transform=generators["interval"],
+                           quadrilateral_transform=generators["quadrilateral"])
+    action = array_file(tmp_path / "actions.npz", frozen_input=x)
+    def call():
+        return check_routing([] if fault == "missing_rank" else [packet], 144,
+                             topology=[topology], actions=action, directions=direction, expected_ranks=1)
+    if fault in ("owner", "missing_face", "missing_rank", "permutation"):
+        with pytest.raises(ValueError):
+            call()
+    else:
+        assert call()["passed"] == (fault == "none")
 
 
 def test_short_deadline_clears_only_own_descendant_tree(tmp_path):
