@@ -1,5 +1,5 @@
 {
-  "status": "PENDING_SCOPED_GITHUB_PUBLICATION",
+  "status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
   "review_v22_reused": {
     "report_SHA256": "c0b6645ef6372889ae2c19c4ee3f38b351f9b36a4081745ad5dda0310500452d",
     "audit": "review_v22_evidence_audit.json",
@@ -12,5 +12,95 @@
     "response_v23.md",
     "outcomes/portable_facet_component_v23.md"
   ],
-  "local_parser_is_not_visual_PASS": true
+  "local_parser_is_not_visual_PASS": true,
+  "publication_HEAD": "d3099857f5b28289b45beb4d7386bc5150787602",
+  "new_page_visual_PASS_claim": true,
+  "pages": [
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d3099857f5b28289b45beb4d7386bc5150787602/docs/task042extra_feinn_5nm/response_v23.md",
+      "document": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/response_v23.md",
+        "sha256": "da974c0250e65ab0ea30e0c623355e8d832f41e84a5d84eaa4eab3842d20608d",
+        "bytes": 5526
+      },
+      "tables": 1,
+      "formulas": 0
+    },
+    {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/d3099857f5b28289b45beb4d7386bc5150787602/docs/task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md",
+      "document": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/portable_facet_component_v23.md",
+        "sha256": "5d7bbec0e8bd53400709081ec702b449540fd8caf6b7908577031daf4c02953e",
+        "bytes": 7609
+      },
+      "tables": 2,
+      "formulas": 1
+    }
+  ],
+  "captures": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/00_top.png",
+      "sha256": "e681c446234d1c1cc869895fae3eaeeffa1292e93022f1e6e8a356dc8bbe7012",
+      "bytes": 374583,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/00_table_00.png",
+      "sha256": "c55d8767b13f76b74e652d01d07389e7e2d4dc651fedeb9f4fe32b9c6cdbae19",
+      "bytes": 456100,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/00_table_00_bottom.png",
+      "sha256": "a76fca5bef1bb1d0f4ee3c49a8586f85710ee359c707862188ef7c17fb664c31",
+      "bytes": 421425,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_top.png",
+      "sha256": "0435af0140b8702c07fe7d9b681033b99ba950eea14383c1e037b2d35ab08128",
+      "bytes": 437063,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_00.png",
+      "sha256": "23d650799c623a897a40451b3034e72acdf0b8c3b76d8b0a225e78a548e7f1b2",
+      "bytes": 452299,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_01.png",
+      "sha256": "00cb80b354000221f420271531c86b5c356b4d8dc0f4cad7218c9986cfeb004f",
+      "bytes": 457485,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_math-renderer_00.png",
+      "sha256": "95225c63a2a7361e274ebd91e5c67d276fd1f02d6848d66775fcf75f558fd341",
+      "bytes": 503057,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_00_bottom.png",
+      "sha256": "ccda7b2dffea72c758ea5066c3ee6e14054ee49ae93b6a5f59b64a4ba32a0945",
+      "bytes": 498816,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/01_table_01_bottom.png",
+      "sha256": "1cfec555d0decb5315bb207f545b8b7d981487c42727bc5933079833692227cb",
+      "bytes": 480083,
+      "model_image_inspection": "PASS_LEGIBLE_COMPLETE_SCOPED_CONTENT"
+    }
+  ],
+  "tables": 3,
+  "formulas": 1,
+  "capture_count": 9,
+  "raw_capture_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v23_published/render_records.json",
+    "sha256": "f10764bae14d355d377b13998f26bc8fd453ab142ad08a9eea5d3f1f6553e08e",
+    "bytes": 10760
+  },
+  "scope": "Two new documents: first screens, complete three tables with bottom rows, one rendered equation. Git text and raw evidence were the reading source; screenshots only validate presentation.",
+  "seal_does_not_change_rendered_documents": true
 }

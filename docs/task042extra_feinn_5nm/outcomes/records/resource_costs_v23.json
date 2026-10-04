@@ -8,11 +8,11 @@
     "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
     "batch_limit_seconds": 14280
   },
-  "first_read_UTC_derived": "2026-10-04T12:49:29.319824+00:00",
+  "first_read_UTC_derived": "2026-10-04T12:49:29.319813+00:00",
   "original_clock_start_utc_was_later_recorded": true,
-  "observation_utc": "2026-10-04T13:27:19.608361+00:00",
-  "observed_complete_batch_seconds": 2390.288537214976,
-  "conservative_complete_batch_upper_seconds": 4190.288537214976,
+  "observation_utc": "2026-10-04T13:44:04.437887+00:00",
+  "observed_complete_batch_seconds": 3395.118073508027,
+  "conservative_complete_batch_upper_seconds": 5195.118073508027,
   "tail_reserve_seconds": 1800,
   "total_limit_seconds": 14400,
   "includes_read_code_failure_wait_IO_tests_Git_render_notification": true,
@@ -375,10 +375,10 @@
       "duplicated_failure_companion": false
     }
   ],
-  "sampled_tree_peak_bytes": 179499008,
+  "sampled_tree_peak_bytes": 1780613120,
   "own_swap": 0,
   "unmeasured_startup_refusal_peak": "NOT_MEASURED",
-  "new_artifact_bytes_measured": 8164744,
+  "new_artifact_bytes_measured": 70137479,
   "new_artifact_limit_bytes": 2147483648,
   "global_Maxwell_factor": 0,
   "local_Maxwell_factor": 0,
@@ -400,5 +400,237 @@
   "resource_wait_limit_seconds": 600,
   "stable_windows_seconds_measured": 240,
   "resource_old_refusals_preserved": true,
-  "all_measured_trees_cleared": true
+  "all_measured_trees_cleared": true,
+  "earlier_evidence_snapshot": {
+    "observation_utc": "2026-10-04T13:27:19.608361+00:00",
+    "observed_complete_batch_seconds": 2390.288537214976,
+    "conservative_complete_batch_upper_seconds": 4190.288537214976,
+    "sampled_tree_peak_bytes": 179499008,
+    "new_artifact_bytes_measured": 8164744
+  },
+  "final_tail_bound_seconds": 1800,
+  "final_tail_scope": "Subsequent scoped checks, Git commit/push/fetch, exact identity/clean/lock verification, one controlled official notification and clearing. Actual observed receipt is frozen before notification; delivery stdout includes final observed cost.",
+  "new_artifact_scope": "Current V23 outputs, indices and bound payloads, test/control records, browser isolated profile and captures; unique paths; existing shared caches excluded",
+  "new_artifact_file_count": 503,
+  "final_light_stage_records": [
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_native_abi_20261004T131111660284Z/summary.json",
+        "sha256": "b5568a5847df553dd48a53ea8dd0bc23e9f5fc7089c35afe58147c0964a09a60",
+        "bytes": 2034
+      },
+      "classification": "COMPLETED",
+      "seconds": 2.658104411093518,
+      "tree_peak_bytes": 179499008,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_final_component_fixture_20261004T131843851802Z/summary.json",
+        "sha256": "5479a566314259e9bf5e3e66ca3e410804197515006869666c2b1daeb21a0394",
+        "bytes": 2037
+      },
+      "classification": "COMPLETED",
+      "seconds": 2.613234455930069,
+      "tree_peak_bytes": 143036416,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_prepublication_metadata_20261004T133758354231Z/summary.json",
+        "sha256": "ae58b0627583654c6243a15ebecad58fb7cbeca6c3d9c5d4ca0d45da8a314bc2",
+        "bytes": 2023
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.9410145290894434,
+      "tree_peak_bytes": 68431872,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_20261004T131512249881Z/summary.json",
+        "sha256": "61c46dcc470832731d93d7ce1b2a3ecd201bee011e353aa60208c0566c758929",
+        "bytes": 2028
+      },
+      "classification": "WORKER_FAILED",
+      "seconds": 1.9382144769188017,
+      "tree_peak_bytes": 70262784,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_scoped_publication_checks_20261004T133539145119Z/summary.json",
+        "sha256": "26bb3520037655d9f2119826eb3ffdea3d069e6ec9983c28f60c1b8f7de94ddc",
+        "bytes": 2017
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.938619213993661,
+      "tree_peak_bytes": 68919296,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_decimal_oracle_fixture_20261004T131743220879Z/summary.json",
+        "sha256": "52046ba358347b7fce5b7a4129bd3408eb83325552dc1e3448ba69f4ca2ee73c",
+        "bytes": 2037
+      },
+      "classification": "COMPLETED",
+      "seconds": 2.558669345919043,
+      "tree_peak_bytes": 142929920,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_read_snapshot_20261004T125426323578Z/summary.json",
+        "sha256": "50c8545dacbe62a81adfec427236b20f67de1daabf33524189f3012ee903d10e",
+        "bytes": 2015
+      },
+      "classification": "COMPLETED",
+      "seconds": 2.000059223966673,
+      "tree_peak_bytes": 61870080,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_checker_final_fixture_20261004T132455861822Z/summary.json",
+        "sha256": "b326a0f1de89fa9dc3fce3f929837763e2c2ef42d7204ba98b0e5cbe33fa0391",
+        "bytes": 2871
+      },
+      "classification": "COMPLETED",
+      "seconds": 2.6324755189707503,
+      "tree_peak_bytes": 120406016,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_evidence_freeze_20261004T132717996050Z/summary.json",
+        "sha256": "00003dfda627162d4faf323cfe36adceeb2bb7d6732f1248fdcfaf9bf3365ae7",
+        "bytes": 2016
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.9327052350854501,
+      "tree_peak_bytes": 68911104,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_arithmetic_schema_fix_20261004T131043664842Z/summary.json",
+        "sha256": "404973eb3a84ddc93209429a54208d13afc3c02f9fc648dc267cab5d590b0376",
+        "bytes": 2533
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.8440031319623813,
+      "tree_peak_bytes": 40112128,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_full_entry_routing_20261004T130901375015Z/summary.json",
+        "sha256": "b75afe284f542eac812c345ea4ee00b9af908c7b50bee1139fe0a4793591e5c8",
+        "bytes": 2385
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.9680299219908193,
+      "tree_peak_bytes": 68337664,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_second_resource_readmission_20261004T130331009752Z/summary.json",
+        "sha256": "f5ce4a80a25d96a64e2045757d8099b56801793d36b894b522095bf963bb7d76",
+        "bytes": 1948
+      },
+      "classification": "WORKER_FAILED",
+      "seconds": 2.5912765859393403,
+      "tree_peak_bytes": 70066176,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_github_visual_capture_20261004T133920354797Z/summary.json",
+        "sha256": "85ed7ec911ef0f2be7e567f755f9f51d21d6b6a16f2d6a9054dd96e70f3ce8f8",
+        "bytes": 2256
+      },
+      "classification": "COMPLETED",
+      "seconds": 21.283559518982656,
+      "tree_peak_bytes": 1780613120,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_own_navigation_20261004T133222884782Z/summary.json",
+        "sha256": "91ad7ed72738f55fcb1f7730fe2bf58ed27fc0883d793d5047952f65a527abc1",
+        "bytes": 2012
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.9355927989818156,
+      "tree_peak_bytes": 68280320,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_format_recheck_20261004T130737263147Z/summary.json",
+        "sha256": "854dd9292137fdda161d1ccf994b48e04875ec58c8d759cec41da13c8bc22ae3",
+        "bytes": 2018
+      },
+      "classification": "COMPLETED",
+      "seconds": 2.5128974789986387,
+      "tree_peak_bytes": 52895744,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_component_fixture_fixed_20261004T131557751298Z/summary.json",
+        "sha256": "b24bbd375e8d2a0d013fb68a58e775185def1a44fa45a7e95c79e60f2bbb7113",
+        "bytes": 2028
+      },
+      "classification": "WORKER_FAILED",
+      "seconds": 2.5980920359725133,
+      "tree_peak_bytes": 68145152,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_stage_schema_repair_20261004T130822351828Z/summary.json",
+        "sha256": "c9050554821af2755bc62379a7957b0e85385eddc40d515fc4246d1dbf97c73c",
+        "bytes": 2235
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.9406814840622246,
+      "tree_peak_bytes": 68501504,
+      "own_swap": 0,
+      "cleared": true
+    },
+    {
+      "record": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v23_initial_dispatch_closeout_20261004T130932211929Z/summary.json",
+        "sha256": "a7c62ec9e68d89d140a8c61789007ccbf6072baea36a554738bc95fcb272e237",
+        "bytes": 2030
+      },
+      "classification": "COMPLETED",
+      "seconds": 1.9788508000783622,
+      "tree_peak_bytes": 68423680,
+      "own_swap": 0,
+      "cleared": true
+    }
+  ],
+  "component_and_native_tree_peak_bytes": 179499008,
+  "browser_tree_peak_bytes": 1780613120,
+  "seal_final_observed_cost_is_bounded_not_future_measurement": true
 }

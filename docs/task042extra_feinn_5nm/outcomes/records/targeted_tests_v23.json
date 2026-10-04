@@ -27,7 +27,7 @@
   "early_failures_preserved": true,
   "source_of_fixtures_before_checker": "b5034e5ffab657146024ac429fe410f005049d3d",
   "actual_checker_source": "7a7c6b5a3a0c65a93e362644b50ad84ae0d20f2c",
-  "render": "PENDING_PUBLISHED_SCOPED_BROWSER",
+  "render": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
   "scoped_doc_CSV_history_patch": {
     "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v23/document_checks.json",
     "sha256": "3c664f2a1f5416b739098675c27e28f5a0ef3e5d654b967fa7e6d8710bab08c3",
@@ -86,5 +86,10 @@
       "sha256": "5edf1a830968a5b7c9441a0e81707fef42a005ea91cee2dc24b1f6d745f6cc6f",
       "bytes": 7918
     }
-  ]
+  ],
+  "render_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/render_check_v23.json",
+    "sha256": "44900889557dc4fa5da1c183b42cbe456cc8409f711f000ec831f9a451dbe7e2",
+    "bytes": 4695
+  }
 }
