@@ -237,8 +237,12 @@ def main():
                 no_zero_cost_claim=True, remedy='paid lossless archive and same cap, only one successful formal launch')],
         final_static_failure=dict(source='fe9d2c730e8e725d92228409b5caa7ac50d1b393',
             folder='aux_docs_003', no_actual_operator_calls=True,
-            checker_previous_initialized=True, unused_new_FAMILY_import_removed=True,
+            checker_previous_initialized=True, FAMILY_explicit_public_reexport_restored=True,
             unrelated_legacy_F401_not_cleaned=True, final_Ruff_scope='new V35 files;23 dependency Python files still compiled'),
+        final_integration_failure=dict(source='74e41320215c878c13fd35325695f4616a22cb6b',
+            folder='aux_docs_004', passed=34, failed=7,
+            root_cause='FAMILY dynamically read by shared runner was mistakenly removed for lint; restore explicit export',
+            affected_replay='synthetic stage/checker only', actual_numeric_rerun=False),
         metadata_corrections=receipt(OUT/'metadata_corrections_v35.json'),
         archive_manifests=[receipt(p) for p in sorted(TMP.glob('aux_*/archive_manifest.json'))],
         numeric_failure_not_a_bug=True, restarts=0, resource_reentries=0, ordinary_resource_waits=0))
