@@ -1,0 +1,86 @@
+{
+  "schema": "native-entities.v41.v1",
+  "review_commit": "718c42ef2be1ce375f940a5092ad503ab3729d5a",
+  "target_p6_space_authorized": false,
+  "new_LU_authorized": false,
+  "fixture_hex": 64,
+  "max_mesh_hex": 512,
+  "target_cells": 530856,
+  "fixture_axes_nm": [
+    [
+      0,
+      16.5,
+      25,
+      33.5,
+      50
+    ],
+    [
+      0,
+      6.25,
+      12.5,
+      18.75,
+      25
+    ],
+    [
+      -10,
+      0,
+      60,
+      120,
+      130
+    ]
+  ],
+  "fixture_seed": 424101,
+  "direction_label_seed": 424113,
+  "stages": [
+    "ENVELOPE",
+    "BRIDGE1",
+    "BRIDGE2",
+    "BRIDGE4",
+    "TOPOLOGY",
+    "ROUTING",
+    "CHECK",
+    "DEPLOY",
+    "CAPACITY"
+  ],
+  "parents": {
+    "V40_BUILD": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/BUILD.json",
+      "sha256": "c4d9f25b47cc855e892278aae5fc1a0f435e165a7c2cf2aeaf09c95a3cad7471"
+    },
+    "V40_RECOVER": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/RECOVER.json",
+      "sha256": "74cf9cae60cb015c9070974adb269d6c5a74c80f2bb735e843c9b199af332d75"
+    },
+    "V40_CAPACITY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/CAPACITY.json",
+      "sha256": "d61495e7c4353b93a8ec034f93ccd0004f25ee6c19a12401e821f3fe3c687e80"
+    },
+    "V40_CHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/CHECK.json",
+      "sha256": "b2624718dc1772d23853efd50a99e0208c5861b0217bba185d341f6749cbee91"
+    },
+    "V38_LAYOUT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/LAYOUT.json",
+      "sha256": "3d699974d3996b148bb0cb7f38f64c90efb7b0b4f4c33f0b898115dfda26a21c"
+    },
+    "V38_COMPONENT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/COMPONENT.json",
+      "sha256": "5f9e7a2b631cd699f983f7a7fa8312952d80664bc521b139cd279587672749d0"
+    },
+    "V36_INVENTORY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v36/INVENTORY.json",
+      "sha256": "6d287a563dc20139e4c48c968d2b224a6a5351b766aa144aa392456b666102e8"
+    }
+  },
+  "new_storage_bytes": 2147483648,
+  "evidence_reserve_bytes": 268435456,
+  "target_MPI": 2,
+  "p": 6,
+  "q_volume": 15,
+  "q_boundary": 30,
+  "q_audit": 17,
+  "new_assembly": 0,
+  "new_QR": 0,
+  "new_Krylov": 0,
+  "new_training": 0
+}

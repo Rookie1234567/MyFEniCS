@@ -29,7 +29,7 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace in ("v37", "v38", "v39", "v40"):
+        if self.namespace in ("v37", "v38", "v39", "v40", "v41"):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
                 ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
@@ -39,7 +39,10 @@ class PreparationHealth:
             )
             size = inventory_paths(own, ROOT)["bytes"]
             row["new_preparation_bytes"] = size
-            if size > (2048 if self.namespace in ("v39", "v40") else 512) * 2**20:
+            if (
+                size
+                > (2048 if self.namespace in ("v39", "v40", "v41") else 512) * 2**20
+            ):
                 row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
             if self.namespace in ("v39", "v40"):
                 jit = ROOT / ("tmp/task042/" + self.namespace + "/formal/xdg/fenics")
@@ -63,6 +66,10 @@ FE_ROLES = (
 
 
 def context(namespace):
+    if namespace == "v41":
+        from src.solvers import native_entity_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v40":
         from src.solvers import native_recovery_scope as scope
 
@@ -93,7 +100,8 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     free = __import__("shutil").disk_usage(ROOT).free
     if (
         (
-            new + reserve > (2048 if namespace in ("v39", "v40") else 512) * 2**20
+            new + reserve
+            > (2048 if namespace in ("v39", "v40", "v41") else 512) * 2**20
             and not cleanup
         )
         or total + reserve > 20 * 2**30
@@ -139,7 +147,11 @@ def launch(
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
     is_fe = role in FE_ROLES or (namespace == "v40" and specification is not None)
-    if is_fe:
+    if namespace == "v41":
+        from src.solvers.native_entity_scope import NATIVE
+
+        is_fe = role in NATIVE
+    if is_fe or (namespace == "v41" and specification is not None):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -167,6 +179,8 @@ def launch(
         if status:
             raise RuntimeError("V36 formal component/preparation requires clean source")
     seconds = window.remaining(role)
+    if specification is not None and namespace == "v41":
+        seconds = min(seconds, float(specification.execution["timeout_seconds"]))
     if seconds <= 5:
         raise RuntimeError("V36 phase paid wall exhausted")
     source = subprocess.check_output(
@@ -210,7 +224,29 @@ def launch(
             if specification
             else str(command),
         )
-        os.sched_setaffinity(0, {baseline["cpu"]})
+        ranks = (
+            int(specification.execution["mpi_size"]) if specification is not None else 1
+        )
+        cpus = [baseline["cpu"]]
+        if namespace == "v41":
+            cpus, used = [], set()
+            for t in baseline["topology"]:
+                key = (t["socket"], t["core"])
+                if t["cpu"] in baseline["candidate_cpus"] and key not in used:
+                    cpus.append(t["cpu"])
+                    used.add(key)
+                if len(cpus) == ranks:
+                    break
+            if len(cpus) != ranks:
+                write_json(
+                    window.TMP / "resource_wait.json",
+                    {
+                        "next_probe_monotonic": time.monotonic() + 120,
+                        "cause": "insufficient distinct audited physical cores for ranks",
+                    },
+                )
+                raise RuntimeError("V41 per-rank CPU/SMT admission rejected")
+        os.sched_setaffinity(0, set(cpus))
         os.nice(10)
         subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())], check=True)
         write_json(folder / "resource_baseline.json", baseline)
@@ -224,6 +260,8 @@ def launch(
             "shared_workstation": True,
             "environment_mode": os.environ.get("TASK042_ENV_MODE"),
             "cpu": baseline["cpu"],
+            "rank_cpus": cpus,
+            "MPI_size": ranks,
             "planned_bytes": 6 * 2**30 if is_fe else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
@@ -245,6 +283,8 @@ def launch(
                 str(folder),
                 namespace,
             ]
+            if namespace == "v41" and ranks > 1:
+                command = ["mpiexec", "--bind-to", "none", "-n", str(ranks), *command]
         write_json(folder / "run_manifest.json", state)
         window.begin(role, folder, source)
         result = supervise(
@@ -263,6 +303,7 @@ def launch(
                 "TASK042_WATCHDOG_PARENT_PID": str(os.getpid()),
                 "TASK042_V36_AUX_DIRECTORY": str(folder),
                 "TASK042_PREPARATION_SCOPE": namespace,
+                "TASK042_RANK_CPUS": ",".join(map(str, cpus)),
                 "PYTHONDONTWRITEBYTECODE": "1",
             },
             health_check=(
@@ -308,7 +349,12 @@ def launch(
 
 def worker(folder, namespace="v36"):
     window, ARTIFACT, _plan, implementation_hashes = context(namespace)
-    window.guard_worker_parent()
+    if namespace == "v41":
+        from src.solvers.native_entity_scope import guard_entity_worker
+
+        guard_entity_worker()
+    else:
+        window.guard_worker_parent()
     state = json.loads((folder / "run_manifest.json").read_text())
     if (
         state["source_sha"]
@@ -318,11 +364,21 @@ def worker(folder, namespace="v36"):
         raise RuntimeError("V36 active source changed")
     role = state["stage"].removeprefix(namespace.upper() + "-")
     artifact = ARTIFACT / folder.name
-    artifact.mkdir(parents=True, exist_ok=False)
+    if namespace == "v41":
+        from mpi4py import MPI
+
+        comm = MPI.COMM_WORLD
+        if comm.rank == 0:
+            artifact.mkdir(parents=True, exist_ok=False)
+        comm.barrier()
+    else:
+        artifact.mkdir(parents=True, exist_ok=False)
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v40":
+        if namespace == "v41":
+            from src.solvers.native_entity_study import execute
+        elif namespace == "v40":
             from src.solvers.native_recovery_study import execute
         elif namespace == "v39":
             from src.solvers.native_integration_study import execute
@@ -347,8 +403,13 @@ def worker(folder, namespace="v36"):
             input_sha256=state["input_sha256"],
             physical_contract_sha256=state["physical_sha256"],
         )
-        write_json(artifact / "result.json", result)
-        if result["status"] != "FAILED":
+        result_path = artifact / (
+            "result.json"
+            if namespace != "v41" or comm.rank == 0
+            else f"result_rank{comm.rank}.json"
+        )
+        write_json(result_path, result)
+        if result["status"] != "FAILED" and (namespace != "v41" or comm.rank == 0):
             write_json(
                 ARTIFACT / (role + ".json"),
                 {

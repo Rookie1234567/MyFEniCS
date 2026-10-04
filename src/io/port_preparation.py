@@ -19,6 +19,8 @@ STAGES = ("INVENTORY", "COMPONENT", "CHECK", "DEPLOY")
 def load_preparation(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
+    if b"[task042_v41]" in raw:
+        return load_native_entities(path)
     if b"[task042_v40]" in raw:
         return load_native_recovery(path)
     if b"[task042_v39]" in raw:
@@ -336,6 +338,67 @@ def load_native_recovery(path):
         derived={
             "stage": stage,
             "preparation_scope": "v40",
+            "environment_mode": "fe",
+            "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
+            "target_solve": False,
+        },
+        source_path=path,
+        raw_input_bytes=raw,
+        input_sha256=hashlib.sha256(raw).hexdigest(),
+    )
+
+
+def load_native_entities(path):
+    from dataclasses import replace
+
+    from src.solvers.native_entity_scope import NATIVE, PLAN, STAGES, plan_record
+
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    value = tomllib.loads(raw.decode())
+    item = value.get("task042_v41", {})
+    if (
+        set(value) != {"schema_version", "task042_v41"}
+        or value["schema_version"] != 1
+        or set(item) != {"stage", "run_id"}
+        or item.get("stage") not in STAGES
+        or not re.fullmatch("task042_v41_[a-z0-9_]+", item.get("run_id", ""))
+    ):
+        raise InputError("V41 entity-only explicit stage schema")
+    plan_record()
+    old = load_boundary_structure(
+        ROOT / "input/task042_neural_coarse_inverse/v38_bridge.dat"
+    )
+    stage = item["stage"]
+    ranks = {"BRIDGE2": 2, "BRIDGE4": 4, "TOPOLOGY": 2, "ROUTING": 2, "DEPLOY": 2}.get(
+        stage, 1
+    )
+    return replace(
+        old,
+        identity={
+            "model_id": "task042_v41_native_entities",
+            "run_id": item["run_id"],
+            "batch": "V41_NATIVE_ENTITY_TOPOLOGY_AND_OWNER",
+        },
+        method={"kind": "native_entity_topology_only_explicit_opt_in"},
+        discretization={
+            "degree": 6,
+            "q_volume": 15,
+            "q_boundary": 30,
+            "q_audit": 17,
+            "fixture_hex": 64,
+            "target_p6_function_space": "NOT_AUTHORIZED",
+        },
+        execution={
+            "mpi_size": ranks,
+            "timeout_seconds": 2400 if stage == "TOPOLOGY" else 600,
+            "warning_memory_gib": 6 if stage in NATIVE else 1,
+            "terminate_memory_gib": 8 if stage in NATIVE else 2,
+            "require_zero_swap": True,
+        },
+        derived={
+            "stage": stage,
+            "preparation_scope": "v41",
             "environment_mode": "fe",
             "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             "target_solve": False,
