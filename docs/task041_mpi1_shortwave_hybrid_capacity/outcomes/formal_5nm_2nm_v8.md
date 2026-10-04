@@ -78,3 +78,17 @@ r1全程authority/process-tree峰为17,303,310,336 B，专属cgroup `memory.peak
 worker与supervision均 `rc=0`、无受控终止、专属进程组清场；user journal记录自然结束，transient unit随后卸载。终态依据为worker/supervision及journal，不能单看卸载后的默认unit状态。record与原 compact 入口见 [V8 machine record](records/task041_v8_formal_5nm_2nm.json) 及 `results/task041_review_v8_a6_paired_action/run_20261001T030232Z_real_rhs_abba/a6_real_rhs_abba_closeout.json`（SHA-256 `f4f8800b3b5924466580ae6ee6bc0f694abb804835a823bc3edacdb4af3b4f60`）；8个packet manifest路径与hash、逐响应计时/修正数和唯一账本追加均在machine record中。此诊断不构成全八项、全场或正式性能资格。
 
 机器记录见[Task041 V8 record](records/task041_v8_formal_5nm_2nm.json)。
+
+## Modal-Anderson 实坐标 tiny 回归（2026-10-04）
+
+该研究候选把复模态量写成 `[Re, Im]` 两段实坐标，仍在每次内层作用中调用完整两侧响应；原复数残差门、迭代和 S 评估上限不变。目的在于检验实系数 Anderson 混合能否改善当前 PETSc 复数内积轨迹下的小型内层问题，不代表全场加速。
+
+此前 SideBalancedInverse 代数/stub case 的内层曾以 8 步后 raw relative residual `2.7990056731122732` 未收敛，保留在 `results/task041_modal_inner_pc_test_20261004T094652Z/serial_pytest.stdout.log`。独立数组审计确认 PETSc Anderson 复数 Gram 与 Hermitian Gram 不一致，但这尚未证明它是该 `2.799` 负结果的唯一或直接根因：`results/task041_modal_inner_pc_test_20261004T094652Z/complex_inner_product_audit.json`。
+
+| 检查 | 结果 | 范围 |
+|---|---|---|
+| 最终定向测试 | serial 9/9；MPI2 两 rank 各 9/9。首次 serial 的 8/9 及 route fixture 错用不存在的 `DIVERGED_USER` 失败均保留；改用本机支持的 PETSc 负 reason 后复测通过。 | tiny algebra/action fixture，不是 FE |
+| SideBalancedInverse 类/stub 原门 | 五残差断言通过；stdout 聚合最大值 `1.533e-10`。PC/S/C-LU=`3/18/1`；五项各自数值及该 case 的 side 总调用数未持久化，不从公式推算。 | 下层 action 是代数 stub，不是实际 BAL_H/FE |
+| C 缩放小型校验（默认复数坐标，`real_coordinate_embedding=false`） | 固定线性例 raw relative residual `2.396e-3`，合成非线性例 `3.379e-3`，均低于研究目标 `1e-2`；两例各 4 次迭代、6 次 S、一次 C LU。未缩放固定线性负例仍为 `1.874`，单独保留。 | test241 默认复数坐标轨迹；不是新增实坐标轨迹，也不证明真实侧区收敛 |
+
+首次 serial、修后 serial、MPI2 的顶层 wall 分别为 `20.932887194 / 12.672541076 / 29.657094041 s`，各独立记账一次。机器记录与原始日志入口见 [V8 record](records/task041_v8_formal_5nm_2nm.json) 和 [tiny compact](../../../results/task041_modal_real_coordinate_embedding_fix_20261004T101826Z/modal_real_coordinate_test_compact.json)（SHA-256 `13baa2329a19cfc466a0680c123fecd887c228e8c9f82112c8424ac937d90ea5`）。实坐标 Vec 字节数是 payload 估算，不是 RSS。此结果不构成真实 FE、0.7 nm、性能或正式 PC 资格；0.7 nm 仍需 W 材料专属输入及网格/模态收敛验证。

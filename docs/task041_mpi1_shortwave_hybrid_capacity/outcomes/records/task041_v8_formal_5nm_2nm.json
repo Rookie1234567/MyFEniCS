@@ -1255,5 +1255,127 @@
     },
     "closeout_observed_utc": "2026-10-04T01:12:37Z",
     "two_nm_status": "not_started"
+  },
+  "modal_inner_real_coordinate_tiny_diagnostic": {
+    "observed_utc": "2026-10-04T10:33:31Z",
+    "classification": "tiny_algebra_action_tests_passed_only",
+    "source_commit": "9d6187651b3d579f54e419599c6e755726880499",
+    "source_commit_parent": "5b883ed6e5d0ad605d0fa81657c53dba02922d5f",
+    "source_sha256": {
+      "src/solvers/hybrid_fem_modal_block_ldu.py": "a39c7e9fd80596ed8cd63ed0a644646a9d7628d77949cc044ef0320d64b5966f",
+      "src/test/test_350_task041_balh_block_ldu.py": "525e4924766da0aeb1fbd159291a1ddaa71f2e67d93a96216cfedb65ff43964b"
+    },
+    "prior_negative": {
+      "side_balh_inner_relative_residual": 2.799005673112273,
+      "classification": "bounded_8_iteration_negative_preserved; not attributed to one proven cause",
+      "stdout_path": "results/task041_modal_inner_pc_test_20261004T094652Z/serial_pytest.stdout.log",
+      "stdout_sha256": "8c7501286378ca2a7ad0433ce8e11e63b36c74e1750573691124c1066be466a1"
+    },
+    "complex_gram_audit": {
+      "path": "results/task041_modal_inner_pc_test_20261004T094652Z/complex_inner_product_audit.json",
+      "sha256": "f75c630e2d12ed382169f240999199fbae2fb7fafa891c3710e25be8fcdeb930",
+      "finding": "PETSc Anderson complex Gram differs from Hermitian Gram on the fixed array audit; not proven to be the unique or direct cause of the 2.799 negative."
+    },
+    "enum_fixture_failure_and_fix": {
+      "initial_serial_result": "8 passed, 1 failed",
+      "failure": "test stub used unavailable PETSc.SNES.ConvergedReason.DIVERGED_USER",
+      "initial_stdout_path": "results/task041_modal_real_coordinate_embedding_test_20261004T101500Z/serial_pytest.stdout.log",
+      "initial_stdout_sha256": "f8adf69ee04cff2054e969068b5604edf206eb532de32c8185fb93b9065ecedb",
+      "bound_reasons": {
+        "DIVERGED_FUNCTION_DOMAIN": -1,
+        "DIVERGED_INNER": -7
+      },
+      "reason_probe_path": "results/task041_modal_real_coordinate_embedding_fix_20261004T101826Z/reason_enum_probe.json",
+      "reason_probe_sha256": "deb9fa896a853f378b81c6b5337df26143afb7a14919c31169bd95b4703a390b"
+    },
+    "approved_tests": {
+      "reused_prior_seven_nodes": true,
+      "added_nodes": [
+        "test_modal_real_coordinate_embedding_is_isometric_for_complex_values",
+        "test_side_balh_modal_inner_explicitly_selects_real_coordinates"
+      ],
+      "serial": {
+        "result": "9_passed",
+        "returncode": 0,
+        "parent_wall_seconds": 12.672541075968184,
+        "stdout_path": "results/task041_modal_real_coordinate_embedding_fix_20261004T101826Z/serial_retest_pytest.stdout.log",
+        "stdout_sha256": "fcc3f0e83e463437fd976d566e5875d6535054674eed8aa1d433fc64bea6674e"
+      },
+      "mpi2": {
+        "result": "9_passed_each_rank",
+        "returncode": 0,
+        "parent_wall_seconds": 29.657094041001983,
+        "rank_binding": "rank0 CPU1, rank1 CPU2, membind0, threads1",
+        "stdout_path": "results/task041_modal_real_coordinate_embedding_fix_20261004T101826Z/mpi2_pytest.stdout.log",
+        "stdout_sha256": "0c30357cad52347a42670ae0956e3ded321cd8b624b072f851b49cc0e95f9d6d"
+      },
+      "initial_failed_serial_parent_wall_seconds": 20.932887193979695,
+      "wall_charged_once_each": true
+    },
+    "observed_tiny_case": {
+      "scope": "actual SideBalancedInverse class with algebraic lower-operator stubs; not real BAL_H or FE",
+      "five_gate_assertions": "passed",
+      "five_residual_max_stdout_rounded": 1.533e-10,
+      "individual_five_residuals": "not_persisted",
+      "PC_calls": 3,
+      "S_evaluations": 18,
+      "constraint_C_LU_factorizations": 1,
+      "C_LU_owner_rank": {
+        "serial": 0,
+        "mpi2": 1
+      },
+      "real_class_side_total_calls": "not_persisted",
+      "operator_diff": 0.0,
+      "RHS_diff": 0.0
+    },
+    "small_candidate_scalars": {
+      "C_scaled_fixed_linear": {
+        "status": "converged",
+        "real_coordinate_embedding": false,
+        "raw_relative_residual": 0.0023962282133846045,
+        "iterations": 4,
+        "S_evaluations": 6,
+        "C_LU_factorizations": 1,
+        "C_LU_solve_calls": 6,
+        "side_calls": {
+          "bottom": 6,
+          "top": 6
+        }
+      },
+      "C_scaled_synthetic_nonlinear": {
+        "status": "converged",
+        "real_coordinate_embedding": false,
+        "raw_relative_residual": 0.003379191455738516,
+        "iterations": 4,
+        "S_evaluations": 6,
+        "C_LU_factorizations": 1,
+        "C_LU_solve_calls": 6,
+        "side_calls": {
+          "bottom": 6,
+          "top": 6
+        },
+        "scope": "synthetic nonlinear actions, not BAL_H or FE"
+      },
+      "unscaled_fixed_linear_negative": {
+        "status": "not_converged",
+        "raw_relative_residual": 1.873594182558834,
+        "iterations": 8,
+        "S_evaluations": 10
+      }
+    },
+    "compact_path": "results/task041_modal_real_coordinate_embedding_fix_20261004T101826Z/modal_real_coordinate_test_compact.json",
+    "compact_sha256": "13baa2329a19cfc466a0680c123fecd887c228e8c9f82112c8424ac937d90ea5",
+    "qualification": {
+      "real_FE": false,
+      "performance": false,
+      "0.7nm": false,
+      "production_PC": false
+    },
+    "ledger": {
+      "path": "results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json",
+      "sha256": "9d5056cc4a173a64252ebdf1b24fbadefc46ac886f1cb1459671868e50b97822",
+      "entries": 76,
+      "charged_seconds_total": 441666.18269128905
+    }
   }
 }
