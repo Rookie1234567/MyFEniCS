@@ -10,7 +10,40 @@ from src.solvers.port_preparation_window import PreparationWindow
 ROOT = Path(__file__).resolve().parents[2]
 PLAN = ROOT / "input/task042_neural_coarse_inverse/neural_deployment_v46.json"
 ARTIFACT = ROOT / "benchmarks/artifacts/task042/v46"
-window = PreparationWindow(
+
+
+class DecisionWindow(PreparationWindow):
+    """Include measured launcher overhead without counting nested probes twice."""
+
+    def launcher_overhead(self):
+        probes = {}
+        for path in self.TMP.glob("probe_*.json"):
+            record = json.loads(path.read_text())
+            folder = str(Path(record["receipt_path"]).parent)
+            probes[folder] = probes.get(folder, 0.0) + record["elapsed_seconds"]
+        seconds = 0.0
+        for run in self.ledger()["runs"]:
+            path = Path(run["folder"]) / "summary.json"
+            if path.exists():
+                summary = json.loads(path.read_text())
+                seconds += max(
+                    0.0,
+                    summary["launch_wall_seconds"]
+                    - run["elapsed_seconds"]
+                    - probes.get(run["folder"], 0.0),
+                )
+        return seconds
+
+    def charged_wall(self):
+        value = super().charged_wall() + self.launcher_overhead()
+        for name in ("metadata_setup_receipt.json", "post_settlement_fee.json"):
+            path = self.TMP / name
+            if path.exists():
+                value += json.loads(path.read_text())["seconds"]
+        return value
+
+
+window = DecisionWindow(
     ROOT / "tmp/task042/v46",
     label="V46",
     total=900,

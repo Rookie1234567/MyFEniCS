@@ -326,6 +326,38 @@ class Contracts(unittest.TestCase):
 
 
 class FrozenDataAndConfig(unittest.TestCase):
+    def test_launcher_and_probe_are_charged_once_in_live_window(self):
+        from src.solvers.neural_decision_scope import DecisionWindow
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            folder = root / "aux_test"
+            folder.mkdir()
+            (root / "ledger.json").write_text(
+                json.dumps(
+                    {
+                        "runs": [{"folder": str(folder), "elapsed_seconds": 2}],
+                        "active": None,
+                        "closed": False,
+                    }
+                )
+            )
+            (root / "probe_001.json").write_text(
+                json.dumps(
+                    {
+                        "elapsed_seconds": 1,
+                        "receipt_path": str(folder / "admission.json"),
+                    }
+                )
+            )
+            (folder / "summary.json").write_text(json.dumps({"launch_wall_seconds": 4}))
+            (root / "metadata_setup_receipt.json").write_text(
+                json.dumps({"seconds": 0.25})
+            )
+            w = DecisionWindow(root, label="SCALAR-FIXTURE", total=900, bootstrap=0)
+            self.assertEqual(w.launcher_overhead(), 1)
+            self.assertEqual(w.charged_wall(), 4.25)
+
     def test_complete_scalar_workflow_consumes_frozen_records_without_engine(self):
         from benchmarks.neural_deployment_decision import run
 
