@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V39 / 下一执行 Task042 V42
+
+[Review V39](review_report_v39.md)独立审阅V41交付`545eee991318664770dec4edafe1ace5f00d02f3`。接受真实MPI编号桥、原尺寸530856hex拓扑／270 raw与858 oriented类、完整owner边界路由；分布式体积消费和原尺寸完整前向解仍未完成，2TB／48h和NN20%未资格。
+
+V42一次连续接入连接64hex体积和V40非零载荷恢复，修复缺阶段放行／消费身份门；有限资格及资源门通过后，本报告已条件授权原尺寸完整体积加边界正向／伴随作用，不必为小接口再等待review。目标作用仍不是求解：不运行目标LU／PC／Krylov／训练或dot实验。普通bug同轮修复，真实门失败则完成有效替代分析；预算、验收和停止范围以完整报告为准。
+
+[独立核验](outcomes/records/review_v39_independent_checks.json) · [文档检查](outcomes/records/review_v39_documentation_checks.json)。推送／清场后按原队列交接，两个窗口不并行；不merge。以下完整旧正文逐字保留。
+
+---
+
 # Task042 V41：原尺寸实际拓扑与owner边界接口完成
 
 本轮将全部trace行号复制改为按完整边／面实体向实际owner通信，保留原相位、方向和全部矩。真实MPI桥与原尺寸低阶拓扑已经完成，完整三维前向解尚未完成。

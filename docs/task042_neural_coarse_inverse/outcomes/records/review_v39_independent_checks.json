@@ -1,0 +1,1174 @@
+{
+  "reviewed_head": "545eee991318664770dec4edafe1ace5f00d02f3",
+  "previous_review": "718c42ef2be1ce375f940a5092ad503ab3729d5a",
+  "scope": "stdlib read-only frozen byte/source/metadata/topology audit; no new FE/matrix action/factor/solve",
+  "raw_archives_verified": 636,
+  "current_originals_matching_archived_version": 622,
+  "unmatched_current_originals": [],
+  "protected_files": 3205,
+  "history_files": [
+    "docs/task042_neural_coarse_inverse/response_v1.md",
+    "docs/task042_neural_coarse_inverse/response_v10.md",
+    "docs/task042_neural_coarse_inverse/response_v11.md",
+    "docs/task042_neural_coarse_inverse/response_v12.md",
+    "docs/task042_neural_coarse_inverse/response_v13.md",
+    "docs/task042_neural_coarse_inverse/response_v14.md",
+    "docs/task042_neural_coarse_inverse/response_v15.md",
+    "docs/task042_neural_coarse_inverse/response_v16.md",
+    "docs/task042_neural_coarse_inverse/response_v17.md",
+    "docs/task042_neural_coarse_inverse/response_v18.md",
+    "docs/task042_neural_coarse_inverse/response_v19.md",
+    "docs/task042_neural_coarse_inverse/response_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v20.md",
+    "docs/task042_neural_coarse_inverse/response_v21.md",
+    "docs/task042_neural_coarse_inverse/response_v22.md",
+    "docs/task042_neural_coarse_inverse/response_v23.md",
+    "docs/task042_neural_coarse_inverse/response_v24.md",
+    "docs/task042_neural_coarse_inverse/response_v25.md",
+    "docs/task042_neural_coarse_inverse/response_v26.md",
+    "docs/task042_neural_coarse_inverse/response_v27.md",
+    "docs/task042_neural_coarse_inverse/response_v28.md",
+    "docs/task042_neural_coarse_inverse/response_v29.md",
+    "docs/task042_neural_coarse_inverse/response_v3.md",
+    "docs/task042_neural_coarse_inverse/response_v30.md",
+    "docs/task042_neural_coarse_inverse/response_v31.md",
+    "docs/task042_neural_coarse_inverse/response_v32.md",
+    "docs/task042_neural_coarse_inverse/response_v33.md",
+    "docs/task042_neural_coarse_inverse/response_v34.md",
+    "docs/task042_neural_coarse_inverse/response_v35.md",
+    "docs/task042_neural_coarse_inverse/response_v36.md",
+    "docs/task042_neural_coarse_inverse/response_v37.md",
+    "docs/task042_neural_coarse_inverse/response_v38.md",
+    "docs/task042_neural_coarse_inverse/response_v39.md",
+    "docs/task042_neural_coarse_inverse/response_v4.md",
+    "docs/task042_neural_coarse_inverse/response_v40.md",
+    "docs/task042_neural_coarse_inverse/response_v5.md",
+    "docs/task042_neural_coarse_inverse/response_v6.md",
+    "docs/task042_neural_coarse_inverse/response_v7.md",
+    "docs/task042_neural_coarse_inverse/response_v8.md",
+    "docs/task042_neural_coarse_inverse/response_v9.md",
+    "docs/task042_neural_coarse_inverse/review_report_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v10.md",
+    "docs/task042_neural_coarse_inverse/review_report_v11.md",
+    "docs/task042_neural_coarse_inverse/review_report_v12.md",
+    "docs/task042_neural_coarse_inverse/review_report_v13.md",
+    "docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "docs/task042_neural_coarse_inverse/review_report_v15.md",
+    "docs/task042_neural_coarse_inverse/review_report_v16.md",
+    "docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "docs/task042_neural_coarse_inverse/review_report_v18.md",
+    "docs/task042_neural_coarse_inverse/review_report_v19.md",
+    "docs/task042_neural_coarse_inverse/review_report_v2.md",
+    "docs/task042_neural_coarse_inverse/review_report_v20.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md",
+    "docs/task042_neural_coarse_inverse/review_report_v22.md",
+    "docs/task042_neural_coarse_inverse/review_report_v23.md",
+    "docs/task042_neural_coarse_inverse/review_report_v24.md",
+    "docs/task042_neural_coarse_inverse/review_report_v25.md",
+    "docs/task042_neural_coarse_inverse/review_report_v26.md",
+    "docs/task042_neural_coarse_inverse/review_report_v27.md",
+    "docs/task042_neural_coarse_inverse/review_report_v28.md",
+    "docs/task042_neural_coarse_inverse/review_report_v29.md",
+    "docs/task042_neural_coarse_inverse/review_report_v3.md",
+    "docs/task042_neural_coarse_inverse/review_report_v30.md",
+    "docs/task042_neural_coarse_inverse/review_report_v31.md",
+    "docs/task042_neural_coarse_inverse/review_report_v32.md",
+    "docs/task042_neural_coarse_inverse/review_report_v33.md",
+    "docs/task042_neural_coarse_inverse/review_report_v34.md",
+    "docs/task042_neural_coarse_inverse/review_report_v35.md",
+    "docs/task042_neural_coarse_inverse/review_report_v36.md",
+    "docs/task042_neural_coarse_inverse/review_report_v37.md",
+    "docs/task042_neural_coarse_inverse/review_report_v38.md",
+    "docs/task042_neural_coarse_inverse/review_report_v4.md",
+    "docs/task042_neural_coarse_inverse/review_report_v5.md",
+    "docs/task042_neural_coarse_inverse/review_report_v6.md",
+    "docs/task042_neural_coarse_inverse/review_report_v7.md",
+    "docs/task042_neural_coarse_inverse/review_report_v8.md",
+    "docs/task042_neural_coarse_inverse/review_report_v9.md"
+  ],
+  "compiled": [
+    "benchmarks/check_native_entities.py",
+    "benchmarks/qualify_native_entities.py",
+    "scripts/run_case.py",
+    "src/io/port_preparation.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/native_entity_adapter.py",
+    "src/solvers/native_entity_dependencies.py",
+    "src/solvers/native_entity_protocol.py",
+    "src/solvers/native_entity_scope.py",
+    "src/solvers/native_entity_study.py",
+    "src/solvers/native_entity_topology.py",
+    "src/test/test_native_entities.py"
+  ],
+  "formal_source_checks": [
+    {
+      "role": "ENVELOPE",
+      "source_sha": "fa2fbcf761584597b77ca0be3707d79535c95eae",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_envelope_20261004T100043821890Z/run_manifest.json"
+    },
+    {
+      "role": "BRIDGE1",
+      "source_sha": "fa2fbcf761584597b77ca0be3707d79535c95eae",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge1_20261004T100117721462Z/run_manifest.json"
+    },
+    {
+      "role": "BRIDGE1",
+      "source_sha": "d9b329913b417367b5dda75cee5bc9448d1d8d9c",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge1_20261004T100337865573Z/run_manifest.json"
+    },
+    {
+      "role": "BRIDGE2",
+      "source_sha": "d9b329913b417367b5dda75cee5bc9448d1d8d9c",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge2_20261004T100420606939Z/run_manifest.json"
+    },
+    {
+      "role": "BRIDGE4",
+      "source_sha": "7a354429a06d01173f057d68eae377a95f1f66eb",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge4_20261004T100931607130Z/run_manifest.json"
+    },
+    {
+      "role": "TOPOLOGY",
+      "source_sha": "55945e4838529eeb5b05ddb4a2fc37c5f7f2d0cb",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_topology_20261004T101836320087Z/run_manifest.json"
+    },
+    {
+      "role": "ORIENTATION",
+      "source_sha": "cd6819e73607bbe68f14ee4290eed822a220bc2d",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_orientation_20261004T102620782175Z/run_manifest.json"
+    },
+    {
+      "role": "ROUTING",
+      "source_sha": "cd6819e73607bbe68f14ee4290eed822a220bc2d",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T102752014232Z/run_manifest.json"
+    },
+    {
+      "role": "ROUTING",
+      "source_sha": "4a25c8c05e9c39e2caa8dfe7d28acaea23d256fd",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T103231188208Z/run_manifest.json"
+    },
+    {
+      "role": "ROUTING",
+      "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T103554889407Z/run_manifest.json"
+    },
+    {
+      "role": "CHECK",
+      "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_check_20261004T103642327887Z/run_manifest.json"
+    },
+    {
+      "role": "DEPLOY",
+      "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_deploy_20261004T103909861078Z/run_manifest.json"
+    },
+    {
+      "role": "CAPACITY",
+      "source_sha": "81c776fddcd173cf7db898f20f3068eb7cf7ae2b",
+      "hashes": 19,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_capacity_20261004T104006754979Z/run_manifest.json"
+    }
+  ],
+  "final_source_hashes": {
+    "benchmarks/check_native_entities.py": "a2885d265223b7a9cee87087ed29d0fc108ffe405371c47bdcb76c84cf7b6c84",
+    "benchmarks/qualify_native_entities.py": "4d19af35ed5f89dbb595379ee50b4497e02c81a8f1aef9c02c64b5230c53c148",
+    "input/task042_neural_coarse_inverse/native_entities_v41.json": "2b50ec5bd51bc61ef348953ea1599cb6d6983d7dad4504e94998f48fe97bfa30",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "scripts/run_case.py": "6832d88d989f8b77eb464a9c5045a85c7d9f22510eefdc8ea9bc28eb60a4afac",
+    "src/constraints/floquet_3d.py": "b013ce397b6bdc4a7a27ae8088a20718d8c6f195adc03f9f3dd21a0a965aacd4",
+    "src/constraints/floquet_3d_high_order.py": "9e441f562cb9acd449a8aa1e8d69a4909e4c1e09b5a9d6590c24e66bf9fc751d",
+    "src/constraints/high_order_floquet_trace.py": "518442c9217253dd4e69309939c64a10ce3ff6ee64d0533ce3126b31d7acf0bb",
+    "src/io/port_preparation.py": "37c10e118e32d6898cd825445d38f5e5f0aefe5658eca0b89ac67ff67b89f25e",
+    "src/runners/port_preparation.py": "96e89b1f0825b2e4a6c52dff93717d95f244938ca425e3b184598757fcd40feb",
+    "src/solvers/directional_boundary.py": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+    "src/solvers/native_entity_adapter.py": "fb572b37fe7ab7e7b135cfda1b5a617fe5fcebce4a781cb4f82154286ce9334d",
+    "src/solvers/native_entity_dependencies.py": "41ce56f6c6dcd1818f527b18205799c2bb93e16fada4257475988770f2d5cab3",
+    "src/solvers/native_entity_protocol.py": "57d1496cf3fe1b3c520dae22929569e199ea4a7f5a428b8c493a3a5b01a606a4",
+    "src/solvers/native_entity_scope.py": "f6b0ebf872516577b87466aaa1c73d9b6d918acaf61d15f17705ea34e1aa7355",
+    "src/solvers/native_entity_study.py": "cf8b31bab5d61b0d660a10fc053db7ec1011f5f8840d8bf4d524937aa9223a43",
+    "src/solvers/native_entity_topology.py": "65755e5adbb71086c14821d86f689dae9eea48c94ec154efbc2896c3f4577a13",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "src/test/test_native_entities.py": "0215db2dc2469160fc1a0e754cb6e5d1e328f9d5fad312b008be5adaeb36cecc"
+  },
+  "supervisions": [
+    {
+      "role": "inspect",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_inspect_inspect01/supervision/summary.json",
+      "seconds": 4.391028078971431,
+      "peak": 183554048,
+      "samples": 7,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre02/supervision/summary.json",
+      "seconds": 6.479197631007992,
+      "peak": 235753472,
+      "samples": 9,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre03/supervision/summary.json",
+      "seconds": 10.007324154023081,
+      "peak": 263471104,
+      "samples": 13,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre04/supervision/summary.json",
+      "seconds": 9.906174744013697,
+      "peak": 250089472,
+      "samples": 12,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre05/supervision/summary.json",
+      "seconds": 9.981690726010129,
+      "peak": 250781696,
+      "samples": 11,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ENVELOPE",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_envelope_20261004T100043821890Z/supervision/summary.json",
+      "seconds": 5.313322969013825,
+      "peak": 168644608,
+      "samples": 6,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "BRIDGE1",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge1_20261004T100117721462Z/supervision/summary.json",
+      "seconds": 7.956151535036042,
+      "peak": 338354176,
+      "samples": 8,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre06/supervision/summary.json",
+      "seconds": 11.272425443981774,
+      "peak": 269815808,
+      "samples": 11,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "BRIDGE1",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge1_20261004T100337865573Z/supervision/summary.json",
+      "seconds": 11.246686003054492,
+      "peak": 381194240,
+      "samples": 10,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "BRIDGE2",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge2_20261004T100420606939Z/supervision/summary.json",
+      "seconds": 61.28722827497404,
+      "peak": 1731678208,
+      "samples": 47,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre07/supervision/summary.json",
+      "seconds": 10.309222903102636,
+      "peak": 262672384,
+      "samples": 10,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "BRIDGE4",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge4_20261004T100931607130Z/supervision/summary.json",
+      "seconds": 36.17417110106908,
+      "peak": 1895116800,
+      "samples": 28,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre08/supervision/summary.json",
+      "seconds": 11.868020785972476,
+      "peak": 262430720,
+      "samples": 11,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre09/supervision/summary.json",
+      "seconds": 12.174045113031752,
+      "peak": 264048640,
+      "samples": 11,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre10/supervision/summary.json",
+      "seconds": 6.372390964068472,
+      "peak": 205754368,
+      "samples": 6,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "TOPOLOGY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_topology_20261004T101836320087Z/supervision/summary.json",
+      "seconds": 41.16011951700784,
+      "peak": 1232334848,
+      "samples": 31,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre11/supervision/summary.json",
+      "seconds": 10.958974734996445,
+      "peak": 262627328,
+      "samples": 10,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ORIENTATION",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_orientation_20261004T102620782175Z/supervision/summary.json",
+      "seconds": 70.44185358297545,
+      "peak": 1689112576,
+      "samples": 52,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ROUTING",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T102752014232Z/supervision/summary.json",
+      "seconds": 10.56556274893228,
+      "peak": 1030373376,
+      "samples": 9,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre12/supervision/summary.json",
+      "seconds": 14.081432631937787,
+      "peak": 299769856,
+      "samples": 12,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre13/supervision/summary.json",
+      "seconds": 12.147359503083862,
+      "peak": 290111488,
+      "samples": 10,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ROUTING",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T103231188208Z/supervision/summary.json",
+      "seconds": 23.203239069902338,
+      "peak": 979202048,
+      "samples": 17,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre14/supervision/summary.json",
+      "seconds": 13.563631964032538,
+      "peak": 268111872,
+      "samples": 11,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre15/supervision/summary.json",
+      "seconds": 5.853627486038022,
+      "peak": 230776832,
+      "samples": 5,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "ROUTING",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T103554889407Z/supervision/summary.json",
+      "seconds": 17.741380801075138,
+      "peak": 971390976,
+      "samples": 13,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "CHECK",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_check_20261004T103642327887Z/supervision/summary.json",
+      "seconds": 73.72703309496865,
+      "peak": 1339387904,
+      "samples": 49,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "archive",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_archive_bytecode01/supervision/summary.json",
+      "seconds": 2.137048040982336,
+      "peak": 70377472,
+      "samples": 4,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "DEPLOY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_deploy_20261004T103909861078Z/supervision/summary.json",
+      "seconds": 4.937083396012895,
+      "peak": 344076288,
+      "samples": 6,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "CAPACITY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_capacity_20261004T104006754979Z/supervision/summary.json",
+      "seconds": 4.065080433967523,
+      "peak": 210747392,
+      "samples": 5,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_collect01/supervision/summary.json",
+      "seconds": 39.52009128208738,
+      "peak": 844603392,
+      "samples": 38,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final01/supervision/summary.json",
+      "seconds": 12.982120560016483,
+      "peak": 271302656,
+      "samples": 14,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final02/supervision/summary.json",
+      "seconds": 3.003193535027094,
+      "peak": 70787072,
+      "samples": 4,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_settle01/supervision/summary.json",
+      "seconds": 5.022021380951628,
+      "peak": 86618112,
+      "samples": 6,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final03/supervision/summary.json",
+      "seconds": 3.0243373260600492,
+      "peak": 70791168,
+      "samples": 4,
+      "status": "COMPLETED"
+    }
+  ],
+  "CPU_admissions": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre07/admission.json",
+      "cpu": 20
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre10/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre02/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_archive_bytecode01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final02/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre08/admission.json",
+      "cpu": 4
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre14/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final03/admission.json",
+      "cpu": 11
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_collect01/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge1_20261004T100117721462Z/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_capacity_20261004T104006754979Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T102752014232Z/admission.json",
+      "cpu": 4
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_deploy_20261004T103909861078Z/admission.json",
+      "cpu": 4
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre03/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_envelope_20261004T100043821890Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge1_20261004T100337865573Z/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge2_20261004T100420606939Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_check_20261004T103642327887Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T103554889407Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre11/admission.json",
+      "cpu": 10
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_topology_20261004T101836320087Z/admission.json",
+      "cpu": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre15/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre04/admission.json",
+      "cpu": 5
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre13/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_bridge4_20261004T100931607130Z/admission.json",
+      "cpu": 16
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre06/admission.json",
+      "cpu": 4
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_orientation_20261004T102620782175Z/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_inspect_inspect01/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre12/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v41_routing_20261004T103231188208Z/admission.json",
+      "cpu": 17
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_settle01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre09/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre05/admission.json",
+      "cpu": 11
+    }
+  ],
+  "costs": {
+    "supervised": 582.8742715173867,
+    "probes": 44.272283111233264,
+    "bootstrap": 3,
+    "close_upper": 5,
+    "total_upper": 635.1465546286199,
+    "peak_sampled_tree_bytes": 1895116800,
+    "ownswap": 0,
+    "cumulative_supervised_lower": 81610.59579075915
+  },
+  "array_byte_verification": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge1_20261004T100117721462Z/fixture_rank0.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 4124690
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge1_20261004T100337865573Z/directions.npz",
+      "members": 9,
+      "stored_members": 9,
+      "bytes": 53804410
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge2_20261004T100420606939Z/directions.npz",
+      "members": 58,
+      "stored_members": 58,
+      "bytes": 516930158
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge2_20261004T100420606939Z/fixture_rank0.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 2233444
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge2_20261004T100420606939Z/fixture_rank1.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 2240672
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge4_20261004T100931607130Z/directions.npz",
+      "members": 47,
+      "stored_members": 47,
+      "bytes": 411746145
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge4_20261004T100931607130Z/fixture_rank0.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 1173652
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge4_20261004T100931607130Z/fixture_rank1.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 1092904
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge4_20261004T100931607130Z/fixture_rank2.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 1145314
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_bridge4_20261004T100931607130Z/fixture_rank3.npz",
+      "members": 54,
+      "stored_members": 54,
+      "bytes": 1191712
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_orientation_20261004T102620782175Z/directions.npz",
+      "members": 66,
+      "stored_members": 66,
+      "bytes": 601521436
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T102752014232Z/boundary_rank0.npz",
+      "members": 34,
+      "stored_members": 34,
+      "bytes": 17633475
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T102752014232Z/boundary_rank1.npz",
+      "members": 34,
+      "stored_members": 34,
+      "bytes": 17633165
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T103231188208Z/complete_boundary_actions.npz",
+      "members": 12,
+      "stored_members": 12,
+      "bytes": 54072161
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T103554889407Z/complete_boundary_actions.npz",
+      "members": 12,
+      "stored_members": 12,
+      "bytes": 54072185
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_topology_20261004T101836320087Z/topology_rank0.npz",
+      "members": 29,
+      "stored_members": 29,
+      "bytes": 41729701
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_topology_20261004T101836320087Z/topology_rank1.npz",
+      "members": 29,
+      "stored_members": 29,
+      "bytes": 41759997
+    }
+  ],
+  "array_totals": {
+    "files": 17,
+    "logical": 708,
+    "actual": 708
+  },
+  "scalar_ratio_checks": 251,
+  "pytest_snapshots": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre09/pytest.xml",
+      "tests": 24,
+      "failures": 2,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre13/pytest.xml",
+      "tests": 32,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre11/pytest.xml",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre04/pytest.xml",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre14/pytest.xml",
+      "tests": 33,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre02/pytest.xml",
+      "tests": 18,
+      "failures": 1,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre07/pytest.xml",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre05/pytest.xml",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre08/pytest.xml",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_inspect_inspect01/pytest.xml",
+      "tests": 16,
+      "failures": 1,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre12/pytest.xml",
+      "tests": 32,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre06/pytest.xml",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre03/pytest.xml",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre10/pytest.xml",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_pre_pre15/pytest.xml",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v41/aux_post_final01/pytest.xml",
+      "tests": 38,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "topology_independent": {
+    "raw": 270,
+    "oriented": 858,
+    "rank_counts": [
+      {
+        "rank": 0,
+        "raw": 108,
+        "oriented": 405,
+        "cells": 265428
+      },
+      {
+        "rank": 1,
+        "raw": 198,
+        "oriented": 495,
+        "cells": 265428
+      }
+    ],
+    "cells": 530856,
+    "tags": {
+      "1": 336636,
+      "3": 154800,
+      "2": 39420
+    },
+    "reference_orders": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    ],
+    "native_direction_codes": [
+      0,
+      576,
+      4680,
+      32769,
+      36873,
+      1048720,
+      1081489,
+      1836022,
+      1840126,
+      1872319,
+      5244088,
+      5244089,
+      6295113,
+      6299209,
+      6331401,
+      7868415,
+      7872511,
+      7904703,
+      17867216,
+      17867217,
+      22029816,
+      22062585,
+      25190976,
+      25195080,
+      25227336,
+      26502134,
+      26506238,
+      26538494,
+      31485512,
+      31489608,
+      31521865,
+      32534013,
+      32534525,
+      32538621,
+      32570876,
+      33559104,
+      33559112,
+      33591817,
+      35394547,
+      35394555,
+      35427258,
+      37756489,
+      37789193,
+      39329786,
+      39362490,
+      50360896,
+      50360904,
+      50393672,
+      51672051,
+      51672059,
+      51704827,
+      54558280,
+      54591049,
+      55607288,
+      55640057,
+      71402536,
+      71402537,
+      151068992,
+      151068993,
+      222373225,
+      222405992,
+      256081768,
+      256114537,
+      319880144,
+      319880145,
+      453245760,
+      453245761,
+      575692472,
+      575692473,
+      641949224,
+      641949225,
+      839014913,
+      839047680,
+      839932560,
+      839965329
+    ]
+  },
+  "present_required_checker_stages": [
+    "ACTIONS",
+    "BRIDGE1",
+    "BRIDGE2",
+    "BRIDGE4",
+    "ORIENTATION",
+    "ROUTING",
+    "TOPOLOGY"
+  ],
+  "sampling": [
+    {
+      "folder": "tmp/task042/v41/aux_inspect_inspect01",
+      "sample_count": 7,
+      "actual_interval_median": 0.6630938405287452,
+      "actual_interval_max": 0.8555674339877442
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre02",
+      "sample_count": 9,
+      "actual_interval_median": 0.7518842834979296,
+      "actual_interval_max": 0.9623725839192048
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre03",
+      "sample_count": 13,
+      "actual_interval_median": 0.7994498395128176,
+      "actual_interval_max": 1.0148305300390348
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre04",
+      "sample_count": 12,
+      "actual_interval_median": 0.8662654539803043,
+      "actual_interval_max": 1.1033434569835663
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre05",
+      "sample_count": 11,
+      "actual_interval_median": 0.9527963100117631,
+      "actual_interval_max": 1.1861862760270014
+    },
+    {
+      "folder": "results/task042/task042_v41_envelope_20261004T100043821890Z",
+      "sample_count": 6,
+      "actual_interval_median": 0.824898059014231,
+      "actual_interval_max": 1.2281898530200124
+    },
+    {
+      "folder": "results/task042/task042_v41_bridge1_20261004T100117721462Z",
+      "sample_count": 8,
+      "actual_interval_median": 1.181583401048556,
+      "actual_interval_max": 1.2116905979346484
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre06",
+      "sample_count": 11,
+      "actual_interval_median": 1.006355355028063,
+      "actual_interval_max": 1.427094009006396
+    },
+    {
+      "folder": "results/task042/task042_v41_bridge1_20261004T100337865573Z",
+      "sample_count": 10,
+      "actual_interval_median": 1.2531855299603194,
+      "actual_interval_max": 1.4231183580122888
+    },
+    {
+      "folder": "results/task042/task042_v41_bridge2_20261004T100420606939Z",
+      "sample_count": 47,
+      "actual_interval_median": 1.310308193496894,
+      "actual_interval_max": 1.4845645490568131
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre07",
+      "sample_count": 10,
+      "actual_interval_median": 1.053009273018688,
+      "actual_interval_max": 1.4309940009843558
+    },
+    {
+      "folder": "results/task042/task042_v41_bridge4_20261004T100931607130Z",
+      "sample_count": 28,
+      "actual_interval_median": 1.325585072976537,
+      "actual_interval_max": 1.5091447150334716
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre08",
+      "sample_count": 11,
+      "actual_interval_median": 1.0656011354876682,
+      "actual_interval_max": 1.4650916199898347
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre09",
+      "sample_count": 11,
+      "actual_interval_median": 1.1100872824899852,
+      "actual_interval_max": 1.5024939379654825
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre10",
+      "sample_count": 6,
+      "actual_interval_median": 1.0820865989662707,
+      "actual_interval_max": 1.5068862759508193
+    },
+    {
+      "folder": "results/task042/task042_v41_topology_20261004T101836320087Z",
+      "sample_count": 31,
+      "actual_interval_median": 1.3507103060255758,
+      "actual_interval_max": 1.5509194090263918
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre11",
+      "sample_count": 10,
+      "actual_interval_median": 1.0799232859862968,
+      "actual_interval_max": 1.4604458479443565
+    },
+    {
+      "folder": "results/task042/task042_v41_orientation_20261004T102620782175Z",
+      "sample_count": 52,
+      "actual_interval_median": 1.3534986679442227,
+      "actual_interval_max": 1.5437489850446582
+    },
+    {
+      "folder": "results/task042/task042_v41_routing_20261004T102752014232Z",
+      "sample_count": 9,
+      "actual_interval_median": 1.3375622624880634,
+      "actual_interval_max": 1.5615630759857595
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre12",
+      "sample_count": 12,
+      "actual_interval_median": 1.1018013110151514,
+      "actual_interval_max": 1.5923321809386835
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre13",
+      "sample_count": 10,
+      "actual_interval_median": 1.2373242810135707,
+      "actual_interval_max": 1.6065493120113388
+    },
+    {
+      "folder": "results/task042/task042_v41_routing_20261004T103231188208Z",
+      "sample_count": 17,
+      "actual_interval_median": 1.4666978350142017,
+      "actual_interval_max": 1.6416502309730276
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre14",
+      "sample_count": 11,
+      "actual_interval_median": 1.2065018889843486,
+      "actual_interval_max": 1.6670737359672785
+    },
+    {
+      "folder": "tmp/task042/v41/aux_pre_pre15",
+      "sample_count": 5,
+      "actual_interval_median": 1.1959973855409771,
+      "actual_interval_max": 1.7227619939949363
+    },
+    {
+      "folder": "results/task042/task042_v41_routing_20261004T103554889407Z",
+      "sample_count": 13,
+      "actual_interval_median": 1.4909214949584566,
+      "actual_interval_max": 1.6793994409963489
+    },
+    {
+      "folder": "results/task042/task042_v41_check_20261004T103642327887Z",
+      "sample_count": 49,
+      "actual_interval_median": 1.5104627939290367,
+      "actual_interval_max": 1.697447060025297
+    },
+    {
+      "folder": "tmp/task042/v41/aux_archive_bytecode01",
+      "sample_count": 4,
+      "actual_interval_median": 0.5746161020360887,
+      "actual_interval_max": 0.7644247499993071
+    },
+    {
+      "folder": "results/task042/task042_v41_deploy_20261004T103909861078Z",
+      "sample_count": 6,
+      "actual_interval_median": 0.9563532349420711,
+      "actual_interval_max": 1.0831697050016373
+    },
+    {
+      "folder": "results/task042/task042_v41_capacity_20261004T104006754979Z",
+      "sample_count": 5,
+      "actual_interval_median": 0.8524135029874742,
+      "actual_interval_max": 1.1782825948903337
+    },
+    {
+      "folder": "tmp/task042/v41/aux_post_collect01",
+      "sample_count": 38,
+      "actual_interval_median": 1.0414576650364324,
+      "actual_interval_max": 1.2191354589303955
+    },
+    {
+      "folder": "tmp/task042/v41/aux_post_final01",
+      "sample_count": 14,
+      "actual_interval_median": 0.9789343581069261,
+      "actual_interval_max": 1.2943614680552855
+    },
+    {
+      "folder": "tmp/task042/v41/aux_post_final02",
+      "sample_count": 4,
+      "actual_interval_median": 0.7714273809688166,
+      "actual_interval_max": 1.006970620015636
+    },
+    {
+      "folder": "tmp/task042/v41/aux_post_settle01",
+      "sample_count": 6,
+      "actual_interval_median": 0.776376869995147,
+      "actual_interval_max": 1.236198008991778
+    },
+    {
+      "folder": "tmp/task042/v41/aux_post_final03",
+      "sample_count": 4,
+      "actual_interval_median": 0.7756234590196982,
+      "actual_interval_max": 1.0114205280551687
+    }
+  ],
+  "repository_index_sha256": "1f2c2b77b53d60eda469bfe8be3f22bc68a9acfb4fbf0c3c2ebf98fa2fa9c208",
+  "dot_head": "077ec9c8386c976da232093779279fb9d1a93033",
+  "source_changes": false,
+  "qualification": "DISTRIBUTED_NATIVE_ENTITY_BRIDGE_ON_FIXTURE_AND_TARGET_TOPOLOGY_OWNER_COMPONENT_ONLY",
+  "limitations": [
+    "not whole-repository line-by-line semantic audit",
+    "no target p6 FunctionSpace/complete dofmap/vector/operator/solve",
+    "saved ratio checks do not rerun matrix/vector arithmetic",
+    "fail-open missing stage aggregation and self-expected consumption identity require next-round repair",
+    "no distributed nonzero-RHS volume consumer",
+    "review ordinary IO/human costs not supervised"
+  ]
+}
