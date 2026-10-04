@@ -239,6 +239,9 @@ def budget():
 
 
 def launch(spec):
+    if spec.derived["stage"].startswith("v20_"):
+        from src.runners.fixed_phase_campaign import launch
+        return launch(spec)
     launch_origin = perf_counter()
     if Path.cwd().resolve() != ROOT or os.environ.get("TASK42EXTRA_ACTIVATION") != "1":
         raise RuntimeError("native task-local activation required")

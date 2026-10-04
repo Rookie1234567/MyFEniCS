@@ -1121,12 +1121,14 @@ class _ReusableSurfaceComponentAssembler:
         *,
         quadrature_degree: int | None = None,
         jit_options: Mapping[str, Any] | None = None,
+        phase_carrier: tuple[float, float, float] | None = None,
     ):
         if component not in {0, 1}:
             raise ValueError(
                 "Stage-4 DtN port component assembly only supports x/y tangential components."
             )
         self.comm = mesh_data.mesh.comm
+        self.phase_carrier = (0.0, 0.0, 0.0) if phase_carrier is None else phase_carrier
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
@@ -1152,9 +1154,9 @@ class _ReusableSurfaceComponentAssembler:
         )
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
-        _set_scalar_constant(self.alpha, mode.alpha)
-        _set_scalar_constant(self.gamma, mode.gamma)
-        _set_scalar_constant(self.kz, mode.k_vector[2])
+        _set_scalar_constant(self.alpha, mode.alpha - self.phase_carrier[0])
+        _set_scalar_constant(self.gamma, mode.gamma - self.phase_carrier[1])
+        _set_scalar_constant(self.kz, mode.k_vector[2] - self.phase_carrier[2])
         vec = _assemble_mpc_form_vector(self.form, mpc)
         try:
             return _vec_nonzero_owned_entries(vec)
@@ -1162,9 +1164,9 @@ class _ReusableSurfaceComponentAssembler:
             vec.destroy()
 
     def assemble_unconstrained_vector(self, mode: PortMode3D) -> PETSc.Vec:
-        _set_scalar_constant(self.alpha, mode.alpha)
-        _set_scalar_constant(self.gamma, mode.gamma)
-        _set_scalar_constant(self.kz, mode.k_vector[2])
+        _set_scalar_constant(self.alpha, mode.alpha - self.phase_carrier[0])
+        _set_scalar_constant(self.gamma, mode.gamma - self.phase_carrier[1])
+        _set_scalar_constant(self.kz, mode.k_vector[2] - self.phase_carrier[2])
         return _assemble_unconstrained_form_vector(self.form)
 
 

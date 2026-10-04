@@ -1,0 +1,7 @@
+schema_version = 1
+[task42extra]
+stage = "v20_o3"
+run_id = "task42extra_v20_o3"
+design_sha256 = "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676"
+research_fixed_phase = true
+neural_training_allowed = false

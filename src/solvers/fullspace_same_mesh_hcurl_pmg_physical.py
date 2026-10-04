@@ -35,6 +35,7 @@ def _surface_assemblers(
     qdegree: int,
     *,
     jit_options: Mapping[str, Any] | None = None,
+    phase_carrier=None,
 ) -> dict[tuple[str, int], Any]:
     from .dtn_port_3d import _ReusableSurfaceComponentAssembler
 
@@ -46,6 +47,7 @@ def _surface_assemblers(
             component,
             quadrature_degree=qdegree,
             jit_options=jit_options,
+            phase_carrier=phase_carrier,
         )
         for side in ("top", "bottom")
         for component in (0, 1)
@@ -61,6 +63,7 @@ def _build_split_volume_action(
     jit_options: Mapping[str, Any],
     native_curl_codegen: bool = False,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
+    phase_carrier=None,
 ) -> Any:
     import ufl
 
@@ -72,7 +75,9 @@ def _build_split_volume_action(
     dx = ufl.Measure(
         "dx", domain=mesh_data.mesh, subdomain_data=mesh_data.cell_tags
     )
-    curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
+    curl_curl, material_mass = _build_physical_volume_terms(
+        cfg, u, v, dx, phase_carrier=phase_carrier
+    )
     if volume_quadrature_metadata is not None:
         curl_curl, material_mass = tuple(
             ufl.Form(tuple(integral.reconstruct(metadata={
@@ -98,6 +103,7 @@ def build_same_mesh_physical_action(
     mode_inventory: tuple[Any, Any, Any] | None = None,
     jit_options: Mapping[str, Any] | None = None,
     volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
+    phase_carrier=None,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -150,6 +156,7 @@ def build_same_mesh_physical_action(
         cfg,
         qdegree,
         jit_options=options,
+        phase_carrier=phase_carrier,
     )
     carrier = None
     dtn_action = None
@@ -174,6 +181,7 @@ def build_same_mesh_physical_action(
             floquet,
             jit_options=options,
             volume_quadrature_metadata=volume_quadrature_metadata,
+            phase_carrier=phase_carrier,
             **({'native_curl_codegen': True} if degree in (4, 6) and setup.get('native_curl_jit') else {}),
         )
         physical_action = FullspacePhysicalAction(volume_action, dtn_action)
@@ -198,6 +206,7 @@ def build_same_mesh_physical_action(
             "mode_sha256": mode_sha,
             "dtn_quadrature_degree": int(qdegree),
             "volume_quadrature_metadata": volume_quadrature_metadata,
+            "phase_carrier": phase_carrier,
             "incident_projections": incident_projections,
         }
     except Exception:

@@ -172,6 +172,8 @@ def export_native(model, marker=lambda *_: None):
         )
         coordinates -= coordinates[0]
         key = (int(tag), coordinates.tobytes(), int(infos[cell]))
+        if "tensor_class_key" in model:
+            key = model["tensor_class_key"](int(tag), coordinates, int(infos[cell]))
         if key not in cache:
             tensor = _tabulate_raw_tensor_class(
                 compiled, kernels, coordinates, tag=int(tag), dimension=dim
@@ -194,12 +196,12 @@ def export_native(model, marker=lambda *_: None):
         dp.extend([port] * len(d))
         dv.extend(entry.projection_values)
         H.append(entry.normalization_h)
-    rhs, rhs_facts = build_physical_rhs(bundle)
+    rhs, rhs_facts = model.get("rhs_factory", build_physical_rhs)(bundle)
     try:
         total_g = rhs.array[masters].copy()
     finally:
         rhs.destroy()
-    background_storage = stage4_layered_background_field(
+    background_storage = model.get("background_factory", stage4_layered_background_field)(
         space, model["cfg"]
     ).x.array.copy()
     background_storage[slaves] = 0

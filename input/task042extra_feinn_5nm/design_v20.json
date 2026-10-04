@@ -1,0 +1,405 @@
+{
+  "schema": "fixed_phase.review_v19.v1",
+  "review_publication": "65966f1f4fe9f199ba4d1b4099d6b986ac405d5a",
+  "frozen_base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "models": {
+    "G0": {
+      "schema": "fixed-transverse-phase.physical.v1",
+      "wavelength_nm": 0.7,
+      "geometry": {
+        "bounds_nm": [
+          [
+            0.0,
+            2.5925925925925926
+          ],
+          [
+            0.0,
+            1.2962962962962963
+          ],
+          [
+            -0.5185185185185185,
+            6.7407407407407405
+          ]
+        ],
+        "substrate_z_nm": 0.0,
+        "block_bounds_nm": [
+          [
+            0.8555555555555555,
+            1.737037037037037
+          ],
+          [
+            0.0,
+            1.2962962962962963
+          ],
+          [
+            0.0,
+            6.222222222222222
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            1.2962962962962963,
+            1.737037037037037
+          ],
+          [
+            0.32407407407407407,
+            0.9722222222222222
+          ],
+          [
+            2.074074074074074,
+            4.148148148148148
+          ]
+        ],
+        "axis_coordinates_nm": [
+          [
+            0.0,
+            0.42777777777777776,
+            0.8555555555555555,
+            1.2962962962962963,
+            1.737037037037037,
+            2.164814814814815,
+            2.5925925925925926
+          ],
+          [
+            0.0,
+            0.32407407407407407,
+            0.6481481481481481,
+            0.9722222222222222,
+            1.2962962962962963
+          ],
+          [
+            -0.5185185185185185,
+            0.0,
+            0.5185185185185185,
+            1.037037037037037,
+            1.5555555555555556,
+            2.074074074074074,
+            2.5925925925925926,
+            3.111111111111111,
+            3.6296296296296298,
+            4.148148148148148,
+            4.666666666666667,
+            5.185185185185185,
+            5.703703703703703,
+            6.222222222222222,
+            6.7407407407407405
+          ]
+        ],
+        "mesh_id": "G0",
+        "cells": [
+          6,
+          4,
+          14
+        ]
+      },
+      "materials": {
+        "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+        "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+        "si_n": [
+          0.9998851703688496,
+          4.3236152269189515e-06
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "amplitude": 1.0
+      },
+      "boundary": {
+        "max_m": 8,
+        "max_n": 2,
+        "channels": 340,
+        "reference_origin_nm": [
+          0,
+          0,
+          0
+        ]
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "quadrature_degree": 15
+      },
+      "interface_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43"
+    },
+    "GX560": {
+      "schema": "fixed-transverse-phase.physical.v1",
+      "wavelength_nm": 0.7,
+      "geometry": {
+        "bounds_nm": [
+          [
+            0.0,
+            2.5925925925925926
+          ],
+          [
+            0.0,
+            1.2962962962962963
+          ],
+          [
+            -0.5185185185185185,
+            6.7407407407407405
+          ]
+        ],
+        "substrate_z_nm": 0.0,
+        "block_bounds_nm": [
+          [
+            0.8555555555555555,
+            1.737037037037037
+          ],
+          [
+            0.0,
+            1.2962962962962963
+          ],
+          [
+            0.0,
+            6.222222222222222
+          ]
+        ],
+        "notch_bounds_nm": [
+          [
+            1.2962962962962963,
+            1.737037037037037
+          ],
+          [
+            0.32407407407407407,
+            0.9722222222222222
+          ],
+          [
+            2.074074074074074,
+            4.148148148148148
+          ]
+        ],
+        "axis_coordinates_nm": [
+          [
+            0.0,
+            0.2851851851851852,
+            0.5703703703703704,
+            0.8555555555555555,
+            1.075925925925926,
+            1.2962962962962963,
+            1.5166666666666666,
+            1.737037037037037,
+            2.022222222222222,
+            2.3074074074074074,
+            2.5925925925925926
+          ],
+          [
+            0.0,
+            0.32407407407407407,
+            0.6481481481481481,
+            0.9722222222222222,
+            1.2962962962962963
+          ],
+          [
+            -0.5185185185185185,
+            0.0,
+            0.5185185185185185,
+            1.037037037037037,
+            1.5555555555555556,
+            2.074074074074074,
+            2.5925925925925926,
+            3.111111111111111,
+            3.6296296296296298,
+            4.148148148148148,
+            4.666666666666667,
+            5.185185185185185,
+            5.703703703703703,
+            6.222222222222222,
+            6.7407407407407405
+          ]
+        ],
+        "mesh_id": "GX560",
+        "cells": [
+          10,
+          4,
+          14
+        ]
+      },
+      "materials": {
+        "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+        "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+        "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+        "si_n": [
+          0.9998851703688496,
+          4.3236152269189515e-06
+        ]
+      },
+      "incidence": {
+        "grazing_deg": 1.0,
+        "azimuth_deg": 0.0,
+        "polarization": "s",
+        "amplitude": 1.0
+      },
+      "boundary": {
+        "max_m": 8,
+        "max_n": 2,
+        "channels": 340,
+        "reference_origin_nm": [
+          0,
+          0,
+          0
+        ]
+      },
+      "finite_element": {
+        "family": "N1curl",
+        "quadrature_degree": 15
+      },
+      "interface_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+      "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43"
+    }
+  },
+  "fixture": {
+    "schema": "fixed-transverse-phase.physical.v1",
+    "wavelength_nm": 0.7,
+    "geometry": {
+      "bounds_nm": [
+        [
+          0.0,
+          0.28
+        ],
+        [
+          0.0,
+          0.21
+        ],
+        [
+          0.0,
+          0.07
+        ]
+      ],
+      "substrate_z_nm": -1.0,
+      "block_bounds_nm": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "notch_bounds_nm": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "axis_coordinates_nm": [
+        [
+          0.0,
+          0.14,
+          0.28
+        ],
+        [
+          0.0,
+          0.105,
+          0.21
+        ],
+        [
+          0.0,
+          0.035,
+          0.07
+        ]
+      ],
+      "cells": [
+        2,
+        2,
+        2
+      ],
+      "mesh_id": "AIR8"
+    },
+    "materials": {
+      "legacy_table_sha256": "55aa34e55c5e3cc35f6849eddbd3bcc72d3b694d32bc4885299ef373acd676a2",
+      "source": "Review V19 and frozen Task40 interface; not legacy 0.7 entry",
+      "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+      "si_n": [
+        0.9998851703688496,
+        4.3236152269189515e-06
+      ]
+    },
+    "incidence": {
+      "grazing_deg": 1.0,
+      "azimuth_deg": 17.0,
+      "polarization": "s",
+      "amplitude": 1.0
+    },
+    "boundary": {
+      "max_m": 1,
+      "max_n": 1,
+      "channels": 36,
+      "reference_origin_nm": [
+        0,
+        0,
+        0
+      ]
+    },
+    "finite_element": {
+      "family": "N1curl",
+      "quadrature_degree": 15
+    },
+    "interface_source": "2374d0d556aed7a415202757daa2b94b76ad399b",
+    "interface_sha256": "44a878f85c6e50f5aa5c6b53f58addf1350041c33593cf72ea8cb6b961f29e43",
+    "fixture": true
+  },
+  "selected_original_nm": [
+    [
+      5,
+      3,
+      -5
+    ],
+    [
+      5,
+      3,
+      20
+    ],
+    [
+      20,
+      3,
+      20
+    ],
+    [
+      29,
+      10,
+      60
+    ],
+    [
+      40,
+      20,
+      125
+    ],
+    [
+      20,
+      10,
+      100
+    ]
+  ],
+  "fixed_carrier": "(physical kx, physical ky, 0); origin (0,0,0)",
+  "quadrature": {
+    "primary": "max(15,2p+3)",
+    "verification": "2q once",
+    "diagnosis": "4q at most once on failure"
+  },
+  "no_NN_training": true,
+  "bounds": {
+    "batch_seconds": 43200,
+    "final_reserve_seconds": 1800,
+    "A_seconds": 3600,
+    "B_seconds": 14400,
+    "B_each_seconds": 7200,
+    "C_seconds": 5400,
+    "B_lifecycles": 6
+  }
+}

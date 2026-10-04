@@ -1,5 +1,12 @@
 """Explicit reviewed stages in distinct durable namespaces; no restart."""
 
+# Capture before the project/schema imports so their cost belongs to V20.
+# ruff: noqa: E402
+
+from time import monotonic
+
+DURABLE_LAUNCH_ORIGIN = monotonic()
+
 import json
 import os
 from pathlib import Path
@@ -66,6 +73,8 @@ def main():
     from src.runners.feinn_attribution_campaign import STAGES as ATTRIBUTION_STAGES
 
     STAGES = STAGES | GN_STAGES | CACHED_STAGES | METRIC_STAGES | ATTRIBUTION_STAGES
+    from src.io.fixed_phase_pilot import STAGES as PHASE_STAGES
+    STAGES = STAGES | PHASE_STAGES
     stages.update(
         {name: (name, "task42extra-" + name.replace("_", "-")) for name in STAGES}
     )
@@ -77,7 +86,7 @@ def main():
     if len(sys.argv) == 4:
         attempt = int(sys.argv[3])
         if not spec.derived["stage"].startswith(
-            ("v9_", "v10_", "v11_", "v12_", "v13_", "v18_")
+            ("v9_", "v10_", "v11_", "v12_", "v13_", "v18_", "v20_")
         ) or attempt not in (
             2,
             3,
@@ -92,6 +101,8 @@ def main():
             raise ValueError("V13_AT_MOST_TWO_EVIDENCED_LOCAL_REPAIRS")
         if spec.derived["stage"].startswith("v18_") and attempt != 2:
             raise ValueError("V18_AT_MOST_ONE_NUMERICAL_BUG_REPLAY")
+        if spec.derived["stage"].startswith("v20_") and attempt > 3:
+            raise ValueError("V20_AT_MOST_TWO_EVIDENCED_IMPLEMENTATION_REPLAYS")
         # A prior attempt must be closed and cleared; never replace its files.
         previous = sorted(
             (ROOT / "results/task42extra").glob(spec.identity["run_id"] + "_*")
@@ -115,6 +126,8 @@ def main():
         + spec.derived["environment_mode"]
         + " && export TASK42EXTRA_DURABLE_NAMESPACE="
         + namespace
+        + (" && export TASK42EXTRA_V20_LAUNCH_ORIGIN_MONOTONIC="+str(DURABLE_LAUNCH_ORIGIN)
+           if spec.derived["stage"].startswith("v20_") else "")
         + " && exec python scripts/run_case.py "
         + str(spec.source_path.relative_to(ROOT)),
     ]

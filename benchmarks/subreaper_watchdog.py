@@ -199,13 +199,28 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               rss_warning_bytes: int | None = None,
               startup_headroom_bytes: int | None = None,
               memory_envelope_provider=None, health_check=None,
-              include_pss: bool | None = None) -> dict:
+              include_pss: bool | None = None,
+              sampled_root_identity: dict | None = None) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
     if (not command or interval <= 0 or grace_seconds <= 0 or
             (wall_seconds is not None and wall_seconds <= 0)):
         raise ValueError('command and positive monitoring budgets are required')
     if resource_stop_policy not in ('legacy', 'measured_tree_rss_only_v3'):
         raise ValueError(f'unsupported resource_stop_policy: {resource_stop_policy!r}')
+    sample_root = os.getpid()
+    if sampled_root_identity is not None:
+        sample_root = int(sampled_root_identity['pid'])
+        fields = Path(f'/proc/{sample_root}/stat').read_text().rsplit(')', 1)[1].split()
+        if int(fields[19]) != int(sampled_root_identity['start_ticks']):
+            raise RuntimeError('sampled root identity changed')
+        # It must be an ancestor of this watchdog: sampling can include its
+        # isolated terminal server, but cannot substitute an unrelated tree.
+        cursor = os.getpid()
+        while cursor != sample_root and cursor > 1:
+            fields = Path(f'/proc/{cursor}/stat').read_text().rsplit(')', 1)[1].split()
+            cursor = int(fields[1])
+        if cursor != sample_root:
+            raise RuntimeError('sampled root is not a watchdog ancestor')
     if rss_hard_limit_bytes is not None and int(rss_hard_limit_bytes) <= 0:
         raise ValueError('rss_hard_limit_bytes must be positive')
     if rss_warning_bytes is not None and int(rss_warning_bytes) <= 0:
@@ -262,6 +277,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     observed = set()
     leader = None
     summary = {
+        'sampled_root_identity': sampled_root_identity,
         'workflow_deadline_seconds': wall_seconds,
         'solve_deadline_seconds': solve_seconds,
         'time_limit_mode': 'none' if wall_seconds is None and solve_seconds is None else 'bounded',
@@ -312,7 +328,11 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                     sample_options['include_pss'] = time.monotonic() >= next_pss_sample
                     if sample_options['include_pss']:
                         next_pss_sample = time.monotonic() + 5.0
-                sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code, **sample_options)
+                if sampled_root_identity is not None:
+                    fields = Path(f'/proc/{sample_root}/stat').read_text().rsplit(')', 1)[1].split()
+                    if int(fields[19]) != int(sampled_root_identity['start_ticks']):
+                        raise RuntimeError('sampled root identity changed during supervision')
+                sample = process_tree_snapshot(sample_root, 'workflow', exit_code, **sample_options)
                 if os.environ.get('PHYSICAL_NATIVE_CAPACITY'):
                     for member in sample['members']:
                         try:
