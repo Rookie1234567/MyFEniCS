@@ -225,6 +225,32 @@ def error(diff, reference, natural=1.0):
     )
 
 
+def saved_state_identity_and_MPC(model, packet, state):
+    """Actual stored vectors, independently restored through the public MPC API."""
+    from src.solvers.fixed_phase_saved_diagnostics import inspect_state
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import restore_p0_full_field
+
+    inspect_state(packet, state)
+    residuals = {}
+    for name in ("c_scattered", "c_total"):
+        local = packet.expand(state[name])
+        field = restore_p0_full_field(model["floquet"], packet.storage(state[name]))
+        residuals[name] = float(
+            np.linalg.norm(field.x.array[packet.a["cell_dofs"]] - local)
+            / max(np.linalg.norm(local), 1e-30)
+        )
+    if max(residuals.values()) > 1e-10:
+        raise ValueError("SAVED_FIELD_MPC_RECONSTRUCTION_FAILED")
+    return dict(
+        MPC_relative=residuals,
+        full_independent_complex_FE=packet.size,
+        internal_storage_rows_retained=len(np.unique(packet.a["idofs"])),
+        saved_background_master_and_affine_identities=True,
+        no_factor_solve_or_FE_action=True,
+        internal_coefficient_recovery_scope="full coefficients retained; arbitrary-load recovery qualified in P1; no new local inverse in compare-only",
+    )
+
+
 def compare(indices, artifact, marker, budget):
     import basix
     from src.geometry.fixed_phase_plan import physical_design
@@ -240,7 +266,7 @@ def compare(indices, artifact, marker, budget):
             comparisons={},
             no_new_solve_or_factor=True,
         ), dict(integrals=artifact / "comparison_integrals.npz")
-    models, packets, states, obs = {}, {}, {}, {}
+    models, packets, states, obs, state_checks = {}, {}, {}, {}, {}
     for role, idx in indices.items():
         mesh, degree, phase = ROLES[role]
         models[role] = build_model(
@@ -248,10 +274,7 @@ def compare(indices, artifact, marker, budget):
         )
         packets[role] = load_native(idx["files"]["native"]["path"])
         with np.load(idx["files"]["field"]["path"], allow_pickle=False) as z:
-            states[role] = {
-                k: np.array(z[k])
-                for k in ("c_scattered", "c_total", "alpha_scattered", "alpha_total")
-            }
+            states[role] = {k: np.array(z[k]) for k in z.files}
         with np.load(idx["files"]["observables"]["path"], allow_pickle=False) as z:
             obs[role] = {
                 k: np.array(z[k])
@@ -288,6 +311,13 @@ def compare(indices, artifact, marker, budget):
             models[role]["space"].dofmap.list, packets[role].a["cell_dofs"]
         ):
             raise ValueError("COMPARE_COEFFICIENT_CELL_ORDER_CHANGED")
+        state_checks[role] = saved_state_identity_and_MPC(
+            models[role], packets[role], states[role]
+        )
+        marker(
+            "independent_saved_state_identity_MPC",
+            dict(role=role, **state_checks[role]),
+        )
     physical = {
         idx["result"]["identity"]["physical_model_sha256"] for idx in indices.values()
     }
@@ -548,4 +578,5 @@ def compare(indices, artifact, marker, budget):
         interface_band_nm=7 / 135,
         common_subcells=int(np.prod([len(a) - 1 for a in axes])),
         continuum_accuracy_qualified=False,
+        saved_state_checks=state_checks,
     ), dict(integrals=artifact / "comparison_integrals.npz")

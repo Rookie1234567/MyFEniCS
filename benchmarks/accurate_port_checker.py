@@ -84,6 +84,12 @@ def check_published(a, state, *, expected_mode_hash, mode_hash):
         passed=rows["scattered"]["original_coordinates_relative"] <= 1e-10
         and rows["scattered"]["decimal_90_110_equal"]
         and background_relative <= 1e-10,
+        all_saved_origin_coordinates_qualified=all(
+            r["original_coordinates_relative"] <= 1e-10 and r["decimal_90_110_equal"]
+            for r in rows.values()
+        )
+        and background_relative <= 1e-10,
+        affine_total_origin_reprojection_gate=1e-10,
         rows=rows,
         background_original_coordinates_relative=background_relative,
         recovery_gate="alpha_scattered=H^-1(gp+D*c_scattered), background separately; actual affine total equation gated by full residual",

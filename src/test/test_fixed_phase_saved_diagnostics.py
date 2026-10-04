@@ -92,6 +92,42 @@ def test_wrong_saved_alpha_stays_a_negative():
     assert r["original_port_recovery_relative"] > 1e-10
 
 
+def test_saved_mpc_checker_reads_both_actual_vectors_and_rejects_bad_restoration(
+    monkeypatch,
+):
+    import sys
+    from src.solvers.fixed_phase_comparison import saved_state_identity_and_MPC
+
+    native, state = fixture()
+    native.update(cell_dofs=np.array([[0, 1]]), idofs=np.array([[1]]))
+    calls = []
+
+    def restore(_floquet, values):
+        calls.append(values.copy())
+        return SimpleNamespace(x=SimpleNamespace(array=values.copy()))
+
+    monkeypatch.setitem(
+        sys.modules,
+        "src.solvers.fullspace_same_mesh_hcurl_pmg_physical",
+        SimpleNamespace(restore_p0_full_field=restore),
+    )
+    p = SimpleNamespace(
+        size=2,
+        np=1,
+        a=native,
+        storage=lambda v: v,
+        expand=lambda v: v.reshape(1, 2),
+    )
+    r = saved_state_identity_and_MPC(dict(floquet="fixture"), p, state)
+    assert r["MPC_relative"] == dict(c_scattered=0.0, c_total=0.0)
+    assert np.array_equal(calls[0], state["c_scattered"])
+    assert np.array_equal(calls[1], state["c_total"])
+    assert r["no_factor_solve_or_FE_action"]
+    p.expand = lambda v: (v + 0.1).reshape(1, 2)
+    with pytest.raises(ValueError, match="MPC_RECONSTRUCTION_FAILED"):
+        saved_state_identity_and_MPC(dict(floquet="fixture"), p, state)
+
+
 def setup_closed(root, *, cleared=True, released=True):
     d = root / "results/task42extra/task42extra_v20_o3_0"
     d.mkdir(parents=True)

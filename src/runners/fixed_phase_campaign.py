@@ -693,10 +693,13 @@ def v21_worker(m,directory,artifact,design,marker,budget):
             algebra[role] = dict(record["result"]["full_equation"])
             algebra[role]["recovery"] = max(algebra[role]["recovery"],
                        recovery[role]["rows"]["scattered"]["original_coordinates_relative"],
-                       recovery[role]["background_original_coordinates_relative"])
+                       recovery[role]["background_original_coordinates_relative"],
+                       *index["result"]["saved_state_checks"][role]["MPC_relative"].values())
             del native,state
         result = compare_from_arrays(raw,obs,algebra)
-        result.update(stage_qualified=True,independent_accurate_recovery=recovery)
+        result.update(stage_qualified=True,independent_accurate_recovery=recovery,
+                      strict_all_saved_vector_recovery_qualified=all(
+                          r["all_saved_origin_coordinates_qualified"] for r in recovery.values()))
         return result,{}
     raise RuntimeError("V21_EXPLICIT_STAGE_NOT_IMPLEMENTED")
 
