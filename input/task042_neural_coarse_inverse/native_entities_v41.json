@@ -106,5 +106,96 @@
       }
     ],
     "reason": "saved full owner extract/scatter before ordered-mode receipt reader error; no array regenerated"
+  },
+  "resume_action_packet": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/task042_v41_routing_20261004T103231188208Z/complete_boundary_actions.npz",
+    "sha256": "86cc5f64a59d7ec5f300499be5dda1b26f03d79761ba2cbc7774dde6d040b73f",
+    "aliases": {},
+    "members": {
+      "routed_input": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "375a15a4b1d6a86a0ae30aa157e46975ddb6c0ee526c9290f38f68b8d503faf7"
+      },
+      "frozen_input": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "f09adbafd61eace2a3a5ddb2acba77fb7110a8be320f514d777b84e6ce42c68c"
+      },
+      "amplitudes": {
+        "shape": [
+          32060
+        ],
+        "dtype": "<c16",
+        "sha256": "f9ec2c173ef8407c399299dab5a49aef345f963508d6cf7f56c7cb6751bdd699"
+      },
+      "frozen_amplitudes": {
+        "shape": [
+          32060
+        ],
+        "dtype": "<c16",
+        "sha256": "bef282edc91d002049cee6ed0177ccd1dacfa5528e821a142d3e4a3d5266d1eb"
+      },
+      "forward": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "33bf83deb2f90f1bea8b382257f3fb8da2ebab2235f20dc1dd2e1db969a7790a"
+      },
+      "frozen_forward": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "62bffd86d11badeacc8d56e4c188b423cc61970ca6600db940a6c72bc1fa26f7"
+      },
+      "adjoint": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "182e89cd4d300a6b7b4b706c6def7cec551ae32b1850597d9031556f067b16ec"
+      },
+      "frozen_adjoint": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "d237237b8c3aa6e363c3dac2eefdd5c4806053bef84c905a20af0bf7482a85c1"
+      },
+      "modal": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "8858128f26cbdfe9a5b7703bfa2beaac7d02fa23423c4621b1db868faa53bdb0"
+      },
+      "frozen_modal": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "8858128f26cbdfe9a5b7703bfa2beaac7d02fa23423c4621b1db868faa53bdb0"
+      },
+      "y": {
+        "shape": [
+          378432
+        ],
+        "dtype": "<c16",
+        "sha256": "2fe1c49b08154f782be5ac0263f5d3cb6765332dab37ee2409623cf2adfdafca"
+      },
+      "alpha": {
+        "shape": [
+          32060
+        ],
+        "dtype": "<c16",
+        "sha256": "6a1cbb1d750a78b29a0aaf1f4c6766118ca218766327735fa6017d067763b921"
+      }
+    }
   }
 }

@@ -994,10 +994,19 @@ def complete_routed_boundary(folder, packets, output):
         )
         action = saved_boundary_action()
         old = read_arrays(component["outputs"])
-        amplitudes = action.recover(output)
-        forward = action.apply(output)
-        adjoint = action.apply(output, adjoint=True)
-        modal = action.modal_rhs(inputs["alpha"])
+        resume = plan_record().get("resume_action_packet")
+        if resume:
+            cached = read_arrays(resume)
+            for actual, saved in ((output, cached["routed_input"]), (x, cached["frozen_input"]),
+                                  (y, cached["y"]), (inputs["alpha"], cached["alpha"])):
+                if not metric(actual, saved)["passed"]:
+                    raise ValueError("partial boundary action input identity")
+            amplitudes, forward, modal = cached["amplitudes"], cached["forward"], cached["modal"]
+        else:
+            amplitudes = action.recover(output)
+            forward = action.apply(output)
+            modal = action.modal_rhs(inputs["alpha"])
+        adjoint = apply_frozen_boundary_adjoint(action, inputs)
         for name, value, frozen in (
             ("amplitudes", amplitudes, "q30_a_amplitudes"),
             ("forward", forward, "q30_a_forward"),
@@ -1036,9 +1045,17 @@ def complete_routed_boundary(folder, packets, output):
         "faces_per_side": 2628,
         "full_target_p6_dofmap": "NOT_CONSTRUCTED",
         "native_full_volume_vector": "NOT_CONSTRUCTED",
-        "boundary_calls": {"recover": 1, "forward": 1, "adjoint": 1, "modal": 1},
+        "boundary_calls": {"recover": 0 if plan_record().get("resume_action_packet") else 1,
+                           "forward": 0 if plan_record().get("resume_action_packet") else 1,
+                           "adjoint": 1, "modal": 0 if plan_record().get("resume_action_packet") else 1},
+        "action_input_identity": {"forward_recover": "V38_inputs.x", "adjoint": "V38_inputs.y", "modal": "V38_inputs.alpha"},
         "NN_training": 0,
     }
+
+
+def apply_frozen_boundary_adjoint(action, inputs):
+    """V38 witness uses independent dual y, never the primal x."""
+    return action.apply(inputs["y"], adjoint=True)
 
 
 def finish(role, folder):

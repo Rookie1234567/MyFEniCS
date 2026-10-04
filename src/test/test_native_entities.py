@@ -29,6 +29,19 @@ def test_ordered_mode_receipt_reads_literal_list_and_rejects_hash(tmp_path):
         ordered_modes_from_receipt(receipt, expected_count=2)
 
 
+def test_complete_boundary_adjoint_uses_saved_independent_dual():
+    from src.solvers.native_entity_study import apply_frozen_boundary_adjoint
+
+    class Action:
+        def apply(self, value, *, adjoint=False):
+            assert adjoint
+            return value * (2 - 3j)
+
+    inputs = {"x": np.array([1 + 2j]), "y": np.array([-4 + 7j])}
+    assert np.array_equal(apply_frozen_boundary_adjoint(Action(), inputs), inputs["y"] * (2 - 3j))
+    assert not np.array_equal(apply_frozen_boundary_adjoint(Action(), inputs), inputs["x"] * (2 - 3j))
+
+
 @pytest.mark.parametrize(
     "key",
     [
