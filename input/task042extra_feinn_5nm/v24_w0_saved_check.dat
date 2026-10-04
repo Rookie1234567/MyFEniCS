@@ -1,5 +1,5 @@
-# 仅修复保存数组 checker 的自有 FD 准入；不重跑完整 FE worker。
 receiver_schema = 1
+# 仅修复保存数组 checker 的自有 FD 准入；不重跑完整 FE worker。
 component = "fresh_c1_same80_p6"
 mode = "saved_check"
 dependency_commit = "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382"

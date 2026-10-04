@@ -126,6 +126,19 @@ def test_saved_checker_binds_exact_completed_worker(tmp_path):
     assert "--supervised" not in text and "--worker " not in text
 
 
+def test_tracked_saved_checker_input_uses_public_validation():
+    import subprocess
+    import sys
+    from src.runners.fresh_component_receiver import ROOT
+
+    result = subprocess.run([
+        sys.executable, str(ROOT / "scripts/run_case.py"), "--validate-only",
+        str(ROOT / "input/task042extra_feinn_5nm/v24_w0_saved_check.dat"),
+    ], capture_output=True, text=True, check=True)
+    record = json.loads(result.stdout)
+    assert record["mode"] == "saved_check" and record["worker_report_sha256"] == WORKER_SHA
+
+
 def test_priority_only_lowers_self(monkeypatch):
     import src.runners.fresh_component_receiver as module
     actions = []
