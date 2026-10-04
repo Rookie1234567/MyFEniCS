@@ -526,6 +526,10 @@ def test_new_window_deadline_and_closed_parent_isolation(tmp_path):
     book["runs"].append({"role": "ADAPTER", "elapsed_seconds": 100.0})
     win.LEDGER_PATH.write_text(json.dumps(book))
     assert win.remaining("DEPLOY") == 150
+    book["runs"] = [{"role": "basis_audit", "elapsed_seconds": 1199.0}]
+    win.LEDGER_PATH.write_text(json.dumps(book))
+    assert win.remaining("COUPLED") == 1
+    assert win.remaining("basis_audit") == 1
     book["closed"] = True
     win.LEDGER_PATH.write_text(json.dumps(book))
     with pytest.raises(RuntimeError, match="closed"):

@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PLAN = ROOT / "input/task042_neural_coarse_inverse/native_integration_v39.json"
 ARTIFACT = ROOT / "benchmarks/artifacts/task042/v39"
 FE_ROLES = ("ADAPTER", "COUPLED")
+NATIVE_COST_ROLES = (*FE_ROLES, "basis_audit")
 COMPONENT_ROLES = ("EVIDENCE", "ADAPTER", "COUPLED", "CHECK", "DEPLOY")
 
 
@@ -18,7 +19,9 @@ class IntegrationWindow(PreparationWindow):
     def remaining(self, role):
         self.require_ready()
         native = sum(
-            r["elapsed_seconds"] for r in self.ledger()["runs"] if r["role"] in FE_ROLES
+            r["elapsed_seconds"]
+            for r in self.ledger()["runs"]
+            if r["role"] in NATIVE_COST_ROLES
         )
         components = sum(
             r["elapsed_seconds"]
@@ -27,7 +30,7 @@ class IntegrationWindow(PreparationWindow):
         )
         return min(
             self.component - components if role in COMPONENT_ROLES else self.auxiliary,
-            1200 - native if role in FE_ROLES else self.auxiliary,
+            1200 - native if role in NATIVE_COST_ROLES else self.auxiliary,
             self.total - self.reserve - self.charged_wall(),
             self.snapshot()["heavy_remaining_seconds"],
         )
