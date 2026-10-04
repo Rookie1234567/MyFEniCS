@@ -4182,6 +4182,211 @@
         "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "source_state": "development_worktree; not formal PDE provenance"
       }
+    },
+    {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v20_document_audit_20261004T043838462848Z/summary.json",
+        "bytes": 1898,
+        "sha256": "fab784c264a98ed1cdc2600ca513ecafd93538ce5ccf346b6e3cc5c74498cfd6"
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 120.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 38100992,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2139587878912,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2139587878912,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.5512495770817623,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v20_prepublication_check_20261004T044203159382Z/summary.json",
+        "bytes": 1897,
+        "sha256": "d6d0d3b1bbe2f10b9921ae3201097b5d78b7d3e5e2f4e19bd8767b77d3359535"
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 120.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 43212800,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2139598680064,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2139598680064,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.555187434074469,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v20_github_render_20261004T044319503868Z/summary.json",
+        "bytes": 2075,
+        "sha256": "246f09c893296df4783d046a93a1ebe4b56a725ecc91e7bf188b008c589e08fd"
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1596834,
+          1596835,
+          1596838,
+          1596905,
+          1596908,
+          1596929,
+          1596935,
+          1596997,
+          1597059,
+          1597064,
+          1597075,
+          1597084,
+          1597099,
+          1597210
+        ],
+        "sampled_process_tree_rss_peak_bytes": 1544364032,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2139650510848,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2139650510848,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 28,
+        "elapsed_seconds": 17.701942170970142,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
     }
   ],
   "reviewer_operations": {
@@ -4230,8 +4435,7 @@
     "OOC_bytes": 0
   },
   "publication": {
-    "render": "PENDING_AFTER_FIRST_PUSH",
-    "notifications_sent": 0,
+    "render": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
     "merge_approval": false,
     "local_page_check": {
       "path": "docs/task042extra_feinn_5nm/review_report_v20.md",
@@ -4246,6 +4450,170 @@
       "FEINN": "f5ae072d09816b899002fc45460dc4cd1840e1af",
       "main": "d68f5688e6d166aa6a2bc4b6a0dd015f9e31c77b",
       "dot": "077ec9c8386c976da232093779279fb9d1a93033"
-    }
+    },
+    "seal_utc": "2026-10-04T04:45:09.420800+00:00",
+    "report_publication": "33f3c4543516bb89d94a335a2fa6acabb7eea03e",
+    "render_record": {
+      "path": "tmp/task42extra/render/review_v20_published/render_records.json",
+      "bytes": 6635,
+      "sha256": "3aa786fda9f3f1b31a76974b8b37b5b76ab5be30acc659b608dc707243efbba5"
+    },
+    "render_observed": {
+      "url": "https://github.com/Rookie1234567/MyFEniCS/blob/33f3c4543516bb89d94a335a2fa6acabb7eea03e/docs/task042extra_feinn_5nm/review_report_v20.md",
+      "heading_prefix": "",
+      "DOM": {
+        "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v20.md at 33f3c4543516bb89d94a335a2fa6acabb7eea03e · Rookie1234567/MyFEniCS · GitHub",
+        "scopeHeading": "entire task document",
+        "articleText": "Review V20：关闭端口实现缺口，完成相位有限元的严格比较\n0. 审阅决定与最终目标\n\n目标尚未达成。本轮接受 Response V20 为有实物、有负结果的研究交付，不接受其为合格前向解、相位空间精度证书或 NN 增益。授权下一轮在本报告限定内一次完成“准确端口回代／理论零迹资格 → 已存 p3 场重新验算 → p6 参考与条件 p4 → 完整比较及原尺寸出口”，回应为 Response V21。 不再安排仅更新暂停状态的批次；",
+        "ready": "complete",
+        "fonts": "loaded",
+        "tables": [
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "width": 663.0333251953125,
+            "scrollWidth": 663,
+            "clientWidth": 663
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              2,
+              2,
+              2,
+              2
+            ],
+            "width": 1012,
+            "scrollWidth": 1012,
+            "clientWidth": 1012
+          },
+          {
+            "columns": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "width": 884.6500244140625,
+            "scrollWidth": 885,
+            "clientWidth": 885
+          }
+        ],
+        "math": [],
+        "mathAfterScroll": []
+      },
+      "screenshots": [
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_top.png",
+          "sha256": "21e5b91019de891b5d053f1c11aeb1cbb53ceab75a876dc1234383097db9fd1a"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_00.png",
+          "sha256": "489fb1b9e7637eace84aebdb159b9a55aadead51efc3009ac9ed466ae1d836e5"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_01.png",
+          "sha256": "77803baa69392976a60ef9668bdbbcf1fd509fe51655ecbf97c6192c6548bf86"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_02.png",
+          "sha256": "0b5bb413f023a8cc63c781dc10e9e5f8edc67684834485a9792f30c2a8fcac97"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_03.png",
+          "sha256": "78814ff8c51baddeb36d7126c92d03c62901380fabd15d4b18da41fbeb02f1ad"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_04.png",
+          "sha256": "6ddf0eb6815881fed3c9808111e3a8fe26530f87299b3d58f25bd3b5891cc553"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_05.png",
+          "sha256": "a253ee9bb6dad41b544955c9ce908f5795ea970236bb1f0fbec678afad0523cb"
+        },
+        {
+          "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v20_published/00_table_06.png",
+          "sha256": "7658f54ba4ec3ae24f8ccde25e95af9640871dc8f08192e73d86fac3b1ff4c17"
+        }
+      ],
+      "visual_review": "pending human/model image inspection"
+    },
+    "visual_inspection": {
+      "images": 8,
+      "complete_tables": 7,
+      "horizontal_overflow": false,
+      "math_blocks": 0,
+      "scope": "Model inspected top and all seven complete tables; not a claim every prose viewport was screenshotted"
+    },
+    "numerical_source_and_old_evidence_unchanged": true,
+    "notification_count_before_handoff": 0,
+    "handoff_policy": "Send executor one official queue message after final push/tracking/cleanup; stop reviewer tools immediately thereafter"
   }
 }
