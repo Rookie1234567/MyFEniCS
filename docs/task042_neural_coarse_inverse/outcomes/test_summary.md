@@ -1,3 +1,11 @@
+# V37测试：真实编译、31个定点与MPI2／4小fixture通过
+
+复用最终aux_pre_06的逐文件hash和真实ABI记录；新增独立C/D、共享rows、H/source不变性、tile容量分配前拒绝、错误相位／转置／共轭、重复／丢face、坏hash及整树超时清场测试。31pass（pytest7.36s），MPI2／4完整向量和空owner／全体拒绝通过；真实FE仅MPI1。未重复旧campaign或全仓昂贵测试，无CI声明。
+
+首次27pass/1fail、两次PATCH接线失败、q60存储停止及打包字段失败均保留，针对性修复同轮计费。[最终测试身份](records/tests_v37.json) · [原始日志](records/raw_evidence_index_v37.json) · [独立数组审核](records/component_checker_v37.json)。Ruff／文档本地检查结果单列，GitHub视觉NOT_VERIFIED；不以小fixture授目标资格。旧后缀逐字保留。
+
+<!-- V37-LATEST-END -->
+
 # V36测试：最终19定点与MPI2/4、真实组件及cache审核通过
 
 实际编译发生在测试前；最终源文件hash绑定19个定点（含fixture closed／负结果reference barrier、actual dat、坏hash／readonly／空owner／weakref／独立保存数组反例），MPI2及MPI4保存实际完整向量并与serial配对。Ruff新文件通过。真实micro边界及独立cache checker两seed通过原1e-10门。

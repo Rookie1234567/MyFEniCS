@@ -1,0 +1,127 @@
+{
+  "merge_approval": false,
+  "order": [
+    "review opt-in core",
+    "runner supervision",
+    "independent checker",
+    "compact evidence"
+  ],
+  "groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/bounded_port_provider.py",
+        "src/solvers/tiled_port_action.py",
+        "src/solvers/solver_consumer_contract.py"
+      ],
+      "behavior": "explicit opt-in only; independent C/D two-pass boundary action, H/source/ordered identity binding",
+      "dependencies": [
+        "numpy",
+        "qualified mode/canonical surface reader"
+      ],
+      "tests": [
+        "31 focused tests",
+        "MPI2/4 synthetic",
+        "ordinary p6 native witness"
+      ],
+      "fresh_PDE": "NOT_RUN; boundary component only",
+      "merge": "NOT_APPROVED; no production promotion"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/solvers/port_preparation_window.py",
+        "benchmarks/archive_jit_cache.py"
+      ],
+      "behavior": "V37 configurable budget / 0.5s new-storage stop / lossless archival; V36 defaults preserved",
+      "dependencies": [
+        "existing subreaper watchdog",
+        "shared CPU admission",
+        "task-local storage"
+      ],
+      "tests": [
+        "deadline child fixture",
+        "live storage stop negative",
+        "lossless readback"
+      ],
+      "fresh_PDE": "NOT_RUN",
+      "merge": "review resource regression before any extraction"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_boundary_witness.py",
+        "benchmarks/qualify_port_preparation.py",
+        "src/test/test_boundary_witness.py",
+        "src/test/tiled_port_mpi_fixture.py"
+      ],
+      "behavior": "independent saved array reconstruction, no FE solve",
+      "dependencies": [
+        "bounded tile core",
+        "hash-bound raw receipts"
+      ],
+      "tests": [
+        "final focused regression",
+        "CHECK completed"
+      ],
+      "fresh_PDE": "NOT_RUN",
+      "merge": "after core review; no solver qualification"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v37.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records",
+        "docs/task042_neural_coarse_inverse/outcomes/target_p6_boundary_tiles_v37.md"
+      ],
+      "behavior": "positive partial component, accuracy negative and storage breach retained",
+      "dependencies": [
+        "source/hash-bound run index"
+      ],
+      "tests": [
+        "archive hashes",
+        "Markdown and history suffix checks"
+      ],
+      "fresh_PDE": "NOT_RUN",
+      "merge": "selective evidence only after review"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/target_boundary_witness.py",
+        "src/solvers/boundary_witness_scope.py",
+        "input/task042_neural_coarse_inverse/v37_*.dat",
+        "input/task042_neural_coarse_inverse/boundary_witness_v37.json"
+      ],
+      "behavior": "finite real p6 patches; no target volume graph/solver",
+      "dependencies": [
+        "qualified FE complex128 Int64 ABI",
+        "original MPC and mode contracts"
+      ],
+      "tests": [
+        "ordinary p6 witness",
+        "31 focused",
+        "partial independent checker"
+      ],
+      "fresh_PDE": "NOT_RUN",
+      "merge": "keep on execution branch; native q60/periodic incomplete"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "ignored tmp/task042/v37",
+        "ignored benchmarks/artifacts/task042/v37",
+        "ignored results/task042/task042_v37_*",
+        "historical failed solver paths"
+      ],
+      "behavior": "raw arrays/logs/JIT and closed research campaigns; no executable production claim",
+      "dependencies": [],
+      "tests": [
+        "content hash provenance only"
+      ],
+      "fresh_PDE": "NOT_RUN",
+      "merge": "DO_NOT_MERGE heavy artifacts/failed solver implementation"
+    }
+  ]
+}

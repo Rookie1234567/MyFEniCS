@@ -1,3 +1,11 @@
+# 最新交付导航：V37 / Review V34 已连续收口
+
+已完成普通p6真实4hex／12mode未裁剪积分、单mode面片分块及独立保存数组检查。q15不合格；原生q60 JIT超过新存储门，周期缝／角点未完成，故仅P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS，无目标全量边界／完整求解／NN20%资格。
+
+[合同](review_report_v34.md) · [response](response_v37.md) · [完整结果](outcomes/target_p6_boundary_tiles_v37.md) · [run/source](outcomes/records/run_index_v37.json) · [checker](outcomes/records/component_checker_v37.json) · [费用](outcomes/records/resource_costs_v37.json) · [原始证据](outcomes/records/raw_evidence_index_v37.json) · [部署与缺口](outcomes/records/deployment_package_v37.json)。失败保留；正式入口仅列复现身份，closed后不得重开运行。以下完整历史正文保留，“当前”只指当时状态。
+
+<!-- V37-LATEST-END -->
+
 # 当前审阅入口：Review V34 / 下一执行 V37
 
 [Review V34](review_report_v34.md)审阅交付HEAD `bc2efb6e9013ceeb3e34d4c295a21db8b054c837`。接受V36的32060原尺寸ordered端口、解析容量及与现有裁剪表面实现的micro组件等价资格；不授原尺寸完整求解或NN20%。

@@ -1,3 +1,23 @@
+# Task042 V37进展：普通p6面片分块接口通过，q15不合格，全量边界未获资格
+
+端口把边界场分解为不同衍射方向。新接口将单个方向的边界数据继续拆成面片：第一遍累加一个复振幅，第二遍重放面片并累加牵引。这样不必常驻整张单方向系数表，代价是两次遍历与生成；它不改变三维体积方程，也不是神经收益。
+
+| 对象／数据身份 | measured、derived或not_run结果 | 门限／边界及证据 |
+|---|---|---|
+| 原50×25nm周期、z=−10..130nm、.7nm、p6容量情景 | 32060 ordered端口；530856 cells／345771066 storage，均复用V36 | 未建目标体积mesh／完整编号或解PDE |
+| p6真实普通面片，4hex、882局部basis、12预登记mode、MPI1 | q15→q30最大相对差 1.32594720615e-05 | 高于1e-10，q15未获此见证资格 |
+| 未裁剪native q30 vs Basix q60 | 最大相对差 4.69243170483e-13 | 低于1e-10；原生q60、max普通／周期缝／角点未完成，不授全量边界资格 |
+| q30分块正向／伴随／复振幅 | 2.79307870108e-13／2.61645760695e-13／1.59542409236e-13 | H独立重算差0；单位功率绝对差7.1054e-15；仅P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS |
+| 数值tile／creator工作区 | 42336B／q30上界22127616B、q60上界81821376B | 缓存与生成临时对象分开；真实全量support／周期扩张上界unknown |
+| shared-workstation费用／峰 | 计费 474.862115805s；同时树采样峰 3387654144B；own swap0 | 0.5s采样，非连续cgroup硬峰；实现／元数据读写未单独监督部分unknown |
+| 新存储停止及最终库存 | 原JIT C/o/so重叠曾越512MiB；无损归档后 477669342B | 保留越界事实，不改成全程合规；原生q60与扩大面片停止 |
+| 原方程、total/scattered E/H、curl、40或32060通道物理解、R/T/A/A_volume及能量 | 本轮全部NOT_RUN | 仅任意边界向量与单位通道泛函，没有新合格场 |
+| dot语义消费／原尺寸2TB、48h／NN20% | SOLVER_PACKAGE_NOT_QUALIFIED／NOT_QUALIFIED／NOT_DEMONSTRATED | 不忽略材料差2.9917e-8，不以小面片或缓存节省推断生产能力 |
+
+[response](task042_neural_coarse_inverse/response_v37.md)／[完整结果](task042_neural_coarse_inverse/outcomes/target_p6_boundary_tiles_v37.md)／[独立checker](task042_neural_coarse_inverse/outcomes/records/component_checker_v37.json)／[全部费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v37.json)／[run与source](task042_neural_coarse_inverse/outcomes/records/run_index_v37.json)。本批closed，全部自有actor清除，V24–V36永久closed，旧资格及负结果保持。唯一下一建议：取得一次可预估JIT峰存储的未裁剪原生q60周期缝／角点边界见证，补齐精度与MPC覆盖；不自动运行、不升级到体积求解或NN训练。
+
+<!-- V37-LATEST-END -->
+
 # Task042 V36进展：有界完整端口组件通过，原尺寸求解仍未授权
 
 新provider按需生成／读取一批边界系数并释放，避免保留全mode×surface表；代价是更多生成和IO。它是存储接口工程，不是NN收益，也不代替全局求解。

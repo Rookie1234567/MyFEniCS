@@ -1,0 +1,14 @@
+{
+  "source_sha": "d7ec9180af1b45f55bd37b49a6f0ac450920589e",
+  "archives_checked": 310,
+  "extra_archives_added": 41,
+  "tested_implementation_hashes_equal": true,
+  "legacy_suffix_unchanged": true,
+  "old_authorities_modified": false,
+  "metadata_wall_seconds": 0.2664739080937579,
+  "ruff_exit": 0,
+  "volume_actions": 0,
+  "LU": 0,
+  "QR": 0,
+  "training": 0
+}

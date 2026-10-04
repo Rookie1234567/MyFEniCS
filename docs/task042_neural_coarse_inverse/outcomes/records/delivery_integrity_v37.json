@@ -1,0 +1,14 @@
+{
+  "raw_versions": 348,
+  "large_file_hashes_checked": [
+    "15",
+    "30",
+    "manual30",
+    "manual60",
+    "actions"
+  ],
+  "source_sha": "d7ec9180af1b45f55bd37b49a6f0ac450920589e",
+  "new_scientific_evaluation": false,
+  "archive_version_repair_verified": true,
+  "all_fees_pending_current_supervisor_settlement": true
+}

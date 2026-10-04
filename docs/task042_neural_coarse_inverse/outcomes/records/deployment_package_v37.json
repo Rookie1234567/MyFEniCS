@@ -1,0 +1,41 @@
+{
+  "family": "TWO_PASS_UNTHRESHOLDED_SURFACE_TILES",
+  "source_sha": "d7ec9180af1b45f55bd37b49a6f0ac450920589e",
+  "implementation_hashes": {
+    "src/solvers/bounded_port_provider.py": "d23a41023a6fe8bf242a021439d6ce707ef1c079dd7e272a1e56d66d000a4730",
+    "src/solvers/tiled_port_action.py": "778779d234dc2575cf56a304e3c248f95417d816de644f4faa3c72ed488e2fa0",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/boundary_witness_scope.py": "957dfb1dee867033e3652a08b16e2672b7c9f25e4be6e7937223fee8061e62e3",
+    "src/solvers/target_boundary_witness.py": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+    "src/solvers/solver_consumer_contract.py": "382bd0323eb19b2bc3d7851539fb7a6db8a197f76b5d18c42aa97c2f05832357",
+    "src/io/port_preparation.py": "10bf38b5e4fce15cfd439589d9eb25a7b4a95f5c3824fdaffb5eb9955cb262da",
+    "src/runners/port_preparation.py": "284acef93c46c4547fd88dcabfd15e95884ab4131d378263841ece7e0ad90f47",
+    "benchmarks/qualify_port_preparation.py": "3433befc4f235ea3c71a77d4f0697025f7e12ba78a7e0dd4eea0a2aea2c3c339",
+    "benchmarks/check_boundary_witness.py": "efc0bae0b8907db169b21fd3a4cd0711643f2bf39385fbdf5b02da9465249689",
+    "benchmarks/archive_jit_cache.py": "2695c956930ce41ea9ca7effd5a38d8e939f78f589d7905bf1e1b83873d5f2cc",
+    "src/test/test_boundary_witness.py": "4a1b72b0781b0a754b308dedc67b9d9caf56e90c5bb7336e0df928c81fc665b5",
+    "src/test/tiled_port_mpi_fixture.py": "96ecfb1753e1c064d029ccedeb247e58566eac55bf7b280844982b6bbe2cc26d",
+    "src/test/test_task042_v36_ports.py": "2be9d27febf4552befda5e4768565c2f0493344f7d89f6960035466bd94defc0",
+    "scripts/run_case.py": "bbc53dc311e59deec9dbf4ab1e70797f563fcae5c70a19626b2781ebc12d34c0",
+    "input/task042_neural_coarse_inverse/boundary_witness_v37.json": "4b252ffb0fa2491c1149da968f76e6ab8003ab0d91cc6fb14780ebdb12bf344d"
+  },
+  "provider": "src.solvers.tiled_port_action.TiledPortAction",
+  "identity_acceptor": "src.solvers.solver_consumer_contract",
+  "array_checker": "benchmarks.check_boundary_witness.check_partial",
+  "numerical_qualification": "P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS",
+  "coverage": {
+    "modes": 12,
+    "unique_native_hex": 4,
+    "real_MPI": 1
+  },
+  "target_canonical_facet_reader": "NOT_QUALIFIED",
+  "global_solver_package": "SOLVER_PACKAGE_NOT_QUALIFIED",
+  "default": "TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED",
+  "automatic_solver_execution": false,
+  "closed_window_no_replay": true,
+  "prerequisites": [
+    "native q60 and periodic seam/corner coverage",
+    "qualified source/runtime/canonical row/recovery matching solver",
+    "full target lifecycle/cost/precision evidence"
+  ]
+}

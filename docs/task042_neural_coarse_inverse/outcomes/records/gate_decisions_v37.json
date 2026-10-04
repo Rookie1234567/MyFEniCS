@@ -1,0 +1,131 @@
+{
+  "q15": {
+    "status": "NOT_QUALIFIED_ON_FINITE_WITNESS",
+    "limit": 1e-10,
+    "worst": {
+      "index": 10,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.7718637525461538e-05,
+      "denominator": 2.09047821790138,
+      "relative": 1.3259472061511423e-05,
+      "passed": false
+    },
+    "mode": {
+      "alpha": {
+        "imag": 0.0,
+        "real": 8.97461192517716
+      },
+      "beta": {
+        "imag": 0.004478058289365571,
+        "real": 0.07780134385941416
+      },
+      "classification": "propagating",
+      "e_vector": [
+        {
+          "imag": 0.0,
+          "real": -0.0
+        },
+        {
+          "imag": 0.0,
+          "real": 1.0
+        },
+        {
+          "imag": 0.0,
+          "real": 0.0
+        }
+      ],
+      "electric_tangential_norm_sq": 1.0,
+      "floquet_phases": [
+        {
+          "imag": 0.49440762401215377,
+          "real": -0.8692301774091008
+        },
+        {
+          "imag": 0.0,
+          "real": 1.0
+        }
+      ],
+      "gamma": {
+        "imag": 0.0,
+        "real": 0.0
+      },
+      "h_vector": [
+        {
+          "imag": 0.0004988935785443173,
+          "real": 0.008667727918092628
+        },
+        {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        {
+          "imag": 0.0,
+          "real": 0.9998476951563912
+        }
+      ],
+      "k_vector": [
+        {
+          "imag": 0.0,
+          "real": 8.97461192517716
+        },
+        {
+          "imag": 0.0,
+          "real": 0.0
+        },
+        {
+          "imag": -0.004478058289365571,
+          "real": -0.07780134385941416
+        }
+      ],
+      "m": 0,
+      "mode_index": 32058,
+      "n": 0,
+      "original_H_definition": "area*||E_t||^2*abs(exp(i*k_z*z_side))^2; original Hp diagonal, NOT Hhat",
+      "polarization": "s",
+      "power_at_reference_unit_amplitude": 4.95323995540892,
+      "power_per_unit_amplitude": 5.417329948807892,
+      "projection_denominator": 1142.9154219457553,
+      "propagating": true,
+      "rayleigh_tolerance": 1e-06,
+      "rayleigh_warning": false,
+      "reference_plane_nm": -10.0,
+      "reference_plane_phase": {
+        "imag": 0.6711291392599558,
+        "real": 0.6811152736452143
+      },
+      "refractive_index": {
+        "imag": 4.32477054e-06,
+        "real": 0.999885140474
+      },
+      "schema": "fullspace-dtn.mode.v1",
+      "side": "bottom",
+      "traction_vector": [
+        {
+          "imag": 0.0,
+          "real": -0.0
+        },
+        {
+          "imag": 0.07780134385941416,
+          "real": -0.004478058289365571
+        },
+        {
+          "imag": 0.0,
+          "real": -0.0
+        }
+      ],
+      "vertical_sign": -1
+    }
+  },
+  "ordinary_tile": "P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS",
+  "native_q60": "NOT_RUN_STORAGE_GATE",
+  "max_ordinary": "NOT_RUN_STORAGE_GATE",
+  "periodic_seam_corner": "NOT_RUN_STORAGE_GATE",
+  "target_boundary": "NOT_QUALIFIED_INCOMPLETE_NATIVE_Q60_AND_PERIODIC_COVERAGE",
+  "legacy_v36_scope_annotation": "LEGACY_CLIPPED_SURFACE_EQUIVALENCE",
+  "target_solve": "TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED",
+  "global_p4_factor": "ABSENT_IN_THIS_BATCH",
+  "new_volume_actions": 0,
+  "new_LU": 0,
+  "new_QR": 0,
+  "neural20": "NOT_DEMONSTRATED"
+}

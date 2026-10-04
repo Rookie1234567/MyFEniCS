@@ -1,0 +1,37 @@
+{
+  "implementation": [
+    "benchmarks/archive_jit_cache.py",
+    "benchmarks/check_boundary_witness.py",
+    "benchmarks/qualify_port_preparation.py",
+    "input/task042_neural_coarse_inverse/boundary_witness_v37.json",
+    "input/task042_neural_coarse_inverse/v37_boundary_check.dat",
+    "input/task042_neural_coarse_inverse/v37_consumer.dat",
+    "input/task042_neural_coarse_inverse/v37_identity.dat",
+    "input/task042_neural_coarse_inverse/v37_target_p6_facets.dat",
+    "input/task042_neural_coarse_inverse/v37_tile_capacity.dat",
+    "scripts/run_case.py",
+    "src/io/port_preparation.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/boundary_witness_scope.py",
+    "src/solvers/bounded_port_provider.py",
+    "src/solvers/port_preparation_window.py",
+    "src/solvers/solver_consumer_contract.py",
+    "src/solvers/target_boundary_witness.py",
+    "src/solvers/tiled_port_action.py",
+    "src/test/test_boundary_witness.py",
+    "src/test/tiled_port_mpi_fixture.py"
+  ],
+  "review_history_files_modified": [],
+  "ordinary_oracle_modified": false,
+  "current_documentation": [
+    "docs/task042_neural_coarse_inverse/response_v37.md",
+    "docs/task042_neural_coarse_inverse/outcomes/target_p6_boundary_tiles_v37.md",
+    "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+    "docs/task042_neural_coarse_inverse/README.md",
+    "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+    "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+    "docs/development_progress.md",
+    "docs/development_model_registry.md"
+  ],
+  "records_count": 382
+}

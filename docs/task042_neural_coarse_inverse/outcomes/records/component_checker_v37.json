@@ -1,0 +1,1144 @@
+{
+  "status": "P6_PARTIAL_SAVED_ARRAYS_VERIFIED",
+  "parent": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_tile_capacity_20261004T034945301416Z/result.json",
+    "sha256": "33d00b61e415820cad6b68d06d5feeded11b554aa0f14f49dfb296e70e2a18f1"
+  },
+  "independent_checks": [
+    {
+      "index": 0,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.2452648202027845,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 0,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.2059995280498472,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 0,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.2452629262768302,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 0,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.205996172940401,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 0,
+      "kind": "same_q30_C",
+      "numerator": 5.273163103590846e-13,
+      "denominator": 1.2452629262768302,
+      "relative": 4.2345780897508124e-13,
+      "passed": true
+    },
+    {
+      "index": 0,
+      "kind": "same_q30_D",
+      "numerator": 9.341456919459948e-13,
+      "denominator": 2.205996172940401,
+      "relative": 4.23457530617952e-13,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.98672538288132,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.17506607338119673,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.986713209281376,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.17506598808853394,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "kind": "same_q30_C",
+      "numerator": 9.886591590790613e-12,
+      "denominator": 24.986713209281376,
+      "relative": 3.956739531119369e-13,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "kind": "same_q30_D",
+      "numerator": 6.926898525099253e-14,
+      "denominator": 0.17506598808853394,
+      "relative": 3.956735743322226e-13,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.1906150263059188,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.260881127275703,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.190613010085699,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.260877298637443,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "kind": "same_q30_C",
+      "numerator": 5.582979457330775e-13,
+      "denominator": 1.190613010085699,
+      "relative": 4.689163825724463e-13,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "kind": "same_q30_D",
+      "numerator": 1.060161189009721e-12,
+      "denominator": 2.260877298637443,
+      "relative": 4.689158450344234e-13,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.393342064092714,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.1594414663820861,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.393329931306198,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.1594413870789193,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "kind": "same_q30_C",
+      "numerator": 9.129244407120912e-12,
+      "denominator": 24.393329931306198,
+      "relative": 3.742516676825051e-13,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "kind": "same_q30_D",
+      "numerator": 5.967144282868364e-14,
+      "denominator": 0.1594413870789193,
+      "relative": 3.7425315924495715e-13,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 0.34247648187754787,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.186218710043636,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 0.3424758804061159,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.1862148705154705,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "kind": "same_q30_C",
+      "numerator": 1.5664056957248744e-13,
+      "denominator": 0.3424758804061159,
+      "relative": 4.573769381561686e-13,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "kind": "same_q30_D",
+      "numerator": 9.999242645253556e-13,
+      "denominator": 2.1862148705154705,
+      "relative": 4.573769385666978e-13,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 25.24025932454809,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.04907579037462998,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 25.24024771466717,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.049075767801007614,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "kind": "same_q30_C",
+      "numerator": 9.362372077778332e-12,
+      "denominator": 25.24024771466717,
+      "relative": 3.709302770565851e-13,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "kind": "same_q30_D",
+      "numerator": 1.8203605949685244e-14,
+      "denominator": 0.049075767801007614,
+      "relative": 3.709286021463222e-13,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.2009020513998827,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.1920153044557535,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.200900224945365,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.192011970614954,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "kind": "same_q30_C",
+      "numerator": 9.113514286229994e-14,
+      "denominator": 1.2009002249453662,
+      "relative": 7.588902139346842e-14,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "kind": "same_q30_D",
+      "numerator": 1.66374933175076e-13,
+      "denominator": 2.192011970614956,
+      "relative": 7.590055866729619e-14,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.82547818980365,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.16884870808917277,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.825466094763826,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.16884862582562754,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "kind": "same_q30_C",
+      "numerator": 1.8569070286994307e-12,
+      "denominator": 24.82546609476384,
+      "relative": 7.479847595252552e-14,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "kind": "same_q30_D",
+      "numerator": 1.2628679649796016e-14,
+      "denominator": 0.16884862582562762,
+      "relative": 7.479290748174542e-14,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.1423538754631073,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.245450924279257,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 1.1423519409696532,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.2454471217709386,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "kind": "same_q30_C",
+      "numerator": 1.1038560871912973e-13,
+      "denominator": 1.1423519409696532,
+      "relative": 9.663012313476005e-14,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "kind": "same_q30_D",
+      "numerator": 2.1699733801264742e-13,
+      "denominator": 2.2454471217709386,
+      "relative": 9.663881010990186e-14,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.224078030598044,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.1529961361996174,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.224065982000308,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.15299606010223624,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "kind": "same_q30_C",
+      "numerator": 1.9430817577017935e-12,
+      "denominator": 24.224065982000308,
+      "relative": 8.021286596336059e-14,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "kind": "same_q30_D",
+      "numerator": 1.2275126273348962e-14,
+      "denominator": 0.15299606010223624,
+      "relative": 8.02316495284021e-14,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 0.16291119838251306,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.09047821790138,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 0.16291091227109586,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 2.0904745465166537,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "kind": "same_q30_C",
+      "numerator": 1.378022474137238e-14,
+      "denominator": 0.16291091227109586,
+      "relative": 8.458748741423204e-14,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "kind": "same_q30_D",
+      "numerator": 1.7682046504903964e-13,
+      "denominator": 2.0904745465166537,
+      "relative": 8.458388806679068e-14,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "q": 15,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.13214125585694,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "q": 15,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.023347332330848656,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "q": 30,
+      "kind": "native_C",
+      "numerator": 0.0,
+      "denominator": 24.13213015568237,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "q": 30,
+      "kind": "native_D",
+      "numerator": 0.0,
+      "denominator": 0.023347321591666338,
+      "relative": 0.0,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "kind": "same_q30_C",
+      "numerator": 1.9958948802019986e-12,
+      "denominator": 24.13213015568237,
+      "relative": 8.270694991805467e-14,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "kind": "same_q30_D",
+      "numerator": 1.931418209291851e-15,
+      "denominator": 0.023347321591666338,
+      "relative": 8.2725472457674e-14,
+      "passed": true
+    },
+    {
+      "kind": "forward",
+      "numerator": 2.6826728359835347e-12,
+      "denominator": 9.604716239980327,
+      "relative": 2.7930787010830315e-13,
+      "passed": true
+    },
+    {
+      "kind": "adjoint",
+      "numerator": 1.5166574187901672e-12,
+      "denominator": 5.796606124093865,
+      "relative": 2.616457606954024e-13,
+      "passed": true
+    },
+    {
+      "kind": "amplitudes",
+      "numerator": 6.217099702167731e-14,
+      "denominator": 0.3896832028520384,
+      "relative": 1.5954240923564637e-13,
+      "passed": true
+    },
+    {
+      "kind": "modal",
+      "numerator": 1.8005227816650767e-11,
+      "denominator": 55.16793664866991,
+      "relative": 3.263712386293293e-13,
+      "passed": true
+    },
+    {
+      "kind": "linear",
+      "numerator": 4.324214826151203e-15,
+      "denominator": 9.435136668791447,
+      "relative": 4.583097180197067e-16,
+      "passed": true
+    }
+  ],
+  "independent_quadrature_checks": [
+    {
+      "index": 0,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 1.4488967095725993e-05,
+      "denominator": 1.2452648202027845,
+      "relative": 1.1635249675941656e-05,
+      "passed": false
+    },
+    {
+      "index": 0,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 5.275755941991876e-13,
+      "denominator": 1.2452629262768302,
+      "relative": 4.2366602511532897e-13,
+      "passed": true
+    },
+    {
+      "index": 0,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.566735529394639e-05,
+      "denominator": 2.2059995280498472,
+      "relative": 1.1635249675976542e-05,
+      "passed": false
+    },
+    {
+      "index": 0,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 9.346029064296447e-13,
+      "denominator": 2.205996172940401,
+      "relative": 4.2366479048959565e-13,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 0.0001021824830744435,
+      "denominator": 24.98672538288132,
+      "relative": 4.089470769324973e-06,
+      "passed": false
+    },
+    {
+      "index": 1,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 9.885797164071462e-12,
+      "denominator": 24.986713209281376,
+      "relative": 3.956421591455797e-13,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 7.15927589791957e-07,
+      "denominator": 0.17506607338119673,
+      "relative": 4.089470769319559e-06,
+      "passed": false
+    },
+    {
+      "index": 1,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 6.926346671545706e-14,
+      "denominator": 0.17506598808853394,
+      "relative": 3.9564205172982726e-13,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 1.5442862081348946e-05,
+      "denominator": 1.1906150263059188,
+      "relative": 1.2970491502415349e-05,
+      "passed": false
+    },
+    {
+      "index": 2,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 5.586870236711576e-13,
+      "denominator": 1.190613010085699,
+      "relative": 4.692431704831983e-13,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.9324739449300652e-05,
+      "denominator": 2.260881127275703,
+      "relative": 1.297049150241531e-05,
+      "passed": false
+    },
+    {
+      "index": 2,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.0608995513075052e-12,
+      "denominator": 2.260877298637443,
+      "relative": 4.692424272413521e-13,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 0.00011907056444521872,
+      "denominator": 24.393342064092714,
+      "relative": 4.881273100355199e-06,
+      "passed": false
+    },
+    {
+      "index": 3,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 9.134056309434677e-12,
+      "denominator": 24.393329931306198,
+      "relative": 3.7444893071823315e-13,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 7.782773409335473e-07,
+      "denominator": 0.1594414663820861,
+      "relative": 4.881273100364498e-06,
+      "passed": false
+    },
+    {
+      "index": 3,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 5.970253808231295e-14,
+      "denominator": 0.1594413870789193,
+      "relative": 3.7444818548123744e-13,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 4.541057340964013e-06,
+      "denominator": 0.34247648187754787,
+      "relative": 1.325947205504074e-05,
+      "passed": false
+    },
+    {
+      "index": 4,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 1.566270970282549e-13,
+      "denominator": 0.3424758804061159,
+      "relative": 4.573375994902848e-13,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.8988105892062274e-05,
+      "denominator": 2.186218710043636,
+      "relative": 1.3259472055055133e-05,
+      "passed": false
+    },
+    {
+      "index": 4,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 9.998397733230018e-13,
+      "denominator": 2.1862148705154705,
+      "relative": 4.573382913122612e-13,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 0.00011082874466771282,
+      "denominator": 25.24025932454809,
+      "relative": 4.390951108807482e-06,
+      "passed": false
+    },
+    {
+      "index": 5,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 9.356801091173399e-12,
+      "denominator": 25.24024771466717,
+      "relative": 3.7070955867585e-13,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.1548939616105613e-07,
+      "denominator": 0.04907579037462998,
+      "relative": 4.390951108806892e-06,
+      "passed": false
+    },
+    {
+      "index": 5,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.819293180310978e-14,
+      "denominator": 0.049075767801007614,
+      "relative": 3.7071109874181625e-13,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 1.3972795211642885e-05,
+      "denominator": 1.2009020513998827,
+      "relative": 1.1635249681982724e-05,
+      "passed": false
+    },
+    {
+      "index": 6,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 9.201549580536023e-14,
+      "denominator": 1.2009002249453673,
+      "relative": 7.66220989004697e-14,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.5504645374105047e-05,
+      "denominator": 2.1920153044557535,
+      "relative": 1.163524968199868e-05,
+      "passed": false
+    },
+    {
+      "index": 6,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.6796038293049695e-13,
+      "denominator": 2.1920119706149577,
+      "relative": 7.662384383940045e-14,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 0.00010152306749261874,
+      "denominator": 24.82547818980365,
+      "relative": 4.089470773389429e-06,
+      "passed": false
+    },
+    {
+      "index": 7,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 1.833123462275545e-12,
+      "denominator": 24.825466094763826,
+      "relative": 7.384044493981068e-14,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 6.905018568537126e-07,
+      "denominator": 0.16884870808917277,
+      "relative": 4.089470773380411e-06,
+      "passed": false
+    },
+    {
+      "index": 7,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.2466661542212622e-14,
+      "denominator": 0.16884862582562754,
+      "relative": 7.383336098386212e-14,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 1.4816891231194647e-05,
+      "denominator": 1.1423538754631073,
+      "relative": 1.2970491499569622e-05,
+      "passed": false
+    },
+    {
+      "index": 8,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 1.0971236638650647e-13,
+      "denominator": 1.1423519409696532,
+      "relative": 9.604077557165109e-14,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.9124602126012185e-05,
+      "denominator": 2.245450924279257,
+      "relative": 1.2970491499546165e-05,
+      "passed": false
+    },
+    {
+      "index": 8,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 2.1567934443329692e-13,
+      "denominator": 2.2454471217709386,
+      "relative": 9.605184746599376e-14,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 0.00011824434034529309,
+      "denominator": 24.224078030598044,
+      "relative": 4.881273095138468e-06,
+      "passed": false
+    },
+    {
+      "index": 9,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 1.9867748970058805e-12,
+      "denominator": 24.224065982000308,
+      "relative": 8.201657386840646e-14,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 7.468159232899441e-07,
+      "denominator": 0.1529961361996174,
+      "relative": 4.881273095129389e-06,
+      "passed": false
+    },
+    {
+      "index": 9,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.2551436826655693e-14,
+      "denominator": 0.15299606010223624,
+      "relative": 8.203764736339271e-14,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 2.160116483457517e-06,
+      "denominator": 0.16291119838251306,
+      "relative": 1.3259472061494481e-05,
+      "passed": false
+    },
+    {
+      "index": 10,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 1.3770096834974668e-14,
+      "denominator": 0.16291091227109597,
+      "relative": 8.452531904099951e-14,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 2.7718637525461538e-05,
+      "denominator": 2.09047821790138,
+      "relative": 1.3259472061511423e-05,
+      "passed": false
+    },
+    {
+      "index": 10,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.7669997041406755e-13,
+      "denominator": 2.090474546516655,
+      "relative": 8.452624821885616e-14,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "kind": "q15_native_vs_q30_native_C",
+      "numerator": 0.00010596305241014438,
+      "denominator": 24.13214125585694,
+      "relative": 4.390951109008068e-06,
+      "passed": false
+    },
+    {
+      "index": 11,
+      "kind": "q30_native_vs_q60_Basix_C",
+      "numerator": 1.9352384650663275e-12,
+      "denominator": 24.13213015568237,
+      "relative": 8.019343723830525e-14,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "kind": "q15_native_vs_q30_native_D",
+      "numerator": 1.0251699479082835e-07,
+      "denominator": 0.023347332330848656,
+      "relative": 4.390951109021282e-06,
+      "passed": false
+    },
+    {
+      "index": 11,
+      "kind": "q30_native_vs_q60_Basix_D",
+      "numerator": 1.872473930709294e-15,
+      "denominator": 0.023347321591666338,
+      "relative": 8.020080262130197e-14,
+      "passed": true
+    }
+  ],
+  "independent_H_power": [
+    {
+      "index": 0,
+      "H_relative": 0.0,
+      "unit_power_absolute": 0.0,
+      "passed": true
+    },
+    {
+      "index": 1,
+      "H_relative": 0.0,
+      "unit_power_absolute": 7.105427357601002e-15,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "H_relative": 0.0,
+      "unit_power_absolute": 7.105427357601002e-15,
+      "passed": true
+    },
+    {
+      "index": 3,
+      "H_relative": 0.0,
+      "unit_power_absolute": 7.105427357601002e-15,
+      "passed": true
+    },
+    {
+      "index": 4,
+      "H_relative": 0.0,
+      "unit_power_absolute": 1.7763568394002505e-15,
+      "passed": true
+    },
+    {
+      "index": 5,
+      "H_relative": 0.0,
+      "unit_power_absolute": 3.552713678800501e-15,
+      "passed": true
+    },
+    {
+      "index": 6,
+      "H_relative": 0.0,
+      "unit_power_absolute": 7.105427357601002e-15,
+      "passed": true
+    },
+    {
+      "index": 7,
+      "H_relative": 0.0,
+      "unit_power_absolute": 0.0,
+      "passed": true
+    },
+    {
+      "index": 8,
+      "H_relative": 0.0,
+      "unit_power_absolute": 0.0,
+      "passed": true
+    },
+    {
+      "index": 9,
+      "H_relative": 0.0,
+      "unit_power_absolute": 0.0,
+      "passed": true
+    },
+    {
+      "index": 10,
+      "H_relative": 0.0,
+      "unit_power_absolute": 0.0,
+      "passed": true
+    },
+    {
+      "index": 11,
+      "H_relative": 0.0,
+      "unit_power_absolute": 0.0,
+      "passed": true
+    }
+  ],
+  "component_passed": true,
+  "q15_vs_q30_pass": false,
+  "q30_native_vs_q60_Basix_pass": true,
+  "native_q60": "NOT_RUN_STORAGE_GATE",
+  "target_witness_qualified": false,
+  "target_solve": false,
+  "periodic_coverage": "NOT_RUN_STORAGE_GATE",
+  "new_volume_actions": 0,
+  "new_LU": 0,
+  "new_QR": 0,
+  "reference_read": false,
+  "stage": "CHECK",
+  "source_sha": "bd7d7e2bc8167973ee1156deb0e8a23607a37db6",
+  "elapsed_worker_seconds": 0.22133523598313332,
+  "input_sha256": "eacf127da921fffce66eea2da4bc8fc3cce436f01d95d920b924ba4a3ba25944",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

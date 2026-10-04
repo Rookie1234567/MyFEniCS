@@ -1,0 +1,2239 @@
+{
+  "status": "P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS",
+  "strict_target_witness": "NOT_QUALIFIED_INCOMPLETE_NATIVE_Q60_AND_PERIODIC_COVERAGE",
+  "selected_modes": 12,
+  "native_hex_count": 4,
+  "description": {
+    "name": "min_ordinary",
+    "cells": [
+      {
+        "indices": [
+          24,
+          20,
+          0
+        ],
+        "side": "bottom",
+        "bounds_nm": [
+          [
+            16.5,
+            17.18
+          ],
+          [
+            13.88888888888889,
+            14.583333333333332
+          ],
+          [
+            -10.0,
+            -9.333333333333334
+          ]
+        ]
+      },
+      {
+        "indices": [
+          25,
+          20,
+          0
+        ],
+        "side": "bottom",
+        "bounds_nm": [
+          [
+            17.18,
+            17.86
+          ],
+          [
+            13.88888888888889,
+            14.583333333333332
+          ],
+          [
+            -10.0,
+            -9.333333333333334
+          ]
+        ]
+      },
+      {
+        "indices": [
+          24,
+          20,
+          201
+        ],
+        "side": "top",
+        "bounds_nm": [
+          [
+            16.5,
+            17.18
+          ],
+          [
+            13.88888888888889,
+            14.583333333333332
+          ],
+          [
+            129.33333333333334,
+            130.0
+          ]
+        ]
+      },
+      {
+        "indices": [
+          25,
+          20,
+          201
+        ],
+        "side": "top",
+        "bounds_nm": [
+          [
+            17.18,
+            17.86
+          ],
+          [
+            13.88888888888889,
+            14.583333333333332
+          ],
+          [
+            129.33333333333334,
+            130.0
+          ]
+        ]
+      }
+    ]
+  },
+  "q15_q30_max": 1.3259472061511423e-05,
+  "q30_native_q60_Basix_max": 4.692431704831983e-13,
+  "q30_same_max": 4.689163825724463e-13,
+  "action_checks": {
+    "forward": {
+      "numerator": 2.6826728359835347e-12,
+      "denominator": 9.604716239980327,
+      "relative": 2.7930787010830315e-13,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    "adjoint": {
+      "numerator": 1.5166574187901672e-12,
+      "denominator": 5.796606124093865,
+      "relative": 2.616457606954024e-13,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    "port": {
+      "numerator": 6.217099702167731e-14,
+      "denominator": 0.3896832028520384,
+      "relative": 1.5954240923564637e-13,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    "modal_rhs": {
+      "numerator": 1.8005227816650767e-11,
+      "denominator": 55.16793664866991,
+      "relative": 3.263712386293293e-13,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    "linearity": {
+      "numerator": 4.324214826151203e-15,
+      "denominator": 9.435136668791447,
+      "relative": 4.583097180197067e-16,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    "dual": {
+      "numerator": 3.1086244689504383e-15,
+      "denominator": 1265.23466147136,
+      "relative": 2.456954874549021e-18,
+      "pass_gate": true
+    },
+    "H": {
+      "max_relative": 0.0,
+      "pass_gate": true
+    },
+    "unit_power": {
+      "max_absolute": 7.105427357601002e-15,
+      "pass_gate": true
+    }
+  },
+  "action_stats": {
+    "tile_loads": 192,
+    "numeric_cache_peak_bytes": 42336,
+    "creator_seconds": 1.6285192903596908,
+    "hash_seconds": 0.04145978600718081,
+    "projection_seconds": 0.004341392777860165,
+    "reduction_seconds": 7.010065019130707e-06,
+    "scatter_seconds": 0.001559831784106791,
+    "visits": 5,
+    "passes": 96
+  },
+  "action_wall_seconds": 1.8104185370029882,
+  "creator_costs": {
+    "30": {
+      "tabulation": 0.038855689694173634,
+      "phase_integral": 1.1680733306566253,
+      "orientation": 0.008945741457864642,
+      "canonical_pullback": 0.875282178283669,
+      "calls": 240,
+      "creator_workspace_upper_bytes": 22127616,
+      "persistent_geometry_map_bytes": 81024
+    },
+    "60": {
+      "tabulation": 0.08931928302627057,
+      "phase_integral": 1.0610808331985027,
+      "orientation": 0.0025217198999598622,
+      "canonical_pullback": 0.19663373637013137,
+      "calls": 48,
+      "creator_workspace_upper_bytes": 81821376,
+      "persistent_geometry_map_bytes": 81024
+    }
+  },
+  "legacy_clipping_q30": [
+    {
+      "original_index": 0,
+      "mode": [
+        "top",
+        -142,
+        -5,
+        "s"
+      ],
+      "first_deleted_counts": [
+        582,
+        586
+      ],
+      "second_deleted_counts": [
+        10,
+        10
+      ],
+      "first_deleted_norms": [
+        4.817430488035426e-13,
+        2.811972751973399e-13
+      ],
+      "second_deleted_norms": [
+        4.236883084980668e-14,
+        7.505682272745566e-14
+      ],
+      "C_relative": 1.1446020474922887e-13,
+      "D_relative": 1.1446053340578391e-13,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 1,
+      "mode": [
+        "top",
+        -142,
+        -5,
+        "p"
+      ],
+      "first_deleted_counts": [
+        582,
+        586
+      ],
+      "second_deleted_counts": [
+        12,
+        12
+      ],
+      "first_deleted_norms": [
+        4.817430488035426e-13,
+        2.811972751973399e-13
+      ],
+      "second_deleted_norms": [
+        5.324300298999295e-13,
+        3.7303981716897286e-15
+      ],
+      "C_relative": 1.8657524221212673e-13,
+      "D_relative": 1.8657504655173252e-13,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 6018,
+      "mode": [
+        "top",
+        -85,
+        -35,
+        "s"
+      ],
+      "first_deleted_counts": [
+        566,
+        584
+      ],
+      "second_deleted_counts": [
+        12,
+        12
+      ],
+      "first_deleted_norms": [
+        2.7188006455061314e-13,
+        4.673578087103342e-13
+      ],
+      "second_deleted_norms": [
+        7.021197057605843e-14,
+        1.333268232610566e-13
+      ],
+      "C_relative": 1.1693266540691478e-13,
+      "D_relative": 1.1693245372498202e-13,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 6019,
+      "mode": [
+        "top",
+        -85,
+        -35,
+        "p"
+      ],
+      "first_deleted_counts": [
+        566,
+        584
+      ],
+      "second_deleted_counts": [
+        22,
+        22
+      ],
+      "first_deleted_norms": [
+        2.7188006455061314e-13,
+        4.673578087103342e-13
+      ],
+      "second_deleted_norms": [
+        8.600296886287393e-13,
+        5.621386127690302e-15
+      ],
+      "C_relative": 1.9268917940278742e-13,
+      "D_relative": 1.9268905832321516e-13,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 16028,
+      "mode": [
+        "top",
+        0,
+        0,
+        "s"
+      ],
+      "first_deleted_counts": [
+        658,
+        625
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        4.583393519442705e-13,
+        1.6568082700621069e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 7.578432899742654e-14,
+      "D_relative": 7.578432899742654e-14,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 16029,
+      "mode": [
+        "top",
+        0,
+        0,
+        "p"
+      ],
+      "first_deleted_counts": [
+        658,
+        625
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        4.583393519442705e-13,
+        1.6568082700621069e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 1.6299540516140347e-13,
+      "D_relative": 1.6299540516140352e-13,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 16030,
+      "mode": [
+        "bottom",
+        -142,
+        -5,
+        "s"
+      ],
+      "first_deleted_counts": [
+        624,
+        630
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        1.642882058950699e-13,
+        1.5468323657141618e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 6.95574173182681e-14,
+      "D_relative": 6.95576203860486e-14,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 16031,
+      "mode": [
+        "bottom",
+        -142,
+        -5,
+        "p"
+      ],
+      "first_deleted_counts": [
+        624,
+        630
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        1.642882058950699e-13,
+        1.5468323657141618e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 6.013692417535558e-14,
+      "D_relative": 6.013729794187887e-14,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 22048,
+      "mode": [
+        "bottom",
+        -85,
+        -35,
+        "s"
+      ],
+      "first_deleted_counts": [
+        624,
+        630
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        1.608805668078283e-13,
+        1.6120488269800092e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 7.039964300537419e-14,
+      "D_relative": 7.039985198928366e-14,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 22049,
+      "mode": [
+        "bottom",
+        -85,
+        -35,
+        "p"
+      ],
+      "first_deleted_counts": [
+        624,
+        630
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        1.608805668078283e-13,
+        1.6120488269800092e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 6.074358703263906e-14,
+      "D_relative": 6.074374087386796e-14,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 32058,
+      "mode": [
+        "bottom",
+        0,
+        0,
+        "s"
+      ],
+      "first_deleted_counts": [
+        696,
+        659
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        1.66115914236489e-13,
+        1.2423955740502846e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 5.94312700970448e-14,
+      "D_relative": 5.94312700970448e-14,
+      "empty_C": false,
+      "empty_D": false
+    },
+    {
+      "original_index": 32059,
+      "mode": [
+        "bottom",
+        0,
+        0,
+        "p"
+      ],
+      "first_deleted_counts": [
+        696,
+        659
+      ],
+      "second_deleted_counts": [
+        0,
+        0
+      ],
+      "first_deleted_norms": [
+        1.66115914236489e-13,
+        1.2423955740502846e-13
+      ],
+      "second_deleted_norms": [
+        0.0,
+        0.0
+      ],
+      "C_relative": 6.177993061889298e-14,
+      "D_relative": 6.177993061889295e-14,
+      "empty_C": false,
+      "empty_D": false
+    }
+  ],
+  "old_V36_scope": "LEGACY_CLIPPED_SURFACE_EQUIVALENCE",
+  "complete_native_q60": "NOT_RUN_STORAGE_GATE",
+  "periodic_mpc_patch_coverage": "NOT_RUN_STORAGE_GATE",
+  "native_reference_files": {
+    "15": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_target_p6_facets_20261004T033719818144Z/min_ordinary_q15.npz",
+      "sha256": "efef240fb5144afffc15fc065b51fa9ec78e3a158fb5415985ed2e70b41fc40a",
+      "members": {
+        "C_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "b839eb5ec21f2e67b44c30c2da422626d9a240744c201b8ca5a2909905da0132"
+        },
+        "D_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e0a93a05eaa13827f8d4be40c6e48c8b6d8b1af9402d9cdcbe21a3707ee66f12"
+        },
+        "tileC_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f2cc420487b9e91f1ca785ca18e3ebd4933b933a157d05f0d74c7a0bb5aca1e1"
+        },
+        "tileD_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "21cc71d708a1cee2cc1a114704c6fb35f7efba99163a0d5b53778f53184f481d"
+        },
+        "native_components_0": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "da6473bf9190ab0de79c9fb3dd243adef6e9cd862867fee9c4c8888c104f3115"
+        },
+        "tile_components_0": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "b77b61c75f29e63fac7c4fd5607f6d8fedfc2db0f619d0242675e6c534d5e88e"
+        },
+        "C_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "9af6ee75bc69aff9be46a7d76efc231795b91a65ef29e4f609a33128dadbfbfc"
+        },
+        "D_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d3964da3eb9ebde6106de1d173170f4dd22a75f030bbb809f1d00eef1839af14"
+        },
+        "tileC_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "980f240ebb2d6bfa8165db426b0a69ba04c0c737b3ef11b015a7324f18aa3bd5"
+        },
+        "tileD_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0a8a503aa95f9cb3d93e03b6d320825e802ccd29b9fed9bb70fea55b8e6a7d27"
+        },
+        "native_components_1": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "da6473bf9190ab0de79c9fb3dd243adef6e9cd862867fee9c4c8888c104f3115"
+        },
+        "tile_components_1": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "b77b61c75f29e63fac7c4fd5607f6d8fedfc2db0f619d0242675e6c534d5e88e"
+        },
+        "C_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "10148bbcb83e884a526b2d4d54f072a8d3007c7d7acb4925ab5c08971a86764c"
+        },
+        "D_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "677e338122f0227aa74c4e49b2c9055d8535caa5fbaa19bd9248919883688a6a"
+        },
+        "tileC_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "2181a0b0d28d7b43740fe41dbcd51cd5e1dbceca981bb51fd069ba9a0557beab"
+        },
+        "tileD_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "298a2505065aef5fdfc4bc27c37c9223adbf3a2f852577b8a4c8b8db6aee5c2e"
+        },
+        "native_components_2": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "04b0431fb470f4c0131266b0a0288456f89f19d8e38b5bb9e4d743098b34de2c"
+        },
+        "tile_components_2": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "7b934806116914adc360c05bd47c389c05ee98798f27c42184d684a44090518b"
+        },
+        "C_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0656085052a9678aeb57437dbacb2c848973e9b5e3d2fdf697dc4bdbc137ee06"
+        },
+        "D_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0a0cdc9287a058b0adfd0060e8f5b9c170cbfb40b625aad33f8d79d783364bbf"
+        },
+        "tileC_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0a455dc874f82fadb2d9c68c1613fa18053faecc0cf1c704a9ab803aa576f0de"
+        },
+        "tileD_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "781f7bdf41d0f3afe4e3700fc2c27880a54754dac2fd0ccccca996144b9d3b35"
+        },
+        "native_components_3": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "04b0431fb470f4c0131266b0a0288456f89f19d8e38b5bb9e4d743098b34de2c"
+        },
+        "tile_components_3": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "7b934806116914adc360c05bd47c389c05ee98798f27c42184d684a44090518b"
+        },
+        "C_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "c196750a17fdb4f5302f43568ab52b04dc014dc7648358cd6f462d3dd5bb0d69"
+        },
+        "D_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "c794e811b9f7b02c9f319c5d7bb1b031a27fb6548c46c36cd5aff713729fe14e"
+        },
+        "tileC_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "018abc43776458406b8b0cd809defa62a652512fbf3032bfd7ba6509688439f2"
+        },
+        "tileD_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "32db073031e1763b6a8498ed750cbda5c000eef1e8748950eba078fa9b52d456"
+        },
+        "native_components_4": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "abec44bca481f9cf3ae24723b29f9619884c7fbabdc056c9d3aa8d7cc53448b7"
+        },
+        "tile_components_4": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "227f035c215caa45db09b3d46c4ba39f80809ddea6836dfd3b7394a56b8d9f36"
+        },
+        "C_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "836eade8a50e96aa68da6bad4e337ece7e7a8d75f9e987a488124b128abab0f1"
+        },
+        "D_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "34f288bcbcd39f1f1634c7d6762bd1bb663de86fbb366f429b488ae8ae5c6d67"
+        },
+        "tileC_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "94364927e7b6216e46eda04175454278a7979d751244214cbd196d89d542106f"
+        },
+        "tileD_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "43906091124ec3cd56228bf2157febef8e6f497ef680ffa7d9ccfab778e107a1"
+        },
+        "native_components_5": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "abec44bca481f9cf3ae24723b29f9619884c7fbabdc056c9d3aa8d7cc53448b7"
+        },
+        "tile_components_5": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "227f035c215caa45db09b3d46c4ba39f80809ddea6836dfd3b7394a56b8d9f36"
+        },
+        "C_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3f947d89080cf0a48218c33039da166073dca9b54be19451ca1c07fbc3cd9eff"
+        },
+        "D_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0be54882b22a876ce5a691ea2e99bf66b1f71ce882bb2ccefd28878999a256b6"
+        },
+        "tileC_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "bde256e37b5d982700f1b67af46cfe8e9dba9bd0b5d0cfd97dd7f21bebf0b894"
+        },
+        "tileD_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0664bb46344b7a20246b43fe32ee2e305cb1e8c9900ba20e018286becd54b065"
+        },
+        "native_components_6": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "01a10c5239adc629cf5f38a21c7548b445b0de907092d2ff54c1b72d45614636"
+        },
+        "tile_components_6": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "e52d40eb1271b83f77986d839cc5008160cb03a7ae7de4d6dfbef18b7b89fa87"
+        },
+        "C_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "ca640d978d47211afc841eca2e1adcd70a11b4b9a588f8e59fb298b473dfe83f"
+        },
+        "D_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f629f8638ee4547a2152fc038f4f01404afe7215734fa015f5c53491d190be26"
+        },
+        "tileC_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "597f5b9cd823313782d38bfadb84594531937547f45f171e0ac20e7cba14d021"
+        },
+        "tileD_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7eb4c6bdc2ccd6f1d924a129b0febabbc8eb293c78aa3a11f16f88818cfbfde4"
+        },
+        "native_components_7": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "01a10c5239adc629cf5f38a21c7548b445b0de907092d2ff54c1b72d45614636"
+        },
+        "tile_components_7": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "e52d40eb1271b83f77986d839cc5008160cb03a7ae7de4d6dfbef18b7b89fa87"
+        },
+        "C_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "c8cc5f164607ae281b8b33764ee2b185d8de662d3d0fde4301f6fef7af556ce0"
+        },
+        "D_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "8164ff97dddbb4959f09e14b37d61e08aaa6982c3e2a57d5e1e7f873893b7f63"
+        },
+        "tileC_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "16fda748f54bbfbff956e4027deb62f1a697e3f9a8f6097f4148a480b1a4e95d"
+        },
+        "tileD_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "050448aa944630145a6480f192e72403f1bd844acd50b246bfe1091605fa9285"
+        },
+        "native_components_8": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "0d805be8161944372889a7f1b06ba560c33ccc4ab43c28d58f1bdb77e6f0728c"
+        },
+        "tile_components_8": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "88e06d3dae1232b4e257d444176c0c39b3503b06fb13046ce8a49f740d88f245"
+        },
+        "C_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "36184fd3ec51605a54321cdb490dde8ec29ef82c3ae005f5f25d9943c2fdb8e3"
+        },
+        "D_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "69ac5b6c949f874d989073b7c8895edd6dd965d832ab5305b6f20b3c84e5a234"
+        },
+        "tileC_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "103e7790f39518130a4bf3f289465a6651b20f80c9f34e235a6b118edecd21c2"
+        },
+        "tileD_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "ea7636f2c5cf77bde475127ea5e9dc98de06baf21c59ec2a36a4d48fc2d2793c"
+        },
+        "native_components_9": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "0d805be8161944372889a7f1b06ba560c33ccc4ab43c28d58f1bdb77e6f0728c"
+        },
+        "tile_components_9": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "88e06d3dae1232b4e257d444176c0c39b3503b06fb13046ce8a49f740d88f245"
+        },
+        "C_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "b6276429da14c493aee4434ec484eac850753df4a36f54b94d96dbf68d093156"
+        },
+        "D_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0df4bcbfae85ba715b1c521793c27f2c20484eacb1d43b2fc9cdd3d4a51ddb2a"
+        },
+        "tileC_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "749ec2ed19a1fa073a1b04ecc672e2f2d928f415ceebaf1621c354bda841d162"
+        },
+        "tileD_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "493eb2aa794c2c883946aadd575cb21cabe4a8f58c2cea6ada819801cbc3ab0b"
+        },
+        "native_components_10": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "bbb80e274c44b76e457918920e17ba58aed642b26058af0a58d5bb546865f6a8"
+        },
+        "tile_components_10": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "cef58f629b7fcac15aa3ab79776e2f6169c15c38073acf2285f6762b02390739"
+        },
+        "C_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "40c3bea61933bac2ade795674cf79014e80882835ca880295eb54b1739fb8ac5"
+        },
+        "D_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "2d3b9f62b458f39fcbf44cad425bc0b574cda7a5a473f7bb464618995686c30d"
+        },
+        "tileC_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "aacea9a218111f365a1547a2247ebbce8c7fe4bcd18b5442430f42911dbad475"
+        },
+        "tileD_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "28e15835443f2a8d8ebd18aca5727ea801993bf26100f0dae342bea900caea0f"
+        },
+        "native_components_11": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "bbb80e274c44b76e457918920e17ba58aed642b26058af0a58d5bb546865f6a8"
+        },
+        "tile_components_11": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "cef58f629b7fcac15aa3ab79776e2f6169c15c38073acf2285f6762b02390739"
+        }
+      },
+      "source_sha": "ce18a6056731780d1feb4f47c96dfcc4f52aa6d1",
+      "oracle": "unthresholded DOLFINx p6 facet assembly"
+    },
+    "30": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_target_p6_facets_20261004T033719818144Z/min_ordinary_q30.npz",
+      "sha256": "1c97ff6b418d3959b22f77f1ab8516318629ec739f38c71e96e4a68e30fc68ce",
+      "members": {
+        "C_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "774a75121ef8f48df8d6322be556d35e593be8822341abd64cf38f5e26a68987"
+        },
+        "D_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "b8671f4a939636df7105d2459f078d8aebaf0ec6e46b2d03c73f2d4dc341d72d"
+        },
+        "tileC_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "a5060d106294bda2e49dec5acbd6d54ae458289950021de5d7bc53313f145761"
+        },
+        "tileD_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "702af1b41da3570d26216c5b0c372d15a9a279f66d590accb3cea5b80b546847"
+        },
+        "native_components_0": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "a4f60c07ad710e60473b91e3c642e2132054b8916620ee66229be3db25b0bbc8"
+        },
+        "tile_components_0": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "c1d77b28706c3d5bd23d90bb90d9fd9d7fa4a091f20b595cd5f0016fbf58b6ae"
+        },
+        "C_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "74782e8f640e3218ba8541118ce1d24312ccaa9cd4a3c9d771ffd94421229390"
+        },
+        "D_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "9220f1a20c260f7577f93659491bae47931095fdda7ed9fc6eb0820eb326df7c"
+        },
+        "tileC_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "89ff3449e225bff9ce42377fbabb8a57bd53c26bfa8526745a376a5e0749ff77"
+        },
+        "tileD_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "00297b1ed0254e7915cbe1e4d9d8846a22fd09576871ba7147c36df487377a9f"
+        },
+        "native_components_1": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "a4f60c07ad710e60473b91e3c642e2132054b8916620ee66229be3db25b0bbc8"
+        },
+        "tile_components_1": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "c1d77b28706c3d5bd23d90bb90d9fd9d7fa4a091f20b595cd5f0016fbf58b6ae"
+        },
+        "C_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "59362b50fe718ed58facd5c77817ddb5ccfecadc3edab2126d574f287a549025"
+        },
+        "D_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "5e6b5590dcdecf0cdc3307eb9d4618c5fd3f3d3786d24e7ca13ab03ae13b5419"
+        },
+        "tileC_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e71a650d7199c79a3e6ff4600b5cdbe8591ed324d91d966b302cbdc08d6aed0a"
+        },
+        "tileD_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7b4632c686953c0aa22a5609f1362e837ca99588e6284a5eb4a99b07bc8c6560"
+        },
+        "native_components_2": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "1ec483d98fe750feeec1c8d050eb3b5cad7842826b236ca7b31f1ec3e8fde84c"
+        },
+        "tile_components_2": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "ee36aff0f33303e469c7e651e3aff654afb488a2f9fd75d93fe59050ddbb8701"
+        },
+        "C_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "75acca2fab4436dabccf7ccc80fe8990bf7f605e894bba8c9db07c93e96b9f7d"
+        },
+        "D_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3244107fe06f7510641503b9d3b8923b418c945ac55f15db467c600546cadf2d"
+        },
+        "tileC_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f47ddd430bab8f40d56871fe91d1eb2aaf81cb7640b5a85fc308cd5acfb4e78a"
+        },
+        "tileD_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "67006ab16dd5a98ca54798f4ac92c864c717067f0f2448576da090c265f7009c"
+        },
+        "native_components_3": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "1ec483d98fe750feeec1c8d050eb3b5cad7842826b236ca7b31f1ec3e8fde84c"
+        },
+        "tile_components_3": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "ee36aff0f33303e469c7e651e3aff654afb488a2f9fd75d93fe59050ddbb8701"
+        },
+        "C_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "2781070b6c3f5f8b7704e21efa6302d795801d4301d3c5c6a34278561e0f6d60"
+        },
+        "D_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "1ad28ebb9407bbb406ef1873c470508b34191309a19b3adab01115c7b2fc535b"
+        },
+        "tileC_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "25f70fb9a4a9566d6293b604e45fa789b8682d0f29edfbc4baf43ddf0f0e965b"
+        },
+        "tileD_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7e298ebe5a8c929a5223834f1a1835c29edd48a6765020379d2a769f382f8fee"
+        },
+        "native_components_4": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "b96afe71e42d7dbf740f729f0f3cf9848fb88d6c15b878cce550de1336b0f767"
+        },
+        "tile_components_4": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "dd0668b93df20e8d20bf20c7f5f0885c462aacc913eb77b7d27a80c056efc808"
+        },
+        "C_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "ccb8fde74f3bf0d7c3a70624cbebc5398dc062fbbb7f37d62c6abef211be77fb"
+        },
+        "D_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "0af167ac6befa165ce63b2c4e34bad564f49f6713a2ef91ec60d69e2665ab601"
+        },
+        "tileC_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f3400a2aa6ee0bf87eb84258b9feb5d171039c325021de835c519c3abf068621"
+        },
+        "tileD_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d0868f29d1e415b686e47c42b0e2affc26724ace29a48475d526843ba8288ce5"
+        },
+        "native_components_5": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "b96afe71e42d7dbf740f729f0f3cf9848fb88d6c15b878cce550de1336b0f767"
+        },
+        "tile_components_5": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "dd0668b93df20e8d20bf20c7f5f0885c462aacc913eb77b7d27a80c056efc808"
+        },
+        "C_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "92d48188800e141a95ef37dd5a2bbd498aa177879a24b8de3692e7fbce21e3dd"
+        },
+        "D_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "fe7590af3437365baaf44ed9b3978d74839f5a19d683465f0073346707877077"
+        },
+        "tileC_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "585f1b45ee2ddbaa36e03a3db0d485fe5b21b1a93e5f482b32999647113fddeb"
+        },
+        "tileD_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "2912df0576fd8e4a8ba6deda549ce81b9c11e6c2cb916b941801df0566ee12b1"
+        },
+        "native_components_6": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "2e3bb8e769fce4d118c65c08ce83e7b7aa331e934a90a38982ae5f74f3a2071c"
+        },
+        "tile_components_6": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "8a2f534dcfd03feb7baddf51e89ec73778ab29bc2b7ebab4488eb1be2748301b"
+        },
+        "C_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d70e77d358859903cf98423614805e235eb05770ff04fcb8656d22b7e7657b4a"
+        },
+        "D_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "6522afbddb1d73d8eda87e850003e2cb9b0604430ebaf4d7464ed1dfb1363d11"
+        },
+        "tileC_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3ad81fe4449f71f9df76661a739a129087a18ab1994cb938fbbed3c3e00675b0"
+        },
+        "tileD_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3d4ad065e9c5a76fe52025b3ce188b4ac4f191ba8a58f4c11f45dd659219f284"
+        },
+        "native_components_7": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "2e3bb8e769fce4d118c65c08ce83e7b7aa331e934a90a38982ae5f74f3a2071c"
+        },
+        "tile_components_7": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "8a2f534dcfd03feb7baddf51e89ec73778ab29bc2b7ebab4488eb1be2748301b"
+        },
+        "C_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "695f6595a5beafc46209d06a778e9d60689364b14af0e394227af69554c83d76"
+        },
+        "D_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "50d67b91c9e16e8ab07b2af2ad9ab386d6b8c0a41b0d03e87b0e7030e12d81f3"
+        },
+        "tileC_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "9239bb18e6c0518d297be4082ee2acc1ea9353d6b299bbd786a8438fb2aaf111"
+        },
+        "tileD_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "fac12ccc3928e9fe82cd8cdb468b9c53a24d35b8fd566166973e6e37a147f440"
+        },
+        "native_components_8": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "72c4de020ac2d67bb390cc9403d30f65af7c67e9308d1ffb6fca73b1d1a4261f"
+        },
+        "tile_components_8": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "bd46dfe272349e5699642ff2c8e675808bc9c46cc4dd300b311b6e8b38c5be56"
+        },
+        "C_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "fc549c832fd11397606ec109f87db7ac3ee4b9796ec30a6004a8b0ccfe16d886"
+        },
+        "D_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e71368dbf93dabab7e3f174c864ebd27122ff46d16d728d6b4593840e242cab8"
+        },
+        "tileC_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d54f0d33cd628138c3c7c73bb6f777bfdeafe346c392722522e99900f23fb14a"
+        },
+        "tileD_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e0c786006eb00c164b79737ecd70c5836d9e2c969c59ff9455768bdfdbeab90c"
+        },
+        "native_components_9": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "72c4de020ac2d67bb390cc9403d30f65af7c67e9308d1ffb6fca73b1d1a4261f"
+        },
+        "tile_components_9": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "bd46dfe272349e5699642ff2c8e675808bc9c46cc4dd300b311b6e8b38c5be56"
+        },
+        "C_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e36e1120d05330e36ac816179b51d3518af746f2640dad09a819ee225eff6101"
+        },
+        "D_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "ec5828bdfe402727e4bf402f41520b75f32ff86351945142069b6cb6b50be962"
+        },
+        "tileC_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "360814f290ed8fdd4a4d2cf5b172b14a62bd83a04aaca6b106405faaa5806e91"
+        },
+        "tileD_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "c6256cad90854cd3c2f18a421d514d2270ebe386ad042770379c1405a3019a05"
+        },
+        "native_components_10": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "55a5000c3d0f210e8eda92eae482f5b4aac197dd17d1eed268b7ea4ddeedb85a"
+        },
+        "tile_components_10": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "3745dce0bd5a1937c4b6d70a049b5f6e0025fa51bcb9a1563eb05d92d40b37e7"
+        },
+        "C_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f62b21a37778be11078424b91233c8609e05178c1708cdf7dd03de3456012000"
+        },
+        "D_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "c4f6b6767938c3b79a10ebecd700b3f617349f04ce29714195b0e8009d2c3ccc"
+        },
+        "tileC_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7002e6c072b0f3a883d7b6808e60d335b1212c17a95a51d5f2abe9b1884b61a7"
+        },
+        "tileD_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "dafbf8482be481036322aa8650d0fe10b717dba7dc0ce1abc96f9f4c9397350d"
+        },
+        "native_components_11": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "55a5000c3d0f210e8eda92eae482f5b4aac197dd17d1eed268b7ea4ddeedb85a"
+        },
+        "tile_components_11": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "3745dce0bd5a1937c4b6d70a049b5f6e0025fa51bcb9a1563eb05d92d40b37e7"
+        }
+      },
+      "source_sha": "ce18a6056731780d1feb4f47c96dfcc4f52aa6d1",
+      "oracle": "unthresholded DOLFINx p6 facet assembly"
+    }
+  },
+  "manual_files": {
+    "30": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_tile_capacity_20261004T034945301416Z/manual_q30.npz",
+      "sha256": "107e633ee69164ce34372d2d518f04796c6b3ec28174ce15b9414d0a126279dd",
+      "members": {
+        "C_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "a5060d106294bda2e49dec5acbd6d54ae458289950021de5d7bc53313f145761"
+        },
+        "D_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "702af1b41da3570d26216c5b0c372d15a9a279f66d590accb3cea5b80b546847"
+        },
+        "components_0": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "c1d77b28706c3d5bd23d90bb90d9fd9d7fa4a091f20b595cd5f0016fbf58b6ae"
+        },
+        "C_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "89ff3449e225bff9ce42377fbabb8a57bd53c26bfa8526745a376a5e0749ff77"
+        },
+        "D_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "00297b1ed0254e7915cbe1e4d9d8846a22fd09576871ba7147c36df487377a9f"
+        },
+        "components_1": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "c1d77b28706c3d5bd23d90bb90d9fd9d7fa4a091f20b595cd5f0016fbf58b6ae"
+        },
+        "C_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e71a650d7199c79a3e6ff4600b5cdbe8591ed324d91d966b302cbdc08d6aed0a"
+        },
+        "D_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7b4632c686953c0aa22a5609f1362e837ca99588e6284a5eb4a99b07bc8c6560"
+        },
+        "components_2": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "ee36aff0f33303e469c7e651e3aff654afb488a2f9fd75d93fe59050ddbb8701"
+        },
+        "C_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f47ddd430bab8f40d56871fe91d1eb2aaf81cb7640b5a85fc308cd5acfb4e78a"
+        },
+        "D_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "67006ab16dd5a98ca54798f4ac92c864c717067f0f2448576da090c265f7009c"
+        },
+        "components_3": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "ee36aff0f33303e469c7e651e3aff654afb488a2f9fd75d93fe59050ddbb8701"
+        },
+        "C_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "25f70fb9a4a9566d6293b604e45fa789b8682d0f29edfbc4baf43ddf0f0e965b"
+        },
+        "D_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7e298ebe5a8c929a5223834f1a1835c29edd48a6765020379d2a769f382f8fee"
+        },
+        "components_4": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "dd0668b93df20e8d20bf20c7f5f0885c462aacc913eb77b7d27a80c056efc808"
+        },
+        "C_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f3400a2aa6ee0bf87eb84258b9feb5d171039c325021de835c519c3abf068621"
+        },
+        "D_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d0868f29d1e415b686e47c42b0e2affc26724ace29a48475d526843ba8288ce5"
+        },
+        "components_5": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "dd0668b93df20e8d20bf20c7f5f0885c462aacc913eb77b7d27a80c056efc808"
+        },
+        "C_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "585f1b45ee2ddbaa36e03a3db0d485fe5b21b1a93e5f482b32999647113fddeb"
+        },
+        "D_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "2912df0576fd8e4a8ba6deda549ce81b9c11e6c2cb916b941801df0566ee12b1"
+        },
+        "components_6": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "8a2f534dcfd03feb7baddf51e89ec73778ab29bc2b7ebab4488eb1be2748301b"
+        },
+        "C_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3ad81fe4449f71f9df76661a739a129087a18ab1994cb938fbbed3c3e00675b0"
+        },
+        "D_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3d4ad065e9c5a76fe52025b3ce188b4ac4f191ba8a58f4c11f45dd659219f284"
+        },
+        "components_7": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "8a2f534dcfd03feb7baddf51e89ec73778ab29bc2b7ebab4488eb1be2748301b"
+        },
+        "C_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "9239bb18e6c0518d297be4082ee2acc1ea9353d6b299bbd786a8438fb2aaf111"
+        },
+        "D_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "fac12ccc3928e9fe82cd8cdb468b9c53a24d35b8fd566166973e6e37a147f440"
+        },
+        "components_8": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "bd46dfe272349e5699642ff2c8e675808bc9c46cc4dd300b311b6e8b38c5be56"
+        },
+        "C_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d54f0d33cd628138c3c7c73bb6f777bfdeafe346c392722522e99900f23fb14a"
+        },
+        "D_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e0c786006eb00c164b79737ecd70c5836d9e2c969c59ff9455768bdfdbeab90c"
+        },
+        "components_9": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "bd46dfe272349e5699642ff2c8e675808bc9c46cc4dd300b311b6e8b38c5be56"
+        },
+        "C_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "360814f290ed8fdd4a4d2cf5b172b14a62bd83a04aaca6b106405faaa5806e91"
+        },
+        "D_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "c6256cad90854cd3c2f18a421d514d2270ebe386ad042770379c1405a3019a05"
+        },
+        "components_10": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "3745dce0bd5a1937c4b6d70a049b5f6e0025fa51bcb9a1563eb05d92d40b37e7"
+        },
+        "C_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "7002e6c072b0f3a883d7b6808e60d335b1212c17a95a51d5f2abe9b1884b61a7"
+        },
+        "D_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "dafbf8482be481036322aa8650d0fe10b717dba7dc0ce1abc96f9f4c9397350d"
+        },
+        "components_11": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "3745dce0bd5a1937c4b6d70a049b5f6e0025fa51bcb9a1563eb05d92d40b37e7"
+        }
+      }
+    },
+    "60": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_tile_capacity_20261004T034945301416Z/manual_q60.npz",
+      "sha256": "9339bb5bd925b2de374f7e32c90f0cdbc8341372084397f3336a665c9373433c",
+      "members": {
+        "C_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "2124142eeaac76884268f8331304d2b7053b35fec1a2849612aefc2c0f4bc5c8"
+        },
+        "D_0": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d90dd6fb490a156c484e708eee77837d8b278f0012281b2c04e3af8f8b518d65"
+        },
+        "components_0": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "ea72a8bbc14c2a6b78f6845a840e6dc1b67039340a5b7609cca6e2c78265e13d"
+        },
+        "C_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "78a1850332aeef55b2c7a7db797e32d3700aec470354c6dc5c21038cfa5ec94f"
+        },
+        "D_1": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "08c4e0900db609315d1af581f90df9c41ea33fa1675d85ce5651c5fecf980ce6"
+        },
+        "components_1": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "ea72a8bbc14c2a6b78f6845a840e6dc1b67039340a5b7609cca6e2c78265e13d"
+        },
+        "C_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "9183a88b9d58a50abfdc5d419781a3c625516e7cf3cff387c8a7c465f5a2d6bd"
+        },
+        "D_2": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "929ffa89202fb69d78ec8e17157c2689cab744a237aee496ecef30dc2b74a5c5"
+        },
+        "components_2": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "24098f95ee6d84168ba81221e0b6a8ea79b4a8fa102c60807b250ba6c0423a06"
+        },
+        "C_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "6f0d578c30b214303902ebdd2936e7fb2398963670ac44b15a78d3bc5a2747c0"
+        },
+        "D_3": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "67096758f6c4526720549697ebc2820774bac86a5b20ae9d245d65b9b135371c"
+        },
+        "components_3": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "24098f95ee6d84168ba81221e0b6a8ea79b4a8fa102c60807b250ba6c0423a06"
+        },
+        "C_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e2e3294ee9c0f8f9d1ae7769a94399c7a8e2b2605eb9fbd15a0db7a2e0e199fc"
+        },
+        "D_4": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f1fe1dc73d49eb58e6d14e34d1e925d234e78420c0d2cefda27aeb22ed7dc83a"
+        },
+        "components_4": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "e675caa65cfd871473350820002177e4343b09ddcbce74340f418fbfee4999f6"
+        },
+        "C_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "3d34e19d72e92055943381b1fa3934b3a511494b0b58baec721c13991d7dbfe6"
+        },
+        "D_5": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "feb0f79ff87e5e4adfa21fa27996b7ce570ce16e8151be767b1da32a8419039a"
+        },
+        "components_5": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "e675caa65cfd871473350820002177e4343b09ddcbce74340f418fbfee4999f6"
+        },
+        "C_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "f9b7f144abc37f52d647ddcc97213a7c6aab2dcbae9bd36b965cb403c0343e85"
+        },
+        "D_6": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "08e4bfa729407727bfdd7d669156dbe24c1d2467c0c35ee6dee21ff1ea3fb793"
+        },
+        "components_6": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "eca50a9897f0d7e75ee40f87a9d78f1b8f55626b18063ad4ebd5c644cf310b33"
+        },
+        "C_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "813e6f3351369c352d4525e46e63d3349117dc14689d60001b232369b6663554"
+        },
+        "D_7": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "a853a4aabc6bb14f27f494f42a347f9e565144a919df1d8d9caeb8372203a4dc"
+        },
+        "components_7": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "eca50a9897f0d7e75ee40f87a9d78f1b8f55626b18063ad4ebd5c644cf310b33"
+        },
+        "C_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "712abea1889cf3148e8c202dcad7737a99f14b29b5b0338a1c2da20c230dc6e7"
+        },
+        "D_8": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "bc560d9e625949b7bef460f1a6eafbb0aef32eb0f8561104897d922195ebaa86"
+        },
+        "components_8": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "2585270cf1129db20b54a69d0c8e4d8f40aeade4471bfc5549690c0a4415ae87"
+        },
+        "C_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "d723bf23f53e295293ab5bbf1de09b2fd7008a61709cbd81c577d941b9af2aff"
+        },
+        "D_9": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "4e5003009c64c34a744fc0b06940c82c8de2838787ecef8c89efd3d50f8dea13"
+        },
+        "components_9": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "2585270cf1129db20b54a69d0c8e4d8f40aeade4471bfc5549690c0a4415ae87"
+        },
+        "C_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "1da0e48492ef1309013b5a99c0baf9f35fa7bc5c583bd4bda9b4dbf33ec25ea8"
+        },
+        "D_10": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "8376694fdcc2f33bdc8f2acbcde31df22edc63ac7a3fb1a119abce7b73568d8b"
+        },
+        "components_10": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "a8186b508edeafc2ea3a0dca0ca1b502356e91916286f610f2cdadb38a98c396"
+        },
+        "C_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "e84e7bb81e07bd4301b7959934970dabf79172a4f0a0279041378e6b2f0f22a4"
+        },
+        "D_11": {
+          "shape": [
+            3360
+          ],
+          "dtype": "<c16",
+          "sha256": "23f0b8c590b9928963e209270a2458040712f20be05ecbee5f507a6d679a34de"
+        },
+        "components_11": {
+          "shape": [
+            3360,
+            2
+          ],
+          "dtype": "<c16",
+          "sha256": "a8186b508edeafc2ea3a0dca0ca1b502356e91916286f610f2cdadb38a98c396"
+        }
+      }
+    }
+  },
+  "action_witness": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_tile_capacity_20261004T034945301416Z/partial_min_ordinary_actions.npz",
+    "sha256": "fffcaa5fac31c95e66ff3595bd9bce3d510794a3b47777acb0b8bff9d20dd355",
+    "members": {
+      "x": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "81ccc364cf9518fbc502ff91cf02bb749efae7b124e4291984debb25f2fbc53e"
+      },
+      "y": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "871adc107627b5dae90fc13a62592167ff4410e2269db595ecc1cc1641d0081b"
+      },
+      "forward": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "36e8ec75a54eff7ab92ddd97cb9b3cc4cb589e34b63847d80b80b3c7653512ef"
+      },
+      "old_forward": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "e0bd54e37d9a4fac68e9f55b96a280c6463e0f7c8a0953bfdc0acc5c35e55fca"
+      },
+      "adjoint": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "260226d3e82f42d71867114bcbc89ba46b942f2a2e89e600632c853b78f4d967"
+      },
+      "old_adjoint": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "b6b18983498e60884978a233fc80781f2657aece02cea264426a8404c907aba0"
+      },
+      "amplitudes": {
+        "shape": [
+          12
+        ],
+        "dtype": "<c16",
+        "sha256": "76eb81c23f6d1a92185099fc3de4b09c36d27b1067d92803f0ec2436b9c8256b"
+      },
+      "old_amplitudes": {
+        "shape": [
+          12
+        ],
+        "dtype": "<c16",
+        "sha256": "dcfedd107e6a1ce00419f47a38c50fe1f8ef64f12668c02fb2d8d7551eb56272"
+      },
+      "modal": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "46c1f121804adfa9c296470fafae3caa11e8636f8bd78fdfa4be99818aa5b033"
+      },
+      "old_modal": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "dfed3809183ca63e97d818dbb7c3abb81c845a1cfd2c5d4be359c53d4e00ff15"
+      },
+      "linear": {
+        "shape": [
+          3360
+        ],
+        "dtype": "<c16",
+        "sha256": "2040da989ff3648d3547da541292f1d2f1bf918ebbe1ef12bb0a3090064cbbbc"
+      }
+    }
+  },
+  "source": "bd7d7e2bc8167973ee1156deb0e8a23607a37db6",
+  "checker_source": "bd7d7e2bc8167973ee1156deb0e8a23607a37db6"
+}

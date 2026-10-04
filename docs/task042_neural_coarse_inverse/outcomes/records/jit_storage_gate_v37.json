@@ -1,0 +1,303 @@
+{
+  "external_stop": {
+    "cause": "new512MiB storage cap crossed by JIT C/o/so overlap; cache sampled909MiB",
+    "pid": 1575132,
+    "argv": [
+      "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "-m",
+      "src.runners.port_preparation",
+      "--worker",
+      "/home/fenics/Projects/NN-Lab/results/task042/task042_v37_target_p6_facets_20261004T033719818144Z",
+      "v37"
+    ],
+    "cwd": "/home/fenics/Projects/NN-Lab",
+    "utc_seconds": 1791085276.979309,
+    "monotonic": 1010271.840176083,
+    "signal": "SIGTERM own numerical group only",
+    "not_a_numerical_failure": true,
+    "prior_no_signal_checks": "native JIT temporarily changes cwd to its own cache; exact argv/PGID retained"
+  },
+  "archive_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/manifest.json",
+    "sha256": "6d23a637e454fd8ea0eafc8a2a5f68a580485cdcf9fcfd5416cdefbc94c80d6c"
+  },
+  "archived_generated_raw_bytes": 1559383311,
+  "compressed_bytes": 254668906,
+  "members": [
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_17d3a7e2cc7b5463cd0c359d9932fd717ca2e519.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_17d3a7e2cc7b5463cd0c359d9932fd717ca2e519.c.gz",
+      "sha256": "92f44de0fb8065ab4c0cefa25aa4a60b9e736d59eda3b9cd2d7e8debc2900890",
+      "bytes": 30101326,
+      "archive_bytes": 6370394,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_17d3a7e2cc7b5463cd0c359d9932fd717ca2e519.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_17d3a7e2cc7b5463cd0c359d9932fd717ca2e519.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "fe583ac630960e6baa788aae112c762f65bf6eb01cc8a6a8f7069e3213825242",
+      "bytes": 32930072,
+      "archive_bytes": 4519281,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_17d3a7e2cc7b5463cd0c359d9932fd717ca2e519.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_17d3a7e2cc7b5463cd0c359d9932fd717ca2e519.o.gz",
+      "sha256": "bf0cf325ebd67d9e06d0efddf279590516811563d2f20ba40ff052ff234af220",
+      "bytes": 32922624,
+      "archive_bytes": 4516819,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_7880f9a1b9ba89723c66f2667514e62195223b35.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_7880f9a1b9ba89723c66f2667514e62195223b35.c.gz",
+      "sha256": "fc134e695411ec0ab5ecd8ff41126361918ff7cdcf9150144a7ba267a7580cc5",
+      "bytes": 112687507,
+      "archive_bytes": 24610358,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_7880f9a1b9ba89723c66f2667514e62195223b35.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_7880f9a1b9ba89723c66f2667514e62195223b35.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "50c702dcc68b0e12d8b52a094ea3a6e4c3d7b7fa79b060748814adfe27936999",
+      "bytes": 123558168,
+      "archive_bytes": 17537453,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_7880f9a1b9ba89723c66f2667514e62195223b35.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_7880f9a1b9ba89723c66f2667514e62195223b35.o.gz",
+      "sha256": "a1d1dea307cdadc71dd4bc87de458a67463d721517eaace4a2d1a49f90a4e044",
+      "bytes": 123551808,
+      "archive_bytes": 17535602,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_8db6056e964a37d916f872564e723f9d095668b6.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_8db6056e964a37d916f872564e723f9d095668b6.c.gz",
+      "sha256": "6c45f3172fb10739425b662f05a003ea2bc177c6b992de1f61a5b9125118335b",
+      "bytes": 30101648,
+      "archive_bytes": 6370279,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_8db6056e964a37d916f872564e723f9d095668b6.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_8db6056e964a37d916f872564e723f9d095668b6.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "63358270f79f9b8fadd6339d06c8fba2297091619f8ed4e65a62827ec1a4c0e2",
+      "bytes": 32930072,
+      "archive_bytes": 4519159,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_8db6056e964a37d916f872564e723f9d095668b6.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_8db6056e964a37d916f872564e723f9d095668b6.o.gz",
+      "sha256": "425f4d18edf106618235cb87b697b0f688e5e2c3cdc7649f939eae12a97d499c",
+      "bytes": 32922776,
+      "archive_bytes": 4516715,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_991cf3ba1c2256c7845a8c47c30a80c7563f20da.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_991cf3ba1c2256c7845a8c47c30a80c7563f20da.c.gz",
+      "sha256": "b4d10a074c958168f35b91fa7c05102140637ae97da9af79d6f98c4a44a3e652",
+      "bytes": 7555207,
+      "archive_bytes": 1480466,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_991cf3ba1c2256c7845a8c47c30a80c7563f20da.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_991cf3ba1c2256c7845a8c47c30a80c7563f20da.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "273666683cc02b561a7c718d3c5b0ec03082d06a45dc435c2b6d8959302db064",
+      "bytes": 8247576,
+      "archive_bytes": 1010128,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_991cf3ba1c2256c7845a8c47c30a80c7563f20da.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_991cf3ba1c2256c7845a8c47c30a80c7563f20da.o.gz",
+      "sha256": "08e37430b00ded77ceb57753bfcaca999bf22962c4664a608e9c01a00747af38",
+      "bytes": 8240792,
+      "archive_bytes": 1007711,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_9bf3f023e4aa8692f005084e32194e6ad15a2170.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_9bf3f023e4aa8692f005084e32194e6ad15a2170.c.gz",
+      "sha256": "44a00b6692501c4534eb281fadd80621db607b396341dce319e8825455e02a61",
+      "bytes": 7554885,
+      "archive_bytes": 1480360,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_9bf3f023e4aa8692f005084e32194e6ad15a2170.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_9bf3f023e4aa8692f005084e32194e6ad15a2170.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "a60d304131061be1bfdbf30aa7f4542a4815231e764c5c21b33b6032f1302cd8",
+      "bytes": 8247576,
+      "archive_bytes": 1010251,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_9bf3f023e4aa8692f005084e32194e6ad15a2170.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_9bf3f023e4aa8692f005084e32194e6ad15a2170.o.gz",
+      "sha256": "faf483d887ca99f3203eded1604ad0504e73bd79e94922b8f64f82d3b4c0fc4d",
+      "bytes": 8240640,
+      "archive_bytes": 1007816,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_a0269bcf8fdab222d1204e2aea0edefc8eeb5035.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_a0269bcf8fdab222d1204e2aea0edefc8eeb5035.c.gz",
+      "sha256": "efa8eb8c5f7cee4272266682962ad20e7738bd817028467ee984fe9768a76c94",
+      "bytes": 7554885,
+      "archive_bytes": 1480360,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_a0269bcf8fdab222d1204e2aea0edefc8eeb5035.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_a0269bcf8fdab222d1204e2aea0edefc8eeb5035.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "46bf1e07b1d31a999c47426290cf7ea66d77a7e3e96f7da5ea92e15e51482258",
+      "bytes": 8247576,
+      "archive_bytes": 1010255,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_a0269bcf8fdab222d1204e2aea0edefc8eeb5035.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_a0269bcf8fdab222d1204e2aea0edefc8eeb5035.o.gz",
+      "sha256": "9682abb80391d8e5000785c1b28ae1311a69e65cab6666a293e4b5a19df29abf",
+      "bytes": 8240640,
+      "archive_bytes": 1007819,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_b80f9662b9267bd36996e16275c6df38caf138a2.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_b80f9662b9267bd36996e16275c6df38caf138a2.c.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "archive_bytes": 88,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_be3ed90a7561ff16e384b8fce105eb6ebf06697f.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_be3ed90a7561ff16e384b8fce105eb6ebf06697f.c.gz",
+      "sha256": "263bbe4e40641058ac816dee4829083a4daeca660ae862aff0ccf0d85922aee9",
+      "bytes": 7555207,
+      "archive_bytes": 1480470,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_be3ed90a7561ff16e384b8fce105eb6ebf06697f.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_be3ed90a7561ff16e384b8fce105eb6ebf06697f.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "8d29c5bcfff77a722a3aa867cd983a04e339a0599e09d8cdd867e165a262adc6",
+      "bytes": 8247576,
+      "archive_bytes": 1010140,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_be3ed90a7561ff16e384b8fce105eb6ebf06697f.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_be3ed90a7561ff16e384b8fce105eb6ebf06697f.o.gz",
+      "sha256": "7c5e880d135bde100b7b79a202d6d7855dfd5855f5369dbd1133fa69064a7c1a",
+      "bytes": 8240792,
+      "archive_bytes": 1007715,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_bf41d4d68a37c504432c1a4a42b904dd129c0f74.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_bf41d4d68a37c504432c1a4a42b904dd129c0f74.c.gz",
+      "sha256": "7b60c518120f360633de8aa048bd9395771cb97a29fd5c8a344105b2c4153683",
+      "bytes": 112687829,
+      "archive_bytes": 24610342,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_bf41d4d68a37c504432c1a4a42b904dd129c0f74.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_bf41d4d68a37c504432c1a4a42b904dd129c0f74.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "5148ce18f4f9e9136804aefd707ea13c383990ff2c000638bcb067541fb79288",
+      "bytes": 123558168,
+      "archive_bytes": 17537394,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_bf41d4d68a37c504432c1a4a42b904dd129c0f74.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_bf41d4d68a37c504432c1a4a42b904dd129c0f74.o.gz",
+      "sha256": "98d096628abe9a6984112b4f10b9e58b3b02256ceb9bcd04d97999c2c3528e9d",
+      "bytes": 123551960,
+      "archive_bytes": 17535557,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_ee319dc2959f29a9b0f1b195daa297cd80ff30c4.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_ee319dc2959f29a9b0f1b195daa297cd80ff30c4.c.gz",
+      "sha256": "93b2e511b8f5a6c25cb8220e0fda456a2d9553a3424bdef68db49c5d8e0d3ce7",
+      "bytes": 30101648,
+      "archive_bytes": 6370291,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_ee319dc2959f29a9b0f1b195daa297cd80ff30c4.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_ee319dc2959f29a9b0f1b195daa297cd80ff30c4.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "fe4d59a04f700ccbb5599ba8d65b912fc88be8aa8113320ededf05c793306e1b",
+      "bytes": 32930072,
+      "archive_bytes": 4519162,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_ee319dc2959f29a9b0f1b195daa297cd80ff30c4.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_ee319dc2959f29a9b0f1b195daa297cd80ff30c4.o.gz",
+      "sha256": "cf46283645c653e617f63638c991dbde8f378783225c502b451f9594096e05c2",
+      "bytes": 32922776,
+      "archive_bytes": 4516728,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_fd15e04fa9a2d997946dbc033c09e377f3469148.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_fd15e04fa9a2d997946dbc033c09e377f3469148.c.gz",
+      "sha256": "49153771a7e593e7757a7a8ced081fb41d0d45c91aa5f08d4fc3a8be38b67adb",
+      "bytes": 112687507,
+      "archive_bytes": 24610319,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_fd15e04fa9a2d997946dbc033c09e377f3469148.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_fd15e04fa9a2d997946dbc033c09e377f3469148.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "8cf2c806ddd38988162bc586acd5cc5eac60539816eed93e83c943faad3a193d",
+      "bytes": 123558168,
+      "archive_bytes": 17537451,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_fd15e04fa9a2d997946dbc033c09e377f3469148.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_fd15e04fa9a2d997946dbc033c09e377f3469148.o.gz",
+      "sha256": "68c38a0d509813a95754f3eac7875ca3c7990e005023839e9747dbeb9ed689ee",
+      "bytes": 123551808,
+      "archive_bytes": 17535588,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_fd720deb41b4bc08b0e2d1dd6ae2a89880d35a1f.c",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_fd720deb41b4bc08b0e2d1dd6ae2a89880d35a1f.c.gz",
+      "sha256": "11d035c4991a9f5a6409c40c500dff1df60a3d8a42f9eddc28db3dc57b68d374",
+      "bytes": 30101326,
+      "archive_bytes": 6370392,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_fd720deb41b4bc08b0e2d1dd6ae2a89880d35a1f.cpython-312-x86_64-linux-gnu.so",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_fd720deb41b4bc08b0e2d1dd6ae2a89880d35a1f.cpython-312-x86_64-linux-gnu.so.gz",
+      "sha256": "e28f88027ab6034193c6dcf7591c0f6deb2160befe6c54baccffbb5da6b6dc03",
+      "bytes": 32930072,
+      "archive_bytes": 4519242,
+      "lossless_readback": true
+    },
+    {
+      "original": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/facets/xdg/fenics/libffcx_forms_fd720deb41b4bc08b0e2d1dd6ae2a89880d35a1f.o",
+      "archive": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/jit_archive/libffcx_forms_fd720deb41b4bc08b0e2d1dd6ae2a89880d35a1f.o.gz",
+      "sha256": "61c7b5011b99ef5e284793730f021ce3eb5ee58d4f1280fbef95f13b961424a6",
+      "bytes": 32922624,
+      "archive_bytes": 4516801,
+      "lossless_readback": true
+    }
+  ],
+  "breach_not_erased": true,
+  "live_new_storage_guard_added": true,
+  "native_q60_jit_single_form_transient_example_bytes": 359797483
+}

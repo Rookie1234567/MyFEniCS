@@ -1,0 +1,188 @@
+{
+  "source_metadata_checker": "d7ec9180af1b45f55bd37b49a6f0ac450920589e",
+  "final_focused": {
+    "status": "PASSED",
+    "implementation_hashes": {
+      "src/solvers/bounded_port_provider.py": "d23a41023a6fe8bf242a021439d6ce707ef1c079dd7e272a1e56d66d000a4730",
+      "src/solvers/tiled_port_action.py": "778779d234dc2575cf56a304e3c248f95417d816de644f4faa3c72ed488e2fa0",
+      "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+      "src/solvers/boundary_witness_scope.py": "957dfb1dee867033e3652a08b16e2672b7c9f25e4be6e7937223fee8061e62e3",
+      "src/solvers/target_boundary_witness.py": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "src/solvers/solver_consumer_contract.py": "382bd0323eb19b2bc3d7851539fb7a6db8a197f76b5d18c42aa97c2f05832357",
+      "src/io/port_preparation.py": "10bf38b5e4fce15cfd439589d9eb25a7b4a95f5c3824fdaffb5eb9955cb262da",
+      "src/runners/port_preparation.py": "284acef93c46c4547fd88dcabfd15e95884ab4131d378263841ece7e0ad90f47",
+      "benchmarks/qualify_port_preparation.py": "3433befc4f235ea3c71a77d4f0697025f7e12ba78a7e0dd4eea0a2aea2c3c339",
+      "benchmarks/check_boundary_witness.py": "efc0bae0b8907db169b21fd3a4cd0711643f2bf39385fbdf5b02da9465249689",
+      "benchmarks/archive_jit_cache.py": "2695c956930ce41ea9ca7effd5a38d8e939f78f589d7905bf1e1b83873d5f2cc",
+      "src/test/test_boundary_witness.py": "4a1b72b0781b0a754b308dedc67b9d9caf56e90c5bb7336e0df928c81fc665b5",
+      "src/test/tiled_port_mpi_fixture.py": "96ecfb1753e1c064d029ccedeb247e58566eac55bf7b280844982b6bbe2cc26d",
+      "src/test/test_task042_v36_ports.py": "2be9d27febf4552befda5e4768565c2f0493344f7d89f6960035466bd94defc0",
+      "scripts/run_case.py": "bbc53dc311e59deec9dbf4ab1e70797f563fcae5c70a19626b2781ebc12d34c0",
+      "input/task042_neural_coarse_inverse/boundary_witness_v37.json": "4b252ffb0fa2491c1149da968f76e6ab8003ab0d91cc6fb14780ebdb12bf344d"
+    },
+    "before_authoring_hashes": {
+      "src/solvers/bounded_port_provider.py": "d23a41023a6fe8bf242a021439d6ce707ef1c079dd7e272a1e56d66d000a4730",
+      "src/solvers/tiled_port_action.py": "778779d234dc2575cf56a304e3c248f95417d816de644f4faa3c72ed488e2fa0",
+      "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+      "src/solvers/boundary_witness_scope.py": "957dfb1dee867033e3652a08b16e2672b7c9f25e4be6e7937223fee8061e62e3",
+      "src/solvers/target_boundary_witness.py": "0d2c964f3bcc7d2170e1ca253546831195a123151706ff1078323f5aafaebe20",
+      "src/solvers/solver_consumer_contract.py": "382bd0323eb19b2bc3d7851539fb7a6db8a197f76b5d18c42aa97c2f05832357",
+      "src/io/port_preparation.py": "10bf38b5e4fce15cfd439589d9eb25a7b4a95f5c3824fdaffb5eb9955cb262da",
+      "src/runners/port_preparation.py": "284acef93c46c4547fd88dcabfd15e95884ab4131d378263841ece7e0ad90f47",
+      "benchmarks/qualify_port_preparation.py": "3433befc4f235ea3c71a77d4f0697025f7e12ba78a7e0dd4eea0a2aea2c3c339",
+      "benchmarks/check_boundary_witness.py": "efc0bae0b8907db169b21fd3a4cd0711643f2bf39385fbdf5b02da9465249689",
+      "benchmarks/archive_jit_cache.py": "2695c956930ce41ea9ca7effd5a38d8e939f78f589d7905bf1e1b83873d5f2cc",
+      "src/test/test_boundary_witness.py": "4a1b72b0781b0a754b308dedc67b9d9caf56e90c5bb7336e0df928c81fc665b5",
+      "src/test/tiled_port_mpi_fixture.py": "96ecfb1753e1c064d029ccedeb247e58566eac55bf7b280844982b6bbe2cc26d",
+      "src/test/test_task042_v36_ports.py": "2be9d27febf4552befda5e4768565c2f0493344f7d89f6960035466bd94defc0",
+      "scripts/run_case.py": "bbc53dc311e59deec9dbf4ab1e70797f563fcae5c70a19626b2781ebc12d34c0",
+      "input/task042_neural_coarse_inverse/boundary_witness_v37.json": "4b252ffb0fa2491c1149da968f76e6ab8003ab0d91cc6fb14780ebdb12bf344d"
+    },
+    "commands": [
+      {
+        "command": [
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "--basetemp=/home/fenics/Projects/NN-Lab/tmp/task042/v37/aux_pre_06/fixtures",
+          "src/test/test_task042_v36_ports.py",
+          "src/test/test_task042_v36_checker.py",
+          "src/test/test_boundary_witness.py",
+          "src/test/test_task042_v35_cache.py::test_verify_barrier_does_not_read_reference_after_numeric_negative",
+          "--junitxml=/home/fenics/Projects/NN-Lab/tmp/task042/v37/aux_pre_06/pytest.xml"
+        ],
+        "returncode": 0,
+        "seconds": 8.407334739924408
+      },
+      {
+        "command": [
+          "mpiexec",
+          "--bind-to",
+          "none",
+          "-n",
+          "2",
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "src.test.tiled_port_mpi_fixture",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v37/aux_pre_06/mpi2.json"
+        ],
+        "returncode": 0,
+        "seconds": 3.543833930976689
+      },
+      {
+        "command": [
+          "mpiexec",
+          "--bind-to",
+          "none",
+          "-n",
+          "4",
+          "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+          "-m",
+          "src.test.tiled_port_mpi_fixture",
+          "/home/fenics/Projects/NN-Lab/tmp/task042/v37/aux_pre_06/mpi4.json"
+        ],
+        "returncode": 0,
+        "seconds": 6.959455848904327
+      }
+    ],
+    "compiled": [
+      "src/solvers/bounded_port_provider.py",
+      "src/solvers/tiled_port_action.py",
+      "src/solvers/port_preparation_window.py",
+      "src/solvers/boundary_witness_scope.py",
+      "src/solvers/target_boundary_witness.py",
+      "src/solvers/solver_consumer_contract.py",
+      "src/io/port_preparation.py",
+      "src/runners/port_preparation.py",
+      "benchmarks/qualify_port_preparation.py",
+      "benchmarks/check_boundary_witness.py",
+      "benchmarks/archive_jit_cache.py",
+      "src/test/test_boundary_witness.py",
+      "src/test/tiled_port_mpi_fixture.py",
+      "src/test/test_task042_v36_ports.py",
+      "scripts/run_case.py",
+      "input/task042_neural_coarse_inverse/boundary_witness_v37.json"
+    ],
+    "environment": {
+      "executable": "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+      "src_root": "/home/fenics/Projects/NN-Lab",
+      "affinity": [
+        0
+      ],
+      "math_pools": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so",
+          "function": "openblas_get_num_threads",
+          "threads": 1
+        }
+      ],
+      "activation": "1",
+      "mode": "fe",
+      "MPI_size": 1,
+      "Torch_loaded": false,
+      "GPU_used": false,
+      "DataLoader_workers": 0,
+      "scalar": "complex128",
+      "IntType": "int64",
+      "native_marker": "1",
+      "module_paths": {
+        "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+        "dolfinx": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/__init__.py",
+        "dolfinx_mpc": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python/dolfinx_mpc/__init__.py",
+        "petsc4py": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/__init__.py",
+        "slepc4py": "/usr/lib/slepc/lib/python3/dist-packages/slepc4py/__init__.py"
+      }
+    },
+    "loaded_wall_seconds": 20.967624121927656,
+    "raw_files": {
+      "check0.stdout": "2ffd673824f4caaf7d52a13411df8ec9b7243ceec68ba7b5295c9faa4b82193b",
+      "abi.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "check0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resource_baseline.json": "a328280bb0c5d57bc85e3d4b0e6012da1dde47453899d7545962b43f6b578e2d",
+      "admission.json": "9db0f29a08aca70d40274d35f0981e4ba181dd5c0169cc368b5838971663ee56",
+      "run_manifest.json": "33ea39e58b70e0a2ca0ebac6c54e231cf64311137101d29670787cda33a1fb45",
+      "pytest.xml": "7186355241c0dbafdfa5cbab2621352c7be3825b0f14ac44a95e02c71ac24ff6",
+      "check1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "shared_health.jsonl": "8486b10766516fd003e7458e1ec8e42bb01911cec2121c89364098186c62ee32",
+      "mpi4.json": "3f7c2f1b5dd923e290910386b64c6c806bc507a4d1a03ce4463d8443151826f7",
+      "mpi2.json": "73692e7bb07269e0a1b95a74bef8760d8e8994374decfd047c5a11289abb3070",
+      "check2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "check1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "check2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "abi.stdout": "565040f40189bb6b36b5ab9abde86c34b619a55420b026e3d6ee474062b9e2c6"
+    },
+    "volume_action_count": 0,
+    "LU_count": 0,
+    "QR_count": 0,
+    "reference_read": false
+  },
+  "counts": {
+    "serial_passed": 31,
+    "serial_failed": 0,
+    "synthetic_MPI_sizes": [
+      2,
+      4
+    ]
+  },
+  "prior_failure": "aux_pre_01: 27 passed / 1 failed; clean child fixture repair; original preserved",
+  "ruff": {
+    "returncode": 0,
+    "stdout": "/home/fenics/Projects/NN-Lab/tmp/task042/v37/final_ruff.stdout",
+    "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "historical_dispatcher_findings_unchanged": 10
+  },
+  "CI": "NOT_CLAIMED"
+}

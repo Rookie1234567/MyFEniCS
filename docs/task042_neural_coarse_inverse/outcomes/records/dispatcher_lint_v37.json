@@ -1,0 +1,712 @@
+{
+  "baseline": "02fe5f860562f6a7ef689f9d53b061cfaf30a43b",
+  "path": "scripts/run_case.py",
+  "old": [
+    {
+      "cell": null,
+      "code": "RUF100",
+      "end_location": {
+        "column": 67,
+        "row": 14
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "",
+            "end_location": {
+              "column": 67,
+              "row": 14
+            },
+            "location": {
+              "column": 53,
+              "row": 14
+            }
+          }
+        ],
+        "message": "Remove unused `noqa` directive"
+      },
+      "location": {
+        "column": 55,
+        "row": 14
+      },
+      "message": "Unused `noqa` directive (non-enabled: `E402`)",
+      "name": "unused-noqa",
+      "noqa_row": 14,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-noqa"
+    },
+    {
+      "cell": null,
+      "code": "RUF100",
+      "end_location": {
+        "column": 57,
+        "row": 15
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "",
+            "end_location": {
+              "column": 57,
+              "row": 15
+            },
+            "location": {
+              "column": 43,
+              "row": 15
+            }
+          }
+        ],
+        "message": "Remove unused `noqa` directive"
+      },
+      "location": {
+        "column": 45,
+        "row": 15
+      },
+      "message": "Unused `noqa` directive (non-enabled: `E402`)",
+      "name": "unused-noqa",
+      "noqa_row": 15,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-noqa"
+    },
+    {
+      "cell": null,
+      "code": "C408",
+      "end_location": {
+        "column": 79,
+        "row": 48
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "{\"status\": 'valid', \"stage\": preparation.derived['stage'],\n                    \"input_sha256\": preparation.input_sha256, \"target_solve\": False}",
+            "end_location": {
+              "column": 79,
+              "row": 48
+            },
+            "location": {
+              "column": 34,
+              "row": 47
+            }
+          }
+        ],
+        "message": "Rewrite as a literal"
+      },
+      "location": {
+        "column": 34,
+        "row": 47
+      },
+      "message": "Unnecessary `dict()` call (rewrite as a literal)",
+      "name": "unnecessary-collection-call",
+      "noqa_row": 47,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+    },
+    {
+      "cell": null,
+      "code": "C408",
+      "end_location": {
+        "column": 89,
+        "row": 53
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "{\"directory\": result['directory'], \"classification\": result['classification'],\n                \"seconds\": result['elapsed_seconds'], \"exit_code\": result['leader_exit_code']}",
+            "end_location": {
+              "column": 89,
+              "row": 53
+            },
+            "location": {
+              "column": 30,
+              "row": 52
+            }
+          }
+        ],
+        "message": "Rewrite as a literal"
+      },
+      "location": {
+        "column": 30,
+        "row": 52
+      },
+      "message": "Unnecessary `dict()` call (rewrite as a literal)",
+      "name": "unnecessary-collection-call",
+      "noqa_row": 52,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 69,
+        "row": 93
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "        from src.io.actual_loss_block_descent import load_actual_loss\n        from src.io.augmented_trace_lsqr import load_augmented_trace\n        from src.io.autonomous_neural_head import load_autonomous\n        from src.io.block_direction_diagnostic import load_block_diagnostic\n        from src.io.exact_action_recycling import load_recycling\n        from src.io.fixed_p3_ilu0 import load_fixed_ilu0\n        from src.io.frozen_fe_diagnostic import load_diagnostic\n        from src.io.full_input_block_v33 import load_return_diagnostic as load_full_v33\n        from src.io.full_input_block_v34 import (\n            load_return_diagnostic as load_full_input_v34,\n        )\n        from src.io.full_input_online import load_online\n        from src.io.gmres_residual_completion import load_residual_completion\n        from src.io.joint_block_diagnostic import load_joint_diagnostic\n        from src.io.local_block_pair import load_local_block\n        from src.io.local_trace_representation import load_local_trace\n        from src.io.neural_fe_calibration import load_calibration\n        from src.io.neural_fe_continuation import load_continuation\n        from src.io.neural_fe_interface import load_interface\n        from src.io.orthonormal_trace_reprofile import load_orthonormal_trace\n        from src.io.p1_image_minres import load_image_minres\n        from src.io.p1_trace_galerkin import load_p1_trace\n        from src.io.post_lsqr_polish import load_post_lsqr\n        from src.io.resumable_trace_campaign import load_resumable_trace\n        from src.io.return_block_continuation import (\n            load_return_diagnostic as load_return_continuation,\n        )\n        from src.io.return_block_diagnostic import load_return_diagnostic\n        from src.io.return_block_v31 import load_return_diagnostic as load_return_v31\n        from src.io.return_block_v32 import load_return_diagnostic as load_return_v32\n        from src.io.stable_head_varpro import load_stable_head\n        from src.io.tangent_head_compensation import load_tangent_head\n",
+            "end_location": {
+              "column": 1,
+              "row": 94
+            },
+            "location": {
+              "column": 1,
+              "row": 66
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 9,
+        "row": 66
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 66,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "C408",
+      "end_location": {
+        "column": 114,
+        "row": 157
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "{\"variant\": args.profile_variant, \"r0_reference\": args.profile_r0_reference}",
+            "end_location": {
+              "column": 114,
+              "row": 157
+            },
+            "location": {
+              "column": 40,
+              "row": 157
+            }
+          }
+        ],
+        "message": "Rewrite as a literal"
+      },
+      "location": {
+        "column": 40,
+        "row": 157
+      },
+      "message": "Unnecessary `dict()` call (rewrite as a literal)",
+      "name": "unnecessary-collection-call",
+      "noqa_row": 157,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 97,
+        "row": 162
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "                from src.runners.fine_reference_preflight import (\n                    launch_native_matched_reference,\n                )\n",
+            "end_location": {
+              "column": 1,
+              "row": 163
+            },
+            "location": {
+              "column": 1,
+              "row": 162
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 17,
+        "row": 162
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 162,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 77,
+        "row": 174
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "            from src.io.physical_balanced_profile import BALANCED_PROFILES\n            from src.io.physical_intermediate_profile import (\n                JOINT_PROFILE,\n                LIGHT_PROFILE,\n            )\n            from src.io.physical_recursive_profile import RECURSIVE_PROFILES\n",
+            "end_location": {
+              "column": 1,
+              "row": 175
+            },
+            "location": {
+              "column": 1,
+              "row": 172
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 13,
+        "row": 172
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 172,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 92,
+        "row": 176
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "                from src.runners.physical_recursive_budget import (\n                    launch_recursive_workflow,\n                )\n",
+            "end_location": {
+              "column": 1,
+              "row": 177
+            },
+            "location": {
+              "column": 1,
+              "row": 176
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 17,
+        "row": 176
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 176,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 90,
+        "row": 181
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "                from src.runners.physical_balanced_budget import (\n                    launch_balanced_workflow,\n                )\n",
+            "end_location": {
+              "column": 1,
+              "row": 182
+            },
+            "location": {
+              "column": 1,
+              "row": 181
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 17,
+        "row": 181
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 181,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    }
+  ],
+  "current": [
+    {
+      "cell": null,
+      "code": "RUF100",
+      "end_location": {
+        "column": 67,
+        "row": 14
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "",
+            "end_location": {
+              "column": 67,
+              "row": 14
+            },
+            "location": {
+              "column": 53,
+              "row": 14
+            }
+          }
+        ],
+        "message": "Remove unused `noqa` directive"
+      },
+      "location": {
+        "column": 55,
+        "row": 14
+      },
+      "message": "Unused `noqa` directive (non-enabled: `E402`)",
+      "name": "unused-noqa",
+      "noqa_row": 14,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-noqa"
+    },
+    {
+      "cell": null,
+      "code": "RUF100",
+      "end_location": {
+        "column": 57,
+        "row": 15
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "",
+            "end_location": {
+              "column": 57,
+              "row": 15
+            },
+            "location": {
+              "column": 43,
+              "row": 15
+            }
+          }
+        ],
+        "message": "Remove unused `noqa` directive"
+      },
+      "location": {
+        "column": 45,
+        "row": 15
+      },
+      "message": "Unused `noqa` directive (non-enabled: `E402`)",
+      "name": "unused-noqa",
+      "noqa_row": 15,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unused-noqa"
+    },
+    {
+      "cell": null,
+      "code": "C408",
+      "end_location": {
+        "column": 79,
+        "row": 48
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "{\"status\": 'valid', \"stage\": preparation.derived['stage'],\n                    \"input_sha256\": preparation.input_sha256, \"target_solve\": False}",
+            "end_location": {
+              "column": 79,
+              "row": 48
+            },
+            "location": {
+              "column": 34,
+              "row": 47
+            }
+          }
+        ],
+        "message": "Rewrite as a literal"
+      },
+      "location": {
+        "column": 34,
+        "row": 47
+      },
+      "message": "Unnecessary `dict()` call (rewrite as a literal)",
+      "name": "unnecessary-collection-call",
+      "noqa_row": 47,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+    },
+    {
+      "cell": null,
+      "code": "C408",
+      "end_location": {
+        "column": 89,
+        "row": 53
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "{\"directory\": result['directory'], \"classification\": result['classification'],\n                \"seconds\": result['elapsed_seconds'], \"exit_code\": result['leader_exit_code']}",
+            "end_location": {
+              "column": 89,
+              "row": 53
+            },
+            "location": {
+              "column": 30,
+              "row": 52
+            }
+          }
+        ],
+        "message": "Rewrite as a literal"
+      },
+      "location": {
+        "column": 30,
+        "row": 52
+      },
+      "message": "Unnecessary `dict()` call (rewrite as a literal)",
+      "name": "unnecessary-collection-call",
+      "noqa_row": 52,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 69,
+        "row": 93
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "        from src.io.actual_loss_block_descent import load_actual_loss\n        from src.io.augmented_trace_lsqr import load_augmented_trace\n        from src.io.autonomous_neural_head import load_autonomous\n        from src.io.block_direction_diagnostic import load_block_diagnostic\n        from src.io.exact_action_recycling import load_recycling\n        from src.io.fixed_p3_ilu0 import load_fixed_ilu0\n        from src.io.frozen_fe_diagnostic import load_diagnostic\n        from src.io.full_input_block_v33 import load_return_diagnostic as load_full_v33\n        from src.io.full_input_block_v34 import (\n            load_return_diagnostic as load_full_input_v34,\n        )\n        from src.io.full_input_online import load_online\n        from src.io.gmres_residual_completion import load_residual_completion\n        from src.io.joint_block_diagnostic import load_joint_diagnostic\n        from src.io.local_block_pair import load_local_block\n        from src.io.local_trace_representation import load_local_trace\n        from src.io.neural_fe_calibration import load_calibration\n        from src.io.neural_fe_continuation import load_continuation\n        from src.io.neural_fe_interface import load_interface\n        from src.io.orthonormal_trace_reprofile import load_orthonormal_trace\n        from src.io.p1_image_minres import load_image_minres\n        from src.io.p1_trace_galerkin import load_p1_trace\n        from src.io.post_lsqr_polish import load_post_lsqr\n        from src.io.resumable_trace_campaign import load_resumable_trace\n        from src.io.return_block_continuation import (\n            load_return_diagnostic as load_return_continuation,\n        )\n        from src.io.return_block_diagnostic import load_return_diagnostic\n        from src.io.return_block_v31 import load_return_diagnostic as load_return_v31\n        from src.io.return_block_v32 import load_return_diagnostic as load_return_v32\n        from src.io.stable_head_varpro import load_stable_head\n        from src.io.tangent_head_compensation import load_tangent_head\n",
+            "end_location": {
+              "column": 1,
+              "row": 94
+            },
+            "location": {
+              "column": 1,
+              "row": 66
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 9,
+        "row": 66
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 66,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "C408",
+      "end_location": {
+        "column": 114,
+        "row": 157
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "unsafe",
+        "edits": [
+          {
+            "content": "{\"variant\": args.profile_variant, \"r0_reference\": args.profile_r0_reference}",
+            "end_location": {
+              "column": 114,
+              "row": 157
+            },
+            "location": {
+              "column": 40,
+              "row": 157
+            }
+          }
+        ],
+        "message": "Rewrite as a literal"
+      },
+      "location": {
+        "column": 40,
+        "row": 157
+      },
+      "message": "Unnecessary `dict()` call (rewrite as a literal)",
+      "name": "unnecessary-collection-call",
+      "noqa_row": 157,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 97,
+        "row": 162
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "                from src.runners.fine_reference_preflight import (\n                    launch_native_matched_reference,\n                )\n",
+            "end_location": {
+              "column": 1,
+              "row": 163
+            },
+            "location": {
+              "column": 1,
+              "row": 162
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 17,
+        "row": 162
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 162,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 77,
+        "row": 174
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "            from src.io.physical_balanced_profile import BALANCED_PROFILES\n            from src.io.physical_intermediate_profile import (\n                JOINT_PROFILE,\n                LIGHT_PROFILE,\n            )\n            from src.io.physical_recursive_profile import RECURSIVE_PROFILES\n",
+            "end_location": {
+              "column": 1,
+              "row": 175
+            },
+            "location": {
+              "column": 1,
+              "row": 172
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 13,
+        "row": 172
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 172,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 92,
+        "row": 176
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "                from src.runners.physical_recursive_budget import (\n                    launch_recursive_workflow,\n                )\n",
+            "end_location": {
+              "column": 1,
+              "row": 177
+            },
+            "location": {
+              "column": 1,
+              "row": 176
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 17,
+        "row": 176
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 176,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 90,
+        "row": 181
+      },
+      "filename": "/home/fenics/Projects/NN-Lab/scripts/run_case.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "                from src.runners.physical_balanced_budget import (\n                    launch_balanced_workflow,\n                )\n",
+            "end_location": {
+              "column": 1,
+              "row": 182
+            },
+            "location": {
+              "column": 1,
+              "row": 181
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 17,
+        "row": 181
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "name": "unsorted-imports",
+      "noqa_row": 181,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    }
+  ],
+  "same_exact_source_spans": true,
+  "old_count": 10,
+  "new_count": 10,
+  "unrelated_cleanup_performed": false
+}

@@ -1,0 +1,43 @@
+{
+  "ideal_single_mode_pair_payload_bytes": 9082376,
+  "legacy_conservative_pair_upper_bytes": 111259016,
+  "mode_cache_cap_bytes": 67108864,
+  "tile_cap_bytes": 131072,
+  "ordinary_measured_tile_payload_bytes": 42336,
+  "target_surface_faces_per_port": 2628,
+  "full_mode_count": 32060,
+  "two_pass_tile_visits_per_full_apply": 168507360,
+  "projection_reduction": "one scalar per mode; all owners including empty ranks; batch<=64",
+  "creator_workspace_measured_example": {
+    "30": {
+      "tabulation": 0.038855689694173634,
+      "phase_integral": 1.1680733306566253,
+      "orientation": 0.008945741457864642,
+      "canonical_pullback": 0.875282178283669,
+      "calls": 240,
+      "creator_workspace_upper_bytes": 22127616,
+      "persistent_geometry_map_bytes": 81024
+    },
+    "60": {
+      "tabulation": 0.08931928302627057,
+      "phase_integral": 1.0610808331985027,
+      "orientation": 0.0025217198999598622,
+      "canonical_pullback": 0.19663373637013137,
+      "calls": 48,
+      "creator_workspace_upper_bytes": 81821376,
+      "persistent_geometry_map_bytes": 81024
+    }
+  },
+  "actual_target_single_mode_support": "UNKNOWN",
+  "target_periodic_expansion_bound": "UNKNOWN; byte precheck rejects before allocation; finite ordinary witness does not prove all target maps",
+  "target_full_storage_vector_payload_bytes": 5532337056,
+  "two_full_input_output_payload_lower_bytes": 11064674112,
+  "conditional_GMRES256_vector_group_payload_bytes": 434673050112,
+  "metadata": "O(Nport) separate from numeric cache; full Python overhead UNKNOWN",
+  "global_solver_interiors_factors_MPI_IO_peak": "UNKNOWN, not additive pseudo-peak",
+  "time_formula": "sum over 32060 modes and 2628 faces of projection-create plus traction-replay, plus MPI reduction/scatter and full vector IO; cache reuse, communication, iterations unknown",
+  "measured_tile_creator_unit_seconds": 0.008481871303956723,
+  "unit_cost_transfer_to_target": "UNQUALIFIED; finite ordinary witness, cold JIT/geometry reuse and target row reader not measured",
+  "target_N1_2TB_48h": "NOT_QUALIFIED",
+  "neural20": "NOT_DEMONSTRATED; no new NN or comparable full correct baseline"
+}

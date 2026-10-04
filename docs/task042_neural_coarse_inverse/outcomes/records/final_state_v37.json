@@ -1,0 +1,62 @@
+{
+  "source_before_documentation": "d7ec9180af1b45f55bd37b49a6f0ac450920589e",
+  "clock": {
+    "start_utc": "2026-10-04T03:17:22.040407958+00:00",
+    "start_monotonic": 1008836.9,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "total_limit_seconds": 86400,
+    "heavy_limit_seconds": 82800,
+    "total_loaded_seconds": 3600,
+    "component_seconds": 2400,
+    "aux_per_run_seconds": 600,
+    "probe_seconds": 60,
+    "cleanup_reserve_seconds": 120,
+    "initial_HEAD": "02fe5f860562f6a7ef689f9d53b061cfaf30a43b",
+    "review_commit": "02fe5f860562f6a7ef689f9d53b061cfaf30a43b",
+    "review_sha256": "59b9d4c649fd73ee88424cf0d31c8f7f02c4747fa2001b4c04352dea985aa864",
+    "observed_utc": "2026-10-04T04:13:20.508353+00:00",
+    "observed_monotonic": 1012195.369220362,
+    "actors": [],
+    "neighbor_readonly": [
+      {
+        "pid": 1563640,
+        "cwd": "/home/fenics/Projects/NN-Lab-V2",
+        "command": [
+          "python",
+          "scripts/run_case.py",
+          "input/task042extra_feinn_5nm/v20_physical_compare.dat",
+          ""
+        ]
+      },
+      {
+        "pid": 1564129,
+        "cwd": "/home/fenics/Projects/NN-Lab-V2",
+        "command": [
+          "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
+          "-m",
+          "src.runners.fixed_phase_campaign",
+          "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z",
+          ""
+        ]
+      }
+    ],
+    "observed_boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "monotonic_same_boot": true,
+    "elapsed_seconds": 3358.4692203620216,
+    "heavy_remaining_seconds": 79441.53077963798,
+    "total_remaining_seconds": 83041.53077963798
+  },
+  "closed": true,
+  "active": null,
+  "own_actors": [],
+  "neighbors_readonly": [],
+  "charged_wall_seconds": 474.86211580527015,
+  "component_wall_seconds": 269.67077779688407,
+  "own_swap_peak_bytes": 0,
+  "no_global_p4_factor": true,
+  "new_volume_solve": false,
+  "merge": false,
+  "closed_old_ledgers_reopened": false,
+  "stopped_q60_enlargement_restarted": false,
+  "final_git_head": "reported after exact branch commit/push; documentation HEAD never used as run source"
+}

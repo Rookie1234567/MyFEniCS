@@ -1,0 +1,14 @@
+{
+  "final": {
+    "new_bytes": 477669342,
+    "task_artifact_bytes": 14963754484,
+    "free_bytes": 3370566049792,
+    "reserve_bytes": 0
+  },
+  "limit_new_bytes": 536870912,
+  "task_artifact_limit_bytes": 21474836480,
+  "minimum_free_bytes": 53687091200,
+  "status": "FINAL_WITHIN_LIMIT_PRIOR_BREACH_RETAINED",
+  "prior_breach_evidence": "jit_storage_gate_v37.json",
+  "old_arrays_and_results_deleted": false
+}

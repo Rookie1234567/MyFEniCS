@@ -1,3 +1,11 @@
+# V37变更：通用分面片端口作用与独立原数组审核
+
+数值核心在src/solvers，按mode内双遍历生成／散射未裁剪面片，原oracle／体积solver默认不变；provider补H/source身份绑定。复用既有runner、窗、watchdog、事务writer，并加本批新存储live门与无损JIT归档。checker只重算保存数组，不搭建FE或solve。
+
+五个one-run dat对应IDENTITY／PATCH／CAPACITY／CHECK／DEPLOY，PATCH失败没有被伪造为完成；大数组、JIT、timeline保持ignored。compact证据、README／总账只增加V37内容，原task／review／response／raw不改。[实际清单](records/changed_files_v37.json) · [依赖分组与资格](records/selective_merge_manifest_v37.json)。无merge approval，不把research-only组件升为production default。
+
+<!-- V37-LATEST-END -->
+
 # V36变更：准备接口、按需全端口与独立证据
 
 新增通用bounded provider／surface适配、目标物理／计数／mode准备核；runner只编排新scope的四个opt-in stage，复用既有监督，不复制体积求解。仅在run_case加explicit dispatch、修闭账fixture；原ActionPacket/recover/uncondensed/audit、默认物理solver及其他分支不变。

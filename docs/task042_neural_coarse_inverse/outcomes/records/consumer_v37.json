@@ -1,0 +1,200 @@
+{
+  "consumer": {
+    "status": "SOLVER_PACKAGE_NOT_QUALIFIED",
+    "fields": [
+      {
+        "field": "geometry",
+        "required": {
+          "bounds_nm": [
+            [
+              0.0,
+              50.0
+            ],
+            [
+              0.0,
+              25.0
+            ],
+            [
+              -10.0,
+              130.0
+            ]
+          ],
+          "block_dimensions_nm": [
+            17.0,
+            25.0,
+            120.0
+          ],
+          "void_box_nm": null
+        },
+        "offered": {
+          "bounds_nm": [
+            [
+              0,
+              2.5925925925925926
+            ],
+            [
+              0,
+              1.2962962962962963
+            ],
+            [
+              -0.5185185185185185,
+              6.7407407407407405
+            ]
+          ],
+          "block_dimensions_nm": [
+            0.8814814814814814,
+            1.2962962962962963,
+            6.222222222222222
+          ],
+          "void_box_nm": [
+            1.2962962962962963,
+            1.737037037037037,
+            0.32407407407407407,
+            0.9722222222222222,
+            2.074074074074074,
+            4.148148148148148
+          ]
+        },
+        "status": "PHYSICAL_OR_DISCRETE_DIFFERENCE"
+      },
+      {
+        "field": "material",
+        "required": [
+          0.999885140474,
+          4.32477054e-06
+        ],
+        "offered": [
+          0.9998851703688496,
+          4.3236152269189515e-06
+        ],
+        "status": "PHYSICAL_OR_DISCRETE_DIFFERENCE"
+      },
+      {
+        "field": "wavelength",
+        "required": 0.7,
+        "offered": 0.7,
+        "status": "EXACT_FIELD_MATCH"
+      },
+      {
+        "field": "incidence",
+        "required": {
+          "grazing_degrees": 1.0,
+          "azimuth_degrees": 0.0,
+          "polarization": "s",
+          "amplitude": 1.0
+        },
+        "offered": {
+          "grazing_degrees": 1.0,
+          "azimuth_degrees": 0.0,
+          "polarization": "s",
+          "amplitude": 1.0
+        },
+        "status": "EXACT_FIELD_MATCH"
+      },
+      {
+        "field": "background",
+        "required": "layered",
+        "offered": "layered",
+        "status": "EXACT_FIELD_MATCH"
+      },
+      {
+        "field": "modes",
+        "required": {
+          "count": 32060,
+          "sha256": "ae785ecbdaaa7ff11ef7897b1ab00c58232aaf1d97f851a8960206063496eeda"
+        },
+        "offered": null,
+        "status": "EVIDENCE_MISSING"
+      },
+      {
+        "field": "reference_planes",
+        "required": {
+          "top": 130.0,
+          "bottom": -10.0
+        },
+        "offered": {
+          "top": 6.7407407407407405,
+          "bottom": -0.5185185185185185
+        },
+        "status": "PHYSICAL_OR_DISCRETE_DIFFERENCE"
+      },
+      {
+        "field": "complex_floquet",
+        "required": [
+          {
+            "imag": 0.49440762401215377,
+            "real": -0.8692301774091008
+          },
+          {
+            "imag": 0.0,
+            "real": 1.0
+          }
+        ],
+        "offered": null,
+        "status": "EVIDENCE_MISSING"
+      },
+      {
+        "field": "degree",
+        "required": 6,
+        "offered": 6,
+        "status": "EXACT_FIELD_MATCH"
+      },
+      {
+        "field": "canonical_rows",
+        "required": 105298704,
+        "offered": null,
+        "status": "EVIDENCE_MISSING"
+      },
+      {
+        "field": "internal_recovery",
+        "required": "full original 3D affine recovery required",
+        "offered": null,
+        "status": "EVIDENCE_MISSING"
+      }
+    ],
+    "scientific_qualified": false,
+    "serialized_physical_hash_comparison_used": false,
+    "target_solve_authorized": false,
+    "material_difference_norm": 2.991716531811656e-08
+  },
+  "dot_readonly": {
+    "published_sha": "077ec9c8386c976da232093779279fb9d1a93033",
+    "recovery_receipt_path": "docs/task042_neural_coarse_inverse/outcomes/records/review_v34_dot_recovery_receipt.json",
+    "recovery_receipt_sha256": "58a9e745b26165dbb18a11a2deb320261e7cd7eb178f1e7e83152416feb87c1c",
+    "runtime": "not restored/qualified",
+    "scientific_raw": "C1a UNAVAILABLE after reset; prior Y compact archival statement only",
+    "source_status": "NEW_UNQUALIFIED",
+    "refs_or_worktree_changed": false,
+    "source_receipts": [
+      {
+        "path": "docs/task40extra_dot_parallel_cloud/response_v15.md",
+        "snapshot": "tmp/task042/v37/dot_source_0.txt",
+        "sha256": "35f94010994a9894ac12527cf8f2775d0f73bd5f3b82e315308b19d260a5d246"
+      },
+      {
+        "path": "src/solvers/fresh_c1_contract.py",
+        "snapshot": "tmp/task042/v37/dot_source_1.txt",
+        "sha256": "0792ed75c62ec87195847cfc0ea9dc36eb93e416c22732bbda10eda230905baf"
+      },
+      {
+        "path": "src/solvers/fresh_c1_p6_component.py",
+        "snapshot": "tmp/task042/v37/dot_source_2.txt",
+        "sha256": "eeb08926025f9cb8e86b712834c0dd88f9856bcbd30464f737da3e449cc8b850"
+      }
+    ],
+    "published_input_path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_direct_reference.dat",
+    "published_input_sha256": "c80c921834cb268a9251459795fbda5acf4e9f25347d16ee24dec3b9d85c6c56",
+    "published_p6_component_inventory": {
+      "degree": 6,
+      "cells": 80,
+      "mode_rows": 532,
+      "source_status": "NEW_UNQUALIFIED",
+      "source_snapshot": "tmp/task042/v37/dot_source_2.txt"
+    }
+  },
+  "identity_parent": {
+    "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v37/task042_v37_identity_20261004T033307945408Z/result.json",
+    "sha256": "d5edbce8c3059b43626c59fdf2ae5892dd1cb0a9788fbfef2e0a0646db661023"
+  },
+  "default": "TARGET_SOLVE_NOT_AUTHORIZED_OR_NOT_QUALIFIED"
+}
