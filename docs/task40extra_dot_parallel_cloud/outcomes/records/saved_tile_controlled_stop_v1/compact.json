@@ -1,0 +1,89 @@
+{
+  "schema": "saved-tile-controlled-stop-publication.v1",
+  "status": "PERFORMANCE_CONTROLLED_STOP_NOT_FULLY_QUALIFIED",
+  "source_head": "c81e286bdf5cf9c78620854df2fb814cbf41e67a",
+  "qualified_prior_source": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+  "qualified_prior_remote": "0a238243f353cf1e110170f92185d04d79ffbacc",
+  "resource": {
+    "classification": "PERFORMANCE_CONTROLLED_STOP",
+    "elapsed_seconds": 601.272085867,
+    "sampled_process_tree_rss_peak_bytes": 337399808,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "stop_event": {
+      "reason": "PERFORMANCE_CONTROLLED_STOP",
+      "monotonic": 36958.45694536,
+      "timestamp_ns": 1791143494578594910,
+      "grace_seconds": 2
+    }
+  },
+  "completed_pairs": [
+    {
+      "twist": 0,
+      "p": 0,
+      "q": 0,
+      "passed": true,
+      "nnz": 436012,
+      "CSR_sha256": "a2bc9db900469dde4f8168522f568b30a211bdf00e787e6df46af7bc7b5add02",
+      "recipe_count": 509,
+      "tiles_projected": 2255,
+      "tiles_skipped_structural": 112270,
+      "support_discoveries": 509,
+      "peak_projection_owned_upper_bytes": 26374924
+    },
+    {
+      "twist": 0,
+      "p": 0,
+      "q": 2,
+      "passed": true,
+      "nnz": 442876,
+      "CSR_sha256": "39129699f18d948d4693fb99304f21fc2a5c672e3aeac8120cae653bc235a5d5",
+      "recipe_count": 509,
+      "tiles_projected": 2878,
+      "tiles_skipped_structural": 119282,
+      "support_discoveries": 509,
+      "peak_projection_owned_upper_bytes": 26786764
+    },
+    {
+      "twist": 0,
+      "p": 2,
+      "q": 0,
+      "passed": true,
+      "nnz": 443286,
+      "CSR_sha256": "eda83202f547e6b1df7509a3c1b580747446c0151ceaf5e7a4e560dc81f4b2f7",
+      "recipe_count": 509,
+      "tiles_projected": 2878,
+      "tiles_skipped_structural": 119282,
+      "support_discoveries": 509,
+      "peak_projection_owned_upper_bytes": 26705780
+    }
+  ],
+  "all8_completed": false,
+  "matched_subset_completed": false,
+  "optimization_qualified": false,
+  "FE_JIT_factor_PDE_run": false,
+  "target_qualified": false,
+  "archive_sha256": "ea4cdba5318d7cf6ece0bf385d72f2b059fbffac371745dea0faa5b3fa00f4b0",
+  "archive_bytes": 1502553,
+  "library_file_id": "libfile_bbb642d33aa08191a70bd8288e3bc43b",
+  "partial_result_sha256": "cb8601891b8ae5de29901fa013f17f7c5daa1c1a851e3b435e6ede53d32c307f",
+  "events_count": 35668,
+  "tests": "117 passed in 1.31s; source contracts only",
+  "no_automatic_retry": true
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "task40extra.independent-saved-projection-launch-review.v1",
+  "status": "PASS_BOUNDED_SOURCE_AND_ORCHESTRATION_REVIEW",
+  "record_kind": "post-review record; reviewer did not execute tests or saved numerical replay",
+  "reviewed_at_UTC": "2026-10-04T19:39:50Z",
+  "reviewer": "/root/review_checker_launch_identity",
+  "source_head": "c81e286bdf5cf9c78620854df2fb814cbf41e67a",
+  "source_tree": "ef74f62a9ce5497d5199ffcf386b101bc01b8679",
+  "working_tree_clean": true,
+  "sha256": {
+    "src/solvers/bounded_compact_q_projection.py": "02a11ce42b8a075d0aa4508c659d5327110be37be6ce74dad9259f58ff11e0e0",
+    "src/solvers/fresh_projection_support_replay.py": "09eb5aadaec71b95c374135227b07c4b33055ecdccc3c82fb80a528e030fd1bc",
+    "launch_saved_projection_replay.py": "a95e140e682ee431728820cd7299e0be656c2faaff0c3b0683f275891e1eb92d",
+    "preflight.json": "4ad06d0f9e80da6538f617a5aa589d482ed6d59b73b345e1f245ca5dea53cb36",
+    "integrated_tests.log": "acd49d02d758920568e12aad9727beaea83c7bc8a97ba9bf1742dbb609da3668"
+  },
+  "baseline": {
+    "Git_blob": "235892c6bd8692aef6e9059611fdd9cdcf9fc688",
+    "source_sha256": "ac7f73b51ce67e7a0655ab71af1136c56d70f86ca1c4e42a1634782b0672f925",
+    "reviewer_verified_blob_bytes_sha256": true,
+    "commit_identity_invented": false
+  },
+  "immutable_saved_authority": {
+    "source_head": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+    "report_sha256": "9fd8e2592382320f595807c17276b6f662193461ee64e0b105bd32df87dfe47d",
+    "checker_sha256": "72e0428a0d8c78a7a55adc3199a2b2ab01cd00969a262f3e2c4ee717ed67b599",
+    "checker_records": 399,
+    "checker_records_all_passed": true,
+    "worker_Library_receipt_sha256": "a63fd2e13c0f04db94ffb73847a85cc0de082025a5234b4f71122fcb108a5d9e",
+    "checker_Library_receipt_sha256": "b84c8f4bf7b88a717892502c29dd5f0dae70e6982e19bd31ae8efab7e9c7fa6a"
+  },
+  "reviewed_findings": [
+    "The exact production delta changes only the bounded accumulator: scalar stored-index support includes explicit zeros and duplicate-index support; no magnitude cutoff, sparse slicing, index cast or numerical support guess was introduced.",
+    "Support-mask bytes are admitted before allocation. Masks are released before projection. Python tuple scheduling is separately admitted against whole-tree RSS, outside the named-array budget.",
+    "Original width selection, nonempty tile ordering, recursive split and merge arithmetic remain; empty recursive children are skipped by exact structural support.",
+    "Existing provider map and recipe validation remains before the bounded path; borrowed maps and recipes are not retained by the accumulator.",
+    "The replay reads hash/path-bound readonly arrays, validates snapshot numeric hashes and canonical CSR before reconstruction, and retains one accumulator at a time.",
+    "All eight optimized complete CSR results are compared with immutable saved targets at 1e-11. Both diagonal scales apply to cross comparisons.",
+    "The old path is restricted to the same first-two-cell and representative-family subset as the new path, with identical read/admission callbacks, JSON encoding, serialization option and owned budget; resulting CSR fingerprints must be bitwise equal.",
+    "Verified Git blob bytes and SHA-bound candidate bytes execute with unchanged protected dependencies. The exact source bridge admits one changed existing file and three named additions only.",
+    "Full saved worker/checker supervision and Library pins, complete saved/current/child ABI equality and qualified relative interpreter spelling remain.",
+    "Existing supervisor hard stops and final source/environment/script/exit/RSS/wall/swap/identity/readability/descendant-cleanup gates remain; no automatic retry or live FE/factor/PDE path is added."
+  ],
+  "resource_contract": {
+    "whole_tree_cap_bytes": 3221225472,
+    "wall_seconds": 600,
+    "reserve_bytes": 134217728,
+    "projection_owned_max_bytes": 134217728,
+    "zero_swap": true,
+    "MPI_ranks": 1,
+    "math_threads": 1,
+    "observed_preflight_launch_cap_bytes": 3605647360
+  },
+  "evidence_read": {
+    "final_integrated_tests_passed": 117,
+    "final_integrated_tests_seconds": 1.31,
+    "staged_regression_passed": 144,
+    "staged_regression_skipped": 4,
+    "staged_regression_deselected": 1,
+    "independent_synthetic_bitwise_successes": 83,
+    "independent_matching_guarded_failures": 37,
+    "reviewer_reran_tests": false
+  },
+  "limits": [
+    "Support masks can introduce a guarded failure for extremely wide outputs with tiny owned budgets; skipping empty work can also remove an old unnecessary scratch failure. These differences are disclosed and do not establish universal failure equivalence.",
+    "Python/native allocations remain outside the hard named-array budget and under the process-tree watchdog.",
+    "Skipped-tile telemetry mixes initial tiles and recursive children, rather than counting unique uniform-grid tiles.",
+    "No actual saved numerical replay, FE/JIT, new factorization or PDE was run by the reviewer; no measured actual speedup or live/target qualification follows from this source review.",
+    "The historical full baseline replay is excluded; root owns any separate launch decision after final source durability and fresh resource admission."
+  ],
+  "blocking_findings": []
+}

@@ -15,6 +15,8 @@ from the small algebra tests. All entries are retained except exact zeros.
 """
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 from scipy import sparse
 
@@ -50,6 +52,30 @@ def _gather_tile(matrix, rows, first, last):
             if first <= column < last:
                 out[i, column - first] += matrix.data[k]
     return out
+
+
+def _mark_stored_tiles(matrix, rows, width, occupied):
+    """Mark structural support, including stored zeros and repeated indices.
+
+    Read CSR indices as scalars: no sparse slicing, canonicalization, numeric
+    cutoff, index cast, or vector-sized temporary is made. Providers validate
+    canonical CSR before calling the accumulator; literal direct gathers also
+    retain their existing unsorted/duplicate-index semantics.
+    """
+    for row in rows:
+        begin, end = int(matrix.indptr[int(row)]), int(matrix.indptr[int(row) + 1])
+        for k in range(begin, end):
+            occupied[int(matrix.indices[k]) // width] = True
+
+
+def _has_stored_column(matrix, rows, first, last):
+    """Exact scalar structural test for a recursively split output interval."""
+    for row in rows:
+        begin, end = int(matrix.indptr[int(row)]), int(matrix.indptr[int(row) + 1])
+        for k in range(begin, end):
+            if first <= int(matrix.indices[k]) < last:
+                return True
+    return False
 
 
 def _shift_indptr(source, delta, target):
@@ -104,6 +130,8 @@ class BoundedCompactQAccumulator:
         self.result = None
         self.peak_owned_upper_bytes = 0
         self.tiles_projected = 0
+        self.tiles_skipped_structural = 0
+        self.support_discoveries = 0
         self._admit('empty_result', (self.shape[0] + 1) * self.ibytes)
         self.result = sparse.csr_matrix(self.shape, dtype=np.complex128)
 
@@ -111,7 +139,9 @@ class BoundedCompactQAccumulator:
         resident = 0 if self.result is None else _bytes(self.result)
         upper = resident + int(additional)
         if upper > self.budget:
-            reason = ('minimum projection scratch cannot fit with the current CSR'
+            reason = ('structural support-discovery scratch cannot fit with the current CSR'
+                      if label.startswith('support_discovery/') else
+                      'minimum projection scratch cannot fit with the current CSR'
                       if label.startswith('projection/') else
                       'complete final CSR/merge storage for this exact plan cannot fit; '
                       'it cannot be omitted or truncated')
@@ -155,15 +185,68 @@ class BoundedCompactQAccumulator:
         while width > 1 and (_bytes(self.result) + self._scratch(
                 rows, cols, values, min(width, self.shape[0]), min(width, self.shape[1])) > self.budget):
             width = max(1, width // 2)
-        for first_p in range(0, self.shape[0], width):
+        # Only stored CSR indices can prove a tile empty. Use the same width
+        # as the previous traversal, then release discovery arrays before any
+        # projection, so they cannot change GEMM dimensions or budget-driven
+        # split/merge order. Python tuple storage is outside the named-array
+        # budget and remains subject to the caller's whole-process RSS gate.
+        count_p = (self.shape[0] + width - 1) // width
+        count_q = (self.shape[1] + width - 1) // width
+        support_bytes = (count_p + count_q) * np.dtype(np.bool_).itemsize
+        self._admit('support_discovery/' + str(label), support_bytes,
+                    support_tile_width=width,
+                    support_mask_entries=count_p + count_q,
+                    support_mask_itemsize_bytes=np.dtype(np.bool_).itemsize,
+                    left_CSR_index_itemsize_bytes=left.indices.dtype.itemsize,
+                    left_CSR_indptr_itemsize_bytes=left.indptr.dtype.itemsize,
+                    right_CSR_index_itemsize_bytes=right.indices.dtype.itemsize,
+                    right_CSR_indptr_itemsize_bytes=right.indptr.dtype.itemsize,
+                    support_uses_stored_indices_including_explicit_zeros=True,
+                    support_masks_released_before_projection=True,
+                    support_Python_tuples_in_whole_RSS_not_named_array_budget=True)
+        occupied_p = np.zeros(count_p, dtype=np.bool_)
+        occupied_q = np.zeros(count_q, dtype=np.bool_)
+        _mark_stored_tiles(left, rows, width, occupied_p)
+        _mark_stored_tiles(right, cols, width, occupied_q)
+        self.support_discoveries += 1
+        if not any(occupied_p) or not any(occupied_q):
+            del occupied_p, occupied_q
+            self.tiles_skipped_structural += count_p * count_q
+            return
+        # Reserve a conservative Python tuple/generator allowance separately
+        # in the whole-RSS callback before tuple construction. Named arrays
+        # are still the two masks; recounting live masks is conservative for
+        # the fresh-RSS allowance. Python/native allocator overhead is not a
+        # hard bound, so the independent process-tree watchdog remains needed.
+        tuple_workspace = ((count_p + count_q)
+                           * (sys.getsizeof(max(self.shape)) + 3 * np.dtype(np.intp).itemsize)
+                           + 2 * (sys.getsizeof(()) + 1024))
+        self._admit('support_schedule/' + str(label), support_bytes,
+                    workspace=tuple_workspace,
+                    support_Python_tuple_workspace_allowance_bytes=tuple_workspace,
+                    fresh_RSS_allowance_conservatively_recounts_current_support_masks=True)
+        starts_p = tuple(i * width for i, used in enumerate(occupied_p) if used)
+        starts_q = tuple(i * width for i, used in enumerate(occupied_q) if used)
+        del occupied_p, occupied_q
+        self.tiles_skipped_structural += count_p * count_q - len(starts_p) * len(starts_q)
+        for first_p in starts_p:
             last_p = min(first_p + width, self.shape[0])
-            for first_q in range(0, self.shape[1], width):
+            for first_q in starts_q:
                 last_q = min(first_q + width, self.shape[1])
                 self._project_tile(left, right, rows, cols, values, label,
-                                   first_p, last_p, first_q, last_q)
+                                   first_p, last_p, first_q, last_q,
+                                   structural_support_checked=True)
 
     def _project_tile(self, left, right, rows, cols, values, label,
-                      first_p, last_p, first_q, last_q):
+                      first_p, last_p, first_q, last_q,
+                      structural_support_checked=False):
+        # Recursion may bisect an occupied parent into empty children. Check
+        # stored support again without scratch; no value-dependent skipping.
+        if not structural_support_checked and (
+                not _has_stored_column(left, rows, first_p, last_p)
+                or not _has_stored_column(right, cols, first_q, last_q)):
+            self.tiles_skipped_structural += 1
+            return
         a, b = last_p - first_p, last_q - first_q
         scratch = self._scratch(rows, cols, values, a, b)
         if _bytes(self.result) + scratch > self.budget and max(a, b) > 1:
@@ -275,7 +358,9 @@ class BoundedCompactQAccumulator:
         """Validate canonical CSR without vector-sized temporary masks."""
         audit_csr_scalar(self.result, index_dtype=self.index_dtype)
         self._admit('complete', 0, exact_final_CSR_bytes=_bytes(self.result),
-                    tiles_projected=self.tiles_projected)
+                    tiles_projected=self.tiles_projected,
+                    tiles_skipped_structural=self.tiles_skipped_structural,
+                    support_discoveries=self.support_discoveries)
         return self.result
 
 

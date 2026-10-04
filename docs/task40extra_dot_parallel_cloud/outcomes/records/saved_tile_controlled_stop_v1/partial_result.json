@@ -1,0 +1,258 @@
+{
+  "status": "PERFORMANCE_CONTROLLED_STOP_NOT_FULLY_QUALIFIED",
+  "source_head": "c81e286bdf5cf9c78620854df2fb814cbf41e67a",
+  "worker_dataset_source": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+  "elapsed_seconds": 601.272085867,
+  "RSS_peak_bytes": 337399808,
+  "swap": 0,
+  "descendants_cleared": true,
+  "completed_pairs": [
+    {
+      "CSR_payload_bytes": 8727780,
+      "CSR_sha256": "a2bc9db900469dde4f8168522f568b30a211bdf00e787e6df46af7bc7b5add02",
+      "buffer_dtypes": [
+        "int32",
+        "int32",
+        "complex128"
+      ],
+      "checks": [
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 436012,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "Frobenius",
+          "operation_scale": 56452.64981885058,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 436012,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "maximum_entry",
+          "operation_scale": 6299.882969692353,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        }
+      ],
+      "implementation": "new",
+      "kind": "complete_pair_compared",
+      "nnz": 436012,
+      "ordered_recipe_labels_sha256": "26e4c63d7c8213564325d381a9991042ca5b87f8b4763617bcb01a74ed86c491",
+      "owned_budget_bytes": 134217728,
+      "owned_diagonal_reservation_bytes": 3648,
+      "p": 0,
+      "passed": true,
+      "peak_projection_owned_upper_bytes": 26374924,
+      "q": 0,
+      "recipe_count": 509,
+      "saved_target": {
+        "CSR_payload_bytes": 8727780,
+        "CSR_sha256": "a2bc9db900469dde4f8168522f568b30a211bdf00e787e6df46af7bc7b5add02",
+        "buffer_dtypes": [
+          "int32",
+          "int32",
+          "complex128"
+        ],
+        "nnz": 436012,
+        "shape": [
+          1884,
+          1884
+        ]
+      },
+      "shape": [
+        1884,
+        1884
+      ],
+      "support_discoveries": 509,
+      "tiles_projected": 2255,
+      "tiles_skipped_structural": 112270,
+      "twist": 0
+    },
+    {
+      "CSR_payload_bytes": 8865060,
+      "CSR_sha256": "39129699f18d948d4693fb99304f21fc2a5c672e3aeac8120cae653bc235a5d5",
+      "buffer_dtypes": [
+        "int32",
+        "int32",
+        "complex128"
+      ],
+      "checks": [
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 442876,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "Frobenius_diagonal0",
+          "operation_scale": 56452.64981885058,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 442876,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "Frobenius_diagonal1",
+          "operation_scale": 176251.3022119294,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 442876,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "maximum_entry_diagonal0",
+          "operation_scale": 56452.64981885058,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 442876,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "maximum_entry_diagonal1",
+          "operation_scale": 176251.3022119294,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        }
+      ],
+      "implementation": "new",
+      "kind": "complete_pair_compared",
+      "nnz": 442876,
+      "ordered_recipe_labels_sha256": "26e4c63d7c8213564325d381a9991042ca5b87f8b4763617bcb01a74ed86c491",
+      "owned_budget_bytes": 134217728,
+      "owned_diagonal_reservation_bytes": 3648,
+      "p": 0,
+      "passed": true,
+      "peak_projection_owned_upper_bytes": 26786764,
+      "q": 2,
+      "recipe_count": 509,
+      "saved_target": {
+        "CSR_payload_bytes": 8865060,
+        "CSR_sha256": "39129699f18d948d4693fb99304f21fc2a5c672e3aeac8120cae653bc235a5d5",
+        "buffer_dtypes": [
+          "int32",
+          "int32",
+          "complex128"
+        ],
+        "nnz": 442876,
+        "shape": [
+          1884,
+          1960
+        ]
+      },
+      "shape": [
+        1884,
+        1960
+      ],
+      "support_discoveries": 509,
+      "tiles_projected": 2878,
+      "tiles_skipped_structural": 119282,
+      "twist": 0
+    },
+    {
+      "CSR_payload_bytes": 8873564,
+      "CSR_sha256": "eda83202f547e6b1df7509a3c1b580747446c0151ceaf5e7a4e560dc81f4b2f7",
+      "buffer_dtypes": [
+        "int32",
+        "int32",
+        "complex128"
+      ],
+      "checks": [
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 443286,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "Frobenius_diagonal0",
+          "operation_scale": 56452.64981885058,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 443286,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "Frobenius_diagonal1",
+          "operation_scale": 176251.3022119294,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 443286,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "maximum_entry_diagonal0",
+          "operation_scale": 56452.64981885058,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        },
+        {
+          "all_entries_checked": true,
+          "compared_union_entries": 443286,
+          "error_norm": 0.0,
+          "limit": 1e-11,
+          "name": "maximum_entry_diagonal1",
+          "operation_scale": 176251.3022119294,
+          "passed": true,
+          "relative": 0.0,
+          "zero_scale_rule": "error_must_be_exactly_zero"
+        }
+      ],
+      "implementation": "new",
+      "kind": "complete_pair_compared",
+      "nnz": 443286,
+      "ordered_recipe_labels_sha256": "26e4c63d7c8213564325d381a9991042ca5b87f8b4763617bcb01a74ed86c491",
+      "owned_budget_bytes": 134217728,
+      "owned_diagonal_reservation_bytes": 3648,
+      "p": 2,
+      "passed": true,
+      "peak_projection_owned_upper_bytes": 26705780,
+      "q": 0,
+      "recipe_count": 509,
+      "saved_target": {
+        "CSR_payload_bytes": 8873564,
+        "CSR_sha256": "eda83202f547e6b1df7509a3c1b580747446c0151ceaf5e7a4e560dc81f4b2f7",
+        "buffer_dtypes": [
+          "int32",
+          "int32",
+          "complex128"
+        ],
+        "nnz": 443286,
+        "shape": [
+          1960,
+          1884
+        ]
+      },
+      "shape": [
+        1960,
+        1884
+      ],
+      "support_discoveries": 509,
+      "tiles_projected": 2878,
+      "tiles_skipped_structural": 119282,
+      "twist": 0
+    }
+  ],
+  "all8_completed": false,
+  "matched_subset_completed": false,
+  "full_optimization_qualified": false,
+  "no_automatic_retry": true,
+  "actual_scope": "savedonly/noFE/JIT/factor/PDE"
+}
