@@ -664,7 +664,71 @@
     "B_normal_and_replay_lifecycles_max": 6,
     "formal_repair_rounds_max": 2
   },
-  "publication_render": "PENDING_ACTUAL_GITHUB_VIEW; separate immutable render receipt will record final scope",
+  "publication_render": {
+    "status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
+    "observed_utc": "2026-10-04T01:24:44.473698+00:00",
+    "report_commit": "65966f1f4fe9f199ba4d1b4099d6b986ac405d5a",
+    "report": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+      "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4"
+    },
+    "url": "https://github.com/Rookie1234567/MyFEniCS/blob/65966f1f4fe9f199ba4d1b4099d6b986ac405d5a/docs/task042extra_feinn_5nm/review_report_v19.md",
+    "scope": "Model inspected all ten captured images: title/goal, seven complete tables including all right columns, and both mathematical displays. Not a claim of every prose line inspected in browser.",
+    "table_count": 7,
+    "math_count": 2,
+    "horizontal_overflow": false,
+    "render_records": {
+      "path": "tmp/task42extra/render/review_v19_published/render_records.json",
+      "sha256": "b5677e63f9dcde2f4c5cca3bfaf82537627c27aa6985d2ec3deb21cdcc264bca"
+    },
+    "screenshots": [
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_top.png",
+        "sha256": "9028ffde69b1307735ae7d4ccfb85b9d67d8a3810a6bf773c27db31911055cba"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_00.png",
+        "sha256": "6e1d49ee5920bbde01442da45367b67f5902fc2f6ca5ef25d280cadbbaa7f797"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_01.png",
+        "sha256": "e2b040cc0b10a3c290d104e440222406b079a5f6fbd84323bb89604c0bcc4372"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_02.png",
+        "sha256": "b44b0d706ce47692eb104af8edd30f6e037512eb57907e2206feae6ffe9b64df"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_03.png",
+        "sha256": "1a20c34f174800d1ce070aeae0eb80cc4977c7ff967a7a9a2d04fddb1efbe58d"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_04.png",
+        "sha256": "90e5a8fb89ef579cfdc81825248f52408907b2e1e632c3ae1a0800136487a6ee"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_05.png",
+        "sha256": "ac7547e9f5afe4a5dc7b4564cc4bb86c0f00135957c20127aed0bd3234bb96f8"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_table_06.png",
+        "sha256": "c6279f9e217346b5f60d3df617e6b8a022d4db3ae58cc6f7ce2cf8af7e474dc3"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_math-renderer_00.png",
+        "sha256": "0cb6c9b23e1f45b73b0e8b5e368e6697de624bce564e341160d908c8340d9c76"
+      },
+      {
+        "path": "tmp/task42extra/render/review_v19_published/00_math-renderer_01.png",
+        "sha256": "5d810602ebee88ce7c9cf1316f16689ecf87d7694002c838d02956f6d9c24bb1"
+      }
+    ],
+    "prior_executor_visual_nonrun_preserved": true,
+    "immutable_receipt": {
+      "path": "tmp/task42extra/review_v19_publication_render_receipt.json",
+      "sha256": "c7b1d7fc548b98f99060474821db241e2adf5808c65e50ccfbe236c3af062a31"
+    }
+  },
   "preserved_review_check_failure": {
     "reason": "Remote refs advanced before publication; first checker rejected stale frozen-head assertion before any inventory or numerical work",
     "script": {
@@ -687,7 +751,13 @@
   },
   "new_FE_tests": "NOT_RUN_NOT_NEEDED_FOR_REVIEW_ONLY_CHANGE",
   "new_CI_claim": false,
-  "reviewer_cost_scope": "This pure-check elapsed and separate scalar/browser workers are not a measured complete review or project wall; historical unknown tails retained",
+  "reviewer_cost_scope": {
+    "scope": "Listed stages are nested worker observations, not complete review wall or project expense.",
+    "full_review_reading_editing_git_wall_seconds": null,
+    "classification": "UNKNOWN_UNTIMED_PARENT_READING_AND_PUBLICATION",
+    "all_old_costs_and_failures_retained": true,
+    "final_seal_summary": "Saved separately after this worker returns; no fake self-finalization timer"
+  },
   "worker": {
     "interpreter": "/home/fenics/Projects/NN-Lab-V2/.venv/bin/python",
     "affinity": [
@@ -708,5 +778,64 @@
     "parsed_tables": 7,
     "math_fences": 2,
     "links": 10
-  }
+  },
+  "reviewer_stages_before_final_seal": [
+    {
+      "name": "review_v19_phase_precheck_20261004T005436235297Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v19_phase_precheck_20261004T005436235297Z/summary.json",
+        "sha256": "db3259a92230e9370dee7b9dd356e0b5c058bb89f431c94eb76a6e05455aebb3"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 3.060215769917704,
+      "sampled_process_tree_rss_peak_bytes": 96227328,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "review_v19_evidence_20261004T011510436312Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v19_evidence_20261004T011510436312Z/summary.json",
+        "sha256": "5d70dccd9989c50c3df636e9d4eeb87fd392eb27d39052c24fb52088acb0d429"
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.552005251054652,
+      "sampled_process_tree_rss_peak_bytes": 37945344,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "review_v19_evidence_refreshed_20261004T012056729656Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v19_evidence_refreshed_20261004T012056729656Z/summary.json",
+        "sha256": "c69246b52c2e947bac4cb60e36cd717f049f48c20300b5f9882065efc8ccb99a"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.0550209829816595,
+      "sampled_process_tree_rss_peak_bytes": 70717440,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    },
+    {
+      "name": "review_v19_github_render_20261004T012210142585Z",
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v19_github_render_20261004T012210142585Z/summary.json",
+        "sha256": "706ce1b15e4868eeb0d04771411fb31f48ebf4fc60eff4dc1601c9caad13ca5f"
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 21.16222070402,
+      "sampled_process_tree_rss_peak_bytes": 1738883072,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true
+    }
+  ],
+  "publication_seal_script": {
+    "path": "tmp/task42extra/review_v19_publication_seal.py",
+    "sha256": "d1f1e503f58c202cda6f64458fb69e36e7a3ba415420eb7d1b6f6811ba42a6e4"
+  },
+  "sealed_utc": "2026-10-04T01:24:44.497089+00:00"
 }
