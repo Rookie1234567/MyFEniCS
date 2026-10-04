@@ -98,7 +98,38 @@ def deploy(folder):
         raise ValueError("frozen consumer owner directory requires actual MPI2")
     checked, _ = stage("CHECK")
     if not checked["volume_action_passed"] or not checked["recovery"]["passed"]:
-        raise ValueError("untrusted finite action/recovery cannot be deployed")
+        # The numerical stop is not a software exception or a new permission request.
+        # MPI2/4 have already consumed the immutable A/B objects in separate
+        # processes. Preserve those exact runs, but do not replay or promote
+        # recovery after its independent CSR balance fails the original gate.
+        consumers = []
+        for name in ("VOLUME1", "VOLUME2", "VOLUME4", "RECOVERY2", "RECOVERY4"):
+            result, path = stage(name)
+            consumers.append(
+                {
+                    "stage": name,
+                    "source": result["source_sha"],
+                    "path": str(path),
+                    "sha256": sha(path),
+                    "MPI_size": result["MPI_size"],
+                    "status": result["status"],
+                }
+            )
+        return {
+            "status": "PARTIAL_INTERFACES_FROZEN_AFTER_NUMERICAL_GATE",
+            "passed": False,
+            "already_measured_consumers": consumers,
+            "volume_action_passed": checked["volume_action_passed"],
+            "B_original_CSR_internal_balance_passed": checked["recovery"]["passed"],
+            "original": "NativeDistributedAction.apply_original / SavedRecoveryConsumer.apply_original",
+            "adjoint": "apply_original_adjoint / apply_original(adjoint=True)",
+            "finite_recover": "SavedRecoveryConsumer.recover(z, full_rhs); NOT_QUALIFIED after independent balance",
+            "residual": "original r_FE-C*r_port; retained nonzero affine particular solution",
+            "new_action_calls": 0,
+            "new_LU": 0,
+            "target_callable": False,
+            "new_deploy_replay": "NOT_RUN_AFTER_TRUE_NUMERICAL_STOP",
+        }
     e = element()
     arow, apath = stage("VOLUME2")
     ap = arow["packets"][comm.rank]
@@ -149,7 +180,7 @@ def deploy(folder):
         "owned_cells": int(saved_bridge["owned_cells"][0]),
         "producer_owner": saved_bridge["producer_row_owners"],
         "transfer": [
-                native_transfer(e, producer_codes[c], p)
+            native_transfer(e, producer_codes[c], p)
             for c, p in zip(cells, perms, strict=True)
         ],
         "native_transforms": [cell_transform(e, p) for p in perms],
@@ -287,7 +318,7 @@ def capacity():
             "h/p/mode accuracy",
             "full original residual and fields/power",
         ],
-        "next_minimum_proposal_only": "one frozen neural-trace to canonical-entity/original-residual/adjoint-gradient integration on the qualified finite B packet, with same-correctness non-neural cost control; no automatic training",
+        "next_minimum_proposal_only": "one frozen neural-trace to canonical-entity/original-residual/adjoint-gradient integration on the trusted finite action interfaces, with the unresolved recovery gate explicit and same-correctness non-neural cost control; no automatic training",
         "reasons_not_run": gate["reasons"],
         "old_costs": "retain supervised lower bound and unmetered unknown",
     }
