@@ -174,6 +174,15 @@ def topology_packet(msh, axes, phases, *, block=4096):
             ("phase", phase),
         ):
             out[f"entity{d}_{name}"] = np.asarray(a)
+        # This is the topology IndexMap's actual vertex numbering, distinct
+        # from geometry.input_global_indices exported as vertex_ids above.
+        vertices = np.asarray(t.connectivity(d, 0).array, np.int32).reshape(n, nv)
+        out[f"entity{d}_topology_vertex_global_ids"] = (
+            t.index_map(0)
+            .local_to_global(vertices.ravel())
+            .reshape(n, nv)
+            .astype(np.int64)
+        )
         sizes[str(d)] = {
             "owned": int(imap.size_local),
             "ghost": int(imap.num_ghosts),
@@ -222,6 +231,10 @@ def topology_packet(msh, axes, phases, *, block=4096):
         "producer_numbering": "ACTUAL_NATIVE_MESH_ENTITY_GLOBAL_IDS",
         "consumer_numbering": "STRUCTURED_CANONICAL_ENTITY_AND_MOMENT_PREFIX_PROTOCOL",
         "full_target_p6_native_ids": "NOT_CONSTRUCTED",
+        "vertex_identity": {
+            "vertex_ids": "actual geometry.input_global_indices in transformed geometry order",
+            "topology_vertex_global_ids": "actual topology vertex IndexMap global IDs in connectivity order",
+        },
     }
 
 

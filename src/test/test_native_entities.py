@@ -214,6 +214,84 @@ def test_native_p6_actual_T_apply_requires_flat_contiguous_channels():
     assert np.array_equal(value, original)
 
 
+@pytest.mark.parametrize(
+    "fault", ["none", "phase", "owner", "missing_face", "missing_rank"]
+)
+def test_literal_owner_checker_end_to_end_inventory_faults(tmp_path, fault):
+    from benchmarks.check_native_entities import check_packets
+    from src.solvers.port_component_study import array_file
+
+    arrays = {}
+    sizes = {}
+    for dimension in (1, 2):
+        keys = []
+        for axis in range(3):
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        low = [i, j, k]
+                        if (dimension == 1 and low[axis] != 0) or (
+                            dimension == 2
+                            and any(low[a] != 0 for a in range(3) if a != axis)
+                        ):
+                            continue
+                        keys.append([dimension, axis, *low])
+        keys = np.array(keys, np.int64)
+        master, phase = periodic_master(keys, (1, 1, 1), (np.exp(0.3j), np.exp(-0.2j)))
+        lookup = {tuple(key): i for i, key in enumerate(keys)}
+        gid = np.arange(len(keys), dtype=np.int64)
+        ids = np.array([lookup[tuple(key)] for key in master], np.int64)
+        sizes[str(dimension)] = {"owned": len(keys), "ghost": 0, "global": len(keys)}
+        for name, value in (
+            ("keys", keys),
+            ("native_ids", gid),
+            ("owners", np.zeros(len(keys), np.int32)),
+            ("master_keys", master),
+            ("master_ids", ids),
+            ("master_owners", np.zeros(len(keys), np.int32)),
+            ("phase", phase),
+        ):
+            arrays[f"entity{dimension}_" + name] = value
+    if fault == "phase":
+        arrays["entity1_phase"][1] *= np.exp(0.1j)
+    if fault == "owner":
+        arrays["entity2_master_owners"][0] = 1
+    if fault == "missing_face":
+        arrays["entity2_keys"] = arrays["entity2_keys"][:-1]
+    arrays.update(
+        cell_native_ids=np.array([0], np.int64),
+        cell_tags=np.array([1], np.int32),
+        cell_raw_class_local=np.array([0], np.int32),
+        coordinates=np.array(
+            [[i, j, k] for k in (0.0, 1.0) for j in (0.0, 1.0) for i in (0.0, 1.0)],
+            np.float64,
+        ),
+        cell_vertices=np.array([list(range(8))], np.int32),
+        boundary_facets=np.arange(6, dtype=np.int32),
+    )
+    sizes["3"] = {"owned": 1, "ghost": 0, "global": 1}
+    receipt = array_file(tmp_path / "literal.npz", **arrays)
+    record = {
+        "rank": 0,
+        "MPI_size": 1,
+        "commit": True,
+        "numeric": receipt,
+        "metadata": {
+            "entity_sizes": sizes,
+            "raw_classes": [
+                {"tag": 1, "width_hex": [float(1).hex()] * 3, "count": 1, "index": 0}
+            ],
+            "axis_cells": [1, 1, 1],
+            "phases": [[np.cos(0.3), np.sin(0.3)], [np.cos(-0.2), np.sin(-0.2)]],
+        },
+    }
+    if fault in ("owner", "missing_face", "missing_rank"):
+        with pytest.raises(ValueError):
+            check_packets([] if fault == "missing_rank" else [record])
+    else:
+        assert check_packets([record])["passed"] == (fault == "none")
+
+
 def test_short_deadline_clears_only_own_descendant_tree(tmp_path):
     import subprocess
     import sys
