@@ -1,6 +1,25 @@
 # 原生迁移与容量任务：本轮执行结果
 
-## Review V6 F5 终态：5 nm完整场主审通过（2026-10-03）
+## Review V6 当前状态：F5通过、P2限域pilot验收、R48容量目标未建立（2026-10-04）
+
+P2在2 nm硅模型上完成预先限定的16步计算，主审按28项检查接受其“范围内完成”记录。它没有收敛、没有通过完整求解器残差门，也没有运行official R/T/A或物理checker；因此状态为 `NOT_SOLVER_QUALIFICATION`。16步是计划停止点，不是收敛证据，不从残差外推总步数，也不续跑。
+
+| 模型与身份 | measured 数值 / 阶段 | 资源与资格 | evidence |
+|---|---|---|---|
+| 2 nm Si，p6/h1.5 q4；54332 cells、3904 modes；run `20261002T194532.418927Z` | source `584d6e406e6e1ed552fff4fd311b51549c984825`；input `bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12`；physical `fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef`；resolved `cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532`；mode `4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364` | exit0、16/16 planned steps、final original A6 `0.35320202729663724`；process-tree RSS peak `1150080622592 B`，tree swap0；全球 pswpin +24 pages/pswpout +0，归因unknown；332532/332532 samples readable，descendants cleared | [P2 terminal compact](records/v6_2nm_16step_pilot.json)；主审receipt `tmp/review_v6_components/p2_main_terminal_acceptance_20261004_v2.json` SHA `16af3bb771f74e743a45e396adf4f15f24cf1f97a850de04254d80882b8a6554` |
+| 同一P2中的准确p4粗修正 | 34/34 logical returns通过完整原A4；最大 `9.0156139e-11`；1 symbolic/1 numeric/49 MatSolve；每次最多1、总计15次额外同因子精化，策略上限每次2 | QA和16步复用同一准确因子。凝聚增广矩阵4,586,288行；输入矩阵stored NNZ `2,070,391,064`（owned-row `getRow`条目），不是MUMPS因子fill NNZ或因子内存。原始backend INFOG[22]记为916713 MB；字节换算与因子NNZ解码unknown | [P2 compact](records/v6_2nm_16step_pilot.json)；实际记录为run根的`physical_intermediate_summary.json`，SHA `b058c56f0f20c90b3d1722962e26245b3448d55af5099fe73a69ff3b24aeae3a` |
+| backend 容量字段的条件情景 | P2 `INFOG[22]=916713 MB`；以916.713 GB作表示，若候选值仅按cell数线性缩放则为约23.621 TB | 原始MUMPS字段单列；MB到B换算、真实factor-fill NNZ均unknown。线性乘数情景不是实测、下界、预测或R48容量资格 | [P2 compact](records/v6_2nm_16step_pilot.json)、[R48 capacity record](records/v6_0p7nm_48h_capacity_plan.json) |
+| P2时间边界 | workflow `111741.070836 s`；workflow起点到solve开始 `84346.877104 s`；same-object setup检查完成 `84346.872505 s`，相差4.6 ms；MUMPS numeric API `57870.129416 s`墙钟 / `57851.993158 s`进程CPU | 旧的`44111.673835 s`为不同包围区间，不作LU提速比较。末PC的C父计时`1051.014 s`，其中MatSolve `640.645 s`、A4 parent `156.550 s`，不能将整个C叫作LU | [P2 compact](records/v6_2nm_16step_pilot.json)；资源摘要仅来自一次流式审计，原3.38 GB日志未再次扫描 |
+| 0.7 nm R48元数据候选 | planner轴计数`100×50×280=1,400,000 cells`；完整external inventory `32,060 modes`（每侧16,030）；7个材料平面与目标间距对齐 | 仅stage4轴planner及生产动态mode inventory。没有创建FE网格、全局矩阵、MUMPS因子或PDE；`54332×27`不是实测网格 | [R48 capacity record](records/v6_0p7nm_48h_capacity_plan.json)；完整10,774,375 B inventory留在ignored路径并以SHA绑定 |
+| 周期独立行、保留行与端口 | p6与p4求解空间都对单元内部未知量作静态凝聚，保留周期骨架+端口；完整原A6作用、显式残差和单元恢复仍包含内部场工作。P2运行行数与周期公式控制相符；0.7 nm派生周期独立p6/p4场行`907,560,000/268,960,000`，保留骨架+32060端口行`277,592,060/117,792,060` | 0.7 nm行数来自规则六面体拓扑和Nédélec边/面/单元自由度公式，不是FE离散或容量实测 | [R48 capacity record](records/v6_0p7nm_48h_capacity_plan.json) |
+| 向量与工作集边界 | 按约65个`complex128`数组、每个长度等于p6保留+端口行，0.7 nm载荷情景为`288695742400 B`；一个32060×32060复数稠密数组为`16445497600 B` | 都是明确条件下的数组载荷算术，不是已分配内存、RSS或完整峰值。P2的108.004/106.341/91.060 GB三项buffer inventory重叠，不能求和；对象id去重不等于底层buffer去重 | [R48 capacity record](records/v6_0p7nm_48h_capacity_plan.json)、[P2 compact](records/v6_2nm_16step_pilot.json) |
+| 48小时目标与下一步 | `TARGET_0P7NM_48H_NOT_ESTABLISHED`；预算示例setup/solve/recovery-output-cleanup为43200/115200/14400 s | 不根据16步残差推断收敛步数或总耗时。没有0.7 nm精度PDE，没有新低内存p4逆试验；R48/Z限于元数据、容量账和文档收口 | [R48 capacity record](records/v6_0p7nm_48h_capacity_plan.json) |
+
+buffer payload、输入矩阵stored NNZ、MUMPS因子内存和同时进程树RSS是不同口径。P2的三项buffer数字有交叠；Hlocal及全局Hp/Hhat可能含mode平方尺寸，但现存证据没有各自shape，故保留unknown。按单元、mode一次项、mode平方项拆分的条件公式见R48 compact；其中示例不是上界、下界或RSS预测。
+
+planner使用P2已验收resolved配置作为基底，只在内存中改 wavelength、h与动态通道策略。候选材料取硅的Henke表行线性插值并按项目约定换算；这只为容量规划提供材料元数据，不是CXRO直接计算，也不是0.7 nm精度或连续体资格。目标48小时仍未建立。
+
+## Review V6 F5 终态：5 nm完整场主审通过（2026-10-03；先于本节P2 pilot）
 
 F5在5 nm硅模型上组装有限元系统、用p6外层迭代求完整场，并用精确凝聚p4 MUMPS因子做修正；检查的是本run完整残差、场、模态和能量，不把较快setup当数值资格。当前正式记录绑定运行时clean source `1828bc675f2862025e0eaed0beccf15982eb09e6`。后续归档文档的提交SHA不替代此运行SHA。
 
@@ -12,7 +31,7 @@ F5在5 nm硅模型上组装有限元系统、用p6外层迭代求完整场，并
 | 时间 | workflow `12534.182499 s`；同单调时钟setup `1696.196008 s`；solve含最终检查 `9952.023125 s`；KSP API `9830.705350 s`，折算121外层步 `81.245499 s/步`；solve折算 `82.248125 s/步`（含检查/输出） | `iterations.jsonl`有125条记录，32/64/96各重复；正式步数仍为121，不能用124个callback求均值。checker `176.390309 s`，physical intermediate summary `12349.965614 s`。阶段定义见下表与compact |
 | 资源与清场 | 整树RSS峰 `38082981888 B`，低于 `1300000000000 B` hard线；任务swap峰0，global pswp增量0；36145条资源样本可读，最大相邻间隔 `0.544715086 s`，末样本距watchdog clock_end `0.068841 s`；4个样本含已消失PID条目；watchdog COMPLETED、后代清场 | 主审按同一资源文件hash单次流式核验，PSS全程关闭；不把4个消失条目写成零，也不把终态后时间增长判作运行中stale。资源原文件不入Git，hash/范围见compact |
 | 与旧V5工程比较 | setup `11263.075601→1696.196008 s`，旧/新比 `6.6402x`；solve `10671.215508→9952.023125 s`，`1.0723x`；workflow `22680.911776→12534.182499 s`，`1.8095x` | 同case非受控工程比较：实现、几何分组、NUMA、PSS和缓存条件不同；不作单因素因果归因，不据此承诺2 nm耗时 |
-| 下一步 | F5 `F5_FULL_REGRESSION_ACCEPTED`；P2候选输入与审阅包已备，尚未启动 | 本机ignored审阅包路径为 `tmp/review_v6_components/p2_setup16_launch_review_20261003.json`；归档提交后刷新到新clean HEAD并以短哈希交主审。启动还须主审核包及fresh现场准入。P2的16步计划终点不是收敛资格，不报告official R/T/A，不自动续跑 |
+| 后续状态 | F5 `F5_FULL_REGRESSION_ACCEPTED`；此后唯一P2 pilot已按包批准并由主审接受限域终态 | P2对应source与归档文档HEAD分列；16步计划停止不是收敛资格，不报告official R/T/A，也不自动续跑。最新结果见本文件顶部P2/R48表 |
 
 | F5阶段 | 相邻marker实测秒 | 计时边界 |
 |---|---:|---|

@@ -1,0 +1,238 @@
+{
+  "schema": "task39extra.v6.r48_capacity_plan.v1",
+  "status": "TARGET_0P7NM_48H_NOT_ESTABLISHED",
+  "evidence_scope": "Metadata planner and complete external-mode inventory only; no formal resolved input, FE mesh, assembled matrix, factor, PDE, accuracy qualification, or memory admission.",
+  "source_and_recipe": {
+    "source_sha": "584d6e406e6e1ed552fff4fd311b51549c984825",
+    "source_was_clean": true,
+    "planner_script": "tmp/review_v6_components/r48_planner_0p7nm.py",
+    "planner_script_sha256": "ac1b27c03e47ad77cf041ff0d6b414578bc0a76c78040b09fa4c58a90c8820a7",
+    "production_planner_module": "src/geometry/mesh_builder_3d.py",
+    "production_planner_module_sha256": "042062a5d405c862b9470365515f25a01b1e50f51b63d4e3cf9faba83a8aa64e",
+    "planner_record": "tmp/review_v6_components/r48_planner_capacity_20261004_v1.json",
+    "planner_record_sha256": "108b788295413b4fca14023d022d7f5b6b8aaad5394c7aca787a0ba6e1447b41",
+    "candidate_recipe_sha256": "5d6a4b1a33c23cc4d83b9186bb657e603a83df7da3d0a522ebabdfb14b3dd0bd",
+    "candidate_recipe": "In-memory overrides from the accepted P2 resolved configuration: wavelength 0.7 nm, target spacing 0.5 nm, boundary-fitted mesh, dynamic propagating-mode inventory, p6/p4 degrees 6/4, MPI size 1.",
+    "p2_control_source_sha": "584d6e406e6e1ed552fff4fd311b51549c984825",
+    "p2_input_sha256": "bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12",
+    "p2_physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "p2_resolved_config_sha256": "cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532"
+  },
+  "planner_and_inventory": {
+    "planner_call": "src.geometry.mesh_builder_3d.stage4_axis_plan(cfg, comm_size=1)",
+    "mode_inventory_call": "src.solvers.fullspace_dtn_action.build_dynamic_mode_inventory(cfg)",
+    "no_mesh_or_FE_or_global_matrix_or_factor_or_PDE_created": true,
+    "axis_cells": [100, 50, 280],
+    "axis_spacing_nm": [0.5, 0.5, 0.5],
+    "cells": 1400000,
+    "required_material_planes": 7,
+    "all_required_material_planes_aligned": true,
+    "mesh_entities_from_planner": {
+      "vertices": 1447431,
+      "edges": 4294430,
+      "faces": 4247000,
+      "boundary_edges": 188000,
+      "boundary_faces": 94000
+    },
+    "candidate_modes": 32060,
+    "modes_per_side": 16030,
+    "propagating_modes_per_side": 16030,
+    "rayleigh_warning_modes": 0,
+    "mode_manifest_sha256": "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb",
+    "complete_external_mode_inventory": {
+      "path_ignored": "tmp/review_v6_components/r48_external_mode_inventory_0p7nm_v1.json",
+      "sha256": "806acae28c8efbe32c11d38ccfe79fc55e84ed2c11e27012fca58f2db105fa74",
+      "bytes": 10774375,
+      "keys": 32060
+    }
+  },
+  "row_formula_and_p2_control": {
+    "status": "derived integer topology formulas cross-checked against accepted P2 runtime row inventories; candidate is not a generated FE space",
+    "periodic_domain_assumption": "Structured hexahedra with x/y Floquet-periodic identification and open z boundaries.",
+    "formulas": {
+      "cells": "C = Nx*Ny*Nz",
+      "unique_periodic_edges": "E = Nx*Ny*(3*Nz + 2)",
+      "unique_periodic_faces": "F = Nx*Ny*(3*Nz + 1)",
+      "p_degree_mesh_skeleton_rows": "S_p = p*E + 2*p*(p-1)*F",
+      "p_degree_cell_interior_rows": "I_p = 3*p*(p-1)^2*C",
+      "periodic_independent_mesh_field_rows": "S_p + I_p",
+      "retained_mesh_rows_plus_ports": "S_p + N_external_modes"
+    },
+    "interpretation": "Periodic MPC identifies duplicate opposite-side edge and face unknowns. Both p6 outer-solve and p4 coarse-factor spaces statically eliminate per-cell interior unknowns and retain periodic skeleton plus port variables. Full original A6 action, explicit residual, and local reconstruction still perform cell-interior work. Port-mode variables are counted separately from mesh-field rows.",
+    "p2_control": {
+      "axes": [34, 17, 94],
+      "cells": 54332,
+      "external_modes": 3904,
+      "periodic_edges_derived": 164152,
+      "periodic_faces_derived": 163574,
+      "p6_skeleton_rows_derived": 10799352,
+      "p6_cell_interior_rows_derived": 24449400,
+      "p6_periodic_independent_mesh_field_rows_derived": 35248752,
+      "p6_retained_mesh_rows_plus_ports_derived_and_runtime_matched": 10803256,
+      "p6_full_rows_pre_MPC_runtime": 35594790,
+      "p4_skeleton_rows_derived": 4582384,
+      "p4_cell_interior_rows_derived": 5867856,
+      "p4_periodic_independent_mesh_field_rows_derived": 10450240,
+      "p4_retained_mesh_rows_plus_ports_derived_and_runtime_matrix_matched": 4586288,
+      "p4_full_rows_pre_MPC_runtime": 10604228,
+      "p4_condensed_augmented_matrix_stored_nnz_runtime": 2070391064,
+      "p4_matrix_nnz_semantics": "owned-row getRow stored entries, not factor fill NNZ",
+      "p4_backend_raw_info": {
+        "field_path": "physical_intermediate_summary.json:retained_runtime.p4_factor.numeric.info",
+        "infog_one_based_entries": {
+          "3": -54415,
+          "9": -54415,
+          "16": 1091654,
+          "17": 1091654,
+          "18": 1091654,
+          "19": 1091654,
+          "20": -54415,
+          "22": 916713,
+          "29": -54415
+        },
+        "rinfog_one_based_entries": {
+          "15": 870640.983552,
+          "17": 879471.61023,
+          "18": 1058655.467209
+        },
+        "infog_22_backend_reported_unit": "MB",
+        "byte_conversion": "unknown",
+        "negative_code_semantics": "-54415 is a raw INFOG code at one-based keys 3, 9, 20, and 29; unit/semantic decoding is unknown and it is not a derived negative NNZ"
+      },
+      "p4_MUMPS_symbolic_numeric_MatSolve_calls": [1, 1, 49],
+      "p4_MUMPS_factor_fill_and_allocated_bytes": "exact factor-fill NNZ decoding and byte conversion remain unknown; raw backend INFOG/RINFOG fields are preserved separately"
+    },
+    "candidate_0p7nm": {
+      "axes": [100, 50, 280],
+      "cells": 1400000,
+      "external_modes": 32060,
+      "periodic_edges_derived": 4210000,
+      "periodic_faces_derived": 4205000,
+      "p6_skeleton_rows_derived": 277560000,
+      "p6_cell_interior_rows_derived": 630000000,
+      "p6_periodic_independent_mesh_field_rows_derived": 907560000,
+      "p6_retained_mesh_rows_plus_ports_derived": 277592060,
+      "p6_full_rows_pre_MPC_planner_formula": 910586580,
+      "p4_skeleton_rows_derived": 117760000,
+      "p4_cell_interior_rows_derived": 151200000,
+      "p4_periodic_independent_mesh_field_rows_derived": 268960000,
+      "p4_retained_mesh_rows_plus_ports_derived": 117792060,
+      "p4_full_rows_pre_MPC_planner_formula": 270305720,
+      "actual_factor_or_matrix_nnz": "not_run"
+    }
+  },
+  "krylov_vector_payload_scenario": {
+    "model": "Assume approximately 65 complex128 arrays for FGMRES32, each sized at the p6 retained mesh-plus-port vector length.",
+    "bytes_per_complex128": 16,
+    "p2_control_arrays_bytes_derived": 11235386240,
+    "p2_control_decimal_GB": 11.23538624,
+    "p2_control_GiB": 10.46376884,
+    "candidate_arrays_bytes_derived": 288695742400,
+    "candidate_decimal_GB": 288.6957424,
+    "candidate_GiB": 268.86886209,
+    "scope_note": "Payload arithmetic for the stated array-count and vector-length assumptions only. It is not observed allocation or RSS and excludes concurrent copies, matrices, preconditioner/factor, allocator, JIT, and process overhead."
+  },
+  "p2_buffer_inventory_and_conditional_scaling": {
+    "p2_unique_cache_bytes": 108004276088,
+    "p2_unique_port_cache_bytes": 106341066752,
+    "p2_local_carrier_cell_payload_bytes": 91060468992,
+    "overlap_rule": "These categories overlap; do not sum them or treat them as RSS. Inventory deduplicates ndarray Python object IDs and nbytes, not shared backing allocations.",
+    "port_arrays_include": "Per-cell Bi/Bt/Di/Dt/Bhat/Dhat/XiB/Hlocal plus global Hp/Hhat.",
+    "unknown_shapes": "No saved component shape breakdown is available. Hlocal and global Hp/Hhat have possible mode-squared dimensions; their exact contribution is unknown.",
+    "ratios": {
+      "candidate_to_p2_cells": 25.767503497018332,
+      "candidate_to_p2_modes": 8.212090163934427,
+      "mode_ratio_squared": 67.43842486058855,
+      "cell_ratio_times_mode_ratio_squared": 1737.7198484286237
+    },
+    "conditional_examples_not_forecasts": {
+      "cell_payload_if_every_byte_were_mode_independent_and_per_cell_constant_bytes": {
+        "formula": "91060468992 * 25.767503497",
+        "bytes": 2346400953191,
+        "interpretation": "Illustrative cell-only scaling assumption; actual cell payload contains port-related arrays, so this is not an upper bound or prediction."
+      },
+      "port_cache_if_every_byte_scaled_linearly_with_mode_count": {
+        "formula": "106341066752 * 8.212090164",
+        "bytes": 873282428296,
+        "interpretation": "Illustrative all-linear mode scenario only; mixed and cell-by-mode terms are unpartitioned."
+      },
+      "port_cache_if_every_byte_scaled_quadratically_with_mode_count": {
+        "formula": "106341066752 * 67.438424861",
+        "bytes": 7171474039750,
+        "interpretation": "Sensitivity extreme only, not an upper bound. Only an unknown subset may be mode-squared; a per-cell mode-squared term would also carry the cell ratio."
+      },
+      "backend_reported_p4_capacity_if_scaled_linearly_with_cells": {
+        "p2_backend_value": "916713 MB as reported by INFOG[22]",
+        "normalized_value_used_for_sensitivity": "916.713 GB",
+        "formula": "916.713 GB * 25.767503497",
+        "derived_value": "23621.405 GB (23.621 TB)",
+        "interpretation": "Conditional linear-per-cell sensitivity only; not a measurement, lower bound, forecast, exact factor NNZ, or capacity qualification."
+      },
+      "mixed_component_model": "B_R48 = 25.768*B_cell_constant + 8.212*B_global_mode_linear + 67.438*B_global_mode_squared + 1737.720*B_cell_mode_squared; component baselines are unknown and these groups must be disjoint before summation.",
+      "one_dense_mode_square_complex128_array": {
+        "formula": "32060 * 32060 * 16",
+        "bytes": 16445497600,
+        "interpretation": "One hypothetical M-by-M complex128 array only; not evidence that a particular Hlocal/Hp/Hhat object has this exact shape or that arrays are independently allocated."
+      },
+      "stored_matrix_nnz_if_p2_nnz_per_cell_were_unchanged": {
+        "formula": "2070391064 * 24 * 25.767503497",
+        "assumption": "P2 stored input-matrix NNZ per cell stays unchanged; 24 bytes per entry is complex128 value plus int64 index, excluding row pointers and other storage.",
+        "derived_candidate_NNZ": 53348808982,
+        "derived_value_plus_index_bytes": 1280371415564,
+        "interpretation": "Conditional arithmetic only; not a lower bound, stored candidate matrix, factor estimate, or memory prediction."
+      }
+    }
+  },
+  "resource_and_factor_boundary": {
+    "p2_measured_process_tree_RSS_peak_bytes": 1150080622592,
+    "p2_RSS_hard_limit_bytes": 1300000000000,
+    "p2_task_swap_peak_bytes": 0,
+    "p2_global_pswpin_pages_delta": 24,
+    "p2_global_pswpout_pages_delta": 0,
+    "global_swap_attribution": "unknown",
+    "0p7_actual_process_RSS": "not_run",
+    "0p7_symbolic_numeric_factorization": "not_run",
+    "0p7_factor_fill_or_MUMPS_memory": "unknown; no matrix or symbolic phase was created",
+    "0p7_runtime_prediction": "not_established",
+    "storage_terms_rule": "MUMPS factor storage, input matrix stored NNZ, ndarray payload arithmetic, and process-tree RSS are separate quantities and must not be added or substituted."
+  },
+  "material_metadata": {
+    "wavelength_nm": 0.7,
+    "energy_eV_derived": 1771.2028347600037,
+    "density_g_cm3": 2.33,
+    "Henke_bracket_eV": [1756.82, 1785.24],
+    "interpolated_f1": 10.462828075875802,
+    "interpolated_f2": 0.3939509544035157,
+    "delta_derived": 0.00011487400308289077,
+    "beta_derived": 4.325285938225562e-06,
+    "project_convention_refractive_index": [0.9998851259969171, 4.325285938225562e-06],
+    "source_prep_sha256": "3e947de11141efbba8b0df1ece4d75f56c72075d060cc2b457cf21be1400d884",
+    "scope_note": "Linear interpolation of elemental Si optical-constant table rows and project conversion convention; not a direct CXRO calculator output or an accuracy qualification. Both rows are below the Si K edge near 1839 eV.",
+    "sources": [
+      "https://henke.lbl.gov/optical_constants/sf/si.nff",
+      "https://physics.nist.gov/PhysRefData/XrayMassCoef/tab1.html",
+      "https://physics.nist.gov/PhysRefData/Handbook/Tables/silicontable1.htm",
+      "https://physics.nist.gov/cuu/Constants/Table/allascii.txt",
+      "https://xdb.lbl.gov/xdb.pdf"
+    ]
+  },
+  "48_hour_budget": {
+    "target_seconds": 172800,
+    "setup_budget_seconds": 43200,
+    "solve_budget_seconds": 115200,
+    "recovery_check_output_cleanup_budget_seconds": 14400,
+    "required_mean_full_step_if_256_steps_seconds": 450,
+    "required_mean_full_step_if_512_steps_seconds": 225,
+    "required_mean_full_step_if_1024_steps_seconds": 112.5,
+    "iteration_count_or_convergence_time": "unknown; not extrapolated from the 16-step pilot residual",
+    "status": "TARGET_0P7NM_48H_NOT_ESTABLISHED"
+  },
+  "prohibited_or_not_performed": {
+    "0p7nm_precision_PDE": "not_run",
+    "FE_mesh_creation": "not_run",
+    "global_matrix_assembly": "not_run",
+    "MUMPS_factorization": "not_run",
+    "low_memory_p4_inverse_new_experiments": 0,
+    "P2_continuation_after_iteration16": "not_run"
+  }
+}

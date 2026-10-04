@@ -302,9 +302,43 @@
       "workflow_seconds": 12534.182499101968,
       "main_review_sha256": "b06c8044736c06b6db00bd792f83e1b075493d8e8869ac3813b6b500212cabd3",
       "resource_audit_sha256": "1866be1343fc97cec4c920d05a33743ed20c71ae9bd8c0e79fcaf1b6b1ee4a53"
+    },
+    {
+      "stage": "P2_V6_PILOT16",
+      "attempt": 1,
+      "run_id": "20261002T194532.418927Z",
+      "record": "v6_2nm_16step_pilot.json",
+      "status": "SCOPED_COMPLETION_ACCEPTED_NOT_SOLVER_QUALIFICATION",
+      "source_sha": "584d6e406e6e1ed552fff4fd311b51549c984825",
+      "input_sha256": "bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12",
+      "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+      "resolved_config_sha256": "cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532",
+      "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+      "cells": 54332,
+      "modes": 3904,
+      "iterations": 16,
+      "original_A6_iteration16": 0.35320202729663724,
+      "p4_symbolic_numeric_MatSolve": [1, 1, 49],
+      "tree_rss_peak_bytes": 1150080622592,
+      "tree_swap_peak_bytes": 0,
+      "workflow_seconds": 111741.07083616301,
+      "main_review_sha256": "16af3bb771f74e743a45e396adf4f15f24cf1f97a850de04254d80882b8a6554",
+      "resource_log_sha256": "8339e5fba652460381e3bc30c3cc1277a3d97c91e59a28ff5d159dfe21b0d35a",
+      "official_rta": "NOT_RUN"
+    },
+    {
+      "stage": "R48_METADATA_PLANNER",
+      "attempt": 1,
+      "record": "v6_0p7nm_48h_capacity_plan.json",
+      "status": "TARGET_0P7NM_48H_NOT_ESTABLISHED",
+      "source_sha": "584d6e406e6e1ed552fff4fd311b51549c984825",
+      "candidate_recipe_sha256": "5d6a4b1a33c23cc4d83b9186bb657e603a83df7da3d0a522ebabdfb14b3dd0bd",
+      "cells_from_axis_planner": 1400000,
+      "modes_from_dynamic_inventory": 32060,
+      "FE_mesh_matrix_factor_PDE": "NOT_CREATED"
     }
   ],
   "R2_S5_S3_S2_G": "R2_UNRESOLVED_5NM_OWN_PASS_REFERENCE_LIMITED_RESOURCE_UNQUALIFIED_2NM_H1P5_TERMINAL_GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED_3NM_LOCKED",
   "R13": "R13_PAIR_RELEASED_WITH_SOURCE_FULL_FIELD_AUTHORITY_LIMITED_BUSY_MHZ_UNKNOWN",
-  "next_gate": "P2_FIXED_SETUP16_PACKAGE_MAIN_REVIEW_AND_FRESH_ADMISSION_REQUIRED; no launch before main review of updated clean source package"
+  "next_gate": "Z_DOCS_CLOSEOUT_MAIN_REVIEW; no further FE/PDE/factor run or 0.7nm qualification was started in Review V6"
 }

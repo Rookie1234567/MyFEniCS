@@ -18,6 +18,10 @@
 
 当前窄 WIP 的 Ruff baseline 对照为 HEAD 40 项、当前 40 项、新增 0；受影响文件 py_compile 与 git diff --check 通过。该结果不表示全仓 Ruff 通过。
 
+## Review V6：P2终态与R48/Z文档收口（2026-10-04）
+
+本次仅归档既有P2主审接受结果，并整理R48纯metadata planner、完整external-mode inventory和条件容量账；求解器源码、输入、运行参数均未改动。没有重跑FE、矩阵、factor、PDE、性能或既有H6测试，也没有重扫P2的3.38 GB resources日志。P2资源结果来自已完成的一次流式审计receipt；R48依赖已由主审复核的planner/inventory hashes。新增JSON/Markdown的本地结构、身份、哈希、链接、围栏与表格检查属于文档静态校验，不是数值测试。GitHub richText/表格检查须在实际push后的文档commit执行；在检查前不把它写成PASS，也不声称已人工视觉查看。
+
 ## Review V5：5 nm rounded-tensor representative bounded component
 
 | 检查 | 实际结果 | 范围 / 限制 |

@@ -1631,7 +1631,7 @@ F5在5 nm Si、p6/h4 q4、3780 cells和600个DtN模态上完成完整三维场�
 
 同旧V5 5 nm run的工程比为setup `6.6402x`、solve `1.0723x`、workflow `1.8095x`（旧/新时间比）。这是不同实现、几何分组、NUMA、PSS和缓存条件下的非受控同case比较，不单独归因任何优化，也不据此预测2 nm耗时。正式setup/KSP/solve与C父子计时边界收录在上述compact中；iterations日志125行含32/64/96重复标记，不能当124个正式outer步。
 
-下一项仅准备一次2 nm Si p6/h1.5 q4、54332-cell/3904-mode setup+16步；QA与16步共用一个准确p4 MUMPS因子。当前P2未启动，候选与命令包须先由主审复核并在正式启动前通过fresh资源/CPU/NUMA/ABI准入；16步计划终点不等于收敛，不能输出official R/T/A或自动续跑。
+以上一段的P2准备状态是F5终态当时的快照。之后唯一批准的2 nm setup+16步pilot已经完成并由主审限域接受；最新P2/R48结果见本总账3.44。16步计划终点仍不是收敛，不能输出official R/T/A或自动续跑。
 
 ## task39extra Review V5：5 nm Si p6/h4 q4 F5 完整场
 
@@ -1649,3 +1649,16 @@ F5在5 nm Si、p6/h4 q4、3780 cells和600个DtN模态上完成完整三维场�
 | 2 nm Si、p6/h1.5、q4；54332 cells、3904端口；retained10803256行、p4凝聚增广4586288行/2070391064 NNZ；run `20260924T104936.107285Z`；source `64ca6048ca7e1fd7cc66a9b1b1fb2a858a0bd5aa` | 完成228步Schur9.373049823814199e-5；最近独立原A6在224步9.758316562442362e-5，未到1e-6；第224步解检查点仍在；正式RTA/checker NOT_RUN | workflow666232.838509 s、setup184388.380644 s；整树RSS采样峰1154381864960 B、swap峰8574500864 B；global pswp增量3138800/5146004页，归因未决 | WORKER_FAILED/exit137；内核node1 memory-policy OOM，victim341839、触发分配PID1172428所属任务unknown；RSS未达1.3e12 B；后代清场。[报告](task39extra_para_workstation_capacity/outcomes/f2_terminal_oom_20261002.md)、[compact](task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_compact_v1.json) |
 
 记录冻结于 2026-10-02T04:49:18.771814+00:00 UTC。文档更新不改变运行SHA；不将PC sequence230当228之后已完成的外层步，也不将Schur报告量作为独立原A6。保留历史失败与5 nm成功各自范围；本条无优化、重跑或master合并。
+
+## 3.44 Task39extra_para Review V6：P2限域pilot与R48元数据规划
+
+P2为2 nm Si p6/h1.5 q4、54332 cells、3904 modes，使用干净source `584d6e406e6e1ed552fff4fd311b51549c984825`、input `bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12`、physical `fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef`、resolved `cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532`、mode `4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364`。运行exit0，在计划的16步停止；原A6相对残差`0.35320202729663724`，RTA/checker `NOT_RUN`。主审28/28项接受其范围记录，但未授solver/physics资格。[P2 compact](task39extra_para_workstation_capacity/outcomes/records/v6_2nm_16step_pilot.json)；receipt SHA `16af3bb771f74e743a45e396adf4f15f24cf1f97a850de04254d80882b8a6554`。
+
+| scope / identity | measured or derived result | resource / status | evidence |
+|---|---|---|---|
+| P2 outer pilot | 16步；A6第16步`0.35320202729663724`；34/34 p4返回过完整原A4，最大`9.015613904397618e-11`；symbolic/numeric/MatSolve=`1/1/49`；15次额外精化、单次最多1、策略上限2 | process-tree RSS峰`1150080622592 B`，tree swap0，332532样本全可读、descendants cleared；global pswpin +24页、pswpout +0、归因unknown | `SCOPED_COMPLETION_ACCEPTED_NOT_SOLVER_OR_PHYSICS_QUALIFICATION`；见[P2 compact](task39extra_para_workstation_capacity/outcomes/records/v6_2nm_16step_pilot.json) |
+| R48 metadata planner | 实际轴计数100×50×280=1400000 cells，完整external inventory32060 modes；cell/mode比例25.767503497/8.21209016 | 周期公式得p6/p4保留骨架+ports 277592060/117792060行；65个FGMRES32 complex128数组payload情景288695742400 B | `TARGET_0P7NM_48H_NOT_ESTABLISHED`；没有FE mesh、matrix、factor或0.7 nm PDE；见[R48 capacity plan](task39extra_para_workstation_capacity/outcomes/records/v6_0p7nm_48h_capacity_plan.json) |
+
+P2准确p4凝聚增广矩阵为4,586,288行，输入matrix stored NNZ为2,070,391,064个owned-row `getRow`条目，不能当MUMPS因子fill。backend原始INFOG[22]为916713 MB；一基键16–19均1091654，RINFOG[17]/[18]为879471.61023/1058655.467209；键3/9/20/29的−54415是backend原始编码，语义、单位及MB到byte转换unknown。按cell比例线性乘出的约23.621 TB只是敏感情景，不是实测、下界、预测或容量资格。p6 buffer inventory的unique cache、unique port cache和local-cell payload互相重叠，按ndarray object id而非底层allocation去重；Hlocal及Hp/Hhat可能随mode平方，实际shape unknown。
+
+R48行数由x/y周期Floquet识别后的规则网格拓扑公式派生；P2 p6/p4 periodic independent field rows=35248752/10450240，retained skeleton+ports=10803256/4586288，与run维度核对相符。R48 p6/p4 periodic independent field rows=907560000/268960000，retained skeleton+ports=277592060/117792060。FGMRES32按约65个complex128数组的条件payload为288695742400 B；单个32060×32060 complex128阵列为16445497600 B。都不是RSS。48小时预算示例setup/solve/recovery-output-cleanup为43200/115200/14400秒；假设256/512/1024完整步时，预算的均步solve时间为450/225/112.5秒。P2 16步残差不用于外推总步数；没有0.7 nm精度PDE或新增低内存p4逆实验。

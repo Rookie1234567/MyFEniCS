@@ -2826,7 +2826,7 @@ run `20260918T035017.294454Z`、source `41caf5141493ad6c5d6c518a64ee74fda8d7a7db
 1300GB measured guard 另记 attachment peak=`640141377536 B`，后以 worker RSS unreadable/`monitoring_failed` 停止，触发晚于原 watchdog stop约`0.245228993 s`，不作为最初原因。详见 [终态 compact](task39extra_para_workstation_capacity/outcomes/records/2nm_h1p5_measured_terminal_snapshot_v1.json)；不自动重跑。后续 cgroup v2 swap隔离只作建议，不在本轮修改系统或 Gate。
 
 
-## Task39extra_para Review V6：5 nm F5完整回归通过，准备唯一P2
+## Task39extra_para Review V6：5 nm F5完整回归通过（随后P2限域pilot已验收）
 
 F5在clean source `1828bc675f2862025e0eaed0beccf15982eb09e6` 上完成5 nm Si、p6/h4 q4、3780 cells、600个DtN模态的完整场求解。主审对数值、场、模态、物理量、同对象缓存/释放、244条p4返回和监督/清场共24项全部通过；它资格化的是这一离散模型与运行配置，不是连续体收敛证明。正式记录见 [F5终态compact](task39extra_para_workstation_capacity/outcomes/records/v6_5nm_terminal.json)。
 
@@ -2837,9 +2837,9 @@ F5在clean source `1828bc675f2862025e0eaed0beccf15982eb09e6` 上完成5 nm Si、
 | 生命周期 | workflow `12534.182499 s`，setup同钟 `1696.196008 s`，solve含最终检查 `9952.023125 s`；RSS峰 `38082981888 B`、任务/global swap增量0、36,145资源样本全可读，最大采样间隔 `0.544715086 s` | 最后样本距watchdog终态时钟 `0.068841 s`，descendants清场；4个样本含已消失PID条目，不能写成0个 |
 | 计时解释 | KSP API `9830.705350 s`，按121步为 `81.245499 s/步`；solve按121步为 `82.248125 s/步`（含检查/输出） | iterations文件125条含32/64/96重复标记，不能把callback数误作outer步数 |
 | 旧V5比较 | setup/solve/workflow旧÷新=`6.6402/1.0723/1.8095` | 非受控同case工程对照；source实现、几何分组、NUMA、PSS和缓存条件不同，不作单因素因果解释 |
-| 下一步 | P2候选为2 nm Si p6/h1.5 q4、54332 cells、3904 modes；一次setup和16步，共用同一个准确p4因子 | 审阅包待主审核验并需启动前fresh CPU/NUMA/内存/ABI/窗口准入。计划停在16步不等于收敛，不报official R/T/A，不自动续算 |
+| 后续范围 | 随后唯一P2已在2 nm Si p6/h1.5 q4、54332 cells、3904 modes完成setup+16步，并由QA与16步共用同一个准确p4因子 | P2以计划点停止，不是收敛；不报official R/T/A、不自动续算，后续仅进行R48 metadata容量规划 |
 
-旧F2的OOM负结果仍保留为node1受限分配失败，不被本次F5通过覆盖。F5归档后的文档提交SHA与运行源码SHA分开；P2包将在归档提交后刷新至新clean HEAD，再送主审审阅，不在此阶段启动。
+旧F2的OOM负结果仍保留为node1受限分配失败，不被本次F5通过覆盖。F5/P2运行源码SHA与归档文档提交SHA分开。P2终态及R48 metadata容量账见下方V6 closeout；没有从16步残差外推收敛时间，也未启动0.7 nm计算。
 
 
 ## Task39extra_para V5：5 nm setup-only 终态
@@ -2856,3 +2856,20 @@ F5在clean source `1828bc675f2862025e0eaed0beccf15982eb09e6` 上完成5 nm Si、
 内核在node1受限内存分配且swap用尽时触发OOM，选中worker341839并导致exit137；触发分配的是另一个Python PID1172428，所属任务及具体策略unknown。整机当时仍有derived887.976 GB free，说明全机RSS硬线与单节点受限分配是不同边界；不能据此把本场preferred回落策略认作strict membind原因。全机换页增量独立记录，不归因到邻近项目。
 
 本场后代清场，224步full/retained解文件与manifest仍在，但只保存解，不能承诺免LU或原KSP续算。最后两次C为1607.683174秒，其中p4 ledger1537.870988秒；MatSolve、恢复和native原A4验算无分项timer，性能诊断仍有缺项。H6/PSS观察没有关闭PSS对照，不将其全部时间差归因监督。当前交付是NOT_QUALIFIED_INTERRUPTED负结果报告，保持5 nm旧成功范围，未重启/优化或开展0.7 nm计算。详细边界、原始摘录、CSV和hash见[终态报告](task39extra_para_workstation_capacity/outcomes/f2_terminal_oom_20261002.md)及[compact](task39extra_para_workstation_capacity/outcomes/records/f2_terminal_oom_20261002_compact_v1.json)。
+
+## Task39extra_para Review V6后续：P2限域终态与R48/Z纯文档收口
+
+P2在2 nm Si、p6/h1.5 q4、54332 cells与3904 modes上自然exit0并按既定范围停在16步。主审按28/28项重新核验，分类为 `SCOPED_COMPLETION_ACCEPTED_NOT_SOLVER_OR_PHYSICS_QUALIFICATION`；原A6第16步为 `0.35320202729663724`，所以不是收敛解。34个p4 logical return均通过完整原A4，symbolic/numeric/MatSolve为1/1/49，额外精化总计15、单次最多1，准确因子只建一次并由QA与16步共享。完整Aq见证按原门通过，但RTA和physical checker `NOT_RUN`；计划终点不授权续跑。
+
+| 方面 | measured / derived 结果 | 解释与证据 |
+|---|---|---|
+| P2身份 | source `584d6e406e6e1ed552fff4fd311b51549c984825`；input `bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12`；physical `fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef`；resolved `cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532`；mode `4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364` | [P2 compact](task39extra_para_workstation_capacity/outcomes/records/v6_2nm_16step_pilot.json)；main receipt SHA `16af3bb771f74e743a45e396adf4f15f24cf1f97a850de04254d80882b8a6554` |
+| P2时间 | workflow `111741.070836 s`；起点→solve `84346.877104 s`；同对象setup检查边界`84346.872505 s`（相差4.6 ms）；MUMPS numeric API `57870.129416 s` wall / `57851.993158 s` CPU | 旧44111.673835秒是另一个包围区间，不是LU speedup；KSP含callbacks/检查/输出；C父子计时不重复相加 |
+| P2资源 | 整树RSS峰 `1150080622592 B`，tree swap0，PSS disabled；332532样本全可读、最大间隔`0.73240133 s`、终态前`0.046047561 s`、descendants cleared | global pswpin +24页、pswpout +0，归因unknown；主审资源审计receipt和raw log SHA见P2 compact；本回合未再次扫描3.38GB日志 |
+| P2准确p4存储边界 | 凝聚增广矩阵4,586,288行，stored matrix `2,070,391,064` owned-row `getRow`条目；backend INFOG[22]原值916713 MB | stored NNZ不是factor-fill NNZ；字节转换及精确factor NNZ解码unknown。按cell比例线性乘得23.621 TB仅为敏感情景，不是测量、下界、预测或容量资格 |
+| R48规划 | production axis planner为100×50×280=1400000 cells；dynamic inventory为32060 modes；P2比例分别25.767503497与8.21209016 | mode inventory完整SHA见[R48 compact](task39extra_para_workstation_capacity/outcomes/records/v6_0p7nm_48h_capacity_plan.json)；无FE mesh、matrix、factor或PDE |
+| 周期行数控制 | P2公式得到p6/p4周期独立场行35248752/10450240、保留骨架+3904端口10803256/4586288，与run行数/矩阵维数相符；R48公式得到p6/p4独立场行907560000/268960000、保留骨架+32060端口277592060/117792060 | derived整数拓扑计数，不是有限元空间实测；p6与p4都逐cell消去interior变量，完整原A6作用与局部恢复仍包含内场工作 |
+| 内存敏感度 | 约65个complex128数组情景288695742400 B；一个M×M dense array为16445497600 B；若stored NNZ/cell不变则值+int64索引约1.2803714 TB | 条件payload/乘数算术，不是已分配RSS、下界或预测；cache inventory字段有重叠，mode平方数组shape未知，不作统一比例外推 |
+| 最终状态 | P2 `NOT_SOLVER_QUALIFICATION`；R48 `TARGET_0P7NM_48H_NOT_ESTABLISHED` | 没有0.7 nm精度PDE或新低内存p4逆实验；Z限于文档与元数据收口 |
+
+Henke硅表行的线性插值与项目复折射率约定只提供容量规划的派生材料值，不是CXRO直接结果或精度证明。48小时预算为setup/solve/recovery-output-cleanup `43200/115200/14400 s`；假设256/512/1024完整步时，预算对应450/225/112.5 s/步。P2残差不用于外推总步数。此次文档diff不改source、input、review、数值Gate或邻任务；GitHub richText/表格检查留待实际docs-only push SHA后按该SHA核验。

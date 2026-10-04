@@ -1,0 +1,329 @@
+{
+  "schema": "task39extra.v6.p2_pilot16_terminal_compact.v1",
+  "classification": "SCOPED_COMPLETION_ACCEPTED_NOT_SOLVER_OR_PHYSICS_QUALIFICATION",
+  "run": {
+    "run_id": "v6_interleave_2nm_p6h1p5_q4_pilot16",
+    "execution_id": "20261002T194532.418927Z",
+    "path": "results/euv_grazing1_phi0/v6_interleave_2nm_p6h1p5_q4_pilot16__full3d_iterative__mpi1__Mna/20261002T194532.418927Z",
+    "exit_status": 0,
+    "worker_classification": "pilot_16",
+    "descendants_cleared": true,
+    "source_sha": "584d6e406e6e1ed552fff4fd311b51549c984825",
+    "input_sha256": "bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12",
+    "physical_model_sha256": "fb8d259274ea968deb243ab9fa2b5c360b74f19dd8ebcf606aeba643cb59b6ef",
+    "resolved_config_sha256": "cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532",
+    "mode_sha256": "4b62741e84970cc5312c88039244ad5ba30065ea92dcf72a949773fef8de6364",
+    "cells": 54332,
+    "external_modes": 3904,
+    "mpi_size": 1,
+    "clean_source": true
+  },
+  "main_acceptance": {
+    "receipt": "tmp/review_v6_components/p2_main_terminal_acceptance_20261004_v2.json",
+    "receipt_sha256": "16af3bb771f74e743a45e396adf4f15f24cf1f97a850de04254d80882b8a6554",
+    "checks_reverified": "28/28"
+  },
+  "terminal_scope": {
+    "status": "PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION",
+    "planned_stop_iteration": 16,
+    "iterations_completed": 16,
+    "zero_start": true,
+    "initial_original_A6_relative": 0.9999999999999978,
+    "iteration16_original_A6_relative": 0.35320202729663724,
+    "complete_solve": false,
+    "physical_checker": "NOT_RUN",
+    "RTA": "NOT_RUN",
+    "official_physics_qualification": false
+  },
+  "accurate_p4": {
+    "contract": "Each complete original A4 residual <= 1e-10; at most 2 additional refinements with the same exact factor.",
+    "logical_returns": 34,
+    "all_returns": "P4_RETURN_PASS",
+    "max_original_A4_relative": 9.015613904397618e-11,
+    "max_port_relative": 4.474408680934743e-12,
+    "symbolic_calls": 1,
+    "numeric_calls": 1,
+    "MatSolve_calls": 49,
+    "additional_refinements_total": 15,
+    "max_additional_refinements_per_return": 1,
+    "policy_max_additional_refinements_per_return": 2,
+    "QA_and_16_outer_steps_share_one_factor": true,
+    "condensed_augmented_matrix_rows": 4586288,
+    "stored_matrix_nnz": 2070391064,
+    "stored_matrix_nnz_semantics": "owned-row getRow stored entries",
+    "backend_info_raw": {
+      "path": "physical_intermediate_summary.json:retained_runtime.p4_factor.numeric.info",
+      "infog_one_based_entries": {
+        "3": -54415,
+        "9": -54415,
+        "16": 1091654,
+        "17": 1091654,
+        "18": 1091654,
+        "19": 1091654,
+        "20": -54415,
+        "22": 916713,
+        "29": -54415
+      },
+      "rinfog_one_based_entries": {
+        "15": 870640.983552,
+        "17": 879471.61023,
+        "18": 1058655.467209
+      },
+      "infog_22_backend_reported_unit": "MB",
+      "byte_conversion": "unknown; retain the backend-reported MB value without decimal/binary conversion",
+      "negative_code_semantics": "-54415 is a raw INFOG code at one-based keys 3, 9, 20, and 29; unit/semantic decoding is unknown and it is not a derived negative NNZ"
+    },
+    "mumps_factor_fill_nnz": null,
+    "mumps_allocated_factor_bytes": null,
+    "factor_storage_note": "Input matrix stored NNZ and raw backend INFOG/RINFOG fields are recorded separately. The exact factor-fill NNZ and byte conversion are not decoded by these fields."
+  },
+  "timing": {
+    "workflow_seconds": 111741.07083616301,
+    "workflow_start_to_solve_started_seconds": 84346.87710437796,
+    "same_object_setup_checks_complete_seconds": 84346.87250509497,
+    "setup_boundary_difference_seconds": 0.004599283,
+    "MUMPS_numeric_API_wall_seconds": 57870.12941636401,
+    "MUMPS_numeric_API_process_CPU_seconds": 57851.993157698,
+    "older_p4_numeric_envelope_seconds": 44111.673835,
+    "older_envelope_comparison": "Different surrounding interval; not an LU speedup comparison.",
+    "H6_diagonal_seconds": 48.72837011690717,
+    "H6_parent_seconds": 1537.5790122969775,
+    "H6_power10_child_seconds": 1363.6720478709321,
+    "H6_timing_scope_note": "power10 and diagonal are children or component timings; do not add child work to the parent.",
+    "solve_phase_seconds": 27325.34421883803,
+    "KSP_API_seconds": 25925.27001416392,
+    "KSP_scope_note": "Includes callbacks, checks, and output; not pure Krylov arithmetic.",
+    "first16_callback_old_to_new_mean_seconds": [
+      1904.390336,
+      1532.73335
+    ],
+    "first16_engineering_ratio_old_over_new": 1.242479872,
+    "callback_comparison_boundary": "Engineering comparison only; not controlled for PSS, NUMA, or cache, and not extrapolated to convergence time.",
+    "PC_sequence_17_outer_iteration": 16,
+    "last_PC_C_parent_seconds": 1051.0138357140822,
+    "last_PC_MatSolve_seconds": 640.644698,
+    "last_PC_A4_parent_seconds": 156.549798,
+    "last_PC_RHS_reduction_seconds": 143.808515,
+    "last_PC_recovery_seconds": 77.352596,
+    "last_PC_timing_note": "C parent includes child work; it is not all LU backsolve time.",
+    "last_PC_coarse_corrections": [
+      {
+        "correction": 1,
+        "parent_seconds": 697.1400847380282,
+        "factor_solve_calls": 2,
+        "additional_refinements": 1,
+        "PH_seconds": 5.30616282299161,
+        "P_seconds": 9.599449179018848,
+        "rhs_reduction_seconds": 95.92619850696065,
+        "MatSolve_seconds": 427.6250330330804,
+        "recovery_seconds": 51.51796645100694,
+        "A4_parent_seconds": 105.26630603405647,
+        "A4_volume_child_seconds": 102.10250302799977,
+        "A4_DtN_child_seconds": 2.8621796139050275,
+        "port_closure_seconds": 1.0623775669373572,
+        "scope_note": "Component times are children of logical correction wall; A4 volume and DtN are children of A4 parent. Do not add nested timers twice."
+      },
+      {
+        "correction": 2,
+        "parent_seconds": 353.81583341700025,
+        "factor_solve_calls": 1,
+        "additional_refinements": 0,
+        "PH_seconds": 5.284471899969503,
+        "P_seconds": 9.547291773022152,
+        "rhs_reduction_seconds": 47.882316573988646,
+        "MatSolve_seconds": 213.01966464298312,
+        "recovery_seconds": 25.834629387012683,
+        "A4_parent_seconds": 51.28349235095084,
+        "A4_volume_child_seconds": 49.70501391496509,
+        "A4_DtN_child_seconds": 1.42617275507655,
+        "port_closure_seconds": 0.5321276589529589,
+        "scope_note": "Component times are children of logical correction wall; A4 volume and DtN are children of A4 parent. Do not add nested timers twice."
+      }
+    ]
+  },
+  "resources": {
+    "authority": "Process-tree simultaneous RSS from the existing watchdog",
+    "rss_peak_bytes": 1150080622592,
+    "rss_warning_bytes": 1170000000000,
+    "rss_hard_bytes": 1300000000000,
+    "tree_swap_peak_bytes": 0,
+    "PSS": null,
+    "PSS_sampling": "disabled_by_profile",
+    "sample_count": 332532,
+    "all_samples_readable": true,
+    "parse_errors": 0,
+    "max_timestamp_gap_seconds": 0.73240133,
+    "last_sample_to_watchdog_clock_end_seconds": 0.046047561,
+    "descendants_cleared": true,
+    "global_pswpin_pages_delta": 24,
+    "global_pswpout_pages_delta": 0,
+    "global_swap_attribution": "unknown; global counters are not dedicated to this run",
+    "raw_resource_path": "results/euv_grazing1_phi0/v6_interleave_2nm_p6h1p5_q4_pilot16__full3d_iterative__mpi1__Mna/20261002T194532.418927Z/watchdog/resources.jsonl",
+    "raw_resource_bytes": 3381243014,
+    "raw_resource_sha256": "8339e5fba652460381e3bc30c3cc1277a3d97c91e59a28ff5d159dfe21b0d35a",
+    "single_stream_audit": "tmp/review_v6_components/p2_resource_terminal_audit_20261002T194532.418927Z_v2.json",
+    "single_stream_audit_sha256": "35ada2a4e7e073c83639540b8780ced1bb9b7b1ba0daeac4527dcb0b7e7fc7b2",
+    "compact_source": "tmp/review_v6_components/p2_pilot16_terminal_compact_20261002T194532.418927Z_v1.json",
+    "compact_source_sha256": "e21a306f3e7b9383d20375260481bf96938f02e8c724589908e269b675aaed88"
+  },
+  "runtime_control": {
+    "p6_full_global_rows_before_periodic_constraints": 35594790,
+    "p4_full_global_rows_before_periodic_constraints": 10604228,
+    "p6_retained_global_size": 10803256,
+    "p4_retained_augmented_matrix_rows": 4586288,
+    "p6_buffer_inventory_unique_cache_bytes": 108004276088,
+    "p6_buffer_inventory_unique_port_cache_bytes": 106341066752,
+    "p6_buffer_inventory_local_carrier_cell_payload_bytes": 91060468992,
+    "p6_buffer_inventory_unique_retained_cache_bytes": 93211397240,
+    "buffer_inventory_scope": "NumPy ndarray object-id deduplication plus nbytes; not unique backing-allocation accounting.",
+    "buffer_inventory_overlap_note": "The three reported totals overlap and must not be added or called simultaneous RSS. The port collection includes per-cell Bi/Bt/Di/Dt/Bhat/Dhat/XiB/Hlocal and global Hp/Hhat; several may scale with mode count or its square, but component shapes are unavailable."
+  },
+  "physical_intermediate_summary": {
+    "path": "results/euv_grazing1_phi0/v6_interleave_2nm_p6h1p5_q4_pilot16__full3d_iterative__mpi1__Mna/20261002T194532.418927Z/physical_intermediate_summary.json",
+    "sha256": "b058c56f0f20c90b3d1722962e26245b3448d55af5099fe73a69ff3b24aeae3a",
+    "bytes": 2871159,
+    "manifest_numerical_output_directory": "points to a nonexistent run subdirectory; not treated as evidence",
+    "actual_summary_location": "run-root physical_intermediate_summary.json"
+  },
+  "H6_reference_metric_fallback_count": null,
+  "H6_reference_metric_fallback_note": "The original physical_intermediate_summary producer did not save a fallback count field; the actual count is unknown.",
+  "main_terminal_detail_copy": {
+    "source_receipt": "tmp/review_v6_components/p2_main_terminal_acceptance_20261004_v2.json",
+    "source_receipt_sha256": "16af3bb771f74e743a45e396adf4f15f24cf1f97a850de04254d80882b8a6554",
+    "copy_note": "The following fields are copied directly from the accepted main terminal receipt; values and null/NOT_INDEPENDENTLY_TIMED states are unchanged.",
+    "timing": {
+      "stage_boundaries_monotonic_seconds": {
+        "workflow_started": 4.51959203928709e-05,
+        "retained_runtime_build_started": 0.017341166967526078,
+        "retained_shared_mesh_complete": 170.03039209800772,
+        "retained_volume_quadrature_metadata_complete": 170.57525350595824,
+        "retained_sum_factorized_physical_action_complete": 14682.128966096905,
+        "retained_fast_complete_a4_action_complete": 14699.216425353894,
+        "retained_forms_compiled": 14780.53112879896,
+        "retained_condensed_components_complete": 17888.18498067092,
+        "retained_postprocess_jit_complete": 17955.396932467003,
+        "retained_postprocess_jit_released": 17957.02640375495,
+        "retained_runtime_build_complete": 17957.029385818983,
+        "reference_symbolic_started": 17957.084646594943,
+        "reference_symbolic_complete": 18094.747359550907,
+        "reference_budget_evaluated": 18094.78243429796,
+        "reference_numeric_complete": 75964.9126388809,
+        "retained_p4_factor_complete": 76146.92447444797,
+        "h6_original_setup_started": 76146.92682224198,
+        "h6_original_window_and_packed_action_complete": 77684.50583453896,
+        "retained_bal_h_bridge_complete": 77792.31773893593,
+        "retained_native_aq_projection_check_complete": 78754.13740787492,
+        "retained_same_object_setup_checks_complete": 84346.87250509497,
+        "solve_started": 84346.87710437796,
+        "PILOT_COMPLETED_NOT_SOLVER_QUALIFICATION": 111672.221309016
+      },
+      "MUMPS_symbolic_API": {
+        "api_wall_seconds": 137.66191347595304,
+        "process_cpu_seconds": 137.63175156500074
+      },
+      "outer_driver_timings": {
+        "checkpoint_seconds": 10.03801261994522,
+        "explicit_schur_seconds": 97.41634935501497,
+        "orthogonalization_seconds": null,
+        "orthogonalization_status": "NOT_INDEPENDENTLY_TIMED",
+        "outer_pc_seconds": 21332.256736345123,
+        "outer_schur_seconds": 386.0464036326157,
+        "physical_evaluation_seconds": 5471.621090832981,
+        "retained_save_seconds": 0.261732539976947,
+        "scope": "KSP API includes callback checks/output; final snapshot is after the API"
+      }
+    },
+    "monitor_residuals": [
+      {
+        "iteration": 0,
+        "original_A6_relative": 0.9999999999999978,
+        "reported_schur_relative": 1.0,
+        "schur_true_relative_residual": 1.0,
+        "solution_source": "live_buildSolution",
+        "solve_seconds": 1392.4869835521095
+      },
+      {
+        "iteration": 8,
+        "original_A6_relative": 0.5525770612086955,
+        "reported_schur_relative": 0.5525770612085759,
+        "schur_true_relative_residual": 0.5525770612089573,
+        "solution_source": "live_buildSolution",
+        "solve_seconds": 13607.664003178012
+      },
+      {
+        "iteration": 16,
+        "original_A6_relative": 0.35320202729663724,
+        "reported_schur_relative": 0.35320202729272016,
+        "schur_true_relative_residual": 0.35320202729660694,
+        "solution_source": "live_buildSolution",
+        "solve_seconds": 25920.893864792073
+      },
+      {
+        "iteration": 16,
+        "original_A6_relative": 0.35320202729663724,
+        "reported_schur_relative": 0.35320202729272016,
+        "schur_true_relative_residual": 0.35320202729660694,
+        "solution_source": "terminal_vec_sol",
+        "solve_seconds": 27317.588285461068
+      }
+    ],
+    "stable_source_hashes": {
+      "run_manifest.json": "e56ee308f2bd6b898d76b95a9bcbedf38b8b17a47ad06991386f1a9071334960",
+      "resolved_config.json": "cc6c7244c0c72c33aa17062370e2174e705c162861231a2a2030a6f856919532",
+      "input_original.dat": "bcd73afb38d750152a028de7b9b4e390d2c5fca688ad28c5352ba8cfe6cbcf12",
+      "run_summary.json": "ea7ed6fac758e9c04b4438fc7a0589f1a6eebe676ac8fd14466c91453651eb2e",
+      "physical_intermediate_summary.json": "b058c56f0f20c90b3d1722962e26245b3448d55af5099fe73a69ff3b24aeae3a",
+      "watchdog/summary.json": "74e51c34d46451158538105a5a2e8874dd0833206e1af2b36b4d2173bfd54322",
+      "stages.jsonl": "d200f0ccec39fc1d506f42d42cea7d1c64111670274cb37ed2ae91aa47384eee",
+      "pc_applies.jsonl": "3213a03ed249cc1f4081396a533fafb22438a88299e397ed3e72db7fb466de14",
+      "p4_decisions.jsonl": "b6407dd6df07efa09c71da234684653d5d092105b877f50d7dad1b236341e86d",
+      "iterations.jsonl": "41030b8e3910948af807af2a43515b41e84c2c05e0d4de2e51c27e914026312f",
+      "monitor_residuals.jsonl": "270555eecc6924bc468e0a670a8c50185138c19bb0b84adf7c8440ff88e42c63"
+    }
+  },
+  "setup_build_runtime_detail": {
+    "source": {
+      "path": "results/euv_grazing1_phi0/v6_interleave_2nm_p6h1p5_q4_pilot16__full3d_iterative__mpi1__Mna/20261002T194532.418927Z/stages.jsonl",
+      "sha256": "d200f0ccec39fc1d506f42d42cea7d1c64111670274cb37ed2ae91aa47384eee",
+      "record_index_zero_based": 7,
+      "phase": "setup",
+      "stage": "retained_condensed_components_complete",
+      "physical_intermediate_summary_sha256": "b058c56f0f20c90b3d1722962e26245b3448d55af5099fe73a69ff3b24aeae3a"
+    },
+    "p6": {
+      "build_seconds": 206.0782779000001,
+      "tensor_kernel_seconds_max": 4.279417155892588,
+      "retained_local_schur_classes": 87
+    },
+    "p4": {
+      "build_seconds": 318.79104655608535,
+      "tensor_kernel_seconds_max": 0.29706995212472975,
+      "raw_geometry_classes": 54,
+      "raw_classes_merged": 48,
+      "tensor_groups": 6,
+      "oriented_schur_class_count_sum": 87
+    },
+    "runtime_abi": {
+      "petsc_map": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6",
+      "petsc_version": "3.19.6",
+      "scalar": "complex128",
+      "integer": "int64",
+      "mpi_size": 1,
+      "math_threads": 1,
+      "math_thread_environment": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "parent_supervisor_cpu": 9,
+      "worker_cpu_affinity": [
+        24
+      ],
+      "numa_memory_policy": "interleave_nodes0_1",
+      "pss_or_smaps_read": false,
+      "mumps_shared_memory_capability": "unknown; no inference from environment alone"
+    },
+    "timing_scope_note": "Setup marker durations are recorded as producer values; nested timing components are not added to parent intervals."
+  }
+}
