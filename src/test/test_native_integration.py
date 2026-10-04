@@ -18,6 +18,7 @@ from src.solvers.native_boundary_adapter import (
     CoupledNativeBoundaryAction,
     NativeBoundaryAdapter,
     build_literal_adapter,
+    literal_expansion,
 )
 from src.solvers.port_component_study import array_file
 from src.test.test_boundary_structure import element, modes
@@ -211,6 +212,19 @@ def test_sparse_native_primal_dual_and_storage_copy(tmp_path):
         adapter.extract(bad)
     restored = NativeBoundaryAdapter.from_arrays(adapter.arrays(), identity="fixed")
     assert np.array_equal(restored.extract(x), adapter.extract(x))
+
+
+def test_literal_identity_without_saved_mpc_and_nontrivial_coefficients():
+    assert np.array_equal(literal_expansion({}, 3).toarray(), np.eye(3))
+    lit = {
+        "master_offsets": np.array([0, 1, 2, 3]),
+        "master_rows": np.array([0, 0, 2]),
+        "master_dual_coefficients": np.array([1, np.exp(-0.4j), 1], np.complex128),
+    }
+    assert literal_expansion(lit, 3)[1, 0] == np.exp(0.4j)
+    lit["master_offsets"][-1] = 4
+    with pytest.raises(ValueError, match="inventory"):
+        literal_expansion(lit, 3)
 
 
 def test_complex_nonhermitian_augmented_identity_nonzero_port():

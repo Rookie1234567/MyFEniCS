@@ -24,6 +24,7 @@ from src.solvers.native_boundary_adapter import (
     LocalNativeVolumeAction,
     NativeBoundaryAdapter,
     build_literal_adapter,
+    literal_expansion,
 )
 from src.solvers.native_integration_scope import (
     native_counter,
@@ -195,14 +196,20 @@ def adapter_stage(folder):
             "coordinates",
             "geometry_dofmap",
             "permutations",
-            "master_offsets",
-            "master_rows",
-            "master_dual_coefficients",
             "slaves",
         ):
             if not np.array_equal(lit[key], old_lit[key]):
                 raise ValueError("native witness row/permutation/MPC changed: " + key)
         n = V.dofmap.index_map.size_global
+        # Early ordinary-patch literals have no MPC arrays because the
+        # actual constraint was the identity. Compare expansions, never
+        # invent coefficients for a periodic/slave-bearing missing record.
+        if "master_offsets" not in old_lit and np.any(old_lit["slaves"]):
+            raise ValueError("missing historical nontrivial MPC literal")
+        old_G = literal_expansion(old_lit, n)
+        new_G = literal_expansion(lit, n)
+        if (old_G - new_G).nnz:
+            raise ValueError("native historical MPC expansion changed")
         adapter, ownership = build_literal_adapter(
             action.layout.polynomial.element, lit, desc, action.layout, n, lit["slaves"]
         )
