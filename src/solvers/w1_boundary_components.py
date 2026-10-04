@@ -42,7 +42,7 @@ def relative_terms(candidate, reference):
         "reference_norm": norm,
         "denominator": denominator,
         "relative": numerator / denominator,
-        "near_zero": norm <= np.finfo(float).tiny,
+        "near_zero": bool(norm <= np.finfo(float).tiny),
     }
 
 
@@ -97,6 +97,120 @@ def centered_phase_pair(k, shift):
     return phase, 1 / phase
 
 
+def physical_incidence(modes):
+    """Original 1-degree grazing/phi0/s incoming wave, no manufactured load."""
+    from src.solvers.directional_boundary import zvalue
+
+    selected = [
+        i
+        for i, m in enumerate(modes)
+        if [m["side"], m["m"], m["n"], m["polarization"]] == ["top", 0, 0, "s"]
+    ]
+    if len(selected) != 1:
+        raise ValueError("W1_UNIQUE_ORIGINAL_INCIDENT_MODE_REQUIRED")
+    index = selected[0]
+    kout = np.array([zvalue(z) for z in modes[index]["k_vector"]])
+    expected = (
+        2 * np.pi / 0.7 * np.array([np.cos(np.deg2rad(1)), 0, np.sin(np.deg2rad(1))])
+    )
+    e = np.array([zvalue(z) for z in modes[index]["e_vector"]])
+    if (
+        relative_terms(kout, expected)["relative"] > 1e-10
+        or relative_terms(e, [0, 1, 0])["relative"] > 1e-10
+    ):
+        raise ValueError("W1_ORIGINAL_INCIDENT_IDENTITY")
+    kin = kout.copy()
+    kin[2] = -kin[2]
+    alpha = np.zeros(len(modes), np.complex128)
+    # Natural weak load: t_in - DtN(E_in) = 2*B_out*phase_ratio for TE.
+    alpha[index] = 2 * np.exp(1j * (kin[2] - kout[2]) * 130)
+    return kin, kout, e, alpha
+
+
+def incident_boundary_packet(polynomial, side, modes, J, origin, oracle, q=60):
+    """Independent incoming/background natural-load witnesses on actual face."""
+    kin, kout, e, alpha = physical_incidence(modes)
+    if side != "top":
+        raise ValueError("W1_TOP_INCOMING_REFERENCE_PLANE")
+    normal = np.array([0, 0, 1])
+    shift = np.array([25, 12.5, 0])
+
+    def integrals(k, pos):
+        identity = oracle.facet_identity(polynomial, side, k, J, pos)
+        return (
+            polynomial.integral_native(side, k, J, pos, q),
+            oracle.integrate_receiver_facet(
+                polynomial, side, k, J, pos, expected=identity
+            ),
+        )
+
+    ci, ri = integrals(kin, origin)
+    co, ro = integrals(kout, origin)
+    ai, ar = integrals(kin, origin + shift)
+    ao, aor = integrals(kout, origin + shift)
+    t_in, t_out = (
+        np.cross(1j * np.cross(kin, e), normal),
+        np.cross(1j * np.cross(kout, e), normal),
+    )
+    z = float(origin[2] + (J[2, 2] if side == "top" else 0))
+    delta = np.exp(1j * (kin[2] - kout[2]) * z)
+    rev = np.exp(-1j * (kin @ shift))
+    center = ci @ t_in[:2] - (co @ t_out[:2]) * delta
+    reference = ri @ t_in[:2] - (ro @ t_out[:2]) * delta
+    absolute = (ai @ t_in[:2] - (ao @ t_out[:2]) * delta) * rev
+    bottom = [
+        m
+        for m in modes
+        if (m["side"], m["m"], m["n"], m["polarization"]) == ("bottom", 0, 0, "s")
+    ]
+    if len(bottom) != 1:
+        raise ValueError("W1_BACKGROUND_BOTTOM_INCIDENT_KEY")
+    from src.solvers.directional_boundary import zvalue
+
+    kb = np.array([zvalue(z) for z in bottom[0]["k_vector"]])
+    eb = np.array([zvalue(z) for z in bottom[0]["e_vector"]])
+    if (
+        relative_terms(kb[:2], kin[:2])["relative"] > 1e-10
+        or relative_terms(eb, e)["relative"] > 1e-10
+    ):
+        raise ValueError("W1_BACKGROUND_TRANSVERSE_IDENTITY")
+    # Flat air/Si interface at z=0: a background boundary witness, not a
+    # new reference for the 3-D grating or its volume contrast source.
+    r = (kout[2] + kb[2]) / (kout[2] - kb[2])
+    transmission = 1 + r
+    bg_traction = ci @ t_in[:2] + (co @ t_out[:2]) * r
+    bg_dtn = (co @ t_out[:2]) * (delta + r)
+    bg_absolute = (
+        (ai @ t_in[:2] + (ao @ t_out[:2]) * r) - (ao @ t_out[:2]) * (delta + r)
+    ) * rev
+    # These are the physical incoming boundary source, not the grating's
+    # volume contrast source nor a solved 3-D scattered field.
+    return {
+        "rhs_center": center,
+        "rhs_reference": reference,
+        "rhs_absolute": absolute,
+        "rhs_absolute_reference": (ar @ t_in[:2] - (aor @ t_out[:2]) * delta) * rev,
+        "rhs_modal": -co @ t_out[:2] * (2 * delta),
+        "k_in": kin,
+        "k_out": kout,
+        "e_in": e,
+        "origin_center": origin,
+        "origin_absolute": origin + shift,
+        "reference_plane_nm": np.array(z),
+        "physical_alpha": alpha,
+        "background_rhs_center": bg_traction - bg_dtn,
+        "background_rhs_absolute": bg_absolute,
+        "background_r": np.array(r),
+        "background_t": np.array(transmission),
+        "background_bottom_k": kb,
+        "background_interface_E_jump": np.array(1 + r - transmission),
+        "background_interface_curl_jump": np.array(
+            kin[2] + kout[2] * r - kb[2] * transmission
+        ),
+        "scope": np.array("PHYSICAL_TOP_INCIDENT_BOUNDARY_RHS_NO_VOLUME_SOURCE"),
+    }
+
+
 def probe_actions(layout, modes, q, *, action_factory=None):
     """Real frozen action, adjoint and modal-load API with explicit q60."""
     consumers(q)
@@ -112,7 +226,7 @@ def probe_actions(layout, modes, q, *, action_factory=None):
     alpha = np.asarray(
         np.exp(0.07j * np.arange(len(modes))) / np.sqrt(len(modes)), np.complex128
     )
-    return {
+    result = {
         "trace": trace,
         "dual": dual,
         "alpha": alpha,
@@ -122,6 +236,12 @@ def probe_actions(layout, modes, q, *, action_factory=None):
         "adjoint": action.apply(dual, adjoint=True),
         "modal_rhs": action.modal_rhs(alpha),
     }
+    if modes and isinstance(modes[0], dict):
+        _, _, _, physical_alpha = physical_incidence(modes)
+        result.update(
+            physical_alpha=physical_alpha, physical_rhs=action.modal_rhs(physical_alpha)
+        )
+    return result
 
 
 def reference_actions(layout, modes, integrals, indices, state, accumulators):
@@ -150,6 +270,12 @@ def reference_actions(layout, modes, integrals, indices, state, accumulators):
         np.add.at(
             accumulators["modal_rhs"], rows, phase.conj() * B * state["alpha"][index]
         )
+        if "physical_rhs" in accumulators:
+            np.add.at(
+                accumulators["physical_rhs"],
+                rows,
+                phase.conj() * B * state["physical_alpha"][index],
+            )
         np.add.at(
             accumulators["adjoint"],
             rows,
@@ -198,6 +324,32 @@ def run_local(spec, modes, layout, *, config, stream=None):
     )
     # Historical raw names in the frozen API are labels, not the quadrature.
     arrays = result["arrays"]
+    if "small_key_native_carrier_witness" in result:
+        arrays["witness_mode_index"] = np.array(
+            result["small_key_native_carrier_witness"]["ordered_key_index"]
+        )
+    arrays.update(
+        degree=np.array(degree),
+        side=np.array(side),
+        quadrature_degree=np.array(60),
+        original_H=np.array([m["projection_denominator"] for m in modes])
+        if modes and isinstance(modes[0], dict)
+        else np.array([]),
+        mode_keys=np.array(
+            [
+                [
+                    m["m"],
+                    m["n"],
+                    0 if m["side"] == "top" else 1,
+                    0 if m["polarization"] == "s" else 1,
+                ]
+                for m in modes
+            ],
+            dtype=np.int64,
+        )
+        if modes and isinstance(modes[0], dict)
+        else np.array([]),
+    )
     for key in list(arrays):
         if "direct_q30" in key:
             arrays[key.replace("direct_q30", "direct_q60")] = arrays.pop(key)
@@ -293,4 +445,12 @@ def control_layout(*, degree=4):
         "full_target_MPC_qualified": False,
         "physical_incident_rhs_qualified": False,
         "PDE_solved": False,
+        "arrays": {
+            "orientation": T,
+            "MPC_expansion": G.toarray(),
+            "MPC_state": x,
+            "MPC_expanded": G @ x,
+            "MPC_expected": expected,
+            "MPC_dual": dual,
+        },
     }

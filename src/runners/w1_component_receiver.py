@@ -10,15 +10,26 @@ import subprocess
 import time
 
 from src.io.w1_receiver_contract import MATH_COMMIT, ROOT, digest, validate_originals
+from src.io.finite_json import atomic_json
+from src.io.w1_evidence import (
+    scientific_identity,
+    seal_stage,
+    validate_stage,
+    validate_P1_summary,
+    validate_A,
+)
 from src.runners.fresh_component_receiver import (
     PREFIX,
-    atomic_json,
     bind_own_terminal_core,
     set_own_low_priority,
 )
 from src.runners.frozen_source_snapshot import materialize
 
 RECEIVER_FILES = [
+    "src/io/finite_json.py",
+    "src/io/w1_evidence.py",
+    "src/solvers/w1_saved_equations.py",
+    "src/solvers/w1_local_export_patch.py",
     "src/io/w1_receiver_contract.py",
     "src/runners/w1_component_receiver.py",
     "src/runners/w1_component_payload.py",
@@ -27,7 +38,6 @@ RECEIVER_FILES = [
     "src/solvers/interval_facet_moments.py",
     "benchmarks/portable_facet_oracle.py",
 ]
-CHARGES = ROOT / "tmp/task42extra/w1_receiver/numerical_charges.json"
 
 
 def charged_seconds(entries, now):
@@ -39,9 +49,18 @@ def charged_seconds(entries, now):
 
 
 def remaining(window, *, now=None, utc_now=None):
+    budget = (
+        10800
+        if window.get("schema") == "task42extra.w1-receiver-B-window.v26"
+        else 14400
+    )
     if (
-        window.get("schema") != "task42extra.w1-receiver-window.v1"
-        or window.get("budget_seconds") != 14400
+        window.get("schema")
+        not in (
+            "task42extra.w1-receiver-window.v1",
+            "task42extra.w1-receiver-B-window.v26",
+        )
+        or window.get("budget_seconds") != budget
         or window.get("numerical_and_checker_budget_seconds") != 7200
         or window.get("delivery_reserve_seconds") != 1800
         or window.get("old_windows_not_reset") is not True
@@ -63,24 +82,67 @@ def remaining(window, *, now=None, utc_now=None):
 def prerequisite(stage, output, spec=None):
     if stage == "control":
         return
-    control = json.loads((output / "control/receiver_result.json").read_text())
-    if (
-        not control.get("cleared")
-        or control.get("component_status")
-        != "CONTROL_NATIVE_BOUNDARY_PASS_NO_VOLUME_FE"
-    ):
+    if spec is None:
+        raise ValueError("W1_P1_FULL_SCIENTIFIC_BINDING_REQUIRED")
+    original = validate_originals(spec)
+    identity = scientific_identity(
+        {
+            "contract": {
+                k: spec[k]
+                for k in (
+                    "manifest_path",
+                    "ledger_path",
+                    "math_commit",
+                    "quadrature_degree",
+                    "output_root",
+                    "coordinate_convention",
+                    "ledger_translation_nm",
+                )
+            },
+            "original_inputs": original,
+            "receiver_files": {p: digest(ROOT / p) for p in RECEIVER_FILES},
+            "math_source_sha": MATH_COMMIT,
+            "source_manifest_sha256": digest(spec["source_manifest_path"]),
+            "window_sha256": digest(spec["window_path"]),
+        }
+    )
+
+    def previous(name):
+        return Path(spec.get("prerequisite_paths", {}).get(name, output / name))
+
+    control = validate_stage(
+        previous("control"),
+        identity=identity,
+        statuses={"CONTROL_NATIVE_BOUNDARY_PASS_NO_VOLUME_FE"},
+        expected_stage="control",
+    )
+    if control.get("native_control_complete") is not True:
         raise ValueError("W1_CONTROL_GATE_REQUIRED")
     if stage.startswith("p"):
-        p1 = json.loads((output / "boundary_check/component_result.json").read_text())
-        if p1.get("status") != "P1_Q60_FULL_MODE_PASS" or not p1.get(
-            "coverage_complete"
-        ):
-            raise ValueError("W1_P1_FULL_MODE_GATE_REQUIRED")
+        validate_stage(
+            previous("boundary"),
+            identity=identity,
+            statuses={"BOUNDARY_WORKER_PASS_PENDING_CHECKER"},
+            expected_stage="boundary",
+        )
+        p1 = validate_stage(
+            previous("boundary_check"),
+            identity=identity,
+            statuses={"P1_Q60_FULL_MODE_PASS"},
+            expected_stage="boundary_check",
+        )
+        validate_P1_summary(p1)
     if stage.endswith("_check"):
-        producer = output / stage.removesuffix("_check")
-        status = json.loads((producer / "receiver_result.json").read_text())
-        if not status.get("cleared") or status.get("receiver_exit_code") != 0:
-            raise ValueError("W1_FROZEN_CLEARED_PRODUCER_REQUIRED")
+        producer = previous(stage.removesuffix("_check"))
+        validate_stage(
+            producer,
+            identity=identity,
+            statuses={
+                "BOUNDARY_WORKER_PASS_PENDING_CHECKER",
+                "P2_LOCAL_WORKER_COMPLETED_PENDING_CHECKER",
+            },
+            expected_stage=stage.removesuffix("_check"),
+        )
         if spec is not None:
             producer_binding = json.loads((producer / "binding.json").read_text())
             for key in (
@@ -90,7 +152,6 @@ def prerequisite(stage, output, spec=None):
                 "quadrature_degree",
                 "coordinate_convention",
                 "ledger_translation_nm",
-                "output_root",
             ):
                 if producer_binding["contract"][key] != spec[key]:
                     raise ValueError("W1_PRODUCER_CHECKER_INPUT_MISMATCH:" + key)
@@ -122,6 +183,11 @@ def launch_w1(spec):
 
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("W1_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
+    if "A_qualification_path" not in spec:
+        raise ValueError("W1_A_QUALIFICATION_REQUIRED")
+    validate_A(
+        spec["A_qualification_path"], {p: digest(ROOT / p) for p in RECEIVER_FILES}
+    )
     window = json.loads(Path(spec["window_path"]).read_text())
     if remaining(window) <= 1950:
         raise TimeoutError("W1_DELIVERY_SAVE_RESERVE")
@@ -158,9 +224,12 @@ def launch_w1(spec):
             atomic_json(run / "receiver_result.json", result)
             return result
         prerequisite(stage, output, spec)
+        charge_path = Path(spec["window_path"]).parent / (
+            "numerical_charges_" + digest(spec["window_path"])[:16] + ".json"
+        )
         charges = (
-            json.loads(CHARGES.read_text())
-            if CHARGES.exists()
+            json.loads(charge_path.read_text())
+            if charge_path.exists()
             else {"window_sha256": digest(spec["window_path"]), "entries": []}
         )
         if charges["window_sha256"] != digest(spec["window_path"]):
@@ -170,7 +239,7 @@ def launch_w1(spec):
             raise ValueError("W1_MAXIMUM_THREE_LIFECYCLES_PER_AFFECTED_CASE")
         charge = {"stage": stage, "output": str(run), "origin_monotonic": origin}
         charges["entries"].append(charge)
-        atomic_json(CHARGES, charges)
+        atomic_json(charge_path, charges)
         hard = 2 * 2**30 if stage == "control" else 16 * 2**30
         priority = set_own_low_priority()
         facts = admission(hard, compensate_self=True)
@@ -197,13 +266,9 @@ def launch_w1(spec):
             / ("source_" + digest(manifest_path)[:16])
         )
         materialize(ROOT, manifest_path, bundle)
-        stage_cap = (
-            min(remaining(window) - 1800, 7200 - numeric_used)
-            if stage != "control"
-            else min(900, remaining(window) - 1800)
-        )
+        cap = stage_cap(remaining(window), numeric_used, stage)
         # Setup, import and stable admission belong to the same stage clock.
-        stage_deadline = origin + stage_cap
+        stage_deadline = origin + cap
         if stage_deadline - time.monotonic() <= 150:
             raise TimeoutError("W1_SETUP_CONSUMED_SAVE_RESERVE")
         source_sha = subprocess.check_output(
@@ -233,6 +298,7 @@ def launch_w1(spec):
             "contract_source_manifest_path": str(manifest_path),
             "source_manifest_sha256": digest(manifest_path),
             "window": window,
+            "window_sha256": digest(spec["window_path"]),
             "stage": stage,
             "run_path": str(run),
             "stage_deadline_monotonic": stage_deadline,
@@ -278,7 +344,7 @@ def launch_w1(spec):
             rss_warning_bytes=(1879048192 if stage == "control" else 12 * 2**30),
             memory_envelope_provider=lambda: envelope(hard),
             health_check=guarded_health,
-            stop_on_global_swap=True,
+            stop_on_global_swap=False,
             include_pss=False,
             sampled_root_identity=terminal["server"],
         )
@@ -303,13 +369,17 @@ def launch_w1(spec):
                 "sampled_process_tree_swap_peak_bytes"
             ],
             "PDE_solved": False,
+            "worker_started": True,
             "official_results": False,
         }
+        if path.exists():
+            atomic_json(run / "evidence.json", seal_stage(run))
+            result["evidence_sha256"] = digest(run / "evidence.json")
         atomic_json(run / "receiver_result.json", result)
         charge["elapsed_seconds"] = time.monotonic() - origin
         charge["classification"] = result["receiver_classification"]
         charge["cleared"] = result["cleared"]
-        atomic_json(CHARGES, charges)
+        atomic_json(charge_path, charges)
         return result
 
 
@@ -319,6 +389,21 @@ def durable_w1(spec, *, launch_origin=None):
 
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("W1_DURABLE_REQUIRES_CLEAN_IMPLEMENTATION_COMMIT")
+    original = validate_originals(spec)
+    if "A_qualification_path" not in spec:
+        raise ValueError("W1_A_QUALIFICATION_REQUIRED")
+    if "A_qualification_path" in spec:
+        if not original["received"]:
+            return {
+                "scope": "B_NOT_STARTED_INPUT_UNAVAILABLE",
+                "socket": None,
+                "session": None,
+                "output": None,
+            }
+        validate_A(
+            spec["A_qualification_path"], {p: digest(ROOT / p) for p in RECEIVER_FILES}
+        )
+        prepare_B_window(spec, original, launch_origin=launch_origin)
     remaining(json.loads(Path(spec["window_path"]).read_text()))
     namespace = "w1-receiver-" + Path(spec["output_root"]).name + "-" + spec["stage"]
     directory = ROOT / "tmp/task42extra/durable" / namespace
@@ -349,3 +434,48 @@ def durable_w1(spec, *, launch_origin=None):
     return launch_tmux(
         directory, "task42extra-" + namespace, command, ROOT, management_supervised=True
     )
+
+
+def stage_cap(window_left, numerical_used, stage):
+    return min(
+        window_left - 1800, 7200 - numerical_used, 900 if stage == "control" else 7200
+    )
+
+
+def prepare_B_window(spec, original, *, launch_origin=None):
+    path = Path(spec["window_path"])
+    if path.exists():
+        old = json.loads(path.read_text())
+        remaining(old)
+        if old.get("original_inputs") != original or old.get(
+            "A_qualification_sha256"
+        ) != digest(spec["A_qualification_path"]):
+            raise ValueError("W1_B_WINDOW_INPUT_OR_QUALIFICATION_CHANGED")
+        return
+    if not original["received"]:
+        raise ValueError("W1_B_REAL_ORIGINALS_REQUIRED")
+    now = time.monotonic()
+    origin = now if launch_origin is None else launch_origin
+    utc = datetime.datetime.now(datetime.timezone.utc)
+    window = {
+        "schema": "task42extra.w1-receiver-B-window.v26",
+        "budget_seconds": 10800,
+        "numerical_and_checker_budget_seconds": 7200,
+        "delivery_reserve_seconds": 1800,
+        "old_windows_not_reset": True,
+        "T0_utc": (utc - datetime.timedelta(seconds=now - origin)).isoformat(),
+        "deadline_utc": (
+            utc + datetime.timedelta(seconds=10800 - (now - origin))
+        ).isoformat(),
+        "deadline_monotonic": origin + 10800,
+        "original_inputs": original,
+        "A_qualification_sha256": digest(spec["A_qualification_path"]),
+        "external_wait_not_claimed_within_14400s": True,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Exclusive creation; no prior window can be reset by a repeat launch.
+    with path.open("x") as out:
+        json.dump(window, out, indent=2)
+        out.write("\n")
+        out.flush()
+        os.fsync(out.fileno())

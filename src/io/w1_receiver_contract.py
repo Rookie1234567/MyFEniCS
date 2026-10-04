@@ -46,6 +46,7 @@ STAGES = {
     "p6_top_check",
     "p6_bottom_check",
 }
+OPTIONAL_FIELDS = {"A_qualification_path", "prerequisite_paths"}
 
 
 def digest(path):
@@ -62,7 +63,7 @@ def load_w1(path):
     if not raw.startswith(b"w1_receiver_schema = "):
         return None
     spec = tomllib.loads(raw.decode())
-    if set(spec) != FIELDS:
+    if not FIELDS <= set(spec) or set(spec) - FIELDS - OPTIONAL_FIELDS:
         raise ValueError("W1_EXPLICIT_FIELDS_REQUIRED")
     if (
         spec["w1_receiver_schema"] != 1
@@ -88,6 +89,26 @@ def load_w1(path):
     if not output.is_relative_to(ROOT / "benchmarks/artifacts/task42extra/w1_receiver"):
         raise ValueError("W1_OUTPUT_ESCAPES_OWN_ARTIFACTS")
     spec["output_root"] = str(output)
+    if "A_qualification_path" in spec:
+        spec["A_qualification_path"] = str(
+            (ROOT / spec["A_qualification_path"]).resolve()
+        )
+    if "prerequisite_paths" in spec:
+        if (
+            not isinstance(spec["prerequisite_paths"], dict)
+            or set(spec["prerequisite_paths"]) - STAGES
+        ):
+            raise ValueError("W1_EXPLICIT_PREREQUISITE_STAGES")
+        spec["prerequisite_paths"] = {
+            k: str((ROOT / v).resolve()) for k, v in spec["prerequisite_paths"].items()
+        }
+        if any(
+            not Path(v).is_relative_to(
+                ROOT / "benchmarks/artifacts/task42extra/w1_receiver"
+            )
+            for v in spec["prerequisite_paths"].values()
+        ):
+            raise ValueError("W1_PREREQUISITE_ESCAPES_OWN_ARTIFACTS")
     if spec["checkpoint_path"]:
         spec["checkpoint_path"] = str((ROOT / spec["checkpoint_path"]).resolve())
     spec.update(path=str(path.resolve()), input_sha256=hashlib.sha256(raw).hexdigest())

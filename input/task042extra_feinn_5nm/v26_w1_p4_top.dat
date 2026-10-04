@@ -1,0 +1,23 @@
+w1_receiver_schema = 1
+component = "original_size_boundary_w1"
+stage = "p4_top"
+math_commit = "c354afa449fb80cfb5012e7d2ff66a3e3e64e088"
+quadrature_degree = 60
+manifest_path = "benchmarks/artifacts/task42extra/w1_receiver/inputs/52d7ec80/original_size_auto_mode_manifest.json"
+ledger_path = "benchmarks/artifacts/task42extra/w1_receiver/inputs/52d7ec80/target_ledger.json"
+output_root = "benchmarks/artifacts/task42extra/w1_receiver/v26"
+window_path = "tmp/task42extra/w1_receiver/v26/B_window.json"
+source_manifest_path = "benchmarks/cases/w1_receiver/dependencies.json"
+coordinate_convention = "main_centered_nm"
+ledger_translation_nm = [25.0, 12.5, 0.0]
+checkpoint_path = ""
+A_qualification_path = "tmp/task42extra/w1_receiver/v26/A_qualification.json"
+
+[prerequisite_paths]
+control = "benchmarks/artifacts/task42extra/w1_receiver/v26/control"
+boundary = "benchmarks/artifacts/task42extra/w1_receiver/v26/boundary"
+boundary_check = "benchmarks/artifacts/task42extra/w1_receiver/v26/boundary_check"
+p4_top = "benchmarks/artifacts/task42extra/w1_receiver/v26/p4_top"
+p4_bottom = "benchmarks/artifacts/task42extra/w1_receiver/v26/p4_bottom"
+p6_top = "benchmarks/artifacts/task42extra/w1_receiver/v26/p6_top"
+p6_bottom = "benchmarks/artifacts/task42extra/w1_receiver/v26/p6_bottom"

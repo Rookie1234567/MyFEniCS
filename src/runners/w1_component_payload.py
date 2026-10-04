@@ -24,19 +24,10 @@ def load_file(name, path):
 
 
 def atomic_json(path, value):
-    path = Path(path)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w") as out:
-        json.dump(value, out, indent=2, ensure_ascii=False, allow_nan=False)
-        out.write("\n")
-        out.flush()
-        os.fsync(out.fileno())
-    os.replace(temporary, path)
-    fd = os.open(path.parent, os.O_DIRECTORY | os.O_RDONLY)
-    try:
-        os.fsync(fd)
-    finally:
-        os.close(fd)
+    module = load_file(
+        "_w1_finite_json", Path(__file__).resolve().parents[2] / "src/io/finite_json.py"
+    )
+    return module.atomic_json(path, value)
 
 
 def atomic_arrays(path, arrays):
@@ -48,6 +39,11 @@ def atomic_arrays(path, arrays):
         out.flush()
         os.fsync(out.fileno())
     os.replace(temporary, path)
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
     with np.load(path, allow_pickle=False) as reopened:
         if set(reopened.files) != set(arrays):
             raise ValueError("W1_ATOMIC_ARRAY_REOPEN")
@@ -59,6 +55,49 @@ def atomic_arrays(path, arrays):
         "bytes": path.stat().st_size,
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
     }
+
+
+def file_receipt(path):
+    path = Path(path).resolve()
+    return {
+        "path": str(path),
+        "bytes": path.stat().st_size,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+
+
+def checked_receipt(receipt, parent):
+    path = Path(receipt["path"])
+    if (
+        path.is_symlink()
+        or not path.resolve().is_relative_to(Path(parent).resolve())
+        or file_receipt(path) != {k: receipt[k] for k in ("path", "bytes", "sha256")}
+    ):
+        raise ValueError("W1_SAVED_RECEIPT_SCOPE_OR_HASH")
+    return path
+
+
+def required_oracle_frequencies(modes, layout):
+    from src.solvers.directional_boundary import zvalue
+    import numpy as np
+
+    widths = [layout.x[101] - layout.x[100], layout.y[2] - layout.y[1]]
+    values = [
+        np.array([zvalue(m["k_vector"][axis]).real * widths[axis] for m in modes])
+        for axis in (0, 1)
+    ]
+    selected = {0.0}
+    for v in values:
+        selected.update([float(v.min()), float(v.max())])
+    for i, row in enumerate(modes):
+        if [row["side"], row["m"], row["n"], row["polarization"]] == [
+            "top",
+            -67,
+            -34,
+            "s",
+        ] or (row["m"] == 0 and row["n"] == 0 and row["polarization"] == "s"):
+            selected.update(float(v[i]) for v in values)
+    return sorted(selected)
 
 
 def guard(binding):
@@ -129,6 +168,14 @@ def source_modules(root, snapshot, binding):
     component = load_file(
         "_w1_component", root / "src/solvers/w1_boundary_components.py"
     )
+    # Explicitly hash-bound exports-only overlay; immutable snapshot untouched.
+    patch = load_file("_w1_export_patch", root / "src/solvers/w1_local_export_patch.py")
+    patched_path = Path(binding["run_path"]) / "local_probe_exports.py"
+    receipt = patch.materialize_export_module(
+        snapshot / "src/solvers/task40_w1_local_probe.py", patched_path
+    )
+    atomic_json(Path(binding["run_path"]) / "math_export_overlay.json", receipt)
+    load_file("src.solvers.task40_w1_local_probe", patched_path)
     return contract, component
 
 
@@ -177,23 +224,18 @@ def qualify_oracle(root, modes, layout, oracle, binding):
         np.asarray([zvalue(m["k_vector"][axis]).real * widths[axis] for m in modes])
         for axis in (0, 1)
     ]
-    selected = {0.0}
-    for values in frequencies:
-        selected.update([float(values.min()), float(values.max())])
-    for index, row in enumerate(modes):
-        if [row["side"], row["m"], row["n"], row["polarization"]] == [
-            "top",
-            -67,
-            -34,
-            "s",
-        ]:
-            selected.update(float(a[index]) for a in frequencies)
+    selected = required_oracle_frequencies(modes, layout)
     checks = []
     for omega in sorted(selected):
         guard(binding)
+        if abs(omega) > 56 or not np.isfinite(omega):
+            return {
+                "status": "ORACLE_ACCURACY_UNRESOLVED",
+                "reason": "original frequency outside previously qualified fixed range",
+            }
         a = oracle.unit_interval_moments(omega, 6)
-        b, _ = decimal.moments(omega, 6, 80)
-        c, _ = decimal.moments(omega, 6, 110, direct_quadrature=True)
+        b, bstrings = decimal.moments(omega, 6, 80)
+        c, cstrings = decimal.moments(omega, 6, 110, direct_quadrature=True)
         terms = [float(np.max(abs(a - b))), float(np.max(abs(b - c)))]
         checks.append(
             {
@@ -201,6 +243,9 @@ def qualify_oracle(root, modes, layout, oracle, binding):
                 "analytic_Decimal80_absolute": terms[0],
                 "Decimal80_Decimal110_Gauss64_absolute": terms[1],
                 "pass": max(terms) <= 1e-12,
+                "analytic_values": [[float(v.real), float(v.imag)] for v in a],
+                "Decimal80_values": bstrings,
+                "Decimal110_Gauss64_values": cstrings,
             }
         )
     return {
@@ -208,6 +253,12 @@ def qualify_oracle(root, modes, layout, oracle, binding):
         if all(r["pass"] for r in checks)
         else "ORACLE_ACCURACY_UNRESOLVED",
         "checks": checks,
+        "scope": {
+            "maximum_abs_omega": 56,
+            "maximum_degree": 6,
+            "precision": [80, 110],
+            "Gauss_points": 64,
+        },
         "maximum_half_phase_span": max(abs(a).max() for a in frequencies) / 2,
         "fixed_reference": "qualified Fourier-Legendre plus Decimal80/110 fixed64-point independent crosscheck",
     }
@@ -219,7 +270,7 @@ def boundary_worker(root, binding, modes, component, run):
     from src.solvers.directional_boundary import zvalue
 
     oracle = oracle_module(root)
-    rows, all_pass = [], True
+    rows, all_pass, oracle_receipts, incident_receipts = [], True, [], []
     q = binding["contract"]["quadrature_degree"]
     kvec = np.asarray(
         [[zvalue(v) for v in m["k_vector"]] for m in modes], np.complex128
@@ -231,13 +282,21 @@ def boundary_worker(root, binding, modes, component, run):
         layout, floquet = layout_for(modes, degree)
         oracle_gate = qualify_oracle(root, modes, layout, oracle, binding)
         atomic_json(run / f"oracle_p{degree}.json", oracle_gate)
+        oracle_receipts.append(file_receipt(run / f"oracle_p{degree}.json"))
         if oracle_gate["status"] != "ORACLE_INTERVAL_PASS":
             return {"status": "ORACLE_ACCURACY_UNRESOLVED", "chunks": rows}
         polynomial = layout.polynomial
         actions = component.probe_actions(layout, modes, q)
         reference_action = {
             name: np.zeros_like(actions[name])
-            for name in ("components", "recover", "apply", "adjoint", "modal_rhs")
+            for name in (
+                "components",
+                "recover",
+                "apply",
+                "adjoint",
+                "modal_rhs",
+                "physical_rhs",
+            )
         }
         for side in ("top", "bottom"):
             indices = [i for i, row in enumerate(modes) if row["side"] == side]
@@ -249,13 +308,25 @@ def boundary_worker(root, binding, modes, component, run):
             origin = np.array(
                 [layout.x[100], layout.y[1], 120.0 if side == "top" else -10.0]
             )
+            if side == "top":
+                packet = component.incident_boundary_packet(
+                    polynomial, side, modes, J, origin, oracle, q
+                )
+                incident_receipts.append(
+                    atomic_arrays(run / f"incident_p{degree}.npz", packet)
+                )
             for start in range(0, len(indices), 64):
                 guard(binding)
                 subset = indices[start : start + 64]
-                candidate, reference = [], []
+                candidate, reference, absolute = [], [], []
                 for index in subset:
                     k = kvec[index]
                     candidate.append(polynomial.integral_native(side, k, J, origin, q))
+                    absolute.append(
+                        polynomial.integral_native(
+                            side, k, J, origin + np.array([25, 12.5, 0]), q
+                        )
+                    )
                     identity = oracle.facet_identity(polynomial, side, k, J, origin)
                     reference.append(
                         oracle.integrate_receiver_facet(
@@ -265,6 +336,11 @@ def boundary_worker(root, binding, modes, component, run):
                 arrays = {
                     "candidate": np.array(candidate),
                     "reference": np.array(reference),
+                    "absolute_candidate": np.array(absolute),
+                    "origins": np.array([origin, origin + np.array([25, 12.5, 0])]),
+                    "reference_planes": np.array([130, -10]),
+                    "J": J,
+                    "alpha": actions["alpha"][subset],
                     "mode_indices": np.array(subset),
                     "k": kvec[subset],
                     "e": np.array(
@@ -316,6 +392,8 @@ def boundary_worker(root, binding, modes, component, run):
         if all_pass
         else "Q60_NATIVE_INTEGRAL_FAIL",
         "chunks": rows,
+        "oracle_receipts": oracle_receipts,
+        "incident_receipts": incident_receipts,
         "consumer_quadrature": component.consumers(q),
         "full_native_columns": True,
         "floquet": floquet,
@@ -329,16 +407,50 @@ def check_boundary(binding, modes, component, producer, run):
     from src.solvers.directional_boundary import zvalue
 
     index = json.loads((producer / "chunk_index.json").read_text())
-    oracle_gates = [
-        json.loads((producer / f"oracle_p{p}.json").read_text()) for p in (4, 6)
-    ]
-    all_pass = all(g["status"] == "ORACLE_INTERVAL_PASS" for g in oracle_gates)
+    equations = load_file(
+        "_w1_saved_equations",
+        Path(__file__).resolve().parents[2] / "src/solvers/w1_saved_equations.py",
+    )
+    producer_result = json.loads((producer / "component_result.json").read_text())
+    if index["chunks"] != producer_result["chunks"]:
+        raise ValueError("W1_SAVED_CHUNK_INDEX_CHANGED")
+    raw_receipts = (
+        list(producer_result["chunks"])
+        + list(producer_result["oracle_receipts"])
+        + list(producer_result["incident_receipts"])
+    )
+    oracle_gates = []
+    for receipt in producer_result["oracle_receipts"]:
+        checked_receipt(receipt, producer)
+        document = json.loads(Path(receipt["path"]).read_text())
+        oracle_gates.append(
+            equations.oracle_checks(
+                document,
+                required_oracle_frequencies(
+                    modes, layout_for(modes, int(Path(receipt["path"]).stem[-1]))[0]
+                ),
+            )
+        )
+    all_pass = (
+        all(g["status"] == "ORACLE_INTERVAL_PASS" for g in oracle_gates)
+        and len(oracle_gates) == 2
+    )
+    if not all_pass:
+        return {
+            "status": "ORACLE_ACCURACY_UNRESOLVED",
+            "oracle_numeric_recomputed": oracle_gates,
+            "coverage_complete": False,
+            "physical_incident_rhs_qualified": False,
+            "raw_receipts": raw_receipts,
+        }
+    oracle = oracle_module(Path(__file__).resolve().parents[2])
     coverage, diagnostics = {4: [], 6: []}, []
     action_states, reference_states, action_metrics, layouts = {}, {}, {}, {}
     for p in (4, 6):
         layouts[p], _ = layout_for(modes, p)
         path = producer / f"actions_p{p}.npz"
         receipt = json.loads((producer / f"actions_p{p}.json").read_text())
+        raw_receipts.extend([receipt, file_receipt(producer / f"actions_p{p}.json")])
         if hashlib.sha256(path.read_bytes()).hexdigest() != receipt["sha256"]:
             raise ValueError("W1_SAVED_ACTION_HASH_CHANGED")
         with np.load(path, allow_pickle=False) as saved:
@@ -353,11 +465,23 @@ def check_boundary(binding, modes, component, producer, run):
                     "apply",
                     "adjoint",
                     "modal_rhs",
+                    "physical_alpha",
+                    "physical_rhs",
                 )
             }
+        physical_alpha = component.physical_incidence(modes)[3]
+        if not np.array_equal(action_states[p]["physical_alpha"], physical_alpha):
+            raise ValueError("W1_ACTION_ACTUAL_PHYSICAL_RHS_IDENTITY")
         reference_states[p] = {
             name: np.zeros_like(action_states[p][name])
-            for name in ("components", "recover", "apply", "adjoint", "modal_rhs")
+            for name in (
+                "components",
+                "recover",
+                "apply",
+                "adjoint",
+                "modal_rhs",
+                "physical_rhs",
+            )
         }
     for row in index["chunks"]:
         guard(binding)
@@ -399,14 +523,57 @@ def check_boundary(binding, modes, component, producer, run):
                     if not np.array_equal(raw[field][j], expected):
                         raise ValueError("W1_PHYSICAL_MODE_CHANGED")
                 a, b = raw["candidate"][j], raw["reference"][j]
+                layout = layouts[row["degree"]]
+                expected_origin = np.array(
+                    [layout.x[100], layout.y[1], 120 if row["side"] == "top" else -10]
+                )
+                expected_J = np.diag(
+                    [layout.x[101] - layout.x[100], layout.y[2] - layout.y[1], 10]
+                )
+                if not np.array_equal(
+                    raw["origins"][0], expected_origin
+                ) or not np.array_equal(raw["J"], expected_J):
+                    raise ValueError("W1_SAVED_ACTUAL_FACE_GEOMETRY")
+                reference_identity = oracle.facet_identity(
+                    layout.polynomial,
+                    row["side"],
+                    raw["k"][j],
+                    expected_J,
+                    expected_origin,
+                )
+                rebuilt_reference = oracle.integrate_receiver_facet(
+                    layout.polynomial,
+                    row["side"],
+                    raw["k"][j],
+                    expected_J,
+                    expected_origin,
+                    expected=reference_identity,
+                )
                 e, t, h = raw["e"][j, :2], raw["traction"][j, :2], float(raw["H"][j])
                 ba, bb = a @ -t, b @ -t
                 da, db = (a @ e).conj() / h, (b @ e).conj() / h
                 metrics = {
                     "integral": component.relative_terms(a, b),
+                    "saved_reference_recomputed": component.relative_terms(
+                        b, rebuilt_reference
+                    ),
                     "B": component.relative_terms(ba, bb),
                     "D_original_H": component.relative_terms(da, db),
                 }
+                coordinate = equations.coordinate_checks(
+                    raw["candidate"][j : j + 1],
+                    raw["absolute_candidate"][j : j + 1],
+                    raw["k"][j : j + 1],
+                    raw["e"][j : j + 1],
+                    raw["traction"][j : j + 1],
+                    raw["H"][j : j + 1],
+                    raw["alpha"][j : j + 1],
+                    raw["origins"],
+                    raw["reference_planes"],
+                )
+                metrics.update(
+                    {"coordinate_" + name: value for name, value in coordinate.items()}
+                )
                 # Three fixed nonzero native directions; same complete columns.
                 for direction in range(3):
                     v = np.asarray(
@@ -452,11 +619,62 @@ def check_boundary(binding, modes, component, producer, run):
         )
     # All denominators and negatives remain in the ignored full record.
     atomic_json(run / "all_mode_denominators.json", diagnostics)
+    incident_metrics = []
+    for receipt in producer_result["incident_receipts"]:
+        checked_receipt(receipt, producer)
+        with np.load(receipt["path"], allow_pickle=False) as data:
+            kin, kout, e, alpha = component.physical_incidence(modes)
+            if (
+                not all(
+                    np.array_equal(data[name], value)
+                    for name, value in (
+                        ("k_in", kin),
+                        ("k_out", kout),
+                        ("e_in", e),
+                        ("physical_alpha", alpha),
+                    )
+                )
+                or float(data["reference_plane_nm"]) != 130
+                or not np.array_equal(
+                    data["origin_absolute"] - data["origin_center"], [25, 12.5, 0]
+                )
+            ):
+                raise ValueError("W1_PHYSICAL_INCIDENT_SAVED_IDENTITY")
+            p = int(Path(receipt["path"]).stem[-1])
+            layout = layouts[p]
+            J = np.diag([layout.x[101] - layout.x[100], layout.y[2] - layout.y[1], 10])
+            pos = np.array([layout.x[100], layout.y[1], 120])
+            rebuilt = component.incident_boundary_packet(
+                layout.polynomial, "top", modes, J, pos, oracle, 60
+            )
+            if not np.array_equal(data["origin_center"], pos):
+                raise ValueError("W1_ACTUAL_INCIDENT_FACE_GEOMETRY")
+            metrics = equations.incident_checks(data, rebuilt)
+            incident_metrics.append(metrics)
+            all_pass &= all(m["relative"] <= 1e-10 for m in metrics.values())
+    incident_ok = len(incident_metrics) == 2 and all(
+        m["relative"] <= 1e-10 for row in incident_metrics for m in row.values()
+    )
+    all_pass &= incident_ok
+    raw_receipts.append(file_receipt(run / "all_mode_denominators.json"))
     return {
         "status": "P1_Q60_FULL_MODE_PASS" if all_pass else "P1_Q60_FULL_MODE_FAIL",
         "coverage": {str(p): len(v) for p, v in coverage.items()},
         "coverage_complete": complete,
-        "actual_action_RHS_adjoint_metrics": action_metrics,
+        "physical_incident_rhs_qualified": incident_ok,
+        "physical_RHS_scope": "original 1degree/phi0/s incoming natural port load; full grating volume RHS NOT_RUN",
+        "physical_incident_metrics": incident_metrics,
+        "coordinate_physics_qualified": all(
+            v["relative"] <= 1e-10
+            for row in diagnostics
+            for name, v in row["metrics"].items()
+            if name.startswith("coordinate_")
+        ),
+        "oracle_numeric_recomputed": oracle_gates,
+        "raw_receipts": raw_receipts,
+        "actual_action_RHS_adjoint_metrics": {
+            str(p): metrics for p, metrics in action_metrics.items()
+        },
         "failed_mode_count": sum(not r["pass"] for r in diagnostics),
         "maximum_original_relative": max(
             v["relative"] for r in diagnostics for v in r["metrics"].values()
@@ -469,17 +687,49 @@ def check_boundary(binding, modes, component, producer, run):
     }
 
 
-def check_local(component, producer, run, binding):
+def check_local(component, producer, run, binding, modes=None):
     """Saved full original block equations; no factor or solve in the checker."""
     import numpy as np
 
     report = json.loads((producer / "component_result.json").read_text())
     guard(binding)
+    if modes is None:
+        raise ValueError("W1_TRUSTED_MODE_IDENTITY_REQUIRED")
+    if (
+        report["degree"] != int(binding["stage"][1])
+        or report["side"] != binding["stage"].split("_")[1]
+    ):
+        raise ValueError("W1_LOCAL_STAGE_P_SIDE_IDENTITY")
     path = producer / "local_arrays.npz"
     if hashlib.sha256(path.read_bytes()).hexdigest() != report["raw"]["sha256"]:
         raise ValueError("W1_LOCAL_RAW_HASH_CHANGED")
     with np.load(path, allow_pickle=False) as raw:
         a = {k: raw[k] for k in raw.files}
+    equations = load_file(
+        "_w1_saved_equations",
+        Path(__file__).resolve().parents[2] / "src/solvers/w1_saved_equations.py",
+    )
+    saved = equations.local_equations(a, report, modes)
+    witness_index = int(a["witness_mode_index"])
+    witness_mode = modes[witness_index]
+    from src.solvers.directional_boundary import zvalue
+
+    for field, original in (
+        ("witness_mode_k", "k_vector"),
+        ("witness_mode_e", "e_vector"),
+        ("witness_mode_traction", "traction_vector"),
+    ):
+        expected = np.array([zvalue(z) for z in witness_mode[original]])
+        if len(a[field]) == 2:
+            expected = expected[:2]
+        if not np.array_equal(a[field], expected):
+            raise ValueError("W1_LOCAL_WITNESS_PHYSICAL_IDENTITY")
+    if (
+        witness_mode["side"] != report["side"]
+        or float(a["witness_mode_projection_denominator"])
+        != witness_mode["projection_denominator"]
+    ):
+        raise ValueError("W1_LOCAL_WITNESS_ORIGINAL_H_SIDE")
     from src.solvers.task40_w1_local_probe import _direct_full_basis_integral
     import basix
 
@@ -509,74 +759,37 @@ def check_local(component, producer, run, binding):
         "B": component.relative_terms(B, a["witness_candidate_B_native"]),
         "D": component.relative_terms(D, a["witness_candidate_D_native"]),
     }
-    ii, tt = a["interior_positions"], a["trace_positions"]
-    V = a["local_native_tensor"]
-    xi, xi0, xt = (
-        a["recovered_interior"],
-        a["known_interior_solution"],
-        a["trace_values"],
+    pos = np.flatnonzero(a["active_mode_indices"] == witness_index)
+    if len(pos) != 1:
+        raise ValueError("W1_LOCAL_WITNESS_KEY_COVERAGE")
+    full_B, full_D = np.empty_like(B), np.empty_like(D)
+    for positions, name in (
+        (a["interior_positions"], "saved_Bi"),
+        (a["trace_positions"], "saved_Bt"),
+    ):
+        full_B[positions] = a[name][pos[0]]
+    for positions, name in (
+        (a["interior_positions"], "saved_Di"),
+        (a["trace_positions"], "saved_Dt"),
+    ):
+        full_D[positions] = a[name][pos[0]]
+    direct_metrics.update(
+        all_saved_B_columns=component.relative_terms(full_B, B),
+        all_saved_D_columns=component.relative_terms(full_D, D),
     )
-    fi, ft, bi, bt = a["interior_rhs"], a["trace_rhs"], a["Bi_alpha"], a["Bt_alpha"]
-    actual_i, actual_t = (
-        V[np.ix_(ii, ii)] @ xi + V[np.ix_(ii, tt)] @ xt + bi,
-        V[np.ix_(tt, ii)] @ xi + V[np.ix_(tt, tt)] @ xt + bt,
-    )
-    alpha, rhs, di, dt = (
-        a["mode_alpha"],
-        a["port_rhs"],
-        a["port_internal_recovered_correction"],
-        a["port_trace_action"],
-    )
-    original = alpha - rhs - di - dt
-    reduced = (
-        alpha
-        + a["port_internal_B_correction"]
-        - (rhs + a["port_internal_rhs_correction"])
-        - dt
-        + a["port_internal_trace_correction"]
-    )
-    metrics = {
-        "interior_original_equation": component.relative_terms(actual_i, fi),
-        "trace_original_equation": component.relative_terms(actual_t, ft),
-        "full_internal_recovery": component.relative_terms(xi, xi0),
-        "port_original_equation": component.relative_terms(alpha - di - dt, rhs),
-        "port_reduced_equation": component.relative_terms(
-            alpha
-            + a["port_internal_B_correction"]
-            - dt
-            + a["port_internal_trace_correction"],
-            rhs + a["port_internal_rhs_correction"],
-        ),
-    }
-    scale = max(
-        np.linalg.norm(alpha),
-        np.linalg.norm(rhs),
-        np.linalg.norm(di),
-        np.linalg.norm(dt),
-        np.finfo(float).tiny,
-    )
-    identity = float(np.linalg.norm(original - reduced) / scale)
     passed = (
         all(value["relative"] <= 1e-10 for value in direct_metrics.values())
-        and len(alpha) == 32060
-        and len(ii) in (108, 450)
-        and all(
-            v["relative"]
-            <= (
-                1e-11
-                if k in ("interior_original_equation", "full_internal_recovery")
-                else 1e-10
-            )
-            for k, v in metrics.items()
-        )
-        and identity <= 1e-11
+        and saved["pass"]
         and report["consumer_quadrature"] == component.consumers(60)
     )
     return {
         "status": "P2_SAVED_LOCAL_PASS" if passed else "P2_SAVED_LOCAL_FAIL",
-        "metrics": metrics,
+        "metrics": saved["metrics"],
+        "metric_limits": saved["limits"],
+        "full_mode_count": saved["full_mode_count"],
+        "raw_receipts": [report["raw"]],
         "independent_native_direct_q60": direct_metrics,
-        "port_elimination_identity": identity,
+        "port_elimination_identity": saved["metrics"]["port_elimination_identity"],
         "checker_factor_calls": 0,
         "checker_solve_calls": 0,
         "manufactured_rhs_only": True,
@@ -601,6 +814,12 @@ def main(argv=None):
     if stage == "control":
         result = component.control_layout()
         result["p6_native_control"] = component.control_layout(degree=6)
+        arrays = result.pop("arrays")
+        arrays.update(
+            {"p6_" + k: v for k, v in result["p6_native_control"].pop("arrays").items()}
+        )
+        result["raw"] = atomic_arrays(run / "control_arrays.npz", arrays)
+        result["native_control_complete"] = True
         result["original_inputs"] = contract.validate_originals(binding["spec"])
         result["consumer_quadrature"] = component.consumers(60)
     else:
@@ -608,6 +827,14 @@ def main(argv=None):
         modes = json.loads(Path(binding["spec"]["manifest_path"]).read_text())["modes"]
         modes, physics = component.physical_modes(modes)
         atomic_json(run / "physics_binding.json", physics)
+
+        def previous(name):
+            return Path(
+                binding["spec"]
+                .get("prerequisite_paths", {})
+                .get(name, Path(binding["spec"]["output_root"]) / name)
+            )
+
         if stage == "boundary":
             result = boundary_worker(root, binding, modes, component, run)
         elif stage == "boundary_check":
@@ -615,15 +842,16 @@ def main(argv=None):
                 binding,
                 modes,
                 component,
-                Path(binding["spec"]["output_root"]) / "boundary",
+                previous("boundary"),
                 run,
             )
         elif stage.endswith("_check"):
             result = check_local(
                 component,
-                Path(binding["spec"]["output_root"]) / stage.removesuffix("_check"),
+                previous(stage.removesuffix("_check")),
                 run,
                 binding,
+                modes,
             )
         else:
             from src.common.config_3d import SimulationConfig3D
@@ -653,7 +881,12 @@ def main(argv=None):
         NN_used=False,
         official_results=False,
         full_target_qualified=False,
+        raw_export_overlay=file_receipt(run / "math_export_overlay.json"),
+        raw_runtime=file_receipt(run / "runtime.json"),
+        raw_abi=file_receipt(run / "abi_receipt.json"),
     )
+    if stage != "control":
+        result["raw_physics_binding"] = file_receipt(run / "physics_binding.json")
     atomic_json(run / "component_result.json", result)
     print(
         json.dumps(
