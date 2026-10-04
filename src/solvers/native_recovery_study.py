@@ -260,13 +260,28 @@ def copy_exact_jit(folder):
     return row
 
 
+def orient_basix_tensor(element, tensor, cell_info):
+    """Apply the real native DOF transformation to both complex tensor axes."""
+    result = []
+    for part in (np.asarray(tensor).real, np.asarray(tensor).imag):
+        a = np.array(part, dtype=np.float64, order="C", copy=True)
+        element.T_apply(a.ravel(), element.dim, int(cell_info))
+        b = np.ascontiguousarray(a.T)
+        element.T_apply(b.ravel(), element.dim, int(cell_info))
+        result.append(np.ascontiguousarray(b.T))
+    return result[0] + 1j * result[1]
+
+
 def build(folder):
     from src.solvers.target_port_preparation import target_config
 
     s = store()
     if s.has("quadrature") and s.has("oracle") and s.has("system"):
+        checks = s.read("quadrature")[0]["metadata"]["checks"]
         return {
-            "status": "NATIVE_VOLUME_PACKETS_READY",
+            "status": "NATIVE_VOLUME_PACKETS_READY"
+            if all(c["passed"] for c in checks)
+            else "NATIVE_RECOVERY_NOT_QUALIFIED",
             "checkpoint_reuse": True,
             "root": str(s.root),
             "new_hex": 0,
@@ -476,10 +491,9 @@ def build(folder):
             for q in (15, 17):
                 a = polynomial_volume(element, coords, eps, cfg.k0, cfg.mu_r, q)
                 # Apply native basis-column orientation: T A T^T.
-                element.T_apply(a.ravel(), element.dim, int(lit["permutations"][cell]))
-                b = np.ascontiguousarray(a.T)
-                element.T_apply(b.ravel(), element.dim, int(lit["permutations"][cell]))
-                arrays[f"tag{tag}_q{q}"] = np.ascontiguousarray(b.T)
+                arrays[f"tag{tag}_q{q}"] = orient_basix_tensor(
+                    element, a, int(lit["permutations"][cell])
+                )
             arrays[f"tag{tag}_native"] = class_data[int(ci)]["original"]
             arrays[f"tag{tag}_cell"] = np.array([cell, ci], np.int64)
             checks += [

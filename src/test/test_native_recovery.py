@@ -13,6 +13,31 @@ from src.solvers.native_boundary_adapter import (
 from src.solvers.native_recovery_packets import PacketStore, sha
 
 
+def test_real_basix_transform_preserves_complex_nonhermitian_tensor():
+    import basix
+
+    from src.solvers.native_recovery_study import orient_basix_tensor
+
+    element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        2,
+        basix.LagrangeVariant.legendre,
+    )
+    rng = np.random.default_rng(4040)
+    tensor = rng.normal(size=(element.dim, element.dim)) + 1j * rng.normal(
+        size=(element.dim, element.dim)
+    )
+    original = tensor.copy()
+    for code in (0, 1, 15, (1 << 24) - 1):
+        transform = np.eye(element.dim)
+        element.T_apply(transform.ravel(), element.dim, code)
+        actual = orient_basix_tensor(element, tensor, code)
+        assert np.allclose(actual, transform @ tensor @ transform.T, atol=1e-13)
+        assert np.array_equal(tensor, original)
+        assert actual.dtype == np.complex128
+
+
 def synthetic_packets(tmp_path):
     """Two non-Hermitian classes, nonmutual 40 ports and affine internal RHS."""
     from mpi4py import MPI
@@ -386,7 +411,7 @@ def test_entity_builder_has_no_native_length_default_or_dense_row():
                 "indices": [0, 0, 0],
                 "bounds_nm": [[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]],
             }
-        ]
+        ],
     }
     adapter, meta = build_literal_adapter(
         e, literal, description, layout, 345771066, np.array([], np.int64)
