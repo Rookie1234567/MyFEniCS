@@ -380,10 +380,24 @@ def worker(directory):
             result, files = reference(design, m["role"], artifact, marker, budget)
         elif m["stage"] == "v20_saved_checker":
             import numpy as np
-            from benchmarks.fixed_phase_checker import compare_from_arrays
+            from benchmarks.fixed_phase_checker import (
+                compare_from_arrays,
+                saved_port_recovery,
+                interior_port_support,
+            )
 
-            indices = retained_roles()
             compare_index = selected("v20_physical_compare")
+            indices = json.loads(
+                Path(compare_index["files"]["role_indices"]["path"]).read_text()
+            )
+            for idx in indices.values():
+                for v in idx["files"].values():
+                    p = Path(v["path"])
+                    if (
+                        not p.resolve().is_relative_to(ROOT.resolve())
+                        or sha(p) != v["sha256"]
+                    ):
+                        raise RuntimeError("V20_COMPARE_SAVED_IDENTITY_CHANGED")
             with np.load(
                 compare_index["files"]["integrals"]["path"], allow_pickle=False
             ) as z:
@@ -394,22 +408,76 @@ def worker(directory):
                     idx["files"]["observables"]["path"], allow_pickle=False
                 ) as z:
                     observables[role] = {k: np.array(z[k]) for k in z.files}
-            result = compare_from_arrays(
-                raw,
-                observables,
-                {r: i["result"]["full_equation"] for r, i in indices.items()},
-            )
+            algebra, recovery = {}, {}
+            for role, idx in indices.items():
+                with np.load(idx["files"]["native"]["path"], allow_pickle=False) as z:
+                    native = {
+                        k: np.array(z[k])
+                        for k in (
+                            "H",
+                            "dp",
+                            "dr",
+                            "dv",
+                            "gp",
+                            "masters",
+                            "background",
+                            "background_alpha",
+                        )
+                    }
+                with np.load(idx["files"]["field"]["path"], allow_pickle=False) as z:
+                    state = {k: np.array(z[k]) for k in z.files}
+                recovery[role] = saved_port_recovery(native, state)
+                algebra[role] = dict(idx["result"]["full_equation"])
+                algebra[role]["recovery"] = max(
+                    algebra[role]["recovery"],
+                    recovery[role]["original_port_recovery_relative"],
+                )
+                del native, state
+            result = compare_from_arrays(raw, observables, algebra)
+            result["saved_raw_port_recovery"] = recovery
+            native_only = compare_index["result"]["native_without_field"]
+            checks = {}
+            for role, row in native_only.items():
+                for item in row["original_files"].values():
+                    path = Path(item["path"])
+                    if (
+                        not path.resolve().is_relative_to(ROOT.resolve())
+                        or sha(path) != item["sha256"]
+                    ):
+                        raise ValueError("NATIVE_WITHOUT_FIELD_HASH_CHANGED")
+                with np.load(
+                    row["original_files"]["native"]["path"], allow_pickle=False
+                ) as z:
+                    arrays = {
+                        k: np.array(z[k])
+                        for k in ("masters", "idofs", "br", "bv", "dr", "dv")
+                    }
+                checks[role] = interior_port_support(arrays)
+                if checks[role] != row["port_support"]:
+                    raise ValueError("NATIVE_SUPPORT_INDEPENDENT_RECOMPUTATION")
+            result["native_without_field_checks"] = checks
             result["stage_qualified"] = True
             files = {}
         elif m["group"] == "C":
             from src.solvers.fixed_phase_comparison import compare
+            from src.solvers.fixed_phase_saved_diagnostics import (
+                negative_indices,
+                native_without_fields,
+            )
 
+            indices = negative_indices(
+                ROOT, artifact, retained_roles(), marker, budget, m["source_sha"]
+            )
+            role_book = artifact / "role_indices.json"
+            write(role_book, indices)
             result, files = compare(
-                retained_roles(),
+                indices,
                 artifact,
                 marker,
                 budget,
             )
+            files["role_indices"] = role_book
+            result["native_without_field"] = native_without_fields(ROOT, indices)
         else:
             raise RuntimeError("V20_STAGE_NOT_IMPLEMENTED")
         result.update(

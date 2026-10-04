@@ -298,7 +298,8 @@ def compare(indices, artifact, marker, budget):
         raise ValueError("CROSS_SPACE_PHYSICS_OR_PORT_KEYS_NOT_IDENTICAL")
     pairs = [
         (a, b)
-        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")] + [("E3", "E4")]
+        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")]
+        + [("E3", "E4"), ("O3", "E3")]
         if a in indices and b in indices
     ]
     names = ["total_E", "total_scaled_curl", "scattered_E", "scattered_scaled_curl"]
@@ -338,6 +339,15 @@ def compare(indices, artifact, marker, budget):
         for subcell, ijk in enumerate(product(*(range(len(a) - 1) for a in axes))):
             if subcell % 8 == 0:
                 budget("common subcell independent comparison")
+            if subcell % 128 == 0:
+                marker(
+                    "common_subcell_progress",
+                    dict(
+                        q=q,
+                        completed=subcell,
+                        total=int(np.prod([len(a) - 1 for a in axes])),
+                    ),
+                )
             low = np.array([axes[j][ijk[j]] for j in range(3)])
             high = np.array([axes[j][ijk[j] + 1] for j in range(3)])
             x = low + qp * (high - low)
@@ -488,7 +498,8 @@ def compare(indices, artifact, marker, budget):
         pair_reference = (
             ref_qualified
             if right == "O6"
-            else all(
+            else right == "E4"
+            and all(
                 indices[r]["result"]["checker"]["passed"]
                 and indices[r]["result"]["physics"]["physical_gate_passed"]
                 for r in (left, right)
@@ -508,7 +519,9 @@ def compare(indices, artifact, marker, budget):
             ),
             reference_status=("QUALIFIED_DISCRETE_ONLY" if ref_qualified else "UNKNOWN")
             if right == "O6"
-            else "FINITE_P_PAIR_ONLY",
+            else "FINITE_P_PAIR_ONLY"
+            if right == "E4"
+            else "CONTROL_COMPARISON_ONLY_NO_ACCURACY_AUTHORITY",
         )
     atomic_npz(
         artifact / "comparison_integrals.npz",

@@ -245,7 +245,8 @@ def compare_from_arrays(integrals, observables, algebra):
     )
     pairs = [
         (a, b)
-        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")] + [("E3", "E4")]
+        for a, b in [(r, "O6") for r in ("O3", "E3", "E4")]
+        + [("E3", "E4"), ("O3", "E3")]
         if a in roles and b in roles
     ]
     expected = {f"{a}_vs_{b}_q{q}" for a, b in pairs for q in (15, 30)}
@@ -261,6 +262,8 @@ def compare_from_arrays(integrals, observables, algebra):
             or second.shape != first.shape
             or not np.isfinite(first).all()
             or np.min(first) < 0
+            or not np.isfinite(second).all()
+            or np.min(second) < 0
         ):
             raise ValueError("COMMON_INTEGRALS_INVALID")
         threshold = 1e-3 if b == "E4" else 1e-4
@@ -327,7 +330,8 @@ def compare_from_arrays(integrals, observables, algebra):
                 (
                     reference
                     if b == "O6"
-                    else equations[b]["passed"]
+                    else b == "E4"
+                    and equations[b]["passed"]
                     and physics[b]["raw_valid"]
                     and physics[b]["energy_closure"] <= 1e-5
                 )
@@ -349,4 +353,118 @@ def compare_from_arrays(integrals, observables, algebra):
         no_solver_calls=True,
         neural_gain="NOT_TESTED",
         target_qualified=False,
+    )
+
+
+def saved_port_recovery(native, state):
+    """Independent raw diagonal-port/affine audit; no FE action or solve."""
+    import numpy as np
+
+    for key in (
+        "H",
+        "dp",
+        "dr",
+        "dv",
+        "gp",
+        "masters",
+        "background",
+        "background_alpha",
+    ):
+        if key not in native:
+            raise ValueError("RAW_PORT_NATIVE_INCOMPLETE")
+    required = {
+        "c_scattered",
+        "c_total",
+        "alpha_scattered",
+        "alpha_total",
+        "background",
+        "background_alpha",
+        "masters",
+    }
+    if set(state) != required:
+        raise ValueError("RAW_PORT_STATE_INCOMPLETE")
+    H = native["H"]
+    c = state["c_scattered"]
+    alpha = state["alpha_scattered"]
+    if (
+        H.shape != alpha.shape
+        or c.shape != (len(native["masters"]),)
+        or c.dtype != np.complex128
+        or alpha.dtype != np.complex128
+        or not np.isfinite(c).all()
+        or not np.isfinite(alpha).all()
+        or not np.isfinite(H).all()
+        or np.any(H <= 0)
+    ):
+        raise ValueError("RAW_PORT_STATE_LAYOUT")
+    if not np.array_equal(state["masters"], native["masters"]):
+        raise ValueError("RAW_PORT_MASTER_ORDER")
+    if (
+        not np.array_equal(state["background"], native["background"])
+        or not np.array_equal(state["background_alpha"], native["background_alpha"])
+        or not np.array_equal(state["c_total"], c + state["background"])
+        or not np.array_equal(state["alpha_total"], alpha + state["background_alpha"])
+    ):
+        raise ValueError("RAW_PORT_AFFINE_BACKGROUND")
+    if (
+        native["dp"].shape != native["dr"].shape
+        or native["dp"].shape != native["dv"].shape
+        or np.any(native["dp"] < 0)
+        or np.any(native["dp"] >= len(H))
+        or np.any(native["dr"] < 0)
+        or np.any(native["dr"] >= len(c))
+        or not np.isfinite(native["dv"]).all()
+        or not np.isfinite(native["gp"]).all()
+    ):
+        raise ValueError("RAW_PORT_MAP_INVALID")
+    d = np.zeros(len(H), complex)
+    np.add.at(d, native["dp"], native["dv"] * c[native["dr"]])
+    expected = (d + native["gp"]) / H
+    original_relative = float(
+        np.linalg.norm(expected - alpha) / max(np.linalg.norm(alpha), 1e-12)
+    )
+    return dict(
+        original_port_recovery_relative=original_relative,
+        finite=True,
+        master_order_exact=True,
+        affine_exact=True,
+        no_FE_or_solver_calls=True,
+    )
+
+
+def interior_port_support(arrays):
+    """Explain a saved condensation precondition failure without dropping terms."""
+    import numpy as np
+
+    masters = arrays["masters"]
+    interior = np.unique(arrays["idofs"])
+    ids = np.searchsorted(masters, interior)
+    if np.any(ids >= len(masters)) or not np.array_equal(masters[ids], interior):
+        raise ValueError("INTERIOR_MASTER_IDENTITY")
+    result = {}
+    for row, value in (("br", "bv"), ("dr", "dv")):
+        if (
+            arrays[row].shape != arrays[value].shape
+            or not np.isfinite(arrays[value]).all()
+        ):
+            raise ValueError("INTERIOR_PORT_LAYOUT")
+        mask = np.isin(arrays[row], ids)
+        values = arrays[value][mask]
+        whole = float(np.linalg.norm(arrays[value]))
+        result[value] = dict(
+            stored_interior_entries=len(values),
+            exact_nonzeros=int(np.count_nonzero(values)),
+            exact_zeros=int(np.sum(values == 0)),
+            max_absolute=float(abs(values).max(initial=0)),
+            norm=float(np.linalg.norm(values)),
+            all_entry_norm=whole,
+            norm_fraction=float(np.linalg.norm(values) / max(whole, 1e-300)),
+            unique_internal_rows=len(np.unique(arrays[row][mask])),
+        )
+    return dict(
+        internal_independent_dofs=len(ids),
+        blocks=result,
+        no_terms_removed=True,
+        no_FE_or_action_or_factor_or_solve=True,
+        accuracy_or_recovery_qualified=False,
     )
