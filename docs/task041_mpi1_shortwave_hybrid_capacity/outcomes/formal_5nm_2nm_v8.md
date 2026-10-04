@@ -2,7 +2,20 @@
 
 5 nm cell-condensed 路线先消去单元内部自由度，再恢复完整场并检查原方程；内部目标 `5e-13` 最多追加两次同因子修正，原物理残差门不变。
 
-## S1：5 nm 完整 consumer 已完成
+## 最新正式运行：5 nm A6 consumer 已完成（2026-10-03）
+
+| 项目 | 实际结果 |
+|---|---|
+| 身份与范围 | unit `task041-v8-5nm-cellcond-a6-formal-20261001T053737Z.service`，Invocation `b00e1993f6a2429185553092fa3ba7e2`，运行源码 `5bfb813870182fda172f658c8f276f58318844a5`；public runroot `results/task041_5nm_balh_hybrid_iterative_p6h4_m480_mpi8_cell_condensed/task041_5nm_p6h4_m480_mpi8_cell_condensed__hybrid_iterative__mpi8__M480/20261001T055115.915457Z`。W、5 nm、p6/h4、M480、MPI8×1，实际 `cell_condensed` 与 `task041_opt_in_sum_factorized_physical_volume`；target `5e-13`、最多2次修正。正式响应1920项完成，QEP复用。 |
+| 数值与物理 | consumer `TASK041_CONSUMER_PASS`；完整求解、恢复和物理门通过。五项真实残差 global/bottom/top/modal/reported 分别为 `4.778595132175164e-11 / 6.21753923942821e-11 / 4.4271638517096704e-11 / 6.700061128878644e-13 / 4.778282085648332e-11`，上限均为 `5e-9`。`R/T/A/A_volume = 0.7331842733875563 / 0.00022009869572797534 / 0.2665956279167157 / 0.2665962726229846`；能量闭合差 `6.447062688152982e-7`。 |
+| Exact数值对照 | 使用原有 comparator、以两个 public runroot 为输入的修正版 v2：`results/task041_v8_5nm_cellcond_a6_formal_run_20261001T053737Z/exact_comparison_offline_v2.json`，SHA-256 `e10d839252f066835c87da9346fd83f7ed5789b35694e7357a6dc873ca5ced42`。身份、R/T/A/A_volume、E/H、canonical场、600个外部衍射通道和法向通量的数值检查均通过；R/T/A/A_volume最大绝对差 `6.533662499919046e-13`（限 `1e-8`），E/H最大相对差约 `2.296e-11`（限 `1e-6`），canonical最大相对差约 `4.014e-10`（限 `1e-5`），法向通量相对差 `2.096e-12`（限 `1e-4`）。比较器总 `pass=false` 是因为旧exact producer没有可测的 `exact_raw_phase_measured`，所以exact资源/完整workflow资源对照仍不完整；这不否定本次consumer自身的数值和资源门。首次v1错误地把 `consumer/` 子目录当public root，结果保留；v2才是按既有接口正确执行的比较。 |
+| 资源与交换观察 | authority峰 `43,966,554,112 B`，process-tree RSS峰 `43,415,531,520 B`，专属cgroup `memory.peak=43,975,204,864 B`（历史峰计数器）；均低于原53,221,163,008 B cap，warning `47,899,046,707 B`，reserve门通过。job/cgroup swap峰为0。global swap仅按V8观察：baseline `5,998,125,056 B`，运行中峰 `8,589,930,496 B`，结束 `2,591,805,440 B`；pswpin/pswpout分别增加 `1,481,020 / 2,781,714` 页，不归因于本job，也不作失败门。进程组已清场。 |
+| 终态与耗时 | finalizer `service_complete`、exit 0、10项检查全通过；Invocation与账本条目一致且恰一次。public-to-finalizer wall `202,124.563261555 s`（`56.146 h`），24 h目标未达到且未强杀。相比早先同配置边界的52.590 h服务wall，本场约慢6.76%；此前两条固定RHS上A6约9.6%收益不代表完整consumer加速。 |
+| 保留证据 | outer summary SHA-256 `14d5a069acce5be228097872d2ee28390ce1f739575ed296bc7d61bfb7c6ef27`；finalizer summary SHA-256 `5318e54f05a48c64647c1db3dda780a8e9b693f59384f1f7bf622f5ff811cbf4`。复用QEP packet manifest `results/task041_5nm_mpi8_fresh_selected_packet_b01a5932_r1/manifest.json`，SHA-256 `306939dda3b70777204c11fbd65beac2db5dc0637bc9b6803f7794d0d7cbad2f`，producer source `b01a5932e4dfaf895e81e0424e0dd88c276fb0d3`；最终恢复包 manifest SHA-256 `31be97e466f9934bf63e664a5b38222991c716aa3474d030c14f24ed6e84a25c`。未重算大数组。V5 ledger `results/task041_review_v5_cpu_numa_condensed_speed/r0_r1_20260920/r1_load_ledger_20260920.json` 对该 run ID 恰有一条 `202124.563261555 s` 记录；ledger累计 `441571.6888938089 s`，本次不再收费。 |
+
+9月28日的较早S1执行与当前运行身份不同，保留其worker exit0/public exit3及文档HEAD差异历史，不用当前成功覆盖旧记录。
+
+## 早期S1尝试（2026-09-28）：数值通过、public身份合同失败
 
 | 项目 | 结果 |
 |---|---|
