@@ -237,6 +237,47 @@ def test_sparse_native_primal_dual_and_storage_copy(tmp_path):
     assert np.array_equal(restored.extract(x), adapter.extract(x))
 
 
+def test_coupled_callback_rejects_wrong_shape_dtype_finite_or_dual_storage():
+    from types import SimpleNamespace
+
+    adapter = NativeBoundaryAdapter(
+        csr_matrix(np.array([[1, 0, 0], [0, 1, 0]], complex)),
+        [0, 1],
+        3,
+        2,
+        [2],
+        identity="synthetic",
+    )
+    boundary = SimpleNamespace(
+        layout=SimpleNamespace(rows=2),
+        modes=list(range(40)),
+        apply=lambda t, adjoint=False: np.zeros_like(t),
+        modal_rhs=lambda a: np.zeros(2, complex),
+        recover=lambda t: np.zeros(40, complex),
+    )
+    x, alpha = np.array([0.4j, 0.7, 0], complex), np.ones(40, complex)
+    bads = [
+        np.zeros(2, complex),
+        np.zeros(3, float),
+        np.array([np.nan, 0, 0], complex),
+        np.array([0, 0, 1e-30], complex),
+    ]
+    for bad in bads:
+        wrapper = CoupledNativeBoundaryAction(
+            adapter, boundary, lambda x, adjoint=False, saved=bad: saved
+        )
+        with pytest.raises(ValueError, match="volume callback output"):
+            wrapper.apply(x)
+        with pytest.raises(ValueError, match="volume callback output"):
+            wrapper.augmented(x, alpha)
+    good = CoupledNativeBoundaryAction(
+        adapter, boundary, lambda x, adjoint=False: x.copy()
+    )
+    assert np.array_equal(good.apply(x), x)
+    field, port = good.augmented(x, alpha)
+    assert np.array_equal(field, x) and np.array_equal(port, alpha)
+
+
 def test_literal_identity_without_saved_mpc_and_nontrivial_coefficients():
     assert np.array_equal(literal_expansion({}, 3).toarray(), np.eye(3))
     lit = {
@@ -478,6 +519,13 @@ def test_new_window_deadline_and_closed_parent_isolation(tmp_path):
     )
     assert 1190 < win.remaining("COUPLED") <= 1200
     book = win.ledger()
+    book["runs"] = [{"role": "EVIDENCE", "elapsed_seconds": 5150.0}]
+    win.LEDGER_PATH.write_text(json.dumps(book))
+    assert win.remaining("CHECK") == 250
+    assert win.remaining("COUPLED") == 250  # every component, not only native
+    book["runs"].append({"role": "ADAPTER", "elapsed_seconds": 100.0})
+    win.LEDGER_PATH.write_text(json.dumps(book))
+    assert win.remaining("DEPLOY") == 150
     book["closed"] = True
     win.LEDGER_PATH.write_text(json.dumps(book))
     with pytest.raises(RuntimeError, match="closed"):

@@ -268,7 +268,7 @@ class CoupledNativeBoundaryAction:
 
     def __init__(self, adapter, boundary, volume_apply):
         self.adapter, self.boundary, self.volume_apply = adapter, boundary, volume_apply
-        if adapter.boundary_size != boundary.layout.rows:
+        if adapter.boundary_size != boundary.layout.rows or not callable(volume_apply):
             raise ValueError("native/boundary layout identity size")
         self.port_count = len(boundary.modes)
         self.original_hp_kind = "IMPLICIT_IDENTITY_NO_DENSE_PORT_MATRIX"
@@ -285,19 +285,27 @@ class CoupledNativeBoundaryAction:
     def modal_rhs(self, alpha):
         return self.scatter(self.boundary.modal_rhs(alpha))
 
-    def apply(self, value, *, adjoint=False):
-        x = self.adapter.independent(value)
-        v = vector(
-            self.volume_apply(x, adjoint=adjoint),
+    def _volume(self, value, *, adjoint):
+        output = vector(
+            self.volume_apply(value, adjoint=adjoint),
             self.adapter.native_size,
             "volume callback output",
         )
+        if np.any(output[self.adapter.slaves] != 0):
+            raise ValueError(
+                "volume callback output requires independent dual slave zero"
+            )
+        return output
+
+    def apply(self, value, *, adjoint=False):
+        x = self.adapter.independent(value)
+        v = self._volume(x, adjoint=adjoint)
         return v + self.scatter(self.boundary.apply(self.extract(x), adjoint=adjoint))
 
     def augmented(self, value, alpha):
         x = self.adapter.independent(value)
         a = vector(alpha, self.port_count, "original port")
-        return self.volume_apply(x, adjoint=False) + self.modal_rhs(
+        return self._volume(x, adjoint=False) + self.modal_rhs(
             a
         ), a - self.port_extract(x)
 
