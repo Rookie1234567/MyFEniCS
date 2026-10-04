@@ -1,0 +1,23 @@
+{
+  "scope": "single volume0 and first q0-compatible direct/C/port/2, empty and synthetic seeded, four cases; no run at freeze",
+  "test_result": "5 passed in 0.27s",
+  "source_head": "c81e286bdf5cf9c78620854df2fb814cbf41e67a",
+  "files_sha256": {
+    "profile_fresh_projection_cost.py": "29aa4c36502d70f84b423468dad74c372793363ae3ee51d01672428dc4b47e85",
+    "test_fresh_projection_cost_profile.py": "a7a7e3b6cca7b20e31eb22e026ae99d6b1530864710cc72b06590ab813547cd1",
+    "launch_saved_projection_cost.py": "62cd227753cb2f8e7b5516dd6e286eec551272e7a380c4edab7334fb48bc98e9",
+    "synthetic_tests_active_sample.log": "dc73d5669fe02105037ac272969a74c0e92d8e4eda11ab9f36efd14f0fd1c648"
+  },
+  "physical_sample_identity": {
+    "twist": 0,
+    "local_port_index": 2,
+    "key": [
+      "top",
+      -9,
+      0,
+      "s"
+    ],
+    "first_q0_compatible_mode": true
+  },
+  "previous_source_checkpoint": "libfile_9e5106bf74548191bd4dbe6869952db7"
+}

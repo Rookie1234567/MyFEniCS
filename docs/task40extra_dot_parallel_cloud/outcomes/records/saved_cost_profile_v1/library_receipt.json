@@ -1,0 +1,11 @@
+{
+  "library_file_id": "libfile_1b4bbfd9d9488191bd7844119ff6d0aa",
+  "file_id": "file_00000000f1448207952410f26d5f16e7",
+  "filename": "saved_projection_cost_profile_complete.zip",
+  "sha256": "847731083b75393ad406b77113bb92cafec83f721f836b19466e65767b4c5066",
+  "members_verified": 13,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "metadata": {
+    "status": "REPRESENTATIVE_COST_DIAGNOSTIC_COMPLETED_NOT_OPTIMIZATION_QUALIFICATION"
+  }
+}

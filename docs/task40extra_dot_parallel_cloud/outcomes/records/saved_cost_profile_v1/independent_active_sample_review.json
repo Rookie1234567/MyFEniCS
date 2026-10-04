@@ -1,0 +1,48 @@
+{
+  "status": "PASS_NARROW_ACTIVE_SAMPLE_SOURCE_RECHECK",
+  "reviewed_at_UTC": "2026-10-04T20:17:06Z",
+  "reviewer": "/root/review_checker_launch_identity",
+  "canonical_head": "c81e286bdf5cf9c78620854df2fb814cbf41e67a",
+  "canonical_tree": "ef74f62a9ce5497d5199ffcf386b101bc01b8679",
+  "canonical_clean_unchanged": true,
+  "prior_source_review_sha256": "a3681d3c80eec6506a2a78d82c8aa94d56e5773580753818d471bfac4815b032",
+  "current_sha256": {
+    "profile_fresh_projection_cost.py": "29aa4c36502d70f84b423468dad74c372793363ae3ee51d01672428dc4b47e85",
+    "launch_saved_projection_cost.py": "62cd227753cb2f8e7b5516dd6e286eec551272e7a380c4edab7334fb48bc98e9",
+    "preflight.json": "7440421ae17674913a4b306536ff507dfab0bac5a2f5e0bada4611d44586e2d2",
+    "test_fresh_projection_cost_profile.py": "a7a7e3b6cca7b20e31eb22e026ae99d6b1530864710cc72b06590ab813547cd1",
+    "active_sample_test_receipt.json": "1ded203afd69ded2c31d3bc26d922b1dfe01a34cd5b1ca11b526089de75169e1",
+    "synthetic_tests_active_sample.log": "dc73d5669fe02105037ac272969a74c0e92d8e4eda11ab9f36efd14f0fd1c648"
+  },
+  "exact_reviewed_delta": [
+    "Core direct-C sample constant changes local port0 to port2; only its explanatory strings also change. Numerical methods, allocation admission, callback/JSON encoding and profiling logic remain byte-identical.",
+    "Tests use the same synthetic arrays and rename the selected recipe label to port2, with updated expected case labels.",
+    "Wrapper adds exact physical-key and first-q0-alias guards and updates CORE_SHA; all other wrapper code remains identical to reviewed b1659a8351cde4adcdfc87ac1180d0174ea6e31bd1ac1b9048823bb3aab75d61."
+  ],
+  "sample_metadata_verified_from_immutable_report": {
+    "twist": 0,
+    "q": 0,
+    "local_port_index": 2,
+    "physical_key": ["top", -9, 0, "s"],
+    "earlier_local_port_n_values": [-2, -2],
+    "direct_recipe_label": "direct/C/port/2",
+    "direct_recipe_kind": "dense"
+  },
+  "retained_scope": "Exactly four reset cases: volume/cell/0 and direct/C/port/2, each empty and explicitly synthetic saved-final-q0 seeded. Optional repeats disabled; timing diagnostic only.",
+  "retained_resource_contract": {
+    "tree_cap_bytes": 3221225472,
+    "wall_seconds": 60,
+    "reserve_bytes": 134217728,
+    "owned_accumulator_bytes": 134217728,
+    "zero_swap": true,
+    "observed_preflight_launch_cap_bytes": 3593613312
+  },
+  "source_ABI_Library_supervisor_postgates_unchanged": true,
+  "external_core_preimport_and_postsupervision_SHA_gates_retained": true,
+  "integrity_status_and_four_case_success_checks_retained": true,
+  "observed_synthetic_tests": "5 passed in 0.27s; not rerun by reviewer",
+  "actual_profile_run_by_reviewer": false,
+  "all8_old_baseline_FE_JIT_factor_PDE_dispatch": false,
+  "blocking_findings": [],
+  "remaining_condition": "Root owns the separate launch decision after current source durability and fresh admission; the previous source checkpoint remains historical and unrun."
+}
