@@ -1,0 +1,147 @@
+{
+  "layout_rows": 378432,
+  "per_side": 189216,
+  "faces_per_side": 2628,
+  "layout_bytes": 10596096,
+  "numeric_cache_bytes": 7628096,
+  "cache_cap_bytes": 67108864,
+  "mode_block": 64,
+  "single_boundary_vector_bytes": 6054912,
+  "component_input_bytes": 12622784,
+  "full_volume_vector_bytes_historical_derived": 5532337056,
+  "volume_rows_not_constructed": true,
+  "surface_polynomial_workspace_per_side_bytes": 4120704,
+  "live_objects": "two input boundary vectors + alpha; one layout/kernel; at most both q frozen output dictionaries during comparison; direct q60 oracle retains two C/D vectors at a time; gzip temporary coexists with original until verified",
+  "persistent_outputs_encoding": "complex128 lossless compressed NPZ; aliases only byte-identical dtype/shape/content, individually decoded member hashes",
+  "allocation_preflight": "native q30 C/o/so reserved before JIT; completed binaries archived after actor exit; 144MiB full-output reservation refused once and later passed after releasing archived cache",
+  "time_formula": "T_setup + K*T_boundary + T_volume/PC/recovery/IO; K and volume costs UNKNOWN",
+  "setup_q30_full_seconds": 4.016996372956783,
+  "first_q30_per_action_seconds": {
+    "amplitudes": 0.03339462401345372,
+    "forward": 0.07713441899977624,
+    "adjoint": 0.07600468001328409,
+    "modal": 0.0426694710040465,
+    "linear": 0.07463619904592633,
+    "zero": 0.11123545304872096
+  },
+  "fixed_cost_ladder": [
+    {
+      "count": 64,
+      "measurement": {
+        "wall_seconds": 0.1118447290500626,
+        "per_action_seconds": {
+          "amplitudes": 0.007988838944584131,
+          "forward": 0.018875352921895683,
+          "adjoint": 0.01759436901193112,
+          "modal": 0.013688712962903082,
+          "linear": 0.020215154043398798,
+          "zero": 0.019564189016819
+        },
+        "checks": {
+          "linearity": {
+            "numerator": 8.2966959161111e-12,
+            "denominator": 7242.231482836147,
+            "relative": 1.145599382700484e-15,
+            "both_zero": false,
+            "pass_gate": true
+          },
+          "dual": {
+            "numerator": 5.87187839475083e-11,
+            "denominator": 4196.130226599725,
+            "relative": 1.3993556152114525e-14,
+            "both_zero": false,
+            "pass_gate": true
+          },
+          "zero_exact": true
+        },
+        "stats": {
+          "project_calls": 5,
+          "scatter_calls": 5,
+          "project_seconds": 0.03525018598884344,
+          "scatter_seconds": 0.06214190006721765
+        },
+        "cache_bytes": 1486736,
+        "setup_seconds": 3.415371456067078
+      }
+    },
+    {
+      "count": 1024,
+      "measurement": {
+        "wall_seconds": 0.16612718102987856,
+        "per_action_seconds": {
+          "amplitudes": 0.008007301017642021,
+          "forward": 0.021976359887048602,
+          "adjoint": 0.021781980991363525,
+          "modal": 0.01365052000619471,
+          "linear": 0.02730558009352535,
+          "zero": 0.04735419899225235
+        },
+        "checks": {
+          "linearity": {
+            "numerator": 1.2741069289242247e-11,
+            "denominator": 11089.126006559194,
+            "relative": 1.148969655652387e-15,
+            "both_zero": false,
+            "pass_gate": true
+          },
+          "dual": {
+            "numerator": 7.564814784774961e-11,
+            "denominator": 12364.685055852004,
+            "relative": 6.118081253670637e-15,
+            "both_zero": false,
+            "pass_gate": true
+          },
+          "zero_exact": true
+        },
+        "stats": {
+          "project_calls": 5,
+          "scatter_calls": 5,
+          "project_seconds": 0.045562388957478106,
+          "scatter_seconds": 0.09368658100720495
+        },
+        "cache_bytes": 1813936,
+        "setup_seconds": 2.7282612799899653
+      }
+    },
+    {
+      "count": 32060,
+      "measurement": {
+        "wall_seconds": 0.4410567539744079,
+        "per_action_seconds": {
+          "amplitudes": 0.03339462401345372,
+          "forward": 0.07713441899977624,
+          "adjoint": 0.07600468001328409,
+          "modal": 0.0426694710040465,
+          "linear": 0.07463619904592633,
+          "zero": 0.11123545304872096
+        },
+        "checks": {
+          "linearity": {
+            "numerator": 4.4465901708770304e-11,
+            "denominator": 38811.58690263185,
+            "relative": 1.1456862565378648e-15,
+            "both_zero": false,
+            "pass_gate": true
+          },
+          "dual": {
+            "numerator": 1.1506599739614123e-09,
+            "denominator": 54673.343770940315,
+            "relative": 2.1046087445871656e-14,
+            "both_zero": false,
+            "pass_gate": true
+          },
+          "zero_exact": true
+        },
+        "stats": {
+          "project_calls": 10,
+          "scatter_calls": 10,
+          "project_seconds": 0.38777230225969106,
+          "scatter_seconds": 0.5121256179409102
+        },
+        "cache_bytes": 7628096,
+        "setup_seconds": 4.016996372956783
+      }
+    }
+  ],
+  "full_qualification": "boundary only, no h/p convergence, no N=1 complete solver time"
+}

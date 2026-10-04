@@ -1,3 +1,9 @@
+# V38测试：最终27个定点、合成MPI2/4及保存数组独立验收通过
+
+完整checker缺q/缺action/重复/错身份、共享计划、单rank坏H/hash、单侧前缀、active worker预算、byte-identical别名及counter快照反例已覆盖。真实编译与复杂ABI/getter先于测试；最终aux_pre_12 27pass，MPI2/4通过，真实native与全量组件仅MPI1。没有重复旧campaign或CI声明。[测试身份](records/tests_v38.json) · [raw日志](records/raw_evidence_index_v38.json) · [独立checker](records/component_checker_v38.json)。文档检查另记；GitHub视觉NOT_VERIFIED。历史全文保留。
+
+<!-- V38-LATEST-END -->
+
 # V37测试：真实编译、31个定点与MPI2／4小fixture通过
 
 复用最终aux_pre_06的逐文件hash和真实ABI记录；新增独立C/D、共享rows、H/source不变性、tile容量分配前拒绝、错误相位／转置／共轭、重复／丢face、坏hash及整树超时清场测试。31pass（pytest7.36s），MPI2／4完整向量和空owner／全体拒绝通过；真实FE仅MPI1。未重复旧campaign或全仓昂贵测试，无CI声明。

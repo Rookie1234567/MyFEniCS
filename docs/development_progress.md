@@ -1,3 +1,22 @@
+# Task042 V38：全原尺寸边界作用通过，完整体积解仍未资格化
+
+将相同有限元边界积分按x/y方向收缩并共享几何，减少逐通道重算，代价是局部坐标桥及7.28MiB缓存。它只加速端口组件，不改变体积三维Maxwell，也不是神经训练增量。
+
+| 对象／数据身份 | measured或not_run结果 | 边界 |
+|---|---|---|
+| .7nm／50×25nm／上下2628面／p6／32060端口 | 四类native q30完整882基，最差1.48686e-12；两一般复输入全量PASS | q30/MPI1 TARGET_BOUNDARY_ACTION_QUALIFIED_AT_FROZEN_Q |
+| 逐通道q30/q60／独立12mode全表面 | max1.60663e-12／2.39972e-14<1e-10 | 未删通道／校幅相；不证明h/p收敛 |
+| 完整q30首次forward／adjoint | 0.077134419／0.076004680s；cache7628096B | setup／失败／IO与旧费用全部另记；shared-workstation |
+| 同时整树采样峰／own swap | 1047965696B／0 | 0.5s，不是连续cgroup硬峰；MPI1/数学1，无GPU |
+| 原方程／E/H/curl／R/T/A/A_volume | NOT_RUN；全目标native row adapter与solver未合格 | 仅边界组件，无新official结果 |
+| 2TB／48h／NN20% | NOT_QUALIFIED／NOT_DEMONSTRATED | 历史成本及unknown保留；旧q15FAIL/native q60未运行保持 |
+
+[response](task042_neural_coarse_inverse/response_v38.md) · [结果](task042_neural_coarse_inverse/outcomes/directional_boundary_structure_v38.md) · [费用](task042_neural_coarse_inverse/outcomes/records/resource_costs_v38.json)
+
+唯一下一建议：匹配体积solver的native边界row抽取／散布及内部恢复资格；本批不实施、不merge。完整旧正文逐字保留。
+
+<!-- V38-LATEST-END -->
+
 # Task042 V37进展：普通p6面片分块接口通过，q15不合格，全量边界未获资格
 
 端口把边界场分解为不同衍射方向。新接口将单个方向的边界数据继续拆成面片：第一遍累加一个复振幅，第二遍重放面片并累加牵引。这样不必常驻整张单方向系数表，代价是两次遍历与生成；它不改变三维体积方程，也不是神经收益。

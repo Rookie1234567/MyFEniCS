@@ -1,0 +1,137 @@
+{
+  "github_visual": "NOT_VERIFIED",
+  "exact_review_url": "https://github.com/Rookie1234567/MyFEniCS/blob/cf0896e57f9f16970e5af6b55ad14920ab4c7815/docs/task042_neural_coarse_inverse/review_report_v35.md",
+  "web_attempt": "Cache miss on precise page; no visual evidence",
+  "local_markdown": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/response_v38.md",
+      "tables": 2,
+      "math_blocks": 0,
+      "local_links": 7,
+      "passed": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/directional_boundary_structure_v38.md",
+      "tables": 4,
+      "math_blocks": 1,
+      "local_links": 9,
+      "passed": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v35.md",
+      "tables": 4,
+      "math_blocks": 0,
+      "local_links": 14,
+      "passed": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 4,
+      "passed": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 4,
+      "passed": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "tables": 0,
+      "math_blocks": 0,
+      "local_links": 3,
+      "passed": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "tables": 0,
+      "math_blocks": 0,
+      "local_links": 2,
+      "passed": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 3,
+      "passed": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "tables": 1,
+      "math_blocks": 0,
+      "local_links": 3,
+      "passed": true
+    }
+  ],
+  "historical_suffix": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/README.md",
+      "original_sha256": "9bc8cb0e5567cf0057a7f3b4f1640266378d01ec0be9db87341fe720019effe2",
+      "bytes": 47986,
+      "suffix_exact": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/summary.md",
+      "original_sha256": "31e9d09e9ace50a309ddeb72b9df60b7b4e6b67da689cc437f7b46233d3d113f",
+      "bytes": 110992,
+      "suffix_exact": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/test_summary.md",
+      "original_sha256": "187986bb760dd593320c468859b56f3cbfa42a8ede5851a36ef4db82678aba0e",
+      "bytes": 66328,
+      "suffix_exact": true
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/outcomes/changed_files.md",
+      "original_sha256": "59fec92e57aaae4196507ddfb738f886e92a0e52dc6dd4f9234cb1148da752f9",
+      "bytes": 65710,
+      "suffix_exact": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "original_sha256": "5dfc68d0aec0a236b05495b72e21bc195b06ceaea392d89a79c0ca7bc1150439",
+      "bytes": 236131,
+      "suffix_exact": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "original_sha256": "c675e8d542b0d241688990536d9f3123b0fc7a6c0581ae50cbe67c2e715ffaf9",
+      "bytes": 269920,
+      "suffix_exact": true
+    }
+  ],
+  "protected_paths_modified": [],
+  "commands": [
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_26_documentation_contract",
+        "src.test.test_24_repository_work_principles"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "----------------------------------------------------------------------\nRan 22 tests in 0.049s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/home/fenics/Projects/NN-Lab/.venv/bin/python",
+        "-m",
+        "unittest",
+        "-q",
+        "src.test.test_183_development_model_registry_markdown"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "----------------------------------------------------------------------\nRan 5 tests in 0.021s\n\nOK\n"
+    }
+  ],
+  "CI": "NOT_CLAIMED"
+}

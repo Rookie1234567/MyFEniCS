@@ -1,0 +1,41 @@
+{
+  "implementation": [
+    "benchmarks/archive_jit_cache.py",
+    "benchmarks/check_boundary_structure.py",
+    "benchmarks/check_boundary_witness.py",
+    "benchmarks/qualify_port_preparation.py",
+    "input/task042_neural_coarse_inverse/boundary_structure_v38.json",
+    "input/task042_neural_coarse_inverse/v38_boundary_check.dat",
+    "input/task042_neural_coarse_inverse/v38_bridge.dat",
+    "input/task042_neural_coarse_inverse/v38_consumer.dat",
+    "input/task042_neural_coarse_inverse/v38_explicit_oracle.dat",
+    "input/task042_neural_coarse_inverse/v38_full_action.dat",
+    "input/task042_neural_coarse_inverse/v38_layout.dat",
+    "scripts/run_case.py",
+    "src/io/port_preparation.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/boundary_structure_scope.py",
+    "src/solvers/boundary_structure_study.py",
+    "src/solvers/directional_boundary.py",
+    "src/solvers/port_component_study.py",
+    "src/solvers/tiled_port_action.py",
+    "src/test/test_boundary_structure.py",
+    "src/test/tiled_port_mpi_fixture.py"
+  ],
+  "navigation_updated_preserving_history": [
+    "README",
+    "outcomes/summary",
+    "test_summary",
+    "changed_files",
+    "development_progress",
+    "development_model_registry"
+  ],
+  "new_delivery": [
+    "response_v38.md",
+    "outcomes/directional_boundary_structure_v38.md",
+    "outcomes/records/*v38*"
+  ],
+  "old_authorities_modified": false,
+  "ordinary_defaults_changed": false,
+  "actual_source_before_docs": "6e4693620dc87802b44361da64620bf5d622b271"
+}

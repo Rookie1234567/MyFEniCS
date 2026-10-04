@@ -1,0 +1,2188 @@
+{
+  "status": "TARGET_BOUNDARY_ACTION_QUALIFIED_AT_FROZEN_Q",
+  "checks": [
+    {
+      "patch": "min_ordinary",
+      "index": 0,
+      "kind": "same_q_C",
+      "numerator": 1.5522370736162805e-12,
+      "denominator": 1.2452629262768302,
+      "relative": 1.2465135200461336e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 0,
+      "kind": "q30_60_C",
+      "numerator": 1.2232057708486844e-12,
+      "denominator": 1.2452629262768216,
+      "relative": 9.822871499964387e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 0,
+      "kind": "same_q_D",
+      "numerator": 2.749802589327196e-12,
+      "denominator": 2.205996172940401,
+      "relative": 1.2465128557598304e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 0,
+      "kind": "q30_60_D",
+      "numerator": 2.1669212923701856e-12,
+      "denominator": 2.205996172940386,
+      "relative": 9.822869681056078e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 1,
+      "kind": "same_q_C",
+      "numerator": 3.3540451263298895e-11,
+      "denominator": 24.986713209281376,
+      "relative": 1.3423314616201787e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 1,
+      "kind": "q30_60_C",
+      "numerator": 2.5410763910317396e-11,
+      "denominator": 24.986713209281277,
+      "relative": 1.0169710476717924e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 1,
+      "kind": "same_q_D",
+      "numerator": 2.349965869448979e-13,
+      "denominator": 0.17506598808853394,
+      "relative": 1.3423314803219002e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 1,
+      "kind": "q30_60_D",
+      "numerator": 1.7803701186486477e-13,
+      "denominator": 0.17506598808853327,
+      "relative": 1.0169708794310692e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 2,
+      "kind": "same_q_C",
+      "numerator": 1.470430871079606e-12,
+      "denominator": 1.190613010085699,
+      "relative": 1.2350199927462292e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 2,
+      "kind": "q30_60_C",
+      "numerator": 1.0381635810911893e-12,
+      "denominator": 1.1906130100856909,
+      "relative": 8.719571954084985e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 2,
+      "kind": "same_q_D",
+      "numerator": 2.7922275698027135e-12,
+      "denominator": 2.260877298637443,
+      "relative": 1.2350195083499214e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 2,
+      "kind": "q30_60_D",
+      "numerator": 1.971388084336896e-12,
+      "denominator": 2.2608772986374275,
+      "relative": 8.71957131651948e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 3,
+      "kind": "same_q_C",
+      "numerator": 3.329217368072054e-11,
+      "denominator": 24.393329931306198,
+      "relative": 1.3648064357951245e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 3,
+      "kind": "q30_60_C",
+      "numerator": 2.6703641240213273e-11,
+      "denominator": 24.393329931306102,
+      "relative": 1.0947107801769264e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 3,
+      "kind": "same_q_D",
+      "numerator": 2.1760677576512344e-13,
+      "denominator": 0.1594413870789193,
+      "relative": 1.3648073423835293e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 3,
+      "kind": "q30_60_D",
+      "numerator": 1.745422955073917e-13,
+      "denominator": 0.1594413870789187,
+      "relative": 1.0947113463143575e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 4,
+      "kind": "same_q_C",
+      "numerator": 5.05005823751793e-13,
+      "denominator": 0.3424758804061159,
+      "relative": 1.4745734010609605e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 4,
+      "kind": "q30_60_C",
+      "numerator": 3.986082723736674e-13,
+      "denominator": 0.3424758804061142,
+      "relative": 1.1639017378420645e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 4,
+      "kind": "same_q_D",
+      "numerator": 3.223734365018388e-12,
+      "denominator": 2.1862148705154705,
+      "relative": 1.4745734321431493e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 4,
+      "kind": "q30_60_D",
+      "numerator": 2.5445398683049446e-12,
+      "denominator": 2.18621487051546,
+      "relative": 1.1639020036969192e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 5,
+      "kind": "same_q_C",
+      "numerator": 2.997176586032786e-11,
+      "denominator": 25.24024771466717,
+      "relative": 1.1874592594791054e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 5,
+      "kind": "q30_60_C",
+      "numerator": 2.245236111406244e-11,
+      "denominator": 25.240247714667007,
+      "relative": 8.895459889252775e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 5,
+      "kind": "same_q_D",
+      "numerator": 5.827547376971045e-14,
+      "denominator": 0.049075767801007614,
+      "relative": 1.1874592366237813e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 5,
+      "kind": "q30_60_D",
+      "numerator": 4.365513904036614e-14,
+      "denominator": 0.049075767801007295,
+      "relative": 8.895457166840312e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 6,
+      "kind": "same_q_C",
+      "numerator": 9.440364371523576e-14,
+      "denominator": 1.200900224945365,
+      "relative": 7.861073031236267e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 6,
+      "kind": "q30_60_C",
+      "numerator": 6.310235853286584e-14,
+      "denominator": 1.2009002249453673,
+      "relative": 5.2545879517789723e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 6,
+      "kind": "same_q_D",
+      "numerator": 1.7231897255931846e-13,
+      "denominator": 2.192011970614954,
+      "relative": 7.861224065805423e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 6,
+      "kind": "q30_60_D",
+      "numerator": 1.1518753751303984e-13,
+      "denominator": 2.1920119706149577,
+      "relative": 5.2548772113103274e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 7,
+      "kind": "same_q_C",
+      "numerator": 1.6977654210050625e-12,
+      "denominator": 24.82546609476384,
+      "relative": 6.83880582352149e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 7,
+      "kind": "q30_60_C",
+      "numerator": 8.410891256693984e-13,
+      "denominator": 24.82546609476384,
+      "relative": 3.388009403162022e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 7,
+      "kind": "same_q_D",
+      "numerator": 1.154781665203041e-14,
+      "denominator": 0.16884862582562762,
+      "relative": 6.83915346989913e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 7,
+      "kind": "q30_60_D",
+      "numerator": 5.720127911436601e-15,
+      "denominator": 0.16884862582562762,
+      "relative": 3.3877254750914334e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 8,
+      "kind": "same_q_C",
+      "numerator": 1.1157031432323652e-13,
+      "denominator": 1.1423519409696532,
+      "relative": 9.766719897944342e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 8,
+      "kind": "q30_60_C",
+      "numerator": 2.001950925234846e-14,
+      "denominator": 1.142351940969653,
+      "relative": 1.752481747031083e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 8,
+      "kind": "same_q_D",
+      "numerator": 2.1934498478805487e-13,
+      "denominator": 2.2454471217709386,
+      "relative": 9.768432427616551e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 8,
+      "kind": "q30_60_D",
+      "numerator": 3.9362403005071144e-14,
+      "denominator": 2.2454471217709377,
+      "relative": 1.7529873058879618e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 9,
+      "kind": "same_q_C",
+      "numerator": 2.0651085591632546e-12,
+      "denominator": 24.22406598200034,
+      "relative": 8.525028625242892e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 9,
+      "kind": "q30_60_C",
+      "numerator": 1.0599752408592432e-12,
+      "denominator": 24.22406598200034,
+      "relative": 4.375711499658465e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 9,
+      "kind": "same_q_D",
+      "numerator": 1.3046695402137435e-14,
+      "denominator": 0.15299606010223643,
+      "relative": 8.527471487448273e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 9,
+      "kind": "q30_60_D",
+      "numerator": 6.694554022071639e-15,
+      "denominator": 0.15299606010223643,
+      "relative": 4.3756381815310423e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 10,
+      "kind": "same_q_C",
+      "numerator": 1.3223755195182761e-14,
+      "denominator": 0.16291091227109586,
+      "relative": 8.117169691602641e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 10,
+      "kind": "q30_60_C",
+      "numerator": 9.084377701000855e-15,
+      "denominator": 0.16291091227109597,
+      "relative": 5.576285574955083e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 10,
+      "kind": "same_q_D",
+      "numerator": 1.6968340273279132e-13,
+      "denominator": 2.0904745465166537,
+      "relative": 8.116980090263899e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 10,
+      "kind": "q30_60_D",
+      "numerator": 1.1655053377097413e-13,
+      "denominator": 2.090474546516655,
+      "relative": 5.575314655956064e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 11,
+      "kind": "same_q_C",
+      "numerator": 1.6844344703685754e-12,
+      "denominator": 24.13213015568237,
+      "relative": 6.980048837387624e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 11,
+      "kind": "q30_60_C",
+      "numerator": 7.131742498387914e-13,
+      "denominator": 24.132130155682358,
+      "relative": 2.955289256430855e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 11,
+      "kind": "same_q_D",
+      "numerator": 1.6299326913200315e-15,
+      "denominator": 0.023347321591666338,
+      "relative": 6.981240588649896e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "index": 11,
+      "kind": "q30_60_D",
+      "numerator": 6.898792588993219e-16,
+      "denominator": 0.023347321591666328,
+      "relative": 2.9548539698256856e-14,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "forward",
+      "numerator": 7.066154609729177e-12,
+      "denominator": 9.60471623998058,
+      "relative": 7.356963426275532e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "adjoint",
+      "numerator": 4.546496196613883e-12,
+      "denominator": 5.796606124094017,
+      "relative": 7.843376105400777e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "amplitudes",
+      "numerator": 5.99806574521776e-14,
+      "denominator": 0.38968320285204217,
+      "relative": 1.539215881341221e-13,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "modal",
+      "numerator": 5.695744112465823e-11,
+      "denominator": 55.16793664866991,
+      "relative": 1.0324374008653714e-12,
+      "passed": true
+    },
+    {
+      "patch": "min_ordinary",
+      "kind": "linear",
+      "numerator": 2.3995897364962396e-15,
+      "denominator": 9.435136668791692,
+      "relative": 2.543248519582433e-16,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 0,
+      "kind": "same_q_C",
+      "numerator": 1.5731798823107661e-12,
+      "denominator": 1.2580396008609787,
+      "relative": 1.2505010821870086e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 0,
+      "kind": "q30_60_C",
+      "numerator": 1.2400739180616898e-12,
+      "denominator": 1.2580396008609764,
+      "relative": 9.85719302645965e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 0,
+      "kind": "same_q_D",
+      "numerator": 2.7869043909600645e-12,
+      "denominator": 2.2286301843132494,
+      "relative": 1.2505010524295878e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 0,
+      "kind": "q30_60_D",
+      "numerator": 2.1968032592206654e-12,
+      "denominator": 2.228630184313246,
+      "relative": 9.857190639718506e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 1,
+      "kind": "same_q_C",
+      "numerator": 3.360195261943872e-11,
+      "denominator": 25.036032090936054,
+      "relative": 1.3421436950308049e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 1,
+      "kind": "q30_60_C",
+      "numerator": 2.547221011032301e-11,
+      "denominator": 25.036032090935947,
+      "relative": 1.0174220107165056e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 1,
+      "kind": "same_q_D",
+      "numerator": 2.3542752386425085e-13,
+      "denominator": 0.17541153408636012,
+      "relative": 1.3421439193864135e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 1,
+      "kind": "q30_60_D",
+      "numerator": 1.78467567356403e-13,
+      "denominator": 0.1754115340863594,
+      "relative": 1.0174220770940811e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 2,
+      "kind": "same_q_C",
+      "numerator": 1.4675521153821208e-12,
+      "denominator": 1.1913784380579795,
+      "relative": 1.2318102027885627e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 2,
+      "kind": "q30_60_C",
+      "numerator": 1.0360201245732672e-12,
+      "denominator": 1.1913784380579693,
+      "relative": 8.695978468957798e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 2,
+      "kind": "same_q_D",
+      "numerator": 2.786762279303214e-12,
+      "denominator": 2.262330784120645,
+      "relative": 1.231810263496199e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 2,
+      "kind": "q30_60_D",
+      "numerator": 1.9673188606255925e-12,
+      "denominator": 2.262330784120625,
+      "relative": 8.695982366655968e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 3,
+      "kind": "same_q_C",
+      "numerator": 3.3594843692618407e-11,
+      "denominator": 24.65227673483529,
+      "relative": 1.3627481166940934e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 3,
+      "kind": "q30_60_C",
+      "numerator": 2.6962868084429114e-11,
+      "denominator": 24.65227673483529,
+      "relative": 1.0937273005023835e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 3,
+      "kind": "same_q_D",
+      "numerator": 2.195850594947866e-13,
+      "denominator": 0.16113393326472497,
+      "relative": 1.3627487087653535e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 3,
+      "kind": "q30_60_D",
+      "numerator": 1.7623658964135708e-13,
+      "denominator": 0.16113393326472497,
+      "relative": 1.0937273488621427e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 4,
+      "kind": "same_q_C",
+      "numerator": 5.109183643095813e-13,
+      "denominator": 0.3461285903226091,
+      "relative": 1.4760940835120839e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 4,
+      "kind": "q30_60_C",
+      "numerator": 4.0320979587795766e-13,
+      "denominator": 0.34612859032260906,
+      "relative": 1.1649132927798482e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 4,
+      "kind": "same_q_D",
+      "numerator": 3.261477287754023e-12,
+      "denominator": 2.2095321585173218,
+      "relative": 1.476094056916825e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 4,
+      "kind": "q30_60_D",
+      "numerator": 2.5739137369116993e-12,
+      "denominator": 2.2095321585173213,
+      "relative": 1.1649134532800336e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 5,
+      "kind": "same_q_C",
+      "numerator": 2.998472704825835e-11,
+      "denominator": 25.28655363905114,
+      "relative": 1.1857973006630532e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 5,
+      "kind": "q30_60_C",
+      "numerator": 2.2461770723612423e-11,
+      "denominator": 25.286553639050968,
+      "relative": 8.882891296393936e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 5,
+      "kind": "same_q_D",
+      "numerator": 5.830067644801551e-14,
+      "denominator": 0.0491658025272341,
+      "relative": 1.1857973113674162e-12,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 5,
+      "kind": "q30_60_D",
+      "numerator": 4.3673455439101306e-14,
+      "denominator": 0.04916580252723377,
+      "relative": 8.882892822691105e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 6,
+      "kind": "same_q_C",
+      "numerator": 8.436511997904757e-14,
+      "denominator": 1.2132217283470939,
+      "relative": 6.953808855203039e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 6,
+      "kind": "q30_60_C",
+      "numerator": 5.413987087737924e-14,
+      "denominator": 1.2132217283470943,
+      "relative": 4.4624877392477923e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 6,
+      "kind": "same_q_D",
+      "numerator": 1.5398960710540876e-13,
+      "denominator": 2.214502500961712,
+      "relative": 6.953688561585923e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 6,
+      "kind": "q30_60_D",
+      "numerator": 9.882575408730461e-14,
+      "denominator": 2.2145025009617125,
+      "relative": 4.462661660774221e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 7,
+      "kind": "same_q_C",
+      "numerator": 1.5356378934370807e-12,
+      "denominator": 24.874466706172583,
+      "relative": 6.173551021522054e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 7,
+      "kind": "q30_60_C",
+      "numerator": 5.883881996985668e-13,
+      "denominator": 24.874466706172583,
+      "relative": 2.365430409619832e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 7,
+      "kind": "same_q_D",
+      "numerator": 1.0444933193756465e-14,
+      "denominator": 0.16918189996716437,
+      "relative": 6.173788801156428e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 7,
+      "kind": "q30_60_D",
+      "numerator": 4.001652399834135e-15,
+      "denominator": 0.16918189996716437,
+      "relative": 2.36529581510244e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 8,
+      "kind": "same_q_C",
+      "numerator": 1.1010400578901382e-13,
+      "denominator": 1.143086342595031,
+      "relative": 9.632168777299538e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 8,
+      "kind": "q30_60_C",
+      "numerator": 2.6095194555037675e-14,
+      "denominator": 1.1430863425950315,
+      "relative": 2.2828716941711014e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 8,
+      "kind": "same_q_D",
+      "numerator": 2.164301000504369e-13,
+      "denominator": 2.246890687415453,
+      "relative": 9.632426769252022e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 8,
+      "kind": "q30_60_D",
+      "numerator": 5.129517223039682e-14,
+      "denominator": 2.246890687415454,
+      "relative": 2.2829402657501093e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 9,
+      "kind": "same_q_C",
+      "numerator": 2.039705322864794e-12,
+      "denominator": 24.481215968172126,
+      "relative": 8.331715734694723e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 9,
+      "kind": "q30_60_C",
+      "numerator": 1.122506911142676e-12,
+      "denominator": 24.481215968172126,
+      "relative": 4.585176294355804e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 9,
+      "kind": "same_q_D",
+      "numerator": 1.2883237077102155e-14,
+      "denominator": 0.1546201860755087,
+      "relative": 8.33218314121717e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 9,
+      "kind": "q30_60_D",
+      "numerator": 7.091731689941613e-15,
+      "denominator": 0.1546201860755087,
+      "relative": 4.586549706050909e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 10,
+      "kind": "same_q_C",
+      "numerator": 1.162171316899992e-14,
+      "denominator": 0.16464845450049967,
+      "relative": 7.058501219617977e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 10,
+      "kind": "q30_60_C",
+      "numerator": 8.02519228387669e-15,
+      "denominator": 0.16464845450049975,
+      "relative": 4.8741376335556994e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 10,
+      "kind": "same_q_D",
+      "numerator": 1.4912984526356647e-13,
+      "denominator": 2.1127707067518995,
+      "relative": 7.05849644672675e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 10,
+      "kind": "q30_60_D",
+      "numerator": 1.0297981111358755e-13,
+      "denominator": 2.112770706751901,
+      "relative": 4.874159357874905e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 11,
+      "kind": "same_q_C",
+      "numerator": 1.4454237185245737e-12,
+      "denominator": 24.17640312030797,
+      "relative": 5.978654936103503e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 11,
+      "kind": "q30_60_C",
+      "numerator": 4.484346290528236e-13,
+      "denominator": 24.17640312030797,
+      "relative": 1.8548442744824285e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 11,
+      "kind": "same_q_D",
+      "numerator": 1.3983473470004996e-15,
+      "denominator": 0.02339015474134115,
+      "relative": 5.978358683232553e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "index": 11,
+      "kind": "q30_60_D",
+      "numerator": 4.3392771770601867e-16,
+      "denominator": 0.02339015474134115,
+      "relative": 1.855172496738848e-14,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "forward",
+      "numerator": 7.139565473356524e-12,
+      "denominator": 9.410402100925946,
+      "relative": 7.58688672044526e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "adjoint",
+      "numerator": 4.388277739891487e-12,
+      "denominator": 5.627051317894544,
+      "relative": 7.798538687458487e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "amplitudes",
+      "numerator": 5.2776691311211496e-14,
+      "denominator": 0.3789706608264754,
+      "relative": 1.3926326432793988e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "modal",
+      "numerator": 5.7337750177000217e-11,
+      "denominator": 61.84175101645059,
+      "relative": 9.271689309338564e-13,
+      "passed": true
+    },
+    {
+      "patch": "max_ordinary",
+      "kind": "linear",
+      "numerator": 1.7935637047207433e-15,
+      "denominator": 9.244253313901158,
+      "relative": 1.9401931598127564e-16,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 0,
+      "kind": "same_q_C",
+      "numerator": 1.5911520992677567e-12,
+      "denominator": 1.2580396008609989,
+      "relative": 1.264786973461548e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 0,
+      "kind": "q30_60_C",
+      "numerator": 1.2480149606941655e-12,
+      "denominator": 1.2580396008609935,
+      "relative": 9.920315384667007e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 0,
+      "kind": "same_q_D",
+      "numerator": 2.8187398024680954e-12,
+      "denominator": 2.228630184313286,
+      "relative": 1.264785796364255e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 0,
+      "kind": "q30_60_D",
+      "numerator": 2.2108769774448226e-12,
+      "denominator": 2.2286301843132756,
+      "relative": 9.920340274517446e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 1,
+      "kind": "same_q_C",
+      "numerator": 3.3910483069607226e-11,
+      "denominator": 25.03603209093585,
+      "relative": 1.3544671514414745e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 1,
+      "kind": "q30_60_C",
+      "numerator": 2.5594780534491683e-11,
+      "denominator": 25.036032090935844,
+      "relative": 1.0223177715033417e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 1,
+      "kind": "same_q_D",
+      "numerator": 2.3758909079834905e-13,
+      "denominator": 0.17541153408635873,
+      "relative": 1.354466751778016e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 1,
+      "kind": "q30_60_D",
+      "numerator": 1.7932642896046674e-13,
+      "denominator": 0.17541153408635868,
+      "relative": 1.0223183435142908e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 2,
+      "kind": "same_q_C",
+      "numerator": 1.4689538754261221e-12,
+      "denominator": 1.1913784380579735,
+      "relative": 1.2329867895046138e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 2,
+      "kind": "q30_60_C",
+      "numerator": 1.0364574065164149e-12,
+      "denominator": 1.1913784380579624,
+      "relative": 8.699648855538458e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 2,
+      "kind": "same_q_D",
+      "numerator": 2.7894236978567162e-12,
+      "denominator": 2.262330784120633,
+      "relative": 1.232986669074109e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 2,
+      "kind": "q30_60_D",
+      "numerator": 1.96814514083875e-12,
+      "denominator": 2.2623307841206124,
+      "relative": 8.699634707060688e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 3,
+      "kind": "same_q_C",
+      "numerator": 3.363573570096455e-11,
+      "denominator": 24.652276734835628,
+      "relative": 1.3644068684915653e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 3,
+      "kind": "q30_60_C",
+      "numerator": 2.697033928366141e-11,
+      "denominator": 24.652276734835628,
+      "relative": 1.0940303637574445e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 3,
+      "kind": "same_q_D",
+      "numerator": 2.1985233440653445e-13,
+      "denominator": 0.16113393326472716,
+      "relative": 1.3644074215288888e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 3,
+      "kind": "q30_60_D",
+      "numerator": 1.7628533833687818e-13,
+      "denominator": 0.16113393326472716,
+      "relative": 1.0940298841167041e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 4,
+      "kind": "same_q_C",
+      "numerator": 5.146443798084879e-13,
+      "denominator": 0.34612859032261395,
+      "relative": 1.486858913702582e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 4,
+      "kind": "q30_60_C",
+      "numerator": 4.0409354381696586e-13,
+      "denominator": 0.3461285903226144,
+      "relative": 1.1674665286687943e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 4,
+      "kind": "same_q_D",
+      "numerator": 3.2852657895240316e-12,
+      "denominator": 2.209532158517352,
+      "relative": 1.4868603640186537e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 4,
+      "kind": "q30_60_D",
+      "numerator": 2.5795550138237906e-12,
+      "denominator": 2.209532158517355,
+      "relative": 1.1674666077522623e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 5,
+      "kind": "same_q_C",
+      "numerator": 3.031282568040015e-11,
+      "denominator": 25.286553639050958,
+      "relative": 1.1987725220722423e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 5,
+      "kind": "q30_60_C",
+      "numerator": 2.2533014437557668e-11,
+      "denominator": 25.286553639050855,
+      "relative": 8.911065841237927e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 5,
+      "kind": "same_q_D",
+      "numerator": 5.89386143662096e-14,
+      "denominator": 0.049165802527233744,
+      "relative": 1.1987725479221566e-12,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 5,
+      "kind": "q30_60_D",
+      "numerator": 4.381197371800427e-14,
+      "denominator": 0.04916580252723354,
+      "relative": 8.911066527132611e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 6,
+      "kind": "same_q_C",
+      "numerator": 2.5132632807836744e-13,
+      "denominator": 1.2132217283471107,
+      "relative": 2.0715613824422152e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 6,
+      "kind": "q30_60_C",
+      "numerator": 6.887083404505622e-14,
+      "denominator": 1.2132217283471107,
+      "relative": 5.676689795103292e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 6,
+      "kind": "same_q_D",
+      "numerator": 4.587654315232857e-13,
+      "denominator": 2.2145025009617427,
+      "relative": 2.0716410630561363e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 6,
+      "kind": "q30_60_D",
+      "numerator": 1.257254084361424e-13,
+      "denominator": 2.2145025009617427,
+      "relative": 5.677365836414307e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 7,
+      "kind": "same_q_C",
+      "numerator": 5.0558554227586184e-12,
+      "denominator": 24.874466706172473,
+      "relative": 2.0325482682625849e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 7,
+      "kind": "q30_60_C",
+      "numerator": 7.642487160912873e-13,
+      "denominator": 24.874466706172473,
+      "relative": 3.0724225171092524e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 7,
+      "kind": "same_q_D",
+      "numerator": 3.4396493703785265e-14,
+      "denominator": 0.16918189996716362,
+      "relative": 2.0331071887986393e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 7,
+      "kind": "q30_60_D",
+      "numerator": 5.2037030565648965e-15,
+      "denominator": 0.16918189996716362,
+      "relative": 3.075803651321376e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 8,
+      "kind": "same_q_C",
+      "numerator": 1.384070274775861e-13,
+      "denominator": 1.1430863425950273,
+      "relative": 1.2108186610241127e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 8,
+      "kind": "q30_60_C",
+      "numerator": 3.095597405231507e-14,
+      "denominator": 1.1430863425950253,
+      "relative": 2.7081046198171762e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 8,
+      "kind": "same_q_D",
+      "numerator": 2.7203453456993457e-13,
+      "denominator": 2.2468906874154464,
+      "relative": 1.2107154838175527e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 8,
+      "kind": "q30_60_D",
+      "numerator": 6.085901457843884e-14,
+      "denominator": 2.2468906874154415,
+      "relative": 2.7085881355645246e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 9,
+      "kind": "same_q_C",
+      "numerator": 2.7852500964109042e-12,
+      "denominator": 24.48121596817246,
+      "relative": 1.1377090500863815e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 9,
+      "kind": "q30_60_C",
+      "numerator": 1.1910519154415338e-12,
+      "denominator": 24.48121596817246,
+      "relative": 4.8651664892381023e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 9,
+      "kind": "same_q_D",
+      "numerator": 1.7590281306346756e-14,
+      "denominator": 0.1546201860755108,
+      "relative": 1.1376445568210808e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 9,
+      "kind": "q30_60_D",
+      "numerator": 7.521418338045909e-15,
+      "denominator": 0.1546201860755108,
+      "relative": 4.8644478634715424e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 10,
+      "kind": "same_q_C",
+      "numerator": 3.498257541807025e-14,
+      "denominator": 0.16464845450050206,
+      "relative": 2.1246828902340885e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 10,
+      "kind": "q30_60_C",
+      "numerator": 9.76536993137993e-15,
+      "denominator": 0.16464845450050228,
+      "relative": 5.93104257249505e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 10,
+      "kind": "same_q_D",
+      "numerator": 4.48868507007393e-13,
+      "denominator": 2.11277070675193,
+      "relative": 2.1245490841619124e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 10,
+      "kind": "q30_60_D",
+      "numerator": 1.25303260173785e-13,
+      "denominator": 2.112770706751933,
+      "relative": 5.930755276630085e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 11,
+      "kind": "same_q_C",
+      "numerator": 5.1065307004636126e-12,
+      "denominator": 24.176403120307853,
+      "relative": 2.112196208448475e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 11,
+      "kind": "q30_60_C",
+      "numerator": 7.60471894463345e-13,
+      "denominator": 24.176403120307853,
+      "relative": 3.1455129643522484e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 11,
+      "kind": "same_q_D",
+      "numerator": 4.940699834956825e-15,
+      "denominator": 0.023390154741341037,
+      "relative": 2.1122989093459745e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "index": 11,
+      "kind": "q30_60_D",
+      "numerator": 7.359264063248727e-16,
+      "denominator": 0.023390154741341037,
+      "relative": 3.146308412505524e-14,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "forward",
+      "numerator": 8.59878557003919e-12,
+      "denominator": 16.642335979003747,
+      "relative": 5.16681407038505e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "adjoint",
+      "numerator": 6.1985581952471745e-12,
+      "denominator": 14.770205501207242,
+      "relative": 4.1966634754949993e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "amplitudes",
+      "numerator": 1.8415431695709016e-13,
+      "denominator": 0.6679507795443536,
+      "relative": 2.757004297273402e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "modal",
+      "numerator": 5.562856848077243e-11,
+      "denominator": 61.362858140443045,
+      "relative": 9.065511315241156e-13,
+      "passed": true
+    },
+    {
+      "patch": "x_seam",
+      "kind": "linear",
+      "numerator": 3.8218876983386304e-15,
+      "denominator": 16.34850114532527,
+      "relative": 2.337760302528694e-16,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 0,
+      "kind": "same_q_C",
+      "numerator": 2.2451967158481063e-12,
+      "denominator": 1.7791366655400551,
+      "relative": 1.2619585439022917e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 0,
+      "kind": "q30_60_C",
+      "numerator": 1.7611527070335523e-12,
+      "denominator": 1.7791366655400536,
+      "relative": 9.898917498274128e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 0,
+      "kind": "same_q_D",
+      "numerator": 3.9773871709131206e-12,
+      "denominator": 3.15175903216989,
+      "relative": 1.261957887743344e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 0,
+      "kind": "q30_60_D",
+      "numerator": 3.1199007644510986e-12,
+      "denominator": 3.151759032169888,
+      "relative": 9.898919088059673e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 1,
+      "kind": "same_q_C",
+      "numerator": 4.7884852081875594e-11,
+      "denominator": 35.40629613100878,
+      "relative": 1.352438896875692e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 1,
+      "kind": "q30_60_C",
+      "numerator": 3.614652859328388e-11,
+      "denominator": 35.4062961310088,
+      "relative": 1.0209068031159232e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 1,
+      "kind": "same_q_D",
+      "numerator": 3.354985236017741e-13,
+      "denominator": 0.24806937050159378,
+      "relative": 1.3524383236971153e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 1,
+      "kind": "q30_60_D",
+      "numerator": 2.5325574151395136e-13,
+      "denominator": 0.24806937050159394,
+      "relative": 1.0209069382563056e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 2,
+      "kind": "same_q_C",
+      "numerator": 2.0775092766352635e-12,
+      "denominator": 1.6848534944239648,
+      "relative": 1.2330504008276066e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 2,
+      "kind": "q30_60_C",
+      "numerator": 1.4654442278754582e-12,
+      "denominator": 1.6848534944239544,
+      "relative": 8.697754628075176e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 2,
+      "kind": "same_q_D",
+      "numerator": 3.945022790887365e-12,
+      "denominator": 3.199399792212017,
+      "relative": 1.2330508992625255e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 2,
+      "kind": "q30_60_D",
+      "numerator": 2.782758729050403e-12,
+      "denominator": 3.199399792211997,
+      "relative": 8.697752421639256e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 3,
+      "kind": "same_q_C",
+      "numerator": 4.7556649014221373e-11,
+      "denominator": 34.86357878913537,
+      "relative": 1.3640782348208492e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 3,
+      "kind": "q30_60_C",
+      "numerator": 3.8134702920149725e-11,
+      "denominator": 34.86357878913537,
+      "relative": 1.093826401207949e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 3,
+      "kind": "same_q_D",
+      "numerator": 3.108428159870867e-13,
+      "denominator": 0.22787775905662425,
+      "relative": 1.3640770265335408e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 3,
+      "kind": "q30_60_D",
+      "numerator": 2.492585618136877e-13,
+      "denominator": 0.22787775905662425,
+      "relative": 1.093825754850216e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 4,
+      "kind": "same_q_C",
+      "numerator": 7.278138310831936e-13,
+      "denominator": 0.48949974675932145,
+      "relative": 1.4868523138195758e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 4,
+      "kind": "q30_60_C",
+      "numerator": 5.714744622165785e-13,
+      "denominator": 0.4894997467593221,
+      "relative": 1.1674663082053887e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 4,
+      "kind": "same_q_D",
+      "numerator": 4.6460431528812454e-12,
+      "denominator": 3.124750345074739,
+      "relative": 1.4868525929453475e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 4,
+      "kind": "q30_60_D",
+      "numerator": 3.648041420151394e-12,
+      "denominator": 3.124750345074743,
+      "relative": 1.167466522854047e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 5,
+      "kind": "same_q_C",
+      "numerator": 4.285942364333618e-11,
+      "denominator": 35.7605871020207,
+      "relative": 1.198510066992562e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 5,
+      "kind": "q30_60_C",
+      "numerator": 3.1866788273043204e-11,
+      "denominator": 35.7605871020206,
+      "relative": 8.911147957982664e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 5,
+      "kind": "same_q_D",
+      "numerator": 8.333353170272174e-14,
+      "denominator": 0.06953094473897155,
+      "relative": 1.1985099873957838e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 5,
+      "kind": "q30_60_D",
+      "numerator": 6.196009614012787e-14,
+      "denominator": 0.06953094473897135,
+      "relative": 8.911154072871369e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 6,
+      "kind": "same_q_C",
+      "numerator": 3.2217976968221015e-13,
+      "denominator": 1.71575462239421,
+      "relative": 1.8777729954918138e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 6,
+      "kind": "q30_60_C",
+      "numerator": 8.597639627203193e-14,
+      "denominator": 1.715754622394212,
+      "relative": 5.010996045113844e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 6,
+      "kind": "same_q_D",
+      "numerator": 5.8807896733353e-13,
+      "denominator": 3.131779470769233,
+      "relative": 1.8777789841922845e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 6,
+      "kind": "q30_60_D",
+      "numerator": 1.5694307359819555e-13,
+      "denominator": 3.131779470769237,
+      "relative": 5.011306672868851e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 7,
+      "kind": "same_q_C",
+      "numerator": 6.676696891778744e-12,
+      "denominator": 35.17780817266641,
+      "relative": 1.897985473968961e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 7,
+      "kind": "q30_60_C",
+      "numerator": 1.0240130599189593e-12,
+      "denominator": 35.17780817266641,
+      "relative": 2.910963226852292e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 7,
+      "kind": "same_q_D",
+      "numerator": 4.541711538458028e-14,
+      "denominator": 0.2392593374416062,
+      "relative": 1.8982379484213363e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 7,
+      "kind": "q30_60_D",
+      "numerator": 6.9661162478700475e-15,
+      "denominator": 0.2392593374416062,
+      "relative": 2.911533703285541e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 8,
+      "kind": "same_q_C",
+      "numerator": 1.9270094886211653e-13,
+      "denominator": 1.6165585654621577,
+      "relative": 1.1920443402372205e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 8,
+      "kind": "q30_60_C",
+      "numerator": 4.451848284785495e-14,
+      "denominator": 1.6165585654621575,
+      "relative": 2.75390473311603e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 8,
+      "kind": "same_q_D",
+      "numerator": 3.7881992125611537e-13,
+      "denominator": 3.1775643283015076,
+      "relative": 1.1921707387072936e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 8,
+      "kind": "q30_60_D",
+      "numerator": 8.747078741798739e-14,
+      "denominator": 3.177564328301507,
+      "relative": 2.7527621278636034e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 9,
+      "kind": "same_q_C",
+      "numerator": 3.830475574353997e-12,
+      "denominator": 34.62166236979451,
+      "relative": 1.1063811822322768e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 9,
+      "kind": "q30_60_C",
+      "numerator": 1.593636070139347e-12,
+      "denominator": 34.62166236979451,
+      "relative": 4.6030027475795234e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 9,
+      "kind": "same_q_D",
+      "numerator": 2.4191999921266916e-14,
+      "denominator": 0.21866593084349797,
+      "relative": 1.1063451827153376e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 9,
+      "kind": "q30_60_D",
+      "numerator": 1.0065284314811192e-14,
+      "denominator": 0.21866593084349797,
+      "relative": 4.603041852923602e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 10,
+      "kind": "same_q_C",
+      "numerator": 4.946608641121867e-14,
+      "denominator": 0.2328480773783795,
+      "relative": 2.1243931651982672e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 10,
+      "kind": "q30_60_C",
+      "numerator": 1.3806838741980651e-14,
+      "denominator": 0.2328480773783798,
+      "relative": 5.929548097382157e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 10,
+      "kind": "same_q_D",
+      "numerator": 6.347131110994056e-13,
+      "denominator": 2.9879089876731686,
+      "relative": 2.124271902919265e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 10,
+      "kind": "q30_60_D",
+      "numerator": 1.771637706387787e-13,
+      "denominator": 2.9879089876731726,
+      "relative": 5.929356328110402e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 11,
+      "kind": "same_q_C",
+      "numerator": 7.222508233519125e-12,
+      "denominator": 34.19059718213871,
+      "relative": 2.112425294897215e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 11,
+      "kind": "q30_60_C",
+      "numerator": 1.0884187024579098e-12,
+      "denominator": 34.19059718213871,
+      "relative": 3.183386053948492e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 11,
+      "kind": "same_q_D",
+      "numerator": 6.9877973314941855e-15,
+      "denominator": 0.03307867406120997,
+      "relative": 2.1124780632269943e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "index": 11,
+      "kind": "q30_60_D",
+      "numerator": 1.0532160902789948e-15,
+      "denominator": 0.03307867406120997,
+      "relative": 3.18397311914645e-14,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "forward",
+      "numerator": 1.9730601994296122e-11,
+      "denominator": 27.317049688645998,
+      "relative": 7.22281586744593e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "adjoint",
+      "numerator": 1.3637409431445978e-11,
+      "denominator": 11.754387085450983,
+      "relative": 1.1601974081937211e-12,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "amplitudes",
+      "numerator": 4.3302624262450276e-13,
+      "denominator": 0.7919250018949701,
+      "relative": 5.468020855362935e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "modal",
+      "numerator": 7.929952683942926e-11,
+      "denominator": 91.28389235476561,
+      "relative": 8.687132504302037e-13,
+      "passed": true
+    },
+    {
+      "patch": "xy_corner",
+      "kind": "linear",
+      "numerator": 6.7093747873128995e-15,
+      "denominator": 26.834743553136537,
+      "relative": 2.500256719065491e-16,
+      "passed": true
+    }
+  ],
+  "native_q60": "NOT_RUN_STORAGE_GATE_PRESERVED",
+  "target_solve": false,
+  "official_RTA": false,
+  "MPI_qualification": 1,
+  "reference_read": false,
+  "fullchecks": [
+    {
+      "kind": "amplitudes",
+      "input": "a",
+      "numerator": 5.112255424001563e-13,
+      "denominator": 43.40481332420125,
+      "relative": 1.1778084116655145e-14,
+      "passed": true
+    },
+    {
+      "kind": "forward",
+      "input": "a",
+      "numerator": 6.34952945683737e-10,
+      "denominator": 39509.1552045175,
+      "relative": 1.6071033217413266e-14,
+      "passed": true
+    },
+    {
+      "kind": "adjoint",
+      "input": "a",
+      "numerator": 6.58909780049703e-10,
+      "denominator": 39894.32300216494,
+      "relative": 1.6516379536355236e-14,
+      "passed": true
+    },
+    {
+      "kind": "modal",
+      "input": "a",
+      "numerator": 1.5243461169518017e-09,
+      "denominator": 178968.5406526113,
+      "relative": 8.517397031865222e-15,
+      "passed": true
+    },
+    {
+      "kind": "linear",
+      "input": "a",
+      "numerator": 6.254480027450215e-10,
+      "denominator": 38811.58690263185,
+      "relative": 1.6114981443920537e-14,
+      "passed": true
+    },
+    {
+      "kind": "zero",
+      "input": "a",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "kind": "dual",
+      "input": "a",
+      "q": 30,
+      "numerator": 1.1506599739614123e-09,
+      "denominator": 54673.343770940315,
+      "relative": 2.1046087445871656e-14,
+      "passed": true
+    },
+    {
+      "kind": "linearity",
+      "input": "a",
+      "q": 30,
+      "numerator": 4.4465901708770304e-11,
+      "denominator": 38811.58690263185,
+      "relative": 1.1456862565378648e-15,
+      "passed": true
+    },
+    {
+      "kind": "zero",
+      "input": "a",
+      "q": 30,
+      "passed": true
+    },
+    {
+      "kind": "dual",
+      "input": "a",
+      "q": 60,
+      "numerator": 5.873392568687323e-10,
+      "denominator": 54673.34377093875,
+      "relative": 1.0742698660053943e-14,
+      "passed": true
+    },
+    {
+      "kind": "linearity",
+      "input": "a",
+      "q": 60,
+      "numerator": 4.3637526115773256e-11,
+      "denominator": 38811.58690263181,
+      "relative": 1.1243427439658283e-15,
+      "passed": true
+    },
+    {
+      "kind": "zero",
+      "input": "a",
+      "q": 60,
+      "passed": true
+    },
+    {
+      "kind": "amplitudes",
+      "input": "b",
+      "numerator": 5.535569375402363e-13,
+      "denominator": 44.122803435426384,
+      "relative": 1.2545824255033239e-14,
+      "passed": true
+    },
+    {
+      "kind": "forward",
+      "input": "b",
+      "numerator": 6.594599492959254e-10,
+      "denominator": 39894.19564210997,
+      "relative": 1.653022297308429e-14,
+      "passed": true
+    },
+    {
+      "kind": "adjoint",
+      "input": "b",
+      "numerator": 6.350666075093106e-10,
+      "denominator": 39508.438441687846,
+      "relative": 1.6074201678373898e-14,
+      "passed": true
+    },
+    {
+      "kind": "modal",
+      "input": "b",
+      "numerator": 1.5243461169518017e-09,
+      "denominator": 178968.5406526113,
+      "relative": 8.517397031865222e-15,
+      "passed": true
+    },
+    {
+      "kind": "linear",
+      "input": "b",
+      "numerator": 6.489199175296085e-10,
+      "denominator": 39189.82911832267,
+      "relative": 1.6558375785982052e-14,
+      "passed": true
+    },
+    {
+      "kind": "zero",
+      "input": "b",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "passed": true
+    },
+    {
+      "kind": "dual",
+      "input": "b",
+      "q": 30,
+      "numerator": 1.352819485985223e-09,
+      "denominator": 54298.05654099673,
+      "relative": 2.4914694413856265e-14,
+      "passed": true
+    },
+    {
+      "kind": "linearity",
+      "input": "b",
+      "q": 30,
+      "numerator": 4.4138986276371084e-11,
+      "denominator": 39189.82911832267,
+      "relative": 1.1262867756607416e-15,
+      "passed": true
+    },
+    {
+      "kind": "zero",
+      "input": "b",
+      "q": 30,
+      "passed": true
+    },
+    {
+      "kind": "dual",
+      "input": "b",
+      "q": 60,
+      "numerator": 1.094614563876441e-09,
+      "denominator": 54298.05654099537,
+      "relative": 2.0159369112041794e-14,
+      "passed": true
+    },
+    {
+      "kind": "linearity",
+      "input": "b",
+      "q": 60,
+      "numerator": 4.3764952317353175e-11,
+      "denominator": 39189.82911832262,
+      "relative": 1.1167426166931544e-15,
+      "passed": true
+    },
+    {
+      "kind": "zero",
+      "input": "b",
+      "q": 60,
+      "passed": true
+    },
+    {
+      "input": "a",
+      "kind": "explicit_amplitudes",
+      "numerator": 2.7490393314611937e-13,
+      "denominator": 16.257485983537165,
+      "relative": 1.69093753747963e-14,
+      "passed": true
+    },
+    {
+      "input": "a",
+      "kind": "explicit_forward",
+      "numerator": 3.357350383429111e-10,
+      "denominator": 14341.74774519026,
+      "relative": 2.340963209700194e-14,
+      "passed": true
+    },
+    {
+      "input": "a",
+      "kind": "explicit_adjoint",
+      "numerator": 3.5773981767271543e-10,
+      "denominator": 15251.85449750261,
+      "relative": 2.3455496361527246e-14,
+      "passed": true
+    },
+    {
+      "input": "a",
+      "kind": "explicit_modal",
+      "numerator": 6.959091003941522e-11,
+      "denominator": 3542.876451983423,
+      "relative": 1.9642488521002717e-14,
+      "passed": true
+    },
+    {
+      "input": "b",
+      "kind": "explicit_amplitudes",
+      "numerator": 2.376514988545761e-13,
+      "denominator": 17.358614318343143,
+      "relative": 1.3690695264969722e-14,
+      "passed": true
+    },
+    {
+      "input": "b",
+      "kind": "explicit_forward",
+      "numerator": 3.6600229352876324e-10,
+      "denominator": 15251.854249848995,
+      "relative": 2.3997232568124426e-14,
+      "passed": true
+    },
+    {
+      "input": "b",
+      "kind": "explicit_adjoint",
+      "numerator": 3.3349565406265963e-10,
+      "denominator": 14341.747601105584,
+      "relative": 2.325348788295165e-14,
+      "passed": true
+    },
+    {
+      "input": "b",
+      "kind": "explicit_modal",
+      "numerator": 6.959091003941522e-11,
+      "denominator": 3542.876451983423,
+      "relative": 1.9642488521002717e-14,
+      "passed": true
+    },
+    {
+      "kind": "all_channel_q30_q60",
+      "input": "a",
+      "passed": true,
+      "maximum_relative": 1.47954943850825e-12,
+      "worst_original_index": 22336,
+      "numerator": 8.020751664043668e-16,
+      "denominator": 0.0005421077157198992
+    },
+    {
+      "kind": "all_channel_q30_q60",
+      "input": "b",
+      "passed": true,
+      "maximum_relative": 1.6066324236103945e-12,
+      "worst_original_index": 29663,
+      "numerator": 6.0055048985650756e-15,
+      "denominator": 0.003737945786671986
+    }
+  ],
+  "full_action": "QUALIFIED",
+  "q": 30,
+  "modes": 32060,
+  "rows": 378432,
+  "H_max_relative": 5.460289279460157e-16,
+  "unit_power_max_absolute": 3.410605131648481e-13,
+  "H_worst_original_index": 28957,
+  "unit_power_worst_original_index": 5659,
+  "modal_physics_recomputed_from_frozen_inventory": true,
+  "stage": "CHECK",
+  "source_sha": "0e0184b9db55d517a8118a59061a4235a295c072",
+  "elapsed_worker_seconds": 5.83997140196152,
+  "input_sha256": "614efd9565531e7842657d123f159135f0896466e957f447778abdc30468704a",
+  "physical_contract_sha256": "7da1f5b5f1ef0345c499c656965cb3c9820c3f8beec850ef2889efd605b8eaa8"
+}

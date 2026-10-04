@@ -1,3 +1,9 @@
+# V38变化：opt-in分方向边界核、完整库存checker和接口修复
+
+新数值核在src/solvers，六个明确stage复用同一个runner及监督。改变的是边界数据布局／相同q计算顺序，ordinary默认和原native oracle不改；无体积求解或NN训练。覆盖、MPI共同错误、预算reader与原子无损writer修复均附定点测试。旧task/review/response/raw保持。[精确列表](records/changed_files_v38.json) · [依赖分组及production边界](records/selective_merge_manifest_v38.json)。以下历史逐字保留。
+
+<!-- V38-LATEST-END -->
+
 # V37变更：通用分面片端口作用与独立原数组审核
 
 数值核心在src/solvers，按mode内双遍历生成／散射未裁剪面片，原oracle／体积solver默认不变；provider补H/source身份绑定。复用既有runner、窗、watchdog、事务writer，并加本批新存储live门与无损JIT归档。checker只重算保存数组，不搭建FE或solve。

@@ -1,0 +1,71 @@
+{
+  "approval": "NOT_APPROVED",
+  "dependency_groups": [
+    {
+      "group": "production numerical/core",
+      "files": [
+        "src/solvers/directional_boundary.py"
+      ],
+      "behavior": "new opt-in boundary decoder/action only",
+      "dependencies": [
+        "Basix native element",
+        "explicit qualified volume adapter REQUIRED"
+      ],
+      "fresh_PDE": "NOT_RUN",
+      "merge": "not approved; consumer Gate first"
+    },
+    {
+      "group": "reusable runner/watchdog",
+      "files": [
+        "src/runners/port_preparation.py",
+        "src/solvers/boundary_structure_scope.py",
+        "src/solvers/tiled_port_action.py"
+      ],
+      "behavior": "namespace budget/active reader and collective error/shared plan fixes",
+      "tests": "final focused/MPI2/4",
+      "merge": "selective after review"
+    },
+    {
+      "group": "checker/benchmark",
+      "files": [
+        "benchmarks/check_boundary_witness.py",
+        "benchmarks/check_boundary_structure.py",
+        "benchmarks/archive_jit_cache.py",
+        "benchmarks/qualify_port_preparation.py"
+      ],
+      "behavior": "strict complete inventory and raw independent recomputation; lossless own JIT cleanup",
+      "tests": "negative inventory/hash/counter/physics fixtures",
+      "merge": "selective after dependencies"
+    },
+    {
+      "group": "compact evidence/docs",
+      "files": [
+        "docs/task042_neural_coarse_inverse/response_v38.md",
+        "docs/task042_neural_coarse_inverse/outcomes/directional_boundary_structure_v38.md",
+        "docs/task042_neural_coarse_inverse/outcomes/records/*v38*"
+      ],
+      "behavior": "no numerical behavior",
+      "merge": "retain negative history"
+    },
+    {
+      "group": "research-only",
+      "files": [
+        "src/solvers/boundary_structure_study.py",
+        "input/task042_neural_coarse_inverse/v38_*.dat"
+      ],
+      "behavior": "one frozen campaign; closed entries not production",
+      "merge": "research branch"
+    },
+    {
+      "group": "do-not-merge",
+      "files": [
+        "tmp/task042/v38",
+        "benchmarks/artifacts/task042/v38",
+        "results/task042/task042_v38_*"
+      ],
+      "behavior": "large raw data/caches remain ignored",
+      "merge": "never tracked"
+    }
+  ],
+  "ordinary_solver_default_changed": false
+}

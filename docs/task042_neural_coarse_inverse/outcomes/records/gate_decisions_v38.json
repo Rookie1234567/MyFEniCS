@@ -1,0 +1,127 @@
+{
+  "native_bridge": "NATIVE_P6_PERIODIC_PATCH_BRIDGE_QUALIFIED",
+  "boundary_layout": "BOUNDARY_LAYOUT_ONLY_QUALIFIED",
+  "full_boundary_action": "TARGET_BOUNDARY_ACTION_QUALIFIED_AT_FROZEN_Q",
+  "qualified_q": 30,
+  "real_MPI": 1,
+  "all_modes": 32060,
+  "all_rows": 378432,
+  "selected_explicit_modes": 12,
+  "native_unique_hex": 20,
+  "native_constructs": 28,
+  "q15_historical": "FAIL 1.3259472061511423e-5 > 1e-10, not rerun",
+  "native_q60": "NOT_RUN_STORAGE_GATE_PRESERVED",
+  "full_volume_adapter": "NOT_QUALIFIED_NOT_CONSTRUCTED",
+  "full_PDE": "NOT_RUN",
+  "official_RTA": "NOT_RUN",
+  "E_H_curl_Avolume": "NOT_RUN",
+  "global_p4_factor": "ABSENT",
+  "global_volume_matrices": "ABSENT",
+  "training": "NOT_RUN",
+  "NN20": "NOT_DEMONSTRATED",
+  "target_2TB_48h": "NOT_QUALIFIED",
+  "failures_preserved": [
+    {
+      "role": "inspect",
+      "source_sha": "cf0896e57f9f16970e5af6b55ad14920ab4c7815",
+      "elapsed_seconds": 4.001501995953731,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak_bytes": 163262464,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "directory": "/home/fenics/Projects/NN-Lab/tmp/task042/v38/aux_inspect_01",
+      "cpu": 3,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v38/aux_inspect_01/summary.json",
+        "sha256": "99c771b6987d8bfe134883b851806aacec53e2cbf5b9ce3de50137ed34ed5287",
+        "bytes": 6715
+      }
+    },
+    {
+      "role": "BRIDGE",
+      "source_sha": "20e287be22b83576af9ef3ef9e43d95884a2565c",
+      "elapsed_seconds": 79.48834243998863,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak_bytes": 1039990784,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_bridge_20261004T045918481082Z",
+      "cpu": 0,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_bridge_20261004T045918481082Z/run_summary.json",
+        "sha256": "318ed981e3533a3d35a4f29ffd919113c83c1c984a8560d56c3c5405317d22a6",
+        "bytes": 7274
+      }
+    },
+    {
+      "role": "BRIDGE",
+      "source_sha": "e154f008ae94dbae416b0ca16991712d1ca3c4e3",
+      "elapsed_seconds": 24.846572670037858,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak_bytes": 998838272,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_bridge_20261004T050704552495Z",
+      "cpu": 2,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_bridge_20261004T050704552495Z/run_summary.json",
+        "sha256": "bc94bf0dec7702ece5ddb12b4f0ff4c1ef0982c82ed7ef8b665138989ab72a0a",
+        "bytes": 7171
+      }
+    },
+    {
+      "role": "COMPONENT",
+      "source_sha": "42b8baf9aeb4e6bb6548ca0087f67c3978be17a1",
+      "elapsed_seconds": 8.438553591025993,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak_bytes": 642359296,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_full_action_20261004T052237329806Z",
+      "cpu": 0,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_full_action_20261004T052237329806Z/run_summary.json",
+        "sha256": "036430cfb42120c70596821f3ec125fa033786bf533dbda1724bf55f0aa7f579",
+        "bytes": 7238
+      }
+    },
+    {
+      "role": "COMPONENT",
+      "source_sha": "ab707f6f5ec92f2077916f21ca9a581f93fd53c9",
+      "elapsed_seconds": 11.864887528005056,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak_bytes": 634896384,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_full_action_20261004T052423028580Z",
+      "cpu": 1,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_full_action_20261004T052423028580Z/run_summary.json",
+        "sha256": "7eaf051f3291107432fa5e27d607388f2efec24a4f4c66c365a536cedeb5a4d3",
+        "bytes": 7243
+      }
+    },
+    {
+      "role": "COMPONENT",
+      "source_sha": "5529cc22a9dcc208b84ce930be271fdc54fcbbd1",
+      "elapsed_seconds": 12.850935348076746,
+      "classification": "WORKER_FAILED",
+      "exit_code": 1,
+      "peak_bytes": 634818560,
+      "swap_bytes": 0,
+      "descendants_cleared": true,
+      "directory": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_full_action_20261004T052632185699Z",
+      "cpu": 0,
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v38_full_action_20261004T052632185699Z/run_summary.json",
+        "sha256": "ff100d5160090abc40084f99d67b5ac26123105967c3627144e1c5a17a008acf",
+        "bytes": 7242
+      }
+    }
+  ]
+}
