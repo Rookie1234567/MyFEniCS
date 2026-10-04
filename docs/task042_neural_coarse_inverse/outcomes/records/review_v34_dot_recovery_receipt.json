@@ -1,0 +1,131 @@
+{
+  "schema": "fresh_C1_source_snapshot_recovery_20261004T0234Z.v1",
+  "created_utc": "2026-10-04T02:44:00Z",
+  "scope": "source recovery checkpoint; no new FE/PDE execution approval or qualification",
+  "remote_parent": "5be1210aa79f25c13a7677cc291a4a766a548650",
+  "own_branch": "task40extra_dot_parallel_cloud",
+  "historical_local_heads": {
+    "optional_plot_fix": "c9bd1b5d258c18c57eace7d84f673f6dbd166768",
+    "four_file_patch_base": "c9bd1b5d258c18c57eace7d84f673f6dbd166768"
+  },
+  "lost_local_graph_restored": false,
+  "exact_frozen_source_recovery": [
+    {
+      "path": "src/solvers/fresh_c1_p6_component.py",
+      "bytes": 55869,
+      "sha256": "eeb08926025f9cb8e86b712834c0dd88f9856bcbd30464f737da3e449cc8b850",
+      "mode": "100644"
+    },
+    {
+      "path": "benchmarks/check_fresh_c1_p6_component.py",
+      "bytes": 72201,
+      "sha256": "42671b5ac42c31231ce7b5cdd2911c4548c8f8aa4c8e389fa1b8f7c818c4e5f6",
+      "mode": "100644"
+    },
+    {
+      "path": "src/test/test_fresh_c1_p6_component_contract.py",
+      "bytes": 7984,
+      "sha256": "c2f2d427de03a3d83ffb78799f950a2e17578b459a7a08282491b828cce5a0b0",
+      "mode": "100644"
+    },
+    {
+      "path": "src/test/test_fresh_c1_p6_native_tensor_checker.py",
+      "bytes": 10714,
+      "sha256": "22f64dc1e9a1446a1b34a42ddf781828f5e8bb2f5322101efd7e551ba2c4155f",
+      "mode": "100644"
+    },
+    {
+      "path": "src/solvers/solve_vector_maxwell.py",
+      "bytes": 17349,
+      "sha256": "dde88dbebf6249dcf3050ab64a286f3a422f8c9f4988b0d8f6642cc1723afe7c",
+      "mode": "100644"
+    }
+  ],
+  "optional_plot_test_recovery": {
+    "path": "src/test/test_cloud_logging_optional_plot_import.py",
+    "sha256_now": "d36fc0761fb82b01d1ba4269ac54eeee7ed99126f223b1c4c7f3f1c118535798",
+    "provenance": "complete79-line source captured in independent read2026-10-04T01:20:06Z",
+    "independent_pre_loss_SHA_or_Git_blob_recorded": false,
+    "not_claimed_matching_lost_git_blob": true
+  },
+  "historical_targeted_tests": {
+    "native_authority_worker_pipeline_checker_saved_transform": {
+      "passed": 78,
+      "failed": 0,
+      "elapsed_seconds": 2.06,
+      "scope": "pure contracts plus opt-in public native basis/saved-array transform; no mesh/form/JIT/PDE",
+      "status": "historical_pass_before_snapshot_loss; test_log_and_saved_inputs_now_unavailable"
+    },
+    "optional_plot_import_regressions": {
+      "passed": 2,
+      "failed": 0,
+      "elapsed_seconds": 1.33,
+      "status": "historical_pass; recovered test has captured-source provenance only"
+    }
+  },
+  "independent_source_review": {
+    "status": "approved_no_concrete_blocker_from_completed_reads",
+    "review_scope": "exact native two-call operation order/hash authority; complete CSR support/equivalence; inventory/basis/allocation/lifecycle; unchanged original controls",
+    "final_supplemental_read": "exec-server No such file or directory, no numerical action"
+  },
+  "new_native_tensor_contract": {
+    "representation": "native_Basix_row_transpose_row_v2",
+    "exact_authority": "inherited pre-elimination raw/native C-order hashes checkpointed before any array export and copied into failure receipt",
+    "checker_recipe": "public native T_apply C-order row/transpose/row with exact byte hash",
+    "CSR_witness": "all nonzero support plus identity/full/ii/it/ti/tt comparisons at unchanged1e-12",
+    "action_recovery_limit": 1e-11,
+    "original_equation_limit": 1e-10
+  },
+  "scientific_raw_persistence": {
+    "only_confirmed_Library_payload": "synthetic1.07MB C0 transfer pilot",
+    "C0_library_file_id": "libfile_d0f6b202125081919d5b0d44359ae180",
+    "C1a_attempt1_archive_upload": "NOT_STARTED",
+    "C1a_attempt2_archive_upload": "NOT_STARTED",
+    "live532_receipt_upload": "NOT_STARTED",
+    "raw_after_reset": "UNAVAILABLE; never regenerated or relabeled PASS"
+  },
+  "historical_C1a_attempts": [
+    {
+      "attempt": 1,
+      "source": "32847dfa3371b9b0e43796a7675a4379c9ee6fb8",
+      "status": "WORKER_FAILED",
+      "cause": "ModuleNotFoundError pyvista through logging import",
+      "supervised_seconds": 3.023872774,
+      "peak_RSS_bytes": 349843456,
+      "swap_bytes": 0,
+      "archive_before_loss_bytes": 214397,
+      "archive_sha256_before_loss": "009e50ea75f9fca476ed4f0b47e61eec45002edb84664190af28d446b7d974a8",
+      "archive_now": "UNAVAILABLE"
+    },
+    {
+      "attempt": 2,
+      "source": "c9bd1b5d258c18c57eace7d84f673f6dbd166768",
+      "status": "WORKER_FAILED",
+      "cause": "CSR product byte hash differed from original native orientation arithmetic",
+      "completed_subgate": "fresh p6 all532 same-live literal component proof; not wholeC1a",
+      "subgate_seconds": 174.972,
+      "supervised_seconds": 726.977009198,
+      "peak_RSS_bytes": 2279366656,
+      "swap_bytes": 0,
+      "raw_classes": 16,
+      "oriented_classes": 29,
+      "archive_before_loss_bytes": 12136259,
+      "archive_sha256_before_loss": "1198d2840f3eb16798cd98b745dde911fc5dbfb11e025e7fd59f6a1c3e3b35a1",
+      "archive_now": "UNAVAILABLE"
+    }
+  ],
+  "saved_orientation_diagnostic_historical": {
+    "status": "new derived diagnostic only; not missing original native witness",
+    "relative_CSR_native_defect": 1.2451933667225598e-17,
+    "max_entry_difference": 1.8189894035458565e-12,
+    "omitted_orientation_relative": 0.2713187670941253,
+    "one_sided_orientation_relative": 0.19649121420178328,
+    "transpose_and_conjugation_current_reflection": "non-discriminating",
+    "failed_original_nonidentity_native_tensor_and_expected_hash": "NOT_ARCHIVED_BEFORE_FAILURE",
+    "exploratory_roundoff_bound_status": "WITHDRAWN_AS_CERTIFIED_BOUND",
+    "reason": "prepared-factor growth/componentwise envelope proof incomplete",
+    "raw_derived_arrays_now": "UNAVAILABLE"
+  },
+  "qualification": "C1a/C1b/C1c/C2/target_not_qualified; no current runtime restored",
+  "next_conditions": "durable source readback; restore exact runtime lock and imports/API; root explicit bounded replay decision; actual scientific raw Library upload/readback before later stage"
+}

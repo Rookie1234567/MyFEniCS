@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V34 / 下一执行 V37
+
+[Review V34](review_report_v34.md)审阅交付HEAD `bc2efb6e9013ceeb3e34d4c295a21db8b054c837`。接受V36的32060原尺寸ordered端口、解析容量及与现有裁剪表面实现的micro组件等价资格；不授原尺寸完整求解或NN20%。
+
+V37一次连续完成：dot已发布包的语义身份验收、目标p6面片的未裁剪积分／q15→30→60审计、单mode内部面片分块及容量／作用验证。缺匹配solver也继续自身边界任务，不重跑dot求解或旧七／八块路线。普通bug同轮修复，真实Gate和预算依报告执行；交付response_v37后清场队列交回。
+
+[本轮独立核验](outcomes/records/review_v34_independent_checks.json) · [文档验收](outcomes/records/review_v34_documentation_checks.json)。以下V36及此前历史全文保留；不merge。
+
+---
+
 # 最新导航：V36 / Review V33 已连续收口
 
 已完成原尺寸规则3D物理／32060全端口／解析容量包，以及真实384hex/p3/q15/40mode按需provider边界配对。只获PORT_COMPONENT_QUALIFIED_ON_MICRO；目标solve、2TB/48h、NN20%未合格。旧V35七／八块追加路线关闭，未重复actor。

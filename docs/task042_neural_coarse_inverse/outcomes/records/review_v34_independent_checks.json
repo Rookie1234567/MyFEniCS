@@ -1,0 +1,506 @@
+{
+  "reviewed_head": "bc2efb6e9013ceeb3e34d4c295a21db8b054c837",
+  "previous_review": "cc5d9823a66fb5090618705114093998a647e40c",
+  "scope": "stdlib metadata/hash/resource/source audit only; no new FE/matrix/factor/vector numerical experiment",
+  "raw_archives_verified": 239,
+  "final_originals_matching_archive": 237,
+  "protected_files": 1158,
+  "history_files": [
+    "docs/task042_neural_coarse_inverse/response_v1.md",
+    "docs/task042_neural_coarse_inverse/response_v10.md",
+    "docs/task042_neural_coarse_inverse/response_v11.md",
+    "docs/task042_neural_coarse_inverse/response_v12.md",
+    "docs/task042_neural_coarse_inverse/response_v13.md",
+    "docs/task042_neural_coarse_inverse/response_v14.md",
+    "docs/task042_neural_coarse_inverse/response_v15.md",
+    "docs/task042_neural_coarse_inverse/response_v16.md",
+    "docs/task042_neural_coarse_inverse/response_v17.md",
+    "docs/task042_neural_coarse_inverse/response_v18.md",
+    "docs/task042_neural_coarse_inverse/response_v19.md",
+    "docs/task042_neural_coarse_inverse/response_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v20.md",
+    "docs/task042_neural_coarse_inverse/response_v21.md",
+    "docs/task042_neural_coarse_inverse/response_v22.md",
+    "docs/task042_neural_coarse_inverse/response_v23.md",
+    "docs/task042_neural_coarse_inverse/response_v24.md",
+    "docs/task042_neural_coarse_inverse/response_v25.md",
+    "docs/task042_neural_coarse_inverse/response_v26.md",
+    "docs/task042_neural_coarse_inverse/response_v27.md",
+    "docs/task042_neural_coarse_inverse/response_v28.md",
+    "docs/task042_neural_coarse_inverse/response_v29.md",
+    "docs/task042_neural_coarse_inverse/response_v3.md",
+    "docs/task042_neural_coarse_inverse/response_v30.md",
+    "docs/task042_neural_coarse_inverse/response_v31.md",
+    "docs/task042_neural_coarse_inverse/response_v32.md",
+    "docs/task042_neural_coarse_inverse/response_v33.md",
+    "docs/task042_neural_coarse_inverse/response_v34.md",
+    "docs/task042_neural_coarse_inverse/response_v35.md",
+    "docs/task042_neural_coarse_inverse/response_v4.md",
+    "docs/task042_neural_coarse_inverse/response_v5.md",
+    "docs/task042_neural_coarse_inverse/response_v6.md",
+    "docs/task042_neural_coarse_inverse/response_v7.md",
+    "docs/task042_neural_coarse_inverse/response_v8.md",
+    "docs/task042_neural_coarse_inverse/response_v9.md",
+    "docs/task042_neural_coarse_inverse/review_report_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v10.md",
+    "docs/task042_neural_coarse_inverse/review_report_v11.md",
+    "docs/task042_neural_coarse_inverse/review_report_v12.md",
+    "docs/task042_neural_coarse_inverse/review_report_v13.md",
+    "docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "docs/task042_neural_coarse_inverse/review_report_v15.md",
+    "docs/task042_neural_coarse_inverse/review_report_v16.md",
+    "docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "docs/task042_neural_coarse_inverse/review_report_v18.md",
+    "docs/task042_neural_coarse_inverse/review_report_v19.md",
+    "docs/task042_neural_coarse_inverse/review_report_v2.md",
+    "docs/task042_neural_coarse_inverse/review_report_v20.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md",
+    "docs/task042_neural_coarse_inverse/review_report_v22.md",
+    "docs/task042_neural_coarse_inverse/review_report_v23.md",
+    "docs/task042_neural_coarse_inverse/review_report_v24.md",
+    "docs/task042_neural_coarse_inverse/review_report_v25.md",
+    "docs/task042_neural_coarse_inverse/review_report_v26.md",
+    "docs/task042_neural_coarse_inverse/review_report_v27.md",
+    "docs/task042_neural_coarse_inverse/review_report_v28.md",
+    "docs/task042_neural_coarse_inverse/review_report_v29.md",
+    "docs/task042_neural_coarse_inverse/review_report_v3.md",
+    "docs/task042_neural_coarse_inverse/review_report_v30.md",
+    "docs/task042_neural_coarse_inverse/review_report_v31.md",
+    "docs/task042_neural_coarse_inverse/review_report_v32.md",
+    "docs/task042_neural_coarse_inverse/review_report_v33.md",
+    "docs/task042_neural_coarse_inverse/review_report_v4.md",
+    "docs/task042_neural_coarse_inverse/review_report_v5.md",
+    "docs/task042_neural_coarse_inverse/review_report_v6.md",
+    "docs/task042_neural_coarse_inverse/review_report_v7.md",
+    "docs/task042_neural_coarse_inverse/review_report_v8.md",
+    "docs/task042_neural_coarse_inverse/review_report_v9.md"
+  ],
+  "compiled": [
+    "benchmarks/check_port_preparation.py",
+    "benchmarks/qualify_port_preparation.py",
+    "scripts/run_case.py",
+    "src/io/port_preparation.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/bounded_port_provider.py",
+    "src/solvers/bounded_port_surface.py",
+    "src/solvers/port_component_study.py",
+    "src/solvers/port_preparation_window.py",
+    "src/solvers/target_port_preparation.py",
+    "src/test/port_provider_mpi_fixture.py",
+    "src/test/test_task042_v35_cache.py",
+    "src/test/test_task042_v36_checker.py",
+    "src/test/test_task042_v36_ports.py"
+  ],
+  "source_hashes": {
+    "src/solvers/bounded_port_provider.py": "a98cabb41b0bcf36b94446130b14c0b703b03e0d0e8d0699f30ec459de2449ee",
+    "src/solvers/bounded_port_surface.py": "9a6367e01f91323bc14f38c96b1eea312f4a0706500efa6c2e28494e4b54c24e",
+    "src/solvers/target_port_preparation.py": "3a771d1cb5bf81d9c3f722d34a92b0af6d3c0194b1ed9591b71423776180256f",
+    "src/solvers/port_component_study.py": "257950f8b9fa3d063177a8e98f24855c6de4ad709abc1449098886be267f108c",
+    "src/solvers/port_preparation_window.py": "17a2d4e7e2e59e440d07e4fb729a65ac3842cc98825a81c222d577b8982021c1",
+    "src/io/port_preparation.py": "db5c5c7f8243b92976bef3a7ea7fb083ae75bd55a78624bd6396a24f4d8446b0",
+    "src/runners/port_preparation.py": "6715d0140f663a1b4410b133aef8e89dadc9fe4b5459e0842fcb98d076a0fca4",
+    "scripts/run_case.py": "4ab8b257a83ead2e9f8142c0a2c48b51b1751b9310308b3c4b3997d8d8752c10",
+    "benchmarks/check_port_preparation.py": "dfd401c65e812e493f3e43324660df4d2d9276014116d41af6f7508671aa65c3",
+    "src/test/test_task042_v36_ports.py": "2be9d27febf4552befda5e4768565c2f0493344f7d89f6960035466bd94defc0",
+    "src/test/port_provider_mpi_fixture.py": "1d5c596973895d9f6fff23fceaeb0fff1b6845e14c095ee33e901c7d93d39f45",
+    "input/task042_neural_coarse_inverse/port_preparation_v36.json": "b6b0049eca60b6ec8f672500c05b55b33a4a4fd44eaf1998935fdd02478af7ef",
+    "benchmarks/qualify_port_preparation.py": "b4fea865a19567276e99c9a5e658ff5c7c3960e9159014ea1c3c20fe4223bfd3",
+    "src/test/test_task042_v35_cache.py": "a92d706304eb88b5da1ea41da29bbfeef9f0a50c108909965481cd1a8869aba0",
+    "src/test/test_task042_v36_checker.py": "ec4ca85956e944cc54462b2f8e6df590ed44c59926e50d6e8ed1bbb813c4c432"
+  },
+  "supervisions": [
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_001/supervision/summary.json",
+      "seconds": 2.7794324009446427,
+      "peak": 96866304,
+      "samples": 5,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002/supervision/summary.json",
+      "seconds": 5.325221155071631,
+      "peak": 263684096,
+      "samples": 9,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/supervision/summary.json",
+      "seconds": 19.643878221977502,
+      "peak": 462979072,
+      "samples": 27,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "style",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_style_001/supervision/summary.json",
+      "seconds": 2.770740662002936,
+      "peak": 96714752,
+      "samples": 5,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_004/supervision/summary.json",
+      "seconds": 2.739010878955014,
+      "peak": 97710080,
+      "samples": 5,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/supervision/summary.json",
+      "seconds": 19.675327743054368,
+      "peak": 464232448,
+      "samples": 27,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/supervision/summary.json",
+      "seconds": 20.199995498987846,
+      "peak": 470986752,
+      "samples": 27,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "INVENTORY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_target_inventory_20261004T023228048893Z/supervision/summary.json",
+      "seconds": 24.48176990193315,
+      "peak": 603471872,
+      "samples": 38,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "COMPONENT",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_port_component_20261004T023327208081Z/supervision/summary.json",
+      "seconds": 11.306872299988754,
+      "peak": 352448512,
+      "samples": 18,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "CHECK",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_port_checker_20261004T023414520694Z/supervision/summary.json",
+      "seconds": 4.744587441091426,
+      "peak": 288509952,
+      "samples": 8,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "DEPLOY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_deployment_package_20261004T023423836261Z/supervision/summary.json",
+      "seconds": 4.714764241012745,
+      "peak": 293474304,
+      "samples": 8,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/supervision/summary.json",
+      "seconds": 21.5245233559981,
+      "peak": 466509824,
+      "samples": 30,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_post_001/supervision/summary.json",
+      "seconds": 4.632711404003203,
+      "peak": 290787328,
+      "samples": 8,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "collect",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_collect_001/supervision/summary.json",
+      "seconds": 2.70617283298634,
+      "peak": 98127872,
+      "samples": 5,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "stage": "collect",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_collect_002/supervision/summary.json",
+      "seconds": 4.656090737902559,
+      "peak": 99233792,
+      "samples": 8,
+      "status": "COMPLETED"
+    },
+    {
+      "stage": "docs",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_docs_001/supervision/summary.json",
+      "seconds": 2.7270018679555506,
+      "peak": 95875072,
+      "samples": 5,
+      "status": "COMPLETED"
+    }
+  ],
+  "CPU_admissions": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_deployment_package_20261004T023423836261Z/admission.json",
+      "cpu": 8
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_collect_002/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002/admission.json",
+      "cpu": 5
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_post_001/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_port_component_20261004T023327208081Z/admission.json",
+      "cpu": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_port_checker_20261004T023414520694Z/admission.json",
+      "cpu": 7
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_docs_001/admission.json",
+      "cpu": 6
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_style_001/admission.json",
+      "cpu": 2
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v36_target_inventory_20261004T023228048893Z/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_001/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_collect_001/admission.json",
+      "cpu": 3
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_004/admission.json",
+      "cpu": 0
+    }
+  ],
+  "costs": {
+    "supervised": 154.62810064386576,
+    "probes": 20.818985254736617,
+    "bootstrap": 0.326941663,
+    "total": 175.7740275616024
+  },
+  "inventory_counts": {
+    "cells": 530856,
+    "trace": 105298704,
+    "interior": 238885200,
+    "storage": 345771066,
+    "ports": 32060
+  },
+  "target_boundary_support": {
+    "ideal_topological_pair_bytes": 9082376,
+    "conservative_full_boundary_cell_support_pair_bytes": 111259016,
+    "provider_cache_cap": 67108864,
+    "kind": "source-derived candidate bound, not measured actual target support"
+  },
+  "component_gates": [
+    {
+      "label": "forward_423611",
+      "numerator": 0.0,
+      "denominator": 5974.549148562707,
+      "relative": 0.0,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "adjoint_423611",
+      "numerator": 2.9963635602442263e-13,
+      "denominator": 2760.4325523746706,
+      "relative": 1.0854688543889962e-16,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "amplitudes_423611",
+      "numerator": 0.0,
+      "denominator": 348.6018755550755,
+      "relative": 0.0,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "modal_rhs_423611",
+      "numerator": 0.0,
+      "denominator": 119.91423172433731,
+      "relative": 0.0,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "dual_423611",
+      "numerator": 4.7477017273697814e-12,
+      "denominator": 2210226.0304464055,
+      "relative": 2.1480616289777724e-18,
+      "pass_gate": true
+    },
+    {
+      "label": "complex_linearity_423611",
+      "numerator": 1.0572642017777584e-12,
+      "denominator": 5869.063316670783,
+      "relative": 1.8014189739181242e-16,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "unit_channel_power_423611",
+      "max_absolute": 2.842170943040401e-14,
+      "pass_gate": true
+    },
+    {
+      "label": "forward_423613",
+      "numerator": 0.0,
+      "denominator": 4875.586260196205,
+      "relative": 0.0,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "adjoint_423613",
+      "numerator": 5.645378008705124e-13,
+      "denominator": 5184.524256327709,
+      "relative": 1.0888902683433186e-16,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "amplitudes_423613",
+      "numerator": 0.0,
+      "denominator": 284.4987312366453,
+      "relative": 0.0,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "modal_rhs_423613",
+      "numerator": 0.0,
+      "denominator": 136.66030212960297,
+      "relative": 0.0,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "dual_423613",
+      "numerator": 1.2040074848185874e-11,
+      "denominator": 2537849.7604694404,
+      "relative": 4.7442031580146624e-18,
+      "pass_gate": true
+    },
+    {
+      "label": "complex_linearity_423613",
+      "numerator": 1.0551983293380748e-12,
+      "denominator": 4789.5035684601535,
+      "relative": 2.2031476002790113e-16,
+      "both_zero": false,
+      "pass_gate": true
+    },
+    {
+      "label": "unit_channel_power_423613",
+      "max_absolute": 2.842170943040401e-14,
+      "pass_gate": true
+    },
+    {
+      "label": "zero",
+      "numerator": 0.0,
+      "denominator": 0.0,
+      "relative": null,
+      "both_zero": true,
+      "pass_gate": true
+    }
+  ],
+  "provider_stats": {
+    "loads": 440,
+    "hits": 2,
+    "evictions": 438,
+    "visits": 11,
+    "cache_peak_bytes": 82960,
+    "lease_peak_bytes": 82960,
+    "created_live_peak": 2,
+    "active_batches_peak": 1,
+    "identity_bytes": 43306,
+    "loading_seconds": 1.3953744763275608,
+    "hashing_seconds": 0.06727136590052396
+  },
+  "repository_index_sha256": "feb78a8b9b35a7972d109fa413e2a69c91097ac4a436067aaac92f3515b36e37",
+  "dot_head": "077ec9c8386c976da232093779279fb9d1a93033",
+  "no_source_edits": true,
+  "JUnit": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_002/pytest.xml",
+      "cases": 18,
+      "failed": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_003/pytest.xml",
+      "cases": 19,
+      "failed": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_005/pytest.xml",
+      "cases": 19,
+      "failed": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_006/pytest.xml",
+      "cases": 19,
+      "failed": []
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v36/aux_pre_007/pytest.xml",
+      "cases": 19,
+      "failed": []
+    }
+  ],
+  "remote_identity": {
+    "task42": "bc2efb6e9013ceeb3e34d4c295a21db8b054c837",
+    "dot": "077ec9c8386c976da232093779279fb9d1a93033",
+    "read_UTC_date": "2026-10-04",
+    "fetch": "exact object only, --no-write-fetch-head --no-tags; no dot ref/worktree mutation"
+  },
+  "findings": [
+    {
+      "path": "src/solvers/bounded_port_provider.py",
+      "scope": "loader scalar identity",
+      "finding": "H positive but absent from numeric content hash and not checked equal to mode projection_denominator; actual V36 loader/checker correct"
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "scope": "inherited discrete definition",
+      "finding": "both vec_nonzero and combine apply max(1e-30,1e-13*global_max); old/new match does not establish unthresholded integral accuracy"
+    },
+    {
+      "path": "src/solvers/target_port_preparation.py",
+      "scope": "capacity conditional bound",
+      "finding": "ideal trace support is distinct from SurfacePortSource conservative full-boundary-cell native support; neither actual full target allocation nor tighter bound qualified"
+    }
+  ]
+}

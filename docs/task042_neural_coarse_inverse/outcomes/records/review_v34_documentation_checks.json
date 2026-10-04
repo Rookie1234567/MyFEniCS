@@ -1,0 +1,112 @@
+{
+  "schema": "task042.review34.docs.v1",
+  "UTC": "2026-10-04T03:15:52.027689+00:00",
+  "reviewed_HEAD": "bc2efb6e9013ceeb3e34d4c295a21db8b054c837",
+  "files": {
+    "docs/task042_neural_coarse_inverse/review_report_v34.md": {
+      "sha256": "59b9d4c649fd73ee88424cf0d31c8f7f02c4747fa2001b4c04352dea985aa864",
+      "bytes": 23677
+    },
+    "docs/task042_neural_coarse_inverse/README.md": {
+      "sha256": "2e08d98650aef8f217ec5cd4f908241100b86749b37471310958edb3033a5203",
+      "bytes": 46025
+    }
+  },
+  "README_original_suffix_sha256": "46eb5169181e1dde19fb8b16fafa042c1263aaf4ea15c6f0ed6becb1a7ede647",
+  "historical_suffix_unchanged": true,
+  "review_math_fences": [],
+  "review_tables": [
+    {
+      "start": 15,
+      "columns": 2
+    },
+    {
+      "start": 34,
+      "columns": 3
+    },
+    {
+      "start": 56,
+      "columns": 3
+    },
+    {
+      "start": 80,
+      "columns": 2
+    },
+    {
+      "start": 150,
+      "columns": 2
+    }
+  ],
+  "local_links_checked": [
+    {
+      "line": 26,
+      "path": "outcomes/records/review_v34_independent_checks.json"
+    },
+    {
+      "line": 26,
+      "path": "outcomes/records/review_v34_metadata_audit.py.gz"
+    },
+    {
+      "line": 26,
+      "path": "outcomes/records/review_v34_repository_index.gz"
+    },
+    {
+      "line": 52,
+      "path": "response_v36.md"
+    },
+    {
+      "line": 52,
+      "path": "outcomes/original_size_port_preparation_v36.md"
+    },
+    {
+      "line": 52,
+      "path": "outcomes/records/run_index_v36.json"
+    },
+    {
+      "line": 52,
+      "path": "outcomes/records/component_checker_v36.json"
+    },
+    {
+      "line": 66,
+      "path": "outcomes/records/resource_costs_v36.json"
+    },
+    {
+      "line": 66,
+      "path": "outcomes/records/final_state_v36.json"
+    },
+    {
+      "line": 78,
+      "path": "review_report_v21.md"
+    },
+    {
+      "line": 78,
+      "path": "review_report_v32.md"
+    },
+    {
+      "line": 78,
+      "path": "review_report_v33.md"
+    },
+    {
+      "line": 93,
+      "path": "outcomes/records/review_v34_dot_recovery_receipt.json"
+    },
+    {
+      "line": 164,
+      "path": "outcomes/records/review_v34_documentation_checks.json"
+    }
+  ],
+  "raw_review_archives_verified": 0,
+  "unittest": {
+    "command": "python -m unittest -q src.test.test_26_documentation_contract",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.048s\n\nOK\n",
+    "elapsed_including_startup_seconds": 0.3852802619803697,
+    "scope": "pure stdlib documentation only; no FE"
+  },
+  "diff_check": "PASS",
+  "no_source_edits": true,
+  "GitHub_visual": "NOT_VERIFIED",
+  "CI": "NOT_RUN",
+  "script": "import gzip, hashlib, json, re, subprocess, sys, time\nfrom pathlib import Path\nfrom datetime import datetime, timezone\n\nroot=Path('/home/fenics/Projects/NN-Lab')\nbase='bc2efb6e9013ceeb3e34d4c295a21db8b054c837'\ndocs=root/'docs/task042_neural_coarse_inverse'\nrec=docs/'outcomes/records'\ntarget=rec/'review_v34_documentation_checks.json'\ntarget.write_text('{}\\n')\nsha=lambda b:hashlib.sha256(b).hexdigest()\nold=subprocess.check_output(['git','show',base+':docs/task042_neural_coarse_inverse/README.md'],cwd=root)\nassert (docs/'README.md').read_bytes().endswith(old)\nreport=docs/'review_report_v34.md'\nlines=report.read_text().splitlines()\ninside=False;fences=[];links=[];tables=[];width=None\nfor i,line in enumerate(lines,1):\n    if line.startswith('```'):\n        inside=not inside;fences.append(dict(line=i,syntax=line))\n        continue\n    if inside:continue\n    assert '$$' not in line and '\\\\[' not in line and '\\\\]' not in line,(i,line)\n    if line.startswith('|'):\n        count=len(line.split('|'))\n        if width is None:width=count;tables.append(dict(start=i,columns=count-2))\n        assert count==width,(i,count,width)\n    else:width=None\n    for label,link in re.findall(r'\\[([^\\]]+)\\]\\(([^)]+)\\)',line):\n        if link.startswith(('https://','http://')):continue\n        path=(report.parent/link.split('#')[0]).resolve()\n        assert path.exists(),(i,link)\n        links.append(dict(line=i,path=link))\nassert not inside and len(fences)==0\ntest_started=time.perf_counter()\nr=subprocess.run([sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],cwd=root,capture_output=True,text=True)\nelapsed=time.perf_counter()-test_started\nassert r.returncode==0,r.stdout+r.stderr\nsubprocess.run(['git','diff','--check'],cwd=root,check=True)\nassert not subprocess.check_output(['git','diff','--name-only','--','src','benchmarks','input','scripts'],cwd=root)\nraw={'raw_review_evidence': []}\nout=dict(schema='task042.review34.docs.v1',UTC=datetime.now(timezone.utc).isoformat(),reviewed_HEAD=base,\n    files={str(p.relative_to(root)):dict(sha256=sha(p.read_bytes()),bytes=p.stat().st_size) for p in (report,docs/'README.md')},\n    README_original_suffix_sha256=sha(old),historical_suffix_unchanged=True,review_math_fences=fences,\n    review_tables=tables,local_links_checked=links,raw_review_archives_verified=len(raw['raw_review_evidence']),\n    unittest=dict(command='python -m unittest -q src.test.test_26_documentation_contract',returncode=r.returncode,\n        stdout=r.stdout,stderr=r.stderr,elapsed_including_startup_seconds=elapsed,scope='pure stdlib documentation only; no FE'),\n    diff_check='PASS',no_source_edits=True,GitHub_visual='NOT_VERIFIED',CI='NOT_RUN',script=Path(__file__).read_text())\ntarget.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\\n')\nprint(json.dumps(dict(local_links=len(links),tables=len(tables),math_blocks=len(fences)//2,unittest=r.stderr.strip(),diff_check='PASS'),ensure_ascii=False,indent=2))\n"
+}
