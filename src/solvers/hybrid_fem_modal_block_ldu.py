@@ -1323,6 +1323,54 @@ def _sampled_modal_column_contract(
     return {**contract, "sha256": actual_hash}
 
 
+def _compare_modal_sample_repeat(
+    first: np.ndarray,
+    second: np.ndarray,
+    *,
+    finite_reducer: Callable[[bool], bool] | None = None,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Apply the existing finite, aggregate, and per-column sample repeat gate."""
+
+    difference = first - second
+    finite = bool(
+        np.all(np.isfinite(first))
+        and np.all(np.isfinite(second))
+        and np.all(np.isfinite(difference))
+    )
+    if finite_reducer is not None:
+        finite = bool(finite_reducer(finite))
+    reference_norm = float(np.linalg.norm(first))
+    difference_norm = float(np.linalg.norm(difference))
+    column_absolute = [
+        float(np.linalg.norm(difference[:, index]))
+        for index in range(first.shape[1])
+    ]
+    column_relative = [
+        column_absolute[index]
+        / max(float(np.linalg.norm(first[:, index])), _TINY)
+        for index in range(first.shape[1])
+    ]
+    relative_error = difference_norm / max(reference_norm, _TINY)
+    limit = 1.0e-10
+    diagnostics = {
+        "absolute_difference": difference_norm,
+        "reference_norm": reference_norm,
+        "difference_norm": difference_norm,
+        "relative_error": relative_error,
+        "max_abs": float(np.max(np.abs(difference))),
+        "max_column_absolute_difference": max(column_absolute),
+        "max_column_relative_error": max(column_relative),
+        "finite": finite,
+        "limit": limit,
+        "pass": bool(
+            finite
+            and relative_error <= limit
+            and max(column_relative) <= limit
+        ),
+    }
+    return difference, diagnostics
+
+
 def build_hybrid_action_modal_schur(
     coupling: HybridInternalModeCoupling,
     bottom_action: Any,
@@ -1438,42 +1486,14 @@ def build_hybrid_action_modal_schur(
             "bottom", bottom_action, columns=sampled
         )
         sampled_second -= build_contribution("top", top_action, columns=sampled)
-        early_difference = sampled_first - sampled_second
-        early_reference_norm = float(np.linalg.norm(sampled_first))
-        early_difference_norm = float(np.linalg.norm(early_difference))
-        early_column_absolute = [
-            float(np.linalg.norm(early_difference[:, index]))
-            for index in range(len(sampled))
-        ]
-        early_column_relative = [
-            float(
-                early_column_absolute[index]
-                / max(float(np.linalg.norm(sampled_first[:, index])), _TINY)
-            )
-            for index in range(len(sampled))
-        ]
-        early_finite = bool(
-            np.all(np.isfinite(sampled_first))
-            and np.all(np.isfinite(sampled_second))
-            and np.all(np.isfinite(early_difference))
+        early_difference, repeat_metrics = _compare_modal_sample_repeat(
+            sampled_first, sampled_second
         )
+        early_reference_norm = repeat_metrics["reference_norm"]
+        early_difference_norm = repeat_metrics["difference_norm"]
+        early_finite = repeat_metrics["finite"]
         early_sample_diagnostics = {
-            "absolute_difference": early_difference_norm,
-            "reference_norm": early_reference_norm,
-            "difference_norm": early_difference_norm,
-            "relative_error": early_difference_norm
-            / max(early_reference_norm, _TINY),
-            "max_abs": float(np.max(np.abs(early_difference))),
-            "max_column_absolute_difference": max(early_column_absolute),
-            "max_column_relative_error": max(early_column_relative),
-            "finite": early_finite,
-            "limit": 1.0e-10,
-            "pass": bool(
-                early_finite
-                and early_difference_norm / max(early_reference_norm, _TINY)
-                <= 1.0e-10
-                and max(early_column_relative) <= 1.0e-10
-            ),
+            **repeat_metrics,
             "mode": "two_batched_sample_builds_before_full_build",
         }
         if not early_sample_diagnostics["pass"]:
@@ -2164,6 +2184,101 @@ def create_action_block_ldu_preconditioner(
         raise
 
 
+def _check_on_demand_modal_sample_repeat(
+    modal_action: HybridActionModalSchurApply,
+    *,
+    sampled_columns: Sequence[int] | None,
+    sampled_column_roles: Mapping[str, Sequence[str]] | None,
+    sampled_column_contract_sha256: str | None,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
+) -> dict[str, Any]:
+    """Repeat the frozen sample basis through S without materializing S."""
+
+    contract = _sampled_modal_column_contract(
+        sampled_columns,
+        sampled_column_roles,
+        sampled_column_contract_sha256,
+        modal_action.modal_count,
+        modal_action.mode_count,
+    )
+    if contract is None:
+        return {
+            "status": "not_run",
+            "pass": None,
+            "reason": "sampled_column_contract_not_supplied",
+            "full_vs_sample": "not_applicable_full_schur_not_materialized",
+        }
+
+    columns = list(contract["columns"])
+    comm = _action_operator(modal_action.bottom_action).getComm().tompi4py()
+    marker_detail = {
+        "side": "both",
+        "stage": "modal_sample_repeat",
+        "columns": columns,
+        "sample_count": len(columns),
+        "contract_sha256": contract["sha256"],
+    }
+    if marker_callback is not None:
+        marker_callback(
+            "modal_sample_begin",
+            {
+                **marker_detail,
+                "index": 0,
+                "total": len(columns),
+                "width": len(columns),
+                "logical_completed": 0,
+                "stage_wall_seconds": 0.0,
+            },
+        )
+
+    sample_started = time.perf_counter()
+    first = np.empty((modal_action.modal_count, len(columns)), dtype=np.complex128)
+    second = np.empty_like(first)
+    for target in (first, second):
+        for index, column in enumerate(columns):
+            basis = np.zeros(modal_action.modal_count, dtype=np.complex128)
+            basis[column] = 1.0
+            target[:, index] = modal_action.apply(basis)
+
+    _, repeat_metrics = _compare_modal_sample_repeat(
+        first,
+        second,
+        finite_reducer=lambda finite: bool(comm.allreduce(finite, op=MPI.LAND)),
+    )
+    passed = repeat_metrics["pass"]
+    diagnostics = {
+        **contract,
+        "status": "passed" if passed else "failed",
+        "pass": passed,
+        "mode": "on_demand_modal_action_two_sample_basis_repeats",
+        "early_sample_repeat": {
+            **repeat_metrics,
+        },
+        "full_vs_sample": "not_applicable_full_schur_not_materialized",
+    }
+    if not passed:
+        raise ValueError(
+            "Early sampled modal repeat Gate failed: "
+            f"relative={repeat_metrics['relative_error']:.6e}, "
+            f"max_column={repeat_metrics['max_column_relative_error']:.6e}, "
+            f"finite={repeat_metrics['finite']}, limit=1.000000e-10"
+        )
+    if marker_callback is not None:
+        marker_callback(
+            "modal_sample_ready",
+            {
+                **marker_detail,
+                "index": len(columns),
+                "total": len(columns),
+                "width": len(columns),
+                "logical_completed": len(columns),
+                "stage_wall_seconds": time.perf_counter() - sample_started,
+                **diagnostics["early_sample_repeat"],
+            },
+        )
+    return diagnostics
+
+
 def create_side_balh_block_ldu_preconditioner(
     layout: HybridAugmentedLayout,
     bottom_system: Any,
@@ -2218,20 +2333,6 @@ def create_side_balh_block_ldu_preconditioner(
     if not isinstance(use_anderson_modal_inner, (bool, np.bool_)):
         raise TypeError("Anderson modal inner opt-in must be an explicit boolean.")
     use_anderson_modal_inner = bool(use_anderson_modal_inner)
-    samples_supplied = any(
-        value is not None
-        for value in (
-            sampled_columns,
-            sampled_column_roles,
-            sampled_column_contract_sha256,
-        )
-    )
-    if use_anderson_modal_inner and samples_supplied:
-        raise ValueError(
-            "On-demand modal inner solve cannot receive sampled Schur columns."
-        )
-    if use_anderson_modal_inner and marker_callback is not None:
-        raise ValueError("On-demand modal inner solve does not emit Schur markers.")
     if not use_anderson_modal_inner and not all(
         value is not None
         for value in (
@@ -2252,6 +2353,13 @@ def create_side_balh_block_ldu_preconditioner(
                 bottom_side_inverse,
                 top_side_inverse,
             )
+            early_sample_gate = _check_on_demand_modal_sample_repeat(
+                modal_action,
+                sampled_columns=sampled_columns,
+                sampled_column_roles=sampled_column_roles,
+                sampled_column_contract_sha256=sampled_column_contract_sha256,
+                marker_callback=marker_callback,
+            )
             modal_system = HybridActionModalSchurAndersonSystem(
                 modal_action,
                 modal_owner=layout.modal_owner,
@@ -2267,6 +2375,17 @@ def create_side_balh_block_ldu_preconditioner(
                 "global_direct_factor_count": 0,
                 "global_hybrid_direct_factor_count": 0,
                 "p6_factor_count": 0,
+                "modal_schur_materialized": False,
+                "modal_schur_column_count": 0,
+                "full_vs_sample": {
+                    "status": "not_applicable",
+                    "reason": "full_modal_schur_not_materialized",
+                },
+                "schur_lu_repeat": {
+                    "status": "not_applicable",
+                    "reason": "modal_schur_lu_not_constructed",
+                },
+                "early_sample_gate": early_sample_gate,
             }
         else:
             modal_schur = build_hybrid_action_modal_schur(

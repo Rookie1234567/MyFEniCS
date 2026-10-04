@@ -4434,6 +4434,7 @@ def _run_task041_balh_candidate_setup(
     p4_refinement_target_tolerance: float | None = None,
     p4_backend_pair_side: str | None = None,
     a6_response_pair: bool = False,
+    use_anderson_modal_inner: bool = False,
     physical_action_context_factory: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Build the finite-response BAL_H Schur and run the shared formal path."""
@@ -4442,6 +4443,7 @@ def _run_task041_balh_candidate_setup(
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_5NM_CANDIDATE_MODEL_ID,
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_COMMON_LAYOUT_EQUIVALENCE_MODE,
         TASK041_P4_BACKEND_PAIR_MODE,
         TASK041_SEQUENTIAL_COMPONENT_SCHEDULE,
@@ -4472,6 +4474,34 @@ def _run_task041_balh_candidate_setup(
         raise Task041ModePrepError("P4 response correction steps must be 0 or 1")
     if not isinstance(a6_response_pair, bool):
         raise Task041ModePrepError("a6_response_pair must be a boolean")
+    if not isinstance(use_anderson_modal_inner, bool):
+        raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
+    if use_anderson_modal_inner and (
+        not isinstance(identity, Mapping)
+        or str(identity.get("model_id"))
+        != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+        or identity.get("mpi_size") != TASK041_BALH_MPI_SIZE
+        or identity.get("mode_count") != 120
+        or p4_inverse_backend != "cell_condensed"
+        or p4_refinement_target_tolerance is not None
+        or p4_response_correction_steps != 0
+        or p4_backend_pair_side is not None
+        or representative_rhs_contract is not None
+        or performance_profile is not None
+        or side_setup_schedule is not None
+        or comparison_mode is not None
+        or top_causal_replay
+        or p4_correction_replay_from is not None
+        or a6_response_pair
+        or not isinstance(sampled_column_contract, Mapping)
+        or not sampled_column_contract.get("columns")
+        or not isinstance(sampled_column_contract.get("roles"), Mapping)
+        or not sampled_column_contract.get("sha256")
+    ):
+        raise Task041ModePrepError(
+            "Anderson modal inner is limited to the registered 13.5 nm "
+            "cell-condensed MPI8 formal candidate with its sampled-column contract"
+        )
     if a6_response_pair and (
         not isinstance(identity, Mapping)
         or str(identity.get("model_id"))
@@ -6337,7 +6367,9 @@ def _run_task041_balh_candidate_setup(
             for vector in owned_vectors:
                 vector.destroy()
 
-    def cost_probe_summary() -> dict[str, Any]:
+    def cost_probe_summary(
+        *, on_demand_modal_inner: bool = False
+    ) -> dict[str, Any]:
         sampled_count = len(sampled_column_contract["columns"])
         internal_count = 2 * int(setup.coupling.mode_count_per_direction)
         modal_build_calls = internal_count + 2 * sampled_count
@@ -6484,10 +6516,24 @@ def _run_task041_balh_candidate_setup(
             "consumer_elapsed_seconds_before_modal_schur": consumer_elapsed,
             "remaining_timeout_seconds": remaining_budget,
         }
+        if on_demand_modal_inner:
+            summary["status"] = "counterfactual_materialized_schur_probe"
+            summary["modal_schur_work_contract"]["classification"] = (
+                "counterfactual_full_column_builder_not_used"
+            )
+            summary["estimate"]["status"] = (
+                "counterfactual_not_applicable_to_on_demand_route"
+            )
+            summary["estimate"]["used_for_admission"] = False
+            for side_record in side_summary.values():
+                side_record["derived_modal_schur_seconds"]["classification"] = (
+                    "counterfactual_full_column_builder_not_used"
+                )
         if (
             all_sides_measured
             and active_time_stop_enforced
             and remaining_budget is not None
+            and not on_demand_modal_inner
             and float(
                 summary["estimate"]["optimistic_seconds_total"]
             )
@@ -12239,7 +12285,9 @@ def _run_task041_balh_candidate_setup(
 
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
             probe_side(side, side_inverses[side], system)
-        cost_probe = cost_probe_summary()
+        cost_probe = cost_probe_summary(
+            on_demand_modal_inner=use_anderson_modal_inner
+        )
         for side in audit_phase:
             audit_phase[side] = "modal_schur"
 
@@ -12262,6 +12310,14 @@ def _run_task041_balh_candidate_setup(
             {
                 "source": "create_side_balh_block_ldu_preconditioner",
                 "sampled_column_contract_sha256": sampled_column_contract["sha256"],
+                **(
+                    {
+                        "modal_action_mode": "on_demand_nonlinear_inner",
+                        "modal_schur_materialized": False,
+                    }
+                    if use_anderson_modal_inner
+                    else {}
+                ),
             },
         )
         context = create_side_balh_block_ldu_preconditioner(
@@ -12275,6 +12331,7 @@ def _run_task041_balh_candidate_setup(
             sampled_column_roles=sampled_column_contract["roles"],
             sampled_column_contract_sha256=sampled_column_contract["sha256"],
             marker_callback=marker_callback,
+            use_anderson_modal_inner=use_anderson_modal_inner,
         )
         context_inventory_before = dict(context.inventory)
         marker_callback(
@@ -12345,7 +12402,11 @@ def _run_task041_balh_candidate_setup(
                     side: int(diagnostics.get("nested_iterative_ksp_count", 0))
                     for side, diagnostics in side_diagnostics_after.items()
                 },
-                "modal_block": "finite_nonlinear_side_inverse_response_columns",
+                "modal_block": (
+                    "on_demand_nonlinear_modal_inner"
+                    if use_anderson_modal_inner
+                    else "finite_nonlinear_side_inverse_response_columns"
+                ),
                 "approximate_preconditioner_only": True,
                 "component_cleanup_pass": formal_result.get(
                     "release_before_recovery", {}
@@ -12365,6 +12426,16 @@ def _run_task041_balh_candidate_setup(
             },
             "full_formal": formal_result,
         }
+        if use_anderson_modal_inner:
+            result["candidate_inventory"].update(
+                {
+                    "modal_schur_materialized": False,
+                    "modal_schur_column_count": 0,
+                    "early_sample_gate": context_inventory_before.get(
+                        "early_sample_gate"
+                    ),
+                }
+            )
         if rank_numa_evidence is not None:
             result["rank_numa_evidence"] = list(rank_numa_evidence)
         return result
@@ -12406,6 +12477,7 @@ def run_task041_consumer(
     p4_backend_pair_side: str | None = None,
     task041_resource_policy: str | None = None,
     a6_response_pair: bool = False,
+    use_anderson_modal_inner: bool = False,
 ) -> dict[str, Any]:
     """Consume one fresh Task041 packet through an exact or BAL_H side path."""
 
@@ -12425,6 +12497,7 @@ def run_task041_consumer(
     contract = _task041_case_contract(normalized, comm.size, phase="consumer")
     from benchmarks.task041_balh_workflow import (
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_V8_SWAP_OBSERVE_CONTINUE,
         task041_balh_formal_physical_volume_context_factory,
         task041_p4_refinement_target_binding,
@@ -12432,6 +12505,34 @@ def run_task041_consumer(
 
     if not isinstance(a6_response_pair, bool):
         raise Task041ModePrepError("a6_response_pair must be a boolean")
+    if not isinstance(use_anderson_modal_inner, bool):
+        raise Task041ModePrepError("use_anderson_modal_inner must be a boolean")
+    if use_anderson_modal_inner:
+        registered_case = task041_balh_case(str(normalized.get("model_id", "")))
+        if (
+            not candidate
+            or not contract.get("balh")
+            or normalized.get("model_id")
+            != TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID
+            or registered_case is None
+            or registered_case.get("p4_inverse_backend") != "cell_condensed"
+            or contract.get("mpi_size") != TASK041_BALH_MPI_SIZE
+            or contract.get("mode_count") != 120
+            or performance_profile is not None
+            or task041_rhs_probe_manifest is not None
+            or side_setup_schedule is not None
+            or comparison_mode is not None
+            or top_causal_replay
+            or p4_correction_replay_from is not None
+            or p4_response_correction_steps != 0
+            or p4_refinement_target_tolerance is not None
+            or p4_backend_pair_side is not None
+            or a6_response_pair
+        ):
+            raise Task041ModePrepError(
+                "Anderson modal inner is limited to the registered 13.5 nm "
+                "cell-condensed MPI8 formal candidate without other diagnostic modes"
+            )
     if a6_response_pair and (
         not candidate
         or normalized.get("model_id")
@@ -13543,6 +13644,7 @@ def run_task041_consumer(
                 ),
                 p4_backend_pair_side=p4_backend_pair_side,
                 a6_response_pair=a6_response_pair,
+                use_anderson_modal_inner=use_anderson_modal_inner,
                 physical_action_context_factory=physical_action_context_factory,
                 p4_correction_replay_packet_identity=(
                     disk_identity

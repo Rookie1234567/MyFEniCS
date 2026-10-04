@@ -419,6 +419,8 @@ def test_side_balh_anderson_inner_reuses_owner_factor_and_keeps_true_operator(
         assert initial_inventory["modal_schur_materialized"] is False
         assert initial_inventory["modal_schur_storage_bytes"] == 0
         assert initial_inventory["modal_block_condition"] is None
+        assert initial_inventory["early_sample_gate"]["status"] == "not_run"
+        assert initial_inventory["early_sample_gate"]["pass"] is None
         assert "repeat_diagnostics" not in initial_inner
         assert initial_inventory["modal_count"] == layout.modal_count
         assert initial_inner["constraint_lu_factorizations"] == 1
@@ -632,6 +634,133 @@ def test_side_balh_anderson_inner_failure_is_synchronized_without_fallback(
             original_action.destroy()
         if original_context is not None:
             original_context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_anderson_inner_repeats_frozen_sample_without_schur(monkeypatch):
+    fixture = _side_block_fixture()
+    context = None
+    try:
+        columns, roles, contract_sha = _sample_contract()
+        before = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        events = []
+
+        def reject_full_schur(*_args, **_kwargs):
+            raise AssertionError("sample gate must not build Schur columns")
+
+        monkeypatch.setattr(
+            block_ldu, "build_hybrid_action_modal_schur", reject_full_schur
+        )
+        context = block_ldu.create_side_balh_block_ldu_preconditioner(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            fixture["bottom_inverse"],
+            fixture["top_inverse"],
+            sampled_columns=columns,
+            sampled_column_roles=roles,
+            sampled_column_contract_sha256=contract_sha,
+            marker_callback=lambda event, detail: events.append(
+                (event, dict(detail))
+            ),
+            use_anderson_modal_inner=True,
+        )
+        inventory = context.inventory
+        gate = inventory["early_sample_gate"]
+        assert gate["status"] == "passed"
+        assert gate["pass"] is True
+        assert gate["columns"] == columns
+        assert gate["roles"] == roles
+        assert gate["sha256"] == contract_sha
+        assert gate["early_sample_repeat"]["finite"] is True
+        assert gate["early_sample_repeat"]["limit"] == 1.0e-10
+        assert gate["early_sample_repeat"]["pass"] is True
+        assert gate["full_vs_sample"] == (
+            "not_applicable_full_schur_not_materialized"
+        )
+        for key in ("full_vs_sample", "schur_lu_repeat"):
+            assert inventory[key]["status"] == "not_applicable"
+            assert "pass" not in inventory[key]
+        assert inventory["modal_schur"] is None
+        assert inventory["modal_schur_materialized"] is False
+        assert inventory["modal_schur_column_count"] == 0
+        assert [event for event, _ in events] == [
+            "modal_sample_begin",
+            "modal_sample_ready",
+        ]
+        after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert all(
+            after[side] - before[side] == 2 * len(columns)
+            for side in ("bottom", "top")
+        )
+        context.destroy()
+        context = None
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
+        if context is not None:
+            context.destroy()
+        _destroy_side_block_fixture(fixture)
+
+
+def test_side_balh_anderson_inner_stops_before_outer_on_sample_repeat_failure(
+    monkeypatch,
+):
+    fixture = _side_block_fixture()
+    try:
+        columns, roles, contract_sha = _sample_contract()
+        before = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        original_apply = block_ldu.HybridActionModalSchurApply.apply
+        call_count = 0
+
+        def nonrepeating_apply(modal_action, modal_values):
+            nonlocal call_count
+            call_count += 1
+            result = original_apply(modal_action, modal_values)
+            if call_count > len(columns):
+                result[0] += 1.0e-5
+            return result
+
+        monkeypatch.setattr(
+            block_ldu.HybridActionModalSchurApply,
+            "apply",
+            nonrepeating_apply,
+        )
+        with pytest.raises(ValueError, match="Early sampled modal repeat Gate failed"):
+            block_ldu.create_side_balh_block_ldu_preconditioner(
+                fixture["layout"],
+                fixture["bottom"],
+                fixture["top"],
+                fixture["coupling"],
+                fixture["bottom_inverse"],
+                fixture["top_inverse"],
+                sampled_columns=columns,
+                sampled_column_roles=roles,
+                sampled_column_contract_sha256=contract_sha,
+                use_anderson_modal_inner=True,
+            )
+        assert call_count == 2 * len(columns)
+        after = {
+            side: fixture[f"{side}_inverse"].diagnostics["apply_count"]
+            for side in ("bottom", "top")
+        }
+        assert all(
+            after[side] - before[side] == 2 * len(columns)
+            for side in ("bottom", "top")
+        )
+        assert fixture["bottom_inverse"].diagnostics["destroyed"] is False
+        assert fixture["top_inverse"].diagnostics["destroyed"] is False
+    finally:
         _destroy_side_block_fixture(fixture)
 
 

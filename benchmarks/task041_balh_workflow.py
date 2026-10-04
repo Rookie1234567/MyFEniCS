@@ -115,13 +115,14 @@ def task041_v8_resource_policy_binding(
     if policy != TASK041_V8_SWAP_OBSERVE_CONTINUE:
         raise ValueError(f"unsupported Task041 resource policy: {policy}")
     if model_id not in {
+        TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_5NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_2NM_CELL_CONDENSED_MODEL_ID,
         TASK041_BALH_2NM_CANDIDATE_MODEL_ID,
     } or task041_balh_service_contract(model_id) is None:
         raise ValueError(
-            "V8 resource policy is limited to registered 5 nm cell-condensed "
-            "and 2 nm Task041 consumers"
+            "V8 resource policy is limited to registered 13.5 nm, 5 nm, "
+            "and 2 nm Task041 cell-condensed consumers"
         )
     review_path = Path(__file__).resolve().parents[1] / TASK041_V8_REVIEW_PATH
     if not review_path.is_file():

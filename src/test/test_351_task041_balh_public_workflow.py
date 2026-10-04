@@ -1961,7 +1961,11 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     monkeypatch.setattr(
         worker,
         "_task041_consumer_sampled_column_contract",
-        lambda *_a, **_k: {"sha256": "e" * 64},
+        lambda *_a, **_k: {
+            "columns": [0],
+            "roles": {"0": ["registered_sample_fixture"]},
+            "sha256": "e" * 64,
+        },
     )
     monkeypatch.setattr(recovery, "build_frozen_m10_setup", fake_setup_builder)
     monkeypatch.setattr(
@@ -2119,12 +2123,99 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
     )
     assert captured["p4_inverse_backend"] == "cell_condensed"
     assert captured["p4_refinement_target_tolerance"] == 5.0e-13
+    captured_5nm_target_snapshot = copy.deepcopy(captured)
     assert resource_policy_marker_limits_seen[-1]["task041_resource_policy"] == (
         expected_v8_binding
     )
     assert captured["performance_profile"] is None
     assert captured["a6_response_pair"] is False
+    assert captured["use_anderson_modal_inner"] is False
     assert loaded_rhs_manifests == [formal_rhs_manifest]
+
+    formal_13p5_cell_condensed_path = (
+        REPOSITORY_ROOT
+        / "input/official/task041/side_balh/13p5nm_p6h10_m120_mpi8_cell_condensed.dat"
+    )
+    formal_13p5_spec = _specification(formal_13p5_cell_condensed_path)
+    formal_13p5_identity = task041_balh_workflow.build_task041_balh_packet_identity(
+        formal_13p5_spec,
+        formal_13p5_spec.as_jsonable(),
+        source_sha,
+        worker.resolved_config_sha256(formal_13p5_spec),
+    )
+    formal_13p5_identity_path = tmp_path / "13p5_cell_condensed_identity.json"
+    formal_13p5_identity_path.write_text(
+        json.dumps(formal_13p5_identity, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    captured.clear()
+    resource_policy_marker_limits_seen.clear()
+    with pytest.raises(SetupReached):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_anderson_modal_inner_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            use_anderson_modal_inner=True,
+            task041_resource_policy=(
+                task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE
+            ),
+        )
+    assert captured["use_anderson_modal_inner"] is True
+    assert captured["p4_inverse_backend"] == "cell_condensed"
+    assert captured["p4_refinement_target_tolerance"] is None
+    assert captured["p4_response_correction_steps"] == 0
+    assert captured["a6_response_pair"] is False
+    assert captured["sampled_column_contract"]["columns"] == [0]
+    assert captured["sampled_column_contract"]["roles"] == {
+        "0": ["registered_sample_fixture"]
+    }
+    assert resource_policy_marker_limits_seen[-1]["task041_resource_policy"] == (
+        task041_balh_workflow.task041_v8_resource_policy_binding(
+            task041_balh_workflow.TASK041_BALH_13P5NM_CELL_CONDENSED_MODEL_ID,
+            task041_balh_workflow.TASK041_V8_SWAP_OBSERVE_CONTINUE,
+        )
+    )
+
+    captured.clear()
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="unsupported Task041 resource policy",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_13p5_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_13p5_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_13p5_unknown_resource_policy_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            use_anderson_modal_inner=True,
+            task041_resource_policy="unknown_policy",
+        )
+    assert not captured
+
+    captured.clear()
+    with pytest.raises(
+        worker.Task041ModePrepError,
+        match="Anderson modal inner is limited to the registered 13.5 nm",
+    ):
+        worker.run_task041_consumer(
+            input_path=formal_cell_condensed_path,
+            packet_manifest=packet_manifest_path,
+            packet_identity=formal_cell_condensed_identity_path,
+            packet_manifest_sha256=packet_manifest_sha,
+            run_directory=tmp_path / "worker_wrong_model_anderson_inner_run",
+            source_sha=source_sha,
+            candidate=True,
+            comm=FakeComm(),
+            use_anderson_modal_inner=True,
+        )
 
     setup_tree = ast.parse(inspect.getsource(candidate_setup_implementation))
     target_configuration = next(
@@ -2165,7 +2256,9 @@ def test_task041_worker_forwards_top_causal_flag_to_candidate_setup(
         )
         return inverse.calls
 
-    assert run_target_configuration(captured["p4_refinement_target_tolerance"]) == [
+    assert run_target_configuration(
+        captured_5nm_target_snapshot["p4_refinement_target_tolerance"]
+    ) == [
         ((0, None), {"refinement_target_tolerance": 5.0e-13})
     ]
     assert run_target_configuration(None) == []
