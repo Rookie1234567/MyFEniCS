@@ -1,0 +1,41 @@
+{
+  "schema": "native-recovery.v40.v1",
+  "review_commit": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+  "target_solve_authorized": false,
+  "q_boundary": 30,
+  "q_volume": 15,
+  "seeds": [
+    423901,
+    423903
+  ],
+  "selected_mode_count": 12,
+  "structural_zero_input_norm": 1,
+  "structural_zero_absolute_l2": 1e-12,
+  "max_native_hex": 16,
+  "max_oracle_hex": 8,
+  "max_local_classes": 8,
+  "local_cache_bytes": 268435456,
+  "new_storage_bytes": 2147483648,
+  "jit_storage_bytes": 1610612736,
+  "evidence_reserve_bytes": 268435456,
+  "parents": {
+    "ADAPTER": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v39/ADAPTER.json",
+      "sha256": "d7b2d74d3a7ebcfb90cff80d324c0ee051acda591433f74d1bf5206ea0040717"
+    }
+  },
+  "stages": [
+    "PREFLIGHT",
+    "BUILD",
+    "RECOVER",
+    "CHECK",
+    "DEPLOY",
+    "CAPACITY"
+  ],
+  "selected_case": "xy_corner",
+  "basis": "N1E p6 Legendre",
+  "volume_q_audit": [
+    15,
+    17
+  ]
+}

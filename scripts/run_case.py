@@ -38,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         # Independent preparation opt-in: no historical live window and no
         # full-target solver dispatch. Ordinary inputs keep the existing path.
-        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v36]', b'[task042_v37]', b'[task042_v38]', b'[task042_v39]')):
+        if any(marker in args.input_path.read_bytes() for marker in (b'[task042_v36]', b'[task042_v37]', b'[task042_v38]', b'[task042_v39]', b'[task042_v40]')):
             from src.io.port_preparation import load_preparation
             preparation = load_preparation(args.input_path)
             if args.setup_only or args.physical_pc_profile or args.profile_budget_ledger:

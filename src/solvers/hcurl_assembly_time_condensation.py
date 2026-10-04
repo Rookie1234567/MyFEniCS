@@ -19,13 +19,13 @@ the default elsewhere.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass, field
 import hashlib
+import warnings
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from time import perf_counter
 from types import MappingProxyType
-from typing import Any, Callable
-import warnings
+from typing import Any
 
 import numpy as np
 from mpi4py import MPI
@@ -831,9 +831,7 @@ def _canonical_axis_aligned_coordinates(
         # keyed by these values, so preserve the actual float64 geometry.
         identity_widths = tuple(float(value) for value in widths)
     else:
-        raise ValueError(
-            "geometry_identity_policy must be rounded_12 or raw_unrounded"
-        )
+        raise ValueError("geometry_identity_policy must be rounded_12 or raw_unrounded")
     for axis, width in enumerate(identity_widths):
         canonical[canonical[:, axis] != 0.0, axis] = width
     return np.ascontiguousarray(canonical.ravel()), identity_widths
@@ -1082,12 +1080,10 @@ def _global_raw_tensor_cache(
             comm.size > 1 and use_count > unique_count
         ),
         "raw_tensor_class_owner_ranks": {
-            repr(key): int(owner_by_class[key])
-            for key in sorted(global_coordinates)
+            repr(key): int(owner_by_class[key]) for key in sorted(global_coordinates)
         },
         "raw_tensor_class_user_rank_counts": {
-            repr(key): len(ranks_by_class[key])
-            for key in sorted(global_coordinates)
+            repr(key): len(ranks_by_class[key]) for key in sorted(global_coordinates)
         },
         "raw_tensor_classes": [
             {
@@ -1170,7 +1166,9 @@ def _strict_local_lu(
     identity = np.eye(values.shape[0], dtype=np.complex128)
     reconstructed = lu_solve(factor, identity)
     defect = float(np.linalg.norm(values @ reconstructed - identity))
-    scale = max(float(np.linalg.norm(values)) * float(np.linalg.norm(reconstructed)), 1.0)
+    scale = max(
+        float(np.linalg.norm(values)) * float(np.linalg.norm(reconstructed)), 1.0
+    )
     relative_defect = defect / scale
     if not np.isfinite(relative_defect) or relative_defect > float(residual_tolerance):
         raise np.linalg.LinAlgError(
@@ -1209,6 +1207,7 @@ def build_unconstrained_assembly_time_condensation(
     geometry_tolerance: float = 1.0e-11,
     geometry_identity_policy: str = "rounded_12",
     share_identity_cache: bool = False,
+    class_checkpoint: Callable | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1225,6 +1224,8 @@ def build_unconstrained_assembly_time_condensation(
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
         raise TypeError("assembly-time condensation requires complex128")
+    if class_checkpoint is not None and not callable(class_checkpoint):
+        raise TypeError("explicit class checkpoint must be callable")
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
     representative_tensor_groups = (
@@ -1395,9 +1396,7 @@ def build_unconstrained_assembly_time_condensation(
                         "on one MPI rank"
                     )
                 local_class_coordinates[tensor_group_key] = (
-                    _lexicographic_min_coordinates(
-                        previous, canonical_coordinates
-                    )
+                    _lexicographic_min_coordinates(previous, canonical_coordinates)
                 )
             else:
                 local_class_coordinates.setdefault(
@@ -1572,6 +1571,24 @@ def build_unconstrained_assembly_time_condensation(
             solution_embedding_cache[class_key] = interior_identity
             rhs_trace_cache[class_key] = trace_from_interior_rhs
             residual_projection_cache[class_key] = interior_identity
+            if class_checkpoint is not None:
+                # Opt-in persistence only: no change to assembly or factor math.
+                class_checkpoint(
+                    class_key,
+                    {
+                        "raw_tensor": tensor,
+                        "original": oriented,
+                        "lu": interior_lu[0],
+                        "pivots": interior_lu[1],
+                        "recovery": interior_from_trace,
+                        "rhs_trace": trace_from_interior_rhs,
+                        "schur": schur,
+                        "identity": interior_identity,
+                        "interior_positions": interior_positions,
+                        "trace_positions": trace_positions,
+                    },
+                    {"class_compute_seconds": perf_counter() - schur_started},
+                )
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
         if materialize_global_matrix:

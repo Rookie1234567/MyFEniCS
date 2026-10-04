@@ -29,7 +29,7 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace in ("v37", "v38", "v39"):
+        if self.namespace in ("v37", "v38", "v39", "v40"):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
                 ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
@@ -39,10 +39,10 @@ class PreparationHealth:
             )
             size = inventory_paths(own, ROOT)["bytes"]
             row["new_preparation_bytes"] = size
-            if size > (2048 if self.namespace == "v39" else 512) * 2**20:
+            if size > (2048 if self.namespace in ("v39", "v40") else 512) * 2**20:
                 row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
-            if self.namespace == "v39":
-                jit = ROOT / "tmp/task042/v39/formal/xdg/fenics"
+            if self.namespace in ("v39", "v40"):
+                jit = ROOT / ("tmp/task042/" + self.namespace + "/formal/xdg/fenics")
                 jit_bytes = inventory_paths([jit], ROOT)["bytes"]
                 row["new_native_jit_bytes"] = jit_bytes
                 if jit_bytes > 1536 * 2**20:
@@ -63,6 +63,10 @@ FE_ROLES = (
 
 
 def context(namespace):
+    if namespace == "v40":
+        from src.solvers import native_recovery_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v39":
         from src.solvers import native_integration_scope as scope
 
@@ -88,7 +92,10 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
     if (
-        (new + reserve > (2048 if namespace == "v39" else 512) * 2**20 and not cleanup)
+        (
+            new + reserve > (2048 if namespace in ("v39", "v40") else 512) * 2**20
+            and not cleanup
+        )
         or total + reserve > 20 * 2**30
         or free < 50 * 2**30 + reserve
     ):
@@ -131,7 +138,8 @@ def launch(
     started = time.monotonic()
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
-    if role in FE_ROLES:
+    is_fe = role in FE_ROLES or (namespace == "v40" and specification is not None)
+    if is_fe:
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -142,9 +150,10 @@ def launch(
             prior_status = json.loads(
                 __import__("pathlib").Path(previous["path"]).read_text()
             )["status"]
-            if namespace != "v39" or prior_status not in (
+            if namespace not in ("v39", "v40") or prior_status not in (
                 "NATIVE_ADAPTER_NOT_QUALIFIED",
                 "COUPLED_INTERFACE_NOT_QUALIFIED",
+                "NATIVE_RECOVERY_NOT_QUALIFIED",
             ):
                 raise ValueError(
                     "completed qualified phase already published; reuse pointer, no restart"
@@ -180,7 +189,7 @@ def launch(
     folder.mkdir(parents=True, exist_ok=False)
     if (
         specification is not None
-        and namespace == "v39"
+        and namespace in ("v39", "v40")
         and ARTIFACT.joinpath(role + ".json").exists()
     ):
         (folder / "superseded_partial_pointer.json").write_bytes(
@@ -189,7 +198,7 @@ def launch(
     storage(
         32 * 2**20,
         namespace=namespace,
-        cleanup=(namespace == "v37" and role == "archive"),
+        cleanup=(namespace in ("v37", "v40") and role == "archive"),
     )
     with (ROOT / "tmp/task042/task042_shared.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -215,7 +224,7 @@ def launch(
             "shared_workstation": True,
             "environment_mode": os.environ.get("TASK042_ENV_MODE"),
             "cpu": baseline["cpu"],
-            "planned_bytes": 6 * 2**30 if role in FE_ROLES else 2 * 2**30,
+            "planned_bytes": 6 * 2**30 if is_fe else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
         }
@@ -245,8 +254,8 @@ def launch(
             interval=0.5,
             timebase_guard=True,
             hard_stop_immediate=True,
-            rss_hard_limit_bytes=(8 if role in FE_ROLES else 2) * 2**30,
-            rss_warning_bytes=(6 if role in FE_ROLES else 1) * 2**30,
+            rss_hard_limit_bytes=(8 if is_fe else 2) * 2**30,
+            rss_warning_bytes=(6 if is_fe else 1) * 2**30,
             memory_envelope_provider=shared_envelope,
             include_pss=False,
             source_state=state,
@@ -313,7 +322,9 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v39":
+        if namespace == "v40":
+            from src.solvers.native_recovery_study import execute
+        elif namespace == "v39":
             from src.solvers.native_integration_study import execute
         elif namespace == "v38":
             from src.solvers.boundary_structure_study import execute

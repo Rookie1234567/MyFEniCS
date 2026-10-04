@@ -6,10 +6,52 @@ Only MPI1 native witnesses are qualified; full-target volume row IDs are not
 invented by this boundary component.
 """
 
+import hashlib
+import json
+from collections.abc import Mapping
 from time import perf_counter
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+
+
+def identity_digest(value):
+    """Canonical structured identity; never stringify an unknown object."""
+    from src.runners.task042_shared import _json_metadata
+
+    return hashlib.sha256(
+        json.dumps(
+            _json_metadata(value),
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
+    ).hexdigest()
+
+
+def boundary_identity(boundary):
+    layout = boundary.layout
+
+    def digest(a):
+        a = np.ascontiguousarray(a)
+        return hashlib.sha256(
+            a.dtype.str.encode() + repr(a.shape).encode() + a.tobytes()
+        ).hexdigest()
+
+    return identity_digest(
+        {
+            "axes": [digest(layout.x), digest(layout.y)],
+            "phases": layout.phases,
+            "p": layout.p,
+            "basis": str(layout.polynomial.element.family),
+            "variant": str(layout.polynomial.element.lagrange_variant),
+            "maps": {s: digest(v) for s, v in layout.maps.items()},
+            "weights": {s: digest(v) for s, v in layout.weights.items()},
+            "modes": boundary.modes,
+            "q": boundary.q,
+            "faces": getattr(boundary, "face_inventory", None),
+        }
+    )
 
 
 def vector(value, size, name):
@@ -97,10 +139,12 @@ class NativeBoundaryAdapter:
         if (
             np.any(self.slaves < 0)
             or np.any(self.slaves >= native_size)
-            or self.E[:, self.slaves].nnz
+            or np.any(np.isin(self.E.indices, self.slaves))
         ):
             raise ValueError("adapter independent storage contains slave columns")
-        self.EH = self.E.conjugate().transpose().tocsr()
+        # CSC transpose has one pointer per compact row, not per native row.
+        # A full-native-length CSR indptr is unnecessary for dual scatter.
+        self.EH = self.E.conjugate().transpose().tocsc()
         for a in (
             self.E.data,
             self.E.indices,
@@ -112,7 +156,11 @@ class NativeBoundaryAdapter:
             self.slaves,
         ):
             a.flags.writeable = False
-        self.identity = str(identity)
+        self.identity = identity if isinstance(identity, Mapping) else str(identity)
+        if isinstance(identity, Mapping):
+            from src.solvers.directional_boundary import _freeze
+
+            self.identity = _freeze(identity)
         self.stats = {
             "extract_calls": 0,
             "scatter_calls": 0,
@@ -141,6 +189,14 @@ class NativeBoundaryAdapter:
         out = self.EH @ a[self.compact_rows]
         self.stats["scatter_calls"] += 1
         self.stats["scatter_seconds"] += perf_counter() - began
+        return out
+
+    def scatter_into(self, value, target):
+        """Scatter into caller-owned legal storage, without a new native vector."""
+        a = vector(value, self.boundary_size, "boundary dual")
+        out = vector(target, self.native_size, "caller dual storage")
+        weights = np.repeat(a[self.compact_rows], np.diff(self.E.indptr))
+        np.add.at(out, self.E.indices, self.E.data.conjugate() * weights)
         return out
 
     def arrays(self):
@@ -173,7 +229,18 @@ def build_literal_adapter(element, literal, description, layout, n, slaves):
     expansion and division by the physical slave-to-master boundary phase.
     The returned transpose scatter supplies all dual conjugations.
     """
-    G = literal_expansion(literal, n)
+    offsets = literal.get("master_offsets")
+    masters = literal.get("master_rows")
+    dual = literal.get("master_dual_coefficients")
+    if (offsets is None) != (masters is None) or (offsets is None) != (dual is None):
+        raise ValueError("complete entity MPC packet")
+
+    def master_packet(row):
+        if offsets is None:
+            return np.array([row], np.int64), np.array([1 + 0j])
+        section = slice(offsets[row], offsets[row + 1])
+        return masters[section], dual[section].conjugate()
+
     coefficients = {}
     ownership = []
     duplicates = []
@@ -204,20 +271,33 @@ def build_literal_adapter(element, literal, description, layout, n, slaves):
             if ids and ids[0] in active
         ]
         lookup = {int(v): k for k, v in enumerate(active)}
-        local = T[active].T @ G[np.asarray(dofs)[active]].toarray()
         global_rows = layout.maps[side][i, j]
         phase = layout.weights[side][i, j]
         for group in groups:
             maximum_block = max(maximum_block, len(group))
             positions = [lookup[v] for v in group]
+            native_rows = np.asarray(dofs)[group]
+            packets = [master_packet(r) for r in native_rows]
+            indices = np.unique(np.concatenate([packet[0] for packet in packets]))
+            primal = np.zeros((len(group), len(indices)), np.complex128)
+            for b, (ids, weights) in enumerate(packets):
+                np.add.at(primal[b], np.searchsorted(indices, ids), weights)
+            # Whole entity transform, bounded by 6/60 rows, never by n.
+            local = T[np.ix_(group, positions)].T @ primal
             owned = []
-            for a in positions:
+            for b, a in enumerate(positions):
                 row = int(global_rows[a])
-                candidate = local[a] / phase[a]
+                values = local[b] / phase[a]
+                nz = values != 0  # exact algebraic support, no threshold
+                candidate = (indices[nz], values[nz])
                 if row in coefficients:
                     old = coefficients[row]
-                    den = max(np.linalg.norm(old), np.linalg.norm(candidate))
-                    defect = np.linalg.norm(old - candidate) / den if den else 0.0
+                    union = np.union1d(old[0], candidate[0])
+                    delta = np.zeros(len(union), np.complex128)
+                    delta[np.searchsorted(union, old[0])] += old[1]
+                    delta[np.searchsorted(union, candidate[0])] -= candidate[1]
+                    den = max(np.linalg.norm(old[1]), np.linalg.norm(candidate[1]))
+                    defect = np.linalg.norm(delta) / den if den else 0.0
                     if defect > 1e-10:
                         raise ValueError(
                             "shared/periodic entity independent ownership inconsistency"
@@ -241,11 +321,10 @@ def build_literal_adapter(element, literal, description, layout, n, slaves):
     cc = []
     vv = []
     for index, row in enumerate(compact):
-        values = coefficients[int(row)]
-        nz = np.flatnonzero(values != 0)
-        rr.extend([index] * len(nz))
-        cc.extend(nz)
-        vv.extend(values[nz])
+        indices, values = coefficients[int(row)]
+        rr.extend([index] * len(indices))
+        cc.extend(indices)
+        vv.extend(values)
     E = coo_matrix(
         (np.array(vv, np.complex128), (rr, cc)), shape=(len(compact), n)
     ).tocsr()
@@ -260,16 +339,26 @@ def build_literal_adapter(element, literal, description, layout, n, slaves):
         "duplicate_max_relative": max(duplicates, default=0.0),
         "duplicate_row_checks": len(duplicates),
         "MPI": 1,
+        "native_width_dense_intermediate": False,
+        "transpose_storage": "CSC compact-column pointers",
     }
 
 
 class CoupledNativeBoundaryAction:
     """V + E^H B D E, with implicit original Hp=I at any port count."""
 
-    def __init__(self, adapter, boundary, volume_apply):
+    def __init__(self, adapter, boundary, volume_apply, *, contract=None):
         self.adapter, self.boundary, self.volume_apply = adapter, boundary, volume_apply
         if adapter.boundary_size != boundary.layout.rows or not callable(volume_apply):
             raise ValueError("native/boundary layout identity size")
+        if contract is not None and (
+            not isinstance(adapter.identity, Mapping)
+            or identity_digest(adapter.identity) != identity_digest(contract)
+            or contract["boundary"] != boundary_identity(boundary)
+            or identity_digest(getattr(volume_apply, "identity", None))
+            != identity_digest(contract)
+        ):
+            raise ValueError("structured native volume/boundary consumer identity")
         self.port_count = len(boundary.modes)
         self.original_hp_kind = "IMPLICIT_IDENTITY_NO_DENSE_PORT_MATRIX"
 
@@ -320,13 +409,14 @@ class LocalNativeVolumeAction:
     the separately assembled FE matrix is exclusively an audit oracle.
     """
 
-    def __init__(self, literal, tensors, class_indices, n):
+    def __init__(self, literal, tensors, class_indices, n, *, identity=None):
         self.G = literal_expansion(literal, n)
         self.GH = self.G.conjugate().transpose().tocsr()
         self.dofs = literal["cell_dofs"]
         self.tensors = tensors
         self.class_indices = class_indices
         self.n = n
+        self.identity = identity
         self.calls = {"forward": 0, "adjoint": 0}
         self.seconds = {"forward": 0.0, "adjoint": 0.0}
 

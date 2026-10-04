@@ -19,6 +19,8 @@ STAGES = ("INVENTORY", "COMPONENT", "CHECK", "DEPLOY")
 def load_preparation(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
+    if b"[task042_v40]" in raw:
+        return load_native_recovery(path)
     if b"[task042_v39]" in raw:
         return load_native_integration(path)
     if b"[task042_v38]" in raw:
@@ -285,6 +287,56 @@ def load_native_integration(path):
             "stage": stage,
             "preparation_scope": "v39",
             "environment_mode": "fe" if fe else "pure",
+            "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
+            "target_solve": False,
+        },
+        source_path=path,
+        raw_input_bytes=raw,
+        input_sha256=hashlib.sha256(raw).hexdigest(),
+    )
+
+
+def load_native_recovery(path):
+    from dataclasses import replace
+
+    from src.solvers.native_recovery_scope import COMPONENT_ROLES, PLAN, plan_record
+
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    value = tomllib.loads(raw.decode())
+    item = value.get("task042_v40", {})
+    if (
+        set(value) != {"schema_version", "task042_v40"}
+        or value["schema_version"] != 1
+        or set(item) != {"stage", "run_id"}
+        or item.get("stage") not in COMPONENT_ROLES
+        or not re.fullmatch("task042_v40_[a-z0-9_]+", item.get("run_id", ""))
+    ):
+        raise InputError("V40 native recovery explicit stage schema")
+    plan_record()
+    old = load_boundary_structure(
+        ROOT / "input/task042_neural_coarse_inverse/v38_bridge.dat"
+    )
+    stage = item["stage"]
+    return replace(
+        old,
+        identity={
+            "model_id": "task042_v40_native_recovery",
+            "run_id": item["run_id"],
+            "batch": "V40_PERSISTENT_NATIVE_RECOVERY",
+        },
+        method={"kind": "persistent_native_volume_recovery_opt_in"},
+        execution={
+            "mpi_size": 1,
+            "timeout_seconds": 2400 if stage in ("BUILD", "RECOVER") else 600,
+            "warning_memory_gib": 6,
+            "terminate_memory_gib": 8,
+            "require_zero_swap": True,
+        },
+        derived={
+            "stage": stage,
+            "preparation_scope": "v40",
+            "environment_mode": "fe",
             "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             "target_solve": False,
         },

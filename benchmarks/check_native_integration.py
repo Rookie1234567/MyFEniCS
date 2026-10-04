@@ -229,10 +229,15 @@ def native_entity_map_checks(element, layout, description, literal, adapter_arra
         element.T_apply(
             orientation.ravel(), len(active), int(literal["permutations"][cell])
         )
-        expansion = np.zeros((len(active), n), np.complex128)
+        relevant = np.unique(
+            np.concatenate([masters[offsets[r] : offsets[r + 1]] for r in dofs[active]])
+        )
+        expansion = np.zeros((len(active), len(relevant)), np.complex128)
         for a, row in enumerate(dofs[active]):
             for k in range(int(offsets[row]), int(offsets[row + 1])):
-                expansion[a, int(masters[k])] += dual[k].conjugate()
+                expansion[a, np.searchsorted(relevant, masters[k])] += dual[
+                    k
+                ].conjugate()
         expected = orientation[active].T @ expansion
         rows = layout.maps[side][i, j]
         positions = np.searchsorted(compact, rows)
@@ -240,7 +245,11 @@ def native_entity_map_checks(element, layout, description, literal, adapter_arra
             compact[positions], rows
         ):
             raise ValueError("native checker complete boundary entity inventory")
-        observed = layout.weights[side][i, j, :, None] * E[positions].toarray()
+        if E[positions].nnz != E[positions][:, relevant].nnz:
+            raise ValueError("native entity map has foreign master support")
+        observed = (
+            layout.weights[side][i, j, :, None] * E[positions][:, relevant].toarray()
+        )
         checks.append(
             dict(
                 kind="independent_native_entity_equation",
