@@ -2152,3 +2152,17 @@ NN单次初始化完整成本否决，暂停为`FEINN_MAIN_SOLVER_ON_HOLD`/`NO_V
 | 原尺寸物理结果 / 神经 | E/H/curl/R/T/A及所有复模式NOT_RUN，NO_VERIFIED_NN_INCREMENT | 初始nice/IO/tmux缺口限定保留；W1原件缺失，W2待dot |
 
 数学源码d4b6ed6b原样，worker接收1527e115、最后checker/readback6eb24884；实际source和文档HEAD分开。FEINN_MAIN_SOLVER_ON_HOLD / FULL_TARGET_NOT_QUALIFIED、D0成本否决/D1未运行及旧较好/退化/负结果/UNKNOWN不改。原尺寸0.7nm完整3D、decimal2e12B/172800s合取未达成，无production或merge授权。[回执](task042extra_feinn_5nm/response_v24.md)、[原量955行](task042extra_feinn_5nm/outcomes/records/w0_metrics_v24.csv)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v24.json)。
+
+## 3.44.23 Task42extra V25：W1固定q60消费者与保存检查接入
+
+本轮接收包使全部消费者明确读取同一个文件身份和积分阶次，解决旧默认路径与q30残留的工程风险；没有改变主线数学或求出新散射场。主线来源c354afa449fb80cfb5012e7d2ff66a3e3e64e088，接口clean source357748671d1e8106027c0ee680cfdedb874837ec，两者和后续文档HEAD独立绑定。
+
+| measured / implemented / not_run | 实际结果、单位和限值 | 判断 |
+| --- | --- | --- |
+| W1接收合同 | 19冻结文件/365726B、11独立串行dat、q60贯通B/D/作用/载荷/恢复/checker | 源码及fixture就绪，实际native未资格化 |
+| pure定向测试 | 49/49，Ruff/compileall通过；2.832654745s、树峰111972352B、hard2147483648B、自身swap0 | 29新增W1＋20安全回归，不算FE门 |
+| 原生控制 / 原件 | CPU准入拒绝、worker0；manifest/ledger18路径命中0，checkpoint3路径命中0 | P0部分；P1/P2未运行、q60准确性UNKNOWN |
+| 全模式积分/局部恢复 | 覆盖0；local/global factor、solve0 | 原1e-10/1e-12/1e-11门不变，不能借旧q30通过 |
+| 原尺寸物理结果/神经 | E/H/curl/R/T/A/全部复模式NOT_RUN；NO_VERIFIED_NN_INCREMENT | FULL_TARGET_NOT_QUALIFIED，不能称条件数或求解收益 |
+
+原先q30/q60最坏5.70590933及主线p6计时未运行保留；初始12GB轻监督配置缺口/修复/拒绝费用不删，连续墙钟与嵌套阶段分开计。FEINN_MAIN_SOLVER_ON_HOLD、M3600较好/Mfinal退化、D0成本否决/D1未运行、旧UNKNOWN和全部成本保持；无production/merge批准。原50×25×140nm、Si17/120nm、λ0.7完整3D、decimal2e12B/172800s与原精度门仍未达到。[回执](task042extra_feinn_5nm/response_v25.md)、[专题](task042extra_feinn_5nm/outcomes/w1_receiver_v25.md)、[原始缺项/运行](task042extra_feinn_5nm/outcomes/records/run_index_v25.json)、[资源账](task042extra_feinn_5nm/outcomes/records/resource_costs_v25.json)。

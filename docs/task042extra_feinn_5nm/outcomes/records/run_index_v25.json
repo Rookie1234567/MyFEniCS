@@ -1,0 +1,170 @@
+{
+  "schema": "task42extra.w1-runs.v25",
+  "input_review_seal": "07bcd6ae2c9118619b2ee6955e39259cd065a313",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "receiver_implementation_source": "357748671d1e8106027c0ee680cfdedb874837ec",
+  "mathematical_dependency_source": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "dependency_manifest": {
+    "path": "benchmarks/cases/w1_receiver/dependencies.json",
+    "bytes": 4523,
+    "sha256": "f03522011c158254144aa8e5ec7112721b7d48daefd4e6c06da18d250ae3a343"
+  },
+  "dependency_files": 19,
+  "dependency_bytes": 365726,
+  "dependency_materialized": false,
+  "dependency_extraction": "read exact Git blobs while creating manifest; no clone or branch merge",
+  "stages": [
+    {
+      "stage": "control",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_control.dat",
+        "bytes": 680,
+        "sha256": "2a1b5ed1cb5e64ecaff829f64c7cfe4b2249376efd0ff9f88ea17b95c84f9fd8"
+      },
+      "status": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "boundary",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_boundary.dat",
+        "bytes": 681,
+        "sha256": "607c0f0b458da538808ee8cd98341b3b1a1a55762ee6b957a8f383f1793c8ed6"
+      },
+      "status": "NOT_RUN_INPUT_UNAVAILABLE",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "boundary_check",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_boundary_check.dat",
+        "bytes": 687,
+        "sha256": "bc4ce940ebe08fd1d2590c1a96a0063ae9f95d1d5f15ade5f36114358b897dda"
+      },
+      "status": "NOT_RUN_INPUT_UNAVAILABLE",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p4_top",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_top.dat",
+        "bytes": 679,
+        "sha256": "db9d8eabd6741b3435458d8648c920108d97a65cc6cc1483b969348d65cd00dc"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p4_top_check",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_top_check.dat",
+        "bytes": 685,
+        "sha256": "e9954883ff684d4d0c943f7af8a0f580bc96ce9bdd49809437391300c1ca3b91"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p4_bottom",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_bottom.dat",
+        "bytes": 682,
+        "sha256": "1df5d5b78af9b3089b56d98733e9b6696cb61356e1d209ae263f205a947f0f9c"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p4_bottom_check",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_bottom_check.dat",
+        "bytes": 688,
+        "sha256": "aba4499eed4c468c11989c344661f44c0af24e0f38a5f6e1708075b3516b83f4"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p6_top",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_top.dat",
+        "bytes": 679,
+        "sha256": "17705f033248e8ff63418e64714086549814c232fddfc4389685f3e2faf9bc1e"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p6_top_check",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_top_check.dat",
+        "bytes": 685,
+        "sha256": "1ae118344655251ecb7f28c27adc5838758f5435187b0ef779e227fd52815055"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p6_bottom",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_bottom.dat",
+        "bytes": 682,
+        "sha256": "53cdc888e01294bf23f15d0be28eab654d0b5b17bc0dc87aac6cc515803e3eae"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    },
+    {
+      "stage": "p6_bottom_check",
+      "dat": {
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_bottom_check.dat",
+        "bytes": 688,
+        "sha256": "2904469edd2ba90ab8b3f9c8a064c7892858cb185d88b6d1b8d752c54130cb4a"
+      },
+      "status": "NOT_RUN_P0_P1_PRECONDITIONS",
+      "worker_started": false,
+      "runtime_source": "NOT_RUN"
+    }
+  ],
+  "native_control_refusal": {
+    "schema": "task42extra.w1-prelaunch-refusal.v1",
+    "utc": "2026-10-04T18:13:19.249881+00:00",
+    "receiver_source_sha": "357748671d1e8106027c0ee680cfdedb874837ec",
+    "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+    "command": "python scripts/launch_task42extra_durable.py input/task042extra_feinn_5nm/v25_w1_control.dat",
+    "classification": "PRELAUNCH_RESOURCE_WINDOW_UNAVAILABLE",
+    "reason": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+    "failed_at": "durable_w1 admission(hard=2147483648), before mkdir/launch_tmux",
+    "worker_started": false,
+    "terminal_created": false,
+    "output_stage_created": false,
+    "exact_prelauncher_elapsed_seconds": "NOT_RETAINED",
+    "tool_initial_yield_lower_bound_seconds": 1.001515905,
+    "continuous_batch_cost_includes_failed_attempt": true,
+    "no_more_resource_readmission_this_batch": true,
+    "not_numerical_failure": true,
+    "numerical_calls": {
+      "Maxwell_assembly": 0,
+      "factor": 0,
+      "solve": 0,
+      "Gram": 0,
+      "training": 0
+    },
+    "canonical_stage_path_exists": false,
+    "canonical_durable_directory_exists": false
+  },
+  "W0_replayed": false,
+  "old_q30_replayed": false,
+  "NN_used": false,
+  "official_results": false
+}

@@ -1,0 +1,130 @@
+{
+  "schema": "task42extra.w1-documents.v25",
+  "utc": "2026-10-04T18:25:10.492657+00:00",
+  "implementation_source": "357748671d1e8106027c0ee680cfdedb874837ec",
+  "checker_file": {
+    "path": "tmp/task42extra/w1_receiver/check_delivery_documents.py",
+    "bytes": 7580,
+    "sha256": "5a9de4eebe5fbf181339ba8f6c359edbb010ccd029e1085a20dd9c0265d86659"
+  },
+  "pages": [
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "bytes": 13560,
+      "sha256": "48deb1ef2fb9ce7b3e08a1dfed67865ac9b45d096ec8adfc39888014f37eb0d5",
+      "checked_scope": "new section only; history separately byte-checked",
+      "tables": 1,
+      "local_links": 9
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "bytes": 99944,
+      "sha256": "f02dd48a93f7a8c6238d9ed507c88897f28a62c68c51ffa956f1befa68d3525b",
+      "checked_scope": "new section only; history separately byte-checked",
+      "tables": 1,
+      "local_links": 11
+    },
+    {
+      "path": "docs/development_progress.md",
+      "bytes": 228332,
+      "sha256": "8a085926631b2ab21b49746b2b1162eaa2d63d27b2d0160f79131f43670af5dc",
+      "checked_scope": "new section only; history separately byte-checked",
+      "tables": 0,
+      "local_links": 4
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "bytes": 262829,
+      "sha256": "15d1487dab0a7f73a81c5828652e9f35d91f74249b6dda4588f57dc82622c1b8",
+      "checked_scope": "new section only; history separately byte-checked",
+      "tables": 1,
+      "local_links": 4
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "bytes": 37724,
+      "sha256": "4945417399194f047c0623ee3b4c53a6389980e2545d210d6b9c76567a9e3781",
+      "checked_scope": "new section only; history separately byte-checked",
+      "tables": 0,
+      "local_links": 1
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v25.md",
+      "bytes": 7628,
+      "sha256": "80efa4157c26fe5161039f557472ff5d27714914625f4719eb9e68366ec0a46c",
+      "checked_scope": "entire new page",
+      "tables": 2,
+      "local_links": 17
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/w1_receiver_v25.md",
+      "bytes": 5832,
+      "sha256": "878e9dff87ed13c76e3f711b6cda8d02ed8ec1b9559e5813641c5a1e92a3cb25",
+      "checked_scope": "entire new page",
+      "tables": 2,
+      "local_links": 8
+    },
+    {
+      "path": "benchmarks/cases/w1_receiver/README.md",
+      "bytes": 2904,
+      "sha256": "b4004150492aadd7c789a856d2e7e1e5654dc4645f355f50132c9a5371af4ea9",
+      "checked_scope": "entire new page",
+      "tables": 0,
+      "local_links": 1
+    }
+  ],
+  "history": [
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "mode": "insert_after_title",
+      "old_bytes": 11505,
+      "old_sha256": "cf77056fedaf3d485c7344ea1fb02fd53a74417093d2fc2dbc38db27e1dad8cc",
+      "historical_bytes_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "mode": "prepend",
+      "old_bytes": 97357,
+      "old_sha256": "8e93ef64201c34994856587abc63f24e8608067eac4ddfc7c96126d9bfa4b904",
+      "historical_bytes_unchanged": true
+    },
+    {
+      "path": "docs/development_progress.md",
+      "mode": "append",
+      "old_bytes": 226132,
+      "old_sha256": "526b4a92a802ac8d3f98d584a1b98c0c75bbf843acb0ba22eecc52cab6968881",
+      "historical_bytes_unchanged": true
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "mode": "append",
+      "old_bytes": 260849,
+      "old_sha256": "099153cf112d642918d76b0936b268c40208b06b2684c7d91b172be99a3e7852",
+      "historical_bytes_unchanged": true
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+      "mode": "append",
+      "old_bytes": 36624,
+      "old_sha256": "8a08d04fcd19d6320d2c3a71c12dad770a5be23ef06ac82f8bcb212e269ed7df",
+      "historical_bytes_unchanged": true
+    }
+  ],
+  "authority_files_unchanged": 30,
+  "source_package_files_unchanged_from_qualified_commit": 20,
+  "checks": [
+    "MarkdownIt commonmark+table parse",
+    "consistent table columns",
+    "closed fences",
+    "no new display $$ or bracket formulas",
+    "new relative local links exist",
+    "old history byte equality",
+    "authority byte equality",
+    "qualified implementation source equality"
+  ],
+  "status": "PASS_LOCAL_STRUCTURE_ONLY",
+  "elapsed_metadata_seconds": 0.18073206604458392,
+  "native_FE_or_matrix_calls": 0,
+  "browser_visual_pass": false,
+  "old_full_repository_tests_or_old_arrays_replayed": false
+}

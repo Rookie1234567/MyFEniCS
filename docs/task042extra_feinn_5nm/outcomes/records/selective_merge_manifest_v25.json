@@ -1,0 +1,61 @@
+{
+  "schema": "task42extra.w1-merge-groups.v25",
+  "merge_authorized": false,
+  "groups": [
+    {
+      "name": "production numerical/core",
+      "files": [],
+      "status": "NO_QUALIFIED_PRODUCTION_CHANGE"
+    },
+    {
+      "name": "reusable runner/watchdog",
+      "files": [
+        "src/io/w1_receiver_contract.py",
+        "src/runners/w1_component_receiver.py",
+        "scripts/run_case.py",
+        "scripts/launch_task42extra_durable.py"
+      ],
+      "dependencies": [
+        "frozen_source_snapshot",
+        "fresh_component_receiver supervision helpers",
+        "existing feinn_resources/durable_terminal"
+      ],
+      "status": "RESEARCH_OPT_IN_TARGETED_PASS_NATIVE_PENDING"
+    },
+    {
+      "name": "checker/benchmark",
+      "files": [
+        "src/runners/w1_component_payload.py",
+        "src/test/test_w1_component_receiver.py",
+        "benchmarks/cases/w1_receiver"
+      ],
+      "status": "FIXTURE_PASS_REAL_INPUT_UNVERIFIED"
+    },
+    {
+      "name": "compact evidence/docs",
+      "files": [
+        "response_v25.md",
+        "outcomes/w1_receiver_v25.md",
+        "outcomes/records/*_v25.json"
+      ],
+      "status": "EVIDENCE_ONLY"
+    },
+    {
+      "name": "research-only",
+      "files": [
+        "src/solvers/w1_boundary_components.py",
+        "input/task042extra_feinn_5nm/v25_w1_*.dat"
+      ],
+      "status": "NO_FRESH_NATIVE_EVIDENCE"
+    },
+    {
+      "name": "do-not-merge",
+      "files": [
+        "ignored arrays/source caches",
+        "unqualified W1 path",
+        "all old FEINN training defaults"
+      ],
+      "status": "KEEP_SEPARATE"
+    }
+  ]
+}

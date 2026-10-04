@@ -1,3 +1,19 @@
+# 当前：Review V24 → Response V25，W1接收包与真实缺项
+
+新入口统一实际输入和固定q60，避免worker/checker读取不同目录或暗用旧积分阶次。实现及49项纯数据/安全测试完成，真实native控制在启动前被CPU资源门拒绝，原manifest/ledger和checkpoint仍缺。**P0整体PARTIAL，P1/P2未运行；没有新q60物理资格、场、全局求解或NN收益。**
+
+| measured / implemented / not_run；固定W1范围 | 本轮结果与口径 | 证据 |
+| --- | --- | --- |
+| 输入及两类source | 11显式dat，同binding供worker/checker；主线数学19文件/365726B、SHA c354afa449fb80cfb5012e7d2ff66a3e3e64e088 | [包](records/integration_packet_v25.json)、[回执](../response_v25.md) |
+| 接入定向资格 | 49/49，含29新增W1＋20既有安全fixture；Ruff/compileall通过；非FE/物理测量 | [测试](records/targeted_tests_v25.json) |
+| 最后合格轻树 / s、B | 2.832654745s / 同时树采样峰111972352B，显式2GiB、自身swap0，后代清场 | [完整费用](records/resource_costs_v25.json)；初始默认12GB缺口保留 |
+| 原生方向/MPC控制 | NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE；tmux/worker/原生raw未创建 | [Gate](records/gate_decisions_v25.json)、[有限修复](records/repair_log_v25.json) |
+| 全32060-key及p4/p6上下恢复 | NOT_RUN_INPUT_UNAVAILABLE / NOT_RUN_P0_P1_PRECONDITIONS；实际原件0、local/global factor和solve0，q60准确性UNKNOWN | [输入](records/input_receipt_v25.json)、[运行](records/run_index_v25.json) |
+| 旧主线负结果（发布字段，未重算） | q30/q60最坏5.70590933>1e-10，原H组件4.14930383、作用0.008663089；旧p4恢复通过，旧p6计时异常未运行 | [冻结对照与全部边界](w1_receiver_v25.md)，没有新q60结论 |
+| 原完整物理/神经终点 | E/H/curl/六点/复模式/R/T/A/A_volume本轮NOT_RUN；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED | 原50×25×140nm、Si17/120nm、λ0.7/decimal2e12B/172800s和原门未达成 |
+
+本轮数值链关闭，不轮询抢跑或代造原件；P3交付可消费但仍待实际native资格的包。M3600较好、Mfinal退化、D0成本否决/D1未运行及全部旧负结果/UNKNOWN/费用保留，无production/master合并批准。新页仅本地结构检查，实际GitHub视觉NOT_RUN；未改Review V24的原视觉收据复用。[依赖分组](records/selective_merge_manifest_v25.json)、[呈现边界](records/render_check_v25.json)。下方从V24起全部历史原文逐字保留，旧“当前/下一步”不是新预算。
+
 # 当前：用户接续 W0 → Response V24
 
 已完成实际worker、原科学数组、955项独立数值门、4错误负控及1619原件持久读回；数学组件PASS，接收批次PASS_WITH_QUALIFICATIONS。初始nice/IO/终端绑定缺口、两次EMFILE、一次数值前CPU拒绝及全部成本保留。不是完整原尺寸前向解；没有NN净收益。

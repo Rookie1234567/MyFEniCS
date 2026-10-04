@@ -3289,3 +3289,13 @@ Review V22整批完成，真实入口拒绝给定D/H算术通过而oracle/物理
 两次EMFILE分别定位自有FD不足及canonical别名重复映射，一次数值前CPU误判定位观察器自耗；有限修复/定向测试后续进，原worker不重跑、原数学和raw不改。worker3363.419s/2338578432B，原父3478.277s/2383208448B，末次checker父203.854s/972025856B，pure读回6.972s/105771008B；zero own swap，父子不重复加和。新4h固定总窗计代码、准备、失败、等待和发布，不重置主线旧窗口；旧费用和精确累计UNKNOWN保留。
 
 原32060-key/36244923B manifest正文本机缺失，W1不以30250B库存摘要或重建AUTO替代；W2仍待dot C1c，未复制PC/存储。原尺寸50×25×140nm、Si17/120nm、λ.7完整3D、decimal2e12B/172800s及原精度门未达成，组件不是散射解/NN收益。FEINN暂停、M3600较好/Mfinal退化、D0否决/D1未运行不改。[Response](task042extra_feinn_5nm/response_v24.md)、[W0专题](task042extra_feinn_5nm/outcomes/w0_receiver_v24.md)、[完整费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v24.json)、[真实接入需求](task042extra_feinn_5nm/outcomes/records/next_input_and_handoff_v24.json)。
+
+## 2026-10-05 Task42extra V25：W1统一接入实现，真实资格受资源和原件前置限制
+
+Review V24要求推进全部原尺寸端口的可靠积分，而不是再次重跑已接受W0。过去worker与checker各自找默认ledger，恢复又固定旧q30，可能比较和求解不同的算子。本轮新增显式W1入口，把原manifest/ledger、q60、居中nm坐标与相位、冻结数学source以及保存checker绑在一起；只读复用主线c354afa449fb80cfb5012e7d2ff66a3e3e64e088的19文件/365726B最小导入闭包，不复制传统求解器或dot后端。
+
+clean实现357748671d1e8106027c0ee680cfdedb874837ec，最终49/49定向检查（29新增W1＋20安全回归）、Ruff/compileall通过。正确2GiB监督2.832654745s、同时树采样峰111972352B、自身swap0、后代清场。初始默认12GB监督配置缺口、目录契约/观察器补偿/Ruff修复和CPU拒绝都保留。一次新实测合格窗口完成轻检查后，正式native控制再次被无空闲物理核拒绝；未创建tmux或worker，不再重新准入。这是资源前置未满足，不是q60数学失败。
+
+18个明确manifest/ledger路径和3个checkpoint路径均缺原件；P0整体PARTIAL_NOT_NATIVE_QUALIFIED，P1/P2未运行、局部/全局factor和solve0。包准备好了，但真实全32060精度、原H/物理RHS、局部恢复及全域MPC仍无本批证书。旧主线q30/q60最坏5.70590933、旧p4恢复通过、旧p6计时异常未运行原样保留，未重造历史。连续14400s窗包括阅读、实现、失败、等待和交付，旧所有费用保留、项目精确累计UNKNOWN。
+
+FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED，M3600较好/Mfinal退化、D0成本否决/D1未运行不变。原50×25×140nm、Si17/120nm、λ.7完整3D、decimal2e12B/172800s及原门未达成。交可由主控复用的包和准确缺项，不改变其他分支，不自动续跑或merge master。[Response](task042extra_feinn_5nm/response_v25.md)、[W1专题](task042extra_feinn_5nm/outcomes/w1_receiver_v25.md)、[可消费包](../benchmarks/cases/w1_receiver/README.md)、[费用](task042extra_feinn_5nm/outcomes/records/resource_costs_v25.json)。

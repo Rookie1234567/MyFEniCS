@@ -285,3 +285,9 @@ README改为Review V18权威和P0/P1/P2边界；summary只在页首追加，旧�
 新增src/runners/frozen_source_snapshot与fresh_component_receiver只做已有Git objects的最小hash-bound闭包、显式one-run/time/resource/锁/隔离tmux绑定，不维护第二个数学worker。saved_component_checker只为原数学checker提供自身FD及canonical只读加载，benchmarks/check_saved_array_snapshot逐原件stream/hash/关闭/fsync；没有新求解内核。feinn_resources/task042_shared仅加显式opt-in单核观察器自耗补偿，ordinary default与邻任务排除门保持。scripts公开入口及5个receiver dat均拒绝重复run目录；旧失败目录不覆盖。
 
 三份targeted test文件最终28项通过，数学d4b6ed6b源码/cache133文件未改。新增response_v24/W0专题、compact数值/Gate/资源/修复/输入/955行CSV，README更新当前用户接续、summary仅前置并逐字保留历史；自己的progress/model/test同步。raw/科学报告/依赖cache/终端/完整采样留ignored。无其他分支/工作树或master变动；六组边界见[manifest](records/selective_merge_manifest_v24.json)。
+
+## V25：W1统一合同、固定q60与原数组checker接入
+
+clean实现357748671d1e8106027c0ee680cfdedb874837ec新增src/io/w1_receiver_contract、src/solvers/w1_boundary_components、src/runners/w1_component_payload及w1_component_receiver；scripts两个入口只增加显式W1 schema分支，ordinary default不改。数学调用冻结主线19文件闭包与本支既有区间矩，不复制W1数值算法，不调用旧runner默认目录或旧q30。增加29个pure fixture和11个串行dat、最小dependencies.json及接收README。
+
+本次只在任务README/summary前置新结果并保存历史全文，在progress/model末尾追加本任务条目；新增response_v25、一个W1专题及输入/运行/Gate/资源/修复/测试/接收/选择性分组/呈现compact记录。源代码资格为49相关fixture/Ruff/compileall，native资源拒绝及原件缺失使实际P0/P1/P2未资格化；大数组和完整观察日志留ignored。旧权威、旧数值、其他分支/worktree均不改，依赖组见[六类分组](records/selective_merge_manifest_v25.json)，没有生产合入授权。

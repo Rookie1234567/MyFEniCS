@@ -1,5 +1,22 @@
 # Task42extra：NN-Lab-V2 / FEINN研究与0.7nm有限元表示支撑
 
+## 当前：Review V24 → Response V25，W1接入已实现，数值前置未闭合
+
+本轮实质工作是把固定q60、原manifest/ledger、坐标相位、冻结数学来源和保存checker接到同一个W1入口，避免消费者暗用旧q30或其他目录。29项新增W1及20项接收安全回归、Ruff/compileall通过，clean实现为`357748671d1e8106027c0ee680cfdedb874837ec`；真实native控制被空闲物理核准入拒绝，原件也没有取得。不是只更新导航，也不是W1数学通过。
+
+| 当前项 / 数据身份 | 实际结果与证据 |
+| --- | --- |
+| P0接入 / fixture measured | 49/49；最后2GiB监督同时树峰111972352B、swap0，子树清场；[测试](outcomes/records/targeted_tests_v25.json) |
+| P0原生控制 / not_run | 一次公开launcher在创建tmux/worker前拒绝；整体PARTIAL_NOT_NATIVE_QUALIFIED；[运行](outcomes/records/run_index_v25.json) |
+| P1全32060-key / not_run | 18个声明路径均缺原manifest/ledger，checkpoint三处也缺；q60准确性UNKNOWN；[输入](outcomes/records/input_receipt_v25.json) |
+| P2四个恢复 / not_run | P0/P1未通过，未新建local/global factor或solve；[Gate](outcomes/records/gate_decisions_v25.json) |
+| P3包 / implemented | 19文件/365726B冻结数学闭包与11串行dat；[接收说明](../../benchmarks/cases/w1_receiver/README.md)、[实际边界](response_v25.md) |
+| 最终目标与神经 | 原尺寸50×25×140nm、λ0.7、decimal2e12B/172800s未达成；FEINN_MAIN_SOLVER_ON_HOLD / NO_VERIFIED_NN_INCREMENT / FULL_TARGET_NOT_QUALIFIED不变 |
+
+[专题](outcomes/w1_receiver_v25.md)、[费用/全部拒绝](outcomes/records/resource_costs_v25.json)、[有限修复](outcomes/records/repair_log_v25.json)。资源拒绝后不再重复准入；缺原件不重建AUTO、不重造旧q30、不改其他支线。保留M3600较好/Mfinal退化、D0成本否决/D1未运行及全部旧负结果/UNKNOWN。下面V24及全部历史原文保留，旧窗口不是自动续跑许可。
+
+## 历史V24：W0接收批次（已审阅，原文保留）
+
 当前为用户在 Review V23 后明确要求继续 W0 的一次接收批次，结果见 [Response V24](response_v24.md)。**W0 实际worker、955项独立原门及1619原件读回已完成，接收结果PASS_WITH_QUALIFICATIONS**；初始进程优先级缺口和全部失败保留。工作树已承载真实组件；W1当前缺已冻结32060-key manifest正文，未用摘要或重建AUTO替代，不是因工作树名称而不能运行。
 
 [W0专题](outcomes/w0_receiver_v24.md)、[run/source/hash](outcomes/records/run_index_v24.json)、[原量CSV](outcomes/records/w0_metrics_v24.csv)、[持久读回](outcomes/records/durable_readback_v24.json)、[费用/全部失败](outcomes/records/resource_costs_v24.json)、[下一输入](outcomes/records/next_input_and_handoff_v24.json)。原主线过期窗口没有重置，未修改其他分支或工作树，未新建clone/求解器/NN训练。

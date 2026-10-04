@@ -1,0 +1,124 @@
+{
+  "schema": "task42extra.w1-tests.v25",
+  "implementation_source_sha": "357748671d1e8106027c0ee680cfdedb874837ec",
+  "math_source_sha": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "runs": [
+    {
+      "name": "initial_default_cap",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/summary.json",
+        "bytes": 3432,
+        "sha256": "9db331fb6c3882c088b25f1ee658adbe5612badcd140ecfb96ca5f5a183e3af1"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/worker.log",
+        "bytes": 210,
+        "sha256": "c36299e59bd451fe38bfddf6f25d0bedd5ad0dbd186bb24f378ff0555cc30188"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/junit.xml",
+        "bytes": 3927,
+        "sha256": "4f188c98f52e358bda20cce35b94b8f2fb8ea50e53c8633d7f2cce1c8f12cee4"
+      },
+      "counts": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.53221324714832,
+      "sampled_process_tree_rss_peak_bytes": 67682304,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 12000000000,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    {
+      "name": "qualified_with_lint_failure",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/supervision/summary.json",
+        "bytes": 3563,
+        "sha256": "f149507fedfe64d48468fbb5c927c57b0b4f041a688aabd540830ca19d990ce5"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/supervision/worker.log",
+        "bytes": 645,
+        "sha256": "47d0e4cfdd292f2388a13d8d2fae21ca844dfe6f2d622cb653b1da8b13951357"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/junit.xml",
+        "bytes": 6866,
+        "sha256": "98284770edfdda37d7aeaec8cc2b8ade6a0da42e73888f68948f3297d2c12f97"
+      },
+      "counts": {
+        "tests": 49,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "elapsed_seconds": 1.9054927811957896,
+      "sampled_process_tree_rss_peak_bytes": 91009024,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 2147483648,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    },
+    {
+      "name": "final_qualified",
+      "summary": {
+        "path": "tmp/task42extra/w1_receiver/targeted_final/supervision/summary.json",
+        "bytes": 3567,
+        "sha256": "4cf4bdc4a7f718af0d34ba360b050908f7670840c3c6c6cf87bc75c1f19c0a9e"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/w1_receiver/targeted_final/supervision/worker.log",
+        "bytes": 1269,
+        "sha256": "4e013cc548c2f40e72f0ce39d371e07bb45f262c75d63a366653a5145768ae60"
+      },
+      "junit": {
+        "path": "tmp/task42extra/w1_receiver/targeted_final/junit.xml",
+        "bytes": 6866,
+        "sha256": "4cd4ddbbde09175d6f2c5fb56a38a7fe56d92bd7e41e4eca7587d95f8aa47f52"
+      },
+      "counts": {
+        "tests": 49,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 2.8326547448523343,
+      "sampled_process_tree_rss_peak_bytes": 111972352,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 2147483648,
+      "descendants_cleared": true,
+      "remaining_child_pids": []
+    }
+  ],
+  "final_counts_by_module": {
+    "src.test.test_w1_component_receiver": 29,
+    "src.test.test_frozen_component_receiver": 20
+  },
+  "final_checks": {
+    "pytest": 49,
+    "Ruff": true,
+    "compileall": true,
+    "public_validate_only": true,
+    "full_pytest": false,
+    "CI": false
+  },
+  "initial_resource_configuration_gap": "First pure watchdog used its default 12000000000 B cap, measured peak 67682304 B. Not a compliant 2GiB resource PASS; preserved. Final explicitly uses 2147483648 B and original neighbor reserve.",
+  "native_qualification": "NOT_RUN_RESOURCE_WINDOW_UNAVAILABLE",
+  "original_data_qualification": "NOT_RUN_INPUT_UNAVAILABLE",
+  "delivery_document_check": {
+    "path": "docs/task042extra_feinn_5nm/outcomes/records/document_checks_v25.json",
+    "bytes": 4556,
+    "sha256": "1e1f8937250d721d8e1f5c72e948f2055bd8ddeb11ffef39b0ee8db8189841d2"
+  },
+  "no_expensive_tests_repeated_after_docs_only_changes": true
+}

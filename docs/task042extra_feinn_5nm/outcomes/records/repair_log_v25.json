@@ -1,0 +1,59 @@
+{
+  "schema": "task42extra.w1-repairs.v25",
+  "initial_scaffold_repairs": [
+    {
+      "class": "initial light-wrapper resource configuration",
+      "failure": "default watchdog hard=12000000000 B instead of 2GiB",
+      "hypothesis": "CLI did not expose tree cap",
+      "change": "use existing supervise API with explicit 2147483648 B, envelope and Health; retain first run",
+      "test": "final 49 targeted fixtures, 111972352 B peak, zero swap",
+      "retry": "bounded pure check only; no FE"
+    },
+    {
+      "class": "initial startup contract and formatting",
+      "failure": [
+        "supervise rejects an existing output directory",
+        "Ruff E701/E741",
+        "unpinned observer self-compensation rejected before CPU sampling"
+      ],
+      "hypothesis": "receiver/pretest scaffolding diverged from existing API signatures",
+      "change": "leave supervisor subdirectory uncreated; format and rename variable; compensate only already-pinned single-thread observer",
+      "test": "49/49 + Ruff + compileall; measured fresh native-host resource window passed for light check",
+      "retry": "one valid fresh light admission, not a numerical replay"
+    },
+    {
+      "class": "static frozen-field pairing",
+      "failure": "initial receiver prototype used summary labels for ledger keys; not deployed to originals",
+      "hypothesis": "original frozen loader uses target_mode_physical_identity_sha256 and original_size_ordered_mode_inventory_identity_sha256",
+      "change": "map these exact raw keys; preserve original mode_index metadata rather than inventing global ordinal; reference_plane_nm and q60 witness names explicit",
+      "test": "identity/order/complex/H/corrupt-record fixtures",
+      "retry": "before clean implementation commit; no numerical trial"
+    }
+  ],
+  "formal_repairs_used": 0,
+  "formal_numerical_lifecycles": 0,
+  "formal_control_prelaunch_attempts": 1,
+  "resource_refusal": {
+    "class": "formal native-control resource rejection",
+    "failure": "No audited unoccupied physical core; do not overlap a busy worker/SMT sibling",
+    "change": "stop affected numerical chain, no readmission after already used new window",
+    "test": "stage path and durable server absent; no worker",
+    "retry": "NONE"
+  },
+  "initial_patch_context_misses": 2,
+  "initial_patch_context_note": "two apply_patch contexts missed after formatter; no mutation occurred; reapplied against actual text. No numerical retry.",
+  "all_original_failures_preserved": true,
+  "delivery_document_repairs": [
+    {
+      "failure": "local relative links point one parent above repository; metadata assertion failed",
+      "hypothesis": "directory-depth count in compaction note was incorrect",
+      "change": "resolve relative to actual Markdown parent; restore ../../ for task page, ../../../ for outcomes",
+      "test": "8 new pages/sections, 7 tables, 55 links PASS; no implementation or numerical mutation",
+      "attempts": 2,
+      "first_tool_parent_wall_seconds": 0.265956759,
+      "second_tool_parent_wall_seconds": 0.349011319,
+      "exact_first_checker_seconds": "NOT_RETAINED",
+      "all_charged_by_batch_wall": true
+    }
+  ]
+}
