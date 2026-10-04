@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V41 / 下一执行 V44
+
+[Review V41](review_report_v41.md)独立审阅V43交付`b79a47543ce76dacc37f4146788bbcb2fa1e6595`：真实神经训练和梯度接线成立，三路线完整资格均0/8；NN清理更慢。原尺寸0.7nm完整三维前向解、2TB／48h及同正确性NN20%均未达成。
+
+V44一次检验“固定传统前64步之后的神经误差修正”：同一128步总上限，零decoder共同起点，误差感知NN、残差NN及实／复线性控制，新的封存heldout、完整费用和失败退出分析。明确允许train／validation制造解标签，不开放heldout或真实参考场；不增加纯FE接口轮次，不启动原尺寸求解，不复制dot实验。预算、数值门与停止条件以完整报告为准，普通bug同轮修复。
+
+[独立核验](outcomes/records/review_v41_independent_checks.json) · [文档检查](outcomes/records/review_v41_documentation_checks.json)。完成后原队列交回，两个窗口不并行，不merge。以下完整历史正文逐字保留。
+
+---
+
 # 当前执行交付：Task042 V43 / Review V40
 
 已按Review V40完成真实共享实体残差NN训练、同邻域复线性控制、8个未见RHS三路线清理与独立封存误差审核。三路线完整0/8：小残差仍有超1e-4的系数误差；NN20%与原尺寸0.7nm/2TB48h未资格。旧trace-only恢复失败不改写。

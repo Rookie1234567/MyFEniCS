@@ -1,0 +1,246 @@
+{
+  "schema": "task042.review41.docs.v1",
+  "UTC": "2026-10-04T14:52:17.756121+00:00",
+  "reviewed_HEAD": "b79a47543ce76dacc37f4146788bbcb2fa1e6595",
+  "expected_report": "review_report_v41.md",
+  "actual_report": "review_report_v41.md",
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v41.md",
+      "name": "review_report_v41.md",
+      "sha256": "5a643c071d563112d3679154cb05432d71ff7fe249a39c34a3b8954408424940",
+      "bytes": 27059,
+      "tables": [
+        {
+          "line": 15,
+          "columns": 2
+        },
+        {
+          "line": 28,
+          "columns": 2
+        },
+        {
+          "line": 39,
+          "columns": 4
+        },
+        {
+          "line": 65,
+          "columns": 2
+        },
+        {
+          "line": 80,
+          "columns": 2
+        },
+        {
+          "line": 117,
+          "columns": 2
+        },
+        {
+          "line": 151,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v41_independent_checks.json"
+        },
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v41_metadata_audit.py.gz"
+        },
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v41_repository_index.gz"
+        },
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v41_documentation_checks.json"
+        },
+        {
+          "line": 45,
+          "path": "response_v43.md"
+        },
+        {
+          "line": 45,
+          "path": "outcomes/neighborhood_residual_correction_v43.md"
+        },
+        {
+          "line": 45,
+          "path": "outcomes/records/neural_candidate_comparison_v43.json"
+        },
+        {
+          "line": 45,
+          "path": "outcomes/records/neural_heldout_checker_v43.json"
+        },
+        {
+          "line": 45,
+          "path": "outcomes/records/neural_gradient_v43.json"
+        },
+        {
+          "line": 45,
+          "path": "outcomes/records/neural_dataset_v43.json"
+        },
+        {
+          "line": 57,
+          "path": "../../src/solvers/neighborhood_residual_models.py"
+        },
+        {
+          "line": 76,
+          "path": "outcomes/records/resource_costs_v43.json"
+        },
+        {
+          "line": 76,
+          "path": "outcomes/records/closed_window_v43.json"
+        },
+        {
+          "line": 76,
+          "path": "outcomes/records/raw_evidence_index_v43.json"
+        },
+        {
+          "line": 76,
+          "path": "outcomes/records/tests_v43.json"
+        }
+      ],
+      "math_fences": []
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v40.md",
+      "name": "review_report_v40.md",
+      "sha256": "6c32dc0058c3515ab5ea051a4e2f58a704948cbcc1307ba81dd1879211150292",
+      "bytes": 26593,
+      "tables": [
+        {
+          "line": 15,
+          "columns": 2
+        },
+        {
+          "line": 30,
+          "columns": 3
+        },
+        {
+          "line": 57,
+          "columns": 2
+        },
+        {
+          "line": 70,
+          "columns": 2
+        },
+        {
+          "line": 99,
+          "columns": 2
+        },
+        {
+          "line": 152,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v40_independent_checks.json"
+        },
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v40_metadata_audit.py.gz"
+        },
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v40_repository_index.gz"
+        },
+        {
+          "line": 26,
+          "path": "outcomes/records/review_v40_documentation_checks.json"
+        },
+        {
+          "line": 40,
+          "path": "response_v42.md"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/distributed_volume_recovery_v42.md"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/records/component_checker_v42.json"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/records/run_index_v42.json"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/records/consumer_interface_v42.json"
+        },
+        {
+          "line": 40,
+          "path": "outcomes/records/integration_readiness_v42.json"
+        },
+        {
+          "line": 68,
+          "path": "outcomes/records/resource_costs_v42.json"
+        },
+        {
+          "line": 68,
+          "path": "outcomes/records/raw_evidence_index_v42.json"
+        },
+        {
+          "line": 68,
+          "path": "outcomes/records/tests_v42.json"
+        }
+      ],
+      "math_fences": [
+        {
+          "line": 119,
+          "value": "```math"
+        },
+        {
+          "line": 123,
+          "value": "```"
+        },
+        {
+          "line": 143,
+          "value": "```math"
+        },
+        {
+          "line": 146,
+          "value": "```"
+        }
+      ]
+    }
+  ],
+  "historical_review40_unchanged": true,
+  "README": {
+    "path": "docs/task042_neural_coarse_inverse/README.md",
+    "sha256": "59ad75cd4333bf759b58ad540b8d2debfdf54bbfc005a4f725b2621a3d480317",
+    "old_suffix_sha256": "5336b860d20583d496d6684c734ee35e08ddcbe9f1ed088e8c7dccdda36f978d",
+    "old_suffix_preserved": true
+  },
+  "review_archive_hashes": [
+    {
+      "path": "review_v41_repository_index.gz",
+      "sha256": "e2e76b8c4a52cc4c9be2d733202a7d305d1b766bf3732f5b429d329e26406309",
+      "raw_sha256": "95f60a893b1d86fbd67b3e3f9d76216f2a9acc4e7fc7e6e0b38c4d13a16272b5",
+      "raw_bytes": 3820537
+    },
+    {
+      "path": "review_v41_metadata_audit.py.gz",
+      "sha256": "5ec11a9c6cf7a8aa86195b1b9e719387e4ecc045a5a484bca297d8e41461b7ac",
+      "raw_sha256": "22a34d57e7e8e0923a1733d726ccf0e185a0eac7962f1c98cd06a06d36d41ad1",
+      "raw_bytes": 14588
+    }
+  ],
+  "unittest": {
+    "command": "python -m unittest -q src.test.test_26_documentation_contract",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.047s\n\nOK\n",
+    "elapsed_seconds": 0.34865178796462715,
+    "scope": "pure stdlib documentation only, no FE"
+  },
+  "diff_check": "PASS",
+  "source_edits": false,
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN",
+  "script": "import gzip,hashlib,json,re,subprocess,sys,time\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nroot=Path.cwd();d=root/'docs/task042_neural_coarse_inverse';r=d/'outcomes/records';base='b79a47543ce76dacc37f4146788bbcb2fa1e6595';version=41\nreport=d/f'review_report_v{version}.md';record=r/f'review_v{version}_documentation_checks.json';record.write_text('{}\\n')\ndef sha(b):return hashlib.sha256(b).hexdigest()\ndef git(*a):return subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false',*a])\nassert report.name==f'review_report_v{version}.md';assert report.read_text().startswith(f'# Review V{version}：')\nold=git('show',base+':docs/task042_neural_coarse_inverse/README.md');assert (d/'README.md').read_bytes().endswith(old)\nchecked=[]\nfor p in (report,d/'review_report_v40.md'):\n if p!=report:assert p.read_bytes()==git('show',base+':'+str(p.relative_to(root)))\n tables=[];links=[];fences=[];inside=False;width=None\n for i,line in enumerate(p.read_text().splitlines(),1):\n  assert not any(ord(c)<32 and c!='\\t' for c in line),(p,i)\n  if line.startswith('```'):inside=not inside;fences.append(dict(line=i,value=line));continue\n  if inside:continue\n  assert '$$' not in line and '\\\\[' not in line and '\\\\]' not in line,(p,i)\n  if line.startswith('|'):\n   count=len(re.split(r'(?<!\\\\)\\|',line))-2\n   if width is None:tables.append(dict(line=i,columns=count));width=count\n   assert count==width,(p,i,count,width)\n  else:width=None\n  for label,url in re.findall(r'\\[([^\\]]+)\\]\\(([^)]+)\\)',line):\n   if url.startswith(('https://','http://')):continue\n   assert (p.parent/url.split('#')[0]).resolve().exists(),(p,i,url)\n   links.append(dict(line=i,path=url))\n assert not inside\n checked.append(dict(path=str(p.relative_to(root)),name=p.name,sha256=sha(p.read_bytes()),bytes=p.stat().st_size,tables=tables,local_links=links,math_fences=fences))\nassert checked[0]['name']=='review_report_v41.md' and checked[1]['name']=='review_report_v40.md'\nstarted=time.perf_counter();t=subprocess.run([sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],capture_output=True,text=True);elapsed=time.perf_counter()-started;assert t.returncode==0,t.stdout+t.stderr\ngit('diff','--check');assert not git('diff','--name-only','--','src','benchmarks','scripts','input')\narchives=[]\nfor source,name in [(root/'tmp/task042/review_v41/repository_index.json','review_v41_repository_index.gz'),(Path('/tmp/task042_review41_audit.py'),'review_v41_metadata_audit.py.gz')]:\n b=(r/name).read_bytes();raw=gzip.decompress(b);assert raw==source.read_bytes();archives.append(dict(path=name,sha256=sha(b),raw_sha256=sha(raw),raw_bytes=len(raw)))\nout=dict(schema='task042.review41.docs.v1',UTC=datetime.now(timezone.utc).isoformat(),reviewed_HEAD=base,expected_report='review_report_v41.md',actual_report=checked[0]['name'],files=checked,historical_review40_unchanged=True,README=dict(path=str((d/'README.md').relative_to(root)),sha256=sha((d/'README.md').read_bytes()),old_suffix_sha256=sha(old),old_suffix_preserved=True),review_archive_hashes=archives,unittest=dict(command='python -m unittest -q src.test.test_26_documentation_contract',returncode=t.returncode,stdout=t.stdout,stderr=t.stderr,elapsed_seconds=elapsed,scope='pure stdlib documentation only, no FE'),diff_check='PASS',source_edits=False,GitHub_visual='NOT_VERIFIED_CACHE_MISS',CI='NOT_RUN',script=Path(__file__).read_text())\nrecord.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\\n');print(json.dumps(dict(actual_reports=[c['name'] for c in checked],table_counts=[len(c['tables']) for c in checked],links=[len(c['local_links']) for c in checked],tests=t.stderr.strip(),diff_check='PASS'),ensure_ascii=False,indent=2))\n"
+}

@@ -1,0 +1,1518 @@
+{
+  "reviewed_head": "b79a47543ce76dacc37f4146788bbcb2fa1e6595",
+  "previous_review": "84c38b882795c56fead54d75cd56389262c86e31",
+  "scope": "stdlib immutable bytes/source/resource audit plus saved-vector norm/FD recomputation; no A/AH, FE, recovery, solve, factor, training or Torch deserialization",
+  "raw_archives_verified": 453,
+  "current_originals_matching_archived_version": 437,
+  "unmatched_current_originals": [],
+  "protected_files": 4683,
+  "history_files": [
+    "docs/task042_neural_coarse_inverse/response_v1.md",
+    "docs/task042_neural_coarse_inverse/response_v10.md",
+    "docs/task042_neural_coarse_inverse/response_v11.md",
+    "docs/task042_neural_coarse_inverse/response_v12.md",
+    "docs/task042_neural_coarse_inverse/response_v13.md",
+    "docs/task042_neural_coarse_inverse/response_v14.md",
+    "docs/task042_neural_coarse_inverse/response_v15.md",
+    "docs/task042_neural_coarse_inverse/response_v16.md",
+    "docs/task042_neural_coarse_inverse/response_v17.md",
+    "docs/task042_neural_coarse_inverse/response_v18.md",
+    "docs/task042_neural_coarse_inverse/response_v19.md",
+    "docs/task042_neural_coarse_inverse/response_v2.md",
+    "docs/task042_neural_coarse_inverse/response_v20.md",
+    "docs/task042_neural_coarse_inverse/response_v21.md",
+    "docs/task042_neural_coarse_inverse/response_v22.md",
+    "docs/task042_neural_coarse_inverse/response_v23.md",
+    "docs/task042_neural_coarse_inverse/response_v24.md",
+    "docs/task042_neural_coarse_inverse/response_v25.md",
+    "docs/task042_neural_coarse_inverse/response_v26.md",
+    "docs/task042_neural_coarse_inverse/response_v27.md",
+    "docs/task042_neural_coarse_inverse/response_v28.md",
+    "docs/task042_neural_coarse_inverse/response_v29.md",
+    "docs/task042_neural_coarse_inverse/response_v3.md",
+    "docs/task042_neural_coarse_inverse/response_v30.md",
+    "docs/task042_neural_coarse_inverse/response_v31.md",
+    "docs/task042_neural_coarse_inverse/response_v32.md",
+    "docs/task042_neural_coarse_inverse/response_v33.md",
+    "docs/task042_neural_coarse_inverse/response_v34.md",
+    "docs/task042_neural_coarse_inverse/response_v35.md",
+    "docs/task042_neural_coarse_inverse/response_v36.md",
+    "docs/task042_neural_coarse_inverse/response_v37.md",
+    "docs/task042_neural_coarse_inverse/response_v38.md",
+    "docs/task042_neural_coarse_inverse/response_v39.md",
+    "docs/task042_neural_coarse_inverse/response_v4.md",
+    "docs/task042_neural_coarse_inverse/response_v40.md",
+    "docs/task042_neural_coarse_inverse/response_v41.md",
+    "docs/task042_neural_coarse_inverse/response_v42.md",
+    "docs/task042_neural_coarse_inverse/response_v5.md",
+    "docs/task042_neural_coarse_inverse/response_v6.md",
+    "docs/task042_neural_coarse_inverse/response_v7.md",
+    "docs/task042_neural_coarse_inverse/response_v8.md",
+    "docs/task042_neural_coarse_inverse/response_v9.md",
+    "docs/task042_neural_coarse_inverse/review_report_v1.md",
+    "docs/task042_neural_coarse_inverse/review_report_v10.md",
+    "docs/task042_neural_coarse_inverse/review_report_v11.md",
+    "docs/task042_neural_coarse_inverse/review_report_v12.md",
+    "docs/task042_neural_coarse_inverse/review_report_v13.md",
+    "docs/task042_neural_coarse_inverse/review_report_v14.md",
+    "docs/task042_neural_coarse_inverse/review_report_v15.md",
+    "docs/task042_neural_coarse_inverse/review_report_v16.md",
+    "docs/task042_neural_coarse_inverse/review_report_v17.md",
+    "docs/task042_neural_coarse_inverse/review_report_v18.md",
+    "docs/task042_neural_coarse_inverse/review_report_v19.md",
+    "docs/task042_neural_coarse_inverse/review_report_v2.md",
+    "docs/task042_neural_coarse_inverse/review_report_v20.md",
+    "docs/task042_neural_coarse_inverse/review_report_v21.md",
+    "docs/task042_neural_coarse_inverse/review_report_v22.md",
+    "docs/task042_neural_coarse_inverse/review_report_v23.md",
+    "docs/task042_neural_coarse_inverse/review_report_v24.md",
+    "docs/task042_neural_coarse_inverse/review_report_v25.md",
+    "docs/task042_neural_coarse_inverse/review_report_v26.md",
+    "docs/task042_neural_coarse_inverse/review_report_v27.md",
+    "docs/task042_neural_coarse_inverse/review_report_v28.md",
+    "docs/task042_neural_coarse_inverse/review_report_v29.md",
+    "docs/task042_neural_coarse_inverse/review_report_v3.md",
+    "docs/task042_neural_coarse_inverse/review_report_v30.md",
+    "docs/task042_neural_coarse_inverse/review_report_v31.md",
+    "docs/task042_neural_coarse_inverse/review_report_v32.md",
+    "docs/task042_neural_coarse_inverse/review_report_v33.md",
+    "docs/task042_neural_coarse_inverse/review_report_v34.md",
+    "docs/task042_neural_coarse_inverse/review_report_v35.md",
+    "docs/task042_neural_coarse_inverse/review_report_v36.md",
+    "docs/task042_neural_coarse_inverse/review_report_v37.md",
+    "docs/task042_neural_coarse_inverse/review_report_v38.md",
+    "docs/task042_neural_coarse_inverse/review_report_v39.md",
+    "docs/task042_neural_coarse_inverse/review_report_v4.md",
+    "docs/task042_neural_coarse_inverse/review_report_v40.md",
+    "docs/task042_neural_coarse_inverse/review_report_v5.md",
+    "docs/task042_neural_coarse_inverse/review_report_v6.md",
+    "docs/task042_neural_coarse_inverse/review_report_v7.md",
+    "docs/task042_neural_coarse_inverse/review_report_v8.md",
+    "docs/task042_neural_coarse_inverse/review_report_v9.md"
+  ],
+  "compiled": [
+    "benchmarks/check_neighborhood_residual.py",
+    "benchmarks/qualified_ml_pytest.py",
+    "benchmarks/qualify_neighborhood_residual.py",
+    "scripts/run_case.py",
+    "src/io/port_preparation.py",
+    "src/runners/port_preparation.py",
+    "src/solvers/isolated_ml_sparse.py",
+    "src/solvers/neighborhood_port_gradient.py",
+    "src/solvers/neighborhood_recovery_diagnostic.py",
+    "src/solvers/neighborhood_residual_core.py",
+    "src/solvers/neighborhood_residual_models.py",
+    "src/solvers/neighborhood_residual_scope.py",
+    "src/solvers/neighborhood_residual_study.py",
+    "src/test/test_neighborhood_residual.py"
+  ],
+  "formal_source_checks": [
+    {
+      "role": "SETUP",
+      "source_sha": "5cc546a920f7557520395e505bb314cdb2c90a71",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_setup_20261004T134304643860Z/run_manifest.json"
+    },
+    {
+      "role": "RECOVERY",
+      "source_sha": "5cc546a920f7557520395e505bb314cdb2c90a71",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_recovery_20261004T134345019696Z/run_manifest.json"
+    },
+    {
+      "role": "DATA",
+      "source_sha": "5cc546a920f7557520395e505bb314cdb2c90a71",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_data_20261004T134436967175Z/run_manifest.json"
+    },
+    {
+      "role": "DATA",
+      "source_sha": "582146016392567aecca89ab2142bbdf9ec5227a",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_data_20261004T134710335597Z/run_manifest.json"
+    },
+    {
+      "role": "GRADIENT",
+      "source_sha": "582146016392567aecca89ab2142bbdf9ec5227a",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_gradient_20261004T134821754398Z/run_manifest.json"
+    },
+    {
+      "role": "GRADIENT",
+      "source_sha": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_gradient_20261004T135235320489Z/run_manifest.json"
+    },
+    {
+      "role": "TRAIN_NN",
+      "source_sha": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_train_nn_20261004T135349123543Z/run_manifest.json"
+    },
+    {
+      "role": "TRAIN_LIN",
+      "source_sha": "0ed2850df39a53a4c4a6f49ab308c6619de696d4",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_train_lin_20261004T135615910513Z/run_manifest.json"
+    },
+    {
+      "role": "EVALUATE",
+      "source_sha": "9c223d99038605f606e8912ba23b1453896d2b9d",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_evaluate_20261004T140140495047Z/run_manifest.json"
+    },
+    {
+      "role": "CHECK",
+      "source_sha": "765f9899f2914931b4cf945c99f34eb516ff268c",
+      "hashes": 21,
+      "manifest": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_check_20261004T141437229404Z/run_manifest.json"
+    }
+  ],
+  "final_source_hashes": {
+    "scripts/run_case.py": "688e05bd67083a50caafce3e33db184428bb85b044a92e6a73e69c6ad954dd1e",
+    "scripts/activate_task042.sh": "f0ba21b43ce6773e4e2c2dfb87e2ad8260f8ff29c6b091ff77d9a6cd9dad720a",
+    "src/io/port_preparation.py": "d44e5fcb9800b269a778995cc6c3f3176d4998dc9909e90fdab7e2b617178028",
+    "src/runners/port_preparation.py": "1d030c424051658b8cefb67ca910dd8ad307e1f43b3417f2e2b064496a19f0f3",
+    "src/runners/task042_shared.py": "4dbac95a7a341e8c6982e54ea992c413ad4604aa8760c3788833fc70aa5cc94d",
+    "src/solvers/port_preparation_window.py": "161d1e081d11e1d7033f1cc5c5c1564361881a4bd00ce56833f4550c6c63dd5f",
+    "src/solvers/neighborhood_residual_scope.py": "f4659d8ddc349f60d42782afbf49ce38aefba8f27bfd2ad0b551297cea2647c7",
+    "src/solvers/neighborhood_residual_core.py": "4e33d401550e1a45ac9e183c186f21f0846ad1d2e87fe54cefe03273dd86e5da",
+    "src/solvers/neighborhood_residual_study.py": "77e6bbe78855faaf9d6708debb070de87f4e7cf444018e1ae2dff9fbe9d1d496",
+    "src/solvers/neighborhood_residual_models.py": "8bff444ffc70f5f67ba95e21be954b8e760be35383378ffadaaeba0078696a4c",
+    "src/solvers/isolated_ml_sparse.py": "bcfde3507cf33b9c68dd793ffe184fe4d5d221858c439ec3928502ccbd717b6e",
+    "src/solvers/distributed_entity_volume.py": "c91fbb32d8133825817ee1c395f274a4e0baca065e77efceeed8a8502b3f57b7",
+    "src/solvers/neighborhood_port_gradient.py": "4abb40c1cc1fa7b1f1ff8c3902149764e1d0e1b877df4907388d001be2a31547",
+    "src/solvers/neighborhood_recovery_diagnostic.py": "00a61573ab9f6cd9b6e64cc329fc3786ab8a3d16671bf6df08af9bd38c2453b5",
+    "src/solvers/native_entity_adapter.py": "bd6a08f5c83b2c9e886568ce80635f58a0819d4fae5dc280d85f5383876db500",
+    "src/solvers/native_recovery_packets.py": "e10429cade22de7c2cd8a29249b45db6fba7f35bc1c9d04d0ff390c9b4fe3106",
+    "benchmarks/check_neighborhood_residual.py": "90e6f9b6bc7159b674342103e33f8edd2fc0de32ac156d5924f1dfd77e51ab3d",
+    "src/test/test_neighborhood_residual.py": "ecdd3151436b4a584944a0c41b91a4d3aee72d5f1ea9f8fe8c00c1cf84bda899",
+    "benchmarks/qualify_neighborhood_residual.py": "b069dfd83fb42078b0904e60392b70d2c8af0523c3ed618c9335ce68e6eb7d06",
+    "benchmarks/qualified_ml_pytest.py": "c36b9442b24cdfa8af9c1533232bdf5ba1669ca2cec5e1d245d047e0a5eb0b52",
+    "input/task042_neural_coarse_inverse/neighborhood_residual_v43.json": "ad91345e8d6985e647ca871ba1d4a69bd8d76e9da4201ea10962cb0efcf326b2"
+  },
+  "supervisions": [
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre01/supervision/summary.json",
+      "seconds": 5.419650020892732,
+      "peak": 314875904,
+      "samples": 8,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre02/supervision/summary.json",
+      "seconds": 9.209731926908717,
+      "peak": 309649408,
+      "samples": 13,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre03/supervision/summary.json",
+      "seconds": 9.314701705938205,
+      "peak": 309080064,
+      "samples": 13,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre04/supervision/summary.json",
+      "seconds": 9.300607827026397,
+      "peak": 314388480,
+      "samples": 13,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre05/supervision/summary.json",
+      "seconds": 10.090008068014868,
+      "peak": 322879488,
+      "samples": 14,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre06/supervision/summary.json",
+      "seconds": 17.96054424101021,
+      "peak": 439164928,
+      "samples": 24,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre07/supervision/summary.json",
+      "seconds": 17.45376285398379,
+      "peak": 447262720,
+      "samples": 23,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre08/supervision/summary.json",
+      "seconds": 17.582189047941938,
+      "peak": 435105792,
+      "samples": 23,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre09/supervision/summary.json",
+      "seconds": 17.605722552980296,
+      "peak": 438054912,
+      "samples": 23,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "SETUP",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_setup_20261004T134304643860Z/supervision/summary.json",
+      "seconds": 20.500446431920864,
+      "peak": 2353115136,
+      "samples": 23,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "RECOVERY",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_recovery_20261004T134345019696Z/supervision/summary.json",
+      "seconds": 13.926380238961428,
+      "peak": 1259012096,
+      "samples": 16,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "DATA",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_data_20261004T134436967175Z/supervision/summary.json",
+      "seconds": 6.685207483009435,
+      "peak": 279240704,
+      "samples": 8,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre10/supervision/summary.json",
+      "seconds": 19.766589178005233,
+      "peak": 438251520,
+      "samples": 20,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "DATA",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_data_20261004T134710335597Z/supervision/summary.json",
+      "seconds": 24.64869769208599,
+      "peak": 2277277696,
+      "samples": 24,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "GRADIENT",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_gradient_20261004T134821754398Z/supervision/summary.json",
+      "seconds": 25.003117943997495,
+      "peak": 2696056832,
+      "samples": 24,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre11/supervision/summary.json",
+      "seconds": 20.055016211001202,
+      "peak": 530776064,
+      "samples": 20,
+      "status": "WORKER_FAILED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre12/supervision/summary.json",
+      "seconds": 19.875955776078627,
+      "peak": 438538240,
+      "samples": 20,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "GRADIENT",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_gradient_20261004T135235320489Z/supervision/summary.json",
+      "seconds": 27.43957650696393,
+      "peak": 2594226176,
+      "samples": 26,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "TRAIN_NN",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_train_nn_20261004T135349123543Z/supervision/summary.json",
+      "seconds": 120.37779588706326,
+      "peak": 2383609856,
+      "samples": 109,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "TRAIN_LIN",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_train_lin_20261004T135615910513Z/supervision/summary.json",
+      "seconds": 120.73369854898192,
+      "peak": 2395983872,
+      "samples": 109,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre13/supervision/summary.json",
+      "seconds": 22.896807511919178,
+      "peak": 476950528,
+      "samples": 22,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "EVALUATE",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_evaluate_20261004T140140495047Z/supervision/summary.json",
+      "seconds": 647.3952436100226,
+      "peak": 2321752064,
+      "samples": 566,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "pre",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre14/supervision/summary.json",
+      "seconds": 23.757177390973084,
+      "peak": 481988608,
+      "samples": 21,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "CHECK",
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_check_20261004T141437229404Z/supervision/summary.json",
+      "seconds": 24.944333721068688,
+      "peak": 2252087296,
+      "samples": 21,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "report",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_collect01/supervision/summary.json",
+      "seconds": 9.509177678031847,
+      "peak": 98422784,
+      "samples": 8,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "report",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_collect02/supervision/summary.json",
+      "seconds": 9.50640827207826,
+      "peak": 90898432,
+      "samples": 8,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "report",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_documents01/supervision/summary.json",
+      "seconds": 3.5267568009439856,
+      "peak": 70557696,
+      "samples": 4,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "post",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_post_final01/supervision/summary.json",
+      "seconds": 4.021075333934277,
+      "peak": 73248768,
+      "samples": 4,
+      "status": "COMPLETED"
+    },
+    {
+      "role": "report",
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_collect03/supervision/summary.json",
+      "seconds": 10.031934282043949,
+      "peak": 90873856,
+      "samples": 8,
+      "status": "COMPLETED"
+    }
+  ],
+  "CPU_admissions": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_recovery_20261004T134345019696Z/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_gradient_20261004T134821754398Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre02/admission.json",
+      "cpu": 13
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_documents01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre10/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre14/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre07/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_collect03/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_train_nn_20261004T135349123543Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_post_final01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre03/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre06/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre09/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_setup_20261004T134304643860Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_collect02/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_report_collect01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre12/admission.json",
+      "cpu": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre11/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_check_20261004T141437229404Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre04/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre13/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_data_20261004T134436967175Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre08/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_gradient_20261004T135235320489Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre01/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_train_lin_20261004T135615910513Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_evaluate_20261004T140140495047Z/admission.json",
+      "cpu": 5
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/results/task042/task042_v43_data_20261004T134710335597Z/admission.json",
+      "cpu": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre05/admission.json",
+      "cpu": 0
+    }
+  ],
+  "costs": {
+    "supervised": 1288.5383147437824,
+    "probes": 37.445155265391804,
+    "settlement": 17.454304985003546,
+    "total": 1343.4377749941777,
+    "peak_sampled_tree_bytes": 2696056832,
+    "ownswap": 0,
+    "historical_plus_current_lower": 84193.14521706612,
+    "unmonitored": "unknown"
+  },
+  "array_byte_verification": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_data_20261004T134710335597Z/rhs_heldout.npz",
+      "members": 1,
+      "stored_members": 1,
+      "bytes": 4372883
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_data_20261004T134710335597Z/rhs_train.npz",
+      "members": 1,
+      "stored_members": 1,
+      "bytes": 8499877
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_data_20261004T134710335597Z/rhs_validation.npz",
+      "members": 1,
+      "stored_members": 1,
+      "bytes": 2175043
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_data_20261004T134710335597Z/sealed_errors_heldout.npz",
+      "members": 1,
+      "stored_members": 1,
+      "bytes": 2336132
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_data_20261004T134710335597Z/sealed_errors_train.npz",
+      "members": 1,
+      "stored_members": 1,
+      "bytes": 4656475
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_data_20261004T134710335597Z/sealed_errors_validation.npz",
+      "members": 1,
+      "stored_members": 1,
+      "bytes": 1203259
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_0_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2196108
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_0_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4370831
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_0_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4362773
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_1_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2227661
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_1_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4380155
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_1_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4376756
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_2_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 1885381
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_2_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4185592
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_2_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4184066
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_3_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2228784
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_3_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4380220
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_3_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4379735
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_4_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2539741
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_4_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4506185
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_4_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4508858
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_5_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2526582
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_5_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4496281
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_5_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4500086
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_6_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2526163
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_6_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4494887
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_6_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4499967
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_7_R0.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2523614
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_7_R_LIN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4489676
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_evaluate_20261004T140140495047Z/heldout_7_R_NN.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 4493614
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T134821754398Z/B_current_gradient.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 797352
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T134821754398Z/direction_0.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 1326767
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T134821754398Z/direction_1.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 1326675
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T134821754398Z/direction_2.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 1326658
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/B_current_gradient.npz",
+      "members": 8,
+      "stored_members": 8,
+      "bytes": 797352
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_0_step_1e-04.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2627449
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_0_step_1e-05.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2615691
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_0_step_3e-05.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2637837
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_1_step_1e-04.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2628418
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_1_step_1e-05.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2617014
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_1_step_3e-05.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2638530
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_2_step_1e-04.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2630738
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_2_step_1e-05.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2619173
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/FD_direction_2_step_3e-05.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 2640007
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/direction_0.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 1326767
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/direction_1.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 1326675
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/direction_2.npz",
+      "members": 2,
+      "stored_members": 2,
+      "bytes": 1326658
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_gradient_20261004T135235320489Z/gradient_origin.npz",
+      "members": 3,
+      "stored_members": 3,
+      "bytes": 2736211
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_recovery_20261004T134345019696Z/A_recovery_decomposition.npz",
+      "members": 5,
+      "stored_members": 5,
+      "bytes": 2196952
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_setup_20261004T134304643860Z/graph.npz",
+      "members": 14,
+      "stored_members": 14,
+      "bytes": 731740
+    }
+  ],
+  "array_totals": {
+    "files": 50,
+    "logical": 242,
+    "actual": 242
+  },
+  "model_files_verified": 13,
+  "training_records": [
+    {
+      "route": "R-NN",
+      "updates": 128,
+      "initial_median": 4.3599057636087535,
+      "selected": {
+        "update": 128,
+        "residuals": [
+          1.484946934943022,
+          1.5359250527727404,
+          0.5666442422868397,
+          0.5697583297554133
+        ],
+        "median": 1.0273526323492177,
+        "receipt": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_nn_20261004T135349123543Z/checkpoint_128.pt",
+          "sha256": "448ef7daab53d716497d39b0c3fcb02f926c31cbf4d9862b7394ce7c2673e3c5",
+          "committed": true
+        }
+      },
+      "changes": {
+        "encoder": 1.8542853505416077,
+        "message": 0.8196629518507061,
+        "decoder": 3.4730436918704566
+      },
+      "source": "0ed2850df39a53a4c4a6f49ab308c6619de696d4"
+    },
+    {
+      "route": "R-LIN",
+      "updates": 128,
+      "initial_median": 14.162084486136134,
+      "selected": {
+        "update": 128,
+        "residuals": [
+          4.071390546934092,
+          3.6580289751308284,
+          0.6212975272727995,
+          0.6619738809675064
+        ],
+        "median": 2.1600014280491675,
+        "receipt": {
+          "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v43/task042_v43_train_lin_20261004T135615910513Z/checkpoint_128.pt",
+          "sha256": "151e71bc29f0032b4ecdb2c475593b683ff2cb0b5e350066826be97fa288e9b8",
+          "committed": true
+        }
+      },
+      "changes": {
+        "encoder": 1.7823135901161096,
+        "message": 0.9935545049136435,
+        "decoder": 3.1693739162798256
+      },
+      "source": "0ed2850df39a53a4c4a6f49ab308c6619de696d4"
+    }
+  ],
+  "heldout_saved_vector_checks": [
+    {
+      "sample": 0,
+      "route": "R0",
+      "rho": 9.827479979103149e-07,
+      "eta": 0.007218083548224444,
+      "eta_over_rho": 7344.79598388677,
+      "steps": 90,
+      "whole_seconds": 21.103003068943508,
+      "passed": false
+    },
+    {
+      "sample": 0,
+      "route": "R-LIN",
+      "rho": 3.598939934348995e-06,
+      "eta": 0.38799237697209843,
+      "eta_over_rho": 107807.40552767285,
+      "steps": 128,
+      "whole_seconds": 29.805486919009127,
+      "passed": false
+    },
+    {
+      "sample": 0,
+      "route": "R-NN",
+      "rho": 9.189282059764231e-07,
+      "eta": 0.12364979891589802,
+      "eta_over_rho": 134558.71537266808,
+      "steps": 117,
+      "whole_seconds": 27.76390760904178,
+      "passed": false
+    },
+    {
+      "sample": 1,
+      "route": "R0",
+      "rho": 9.842179991571045e-07,
+      "eta": 0.006267501726900866,
+      "eta_over_rho": 6368.001532453609,
+      "steps": 91,
+      "whole_seconds": 20.992463129921816,
+      "passed": false
+    },
+    {
+      "sample": 1,
+      "route": "R-LIN",
+      "rho": 2.683510719636597e-06,
+      "eta": 0.4585935457878734,
+      "eta_over_rho": 170893.12982136194,
+      "steps": 128,
+      "whole_seconds": 30.106927465996705,
+      "passed": false
+    },
+    {
+      "sample": 1,
+      "route": "R-NN",
+      "rho": 9.283078123217337e-07,
+      "eta": 0.17594793550304516,
+      "eta_over_rho": 189536.20035039086,
+      "steps": 117,
+      "whole_seconds": 27.608159256051295,
+      "passed": false
+    },
+    {
+      "sample": 2,
+      "route": "R0",
+      "rho": 9.886024896454903e-07,
+      "eta": 0.006660036569444018,
+      "eta_over_rho": 6736.819539906566,
+      "steps": 90,
+      "whole_seconds": 21.156931404955685,
+      "passed": false
+    },
+    {
+      "sample": 2,
+      "route": "R-LIN",
+      "rho": 2.3828524212086638e-06,
+      "eta": 0.351150801949024,
+      "eta_over_rho": 147365.73646928094,
+      "steps": 128,
+      "whole_seconds": 29.969983348972164,
+      "passed": false
+    },
+    {
+      "sample": 2,
+      "route": "R-NN",
+      "rho": 9.198232605951537e-07,
+      "eta": 0.22703570602200465,
+      "eta_over_rho": 246825.3584662619,
+      "steps": 120,
+      "whole_seconds": 28.488061306998134,
+      "passed": false
+    },
+    {
+      "sample": 3,
+      "route": "R0",
+      "rho": 9.139224145150187e-07,
+      "eta": 0.0067109618254334895,
+      "eta_over_rho": 7343.032317458504,
+      "steps": 90,
+      "whole_seconds": 21.036657595075667,
+      "passed": false
+    },
+    {
+      "sample": 3,
+      "route": "R-LIN",
+      "rho": 2.13881596211436e-06,
+      "eta": 0.3274977743534525,
+      "eta_over_rho": 153121.06331472273,
+      "steps": 128,
+      "whole_seconds": 30.3705683411099,
+      "passed": false
+    },
+    {
+      "sample": 3,
+      "route": "R-NN",
+      "rho": 9.47054872247147e-07,
+      "eta": 0.21764275040928613,
+      "eta_over_rho": 229810.0741437179,
+      "steps": 119,
+      "whole_seconds": 28.13726864301134,
+      "passed": false
+    },
+    {
+      "sample": 4,
+      "route": "R0",
+      "rho": 8.99200148766073e-07,
+      "eta": 0.014479193110345097,
+      "eta_over_rho": 16102.302841268613,
+      "steps": 88,
+      "whole_seconds": 20.510777032002807,
+      "passed": false
+    },
+    {
+      "sample": 4,
+      "route": "R-LIN",
+      "rho": 9.118262015384204e-07,
+      "eta": 0.035567741605741776,
+      "eta_over_rho": 39007.150206620936,
+      "steps": 127,
+      "whole_seconds": 30.248289866023697,
+      "passed": false
+    },
+    {
+      "sample": 4,
+      "route": "R-NN",
+      "rho": 9.218224270356894e-07,
+      "eta": 0.05712372486634756,
+      "eta_over_rho": 61968.25244319636,
+      "steps": 116,
+      "whole_seconds": 27.815826473990455,
+      "passed": false
+    },
+    {
+      "sample": 5,
+      "route": "R0",
+      "rho": 9.505419619931493e-07,
+      "eta": 0.016580221426054347,
+      "eta_over_rho": 17442.913715548144,
+      "steps": 87,
+      "whole_seconds": 20.68599740799982,
+      "passed": false
+    },
+    {
+      "sample": 5,
+      "route": "R-LIN",
+      "rho": 9.288287370014026e-07,
+      "eta": 0.03515810344041783,
+      "eta_over_rho": 37852.08407087079,
+      "steps": 127,
+      "whole_seconds": 30.156026532989927,
+      "passed": false
+    },
+    {
+      "sample": 5,
+      "route": "R-NN",
+      "rho": 9.362037309625047e-07,
+      "eta": 0.06358081385163783,
+      "eta_over_rho": 67913.43780084152,
+      "steps": 114,
+      "whole_seconds": 27.21469854202587,
+      "passed": false
+    },
+    {
+      "sample": 6,
+      "route": "R0",
+      "rho": 9.340678011103228e-07,
+      "eta": 0.016621778764526723,
+      "eta_over_rho": 17795.045225591202,
+      "steps": 87,
+      "whole_seconds": 20.52590563404374,
+      "passed": false
+    },
+    {
+      "sample": 6,
+      "route": "R-LIN",
+      "rho": 8.848772535504422e-07,
+      "eta": 0.03403685282684219,
+      "eta_over_rho": 38465.05567893652,
+      "steps": 127,
+      "whole_seconds": 30.09124521492049,
+      "passed": false
+    },
+    {
+      "sample": 6,
+      "route": "R-NN",
+      "rho": 9.359625537658752e-07,
+      "eta": 0.06163198602606755,
+      "eta_over_rho": 65848.77330624958,
+      "steps": 114,
+      "whole_seconds": 27.47198839392513,
+      "passed": false
+    },
+    {
+      "sample": 7,
+      "route": "R0",
+      "rho": 9.504404463906353e-07,
+      "eta": 0.01678206713738232,
+      "eta_over_rho": 17657.147484740788,
+      "steps": 87,
+      "whole_seconds": 20.60652199096512,
+      "passed": false
+    },
+    {
+      "sample": 7,
+      "route": "R-LIN",
+      "rho": 8.771493114218922e-07,
+      "eta": 0.036473811151691425,
+      "eta_over_rho": 41582.214882624714,
+      "steps": 127,
+      "whole_seconds": 29.982453022967093,
+      "passed": false
+    },
+    {
+      "sample": 7,
+      "route": "R-NN",
+      "rho": 9.560585993695394e-07,
+      "eta": 0.064472639614139,
+      "eta_over_rho": 67435.86601977605,
+      "steps": 115,
+      "whole_seconds": 27.36070240405388,
+      "passed": false
+    }
+  ],
+  "gradient_saved_vector_checks": [
+    {
+      "direction": 0,
+      "step": 0.0001,
+      "relative": 2.970132157554911e-11,
+      "passed": true
+    },
+    {
+      "direction": 0,
+      "step": 3e-05,
+      "relative": 7.423745014958148e-11,
+      "passed": true
+    },
+    {
+      "direction": 0,
+      "step": 1e-05,
+      "relative": 2.0769809234280782e-10,
+      "passed": true
+    },
+    {
+      "direction": 1,
+      "step": 0.0001,
+      "relative": 2.8221887252611825e-11,
+      "passed": true
+    },
+    {
+      "direction": 1,
+      "step": 3e-05,
+      "relative": 6.638972041754397e-11,
+      "passed": true
+    },
+    {
+      "direction": 1,
+      "step": 1e-05,
+      "relative": 1.8831188994395493e-10,
+      "passed": true
+    },
+    {
+      "direction": 2,
+      "step": 0.0001,
+      "relative": 1.0865919205515335e-11,
+      "passed": true
+    },
+    {
+      "direction": 2,
+      "step": 3e-05,
+      "relative": 4.0003953443603125e-11,
+      "passed": true
+    },
+    {
+      "direction": 2,
+      "step": 1e-05,
+      "relative": 1.1172823597287345e-10,
+      "passed": true
+    }
+  ],
+  "action_counts": {
+    "actions": 4090,
+    "B_actions": 21
+  },
+  "action_journals": [
+    {
+      "role": "SETUP",
+      "breakdown": {
+        "production_A": 1,
+        "A": 1,
+        "production_AH": 1,
+        "AH": 1
+      }
+    },
+    {
+      "role": "RECOVERY",
+      "breakdown": {
+        "A_saved_recovery_factory": 1,
+        "A_saved_recovery_native": 1,
+        "A_saved_recovery_delta": 1,
+        "A_saved_recovery_extended": 1,
+        "B_saved_local_sum": 1,
+        "B_saved_CSR": 1,
+        "B_saved_CSR_extended": 1
+      }
+    },
+    {
+      "role": "DATA",
+      "breakdown": {
+        "A": 28
+      }
+    },
+    {
+      "role": "GRADIENT",
+      "breakdown": {
+        "A": 6,
+        "AH": 6,
+        "B_A": 8,
+        "B_AH": 1
+      }
+    },
+    {
+      "role": "GRADIENT",
+      "breakdown": {
+        "A": 6,
+        "AH": 6,
+        "B_A": 8,
+        "B_AH": 1
+      }
+    },
+    {
+      "role": "TRAIN_NN",
+      "breakdown": {
+        "A": 276,
+        "AH": 256
+      }
+    },
+    {
+      "role": "TRAIN_LIN",
+      "breakdown": {
+        "A": 276,
+        "AH": 256
+      }
+    },
+    {
+      "role": "EVALUATE",
+      "breakdown": {
+        "A": 2942
+      }
+    },
+    {
+      "role": "CHECK",
+      "breakdown": {
+        "independent_frozen_checker_A": 24
+      }
+    }
+  ],
+  "pytest_snapshots": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre09/pytest.xml",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre13/pytest.xml",
+      "tests": 26,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre11/pytest.xml",
+      "tests": 24,
+      "failures": 1,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre04/pytest.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre14/pytest.xml",
+      "tests": 27,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre07/pytest.xml",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre05/pytest.xml",
+      "tests": 18,
+      "failures": 3,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre08/pytest.xml",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre12/pytest.xml",
+      "tests": 24,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre06/pytest.xml",
+      "tests": 22,
+      "failures": 1,
+      "errors": 0
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab/tmp/task042/v43/aux_pre_pre10/pytest.xml",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "sampling": [
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre01",
+      "median": 0.742909851949662,
+      "max": 0.9227798080537468
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre02",
+      "median": 0.7441589584923349,
+      "max": 0.9253746919566765
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre03",
+      "median": 0.7550039465422742,
+      "max": 0.9248523400165141
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre04",
+      "median": 0.7532226394978352,
+      "max": 0.9287993289763108
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre05",
+      "median": 0.759929719963111,
+      "max": 0.9319199329474941
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre06",
+      "median": 0.7667830729624256,
+      "max": 0.9418209679424763
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre07",
+      "median": 0.7724882674519904,
+      "max": 0.9551765819778666
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre08",
+      "median": 0.7851129450136796,
+      "max": 0.9661696170223877
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre09",
+      "median": 0.7894567325129174,
+      "max": 0.9711272349813953
+    },
+    {
+      "folder": "results/task042/task042_v43_setup_20261004T134304643860Z",
+      "median": 0.9191738610388711,
+      "max": 1.093677349970676
+    },
+    {
+      "folder": "results/task042/task042_v43_recovery_20261004T134345019696Z",
+      "median": 0.92162936902605,
+      "max": 1.1032284219982103
+    },
+    {
+      "folder": "results/task042/task042_v43_data_20261004T134436967175Z",
+      "median": 0.9577194460434839,
+      "max": 1.1345499500166625
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre10",
+      "median": 1.0372160049155354,
+      "max": 1.2169329290045425
+    },
+    {
+      "folder": "results/task042/task042_v43_data_20261004T134710335597Z",
+      "median": 1.043281304067932,
+      "max": 1.229619049001485
+    },
+    {
+      "folder": "results/task042/task042_v43_gradient_20261004T134821754398Z",
+      "median": 1.0600787149742246,
+      "max": 1.2432382570113987
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre11",
+      "median": 1.0685657809954137,
+      "max": 1.2633520839735866
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre12",
+      "median": 1.0676364760147408,
+      "max": 1.2436480859760195
+    },
+    {
+      "folder": "results/task042/task042_v43_gradient_20261004T135235320489Z",
+      "median": 1.0823902389965951,
+      "max": 1.2574028640519828
+    },
+    {
+      "folder": "results/task042/task042_v43_train_nn_20261004T135349123543Z",
+      "median": 1.0838684710324742,
+      "max": 1.2878347489750013
+    },
+    {
+      "folder": "results/task042/task042_v43_train_lin_20261004T135615910513Z",
+      "median": 1.0872653765254654,
+      "max": 1.282076672068797
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre13",
+      "median": 1.0917177461087704,
+      "max": 1.2918244779575616
+    },
+    {
+      "folder": "results/task042/task042_v43_evaluate_20261004T140140495047Z",
+      "median": 1.116595832980238,
+      "max": 1.3205682940315455
+    },
+    {
+      "folder": "tmp/task042/v43/aux_pre_pre14",
+      "median": 1.2091732629924081,
+      "max": 1.3915604370413348
+    },
+    {
+      "folder": "results/task042/task042_v43_check_20261004T141437229404Z",
+      "median": 1.2212563505163416,
+      "max": 1.4224968319758773
+    },
+    {
+      "folder": "tmp/task042/v43/aux_report_collect01",
+      "median": 1.388728134916164,
+      "max": 1.5480364230461419
+    },
+    {
+      "folder": "tmp/task042/v43/aux_report_collect02",
+      "median": 1.3752497640671209,
+      "max": 1.5490300740348175
+    },
+    {
+      "folder": "tmp/task042/v43/aux_report_documents01",
+      "median": 0.9303033228497952,
+      "max": 1.126543807098642
+    },
+    {
+      "folder": "tmp/task042/v43/aux_post_final01",
+      "median": 0.9771605769637972,
+      "max": 1.4853977500461042
+    },
+    {
+      "folder": "tmp/task042/v43/aux_report_collect03",
+      "median": 1.4590447349473834,
+      "max": 1.6560772450175136
+    }
+  ],
+  "repository_index_sha256": "95f60a893b1d86fbd67b3e3f9d76216f2a9acc4e7fc7e6e0b38c4d13a16272b5",
+  "dot_head": "077ec9c8386c976da232093779279fb9d1a93033",
+  "source_changes": false,
+  "limitations": [
+    "not whole-repository line-by-line semantic audit",
+    "rho recomputation uses saved residual; no independent matrix action replay in review",
+    "training e-read absence is source/record contract, not an OS file-access sandbox proof",
+    "V43 full correctness 0/8 all routes; original-size and NN20 not qualified",
+    "ordinary review IO/human cost unmonitored"
+  ]
+}
