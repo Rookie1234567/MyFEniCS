@@ -1691,8 +1691,8 @@
     "original_precision_gates_unchanged": true
   },
   "publication": {
-    "actual_render": "PENDING_AFTER_FIRST_PUSH",
-    "notification": "NOT_SENT",
+    "actual_render": "PASS_ACTUAL_GITHUB_TABLES_AND_MATH_VISUALLY_INSPECTED",
+    "notification": "Deferred until final seal push and precise ref/cleanup verification; one official queue then stop tools",
     "merge_approval": false,
     "local_page_check": {
       "path": "docs/task042extra_feinn_5nm/review_report_v21.md",
@@ -1703,7 +1703,427 @@
       "math_fences": 1,
       "links": 13
     },
-    "scope_check": "Only two new review files; no tracked source/response/outcomes evidence/history changed."
+    "scope_check": "Only two new review files; no tracked source/response/outcomes evidence/history changed.",
+    "review_commit": "04bbf9fe634fb67764f622b78390d76b6c4b7166",
+    "render_record": {
+      "path": "tmp/task42extra/render/review_v21_published/render_records.json",
+      "sha256": "096234d474a824985cbab448827b210ab01d4dc65801588ab9fc5ae5ef72cb13",
+      "bytes": 10665
+    },
+    "render_capture": {
+      "status": "DOM_AND_SCREENSHOTS_CAPTURED_NOT_YET_VISUALLY_QUALIFIED",
+      "browser": {
+        "sessionId": "de99f06d-7122-4798-89de-e43f053925f8",
+        "capabilities": {
+          "acceptInsecureCerts": false,
+          "browserName": "firefox",
+          "browserVersion": "157.0",
+          "platformName": "linux",
+          "setWindowRect": true,
+          "unhandledPromptBehavior": "dismiss and notify",
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0",
+          "moz:buildID": "20260925125819",
+          "moz:headless": true,
+          "moz:platformVersion": "7.0.0-31-generic",
+          "moz:processID": 1680497,
+          "moz:profile": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/profile",
+          "moz:shutdownTimeout": 60000,
+          "pageLoadStrategy": "eager",
+          "timeouts": {
+            "implicit": 0,
+            "pageLoad": 300000,
+            "script": 30000
+          },
+          "strictFileInteractability": false,
+          "moz:accessibilityChecks": false,
+          "moz:webdriverClick": true,
+          "moz:windowless": false,
+          "proxy": {},
+          "moz:geckodriverVersion": "0.37.1"
+        }
+      },
+      "profile_scope": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/profile",
+      "records": [
+        {
+          "url": "https://github.com/Rookie1234567/MyFEniCS/blob/04bbf9fe634fb67764f622b78390d76b6c4b7166/docs/task042extra_feinn_5nm/review_report_v21.md",
+          "heading_prefix": "",
+          "DOM": {
+            "title": "MyFEniCS/docs/task042extra_feinn_5nm/review_report_v21.md at 04bbf9fe634fb67764f622b78390d76b6c4b7166 · Rookie1234567/MyFEniCS · GitHub",
+            "scopeHeading": "entire task document",
+            "articleText": "Review V21：把端口积分与输出舍入问题做实，结束盲目的阶次试验\n0. 裁决与最终目标\n\n最终目标尚未达成。接受 V21 的实物、独立比较和负结果；不接受为严格合格前向解、相位 FE 缩减证书或 NN 增益。下一轮一次完成“可靠总场输出、解析面端口积分、冻结场归因、原尺寸局部接口”，仅在新算子使保存场原方程超门时允许有限的同配置修正求解。 这是有明确证据支持的确定性辅助工作，不恢复 FEINN 主求解器，不自动重开固定单载波的规模",
+            "ready": "complete",
+            "fonts": "loaded",
+            "tables": [
+              {
+                "columns": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "width": 981.36669921875,
+                "scrollWidth": 981,
+                "clientWidth": 981
+              },
+              {
+                "columns": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "width": 1012,
+                "scrollWidth": 1012,
+                "clientWidth": 1012
+              },
+              {
+                "columns": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "width": 1012,
+                "scrollWidth": 1012,
+                "clientWidth": 1012
+              },
+              {
+                "columns": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "width": 669,
+                "scrollWidth": 669,
+                "clientWidth": 669
+              },
+              {
+                "columns": [
+                  3,
+                  3,
+                  3,
+                  3,
+                  3
+                ],
+                "width": 673.316650390625,
+                "scrollWidth": 673,
+                "clientWidth": 673
+              },
+              {
+                "columns": [
+                  3,
+                  3,
+                  3,
+                  3
+                ],
+                "width": 1012,
+                "scrollWidth": 1012,
+                "clientWidth": 1012
+              },
+              {
+                "columns": [
+                  3,
+                  3,
+                  3,
+                  3,
+                  3,
+                  3,
+                  3
+                ],
+                "width": 902.8333129882812,
+                "scrollWidth": 903,
+                "clientWidth": 903
+              }
+            ],
+            "math": [
+              {
+                "html": "<math-renderer class=\"js-display-math\" style=\"display: block\" data-run-id=\"f859b9e1bf277db04029ca153e08aed0\" data-catalyst=\"\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\n  <msubsup>\n    <mo data-mjx-texclass=\"OP\">∫</mo>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mn>1</mn>\n    </mrow>\n  </msubsup>\n  <msub>\n    <mi>P</mi>\n    <mi>ℓ</mi>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mi>t</mi>\n  <mo stretchy=\"false\">)</mo>\n  <msup>\n    <mi>e</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>i</mi>\n      <mi>z</mi>\n      <mi>t</mi>\n    </mrow>\n  </msup>\n  <mstyle>\n    <mspace width=\"0.167em\"></mspace>\n  </mstyle>\n  <mi>d</mi>\n  <mi>t</mi>\n  <mo>=</mo>\n  <mn>2</mn>\n  <msup>\n    <mi>i</mi>\n    <mi>ℓ</mi>\n  </msup>\n  <msub>\n    <mi>j</mi>\n    <mi>ℓ</mi>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mi>z</mi>\n  <mo stretchy=\"false\">)</mo>\n  <mo>,</mo>\n  <mstyle>\n    <mspace width=\"2em\"></mspace>\n  </mstyle>\n  <mi>z</mi>\n  <mo>=</mo>\n  <mstyle displaystyle=\"false\">\n    <mfrac>\n      <mn>1</mn>\n      <mn>2</mn>\n    </mfrac>\n  </mstyle>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>k</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mrow data-mjx-texclass=\"ORD\">\n        <mi data-mjx-auto-op=\"false\">mode</mi>\n      </mrow>\n      <mo>,</mo>\n      <mi>t</mi>\n    </mrow>\n  </msub>\n  <mo>−</mo>\n  <msub>\n    <mi>κ</mi>\n    <mi>t</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n  <msub>\n    <mi>h</mi>\n    <mi>t</mi>\n  </msub>\n  <mo>.</mo>\n</math></math-renderer>",
+                "shadow": null,
+                "width": 1012,
+                "height": 47
+              }
+            ],
+            "mathAfterScroll": [
+              {
+                "html": "<math-renderer class=\"js-display-math\" style=\"display: block; scroll-margin-top: 160px;\" data-run-id=\"f859b9e1bf277db04029ca153e08aed0\" data-catalyst=\"\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\n  <msubsup>\n    <mo data-mjx-texclass=\"OP\">∫</mo>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mn>1</mn>\n    </mrow>\n  </msubsup>\n  <msub>\n    <mi>P</mi>\n    <mi>ℓ</mi>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mi>t</mi>\n  <mo stretchy=\"false\">)</mo>\n  <msup>\n    <mi>e</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>i</mi>\n      <mi>z</mi>\n      <mi>t</mi>\n    </mrow>\n  </msup>\n  <mstyle>\n    <mspace width=\"0.167em\"></mspace>\n  </mstyle>\n  <mi>d</mi>\n  <mi>t</mi>\n  <mo>=</mo>\n  <mn>2</mn>\n  <msup>\n    <mi>i</mi>\n    <mi>ℓ</mi>\n  </msup>\n  <msub>\n    <mi>j</mi>\n    <mi>ℓ</mi>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mi>z</mi>\n  <mo stretchy=\"false\">)</mo>\n  <mo>,</mo>\n  <mstyle>\n    <mspace width=\"2em\"></mspace>\n  </mstyle>\n  <mi>z</mi>\n  <mo>=</mo>\n  <mstyle displaystyle=\"false\">\n    <mfrac>\n      <mn>1</mn>\n      <mn>2</mn>\n    </mfrac>\n  </mstyle>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>k</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mrow data-mjx-texclass=\"ORD\">\n        <mi data-mjx-auto-op=\"false\">mode</mi>\n      </mrow>\n      <mo>,</mo>\n      <mi>t</mi>\n    </mrow>\n  </msub>\n  <mo>−</mo>\n  <msub>\n    <mi>κ</mi>\n    <mi>t</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n  <msub>\n    <mi>h</mi>\n    <mi>t</mi>\n  </msub>\n  <mo>.</mo>\n</math></math-renderer>",
+                "shadow": null,
+                "width": 1012,
+                "height": 47
+              }
+            ]
+          },
+          "screenshots": [
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_top.png",
+              "sha256": "92d3df45833dce9f5b257eaf3c3a279d790722f68a28b64d7223b2b09567b438"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_00.png",
+              "sha256": "12e98e790efc7e8ddb8109f094bbb8db5f0eb20cfb3a116408b5e4d8fe6fc323"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_01.png",
+              "sha256": "734dc2ea9737ecafda578c528e16c2d2c47fcace561febd9005c5839645403c7"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_02.png",
+              "sha256": "6f4f0aca173f10f844fa4d31a2b0a58c8eac499942783eb27a33df3a537a0895"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_03.png",
+              "sha256": "6f3e51158ba7cb467599c196e9cb8c66590b0a3466716b4ba7f37cb036169f4e"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_04.png",
+              "sha256": "66282f16e2608c5d97ee619424621534959c4357f46efccad7d1343475afd593"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_05.png",
+              "sha256": "2b3a283fbf3674f095b843e1c9d93a935f8cdd9f8cf4827aea642617fba7b75e"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_table_06.png",
+              "sha256": "93fce0c425a53e01b0d3f59e9c7f27c7d9545e52e415e53429f7a242bd2ad092"
+            },
+            {
+              "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/review_v21_published/00_math-renderer_00.png",
+              "sha256": "afac82220edd7b27f1c4e928eaf3cc0cb2e4265f8bea67ff943abd4208b8ad9f"
+            }
+          ],
+          "visual_review": "pending human/model image inspection"
+        }
+      ]
+    },
+    "visual_decision": {
+      "utc": "2026-10-04T08:16:10.689705+00:00",
+      "screenshots_viewed": 9,
+      "complete_tables_viewed": 7,
+      "complete_formulas_viewed": 1,
+      "all_table_right_edges_visible": true,
+      "raw_latex_error": false,
+      "scope": "Header, every full table including right edge, equation. Not a claim that every prose viewport was separately screenshotted."
+    },
+    "additional_checks": [
+      {
+        "summary": {
+          "path": "tmp/task42extra/checks/review_v21_publish_check_20261004T080805172875Z/summary.json",
+          "sha256": "acd8fdf26055e43b72ebc85faacea6eba41e91be61697f07374b52fd9c29fcb3",
+          "bytes": 1897
+        },
+        "measurements": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 90.0,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "legacy",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": null,
+          "swap_policy": "legacy_stop",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            51
+          ],
+          "sampled_process_tree_rss_peak_bytes": 42967040,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139063,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139063,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2138686009344,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2138686009344,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 4,
+          "elapsed_seconds": 1.5534743540920317,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": "development_worktree; not formal PDE provenance"
+        }
+      },
+      {
+        "summary": {
+          "path": "tmp/task42extra/checks/review_v21_prepublication_20261004T081103412213Z/summary.json",
+          "sha256": "0b6ae5c0f4c2fd95f984bbf9cdacfd473d02842ff140a6a672398a7e7a89e043",
+          "bytes": 1897
+        },
+        "measurements": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 90.0,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "legacy",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": null,
+          "swap_policy": "legacy_stop",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            51
+          ],
+          "sampled_process_tree_rss_peak_bytes": 43216896,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139063,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139063,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2139415773184,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2139415773184,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 4,
+          "elapsed_seconds": 1.5483684580540285,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": "development_worktree; not formal PDE provenance"
+        }
+      },
+      {
+        "summary": {
+          "path": "tmp/task42extra/checks/review_v21_github_render_20261004T081239505946Z/summary.json",
+          "sha256": "0b2e85f88056587cbfac9ac32ca12fbc62ba46d83b70c2977ecc5d990bfcd12a",
+          "bytes": 2075
+        },
+        "measurements": {
+          "sampled_root_identity": null,
+          "workflow_deadline_seconds": 240.0,
+          "solve_deadline_seconds": null,
+          "time_limit_mode": "bounded",
+          "resource_stop_policy": "legacy",
+          "rss_hard_limit_bytes": 2147483648,
+          "rss_warning_bytes": 1879048192,
+          "startup_headroom_bytes": null,
+          "swap_policy": "legacy_stop",
+          "global_swap_delta_policy": "observe_only",
+          "cache_metadata_stable": true,
+          "classification": "COMPLETED",
+          "leader_exit_code": 0,
+          "descendants_cleared": true,
+          "remaining_child_pids": [],
+          "observed_child_pids": [
+            1680493,
+            1680494,
+            1680497,
+            1680559,
+            1680561,
+            1680573,
+            1680579,
+            1680631,
+            1680684,
+            1680690,
+            1680703,
+            1680705,
+            1680767,
+            1680833
+          ],
+          "sampled_process_tree_rss_peak_bytes": 1781047296,
+          "sampled_process_tree_swap_peak_bytes": 0,
+          "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+          "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+          "global_swap_activity": {
+            "scope": "WSL-global diagnostic, not dedicated job",
+            "baseline": {
+              "pswpin_pages": 3139063,
+              "pswpout_pages": 5146004
+            },
+            "end": {
+              "pswpin_pages": 3139063,
+              "pswpout_pages": 5146004
+            },
+            "delta": {
+              "pswpin_pages": 0,
+              "pswpout_pages": 0
+            }
+          },
+          "job_swap_activity": "zero_supported_by_zero_global_activity",
+          "launch_envelope": {
+            "mem_total_bytes": 2163100385280,
+            "mem_available_bytes": 2139464024064,
+            "effective_total_bytes": 2163100385280,
+            "effective_available_bytes": 2139464024064,
+            "reserve_bytes": 628626898944,
+            "launch_cap_bytes": 2147483648,
+            "planning_cap_bytes": 2147483648,
+            "cgroup_limits": [],
+            "system_reserve_bytes": 216310038528,
+            "neighbor_growth_allowance_bytes": 412316860416,
+            "shared_workstation": true
+          },
+          "samples": 34,
+          "elapsed_seconds": 21.856577218975872,
+          "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source_state": "development_worktree; not formal PDE provenance"
+        }
+      }
+    ],
+    "seal_scope": "Only this review evidence JSON changes; report and all numerical sources/results unchanged; no expensive requalification"
   },
   "original_AUTO_inventory": {
     "path_in_main_artifact": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
@@ -1712,5 +2132,74 @@
     "ordered_keys_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
     "rows": 32060,
     "review_scope": "Remote index only; body not read or regenerated; future P4 conditional on true hash-bound data availability"
+  },
+  "reviewer_non_numerical_query_notes": [
+    "An rg glob named a nonexistent local task40 path; fixed by reading git objects, no peer worktree mutation.",
+    "One jq display query assumed render root was an array; corrected to records; browser succeeded once and was not rerun."
+  ],
+  "reviewer_metadata_failure": {
+    "summary": {
+      "path": "tmp/task42extra/checks/review_v21_seal_check_20261004T081458982514Z/summary.json",
+      "sha256": "fd29a371800c5f8929cbca9f63f5f7250f8bd543d81b5a389c62104b1fd79854",
+      "bytes": 1900
+    },
+    "measurement": {
+      "sampled_root_identity": null,
+      "workflow_deadline_seconds": 90.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 2147483648,
+      "rss_warning_bytes": 1879048192,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "cache_metadata_stable": true,
+      "classification": "WORKER_FAILED",
+      "leader_exit_code": 1,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        51
+      ],
+      "sampled_process_tree_rss_peak_bytes": 42975232,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 3139063,
+          "pswpout_pages": 5146004
+        },
+        "end": {
+          "pswpin_pages": 3139063,
+          "pswpout_pages": 5146004
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2139431096320,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2139431096320,
+        "reserve_bytes": 628626898944,
+        "launch_cap_bytes": 2147483648,
+        "planning_cap_bytes": 2147483648,
+        "cgroup_limits": [],
+        "system_reserve_bytes": 216310038528,
+        "neighbor_growth_allowance_bytes": 412316860416,
+        "shared_workstation": true
+      },
+      "samples": 4,
+      "elapsed_seconds": 1.553585530957207,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    },
+    "cause": "Seal helper used dom instead of renderer DOM key; failed before audit write. Corrected key only; no browser or numerical replay. A subsequent commit command found clean tree and made no commit."
   }
 }
