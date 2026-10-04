@@ -107,6 +107,30 @@ def _merged_entries(old, tile, row_first, col_first):
                 yield row, int(old.indices[k]), old.data[k]
 
 
+def _merged_row(old, tile_row, row, col_first, values, overlaps, positions, mask):
+    """Prepare one union row in admitted scratch; absent entries are copied."""
+    begin, end = int(old.indptr[row]), int(old.indptr[row + 1])
+    columns = old.indices[begin:end]  # borrowed view, including stored zeros
+    middle_first = begin + int(np.searchsorted(columns, col_first))
+    middle_last = begin + int(np.searchsorted(columns, col_first + len(tile_row)))
+    values[:] = tile_row
+    size = middle_last - middle_first
+    if size:
+        np.subtract(old.indices[middle_first:middle_last], col_first,
+                    out=positions[:size], dtype=np.int64)
+        # Canonical old indices in this interval prove 0 <= positions < width.
+        # clip therefore preserves the result and avoids raise-mode buffering.
+        np.take(values, positions[:size], out=overlaps[:size], mode='clip')
+        # Do not add zero at absent old columns: that changes signed-zero bits.
+        # The stored old value remains the first operand, exactly as before.
+        np.add(old.data[middle_first:middle_last], overlaps[:size], out=overlaps[:size])
+        values[positions[:size]] = overlaps[:size]
+    np.isfinite(values, out=mask[:len(values)])
+    if not np.all(mask[:len(values)]):
+        raise FloatingPointError('compact q accumulation produced a nonfinite entry')
+    return begin, middle_first, middle_last, end
+
+
 class BoundedCompactQAccumulator:
     """Own only a growing exact CSR; borrow maps, indices and numeric recipes.
 
@@ -132,6 +156,13 @@ class BoundedCompactQAccumulator:
         self.tiles_projected = 0
         self.tiles_skipped_structural = 0
         self.support_discoveries = 0
+        # Simple controls/counters let component profiles isolate either path.
+        self.vectorized_row_merge_enabled = True
+        self.vectorized_projected_finite_enabled = True
+        self.row_merges_vectorized = 0
+        self.row_merges_scalar = 0
+        self.projected_finite_checks_vectorized = 0
+        self.projected_finite_checks_scalar = 0
         self._admit('empty_result', (self.shape[0] + 1) * self.ibytes)
         self.result = sparse.csr_matrix(self.shape, dtype=np.complex128)
 
@@ -283,9 +314,7 @@ class BoundedCompactQAccumulator:
             projected = dual @ r
             del dual, matrix
         del l, r
-        # Scalar checks avoid an unaccounted full-size finite mask.
-        if any(not np.isfinite(value) for value in projected.flat):
-            raise FloatingPointError('compact projected contribution is nonfinite: ' + str(label))
+        self._check_projected_finite(projected, label)
         self.tiles_projected += 1
         missing = None
         if np.count_nonzero(projected):
@@ -312,7 +341,125 @@ class BoundedCompactQAccumulator:
         for bounds in tiles:
             self._project_tile(left, right, rows, cols, values, label, *bounds)
 
+    def _check_projected_finite(self, projected, label):
+        additional = int(projected.nbytes + projected.size * np.dtype(np.bool_).itemsize)
+        if self.vectorized_projected_finite_enabled and _bytes(self.result) + additional <= self.budget:
+            self._admit('projection_finite/' + str(label), additional,
+                        projected_tile_bytes=int(projected.nbytes),
+                        projected_finite_mask_bytes=int(projected.size),
+                        finite_mask_released_before_CSR_merge=True)
+            finite = np.empty(projected.shape, dtype=np.bool_)
+            np.isfinite(projected, out=finite)
+            valid = bool(np.all(finite))
+            del finite
+            self.projected_finite_checks_vectorized += 1
+        else:
+            valid = not any(not np.isfinite(value) for value in projected.flat)
+            self.projected_finite_checks_scalar += 1
+        if not valid:
+            raise FloatingPointError('compact projected contribution is nonfinite: ' + str(label))
+
     def _merge(self, tile, first_p, first_q, label):
+        old = self.result
+        last_p = first_p + tile.shape[0]
+        width = tile.shape[1]
+        max_old_row = max((int(old.indptr[row + 1]) - int(old.indptr[row])
+                           for row in range(first_p, last_p)), default=0)
+        # Two complex rows, two int64 rows, one reusable boolean row, and the
+        # maximum transient flatnonzero intp selection and gathered index row.
+        # Index gathering is explicit so narrowing/promoting old indices never
+        # hides an out-dtype conversion buffer in take. Selections are deleted
+        # before the next allocation. Valid-index take uses clip, avoiding
+        # raise-mode output buffering; no compress/COO/sparse-add is used.
+        mask_size = max(width, max_old_row)
+        selection_bytes = mask_size * np.dtype(np.intp).itemsize
+        selected_index_bytes = mask_size * max(8, old.indices.dtype.itemsize)
+        scratch_bytes = (width * (2 * 16 + 2 * 8) + mask_size
+                         + selection_bytes + selected_index_bytes)
+        # Admit the scratch only when even a no-cancellation union plus both
+        # replacement owners fits. Otherwise run the untouched scalar method;
+        # added scratch never changes its exact fit/split/GEMM decision.
+        upper_count = int(old.nnz) + int(tile.size)
+        upper_itemsize = 4 if max(*self.shape, upper_count) <= np.iinfo(np.int32).max else 8
+        upper_new_bytes = upper_count * (16 + upper_itemsize) + (self.shape[0] + 1) * upper_itemsize
+        upper_additional = int(tile.nbytes) + 2 * upper_new_bytes + scratch_bytes
+        if (not self.vectorized_row_merge_enabled
+                or _bytes(old) + upper_additional > self.budget):
+            self.row_merges_scalar += 1
+            return self._merge_scalar(tile, first_p, first_q, label)
+        self._admit('CSR_row_scratch/' + str(label), upper_additional,
+                    next_CSR_entries_upper=upper_count,
+                    next_CSR_payload_upper_bytes=upper_new_bytes,
+                    projected_tile_bytes=int(tile.nbytes),
+                    row_merge_scratch_bytes=scratch_bytes,
+                    row_merge_selection_upper_bytes=selection_bytes,
+                    row_merge_selected_indices_upper_bytes=selected_index_bytes,
+                    take_valid_indices_use_clip=True,
+                    CSR_constructor_copy_allowance_bytes=upper_new_bytes,
+                    scratch_admitted_with_complete_replacement_upper=True)
+        values = np.empty(width, dtype=np.complex128)
+        overlaps = np.empty(width, dtype=np.complex128)
+        positions = np.empty(width, dtype=np.int64)
+        columns = np.arange(first_q, first_q + width, dtype=np.int64)
+        mask = np.empty(mask_size, dtype=np.bool_)
+        first_old, last_old = int(old.indptr[first_p]), int(old.indptr[last_p])
+        local_count = 0
+        for row in range(first_p, last_p):
+            begin, middle_first, middle_last, end = _merged_row(
+                old, tile[row - first_p], row, first_q, values, overlaps, positions, mask)
+            np.not_equal(values, 0, out=mask[:width])
+            local_count += int(np.count_nonzero(mask[:width]))
+            for first, last in ((begin, middle_first), (middle_last, end)):
+                np.not_equal(old.data[first:last], 0, out=mask[:last - first])
+                local_count += int(np.count_nonzero(mask[:last - first]))
+        count = int(old.nnz) - (last_old - first_old) + local_count
+        integer_admission(self.shape, count, index_dtype=self.index_dtype)
+        integer_admission(self.shape, count, index_dtype=np.intp)
+        dtype = np.dtype(np.int32 if max(*self.shape, count) <= np.iinfo(np.int32).max else np.int64)
+        new_bytes = count * (16 + dtype.itemsize) + (self.shape[0] + 1) * dtype.itemsize
+        additional = int(tile.nbytes) + 2 * new_bytes + scratch_bytes
+        self._admit('CSR_merge/' + str(label), additional,
+                    exact_next_CSR_entries=count, next_CSR_payload_bytes=new_bytes,
+                    projected_tile_bytes=int(tile.nbytes),
+                    row_merge_scratch_bytes=scratch_bytes,
+                    row_merge_selection_upper_bytes=selection_bytes,
+                    row_merge_selected_indices_upper_bytes=selected_index_bytes,
+                    take_valid_indices_use_clip=True,
+                    fresh_RSS_allowance_conservatively_recounts_current_tile=True,
+                    CSR_constructor_copy_allowance_bytes=new_bytes)
+        data = np.empty(count, dtype=np.complex128)
+        indices = np.empty(count, dtype=dtype)
+        indptr = np.zeros(self.shape[0] + 1, dtype=dtype)
+        data[:first_old], indices[:first_old] = old.data[:first_old], old.indices[:first_old]
+        end_new = first_old + local_count
+        data[end_new:], indices[end_new:] = old.data[last_old:], old.indices[last_old:]
+        indptr[:first_p + 1] = old.indptr[:first_p + 1]
+        offset = first_old
+        for row in range(first_p, last_p):
+            begin, middle_first, middle_last, end = _merged_row(
+                old, tile[row - first_p], row, first_q, values, overlaps, positions, mask)
+            for first, last, source_data, source_indices in (
+                    (begin, middle_first, old.data, old.indices),
+                    (0, width, values, columns),
+                    (middle_last, end, old.data, old.indices)):
+                np.not_equal(source_data[first:last], 0, out=mask[:last - first])
+                selection = np.flatnonzero(mask[:last - first])
+                size = len(selection)
+                if size:
+                    np.take(source_data[first:last], selection,
+                            out=data[offset:offset + size], mode='clip')
+                    selected_indices = source_indices[first:last][selection]
+                    indices[offset:offset + size] = selected_indices
+                    del selected_indices
+                    offset += size
+                del selection
+            indptr[row + 1] = offset
+        _shift_indptr(old.indptr[last_p + 1:], local_count - (last_old - first_old),
+                      indptr[last_p + 1:])
+        self.result = sparse.csr_matrix((data, indices, indptr), shape=self.shape, copy=False)
+        self.row_merges_vectorized += 1
+
+    def _merge_scalar(self, tile, first_p, first_q, label):
         old = self.result
         # First pass counts the actual exact union/cancellations. No index or
         # numeric arrays are allocated until the complete replacement fits.
@@ -360,7 +507,11 @@ class BoundedCompactQAccumulator:
         self._admit('complete', 0, exact_final_CSR_bytes=_bytes(self.result),
                     tiles_projected=self.tiles_projected,
                     tiles_skipped_structural=self.tiles_skipped_structural,
-                    support_discoveries=self.support_discoveries)
+                    support_discoveries=self.support_discoveries,
+                    row_merges_vectorized=self.row_merges_vectorized,
+                    row_merges_scalar=self.row_merges_scalar,
+                    projected_finite_checks_vectorized=self.projected_finite_checks_vectorized,
+                    projected_finite_checks_scalar=self.projected_finite_checks_scalar)
         return self.result
 
 

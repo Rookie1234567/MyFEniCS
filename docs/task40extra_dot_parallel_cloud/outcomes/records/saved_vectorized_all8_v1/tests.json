@@ -1,0 +1,15 @@
+{
+  "source_head": "d6ae70a53ba9b0f2c8c25a5144f17e78f7579d44",
+  "source_tree": "0eb5a0e93d6e0c7f26c9638b1ca99bcb1b0aeeff",
+  "source_dirty": "",
+  "integrated_test_result": "183 passed in 2.06s",
+  "driver_test_result": "3 passed in 0.21s",
+  "files_sha256": {
+    "src/solvers/bounded_compact_q_projection.py": "5d665abfe976ec6846d8dcf51178827c424818e92bc877f647866be893f2b8a5",
+    "src/test/test_bounded_compact_q_projection.py": "258cbbea3cc3ce200ca728b5a0e49c982aa5bff677b40d048f62b0faa8e09b2a",
+    "src/test/test_vectorized_row_merge.py": "b94270bd68e085cbd62212af6be79d8d20e3611852889ef8f834594faa3ce408"
+  },
+  "integrated_test_log_sha256": "23e297a69c5eb0ac2db557b5ffc78027d3f3acd32bbc64279f2517a7d5fae132",
+  "driver_test_log_sha256": "4a6070b078e8713685bb7d423b62e85d6415f822c5c557fbcd20f48e88981629",
+  "scope": "matched four unprofiled cases and full saved8; FE/JIT/factor/PDE NOT_RUN; actual replay NOT_RUN at freeze"
+}

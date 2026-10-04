@@ -1,0 +1,64 @@
+{
+  "status": "PASS_BOUNDED_INTEGRATED_SOURCE_AND_ORCHESTRATION_REVIEW",
+  "reviewed_at_UTC": "2026-10-04T20:50:10Z",
+  "reviewer": "/root/review_checker_launch_identity",
+  "head": "d6ae70a53ba9b0f2c8c25a5144f17e78f7579d44",
+  "tree": "0eb5a0e93d6e0c7f26c9638b1ca99bcb1b0aeeff",
+  "working_tree_clean": true,
+  "prior_primitive_review_sha256": "831eeb6054b52d61edfbbbcf2f4ae4c9d5004aef6a4f53e606a190e9c8b26faa",
+  "sha256": {
+    "src/solvers/bounded_compact_q_projection.py": "5d665abfe976ec6846d8dcf51178827c424818e92bc877f647866be893f2b8a5",
+    "src/test/test_bounded_compact_q_projection.py": "258cbbea3cc3ce200ca728b5a0e49c982aa5bff677b40d048f62b0faa8e09b2a",
+    "src/test/test_vectorized_row_merge.py": "b94270bd68e085cbd62212af6be79d8d20e3611852889ef8f834594faa3ce408",
+    "launch_saved_vectorized_replay.py": "7279372f200e5c807246be8971affcbc82e1ac86d221fda78a2239a906aa3996",
+    "run_matched_projection_cases.py": "5873accda50ffa3da9579ad3cbc505ab03b96c8dca4f386eb0f46482d4212015",
+    "profile_fresh_projection_cost.py": "29aa4c36502d70f84b423468dad74c372793363ae3ee51d01672428dc4b47e85",
+    "preflight.json": "5eeff7e1bd7aa92cd92e8ea20144e2a7b26cc6082a41f709bb88216e5964ce0b",
+    "targeted_tests.log": "23e297a69c5eb0ac2db557b5ffc78027d3f3acd32bbc64279f2517a7d5fae132",
+    "matched_driver_tests.log": "4a6070b078e8713685bb7d423b62e85d6415f822c5c557fbcd20f48e88981629",
+    "test_matched_cases.py": "83586631ea34492248d92262b11080e50fb6fbc5bef10922f3b0104b4cfc6217"
+  },
+  "matched_baseline": {
+    "source_role": "c81 structural-tile scalar merge baseline",
+    "git_blob": "ce9dc6a67be3188da6e9d5d9dd2fb63f249a373a",
+    "source_sha256": "02a11ce42b8a075d0aa4508c659d5327110be37be6ce74dad9259f58ff11e0e0",
+    "blob_bytes_SHA_verified_by_reviewer": true
+  },
+  "reviewed_findings": [
+    "Integrated primitive bytes equal the independently reviewed frozen candidate. Related old-test changes account for explicit scratch and finite-mask allocations; portable new tests verify the exact c81 Git blob with the existing loader.",
+    "Saved producer remains immutable17c with report9fd8/checker72e and all399 passed checks, full raw Library receipts and both watchdogs bound by exact hashes.",
+    "Source bridge admits only exact old/new primitive and related test hashes, plus four explicit added files relative to17c; complete other source dependencies and ABI dictionaries remain equal.",
+    "Matched driver uses the c81 scalar baseline, identical unprofiled loader/admission/JSON callbacks and128MiB budgets, with volume0/direct-C2 empty/seeded cases. Exact active physical key is guarded.",
+    "Each case releases its accumulator, matrix, seed, map and recipe before the next. Seed copy remains hash-bound, privately owned and pre-admitted. Only fingerprints and scalar metadata persist.",
+    "All four matched case fingerprints must be bitwise equal before the unchanged all-eight optimized replay. Full CSR comparisons retain1e-11 limits and both diagonal scales for cross directions.",
+    "Driver and seed helper hashes are checked before import and after supervision; canonical source/environment/launcher hashes and existing watchdog resource/identity/cleanup gates remain.",
+    "No FE/JIT, new factor, PDE, profiler or full old baseline replay is dispatched; failures do not trigger retries."
+  ],
+  "resource_contract": {
+    "whole_tree_cap_bytes": 3221225472,
+    "wall_seconds_total": 600,
+    "reserve_bytes": 134217728,
+    "owned_projection_bytes": 134217728,
+    "zero_swap": true,
+    "MPI_ranks": 1,
+    "math_threads": 1,
+    "observed_preflight_launch_cap_bytes": 3634036736
+  },
+  "observed_test_logs": {
+    "integrated_passed": 183,
+    "integrated_seconds": 2.06,
+    "matched_driver_passed": 3,
+    "matched_driver_seconds": 0.21,
+    "initial_synthetic_fixture_failure_retained": true,
+    "reviewer_reran_tests": false
+  },
+  "limits": [
+    "Source/orchestration review only; reviewer ran no actual saved numerical replay.",
+    "Seeded single-recipe cases are synthetic cost controls, not physical equation proofs.",
+    "add_seconds includes callbacks during add; case_wall_seconds ends before final fingerprint and completion-log emission.",
+    "Old then new is one warm-cache timing observation, not calibrated universal speedup. Full CSR replacement traffic remains.",
+    "Saved-mode/operator evidence does not establish fresh live FE or target-scale qualification.",
+    "Root retains the launch decision after final exact-source durability and fresh resource admission."
+  ],
+  "blocking_findings": []
+}

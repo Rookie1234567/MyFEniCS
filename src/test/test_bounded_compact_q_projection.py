@@ -168,7 +168,7 @@ def test_budget_shrinks_width_and_counts_all_explicit_array_lifetimes():
             a, b = e['tile_rows'], e['tile_columns']
             assert e['matrix_payload_bytes'] == 16 * (10*a + 10*b + a*4 + 4*b + a*b)
         if 'CSR_merge/' in name:
-            assert e['matrix_payload_bytes'] == e['projected_tile_bytes'] + 2*e['next_CSR_payload_bytes']
+            assert e['matrix_payload_bytes'] == (e['projected_tile_bytes'] + 2*e['next_CSR_payload_bytes'] + e.get('row_merge_scratch_bytes', 0))
     assert events[-1][1]['exact_final_CSR_bytes'] == projection._bytes(result)
 
 
@@ -192,7 +192,10 @@ def test_final_csr_cannot_fit_rejects_before_replacement_buffers(monkeypatch):
     allocations = []
     original_empty = np.empty
     def empty(*args, **kwargs):
-        allocations.append(args[0])
+        # Finite masks are now admitted independently. This assertion tracks
+        # numeric replacement buffers, rather than the most recent bool mask.
+        if kwargs.get('dtype') == np.complex128 and np.ndim(args[0]) == 0:
+            allocations.append(args[0])
         return original_empty(*args, **kwargs)
     monkeypatch.setattr(np, 'empty', empty)
     with pytest.raises(MemoryError, match='before CSR_merge/.*complete final CSR/merge'):
@@ -368,7 +371,7 @@ def test_opt_in_provider_validation_does_not_allocate_vector_masks(monkeypatch):
     condensed, coords, _, _ = fake_provider_fixture('diagonal')
     original_finite = np.isfinite
     def scalar_finite(value, *args, **kwargs):
-        assert np.ndim(value) == 0, 'unbudgeted vector finite mask'
+        assert np.ndim(value) == 0 or kwargs.get('out') is not None, 'unbudgeted vector finite mask'
         return original_finite(value, *args, **kwargs)
     def forbidden(*args, **kwargs):
         raise AssertionError('unbudgeted vector validation')

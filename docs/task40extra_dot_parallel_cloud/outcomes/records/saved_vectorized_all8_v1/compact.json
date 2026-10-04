@@ -1,0 +1,57 @@
+{
+  "status": "ALL8_SAVED_PROJECTION_REPLAY_PASS_AND_MATCHED4_BITWISE_PASS",
+  "source_head": "d6ae70a53ba9b0f2c8c25a5144f17e78f7579d44",
+  "prior_live_source": "17c0a656b44ed5b47351f6c2504579c8b3100f63",
+  "prior_live_remote": "0a238243f353cf1e110170f92185d04d79ffbacc",
+  "resource": {
+    "classification": "COMPLETED",
+    "elapsed_seconds": 231.88614536200475,
+    "sampled_process_tree_rss_peak_bytes": 352264192,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "descendants_cleared": true
+  },
+  "all8_seconds": 224.7873582470056,
+  "event_count": 138020,
+  "log_bytes": 91505813,
+  "peak_owned_bytes": 27957560,
+  "all8_exact_CSR_hashes": true,
+  "all8_errors_exact_zero": true,
+  "matched": [
+    {
+      "label": "volume/cell/0",
+      "synthetic_seed": false,
+      "bitwise_CSR_equal": true,
+      "old_add_seconds": 0.7034938409997267,
+      "new_add_seconds": 0.10637752199545503
+    },
+    {
+      "label": "volume/cell/0",
+      "synthetic_seed": true,
+      "bitwise_CSR_equal": true,
+      "old_add_seconds": 1.1119137790010427,
+      "new_add_seconds": 0.1454764959999011
+    },
+    {
+      "label": "direct/C/port/2",
+      "synthetic_seed": false,
+      "bitwise_CSR_equal": true,
+      "old_add_seconds": 0.2804392519974499,
+      "new_add_seconds": 0.057931357994675636
+    },
+    {
+      "label": "direct/C/port/2",
+      "synthetic_seed": true,
+      "bitwise_CSR_equal": true,
+      "old_add_seconds": 0.597525596000196,
+      "new_add_seconds": 0.07512740799575113
+    }
+  ],
+  "timing_limits": "old then new; not a calibrated universal speedup",
+  "new_live_FE_qualified": false,
+  "new_factor_inverse_PDE_run": false,
+  "target_qualified": false,
+  "archive_sha256": "330e6f694fb329f92168885e74d91158794a36f1bb08afe0ae54288d1d37aaa9",
+  "archive_bytes": 4388484,
+  "library_file_id": "libfile_b1168d95c9dc8191b19c40dd35a56e79",
+  "replay_report_sha256": "f17b19dbda7c699463a5b8c1cfa4a93934ef4af27462d843a89e05c5b1fb8762"
+}

@@ -1,0 +1,13 @@
+{
+  "library_file_id": "libfile_b1168d95c9dc8191b19c40dd35a56e79",
+  "file_id": "file_00000000362c82079b645154b38846fd",
+  "filename": "saved_vectorized_projection_all8_pass.zip",
+  "sha256": "330e6f694fb329f92168885e74d91158794a36f1bb08afe0ae54288d1d37aaa9",
+  "members_verified": 15,
+  "status": "FRESH_LIBRARY_READBACK_ALL_HASHES_PASS",
+  "metadata": {
+    "status": "ALL8_SAVED_PROJECTION_REPLAY_PASS_AND_MATCHED4_BITWISE_PASS",
+    "source_head": "d6ae70a53ba9b0f2c8c25a5144f17e78f7579d44",
+    "scope": "same80/p4/manual532 saved projection qualification only; no new FE/JIT/factor/inverse/PDE or target claim"
+  }
+}
