@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V43 / 下一执行 V46
+
+[Review V43](review_report_v43.md)独立审阅V45交付`09a165a157cdb8291b290a43923c4429c5ca9ee0`：完整矩分层机制与3×128真实训练成立，但五路线完整资格均0/8，两神经模型由validation选回零输出。关闭此次固定A全矩分层资格；原尺寸0.7nm完整前向解、2TB／48h及同正确性NN20%仍未达成。
+
+V46一次连续完成统一冷N=1费用选择修复、冻结引擎身份／资格消费检查、20%必要条件和目标关键路径、最终日志与复用manifest修正。只做轻量代码／证据决策，不新训、不新解、不复制dot；普通bug同轮修复。当前dot仅部分组件，不能充完整合格传统基线。没有实质新引擎或学习机会证据，不继续同A微调或纯FE演示轮次；预算和停止边界以完整报告为准。
+
+[独立核验](outcomes/records/review_v43_independent_checks.json) · [文档检查](outcomes/records/review_v43_documentation_checks.json)。旧task／review／response／raw保持；本轮发现的潜在费用选择错误未进入V45实际性能分支，不推翻负结果。完成推送／closed／清场后原队列一次交接，两个窗口不并行、不merge。以下完整历史正文逐字保留。
+
+---
+
 # Task042 V45最新交付：完整矩分层NN与配对终测
 
 让实体保留全部实虚矩并传递远处残差信息；同信息线性和局部消融辨别贡献。三模型各128真实更新，validation拒绝非零NN head，完整资格与原尺寸/NN20仍未达成。

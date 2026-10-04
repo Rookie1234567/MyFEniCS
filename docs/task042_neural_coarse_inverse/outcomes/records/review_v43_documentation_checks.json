@@ -1,0 +1,290 @@
+{
+  "schema": "task042.review43.docs.v1",
+  "UTC": "2026-10-04T18:28:58.922330+00:00",
+  "reviewed_HEAD": "09a165a157cdb8291b290a43923c4429c5ca9ee0",
+  "expected_report": "review_report_v43.md",
+  "actual_report": "review_report_v43.md",
+  "files": [
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v43.md",
+      "name": "review_report_v43.md",
+      "sha256": "6a15af39530959b28b0f8090c8a08084f915a2541b116e6bde4b32537fa3465d",
+      "bytes": 27412,
+      "tables": [
+        {
+          "line": 15,
+          "columns": 2
+        },
+        {
+          "line": 39,
+          "columns": 4
+        },
+        {
+          "line": 51,
+          "columns": 5
+        },
+        {
+          "line": 65,
+          "columns": 2
+        },
+        {
+          "line": 82,
+          "columns": 4
+        },
+        {
+          "line": 102,
+          "columns": 2
+        },
+        {
+          "line": 138,
+          "columns": 2
+        },
+        {
+          "line": 176,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 27,
+          "path": "../../src/solvers/full_moment_hierarchy.py"
+        },
+        {
+          "line": 27,
+          "path": "../../src/solvers/full_moment_study.py"
+        },
+        {
+          "line": 27,
+          "path": "../../src/solvers/full_moment_scope.py"
+        },
+        {
+          "line": 27,
+          "path": "../../src/solvers/neighborhood_pilot_workflow.py"
+        },
+        {
+          "line": 29,
+          "path": "response_v45.md"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/full_moment_hierarchy_v45.md"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/run_index_v45.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/raw_evidence_index_v45.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/neural_heldout_checker_v45.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/saved_heldout_vector_audit_v45.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/review_v43_independent_checks.json"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/review_v43_metadata_audit.py.gz"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/review_v43_repository_index.gz"
+        },
+        {
+          "line": 29,
+          "path": "outcomes/records/review_v43_documentation_checks.json"
+        },
+        {
+          "line": 74,
+          "path": "outcomes/records/resource_costs_v45.json"
+        },
+        {
+          "line": 74,
+          "path": "outcomes/records/resource_samples_audit_v45.json"
+        },
+        {
+          "line": 74,
+          "path": "outcomes/records/neural_capacity_contract_v45.json"
+        },
+        {
+          "line": 74,
+          "path": "outcomes/records/closed_window_v45.json"
+        },
+        {
+          "line": 80,
+          "path": "../../src/solvers/full_moment_study.py"
+        },
+        {
+          "line": 98,
+          "path": "outcomes/records/selective_merge_manifest_v45.json"
+        }
+      ],
+      "math_fences": [
+        {
+          "line": 155,
+          "value": "```math"
+        },
+        {
+          "line": 157,
+          "value": "```"
+        }
+      ]
+    },
+    {
+      "path": "docs/task042_neural_coarse_inverse/review_report_v42.md",
+      "name": "review_report_v42.md",
+      "sha256": "a6df1273fab5a92d4dccc7a7a97581e72854ea612d8660e3837ff8fc18d5c116",
+      "bytes": 29563,
+      "tables": [
+        {
+          "line": 15,
+          "columns": 2
+        },
+        {
+          "line": 38,
+          "columns": 5
+        },
+        {
+          "line": 62,
+          "columns": 2
+        },
+        {
+          "line": 77,
+          "columns": 2
+        },
+        {
+          "line": 107,
+          "columns": 2
+        },
+        {
+          "line": 156,
+          "columns": 2
+        }
+      ],
+      "local_links": [
+        {
+          "line": 26,
+          "path": "../../src/solvers/neighborhood_late_error.py"
+        },
+        {
+          "line": 26,
+          "path": "../../src/solvers/neighborhood_late_error_study.py"
+        },
+        {
+          "line": 26,
+          "path": "../../src/solvers/neighborhood_training_transaction.py"
+        },
+        {
+          "line": 26,
+          "path": "../../src/solvers/neighborhood_residual_models.py"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/review_v42_independent_checks.json"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/review_v42_metadata_audit.py.gz"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/review_v42_repository_index.gz"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/review_v42_documentation_checks.json"
+        },
+        {
+          "line": 30,
+          "path": "response_v44.md"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/late_error_learning_v44.md"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/run_index_v44.json"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/raw_evidence_index_v44.json"
+        },
+        {
+          "line": 30,
+          "path": "outcomes/records/array_inventory_v44.json"
+        },
+        {
+          "line": 50,
+          "path": "outcomes/records/neural_candidate_comparison_v44.json"
+        },
+        {
+          "line": 50,
+          "path": "outcomes/records/neural_heldout_checker_v44.json"
+        },
+        {
+          "line": 50,
+          "path": "outcomes/records/training_transactions_v44.json"
+        },
+        {
+          "line": 50,
+          "path": "outcomes/records/neural_gradient_v44.json"
+        },
+        {
+          "line": 73,
+          "path": "outcomes/records/resource_costs_v44.json"
+        },
+        {
+          "line": 73,
+          "path": "outcomes/records/closed_window_v44.json"
+        },
+        {
+          "line": 73,
+          "path": "outcomes/records/tests_v44.json"
+        }
+      ],
+      "math_fences": []
+    }
+  ],
+  "historical_review42_unchanged": true,
+  "README": {
+    "path": "docs/task042_neural_coarse_inverse/README.md",
+    "sha256": "d0d6f3fcf48accf66941007fadcd664aebc081ff9365d7773ec233f5c894fe6c",
+    "old_suffix_sha256": "04659bca8424b5f8638357bc698a3efe22da832489670e941e83877db04248b7",
+    "old_suffix_preserved": true
+  },
+  "review_archive_hashes": [
+    {
+      "path": "review_v43_repository_index.gz",
+      "sha256": "a4e617918a313ce527f8c3b71595da5a9d9fe14ec8a0c81076bd071a38cb5a1b",
+      "raw_sha256": "5ba42f03355c15acd1348d19885cbf47a01662c758d274d3504ae6d4d3c5b217",
+      "raw_bytes": 4042975
+    },
+    {
+      "path": "review_v43_metadata_audit.py.gz",
+      "sha256": "f83a4e1ae1a3e23ed1553b975275ca8af43a46f7af06dd3c22edbf1e2d0008a6",
+      "raw_sha256": "a60facd2115cedc6affe610525d428b225d688ed0da3511631bbdc8645b2696b",
+      "raw_bytes": 19226
+    }
+  ],
+  "unittest": {
+    "command": "python -m unittest -q src.test.test_26_documentation_contract",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "----------------------------------------------------------------------\nRan 15 tests in 0.045s\n\nOK\n",
+    "elapsed_seconds": 0.3127882559783757,
+    "scope": "pure stdlib documentation only, no FE"
+  },
+  "diff_check": "PASS",
+  "source_edits": false,
+  "GitHub_visual": "NOT_VERIFIED_CACHE_MISS",
+  "CI": "NOT_RUN",
+  "script": "import gzip,hashlib,json,re,subprocess,sys,time\nfrom pathlib import Path\nfrom datetime import datetime,timezone\nroot=Path.cwd();d=root/'docs/task042_neural_coarse_inverse';r=d/'outcomes/records';base='09a165a157cdb8291b290a43923c4429c5ca9ee0';version=43\nreport=d/f'review_report_v{version}.md';record=r/f'review_v{version}_documentation_checks.json';record.write_text('{}\\n')\ndef sha(b):return hashlib.sha256(b).hexdigest()\ndef git(*a):return subprocess.check_output(['git','-c','gc.auto=0','-c','maintenance.auto=false',*a])\nassert report.name==f'review_report_v{version}.md';assert report.read_text().startswith(f'# Review V{version}：')\nold=git('show',base+':docs/task042_neural_coarse_inverse/README.md');assert (d/'README.md').read_bytes().endswith(old)\nchecked=[]\nfor p in (report,d/'review_report_v42.md'):\n if p!=report:assert p.read_bytes()==git('show',base+':'+str(p.relative_to(root)))\n tables=[];links=[];fences=[];inside=False;width=None\n for i,line in enumerate(p.read_text().splitlines(),1):\n  assert not any(ord(c)<32 and c!='\\t' for c in line),(p,i)\n  if line.startswith('```'):inside=not inside;fences.append(dict(line=i,value=line));continue\n  if inside:continue\n  assert '$$' not in line and '\\\\[' not in line and '\\\\]' not in line,(p,i)\n  if line.startswith('|'):\n   count=len(re.split(r'(?<!\\\\)\\|',line))-2\n   if width is None:tables.append(dict(line=i,columns=count));width=count\n   assert count==width,(p,i,count,width)\n  else:width=None\n  for label,url in re.findall(r'\\[([^\\]]+)\\]\\(([^)]+)\\)',line):\n   if url.startswith(('https://','http://')):continue\n   assert (p.parent/url.split('#')[0]).resolve().exists(),(p,i,url)\n   links.append(dict(line=i,path=url))\n assert not inside\n checked.append(dict(path=str(p.relative_to(root)),name=p.name,sha256=sha(p.read_bytes()),bytes=p.stat().st_size,tables=tables,local_links=links,math_fences=fences))\nassert checked[0]['name']=='review_report_v43.md' and checked[1]['name']=='review_report_v42.md'\nstarted=time.perf_counter();t=subprocess.run([sys.executable,'-m','unittest','-q','src.test.test_26_documentation_contract'],capture_output=True,text=True);elapsed=time.perf_counter()-started;assert t.returncode==0,t.stdout+t.stderr\ngit('diff','--check');assert not git('diff','--name-only','--','src','benchmarks','scripts','input')\narchives=[]\nfor source,name in [(root/'tmp/task042/review_v43/repository_index.json','review_v43_repository_index.gz'),(Path('/tmp/task042_review43_audit.py'),'review_v43_metadata_audit.py.gz')]:\n b=(r/name).read_bytes();raw=gzip.decompress(b);assert raw==source.read_bytes();archives.append(dict(path=name,sha256=sha(b),raw_sha256=sha(raw),raw_bytes=len(raw)))\nout=dict(schema='task042.review43.docs.v1',UTC=datetime.now(timezone.utc).isoformat(),reviewed_HEAD=base,expected_report='review_report_v43.md',actual_report=checked[0]['name'],files=checked,historical_review42_unchanged=True,README=dict(path=str((d/'README.md').relative_to(root)),sha256=sha((d/'README.md').read_bytes()),old_suffix_sha256=sha(old),old_suffix_preserved=True),review_archive_hashes=archives,unittest=dict(command='python -m unittest -q src.test.test_26_documentation_contract',returncode=t.returncode,stdout=t.stdout,stderr=t.stderr,elapsed_seconds=elapsed,scope='pure stdlib documentation only, no FE'),diff_check='PASS',source_edits=False,GitHub_visual='NOT_VERIFIED_CACHE_MISS',CI='NOT_RUN',script=Path(__file__).read_text())\nrecord.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\\n');print(json.dumps(dict(actual_reports=[c['name'] for c in checked],table_counts=[len(c['tables']) for c in checked],links=[len(c['local_links']) for c in checked],tests=t.stderr.strip(),diff_check='PASS'),ensure_ascii=False,indent=2))\n"
+}
