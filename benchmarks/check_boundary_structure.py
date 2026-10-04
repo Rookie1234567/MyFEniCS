@@ -60,6 +60,54 @@ def require_action_inventory(data, inputs, n, nm):
             raise ValueError("full modal physics inventory")
 
 
+def final_oracle_links(data, oracle, full_modes, selected_modes, oracle_indices):
+    """Link independent saved amplitudes to the final full-inventory output."""
+    if len(full_modes) != len({r["mode_index"] for r in full_modes}) or [
+        r["mode_index"] for r in full_modes
+    ] != list(range(len(full_modes))):
+        raise ValueError("ordered full mode identity")
+    wanted = [r["mode_index"] for r in selected_modes]
+    if oracle_indices != wanted or len(set(wanted)) != len(wanted):
+        raise ValueError("oracle selected mode mapping inventory")
+    for r in selected_modes:
+        i = r["mode_index"]
+        if not 0 <= i < len(full_modes) or any(
+            r[k] != full_modes[i][k]
+            for k in (
+                "side",
+                "m",
+                "n",
+                "polarization",
+                "reference_plane_nm",
+                "projection_denominator",
+                "k_vector",
+                "e_vector",
+                "traction_vector",
+            )
+        ):
+            raise ValueError("oracle/full mode key identity")
+    checks = []
+    for label in ("a", "b"):
+        explicit = oracle[label + "_amplitudes"]
+        if explicit.shape != (len(wanted),):
+            raise ValueError("oracle amplitude inventory")
+        for q in (30, 60):
+            actual = data[f"q{q}_{label}_amplitudes"]
+            if actual.shape != (len(full_modes),):
+                raise ValueError("final full inventory amplitude shape")
+            for j, index in enumerate(wanted):
+                checks.append(
+                    dict(
+                        kind="final_full_oracle_amplitude",
+                        input=label,
+                        q=q,
+                        original_index=index,
+                        **metric(actual[index : index + 1], explicit[j : j + 1]),
+                    )
+                )
+    return checks
+
+
 def check_saved():
     b, _bp = read_stage("BRIDGE")
     plan = plan_record()
@@ -218,6 +266,9 @@ def check_saved():
     ):
         raise ValueError("fixed complete selected oracle coverage")
     o = read_arrays(oracle["outputs"])
+    fullchecks.extend(
+        final_oracle_links(data, o, modes, wp["selected_modes"], oracle["modes"])
+    )
     for label in ("a", "b"):
         for kind in ("amplitudes", "forward", "adjoint", "modal"):
             fullchecks.append(

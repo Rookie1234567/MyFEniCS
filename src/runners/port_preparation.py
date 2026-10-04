@@ -29,7 +29,7 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace in ("v37", "v38"):
+        if self.namespace in ("v37", "v38", "v39"):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
                 ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
@@ -39,15 +39,34 @@ class PreparationHealth:
             )
             size = inventory_paths(own, ROOT)["bytes"]
             row["new_preparation_bytes"] = size
-            if size > 512 * 2**20:
+            if size > (2048 if self.namespace == "v39" else 512) * 2**20:
                 row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
+            if self.namespace == "v39":
+                jit = ROOT / "tmp/task042/v39/formal/xdg/fenics"
+                jit_bytes = inventory_paths([jit], ROOT)["bytes"]
+                row["new_native_jit_bytes"] = jit_bytes
+                if jit_bytes > 1536 * 2**20:
+                    row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
         return row
 
 
-FE_ROLES = ("COMPONENT", "PATCH", "CAPACITY", "BRIDGE", "LAYOUT", "ORACLE")
+FE_ROLES = (
+    "COMPONENT",
+    "PATCH",
+    "CAPACITY",
+    "BRIDGE",
+    "LAYOUT",
+    "ORACLE",
+    "ADAPTER",
+    "COUPLED",
+)
 
 
 def context(namespace):
+    if namespace == "v39":
+        from src.solvers import native_integration_scope as scope
+
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
     if namespace == "v38":
         from src.solvers import boundary_structure_scope as scope
 
@@ -69,7 +88,7 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
     if (
-        (new + reserve > 512 * 2**20 and not cleanup)
+        (new + reserve > (2048 if namespace == "v39" else 512) * 2**20 and not cleanup)
         or total + reserve > 20 * 2**30
         or free < 50 * 2**30 + reserve
     ):
@@ -274,7 +293,9 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v38":
+        if namespace == "v39":
+            from src.solvers.native_integration_study import execute
+        elif namespace == "v38":
             from src.solvers.boundary_structure_study import execute
         elif namespace == "v37":
             from src.solvers.target_boundary_witness import execute

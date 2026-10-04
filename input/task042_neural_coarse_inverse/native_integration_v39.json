@@ -1,0 +1,52 @@
+{
+  "schema": "native-boundary-volume-integration.v39.v1",
+  "review_commit": "9430495d8a2cc6870ea1b79cfe4c60889ef5e3db",
+  "target_solve_authorized": false,
+  "q_boundary": 30,
+  "q_volume": 15,
+  "seeds": [
+    423901,
+    423903
+  ],
+  "selected_mode_count": 12,
+  "max_native_hex": 64,
+  "max_oracle_hex": 8,
+  "max_local_classes": 16,
+  "local_cache_bytes": 268435456,
+  "new_storage_bytes": 2147483648,
+  "jit_storage_bytes": 1610612736,
+  "evidence_reserve_bytes": 268435456,
+  "parents": {
+    "BRIDGE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/BRIDGE.json",
+      "sha256": "6a90035657e946430d405ed9e5ea479c01cdb2aa5343c99d51a2c18019e6dd01"
+    },
+    "LAYOUT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/LAYOUT.json",
+      "sha256": "3d699974d3996b148bb0cb7f38f64c90efb7b0b4f4c33f0b898115dfda26a21c"
+    },
+    "COMPONENT": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/COMPONENT.json",
+      "sha256": "5f9e7a2b631cd699f983f7a7fa8312952d80664bc521b139cd279587672749d0"
+    },
+    "ORACLE": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/ORACLE.json",
+      "sha256": "4a612b065387b8231d757750d4422fba59366ea612259bc613c30d8b5f33b9f1"
+    },
+    "CHECK": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/CHECK.json",
+      "sha256": "14290f62f640dfb31d1d7421895e28a009e6b0fff2f0e704404b0baffb217b8f"
+    },
+    "DEPLOY": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v38/DEPLOY.json",
+      "sha256": "560b6e7f8ed0765103e5c18a89a28e5b9763b24d901d93ff79e7b49afd734152"
+    }
+  },
+  "stages": [
+    "EVIDENCE",
+    "ADAPTER",
+    "COUPLED",
+    "CHECK",
+    "DEPLOY"
+  ]
+}

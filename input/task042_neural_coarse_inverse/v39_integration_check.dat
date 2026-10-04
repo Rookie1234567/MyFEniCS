@@ -1,0 +1,4 @@
+schema_version = 1
+[task042_v39]
+stage = "CHECK"
+run_id = "task042_v39_integration_check"

@@ -5,14 +5,32 @@ It retains native basis functions through a bounded local polynomial change
 of coordinates. No modal truncation, threshold clipping or FFT is used.
 """
 
+from collections.abc import Mapping
+from copy import deepcopy
 from time import perf_counter
+from types import MappingProxyType
 
 import numpy as np
 from numpy.polynomial.legendre import legvander
 
 
 def zvalue(x):
-    return complex(x["real"], x["imag"]) if isinstance(x, dict) else complex(x)
+    return complex(x["real"], x["imag"]) if isinstance(x, Mapping) else complex(x)
+
+
+def _freeze(value):
+    if isinstance(value, Mapping):
+        return MappingProxyType({k: _freeze(v) for k, v in value.items()})
+    if isinstance(value, (tuple, list)):
+        return tuple(_freeze(v) for v in value)
+    return deepcopy(value)
+
+
+def _vector(value, size, name):
+    a = np.asarray(value)
+    if a.shape != (size,) or a.dtype != np.complex128 or not np.isfinite(a).all():
+        raise ValueError(name + " shape/complex128/finite")
+    return a
 
 
 class FacetPolynomial:
@@ -51,6 +69,8 @@ class FacetPolynomial:
         self.nbytes = sum(v.nbytes for v in self.coefficients.values())
         for a in (*self.coefficients.values(), *self.active.values()):
             a.flags.writeable = False
+        self.coefficients = MappingProxyType(self.coefficients)
+        self.active = MappingProxyType(self.active)
 
     def integral(self, side, k, J, origin, q):
         import basix
@@ -79,10 +99,25 @@ class BoundaryLayout:
     def __init__(self, x, y, polynomial, phases):
         import basix
 
-        self.x, self.y = np.asarray(x), np.asarray(y)
+        self.x, self.y = np.array(x, dtype=np.float64), np.array(y, dtype=np.float64)
+        if any(
+            a.ndim != 1
+            or len(a) < 2
+            or not np.isfinite(a).all()
+            or np.any(np.diff(a) <= 0)
+            for a in (self.x, self.y)
+        ):
+            raise ValueError("boundary geometry strictly increasing finite axes")
+        self.x.flags.writeable = self.y.flags.writeable = False
         self.nx, self.ny, self.p = len(x) - 1, len(y) - 1, polynomial.p
         self.polynomial = polynomial
         self.phases = tuple(map(complex, phases))
+        if (
+            len(self.phases) != 2
+            or not np.isfinite(self.phases).all()
+            or any(v == 0 for v in self.phases)
+        ):
+            raise ValueError("boundary finite nonzero x/y Floquet phases")
         self.side_rows = 2 * self.p**2 * self.nx * self.ny
         self.rows = 2 * self.side_rows
         self.maps, self.weights = {}, {}
@@ -129,6 +164,8 @@ class BoundaryLayout:
         )
         for a in (*self.maps.values(), *self.weights.values()):
             a.flags.writeable = False
+        self.maps = MappingProxyType(self.maps)
+        self.weights = MappingProxyType(self.weights)
         inventory = np.concatenate([m.ravel() for m in self.maps.values()])
         if (
             len(np.unique(inventory)) != self.rows
@@ -138,7 +175,10 @@ class BoundaryLayout:
             raise ValueError("complete periodic entity row inventory")
 
     def field_coefficients(self, t, side):
-        local = np.asarray(t)[self.maps[side]] * self.weights[side]
+        local = (
+            _vector(t, self.rows, "boundary primal")[self.maps[side]]
+            * self.weights[side]
+        )
         coeff = self.polynomial.coefficients[side][
             :, :, self.polynomial.active[side], :
         ]
@@ -164,13 +204,77 @@ class BoundaryLayout:
 
 
 class DirectionalBoundaryAction:
-    def __init__(self, layout, modes, q):
+    def __init__(
+        self, layout, modes, q, *, cache_limit_bytes=64 * 2**20, face_inventory=None
+    ):
         import basix
 
-        self.layout, self.modes, self.q = layout, tuple(modes), q
+        self.layout, self.modes, self.q = layout, tuple(_freeze(r) for r in modes), q
+        modes = self.modes
+        if not modes or not isinstance(q, int) or q < 1:
+            raise ValueError("nonempty frozen modes and positive quadrature")
+        for r in modes:
+            if (
+                r["side"] not in ("bottom", "top")
+                or any(
+                    len(r[key]) != 3
+                    or not np.isfinite([zvalue(v) for v in r[key]]).all()
+                    for key in ("k_vector", "e_vector", "traction_vector")
+                )
+                or not np.isfinite(r["reference_plane_nm"])
+                or not np.isfinite(r["projection_denominator"])
+                or r["projection_denominator"] <= 0
+            ):
+                raise ValueError("frozen modal geometry/vector/positive H identity")
         self.by_side = {
-            s: [i for i, r in enumerate(modes) if r["side"] == s]
+            s: tuple(i for i, r in enumerate(modes) if r["side"] == s)
             for s in ("bottom", "top")
+        }
+        self.by_side = MappingProxyType(self.by_side)
+        # Restrict complete integrated facets for finite native witnesses;
+        # the full-target default keeps all physical surface facets.
+        self.face_masks = None
+        if face_inventory is not None:
+            faces = tuple(tuple(f) for f in face_inventory)
+            if (
+                not faces
+                or len(set(faces)) != len(faces)
+                or any(
+                    side not in ("bottom", "top")
+                    or not 0 <= i < layout.nx
+                    or not 0 <= j < layout.ny
+                    for side, i, j in faces
+                )
+            ):
+                raise ValueError("complete finite facet inventory")
+            masks = {
+                side: np.zeros((layout.nx, layout.ny), bool)
+                for side in ("bottom", "top")
+            }
+            for side, i, j in faces:
+                masks[side][i, j] = True
+            for mask in masks.values():
+                mask.flags.writeable = False
+            self.face_masks = MappingProxyType(masks)
+        self.face_inventory = None if face_inventory is None else faces
+        planned = layout.polynomial.nbytes + len(modes) * (2 * 2 * 16 + 8 + 2 * 8 + 16)
+        planned += (
+            0
+            if self.face_masks is None
+            else sum(m.nbytes for m in self.face_masks.values())
+        )
+        for side, ids in self.by_side.items():
+            for axis, coords in enumerate((layout.x, layout.y)):
+                nk = len({zvalue(modes[i]["k_vector"][axis]) for i in ids})
+                planned += nk * (len(coords) - 1) * (layout.p + 1) * 16
+        if planned > cache_limit_bytes:
+            raise MemoryError("numeric moment cache preallocation capacity")
+        self.capacity = {
+            "numeric_cache_planned_bytes": planned,
+            "cache_limit_bytes": cache_limit_bytes,
+            "input_bytes": layout.rows * 16,
+            "boundary_output_bytes": layout.rows * 16,
+            "shared_layout_bytes": layout.nbytes,
         }
         rule, w = basix.make_quadrature(basix.CellType.interval, q)
         v = legvander(2 * rule[:, 0] - 1, layout.p)
@@ -216,7 +320,7 @@ class DirectionalBoundaryAction:
         self.cache_bytes = layout.polynomial.nbytes + sum(
             v.nbytes for vs in self.tables.values() for v in vs
         )
-        if self.cache_bytes > 64 * 2**20:
+        if self.cache_bytes > cache_limit_bytes:
             raise MemoryError("all numeric moment caches 64MiB")
         self.e = np.array([[zvalue(v) for v in r["e_vector"][:2]] for r in modes])
         self.traction = np.array(
@@ -224,13 +328,19 @@ class DirectionalBoundaryAction:
         )
         self.H = np.array([r["projection_denominator"] for r in modes])
         self.cache_bytes += self.e.nbytes + self.traction.nbytes + self.H.nbytes
-        if self.cache_bytes > 64 * 2**20:
+        self.cache_bytes += (
+            0
+            if self.face_masks is None
+            else sum(m.nbytes for m in self.face_masks.values())
+        )
+        if self.cache_bytes > cache_limit_bytes:
             raise MemoryError("all moments/polarizations/H cache 64MiB")
         for values in self.tables.values():
             for a in values:
                 a.flags.writeable = False
         for a in (self.e, self.traction, self.H):
             a.flags.writeable = False
+        self.tables = MappingProxyType(self.tables)
         self.stats = {
             "project_calls": 0,
             "scatter_calls": 0,
@@ -239,6 +349,7 @@ class DirectionalBoundaryAction:
         }
 
     def project_components(self, t):
+        t = _vector(t, self.layout.rows, "boundary primal")
         began = perf_counter()
         out = np.zeros((len(self.modes), 2), np.complex128)
         for side, ids in self.by_side.items():
@@ -246,6 +357,8 @@ class DirectionalBoundaryAction:
                 continue
             fx, fy, ix, iy, phase = self.tables[side]
             coef = self.layout.field_coefficients(t, side)
+            if self.face_masks is not None:
+                coef *= self.face_masks[side][:, :, None, None, None]
             for c in (0, 1):
                 grid = (
                     coef[:, :, :, :, c]
@@ -264,6 +377,13 @@ class DirectionalBoundaryAction:
         return out
 
     def scatter_components(self, a):
+        a = np.asarray(a)
+        if (
+            a.shape != (len(self.modes), 2)
+            or a.dtype != np.complex128
+            or not np.isfinite(a).all()
+        ):
+            raise ValueError("boundary dual components shape/complex128/finite")
         began = perf_counter()
         out = np.zeros(self.layout.rows, np.complex128)
         for side, ids in self.by_side.items():
@@ -293,6 +413,8 @@ class DirectionalBoundaryAction:
                 coeff[:, :, :, :, c] = grid.reshape(
                     self.layout.nx, self.layout.p + 1, self.layout.ny, self.layout.p + 1
                 ).transpose(0, 2, 1, 3)
+            if self.face_masks is not None:
+                coeff *= self.face_masks[side][:, :, None, None, None]
             out += self.layout.scatter_coefficients(coeff, side)
         self.stats["scatter_calls"] += 1
         self.stats["scatter_seconds"] += perf_counter() - began
@@ -302,7 +424,9 @@ class DirectionalBoundaryAction:
         return np.sum(self.e.conj() * self.project_components(t), axis=1) / self.H
 
     def modal_rhs(self, alpha):
-        return self.scatter_components(-self.traction * np.asarray(alpha)[:, None])
+        return self.scatter_components(
+            -self.traction * _vector(alpha, len(self.modes), "port amplitudes")[:, None]
+        )
 
     def apply(self, t, *, adjoint=False):
         components = self.project_components(t)

@@ -19,6 +19,8 @@ STAGES = ("INVENTORY", "COMPONENT", "CHECK", "DEPLOY")
 def load_preparation(path):
     path = Path(path).resolve()
     raw = path.read_bytes()
+    if b"[task042_v39]" in raw:
+        return load_native_integration(path)
     if b"[task042_v38]" in raw:
         return load_boundary_structure(path)
     if b"[task042_v37]" in raw:
@@ -230,6 +232,58 @@ def load_boundary_structure(path):
         derived={
             "stage": stage,
             "preparation_scope": "v38",
+            "environment_mode": "fe" if fe else "pure",
+            "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
+            "target_solve": False,
+        },
+        source_path=path,
+        raw_input_bytes=raw,
+        input_sha256=hashlib.sha256(raw).hexdigest(),
+    )
+
+
+def load_native_integration(path):
+    from dataclasses import replace
+
+    from src.solvers.native_integration_scope import PLAN, plan_record
+
+    path = Path(path).resolve()
+    raw = path.read_bytes()
+    value = tomllib.loads(raw.decode())
+    item = value.get("task042_v39", {})
+    if (
+        set(value) != {"schema_version", "task042_v39"}
+        or value["schema_version"] != 1
+        or set(item) != {"stage", "run_id"}
+        or item.get("stage")
+        not in ("EVIDENCE", "ADAPTER", "COUPLED", "CHECK", "DEPLOY")
+        or not re.fullmatch("task042_v39_[a-z0-9_]+", item.get("run_id", ""))
+    ):
+        raise InputError("V39 finite native integration explicit stage schema")
+    plan_record()
+    old = load_boundary_structure(
+        ROOT / "input/task042_neural_coarse_inverse/v38_bridge.dat"
+    )
+    stage = item["stage"]
+    fe = stage in ("ADAPTER", "COUPLED")
+    return replace(
+        old,
+        identity={
+            "model_id": "task042_v39_native_integration",
+            "run_id": item["run_id"],
+            "batch": "V39_NATIVE_BOUNDARY_VOLUME_INTEGRATION",
+        },
+        method={"kind": "native_boundary_volume_callback_opt_in"},
+        execution={
+            "mpi_size": 1,
+            "timeout_seconds": 1200 if fe else 600,
+            "warning_memory_gib": 6 if fe else 1,
+            "terminate_memory_gib": 8 if fe else 2,
+            "require_zero_swap": True,
+        },
+        derived={
+            "stage": stage,
+            "preparation_scope": "v39",
             "environment_mode": "fe" if fe else "pure",
             "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             "target_solve": False,

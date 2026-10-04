@@ -14,7 +14,12 @@ from src.solvers.port_preparation_window import ROOT, implementation_hashes, win
 
 def main():
     namespace = os.environ.get("TASK042_PREPARATION_SCOPE", "v36")
-    if namespace == "v38":
+    if namespace == "v39":
+        from src.solvers.native_integration_scope import (
+            implementation_hashes as selected_hashes,
+        )
+        from src.solvers.native_integration_scope import window as selected_window
+    elif namespace == "v38":
         from src.solvers.boundary_structure_scope import (
             implementation_hashes as selected_hashes,
         )
@@ -102,6 +107,19 @@ def main():
             "--junitxml=" + str(folder / "pytest.xml"),
         ]
     ]
+    if namespace == "v39":
+        commands[0] = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp=" + str(folder / "fixtures"),
+            "src/test/test_native_integration.py",
+            "src/test/test_boundary_structure.py::test_tensor_matches_independent_complete_facet_sum",
+            "--junitxml=" + str(folder / "pytest.xml"),
+        ]
     if "--targeted-new" in sys.argv:
         if namespace != "v38":
             raise ValueError("targeted qualification scope")
@@ -127,7 +145,7 @@ def main():
             sys.executable,
             "-m",
             "src.test.tiled_port_mpi_fixture"
-            if namespace in ("v37", "v38")
+            if namespace in ("v37", "v38", "v39")
             else "src.test.port_provider_mpi_fixture",
             str(folder / f"mpi{n}.json"),
         ]

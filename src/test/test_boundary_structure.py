@@ -92,7 +92,10 @@ def test_tensor_matches_independent_complete_facet_sum(side_only):
         action.apply(y, adjoint=True), A.conj().T @ y, rtol=1e-10, atol=1e-10
     )
     np.testing.assert_allclose(
-        action.modal_rhs(np.ones(len(H))), C @ np.ones(len(H)), rtol=1e-10, atol=1e-10
+        action.modal_rhs(np.ones(len(H), dtype=np.complex128)),
+        C @ np.ones(len(H)),
+        rtol=1e-10,
+        atol=1e-10,
     )
     assert 0 <= action.stats["project_seconds"] < 600
     assert action.cache_bytes < 64 * 2**20 and l.rows == 2 * 2 * 6**2 * 2 * 2
