@@ -1,3 +1,13 @@
+# 当前审阅入口：Review V36 / 下一执行 V39
+
+[Review V36](review_report_v36.md)已独立审阅V38交付`6166ad27e36c08408f81d4bba07d2f6b035e9f2b`。接受q30／真实MPI1的原尺寸完整32060端口边界组件；原尺寸完整0.7nm三维前向解、2TB／48h和NN20%仍未资格化。
+
+V39一次连续接通native边界抽取／对偶散布、有限体积组合和非零内部载荷恢复，并交付可直接消费的接口及完整资源公式。允许报告规定的有界native体积作用／局部内部LU，不运行全局求解或dot实验；普通bug同轮修复，真实数值／身份／资源门按报告处理，不等待dot包才开始自身工作。
+
+[独立核验](outcomes/records/review_v36_independent_checks.json) · [文档检查](outcomes/records/review_v36_documentation_checks.json)。提交推送／清场后通过同一队列交接，两个窗口不并行仓库工作；不merge。以下完整历史正文逐字保留。
+
+---
+
 # Task042 V38：全原尺寸边界作用通过，完整体积解仍未资格化
 
 将相同有限元边界积分按x/y方向收缩并共享几何，减少逐通道重算，代价是局部坐标桥及7.28MiB缓存。它只加速端口组件，不改变体积三维Maxwell，也不是神经训练增量。
