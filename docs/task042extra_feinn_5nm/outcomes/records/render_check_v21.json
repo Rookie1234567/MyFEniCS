@@ -1,5 +1,5 @@
 {
-  "status": "PENDING_NEW_PAGE_BROWSER_VISUAL",
+  "status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL",
   "review_v20": {
     "status": "REUSED_UNCHANGED_REVIEWER_VISUAL_PASS",
     "review": {
@@ -15,6 +15,107 @@
     "accepted_visual_scope": "actual GitHub first screen and all seven tables, eight images; seal changed only receipt",
     "visual_reinspection_this_batch": false
   },
-  "new_page_visual_PASS_claim": false,
-  "old_formula_and_other_failure_records_preserved": true
+  "new_page_visual_PASS_claim": true,
+  "old_formula_and_other_failure_records_preserved": true,
+  "publication_HEAD": "e7b500cc14ed57d9de94560853a148f78f34dfc7",
+  "actual_render_record": {
+    "path": "tmp/task42extra/render/v21_published/render_records.json",
+    "sha256": "c7c1e9d7460002ffb4a5cdceae5fcc8f2216b7526c3a6472894a8907c5a725f5",
+    "bytes": 14339
+  },
+  "visual_inspection": {
+    "path": "tmp/task42extra/v21/visual_inspection.json",
+    "sha256": "9d8d94ff392ec980725fe60b38e7202f432a87b52a3a3b45b9b6217585745b53",
+    "bytes": 3907
+  },
+  "visual_scope": "Both actual GitHub first screens, all eleven tables including horizontal right columns, and the dedicated mathematical display. Not every prose line inspected.",
+  "pages": 2,
+  "tables": 11,
+  "formula": 1,
+  "captures": [
+    {
+      "path": "tmp/task42extra/render/v21_published/00_top.png",
+      "sha256": "9dadaf22d3b17e55a02b7d68a6e75153ca7ccdf8700c6ca11d6c326aec0063b4",
+      "bytes": 450476
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/00_table_00.png",
+      "sha256": "8be4161ffcdb337b932e9f00aa0405562eeb107bae51e57b067a049caaeac633",
+      "bytes": 408543
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/00_table_01.png",
+      "sha256": "b36e1cafc6f86b0c7db34dd542b910a838ed40ebd7fe4ce529140727d18390b0",
+      "bytes": 434322
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/00_table_01_right.png",
+      "sha256": "f6662238082824bd98ceb0ec0c42db393b9d96b2d50bd69b0ae283786339dc3d",
+      "bytes": 434448
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/00_table_02.png",
+      "sha256": "1f808f2003507c7c2b2d1e19a393bea4399117238fd662b344cab623b8196895",
+      "bytes": 545895
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/00_table_03.png",
+      "sha256": "39fa9a0905556cb96d6652fb43535eabab4490a8e0dadd4a315a1219dda33adb",
+      "bytes": 578722
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_top.png",
+      "sha256": "abf2dd70620e2749779dd37a96fb5f0e4c6963f6c4676f03ad0c3ffabac02de9",
+      "bytes": 477088
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_00.png",
+      "sha256": "a598322220292aea9175b6d2a98ae2ce9c44f00a29d4dd0ff2c0700b48be7c08",
+      "bytes": 396998
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_01.png",
+      "sha256": "e58c74b021e4dc2a03a00d329bd7248e08eb161520798263cc6d6688e792b4c8",
+      "bytes": 404660
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_02.png",
+      "sha256": "7048085ddb0dfc541b4acf31a03869cbf024f8189f79ab8b1fc781b73c9b2756",
+      "bytes": 399959
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_03.png",
+      "sha256": "527510b21a31318f910c56d2298b35530cabe2a6d56a149b8408e9be267d7ec4",
+      "bytes": 431533
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_04.png",
+      "sha256": "9e73612a3be5008f2c4239bd9a4b83713e0bd5f93ec2bb257369a90ae5737ccb",
+      "bytes": 481182
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_04_right.png",
+      "sha256": "a424b4b1531a9ecaa4a31767afacaf3395164086dfb10acb500c565e769af962",
+      "bytes": 481320
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_05.png",
+      "sha256": "68a1a441f28f66628e30048e9d06e1b220b2da98e3e74b343fe8aba8cfef125e",
+      "bytes": 471406
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_table_06.png",
+      "sha256": "88bb9b75bf18cce398119958da30bedc70eb0d82cfc1e5031309ee5f386fa59d",
+      "bytes": 469268
+    },
+    {
+      "path": "tmp/task42extra/render/v21_published/01_math-renderer_00.png",
+      "sha256": "a22700016ee2c48650d8a4d573fa8276e7005336674fcb106156d4a739c92f09",
+      "bytes": 419469
+    }
+  ],
+  "numeric_gate_PASS_claim": false,
+  "screenshot_artifacts_ignored": true,
+  "final_seal_changes_only_JSON": true,
+  "published_pages_unchanged": true
 }

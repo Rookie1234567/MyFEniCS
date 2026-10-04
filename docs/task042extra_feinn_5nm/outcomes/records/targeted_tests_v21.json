@@ -97,6 +97,29 @@
       "initial_sandbox_view_limited": false
     },
     {
+      "path": "tmp/task42extra/checks/v21_closeout_records_20261004T071440109486Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.888311484013684,
+      "sampled_tree_rss_peak_bytes": 39813120,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_closeout_records_20261004T071440109486Z/summary.json",
+        "sha256": "44032921209d181828762e821d4a1293f43984c98d69762657cb7a3e3c091bf3",
+        "bytes": 4013
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_closeout_records_20261004T071440109486Z/supervision/worker.log",
+        "sha256": "90224923b2b567cc44192fc7e8aedb106f559a5ff1e8211894011e96e4b9a34c",
+        "bytes": 137
+      },
+      "last_log_lines": [
+        "{\"observed_seconds\": 8707.495236899238, \"conservative_upper_seconds\": 10507.495236899238, \"light_closed_runs\": 28, \"frozen_records\": 15}"
+      ],
+      "initial_sandbox_view_limited": false
+    },
+    {
       "path": "tmp/task42extra/checks/v21_compact_collection_20261004T065946213885Z",
       "classification": "WORKER_FAILED",
       "exit_code": 1,
@@ -448,6 +471,29 @@
       "initial_sandbox_view_limited": false
     },
     {
+      "path": "tmp/task42extra/checks/v21_published_render_20261004T071551123780Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 24.69359523197636,
+      "sampled_tree_rss_peak_bytes": 1763639296,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_published_render_20261004T071551123780Z/summary.json",
+        "sha256": "43bab0a7bfdea19e784510831844a48fdd2ed7bc5765c04155311a96d5b3309a",
+        "bytes": 2331
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_published_render_20261004T071551123780Z/supervision/worker.log",
+        "sha256": "b9c695b7be972495b7a17b23164b1cfd9eec0d08b574981ec2c1cbad0c711269",
+        "bytes": 95
+      },
+      "last_log_lines": [
+        "{\"output\": \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published\", \"pages\": 2}"
+      ],
+      "initial_sandbox_view_limited": false
+    },
+    {
       "path": "tmp/task42extra/checks/v21_pure_final_after_clear_20261004T051121250345Z",
       "classification": "COMPLETED",
       "exit_code": 0,
@@ -634,6 +680,29 @@
       "last_log_lines": [
         "....................                                                     [100%]",
         "20 passed in 0.19s"
+      ],
+      "initial_sandbox_view_limited": false
+    },
+    {
+      "path": "tmp/task42extra/checks/v21_visual_inventory_20261004T071701960182Z",
+      "classification": "COMPLETED",
+      "exit_code": 0,
+      "seconds": 1.881969606038183,
+      "sampled_tree_rss_peak_bytes": 40005632,
+      "own_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "summary": {
+        "path": "tmp/task42extra/checks/v21_visual_inventory_20261004T071701960182Z/summary.json",
+        "sha256": "a0d3fd182a2d5b86a10f02f5e448283f1243e8bc68250db456100f0929a90297",
+        "bytes": 2461
+      },
+      "log": {
+        "path": "tmp/task42extra/checks/v21_visual_inventory_20261004T071701960182Z/supervision/worker.log",
+        "sha256": "d92ebcb6a062bba259115a8cf0e5a7080f1cdac2d7b7f6097208be572d176868",
+        "bytes": 3568
+      },
+      "last_log_lines": [
+        "[{\"page\": \"https://github.com/Rookie1234567/MyFEniCS/blob/e7b500cc14ed57d9de94560853a148f78f34dfc7/docs/task042extra_feinn_5nm/response_v21.md\", \"tables\": 4, \"math\": 0, \"images\": [\"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/00_top.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/00_table_00.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/00_table_01.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/00_table_01_right.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/00_table_02.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/00_table_03.png\"], \"math_after\": []}, {\"page\": \"https://github.com/Rookie1234567/MyFEniCS/blob/e7b500cc14ed57d9de94560853a148f78f34dfc7/docs/task042extra_feinn_5nm/outcomes/phase_port_recovery_v21.md\", \"tables\": 7, \"math\": 1, \"images\": [\"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_top.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_00.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_01.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_02.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_03.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_04.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_04_right.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_05.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_table_06.png\", \"/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v21_published/01_math-renderer_00.png\"], \"math_after\": [{\"html\": \"<math-renderer class=\\\"js-display-math\\\" style=\\\"display: block; scroll-margin-top: 160px;\\\" data-run-id=\\\"c8a85a2a1ce94d3d7be37f4eaa6c5a86\\\" data-catalyst=\\\"\\\"><math xmlns=\\\"http://www.w3.org/1998/Math/MathML\\\" display=\\\"block\\\">\\n  <mi>E</mi>\\n  <mo>=</mo>\\n  <mi>g</mi>\\n  <mi>u</mi>\\n  <mo>,</mo>\\n  <mstyle>\\n    <mspace width=\\\"2em\\\"></mspace>\\n  </mstyle>\\n  <mi>g</mi>\\n  <mo>=</mo>\\n  <msup>\\n    <mi>e</mi>\\n    <mrow data-mjx-texclass=\\\"ORD\\\">\\n      <mi>i</mi>\\n      <mi>\\u03ba</mi>\\n      <mo>\\u22c5</mo>\\n      <mi>x</mi>\\n    </mrow>\\n  </msup>\\n  <mo>,</mo>\\n  <mstyle>\\n    <mspace width=\\\"2em\\\"></mspace>\\n  </mstyle>\\n  <mrow data-mjx-texclass=\\\"ORD\\\">\\n    <mi data-mjx-auto-op=\\\"false\\\">curl</mi>\\n  </mrow>\\n  <mi>E</mi>\\n  <mo>=</mo>\\n  <mi>g</mi>\\n  <mrow data-mjx-texclass=\\\"OPEN\\\">\\n    <mo minsize=\\\"1.2em\\\" maxsize=\\\"1.2em\\\">(</mo>\\n  </mrow>\\n  <mrow data-mjx-texclass=\\\"ORD\\\">\\n    <mi data-mjx-auto-op=\\\"false\\\">curl</mi>\\n  </mrow>\\n  <mi>u</mi>\\n  <mo>+</mo>\\n  <mi>i</mi>\\n  <mi>\\u03ba</mi>\\n  <mo>\\u00d7</mo>\\n  <mi>u</mi>\\n  <mrow data-mjx-texclass=\\\"CLOSE\\\">\\n    <mo minsize=\\\"1.2em\\\" maxsize=\\\"1.2em\\\">)</mo>\\n  </mrow>\\n  <mo>,</mo>\\n  <mstyle>\\n    <mspace width=\\\"2em\\\"></mspace>\\n  </mstyle>\\n  <mi>H</mi>\\n  <mo>=</mo>\\n  <mfrac>\\n    <mrow>\\n      <mrow data-mjx-texclass=\\\"ORD\\\">\\n        <mi data-mjx-auto-op=\\\"false\\\">curl</mi>\\n      </mrow>\\n      <mi>E</mi>\\n    </mrow>\\n    <mrow>\\n      <mi>i</mi>\\n      <msub>\\n        <mi>k</mi>\\n        <mn>0</mn>\\n      </msub>\\n      <msub>\\n        <mi>\\u03bc</mi>\\n        <mi>r</mi>\\n      </msub>\\n    </mrow>\\n  </mfrac>\\n  <mo>.</mo>\\n</math></math-renderer>\", \"shadow\": null, \"width\": 1012, \"height\": 50.23333740234375}]}]"
       ],
       "initial_sandbox_view_limited": false
     }
@@ -1018,5 +1087,15 @@
     "bytes": 572
   },
   "browser_visual_record": "render_check_v21.json; never inferred from local Markdown",
-  "source_control_helpers_scope": "current closeout snapshot; earlier /tmp helper revisions not all individually bound at launch; original summary/command/source_state retained"
+  "source_control_helpers_scope": "current closeout snapshot; earlier /tmp helper revisions not all individually bound at launch; original summary/command/source_state retained",
+  "browser_visual_check": {
+    "record": {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v21.json",
+      "sha256": "34a1b0ad95a442212aecbb614d68f8448a844684b0c5a637c2e2f014abb399c3",
+      "bytes": 4701
+    },
+    "scope": "Both actual GitHub first screens, all eleven tables including horizontal right columns, and the dedicated mathematical display. Not every prose line inspected.",
+    "status": "PASS_SCOPED_ACTUAL_GITHUB_VISUAL"
+  },
+  "local_parser_is_not_visual": true
 }

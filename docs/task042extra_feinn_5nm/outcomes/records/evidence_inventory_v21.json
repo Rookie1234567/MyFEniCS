@@ -1,6 +1,6 @@
 {
   "numeric_source_sha": "5ca562a08bb9766d9ecd5c7f7660dd05e0a7a032",
-  "snapshot_HEAD": "5ca562a08bb9766d9ecd5c7f7660dd05e0a7a032",
+  "snapshot_HEAD": "e7b500cc14ed57d9de94560853a148f78f34dfc7",
   "frozen_scientific_records": [
     {
       "path": "docs/task042extra_feinn_5nm/outcomes/records/design_v21.json",
@@ -98,5 +98,7 @@
     "render_check_v21.json"
   ],
   "original_artifact_arrays_remain_ignored": true,
-  "numeric_source_not_document_HEAD": true
+  "numeric_source_not_document_HEAD": true,
+  "actual_visual_publication_HEAD": "e7b500cc14ed57d9de94560853a148f78f34dfc7",
+  "publication_pages_unchanged_after_visual": true
 }
