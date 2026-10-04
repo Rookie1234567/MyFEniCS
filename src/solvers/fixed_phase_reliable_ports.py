@@ -600,9 +600,9 @@ def frozen_audit(design, bindings, artifact, marker, budget, source):
                 oracle2=(BBB, DDD, HHH),
             ),
         )
-        rhs = incident_rhs(model, old, BB, 2 * n - 1)
+        rhs = incident_rhs(model, old, BB, 2 * n - 1, exact_zero_volume=True)
         traction = rhs - BB @ np.asarray(model["bundle"]["incident_projections"])
-        rhs2 = incident_rhs(model, old, BBB, 2 * n2 - 1)
+        rhs2 = incident_rhs(model, old, BBB, 2 * n2 - 1, exact_zero_volume=True)
         traction2 = rhs2 - BBB @ np.asarray(model["bundle"]["incident_projections"])
         reliable_rhs_pair = float(
             np.linalg.norm(traction - traction2)
@@ -1020,6 +1020,7 @@ def target_local_face(artifact, marker, budget):
         ROOT / relative,
         Path("/home/fenics/Projects/MyFEniCS") / relative,
         Path("/tmp/task40extra_0p7nm_engineering") / relative,
+        Path("/home/fenics/Projects/NN-Lab") / relative,
     ]
     # Same-byte repair copies are allowed, but no recursive machine scan.
     roots = [
@@ -1027,11 +1028,17 @@ def target_local_face(artifact, marker, budget):
         Path("/home/fenics/Projects/Maxwell3D-Lab"),
     ]
     for r in roots:
+        if not r.is_dir():
+            continue
         paths.extend(
             p / relative
             for p in r.iterdir()
             if p.is_dir() and p.name not in (".git", "tmp", "benchmarks", "results")
         )
+    paths += [
+        Path(str(p).replace("target_ledger_v5/", "target_ledger_v5_repair/"))
+        for p in paths
+    ]
     found = [
         p
         for p in paths
@@ -1088,6 +1095,12 @@ def target_local_face(artifact, marker, budget):
         lookup_paths=[str(p) for p in paths],
         main_full_target_qualified=False,
         NN_increment=False,
+        unavailable_without_manifest=[
+            "complete actual ordered mode keys",
+            "all wavevectors/polarizations/reference planes",
+            "original-size p4/p6 all-key independent oracle",
+            "same-accuracy complete local cold cost baseline",
+        ],
     )
     if not found:
         package.update(

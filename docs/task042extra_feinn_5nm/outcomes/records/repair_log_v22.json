@@ -25,6 +25,12 @@
       "test": "both developmental trees completed/cleared; total overlap <=6.464764241012745s; individual peaks 327991296B and 112865280B, no swap",
       "formal_repair_round": false,
       "process_limitations_preserved": true
+    },
+    {
+      "failure": "two E731 assigned lambdas in newly added fixture",
+      "change": "named def, then 42-tests/Ruff/compileall rerun",
+      "formal_repair_round": false,
+      "old_failed_costs_preserved": true
     }
   ],
   "formal_repairs": [
@@ -47,5 +53,23 @@
       "numeric_math_changed": false
     }
   ],
-  "all_failed_costs_preserved": true
+  "all_failed_costs_preserved": true,
+  "post_P2_qualification_repairs": [
+    {
+      "round": 1,
+      "failure": "P3 attempt1 spent 1367.9586567260558s without first role final packet; incidental zero volume source traversed full high-order body quadrature",
+      "hypothesis": "incident_rhs reuses general integrate_load with zero volume source and reliability surface q, causing unnecessary cubic volume tabulation",
+      "change": "explicit source=None certificate skips only identically zero volume basis; V22 frozen-audit opts in, ordinary callback/default unchanged",
+      "test": "42 targeted pure tests; actual saved G0 phase p3 q15 RHS bitwise equality, q47/q63 pair 3.8112406300131497e-16, unchanged native hashes; no factor",
+      "retry": "v22_frozen_port_audit attempt2 after clean source commit; original USER_CONTROLLED_STOP kept",
+      "numeric_operator_and_body_q15_changed": false,
+      "old_failed_costs_preserved": true
+    }
+  ],
+  "counting_rule": {
+    "initial_formal_metadata_errors_before_P2": 2,
+    "after_P2_qualified_engineering_repair_rounds": 1,
+    "authority_exact_text": "Review V21 §6: 初始import、schema、保存路径、lint、明确mock或元数据小错在开发预算内局部修复并定向重验；正式资格以后最多两轮有证据的数值实现修复",
+    "all_three_actual_formal_failed_or_stopped_lifecycles_retained": true
+  }
 }

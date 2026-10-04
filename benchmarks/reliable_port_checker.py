@@ -176,7 +176,9 @@ def surface_array_checks(path):
     from scipy import sparse
 
     with np.load(path, allow_pickle=False) as z:
-        names = ("analytic", "oracle1", "oracle2")
+        names = ["analytic", "oracle1", "oracle2"]
+        if "old_q15_H" in z:
+            names.append("old_q15")
         blocks = {}
         for name in names:
             blocks[name] = tuple(
@@ -190,11 +192,23 @@ def surface_array_checks(path):
                 )
                 for label in ("B", "D")
             ) + (z[name + "_H"].copy(),)
+            B, D, H = blocks[name]
+            if (
+                B.shape != D.shape[::-1]
+                or H.shape != (B.shape[1],)
+                or np.any(H <= 0)
+                or not np.isrealobj(H)
+                or any(not np.isfinite(v).all() for v in (B.data, D.data, H))
+            ):
+                raise ValueError("RAW_SURFACE_LAYOUT_OR_NONFINITE")
     out = {}
-    for name, left, right in (
+    pairs = [
         ("physical", "analytic", "oracle1"),
         ("oracle", "oracle1", "oracle2"),
-    ):
+    ]
+    if "old_q15" in blocks:
+        pairs.append(("old_q15_change", "old_q15", "analytic"))
+    for name, left, right in pairs:
         values = {}
         for i, label in enumerate(("B", "D", "H")):
             x, y = blocks[left][i], blocks[right][i]
@@ -217,7 +231,52 @@ def surface_array_checks(path):
                 maximum=float(np.max(num / np.maximum(den, 1e-300))),
             )
         out[name] = values
+        rng = np.random.default_rng(422202)
+        acts = []
+        for _ in range(3):
+            c = rng.normal(size=blocks[left][0].shape[0]) + 1j * rng.normal(
+                size=blocks[left][0].shape[0]
+            )
+            alpha = rng.normal(size=len(blocks[left][2])) + 1j * rng.normal(
+                size=len(blocks[left][2])
+            )
+            acts.append(
+                [
+                    float(np.linalg.norm(x - y) / max(np.linalg.norm(y), 1e-300))
+                    for x, y in zip(
+                        (
+                            blocks[left][0] @ alpha,
+                            blocks[left][1] @ c,
+                            blocks[left][2] * alpha,
+                        ),
+                        (
+                            blocks[right][0] @ alpha,
+                            blocks[right][1] @ c,
+                            blocks[right][2] * alpha,
+                        ),
+                        strict=True,
+                    )
+                ]
+            )
+        out[name]["nonzero_actions"] = acts
     return out
+
+
+def raw_surface_gate(raw, expected_modes):
+    """New component gates, not the intentionally different old-q15 blocks."""
+    for name, limit in (("physical", 1e-10), ("oracle", 1e-8)):
+        for label in ("B", "D", "H"):
+            values = raw.get(name, {}).get(label, {}).get("relative", [])
+            if len(values) != expected_modes or not all(
+                finite_le(x, limit) for x in values
+            ):
+                return False
+        acts = raw.get(name, {}).get("nonzero_actions", [])
+        if len(acts) != 3 or not all(
+            len(a) == 3 and all(finite_le(x, limit) for x in a) for a in acts
+        ):
+            return False
+    return True
 
 
 def check_campaign(root, artifact):
@@ -264,6 +323,9 @@ def check_campaign(root, artifact):
             role: surface_array_checks(where / (role + "_surface_oracles.npz"))
             for role in ("O3", "E3", "E4", "O6_LOCAL_ONLY")
         }
+        for role, value in face_arrays.items():
+            q["roles"][role] = q["roles"][role] and raw_surface_gate(value, 36)
+        q["whole"] = q["shared"] and all(q["roles"].values())
     frozen = {}
     candidates = list(
         (root / "benchmarks/artifacts/task42extra").glob(
@@ -274,7 +336,14 @@ def check_campaign(root, artifact):
         index = evidence_v22("v22_frozen_port_audit")
         book = json.loads(Path(index["files"]["role_indices"]["path"]).read_text())
         for role, b in book.items():
-            for k in ("native", "field", "identity", "result"):
+            for k in (
+                "native",
+                "field",
+                "identity",
+                "result",
+                "surface_oracles",
+                "frozen_residual_terms",
+            ):
                 if sha(b["files"][k]["path"]) != b["files"][k]["sha256"]:
                     raise ValueError("FROZEN_AUDIT_HASH_CHANGED")
             with np.load(b["files"]["native"]["path"], allow_pickle=False) as z:
@@ -295,6 +364,9 @@ def check_campaign(root, artifact):
             )
             frozen[role]["independent_surface_arrays"] = surface_array_checks(
                 b["files"]["surface_oracles"]["path"]
+            )
+            frozen[role]["reliable_surface_qualified"] = raw_surface_gate(
+                frozen[role]["independent_surface_arrays"], 340
             )
             with np.load(
                 b["files"]["frozen_residual_terms"]["path"], allow_pickle=False
@@ -326,6 +398,8 @@ def check_campaign(root, artifact):
             del a, s
     return dict(
         stage_qualified=True,
+        audit_completed=True,
+        strict_forward_solution_qualified=False,
         roles=rows,
         independent_face_gate=q,
         independent_face_arrays=face_arrays,

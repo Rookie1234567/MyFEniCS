@@ -228,18 +228,25 @@ def block_pair(packet, B, D, H):
 
 
 def integrate_load(model, packet, source, boundary_traction, q=15):
-    """Analytic physical J and curl(E)xnormal, not a manufactured A*x."""
+    """Analytic physical J and curl(E)xnormal, not a manufactured A*x.
+
+    Explicit ``source=None`` certifies an identically zero volume source. It
+    skips volume quadrature/basis tabulation, never tests its magnitude or
+    changes a nonzero source. Existing callback paths are unchanged.
+    """
     import basix
 
-    points, w = basix.make_quadrature(basix.CellType.hexahedron, q)
+    if source is not None:
+        points, w = basix.make_quadrature(basix.CellType.hexahedron, q)
     fp, fw = basix.make_quadrature(basix.CellType.quadrilateral, q)
     vertices = basix.cell.geometry(basix.CellType.hexahedron)
     faces = basix.cell.topology(basix.CellType.hexahedron)[2]
     cfg = model["cfg"]
     local = np.zeros((packet.nc, packet.dim), complex)
     for cell in range(packet.nc):
-        E, _, physical, det, _ = affine_basis(model, cell, points)
-        local[cell] = det * np.einsum("qia,qa,q->i", E.conj(), source(physical), w)
+        if source is not None:
+            E, _, physical, det, _ = affine_basis(model, cell, points)
+            local[cell] = det * np.einsum("qia,qa,q->i", E.conj(), source(physical), w)
         coordinates = model["space"].mesh.geometry.x[
             model["space"].mesh.geometry.dofmap[cell]
         ]
@@ -307,7 +314,7 @@ def analytic_projections(model, electric, q=15):
     return values
 
 
-def incident_rhs(model, packet, B, q=15):
+def incident_rhs(model, packet, B, q=15, *, exact_zero_volume=False):
     cfg = model["cfg"]
     k = np.asarray(cfg.wavevector, complex)
     e = cfg.incident_amplitude * np.asarray(cfg.polarization_vector, complex)
@@ -318,6 +325,10 @@ def incident_rhs(model, packet, B, q=15):
         return np.exp(1j * (x @ k))[:, None] * np.cross(1j * np.cross(k, e), [0, 0, 1])
 
     load = integrate_load(
-        model, packet, lambda x: np.zeros_like(x, dtype=complex), traction, q
+        model,
+        packet,
+        None if exact_zero_volume else lambda x: np.zeros_like(x, dtype=complex),
+        traction,
+        q,
     )
     return load + B @ np.asarray(model["bundle"]["incident_projections"])
