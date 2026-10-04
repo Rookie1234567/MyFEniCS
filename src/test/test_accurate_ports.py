@@ -165,11 +165,34 @@ def test_review_v21_explicit_roles_and_phase_p4_degree():
                 assert spec.discretization["degree"] == 4
 
 
-def test_actual_launch_gate_rejects_proxy_even_with_passed_flag(monkeypatch):
+def test_actual_launch_gate_rejects_proxy_even_with_passed_flag(monkeypatch, tmp_path):
+    import hashlib
+    import json
     from src.runners import fixed_phase_campaign as campaign
-    from src.test.test_fixed_phase_contract import valid
+    from src.test.test_fixed_phase_contract import _joint_fixture
 
-    bad = dict(stage_qualified=True, base=valid(), trace={}, affected_ports=[])
+    bad = _joint_fixture()
+    bad["stage_qualified"] = True
+    for plane in bad["base"]["details"]["plane"]:
+        del plane["physical_flux"]["physical_E_cross_H"]
+    raw = tmp_path / "result.json"
+    raw.write_text(json.dumps(bad))
+    index = dict(
+        source_sha="fixture",
+        result=bad,
+        files=dict(
+            result=dict(
+                path=str(raw), sha256=hashlib.sha256(raw.read_bytes()).hexdigest()
+            )
+        ),
+    )
+    (tmp_path / "index_v21_joint_qualification_attempt3.json").write_text(
+        json.dumps(index)
+    )
+    monkeypatch.setattr(campaign, "ARTIFACTS", tmp_path)
     monkeypatch.setattr(campaign, "selected", lambda stage: dict(result=bad))
-    with pytest.raises(RuntimeError, match="COMPLETE_JOINT"):
-        campaign.v21_admission("v21_o6", [])
+    for stage in ("v21_o6", "v21_saved_p3_recovery"):
+        with pytest.raises(
+            RuntimeError, match="ROLE_COMPLETE.*physical_flux_missing_or_proxy"
+        ):
+            campaign.v21_admission(stage, [])
