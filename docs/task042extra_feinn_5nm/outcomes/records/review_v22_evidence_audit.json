@@ -1,0 +1,1850 @@
+{
+  "schema": "task42extra.review_v22.evidence_audit.v1",
+  "created_utc": "2026-10-04T12:40:21.593762+00:00",
+  "canonical": "/home/fenics/Projects/NN-Lab-V2",
+  "branch": "task42extra_feinn_5nm",
+  "reviewed_HEAD": "d5df65f320b2a82f49e87f3bf021eb89074109af",
+  "input_review_seal": "19b3198552efdf87281dd0c97abb7fdd1ab9642e",
+  "numeric_parent": "dfefca9d79452a62bc5afc1fa68042d74dfb33c2",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "initial_clean": true,
+  "exact_remote_and_tracking_same": true,
+  "ahead_behind": [
+    0,
+    0
+  ],
+  "initial_lock": "FREE",
+  "executor_formally_stopped": true,
+  "report": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v22.md",
+    "sha256": "e4448c1dab01e5c8dd09a991860184c313dd9c3580299fb13636d8ba2ee661fb",
+    "bytes": 26867
+  },
+  "delivery": {
+    "path": "tmp/task42extra/v22/delivery_receipt.json",
+    "sha256": "7c3408061876b18c483afbade0b16df7eab1453521dc65c33a09e8c888afc3d5",
+    "bytes": 4081
+  },
+  "peers": {
+    "main": {
+      "branch": "task40extra_0p7nm_engineering",
+      "head": "4d60016379164368f09e875dbfa8665f423e52f1",
+      "documents": [
+        {
+          "path": "docs/task40extra_0p7nm_engineering/review_report_v8.md",
+          "sha256": "4bbe06d3d4378384d2e89c9988c93007475f77baa71ef0ffdbae550971db1bb4",
+          "bytes": 36556
+        },
+        {
+          "path": "docs/task40extra_0p7nm_engineering/response_v8.md",
+          "sha256": "5a3877dd00cc6f2c831aca93151f6274e294aeb4d4b8be41fd187cdf8ce545db",
+          "bytes": 10851
+        }
+      ],
+      "scope": "Read-only exact remote ref and committed documents/source. No peer field/solver qualification transferred."
+    },
+    "dot": {
+      "branch": "task40extra_dot_parallel_cloud",
+      "head": "077ec9c8386c976da232093779279fb9d1a93033",
+      "documents": [
+        {
+          "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/native_tensor_authority_recovery_20261004/historical_recovery_receipt.json",
+          "sha256": "58a9e745b26165dbb18a11a2deb320261e7cd7eb178f1e7e83152416feb87c1c",
+          "bytes": 6064
+        }
+      ],
+      "scope": "Read-only exact remote ref and committed documents/source. No peer field/solver qualification transferred."
+    },
+    "task042_read_only_component_reference": {
+      "branch": "task42_neural_coarse_inverse",
+      "head": "31774b6282f61280fe33c162f9f48bf4ea526ce6",
+      "documents": [
+        {
+          "path": "docs/task042_neural_coarse_inverse/response_v41.md",
+          "sha256": "aa19199ac389def7b35fe8168081ef4f83be9edd273c3a0e77d2981723164230",
+          "bytes": 4850
+        },
+        {
+          "path": "docs/task042_neural_coarse_inverse/review_report_v39.md",
+          "sha256": "39fd49939207f6014a40ce8b85af65cb4917e34050c778682866b3722673c314",
+          "bytes": 30916
+        },
+        {
+          "path": "src/solvers/directional_boundary.py",
+          "sha256": "81b0f3cf42e01402a650555f92db1425d92dc9cd658bfd4c0a172be743cf159f",
+          "bytes": 18730
+        }
+      ],
+      "scope": "Read-only exact remote ref and committed documents/source. No peer field/solver qualification transferred."
+    }
+  },
+  "NN_V3_excluded": "1f01ae46bbe21f17200350a46513ef5f33e5cf6a",
+  "repository_refresh": {
+    "binding": {
+      "path": "tmp/task42extra/review_v22_inventory.json",
+      "sha256": "dae2aed2026272e30aeb495f195934a20cfeba67bbeb1f493457485b484b29e2",
+      "bytes": 2277286
+    },
+    "files": 4821,
+    "bytes": 111584955,
+    "scope": "quick byte and structural refresh of every tracked file, not full semantic review"
+  },
+  "semantic_scope": "Current task/rules/README/review/response/topic; V22 source, dependencies, relevant tests, compact records and saved arrays; unchanged NN/history reused from hash-bound accepted prior reviews. No all-line semantic re-audit of every repository file claimed.",
+  "history_reuse": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+      "sha256": "0f36c35ac7881046b8b36d1f079b6f46903a7e189b1014c348982de22ce60442",
+      "bytes": 55097
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v19_evidence_audit.json",
+      "sha256": "2885fa63dcbc473266b31a19be6af9e9be27ce309c4c002f010dc81138ca69d8",
+      "bytes": 34979
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v20_evidence_audit.json",
+      "sha256": "479319d0914eaf80cf2617c1d13265487af15ee0ab0cac7570c20cf8a7192379",
+      "bytes": 201332
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v21_evidence_audit.json",
+      "sha256": "1437b77b56cc54cf0069e72dd78a7015bf413789f47a996a173c99258f06cb44",
+      "bytes": 134538
+    }
+  ],
+  "raw_recomputation": {
+    "schema": "review_v22.independent_saved_array_audit.v1",
+    "bindings": {
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/O3/affine_state.npz": "27971ceb83af2c71849ff98b623047e5bee64b342f44396bf180dd96bab60197",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/O3/observables.npz": "84164e904faf15515bbda4cfcab4846b9f759f08d7b0a1c3f221acb9035effdb",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/O3/result.json": "e1d750bef9d82482c663761c4059f1e292bbf14654225b22fac6e18476ddda93",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/O3/native.npz": "cbfc321edbf7825188bb2fdfc7feed80d36bc781fbc7cb581e1492764b5962d0",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/O3/identity.json": "3aea7269503323055f51227a9abb7bc4e82ffd28e7156735ef3e17cb3c57d30a",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/affine_state.npz": "900a556f8c408efacb8bea931cd49d6a4eef7e7b5287a7e342af4b6f7335d299",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/observables.npz": "b77fd62407828c3be269a8a3048f6e6908ebe0a1a2334b51b7be221ffe4ab899",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E3/result.json": "ad12bb745eda524f89180f596b9b8339d5c30143c913486f903b7b0f52168a9d",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/E3/native.npz": "1ff07a0ded4e8afbe2a6bbe7f7f49aed5ca58cc2278d54b3709e3650d75cbf6d",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_saved_p3_recovery_20261004T055228025730Z/E3/identity.json": "473af4630740c2d53079c25b94ddbcd6fcbd4ea1f69b2407cd42a335113c6645",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/affine_state.npz": "8e9509117ef775eacaa44d44afbb0eb33ecca7e44911187df8d6ac7c99c891f0",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/observables.npz": "0f1bade3360b8c96138cfb7d8561d3c2107eaa28adafa3b33e6345ec6b4e9f23",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/E4/result.json": "6460bc197fe06e93833fa98761e452e9f8332a69da4622364e7a799f5c41d685",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_e4_20261004T055937339255Z/native.npz": "d455824f6164bfd86bfb63db98e1fba3e26330318ddc47bc53641394ab922c8e",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v21_e4_20261004T055937339255Z/identity.json": "2273a67c6a141d6931a7c6887d984700af8c05d78315d4b686cb21d0668f8a21",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v21.json": "a1d56778bf1a5ca6c1e8e4e0b5f5e1da0300a1121f4b11193077f29dafd177a9",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/affine_state.npz": "e751b4acd960bfb50dcb212e66ceed880b8d54d9f8a9835d1f7a2c9e1b4f9f5f",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/affine_state.npz": "ee16baaa6b4f9308ea09f7c185a1fedf8636905dc3931e4282d5c8b602a31a0c",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/native.npz": "f148f1001c620ea280a208b54ad3925e6c8dbb6ecee2ac905ec858c576c74b62",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/identity.json": "16e8e1dc4d77cad0c5d16783658e8e03f74295eade4304f449fb8a4f1c4869c6",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/observables.npz": "9a820b4a5e0aa6080a5d432067923ed7117a14ba54d4512f7eb8ff35869d1198",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/result.json": "a0e8323129ab77e0a9151b424841f3ee205edac52cba1c2b2317bf5528d08f4a",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/native.npz": "c3897bde734343b47588d3f90e8a897f3119e0b877de386b18de1c91516cd4ec",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/identity.json": "41d872939cb58f7c9502a81cc84f7fcc20e26be5d71d9aba664f3e39846390bf",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/observables.npz": "5f753842cc347930c71a3f3e91909aaeb10c9e07658bd4792dad36da892bc952",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/result.json": "15219fec941143c6d93d709896b618356e20e0e9d6a6629cba9549ce532ebcfb",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/review_report_v21.md": "accb6348e651e6da2fdbaff45b7d224cfe019c59be44eb61065707240c2ba6cf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/frozen_inputs.json": "718350a4a887ed8a9e935d90967d6142bc400bbee070933e40bc1a9fa007093b",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/design_v22.json": "c97accd2c046bf64612c9d0a12341cbf4ad7031f221ac85a4b080aa0226e1886",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/run_index_v22.json": "14ff0b9aad067eae06eab6008772bc67174b44b6eecb884d81ff3400b3ee3dae",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/affine_output_v22.json": "9ca78ebe5ca46476627de4bd4b623ce3b3961281471ad70fbb83babb2f974459",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/face_qualification_v22.json": "03ceb7b5684bb9a3e592ea0aba6c6d0bc1fc9aaebf56a0a4f70335b02da05520",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/frozen_operator_v22.json": "8cb3a493d655783fb2322277762cfa81033b47af702d3b183f5c355b1da2ca87",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/signed_residual_decomposition_v22.json": "c5ff9176325c69af616fb8c5c668fcb38add3ca3166deaca1ca945a8759e70cc",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/saved_physical_attribution_v22.json": "952133477ebfaee86d72bb076e42e0b02f86bae3781061628680c72986d44dc5",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/saved_dimensions_v22.json": "35e9aee37e53d4d75334dfcdb49175cf15d2e7d3104ae54e6aea09d779bbf500",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/correction_and_comparison_v22.json": "b404670cf0c4cb2041d8c3f60eb6d036b8b4c5bca17d6d63e79692636ecb360a",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v22.json": "0fb725313abaa5e90ce5180693dafb95f488edbb083bc3498a839a9d4a2b9443",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v22.json": "c950b7ac05923fe751faa164cdc709b1c9410d85588f04323ac05bd8cc1f68fc",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/minimal_integration_v22.json": "86f5be3bee4090d15848862ca6535592ef637c85eb0b208d1b3a7774160c1887",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v22.json": "00133f6a1f29bcd5930044661817796589cf30f5d4b50f99c641a3c2bdbb913a",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/cold_cost_counterfactual_v22.json": "5857b3b6fb47c68278e88172955c9662f71a8cf63194ec69326070e466b0b729",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/process_limitations_v22.json": "c9c98866b2ef2eeb7c68b95d6737a8de787881681d8759b6197997783d87a2c2",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/pre_correction_raw_admission_v22.json": "764981c660137946d1f2d3f37e11933c218619c0ad97cf1f833ad331ff6ccaf5",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/final_checker_checks_v22.json": "5787436f649a24687237ecaae534d964703b9ecf4d58abeb05f16a61a1157bdb",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/affine_channels_v22.csv": "b74578353ca1b28abbe53af9e785e407bc92c1ab399e3f5e2afcd9e430a50af1",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/affine_samples_v22.csv": "a1b5f9cafb4ec863bfd6b7322d774e01b9c3354e893b46c3205232bf57565b00",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/affine_recovery_v22.csv": "7e6c98790ccfb971e442cdff43666d04b37c72cc2d6817d10fe36d53b61e9657",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/face_block_modes_v22.csv": "b8558ab5d1d73a254e850ce92476315310fcc351729ffdd0ff3776bd335c5941",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/frozen_channel_changes_v22.csv": "cf032ba32db53b07843e1ad0691683d7e683cba21eab5b55e9959e5b387d2c48",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/corrected_channels_v22.csv": "fdb00fca53a391319175c5be38997c7145e132f73851d3684bc70f8327d2c6d2",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/corrected_samples_v22.csv": "30f308ed28ef52bcde3aeb331615835ec0b07abbac26dba51a69ee109b711170",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/corrected_regions_v22.csv": "2492615814d92fb56401630e2e73a898978429cbb82cefdd25947358850d0fc3",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/corrected_mode_errors_v22.csv": "bdf1bd9f0a949f36f1780fdb63794c3df58d45ed09914daee8ad648c40ebad20",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/format_check_v22.json": "f2625e11b5691ab5ea7f757bf0459ab6c315bfba48400d96fce5fe725344777d",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/response_v22.md": "c0d4fa78d19d7ddeb7d49f89da865effde514f7311bb996787f85cca9f6cc69b",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/reliable_affine_ports_v22.md": "978b53087e50423c80ba40687785a2d46353a2ed43cefb3ec081cc1185e20b24",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_face_qualification_attempt2.json": "65914d80a9352637de88b6dc7852d31d9b5bfb4cf97b4d01b0b2f920fdebee89",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/affine_output_checker.py": "5f9abeedb454684e91d5345c8a4c60f8666b45fbbefef6c510e202cf546f9aef",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/fixed_phase_checker.py": "10ee1ec2d7bc5f7a1df1385e5fc0fa34cc72c53aea1eba402fb0d966f426e259",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/reliable_port_checker.py": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb",
+      "/home/fenics/Projects/NN-Lab-V2/scripts/launch_task42extra_durable.py": "a8e43792386092b0ddb74a666f82cdc78d653de37a6a3adc4328ee20adeb425b",
+      "/home/fenics/Projects/NN-Lab-V2/src/io/feinn_pilot.py": "6d9cc2930215152b9d7307e8b24e5247a3edf242bdddb8b604bdf93e6f27031b",
+      "/home/fenics/Projects/NN-Lab-V2/src/io/fixed_phase_pilot.py": "fcabeb2c5bb9d97bf0114ce61329df11434ba2961aeda264d0d5d228b2878c11",
+      "/home/fenics/Projects/NN-Lab-V2/src/runners/feinn_workflow.py": "dbf34ee1b0abd508c46708475c91eee7c0f5bce75f3bd1627bf6bef0a49a8aac",
+      "/home/fenics/Projects/NN-Lab-V2/src/runners/fixed_phase_campaign.py": "41cfd9bba3636e13f59536d3758dafbfdb1b77b0c9373d9df929f984f1fc57e9",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/accurate_ports.py": "b39a36e9b6fbaaf7e21cb69056ea306e0202e054fc94f529751dfd515c25cbf4",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/affine_field_output.py": "24b368edeca8f65465e3935ac3b045781fc042e76eb43ecc55a86c692d36f5bb",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/analytic_face_ports.py": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/feinn_exact_condensation.py": "588e052c929a9497f7d6b19d504fdb1584594e4b9e1f101d17fb26abd1bfbeb6",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_audit.py": "d7df77f3f09da76c1f404e7d7723db34898e7cd3a11eddf640bad2590802d0a6",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_comparison.py": "201109108a3e0c182f1c0722fad17e38abbe48606eaaec6477aba91e8be25039",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reliable_ports.py": "8c40a953dd80105c9bc2d108fe3100d934d9ea9ce997a95e0b76c5e0602184bd",
+      "/home/fenics/Projects/NN-Lab-V2/src/solvers/port_qualification_state.py": "65b90112833bc06f1f286a370074a418e7202c642964eae76150c04138a5d4aa",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_analytic_face_moments.py": "2af36fcb5f645e3a4842bafe96b90640d4ab6e90f2ce78b3470f3581f7684588",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_exact_affine_output.py": "f927feaea68a215e104ae61e56c7687afa220b544e8208199fe2cb34cbb975e9",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_exact_zero_volume_load.py": "080e5880a7253f8caac33c2e2af14bacee2e660448b4816a810effefaa5843af",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_comparison_roles.py": "2ff16b984e3c821add6162b9b16cee29c6379beba6495a136f667b72644a413e",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_port_contract.py": "bffb23432d4b558fd7213ee0fb0ea580fed47875421c0cc91419c0c886118884",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_raw_equation_checker.py": "3aece754f4b01ad5f8be8057642a6912ecbb4bc3cc6e423440abc76316767adc",
+      "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_surface_saved_checker.py": "82c8e75688ec19f5465aae2967d593288ba57555b270a465778d35c85bb2b37b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/final_checker_tests.json": "456d82769f0f10ff2cb2c88e7e66eab8efb3ba77f634b0e6bce94c388d0330e7",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_final_checker_source_20261004T112948212231Z/summary.json": "c62eeac7009bb8e50976903ed68d32b92926356fe122511032dec3ce31fc280b",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_saved_checker_20261004T113319163183Z/result.json": "76b7d814ae813174dfdeb09214f1110fdca484d30f420109d8d3bb4b87c1e08d",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json": null,
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_pre_correction_source_freeze_20261004T095553911609Z/summary.json": "1fb37c3395fc261e03bbb8c851202bd4f53167397e22906f55a688da88bd452b",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/O3_surface_oracles.npz": "4585d4a3fb1ff14855cc27bc404a42b264287eb1ec358dff62782c5eed4e303a",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/E3_surface_oracles.npz": "72f767763e84205ee7701ccd60a37836542c453bdd4a9ea6b1c58b9078b106e5",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/E4_surface_oracles.npz": "3ac80ea6dca721fc6527bbaa1645390d4d8630451c76ffac9048ebed36fce6a4",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/O6_LOCAL_ONLY_surface_oracles.npz": "d1c6be84cd95cfceecabe35c3c69516ab61ea08b3eaf5ff510533af8f15d9ce5",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/surface_oracles.npz": "b8b43e7ebc6c0a8322b4dad3f44015c7522c642ab722eeabe2357f39bc92c317",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/surface_oracles.npz": "f1303de30305fd1ac42c739e9b8e04ac937fedf742b1bd330bc09f97eef5c334",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/surface_oracles.npz": "2f72f1be42c660b21dc6e09af41b47e3a1efcf52c5def3387611d14412fc9178",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/P3_engineering_controlled_stop.json": "fe093ca147378759dd18441f763ad4336fa2ab7a14fa57408f1b0bee62f2141d",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/RHS_equivalence.json": "7c42adda1967195a2923c88c501abaf86c7353d5bef9f9c56e98b8640307c6bc",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v21_evidence_audit.json": "1437b77b56cc54cf0069e72dd78a7015bf413789f47a996a173c99258f06cb44",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/render_records.json": "29c5c68df9f80ef74c8d52cc676ff92229c88fc96b2ba62dec5db9f8ca89a105",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/render_records.json": "f4f84dc8bfd55850cc91c5025e4b85569d6637de0124d1aae08d1703392b3bf8",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/bottom_capture_design.json": "32b9a99f7ed3525dc866114f2f2cd321e2f83b3454f56cbb810e766d53889d92",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/visual_inspection.json": "a9986d714f909f322d5b4d20c62aeb8b70b8594a256f852ae106eb80c6ea1da5",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_top.png": "c20b03e0b671daa3570e03339850ce7c6c8ce0e30412395b4cdab9da38ae5b9b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_00.png": "4c947369f1484a807fbd26cb5efa74165454375662c94e6290f6ad2b440b20af",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_01.png": "9ff397fa1dfd1acd15d90d3b9878784df829313f57cf1e646df6cd2ddc76e999",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_02.png": "d33cdc57f1f98b9c781ad3c8f344184a2b8af6e66988de1e2d320d1d339ec035",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_02_right.png": "50685845c9f0a09bdedf2ad56e28d0e7748e0d0e43f7164f32e41c9c011edb09",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_03.png": "bb0e1628b941be30bcca2dc7edb781fa926a9a1daf9d5666add530822e7eca8e",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_04.png": "319e682dd4e32c89fa4a7296256aed56106f6803e22c2317e4ecf51bebd9d1d6",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_05.png": "ad0e6d90bd977dde50738d2366180c73bf45fe0d39cda655bd5028e34b9d59e6",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_06.png": "be13b7d93494ef95f6221f8d94e0b9154c224c2ed677ba53d8c3b61b86946d65",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_07.png": "881df0fcb523cef060575fe7664103a9c197445770fd02e55d683e1697050149",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_08.png": "fb9fc6900015ebe17170139ff69f355268b9bdbe1b327c3c8e2854762508b277",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_09.png": "78d36925a3fb92654122efd8cd07bca972ae9b225f28f008052821bbdad48445",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/00_table_09_right.png": "862b2f975666470b8eecc080947ed1ad4293857a25c163f4c485d51392390ac6",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_top.png": "97c683410215ee63a540423b3aa23538b1341abe68daddb6371a7437592afeb1",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_00.png": "e7ee2dbecc8cb1ac26979f884e1e0b31764f3eac37330c32aa4f633867843579",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_01.png": "d2c61f65cfee91836701654a10508f646cde900dd8b24c6354037a70caf398e3",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_02.png": "972c39d917628e60258ce04e79a97e9e93216809f2500e0bd5d1ea792e08847b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_03.png": "515a71ba92303de6561603b4678922241c8b65a815dccb604f31492a7a602df1",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_04.png": "db462f359aac3460bcee37245a2a0b9608f01382b25545d6ef0454685c5312bc",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_04_right.png": "3952c2377dcb3b17858e9e359858b5e611d342a5d3f4dd5844b0f18e4aaeea06",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_table_05.png": "4ed3e7a286973f1df8e06fa868df9d1699f6f6640b4b523e9092a46dad512fe1",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_published/01_math-renderer_00.png": "5d68fd60d6e6481d8eaf2740f144512fb9a92d473b41ce24880aa5e780d4eb74",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/00_top.png": "dee067fd768b161a997888762120603e79987b3c8f27579589f7768f3a566157",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/00_table_01.png": "d33cdc57f1f98b9c781ad3c8f344184a2b8af6e66988de1e2d320d1d339ec035",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/00_table_01_right.png": "50685845c9f0a09bdedf2ad56e28d0e7748e0d0e43f7164f32e41c9c011edb09",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/00_table_01_bottom.png": "1ebe9c41a60b99aac872ebb48d6685658e3feb84bc0332b516fa4b8bd196ea72",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v22_bottom/00_table_01_bottom_right.png": "87e603532dcc20866697527f2aae2670fcc4749557ab15944657d12bbfebd2ef",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_corrected_role_controls_20261004T095321916480Z/summary.json": "f9ce683a16ef1fc344db20561a5d3ec66bf507d73cf7a4e6c5de5195a4b4f419",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_corrected_role_controls_20261004T095321916480Z/supervision/worker.log": "b61d58581522a2c43d4d14bf6cba9d2264dbf61ca6949953b573595d893f2f88",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_fe_surface_smoke_broadcast_fix_20261004T083649463495Z/summary.json": "447ca86fe1caf88d88a470499fd3e3ad43e6ad3cf7421530c7ed69d6a06a5edf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_fe_surface_smoke_broadcast_fix_20261004T083649463495Z/supervision/worker.log": "e454ebec7567605ea5fdc9d5bb884a1d395ed787f894c70c7c7b1bc7ee3561fa",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_final_resource_snapshot_20261004T121307979975Z/admission.json": "0528471c743a5db84cbe2fcca4c789425d2c309ed6e5bdb9ed13f023da3d2d4b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_finish_records_20261004T115916428094Z/summary.json": "12ddb1e375fb4f821078fbe5af5f50b8abe00e962e0a8502c1cf641336cc737f",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_finish_records_20261004T115916428094Z/supervision/worker.log": "8ea6027f36add07e07560cb5f0a7db00a6da84d5e8e837ae7c17e3586854a84f",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_initial_fe_surface_smoke_20261004T083508932631Z/summary.json": "c9fe186ad7773e053b851602fc0555aa6d48e90c06a5712095f07e5c4bfc47bf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_initial_fe_surface_smoke_20261004T083508932631Z/supervision/worker.log": "121d5cf98c4ada5ead6e9a572601e40f3b8f4551bc2cad5e74041e8500cc7051",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_post_qualification_source_freeze_20261004T094049316237Z/summary.json": "a18ba2dd4b2c2617ecb38c241ad4cad76b5a3083b5cec74b8624db58c5535773",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_post_qualification_source_freeze_20261004T094049316237Z/supervision/worker.log": "34ee77e468bb56e1f4e38e39e5afc9ae9f186f08521b7b477b3c7f31f0e768e2",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/resource_readmission_observation.json": "a8a2624c54612ea94e2ac58cb339945141b66a33a0414c39c1bd1377112c0baf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/resource_refusal_diagnostics.json": "cf1e22ab10a7a657e21cc7476e53fd83a23a0fe1eb0da42c3bd38060437d1775",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_all_final_numerical_interfaces_20261004T085540530295Z/summary.json": "7fca5e017dc7bfa47c9355a5459713b985331198be0ccc11a5ca7dba591ff488",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_all_final_numerical_interfaces_20261004T085540530295Z/supervision/worker.log": "e07d9d68f1048fc0778ad73c4db7f2ce2d1d8c598513e1baf5c71ac89ecca175",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_bottom_capture_prepare_20261004T121001742804Z/summary.json": "ced5495941065b1acdd84cbfe7ca8a93be1071bf770ec1dd20fd1d0ea9b35c71",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_bottom_capture_prepare_20261004T121001742804Z/supervision/worker.log": "348aca005ebad98b5d3607f6a477616594a19fa8b02cfbff817dd66aac9cba81",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_collect_20261004T114118818424Z/summary.json": "c21ed86df5b5e433d5cd9df486255f3b84aac7ea985cff5e0a69e7185a8a7f8f",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_collect_20261004T114118818424Z/supervision/worker.log": "465bdfa7ac656fab6b4a33eafb5d16207a7c3859df85eb98d56698f32e1d913e",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_complex_ky_metadata_repair_20261004T085911226738Z/summary.json": "b933ed1b280d9ca65226fc429189c7eadc188fabaa0e0f9d59a23424602763cf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_complex_ky_metadata_repair_20261004T085911226738Z/supervision/worker.log": "be6ea8273ae7a040aac01a72af512f1098c3015198d2b936cd1a138eb625dfaa",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_corrected_role_controls_fixed_20261004T095428092059Z/summary.json": "a83a55926f2a7bfaffbbb5503969af3d1b4c93b2cbac4722e4961f08a0e93168",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_corrected_role_controls_fixed_20261004T095428092059Z/supervision/worker.log": "fc04c4ed459b92d32a3835538d313386aceee93bf4d005bf5bb81449e34239eb",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_dimensions_metadata_20261004T114846657954Z/summary.json": "652db125c84d765b7d898d0e819d85c5036331c4487b2cba1314200557bfd18a",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_dimensions_metadata_20261004T114846657954Z/supervision/worker.log": "8abeb0a4675db33e4ad176e769e9dbf213dacff036ecec52175c38f094ad62d3",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_dimensions_schema_repair_20261004T115619451598Z/summary.json": "21c7b26ae07d7ccd44fc8f0d18ea67596bf11e2bf8db92abdb3da50b84ce8048",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_dimensions_schema_repair_20261004T115619451598Z/supervision/worker.log": "05b0838eadfdcbe960b2047fd4cf641b419f0c4a0d886158a9e0ecfa9233b305",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_docdraft_after_account_20261004T120053839104Z/summary.json": "0f136d0144dfe5cfffdc0a6451ffb0877cc95112b7ff4dc6e31d89a8fb900f6a",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_docdraft_after_account_20261004T120053839104Z/supervision/worker.log": "e15d1ce921d00685b0992c3827472d9b52772d16c46a9d88398ede0bdc850b66",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_docdraft_corrected_20261004T115833565126Z/summary.json": "26e676971310e15263ffae7f9e232e283aca355d3dea06c6868f8c9c3a0cf019",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_docdraft_corrected_20261004T115833565126Z/supervision/worker.log": "e15d1ce921d00685b0992c3827472d9b52772d16c46a9d88398ede0bdc850b66",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_document_checks_20261004T120121171931Z/summary.json": "49d40f4f7f20b157936d0225c7c69df0fa9d9b9af6c36faf3ae9c65acaa486d8",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_document_checks_20261004T120121171931Z/supervision/worker.log": "11a1473f60ed67c9f5b78760ba1db989f629341e7a3de59286f8b60b17b2e969",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_draft_docs_20261004T114444392347Z/summary.json": "131d109e88a75ec2c539c363c5845db14ed52f3bda13320ab6c5c31ffc0bb4e8",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_draft_docs_20261004T114444392347Z/supervision/worker.log": "e15d1ce921d00685b0992c3827472d9b52772d16c46a9d88398ede0bdc850b66",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_fe_surface_smoke_serialization_fix_20261004T084231041899Z/summary.json": "6d7deafe8a8edb3f6bd85886339e78478625e6120b08ae2f5bcab9b27cc0622f",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_fe_surface_smoke_serialization_fix_20261004T084231041899Z/supervision/worker.log": "87fa3d0175e53f2f7931200cc05ac2673c0367a1dd17c63a1e0ac3a1a9389e78",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_final_checker_source_20261004T112948212231Z/supervision/worker.log": "e6708bcaa5e547f5d19452689fcf3680f5804768f912b996c0eeddc0afb0ab46",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_final_pure_qualification_20261004T084332502526Z/summary.json": "28567d88e13d451fcd6b1ea32541e357dd0e8746ae25c5be925b35b304c84011",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_final_pure_qualification_20261004T084332502526Z/supervision/worker.log": "dfc788ed97f9472adb315fdff01ab946e2a8718e465fc9b8093f7572326abcbb",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_finish_records_repaired_20261004T120022726400Z/summary.json": "5ed379bf37f55608829dee1993cbf8c0b49423eb3a764eab1a1cdd3cafc381fc",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_finish_records_repaired_20261004T120022726400Z/supervision/worker.log": "bcb9d9f80115f39333b9624992c755ee335015810a0b0f645613c2e580eb22cf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_freeze_checker_20261004T113053672608Z/summary.json": "f06e7f65589fd23585e2b662fe8b4201c9464cc787b257b048f88c759332fbb5",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_freeze_checker_20261004T113053672608Z/supervision/worker.log": "9d6e42536661d108d57d80e7285f003ef247334d65d44eb18fb04653cf665961",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_freeze_inputs_20261004T082657790075Z/summary.json": "5a75ec4792a84917867ef7c24ad101caf3d12821033a98c62bd9a4740cfcc5fb",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_freeze_inputs_20261004T082657790075Z/supervision/worker.log": "574921ae89570a0f9257e22586061118a9035f9381125541975f036f047e3f32",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_git_CSV_format_check_20261004T120418989133Z/summary.json": "1f115817cb9e6b31a562fdfcad048b1ca96b0e36a8d3d3ea458fe95d020f8826",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_git_CSV_format_check_20261004T120418989133Z/supervision/worker.log": "6686d9ef0670e29f8a2d9a1504687333604cc2f7069a7199bd71f230fd3bfc49",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_guard_digit_event_repair_20261004T084821035586Z/summary.json": "d97526e313a6827d4006cd16e598891fe8f216c6661f1060e86b8194310ab5bf",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_guard_digit_event_repair_20261004T084821035586Z/supervision/worker.log": "a4d0778a9ba058ff75b48cb3a145ac59e8c7ae9f3764db8fb6a0425c242bf8d2",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_implementation_freeze_tests_20261004T084501321787Z/summary.json": "a61139356e6ba2ab43dc3a08f1d8036fb1fac63fa35e403a0ee7f460f0e38cbb",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_implementation_freeze_tests_20261004T084501321787Z/supervision/worker.log": "eaa2cdba86045267421d697a98e36126be1c93e6cc4aeb13a0d09c72d21a4e84",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_initial_pure_tests_20261004T083432003129Z/summary.json": "aa2084ae23bb322aed3676fd617ce197e5bdd3acd4561d325272ff91677e769a",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_initial_pure_tests_20261004T083432003129Z/supervision/worker.log": "62396bfab2de0309c66030301b9bf82dde8da6e36ef786ca06c092c0f59fcc8a",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_post_qualification_source_freeze_fixed_20261004T094136126780Z/summary.json": "7a528449e9e53befdb154f30301dc4fa51c77ea234a6dee11c216f735e1dcd23",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_post_qualification_source_freeze_fixed_20261004T094136126780Z/supervision/worker.log": "054b115f0086a9f95bb8c6672a4c3d34206200928afba3c075570e37bc02306b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_pre_correction_raw_admission_20261004T100024664667Z/summary.json": "d8d43b6a39c2b6108d14039ddd76129aba2a0a18eaf3102d5695693de2da468d",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_pre_correction_raw_admission_20261004T100024664667Z/supervision/worker.log": "ce492dad774f2e8d598291941da825338da2aa0958620f60f7f8280a01732f7b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_pre_correction_record_freeze_20261004T095956757925Z/summary.json": "ab9dfefa360defb191be81c7f49cff814251751aeab4fbcc221ac97bec92a72c",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_pre_correction_record_freeze_20261004T095956757925Z/supervision/worker.log": "b68d7f44a51f786487a924b0cbfcd46cc856431227714c03a47f94f31e0dab0e",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_pre_correction_source_freeze_20261004T095553911609Z/supervision/worker.log": "823acf6abc44d5c4e69902113d01fe8620514af2872201f4bb499f5eecfcf8c7",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_publication_format_records_20261004T120504173695Z/summary.json": "c9865741f5bab96ba000f9db6a2b194e94a3f2d60545f48daeb3c491793a3dc8",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_publication_format_records_20261004T120504173695Z/supervision/worker.log": "c91fac53c486ddcb5482baf7b1c855e7bdfe930a3a1809436bb51cec0c56407d",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_publication_format_seal_20261004T120538606522Z/summary.json": "93d2091322a4a6d743d7a2edf2bc635035860125808e1117da16b499ed2fc4f0",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_publication_format_seal_20261004T120538606522Z/supervision/worker.log": "3534726d4808b0f24db76b87a304d666114e68a8e63ab3b2b24d53f9f169dd6a",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/summary.json": "927945b6383667d0621b75fe2f7b4c9080c223210d16e4897b829869be767722",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_publication_records_20261004T120229971010Z/supervision/worker.log": "90989c964027ce04b40677c30e87e45794d02fdf35e9972b098e6b9298b1cbb1",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_published_render_20261004T120652752087Z/summary.json": "462aa38a1224a2f2331ee941ef77ddcb47e2641f1c0b2506e632dd6e40747128",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_published_render_20261004T120652752087Z/supervision/worker.log": "0231b98c61f26707d06a6874b5929755c28b7ba9611a726676badea5d5e6f9e3",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_published_vertical_render_20261004T121040726384Z/summary.json": "4a650c825fb428915b7f99f9cd2fb31da8514f59cd67cf7d4f677b18691e9e97",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_published_vertical_render_20261004T121040726384Z/supervision/worker.log": "c45c755351a7de48bc59abd7918a3fba034ed8b7183a6229fdc2f8a334773ae1",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_record_visual_inspection_20261004T121226127559Z/summary.json": "af19f42703d497febeb3d035925dc71b2e873cb71dcfb50a5a950c4018437053",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_record_visual_inspection_20261004T121226127559Z/supervision/worker.log": "a9760651fb4d7a2dba96ec874c98938fedf3f85d5a949a714247f78dc78b2676",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_rhs_equivalence_fe_20261004T093654718695Z/summary.json": "9d45fc7a22e1a090f3deeb25594a53c57ee76b3f2c7e5d30b27f0856e7ad04c7",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_rhs_equivalence_fe_20261004T093654718695Z/supervision/worker.log": "bc13598e8a53f4cce61ddc379d57c28d0c8c59ae535d2ffbd2ce4b5c8e8783a3",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_rhs_repair_pure_20261004T093619917959Z/summary.json": "5427d85315241dd78d6e45ff069a78abb0316ea7fa88fc81a34cb1def03ff822",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_rhs_repair_pure_20261004T093619917959Z/supervision/worker.log": "beaf6346c5876d84639de181c788a3f3334d3c79a0c37010b0f7fc60624feaa6",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_saved_surface_evidence_tests_20261004T085418693754Z/summary.json": "a40d5bb82a63a71e0a2e8b363fa0359e65813fb62aab19fa80132d4ec4cb4cf5",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v22_saved_surface_evidence_tests_20261004T085418693754Z/supervision/worker.log": "3a68f085a59862fc7a14d3611735dc0f6355f4c04d00a9b34ab7b563ac9532ff",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v21.json": "a6bbdcaf8965c3e7e9498321d8eacef225fc8adca289a578ee90f08b13fe365b",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/setup/fe_abi.json": "79beaa5362e1f24c5daa05ed77e622086b4c21bd0b87a8847807fd38c852f4be",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084617549606Z/run_manifest.json": "01377e64f4053423670fa7f55353aeb738a388fec2d373c218b56757df7f60c5",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084617549606Z/run_summary.json": "284679e3c355ee278fbb857130615f05f486e0d6e06755f3e0e2e966fc7cc0cf",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084617549606Z/events.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084617549606Z/worker_failure.json": "0b101086146206af1e843ca4156029b7484e15b11db07bdc6c60b0428aef93f8",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084617549606Z/O3/affine_state.npz": "27971ceb83af2c71849ff98b623047e5bee64b342f44396bf180dd96bab60197",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084617549606Z/O3/observables.npz": "6dfb4ae2e42ba6d94076010c02659ed9781f1fb4240c9b9df8e539e8a3cf820f",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/run_manifest.json": "b8493233cdcf62733ff0d8126ff86cdddfcd31a254a7bd4aad3f1e6a4ceb8325",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/run_summary.json": "04c5fa28376174e9e003f16cb1a5ccf84647bd93cd5496d811907cecac741a77",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/events.jsonl": "0ebc0cae5701b1ec7026abab45394aa313ae4185f707e8c69540e41b7828e61b",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/result.json": "a55a970b70b0fb8b49e5ab76a0075d74b3ae9904546c7b21d810da1812d99e66",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_affine_saved_20261004T084900920789Z/role_indices.json": "0cb9684e59319721c62b4bbc8120d1096c6dfd1f06e9b34e484d09dab1f39837",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/setup/pure_abi.json": "a9c5560ffca5214f54a55d5f118aa470558b77db492ab29ac6eebaf255c1cc61",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_control_checks_20261004T084556258487Z/run_manifest.json": "16c91b7bcd59ddfb8d4beb5e7f196ccbbf77e5c40df6b761ed350580a62cef41",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_control_checks_20261004T084556258487Z/run_summary.json": "6eea4c26ac565619ec41d2e1465a2d6567a451ed61fa048ab579c770d1323e90",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_control_checks_20261004T084556258487Z/events.jsonl": "26571e62ca2f5ce5543a087dac2ca33891d153afac1afad8ba129bff91e5bb32",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_control_checks_20261004T084556258487Z/result.json": "a682b972e5dd4cbfca4ba5d28225dc0ec2f1c4f8d6f8c580cfdddca5620d6dd2",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_corrected_compare_20261004T100713214963Z/run_manifest.json": "0399350c46b021890adb593574bde4063c11a5ef4ba20039f282f2fb61207389",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_corrected_compare_20261004T100713214963Z/run_summary.json": "ab58e1341a1bf9a76a93d9beaca4ed1e2e9dad128439ccc04d4033bb4bc81a13",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_corrected_compare_20261004T100713214963Z/events.jsonl": "3a9b8c2533e8bf0c2e739367f723712ccbc597bf8c00dfe57fd260d8bd57ad50",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_corrected_compare_20261004T100713214963Z/comparison_integrals.npz": "7250a91934f3d8aa2e13263ec230eb2bec72a6e41bcf7173bf0251954eff757a",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_corrected_compare_20261004T100713214963Z/result.json": "be937a7bd13cf8dc947615dafd517c5c38c791558f98313182ace7d61472ce06",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_corrected_compare_20261004T100713214963Z/role_indices.json": "7186b777b75119f113fc3dcc2fc4f9206180236fe1d8c40379ff3c0c96be5537",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/run_manifest.json": "7712b8f2e75c7d952b4009d389122b04e0fa17b52bac67d9cea8626a9ef821ce",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/run_summary.json": "12c5a55c98ef2f2d0a13c791c126cd2e3ecaafd6a8e9a69dba3c524d1e23d692",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/events.jsonl": "858ea439b729d865ef29de99f9520ce437d36081285aeed0f738f0b78f7c9e38",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/condensed_csr_recovery.npz": "9201ae2908fc4905ba4aa19e419561e1363d8038180b78333c37888f0668abb9",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/raw_lu.npz": "93a9ccd0d01426781e61dcb6e00268c1ef46f0721e3ce51ce151ba12670ba6ec",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e3_correction_20261004T100053131405Z/boundary_coordinate_csr.npz": "5564fef602d9afb23f8ad942cbb791df5ca4bef4266661df3a667714aec83f78",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/run_manifest.json": "cc4dee41d6acb6f602028e82fa4a9d725f1bcc16632cf4c452aeee40c8aaae1c",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/run_summary.json": "7d3f50ff089140cf83918bdeeab5eb49bd5ee9f63007787a8704f7fdbee8ba6a",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/events.jsonl": "173f5db10606fa251f0d4319d278625a587cfe6d13a04af1eaa45d2f231cc120",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/condensed_csr_recovery.npz": "913871276b76fe7a5955a9d0200c5fd856184cd9089c65fec20fe97a37d435f7",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/raw_lu.npz": "8135884f427e63b2ec88f645fbde84f557a601a263a2a8fff66002a86cc2766c",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_e4_correction_20261004T100339546057Z/boundary_coordinate_csr.npz": "21990e336cd0ae00e40830263f15c156ed406af0e0f3eb0348d8286afe74d03d",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T085709662813Z/run_manifest.json": "5b7c90687f67f2a9d5c02289b44f84210187c874ceed41df2d3f6096e9b60923",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T085709662813Z/run_summary.json": "e80e2c7bfa704a75ecea3bd27633e912ededd65605814de5a35ff4faec967d0b",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T085709662813Z/events.jsonl": "8c416701a17284d075e0870b05384f7e4932a5feb8339bbf38b143e81c147afa",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T085709662813Z/worker_failure.json": "7788a8b0b10c84c0cc28f78db36fdb094fb648b779dbf8819254d2ea36cdf5ae",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T085709662813Z/O3_surface_oracles.npz": "4585d4a3fb1ff14855cc27bc404a42b264287eb1ec358dff62782c5eed4e303a",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/run_manifest.json": "722dbfe11f4a3ce97f5c1762f70dd6ff5761379ee536985fff4344527cfd4077",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/run_summary.json": "5a5fe4faf5f98ec2dfeb035c79880dc44d901c094677994e2d9d28c6ba6384b4",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/events.jsonl": "4c39ef85aecbc0d9402470d8035fa260fb09d546fee203ba5b33a44a5a546c3f",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/qualification.json": "fceb682ab5397fe6a2bf25fe0dfad585d18f6ffed982cbba51a6ae7979165d4b",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/E3_blocks.npz": "f36b9b0f00a71c20844f4152b2364d4656f76b384d7bc2a70894380f0b4e32bb",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/E4_blocks.npz": "e032f939d0cd4d3237b8deee415a0bc1f01fb761396462cb58861399fb09a6eb",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/O3_blocks.npz": "0b6dbd6836d4e47e17fa9752d8c0a2896b418b3f77520164f5a3a1372aacadc8",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/result.json": "92935f0a759cb7842f10ba8c941f5f45da44f52c0c7b46b8bf12c4833cace7de",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_face_qualification_20261004T090031816219Z/O6_LOCAL_ONLY_blocks.npz": "165cc346a2fdbbd45d3ef059939ef59bf75810de3ff196f650a939b94a3f0bd5",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_frozen_port_audit_20261004T091048736313Z/run_manifest.json": "afa13740914c6bd35cc97f5dd152c83181f7f56deea729bd6679634355afbb1e",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_frozen_port_audit_20261004T091048736313Z/run_summary.json": "35da3a332700088950a6fe387438704c6da6097d6b532df931328af52bf79756",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_frozen_port_audit_20261004T091048736313Z/events.jsonl": "abbdcacc120a6de3f7077eba591d25aba0c23849de8f5bea8d9d53efeb9d21fa",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T091048736313Z/O3/surface_oracles.npz": "71e3c4b4807fb40097a6cdb5d89b14e76079c67de91c9a454d9aac84270eb9d2",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/run_manifest.json": "f8ff15ae947932aad0d038b9a8bfa1474efe690116f08412afe6aa473c8cf697",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/run_summary.json": "b04184099f9ebce55b9e2d4f1d1d684914d93cb71a607129fe41d1ddfd157c22",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/events.jsonl": "b775fb371687bede68d97ad75c6f1ce872fd7b3e5b7281a652b971dedacd012f",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/result.json": "e4b4dcbe46184c2683ae328e29387521ae5f892fe82cbef23dc700217dd3163c",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/role_indices.json": "1a827bc79ced2af6ae5e8688fadc1e3d6f7f5062bad58b13f959ba5ca44a6016",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/native.npz": "e55e7208e481d2f9399a4d5fb92dc1da05b8b9646e87fa7d5730ceb4c892f276",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/affine_state.npz": "05b04ac5c9a55f6985cf51476b7578e5bfc5e08fa115de6992401d06f29561af",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/identity.json": "c3270e86dd39c75c5cbe60dc842c6fb307533dba9e0fc130a8afc2df6baf6406",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/result.json": "22cf75371056e8f82d7582f86d689a20ad8e101095ef54012e7d7ed26a192194",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/O3/frozen_residual_terms.npz": "d4eca54aa5bc8f02cf235ff0ed0209d236dabcacddb4b53cbe300c932eb6c055",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/native.npz": "c3897bde734343b47588d3f90e8a897f3119e0b877de386b18de1c91516cd4ec",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/affine_state.npz": "48c723e370a344a93cd557456cc7703674e210bb57de0389339472f2c6225faf",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/identity.json": "3a82d35ae651d411664ec7ee280d8bc274d82f48954939c95cce987b915f73e1",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/result.json": "ce45fa9af43bbca8c0db5b644e9a2a5cf1fb85660eb5fd4514469f385b91d2ff",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E4/frozen_residual_terms.npz": "cb97958c4734245118472a6f9b1ca9af409b3207c2d791b9120948ec351b9458",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/native.npz": "f148f1001c620ea280a208b54ad3925e6c8dbb6ecee2ac905ec858c576c74b62",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/affine_state.npz": "e08e5990f281212f053dd5ae2f7fe48ba4175005f3e5ac033a264b16e0c5ca66",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/identity.json": "835353528f936dcf325984d68c2c5a55fffc601d26a380d54243092f2bbc242f",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/result.json": "e0df2a0c4c9cebf5bbe91f9ec55718de81595aa2e35bb1a9679de480862754cd",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_frozen_port_audit_20261004T094237270285Z/E3/frozen_residual_terms.npz": "dc6544622157bb2582174f91e4ddd6b8b657d05033c0a9d6aa65576c0410d6a6",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_saved_checker_20261004T113319163183Z/run_manifest.json": "626a56e2616a1def8b4c4a1cf56456b7538fd411abf8a4d3276a8b1ebdee82c8",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_saved_checker_20261004T113319163183Z/run_summary.json": "18109462ca63b74740010381339831ff1e315bb752377df9d62af5a35c54462b",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_saved_checker_20261004T113319163183Z/events.jsonl": "ddff761fa110736f0269d1859a1de6b575f6f31ac1a0e2f9a2564b62bf6debc5",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_target_local_face_20261004T113130542533Z/run_manifest.json": "910111fcac7ed68fe50a5f42cdb1ebdb3d381e62e78b2886f68a2d41285b598e",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_target_local_face_20261004T113130542533Z/run_summary.json": "c2b5549d5b8b545c21adfcac92a413360290da2afce9c94b9a842459e65379c7",
+      "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v22_target_local_face_20261004T113130542533Z/events.jsonl": "6afb45039b5e882239d136686648e45da65fc21ec5564eb22d19c622a87d0e01",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_target_local_face_20261004T113130542533Z/result.json": "86f5be3bee4090d15848862ca6535592ef637c85eb0b208d1b3a7774160c1887",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v22_target_local_face_20261004T113130542533Z/minimal_integration_package.json": "8869f29cf06dfbf3f7e13136fe2cebae9902a511bb839c7442ba9e241c1c7405",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_affine_saved_attempt2.json": "bb285d2f515106d3fce9615652d146bbda27a32a33bc1d3eb5a8476f4b007333",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_control_checks_attempt1.json": "de24b7519da12f5a9173ee78dc0540b9dc95dd9c1e4e5c0afecff2b679f19c36",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_corrected_compare_attempt1.json": "e8050d7481c9775ed3ab0ff2e6b51ca0b7f184dab26552b53324036ee96ac903",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_e3_correction_attempt1.json": "7e9c1ca58c2089806927c5df4bfcfb98229e9fdcc587c7f0601d538289cfe763",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_e4_correction_attempt1.json": "535e7bfd569c31553211d54b09ffc9ecbb073882944d236b0c719fdf4eebf5a2",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_frozen_port_audit_attempt2.json": "38b4634e13ee7631f9c7a5d4439a186ce94c552a2fdd4d02a1ec74c87f8b528d",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_saved_checker_attempt1.json": "2b265d21ac6e6f8e0548d5a9d33ac49d04fbb3bb884938340fe361ef56c6679b",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v22_target_local_face_attempt1.json": "10ea529b3e4a314720a11c333c132555bf85def24f60b46766165873dd86f57d",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/target_cost_gap_v21.json": "3074a9e8f58fb1964a42181e4bb6bc3fd375c344b334776826414f5c13e18c23",
+      "/tmp/task42_v22_light.py": "6d534ef4860795372f1d1db19f2e64a81cdf70485507bf3db979f53e4434a304",
+      "/tmp/task42_v22_collect.py": "1c76e16a71394d3477f96eb1466d3b06b18f30848beb6b243b6381c265c3dcec",
+      "/tmp/task42_v22_docdraft.py": "44cbaa719096800e83ed06b49adbe8cf46187818dd5e91785d5c88e26deee5a3",
+      "/tmp/task42_v22_document_checks.py": "67887c4235c8980ad5492541a4ba9afc3cd58c2b17152239ed3f4f3cb5ad4883",
+      "/tmp/task42_v22_finish_records.py": "41e7c51e6bfb6d60701d45c229802ce0755a1206e3e73261369a158575e4deff",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/README.md": "9cdfdbd86b528954bf4b88efa3984a9412416b80320d8a2ff04338dd698f61c3",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/summary.md": "e917dc382b76e087b9e69bbfdf4aa684508a14589f18b97ae6e6c07c00489737",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/test_summary.md": "c6121536b9c21db54841cf9c77b3fd2292307c77178723f0972c2d08f3cc0cb8",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/changed_files.md": "d99f96c3039d2c92fe8093ee6c4fc756dada1b4b491a40b2ab0894e5b77bf6c5",
+      "/home/fenics/Projects/NN-Lab-V2/docs/development_progress.md": "f9250dcf9fc30c0594bdc13cffa5a81c2ca30c71a4d44291c8a35632f8ef0399",
+      "/home/fenics/Projects/NN-Lab-V2/docs/development_model_registry.md": "640a5f76466f1943f86f896d1b2f084d903376348c7f0aab6d9a4c332d740451",
+      "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/document_checks.json": "926c140c5e0097bf9dcb0d3e9cc128ca11fd772626fc2720ec58e9a1264815c6",
+      "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/render_check_v22.json": "dddba80750c8517a57e24a85b5461c2c2882c658b80dc9019dc864e3738880cf",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/field_state.npz": "d95fb546834f09ea2d05209010b8c93a7d2066f9c947958e7b7af8512e82f1cf",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/native.npz": "5b153fe537ee38b7c2394923c5da2611cfadbb90e4dae5386732df797aa6cc37",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/identity.json": "b39c0707ddadb9b59d9090ff0b3bb11465990b2d5258a4196f6ce3ac0bcf99d8"
+    },
+    "binding_count": 313,
+    "binding_exceptions": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "expected": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "actual": null
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/fixed_phase_checker.py",
+        "expected": "0214790abe23cc261cd860440ca241d489f2441c3caf4f1d4d0eb64fca2ace7c",
+        "actual": "10ee1ec2d7bc5f7a1df1385e5fc0fa34cc72c53aea1eba402fb0d966f426e259"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/reliable_port_checker.py",
+        "expected": "00cd9818585b1f883a3f57f689bfcbb1c654c8128e965230011bb5fcbe52af39",
+        "actual": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_comparison_roles.py",
+        "expected": "c3606702df92c378217b8ef5226c2943a302932ed22f3f891a7546f72b99abc7",
+        "actual": "2ff16b984e3c821add6162b9b16cee29c6379beba6495a136f667b72644a413e"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_surface_saved_checker.py",
+        "expected": "0be0c25c5a2d1132a6c5dab817f382135d26bd65a218a51d8940ac92c77aecdf",
+        "actual": "82c8e75688ec19f5465aae2967d593288ba57555b270a465778d35c85bb2b37b"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/reliable_port_checker.py",
+        "expected": "ff7721317254da23dc85bfd7f26ad4e5ea7a4f88dd78577ca026ec5ff39ce733",
+        "actual": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reliable_ports.py",
+        "expected": "5b5ed74e9ca1d975fb772d806d8eec3ba367d2251f609d009116a533e87b50d3",
+        "actual": "8c40a953dd80105c9bc2d108fe3100d934d9ea9ce997a95e0b76c5e0602184bd"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_surface_saved_checker.py",
+        "expected": "0be0c25c5a2d1132a6c5dab817f382135d26bd65a218a51d8940ac92c77aecdf",
+        "actual": "82c8e75688ec19f5465aae2967d593288ba57555b270a465778d35c85bb2b37b"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/fixed_phase_checker.py",
+        "expected": "0214790abe23cc261cd860440ca241d489f2441c3caf4f1d4d0eb64fca2ace7c",
+        "actual": "10ee1ec2d7bc5f7a1df1385e5fc0fa34cc72c53aea1eba402fb0d966f426e259"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/reliable_port_checker.py",
+        "expected": "00cd9818585b1f883a3f57f689bfcbb1c654c8128e965230011bb5fcbe52af39",
+        "actual": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_comparison_roles.py",
+        "expected": "c3606702df92c378217b8ef5226c2943a302932ed22f3f891a7546f72b99abc7",
+        "actual": "2ff16b984e3c821add6162b9b16cee29c6379beba6495a136f667b72644a413e"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_surface_saved_checker.py",
+        "expected": "0be0c25c5a2d1132a6c5dab817f382135d26bd65a218a51d8940ac92c77aecdf",
+        "actual": "82c8e75688ec19f5465aae2967d593288ba57555b270a465778d35c85bb2b37b"
+      }
+    ],
+    "physics": [
+      {
+        "role": "old_E3",
+        "R": 0.07612658363647833,
+        "T": 0.9057668087268692,
+        "A_volume": 0.018106607640842695,
+        "closure": 4.190203739540266e-12,
+        "norms": [
+          6.242118729661892,
+          6.241551233371391,
+          0.8963409048667212,
+          0.8962472274187464
+        ]
+      },
+      {
+        "role": "new_E3",
+        "R": 0.07612658319173408,
+        "T": 0.9057668092670815,
+        "A_volume": 0.01810660754238611,
+        "closure": 1.2017054018542694e-12,
+        "norms": [
+          6.2421187306923915,
+          6.241551234401873,
+          0.8963408928354468,
+          0.8962472153883073
+        ]
+      },
+      {
+        "role": "old_E4",
+        "R": 0.07612713951357228,
+        "T": 0.9057668791043146,
+        "A_volume": 0.01810598138057355,
+        "closure": 1.5395462682477046e-12,
+        "norms": [
+          6.242114081143832,
+          6.241546591550253,
+          0.8963166074424131,
+          0.8962229614764483
+        ]
+      },
+      {
+        "role": "new_E4",
+        "R": 0.07612713950828143,
+        "T": 0.9057668791086486,
+        "A_volume": 0.01810598138063097,
+        "closure": 2.438937940496544e-12,
+        "norms": [
+          6.242114081160803,
+          6.2415465915672215,
+          0.8963166074487818,
+          0.8962229614828036
+        ]
+      }
+    ],
+    "csv_counts": {
+      "corrected_channels": 680,
+      "corrected_samples": 12,
+      "corrected_regions": 72,
+      "corrected_mode_errors": 4080
+    },
+    "pairs": {
+      "old_E3_vs_new_E3": {
+        "fields": [
+          6.38391252460864e-07,
+          7.470548197138183e-07,
+          4.4457572184337074e-06,
+          5.202561137250937e-06
+        ],
+        "qdrift": 2.4125443404185e-11,
+        "modes": {
+          "total_projection": {
+            "key": [
+              "bottom",
+              "7",
+              "0",
+              "p"
+            ],
+            "absolute": 1.6670380776005858e-09,
+            "denominator": 2.2913739814799145e-11,
+            "relative": 72.75277152810764,
+            "over_1e3": 261
+          },
+          "scattered_projection": {
+            "key": [
+              "bottom",
+              "7",
+              "0",
+              "p"
+            ],
+            "absolute": 1.666949201808732e-09,
+            "denominator": 2.2744694407171177e-11,
+            "relative": 73.28958446164744,
+            "over_1e3": 261
+          },
+          "outgoing_origin": {
+            "key": [
+              "bottom",
+              "7",
+              "0",
+              "p"
+            ],
+            "absolute": 1.667038077600586e-09,
+            "denominator": 2.291373981479915e-11,
+            "relative": 72.75277152810764,
+            "over_1e3": 261
+          },
+          "outgoing_boundary": {
+            "key": [
+              "top",
+              "2",
+              "-1",
+              "s"
+            ],
+            "absolute": 5.507229987525558e-09,
+            "denominator": 5.507229987525558e-09,
+            "relative": 1.0,
+            "over_1e3": 188
+          }
+        }
+      },
+      "old_E4_vs_new_E4": {
+        "fields": [
+          1.0325466296764974e-08,
+          2.8001413195457035e-08,
+          7.190845068562616e-08,
+          1.9500964893811114e-07
+        ],
+        "qdrift": 1.4833340248990298e-08,
+        "modes": {
+          "total_projection": {
+            "key": [
+              "top",
+              "0",
+              "-2",
+              "s"
+            ],
+            "absolute": 42253626770058.445,
+            "denominator": 2144693316039.7634,
+            "relative": 19.701477341329603,
+            "over_1e3": 225
+          },
+          "scattered_projection": {
+            "key": [
+              "bottom",
+              "5",
+              "2",
+              "p"
+            ],
+            "absolute": 2.7960396999831545e-10,
+            "denominator": 1.2873258869427912e-11,
+            "relative": 21.71975044037478,
+            "over_1e3": 223
+          },
+          "outgoing_origin": {
+            "key": [
+              "top",
+              "0",
+              "-2",
+              "s"
+            ],
+            "absolute": 42253626770058.445,
+            "denominator": 2144693316039.7632,
+            "relative": 19.701477341329603,
+            "over_1e3": 225
+          },
+          "outgoing_boundary": {
+            "key": [
+              "top",
+              "2",
+              "-1",
+              "s"
+            ],
+            "absolute": 1.8679923703859918e-10,
+            "denominator": 1.8679923703859918e-10,
+            "relative": 1.0,
+            "over_1e3": 178
+          }
+        }
+      },
+      "new_E3_vs_new_E4": {
+        "fields": [
+          0.00044814115800001313,
+          0.00044973356643235687,
+          0.003120937634055354,
+          0.003132069950701146
+        ],
+        "qdrift": 4.674148258876492e-13,
+        "modes": {
+          "total_projection": {
+            "key": [
+              "top",
+              "6",
+              "0",
+              "s"
+            ],
+            "absolute": 1.2095718262856922e+58,
+            "denominator": 2.5214678899870414e+55,
+            "relative": 479.70939114037594,
+            "over_1e3": 338
+          },
+          "scattered_projection": {
+            "key": [
+              "top",
+              "6",
+              "0",
+              "s"
+            ],
+            "absolute": 1.2095718262397571e+58,
+            "denominator": 2.521467092749363e+55,
+            "relative": 479.70954279671423,
+            "over_1e3": 338
+          },
+          "outgoing_origin": {
+            "key": [
+              "top",
+              "6",
+              "0",
+              "s"
+            ],
+            "absolute": 1.209571826285692e+58,
+            "denominator": 2.5214678899870414e+55,
+            "relative": 479.70939114037594,
+            "over_1e3": 338
+          },
+          "outgoing_boundary": {
+            "key": [
+              "top",
+              "6",
+              "0",
+              "s"
+            ],
+            "absolute": 2.8411813879595485e-06,
+            "denominator": 5.922713710493405e-09,
+            "relative": 479.709391140376,
+            "over_1e3": 280
+          }
+        }
+      }
+    },
+    "attribution": {
+      "total_E": {
+        "terms": [
+          7.840781371959107e-06,
+          1.5879539543578263e-11,
+          4.154155508342245e-15,
+          -1.5640042687665174e-08,
+          -8.040376332863714e-14,
+          2.4277937264799694e-15
+        ],
+        "closure": 8.271806125530277e-25,
+        "relative_norm_change": -0.0009968412300716241,
+        "triangle_upper": 0.001446130342322814
+      },
+      "total_curl": {
+        "terms": [
+          7.895075490042678e-06,
+          2.1741526021112828e-11,
+          3.054529570507439e-14,
+          -1.5662781904838366e-08,
+          -1.8956765546818778e-13,
+          2.1172622153139126e-14
+        ],
+        "closure": 8.271806125530277e-25,
+        "relative_norm_change": -0.0009910565603208695,
+        "triangle_upper": 0.0017216608260689694
+      },
+      "scattered_E": {
+        "terms": [
+          7.840781369250084e-06,
+          1.5879539543564973e-11,
+          4.1541555085025744e-15,
+          -1.5640042687348082e-08,
+          -8.040375066457232e-14,
+          2.427793675531462e-15
+        ],
+        "closure": 6.617444900424222e-24,
+        "relative_norm_change": -0.000996841230395163,
+        "triangle_upper": 0.0014461303425724848
+      },
+      "scattered_curl": {
+        "terms": [
+          7.895075479429223e-06,
+          2.174152602121268e-11,
+          3.0545295707294544e-14,
+          -1.5662781904393442e-08,
+          -1.8956770864341957e-13,
+          2.117262236496613e-14
+        ],
+        "closure": 5.790264287871194e-24,
+        "relative_norm_change": -0.000991056561628967,
+        "triangle_upper": 0.0017216608272322665
+      }
+    },
+    "residuals": {
+      "O3": {
+        "native": 0.012671025490517525,
+        "identity_absolute": 5.719328317136727e-17,
+        "identity_scaled": 3.245052080795972e-16
+      },
+      "E3": {
+        "native": 0.004417604162762992,
+        "identity_absolute": 2.4676506494498683e-20,
+        "identity_scaled": 7.75301536810601e-17
+      },
+      "E4": {
+        "native": 0.00027550316874396733,
+        "identity_absolute": 1.7139356534295358e-21,
+        "identity_scaled": 6.476615367210994e-17
+      }
+    },
+    "conditioning": {
+      "O3": {
+        "frozen_scattered": {
+          "analytic_vs_oracle1": 3.133267541011916e-08,
+          "oracle1_vs_oracle2": 2.3479333632519416e-08,
+          "boundary_scaled_oracle_disagreement": 2.2783456122183664e-15,
+          "worst_index": 158,
+          "worst_relative": 0.3200186502614753,
+          "worst_condition": 520587225160926.2,
+          "condition_median": 12556269353.228899,
+          "condition_max": 8005038355267270.0,
+          "binary64_u_condition_max": 0.8887377895025217,
+          "oracle_perturbation_bound_global": 1.1403805163380891e-06,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "frozen_background": {
+          "analytic_vs_oracle1": 3.191329479827761e-08,
+          "oracle1_vs_oracle2": 2.3917616836868045e-08,
+          "boundary_scaled_oracle_disagreement": 2.263664410909152e-15,
+          "worst_index": 110,
+          "worst_relative": 23.483208622205424,
+          "worst_condition": 1.3969348262350274e+17,
+          "condition_median": 1.2433939386083128e+16,
+          "condition_max": 3.1584953616955616e+17,
+          "binary64_u_condition_max": 35.06634273726174,
+          "oracle_perturbation_bound_global": 1.1615790538296368e-06,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "frozen_total": {
+          "analytic_vs_oracle1": 2.7688279113782173e-08,
+          "oracle1_vs_oracle2": 2.0722911613926484e-08,
+          "boundary_scaled_oracle_disagreement": 2.5122882979151128e-15,
+          "worst_index": 158,
+          "worst_relative": 0.07179494833605736,
+          "worst_condition": 117040413150987.53,
+          "condition_median": 296536571.5704683,
+          "condition_max": 761467474413998.4,
+          "binary64_u_condition_max": 0.08453987225975883,
+          "oracle_perturbation_bound_global": 1.002802507348703e-06,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        }
+      },
+      "E3": {
+        "frozen_scattered": {
+          "analytic_vs_oracle1": 4.188206108081052e-08,
+          "oracle1_vs_oracle2": 8.573259724476596e-08,
+          "boundary_scaled_oracle_disagreement": 1.8225036431682907e-15,
+          "worst_index": 118,
+          "worst_relative": 0.4287993843307219,
+          "worst_condition": 1226723703615487.2,
+          "condition_median": 940055870.0766481,
+          "condition_max": 5121997452455410.0,
+          "binary64_u_condition_max": 0.5686559503787392,
+          "oracle_perturbation_bound_global": 2.6126952493207875e-06,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "frozen_background": {
+          "analytic_vs_oracle1": 0.7732447655896876,
+          "oracle1_vs_oracle2": 1.9582095252434673,
+          "boundary_scaled_oracle_disagreement": 1.8230237900406826e-15,
+          "worst_index": 61,
+          "worst_relative": 16.405686408476484,
+          "worst_condition": 1.1404687915283154e+17,
+          "condition_median": 1.3015718936948252e+16,
+          "condition_max": 2.4017305305266464e+17,
+          "binary64_u_condition_max": 26.664565339358752,
+          "oracle_perturbation_bound_global": 48.222593061701474,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "frozen_total": {
+          "analytic_vs_oracle1": 2.644893701854371e-07,
+          "oracle1_vs_oracle2": 5.408954788638611e-07,
+          "boundary_scaled_oracle_disagreement": 1.822742028875648e-15,
+          "worst_index": 140,
+          "worst_relative": 6.9742821295574045,
+          "worst_condition": 1.0110964035865579e+17,
+          "condition_median": 3000981610.9305844,
+          "condition_max": 1.0110964035865579e+17,
+          "binary64_u_condition_max": 11.225425073774863,
+          "oracle_perturbation_bound_global": 1.6492073805598718e-05,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "corrected_scattered": {
+          "analytic_vs_oracle1": 5.86456730222379e-08,
+          "oracle1_vs_oracle2": 1.2002692479119607e-07,
+          "boundary_scaled_oracle_disagreement": 1.8224712135786237e-15,
+          "worst_index": 118,
+          "worst_relative": 0.37308634514105354,
+          "worst_condition": 1067403948879955.5,
+          "condition_median": 1879828820.3868065,
+          "condition_max": 3409468771316878.5,
+          "binary64_u_condition_max": 0.3785270731656441,
+          "oracle_perturbation_bound_global": 3.658030260223441e-06,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "corrected_background": {
+          "analytic_vs_oracle1": 0.7732447655896876,
+          "oracle1_vs_oracle2": 1.9582095252434673,
+          "boundary_scaled_oracle_disagreement": 1.8230237900406826e-15,
+          "worst_index": 61,
+          "worst_relative": 16.405686408476484,
+          "worst_condition": 1.1404687915283154e+17,
+          "condition_median": 1.3015718936948252e+16,
+          "condition_max": 2.4017305305266464e+17,
+          "binary64_u_condition_max": 26.664565339358752,
+          "oracle_perturbation_bound_global": 48.222593061701474,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "corrected_total": {
+          "analytic_vs_oracle1": 3.702740372165341e-07,
+          "oracle1_vs_oracle2": 7.57321581776576e-07,
+          "boundary_scaled_oracle_disagreement": 1.822728403115469e-15,
+          "worst_index": 118,
+          "worst_relative": 5.708722387318698,
+          "worst_condition": 1.6326409361453222e+16,
+          "condition_median": 5930654845.2789345,
+          "condition_max": 1.6326409361453222e+16,
+          "binary64_u_condition_max": 1.8125955582541067,
+          "oracle_perturbation_bound_global": 2.309056517916748e-05,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        }
+      },
+      "E4": {
+        "frozen_scattered": {
+          "analytic_vs_oracle1": 4.076157622075594e-07,
+          "oracle1_vs_oracle2": 5.262490112080006e-07,
+          "boundary_scaled_oracle_disagreement": 2.208122560110914e-15,
+          "worst_index": 160,
+          "worst_relative": 0.18192158648495366,
+          "worst_condition": 1412805752320071.0,
+          "condition_median": 3907227061.544328,
+          "condition_max": 3575366106469516.5,
+          "binary64_u_condition_max": 0.3969453772866856,
+          "oracle_perturbation_bound_global": 2.6011176300988733e-05,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "frozen_background": {
+          "analytic_vs_oracle1": 0.17694204348637727,
+          "oracle1_vs_oracle2": 0.26114046721666273,
+          "boundary_scaled_oracle_disagreement": 2.22993182404928e-15,
+          "worst_index": 98,
+          "worst_relative": 1.8100609697907912,
+          "worst_condition": 2.6143433209215588e+16,
+          "condition_median": 4158830260064270.0,
+          "condition_max": 7.630222946158694e+16,
+          "binary64_u_condition_max": 8.471249197848579,
+          "oracle_perturbation_bound_global": 11.294481629770383,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "frozen_total": {
+          "analytic_vs_oracle1": 2.5726745089170277e-06,
+          "oracle1_vs_oracle2": 3.321213316576189e-06,
+          "boundary_scaled_oracle_disagreement": 2.2178043411628617e-15,
+          "worst_index": 118,
+          "worst_relative": 0.6603979130858296,
+          "worst_condition": 4308637819950220.0,
+          "condition_median": 7671541078.989247,
+          "condition_max": 1.3538818008299244e+16,
+          "binary64_u_condition_max": 1.5031107479023524,
+          "oracle_perturbation_bound_global": 0.00016421150823605956,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "corrected_scattered": {
+          "analytic_vs_oracle1": 7.326414518041785e-07,
+          "oracle1_vs_oracle2": 9.457045266832733e-07,
+          "boundary_scaled_oracle_disagreement": 2.208189844702459e-15,
+          "worst_index": 130,
+          "worst_relative": 0.16745110007073963,
+          "worst_condition": 2792449552105090.5,
+          "condition_median": 5564214302.72254,
+          "condition_max": 2792449552105090.5,
+          "binary64_u_condition_max": 0.3100241787851277,
+          "oracle_perturbation_bound_global": 4.674277960033277e-05,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "corrected_background": {
+          "analytic_vs_oracle1": 0.17694204348637727,
+          "oracle1_vs_oracle2": 0.26114046721666273,
+          "boundary_scaled_oracle_disagreement": 2.22993182404928e-15,
+          "worst_index": 98,
+          "worst_relative": 1.8100609697907912,
+          "worst_condition": 2.6143433209215588e+16,
+          "condition_median": 4158830260064270.0,
+          "condition_max": 7.630222946158694e+16,
+          "binary64_u_condition_max": 8.471249197848579,
+          "oracle_perturbation_bound_global": 11.294481629770383,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        },
+        "corrected_total": {
+          "analytic_vs_oracle1": 4.623683220182236e-06,
+          "oracle1_vs_oracle2": 5.967715556819008e-06,
+          "boundary_scaled_oracle_disagreement": 2.217796612093527e-15,
+          "worst_index": 160,
+          "worst_relative": 1.8452122337008057,
+          "worst_condition": 1.4328817395874586e+16,
+          "condition_median": 8146872606.961178,
+          "condition_max": 2.2711583504488724e+16,
+          "binary64_u_condition_max": 2.5214922932380284,
+          "oracle_perturbation_bound_global": 0.0002950924609115699,
+          "H_min": 5.815941294018401e-168,
+          "H_max": 3.360768175582991
+        }
+      }
+    },
+    "conditioning_arithmetic": "extended complex accumulation of saved binary64 matrices; diagnostic only, no physical error certificate",
+    "FE_solve_training": 0,
+    "seconds": 9.870599993038923
+  },
+  "independent_precision_and_equations": {
+    "schema": "review_v22.precision_and_equation_audit.v1",
+    "resolved_bindings": [
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+          "expected": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+          "actual": null
+        },
+        "historical_blob_matches": [],
+        "status": "DOCUMENTED_MISSING_INPUT"
+      },
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/fixed_phase_checker.py",
+          "expected": "0214790abe23cc261cd860440ca241d489f2441c3caf4f1d4d0eb64fca2ace7c",
+          "actual": "10ee1ec2d7bc5f7a1df1385e5fc0fa34cc72c53aea1eba402fb0d966f426e259"
+        },
+        "historical_blob_matches": [
+          "c3844846435764cd0ca7a4351a1ba8374373b6ae"
+        ],
+        "status": "HISTORICAL_SOURCE_RESOLVED"
+      },
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/reliable_port_checker.py",
+          "expected": "00cd9818585b1f883a3f57f689bfcbb1c654c8128e965230011bb5fcbe52af39",
+          "actual": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb"
+        },
+        "historical_blob_matches": [
+          "c3844846435764cd0ca7a4351a1ba8374373b6ae"
+        ],
+        "status": "HISTORICAL_SOURCE_RESOLVED"
+      },
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_comparison_roles.py",
+          "expected": "c3606702df92c378217b8ef5226c2943a302932ed22f3f891a7546f72b99abc7",
+          "actual": "2ff16b984e3c821add6162b9b16cee29c6379beba6495a136f667b72644a413e"
+        },
+        "historical_blob_matches": [
+          "c3844846435764cd0ca7a4351a1ba8374373b6ae"
+        ],
+        "status": "HISTORICAL_SOURCE_RESOLVED"
+      },
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_reliable_surface_saved_checker.py",
+          "expected": "0be0c25c5a2d1132a6c5dab817f382135d26bd65a218a51d8940ac92c77aecdf",
+          "actual": "82c8e75688ec19f5465aae2967d593288ba57555b270a465778d35c85bb2b37b"
+        },
+        "historical_blob_matches": [
+          "c3844846435764cd0ca7a4351a1ba8374373b6ae",
+          "ce358dff94aef86e14d3246be9f61a8e403f53ee"
+        ],
+        "status": "HISTORICAL_SOURCE_RESOLVED"
+      },
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/reliable_port_checker.py",
+          "expected": "ff7721317254da23dc85bfd7f26ad4e5ea7a4f88dd78577ca026ec5ff39ce733",
+          "actual": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb"
+        },
+        "historical_blob_matches": [
+          "ce358dff94aef86e14d3246be9f61a8e403f53ee"
+        ],
+        "status": "HISTORICAL_SOURCE_RESOLVED"
+      },
+      {
+        "exception": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/src/solvers/fixed_phase_reliable_ports.py",
+          "expected": "5b5ed74e9ca1d975fb772d806d8eec3ba367d2251f609d009116a533e87b50d3",
+          "actual": "8c40a953dd80105c9bc2d108fe3100d934d9ea9ce997a95e0b76c5e0602184bd"
+        },
+        "historical_blob_matches": [
+          "ce358dff94aef86e14d3246be9f61a8e403f53ee"
+        ],
+        "status": "HISTORICAL_SOURCE_RESOLVED"
+      }
+    ],
+    "equations": {
+      "E3": {
+        "native": 6.291539266691261e-11,
+        "augmented": 6.291464103930558e-11
+      },
+      "E4": {
+        "native": 2.9613895021170664e-10,
+        "augmented": 2.9613919136130564e-10
+      }
+    },
+    "decimal110_selected_rows": {
+      "E3": {
+        "61": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 0.005851163130297074,
+            "oracle1_vs_oracle2_absolute": 0.14195635446354096,
+            "denominator": 24.261219744241448,
+            "analytic_vs_oracle1": 0.01755858600609072,
+            "oracle2": [
+              -3.22370210854534,
+              -24.046091744683405
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 1.0969960767425584,
+            "oracle1_vs_oracle2_absolute": 0.7685926634933771,
+            "denominator": 0.700633921841955,
+            "analytic_vs_oracle1": 16.353900954201137,
+            "oracle2": [
+              -0.6971654347607056,
+              -0.06962936887948376
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 0.03667922692166261,
+            "oracle1_vs_oracle2_absolute": 0.8961608212566556,
+            "denominator": 24.43238029990721,
+            "analytic_vs_oracle1": 0.11023061908475479,
+            "oracle2": [
+              -3.9208675433060454,
+              -24.11572111356289
+            ]
+          }
+        },
+        "118": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 0.13008562939986154,
+            "oracle1_vs_oracle2_absolute": 6.599296969191631e+31,
+            "denominator": 5.073040734504571e+32,
+            "analytic_vs_oracle1": 0.3731258609551676,
+            "oracle2": [
+              3.949537276771119e+32,
+              -3.1838494928840543e+32
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 2.506245887427061,
+            "oracle1_vs_oracle2_absolute": 3.570603189292263e+32,
+            "denominator": 1.424681914573786e+32,
+            "analytic_vs_oracle1": 3.4369189248683503,
+            "oracle2": [
+              1.3318124049546405e+32,
+              5.059587687969891e+31
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 0.703136975446032,
+            "oracle1_vs_oracle2_absolute": 4.163601313565129e+32,
+            "denominator": 5.9214654597334544e+32,
+            "analytic_vs_oracle1": 5.706680298223638,
+            "oracle2": [
+              5.28134968172576e+32,
+              -2.677890724087065e+32
+            ]
+          }
+        },
+        "162": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 1.415161711239438e-11,
+            "oracle1_vs_oracle2_absolute": 1.8340744065340408e+62,
+            "denominator": 1.296017544827232e+73,
+            "analytic_vs_oracle1": 5.867027951313751e-11,
+            "oracle2": [
+              -1.7487944332247215e+72,
+              -1.2841645754354185e+73
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.35013876872930877,
+            "oracle1_vs_oracle2_absolute": 9.95298111370094e+62,
+            "denominator": 2.842581856851036e+63,
+            "analytic_vs_oracle1": 2.033918423968626,
+            "oracle2": [
+              2.3069707976241605e+63,
+              -1.660770108054702e+63
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 8.94307845675014e-11,
+            "oracle1_vs_oracle2_absolute": 1.159038658590789e+63,
+            "denominator": 1.2960175449606606e+73,
+            "analytic_vs_oracle1": 3.7157503868470564e-10,
+            "oracle2": [
+              -1.7487944309177509e+72,
+              -1.2841645756014954e+73
+            ]
+          }
+        },
+        "163": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 6.042677615611332e-12,
+            "oracle1_vs_oracle2_absolute": 2.2844395175682335e+62,
+            "denominator": 3.7805086799043455e+73,
+            "analytic_vs_oracle1": 9.866223013842286e-12,
+            "oracle2": [
+              7.14916679217964e+72,
+              3.7122957884048053e+73
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 1.737393320216981,
+            "oracle1_vs_oracle2_absolute": 1.2331455425373258e+63,
+            "denominator": 7.09767631881605e+62,
+            "analytic_vs_oracle1": 1.9512449114121024,
+            "oracle2": [
+              -8.697335638790719e+61,
+              7.044187153571686e+62
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 3.80481458912403e-11,
+            "oracle1_vs_oracle2_absolute": 1.4384134579867007e+63,
+            "denominator": 3.780508679971872e+73,
+            "analytic_vs_oracle1": 6.240564044352174e-11,
+            "oracle2": [
+              7.149166792092667e+72,
+              3.7122957884752476e+73
+            ]
+          }
+        },
+        "167": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 6.573152947230629e-12,
+            "oracle1_vs_oracle2_absolute": 2.484986165519723e+62,
+            "denominator": 3.7805086622344397e+73,
+            "analytic_vs_oracle1": 2.5061825134821396e-12,
+            "oracle2": [
+              -7.149166684733695e+72,
+              -3.71229577247942e+73
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 1.7423187657249881,
+            "oracle1_vs_oracle2_absolute": 1.3456934565200484e+63,
+            "denominator": 7.723577814763984e+62,
+            "analytic_vs_oracle1": 0.7617001520314086,
+            "oracle2": [
+              -4.295725807637557e+62,
+              6.418753309351517e+62
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 4.150727190687586e-11,
+            "oracle1_vs_oracle2_absolute": 1.5691860098738538e+63,
+            "denominator": 3.780508662179534e+73,
+            "analytic_vs_oracle1": 1.5960629116433342e-11,
+            "oracle2": [
+              -7.149166685163268e+72,
+              -3.712295772415232e+73
+            ]
+          }
+        }
+      },
+      "E4": {
+        "98": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 0.006115013628446487,
+            "oracle1_vs_oracle2_absolute": 3.220003438331369e+17,
+            "denominator": 5.265733870734492e+19,
+            "analytic_vs_oracle1": 0.02672485948095019,
+            "oracle2": [
+              -3.4808596558028853e+19,
+              -3.951147840059173e+19
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.294189771393391,
+            "oracle1_vs_oracle2_absolute": 1.7436782414543992e+18,
+            "denominator": 5.927052572887554e+18,
+            "analytic_vs_oracle1": 1.8103205793220536,
+            "oracle2": [
+              4.0380695073747886e+18,
+              4.338657264106362e+18
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 0.043504831910353384,
+            "oracle1_vs_oracle2_absolute": 2.0331017177255311e+18,
+            "denominator": 4.673277952009944e+19,
+            "analytic_vs_oracle1": 0.1832763063986203,
+            "oracle2": [
+              -3.0770527050654065e+19,
+              -3.517282113648537e+19
+            ]
+          }
+        },
+        "130": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 0.18999820368497075,
+            "oracle1_vs_oracle2_absolute": 6.24839675526636e+45,
+            "denominator": 3.288660963146054e+46,
+            "analytic_vs_oracle1": 0.16739713416366875,
+            "oracle2": [
+              9.007267032678444e+45,
+              -3.162907260186579e+46
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.5102616455732776,
+            "oracle1_vs_oracle2_absolute": 3.3827508633939046e+46,
+            "denominator": 6.629443723118544e+46,
+            "analytic_vs_oracle1": 0.5635534548692648,
+            "oracle2": [
+              6.451237038484233e+46,
+              1.5267824832912705e+46
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 0.5236900395335633,
+            "oracle1_vs_oracle2_absolute": 3.9443378144965057e+46,
+            "denominator": 7.531817519404459e+46,
+            "analytic_vs_oracle1": 0.7484360148623832,
+            "oracle2": [
+              7.351963741752077e+46,
+              -1.6361247768953084e+46
+            ]
+          }
+        },
+        "160": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 0.06303496880303221,
+            "oracle1_vs_oracle2_absolute": 6.862216633348956e+66,
+            "denominator": 1.0886364764915786e+68,
+            "analytic_vs_oracle1": 0.049414395180071236,
+            "oracle2": [
+              -2.152986034986781e+67,
+              1.0671344288699144e+68
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.46821619407033466,
+            "oracle1_vs_oracle2_absolute": 3.713497849350146e+67,
+            "denominator": 7.93116063984816e+67,
+            "analytic_vs_oracle1": 0.2600465627492332,
+            "oracle2": [
+              -2.057422951904845e+67,
+              -7.659655337680138e+67
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 0.8364880072476748,
+            "oracle1_vs_oracle2_absolute": 4.3302144454214e+67,
+            "denominator": 5.176660523405773e+67,
+            "analytic_vs_oracle1": 1.8455038537570605,
+            "oracle2": [
+              -4.2104089868916263e+67,
+              3.0116889510190054e+67
+            ]
+          }
+        },
+        "163": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 2.604635634216569e-11,
+            "oracle1_vs_oracle2_absolute": 1.7018064496077888e+62,
+            "denominator": 6.533760143843167e+72,
+            "analytic_vs_oracle1": 2.4017819846227286e-11,
+            "oracle2": [
+              3.813862225806671e+72,
+              -5.3051368068918326e+72
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.34070291796981766,
+            "oracle1_vs_oracle2_absolute": 9.175602084866523e+62,
+            "denominator": 2.693138685028631e+63,
+            "analytic_vs_oracle1": 0.479231626774613,
+            "oracle2": [
+              1.4374618370172978e+63,
+              2.2774326431129856e+63
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 1.6382908178893033e-10,
+            "oracle1_vs_oracle2_absolute": 1.0704199248294502e+63,
+            "denominator": 6.5337601428330575e+72,
+            "analytic_vs_oracle1": 1.5183857550360144e-10,
+            "oracle2": [
+              3.813862227244133e+72,
+              -5.3051368046144e+72
+            ]
+          }
+        },
+        "166": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 4.379418517803526e-10,
+            "oracle1_vs_oracle2_absolute": 7.4005732968335675e+62,
+            "denominator": 1.6898529489127898e+72,
+            "analytic_vs_oracle1": 6.323411218428617e-10,
+            "oracle2": [
+              -9.14946898672155e+71,
+              1.4207305027905389e+72
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.1690659729434765,
+            "oracle1_vs_oracle2_absolute": 3.9936641960099586e+63,
+            "denominator": 2.3621927739091252e+64,
+            "analytic_vs_oracle1": 0.20930900641171166,
+            "oracle2": [
+              2.183791110339175e+64,
+              -9.005615401026632e+63
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 2.757182054730452e-09,
+            "oracle1_vs_oracle2_absolute": 4.659232172399508e+63,
+            "denominator": 1.6898529295175627e+72,
+            "analytic_vs_oracle1": 3.988539583329381e-09,
+            "oracle2": [
+              -9.149468768342437e+71,
+              1.4207304937849234e+72
+            ]
+          }
+        },
+        "167": {
+          "scattered": {
+            "oracle1_vs_oracle2_relative": 2.7385505395527123e-11,
+            "oracle1_vs_oracle2_absolute": 1.789303238968487e+62,
+            "denominator": 6.533760152042817e+72,
+            "analytic_vs_oracle1": 8.862352026267925e-12,
+            "oracle2": [
+              -3.813862123405826e+72,
+              5.305136890606404e+72
+            ]
+          },
+          "background": {
+            "oracle1_vs_oracle2_relative": 0.162415296834656,
+            "oracle1_vs_oracle2_absolute": 9.686113805999702e+62,
+            "denominator": 5.963794048205003e+63,
+            "analytic_vs_oracle1": 0.05580824025095769,
+            "oracle2": [
+              2.9563724453837972e+63,
+              5.1794499141878805e+63
+            ]
+          },
+          "total": {
+            "oracle1_vs_oracle2_relative": 1.728510364438914e-10,
+            "oracle1_vs_oracle2_absolute": 1.1293672145850364e+63,
+            "denominator": 6.533760154522629e+72,
+            "analytic_vs_oracle1": 5.5554342268637693e-11,
+            "oracle2": [
+              -3.813862120449453e+72,
+              5.305136895785854e+72
+            ]
+          }
+        }
+      }
+    },
+    "scalar_moments": [
+      {
+        "y_segments": 4,
+        "mode_n": 35,
+        "half_phase": 27.48893571891069,
+        "polynomial_degrees": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "rules": {
+          "30": {
+            "points": 16,
+            "absolute": [
+              0.06794468513712258,
+              0.04507216756790125,
+              0.07151425493456956,
+              0.09309705434461146,
+              0.12562377547407522,
+              0.15801224029908617,
+              0.1852635590243692
+            ],
+            "max_absolute": 0.1852635590243692,
+            "worst_degree": 6
+          },
+          "60": {
+            "points": 31,
+            "absolute": [
+              3.3029136121466215e-15,
+              3.05311344092397e-15,
+              3.733127439358331e-15,
+              7.258083075313068e-15,
+              1.1889795495271603e-14,
+              4.816980176204813e-14,
+              1.8425105204632195e-13
+            ],
+            "max_absolute": 1.8425105204632195e-13,
+            "worst_degree": 6
+          },
+          "126": {
+            "points": 64,
+            "absolute": [
+              1.5301008426393776e-16,
+              1.2212761278973434e-15,
+              4.857349639974342e-16,
+              9.020628794966343e-16,
+              1.0062128905107051e-15,
+              2.915500078908944e-16,
+              1.4752053181420182e-15
+            ],
+            "max_absolute": 1.4752053181420182e-15,
+            "worst_degree": 6
+          }
+        },
+        "scope": "one-dimensional scalar polynomial moment witness; not all AUTO keys or assembled FE"
+      },
+      {
+        "y_segments": 36,
+        "mode_n": 35,
+        "half_phase": 3.0543261909900767,
+        "polynomial_degrees": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "rules": {
+          "30": {
+            "points": 16,
+            "absolute": [
+              7.216449660063518e-16,
+              1.2412670766236366e-16,
+              3.3335590258932494e-16,
+              3.8882579728510553e-16,
+              1.8049931143190137e-16,
+              6.331146576060242e-17,
+              1.3364409184486247e-16
+            ],
+            "max_absolute": 7.216449660063518e-16,
+            "worst_degree": 0
+          },
+          "60": {
+            "points": 31,
+            "absolute": [
+              4.246927276668484e-15,
+              9.992462726739944e-16,
+              2.9976123308660566e-15,
+              9.4423510177025e-16,
+              4.371503207863437e-15,
+              3.122502256758253e-16,
+              3.892719819811037e-15
+            ],
+            "max_absolute": 4.371503207863437e-15,
+            "worst_degree": 4
+          },
+          "126": {
+            "points": 64,
+            "absolute": [
+              1.5593465895776148e-16,
+              2.336924281732948e-16,
+              1.1155044185999685e-16,
+              6.938893903907228e-18,
+              2.640779103939079e-16,
+              8.341595327188587e-17,
+              4.822711909412859e-16
+            ],
+            "max_absolute": 4.822711909412859e-16,
+            "worst_degree": 6
+          }
+        },
+        "scope": "one-dimensional scalar polynomial moment witness; not all AUTO keys or assembled FE"
+      }
+    ],
+    "seconds": 2.4519761740230024,
+    "FE_solve_training": 0
+  },
+  "test_receipts_independently_parsed": [
+    {
+      "junit": {
+        "path": "tmp/task42extra/v22/pre_correction_tests.xml",
+        "sha256": "8ff4cbfb650019887a8e3eb59488eb6f932b165162bf5d40afa027717199d170",
+        "bytes": 6517
+      },
+      "totals": {
+        "tests": 47,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "scope": "final V22 opt-in code, raw/checker and exact-zero RHS; no full pytest",
+      "Ruff_recorded": "PASS",
+      "compileall_recorded": "PASS"
+    },
+    {
+      "junit": {
+        "path": "tmp/task42extra/v22/final_checker_tests.xml",
+        "sha256": "f8e417ab479d6b8ededdea51ec6ade37e22401d9665de2ecd86777f35b2b3b69",
+        "bytes": 7611
+      },
+      "totals": {
+        "tests": 54,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "scope": "final V22 opt-in code, raw/checker and exact-zero RHS; no full pytest",
+      "Ruff_recorded": "PASS",
+      "compileall_recorded": "PASS"
+    }
+  ],
+  "reviewer_checks": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v22_raw_audit_20261004T122742756766Z/summary.json",
+        "sha256": "c491189df942836aa1fdb1edffd651ac0f915d097978240566aa854113b1024e",
+        "bytes": 1900
+      },
+      "measurements": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 662523904,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2124063162368,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2124063162368,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 23,
+        "elapsed_seconds": 11.138154643005691,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/checks/review_v22_precision_audit_20261004T122959694752Z/summary.json",
+        "sha256": "7df39b9b63c07b2e9fe4bd2aa5514f3db5c7884ba85a30a0c7831328ad0fc027",
+        "bytes": 1898
+      },
+      "measurements": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 336216064,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2123625037824,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2123625037824,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 9,
+        "elapsed_seconds": 4.070479547022842,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    }
+  ],
+  "scripts": {
+    "review_v22_raw_audit": {
+      "binding": {
+        "path": "tmp/task42extra/review_v22_raw_audit.py",
+        "sha256": "3caa1f417d45d536c86b7ded5176210c4fcb629f0a48ca3a86637828b3ac68c9",
+        "bytes": 9345
+      },
+      "source": "\"\"\"Read-only independent V22 audit. No FE or producer/checker imports.\"\"\"\nimport csv, gc, hashlib, json, math, pathlib, time\nimport numpy as np\nfrom scipy import sparse\nR=pathlib.Path('/home/fenics/Projects/NN-Lab-V2'); T=R/'docs/task042extra_feinn_5nm/outcomes/records'; A=R/'benchmarks/artifacts/task42extra'\nt0=time.monotonic(); checked={}; exceptions=[]\ndef sha(p):\n h=hashlib.sha256()\n with p.open('rb') as f:\n  for b in iter(lambda:f.read(4*1024*1024),b''): h.update(b)\n return h.hexdigest()\ndef bind(b):\n p=pathlib.Path(b['path']);p=p if p.is_absolute() else R/p\n if str(p) not in checked: checked[str(p)]=sha(p) if p.is_file() else None\n if checked[str(p)]!=b['sha256']: exceptions.append(dict(path=str(p),expected=b['sha256'],actual=checked[str(p)]))\n return p\ndef walk(o):\n if isinstance(o,dict):\n  if isinstance(o.get('path'),str) and isinstance(o.get('sha256'),str): bind(o)\n  for v in o.values(): walk(v)\n elif isinstance(o,list):\n  for v in o: walk(v)\ndef load(p): return json.loads(pathlib.Path(p).read_text())\ndef index(stage): return load(sorted(A.glob('index_'+stage+'_attempt*.json'))[-1])\ndef npz(p):\n with np.load(p,allow_pickle=False) as z:return {k:z[k] for k in z.files}\ndef norm(x):return np.sqrt(np.sum(abs(x)**2,dtype=np.longdouble))\nfor p in sorted(T.glob('*_v22.json')):walk(load(p))\nidx=index('v22_corrected_compare'); roles=load(bind(idx['files']['role_indices']));walk(roles)\nints=npz(bind(idx['files']['integrals'])); obs={}; physics=[]\nfor role,rec in roles.items():\n a=npz(bind(rec['files']['observables'])); obs[role]=a\n w=a['quadrature_weights_nm3']; k0=float(a['k0']);mu=complex(a['mu_r'])\n e=a['mode_e']*a['outgoing_boundary'][:,None];h=np.cross(a['mode_k'],e)/(k0*mu)\n power=np.maximum(0,np.real(np.cross(e,h.conj()))[:,2]*np.where(a['mode_keys'][:,0]=='top',1,-1)*float(a['port_area'])/(2*float(a['incident_power'])))\n assert np.max(abs(power-a['per_level_power']))<1e-12\n rr=float(sum(power[a['mode_keys'][:,0]=='top']));tt=float(sum(power[a['mode_keys'][:,0]=='bottom']))\n av=float(.5*k0*np.sum(a['cell_epsilon'].imag[:,None]*w*np.sum(abs(a['total_E'])**2,axis=2))/float(a['incident_power']))\n norms=[float(np.sqrt(np.sum(w*np.sum(abs(a[k])**2,axis=2)))/(k0 if 'curl' in k else 1)) for k in ('total_E','total_curl','scattered_E','scattered_curl')]\n assert np.allclose(norms,a['physical_field_norms'],rtol=1e-12,atol=1e-14)\n if 'total_E_hi' in a:\n  for k in ('total_E','total_curl','total_H'): assert np.array_equal(a[k],a[k+'_hi'].astype(np.clongdouble)+a[k+'_lo'].astype(np.clongdouble))\n physics.append(dict(role=role,R=rr,T=tt,A_volume=av,closure=abs(rr+tt+av-1),norms=norms))\ncounts={};pairs={}\nfor pair in ('old_E3_vs_new_E3','old_E4_vs_new_E4','new_E3_vs_new_E4'):\n aa,bb=pair.split('_vs_');a,b=obs[aa],obs[bb];assert np.array_equal(a['mode_keys'],b['mode_keys']);modes={}\n for k in ('total_projection','scattered_projection','outgoing_origin','outgoing_boundary'):\n  d=abs(a[k]-b[k]);den=np.maximum(abs(b[k]),1e-12);rel=d/den;j=int(np.argmax(rel));modes[k]=dict(key=a['mode_keys'][j].tolist(),absolute=float(d[j]),denominator=float(den[j]),relative=float(rel[j]),over_1e3=int(sum(rel>1e-3)))\n q15,q30=ints[pair+'_q15'],ints[pair+'_q30'];pairs[pair]=dict(fields=(np.sqrt(q15[0,:,0])/np.maximum(np.sqrt(q15[0,:,1]),1e-12)).tolist(),qdrift=float(np.max(abs(q15-q30)/np.maximum(abs(q30),1e-24))),modes=modes)\nfor label in ('corrected_channels','corrected_samples','corrected_regions','corrected_mode_errors'):\n rows=list(csv.DictReader((T/(label+'_v22.csv')).open()));counts[label]=len(rows)\n for row in rows:\n  if label=='corrected_channels':\n   key=[row[k] for k in ('side','m','n','polarization')];role=row['role'];role=role if role in obs else 'new_'+role;a=obs[role];j=int(np.flatnonzero(np.all(a['mode_keys']==key,axis=1))[0])\n   for k in ('total_projection','scattered_projection','outgoing_origin','outgoing_boundary'):\n    assert complex(float(row[k+'_real']),float(row[k+'_imag']))==complex(a[k][j])\n   assert float(row['power'])==a['per_level_power'][j]\n  elif label=='corrected_samples':\n   role=row['role'];a=obs[role if role in obs else 'new_'+role];j=int(row['point'])\n   for v,ax in enumerate(('x','y','z')):\n    for k in ('total_E','total_H','scattered_E','scattered_H'):assert complex(float(row[k+'_'+ax+'_real']),float(row[k+'_'+ax+'_imag']))==complex(a['selected_'+k][j,v])\n  elif label=='corrected_regions':\n   ri=['all','air','substrate','grating','notch','interface_band'].index(row['region']);qi=['total_E','total_scaled_curl','scattered_E','scattered_scaled_curl'].index(row['quantity']);v=ints[row['pair']+'_q15'][ri,qi]\n   assert math.isclose(float(row['relative']),float(np.sqrt(v[0])/max(np.sqrt(v[1]),1e-12)),rel_tol=2e-12)\n  else:\n   a,b=(obs[k] for k in row['pair'].split('_vs_'));key=[row[k] for k in ('side','m','n','polarization')];j=int(np.flatnonzero(np.all(a['mode_keys']==key,axis=1))[0]);family=row.get('quantity',row.get('channel',row.get('family')))\n   if family is None: raise ValueError(('mode CSV schema',list(row)))\n   rel=abs(a[family][j]-b[family][j])/max(abs(b[family][j]),1e-12);assert math.isclose(float(row['relative']),float(rel),rel_tol=1e-12,abs_tol=1e-18)\nattrib={}\nfor k in ('total_E','total_curl','scattered_E','scattered_curl'):\n a,b,c,d=(obs[r] for r in ('old_E3','old_E4','new_E3','new_E4'))\n assert all(np.array_equal(a['quadrature_points_nm'],o['quadrature_points_nm']) and np.array_equal(a['quadrature_weights_nm3'],o['quadrature_weights_nm3']) for o in (b,c,d))\n scale=float(a['k0']) if 'curl' in k else 1; w=(a[k]-b[k])/scale;u=(c[k]-a[k])/scale;v=(d[k]-b[k])/scale; weights=a['quadrature_weights_nm3']\n def inner(x,y):return np.sum(weights*np.sum(x.conj()*y,axis=2),dtype=np.clongdouble).real\n terms=[inner(w,w),inner(u,u),inner(v,v),2*inner(w,u),-2*inner(w,v),-2*inner(u,v)]\n new=inner(w+u-v,w+u-v);attrib[k]=dict(terms=list(map(float,terms)),closure=float(abs(sum(terms)-new)),relative_norm_change=float(np.sqrt(new/terms[0])-1),triangle_upper=float((np.sqrt(terms[1])+np.sqrt(terms[2]))/np.sqrt(terms[0])))\ndel obs,a,b,c,d,w,u,v;gc.collect()\nfrozen=load(bind(index('v22_frozen_port_audit')['files']['role_indices']));walk(frozen)\nresiduals={};conditioning={}\nfor role,rec in frozen.items():\n path=pathlib.Path(rec['files']['native']['path']).parent; z=npz(path/'frozen_residual_terms.npz')\n delta=z['old_residual']+z['operator_delta']-z['RHS_delta']-z['new_residual']\n residuals[role]=dict(native=float(norm(z['new_residual'])/norm(z['native_f'])),identity_absolute=float(norm(delta)),identity_scaled=float(norm(delta)/max(norm(z['new_residual']),np.longdouble(1e-300))))\n # A row condition estimate diagnoses sensitivity, never replaces a gate.\n surfaces=npz(path/'surface_oracles.npz');Ds={};Hs={}\n for name in ('analytic','oracle1','oracle2'):\n  Ds[name]=sparse.csr_matrix((surfaces[name+'_D_data'],surfaces[name+'_D_indices'],surfaces[name+'_D_indptr']),shape=tuple(surfaces[name+'_D_shape'])).astype(np.clongdouble)\n  Hs[name]=surfaces[name+'_H'].astype(np.longdouble)\n states={'frozen':npz(path/'affine_state.npz')}\n if role!='O3': states['corrected']=npz(index('v22_'+role.lower()+'_correction')['files']['field']['path'])\n roleout={}\n for state_label,state in states.items():\n  for label,c in [('scattered',state['c_scattered'].astype(np.clongdouble)),('background',state['background'].astype(np.clongdouble)),('total',state['total_hi'].astype(np.clongdouble)+state['total_lo'].astype(np.clongdouble))]:\n   products={};cond={};bounds={}\n   for name,D in Ds.items():\n    products[name]=(D@c)/Hs[name]\n    cond[name]=np.asarray(abs(D)@abs(c))/np.maximum(abs(D@c),np.longdouble(1e-300))\n   x,y,z2=(products[n] for n in ('analytic','oracle1','oracle2'));da=abs(x-y);den=np.maximum(abs(y),np.longdouble(1e-12));j=int(np.argmax(da/den))\n   # Row-wise coefficient perturbation bound using the actual two oracles.\n   bound=(abs(Ds['oracle1']-Ds['oracle2'])@abs(c))/Hs['oracle1']\n   normalized_y=y*np.sqrt(Hs['oracle1']);normalized_delta=(y-z2)*np.sqrt(Hs['oracle1'])\n   roleout[state_label+'_'+label]=dict(analytic_vs_oracle1=float(norm(x-y)/max(norm(y),np.longdouble(1e-12))),oracle1_vs_oracle2=float(norm(y-z2)/max(norm(z2),np.longdouble(1e-12))),boundary_scaled_oracle_disagreement=float(norm(normalized_delta)/max(norm(normalized_y),np.longdouble(1e-12))),worst_index=j,worst_relative=float(da[j]/den[j]),worst_condition=float(cond['oracle1'][j]),condition_median=float(np.median(cond['oracle1'])),condition_max=float(np.max(cond['oracle1'])),binary64_u_condition_max=float(np.max(cond['oracle1'])*2**-53),oracle_perturbation_bound_global=float(norm(bound)/max(norm(y),np.longdouble(1e-12))),H_min=float(min(Hs['oracle1'])),H_max=float(max(Hs['oracle1'])))\n conditioning[role]=roleout\n del surfaces,Ds,Hs,states;gc.collect()\nresult=dict(schema='review_v22.independent_saved_array_audit.v1',bindings=checked,binding_count=len(checked),binding_exceptions=exceptions,physics=physics,csv_counts=counts,pairs=pairs,attribution=attrib,residuals=residuals,conditioning=conditioning,conditioning_arithmetic='extended complex accumulation of saved binary64 matrices; diagnostic only, no physical error certificate',FE_solve_training=0,seconds=time.monotonic()-t0)\n(R/'tmp/task42extra/review_v22_raw_audit.json').write_text(json.dumps(result,indent=2)+'\\n')\nprint(json.dumps({k:v for k,v in result.items() if k!='bindings'},indent=2))\n"
+    },
+    "review_v22_precision_audit": {
+      "binding": {
+        "path": "tmp/task42extra/review_v22_precision_audit.py",
+        "sha256": "3b40f777d85d5460449830ad4304ac1491aeaaa2d00a78a5426842fc30839747",
+        "bytes": 4993
+      },
+      "source": "\"\"\"Independent finite-array precision witnesses, no new FE or solve.\"\"\"\nimport hashlib,json,pathlib,subprocess,time\nfrom decimal import Decimal,localcontext\nimport numpy as np\nfrom scipy import sparse\nfrom scipy.special import spherical_jn\nfrom numpy.polynomial.legendre import leggauss,legvander\nR=pathlib.Path('/home/fenics/Projects/NN-Lab-V2');A=R/'benchmarks/artifacts/task42extra';start=time.monotonic()\ndef load(p):return json.loads(pathlib.Path(p).read_text())\ndef npz(p):\n with np.load(p,allow_pickle=False) as z:return {k:z[k] for k in z.files}\ndef index(s):return load(sorted(A.glob('index_'+s+'_attempt*.json'))[-1])\ndef norm(a):return np.sqrt(np.sum(abs(a)**2,dtype=np.longdouble))\nraw=load(R/'tmp/task42extra/review_v22_raw_audit.json');resolved=[]\ncommits=subprocess.check_output(['git','rev-list','19b3198552efdf87281dd0c97abb7fdd1ab9642e..HEAD'],text=True).splitlines()\nfor ex in raw['binding_exceptions']:\n if ex in [v['exception'] for v in resolved]:continue\n p=pathlib.Path(ex['path']);name=str(p.relative_to(R));matches=[]\n if name.startswith(('src/','benchmarks/')) and p.is_file():\n  for c in commits:\n   q=subprocess.run(['git','show',c+':'+name],capture_output=True)\n   if q.returncode==0 and hashlib.sha256(q.stdout).hexdigest()==ex['expected']:matches.append(c)\n resolved.append(dict(exception=ex,historical_blob_matches=matches,status='HISTORICAL_SOURCE_RESOLVED' if matches else 'DOCUMENTED_MISSING_INPUT' if ex['actual'] is None else 'UNRESOLVED'))\nequations={}; exact={}\nfrozen=load(index('v22_frozen_port_audit')['files']['role_indices']['path'])\nfor role in ('E3','E4'):\n idx=index('v22_'+role.lower()+'_correction');a=npz(idx['files']['native']['path']);s=npz(idx['files']['field']['path']);n=len(a['masters']);nc,dim=a['cell_dofs'].shape\n E=sparse.coo_matrix((a['evals'],(a['erows'],a['eids'])),shape=(nc*dim,n)).tocsr();B=sparse.coo_matrix((a['bv'],(a['br'],a['bp'])),shape=(n,len(a['H']))).tocsr();D=sparse.coo_matrix((a['dv'],(a['dp'],a['dr'])),shape=(len(a['H']),n)).tocsr()\n def vol(c):\n  local=(E@c).reshape(nc,dim);v=np.empty_like(local)\n  for cls,tensor in enumerate(a['F']):\n   ids=np.flatnonzero(a['classes']==cls);v[ids]=np.einsum('ij,cj->ci',tensor,local[ids],optimize=False)\n  return E.conj().T@v.ravel()\n c=s['c_scattered'];al=s['alpha_scattered'];f=a['g']-B@(a['gp']/a['H']);res=vol(c)+B@((D@c)/a['H'])-f\n equations[role]=dict(native=float(norm(res)/norm(f)),augmented=float(norm(np.r_[vol(c)+B@al-a['g'],-D@c+a['H']*al-a['gp']])/norm(np.r_[a['g'],a['gp']])))\n surf=npz(pathlib.Path(frozen[role]['files']['native']['path']).parent/'surface_oracles.npz');ds={}\n for key in ('analytic','oracle1','oracle2'):\n  ds[key]=sparse.csr_matrix((surf[key+'_D_data'],surf[key+'_D_indices'],surf[key+'_D_indptr']),shape=tuple(surf[key+'_D_shape']))\n cols={};worst={int(v['worst_index']) for k,v in raw['conditioning'][role].items() if k.startswith('corrected')}\n worst.update(np.argsort(abs(s['alpha_scattered']))[-3:].tolist())\n def decdot(mat,j,vec):\n  rr=Decimal(0);ii=Decimal(0)\n  for q in range(mat.indptr[j],mat.indptr[j+1]):\n   d=mat.data[q];x=vec[mat.indices[q]];u,v,xr,xi=[Decimal.from_float(float(t)) for t in (d.real,d.imag,x.real,x.imag)]\n   rr+=u*xr-v*xi;ii+=u*xi+v*xr\n  return rr,ii\n def cv(r,i,h):return np.clongdouble(str(r/h))+np.clongdouble(1j)*np.clongdouble(str(i/h))\n with localcontext() as ctx:\n  ctx.prec=110\n  for j in sorted(worst):\n   vals={}\n   for key,dd in ds.items():\n    h=Decimal.from_float(float(surf[key+'_H'][j]));r,i=decdot(dd,j,s['c_scattered']);br,bi=decdot(dd,j,s['background']);vals[key]=dict(scattered=cv(r,i,h),background=cv(br,bi,h),total=cv(r+br,i+bi,h))\n   cols[str(j)]={}\n   for label in ('scattered','background','total'):\n    x,y,z=(vals[k][label] for k in ('analytic','oracle1','oracle2'));den=max(abs(z),np.longdouble(1e-12));cols[str(j)][label]=dict(oracle1_vs_oracle2_relative=float(abs(y-z)/den),oracle1_vs_oracle2_absolute=float(abs(y-z)),denominator=float(den),analytic_vs_oracle1=float(abs(x-y)/max(abs(y),np.longdouble(1e-12))),oracle2=[float(z.real),float(z.imag)])\n exact[role]=cols\nmoments=[]\nfor ny in (4,36):\n z=np.pi*35/ny;p=6;reference=np.array([2*1j**l*spherical_jn(l,z) for l in range(p+1)]);rules={}\n for degree,n in ((30,16),(60,31),(126,64)):\n  nodes,w=leggauss(n);v=(w*np.exp(1j*z*nodes))@legvander(nodes,p);err=abs(v-reference);rules[str(degree)]=dict(points=n,absolute=err.tolist(),max_absolute=float(max(err)),worst_degree=int(np.argmax(err)))\n moments.append(dict(y_segments=ny,mode_n=35,half_phase=z,polynomial_degrees=list(range(7)),rules=rules,scope='one-dimensional scalar polynomial moment witness; not all AUTO keys or assembled FE'))\nout=dict(schema='review_v22.precision_and_equation_audit.v1',resolved_bindings=resolved,equations=equations,decimal110_selected_rows=exact,scalar_moments=moments,seconds=time.monotonic()-start,FE_solve_training=0)\n(R/'tmp/task42extra/review_v22_precision_audit.json').write_text(json.dumps(out,indent=2)+'\\n');print(json.dumps(out,indent=2))\n"
+    }
+  },
+  "findings": [
+    "Both corrected native equations pass, finite-p fields and full modes still fail; strict reference absent.",
+    "Port correction only shrinks old physical pair gap by about 0.1 percent; does not explain full body difference.",
+    "Independent stored physical quadrature oracles themselves disagree above original-alpha gate on actual fields; projection comparison FAIL retained, accuracy attribution remains unresolved.",
+    "Decimal110 selected-row witnesses confirm physical-oracle discrepancy is not ordinary dot-product accumulation error.",
+    "Real execution admission consumed arithmetic/block gates but omitted actual sensitive physical projection; no retroactive strict admission.",
+    "P4 code only delivers metadata even if missing manifest becomes available; main already owns full-body manifest and W1.",
+    "Original candidate y4 versus reference y36 has different oscillatory integration span; q30 scalar polynomial witness fails, reliable q60 is necessary performance control.",
+    "No verified neural or complete-workflow improvement; deterministic auxiliary role only."
+  ],
+  "operations": {
+    "new_FE_assembly": 0,
+    "Maxwell_factor_solve": 0,
+    "NN_training": 0,
+    "Gram": 0,
+    "saved_array_actions": true,
+    "scalar_moment_witness": true,
+    "new_qualified_field": 0
+  },
+  "costs": {
+    "V22_observed_before_notification": 15331.022295132047,
+    "V22_conservative_upper": 16872.594866087078,
+    "review_first_read_utc": "2026-10-04T12:18:11Z",
+    "monotonic_anchor": 1041560.764415897,
+    "UTC_derived_prefix_seconds": 274.903550863266,
+    "monotonic_since_anchor_seconds": 1055.6973748860182,
+    "prefix_is_not_monotonic_measurement": true,
+    "reading_reasoning_Git_render_in_monotonic_tail": true,
+    "project_total": "UNKNOWN_HISTORICAL_TAILS_AND_LOST_3284S_RETAINED"
+  },
+  "accepted_research_evidence": true,
+  "strict_role_qualified": false,
+  "NN_increment": false,
+  "target_qualified": false,
+  "production_qualified": false,
+  "merge_approved": false,
+  "next_batch": {
+    "response": "response_v23.md",
+    "max_seconds": 14400,
+    "tree_hard_bytes": 2147483648,
+    "own_swap_OOC": 0,
+    "formal_repairs_max": 2,
+    "Maxwell_solve_factor_training_Gram_max": 0,
+    "scope": "Fail-closed actual qualification and portable interval-moment consumer with new-span p4/p6 local witnesses and qualified q60 cold-cost control; no duplicate W1 or full target modes"
+  },
+  "goal": {
+    "dimensions_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "whole_machine_decimal_bytes": 2000000000000,
+    "complete_workflow_seconds": 172800,
+    "precision_unchanged": true
+  },
+  "publication": {
+    "actual_GitHub_render": "PENDING_AFTER_FIRST_PUSH",
+    "notification": "NOT_SENT",
+    "report_body_frozen_before_render": true,
+    "local_page_check": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v22.md",
+      "sha256": "e4448c1dab01e5c8dd09a991860184c313dd9c3580299fb13636d8ba2ee661fb",
+      "checked_scope": "entire page",
+      "markdown_tables": 7,
+      "parsed_tables": 7,
+      "math_fences": 1,
+      "links": 13
+    }
+  }
+}
