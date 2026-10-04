@@ -593,7 +593,8 @@ def _worker_cli(root: Path, abi_receipt: Path) -> int:
 
 
 def _checker_cli(root: Path, abi_receipt: Path) -> int:
-    _qualified_runtime(abi_receipt)
+    _mpi, _petsc, abi_identity = _qualified_runtime(abi_receipt)
+    runtime_profile = abi_identity["runtime_profile"]
     report = json.loads((root / "worker_report.json").read_text())
     allocation_gate, _save_array, checkpoint, _guard = _native_callbacks(root, checker=True)
     import numpy as np
@@ -612,7 +613,8 @@ def _checker_cli(root: Path, abi_receipt: Path) -> int:
             raise ValueError("raw member shape/dtype differs from worker descriptor")
         return value
 
-    result = check_component(report, load_array, allocation_gate=allocation_gate, checkpoint=checkpoint)
+    result = check_component(report, load_array, allocation_gate=allocation_gate,
+                             checkpoint=checkpoint, runtime_profile=runtime_profile)
     _atomic_json(root / "checker_report.json", result)
     return 0
 

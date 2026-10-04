@@ -340,17 +340,18 @@ def qualify_live_identity(bundle: Mapping[str, Any], *, record_path: str | Path,
     before = carrier_numeric_identity(carrier)
     runtime_profile = bundle.get("runtime_profile", NATIVE_LINUX_PROFILE)
     profile = validate_fresh_c1_bundle_profile(bundle)
+    degree_profile = profile["fresh_c1_profile"]
     if (profile["degree"] != 6 or profile["fresh_fixture_c1"] is not True
             or bundle.get("dtn_phase_gauge") != BOUNDARY_PLANE
             or before["physical_generator_manifest_sha256"]
-            != profile["physical_generator_manifest_sha256"]
+            != degree_profile["physical_generator_manifest_sha256"]
             or before["mode_count"] != 532):
         raise ValueError("same-live qualification accepts only the fresh same80 p6 boundary-plane bundle")
     from .fullspace_dtn_action import build_dynamic_mode_inventory
     expected_modes, _rows, expected_physical = build_dynamic_mode_inventory(bundle["cfg"])
     expected_keys = tuple((i, mode.side, mode.m, mode.n, mode.polarization)
                           for i, mode in enumerate(expected_modes))
-    if (expected_physical != profile["physical_generator_manifest_sha256"]
+    if (expected_physical != degree_profile["physical_generator_manifest_sha256"]
             or tuple(before["ordered_mode_keys"]) != expected_keys):
         raise ValueError("live carrier differs from an independently regenerated ordered literal532 inventory")
     checkpoint("same_live_component_before_qualification", {

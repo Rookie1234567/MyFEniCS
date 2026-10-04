@@ -244,6 +244,240 @@ def test_profile_specific_degree_metadata_preserves_native_shape():
     assert local["runtime_profile"] == LOCAL_WSL2_PROFILE
 
 
+@pytest.mark.parametrize(
+    "runtime_profile,carrier_matches,rebuilt_matches,expected",
+    [
+        ("native_linux", True, True, "reached"),
+        ("local_wsl2_authorized", True, True, "reached"),
+        ("local_wsl2_authorized", False, True, "carrier_rejected"),
+        ("local_wsl2_authorized", True, False, "inventory_rejected"),
+    ],
+)
+def test_qualify_live_identity_uses_nested_profile_and_rejects_wrong_hashes(
+    monkeypatch, tmp_path, runtime_profile, carrier_matches, rebuilt_matches, expected
+):
+    from types import SimpleNamespace
+    from src.solvers import fullspace_dtn_action
+    from src.solvers import fresh_c1_live_contract as live_contract
+    from src.solvers.dtn_boundary_plane_qualification import fresh_c1_degree_profile
+    from src.solvers.fresh_c1_manifest_identity import (
+        NATIVE_LINUX_PROFILE, literal532_manifest_sha256,
+    )
+
+    class ReachedBeforeOracle(Exception):
+        pass
+
+    manifest_sha = literal532_manifest_sha256(runtime_profile)
+    wrong_sha = literal532_manifest_sha256(NATIVE_LINUX_PROFILE)
+    modes = tuple(SimpleNamespace(side="top", m=index - 266, n=0, polarization="s")
+                  for index in range(532))
+    ordered_keys = tuple((index, mode.side, mode.m, mode.n, mode.polarization)
+                         for index, mode in enumerate(modes))
+    carrier = object()
+    identity = {"physical_generator_manifest_sha256": manifest_sha if carrier_matches else wrong_sha,
+                "mode_count": 532, "ordered_mode_keys": ordered_keys}
+    outer_profile = {
+        "degree": 6,
+        "fresh_fixture_c1": True,
+        "fresh_c1_profile": fresh_c1_degree_profile(6, runtime_profile),
+    }
+    monkeypatch.setattr(live_contract, "carrier_numeric_identity", lambda actual: identity)
+    monkeypatch.setattr(live_contract, "validate_fresh_c1_bundle_profile",
+                        lambda bundle: outer_profile)
+    rebuilt_sha = manifest_sha if rebuilt_matches else wrong_sha
+    monkeypatch.setattr(fullspace_dtn_action, "build_dynamic_mode_inventory",
+                        lambda cfg: (modes, (), rebuilt_sha))
+
+    def checkpoint(stage, facts):
+        if stage == "same_live_component_before_qualification":
+            raise ReachedBeforeOracle
+
+    bundle = {"dtn_action": SimpleNamespace(carrier=carrier),
+              "runtime_profile": runtime_profile,
+              "dtn_phase_gauge": live_contract.BOUNDARY_PLANE,
+              "cfg": object()}
+    call = lambda: live_contract.qualify_live_identity(
+        bundle, record_path=tmp_path / "receipt.json",
+        allocation_gate=lambda *args: None, checkpoint=checkpoint)
+    if expected == "reached":
+        with pytest.raises(ReachedBeforeOracle):
+            call()
+    elif expected == "carrier_rejected":
+        with pytest.raises(ValueError, match="same-live qualification accepts only"):
+            call()
+    else:
+        with pytest.raises(ValueError, match="independently regenerated ordered literal532"):
+            call()
+
+
+@pytest.mark.parametrize(
+    "runtime_profile,wrong_expected",
+    [("native_linux", False), ("local_wsl2_authorized", False),
+     ("local_wsl2_authorized", True)],
+)
+def test_boundary_oracle_uses_nested_profile_before_numerical_work(
+    monkeypatch, tmp_path, runtime_profile, wrong_expected
+):
+    from types import SimpleNamespace
+    from src.solvers import dtn_boundary_plane_qualification as qualification
+    from src.solvers.dtn_boundary_plane_qualification import fresh_c1_degree_profile
+    from src.solvers.fresh_c1_manifest_identity import literal532_manifest_sha256
+    from src.solvers.dtn_boundary_phase_gauge import BOUNDARY_PLANE
+
+    class ReachedAfterProfileComparison(Exception):
+        pass
+
+    class Config:
+        @property
+        def stage4_dtn_order_policy(self):
+            raise ReachedAfterProfileComparison
+
+    manifest_sha = literal532_manifest_sha256(runtime_profile)
+    modes = tuple(SimpleNamespace(side="top", m=index - 266, n=0, polarization="s")
+                  for index in range(532))
+    ordered_keys = tuple((index, mode.side, mode.m, mode.n, mode.polarization)
+                         for index, mode in enumerate(modes))
+    entries = tuple(SimpleNamespace(mode_key=key, coupling_rows=(1,), projection_rows=(1,))
+                    for key in ordered_keys)
+    carrier = SimpleNamespace(
+        entries=entries, physical_generator_manifest_sha256=manifest_sha,
+        mode_manifest_sha256="assembly-modes", assembly_context_sha256="assembly-context",
+        assembly_context={}, construction_numeric_inventory={},
+    )
+    identity = {"physical_generator_manifest_sha256": manifest_sha,
+                "carrier_numeric_sha256": "carrier", "mode_count": 532,
+                "ordered_mode_keys": ordered_keys}
+    outer_profile = {
+        "degree": 6,
+        "fresh_fixture_c1": True,
+        "fresh_c1_profile": fresh_c1_degree_profile(6, runtime_profile),
+    }
+    monkeypatch.setattr(qualification, "carrier_numeric_identity", lambda actual: identity)
+    monkeypatch.setattr(qualification, "validate_fresh_c1_bundle_profile",
+                        lambda bundle: outer_profile)
+    bundle = {"dtn_action": SimpleNamespace(carrier=carrier), "degree": 6,
+              "cfg": Config(), "setup": object(), "dtn_phase_gauge": BOUNDARY_PLANE,
+              "modes": modes, "mode_sha256": manifest_sha}
+    expected_sha = "wrong-full-manifest" if wrong_expected else manifest_sha
+    call = lambda: qualification.qualify_fresh_c1_p6_boundary_plane_bundle(
+        bundle, record_path=tmp_path / f"{runtime_profile}-{wrong_expected}.json",
+        expected_physical_manifest=expected_sha, expected_ordered_keys=ordered_keys)
+    if wrong_expected:
+        with pytest.raises(ValueError, match="differs from the qualified runtime profile"):
+            call()
+    else:
+        with pytest.raises(ReachedAfterProfileComparison):
+            call()
+
+
+
+
+def _same_live_profile_report(tmp_path, runtime_profile, *, mismatch=None):
+    from benchmarks import check_fresh_c1_p6_component as checker
+    from src.solvers.fresh_c1_manifest_identity import literal532_manifest_sha256
+
+    expected = literal532_manifest_sha256(runtime_profile)
+    wrong = literal532_manifest_sha256(
+        "native_linux" if runtime_profile == "local_wsl2_authorized" else "local_wsl2_authorized")
+    physical = wrong if mismatch == "receipt" else expected
+    keys = [[index, "top", 0, 0, "s"] for index in range(532)]
+    identity = {"physical_generator_manifest_sha256": expected,
+                "carrier_numeric_sha256": "carrier-sha", "assembly_context_sha256": "context-sha",
+                "assembly_mode_manifest_sha256": "assembly-sha", "ordered_mode_keys": keys}
+    receipt = {"schema": "task40extra.same-live-boundary-component.v1",
+        "status": "PASS_COMPONENT_ONLY", "full_case_pass": True,
+        "PDE_solved": False, "official_results": False, "fresh_fixture_c1": True,
+        "degree": 6, "mode_count": 532,
+        "physical_generator_manifest_sha256": physical,
+        "completed_gates": list(checker.LIVE_COMPONENT_GATES),
+        "identity": identity,
+        "per_mode": [{"index": index, "key": key} for index, key in enumerate(keys)],
+        "output_component_gates": [{"gate": index} for index in range(5)],
+        "qualification_source_sha256": "a" * 64}
+    receipt_path = tmp_path / f"{runtime_profile}-{mismatch}.json"
+    receipt_raw = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+    receipt_path.write_bytes(receipt_raw)
+    contract_physical = wrong if mismatch == "contract" else expected
+    contract = {"physical_generator_manifest_sha256": contract_physical,
+        "carrier_numeric_sha256": "carrier-sha", "assembly_context_sha256": "context-sha",
+        "assembly_mode_manifest_sha256": "assembly-sha", "ordered_mode_keys": keys}
+    before_physical = wrong if mismatch == "before" else expected
+    after_physical = wrong if mismatch == "after" else expected
+    return {"same_live_qualification": {"schema": receipt["schema"],
+            "status": "PASS_COMPONENT_ONLY", "receipt_path": str(receipt_path),
+            "receipt_sha256": hashlib.sha256(receipt_raw).hexdigest(),
+            "shared_discrete_contract": contract, "live_contract_source_sha256": "b" * 64},
+        "carrier_before": {"carrier_numeric_sha256": "carrier-sha",
+                           "physical_generator_manifest_sha256": before_physical},
+        "carrier_after": {"carrier_numeric_sha256": "carrier-sha",
+                          "physical_generator_manifest_sha256": after_physical},
+        "source_identity": {"files": {
+            "src/solvers/dtn_boundary_plane_qualification.py": "a" * 64,
+            "src/solvers/fresh_c1_live_contract.py": "b" * 64}}}
+
+
+@pytest.mark.parametrize("runtime_profile", ["native_linux", "local_wsl2_authorized"])
+def test_checker_same_live_identity_accepts_each_exact_profile(monkeypatch, tmp_path, runtime_profile):
+    from benchmarks import check_fresh_c1_p6_component as checker
+    from src.solvers import fresh_c1_live_contract
+
+    forwarded = {}
+    monkeypatch.setattr(fresh_c1_live_contract, "validate_live_receipt",
+                        lambda receipt, **kwargs: forwarded.update(kwargs))
+    result = checker._validate_same_live_binding(
+        _same_live_profile_report(tmp_path, runtime_profile), runtime_profile=runtime_profile)
+    assert result["mode_count"] == 532
+    assert forwarded["runtime_profile"] == runtime_profile
+
+
+@pytest.mark.parametrize("identity_field", ["receipt", "contract", "before", "after"])
+def test_checker_same_live_identity_rejects_cross_profile_hash_at_every_binding(
+    monkeypatch, tmp_path, identity_field
+):
+    from benchmarks import check_fresh_c1_p6_component as checker
+    from src.solvers import fresh_c1_live_contract
+
+    monkeypatch.setattr(fresh_c1_live_contract, "validate_live_receipt",
+                        lambda *_args, **_kwargs: pytest.fail("invalid identity reached receipt validation"))
+    report = _same_live_profile_report(
+        tmp_path, "local_wsl2_authorized", mismatch=identity_field)
+    with pytest.raises(ValueError, match="does not bind|outside the fresh p6 scope"):
+        checker._validate_same_live_binding(report, runtime_profile="local_wsl2_authorized")
+
+
+def test_checker_rejects_unknown_and_cross_profile_carrier_hashes_before_array_reads():
+    from benchmarks import check_fresh_c1_p6_component as checker
+
+    with pytest.raises(ValueError, match="qualified Task40 runtime profile"):
+        checker._profile_manifest_identity("unqualified_profile")
+    report = {"carrier_sources": {"ports": [None] * 532,
+        "physical_generator_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951"}}
+    with pytest.raises(ValueError, match="complete current physical532 carrier source"):
+        checker._carrier(None, report, {}, (), lambda *_args: None, None,
+                         runtime_profile="local_wsl2_authorized")
+
+
+@pytest.mark.parametrize("runtime_profile", ["native_linux", "local_wsl2_authorized"])
+def test_runner_checker_cli_forwards_the_qualified_receipt_profile(monkeypatch, tmp_path, runtime_profile):
+    from benchmarks import check_fresh_c1_p6_component as checker
+    from benchmarks import run_fresh_c1_p6_component as runner
+
+    (tmp_path / "worker_report.json").write_text(json.dumps({"schema": "worker-fixture"}))
+    monkeypatch.setattr(runner, "_qualified_runtime",
+        lambda _receipt: (None, None, {"runtime_profile": runtime_profile}))
+    noop = lambda *_args, **_kwargs: None
+    monkeypatch.setattr(runner, "_native_callbacks",
+        lambda *_args, **_kwargs: (noop, None, noop, noop))
+    received = {}
+    def fake_check(report, _load_array, **kwargs):
+        received.update(kwargs)
+        assert report["schema"] == "worker-fixture"
+        return {"independent_component_pass": True}
+    monkeypatch.setattr(checker, "check_component", fake_check)
+
+    assert runner._checker_cli(tmp_path, tmp_path / "abi_receipt.json") == 0
+    assert received["runtime_profile"] == runtime_profile
+    assert json.loads((tmp_path / "checker_report.json").read_text())["independent_component_pass"] is True
 
 def test_pyvista_postprocessing_import_is_deferred_to_plot_callsite():
     source = Path(__file__).parents[1] / "solvers" / "solve_vector_maxwell.py"

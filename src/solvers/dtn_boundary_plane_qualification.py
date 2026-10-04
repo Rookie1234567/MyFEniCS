@@ -342,7 +342,8 @@ def qualify_fresh_c1_p6_boundary_plane_bundle(
         base_identity.update(profile)
         modes = tuple(bundle["modes"])
         assert len(modes) == len(carrier.entries) == 532
-        if (expected_physical_manifest != profile["physical_generator_manifest_sha256"]
+        degree_profile = profile["fresh_c1_profile"]
+        if (expected_physical_manifest != degree_profile["physical_generator_manifest_sha256"]
                 or bundle["mode_sha256"] != expected_physical_manifest
                 or carrier.physical_generator_manifest_sha256 != expected_physical_manifest):
             raise ValueError("same-live expected literal532 manifest differs from the qualified runtime profile")

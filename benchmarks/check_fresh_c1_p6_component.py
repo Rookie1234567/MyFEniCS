@@ -81,6 +81,16 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def _profile_manifest_identity(runtime_profile):
+    """Resolve only the frozen literal532 digest for the selected ABI profile."""
+    from src.solvers.fresh_c1_manifest_identity import (
+        NATIVE_LINUX_PROFILE, literal532_manifest_sha256,
+    )
+    profile = NATIVE_LINUX_PROFILE if runtime_profile is None else runtime_profile
+    require(isinstance(profile, str), "checker runtime profile must be a string")
+    return profile, literal532_manifest_sha256(profile)
+
+
 def _canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"),
                       allow_nan=False, ensure_ascii=True).encode("ascii")
@@ -109,8 +119,9 @@ def _gate(callback, stage, payload=0, workspace=0, **facts):
         "global_p6_matrix_count": 0, "global_p6_factor_count": 0, **facts})
 
 
-def _validate_same_live_binding(report):
+def _validate_same_live_binding(report, *, runtime_profile=None):
     """Verify the saved literal532 receipt and its exact live-carrier binding."""
+    runtime_profile, physical_generator = _profile_manifest_identity(runtime_profile)
     binding = report.get("same_live_qualification")
     require(isinstance(binding, dict)
             and binding.get("schema") == "task40extra.same-live-boundary-component.v1"
@@ -133,7 +144,7 @@ def _validate_same_live_binding(report):
             and receipt.get("official_results") is False
             and receipt.get("fresh_fixture_c1") is True
             and receipt.get("degree") == 6 and receipt.get("mode_count") == 532
-            and receipt.get("physical_generator_manifest_sha256") == PHYSICAL_GENERATOR
+            and receipt.get("physical_generator_manifest_sha256") == physical_generator
             and receipt.get("completed_gates") == list(LIVE_COMPONENT_GATES),
             "same-live receipt is metadata-only, incomplete, or outside the fresh p6 scope")
     modes = receipt.get("per_mode")
@@ -145,13 +156,15 @@ def _validate_same_live_binding(report):
             and all(item.get("index") == index and item.get("key") == keys[index]
                     for index, item in enumerate(modes)),
             "same-live receipt lacks the complete ordered literal532/five-state ledger")
-    require(contract.get("physical_generator_manifest_sha256") == PHYSICAL_GENERATOR
+    require(contract.get("physical_generator_manifest_sha256") == physical_generator
             and contract.get("carrier_numeric_sha256") == identity.get("carrier_numeric_sha256")
             and contract.get("assembly_context_sha256") == identity.get("assembly_context_sha256")
             and contract.get("assembly_mode_manifest_sha256") == identity.get("assembly_mode_manifest_sha256")
             and contract.get("ordered_mode_keys") == keys
             and report.get("carrier_before", {}).get("carrier_numeric_sha256") == identity.get("carrier_numeric_sha256")
-            and report.get("carrier_after", {}).get("carrier_numeric_sha256") == identity.get("carrier_numeric_sha256"),
+            and report.get("carrier_after", {}).get("carrier_numeric_sha256") == identity.get("carrier_numeric_sha256")
+            and report.get("carrier_before", {}).get("physical_generator_manifest_sha256") == physical_generator
+            and report.get("carrier_after", {}).get("physical_generator_manifest_sha256") == physical_generator,
             "same-live receipt does not bind the unchanged worker carrier and ordered modes")
     require(re.fullmatch(r"[0-9a-f]{64}", receipt.get("qualification_source_sha256", "")) is not None
             and binding.get("live_contract_source_sha256")
@@ -167,7 +180,7 @@ def _validate_same_live_binding(report):
     # is pure receipt validation; it creates no mesh/form/JIT and is called
     # only after the checker's resource admission below.
     from src.solvers.fresh_c1_live_contract import validate_live_receipt
-    validate_live_receipt(receipt, identity=identity)
+    validate_live_receipt(receipt, identity=identity, runtime_profile=runtime_profile)
     return {"receipt_sha256": binding["receipt_sha256"],
             "carrier_numeric_sha256": identity["carrier_numeric_sha256"],
             "mode_count": 532, "completed_gates": list(LIVE_COMPONENT_GATES)}
@@ -484,11 +497,12 @@ def _array_signature(array):
     return {"shape": list(array.shape), "dtype": str(array.dtype), "sha256": _sha(array, header=False)}
 
 
-def _carrier(reader, report, maps, cells, gate, measures):
+def _carrier(reader, report, maps, cells, gate, measures, *, runtime_profile=None):
+    _, physical_generator = _profile_manifest_identity(runtime_profile)
     import numpy as np
     source = report.get("carrier_sources")
     require(isinstance(source, dict) and isinstance(source.get("ports"), list)
-            and len(source["ports"]) == 532 and source.get("physical_generator_manifest_sha256") == PHYSICAL_GENERATOR,
+            and len(source["ports"]) == 532 and source.get("physical_generator_manifest_sha256") == physical_generator,
             "complete current physical532 carrier source required")
     require(source.get("carrier_global_rows") == 55950 and source.get("carrier_ownership_range") == [0, 55950],
             "carrier must own all same80 native rows on MPI1")
@@ -561,7 +575,7 @@ def _carrier(reader, report, maps, cells, gate, measures):
     require(isinstance(before, dict) and before == after
             and before.get("carrier_numeric_sha256") == digest.hexdigest()
             and before.get("ordered_mode_keys") == keys and before.get("mode_count") == 532
-            and before.get("physical_generator_manifest_sha256") == PHYSICAL_GENERATOR
+            and before.get("physical_generator_manifest_sha256") == physical_generator
             and before.get("assembly_mode_manifest_sha256") == source.get("assembly_mode_manifest_sha256")
             and before.get("assembly_context_sha256") == source.get("assembly_context_sha256"),
             "actual complete saved carrier digest/order differs from before/after live identity")
@@ -957,7 +971,7 @@ def _material(reader, report, class_index, vii, solve, gate, measures):
             "physical_case": False, "allfour_negative_controls_separated": True}
 
 
-def check_component(report, load_array, *, allocation_gate, checkpoint):
+def check_component(report, load_array, *, allocation_gate, checkpoint, runtime_profile=None):
     """Recompute component evidence from current-run immutable saved arrays.
 
     load_array(reference) receives the exact canonical member descriptor; the
@@ -968,7 +982,8 @@ def check_component(report, load_array, *, allocation_gate, checkpoint):
             "checker requires explicit loader/resource admission/persistent diagnostics")
     measures = _Measurements(checkpoint)
     try:
-        result = _check_component(report, load_array, allocation_gate, checkpoint, measures)
+        result = _check_component(report, load_array, allocation_gate, checkpoint, measures,
+                                  runtime_profile=runtime_profile)
         json.dumps(result, allow_nan=False)
         checkpoint("component_checker_receipt", result)
         return result
@@ -981,14 +996,15 @@ def check_component(report, load_array, *, allocation_gate, checkpoint):
         raise
 
 
-def _check_component(report, load_array, gate, checkpoint, measures):
+def _check_component(report, load_array, gate, checkpoint, measures, *, runtime_profile=None):
     require(isinstance(report, dict) and report.get("schema") == WORKER_SCHEMA
             and report.get("actual_inventory") == INVENTORY,
             "exact current fresh same80 p6 component schema/inventory required")
     source_binding = _validate_source_identity(report)
     # This allocation preadmission precedes numerical imports and all arrays.
     _gate(gate, "numerical_dependencies", workspace=64 << 20, FE_imports=False, JIT=False)
-    same_live = _validate_same_live_binding(report)
+    runtime_profile, _ = _profile_manifest_identity(runtime_profile)
+    same_live = _validate_same_live_binding(report, runtime_profile=runtime_profile)
     import numpy as np
     from scipy.linalg import lu_factor, lu_solve
     reader = _Reader(report, load_array, gate)
@@ -1014,7 +1030,8 @@ def _check_component(report, load_array, gate, checkpoint, measures):
     native_tpos = np.setdiff1d(np.arange(882, dtype=np.int32), native_ipos, assume_unique=True)
     require(np.array_equal(ipos, native_ipos) and np.array_equal(tpos, native_tpos),
             "saved complete interior/trace positions differ from live native basis")
-    carrier = _carrier(reader, report, maps, cells, gate, measures)
+    carrier = _carrier(reader, report, maps, cells, gate, measures,
+                      runtime_profile=runtime_profile)
     _gate(gate, "all_component_control_vectors", payload=96*55950*16 + 8*532**2*16,
           workspace=24*55950*16 + (16 << 20))
     alpha = reader.role("controls/port_probe", shape=(532,), dtype="complex128")
