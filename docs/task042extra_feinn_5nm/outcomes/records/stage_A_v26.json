@@ -443,7 +443,11 @@
     "between_A_B_wait": "NOT_STARTED; real calendar interval to be charged separately on input arrival",
     "previous_V25_execution_seconds": 2846.101466,
     "project_exact_cumulative": "UNKNOWN",
-    "old_lost_3284_seconds": "PRESERVED"
+    "old_lost_3284_seconds": "PRESERVED",
+    "sum_completed_supervised_test_and_auxiliary_seconds": 39.73012030660175,
+    "all_completed_supervised_stages_sampled_tree_RSS_peak_bytes": 1839824896,
+    "closing_receipt_utc": "2026-10-04T19:36:09.647338+00:00",
+    "A_elapsed_through_closing_receipt_seconds": 2129.647338
   },
   "history_preserved": [
     "M3600 better/Mfinal degeneration",
@@ -458,5 +462,104 @@
   ],
   "final_target": "original 50x25x140 nm, Si17/120 nm, lambda0.7, full 3D FE; decimal2e12B; ownswap/OOC0; continuous172800s; original accuracy gates",
   "response_v26": "DEFERRED_UNTIL_PACKAGE_CLOSEOUT_OR_NEW_SUBSTANTIVE_FAILURE_PER_REVIEW_V25",
-  "review_notification": "NOT_SENT_A_ONLY_WAITING_EXTERNAL_CHANGE"
+  "review_notification": "NOT_SENT_A_ONLY_WAITING_EXTERNAL_CHANGE",
+  "rendered_view": {
+    "status": "PASS_FINITE_VISUAL_SCOPE",
+    "publication_commit": "0f7fb9a8947b70917740427e3de3c179467f9a23",
+    "page": "benchmarks/cases/w1_receiver/README.md",
+    "page_sha256": "1d830e4c12a01d7e1c2983cb7b8ed8db8f968ffe12eb541f6826dafd13598d1f",
+    "render_receipt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_A_0f7fb9a8/render_records.json",
+      "bytes": 11334,
+      "sha256": "721389373324a2a56138248419f49d69fa1880f2290c62d112a26b2f5bedd47a"
+    },
+    "scopes": [
+      "串行入口",
+      "独立检查与真实载荷",
+      "资源与边界"
+    ],
+    "images_actually_viewed": 3,
+    "image_assessment": "Actual GitHub view: serial commands, 92 pure-test scope, saved vector/physical-load explanations and two-window resources readable without clipping; no math/table added",
+    "scope_limit": "Three selected changed sections, not a claim of all historical navigation visually closed",
+    "screenshots": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_A_0f7fb9a8/00_top.png",
+        "bytes": 558682,
+        "sha256": "533da591278004654f45134c2180721da8290497be20831b78fb791d7c3dec8a"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_A_0f7fb9a8/01_top.png",
+        "bytes": 558682,
+        "sha256": "533da591278004654f45134c2180721da8290497be20831b78fb791d7c3dec8a"
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v26_A_0f7fb9a8/02_top.png",
+        "bytes": 558682,
+        "sha256": "533da591278004654f45134c2180721da8290497be20831b78fb791d7c3dec8a"
+      }
+    ]
+  },
+  "reused_review_visual": {
+    "review_publication_commit": "47bb6e72c3384dcf41f292848b1844216210eb60",
+    "receipt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/review_v25/publication_render_receipt.json",
+      "bytes": 6660,
+      "sha256": "8f044296c79762632e32c7ddea9ae0cb89a57293027c2cf87394ca68c24ecd29"
+    },
+    "scope": "Review V25 same bytes; reuse actual three-page/seven-table/ten-image audit, no historical rerender"
+  },
+  "auxiliary": [
+    {
+      "stage": "evidence_freeze",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 1.9589368251617998,
+      "sampled_process_tree_rss_peak_bytes": 68284416,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 2147483648,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/evidence_freeze/summary.json",
+        "bytes": 3559,
+        "sha256": "c954b0eab4eafceec516367c344e97eafb3336d12905e0450ab8fe51fa2e8b9f"
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/evidence_freeze/admission.json",
+        "bytes": 182327,
+        "sha256": "b79ed2643a38f95ed5f33ba7f7bf3112c30950b3cbd73396d3fd6b078f58f459"
+      },
+      "command": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/evidence_freeze/command.json",
+        "bytes": 112,
+        "sha256": "df16a86c6c8354af12ca69bd473bc4cafd1cb66a342363a5a5a1d69a07cc839c"
+      }
+    },
+    {
+      "stage": "rendered_view",
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "elapsed_seconds": 18.374716925201938,
+      "sampled_process_tree_rss_peak_bytes": 1839824896,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "rss_hard_limit_bytes": 2147483648,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "summary": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/rendered_view/summary.json",
+        "bytes": 3719,
+        "sha256": "35665689fa5b1c93af51eaf621c6b82fc745b66e4c2fc7c9b09d372d1dabeb94"
+      },
+      "admission": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/rendered_view/admission.json",
+        "bytes": 182231,
+        "sha256": "2acf9c64f6e862cf82007e410c133c98f6e26a25f52ab7347c5fff02d6b2dc3c"
+      },
+      "command": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/w1_receiver/v26/rendered_view/command.json",
+        "bytes": 114,
+        "sha256": "d568399dc385332c332136b66d2d66860ffbc3b6d05bfbe5d94dcab147667b46"
+      }
+    }
+  ]
 }
