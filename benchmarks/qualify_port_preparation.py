@@ -114,6 +114,14 @@ def main():
         )
         if run.returncode:
             break
+    if (
+        "--recheck-cache" in sys.argv
+        and len(rows) == len(commands)
+        and all(r["returncode"] == 0 for r in rows)
+    ):
+        from benchmarks.check_port_preparation import check_saved
+
+        write_json(folder / "saved_cache_recheck.json", check_saved())
     receipt = {
         "status": "PASSED"
         if len(rows) == len(commands) and all(r["returncode"] == 0 for r in rows)

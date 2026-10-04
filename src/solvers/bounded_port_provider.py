@@ -138,7 +138,12 @@ class BoundedPortProvider:
             "loading_seconds": 0.0,
             "hashing_seconds": 0.0,
         }
-        self.batch_records = []  # scalar/hash-only receipts, never functional refs
+        self._mode_receipts = {}  # O(Nport), never O(visits*Nport) or numeric refs
+        self.stats["mode_receipt_count_peak"] = 0
+
+    @property
+    def batch_records(self):
+        return [dict(self._mode_receipts[i]) for i in sorted(self._mode_receipts)]
 
     def _check_references(self):
         cached_ids = {id(v) for v in self.cache.values()}
@@ -165,6 +170,7 @@ class BoundedPortProvider:
 
     def invalidate(self, source_identity):
         self.clear()
+        self._mode_receipts.clear()
         self.source_identity = str(source_identity)
 
     def _load(self, index):
@@ -217,6 +223,11 @@ class BoundedPortProvider:
         expected = getattr(self.loader, "expected_hash", lambda _: None)(index)
         if expected is not None and expected != digest:
             raise ValueError("functional numeric content hash mismatch")
+        prior = self._mode_receipts.get(index)
+        if prior is not None and prior["sha256"] != digest:
+            raise ValueError(
+                "immutable source changed numeric content without invalidation"
+            )
         self.stats["hashing_seconds"] += perf_counter() - began
         self.cache[index] = f
         self.references.append(weakref.ref(f))
@@ -228,14 +239,19 @@ class BoundedPortProvider:
         self.stats["created_live_peak"] = max(
             self.stats["created_live_peak"], len(self.references)
         )
-        self.batch_records.append(
-            {
+        if prior is None:
+            self._mode_receipts[index] = {
                 "index": index,
                 "key": list(f.mode_key),
                 "sha256": digest,
                 "numeric_bytes": f.nbytes,
                 "source_identity": self.source_identity,
+                "loads": 1,
             }
+        else:
+            prior["loads"] += 1
+        self.stats["mode_receipt_count_peak"] = max(
+            self.stats["mode_receipt_count_peak"], len(self._mode_receipts)
         )
         return f
 

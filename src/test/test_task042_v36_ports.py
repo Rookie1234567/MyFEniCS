@@ -119,6 +119,12 @@ def test_nonhermitian_two_sides_forward_adjoint_complete_output_and_zero():
     action.provider.clear()
     assert action.provider.stats["created_live_peak"] <= 2
     assert action.provider.stats["evictions"] > 0
+    assert len(action.provider.batch_records) == source.count
+    assert (
+        sum(r["loads"] for r in action.provider.batch_records)
+        == action.provider.stats["loads"]
+    )
+    assert action.provider.stats["mode_receipt_count_peak"] == source.count
 
 
 @pytest.mark.parametrize(

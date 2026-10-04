@@ -279,6 +279,7 @@ def check_component(record, root):
         "checks": checks,
         "replay_stats": provider.stats,
         "replay_bytes_read": source.bytes_read,
+        "bounded_mode_receipts": provider.batch_records,
         "no_FE_runtime": True,
         "reference_read": False,
         "full_solve": False,
