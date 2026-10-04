@@ -1,0 +1,367 @@
+{
+  "audit_method": {
+    "FE_or_JIT_or_matrix_or_factor_or_PDE": false,
+    "existing_files_only": true,
+    "generated_inventory": false,
+    "ordered_key_digest": "SHA-256 of a canonical JSON array; each [side,m,n,polarization] key encoded in file order using separators \",\" and \":\", ensure_ascii=False",
+    "raw_sha256": "SHA-256 streamed in 1 MiB binary chunks",
+    "row_read": "UTF-8 JSONDecoder consumed one modes[] object at a time; no generator called and no complete row/key inventory retained"
+  },
+  "audited_utc": "2026-10-04T11:26:18.586819Z",
+  "existing_manifests": {
+    "all_checks_match_stored_record": true,
+    "byte_identity_between_original_and_repair": true,
+    "expected_file_bytes": 36244923,
+    "expected_mode_count": 32060,
+    "expected_ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+    "expected_ordered_physical_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "expected_raw_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+    "files": [
+      {
+        "bytes": 36244923,
+        "classification_counts": {
+          "propagating": 32060
+        },
+        "first_key": [
+          "top",
+          -142,
+          -5,
+          "s"
+        ],
+        "indices_contiguous_zero_based": true,
+        "last_key": [
+          "bottom",
+          0,
+          0,
+          "p"
+        ],
+        "maximum_absolute_mn": [
+          142,
+          35
+        ],
+        "mode_count": 32060,
+        "mode_index_max": 32059,
+        "mode_index_min": 0,
+        "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "polarization_counts": {
+          "p": 16030,
+          "s": 16030
+        },
+        "raw_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "side_counts": {
+          "bottom": 16030,
+          "top": 16030
+        }
+      },
+      {
+        "bytes": 36244923,
+        "classification_counts": {
+          "propagating": 32060
+        },
+        "first_key": [
+          "top",
+          -142,
+          -5,
+          "s"
+        ],
+        "indices_contiguous_zero_based": true,
+        "last_key": [
+          "bottom",
+          0,
+          0,
+          "p"
+        ],
+        "maximum_absolute_mn": [
+          142,
+          35
+        ],
+        "mode_count": 32060,
+        "mode_index_max": 32059,
+        "mode_index_min": 0,
+        "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+        "polarization_counts": {
+          "p": 16030,
+          "s": 16030
+        },
+        "raw_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+        "side_counts": {
+          "bottom": 16030,
+          "top": 16030
+        }
+      }
+    ]
+  },
+  "schema": "task40extra.review_v8_w1_identity_audit.v1",
+  "stage_decision": {
+    "W0": "INCOMPLETE; formal worker stopped before FE identity gate",
+    "W1_FE": "HELD until complete W0 pass per Review V8",
+    "W1_inventory_identity": "PASS; read-only existing-file verification",
+    "W2": "HELD",
+    "dot": "HELD; separate authorization unchanged",
+    "engineering_fix_rounds_used": 2,
+    "formal_worker_starts_used_in_current_V8_window": 1,
+    "max_formal_worker_starts": 4,
+    "maximum_engineering_fix_rounds": 3,
+    "engineering_fix_rounds_prior_snapshot": "NOT_INFERRED (preserved by append-only event 15)"
+  },
+  "status": "PASS_EXISTING_INVENTORY_IDENTITY_ONLY; W1_FE_HELD",
+  "target_physical_identity": {
+    "identity": {
+      "geometry": {
+        "air_void_box_nm": [
+          25.0,
+          33.49999999999999,
+          6.25,
+          18.75,
+          39.99999999999999,
+          79.99999999999999
+        ],
+        "grating_height_nm": 120.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "z_max_nm": 130.0,
+        "z_min_nm": -10.0
+      },
+      "incidence": {
+        "azimuth_deg": 0.0,
+        "electric_amplitude": [
+          1.0,
+          0.0
+        ],
+        "grazing_angle_deg": 1.0,
+        "polarization": "s",
+        "theta_from_positive_z_deg": 89.0
+      },
+      "materials": {
+        "bottom_external_medium": {
+          "label": "Si substrate",
+          "refractive_index": [
+            0.9998851703688496,
+            4.3236152269189515e-06
+          ],
+          "relative_permeability": [
+            1.0,
+            0.0
+          ]
+        },
+        "top_external_medium": {
+          "label": "air/vacuum",
+          "refractive_index": [
+            1.0,
+            0.0
+          ],
+          "relative_permeability": [
+            1.0,
+            0.0
+          ]
+        }
+      },
+      "ports": {
+        "bottom": {
+          "external_material": "Si substrate",
+          "reference_plane_z_nm": -10.0,
+          "side": "bottom"
+        },
+        "maximum_abs_m": null,
+        "maximum_abs_n": null,
+        "order_policy": "auto_propagating",
+        "top": {
+          "external_material": "air/vacuum",
+          "reference_plane_z_nm": 130.0,
+          "side": "top"
+        }
+      },
+      "scope": "original_size_external_port_and_mode_inventory_only; internal grating/notch geometry does not enter the external-mode calculation",
+      "wavelength_nm": 0.7
+    },
+    "matches_original_and_repair": true,
+    "matches_original_and_repair_inventory_identity": true,
+    "ordered_inventory_identity": {
+      "mode_manifest_bytes_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "ordered_mode_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "ordered_physical_mode_manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "target_mode_physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
+    },
+    "recomputed_canonical_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+    "recomputed_inventory_identity_sha256": "39b457c3f0b9d8db5f85a8f1482734513d48670c017d4c8060cae734bdcd0c12",
+    "related_source_input_physical_model_sha256": "2d9fa71c8781d96a75e07d0ef1636bbba05e38e50891cd0bcb6661e4059555d8",
+    "related_source_input_scope": "Gx784 source physical identity only; it is not the original-size target mode identity",
+    "stored_inventory_identity_sha256": "39b457c3f0b9d8db5f85a8f1482734513d48670c017d4c8060cae734bdcd0c12",
+    "stored_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
+  },
+  "task042_reference": {
+    "boundary_component_evidence": {
+      "compact_rows_total": 378432,
+      "facets_per_side": 2628,
+      "full_volume_PDE": "NOT_RUN",
+      "independent_12_mode_full_surface_action_difference": 2.39972325681e-14,
+      "mode_count": 32060,
+      "native_q60_storage_gate": "controlled stop; NOT_RUN",
+      "old_q15_difference_failed": 1.32594720615e-05,
+      "q30_vs_q60_worst_per_mode_relative_difference": 1.60663242361e-12,
+      "status": "qualified at the pinned Task042 physical identity for a boundary component only"
+    },
+    "files": {
+      "check_boundary_structure.py": "2c957cbe4d8c1b2f390b31668a2d1b9608d97178",
+      "component_checker_v39.json": "896a594fa76270513e8232b7e58203a5a5b96b18",
+      "deployment_package_v39.json": "81f5b7364609ed839c442db2ead86b7bc12dd15a",
+      "directional_boundary.py": "c35a4965a84145da4b6887c921cad6dfab8e9e26",
+      "directional_boundary_structure_v38.md": "a4ad6e8d615c9fb1bca3426898a366382e2bda34",
+      "integration_readiness_v39.json": "d9efafe95cf8d77ac1d9579c9d8c2fe2757df17f",
+      "native_boundary_adapter.py": "6d883da3e5c4d3df3942c37c45f9f3b1ccd68c37",
+      "native_boundary_volume_integration_v39.md": "b6fe261b8b6b7bef389b9a0f6115537a9413c0ee",
+      "response_v38.md": "65c6d2842700d06d5fee8902691479c307fdb707",
+      "response_v39.md": "b3e3dbf62f25ae478d68f932f773335f0faa6c15",
+      "storage_copy_checker_v39.json": "6e021fe90532fb7ff47965a0e3ef2a3eab21c2e4",
+      "task042_full_input_checker.py": "026fdf055df9f84c5855d5697c1a590c40494566",
+      "test_boundary_structure.py": "bc6ef4650407baf740e3fa34689a418b323bd961",
+      "test_native_integration.py": "e4ff49eaaba21a2047be7c9ee8ff00125283ecd92"
+    },
+    "mathematical_interface": {
+      "Task042_D_convention": "D is already divided by its projection denominator",
+      "after_interior_elimination": "Hhat = I + Di Vii^(-1) Bi",
+      "conjugate_dual_scatter": "E^H",
+      "do_not_conflate": [
+        "projection denominator",
+        "Hp",
+        "Hhat"
+      ],
+      "interior_recovery": "xi = Vii^(-1)(fi - Vit xt - Bi alpha)",
+      "native_primal_extract": "E",
+      "port_rhs_contains": "Di Vii^(-1) fi",
+      "preserve_small_native_internal_terms": "Task042 observed max abs native C interior term 1.3012535225303092e-11; do not clip to zero",
+      "uneliminated_Hp": "I, implicit; not dense",
+      "uneliminated_augmented_block": "[V,B; -D,I]"
+    },
+    "minimum_handoff_assessment": {
+      "adapter_coupling_to_task042": "independent_trace_port_terms imports Task042 P6DirectTracePortTerms lazily; isolate or replace this narrow helper for Task40 API",
+      "candidate_core_files": [
+        "src/solvers/directional_boundary.py",
+        "src/solvers/native_boundary_adapter.py"
+      ],
+      "current_action": "read-only dependency map only; no source copied or modified",
+      "directional_boundary_dependencies": "Python standard library, NumPy, and Basix at element/integration construction; boundary-only exact-q contraction, no volume row IDs",
+      "independent_checkers": [
+        "benchmarks/check_boundary_structure.py",
+        "benchmarks/check_native_integration.py"
+      ],
+      "linked_tests": [
+        "src/test/test_boundary_structure.py",
+        "src/test/test_native_integration.py"
+      ],
+      "native_adapter_dependencies": "NumPy and SciPy sparse with literal geometry/orientation/MPC inputs; E and E^H extraction/scatter",
+      "not_a_boundary_checker": "benchmarks/task042_full_input_checker.py is a saved neural/full-input direction checker and is not part of the minimum boundary module handoff"
+    },
+    "native_adapter_evidence": {
+      "actual_failure": "ValueError: direct B carrier contains an MPC slave or unknown trace row; 660 slave rows had been treated as independent",
+      "actual_volume_attempt_seconds": 912.5918812180171,
+      "consumer_volume_callback": "synthetic zero-volume callable demo only",
+      "four_native_witness_classes": [
+        "min_ordinary",
+        "max_ordinary",
+        "x_seam",
+        "xy_corner"
+      ],
+      "full_native_FE_replay_after_fix": "NOT_RUN",
+      "minimal_fix": "use owned_active_original_dofs for independent trace rows and reject nonzero omitted slave support",
+      "nonzero_native_internal_RHS_affine_recovery": "NOT_QUALIFIED",
+      "physical_volume_qualification": false,
+      "witness_max_relative_difference": 1.3623018728143374e-12
+    },
+    "nontransferable_differences": {
+      "no_reuse": [
+        "Task042 material-dependent coefficients or caches",
+        "Task042 full-volume/native row IDs",
+        "Task042 q30 qualification as a Task40 result",
+        "Task042 physical solve or official outputs"
+      ],
+      "task042_36_y_segment_phase_span_rad_derived": 6.108652381980153,
+      "task042_bottom_Si_n": [
+        0.999885140474,
+        4.32477054e-06
+      ],
+      "task042_surface_facets_per_side": [
+        73,
+        36
+      ],
+      "task40_bottom_Si_n": [
+        0.9998851703688496,
+        4.3236152269189515e-06
+      ],
+      "task40_cell_count_candidate": [
+        272,
+        4,
+        14
+      ],
+      "task40_four_y_segment_phase_span_rad_derived": 54.97787143782138,
+      "task40_lambda0_nm": 0.7,
+      "task40_maximum_abs_n": 35,
+      "task40_phi_deg": 0.0,
+      "task40_theta_from_positive_z_deg": 89.0,
+      "w1_actual_face_q30_q60_structural_check": "NOT_RUN; blocked because current W0 did not pass its full gate"
+    },
+    "pinned_commit": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+    "read_method": "git show and blob identity from the pinned commit; no checkout, ref update, or Task042 worktree write"
+  },
+  "task40_source": {
+    "branch": "task40extra_0p7nm_engineering",
+    "input_path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+    "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "source_sha": "8553a22b73ba8605888d0b27930144470ff5a84d"
+  },
+  "w0_frozen_532_manifest_search": {
+    "complete_preexisting_frozen_532_row_physical_manifest": "NOT_FOUND",
+    "disposition": "W0 identity remains blocked until the frozen original 532-row manifest (and associated runtime identity sufficient for field comparison) is supplied; do not replace hash, delete guard, or treat a newly generated summary as gold",
+    "full_32060_manifests_are_different_inventory": "original-size AUTO inventory; not the frozen 532-mode W0 literal identity",
+    "only_532_row_files_found": [
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z/identity_diagnostic/ordered_mode_manifest.canonical.json",
+        "sha256": "afc439d8969463d3c3d46076382ec30c7a8fe3c9b1150955dc2d228a483e7f6b",
+        "status": "new W0-prefix diagnostic; differs from frozen 4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951"
+      },
+      {
+        "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z/identity_diagnostic/old_wsl_venv/ordered_mode_manifest.canonical.json",
+        "sha256": "ce7cb6670fb9c7b2dde457c13238bfd9bca99faab98fbb5c3f738a8902478f4d",
+        "status": "legacy WSL diagnostic; differs from frozen hash and its ABI differs from W0"
+      }
+    ],
+    "only_preexisting_mode_manifest_candidate_outside_current_diagnostics": {
+      "bytes": 86559,
+      "mode_count": 80,
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/direct_reference_v1/393e5c0dddb933848945ab2e18edb73cf69cc224/mode_manifest.json",
+      "sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "usable_as_532_gold": false
+    },
+    "scope": "bounded filename/size inspection under benchmarks/artifacts/task40extra_0p7nm_engineering, excluding installed runtime/package trees"
+  },
+  "v8_accounting_closeout": {
+    "recorded_utc": "2026-10-04T11:44:36.248649Z",
+    "window": {
+      "t0_utc": "2026-10-04T08:55:26.395534Z",
+      "deadline_utc": "2026-10-04T12:55:26.395534Z",
+      "as_of_utc": "2026-10-04T11:33:35.805415Z",
+      "utc_derived_elapsed_seconds": 9489.409881,
+      "utc_derived_remaining_seconds": 4910.590119,
+      "as_of_basis": "UTC-derived from frozen endpoints; not monotonic elapsed or charge",
+      "window_refreshed": false,
+      "full_window_preparation_and_charge": "UNKNOWN_NOT_SETTLED"
+    },
+    "run_id": "w0_formal_local_20261004T1038Z",
+    "run_index_entry_id_alias": "local_w0_formal_20261004T1038Z_8553a22",
+    "attempt_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z",
+    "entry_command": "bash scripts/run_fresh_c1_p6_local_wsl.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z 2026-10-04T12:55:26Z (arguments reconstructed from saved precheck/ABI receipt and tracked wrapper; literal argv not persisted)",
+    "systemd_unit_observed": "task40freshc1_local_wsl2_authorized_20261004T103856Z_1733139",
+    "supervisor_pid": "UNKNOWN_NOT_RECORDED",
+    "supervisor_start_ticks": "UNKNOWN_NOT_RECORDED",
+    "worker_pid": 1733184,
+    "worker_start_ticks": 70682370,
+    "run_summary_sha256": "dc0dd382c03c7d4ffdb80f6ad0fd38ad624111fc5512cdfc071eb4d5168eb0bc",
+    "engineering_fix_rounds_used": "2/3",
+    "engineering_fix_rounds_prior_snapshot": "NOT_INFERRED (event 15)",
+    "engineering_fix_rounds_basis": "2/3 conservatively: 4b780d84849c28790a603b26247aac90561b1a2e fixed deadline propagation/control entry; 8553a22b73ba8605888d0b27930144470ff5a84 added separately user-authorized local WSL2 runtime-profile qualification. Later no-source identity/preflight diagnostics are not repair rounds. Prior event-15 snapshot remains NOT_INFERRED; no extra rounds are granted."
+  }
+}

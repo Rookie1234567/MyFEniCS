@@ -438,5 +438,118 @@
       "measured_worker_elapsed_subtotal_including_latest_actual_attempt_seconds": 200.87894401792437,
       "native_side_source": "benchmarks/artifacts/task40extra_0p7nm_engineering/native_w0_handoff_1c65fa40/evidence_correction.json"
     }
+  },
+  "v8_current_state": {
+    "status": "ACTIVE_WINDOW_W0_INCOMPLETE_W1_IDENTITY_ONLY_COMPLETE",
+    "updated_utc": "2026-10-04T11:44:36.248649Z",
+    "review": "docs/task40extra_0p7nm_engineering/review_report_v8.md",
+    "source_sha": "8553a22b73ba8605888d0b27930144470ff5a84d",
+    "window": {
+      "first_preparation_t0_utc": "2026-10-04T08:55:26.395534Z",
+      "exact_deadline_utc": "2026-10-04T12:55:26.395534Z",
+      "policy_window_seconds": 14400,
+      "refresh_on_retry": false,
+      "full_window_charge": "UNKNOWN_NOT_SETTLED",
+      "as_of_utc": "2026-10-04T11:33:35.805415Z",
+      "utc_derived_elapsed_seconds": 9489.409881,
+      "utc_derived_remaining_seconds": 4910.590119,
+      "as_of_derivation": "UTC subtraction from frozen T0 and exact deadline; not monotonic elapsed or expense",
+      "window_refreshed": false,
+      "as_of_basis": "UTC-derived from frozen endpoints; not monotonic elapsed or charge"
+    },
+    "policy_caps": {
+      "overall_v7_v8_policy_total_seconds": 57600,
+      "old_w0_policy_allowance_preserved_seconds": 14400,
+      "new_w0_max_seconds": 14400,
+      "w1_max_seconds": 7200,
+      "w2_conditional_max_seconds": 21600,
+      "formal_worker_starts_max": 4,
+      "formal_worker_starts_used": 1,
+      "engineering_fix_rounds_max": 3,
+      "engineering_fix_rounds_used": 2,
+      "engineering_fix_rounds_remaining": 1
+    },
+    "w0_current_attempt": {
+      "run_id": "w0_formal_local_20261004T1038Z",
+      "status": "WORKER_FAILED_BEFORE_FE_IDENTITY_GATE",
+      "classification": "identity/implementation gate failure before FE; not numerical or resource failure",
+      "observed_utc": "2026-10-04T10:41:11.771267Z",
+      "worker_phase_elapsed_seconds": 1.5594090659869835,
+      "tree_rss_peak_bytes": 200359936,
+      "tree_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "checker": "NOT_RUN",
+      "raw_member_count": 0,
+      "official_results": false,
+      "PDE_solved": false,
+      "actual_mode_count_in_failure_record": null,
+      "actual_mode_sha256_in_failure_record": null,
+      "index_entry_id_alias": "local_w0_formal_20261004T1038Z_8553a22",
+      "run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z",
+      "run_summary_sha256": "dc0dd382c03c7d4ffdb80f6ad0fd38ad624111fc5512cdfc071eb4d5168eb0bc",
+      "entry_command": "bash scripts/run_fresh_c1_p6_local_wsl.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z 2026-10-04T12:55:26Z (arguments reconstructed from saved precheck/ABI receipt and tracked wrapper; literal argv not persisted)",
+      "systemd_unit_observed": "task40freshc1_local_wsl2_authorized_20261004T103856Z_1733139",
+      "supervisor_pid": "UNKNOWN_NOT_RECORDED",
+      "supervisor_start_ticks": "UNKNOWN_NOT_RECORDED",
+      "worker_pid": 1733184,
+      "worker_start_ticks": 70682370,
+      "run_summary_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z/run_summary.json"
+    },
+    "w0_identity_diagnostic": {
+      "new_independent_prefix_mode_count": 532,
+      "new_independent_prefix_manifest_sha256": "afc439d8969463d3c3d46076382ec30c7a8fe3c9b1150955dc2d228a483e7f6b",
+      "legacy_repo_venv_mode_count": 532,
+      "legacy_repo_venv_manifest_sha256": "ce7cb6670fb9c7b2dde457c13238bfd9bca99faab98fbb5c3f738a8902478f4d",
+      "frozen_expected_manifest_sha256": "4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+      "historical_full_532_row_manifest_available": false,
+      "FE_JIT_PDE": false,
+      "no_threshold_or_source_change": true
+    },
+    "w1_inventory_audit": {
+      "record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json",
+      "record_sha256": "03b5c44136f132d203237211ea1499faec1c25d3c1f47225e0c662d00aca4ea0",
+      "status": "PASS_READ_ONLY_IDENTITY_ONLY",
+      "generator_rerun": false,
+      "manifest_count": 32060,
+      "file_bytes": 36244923,
+      "file_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "target_physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f",
+      "w1_actual_FE": "HELD_UNTIL_COMPLETE_W0_PASS"
+    },
+    "task042_handoff": {
+      "commit": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "status": "READ_ONLY_MINIMUM_DEPENDENCY_MAP",
+      "no_source_copy": true,
+      "no_task042_worktree_or_ref_change": true,
+      "no_cached_coefficients_reused": true
+    },
+    "carry_forward_costs": {
+      "historical_known_worker_elapsed_subtotal_seconds": 200.87894401792437,
+      "historical_6bbc_preparation_and_cost": "UNKNOWN_NOT_ZERO",
+      "historical_v6_settled_debit_seconds_preserved": 5428.582333962078,
+      "misdirected_remote_preparation": "UNKNOWN_NOT_ZERO",
+      "misdirected_remote_control_smoke_seconds_known": 4.101868640049361,
+      "cross_host_monotonic_comparison": "FORBIDDEN"
+    },
+    "held": {
+      "w1_new_surface_q30_q60": "NOT_RUN",
+      "w2": "HELD",
+      "dot": "HELD",
+      "original_size_PDE": "NO_GO"
+    },
+    "fee_statement": "As of 2026-10-04T11:33:35.805415Z, elapsed/remaining are UTC-derived from frozen endpoints, not monotonic time or charge. Worker phase elapsed is measured; total V8-window preparation and W0 charge remain UNKNOWN_NOT_SETTLED.",
+    "w0_frozen_gold_manifest_search": {
+      "status": "NOT_FOUND_IN_BOUNDED_TASK40_ARTIFACTS_SEARCH",
+      "direct_reference_candidate_mode_count": 80,
+      "direct_reference_candidate_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+      "frozen_hash_or_guard_changed": false
+    },
+    "engineering_fix_rounds_prior_snapshot": "NOT_INFERRED (preserved by append-only event 15)",
+    "engineering_fix_rounds_basis": "2/3 conservatively: 4b780d84849c28790a603b26247aac90561b1a2e fixed deadline propagation/control entry; 8553a22b73ba8605888d0b27930144470ff5a84 added separately user-authorized local WSL2 runtime-profile qualification. Later no-source identity/preflight diagnostics are not repair rounds. Prior event-15 snapshot remains NOT_INFERRED; no extra rounds are granted."
   }
 }

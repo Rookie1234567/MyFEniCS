@@ -1,4 +1,23 @@
-# Task40extra Review V7 补充执行收口待审 / V6-V4 历史总账
+# Task40extra 结果总览：Review V8 当前状态；V7–V4 历史记录
+
+## Review V8：W0 身份门停止与 W1 清单只读核验（当前）
+
+W0 在完整 p6 FE setup 前的 532 模式物理身份门停止：异常为 `ValueError: fresh C1 requires the independently regenerated ordered literal532 physical inventory`，不是 PDE 数值失败或资源停机。worker phase 实测 1.5594090659869835 s，任务树采样 RSS 峰 200,359,936 B、swap 0 B；没有 checker、科学 raw 或 official result。W0 未完成。本机 Task40 artifacts 的有界文件名/大小核对未找到旧冻结的 532 行 gold；唯一其他既存模式 manifest 是 80-mode direct-reference 文件，不能替代。新 W0 与旧 WSL 诊断清单均不匹配冻结 hash，因此该身份 blocker 保留。
+
+| 阶段 | 对象与方式 | 当前证据 | 裁决 |
+|---|---|---|---|
+| W0 正式 worker | 80 cells、p6-only、532 modes、φ=5°、MPI1；本机独立 WSL2 ABI | 当前窗口第 1 次 worker 在 `fresh_p6_cold_setup_begin` 前停止；后代清空；global swap 页增量 0 | `INCOMPLETE / IDENTITY_GATE_FAILURE`；非 FE、solver、PDE 或资源失败 |
+| W1 清单身份 | 对原有 32,060 AUTO 清单及 repair 副本分块 hash、逐行重算有序 keys | 两文件均 36,244,923 B、SHA256 `52d7ec…15490d`；ordered-key SHA `03c196…e95dec`；索引 0–32059 连续 | 只读库存身份 `PASS`；未运行生成器或保留全部 mode rows |
+| W1 Task042 移交 | 固定 commit `f3bf7942…1794ee59` 的 V38/V39 boundary/native adapter | 记录精确 blob 身份、材料/网格差异、MPC slave 失败及 volume 未资格 | 只读最小依赖说明；未拷贝代码或继承数值资格 |
+| W1 FE/q30–q60、W2、dot | 后续数值阶段 | 当前 W0 未完整通过；没有新面片结构积分、体积作用、C1c raw 或 p6 对照 | `HELD / NOT_RUN` |
+
+原件和 repair 的目标物理身份 canonical SHA256 均为 `a855565b…79eaf1f`，组合 inventory identity 均为 `39b457c3…d0c12`。主线 bottom-Si 折射率为 `0.9998851703688496+4.3236152269189515e-6i`，Task042 为 `0.999885140474+4.32477054e-6i`。Task042 每侧 73×36 面片；主线 272×4×14 只是计数候选，所以其 q30 资格不能当作主线误差证明。最小可复用候选是方向边界核与 `E/Eᴴ` native adapter；adapter 的 Task042 direct-carrier helper 需绑定主线接口。
+
+旧三次 worker 已知小计 200.87894401792437 s、`6bbc` 历史准备费用 unknown、V6 settled debit 5428.582333962078 s 均未更改。V8 固定窗口 T0=`2026-10-04T08:55:26.395534Z`、deadline=`2026-10-04T12:55:26.395534Z`；截至 `2026-10-04T11:33:35.805415Z`，按 UTC 边界推导 elapsed=`9489.409881 s`、remaining=`4910.590119 s`。这不是 monotonic elapsed 或收费；整段准备与 W0 总费用仍 `UNKNOWN_NOT_SETTLED`。worker 启动为 1/4；修复额度为 2/3（event 15 原 `NOT_INFERRED` 快照保留）：`4b780d8` 是固定 deadline/控制入口修复，`8553a22` 是用户另行授权的 local WSL2 profile 资格化（保守计为一轮源级变更）；后续无源身份诊断不计修复。
+
+详见 [Response V8](../response_v8.md)、[W1 清单身份与最小依赖记录](records/review_v8_w1_identity_audit_v1.json)和[运行索引](records/run_index.json)。V7、V6 及更早各节继续作为历史记录保留。
+
+---
 
 ## Review V6：Gx784 单次运行与保存场后处理收口
 
@@ -22,6 +41,9 @@ R/T 是端口模式功率比，A_balance 是功率平衡吸收，A_volume 是材
 首次保存场 preflight 的分类错配错误和后续两项最小源码修复均保留；首次失败没有进入比较 worker、预算预留或 PDE/factorization，时钟缺样所以 elapsed 为 unknown、未收费。original/repair AUTO 清单身份相同：SHA256 52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d，32,060 个有序 key，digest 03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec；V6 各读取一次，未运行生成器。已有单个 H 对角/稠密矩阵 512,960 / 16,445,497,600 B、p6 单元张量/内部 LU 形状 12,446,784 / 3,240,000 B、trace Schur/单份耦合项 2,985,984 / 3,110,400 B；272×4×14 候选为 15,232 cells、p6 full/interior 10,228,620 / 6,854,400 行，74 个 outer vectors 3,701,577,088 B、retained/full scratch 4,428,003,200 B。这些是 derived 载荷/计数，不是实测峰值。目标尺寸生命周期仍缺冷 JIT、C/D、H/Hhat 同存、恢复/投影缓存与数量、全部 q 因子填充和 workspace、完整迭代与输出时间等实测；不同阶段不能简单相加为同时峰值。原尺寸仍 NO-GO，2 TB 容量未证明；dot、workstation 与 master 状态不变。
 
 详细边界、checker 数值、失败保留和证据链接见 [Response V6](../response_v6.md) 与 [V6 compact closeout record](records/review_v6_gx784_postprocess_closeout_v1.json)。V5/V4 与更早负结果继续保留如下。
+
+
+
 
 
 ---

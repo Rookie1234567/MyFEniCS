@@ -872,6 +872,80 @@
         "legacy_512_MiB_cap_assertion_preserved": "src/test/test_fresh_c1_p6_native_tensor_checker.py rejects 512 MiB cap mismatch; this W0 disk payload cap is separate"
       },
       "historical_worker_attempt_elapsed_subtotal_seconds": 200.87894401792437
+    },
+    {
+      "run_id": "w0_formal_local_20261004T1038Z",
+      "stage": "W0",
+      "attempt": 1,
+      "kind": "formal_worker_attempt",
+      "runtime_profile": "local_wsl2_authorized",
+      "source_sha": "8553a22b73ba8605888d0b27930144470ff5a84d",
+      "source_identity_manifest_sha256": "2609f67bf22cd4d00385c4d4806226498b42d22d8ed653c3debf5a80cfa7ee84",
+      "input_path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+      "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+      "run_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z",
+      "worker_observed_utc": "2026-10-04T10:41:11.771267Z",
+      "status": "WORKER_FAILED_BEFORE_FE_IDENTITY_GATE",
+      "classification": "frozen ordered literal532 physical inventory identity gate; not a numerical/PDE/resource result",
+      "observed_exception": "ValueError: fresh C1 requires the independently regenerated ordered literal532 physical inventory",
+      "predicate": "len(modes) == 532 and mode_sha256 == 4ace13f47bc6edf8a08e1a1df24309f6326294b6bf9d5ca4ada07208bd50c951",
+      "failure_record_actual_mode_count": null,
+      "failure_record_actual_mode_sha256": null,
+      "worker_phase_elapsed_seconds": 1.5594090659869835,
+      "worker_tree_rss_peak_bytes": 200359936,
+      "worker_tree_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "FE_action": "NOT_REACHED",
+      "JIT": "NOT_REACHED",
+      "matrix": "NOT_CREATED",
+      "factorization": "NOT_RUN",
+      "PDE_solved": false,
+      "checker": "NOT_RUN",
+      "raw_member_count": 0,
+      "official_results": false,
+      "completion_boundary": "identity guard before fresh_p6_cold_setup_begin; no FE setup or scientific raw",
+      "index_entry_id_alias": "local_w0_formal_20261004T1038Z_8553a22",
+      "run_directory_basename": "w0_formal_local_20261004T1038Z",
+      "run_summary_sha256": "dc0dd382c03c7d4ffdb80f6ad0fd38ad624111fc5512cdfc071eb4d5168eb0bc",
+      "entry_invocation": {
+        "reconstructed_outer_argv": [
+          "bash",
+          "scripts/run_fresh_c1_p6_local_wsl.sh",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+          "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z",
+          "2026-10-04T12:55:26Z"
+        ],
+        "literal_shell_argv_persisted": false,
+        "reconstruction_basis": [
+          "formal_w0_entry_precheck_pass event: run directory, profile, source and floored fixed deadline",
+          "run-local abi_receipt.json: qualified prefix",
+          "tracked run_fresh_c1_p6_local_wsl.sh/native_service_entry.sh wrapper contracts"
+        ],
+        "service_entry": "scripts/task40_fresh_c1/native_service_entry.sh via the tracked local-Wsl wrapper and systemd-run --user",
+        "dynamic_systemd_unit_name": null
+      },
+      "formal_service_identity": {
+        "service_pid": null,
+        "start_ticks": null,
+        "unit_name": null,
+        "status": "NOT_RECORDED_IN_FORMAL_W0_RECEIPTS",
+        "note": "The separate control-smoke service PID 1733083 is not this formal run and is not substituted."
+      },
+      "observed_worker_identity": {
+        "pid": 1733184,
+        "start_ticks": 70682370
+      },
+      "entry_command": "bash scripts/run_fresh_c1_p6_local_wsl.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z 2026-10-04T12:55:26Z (arguments reconstructed from saved precheck/ABI receipt and tracked wrapper; literal argv not persisted)",
+      "systemd_unit_observed": "task40freshc1_local_wsl2_authorized_20261004T103856Z_1733139",
+      "supervisor_pid": "UNKNOWN_NOT_RECORDED",
+      "supervisor_start_ticks": "UNKNOWN_NOT_RECORDED",
+      "worker_pid": 1733184,
+      "worker_start_ticks": 70682370,
+      "run_summary_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z/run_summary.json"
     }
   ],
   "ledger": {
@@ -1762,5 +1836,81 @@
         "sha256": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20"
       }
     }
+  },
+  "review_v8_progress": {
+    "status": "W0_INCOMPLETE_W1_READ_ONLY_IDENTITY_PASS_W1_FE_HELD",
+    "updated_utc": "2026-10-04T11:44:36.248649Z",
+    "source_sha": "8553a22b73ba8605888d0b27930144470ff5a84d",
+    "response": "docs/task40extra_0p7nm_engineering/response_v8.md",
+    "w0": {
+      "run_id": "w0_formal_local_20261004T1038Z",
+      "formal_worker_starts_used": 1,
+      "max_formal_worker_starts": 4,
+      "engineering_fix_rounds_max": 3,
+      "engineering_fix_rounds_used": 2,
+      "T0_utc": "2026-10-04T08:55:26.395534Z",
+      "fixed_deadline_utc": "2026-10-04T12:55:26.395534Z",
+      "whole_window_preparation_and_charge": "UNKNOWN_NOT_SETTLED",
+      "historical_worker_elapsed_subtotal_seconds_preserved": 200.87894401792437,
+      "historical_6bbc_preparation_cost": "UNKNOWN_NOT_ZERO",
+      "historical_v6_settled_debit_seconds_preserved": 5428.582333962078,
+      "frozen_gold_manifest_search": {
+        "status": "NOT_FOUND_IN_BOUNDED_TASK40_ARTIFACTS_SEARCH",
+        "80_mode_candidate_sha256": "c3ff9c0cf35e2d183f44ed3fb7448d4aa586bb6fdf7f9dc9ba78dc25011c693a",
+        "guard_change": "NOT_AUTHORIZED_OR_PERFORMED"
+      },
+      "index_entry_id_alias": "local_w0_formal_20261004T1038Z_8553a22",
+      "as_of_window_snapshot": {
+        "t0_utc": "2026-10-04T08:55:26.395534Z",
+        "deadline_utc": "2026-10-04T12:55:26.395534Z",
+        "as_of_utc": "2026-10-04T11:33:35.805415Z",
+        "utc_derived_elapsed_seconds": 9489.409881,
+        "utc_derived_remaining_seconds": 4910.590119,
+        "as_of_basis": "UTC-derived from frozen endpoints; not monotonic elapsed or charge",
+        "window_refreshed": false,
+        "full_window_preparation_and_charge": "UNKNOWN_NOT_SETTLED"
+      },
+      "attempt_directory": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z",
+      "entry_command": "bash scripts/run_fresh_c1_p6_local_wsl.sh benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z 2026-10-04T12:55:26Z (arguments reconstructed from saved precheck/ABI receipt and tracked wrapper; literal argv not persisted)",
+      "systemd_unit_observed": "task40freshc1_local_wsl2_authorized_20261004T103856Z_1733139",
+      "supervisor_pid": "UNKNOWN_NOT_RECORDED",
+      "supervisor_start_ticks": "UNKNOWN_NOT_RECORDED",
+      "worker_pid": 1733184,
+      "worker_start_ticks": 70682370,
+      "run_summary_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1038Z/run_summary.json",
+      "run_summary_sha256": "dc0dd382c03c7d4ffdb80f6ad0fd38ad624111fc5512cdfc071eb4d5168eb0bc",
+      "engineering_fix_rounds_prior_snapshot": "NOT_INFERRED (event 15)",
+      "engineering_fix_rounds_basis": "2/3 conservatively: 4b780d84849c28790a603b26247aac90561b1a2e fixed deadline propagation/control entry; 8553a22b73ba8605888d0b27930144470ff5a84 added separately user-authorized local WSL2 runtime-profile qualification. Later no-source identity/preflight diagnostics are not repair rounds. Prior event-15 snapshot remains NOT_INFERRED; no extra rounds are granted."
+    },
+    "w1_existing_inventory_audit": {
+      "status": "PASS_READ_ONLY_IDENTITY_ONLY",
+      "record": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json",
+      "record_sha256": "03b5c44136f132d203237211ea1499faec1c25d3c1f47225e0c662d00aca4ea0",
+      "generator_rerun": false,
+      "FE_JIT_PDE": false,
+      "mode_count": 32060,
+      "manifest_bytes": 36244923,
+      "manifest_sha256": "52d7ec801de65d11b15aa1b6daff8d2ad43e1f51902dfd91d06597e49715490d",
+      "ordered_key_sha256": "03c1965cc13d89b256ea61212a5baba9aa97ef7ec20d356b0a04f9d233e95dec",
+      "target_physical_identity_sha256": "a855565b82c1d88e84352dd355aec3531464261e5ab0df3e45de17e1879eaf1f"
+    },
+    "task042_minimum_dependency_handoff": {
+      "commit": "f3bf7942f62e725057c3ae44820bc1ca1794ee59",
+      "status": "READ_ONLY_CANDIDATE_MAP_ONLY",
+      "files": [
+        "src/solvers/directional_boundary.py",
+        "src/solvers/native_boundary_adapter.py"
+      ],
+      "physical_volume_qualification": false,
+      "material_and_surface_identity_match": false
+    },
+    "held": {
+      "w1_actual_FE": "HELD_UNTIL_COMPLETE_W0_PASS",
+      "new_surface_q30_q60": "NOT_RUN",
+      "W2": "HELD",
+      "dot": "HELD",
+      "original_size_PDE": "NO_GO"
+    },
+    "commit_or_push_by_executor": false
   }
 }
