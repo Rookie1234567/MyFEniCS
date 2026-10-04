@@ -33,6 +33,7 @@ def implementation_hashes():
         "src/runners/port_preparation.py",
         "benchmarks/qualify_port_preparation.py",
         "benchmarks/check_boundary_witness.py",
+        "benchmarks/archive_jit_cache.py",
         "src/test/test_boundary_witness.py",
         "src/test/tiled_port_mpi_fixture.py",
         "src/test/test_task042_v36_ports.py",

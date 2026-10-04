@@ -62,10 +62,12 @@ class PreparationWindow(DiagnosticWindow):
         used = sum(
             r["elapsed_seconds"]
             for r in self.ledger()["runs"]
-            if r["role"] in ("COMPONENT", "PATCH")
+            if r["role"] in ("COMPONENT", "PATCH", "CAPACITY")
         )
         return min(
-            self.component - used if role in ("COMPONENT", "PATCH") else self.auxiliary,
+            self.component - used
+            if role in ("COMPONENT", "PATCH", "CAPACITY")
+            else self.auxiliary,
             self.total - self.reserve - self.charged_wall(),
             self.snapshot()["heavy_remaining_seconds"],
         )

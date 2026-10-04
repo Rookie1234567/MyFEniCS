@@ -22,6 +22,23 @@ from src.runners.task042_shared import SharedHealth, audit, shared_envelope, wri
 from src.solvers.port_preparation_window import implementation_hashes, window
 
 
+class PreparationHealth:
+    def __init__(self, folder, neighbors, namespace):
+        self.shared = SharedHealth(folder, neighbors)
+        self.namespace, self.folder = namespace, folder
+
+    def __call__(self):
+        row = dict(self.shared())
+        if self.namespace == "v37":
+            own = [ROOT / "tmp/task042/v37", ROOT / "benchmarks/artifacts/task042/v37"]
+            own.extend((ROOT / "results/task042").glob("task042_v37_*"))
+            size = inventory_paths(own, ROOT)["bytes"]
+            row["new_preparation_bytes"] = size
+            if size > 512 * 2**20:
+                row["stop_reason"] = "RESOURCE_CONTROLLED_STOP"
+        return row
+
+
 def context(namespace):
     if namespace == "v37":
         from src.solvers import boundary_witness_scope as scope
@@ -32,7 +49,7 @@ def context(namespace):
     return window, ARTIFACT, PLAN, implementation_hashes
 
 
-def storage(reserve=0, *, namespace="v36"):
+def storage(reserve=0, *, namespace="v36", cleanup=False):
     _, artifact, _, _ = context(namespace)
     own = [ROOT / ("tmp/task042/" + namespace), artifact]
     own.extend((ROOT / "results/task042").glob("task042_" + namespace + "_*"))
@@ -40,7 +57,7 @@ def storage(reserve=0, *, namespace="v36"):
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
     if (
-        new + reserve > 512 * 2**20
+        (new + reserve > 512 * 2**20 and not cleanup)
         or total + reserve > 20 * 2**30
         or free < 50 * 2**30 + reserve
     ):
@@ -83,7 +100,7 @@ def launch(
     started = time.monotonic()
     window.require_ready()
     role = phase if specification is None else specification.derived["stage"]
-    if role in ("COMPONENT", "PATCH"):
+    if role in ("COMPONENT", "PATCH", "CAPACITY"):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -118,7 +135,11 @@ def launch(
             )
         )
     folder.mkdir(parents=True, exist_ok=False)
-    storage(32 * 2**20, namespace=namespace)
+    storage(
+        32 * 2**20,
+        namespace=namespace,
+        cleanup=(namespace == "v37" and role == "archive"),
+    )
     with (ROOT / "tmp/task042/task042_shared.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         baseline = window.admission(
@@ -143,7 +164,9 @@ def launch(
             "shared_workstation": True,
             "environment_mode": os.environ.get("TASK042_ENV_MODE"),
             "cpu": baseline["cpu"],
-            "planned_bytes": 6 * 2**30 if role in ("COMPONENT", "PATCH") else 2 * 2**30,
+            "planned_bytes": 6 * 2**30
+            if role in ("COMPONENT", "PATCH", "CAPACITY")
+            else 2 * 2**30,
             "new_volume_action_count": 0,
             "new_factor_count": 0,
         }
@@ -173,8 +196,12 @@ def launch(
             interval=0.5,
             timebase_guard=True,
             hard_stop_immediate=True,
-            rss_hard_limit_bytes=(8 if role in ("COMPONENT", "PATCH") else 2) * 2**30,
-            rss_warning_bytes=(6 if role in ("COMPONENT", "PATCH") else 1) * 2**30,
+            rss_hard_limit_bytes=(
+                8 if role in ("COMPONENT", "PATCH", "CAPACITY") else 2
+            )
+            * 2**30,
+            rss_warning_bytes=(6 if role in ("COMPONENT", "PATCH", "CAPACITY") else 1)
+            * 2**30,
             memory_envelope_provider=shared_envelope,
             include_pss=False,
             source_state=state,
@@ -184,7 +211,13 @@ def launch(
                 "TASK042_PREPARATION_SCOPE": namespace,
                 "PYTHONDONTWRITEBYTECODE": "1",
             },
-            health_check=SharedHealth(folder, baseline["neighbor_processes"]),
+            health_check=(
+                SharedHealth(folder, baseline["neighbor_processes"])
+                if role == "archive"
+                else PreparationHealth(
+                    folder, baseline["neighbor_processes"], namespace
+                )
+            ),
             stop_on_global_swap=False,
         )
         result.update(

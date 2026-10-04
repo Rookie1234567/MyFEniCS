@@ -116,7 +116,7 @@ def load_boundary_witness(path):
     raw = path.read_bytes()
     value = tomllib.loads(raw.decode())
     item = value.get("task042_v37", {})
-    stages = ("IDENTITY", "PATCH", "CHECK", "DEPLOY")
+    stages = ("IDENTITY", "PATCH", "CAPACITY", "CHECK", "DEPLOY")
     if (
         set(value) != {"schema_version", "task042_v37"}
         or value["schema_version"] != 1
@@ -163,16 +163,16 @@ def load_boundary_witness(path):
         solver={"preconditioner": "none", "target_solve": False},
         execution={
             "mpi_size": 1,
-            "timeout_seconds": 2400 if stage == "PATCH" else 600,
-            "warning_memory_gib": 6 if stage == "PATCH" else 1,
-            "terminate_memory_gib": 8 if stage == "PATCH" else 2,
+            "timeout_seconds": 2400 if stage in ("PATCH", "CAPACITY") else 600,
+            "warning_memory_gib": 6 if stage in ("PATCH", "CAPACITY") else 1,
+            "terminate_memory_gib": 8 if stage in ("PATCH", "CAPACITY") else 2,
             "require_zero_swap": True,
         },
         output={"results_root": "results/task042"},
         derived={
             "stage": stage,
             "preparation_scope": "v37",
-            "environment_mode": "fe" if stage == "PATCH" else "pure",
+            "environment_mode": "fe" if stage in ("PATCH", "CAPACITY") else "pure",
             "plan_sha256": hashlib.sha256(PLAN.read_bytes()).hexdigest(),
             "target_solve": False,
         },

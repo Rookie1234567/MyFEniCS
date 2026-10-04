@@ -14,7 +14,7 @@ from time import perf_counter
 import numpy as np
 
 from src.runners.task042_shared import write_json
-from src.solvers.boundary_witness_scope import PLAN, read_stage
+from src.solvers.boundary_witness_scope import PLAN, ROOT, read_stage
 from src.solvers.bounded_port_provider import json_bytes
 from src.solvers.port_component_study import array_file, environment, relative
 from src.solvers.tiled_port_action import PortTile, TiledPortAction
@@ -388,7 +388,9 @@ class NativeFacetTiles:
         self.costs["phase_integral"] += perf_counter() - began
         began = perf_counter()
         local = np.ascontiguousarray(local)
-        self.V.element.T_apply(local.view(np.float64).ravel(), self.permutations[c : c + 1], 4)
+        self.V.element.T_apply(
+            local.view(np.float64).ravel(), self.permutations[c : c + 1], 4
+        )
         self.costs["orientation"] += perf_counter() - began
         began = perf_counter()
         rows = []
@@ -626,120 +628,19 @@ def patch(folder):
         }
         if same_q and q30q60:
             source = sources[30]
-            identity = [dict(r) for r in rows]
-            action = TiledPortAction(
-                identity,
-                source,
-                source_identity=source.source_identity,
-                global_rows=n,
-                ownership_range=(0, n),
-                tile_bytes=128 * 2**10,
-            )
+            [dict(r) for r in rows]
             file = q_records[1]["numeric_file"]
             native_saved = np.load(file["path"])
-            rng = np.random.default_rng(423701)
-            x = rng.normal(size=n) + 1j * rng.normal(size=n)
-            y = rng.normal(size=n) + 1j * rng.normal(size=n)
-            x[np.asarray(floquet.mpc.slaves, dtype=int)] = 0
-            y[np.asarray(floquet.mpc.slaves, dtype=int)] = 0
-            C = np.column_stack([native_saved[f"C_{i}"] for i in range(len(rows))])
-            D = np.row_stack([native_saved[f"D_{i}"] for i in range(len(rows))])
-            H = np.array([r["projection_denominator"] for r in rows])
-            began = perf_counter()
-            nf = action.apply(x)
-            nh = action.apply(y, adjoint=True)
-            na = action.recover(x)
-            modal = action.modal_rhs(np.ones(len(rows), complex))
-            linear = action.apply((0.37 - 0.91j) * x)
-            measured = perf_counter() - began
-            of = C @ ((D @ x) / H)
-            oh = D.conj().T @ ((C.conj().T @ y) / H)
-            oa = D @ x / H
-            om = C @ np.ones(len(rows))
-            checks = {
-                k: relative(a, b)
-                for k, a, b in [
-                    ("forward", nf, of),
-                    ("adjoint", nh, oh),
-                    ("port", na, oa),
-                    ("modal_rhs", modal, om),
-                    ("linearity", linear, (0.37 - 0.91j) * nf),
-                ]
-            }
-            dual_num = float(abs(np.vdot(y, nf) - np.vdot(nh, x)))
-            dual_den = float(
-                np.linalg.norm(y) * np.linalg.norm(nf)
-                + np.linalg.norm(nh) * np.linalg.norm(x)
+            component_result = evaluate_tiled_witness(
+                source,
+                rows,
+                n,
+                native_saved,
+                folder,
+                description["name"],
+                floquet.mpc.slaves,
+                cfg,
             )
-            checks["dual"] = {
-                "numerator": dual_num,
-                "denominator": dual_den,
-                "relative": dual_num / dual_den,
-                "pass_gate": dual_num <= 1e-10 * dual_den,
-            }
-            h_errors = []
-            powers = []
-            for r in rows:
-                k = np.array([complex_value(v) for v in r["k_vector"]])
-                e = np.array([complex_value(v) for v in r["e_vector"]])
-                hh = np.cross(k, e) / (cfg.k0 * cfg.mu_r)
-                z = r["reference_plane_nm"]
-                phase = np.exp(1j * k[2] * z)
-                actual_h = (
-                    cfg.period_x
-                    * cfg.period_y
-                    * float(np.vdot(e[:2], e[:2]).real)
-                    * abs(phase) ** 2
-                )
-                h_errors.append(
-                    abs(actual_h - r["projection_denominator"])
-                    / r["projection_denominator"]
-                )
-                flux = (
-                    0.5
-                    * float(np.cross(e, np.conj(hh))[2].real)
-                    * abs(phase) ** 2
-                    * cfg.period_x
-                    * cfg.period_y
-                    * (1 if r["side"] == "top" else -1)
-                )
-                powers.append(abs(flux - r["power_at_reference_unit_amplitude"]))
-            checks["H"] = {
-                "max_relative": max(h_errors),
-                "pass_gate": max(h_errors) <= 1e-10,
-            }
-            checks["unit_power"] = {
-                "max_absolute": max(powers),
-                "pass_gate": max(powers) <= 1e-10,
-            }
-            witness = array_file(
-                folder / f"{description['name']}_actions.npz",
-                x=x,
-                y=y,
-                forward=nf,
-                old_forward=of,
-                adjoint=nh,
-                old_adjoint=oh,
-                amplitudes=na,
-                old_amplitudes=oa,
-                modal=modal,
-                old_modal=om,
-                linear=linear,
-            )
-            component_result = {
-                "status": "TILED_P6_PATCH_QUALIFIED"
-                if all(c["pass_gate"] for c in checks.values())
-                else "NUMERICAL_GATE_FAILED",
-                "checks": checks,
-                "action_wall_seconds": measured,
-                "action_stats": action.stats,
-                "mode_receipts": list(action.receipts.values()),
-                "witness": witness,
-                "q": 30,
-                "tile_byte_cap": 128 * 2**10,
-                "H": h_errors,
-                "unit_power_absolute_errors": powers,
-            }
             native_saved.close()
         patch_records.append(
             {
@@ -786,11 +687,127 @@ def patch(folder):
     }
 
 
+def evaluate_tiled_witness(source, rows, n, native_saved, folder, label, slaves, cfg):
+    identity = [dict(r) for r in rows]
+    action = TiledPortAction(
+        identity,
+        source,
+        source_identity=source.source_identity,
+        global_rows=n,
+        ownership_range=(0, n),
+        tile_bytes=128 * 2**10,
+    )
+    rng = np.random.default_rng(423701)
+    x = rng.normal(size=n) + 1j * rng.normal(size=n)
+    y = rng.normal(size=n) + 1j * rng.normal(size=n)
+    x[np.asarray(slaves, dtype=int)] = 0
+    y[np.asarray(slaves, dtype=int)] = 0
+    C = np.column_stack([native_saved[f"C_{i}"] for i in range(len(rows))])
+    D = np.row_stack([native_saved[f"D_{i}"] for i in range(len(rows))])
+    H = np.array([r["projection_denominator"] for r in rows])
+    began = perf_counter()
+    nf = action.apply(x)
+    nh = action.apply(y, adjoint=True)
+    na = action.recover(x)
+    modal = action.modal_rhs(np.ones(len(rows), complex))
+    linear = action.apply((0.37 - 0.91j) * x)
+    measured = perf_counter() - began
+    of = C @ ((D @ x) / H)
+    oh = D.conj().T @ ((C.conj().T @ y) / H)
+    oa = D @ x / H
+    om = C @ np.ones(len(rows))
+    checks = {
+        k: relative(a, b)
+        for k, a, b in [
+            ("forward", nf, of),
+            ("adjoint", nh, oh),
+            ("port", na, oa),
+            ("modal_rhs", modal, om),
+            ("linearity", linear, (0.37 - 0.91j) * nf),
+        ]
+    }
+    dual_num = float(abs(np.vdot(y, nf) - np.vdot(nh, x)))
+    dual_den = float(
+        np.linalg.norm(y) * np.linalg.norm(nf) + np.linalg.norm(nh) * np.linalg.norm(x)
+    )
+    checks["dual"] = {
+        "numerator": dual_num,
+        "denominator": dual_den,
+        "relative": dual_num / dual_den,
+        "pass_gate": dual_num <= 1e-10 * dual_den,
+    }
+    h_errors = []
+    powers = []
+    for r in rows:
+        k = np.array([complex_value(v) for v in r["k_vector"]])
+        e = np.array([complex_value(v) for v in r["e_vector"]])
+        hh = np.cross(k, e) / (cfg.k0 * cfg.mu_r)
+        z = r["reference_plane_nm"]
+        phase = np.exp(1j * k[2] * z)
+        actual_h = (
+            cfg.period_x
+            * cfg.period_y
+            * float(np.vdot(e[:2], e[:2]).real)
+            * abs(phase) ** 2
+        )
+        h_errors.append(
+            abs(actual_h - r["projection_denominator"]) / r["projection_denominator"]
+        )
+        flux = (
+            0.5
+            * float(np.cross(e, np.conj(hh))[2].real)
+            * abs(phase) ** 2
+            * cfg.period_x
+            * cfg.period_y
+            * (1 if r["side"] == "top" else -1)
+        )
+        powers.append(abs(flux - r["power_at_reference_unit_amplitude"]))
+    checks["H"] = {
+        "max_relative": max(h_errors),
+        "pass_gate": max(h_errors) <= 1e-10,
+    }
+    checks["unit_power"] = {
+        "max_absolute": max(powers),
+        "pass_gate": max(powers) <= 1e-10,
+    }
+    witness = array_file(
+        folder / f"{label}_actions.npz",
+        x=x,
+        y=y,
+        forward=nf,
+        old_forward=of,
+        adjoint=nh,
+        old_adjoint=oh,
+        amplitudes=na,
+        old_amplitudes=oa,
+        modal=modal,
+        old_modal=om,
+        linear=linear,
+    )
+    component_result = {
+        "status": "TILED_P6_PATCH_QUALIFIED"
+        if all(c["pass_gate"] for c in checks.values())
+        else "NUMERICAL_GATE_FAILED",
+        "checks": checks,
+        "action_wall_seconds": measured,
+        "action_stats": action.stats,
+        "mode_receipts": list(action.receipts.values()),
+        "witness": witness,
+        "q": 30,
+        "tile_byte_cap": 128 * 2**10,
+        "H": h_errors,
+        "unit_power_absolute_errors": powers,
+    }
+    return component_result
+
+
 def execute(role, folder, state):
     if role == "IDENTITY":
         return identity(folder)
     if role == "PATCH":
         return patch(folder)
+    if role == "CAPACITY":
+        return capacity_after_stop(folder)
     from benchmarks.check_boundary_witness import check_saved
 
     result = check_saved()
@@ -803,3 +820,137 @@ def execute(role, folder, state):
             source_sha=state["source_sha"],
         )
     return result
+
+
+def capacity_after_stop(folder):
+    """Independent interface analysis after q60 JIT storage stopped.
+
+    Does not repeat or qualify the stopped native q60 oracle. Uses completed
+    raw q15/q30 vectors and their literal row order, plus one bounded real p6
+    facet creator. No UFL forms or JIT cache restoration occurs.
+    """
+    from src.solvers.target_port_preparation import target_config
+
+    parent, _ = read_stage("IDENTITY")
+    wp = parent["witness_plan"]
+    plan = json.loads(Path(wp["path"]).read_text())
+    original = (
+        ROOT
+        / "benchmarks/artifacts/task042/v37/task042_v37_target_p6_facets_20261004T033719818144Z"
+    )
+    manifest = json.loads(
+        (
+            ROOT
+            / "results/task042/task042_v37_target_p6_facets_20261004T033719818144Z/run_manifest.json"
+        ).read_text()
+    )
+    if manifest["source_sha"] != "ce18a6056731780d1feb4f47c96dfcc4f52aa6d1":
+        raise ValueError("frozen completed prefix source")
+    description = plan["patches"][0]
+    cfg, _ = target_config()
+    env = environment(fe=True)
+    start = perf_counter()
+    _data, V, floquet = build_patch(description, cfg)
+    setup = perf_counter() - start
+    n = V.dofmap.index_map.size_global
+    rows = [
+        dict(r, original_mode_index=r["mode_index"], mode_index=i)
+        for i, r in enumerate(plan["selected_modes"])
+    ]
+    native_files = {}
+    q_checks = []
+    for q in (15, 30):
+        path = original / f"{description['name']}_q{q}.npz"
+        # Member receipts are recomputed from the actual original array file;
+        # no vector or accepted state is inferred from scalar histories.
+        with np.load(path, allow_pickle=False) as raw:
+            members = {
+                k: {
+                    "shape": list(raw[k].shape),
+                    "dtype": raw[k].dtype.str,
+                    "sha256": hashlib.sha256(
+                        np.ascontiguousarray(raw[k]).tobytes()
+                    ).hexdigest(),
+                }
+                for k in raw.files
+            }
+        native_files[q] = {
+            "path": str(path),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "members": members,
+            "source_sha": manifest["source_sha"],
+            "oracle": "unthresholded DOLFINx p6 facet assembly",
+        }
+    native = np.load(native_files[30]["path"], allow_pickle=False)
+    sources = {}
+    manual_files = {}
+    same_q = []
+    for q in (30, 60):
+        source = NativeFacetTiles(
+            V,
+            floquet.mpc,
+            cfg,
+            rows,
+            q,
+            hashlib.sha256(
+                json_bytes([wp, description, q, os.environ["TASK042_RUN_SOURCE"]])
+            ).hexdigest(),
+        )
+        for i, r in enumerate(rows):
+            r["tile_ids"] = list(source.tile_ids(i))
+        numeric = {}
+        for i in range(len(rows)):
+            C, D, components = dense_tiles(source, i, n)
+            numeric.update({f"C_{i}": C, f"D_{i}": D, f"components_{i}": components})
+            for k, actual in [("C", C), ("D", D)]:
+                metric = relative(actual, native[f"{k}_{i}"])
+                (same_q if q == 30 else q_checks).append(
+                    {"q": q, "index": i, "kind": k, **metric}
+                )
+        manual_files[q] = array_file(folder / f"manual_q{q}.npz", **numeric)
+        sources[q] = source
+    component = {"status": "NOT_RUN_UNTRUSTED_SAME_Q_MAPPING"}
+    if all(c["pass_gate"] for c in same_q):
+        component = evaluate_tiled_witness(
+            sources[30],
+            rows,
+            n,
+            native,
+            folder,
+            "partial_min_ordinary",
+            floquet.mpc.slaves,
+            cfg,
+        )
+    native.close()
+    return {
+        "status": "P6_TILE_INTERFACE_QUALIFIED_ON_PARTIAL_WITNESS"
+        if component["status"] == "TILED_P6_PATCH_QUALIFIED"
+        else "P6_TILE_INTERFACE_NOT_QUALIFIED",
+        "target_p6_boundary_witness": "NOT_QUALIFIED_INCOMPLETE_NATIVE_Q60_AND_PERIODIC_COVERAGE",
+        "environment": env,
+        "description": description,
+        "native_hex_count": len(description["cells"]),
+        "selected_mode_count": len(rows),
+        "planned_classes": 4,
+        "completed_native_classes": 1,
+        "periodic_classes_not_run": True,
+        "native_files": native_files,
+        "manual_files": manual_files,
+        "same_q_checks": same_q,
+        "q30_native_vs_q60_manual": q_checks,
+        "native_q60": "NOT_RUN_JIT_STORAGE_OBJECT_GATE",
+        "component": component,
+        "setup_seconds": setup,
+        "creator_costs": {str(q): s.costs for q, s in sources.items()},
+        "q15_qualified": False,
+        "no_native_JIT": True,
+        "old_stopped_actor_restarted": False,
+        "volume_actions": 0,
+        "new_LU": 0,
+        "new_QR": 0,
+        "solve": 0,
+        "training": 0,
+        "full_target_DoF_graph": False,
+        "parent_stop": "tmp/task042/v37/storage_stop.json",
+        "original_prefix_source": manifest["source_sha"],
+    }
