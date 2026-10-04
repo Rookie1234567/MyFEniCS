@@ -30,10 +30,24 @@ def sparse_tensor(matrix):
 
 
 class NeighborhoodCorrector(nn.Module):
-    def __init__(self, bridge, graph, scale, *, linear=False, seed=424301, width=32):
+    def __init__(
+        self,
+        bridge,
+        graph,
+        scale,
+        *,
+        linear=False,
+        seed=424301,
+        width=32,
+        real_linear=False,
+        zero_decoder=False,
+    ):
         super().__init__()
         torch.manual_seed(seed)
         self.linear = linear
+        self.real_linear = real_linear
+        if linear and real_linear:
+            raise ValueError("distinct complex and real linear architectures")
         dtype = torch.complex128 if linear else torch.float64
         sizes = np.asarray(graph["sizes"])
         self.groups = [
@@ -60,6 +74,10 @@ class NeighborhoodCorrector(nn.Module):
                 for m, _ in self.groups
             ]
         )
+        if zero_decoder:
+            with torch.no_grad():
+                for layer in self.decoder:
+                    layer.weight.zero_()
         self.register_buffer("bridge", sparse_tensor(bridge))
         self.register_buffer("dual", sparse_tensor(bridge.conjugate().T))
         self.register_buffer("scale", torch.from_numpy(np.asarray(scale).copy()))
@@ -86,7 +104,9 @@ class NeighborhoodCorrector(nn.Module):
             if not self.linear:
                 part = torch.cat((part.real, part.imag), dim=-1)
             encoded = self.encoder[i](part)
-            pieces.append(encoded if self.linear else torch.tanh(encoded))
+            pieces.append(
+                encoded if self.linear or self.real_linear else torch.tanh(encoded)
+            )
             offset += m * n
         hidden = torch.cat(pieces, dim=1)
         for s, neighbor in zip(self.message_self, self.message_neighbor, strict=True):
@@ -94,7 +114,7 @@ class NeighborhoodCorrector(nn.Module):
             average.index_add_(1, self.dst, hidden[:, self.src, :])
             average = average / self.degree[None, :, None]
             hidden = s(hidden) + neighbor(average)
-            if not self.linear:
+            if not self.linear and not self.real_linear:
                 hidden = torch.tanh(hidden)
         pieces, offset = [], 0
         for i, (m, n) in enumerate(self.groups):

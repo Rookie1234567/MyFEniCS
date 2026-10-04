@@ -29,7 +29,7 @@ class PreparationHealth:
 
     def __call__(self):
         row = dict(self.shared())
-        if self.namespace in ("v37", "v38", "v39", "v40", "v41", "v42", "v43"):
+        if self.namespace in ("v37", "v38", "v39", "v40", "v41", "v42", "v43", "v44"):
             own = [
                 ROOT / ("tmp/task042/" + self.namespace),
                 ROOT / ("benchmarks/artifacts/task042/" + self.namespace),
@@ -40,8 +40,8 @@ class PreparationHealth:
             size = inventory_paths(own, ROOT)["bytes"]
             row["new_preparation_bytes"] = size
             limit = (
-                (4 if self.namespace == "v43" else 40) * 2**30
-                if self.namespace in ("v42", "v43")
+                (4 if self.namespace in ("v43", "v44") else 40) * 2**30
+                if self.namespace in ("v42", "v43", "v44")
                 else (2048 if self.namespace in ("v39", "v40", "v41") else 512) * 2**20
             )
             if size > limit:
@@ -68,7 +68,10 @@ FE_ROLES = (
 
 
 def context(namespace):
-    if namespace == "v43":
+    if namespace == "v44":
+        from src.solvers import neighborhood_late_error_scope as scope
+        return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
+    if namespace in ("v43", "v44"):
         from src.solvers import neighborhood_residual_scope as scope
 
         return scope.window, scope.ARTIFACT, scope.PLAN, scope.implementation_hashes
@@ -109,12 +112,12 @@ def storage(reserve=0, *, namespace="v36", cleanup=False):
     total = inventory_paths([ROOT / "benchmarks/artifacts/task042"], ROOT)["bytes"]
     free = __import__("shutil").disk_usage(ROOT).free
     limit = (
-        (4 if namespace == "v43" else 40) * 2**30
-        if namespace in ("v42", "v43")
+        (4 if namespace in ("v43", "v44") else 40) * 2**30
+        if namespace in ("v42", "v43", "v44")
         else (2048 if namespace in ("v39", "v40", "v41") else 512) * 2**20
     )
     task_limit = (
-        64 if namespace == "v42" else (24 if namespace == "v43" else 20)
+        64 if namespace == "v42" else (24 if namespace in ("v43", "v44") else 20)
     ) * 2**30
     free_limit = (100 if namespace == "v42" else 50) * 2**30
     if (
@@ -153,7 +156,7 @@ def require_component_gate(*, namespace="v36"):
 
 
 def diagnosed_phase_repair(namespace, role, previous, plan):
-    if namespace == "v43":
+    if namespace in ("v43", "v44"):
         return previous.get("status") == "FAILED"
     if namespace == "v42":
         # A failed attempt never counts as a published successful checkpoint.
@@ -185,7 +188,7 @@ def launch(
     if specification is not None:
         namespace = specification.derived.get("preparation_scope", "v36")
         if (
-            namespace == "v43"
+            namespace in ("v43", "v44")
             and os.environ.get("TASK042_ENV_MODE")
             != specification.derived["environment_mode"]
         ):
@@ -203,9 +206,9 @@ def launch(
         from src.solvers.distributed_volume_scope import NATIVE
 
         is_fe = role in NATIVE
-    if namespace == "v43":
+    if namespace in ("v43", "v44"):
         is_fe = specification is not None
-    if is_fe or (namespace in ("v41", "v42", "v43") and specification is not None):
+    if is_fe or (namespace in ("v41", "v42", "v43", "v44") and specification is not None):
         require_component_gate(namespace=namespace)
         if namespace == "v36":
             read_stage("INVENTORY")
@@ -231,7 +234,7 @@ def launch(
         if status:
             raise RuntimeError("V36 formal component/preparation requires clean source")
     seconds = window.remaining(role)
-    if specification is not None and namespace in ("v41", "v42", "v43"):
+    if specification is not None and namespace in ("v41", "v42", "v43", "v44"):
         seconds = min(seconds, float(specification.execution["timeout_seconds"]))
     if seconds <= 5:
         raise RuntimeError("V36 phase paid wall exhausted")
@@ -255,7 +258,7 @@ def launch(
     folder.mkdir(parents=True, exist_ok=False)
     if (
         specification is not None
-        and namespace in ("v39", "v40", "v43")
+        and namespace in ("v39", "v40", "v43", "v44")
         and ARTIFACT.joinpath(role + ".json").exists()
     ):
         (folder / "superseded_partial_pointer.json").write_bytes(
@@ -428,7 +431,9 @@ def worker(folder, namespace="v36"):
     began = time.monotonic()
     result = {"status": "FAILED", "stage": role, "source_sha": state["source_sha"]}
     try:
-        if namespace == "v43":
+        if namespace == "v44":
+            from src.solvers.neighborhood_late_error_study import execute
+        elif namespace == "v43":
             from src.solvers.neighborhood_residual_study import execute
         elif namespace == "v42":
             from src.solvers.distributed_volume_study import execute
