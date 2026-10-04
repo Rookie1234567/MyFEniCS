@@ -1,0 +1,145 @@
+{
+  "schema": "neighborhood-residual.v43.v1",
+  "review_commit": "84c38b882795c56fead54d75cd56389262c86e31",
+  "stages": [
+    "SETUP",
+    "RECOVERY",
+    "DATA",
+    "GRADIENT",
+    "TRAIN_NN",
+    "TRAIN_LIN",
+    "EVALUATE",
+    "CHECK"
+  ],
+  "parents": {
+    "bridge": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v41/BRIDGE1.json",
+      "sha256": "172013e1071def32228d4092896360fedf89cba705eff0a1917bd688ee88f086"
+    },
+    "volume": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/VOLUME1.json",
+      "sha256": "b02e4af261e18b2fc5666ba2908a8a2a44e044fd6aeeffc77da4c88736b1d150"
+    },
+    "classes": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/CLASSES.json",
+      "sha256": "40b5978b7a19ff8b5cbf3d703ab84e7601817b73c06404030ff26c4b038fd55c"
+    },
+    "csr": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v42/checkpoints/native_csr.json",
+      "sha256": "d37f1173780b08ea79ecc69695dc323f5a0d43b4ffd555bd9430533704b25632"
+    },
+    "B": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/system.json",
+      "sha256": "1cb0f340f7edb0544101a1848e8d6a34a33981759f5adeef8f38d630f5f00ea4"
+    },
+    "Bcsr": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/oracle.json",
+      "sha256": "72ae0cfbbf878267ef4110d46678e44da5d2584a573066c6a582cd11a8b6c2a4"
+    },
+    "Brecovery": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/recovery.json",
+      "sha256": "cbb931f30f2c00014e9a0b3fe7284eeb465c893915f7ffba9cb8f6f66a9bab94"
+    },
+    "Bgeometry": {
+      "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task042/v40/checkpoints/geometry.json",
+      "sha256": "b8cf886f932d2db2dacd84ca96aea2d6c8eb300a11c4ac92c0e976bcd25855d6"
+    }
+  },
+  "seed": 424301,
+  "width": 32,
+  "message_rounds": 2,
+  "real_parameter_cap": 100000,
+  "dtype": "float64/complex128",
+  "MPI": 1,
+  "batch": 2,
+  "Adam_lr": 0.001,
+  "Adam_betas": [
+    0.9,
+    0.999
+  ],
+  "Adam_eps": 1e-08,
+  "updates": 128,
+  "checkpoints": [
+    0,
+    16,
+    32,
+    64,
+    128
+  ],
+  "FD_seeds": [
+    424351,
+    424353,
+    424357
+  ],
+  "FD_steps": [
+    0.0001,
+    3e-05,
+    1e-05
+  ],
+  "Arnoldi_steps": 128,
+  "restart": 32,
+  "true_residual_tolerance": 1e-06,
+  "coefficient_tolerance": 0.0001,
+  "normalization": "full native RHS norm; exact zero bypass; output norm times original right diagonal",
+  "message_aggregation": "bidirectional cell-to-complete-master-entity uniform degree mean; no global identifiers as features",
+  "architecture": "type-specific no-bias encoder -> tanh; two shared self/neighbor no-bias maps -> tanh; no-bias complete-moment decoder; no global embedding",
+  "linear_architecture": "complex128 type-specific no-bias encoder and decoder, two complex-linear shared self/neighbor maps; same graph width32; no activation",
+  "split": {
+    "train": {
+      "seeds": [
+        424401,
+        424402,
+        424403,
+        424404,
+        424405,
+        424406,
+        424407,
+        424408,
+        424409,
+        424410,
+        424411,
+        424412,
+        424413,
+        424414,
+        424415,
+        424416
+      ],
+      "families": [
+        "local_gaussian",
+        "cross_cosine"
+      ]
+    },
+    "validation": {
+      "seeds": [
+        424501,
+        424502,
+        424503,
+        424504
+      ],
+      "families": [
+        "local_laplace",
+        "cross_sine"
+      ]
+    },
+    "heldout": {
+      "seeds": [
+        424601,
+        424602,
+        424603,
+        424604,
+        424605,
+        424606,
+        424607,
+        424608
+      ],
+      "families": [
+        "local_uniform",
+        "cross_mixed_smooth"
+      ]
+    }
+  },
+  "frozen_config": true,
+  "no_new_mesh_JIT_LU_QR": true,
+  "new_storage_bytes": 4294967296,
+  "task_storage_bytes": 25769803776
+}
