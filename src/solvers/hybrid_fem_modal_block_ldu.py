@@ -32,6 +32,7 @@ __all__ = (
     "create_research_exact_side_lu_block_ldu_preconditioner",
     "create_side_balh_block_ldu_preconditioner",
     "multimetric_true_residual_decision",
+    "solve_action_modal_schur_anderson",
     "solve_hybrid_block_ldu_iterative",
 )
 
@@ -43,6 +44,7 @@ _RESIDUAL_KEYS = (
     "top_true_relative_residual",
     "modal_true_relative_residual",
 )
+_MODAL_ANDERSON_S_EVALUATION_LIMIT = 16
 
 
 def _set_owned_values(vector: PETSc.Vec, values: np.ndarray) -> None:
@@ -69,6 +71,16 @@ def _action_diagnostics(action: Any) -> dict[str, Any]:
     if not isinstance(diagnostics, dict):
         raise TypeError("Borrowed action must expose diagnostics.")
     return dict(diagnostics)
+
+
+def _action_apply_count(action: Any) -> int | None:
+    try:
+        value = _action_diagnostics(action).get("apply_count")
+    except (TypeError, ValueError):
+        return None
+    if isinstance(value, (int, np.integer)) and int(value) >= 0:
+        return int(value)
+    return None
 
 
 def _action_operator(action: Any) -> PETSc.Mat:
@@ -239,6 +251,518 @@ class HybridActionModalSchurApply:
             return
         self.modal_constraint = None
         self._destroyed = True
+
+
+def solve_action_modal_schur_anderson(
+    modal_action: HybridActionModalSchurApply,
+    rhs: np.ndarray,
+    *,
+    scale_residual_by_constraint: bool = False,
+) -> dict[str, Any]:
+    """Solve a bounded nonlinear modal equation with PETSc SNESANDERSON.
+
+    The borrowed action is evaluated as ``S(m) - rhs`` on every SNES function
+    call.  No fixed Schur Mat or side-action ownership is introduced.  The
+    raw function norm is used directly by default: nonzero RHS uses a 1e-2
+    relative target, while zero RHS uses a 1e-2 absolute target. The opt-in
+    constraint scaling changes the Anderson residual, but convergence is
+    still decided from the matching unscaled residual.
+    """
+
+    if modal_action._destroyed:
+        raise RuntimeError("On-demand modal Schur action has been destroyed.")
+    modal_count = int(modal_action.modal_count)
+    operator = _action_operator(modal_action.bottom_action)
+    petsc_comm = operator.getComm()
+    comm = petsc_comm.tompi4py()
+    root = comm.size - 1
+
+    try:
+        rhs_values = np.asarray(rhs, dtype=np.complex128)
+        rhs_valid = (
+            rhs_values.shape == (modal_count,)
+            and bool(np.all(np.isfinite(rhs_values)))
+        )
+    except (TypeError, ValueError):
+        rhs_values = np.empty(0, dtype=np.complex128)
+        rhs_valid = False
+    if not comm.allreduce(rhs_valid, op=MPI.LAND):
+        raise ValueError("Modal Anderson RHS must be a finite modal vector.")
+    rhs_hashes = comm.allgather(hashlib.sha256(rhs_values.tobytes()).hexdigest())
+    if len(set(rhs_hashes)) != 1:
+        raise ValueError("Modal Anderson RHS differs across MPI ranks.")
+    rhs_values = rhs_values.copy()
+    rhs_norm = float(np.linalg.norm(rhs_values))
+    if not np.isfinite(rhs_norm):
+        raise ValueError("Modal Anderson RHS norm is non-finite.")
+    absolute_tolerance = 1.0e-2 * rhs_norm if rhs_norm != 0.0 else 1.0e-2
+    if not isinstance(scale_residual_by_constraint, (bool, np.bool_)):
+        raise TypeError("Constraint residual scaling must be an explicit boolean.")
+    scale_residual_by_constraint = bool(scale_residual_by_constraint)
+
+    options = PETSc.Options()
+    option_prefix = "task041_modal_inner_"
+    history_option = f"{option_prefix}snes_anderson_m"
+    try:
+        previous_history_option = options.getString(history_option)
+    except KeyError:
+        previous_history_option = None
+
+    local_modal_size = modal_count if comm.rank == root else 0
+    solution = None
+    function_value = None
+    snes = None
+    function_evaluations = 0
+    function_callbacks = 0
+    convergence_callbacks = 0
+    budget_exhausted = False
+    budget_callback_skipped = False
+    nonfinite_evaluation = False
+    raw_cache_iteration_mismatch = False
+    callback_target_reached = False
+    callback_reason = int(PETSc.SNES.ConvergedReason.ITERATING)
+    last_snes_function_norm = None
+    final_evaluations = 0
+    residual_history: list[dict[str, Any]] = []
+    latest_raw_cache: dict[str, Any] = {
+        "iterate": None,
+        "residual": None,
+        "raw_norm": None,
+        "raw_metric": None,
+        "scaled_norm": None,
+        "finite": False,
+    }
+    constraint_lu = None
+    constraint_pivots = None
+    constraint_condition_number = None
+    constraint_lu_factorizations = 0
+    constraint_lu_solve_calls = 0
+    actions = {
+        "bottom": modal_action.bottom_action,
+        "top": modal_action.top_action,
+    }
+    action_counts_before = {
+        side: _action_apply_count(action) for side, action in actions.items()
+    }
+
+    def scale_raw_residual(raw_residual: np.ndarray) -> np.ndarray:
+        nonlocal constraint_lu_solve_calls
+        if not scale_residual_by_constraint:
+            return np.asarray(raw_residual, dtype=np.complex128).copy()
+        owner_result = None
+        if comm.rank == root:
+            try:
+                scaled = lu_solve(
+                    (constraint_lu, constraint_pivots),
+                    np.asarray(raw_residual, dtype=np.complex128),
+                    check_finite=True,
+                )
+                if not bool(np.all(np.isfinite(scaled))):
+                    owner_result = (False, None, "C solve produced non-finite values")
+                else:
+                    owner_result = (
+                        True,
+                        np.asarray(scaled, dtype=np.complex128),
+                        None,
+                    )
+            except (ValueError, np.linalg.LinAlgError, FloatingPointError) as exc:
+                owner_result = (
+                    False,
+                    None,
+                    f"C solve failed: {type(exc).__name__}: {exc}",
+                )
+        success, scaled_values, error = comm.bcast(owner_result, root=root)
+        if not success:
+            if error == "C solve produced non-finite values":
+                return np.full(modal_count, np.nan, dtype=np.complex128)
+            raise RuntimeError(str(error))
+        constraint_lu_solve_calls += 1
+        return np.asarray(scaled_values, dtype=np.complex128)
+
+    try:
+        if scale_residual_by_constraint:
+            owner_factor_result = None
+            if comm.rank == root:
+                try:
+                    constraint = np.asarray(
+                        modal_action.modal_constraint, dtype=np.complex128
+                    )
+                    if constraint.shape != (modal_count, modal_count):
+                        raise ValueError("C has the wrong modal shape")
+                    if not bool(np.all(np.isfinite(constraint))):
+                        raise ValueError("C contains non-finite values")
+                    condition = float(np.linalg.cond(constraint))
+                    if (
+                        not np.isfinite(condition)
+                        or condition * np.finfo(float).eps >= 1.0
+                    ):
+                        raise np.linalg.LinAlgError(
+                            "C is singular at complex128 working precision"
+                        )
+                    lu, pivots = lu_factor(constraint, check_finite=True)
+                    diagonal = np.diag(lu)
+                    if (
+                        not bool(np.all(np.isfinite(diagonal)))
+                        or bool(np.any(diagonal == 0.0))
+                    ):
+                        raise np.linalg.LinAlgError(
+                            "C LU has a zero or non-finite pivot"
+                        )
+                    constraint_lu = lu
+                    constraint_pivots = pivots
+                    constraint_condition_number = condition
+                    owner_factor_result = (True, condition, None)
+                except (ValueError, np.linalg.LinAlgError, FloatingPointError) as exc:
+                    owner_factor_result = (
+                        False,
+                        None,
+                        f"C factorization rejected: {type(exc).__name__}: {exc}",
+                    )
+            factor_ok, factor_condition, factor_error = comm.bcast(
+                owner_factor_result, root=root
+            )
+            if not factor_ok:
+                raise RuntimeError(str(factor_error))
+            constraint_condition_number = float(factor_condition)
+            constraint_lu_factorizations = 1
+
+        solution = PETSc.Vec().createMPI(
+            (local_modal_size, modal_count), comm=petsc_comm
+        )
+        function_value = solution.duplicate()
+        snes = PETSc.SNES().create(comm=petsc_comm)
+        solution.set(PETSc.ScalarType(0.0))
+
+        def function(_snes, modal_vector, residual_vector) -> None:
+            nonlocal function_evaluations, function_callbacks
+            nonlocal budget_callback_skipped
+            nonlocal nonfinite_evaluation
+            function_callbacks += 1
+            if function_evaluations >= _MODAL_ANDERSON_S_EVALUATION_LIMIT - 1:
+                budget_callback_skipped = True
+                return
+            modal_values = _replicated_modal_values(modal_vector)
+            raw_residual = np.asarray(
+                modal_action.apply(modal_values) - rhs_values,
+                dtype=np.complex128,
+            )
+            function_evaluations += 1
+            local_finite = raw_residual.shape == (modal_count,) and bool(
+                np.all(np.isfinite(raw_residual))
+            )
+            globally_finite = comm.allreduce(local_finite, op=MPI.LAND)
+            if not globally_finite:
+                nonfinite_evaluation = True
+                latest_raw_cache.update(
+                    iterate=modal_values.copy(),
+                    residual=None,
+                    raw_norm=None,
+                    raw_metric=None,
+                    scaled_norm=None,
+                    finite=False,
+                )
+                residual_history.append(
+                    {
+                        "evaluation": function_evaluations,
+                        "source": "snes_function",
+                        "raw_residual_norm": None,
+                        "raw_target_metric": None,
+                        "scaled_residual_norm": None,
+                        "finite": False,
+                    }
+                )
+                residual_vector.set(PETSc.ScalarType(np.nan))
+                return
+            raw_norm = float(np.linalg.norm(raw_residual))
+            raw_metric = raw_norm / rhs_norm if rhs_norm != 0.0 else raw_norm
+            scaled_residual = scale_raw_residual(raw_residual)
+            if not bool(np.all(np.isfinite(scaled_residual))):
+                nonfinite_evaluation = True
+                latest_raw_cache.update(
+                    iterate=modal_values.copy(),
+                    residual=raw_residual.copy(),
+                    raw_norm=raw_norm,
+                    raw_metric=raw_metric,
+                    scaled_norm=None,
+                    finite=False,
+                )
+                residual_history.append(
+                    {
+                        "evaluation": function_evaluations,
+                        "source": "snes_function",
+                        "raw_residual_norm": raw_norm,
+                        "raw_target_metric": raw_metric,
+                        "scaled_residual_norm": None,
+                        "finite": False,
+                    }
+                )
+                residual_vector.set(PETSc.ScalarType(np.nan))
+                return
+            scaled_norm = float(np.linalg.norm(scaled_residual))
+            latest_raw_cache.update(
+                iterate=modal_values.copy(),
+                residual=raw_residual.copy(),
+                raw_norm=raw_norm,
+                raw_metric=raw_metric,
+                scaled_norm=scaled_norm,
+                finite=True,
+            )
+            residual_history.append(
+                {
+                    "evaluation": function_evaluations,
+                    "source": "snes_function",
+                    "raw_residual_norm": raw_norm,
+                    "raw_target_metric": raw_metric,
+                    "scaled_residual_norm": scaled_norm,
+                    "finite": True,
+                }
+            )
+            _set_owned_values(residual_vector, scaled_residual)
+
+        def convergence_test(_snes, iteration, norms):
+            nonlocal convergence_callbacks, callback_target_reached
+            nonlocal callback_reason, last_snes_function_norm
+            nonlocal raw_cache_iteration_mismatch, budget_exhausted
+            convergence_callbacks += 1
+            _xnorm, _ynorm, fnorm = norms
+            last_snes_function_norm = float(fnorm)
+            if nonfinite_evaluation:
+                reason = PETSc.SNES.ConvergedReason.DIVERGED_FNORM_NAN
+            elif budget_callback_skipped:
+                reason = PETSc.SNES.ConvergedReason.DIVERGED_FUNCTION_COUNT
+            elif not latest_raw_cache["finite"]:
+                raw_cache_iteration_mismatch = True
+                reason = PETSc.SNES.ConvergedReason.DIVERGED_USER
+            else:
+                current_solution = _snes.getSolution()
+                try:
+                    current_values = _replicated_modal_values(current_solution)
+                finally:
+                    current_solution.destroy()
+                cached_values = latest_raw_cache["iterate"]
+                if not np.array_equal(current_values, cached_values):
+                    raw_cache_iteration_mismatch = True
+                    reason = PETSc.SNES.ConvergedReason.DIVERGED_USER
+                elif float(latest_raw_cache["raw_metric"]) <= 1.0e-2:
+                    callback_target_reached = True
+                    reason = PETSc.SNES.ConvergedReason.CONVERGED_FNORM_ABS
+                elif (
+                    function_evaluations
+                    >= _MODAL_ANDERSON_S_EVALUATION_LIMIT - 1
+                ):
+                    budget_exhausted = True
+                    reason = PETSc.SNES.ConvergedReason.DIVERGED_FUNCTION_COUNT
+                elif int(iteration) >= 8:
+                    reason = PETSc.SNES.ConvergedReason.DIVERGED_MAX_IT
+                else:
+                    reason = PETSc.SNES.ConvergedReason.ITERATING
+            callback_reason = int(reason)
+            return reason
+
+        snes.setOptionsPrefix(option_prefix)
+        snes.setType(PETSc.SNES.Type.ANDERSON)
+        options.setValue(history_option, "4")
+        snes.setFromOptions()
+        if str(snes.getType()) != str(PETSc.SNES.Type.ANDERSON):
+            raise RuntimeError("PETSc changed the requested SNESANDERSON type.")
+        snes.setFunction(function, function_value)
+        snes.setTolerances(
+            rtol=0.0,
+            atol=absolute_tolerance,
+            stol=0.0,
+            max_it=8,
+        )
+        snes.setConvergenceTest(convergence_test)
+        # Reserve one of the sixteen allowed S evaluations for an independent
+        # raw-residual check after SNES returns.
+        snes.setMaxFunctionEvaluations(_MODAL_ANDERSON_S_EVALUATION_LIMIT)
+        snes.solve(None, solution)
+
+        iterations = int(snes.getIterationNumber())
+        snes_reason = int(snes.getConvergedReason())
+        modal_values = _replicated_modal_values(solution)
+        residual_norm = float("inf")
+        target_value = float("inf")
+        final_target_reached = False
+        final_scaled_norm = float("inf")
+        if not nonfinite_evaluation and bool(np.all(np.isfinite(modal_values))):
+            final_residual = np.asarray(
+                modal_action.apply(modal_values) - rhs_values,
+                dtype=np.complex128,
+            )
+            final_evaluations = 1
+            local_finite = final_residual.shape == (modal_count,) and bool(
+                np.all(np.isfinite(final_residual))
+            )
+            globally_finite = comm.allreduce(local_finite, op=MPI.LAND)
+            if globally_finite:
+                residual_norm = float(np.linalg.norm(final_residual))
+                if np.isfinite(residual_norm):
+                    target_value = (
+                        residual_norm / rhs_norm
+                        if rhs_norm != 0.0
+                        else residual_norm
+                    )
+                    final_scaled_residual = scale_raw_residual(final_residual)
+                    if bool(np.all(np.isfinite(final_scaled_residual))):
+                        final_scaled_norm = float(np.linalg.norm(final_scaled_residual))
+                        final_target_reached = target_value <= 1.0e-2
+                        residual_history.append(
+                            {
+                                "evaluation": function_evaluations + final_evaluations,
+                                "source": "final_validation",
+                                "raw_residual_norm": residual_norm,
+                                "raw_target_metric": target_value,
+                                "scaled_residual_norm": final_scaled_norm,
+                                "finite": True,
+                            }
+                        )
+                    else:
+                        nonfinite_evaluation = True
+                        residual_history.append(
+                            {
+                                "evaluation": function_evaluations + final_evaluations,
+                                "source": "final_validation",
+                                "raw_residual_norm": residual_norm,
+                                "raw_target_metric": target_value,
+                                "scaled_residual_norm": None,
+                                "finite": False,
+                            }
+                        )
+                else:
+                    nonfinite_evaluation = True
+                    residual_history.append(
+                        {
+                            "evaluation": function_evaluations + final_evaluations,
+                            "source": "final_validation",
+                            "raw_residual_norm": None,
+                            "raw_target_metric": None,
+                            "scaled_residual_norm": None,
+                            "finite": False,
+                        }
+                    )
+            else:
+                nonfinite_evaluation = True
+                residual_history.append(
+                    {
+                        "evaluation": function_evaluations + final_evaluations,
+                        "source": "final_validation",
+                        "raw_residual_norm": None,
+                        "raw_target_metric": None,
+                        "scaled_residual_norm": None,
+                        "finite": False,
+                    }
+                )
+
+        total_evaluations = function_evaluations + final_evaluations
+        if total_evaluations > _MODAL_ANDERSON_S_EVALUATION_LIMIT:
+            raise RuntimeError("Modal Anderson exceeded its S-evaluation budget.")
+        if (
+            callback_target_reached
+            and final_target_reached
+            and not nonfinite_evaluation
+            and not budget_exhausted
+            and not budget_callback_skipped
+            and not raw_cache_iteration_mismatch
+            and snes_reason > 0
+        ):
+            status = "converged"
+            stop_reason = "unscaled_residual_target"
+        else:
+            status = "not_converged"
+            if budget_exhausted or budget_callback_skipped:
+                stop_reason = "budget_exhausted"
+            elif nonfinite_evaluation:
+                stop_reason = "nonfinite_residual"
+            elif raw_cache_iteration_mismatch:
+                stop_reason = "raw_cache_iteration_mismatch"
+            elif snes_reason == int(PETSc.SNES.ConvergedReason.DIVERGED_MAX_IT):
+                stop_reason = "max_iterations"
+            elif function_evaluations >= _MODAL_ANDERSON_S_EVALUATION_LIMIT - 1:
+                stop_reason = "function_evaluation_budget"
+            else:
+                stop_reason = "snes_nonconvergence"
+
+        side_action_calls = {}
+        for side, action in actions.items():
+            before = action_counts_before[side]
+            after = _action_apply_count(action)
+            delta = None if before is None or after is None else after - before
+            if delta is not None and delta < 0:
+                delta = None
+            rank_deltas = comm.allgather(delta)
+            side_action_calls[side] = (
+                int(delta)
+                if delta is not None and all(value == delta for value in rank_deltas)
+                else None
+            )
+        rank_state = (
+            function_evaluations,
+            function_callbacks,
+            convergence_callbacks,
+            final_evaluations,
+            iterations,
+            status,
+            tuple(sorted(side_action_calls.items())),
+        )
+        if any(value != rank_state for value in comm.allgather(rank_state)):
+            raise RuntimeError("Modal Anderson control flow differs across MPI ranks.")
+        return {
+            "status": status,
+            "stop_reason": stop_reason,
+            "solution": modal_values.copy(),
+            "target_reached": bool(callback_target_reached and final_target_reached),
+            "convergence_callback_target_reached": bool(callback_target_reached),
+            "final_unscaled_target_reached": bool(final_target_reached),
+            "unscaled_residual_norm": residual_norm,
+            "rhs_norm": rhs_norm,
+            "relative_residual": target_value,
+            "scaled_residual_norm": final_scaled_norm,
+            "last_snes_function_norm": last_snes_function_norm,
+            "residual_evaluation_history": residual_history,
+            "constraint_scale_enabled": scale_residual_by_constraint,
+            "constraint_condition_2": constraint_condition_number,
+            "constraint_lu_owner_rank": root if scale_residual_by_constraint else None,
+            "constraint_lu_factorizations": constraint_lu_factorizations,
+            "constraint_lu_solve_calls": constraint_lu_solve_calls,
+            "zero_rhs_absolute_residual": rhs_norm == 0.0,
+            "iterations": iterations,
+            "function_evaluations": function_evaluations,
+            "function_callbacks": function_callbacks,
+            "convergence_callbacks": convergence_callbacks,
+            "final_validation_evaluations": final_evaluations,
+            "s_evaluation_count": total_evaluations,
+            "s_evaluation_limit": _MODAL_ANDERSON_S_EVALUATION_LIMIT,
+            "snes_function_evaluation_limit": _MODAL_ANDERSON_S_EVALUATION_LIMIT,
+            "budget_callback_skipped": bool(budget_callback_skipped),
+            "budget_callback_residual_state": (
+                "not_evaluated" if budget_callback_skipped else None
+            ),
+            "budget_reason": (
+                "DIVERGED_FUNCTION_COUNT"
+                if budget_exhausted or budget_callback_skipped
+                else None
+            ),
+            "budget_exhausted": bool(budget_exhausted),
+            "anderson_history": 4,
+            "max_iterations": 8,
+            "snes_converged_reason": snes_reason,
+            "callback_converged_reason": callback_reason,
+            "raw_cache_iteration_mismatch": bool(raw_cache_iteration_mismatch),
+            "side_action_calls": side_action_calls,
+        }
+    finally:
+        if snes is not None:
+            snes.destroy()
+        if function_value is not None:
+            function_value.destroy()
+        if solution is not None:
+            solution.destroy()
+        options.delValue(history_option)
+        if previous_history_option is not None:
+            options.setValue(history_option, previous_history_option)
+        constraint_lu = None
+        constraint_pivots = None
 
 
 def _build_action_modal_contribution(

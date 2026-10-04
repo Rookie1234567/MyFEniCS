@@ -76,6 +76,22 @@ class _FixedAction:
         self.destroyed = True
 
 
+class _NonlinearFixedAction(_FixedAction):
+    """Synthetic norm-scaled side action; not BAL_H or a real FE action."""
+
+    def __init__(self, operator: PETSc.Mat, inverse_diagonal: np.ndarray) -> None:
+        super().__init__(operator, inverse_diagonal)
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.destroyed:
+            raise RuntimeError("The nonlinear action is destroyed.")
+        scale = 1.0 + 0.01 * float(source.norm())
+        source.copy(target)
+        first, last = (int(value) for value in source.getOwnershipRange())
+        target.getArray()[:] *= self.inverse_diagonal[first:last] / scale
+        self.apply_count += 1
+
+
 def _matrix_from_dense(
     row_template: PETSc.Vec,
     column_template: PETSc.Vec,
@@ -373,6 +389,344 @@ def test_action_modal_schur_apply_matches_fixed_linear_oracle_and_borrows_action
             on_demand.destroy()
         if explicit is not None:
             explicit.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_anderson_solves_fixed_linear_oracle_and_checks_raw_residual():
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    explicit = None
+    on_demand = None
+    try:
+        explicit = build_hybrid_action_modal_schur(
+            fixture["coupling"], bottom, top
+        )
+        on_demand = HybridActionModalSchurApply(
+            fixture["coupling"], bottom, top
+        )
+        expected_solution = np.asarray(
+            [0.2 + 0.1j, -0.3 + 0.05j, 0.1 - 0.2j, 0.25 + 0.15j],
+            dtype=np.complex128,
+        )
+        rhs = np.asarray(explicit.modal_schur @ expected_solution).copy()
+        rhs_before = rhs.copy()
+        apply_before = (bottom.apply_count, top.apply_count)
+        unscaled_result = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, rhs
+        )
+        unscaled_residual = explicit.modal_schur @ unscaled_result["solution"] - rhs
+        unscaled_diagnostic = {
+            key: unscaled_result.get(key)
+            for key in (
+                "status",
+                "stop_reason",
+                "relative_residual",
+                "iterations",
+                "function_evaluations",
+                "s_evaluation_count",
+                "snes_converged_reason",
+                "constraint_scale_enabled",
+            )
+        }
+        unscaled_diagnostic["explicit_oracle_relative_residual"] = float(
+            np.linalg.norm(unscaled_residual) / np.linalg.norm(rhs)
+        )
+        if fixture["comm"].rank == 0:
+            print(
+                "ANDERSON_RESULT fixed_linear_unscaled_negative "
+                + json.dumps(unscaled_diagnostic, sort_keys=True),
+                flush=True,
+            )
+        assert unscaled_result["constraint_scale_enabled"] is False
+        assert unscaled_result["constraint_lu_factorizations"] == 0
+        assert unscaled_result["status"] == "not_converged"
+        assert unscaled_result["relative_residual"] > 1.0e-2
+        assert bottom.apply_count - apply_before[0] == unscaled_result["s_evaluation_count"]
+        assert top.apply_count - apply_before[1] == unscaled_result["s_evaluation_count"]
+        result_apply_before = (bottom.apply_count, top.apply_count)
+        result = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, rhs, scale_residual_by_constraint=True
+        )
+        diagnostic = {
+            key: result.get(key)
+            for key in (
+                "status",
+                "stop_reason",
+                "target_reached",
+                "unscaled_residual_norm",
+                "rhs_norm",
+                "relative_residual",
+                "iterations",
+                "function_evaluations",
+                "function_callbacks",
+                "final_validation_evaluations",
+                "s_evaluation_count",
+                "snes_converged_reason",
+                "budget_callback_skipped",
+                "constraint_scale_enabled",
+                "constraint_condition_2",
+                "constraint_lu_factorizations",
+                "constraint_lu_solve_calls",
+                "scaled_residual_norm",
+                "residual_evaluation_history",
+                "side_action_calls",
+            )
+        }
+        diagnostic["explicit_oracle_residual_norm"] = float(
+            np.linalg.norm(explicit.modal_schur @ result["solution"] - rhs)
+        )
+        diagnostic["observed_side_apply_delta"] = {
+            "bottom": bottom.apply_count - result_apply_before[0],
+            "top": top.apply_count - result_apply_before[1],
+        }
+        if fixture["comm"].rank == 0:
+            print(
+                "ANDERSON_RESULT fixed_linear_constraint_scaled "
+                + json.dumps(diagnostic, sort_keys=True),
+                flush=True,
+            )
+
+        assert result["constraint_scale_enabled"] is True
+        assert result["constraint_lu_factorizations"] == 1
+        assert result["constraint_lu_solve_calls"] == result["s_evaluation_count"]
+        assert np.isfinite(result["constraint_condition_2"])
+        assert result["status"] in {"converged", "not_converged"}
+        assert result["target_reached"] == (
+            result["convergence_callback_target_reached"]
+            and result["final_unscaled_target_reached"]
+            and result["snes_converged_reason"] > 0
+            and not result["budget_callback_skipped"]
+        )
+        assert result["status"] == (
+            "converged" if result["target_reached"] else "not_converged"
+        )
+        assert result["zero_rhs_absolute_residual"] is False
+        assert result["anderson_history"] == 4
+        assert result["max_iterations"] == 8
+        assert result["snes_function_evaluation_limit"] == 16
+        assert result["s_evaluation_count"] <= 16
+        assert result["s_evaluation_count"] == (
+            result["function_evaluations"]
+            + result["final_validation_evaluations"]
+        )
+        assert len(result["residual_evaluation_history"]) == result[
+            "s_evaluation_count"
+        ]
+        residual = explicit.modal_schur @ result["solution"] - rhs
+        residual_relative = np.linalg.norm(residual) / np.linalg.norm(rhs)
+        assert result["relative_residual"] == pytest.approx(
+            residual_relative, rel=1.0e-12, abs=1.0e-14
+        )
+        if result["status"] == "converged":
+            assert residual_relative <= 1.0e-2
+        else:
+            assert not result["target_reached"]
+        assert result["residual_evaluation_history"][-1]["source"] == (
+            "final_validation"
+        )
+        assert result["residual_evaluation_history"][-1]["raw_residual_norm"] == (
+            pytest.approx(result["unscaled_residual_norm"], rel=1.0e-12)
+        )
+        assert result["residual_evaluation_history"][-1]["scaled_residual_norm"] == (
+            pytest.approx(result["scaled_residual_norm"], rel=1.0e-12)
+        )
+        assert np.array_equal(rhs, rhs_before)
+        assert bottom.apply_count - result_apply_before[0] == result["s_evaluation_count"]
+        assert top.apply_count - result_apply_before[1] == result["s_evaluation_count"]
+        assert bottom.destroyed is False
+        assert top.destroyed is False
+
+        zero_rhs = np.zeros_like(rhs)
+        zero_before = zero_rhs.copy()
+        zero_result = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, zero_rhs
+        )
+        assert zero_result["status"] == "converged"
+        assert zero_result["zero_rhs_absolute_residual"] is True
+        assert zero_result["unscaled_residual_norm"] <= 1.0e-2
+        assert np.array_equal(zero_rhs, zero_before)
+    finally:
+        if on_demand is not None:
+            on_demand.destroy()
+        if explicit is not None:
+            explicit.destroy()
+        assert bottom.destroyed is False
+        assert top.destroyed is False
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_anderson_handles_nonlinear_action_and_keeps_failure():
+    fixture = _tiny_fixture()
+    bottom = _NonlinearFixedAction(fixture["bottom"].A, fixture["inverse"])
+    top = _NonlinearFixedAction(fixture["top"].A, fixture["inverse"])
+    on_demand = HybridActionModalSchurApply(
+        fixture["coupling"], bottom, top
+    )
+    expected_solution = np.asarray(
+        [0.15 + 0.08j, -0.21 + 0.03j, 0.12 - 0.09j, 0.18 + 0.06j],
+        dtype=np.complex128,
+    )
+    rhs = on_demand.apply(expected_solution)
+    rhs_before = rhs.copy()
+    bottom.apply_count = 0
+    top.apply_count = 0
+    try:
+        unscaled_result = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, rhs
+        )
+        assert unscaled_result["status"] == "not_converged"
+        assert unscaled_result["relative_residual"] > 1.0e-2
+        result_apply_before = (bottom.apply_count, top.apply_count)
+        result = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, rhs, scale_residual_by_constraint=True
+        )
+        diagnostic = {
+            key: result.get(key)
+            for key in (
+                "status",
+                "stop_reason",
+                "target_reached",
+                "unscaled_residual_norm",
+                "rhs_norm",
+                "relative_residual",
+                "iterations",
+                "function_evaluations",
+                "function_callbacks",
+                "final_validation_evaluations",
+                "s_evaluation_count",
+                "snes_converged_reason",
+                "budget_callback_skipped",
+                "constraint_scale_enabled",
+                "constraint_condition_2",
+                "constraint_lu_factorizations",
+                "constraint_lu_solve_calls",
+                "scaled_residual_norm",
+                "residual_evaluation_history",
+                "side_action_calls",
+            )
+        }
+        diagnostic["observed_side_apply_delta"] = {
+            "bottom": bottom.apply_count - result_apply_before[0],
+            "top": top.apply_count - result_apply_before[1],
+        }
+        diagnostic["fixture_scope"] = "synthetic_nonlinear_side_action_not_BAL_H_or_FE"
+        if fixture["comm"].rank == 0:
+            print(
+                "ANDERSON_RESULT synthetic_nonlinear_constraint_scaled "
+                + json.dumps(diagnostic, sort_keys=True),
+                flush=True,
+            )
+        assert result["constraint_scale_enabled"] is True
+        assert result["constraint_lu_factorizations"] == 1
+        assert result["constraint_lu_solve_calls"] == result["s_evaluation_count"]
+        assert np.isfinite(result["constraint_condition_2"])
+        assert result["status"] in {"converged", "not_converged"}
+        assert result["target_reached"] == (
+            result["convergence_callback_target_reached"]
+            and result["final_unscaled_target_reached"]
+            and result["snes_converged_reason"] > 0
+            and not result["budget_callback_skipped"]
+        )
+        assert result["status"] == (
+            "converged" if result["target_reached"] else "not_converged"
+        )
+        assert result["s_evaluation_count"] <= 16
+        assert result["constraint_lu_solve_calls"] == result["s_evaluation_count"]
+        assert len(result["residual_evaluation_history"]) == result[
+            "s_evaluation_count"
+        ]
+        assert result["anderson_history"] == 4
+        assert np.array_equal(rhs, rhs_before)
+        assert bottom.apply_count - result_apply_before[0] == result["s_evaluation_count"]
+        assert top.apply_count - result_apply_before[1] == result["s_evaluation_count"]
+        assert bottom.destroyed is False
+        assert top.destroyed is False
+
+        # A nonlinear map with no root must remain an explicit negative result.
+        on_demand.apply = lambda values: np.ones_like(values) * (
+            1.0 + 0.01 * float(np.vdot(values, values).real)
+        )
+        no_root_rhs = np.zeros(4, dtype=np.complex128)
+        no_root_before = no_root_rhs.copy()
+        failed = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, no_root_rhs
+        )
+        assert failed["status"] == "not_converged"
+        assert failed["target_reached"] is False
+        assert failed["s_evaluation_count"] <= 16
+        assert failed["stop_reason"] in {
+            "budget_exhausted",
+            "function_evaluation_budget",
+            "max_iterations",
+            "snes_nonconvergence",
+        }
+        assert failed["side_action_calls"] == {"bottom": 0, "top": 0}
+        assert np.array_equal(no_root_rhs, no_root_before)
+        assert bottom.destroyed is False
+        assert top.destroyed is False
+    finally:
+        on_demand.destroy()
+        assert bottom.destroyed is False
+        assert top.destroyed is False
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_anderson_budget_branch_does_not_fake_residual(
+    monkeypatch,
+):
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    on_demand = HybridActionModalSchurApply(
+        fixture["coupling"], bottom, top
+    )
+    on_demand.apply = lambda values: np.asarray(values, dtype=np.complex128).copy()
+    rhs = np.asarray(
+        [0.2 + 0.1j, -0.1 + 0.05j, 0.08 - 0.04j, 0.1 + 0.03j],
+        dtype=np.complex128,
+    )
+    rhs_before = rhs.copy()
+    monkeypatch.setattr(block_ldu, "_MODAL_ANDERSON_S_EVALUATION_LIMIT", 2)
+    try:
+        result = block_ldu.solve_action_modal_schur_anderson(
+            on_demand, rhs, scale_residual_by_constraint=True
+        )
+        assert result["budget_exhausted"] is True
+        assert result["budget_callback_skipped"] is False
+        assert result["budget_callback_residual_state"] is None
+        assert result["budget_reason"] == "DIVERGED_FUNCTION_COUNT"
+        assert result["stop_reason"] == "budget_exhausted"
+        assert result["status"] == "not_converged"
+        assert result["function_callbacks"] == 1
+        assert result["function_evaluations"] == 1
+        assert result["final_validation_evaluations"] == 1
+        assert result["s_evaluation_count"] == 2
+        assert result["s_evaluation_count"] <= result["s_evaluation_limit"]
+        assert result["constraint_lu_factorizations"] == 1
+        assert result["constraint_lu_solve_calls"] == 2
+        assert result["constraint_scale_enabled"] is True
+        assert result["side_action_calls"] == {"bottom": 0, "top": 0}
+        assert result["snes_converged_reason"] == int(
+            PETSc.SNES.ConvergedReason.DIVERGED_FUNCTION_COUNT
+        )
+        assert result["final_unscaled_target_reached"] is False
+        assert result["relative_residual"] > 1.0e-2
+        assert result["residual_evaluation_history"][-1]["source"] == (
+            "final_validation"
+        )
+        assert len(result["residual_evaluation_history"]) == 2
+        assert np.array_equal(rhs, rhs_before)
+        assert bottom.destroyed is False
+        assert top.destroyed is False
+    finally:
+        on_demand.destroy()
+        assert bottom.destroyed is False
+        assert top.destroyed is False
         bottom.destroy()
         top.destroy()
         _destroy_fixture(fixture)
