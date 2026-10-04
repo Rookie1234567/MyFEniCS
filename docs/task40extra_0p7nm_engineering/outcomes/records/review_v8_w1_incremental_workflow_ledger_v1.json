@@ -1,0 +1,106 @@
+{
+  "charge_status": "UNKNOWN_NOT_SETTLED",
+  "charge_unknowns": [
+    "preparation duration",
+    "unmeasured shell and service startup intervals",
+    "gaps/idle intervals",
+    "UTC/monotonic disagreement prevents treating UTC elapsed as monotonic charge"
+  ],
+  "engineering_startup_events": [
+    {
+      "attempt": "initial W1 service launch",
+      "classification": "PRE_WORKER_STARTUP_ENGINEERING_FAILURE",
+      "error": "ModuleNotFoundError: No module named benchmarks",
+      "phase_time_utc": "2026-10-04T16:51:29Z",
+      "preflight_written": false,
+      "preserved_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_20261004T165129Z/service.log",
+      "raw_written": false,
+      "unit": "myfenics-task40-w1-20261004T165129Z-1756265.service",
+      "worker_started": false
+    },
+    {
+      "attempt": "retry1 W1 probe",
+      "classification": "ADMITTED_THEN_CONTROLLED_STOP_TIMEBASE_INCONSISTENCY",
+      "descendants_cleared": true,
+      "invocation_id": "4408f55b91d445e7a1e1092f6b6fbae5",
+      "preflight_status": "PASS_IMMEDIATE_SERVICE_AND_DYNAMIC_MEMORY_ADMISSION",
+      "source_head": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+      "unit": "myfenics-task40-w1-retry1-20261004T1657Z.service",
+      "watchdog_classification": "TIMEBASE_INCONSISTENCY",
+      "watchdog_elapsed_monotonic_seconds": 38.64929013408255,
+      "watchdog_exit_code": -9,
+      "worker_started": true
+    },
+    {
+      "attempt": "first checkpoint-check service",
+      "checker_started": false,
+      "classification": "CHECKER_NOT_STARTED_LAUNCH_DIRECTORY_COLLISION",
+      "error": "FileExistsError: pre-created checkpoint_checker_watchdog directory; supervise requires a fresh directory",
+      "invocation_id": "c5459ba66d264a99af742f19b0e28753",
+      "preserved_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/checkpoint_checker_service.log",
+      "unit": "myfenics-task40-w1-checkpoint-check-20261004T1702Z.service"
+    },
+    {
+      "attempt": "retry1 checkpoint checker",
+      "checker_pass": false,
+      "checker_status": "SAVED_ARRAYS_PARTIAL_OR_CONTROLLED_NEGATIVE",
+      "classification": "CHECKPOINT_ONLY_CHECKER_COMPLETED",
+      "descendants_cleared": true,
+      "invocation_id": "408ca87248d64ffb9aafe1dce814d3bb",
+      "unit": "myfenics-task40-w1-checkpoint-check-retry1-20261004T1704Z.service",
+      "watchdog_classification": "COMPLETED",
+      "watchdog_elapsed_monotonic_seconds": 2.0471601800527424
+    },
+    {
+      "classification": "PREPARATION_ONLY_COMMAND_INVOCATION_ERROR",
+      "cost": "included in frozen W1 window; not separately charged",
+      "detail": "Bare python was unavailable before qualified activation.",
+      "formal_worker_started": false,
+      "phase_elapsed": "NOT_MEASURED"
+    },
+    {
+      "classification": "PREPARATION_ONLY_ACTIVATION_ARGUMENT_ERROR",
+      "cost": "included in frozen W1 window; not separately charged",
+      "detail": "One short import check passed an unsupported fourth argument; the corrected three-argument activation/import check passed.",
+      "formal_worker_started": false,
+      "phase_elapsed": "NOT_MEASURED"
+    }
+  ],
+  "event_log": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_events.jsonl",
+  "historical_debits_preserved": {
+    "older_w0_worker_subtotal_seconds": 200.87894401792437,
+    "v6_settled_seconds": 5428.582333962078
+  },
+  "known_measured_phase_intervals": [
+    {
+      "classification": "TIMEBASE_INCONSISTENCY",
+      "phase": "retry1 W1 worker and sequential checker-wrapper process tree until timebase stop",
+      "seconds": 38.64929013408255
+    },
+    {
+      "classification": "COMPLETED",
+      "phase": "checkpoint-only independent saved-array checker process tree",
+      "seconds": 2.0471601800527424
+    }
+  ],
+  "known_supervised_interval_sum_seconds": 40.69645031413529,
+  "recorded_utc": "2026-10-04T17:14:44.728074+00:00",
+  "schema": "task40extra.review_v8_w1_incremental_workflow_ledger.v1",
+  "source_head": "c354afa449fb80cfb5012e7d2ff66a3e3e64e088",
+  "source_or_numerical_scope_changed_after_probe": false,
+  "utc_derived_window_boundary": {
+    "elapsed_seconds": 5932.425425,
+    "not_a_monotonic_charge": true,
+    "readback_utc": "2026-10-04T17:03:27.620821+00:00",
+    "remaining_seconds": 1267.574575
+  },
+  "window": {
+    "deadline_utc": "2026-10-04T17:24:35.195396Z",
+    "duration_seconds": 7200,
+    "elapsed_is_charge_or_monotonic": false,
+    "t0_utc": "2026-10-04T15:24:35.195396Z",
+    "utc_derived_elapsed_at_checker_readback_seconds": 5932.425425,
+    "utc_derived_remaining_at_checker_readback_seconds": 1267.574575,
+    "window_refreshed": false
+  }
+}

@@ -1,4 +1,4 @@
-# Task40extra 当前进展：Review V8 W0组件与独立保存数据核验闭合，W1固定窗口内持续推进（原尺寸未实现）
+# Task40extra 当前进展：Review V8 W0组件核验闭合；W1边界门负结果并受控停止（原尺寸未实现）
 
 Task40仍缺原尺寸0.7 nm器件的有限元精度和容量证明。此前V8首个W0 worker在进入FE setup前因冻结模式库存身份不匹配而停止；这次续作复用已存在的attempt4 worker输出，只补独立保存数据检查和持久性闭环，不更换物理模型，也不把组件测试冒充PDE。
 
@@ -6,7 +6,9 @@ checker-only对80个保存单元、29个局部修正类、955项重算指标以�
 
 worker耗时`797.629 s`、同时树RSS峰`2,204,782,592 B`；成功checker耗时`18.994 s`、RSS峰`478,863,360 B`。树VmSwap峰为0；每个被监督/回读的global pswp增量为0，观测宿主基线783/3167页仍存在。第一次checker-only在carrier port 210因errno24失败，后续只给checker专用service设4096 FD上限并通过fixture/重试；checker leaf的`/proc` RLIMIT没有采到。完整W0准备、空档和费用仍unknown，旧失败和V6扣费原样保留。
 
-裁决是`W0_FULL_COMPONENT_AND_INDEPENDENT_CHECK_PASS_NO_PDE`：没有正式Maxwell解、full A6物理residual或官方R/T/A。W1唯一固定7200 s窗口已于2026-10-04T15:24:35.195396Z开始，deadline为2026-10-04T17:24:35.195396Z。最小Task042接线、定向测试、源码提交准备/主控源码审查、资源准入、代表面q30/q60与最大支持内部修正探针、checker和清理均计入此窗，不刷新、不排除已花时间。按已有授权持续推进；正式探针使用主控审查提交的clean source，不等待新的范围批准。W2/dot继续HELD，50×25×140 nm目标完整PDE和2 TB/48小时资格仍NO-GO。
+裁决是`W0_FULL_COMPONENT_AND_INDEPENDENT_CHECK_PASS_NO_PDE`：没有正式Maxwell解、full A6物理residual或官方R/T/A。W1唯一7200 s窗口T0/deadline为2026-10-04T15:24:35.195396Z / 2026-10-04T17:24:35.195396Z，未刷新。q30/q60边界最大相对差5.705909332721303（限值1e-10）失败；p4 top/bottom两个局部制造态恢复/端口方程经独立checker通过；timebase guard因UTC/monotonic偏差6.2779 s超过5 s而受控终止worker，p6未运行。checkpoint checker确认保存数据一致，但总状态partial/negative。到readback UTC端点推导elapsed 5932.425425 s、remaining 1267.574575 s（不是费用）；整窗charge unknown。W2/dot继续HELD，50×25×140 nm完整PDE和2 TB/48小时资格仍NO-GO。
+
+W1证据索引：[Response V8](task40extra_0p7nm_engineering/response_v8.md)、[checkpoint closeout](task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_boundary_checkpoint_closeout_v1.json)、[增量账](task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_incremental_workflow_ledger_v1.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。没有完整设备PDE或官方R/T/A；W1要求集未闭合。
 
 证据入口：[Response V8](task40extra_0p7nm_engineering/response_v8.md)、[W0 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json)、[incremental ledger](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_incremental_workflow_ledger.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)、[summary](task40extra_0p7nm_engineering/outcomes/summary.md)。
 

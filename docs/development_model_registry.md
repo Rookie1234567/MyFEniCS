@@ -18,7 +18,13 @@ Gx784 的 p6 是实际完整场方程，p4 是迭代校正系统；后者减少�
 | raw持久性 | 1,602/1,602文件fsync后重开SHA通过；1,602/1,602数组SHA通过；总`604,158,016 B`；未复制raw | manifest `000c9bb5cbfa531077d0535dccc6cbf0ca8f8984f444f2e22d97b057d9d7e1e4`；archive verification仍false |
 | 失败与系统边界 | 首次checker-only因fd limit errno24失败；服务局部4096 retry通过；checker leaf `/proc` RLIMIT未采样。进程树swap峰0；global swap增量按区间为0，但宿主已有基线783/3167页 | 工程容量失败保留；不写整机swap为零，不改变全局FD限制；整体准备和charge unknown |
 
-证据见 [Response V8](task40extra_0p7nm_engineering/response_v8.md)、[W0 closeout](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json)、[增量账](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_incremental_workflow_ledger.json)、[Task40 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)和[outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。W1唯一7200秒窗口已固定并正在推进；最小Task042参数化接线、测试和源码提交审查准备均计入同一窗口，正式探针使用主控审查提交的clean source，无需新范围批准；原尺寸NO-GO、W2/dot HELD。
+证据见 [Response V8](task40extra_0p7nm_engineering/response_v8.md)、[W0 closeout](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json)、[增量账](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_incremental_workflow_ledger.json)、[Task40 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)和[outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。W1唯一7200秒窗口未刷新；代表面q30/q60检查已出现边界数值负结果，p4 top/bottom局部制造态checker通过，严格timebase门使p6未完成；整窗charge仍unknown；原尺寸NO-GO、W2/dot HELD。
+
+## Task40extra Review V8 W1：代表边界/单元组件探针（部分负结果，不是完整PDE登记）
+
+两种表面积分精细度q30/q60比较同一批32,060通道在两个代表面上的边界作用，检查积分分辨率是否显著改变耦合；最大逐key相对差`5.705909332721303`，超过`1e-10`限值，最差key为top `(-67,-34,s)`，所以该边界作用未获资格。p4 top-air和bottom-Si各一个真实局部单元的已知制造态恢复、原/约化trace与port方程由独立checker重算通过；这只说明两种局部表达相互一致，不表示任意场、p6、全局MPC或目标器件已求解。
+
+严格时钟监督偏差超过5 s后终止W1 worker；原因未知。树RSS峰`1,221,480,448 B`，tree swap峰0，global swap页增量0。checkpoint-only checker成功重算已保存的q30/q60和两项p4证据，但p6 top/bottom `INTERRUPTED_NOT_RUN`，总checker是partial/negative；无完整设备PDE或官方R/T/A。详见[Response V8](task40extra_0p7nm_engineering/response_v8.md)、[W1 checkpoint record](task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_boundary_checkpoint_closeout_v1.json)、[W1增量账](task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_incremental_workflow_ledger_v1.json)和[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。W2/dot仍HELD，原尺寸NO-GO；ordinary default与master未变。
 
 ## Review V7 W0 实际组件执行记录（非PDE模型登记）
 

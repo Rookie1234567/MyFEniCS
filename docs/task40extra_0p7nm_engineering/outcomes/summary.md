@@ -1,4 +1,4 @@
-# Task40extra 结果总览：Review V8 W0组件闭合；W1固定窗口进行中；V7–V4历史记录
+# Task40extra 结果总览：Review V8 W0组件闭合；W1代表探针数值门失败并受控停止；V7–V4历史记录
 
 ## Review V8 后续：W0组件与保存数据独立检查通过（无PDE）
 
@@ -12,7 +12,25 @@
 | 文件描述符失败与修复 | 首次 checker-only errno24，6.205 s，树RSS 351,285,248 B；仅重试服务限制4096；fixture测得24个mmap FD增量、预计总FD 2,118/limit 4,096，余量1,978 | service范围限制；direct checker leaf `/proc` limit未采样，不伪造读数；其他失败/成本均保留 |
 | 资源/时间 | worker和checker树VmSwap峰均0；有记录的 global `pswpin/out` 区间增量0，基线/末值783/3167页；checker RSS见上；窗口T0=`2026-10-04T13:04:57Z`，deadline=`2026-10-04T17:04:57Z` | 不宣称整机swap为零。checker完成时UTC推导elapsed `7515 s`，不是monotonic或费用；整窗准备/空档/charge仍unknown |
 
-完整哈希和非合并边界见[W0 compact record](records/review_v8_w0_component_closeout_v1.json)、[W0增量账](records/review_v8_w0_incremental_workflow_ledger.json)、[run index](records/run_index.json)及[Response V8](../response_v8.md)。此前attempt2和attempt3的worker phase分别为`44.26769974210765 s`和`113.90223937504925 s`，attempt4自动checker失败为`3.137978855986148 s`；RSS及原失败记录路径见W0增量账，这些是独立phase wall值而非总费用。W1 FE尚未运行；唯一7200秒窗口已冻结为T0=2026-10-04T15:24:35.195396Z、deadline=2026-10-04T17:24:35.195396Z。Task042两模块接线、定向测试、源码提交准备/主控审查、资源准入、代表面q30/q60和最大支持内部修正探针、checker及清理均计入本窗，不刷新、不排除已花时间；32,060有序keys必须原样复用，正式探针使用主控审查提交的clean source。W2、dot保持HELD，原尺寸仍NO-GO。
+完整哈希和非合并边界见[W0 compact record](records/review_v8_w0_component_closeout_v1.json)、[W0增量账](records/review_v8_w0_incremental_workflow_ledger.json)、[run index](records/run_index.json)及[Response V8](../response_v8.md)。此前attempt2和attempt3的worker phase分别为`44.26769974210765 s`和`113.90223937504925 s`，attempt4自动checker失败为`3.137978855986148 s`；RSS及原失败记录路径见W0增量账，这些是独立phase wall值而非总费用。W1代表面FE组件探针已执行但未完成要求集；唯一7200秒窗口已冻结为T0=2026-10-04T15:24:35.195396Z、deadline=2026-10-04T17:24:35.195396Z。Task042两模块接线、定向测试、源码提交准备/主控审查、资源准入、代表面q30/q60和最大支持内部修正探针、checker及清理均计入本窗，不刷新、不排除已花时间；32,060有序keys必须原样复用，正式探针使用主控审查提交的clean source。W2、dot保持HELD，原尺寸仍NO-GO。
+
+---
+
+## Review V8 W1：边界Gate数值负结果、局部p4通过、p6受控中断
+
+q30/q60表示同一表面作用的两种积分分辨率；这个对照用于发现表面积分是否敏感，不把q60当作已证明精确。此次只覆盖top/bottom代表面和两个p4单元，不含原尺寸体网格、全局MPC映射或完整Maxwell解。
+
+| 对象/方法 | 实际结果 | 状态与边界 |
+|---|---|---|
+| 两代表面、32,060有序keys | 最大逐key相对差`5.705909332721303`（限值`1e-10`），worst key `top,-67,-34,s`；完整作用相对差`8.663088994999783e-3`；最大component差/原分母`4.1493038268067535` | 边界数值Gate **FAILED**；q重构误差0、adjoint差`2.8212630862997643e-14`通过，但不覆盖积分一致性失败 |
+| p4 top/air一单元 | 300 native行（108内部、192边界）；制造态恢复差`4.071005827429115e-13`；原/约化trace方程差`3.161602089999998e-15` / `3.7390795564108086e-14`；port身份差`1.7404941472212574e-17` | 独立checker局部PASS；是制造态的局部方程一致性 |
+| p4 bottom/Si一单元 | 制造态恢复差`3.318404914520256e-13`；原/约化trace差`2.8169686807005053e-15` / `4.9473670429170724e-14`；port身份差`2.6701384118827724e-17` | 独立checker局部PASS；不是任意场或全局MPC资格 |
+| p6 top/bottom | 严格timebase watchdog触发前没有数组checkpoint | `INTERRUPTED_NOT_RUN`，不是数值失败 |
+| raw/checker与监督 | NPZ 104成员、38,026,664 B；独立hash/key/方程重算完成；checker `SAVED_ARRAYS_PARTIAL_OR_CONTROLLED_NEGATIVE`, `pass=false`；readback确认NPZ/checker一致 | W1要求集不完整；任务树RSS峰`1,221,480,448 B`、tree swap 0、global页delta 0 |
+
+timebase首个越限样本monotonic `37.343951652 s`、UTC `43.621839933 s`，相差`6.277888281 s`，超过5 s门槛；整树监督monotonic耗时`38.649290134 s`后清理。原因未知，分类为时钟监督受控停止；不是solver或内存失败。第一次worker服务因包路径导入错误未启动；checker首服务因预创建目录未启动；两者均独立保留。成功checkpoint checker监督`2.047160180 s`、RSS峰`306,634,752 B`、swap 0。
+
+固定T0/deadline=`2026-10-04T15:24:35.195396Z` / `2026-10-04T17:24:35.195396Z`。到checker readback UTC端点推导elapsed `5932.425425 s`、remaining `1267.574575 s`，不是费用；两段可测supervised monotonic interval合计`40.69645031413529 s`，准备/错误命令/服务启动和空档未全量测得，整窗charge仍`UNKNOWN_NOT_SETTLED`。事件只追加，旧历史费用不变。证据：[Response V8](../response_v8.md)、[checkpoint closeout](records/review_v8_w1_boundary_checkpoint_closeout_v1.json)、[增量费用账](records/review_v8_w1_incremental_workflow_ledger_v1.json)、[run index](records/run_index.json)。W2/dot保持HELD，原尺寸NO-GO，官方R/T/A未生成。
 
 ---
 

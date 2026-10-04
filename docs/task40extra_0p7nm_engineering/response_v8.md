@@ -1,6 +1,28 @@
-# Task40extra Review V8执行回应（W0组件检查通过；W1固定窗口内持续推进）
+# Task40extra Review V8执行回应（W0组件闭合；W1代表探针数值门失败并受控停止）
 
-**当前结论：W0组件和独立保存数据检查通过；PDE及官方R/T/A未产生。W1固定7200 s窗口已冻结（T0 2026-10-04T15:24:35.195396Z；deadline 2026-10-04T17:24:35.195396Z），接线、定向测试、源码提交准备/主控源码审查和唯一数值探针均在同一窗口计时，不刷新或排除准备。按既有授权连续推进，无需新的范围批准；数值探针使用主控审查提交的clean source。W2、dot仍HELD，原尺寸仍NO-GO。
+**当前结论：W0组件与独立保存数据检查通过；W1唯一固定7200 s窗口运行了代表面边界探针。独立checker确认q30/q60边界差超过1e-10，两个p4局部制造态恢复/端口检查通过；严格时钟门导致p6未运行。没有完整设备PDE或官方R/T/A。W1要求集未闭合，W2/dot仍HELD，原尺寸与十进制2 TB（2e12 B）/48小时资格仍NO-GO。固定T0/deadline未刷新；实际整窗费用UNKNOWN_NOT_SETTLED。**
+
+## Review V8 W1：代表边界数值门失败，p4局部检查通过，p6被时钟门中断
+
+W1在冻结的唯一窗口（T0 `2026-10-04T15:24:35.195396Z`；deadline `2026-10-04T17:24:35.195396Z`）内，使用主控提交的clean source `c354afa449fb80cfb5012e7d2ff66a3e3e64e088` 执行。探针复用原32,060个有序通道，只在top/bottom两个代表面计算边界作用；没有构造原尺寸体网格或全局MPC行号。`q30`和`q60`是两种表面积分精细度；比较同一作用在两种分辨率下的变化可检验积分敏感性，但不证明q60就是精确值。
+
+| 检查 | 独立重算/保存证据 | 结论与适用边界 |
+|---|---|---|
+| q30/q60边界作用 | 32,060 keys最大逐通道相对差 `5.705909332721303`，限值`1e-10`；最差key top/`m=-67,n=-34,s`；最大component差/原投影分母`4.1493038268067535`；完整作用相对差`8.663088994999783e-3`（约0.8663%） | 边界数值Gate **FAILED**。q30/q60重构误差均0；伴随双线性差`2.8212630862997643e-14`通过，worker claim与checker一致；这些不能覆盖积分一致性失败 |
+| p4 top/air单元 | 真实单元局部Maxwell有限元形式，300 native行（108内部、192边界）；非零已知内部态由原方程制造右端，再独立求解恢复；已知态差`4.071005827429115e-13`，原/约化边界方程差`3.161602089999998e-15` / `3.7390795564108086e-14`，全key port身份差`1.7404941472212574e-17` | 局部制造态核验 **PASS**；只说明该已知状态的原方程、边界方程和消元式一致，不代表任意物理入射场或整个器件解 |
+| p4 bottom/Si单元 | 同类单元；已知态差`3.318404914520256e-13`，原/约化边界方程差`2.8169686807005053e-15` / `4.9473670429170724e-14`，全key port身份差`2.6701384118827724e-17` | 局部制造态核验 **PASS**；独立Basix q30全DoF见证通过，不扩展为全局MPC映射 |
+| p6 top/bottom | timebase监督停止前没有保存p6数组 | `INTERRUPTED_NOT_RUN`；不是p6数值失败。四个局部case只完成两个 |
+| 保存数组checker | 38,026,664 B、104成员NPZ重新打开；独立复算成员hash、mode顺序、q30/q60和两个p4内部/边界/端口方程；6个源码文件hash与当前source HEAD全部匹配 | `SAVED_ARRAYS_PARTIAL_OR_CONTROLLED_NEGATIVE`、`pass=false`符合实际：边界Gate失败且p6缺失。NPZ/checker hash读回匹配，`persisted_readback_confirmed=true` |
+
+数值失败、监控停止和启动工程错误分开保留。strict timebase watchdog在monotonic elapsed `38.64929013408255 s`时杀停整棵子进程树。首个越限观测为monotonic `37.343951651942916 s`、UTC `43.621839933 s`，相差`6.277888281 s`，超过`5 s`容差；终态差`6.277890061 s`。这是时钟监督受控停止，不是solver、内存或swap失败；时钟偏差外因未知。任务树RSS峰`1,221,480,448 B`、swap峰0；服务`MemoryMax=17,179,869,184 B`、`MemorySwapMax=0`，准入时动态上限`9,132,195,840 B`；global `pswpin/out`基线/末值均为`783/3167`页、delta均0；PSS disabled，后代清空。
+
+首轮W1服务在worker前因薄启动脚本的Python包路径错误`ModuleNotFoundError: No module named benchmarks`退出；只在新ignored attempt入口将仓库root放入`sys.path`，未改tracked source。首次checkpoint-check服务因预创建监督目录触发`FileExistsError`，checker未启动；更换新目录后只运行保存数组checker，没有FE。此前一次裸`python`不可用和一次activation参数误用属于准备命令错误，也计入同一窗口，不伪装为正式FE启动。
+
+checkpoint checker supervisor耗时`2.0471601800527424 s`，树RSS峰`306,634,752 B`、swap峰0、动态上限`9,160,368,128 B`，global swap delta仍为0。它只读取已保存数组并重建两个局部见证，不重跑worker、q作用或新网格。原worker report未生成；checker输入标为checkpoint-only、`worker_completed=false`，由真实progress与同服务preflight绑定source HEAD，原progress/NPZ均未改写。
+
+预算沿用原窗口：checker readback时刻`2026-10-04T17:03:27.620821Z`，UTC端点推导elapsed `5932.425425 s`、remaining `1267.574575 s`；此推导不是monotonic收费。两段可测supervised monotonic phase合计`40.69645031413529 s`，不含接线测试、准备命令错误、未测启动时间及空档，因此W1总charge仍`UNKNOWN_NOT_SETTLED`，不填0、不用UTC elapsed冒充。旧V6 settled debit `5428.582333962078 s`和旧W0 worker小计`200.87894401792437 s`未改，T0/deadline没有刷新。
+
+本轮不继续q/网格扫描、不重跑FE、不把p4局部PASS推广到p6或全目标。W1要求集未通过，W2与dot保持HELD，原尺寸及十进制2 TB（2e12 B）/48小时资格继续NO-GO，官方R/T/A未生成。证据见[W1 checkpoint closeout](outcomes/records/review_v8_w1_boundary_checkpoint_closeout_v1.json)、[W1增量费用账](outcomes/records/review_v8_w1_incremental_workflow_ledger_v1.json)、[run index](outcomes/records/run_index.json)；ignored原始数组、checker、两份watchdog和读回记录位于`benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/`。
 
 ## Review V8 后续 W0：独立组件核验与原始数据持久性闭合
 
