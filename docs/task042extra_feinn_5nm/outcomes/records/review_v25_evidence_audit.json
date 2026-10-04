@@ -1,0 +1,1101 @@
+{
+  "schema": "task42extra.review-v25-evidence-audit.v1",
+  "created_utc": "2026-10-04T18:54:30.251842+00:00",
+  "review": "docs/task042extra_feinn_5nm/review_report_v25.md",
+  "input_head": "bf3fa49d771fb2517166748c268328049f175be9",
+  "input_review_seal": "07bcd6ae2c9118619b2ee6955e39259cd065a313",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "branch": "task42extra_feinn_5nm",
+  "canonical": "/home/fenics/Projects/NN-Lab-V2",
+  "review_binding": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v25.md",
+    "bytes": 24060,
+    "sha256": "afbb7c35ddff61ceef2437aaac4fa0bd5055dc8647f3788af4d4a55237227e2e"
+  },
+  "independent_script": {
+    "binding": {
+      "path": "tmp/task42extra/review_v25/audit.py",
+      "bytes": 10205,
+      "sha256": "ef1ea089c62aa4d4dbd35e45748c83b6564bf3d346a3cff17e761e5c567a2406"
+    },
+    "text": "\"\"\"V25 independent saved-record audit and pure gate counterexamples; no FE.\"\"\"\nimport datetime\nimport hashlib\nimport json\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport time\nimport types\nimport xml.etree.ElementTree as ET\nfrom unittest.mock import patch\n\nimport numpy as np\n\nROOT = Path(__file__).resolve().parents[3]\nOUT = ROOT / 'tmp/task42extra/review_v25'\nDOC = ROOT / 'docs/task042extra_feinn_5nm'\nT0 = time.monotonic()\n\n\ndef sha(path):\n    return hashlib.sha256(Path(path).read_bytes()).hexdigest()\n\n\ndef dump(path, value):\n    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2,\n        default=lambda x:x.item() if isinstance(x,np.generic) else str(x))+'\\n')\n\n\ndef read(path):\n    return json.loads(Path(path).read_text())\n\n\ndef git(*args):\n    return subprocess.check_output(['git', *args], cwd=ROOT)\n\n\nbindings, files = [], {}\n\n\ndef walk(value, label):\n    if isinstance(value, dict):\n        if isinstance(value.get('path'), str) and isinstance(value.get('sha256'), str):\n            p = Path(value['path'])\n            if not p.is_absolute():\n                p = ROOT / p\n            if p not in files:\n                files[p] = {'path': str(p.relative_to(ROOT)), 'bytes': p.stat().st_size,\n                            'sha256': sha(p)}\n            actual = files[p]\n            assert actual['sha256'] == value['sha256'], (label, actual, value)\n            if 'bytes' in value:\n                assert actual['bytes'] == value['bytes'], (label, p)\n            bindings.append({'source': label, **actual})\n        for key, child in value.items():\n            walk(child, label+'/'+key)\n    elif isinstance(value, list):\n        for i, child in enumerate(value):\n            walk(child, label+'/'+str(i))\n\n\nfor p in sorted((DOC/'outcomes/records').glob('*_v25.json')):\n    walk(read(p), p.name)\ndeps = read(ROOT/'benchmarks/cases/w1_receiver/dependencies.json')\nfor row in deps['files']:\n    raw = git('show', deps['commit']+':'+row['path'])\n    assert len(raw) == row['bytes'] and hashlib.sha256(raw).hexdigest() == row['sha256']\n    assert git('rev-parse', deps['commit']+':'+row['path']).decode().strip()==row['blob']\npacket = read(DOC/'outcomes/records/integration_packet_v25.json')\nfor row in packet['source_files']:\n    assert git('show', packet['receiver_source_sha']+':'+row['path']) == (ROOT/row['path']).read_bytes()\ntests = read(DOC/'outcomes/records/targeted_tests_v25.json')\njunit=[]\nfor item in tests['runs']:\n    tree = ET.parse(ROOT/item['junit']['path']).getroot()\n    suites = [tree] if tree.tag=='testsuite' else list(tree.findall('testsuite'))\n    counts = {k: sum(int(s.attrib.get(k, 0)) for s in suites) for k in ('tests','failures','errors','skipped')}\n    assert counts == item['counts']\n    summary = read(ROOT/item['summary']['path'])\n    for k in ('classification','leader_exit_code','elapsed_seconds','sampled_process_tree_rss_peak_bytes','sampled_process_tree_swap_peak_bytes','rss_hard_limit_bytes','descendants_cleared','remaining_child_pids'):\n        assert summary[k] == item[k], (k,summary[k],item[k])\n    junit.append({'run':item['name'],'counts':counts,'classification':summary['classification'],'cap':summary['rss_hard_limit_bytes']})\n\nold='07bcd6ae2c9118619b2ee6955e39259cd065a313'\nprotected=[]\nfor rel in git('ls-tree','-r','--name-only',old,'docs/task042extra_feinn_5nm').decode().splitlines():\n    name=Path(rel).name\n    if name.startswith(('review_report','response','task','addendum')) or name=='AGENTS.md':\n        assert git('show',old+':'+rel)==(ROOT/rel).read_bytes(),rel\n        protected.append(rel)\nold_summary=git('show',old+':docs/task042extra_feinn_5nm/outcomes/summary.md')\nassert (DOC/'outcomes/summary.md').read_bytes().endswith(old_summary)\ninput_record=read(DOC/'outcomes/records/input_receipt_v25.json')\npresence=[]\nfor entry in input_record['rows']+input_record['checkpoint_probes']:\n    p=Path(entry['path']);presence.append({'path':str(p),'is_file_now':p.is_file()})\n\n# Directly exercise the unmodified prerequisite function with failed authority\n# sidecars. These are isolated counterexamples, never numerical launch inputs.\nfrom src.runners.w1_component_receiver import prerequisite\ngate_root=OUT/'prerequisite_counterexample'\n(gate_root/'control').mkdir(parents=True,exist_ok=True)\n(gate_root/'boundary_check').mkdir(exist_ok=True)\ndump(gate_root/'control/receiver_result.json',{\n    'cleared':True,'component_status':'CONTROL_NATIVE_BOUNDARY_PASS_NO_VOLUME_FE',\n    'receiver_exit_code':99,'receiver_classification':'WORKER_FAILED',\n    'receiver_source_sha':'wrong-source'})\ndump(gate_root/'boundary_check/component_result.json',{\n    'status':'P1_Q60_FULL_MODE_PASS','coverage_complete':True,\n    'receiver_source_sha':'different-old-source'})\ndump(gate_root/'boundary_check/receiver_result.json',{\n    'cleared':False,'receiver_exit_code':137,'receiver_classification':'RSS_HARD_STOP'})\naccepted=False\ntry:\n    prerequisite('p4_top',gate_root)\n    accepted=True\nexcept Exception:\n    pass\nassert accepted, 'Counterexample no longer applies; reassess source'\n\n# Isolate saved algebra checking from the unrelated Basix/direct-integral\n# prerequisite with explicit test stubs. This is NOT an FE witness.\nfrom src.runners import w1_component_payload as payload\nfrom src.solvers import w1_boundary_components as component\nfake_basix=types.ModuleType('basix')\nfake_basix.ElementFamily=types.SimpleNamespace(N1E=1)\nfake_basix.CellType=types.SimpleNamespace(hexahedron=1)\nfake_basix.LagrangeVariant=types.SimpleNamespace(legendre=1)\nfake_basix.create_element=lambda *a:types.SimpleNamespace(T_apply=lambda *a:None)\nfake_probe=types.ModuleType('src.solvers.task40_w1_local_probe')\nrule=np.array([[.2,.3],[.7,.4]])\nweights=np.array([.5,.5])\nintegral=np.ones((300,2),dtype=complex)\nfake_probe._direct_full_basis_integral=lambda *a:(integral,rule,weights)\nni,nt,nm=108,192,32060\nalpha=np.ones(nm,dtype=complex)\narrays={\n    'witness_mode_k':np.array([.1,.2,.3],complex),\n    'witness_mode_traction':np.array([1,0],complex),\n    'witness_mode_e':np.array([1,0],complex),\n    'witness_mode_projection_denominator':np.array(1.),\n    'local_cell_coordinates':np.zeros((8,3)),\n    'witness_direct_q60_rule_points':rule,'witness_direct_q60_rule_weights':weights,\n    'local_cell_orientation':np.array([0]),\n    'witness_candidate_B_native':-np.ones(300,complex),\n    'witness_candidate_D_native':np.ones(300,complex),\n    'interior_positions':np.arange(ni),'trace_positions':np.arange(ni,ni+nt),\n    'local_native_tensor':np.eye(ni+nt,dtype=complex),\n    'recovered_interior':np.ones(ni,complex),'known_interior_solution':np.ones(ni,complex),\n    'trace_values':np.ones(nt,complex),'interior_rhs':np.ones(ni,complex),\n    'trace_rhs':np.ones(nt,complex),'Bi_alpha':np.zeros(ni,complex),'Bt_alpha':np.zeros(nt,complex),\n    'mode_alpha':alpha,'port_rhs':alpha.copy(),\n    'port_internal_recovered_correction':np.zeros(nm,complex),\n    'port_trace_action':np.zeros(nm,complex),\n    'port_internal_B_correction':np.zeros(nm,complex),\n    'port_internal_rhs_correction':np.zeros(nm,complex),\n    'port_internal_trace_correction':np.zeros(nm,complex),\n    'qhat_alpha':alpha.copy(),'affine_internal_rhs':alpha.copy(),\n}\nutc=datetime.datetime.now(datetime.timezone.utc)\nbinding={'window':{'deadline_monotonic':time.monotonic()+600,\n                   'deadline_utc':(utc+datetime.timedelta(seconds=600)).isoformat()},\n         'stage_deadline_monotonic':time.monotonic()+600}\nlocal_results=[]\nwith patch.dict(sys.modules,{'basix':fake_basix,'src.solvers.task40_w1_local_probe':fake_probe}):\n    for label,broken in [('baseline',False),('corrupted_saved_port_actions',True)]:\n        folder=OUT/label;folder.mkdir(exist_ok=True)\n        if broken:\n            arrays['qhat_alpha']=alpha*1e6\n            arrays['affine_internal_rhs']=alpha*2e6\n        raw=folder/'local_arrays.npz'\n        np.savez(raw,**arrays)\n        dump(folder/'component_result.json',{'degree':4,'side':'top',\n             'raw':{'sha256':sha(raw)},'consumer_quadrature':component.consumers(60)})\n        result=payload.check_local(component,folder,folder,binding)\n        assert result['status']=='P2_SAVED_LOCAL_PASS'\n        try:\n            payload.atomic_json(folder/'actual_production_writer.json',result)\n            publication_error=None\n        except TypeError as exc:\n            publication_error=str(exc)\n        assert publication_error=='Object of type bool_ is not JSON serializable'\n        expected=float(np.linalg.norm(arrays['qhat_alpha']-arrays['affine_internal_rhs'])/np.linalg.norm(alpha))\n        local_results.append({'fixture':label,'returned_status':result['status'],\n             'actual_production_writer_error':publication_error,\n             'saved_qhat_minus_affine_over_original_alpha_norm':expected,\n             'result':result,'raw_sha256':sha(raw)})\n\nresult={\n    'schema':'task42extra.review-v25-independent.v1','head':git('rev-parse','HEAD').decode().strip(),\n    'bindings':bindings,'binding_count':len(bindings),'unique_files':len(files),\n    'math_dependency_files':len(deps['files']),'math_dependency_bytes':sum(x['bytes'] for x in deps['files']),\n    'current_source_matches_tested_commit':len(packet['source_files']),\n    'junit_and_supervision':junit,'protected_authority_pages':len(protected),\n    'old_summary_suffix_unchanged':True,'presence':presence,\n    'prerequisite_failed_authority_accepted':accepted,\n    'prerequisite_counterexample_scope':'unmodified prerequisite function; failed/mismatched control/P1 reports, no producer binding/raw; no launch',\n    'saved_local_counterexample':local_results,\n    'local_counterexample_scope':'actual unmodified check_local algebra logic, Basix and direct quadrature explicitly stubbed to isolate validation; synthetic arrays, NOT native/PDE qualification',\n    'new_FE_basis_or_integrals':0,'new_LU_or_solve':0,'new_NN':0,\n    'seconds':time.monotonic()-T0}\ndump(OUT/'audit_result.json',result)\nprint(json.dumps({k:v for k,v in result.items() if k not in ('bindings','presence','saved_local_counterexample')},ensure_ascii=False))\nprint(json.dumps({'saved_local_counterexample':[{k:v for k,v in x.items() if k!='result'} for x in local_results]}))\n",
+    "scope": "Read records/hash/blob/JUnit/history and exercise unmodified actual functions on isolated synthetic fixtures. Basix/direct integral stubs explicit. No numerical qualification."
+  },
+  "result_binding": {
+    "path": "tmp/task42extra/review_v25/audit_result.json",
+    "bytes": 27928,
+    "sha256": "16dac8e571710ca58c6d95c8c1ac2a67b9764a24e70a81ec6c9a1c122e82a614"
+  },
+  "derived": {
+    "schema": "task42extra.review-v25-independent.v1",
+    "head": "bf3fa49d771fb2517166748c268328049f175be9",
+    "bindings": [
+      {
+        "source": "document_checks_v25.json/checker_file",
+        "path": "tmp/task42extra/w1_receiver/check_delivery_documents.py",
+        "bytes": 7580,
+        "sha256": "5a9de4eebe5fbf181339ba8f6c359edbb010ccd029e1085a20dd9c0265d86659"
+      },
+      {
+        "source": "document_checks_v25.json/pages/0",
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "bytes": 13560,
+        "sha256": "48deb1ef2fb9ce7b3e08a1dfed67865ac9b45d096ec8adfc39888014f37eb0d5"
+      },
+      {
+        "source": "document_checks_v25.json/pages/1",
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "bytes": 99944,
+        "sha256": "f02dd48a93f7a8c6238d9ed507c88897f28a62c68c51ffa956f1befa68d3525b"
+      },
+      {
+        "source": "document_checks_v25.json/pages/2",
+        "path": "docs/development_progress.md",
+        "bytes": 228332,
+        "sha256": "8a085926631b2ab21b49746b2b1162eaa2d63d27b2d0160f79131f43670af5dc"
+      },
+      {
+        "source": "document_checks_v25.json/pages/3",
+        "path": "docs/development_model_registry.md",
+        "bytes": 262829,
+        "sha256": "15d1487dab0a7f73a81c5828652e9f35d91f74249b6dda4588f57dc82622c1b8"
+      },
+      {
+        "source": "document_checks_v25.json/pages/4",
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "bytes": 37724,
+        "sha256": "4945417399194f047c0623ee3b4c53a6389980e2545d210d6b9c76567a9e3781"
+      },
+      {
+        "source": "document_checks_v25.json/pages/5",
+        "path": "docs/task042extra_feinn_5nm/response_v25.md",
+        "bytes": 7628,
+        "sha256": "80efa4157c26fe5161039f557472ff5d27714914625f4719eb9e68366ec0a46c"
+      },
+      {
+        "source": "document_checks_v25.json/pages/6",
+        "path": "docs/task042extra_feinn_5nm/outcomes/w1_receiver_v25.md",
+        "bytes": 5832,
+        "sha256": "878e9dff87ed13c76e3f711b6cda8d02ed8ec1b9559e5813641c5a1e92a3cb25"
+      },
+      {
+        "source": "document_checks_v25.json/pages/7",
+        "path": "benchmarks/cases/w1_receiver/README.md",
+        "bytes": 2904,
+        "sha256": "b4004150492aadd7c789a856d2e7e1e5654dc4645f355f50132c9a5371af4ea9"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/0",
+        "path": "benchmarks/cases/w1_receiver/README.md",
+        "bytes": 2904,
+        "sha256": "b4004150492aadd7c789a856d2e7e1e5654dc4645f355f50132c9a5371af4ea9"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/1",
+        "path": "benchmarks/cases/w1_receiver/dependencies.json",
+        "bytes": 4523,
+        "sha256": "f03522011c158254144aa8e5ec7112721b7d48daefd4e6c06da18d250ae3a343"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/2",
+        "path": "input/task042extra_feinn_5nm/v25_w1_boundary.dat",
+        "bytes": 681,
+        "sha256": "607c0f0b458da538808ee8cd98341b3b1a1a55762ee6b957a8f383f1793c8ed6"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/3",
+        "path": "input/task042extra_feinn_5nm/v25_w1_boundary_check.dat",
+        "bytes": 687,
+        "sha256": "bc4ce940ebe08fd1d2590c1a96a0063ae9f95d1d5f15ade5f36114358b897dda"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/4",
+        "path": "input/task042extra_feinn_5nm/v25_w1_control.dat",
+        "bytes": 680,
+        "sha256": "2a1b5ed1cb5e64ecaff829f64c7cfe4b2249376efd0ff9f88ea17b95c84f9fd8"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/5",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_bottom.dat",
+        "bytes": 682,
+        "sha256": "1df5d5b78af9b3089b56d98733e9b6696cb61356e1d209ae263f205a947f0f9c"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/6",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_bottom_check.dat",
+        "bytes": 688,
+        "sha256": "aba4499eed4c468c11989c344661f44c0af24e0f38a5f6e1708075b3516b83f4"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/7",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_top.dat",
+        "bytes": 679,
+        "sha256": "db9d8eabd6741b3435458d8648c920108d97a65cc6cc1483b969348d65cd00dc"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/8",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_top_check.dat",
+        "bytes": 685,
+        "sha256": "e9954883ff684d4d0c943f7af8a0f580bc96ce9bdd49809437391300c1ca3b91"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/9",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_bottom.dat",
+        "bytes": 682,
+        "sha256": "53cdc888e01294bf23f15d0be28eab654d0b5b17bc0dc87aac6cc515803e3eae"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/10",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_bottom_check.dat",
+        "bytes": 688,
+        "sha256": "2904469edd2ba90ab8b3f9c8a064c7892858cb185d88b6d1b8d752c54130cb4a"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/11",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_top.dat",
+        "bytes": 679,
+        "sha256": "17705f033248e8ff63418e64714086549814c232fddfc4389685f3e2faf9bc1e"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/12",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_top_check.dat",
+        "bytes": 685,
+        "sha256": "1ae118344655251ecb7f28c27adc5838758f5435187b0ef779e227fd52815055"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/13",
+        "path": "scripts/launch_task42extra_durable.py",
+        "bytes": 7224,
+        "sha256": "ee4ccca763d9f487af445ef92f1e7e3542018f7e3b5472110a768d27a632fcf2"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/14",
+        "path": "scripts/run_case.py",
+        "bytes": 11305,
+        "sha256": "6b9447d439ec943aa8b9b265ed2d0d89aa31fb73713dbd5c0ae6f0e7f21b6bd2"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/15",
+        "path": "src/io/w1_receiver_contract.py",
+        "bytes": 7414,
+        "sha256": "ec77caab3b325833c991a6f9b0c84766e41820a020082ed48d97877003eb19c9"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/16",
+        "path": "src/runners/w1_component_payload.py",
+        "bytes": 25899,
+        "sha256": "2d8228c26dc90e6cce625cb1c57f3057cd6df8398435daab0d60f6143bfbd343"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/17",
+        "path": "src/runners/w1_component_receiver.py",
+        "bytes": 14651,
+        "sha256": "df5aa922bcfca3faf6d67e274e3023a152d91c71148159257c299b4541baa82e"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/18",
+        "path": "src/solvers/w1_boundary_components.py",
+        "bytes": 11785,
+        "sha256": "b731df6c53d63ba16bfe61068e4482ded7e3c4816510d216d5972c803e2fe557"
+      },
+      {
+        "source": "integration_packet_v25.json/source_files/19",
+        "path": "src/test/test_w1_component_receiver.py",
+        "bytes": 11801,
+        "sha256": "c7bee66a0cbf4e9f7b2c66822fa0fc21ad8ac390976b5b0953eed1f2b59a5e7d"
+      },
+      {
+        "source": "render_check_v25.json/input_review_visual_reused/review_report",
+        "path": "docs/task042extra_feinn_5nm/review_report_v24.md",
+        "bytes": 28311,
+        "sha256": "dccb4eca6632d785a4d64e5b675fddac99b49fbf7eb1e66cd77972bcab3c4fbf"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/record",
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/document_checks_v25.json",
+        "bytes": 4556,
+        "sha256": "1e1f8937250d721d8e1f5c72e948f2055bd8ddeb11ffef39b0ee8db8189841d2"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/0",
+        "path": "docs/task042extra_feinn_5nm/README.md",
+        "bytes": 13560,
+        "sha256": "48deb1ef2fb9ce7b3e08a1dfed67865ac9b45d096ec8adfc39888014f37eb0d5"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/1",
+        "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+        "bytes": 99944,
+        "sha256": "f02dd48a93f7a8c6238d9ed507c88897f28a62c68c51ffa956f1befa68d3525b"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/2",
+        "path": "docs/development_progress.md",
+        "bytes": 228332,
+        "sha256": "8a085926631b2ab21b49746b2b1162eaa2d63d27b2d0160f79131f43670af5dc"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/3",
+        "path": "docs/development_model_registry.md",
+        "bytes": 262829,
+        "sha256": "15d1487dab0a7f73a81c5828652e9f35d91f74249b6dda4588f57dc82622c1b8"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/4",
+        "path": "docs/task042extra_feinn_5nm/outcomes/changed_files.md",
+        "bytes": 37724,
+        "sha256": "4945417399194f047c0623ee3b4c53a6389980e2545d210d6b9c76567a9e3781"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/5",
+        "path": "docs/task042extra_feinn_5nm/response_v25.md",
+        "bytes": 7628,
+        "sha256": "80efa4157c26fe5161039f557472ff5d27714914625f4719eb9e68366ec0a46c"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/6",
+        "path": "docs/task042extra_feinn_5nm/outcomes/w1_receiver_v25.md",
+        "bytes": 5832,
+        "sha256": "878e9dff87ed13c76e3f711b6cda8d02ed8ec1b9559e5813641c5a1e92a3cb25"
+      },
+      {
+        "source": "render_check_v25.json/local_structure/pages/7",
+        "path": "benchmarks/cases/w1_receiver/README.md",
+        "bytes": 2904,
+        "sha256": "b4004150492aadd7c789a856d2e7e1e5654dc4645f355f50132c9a5371af4ea9"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/0/summary",
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/summary.json",
+        "bytes": 3432,
+        "sha256": "9db331fb6c3882c088b25f1ee658adbe5612badcd140ecfb96ca5f5a183e3af1"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/0/worker_log",
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/worker.log",
+        "bytes": 210,
+        "sha256": "c36299e59bd451fe38bfddf6f25d0bedd5ad0dbd186bb24f378ff0555cc30188"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/0/junit",
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/junit.xml",
+        "bytes": 3927,
+        "sha256": "4f188c98f52e358bda20cce35b94b8f2fb8ea50e53c8633d7f2cce1c8f12cee4"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/1/summary",
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/supervision/summary.json",
+        "bytes": 3563,
+        "sha256": "f149507fedfe64d48468fbb5c927c57b0b4f041a688aabd540830ca19d990ce5"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/1/worker_log",
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/supervision/worker.log",
+        "bytes": 645,
+        "sha256": "47d0e4cfdd292f2388a13d8d2fae21ca844dfe6f2d622cb653b1da8b13951357"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/1/junit",
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/junit.xml",
+        "bytes": 6866,
+        "sha256": "98284770edfdda37d7aeaec8cc2b8ade6a0da42e73888f68948f3297d2c12f97"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/2/summary",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/supervision/summary.json",
+        "bytes": 3567,
+        "sha256": "4cf4bdc4a7f718af0d34ba360b050908f7670840c3c6c6cf87bc75c1f19c0a9e"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/2/worker_log",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/supervision/worker.log",
+        "bytes": 1269,
+        "sha256": "4e013cc548c2f40e72f0ce39d371e07bb45f262c75d63a366653a5145768ae60"
+      },
+      {
+        "source": "resource_costs_v25.json/phase_records/2/junit",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/junit.xml",
+        "bytes": 6866,
+        "sha256": "4cd4ddbbde09175d6f2c5fb56a38a7fe56d92bd7e41e4eca7587d95f8aa47f52"
+      },
+      {
+        "source": "resource_costs_v25.json/last_qualified_admission",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/admission.json",
+        "bytes": 200863,
+        "sha256": "fae84f0e315c4f1998a4bb584b6c1b85f3eb58c027ed2eb1278fe688908f15ef"
+      },
+      {
+        "source": "run_index_v25.json/dependency_manifest",
+        "path": "benchmarks/cases/w1_receiver/dependencies.json",
+        "bytes": 4523,
+        "sha256": "f03522011c158254144aa8e5ec7112721b7d48daefd4e6c06da18d250ae3a343"
+      },
+      {
+        "source": "run_index_v25.json/stages/0/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_control.dat",
+        "bytes": 680,
+        "sha256": "2a1b5ed1cb5e64ecaff829f64c7cfe4b2249376efd0ff9f88ea17b95c84f9fd8"
+      },
+      {
+        "source": "run_index_v25.json/stages/1/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_boundary.dat",
+        "bytes": 681,
+        "sha256": "607c0f0b458da538808ee8cd98341b3b1a1a55762ee6b957a8f383f1793c8ed6"
+      },
+      {
+        "source": "run_index_v25.json/stages/2/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_boundary_check.dat",
+        "bytes": 687,
+        "sha256": "bc4ce940ebe08fd1d2590c1a96a0063ae9f95d1d5f15ade5f36114358b897dda"
+      },
+      {
+        "source": "run_index_v25.json/stages/3/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_top.dat",
+        "bytes": 679,
+        "sha256": "db9d8eabd6741b3435458d8648c920108d97a65cc6cc1483b969348d65cd00dc"
+      },
+      {
+        "source": "run_index_v25.json/stages/4/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_top_check.dat",
+        "bytes": 685,
+        "sha256": "e9954883ff684d4d0c943f7af8a0f580bc96ce9bdd49809437391300c1ca3b91"
+      },
+      {
+        "source": "run_index_v25.json/stages/5/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_bottom.dat",
+        "bytes": 682,
+        "sha256": "1df5d5b78af9b3089b56d98733e9b6696cb61356e1d209ae263f205a947f0f9c"
+      },
+      {
+        "source": "run_index_v25.json/stages/6/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p4_bottom_check.dat",
+        "bytes": 688,
+        "sha256": "aba4499eed4c468c11989c344661f44c0af24e0f38a5f6e1708075b3516b83f4"
+      },
+      {
+        "source": "run_index_v25.json/stages/7/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_top.dat",
+        "bytes": 679,
+        "sha256": "17705f033248e8ff63418e64714086549814c232fddfc4389685f3e2faf9bc1e"
+      },
+      {
+        "source": "run_index_v25.json/stages/8/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_top_check.dat",
+        "bytes": 685,
+        "sha256": "1ae118344655251ecb7f28c27adc5838758f5435187b0ef779e227fd52815055"
+      },
+      {
+        "source": "run_index_v25.json/stages/9/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_bottom.dat",
+        "bytes": 682,
+        "sha256": "53cdc888e01294bf23f15d0be28eab654d0b5b17bc0dc87aac6cc515803e3eae"
+      },
+      {
+        "source": "run_index_v25.json/stages/10/dat",
+        "path": "input/task042extra_feinn_5nm/v25_w1_p6_bottom_check.dat",
+        "bytes": 688,
+        "sha256": "2904469edd2ba90ab8b3f9c8a064c7892858cb185d88b6d1b8d752c54130cb4a"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/0/summary",
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/summary.json",
+        "bytes": 3432,
+        "sha256": "9db331fb6c3882c088b25f1ee658adbe5612badcd140ecfb96ca5f5a183e3af1"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/0/worker_log",
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/worker.log",
+        "bytes": 210,
+        "sha256": "c36299e59bd451fe38bfddf6f25d0bedd5ad0dbd186bb24f378ff0555cc30188"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/0/junit",
+        "path": "tmp/task42extra/w1_receiver/targeted_initial/junit.xml",
+        "bytes": 3927,
+        "sha256": "4f188c98f52e358bda20cce35b94b8f2fb8ea50e53c8633d7f2cce1c8f12cee4"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/1/summary",
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/supervision/summary.json",
+        "bytes": 3563,
+        "sha256": "f149507fedfe64d48468fbb5c927c57b0b4f041a688aabd540830ca19d990ce5"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/1/worker_log",
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/supervision/worker.log",
+        "bytes": 645,
+        "sha256": "47d0e4cfdd292f2388a13d8d2fae21ca844dfe6f2d622cb653b1da8b13951357"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/1/junit",
+        "path": "tmp/task42extra/w1_receiver/targeted_qualified/junit.xml",
+        "bytes": 6866,
+        "sha256": "98284770edfdda37d7aeaec8cc2b8ade6a0da42e73888f68948f3297d2c12f97"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/2/summary",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/supervision/summary.json",
+        "bytes": 3567,
+        "sha256": "4cf4bdc4a7f718af0d34ba360b050908f7670840c3c6c6cf87bc75c1f19c0a9e"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/2/worker_log",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/supervision/worker.log",
+        "bytes": 1269,
+        "sha256": "4e013cc548c2f40e72f0ce39d371e07bb45f262c75d63a366653a5145768ae60"
+      },
+      {
+        "source": "targeted_tests_v25.json/runs/2/junit",
+        "path": "tmp/task42extra/w1_receiver/targeted_final/junit.xml",
+        "bytes": 6866,
+        "sha256": "4cd4ddbbde09175d6f2c5fb56a38a7fe56d92bd7e41e4eca7587d95f8aa47f52"
+      },
+      {
+        "source": "targeted_tests_v25.json/delivery_document_check",
+        "path": "docs/task042extra_feinn_5nm/outcomes/records/document_checks_v25.json",
+        "bytes": 4556,
+        "sha256": "1e1f8937250d721d8e1f5c72e948f2055bd8ddeb11ffef39b0ee8db8189841d2"
+      }
+    ],
+    "binding_count": 71,
+    "unique_files": 40,
+    "math_dependency_files": 19,
+    "math_dependency_bytes": 365726,
+    "current_source_matches_tested_commit": 20,
+    "junit_and_supervision": [
+      {
+        "run": "initial_default_cap",
+        "counts": {
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "COMPLETED",
+        "cap": 12000000000
+      },
+      {
+        "run": "qualified_with_lint_failure",
+        "counts": {
+          "tests": 49,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "WORKER_FAILED",
+        "cap": 2147483648
+      },
+      {
+        "run": "final_qualified",
+        "counts": {
+          "tests": 49,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "classification": "COMPLETED",
+        "cap": 2147483648
+      }
+    ],
+    "protected_authority_pages": 50,
+    "old_summary_suffix_unchanged": true,
+    "presence": [
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/target_ledger_v5_repair/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/inputs/52d7ec80/original_size_auto_mode_manifest.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/w1_receiver/inputs/52d7ec80/target_ledger.json",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz",
+        "is_file_now": false
+      },
+      {
+        "path": "/home/shenjh/Projects/MyFEniCSx_task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz",
+        "is_file_now": false
+      },
+      {
+        "path": "/tmp/task40extra_0p7nm_engineering/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w1_wsl/w1_probe_c354afa_retry1_20261004T1654Z/probe/w1_boundary_probe_arrays.npz",
+        "is_file_now": false
+      }
+    ],
+    "prerequisite_failed_authority_accepted": true,
+    "prerequisite_counterexample_scope": "unmodified prerequisite function; failed/mismatched control/P1 reports, no producer binding/raw; no launch",
+    "saved_local_counterexample": [
+      {
+        "fixture": "baseline",
+        "returned_status": "P2_SAVED_LOCAL_PASS",
+        "actual_production_writer_error": "Object of type bool_ is not JSON serializable",
+        "saved_qhat_minus_affine_over_original_alpha_norm": 0.0,
+        "result": {
+          "status": "P2_SAVED_LOCAL_PASS",
+          "metrics": {
+            "interior_original_equation": {
+              "numerator": 0.0,
+              "reference_norm": 10.392304845413264,
+              "denominator": 10.392304845413264,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "trace_original_equation": {
+              "numerator": 0.0,
+              "reference_norm": 13.856406460551018,
+              "denominator": 13.856406460551018,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "full_internal_recovery": {
+              "numerator": 0.0,
+              "reference_norm": 10.392304845413264,
+              "denominator": 10.392304845413264,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "port_original_equation": {
+              "numerator": 0.0,
+              "reference_norm": 179.05306476014312,
+              "denominator": 179.05306476014312,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "port_reduced_equation": {
+              "numerator": 0.0,
+              "reference_norm": 179.05306476014312,
+              "denominator": 179.05306476014312,
+              "relative": 0.0,
+              "near_zero": false
+            }
+          },
+          "independent_native_direct_q60": {
+            "B": {
+              "numerator": 0.0,
+              "reference_norm": 17.320508075688775,
+              "denominator": 17.320508075688775,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "D": {
+              "numerator": 0.0,
+              "reference_norm": 17.320508075688775,
+              "denominator": 17.320508075688775,
+              "relative": 0.0,
+              "near_zero": false
+            }
+          },
+          "port_elimination_identity": 0.0,
+          "checker_factor_calls": 0,
+          "checker_solve_calls": 0,
+          "manufactured_rhs_only": true,
+          "full_target_MPC_qualified": false,
+          "PDE_solved": false
+        },
+        "raw_sha256": "621b2ad4a581a18360d9dea2feb8436c72dabb734d07e91127766fe74f68dabb"
+      },
+      {
+        "fixture": "corrupted_saved_port_actions",
+        "returned_status": "P2_SAVED_LOCAL_PASS",
+        "actual_production_writer_error": "Object of type bool_ is not JSON serializable",
+        "saved_qhat_minus_affine_over_original_alpha_norm": 999999.9999999999,
+        "result": {
+          "status": "P2_SAVED_LOCAL_PASS",
+          "metrics": {
+            "interior_original_equation": {
+              "numerator": 0.0,
+              "reference_norm": 10.392304845413264,
+              "denominator": 10.392304845413264,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "trace_original_equation": {
+              "numerator": 0.0,
+              "reference_norm": 13.856406460551018,
+              "denominator": 13.856406460551018,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "full_internal_recovery": {
+              "numerator": 0.0,
+              "reference_norm": 10.392304845413264,
+              "denominator": 10.392304845413264,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "port_original_equation": {
+              "numerator": 0.0,
+              "reference_norm": 179.05306476014312,
+              "denominator": 179.05306476014312,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "port_reduced_equation": {
+              "numerator": 0.0,
+              "reference_norm": 179.05306476014312,
+              "denominator": 179.05306476014312,
+              "relative": 0.0,
+              "near_zero": false
+            }
+          },
+          "independent_native_direct_q60": {
+            "B": {
+              "numerator": 0.0,
+              "reference_norm": 17.320508075688775,
+              "denominator": 17.320508075688775,
+              "relative": 0.0,
+              "near_zero": false
+            },
+            "D": {
+              "numerator": 0.0,
+              "reference_norm": 17.320508075688775,
+              "denominator": 17.320508075688775,
+              "relative": 0.0,
+              "near_zero": false
+            }
+          },
+          "port_elimination_identity": 0.0,
+          "checker_factor_calls": 0,
+          "checker_solve_calls": 0,
+          "manufactured_rhs_only": true,
+          "full_target_MPC_qualified": false,
+          "PDE_solved": false
+        },
+        "raw_sha256": "9f66f81b233f4ce8631c1971e0354d92fff348d911dd9f1447fb39acf55250e7"
+      }
+    ],
+    "local_counterexample_scope": "actual unmodified check_local algebra logic, Basix and direct quadrature explicitly stubbed to isolate validation; synthetic arrays, NOT native/PDE qualification",
+    "new_FE_basis_or_integrals": 0,
+    "new_LU_or_solve": 0,
+    "new_NN": 0,
+    "seconds": 0.3227337021380663
+  },
+  "review_resources": [
+    {
+      "scope": "review-only pure array/gate audit; no native or PDE",
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v25_audit_20261004T183555453528Z/supervision/summary.json",
+        "bytes": 1907,
+        "sha256": "fbf7a8465861692b5b3fa7eea506ed1e53742e0ed34ce5c27fe29812aabba70e"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/checks/review_v25_audit_20261004T183555453528Z/supervision/worker.log",
+        "bytes": 1608,
+        "sha256": "ffa96a7f53f9bae49435fe705f58560914c3bf5ee91d1011d732ee2182e92f70"
+      },
+      "admission": {
+        "path": "tmp/task42extra/checks/review_v25_audit_20261004T183555453528Z/admission.json",
+        "bytes": 261505,
+        "sha256": "e9324c212baf90aaa83bb7c7feb251332d826f0138f71dcde3e7a72893242e90"
+      },
+      "values": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 1,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1939993
+        ],
+        "sampled_process_tree_rss_peak_bytes": 63922176,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2141448880128,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2141448880128,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.9643285861238837,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "scope": "review-only pure array/gate audit; no native or PDE",
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v25_audit_fixed_receipt_20261004T183736622753Z/supervision/summary.json",
+        "bytes": 1903,
+        "sha256": "8a73eaa38aad200d6a3c85e1cb9a1322532fd6cbb0ca3c221d4d60f993645c66"
+      },
+      "worker_log": {
+        "path": "tmp/task42extra/checks/review_v25_audit_fixed_receipt_20261004T183736622753Z/supervision/worker.log",
+        "bytes": 1938,
+        "sha256": "a7223d88b010c5cb559f2eed77814f66a6c9d4d670bf285da5e1e619431e5a84"
+      },
+      "admission": {
+        "path": "tmp/task42extra/checks/review_v25_audit_fixed_receipt_20261004T183736622753Z/admission.json",
+        "bytes": 259025,
+        "sha256": "ade2e193c1366c012c05dacc9c841bbd31c9b4fdfd40d2d55913744035d71d3e"
+      },
+      "values": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          1940473
+        ],
+        "sampled_process_tree_rss_peak_bytes": 64544768,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139073,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2141463822336,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2141463822336,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 4,
+        "elapsed_seconds": 1.9809770609717816,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    }
+  ],
+  "repository_refreshes": [
+    {
+      "binding": {
+        "path": "tmp/task42extra/review_v25/repository_refresh.json",
+        "bytes": 2260346,
+        "sha256": "0d8a79f04eb5cfda0bfc6bddc82d12a0fa502c8454a68efcfc199fd89f4f449e"
+      },
+      "scope": "all tracked bytes/hash/headings quick refresh; not all-lines semantic audit",
+      "files": 4922,
+      "bytes": 112772806,
+      "top_level_counts": {
+        ".gitattributes": 1,
+        ".gitignore": 1,
+        "AGENTS.md": 1,
+        "Dockerfile.mpc": 1,
+        "README.md": 1,
+        "benchmarks": 538,
+        "docker": 2,
+        "docs": 3224,
+        "input": 252,
+        "notes": 100,
+        "scripts": 13,
+        "src": 788
+      }
+    },
+    {
+      "binding": {
+        "path": "tmp/task42extra/review_v25/repository_refresh_after_compaction.json",
+        "bytes": 2158886,
+        "sha256": "d0161aedc05f8e48b38c0bed04dc653c5514e0e0b30d1428b78619dd6e95b47f"
+      },
+      "scope": "All tracked file bytes/hash and title/symbol refresh after compaction; not a fresh complete semantic audit",
+      "files": 4922,
+      "bytes": 112772806,
+      "top_level_counts": {
+        ".gitattributes": 1,
+        ".gitignore": 1,
+        "AGENTS.md": 1,
+        "Dockerfile.mpc": 1,
+        "README.md": 1,
+        "benchmarks": 538,
+        "docker": 2,
+        "docs": 3224,
+        "input": 252,
+        "notes": 100,
+        "scripts": 13,
+        "src": 788
+      }
+    }
+  ],
+  "peers_read_only": [
+    {
+      "role": "main",
+      "commit": "8c1a0ce23bd53cf92fffbed7a2daccd58cbf49a5",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_boundary_checkpoint_closeout_v1.json",
+      "bytes": 16225,
+      "sha256": "b61bc8890990989e3b83c488738a53ccac6330e8574245f1caae3cdcb7b4b66a"
+    },
+    {
+      "role": "main",
+      "commit": "8c1a0ce23bd53cf92fffbed7a2daccd58cbf49a5",
+      "path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w1_identity_audit_v1.json",
+      "bytes": 16783,
+      "sha256": "03b5c44136f132d203237211ea1499faec1c25d3c1f47225e0c662d00aca4ea0"
+    },
+    {
+      "role": "dot",
+      "commit": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/selected_C1c_q0_zh.md",
+      "bytes": 2799,
+      "sha256": "f0b736a9b129eace789a8c5bdde21a875c673689e5336fd36483289086808117"
+    },
+    {
+      "role": "dot",
+      "commit": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/renewed_C1ab_20261004_zh.md",
+      "bytes": 5188,
+      "sha256": "3ea829581fe7a1a2c065581f600e143c8d4b4d30b103e14478c556cffd1263c3"
+    },
+    {
+      "role": "task042",
+      "commit": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "path": "docs/task042_neural_coarse_inverse/response_v45.md",
+      "bytes": 5139,
+      "sha256": "057403964b889b4a0b2108c805bcd8308cf71dd4975b0b04130b46b29af43dc3"
+    },
+    {
+      "role": "task042",
+      "commit": "0217f004a38f109a6253923f83a9a24b19d85362",
+      "path": "docs/task042_neural_coarse_inverse/review_report_v43.md",
+      "bytes": 27412,
+      "sha256": "6a15af39530959b28b0f8090c8a08084f915a2541b116e6bde4b32537fa3465d"
+    }
+  ],
+  "peer_latest_ref_check": {
+    "at": "prepublication latest noninteractive ls-remote",
+    "main": "8c1a0ce23bd53cf92fffbed7a2daccd58cbf49a5",
+    "dot": "7f03a48d2962dd3ea967a07368b36acb4aae7f57",
+    "task042": "0217f004a38f109a6253923f83a9a24b19d85362",
+    "scope": "primary compact records and actual source, not re-evaluation of unavailable peer native raw"
+  },
+  "delivery_v25": {
+    "binding": {
+      "path": "tmp/task42extra/w1_receiver/delivery_receipt.json",
+      "bytes": 3157,
+      "sha256": "943cc020e6f58f01ac8d539e829c86a78a72c14ae86a31607190ca2b6674be68"
+    },
+    "final_batch_elapsed_seconds": 2846.101466,
+    "native_source": "NOT_RUN"
+  },
+  "findings": [
+    {
+      "id": "P0_PREREQUISITE_STATUS_NOT_AUTHORITY",
+      "actual_function": "src/runners/w1_component_receiver.py:prerequisite",
+      "counterexample_accepted": true,
+      "scope": "no launcher; failed/mismatched receipt accepted"
+    },
+    {
+      "id": "P0_SAVED_CONSUMER_ACTIONS_UNCHECKED",
+      "actual_function": "src/runners/w1_component_payload.py:check_local",
+      "actual_saved_port_difference": 999999.9999999999,
+      "gate": 1e-11,
+      "returned_status": "P2_SAVED_LOCAL_PASS",
+      "scope": "pure synthetic algebra, explicitly stubbed Basix/direct quadrature, no FE claim"
+    },
+    {
+      "id": "P0_REAL_CHECKER_JSON_WRITE_ERROR",
+      "actual_function": "src/runners/w1_component_payload.py:atomic_json",
+      "error": "Object of type bool_ is not JSON serializable",
+      "scope": "actual returned checker metrics fed to actual production writer; implementation not modified"
+    },
+    {
+      "id": "P0_COORDINATE_RHS_ORACLE_CHAIN_INCOMPLETE",
+      "scope": "source inspection, not new numerical counterexample",
+      "phase_relation": "phase times inverse only, physical incident RHS unqualified, saved oracle status not numerical/hash qualification"
+    },
+    {
+      "id": "P1_LIFECYCLE_ACCOUNTING",
+      "scope": "source inspection, no native overrun claimed",
+      "changes_needed": [
+        "control cap shares numerical total",
+        "global swap diagnostic only; own swap remains hard gate"
+      ]
+    }
+  ],
+  "new_numerical_calls": {
+    "FE_basis_or_integral": 0,
+    "Maxwell_global_or_local_factor": 0,
+    "solve": 0,
+    "Gram": 0,
+    "NN_train": 0
+  },
+  "old_results_and_authority_unchanged": true,
+  "limitations": [
+    "No received manifest/ledger/checkpoint; all declared paths absent at independent check",
+    "Synthetic checker counterexamples are not native/PDE qualification",
+    "New review render pending; V25 original NOT_RUN retained",
+    "Global project exact cumulative time UNKNOWN; 3284s old missing period and all old negative/unknown preserved",
+    "Review script first receipt serialization failed; only reviewer receipt converter changed, not production code",
+    "Full repository bytes/headings refresh not all-line semantic audit"
+  ],
+  "next_execution": {
+    "A_seconds": 3600,
+    "B_seconds": 10800,
+    "B_worker_and_numerical_checker_seconds": 7200,
+    "B_tail_seconds": 1800,
+    "external_wait": "separately measured calendar cost; no final48h qualification",
+    "single_report_standing_conditional_permission": true,
+    "W2_or_full_target_or_training_authorized": false
+  },
+  "time_accounting": {
+    "start": {
+      "utc": "2026-10-04T18:30:28.660270+00:00",
+      "monotonic": 1063623.52115461,
+      "earlier_reading_allowance_seconds": 180,
+      "goal": "original50x25x140nm Si17/120nm lambda0.7 full3D FE allinteriors doubleFloquet fullports 2e12B wholemachine ownswap/OOC0 172800s coldcomplete originalaccuracy"
+    },
+    "observed_parent_seconds_including_earlier_allowance": 1621.59239398106,
+    "scope": "continuous review parent, nested resources not added twice",
+    "final_tail": "PENDING_SEAL"
+  },
+  "local_document_validation": {
+    "status": "PASS",
+    "value": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v25.md",
+      "sha256": "afbb7c35ddff61ceef2437aaac4fa0bd5055dc8647f3788af4d4a55237227e2e",
+      "checked_scope": "entire page",
+      "markdown_tables": 3,
+      "parsed_tables": 3,
+      "math_fences": 0,
+      "links": 5
+    },
+    "no_full_pytest_or_CI_claim": true
+  },
+  "render": {
+    "status": "PENDING_PUBLICATION",
+    "scope": "new review plus V25 response and W1 topic only; not all project navigation"
+  },
+  "review_authoring_corrections": [
+    {
+      "issue": "summary builder accidentally embedded file list instead of scalar count",
+      "effect": "uncommitted review metadata only; replaced with count/bytes and immutable refresh binding before publication",
+      "retained": {
+        "path": "tmp/task42extra/review_v25/audit_before_compact_count_fix.json",
+        "bytes": 2516349,
+        "sha256": "b647298ee59295690b6fd307ef4bbca4480e78e362ab29b1d5c40e4bbafc2b2d"
+      }
+    },
+    {
+      "issue": "initial git diff --cached --check found extra EOF blank",
+      "effect": "publication stopped before commit; trailing blank removed and document binding refreshed; no source or numerical changes"
+    }
+  ]
+}
