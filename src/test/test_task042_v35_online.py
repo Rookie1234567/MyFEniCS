@@ -171,6 +171,9 @@ def test_actual_dat_kernel_runner_return_checkpoint_independent_checker(tmp_path
     assert record['budget_counts']['cycles']==1 and 0<record['budget_counts']['arnoldi']<=8
     assert record['budget_counts']['port_factors']==1
     assert record['budget_counts']['pc_apply']>1
+    assert record['all_batch_equivalent_actions']==record['actual_equivalent_actions']
+    assert record['field_recovery_calls']==record['action_counts']['audit']
+    assert record['historical_formal_lower_bound_seconds']==77161.55713859801
     assert len(record['final']['state']['z_sha256'])==64
     assert io.load_online('input/task042_neural_coarse_inverse/v35_verify.dat').derived['stage']=='V35-VERIFY'
     with pytest.raises(Exception,match='cannot repeat'):io.load_online('input/task042_neural_coarse_inverse/v35_online_cold.dat')

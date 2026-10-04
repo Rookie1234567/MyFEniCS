@@ -129,9 +129,13 @@ class Stage:
         return record, work
 
     def finish(self,result):
+        # Explicit adapter hook for exact alternate backends. Existing stages
+        # retain their original oracle-only accounting when no hook is given.
+        equivalent_total = (self.equivalent_actions_total() if hasattr(self,'equivalent_actions_total')
+            else self.carry_actions+self.packet.counts['S']+self.packet.counts['SH'])
         result.update(self.meta,budget_counts=self.counts,
             action_counts=self.packet.counts.copy(),action_costs_seconds=self.packet.costs.copy(),
-            all_batch_equivalent_actions=self.carry_actions+self.packet.counts["S"]+self.packet.counts["SH"],
+            all_batch_equivalent_actions=equivalent_total,
             worker_wall_seconds=time.perf_counter()-self.began)
         path = self.artifact/"stage_result.json"; write_json(path,result); self.io.publish(self.name,path)
         write_json(self.directory/"artifact_index.json",dict(path=str(path),sha256=file_hash(path)))

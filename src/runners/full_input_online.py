@@ -19,7 +19,8 @@ class OnlineStage(DirectionStage):
     def __init__(self, specification, directory):
         self.run_limit = specification.execution['timeout_seconds']
         super().__init__(specification, directory, io_module=io, window_module=window,
-                         actor_limit=900, artifact_limit=32*2**20)
+                         actor_limit=900, artifact_limit=32*2**20,
+                         historical_lower=77161.55713859801)
 
     def guard(self, **kwargs):
         self.sample(); self.window.require_live(margin=10)
@@ -50,7 +51,11 @@ class OnlineStage(DirectionStage):
             result.update(fast_action_counts=self.fast.counts.copy(),
                           fast_action_costs_seconds=self.fast.costs.copy())
         result.update(actual_equivalent_actions=self.counts['actions'])
+        self.meta['field_recovery_calls'] = self.packet.counts['audit']
         super().finish(result)
+
+    def equivalent_actions_total(self):
+        return self.counts['actions']
 
 
 def execute_stage(stage):

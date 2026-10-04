@@ -1,5 +1,4 @@
 """One paid cache-only final checker/analysis; never rebuild or solve a PDE."""
-import json
 import os
 from pathlib import Path
 import subprocess
