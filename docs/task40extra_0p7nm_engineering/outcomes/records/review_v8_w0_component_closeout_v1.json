@@ -1,0 +1,220 @@
+{
+  "schema": "task40extra.review-v8-w0-component-closeout.v1",
+  "status": "W0_FULL_COMPONENT_AND_INDEPENDENT_CHECK_PASS_NO_PDE",
+  "recorded_utc": "2026-10-04T15:22:06Z",
+  "execution": {
+    "branch": "task40extra_0p7nm_engineering",
+    "checker_source_sha": "0a15ac550a37196aa2941cc3c0a3a3d37ccf0158",
+    "worker_source_sha": "d4b6ed6b6cb2a0431cb75bba9d8fc74dc9d9e382",
+    "input_path": "input/task40extra_0p7nm_engineering/nonseparable_g0_p6_q4_review_v1.dat",
+    "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+    "runtime_profile": "local_wsl2_authorized",
+    "mpi_size": 1,
+    "math_threads": 1,
+    "worker_root": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4",
+    "checker_output_root": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z",
+    "fixed_window": {
+      "t0_utc": "2026-10-04T13:04:57Z",
+      "deadline_utc": "2026-10-04T17:04:57Z",
+      "window_refreshed": false,
+      "gate_completed_utc": "2026-10-04T15:10:12Z",
+      "utc_derived_elapsed_seconds_to_gate": 7515,
+      "utc_derived_remaining_seconds_at_gate": 6885,
+      "accounting_note": "UTC-derived endpoint difference only; not monotonic elapsed, policy charge, or complete preparation cost."
+    }
+  },
+  "component_worker": {
+    "classification": "COMPLETED",
+    "elapsed_seconds": 797.6286232220009,
+    "process_tree_rss_peak_bytes": 2204782592,
+    "process_tree_swap_peak_bytes": 0,
+    "process_tree_identity_coverage": "complete",
+    "remaining_child_pids": [],
+    "cells": 80,
+    "degree": 6,
+    "mode_count": 532,
+    "worker_math_controls_passed": true,
+    "manufactured_consistent_state_checked": true,
+    "PDE_solved": false,
+    "official_results": false
+  },
+  "independent_saved_component_checker": {
+    "status": "independent_saved_component_controls_passed",
+    "independent_component_pass": true,
+    "metric_count": 955,
+    "cells_rechecked": 80,
+    "unique_correction_classes_rechecked": 29,
+    "saved_members_rehashed": 1602,
+    "saved_member_roles": 3287,
+    "manufactured_original_native_residual": {
+      "error_norm": 2.336514263787662E-8,
+      "finite": true,
+      "limit": 1E-10,
+      "operation_scale": 21675543.287059937,
+      "passed": true,
+      "relative": 1.077949573325129E-15,
+      "zero_scale_rule": "error_must_be_exactly_zero"
+    },
+    "worst_manufactured_state_recovery": {
+      "error_norm": 3.4464619699671934E-10,
+      "finite": true,
+      "limit": 1E-11,
+      "operation_scale": 230.2860421372163,
+      "passed": true,
+      "relative": 1.4966004617481827E-12,
+      "zero_scale_rule": "error_must_be_exactly_zero"
+    },
+    "checker_report_sha256": "6db7e671d1afdb8cfee199c24633f65bd9b7d061b56ca7768361e652dfd139b9",
+    "checker_binding_sha256": "4046536acb6afbae8a642702cf47d23296998f779781187d30d54c96b4742e79",
+    "checker_binding_file_sha256": "4046536acb6afbae8a642702cf47d23296998f779781187d30d54c96b4742e79",
+    "worker_report_bytes_sha256": "c9b46c395aff867f2a8c1a167a7620e4091b9904e015a435fc7d104f41b840d4",
+    "PDE_solved": false,
+    "official_results": false,
+    "durable_archive_verified": false
+  },
+  "raw_durability_and_array_hash_readback": {
+    "durability_status": "PASS_READONLY_FSYNC_AND_HASH_READBACK",
+    "array_status": "PASS_POST_FSYNC_ARRAY_SHA_READBACK",
+    "raw_member_count": 1602,
+    "raw_file_bytes": 604158016,
+    "numeric_array_payload_bytes": 603952960,
+    "member_fsync_success_count": 1602,
+    "member_reopen_hash_success_count": 1602,
+    "array_hash_success_count": 1602,
+    "raw_manifest_sha256": "000c9bb5cbfa531077d0535dccc6cbf0ca8f8984f444f2e22d97b057d9d7e1e4",
+    "raw_byte_binding_sha256": "4046536acb6afbae8a642702cf47d23296998f779781187d30d54c96b4742e79",
+    "raw_archive_created": false,
+    "raw_mutated": false,
+    "directory_names_and_metadata_unchanged": true,
+    "worker_report_modified": false
+  },
+  "fd_limit_handling": {
+    "first_checker_only_attempt": {
+      "event_id": "task40_w0_attempt4_checker_only_failed_fd_limit_20261004T145544Z",
+      "classification": "CHECKER_FAILED_ENGINEERING_FD_LIMIT_NOT_NUMERICAL",
+      "exception_type": "OSError",
+      "message": "[Errno 24] Too many open files",
+      "failure_stage": "independent_numerical_checker",
+      "elapsed_seconds": 6.205292497063056,
+      "process_tree_rss_peak_bytes": 351285248
+    },
+    "retry": {
+      "service_unit": "task40freshc1_checker_fd4096_local_20261004T150320Z.service",
+      "service_local_limit_nofile": 4096,
+      "fixture_status": "PASS_LIMITNOFILE_4096_BOUNDED_MMAP_FIXTURE",
+      "fixture_child_rlimit_soft_hard": [
+        4096,
+        4096
+      ],
+      "fixture_member_count": 24,
+      "fd_delta": 24,
+      "projected_fd_with_allowance": 2118,
+      "projected_margin": 1978,
+      "scope": "this systemd user service only; no global user/systemd limit changed",
+      "checker_leaf_proc_limits": "NOT_SAMPLED; service property and separate in-service fixture child read back 4096; checker leaf inheritance follows service launch and no source setrlimit, but direct PID readback was not captured."
+    }
+  },
+  "resources": {
+    "worker": {
+      "supervised_elapsed_seconds": 797.6286232220009,
+      "process_tree_rss_peak_bytes": 2204782592,
+      "process_tree_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "checker": {
+      "service_unit": "task40freshc1_checker_fd4096_local_20261004T150320Z.service",
+      "invocation_id": "d2256577eec940fa901895a9a850f5cd",
+      "supervised_elapsed_seconds": 18.994373507099226,
+      "process_tree_rss_peak_bytes": 478863360,
+      "process_tree_swap_peak_bytes": 0,
+      "descendants_cleared": true,
+      "global_swap_baseline_pages": {
+        "pswpin_pages": 783,
+        "pswpout_pages": 3167
+      },
+      "global_swap_delta_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "global_swap_end_pages": {
+        "pswpin_pages": 783,
+        "pswpout_pages": 3167
+      }
+    },
+    "readbacks": {
+      "raw_durability_elapsed_seconds": 1.4217948319856077,
+      "array_hash_elapsed_seconds": 0.899467931012623,
+      "array_hash_cpu_seconds": 0.985209,
+      "task_vm_swap_kib_at_end": [
+        0,
+        0
+      ],
+      "global_swap_delta_pages": {
+        "raw_durability": {
+          "pswpin": 0,
+          "pswpout": 0
+        },
+        "array_hash": {
+          "pswpin": 0,
+          "pswpout": 0
+        }
+      }
+    },
+    "swap_interpretation": "Task process-tree VmSwap was zero in measured supervisor/readback scopes. Each recorded global pswp interval had zero delta; observed host baseline remained 783 pswpin and 3167 pswpout pages. This does not mean host swap usage/activity was globally zero."
+  },
+  "cleanup": {
+    "worker_and_checker_descendants_cleared": true,
+    "task40_user_service_units_remaining_at_closeout": 0,
+    "fd_probe_temp_entries_remaining": 0,
+    "duplicate_raw_directory_in_checker_output": false
+  },
+  "unknowns_and_boundaries": {
+    "full_window_preparation_and_charge": "UNKNOWN_NOT_SETTLED",
+    "unknown_idle_or_unmonitored_cost_intervals": "UNKNOWN_NOT_ZERO",
+    "direct_checker_leaf_rlimit_proc_readback": "NOT_SAMPLED",
+    "official_R_T_A": "NOT_GENERATED",
+    "PDE_solved": false,
+    "original_size_PDE": "NO_GO",
+    "W1_FE": "NOT_STARTED; source wiring review pending",
+    "W2": "HELD",
+    "dot": "HELD",
+    "historical_failure_events": "PRESERVED; first checker FD-limit error remains an engineering failure, not a numerical failure."
+  },
+  "artifact_sha256": {
+    "worker_report": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/worker_report.json",
+      "sha256": "c9b46c395aff867f2a8c1a167a7620e4091b9904e015a435fc7d104f41b840d4"
+    },
+    "worker_run_summary": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/run_summary.json",
+      "sha256": "991ecc3e2fc057e92e50cd71693c3ad24cbe826b71cbbe217ce939ad357d2406"
+    },
+    "checker_report": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/checker_report.json",
+      "sha256": "6db7e671d1afdb8cfee199c24633f65bd9b7d061b56ca7768361e652dfd139b9"
+    },
+    "checker_binding": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/checker_continuation_binding.json",
+      "sha256": "4046536acb6afbae8a642702cf47d23296998f779781187d30d54c96b4742e79"
+    },
+    "checker_supervisor": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/checker_supervisor_summary.json",
+      "sha256": "57663e36bac29050176dd5b651587a281ffb71e085d6e9dbd9f6c7beb924ef6f"
+    },
+    "fd_limit_fixture": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/fd_limit_preflight.json",
+      "sha256": "c19fc6a93fe2466a027beef5ca47b669814ad3eb3888c26ab5f2e73d17561b67"
+    },
+    "raw_durability_readback": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/raw_durability_readback.json",
+      "sha256": "5a4281dec58337258d3d0e5a334db864c62c37bd8ab37da2c9fc9e1492fec469"
+    },
+    "raw_array_hash_readback": {
+      "path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/raw_array_hash_readback.json",
+      "sha256": "2503902937e269b621e89af0fa99542f339a72f95702407f56118ab7fd5db43a"
+    }
+  }
+}

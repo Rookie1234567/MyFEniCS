@@ -1,0 +1,99 @@
+{
+  "schema": "task40extra.review-v8-w0-incremental-workflow-ledger.v1",
+  "status": "W0_COMPONENT_AND_INDEPENDENT_CHECK_GATE_CLOSED; WHOLE_WINDOW_CHARGE_UNKNOWN",
+  "created_utc": "2026-10-04T15:22:06Z",
+  "fixed_window": {
+    "t0_utc": "2026-10-04T13:04:57Z",
+    "deadline_utc": "2026-10-04T17:04:57Z",
+    "window_refreshed": false,
+    "gate_completed_utc": "2026-10-04T15:10:12Z",
+    "utc_derived_elapsed_seconds_to_gate": 7515,
+    "utc_derived_remaining_seconds_at_gate": 6885,
+    "basis": "UTC endpoint difference only; not monotonic elapsed or charge."
+  },
+  "known_measured_phase_intervals": [
+    {
+      "phase": "attempt4_component_worker",
+      "elapsed_seconds": 797.6286232220009,
+      "tree_rss_peak_bytes": 2204782592,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED_COMPONENT_WORKER_CHECKER_PENDING_AT_THAT_TIME"
+    },
+    {
+      "phase": "checker_only_first_attempt_fd_limit_failure",
+      "elapsed_seconds": 6.205292497063056,
+      "tree_rss_peak_bytes": 351285248,
+      "classification": "ENGINEERING_FD_LIMIT_FAILURE_ERRNO_24_NOT_NUMERICAL"
+    },
+    {
+      "phase": "checker_only_fd4096_retry",
+      "elapsed_seconds": 18.994373507099226,
+      "tree_rss_peak_bytes": 478863360,
+      "tree_swap_peak_bytes": 0,
+      "classification": "COMPLETED"
+    },
+    {
+      "phase": "raw_member_fsync_and_reopen_hash_readback",
+      "elapsed_seconds": 1.4217948319856077,
+      "classification": "PASS_READONLY_FSYNC_AND_HASH_READBACK"
+    },
+    {
+      "phase": "post_fsync_canonical_array_hash_readback",
+      "elapsed_seconds": 0.899467931012623,
+      "cpu_seconds": 0.985209,
+      "classification": "PASS_POST_FSYNC_ARRAY_SHA_READBACK"
+    }
+  ],
+  "not_summed_or_unknown": {
+    "whole_window_preparation_elapsed_seconds": null,
+    "unmonitored_gaps_seconds": null,
+    "whole_window_charge_seconds": null,
+    "reason": "Preparation and between-phase timing were not fully measured/settled; phase wall times are not a complete billable total."
+  },
+  "historical_accounting_preserved": {
+    "previous_worker_elapsed_subtotal_seconds": 200.87894401792437,
+    "historical_6bbc_preparation_cost": "UNKNOWN_NOT_ZERO",
+    "historical_v6_settled_debit_seconds": 5428.582333962078,
+    "prior_checker_fd_failure_preserved": true,
+    "prior_window_unchanged": true
+  },
+  "receipt_path": "docs/task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json",
+  "receipt_sha256": "b007213fae0436015caf6fee712c1f27b7892fb349fd51ee85e08f973d019318",
+  "event_log_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_events.jsonl",
+  "input_sha256": "6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e",
+  "prior_measured_failure_phases": [
+    {
+      "attempt": 2,
+      "phase": "worker_supervisor",
+      "elapsed_seconds": 44.26769974210765,
+      "process_tree_rss_peak_bytes": 1302790144,
+      "process_tree_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED_PRESERVED",
+      "summary_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1240Z_attempt2/worker_supervisor_summary.json",
+      "summary_sha256": "f23a596b1c78b6bdd4bee8c85728bd63032b6bbd5bbbe7b014d502b852f2f122",
+      "failure_note_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/w0_formal_local_20261004T1240Z_attempt2/failure_note.json"
+    },
+    {
+      "attempt": 3,
+      "phase": "worker_supervisor",
+      "elapsed_seconds": 113.90223937504925,
+      "process_tree_rss_peak_bytes": 1333555200,
+      "process_tree_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED_PRESERVED",
+      "summary_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt3/worker_supervisor_summary.json",
+      "summary_sha256": "fb300ba1ab7b21dd04a674c30ee03435a21db6e2087b81c3ba19b852f23135ef",
+      "failure_note_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt3/failure_note.json"
+    },
+    {
+      "attempt": 4,
+      "phase": "automatic_checker_before_checker_only_retry",
+      "elapsed_seconds": 3.137978855986148,
+      "process_tree_rss_peak_bytes": 264503296,
+      "process_tree_swap_peak_bytes": 0,
+      "classification": "WORKER_FAILED_EXACT_NATIVE_METADATA_GATE_PRESERVED",
+      "summary_path": "benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4/supervision/checker/summary.json",
+      "summary_sha256": "af582d95c581d26e61cda3ca08b4c7bbc317e2820eb1df4a47556bb0cd52dd24"
+    }
+  ],
+  "historical_failure_events_and_costs_mutated": false
+}

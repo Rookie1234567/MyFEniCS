@@ -1,6 +1,22 @@
-# Task40extra 结果总览：Review V8 当前状态；V7–V4 历史记录
+# Task40extra 结果总览：Review V8 W0组件闭合；W1固定窗口进行中；V7–V4历史记录
 
-## Review V8：W0 身份门停止与 W1 清单只读核验（当前）
+## Review V8 后续：W0组件与保存数据独立检查通过（无PDE）
+
+本次续作修复的是保存数据独立 checker 的文件描述符容量：首次 checker-only 在 carrier port 210 收到 `EMFILE`（errno 24）；第二次仅把这一个 user service 的 `LimitNOFILE` 设为4096后通过。随后对原 raw 目录只读打开并 fsync、重开哈希、逐数组重算SHA；没有再次运行 worker、没有重生成32,060通道库存、没有复制 raw。该结果关闭 W0 组件与独立保存数据核验门，允许进入 W1 源接线阶段；它不表示 Maxwell PDE、full A6、官方 R/T/A 或原尺寸能力通过。
+
+| 阶段 | 方法与实测 | 结论与边界 |
+|---|---|---|
+| W0 attempt4 component worker | 80-cell p6 component、532 modes；`797.629 s`；进程树 RSS `2,204,782,592 B`；树 swap `0 B` | component controls pass；`PDE_solved=false`、official outputs false |
+| 独立保存数据 checker | 从不可变 worker report/raw 重算955个指标；80 cells、29 classes、1,602成员、3,287角色；native制造态原方程相对残差 `1.077949573325129e-15 <= 1e-10`，最差恢复相对误差 `1.4966004617481827e-12 <= 1e-11`；checker `18.994 s`、树RSS `478,863,360 B` | `W0_FULL_COMPONENT_AND_INDEPENDENT_CHECK_PASS_NO_PDE`；是组件代数/恢复闭合检查，不是 Maxwell 正式解或物理精度证据 |
+| raw持久性 | 1,602成员、`604,158,016 B`；fsync + reopened file SHA 1,602/1,602；post-fsync array SHA 1,602/1,602 | raw字节及成员元数据未变，没有 archive/raw 副本；`durable_archive_verified=false` 保留 |
+| 文件描述符失败与修复 | 首次 checker-only errno24，6.205 s，树RSS 351,285,248 B；仅重试服务限制4096；fixture测得24个mmap FD增量、预计总FD 2,118/limit 4,096，余量1,978 | service范围限制；direct checker leaf `/proc` limit未采样，不伪造读数；其他失败/成本均保留 |
+| 资源/时间 | worker和checker树VmSwap峰均0；有记录的 global `pswpin/out` 区间增量0，基线/末值783/3167页；checker RSS见上；窗口T0=`2026-10-04T13:04:57Z`，deadline=`2026-10-04T17:04:57Z` | 不宣称整机swap为零。checker完成时UTC推导elapsed `7515 s`，不是monotonic或费用；整窗准备/空档/charge仍unknown |
+
+完整哈希和非合并边界见[W0 compact record](records/review_v8_w0_component_closeout_v1.json)、[W0增量账](records/review_v8_w0_incremental_workflow_ledger.json)、[run index](records/run_index.json)及[Response V8](../response_v8.md)。W1 FE尚未运行；唯一7200秒窗口已冻结为T0=2026-10-04T15:24:35.195396Z、deadline=2026-10-04T17:24:35.195396Z。Task042两模块接线、定向测试、源码提交准备/主控审查、资源准入、代表面q30/q60和最大支持内部修正探针、checker及清理均计入本窗，不刷新、不排除已花时间；32,060有序keys必须原样复用，正式探针使用主控审查提交的clean source。W2、dot保持HELD，原尺寸仍NO-GO。
+
+---
+
+## Review V8：W0 身份门停止与 W1 清单只读核验（首次状态快照；历史保留）
 
 W0 在完整 p6 FE setup 前的 532 模式物理身份门停止：异常为 `ValueError: fresh C1 requires the independently regenerated ordered literal532 physical inventory`，不是 PDE 数值失败或资源停机。worker phase 实测 1.5594090659869835 s，任务树采样 RSS 峰 200,359,936 B、swap 0 B；没有 checker、科学 raw 或 official result。W0 未完成。本机 Task40 artifacts 的有界文件名/大小核对未找到旧冻结的 532 行 gold；唯一其他既存模式 manifest 是 80-mode direct-reference 文件，不能替代。新 W0 与旧 WSL 诊断清单均不匹配冻结 hash，因此该身份 blocker 保留。
 

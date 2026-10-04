@@ -7,6 +7,19 @@
 Gx784 的 p6 是实际完整场方程，p4 是迭代校正系统；后者减少校正系统规模但仍需装配、因子化和重复动作。两组共同坐标场比较、340 个有序模式、能量 Gate、postprocess 资源、预算与原始 artifact hashes 见 [Response V6](task40extra_0p7nm_engineering/response_v6.md)、[V6 closeout record](task40extra_0p7nm_engineering/outcomes/records/review_v6_gx784_postprocess_closeout_v1.json)、[run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)。original 与 repair AUTO 库存仍没有目标生命周期成本或 2 TB 容量结论。原尺寸仍 NO-GO；dot / workstation qualification 不在本轮范围；ordinary default 未改，master 未合并。
 
 
+## Task40extra Review V8 W0：组件与独立保存数据核验（非PDE模型登记）
+
+本记录更新W0的工程组件状态，不新增一个0.7 nm Maxwell物理模型。已有80-cell p6 component worker产生的保存数组在checker-only服务中独立复核；它关闭组件恢复/持久性门，仍不产生full A6正式解、场精度、通道收敛或官方R/T/A。
+
+| 阶段 | 方法与实测 | 结论/边界 |
+|---|---|---|
+| component worker | 80 cells、p6、532 modes；耗时 `797.629 s`；process-tree RSS `2,204,782,592 B`、VmSwap峰0 | worker component control已完成；`PDE_solved=false`、无official results |
+| saved-data independent checker | 955 metrics，80 cells、29 classes、1,602成员/3,287 roles；制造态原native方程残差 `1.077949573325129e-15`（门限`1e-10`）；最差恢复 `1.4966004617481827e-12`（门限`1e-11`）；checker耗时 `18.994 s`，树RSS `478,863,360 B` | W0 component / independent checker PASS；不是正式场或full A6 residual |
+| raw持久性 | 1,602/1,602文件fsync后重开SHA通过；1,602/1,602数组SHA通过；总`604,158,016 B`；未复制raw | manifest `000c9bb5cbfa531077d0535dccc6cbf0ca8f8984f444f2e22d97b057d9d7e1e4`；archive verification仍false |
+| 失败与系统边界 | 首次checker-only因fd limit errno24失败；服务局部4096 retry通过；checker leaf `/proc` RLIMIT未采样。进程树swap峰0；global swap增量按区间为0，但宿主已有基线783/3167页 | 工程容量失败保留；不写整机swap为零，不改变全局FD限制；整体准备和charge unknown |
+
+证据见 [Response V8](task40extra_0p7nm_engineering/response_v8.md)、[W0 closeout](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_component_closeout_v1.json)、[增量账](task40extra_0p7nm_engineering/outcomes/records/review_v8_w0_incremental_workflow_ledger.json)、[Task40 run index](task40extra_0p7nm_engineering/outcomes/records/run_index.json)和[outcomes summary](task40extra_0p7nm_engineering/outcomes/summary.md)。W1唯一7200秒窗口已固定并正在推进；最小Task042参数化接线、测试和源码提交审查准备均计入同一窗口，正式探针使用主控审查提交的clean source，无需新范围批准；原尺寸NO-GO、W2/dot HELD。
+
 ## Review V7 W0 实际组件执行记录（非PDE模型登记）
 
 这次小型运行用于检查工作站自己的 complex PETSc/FEniCS ABI、p6 组件 action、恢复和端口 RHS 接线。它确实进入 FE setup，但并未完成完整 Maxwell PDE。8 门 same-live receipt 的组件结果通过；worker 在 full p6 component worker/raw export 前因 tuple/list mode identity validation bug 退出，因此没有 p6 tensor/FE field、独立 tensor/CSR checker、full residual 或 official R/T/A。该记录是 Task40 的工程组件负结果，不新增成功物理模型，也不改变下面 Review V6 Gx784 的既有结论。

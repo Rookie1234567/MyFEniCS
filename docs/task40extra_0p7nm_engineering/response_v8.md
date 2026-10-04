@@ -1,8 +1,25 @@
-# Task40 Review V8 执行进度回应（W0 尚未完成）
+# Task40extra Review V8执行回应（W0组件检查通过；W1固定窗口内持续推进）
 
-**当前结论：W0 未通过完整组件验收；W1 的只读身份核验已通过，实际 W1 有限元工作仍按 Review V8 保持暂停。**本稿记录本轮可复核事实，不代表完整 PDE 结果，也不请求自动扩大模型或启动 FE。
+**当前结论：W0组件和独立保存数据检查通过；PDE及官方R/T/A未产生。W1固定7200 s窗口已冻结（T0 2026-10-04T15:24:35.195396Z；deadline 2026-10-04T17:24:35.195396Z），接线、定向测试、源码提交准备/主控源码审查和唯一数值探针均在同一窗口计时，不刷新或排除准备。按既有授权连续推进，无需新的范围批准；数值探针使用主控审查提交的clean source。W2、dot仍HELD，原尺寸仍NO-GO。
 
-## W0：正式 worker 在进入 FE 前停于模式身份门
+## Review V8 后续 W0：独立组件核验与原始数据持久性闭合
+
+W0 的这次 checker-only 复核只读取 attempt4 已生成的 worker report 与 1,602 个 raw 成员；没有重新运行 worker、生成网格或解 PDE。独立 checker 对 80 个单元、29 个唯一局部修正类和 955 个重算指标完成检查，复核了 3,287 个保存成员角色。制造一致状态的原始 native 方程相对残差为 `1.077949573325129e-15`，门限 `1e-10`；最差恢复相对误差为 `1.4966004617481827e-12`，门限 `1e-11`。这些是组件/制造态闭合指标，不是正式 Maxwell 求解残差。
+
+| 核验阶段 | 实测结果 | 解释与边界 |
+|---|---|---|
+| attempt4 component worker | 80 cells、p6、532 modes；监督耗时 `797.628623222 s`；同时进程树 RSS 峰 `2,204,782,592 B`；进程树 swap 峰 `0 B` | worker 组件控制通过；没有完成生产 Maxwell PDE、官方后处理或 R/T/A |
+| 独立 checker（成功重试） | 955 metrics、80 cells、29 classes、1,602 members / 3,287 roles；`18.994373507 s`；RSS 峰 `478,863,360 B`；tree swap 峰 `0 B` | 从保存数组重算组件方程与恢复闭合；checker `independent_component_pass=true` |
+| native 方程 / recovery | `1.077949573325129e-15 <= 1e-10`；最差恢复 `1.4966004617481827e-12 <= 1e-11` | 制造态与局部恢复检查通过；不构成 full A6、场精度或官方输出门 |
+| raw durability / array hash | `1,602 / 604,158,016 B`；1,602/1,602 fsync 后 reopened SHA、1,602/1,602 array SHA 均通过；未复制 raw | manifest SHA `000c9bb5cbfa531077d0535dccc6cbf0ca8f8984f444f2e22d97b057d9d7e1e4`；字节绑定 SHA `4046536acb6afbae8a642702cf47d23296998f779781187d30d54c96b4742e79`；`durable_archive_verified=false` 保持原值 |
+| 文件描述符处理 | 首次 checker-only 在 carrier port 210 因 `OSError: [Errno 24] Too many open files` 失败，监督耗时 `6.205292497 s`、RSS 峰 `351,285,248 B`；只在重试 systemd service 限定 `LimitNOFILE=4096` | 24-array mmap fixture 直接读到 soft/hard=4096；按 1,602 files 与 512 FD allowance 的 projected use 为 2,118，余量 1,978。checker leaf `/proc` RLIMIT **NOT_SAMPLED**，不声称有直接 leaf 读数；全局 FD limit 未改 |
+| swap 与清理 | 各监督树 VmSwap 峰 `0 B`；有采样的 global `pswpin/out` 区间增量均为 `0`；checker/readback 基线及末值仍为 `783/3167` 页 | 宿主已有 swap 基线保留，不能写成整机 swap 为零。监督后代清空；没有残留 Task40 checker service、FD fixture 临时文件或第二份 raw 目录 |
+
+固定 W0 T0/deadline 仍为 `2026-10-04T13:04:57Z` / `2026-10-04T17:04:57Z`，未刷新；到 checker gate 完成时按 UTC 端点推导 elapsed `7515 s`、remaining `6885 s`，这不是 monotonic 总耗时或费用。完整准备、无监督空档与本窗口总 charge 均保持 `UNKNOWN_NOT_SETTLED`；既有 `200.87894401792437 s` worker 小计、`6bbc` 准备成本 unknown 和 V6 settled debit `5428.582333962078 s` 均未改写。首次 FD 失败仍在追加事件账中保留。
+
+紧凑指标及 artifact hashes 见 [W0 closeout record](outcomes/records/review_v8_w0_component_closeout_v1.json)、[增量费用账](outcomes/records/review_v8_w0_incremental_workflow_ledger.json) 和 [run index](outcomes/records/run_index.json)。ignored artifact 的 [closeout receipt](../../benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/continuation_attempt4_checker_only_fd4096_20261004T150320Z/w0_component_closeout_receipt.json) 绑定完整 checker/raw receipts。`PDE_solved=false`、`official_results=false`、`R/T/A=NOT_GENERATED`；这只关闭 W0 组件与保存数据核验门。
+
+## 首轮 W0 正式 worker identity-gate 停止（历史分类保留）
 
 本次使用 Task40 README 指定的本机登记 worktree、分支 `task40extra_0p7nm_engineering` 和明确获准的独立 WSL2 ABI。数学输入仍是 80 cells、p6-only、532 个模式、φ=5°、MPI1/单线程；输入 SHA256 为 `6654ec211efbc6112f3ccba13ad67ff3a97cdbc471bdd48e39f891819f51a41e`，源身份清单 SHA256 为 `2609f67bf22cd4d00385c4d4806226498b42d22d8ed653c3debf5a80cfa7ee84`。数值源 HEAD 为 `8553a22b73ba8605888d0b27930144470ff5a84d`。
 
@@ -49,7 +66,7 @@ Task042 V38 边界组件在其材料和表面身份下覆盖 32,060 输出及上
 
 变量约定不能凭相似名称拼接。Task042 增广块为 `[V,B; -D,I]`，其中 `D` 已除 projection denominator；未消元的 `Hp=I` 是隐式单位块。消去内部自由度后 `Hhat=I+Di Vii⁻¹ Bi`，端口 RHS 含 `Di Vii⁻¹ fi`，内部恢复为 `xi=Vii⁻¹(fi−Vit xt−Bi α)`。projection denominator、`Hp` 与 `Hhat` 不同；Task042 记录的 native C 内部项最大 `1.3012535225e−11`，不得直接裁零。
 
-## 当前阶段、费用和证据
+## 首轮阶段、费用和证据快照（历史；上文为当前续作状态）
 
 | 阶段 | 当前状态 | 具体边界 |
 |---|---|---|
