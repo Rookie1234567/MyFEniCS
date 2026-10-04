@@ -279,6 +279,78 @@ def raw_surface_gate(raw, expected_modes):
     return True
 
 
+def physical_origin_sensitivity(a, state, surface_path):
+    """Actual saved vectors against the independent physical D/H oracle.
+
+    A small matrix relative error need not bound a sensitive original-alpha
+    projection. This diagnostic never replaces native arithmetic recovery.
+    """
+    from scipy import sparse
+    from benchmarks.affine_output_checker import decimal_components
+
+    with np.load(surface_path, allow_pickle=False) as z:
+        D = sparse.csr_matrix(
+            (z["oracle1_D_data"], z["oracle1_D_indices"], z["oracle1_D_indptr"]),
+            shape=tuple(z["oracle1_D_shape"]),
+        ).tocoo()
+        H = z["oracle1_H"].copy()
+    if (
+        D.shape != (len(a["H"]), len(state["c_scattered"]))
+        or H.shape != a["H"].shape
+        or not np.isrealobj(H)
+        or np.any(H <= 0)
+        or not np.isfinite(H).all()
+        or not np.isfinite(D.data).all()
+    ):
+        raise ValueError("PHYSICAL_ORIGIN_ORACLE_LAYOUT")
+    oracle = dict(dp=D.row, dr=D.col, dv=D.data, H=H)
+    rows = {}
+    zero = np.zeros_like(a["gp"])
+    for name, components, actual, gp in (
+        ("scattered", (state["c_scattered"],), state["alpha_scattered"], a["gp"]),
+        ("background", (state["background"],), state["background_alpha"], zero),
+        (
+            "total",
+            (state["total_hi"], state["total_lo"]),
+            state["alpha_total_hi"].astype(np.clongdouble)
+            + state["alpha_total_lo"].astype(np.clongdouble),
+            zero,
+        ),
+    ):
+        expected = decimal_components(oracle, components, gp)
+        native = decimal_components(a, components, gp)
+        absolute = abs(actual - expected)
+        den = np.maximum(abs(expected), 1e-12)
+        rel = float(np.linalg.norm(actual - expected) / max(np.linalg.norm(expected), 1e-12))
+        worst = int(np.argmax(absolute / den))
+        rows[name] = dict(
+            original_coordinates_relative=rel,
+            worst_mode_index=worst,
+            worst_absolute=float(absolute[worst]),
+            worst_reference_absolute=float(abs(expected[worst])),
+            worst_denominator=float(den[worst]),
+            max_mode_relative=float((absolute / den)[worst]),
+            natural_floor=1e-12,
+            native_arithmetic_relative=float(
+                np.linalg.norm(actual - native) / max(np.linalg.norm(native), 1e-12)
+            ),
+            per_mode_absolute=np.asarray(absolute, float).tolist(),
+            per_mode_denominator=np.asarray(den, float).tolist(),
+            per_mode_relative=np.asarray(absolute / den, float).tolist(),
+            all_modes=len(expected),
+            independent_physical_projection_within_1e_10=rel <= 1e-10,
+        )
+    return dict(
+        rows=rows,
+        all_physical_projections_within_1e_10=all(
+            r["independent_physical_projection_within_1e_10"] for r in rows.values()
+        ),
+        supplied_binary64_physical_oracle=True,
+        no_new_FE_or_reference=True,
+        strict_forward_solution_qualified=False,
+    )
+
+
 def check_campaign(root, artifact):
     from src.runners.fixed_phase_campaign import evidence_v22, sha
     from benchmarks.affine_output_checker import check_state
@@ -368,6 +440,9 @@ def check_campaign(root, artifact):
             frozen[role]["reliable_surface_qualified"] = raw_surface_gate(
                 frozen[role]["independent_surface_arrays"], 340
             )
+            frozen[role]["physical_origin_sensitivity"] = physical_origin_sensitivity(
+                a, s, b["files"]["surface_oracles"]["path"]
+            )
             with np.load(
                 b["files"]["frozen_residual_terms"]["path"], allow_pickle=False
             ) as z:
@@ -426,6 +501,9 @@ def check_campaign(root, artifact):
             independent_physical_weak=index["result"]["full_equation"].get(
                 "independent_physical_weak"
             ),
+        )
+        corrections[role]["physical_origin_sensitivity"] = physical_origin_sensitivity(
+            a, s, book[role]["files"]["surface_oracles"]["path"]
         )
         del a, s, obs
     comparisons = None

@@ -48,6 +48,16 @@
       "test": "All 47 tested source hashes and immutable XML hash checked before implementation commit",
       "formal_repair_round": false,
       "replayed_old_tests_for_history": false
+    },
+    {
+      "phase": "saved_checker_schema",
+      "observed_incompatibility": "default legacy comparator only accepts complex128 whereas exact-affine total projection retains clongdouble guard digits",
+      "hypothesis": "dtype schema mismatch, not a numerical failure",
+      "change": "explicit opt-in guard dtype for alias comparison; retain ordinary strict complex128 and reject real/complex64/object",
+      "test": "54 targeted tests/Ruff/compileall; a retained 1e-18 complex perturbation remains nonzero; default comparator deliberately rejects the guard dtype",
+      "retry": "first independent saved checker only; no producer or FE repeat",
+      "numerical_math_changed": false,
+      "formal_repair_round": false
     }
   ],
   "formal_repairs": [
@@ -88,5 +98,12 @@
     "after_P2_qualified_engineering_repair_rounds": 1,
     "authority_exact_text": "Review V21 §6: 初始import、schema、保存路径、lint、明确mock或元数据小错在开发预算内局部修复并定向重验；正式资格以后最多两轮有证据的数值实现修复",
     "all_three_actual_formal_failed_or_stopped_lifecycles_retained": true
+  },
+  "independent_audit_supplement": {
+    "mechanism": "actual original-alpha sensitivity can exceed matrix relative pairing error",
+    "change": "from saved physical oracle D/H and actual scatter/background/total vectors, independent Decimal recovery and every-mode numerator/denominator; no FE action/reference/factor",
+    "tests": "near cancellation fixture: raw matrix/actions pass but actual projection fails; matching frozen oracle passes",
+    "old_native_given_binary64_arithmetic_gate_unchanged": true,
+    "strict_solution_never_granted": true
   }
 }

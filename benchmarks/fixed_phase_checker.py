@@ -438,7 +438,10 @@ def compare_from_arrays(
             ):
                 ref = ref[mode_alignment]
                 mode_errors[name] = complex_mode_differences(
-                    observables[a][name], ref, observables[a]["mode_keys"]
+                    observables[a][name],
+                    ref,
+                    observables[a]["mode_keys"],
+                    guard_digits_allowed=role_aliases is not None,
                 )
             diff = observables[a][name] - ref
             complex_errors[name] = float(
@@ -660,15 +663,18 @@ def align_physical_modes(left, right):
     return order
 
 
-def complex_mode_differences(candidate, reference, keys):
+def complex_mode_differences(candidate, reference, keys, *, guard_digits_allowed=False):
     """All 340 complex entries; denominator=max(abs(reference),1e-12)."""
     import numpy as np
 
+    allowed_dtypes = (np.dtype(np.complex128),)
+    if guard_digits_allowed:
+        allowed_dtypes += (np.dtype(np.clongdouble),)
     if (
         candidate.shape != (340,)
         or reference.shape != (340,)
-        or candidate.dtype != np.complex128
-        or reference.dtype != np.complex128
+        or candidate.dtype not in allowed_dtypes
+        or reference.dtype not in allowed_dtypes
         or not np.isfinite(candidate).all()
         or not np.isfinite(reference).all()
     ):

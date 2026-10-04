@@ -1,0 +1,121 @@
+{
+  "tests": {
+    "passed": true,
+    "tests": 54,
+    "scope": "final V22 opt-in code, raw/checker and exact-zero RHS; no full pytest",
+    "junit_path": "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v22/final_checker_tests.xml",
+    "junit_sha256": "f8e417ab479d6b8ededdea51ec6ade37e22401d9665de2ecd86777f35b2b3b69",
+    "Ruff": "PASS",
+    "compileall": "PASS",
+    "CI": false,
+    "source_files": [
+      {
+        "path": "benchmarks/affine_output_checker.py",
+        "sha256": "5f9abeedb454684e91d5345c8a4c60f8666b45fbbefef6c510e202cf546f9aef"
+      },
+      {
+        "path": "benchmarks/fixed_phase_checker.py",
+        "sha256": "10ee1ec2d7bc5f7a1df1385e5fc0fa34cc72c53aea1eba402fb0d966f426e259"
+      },
+      {
+        "path": "benchmarks/reliable_port_checker.py",
+        "sha256": "118e36dd6e57f3aabde491dcfbe929a8a5e3529f111f375aad0d1c91a0b601cb"
+      },
+      {
+        "path": "scripts/launch_task42extra_durable.py",
+        "sha256": "a8e43792386092b0ddb74a666f82cdc78d653de37a6a3adc4328ee20adeb425b"
+      },
+      {
+        "path": "src/io/feinn_pilot.py",
+        "sha256": "6d9cc2930215152b9d7307e8b24e5247a3edf242bdddb8b604bdf93e6f27031b"
+      },
+      {
+        "path": "src/io/fixed_phase_pilot.py",
+        "sha256": "fcabeb2c5bb9d97bf0114ce61329df11434ba2961aeda264d0d5d228b2878c11"
+      },
+      {
+        "path": "src/runners/feinn_workflow.py",
+        "sha256": "dbf34ee1b0abd508c46708475c91eee7c0f5bce75f3bd1627bf6bef0a49a8aac"
+      },
+      {
+        "path": "src/runners/fixed_phase_campaign.py",
+        "sha256": "41cfd9bba3636e13f59536d3758dafbfdb1b77b0c9373d9df929f984f1fc57e9"
+      },
+      {
+        "path": "src/solvers/accurate_ports.py",
+        "sha256": "b39a36e9b6fbaaf7e21cb69056ea306e0202e054fc94f529751dfd515c25cbf4"
+      },
+      {
+        "path": "src/solvers/affine_field_output.py",
+        "sha256": "24b368edeca8f65465e3935ac3b045781fc042e76eb43ecc55a86c692d36f5bb"
+      },
+      {
+        "path": "src/solvers/analytic_face_ports.py",
+        "sha256": "4a3ab5b7d6df1144a823d3ac638e0ece13fb4d953f3a64c478c61cf1e64450e6"
+      },
+      {
+        "path": "src/solvers/feinn_exact_condensation.py",
+        "sha256": "588e052c929a9497f7d6b19d504fdb1584594e4b9e1f101d17fb26abd1bfbeb6"
+      },
+      {
+        "path": "src/solvers/fixed_phase_audit.py",
+        "sha256": "d7df77f3f09da76c1f404e7d7723db34898e7cd3a11eddf640bad2590802d0a6"
+      },
+      {
+        "path": "src/solvers/fixed_phase_comparison.py",
+        "sha256": "201109108a3e0c182f1c0722fad17e38abbe48606eaaec6477aba91e8be25039"
+      },
+      {
+        "path": "src/solvers/fixed_phase_reliable_ports.py",
+        "sha256": "8c40a953dd80105c9bc2d108fe3100d934d9ea9ce997a95e0b76c5e0602184bd"
+      },
+      {
+        "path": "src/solvers/port_qualification_state.py",
+        "sha256": "65b90112833bc06f1f286a370074a418e7202c642964eae76150c04138a5d4aa"
+      },
+      {
+        "path": "src/test/test_analytic_face_moments.py",
+        "sha256": "2af36fcb5f645e3a4842bafe96b90640d4ab6e90f2ce78b3470f3581f7684588"
+      },
+      {
+        "path": "src/test/test_exact_affine_output.py",
+        "sha256": "f927feaea68a215e104ae61e56c7687afa220b544e8208199fe2cb34cbb975e9"
+      },
+      {
+        "path": "src/test/test_exact_zero_volume_load.py",
+        "sha256": "080e5880a7253f8caac33c2e2af14bacee2e660448b4816a810effefaa5843af"
+      },
+      {
+        "path": "src/test/test_reliable_comparison_roles.py",
+        "sha256": "2ff16b984e3c821add6162b9b16cee29c6379beba6495a136f667b72644a413e"
+      },
+      {
+        "path": "src/test/test_reliable_port_contract.py",
+        "sha256": "bffb23432d4b558fd7213ee0fb0ea580fed47875421c0cc91419c0c886118884"
+      },
+      {
+        "path": "src/test/test_reliable_raw_equation_checker.py",
+        "sha256": "3aece754f4b01ad5f8be8057642a6912ecbb4bc3cc6e423440abc76316767adc"
+      },
+      {
+        "path": "src/test/test_reliable_surface_saved_checker.py",
+        "sha256": "82c8e75688ec19f5465aae2967d593288ba57555b270a465778d35c85bb2b37b"
+      }
+    ]
+  },
+  "test_receipt": {
+    "path": "tmp/task42extra/v22/final_checker_tests.json",
+    "sha256": "456d82769f0f10ff2cb2c88e7e66eab8efb3ba77f634b0e6bce94c388d0330e7",
+    "bytes": 3828
+  },
+  "supervisor": {
+    "path": "tmp/task42extra/checks/v22_final_checker_source_20261004T112948212231Z/summary.json",
+    "sha256": "c62eeac7009bb8e50976903ed68d32b92926356fe122511032dec3ce31fc280b",
+    "bytes": 2065
+  },
+  "actual_numeric_source_unchanged": "c3844846435764cd0ca7a4351a1ba8374373b6ae",
+  "purpose": "opt-in retained guard digits and independent original-coordinate physical sensitivity",
+  "ordinary_defaults_unchanged": true,
+  "no_FE_or_producer_replay": true,
+  "actual_clean_checker_source": "bound by subsequent one-run run_index, not a document HEAD"
+}

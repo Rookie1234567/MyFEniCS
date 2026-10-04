@@ -1,7 +1,11 @@
 import numpy as np
 from scipy import sparse
 from src.solvers.fixed_phase_reliable_ports import save_surface_evidence
-from benchmarks.reliable_port_checker import surface_array_checks, raw_surface_gate
+from benchmarks.reliable_port_checker import (
+    surface_array_checks,
+    raw_surface_gate,
+    physical_origin_sensitivity,
+)
 
 
 def test_surface_checker_from_original_arrays_and_damage(tmp_path):
@@ -46,3 +50,52 @@ def test_old_operator_change_is_report_not_new_component_failure(tmp_path):
     assert not raw_surface_gate(raw, 3)
     raw["physical"]["D"]["relative"][0] = float("nan")
     assert not raw_surface_gate(raw, 2)
+
+
+def projection_fixture():
+    c = np.ones(2, complex)
+    zero = np.zeros(2, complex)
+    D = sparse.csr_matrix(np.array([[1, 0], [1, -1]], complex))
+    coo = D.tocoo()
+    H = np.array([1.0, 1e-12])
+    a = dict(dp=coo.row, dr=coo.col, dv=coo.data, H=H, gp=zero)
+    alpha = np.array([1, 0], complex)
+    state = dict(
+        c_scattered=c,
+        background=zero,
+        total_hi=c,
+        total_lo=zero,
+        alpha_scattered=alpha,
+        background_alpha=zero,
+        alpha_total_hi=alpha,
+        alpha_total_lo=zero,
+    )
+    return a, state, D, H
+
+
+def test_matrix_pair_pass_does_not_imply_actual_original_projection_pass(tmp_path):
+    a, state, D, H = projection_fixture()
+    other = D.toarray()
+    other[1, 1] += 1e-15
+    oracle = sparse.csr_matrix(other)
+    path = tmp_path / "sensitivity.npz"
+    save_surface_evidence(
+        path,
+        dict(analytic=(D.T, D, H), oracle1=(oracle.T, oracle, H), oracle2=(oracle.T, oracle, H)),
+    )
+    assert raw_surface_gate(surface_array_checks(path), 2)
+    result = physical_origin_sensitivity(a, state, path)
+    assert not result["all_physical_projections_within_1e_10"]
+    assert result["rows"]["scattered"]["native_arithmetic_relative"] == 0
+    assert result["rows"]["scattered"]["original_coordinates_relative"] > 9e-4
+    assert result["rows"]["background"]["original_coordinates_relative"] == 0
+
+
+def test_physical_origin_check_from_matching_frozen_oracle(tmp_path):
+    a, state, D, H = projection_fixture()
+    path = tmp_path / "matching.npz"
+    save_surface_evidence(path, dict(analytic=(D.T, D, H), oracle1=(D.T, D, H), oracle2=(D.T, D, H)))
+    result = physical_origin_sensitivity(a, state, path)
+    assert result["all_physical_projections_within_1e_10"]
+    assert all(r["all_modes"] == 2 for r in result["rows"].values())
+    assert not result["strict_forward_solution_qualified"]

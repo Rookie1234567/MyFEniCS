@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy import sparse
 from src.solvers.affine_field_output import SplitVector
-from benchmarks.fixed_phase_checker import compare_from_arrays
+from benchmarks.fixed_phase_checker import compare_from_arrays, complex_mode_differences
 
 
 def observation():
@@ -61,10 +61,13 @@ def observation():
     return z
 
 
-def test_same_role_controls_cannot_grant_reference_or_finite_p():
+@pytest.mark.parametrize("projection_dtype", [np.complex128, np.clongdouble])
+def test_same_role_controls_cannot_grant_reference_or_finite_p(projection_dtype):
     names = ("old_E3", "new_E3", "old_E4", "new_E4")
     pairs = [("old_E3", "new_E3"), ("old_E4", "new_E4"), ("new_E3", "new_E4")]
     z = {n: observation() for n in names}
+    for val in z.values():
+        val["total_projection"] = val["total_projection"].astype(projection_dtype)
     a = {
         n: dict(
             native_relative=0.0,
@@ -107,3 +110,31 @@ def test_both_sparse_linear_components_before_guard_digit_combination():
     v = SplitVector(np.ones(2, complex), np.array([1e-20, 0], complex))
     assert v.map(lambda x: a @ x).physical_values()[0] == 1
     assert (a @ (v.hi + v.lo))[0] == 0
+
+
+def test_mode_comparison_retains_guard_digits_only_when_explicitly_allowed():
+    reference = np.ones(340, dtype=np.clongdouble)
+    candidate = reference.copy()
+    candidate[23] += np.longdouble("1e-18")
+    keys = observation()["mode_keys"]
+    assert candidate.astype(np.complex128)[23] == reference[23]
+    with pytest.raises(ValueError, match="FULL_COMPLEX_MODE_LAYOUT"):
+        complex_mode_differences(candidate, reference, keys)
+    result = complex_mode_differences(
+        candidate, reference, keys, guard_digits_allowed=True
+    )
+    assert result["worst_key"] == keys[23].tolist()
+    assert result["max_relative"] == float(abs(candidate[23] - reference[23]))
+    assert result["max_relative"] > 0
+
+
+@pytest.mark.parametrize("invalid_dtype", [np.float64, np.complex64, object])
+def test_guard_digit_opt_in_does_not_accept_invalid_complex_layout(invalid_dtype):
+    reference = np.ones(340, complex)
+    with pytest.raises(ValueError, match="FULL_COMPLEX_MODE_LAYOUT"):
+        complex_mode_differences(
+            np.ones(340, dtype=invalid_dtype),
+            reference,
+            observation()["mode_keys"],
+            guard_digits_allowed=True,
+        )
