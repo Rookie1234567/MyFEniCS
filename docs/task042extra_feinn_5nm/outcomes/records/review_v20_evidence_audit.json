@@ -1,0 +1,4251 @@
+{
+  "schema": "task42extra.review_v20.evidence_audit.v1",
+  "created_utc": "2026-10-04T04:38:39.562150+00:00",
+  "branch": "task42extra_feinn_5nm",
+  "canonical": "/home/fenics/Projects/NN-Lab-V2",
+  "reviewed_head": "f5ae072d09816b899002fc45460dc4cd1840e1af",
+  "batch_input": "dfb60aa3a88c5554e9660ae6de7f169c5ac26298",
+  "base": "fbac3d8777fcfd897d93b898cb9f460f79ddd6ff",
+  "report": {
+    "path": "docs/task042extra_feinn_5nm/review_report_v20.md",
+    "sha256": "8b934f9d2e1347f88280ab892937f3d2a94b6ba4ede52a6eb35b12fa39569ac3",
+    "bytes": 32456
+  },
+  "run_sources": {
+    "A": "6cd669d376008e2a12542764c4bde95b383e6166",
+    "O3_E3_O6": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+    "C": "d9f1b50ee9b7be66d610fbbb78449bc9f6a3dc2f",
+    "checker": "0ede17f482d6370ce84bf8bbf0c638e7f95193ab"
+  },
+  "exact_remote_probe": {
+    "path": "tmp/task42extra/review_v20_remote_refs.txt",
+    "sha256": "2fca7cf55dce1eee541c70fa9c953d7459d6909662f695e7f29b47c9a7d25bcd",
+    "bytes": 408
+  },
+  "peers": {
+    "main": {
+      "branch": "task40extra_0p7nm_engineering",
+      "head": "d68f5688e6d166aa6a2bc4b6a0dd015f9e31c77b",
+      "path": "docs/task40extra_0p7nm_engineering/response_v7.md",
+      "scope": "Latest ResponseV7, workflow ledger, native ABI audit and actual import trace read; W0 blocked before FE, W1/W2 not run",
+      "document_sha256": "922f6efc5e75e63e480025eef60294c70d999d20b0aa96958beaa256244a8bd5",
+      "bytes": 12983,
+      "previous_observation": {
+        "branch": "task40extra_0p7nm_engineering",
+        "head": "66b151a72d4f837bfebc0aa9b9d854457b0fd93a",
+        "path": "docs/task40extra_0p7nm_engineering/review_report_v7.md",
+        "scope": "Published review and retained compact Gx784 results, no peer raw-field recomputation; W0/W1/W2 authorization is not completion",
+        "document_sha256": "22313b2b2bc60e6178a35f77bd9e6584f7e2d9c2fd76e276004041de25a6b06e",
+        "bytes": 41596
+      },
+      "additional_documents": {
+        "docs/task40extra_0p7nm_engineering/outcomes/records/review_v7_incremental_workflow_ledger.json": "e89103312f52f5717a3219d7ca01f5ea0c1ff41b178321ba43a62c259eae2f20",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/abi_identity_audit.json": "1aba3c2325c33397d47c5b951054d90646b3a216750f1c2139f49aede4213041",
+        "docs/task40extra_0p7nm_engineering/outcomes/records/native_w0_handoff_4c98a859/source_import_closure_w0_callpath.stderr": "343939c7bec310f03c05134763e4aef504d9997abb40f06956bdb08dcf2af01a"
+      }
+    },
+    "dot": {
+      "branch": "task40extra_dot_parallel_cloud",
+      "head": "077ec9c8386c976da232093779279fb9d1a93033",
+      "path": "docs/task40extra_dot_parallel_cloud/outcomes/records/native_tensor_authority_recovery_20261004/historical_recovery_receipt.json",
+      "scope": "Source-recovery receipt and implementation diff, historical raw lost; no C1a/C1c qualification granted",
+      "document_sha256": "58a9e745b26165dbb18a11a2deb320261e7cd7eb178f1e7e83152416feb87c1c",
+      "bytes": 6064
+    }
+  },
+  "all_repository_navigation": {
+    "files": 4717,
+    "bytes": 106125874,
+    "python_files": 963,
+    "top_level": {
+      ".gitattributes": 1,
+      ".gitignore": 1,
+      "AGENTS.md": 1,
+      "Dockerfile.mpc": 1,
+      "README.md": 1,
+      "benchmarks": 521,
+      "docker": 2,
+      "docs": 3111,
+      "input": 212,
+      "notes": 100,
+      "scripts": 13,
+      "src": 753
+    },
+    "path": "tmp/task42extra/review_v20_repository_structure.json",
+    "sha256": "28dfe1426c18e0f8642377bc17d902d9b5fd9ed96145c45c7d6d1a90ff61d9df",
+    "scope": "All tracked bytes/hash/navigation; semantic reading is recorded separately, not every line re-reviewed"
+  },
+  "semantic_read_files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "c20842f43aeecedd6c89f89afc5f602bce546e1245bcbeacd72dbec4ec92a19b",
+      "bytes": 16379
+    },
+    {
+      "path": "docs/AGENTS.md",
+      "sha256": "11c40619930fd6a7c6e11db84389a2807aea2790a496bc3ab784d677d7528a0a",
+      "bytes": 1891
+    },
+    {
+      "path": "docs/repository_work_principles.md",
+      "sha256": "223c7883951eec6b79aca7c66472d315f547012bc34085534309b1bb0235a6d0",
+      "bytes": 6643
+    },
+    {
+      "path": "docs/README.md",
+      "sha256": "fbcdf6f5b063267a00a32ba84462ffad0c4327fdec7839d62e904004cc96c80a",
+      "bytes": 28220
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/AGENTS.md",
+      "sha256": "a5be69d581d512112f47daa7726aa041dd5f74ce55176ece20a97e49c7759fd9",
+      "bytes": 1968
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/README.md",
+      "sha256": "ca31bb6d37edf548cf97eb9f2a85ce973a34c857b35cd4f365e3d686e1293b39",
+      "bytes": 9186
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/task.md",
+      "sha256": "ab20e72a8b50d6617c156834f15bb221cdebf2cbcc08cfe89d801c8f4a16e94a",
+      "bytes": 33520
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/review_report_v19.md",
+      "sha256": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4",
+      "bytes": 30186
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/response_v20.md",
+      "sha256": "4af8be8f44261f400aa3728738dd006a7ef6999625f84db56037f045ed26d610",
+      "bytes": 9188
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md",
+      "sha256": "9100c55f9d8041caff632cc785bcd531878a13cef0d932f6e9ed8052371d1b69",
+      "bytes": 11765
+    },
+    {
+      "path": "src/solvers/fixed_phase_fem.py",
+      "sha256": "8b88e103fc49aa6e9fc6be3fb9d3efefcbebe73f4d6d5e5394be274bd188814a",
+      "bytes": 11428
+    },
+    {
+      "path": "src/solvers/fixed_phase_audit.py",
+      "sha256": "127ff1cc1223dae5c52e68716ab906146306cf1610feb058fae7393bd6c22905",
+      "bytes": 13218
+    },
+    {
+      "path": "src/solvers/fixed_phase_port_coordinates.py",
+      "sha256": "27a695b76ae294aa03304bd0e4aba2750ce8757d2d70d3a75581e842186afa2f",
+      "bytes": 4380
+    },
+    {
+      "path": "src/solvers/fixed_phase_reference.py",
+      "sha256": "558ec40e5c2dababae5d8f3233a92725ff144c256b195307e89bc2373d522e61",
+      "bytes": 7261
+    },
+    {
+      "path": "src/solvers/fixed_phase_qualification.py",
+      "sha256": "452bff07614c2b27a2949d9f3f84f3f6f4ce2f1c928a599613ea15e371446279",
+      "bytes": 15488
+    },
+    {
+      "path": "src/solvers/fixed_phase_comparison.py",
+      "sha256": "fee477381f0b3223328c26289d3b4e44c39d872f16f89b2f75d5aea2570c7dde",
+      "bytes": 21462
+    },
+    {
+      "path": "src/solvers/fixed_phase_saved_diagnostics.py",
+      "sha256": "a2d9311e54851b38b32d5096205252a27a7d52c7961d02c7b071d1191d1b68fc",
+      "bytes": 14785
+    },
+    {
+      "path": "src/solvers/feinn_exact_condensation.py",
+      "sha256": "6f1645ea2f229c6af973dba20231390ed387908939a50a9d4a2e378cc995e17f",
+      "bytes": 7622
+    },
+    {
+      "path": "src/solvers/feinn_native.py",
+      "sha256": "9ba88d35fb880b892d1d27318d2889707003ce71c19c290fcaa9686067b64313",
+      "bytes": 8409
+    },
+    {
+      "path": "src/geometry/fixed_phase_plan.py",
+      "sha256": "6c583b7c530cf1b750906dba1e6e39a1e1ab34f515fc8194dec7520b6743edc4",
+      "bytes": 3796
+    },
+    {
+      "path": "src/io/fixed_phase_pilot.py",
+      "sha256": "e46cd287f6c87d2f2c58582cac8565fe32b7f14b95bbd82000d2c4ae172516ea",
+      "bytes": 3316
+    },
+    {
+      "path": "src/runners/fixed_phase_campaign.py",
+      "sha256": "9593c419862d6c46173149735845930ba158bc1280521495101e787f1987c7df",
+      "bytes": 19847
+    },
+    {
+      "path": "benchmarks/fixed_phase_checker.py",
+      "sha256": "06045b1a15bb7d558018d53a676390ad3bbc19f2713c6e886db3fc19bfc9591d",
+      "bytes": 18351
+    },
+    {
+      "path": "benchmarks/fixed_phase_control_checks.py",
+      "sha256": "4a2aa0e81c78145fa1f7418e9dc3ee61609346f9e823e5371e5facdf1f246272",
+      "bytes": 2073
+    },
+    {
+      "path": "src/test/test_fixed_phase_air_flux.py",
+      "sha256": "ca77034de049409b32c27eafbd3a4a1ce25dc6573a81475b789e21e9b38719df",
+      "bytes": 6036
+    },
+    {
+      "path": "src/test/test_fixed_phase_contract.py",
+      "sha256": "db763da1757bb4c5aa97a70f2ac291d5c5c3b2235b8693125fc6f6ee38a083d9",
+      "bytes": 9953
+    },
+    {
+      "path": "src/test/test_fixed_phase_fem.py",
+      "sha256": "ad9c03a010c6a66966c025824770e38b15bef64956409a67ec0a87fe898acb2a",
+      "bytes": 5294
+    },
+    {
+      "path": "src/test/test_fixed_phase_mode_checks.py",
+      "sha256": "2fb45cc4440c271c91a583c03b32a2144691852d2721cb1154300ad0313f0155",
+      "bytes": 2879
+    },
+    {
+      "path": "src/test/test_fixed_phase_old_rhs.py",
+      "sha256": "752f5471df4fd282a33dcb6c29e5f951e84ca33fa1007c899984875dbfede32d",
+      "bytes": 976
+    },
+    {
+      "path": "src/test/test_fixed_phase_port_coordinates.py",
+      "sha256": "208ff9d3f9544f72cd1fdfa3bfd565759e3b806de2692e4cebc1df35c30f36ca",
+      "bytes": 2483
+    },
+    {
+      "path": "src/test/test_fixed_phase_saved_diagnostics.py",
+      "sha256": "cda300d534eb27d203f01f0d3be5e4725111e557f5e5588d2426cab4ee0a7b9f",
+      "bytes": 7044
+    }
+  ],
+  "changed_hunks_and_context": [
+    {
+      "path": "src/solvers/common_3d_forms.py",
+      "sha256": "aca4369b3b358b396c392dc3e8c0d82262375e6863ce109c58465d755cf59aae",
+      "bytes": 9199
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "5d7e6ecb635df9e5a784aebbea865758f9a816cbb09cb1ccc9a79f72861c36db",
+      "bytes": 196630
+    },
+    {
+      "path": "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py",
+      "sha256": "d0765c9a8e20edcd1baa7b0ba35d00d2714afc2ca88ef0a79aeafa582be8c4a3",
+      "bytes": 21864
+    },
+    {
+      "path": "src/solvers/feinn_fem.py",
+      "sha256": "aa2479494f8e35e04f6d60332aaaf62d485f13b347612b2393174994bdde93af",
+      "bytes": 18627
+    },
+    {
+      "path": "src/runners/feinn_workflow.py",
+      "sha256": "da9a86401b978df3c04da59f43751d5231215a5c696c357fcc2a09c8c7120d2d",
+      "bytes": 73850
+    },
+    {
+      "path": "src/io/feinn_pilot.py",
+      "sha256": "71c14be1cf3f4aa04f0a8b15fe078819d8ff488c0ed707262fd18c2445fe5477",
+      "bytes": 7643
+    },
+    {
+      "path": "scripts/launch_task42extra_durable.py",
+      "sha256": "a2f0878b81675352cf23969c298687f67124b5aa249457142f2d2650624244be",
+      "bytes": 5774
+    },
+    {
+      "path": "src/runners/durable_terminal.py",
+      "sha256": "5b10730d9dcc9b95950eb0db0214c9fca48a9ebcdf53269f355d1edb27f4b7ab",
+      "bytes": 2868
+    },
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "d61872105d2b56ac7876a21aa663a56eabaca398aed48097873144b4c155c21b",
+      "bytes": 33759
+    }
+  ],
+  "partial_semantic_read": [
+    {
+      "path": "src/solvers/feinn_reference.py",
+      "sha256": "1ad21732d784d87c477e0dce512aafc9317af921ed4493eca9fb8faef764290e",
+      "bytes": 51066,
+      "scope": "exact_solve lines1-280 and full V20 diff; unrelated old training sections not re-reviewed"
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/summary.md",
+      "sha256": "46a4499384910b37e319667e66a16ef5b8f1841a04a68f50abeaafce8596527f",
+      "bytes": 86995,
+      "scope": "current navigation/results and preserved historical tables; historical detailed analysis inherited from ReviewV18/V19 audits"
+    }
+  ],
+  "historical_review_audits": [
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v18_evidence_audit.json",
+      "sha256": "0f36c35ac7881046b8b36d1f079b6f46903a7e189b1014c348982de22ce60442",
+      "bytes": 55097
+    },
+    {
+      "path": "docs/task042extra_feinn_5nm/outcomes/records/review_v19_evidence_audit.json",
+      "sha256": "2885fa63dcbc473266b31a19be6af9e9be27ce309c4c002f010dc81138ca69d8",
+      "bytes": 34979
+    }
+  ],
+  "new_independent_raw_diagnostics": {
+    "review_v20_saved_audit": {
+      "schema": "feinn.review-v20.saved-array-diagnosis.v1",
+      "input_head": "f5ae072d09816b899002fc45460dc4cd1840e1af",
+      "observed_utc": "2026-10-04T04:14:38.659000+00:00",
+      "elapsed_seconds": 2.183965369942598,
+      "structure": {
+        "files": 4717,
+        "bytes": 106125874,
+        "python_files": 963,
+        "top_level": {
+          ".gitattributes": 1,
+          ".gitignore": 1,
+          "AGENTS.md": 1,
+          "Dockerfile.mpc": 1,
+          "README.md": 1,
+          "benchmarks": 521,
+          "docker": 2,
+          "docs": 3111,
+          "input": 212,
+          "notes": 100,
+          "scripts": 13,
+          "src": 753
+        },
+        "path": "tmp/task42extra/review_v20_repository_structure.json",
+        "sha256": "28dfe1426c18e0f8642377bc17d902d9b5fd9ed96145c45c7d6d1a90ff61d9df",
+        "scope": "All tracked bytes/hash/navigation; semantic reading is recorded separately, not every line re-reviewed"
+      },
+      "ports": [
+        {
+          "role": "O3",
+          "source": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+          "native_sha256": "639cebc3a5d093405226dd8deea4e632c81530b8dd60b1d1d3e72397180b54b9",
+          "field_sha256": "4e00c42335cd179529c88bcea2c8e4b8a5b27cf3bc415a4611fd9957c6dbac42",
+          "original_recovery_relative": 0.0002415785461783923,
+          "extended_vs_saved_relative": 0.00024169987226069982,
+          "float64_vs_extended_relative": 3.7375282392661537e-06,
+          "boundary_recovery_relative": 2.3796241911615673e-13,
+          "worst_modes": [
+            {
+              "index": 81,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 81,
+                "side": "top",
+                "m": 0,
+                "n": -2,
+                "polarization": "p",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.4018807182390413
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.4340972908181536
+                  },
+                  {
+                    "real": 0.8062576699864702,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.40199442654031975,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.3721603711500499,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.34994856958798837,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 2.0883229769291348e-57,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -3.340503679892136
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 3.6082935348660294
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.0
+                  }
+                ]
+              },
+              "terms": 288,
+              "frozen_saved": [
+                32688733046228.84,
+                1583105065608.5332
+              ],
+              "float64_recovered": [
+                -70987025180155.55,
+                -59716686524972.17
+              ],
+              "extended_recovered": [
+                -70643612674116.33,
+                -60296090180152.79
+              ],
+              "decimal80_recovered": [
+                -70643847662449.36,
+                -60296268266892.2
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 228848529996874.44,
+              "float64_vs_decimal_relative": 0.007252170491075067,
+              "extended_vs_decimal_relative": 3.17457980521324e-06,
+              "saved_vs_decimal_relative": 1.2968042105199429,
+              "boundary_absolute_difference": 5.075296815013983e-15,
+              "H": 2.0883229769291348e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 88,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 88,
+                "side": "top",
+                "m": 0,
+                "n": 2,
+                "polarization": "s",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.7338122612499751,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.6793523130447104,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.7336046948257281
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.7924137588654038
+                  },
+                  {
+                    "real": 1.4717660865468898,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 5.967513967517627e-57,
+                "traction_vector": [
+                  {
+                    "real": 7.112689267014361,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -6.584820342581399,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 288,
+              "frozen_saved": [
+                22426301083043.945,
+                8458735974405.132
+              ],
+              "float64_recovered": [
+                54508677979035.97,
+                43496686802099.08
+              ],
+              "extended_recovered": [
+                54858627270852.01,
+                42266699261503.13
+              ],
+              "decimal80_recovered": [
+                54858797322532.88,
+                42266518765968.56
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 168086479762356.1,
+              "float64_vs_decimal_relative": 0.018468890988705758,
+              "extended_vs_decimal_relative": 3.5808574249710212e-06,
+              "saved_vs_decimal_relative": 0.6764934343678788,
+              "boundary_absolute_difference": 1.974141070205119e-15,
+              "H": 5.967513967517627e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 80,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 80,
+                "side": "top",
+                "m": 0,
+                "n": -2,
+                "polarization": "s",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.7338122612499751,
+                    "imag": -0.0
+                  },
+                  {
+                    "real": 0.6793523130447104,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.7336046948257281
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.7924137588654038
+                  },
+                  {
+                    "real": 1.4717660865468898,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 5.967513967517627e-57,
+                "traction_vector": [
+                  {
+                    "real": -7.112689267014361,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -6.584820342581399,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 288,
+              "frozen_saved": [
+                -7988972460855.272,
+                -16718480871964.545
+              ],
+              "float64_recovered": [
+                1546262135437.88,
+                15438198186185.578
+              ],
+              "extended_recovered": [
+                1363739718022.8452,
+                16568102959446.674
+              ],
+              "decimal80_recovered": [
+                1363613333836.7275,
+                16568470575288.586
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 700199202403877.5,
+              "float64_vs_decimal_relative": 0.068870387276244,
+              "extended_vs_decimal_relative": 2.3383233058630323e-05,
+              "saved_vs_decimal_relative": 2.079816469321287,
+              "boundary_absolute_difference": 1.4569705747819145e-15,
+              "H": 5.967513967517627e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 89,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 89,
+                "side": "top",
+                "m": 0,
+                "n": 2,
+                "polarization": "p",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.4018807182390413
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.4340972908181536
+                  },
+                  {
+                    "real": 0.8062576699864702,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.40199442654031975,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.3721603711500499,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.34994856958798837,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 2.0883229769291348e-57,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -3.340503679892136
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -3.6082935348660294
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 288,
+              "frozen_saved": [
+                44040384691990.71,
+                -17656556637977.324
+              ],
+              "float64_recovered": [
+                41292330650188.35,
+                -23898056595618.965
+              ],
+              "extended_recovered": [
+                40389014462701.555,
+                -24177225160919.137
+              ],
+              "decimal80_recovered": [
+                40387838770146.53,
+                -24177225503156.1
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 451544642908345.4,
+              "float64_vs_decimal_relative": 0.02010975962781456,
+              "extended_vs_decimal_relative": 2.4976798127804386e-05,
+              "saved_vs_decimal_relative": 0.15877944349107195,
+              "boundary_absolute_difference": 3.1494066652119256e-16,
+              "H": 2.0883229769291348e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 19,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 19,
+                "side": "top",
+                "m": -7,
+                "n": 2,
+                "polarization": "p",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.36460395060220824
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.4423650475404509
+                  },
+                  {
+                    "real": 0.8193760576925574,
+                    "imag": -0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.45177618285456056,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.37236075040873584,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3286228760802029,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.838392488525307e-52,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 3.3423022799121918
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -4.0551335346363615
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                34977763526.91109,
+                3173479534.6978917
+              ],
+              "float64_recovered": [
+                141051301430.40134,
+                -251788742715.32922
+              ],
+              "extended_recovered": [
+                141079708774.4626,
+                -251590975118.78772
+              ],
+              "decimal80_recovered": [
+                141079952010.76135,
+                -251590740053.79724
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 190964056789865.62,
+              "float64_vs_decimal_relative": 0.0006935937156527539,
+              "extended_vs_decimal_relative": 1.1726933585595795e-06,
+              "saved_vs_decimal_relative": 0.9567645774743406,
+              "boundary_absolute_difference": 5.144901451303711e-15,
+              "H": 3.838392488525307e-52,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 11,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 11,
+                "side": "top",
+                "m": -7,
+                "n": -2,
+                "polarization": "p",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.36460395060220824
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.4423650475404509
+                  },
+                  {
+                    "real": 0.8193760576925574,
+                    "imag": -0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.45177618285456056,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.37236075040873584,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3286228760802029,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.838392488525307e-52,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 3.3423022799121918
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 4.0551335346363615
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                46514771520.94879,
+                -6167055554.013897
+              ],
+              "float64_recovered": [
+                145137798439.74832,
+                -54752313681.38799
+              ],
+              "extended_recovered": [
+                145236368502.17816,
+                -55760945530.446884
+              ],
+              "decimal80_recovered": [
+                145236544853.60928,
+                -55761261681.74075
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 354064787028200.3,
+              "float64_vs_decimal_relative": 0.006516351685637935,
+              "extended_vs_decimal_relative": 2.3269475446956125e-06,
+              "saved_vs_decimal_relative": 0.710141264498025,
+              "boundary_absolute_difference": 2.0596129646703124e-15,
+              "H": 3.838392488525307e-52,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 93,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 93,
+                "side": "top",
+                "m": 1,
+                "n": -1,
+                "polarization": "p",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.5221563935936702
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.22204588283782792
+                  },
+                  {
+                    "real": 0.8234368989449172,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.23352389589770708,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.5491477425363784,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3219516734559782,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1576067770205094e-50,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -4.929138610536302
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 2.096105587971155
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                -241465854522215.88,
+                268532198140881.56
+              ],
+              "float64_recovered": [
+                -241557857131500.75,
+                268537164944477.75
+              ],
+              "extended_recovered": [
+                -241557713757542.28,
+                268537313376112.4
+              ],
+              "decimal80_recovered": [
+                -241557713884072.56,
+                268537313363643.34
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 18768634992.657772,
+              "float64_vs_decimal_relative": 5.710803848942999e-07,
+              "extended_vs_decimal_relative": 3.520062514952053e-10,
+              "saved_vs_decimal_relative": 0.00025471411621479426,
+              "boundary_absolute_difference": 9.516157787445089e-15,
+              "H": 1.1576067770205094e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            },
+            {
+              "index": 10,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 10,
+                "side": "top",
+                "m": -7,
+                "n": -2,
+                "polarization": "s",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.7716705190465476,
+                    "imag": -0.0
+                  },
+                  {
+                    "real": -0.6360224917677298,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.622773245880037
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.7555955333605618
+                  },
+                  {
+                    "real": 1.3995610475496914,
+                    "imag": -0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1680235211588007e-51,
+                "traction_vector": [
+                  {
+                    "real": -6.782209647688007,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 5.589999583168555,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                -12342083695.376545,
+                59678504321.067986
+              ],
+              "float64_recovered": [
+                -37602804719.71931,
+                146763762664.37286
+              ],
+              "extended_recovered": [
+                -37413211836.053116,
+                146718960707.738
+              ],
+              "decimal80_recovered": [
+                -37413079496.60698,
+                146719072497.0164
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 171885922429285.8,
+              "float64_vs_decimal_relative": 0.0012873148693859724,
+              "extended_vs_decimal_relative": 1.1441181154173642e-06,
+              "saved_vs_decimal_relative": 0.5982226323389319,
+              "boundary_absolute_difference": 1.6886343855473316e-15,
+              "H": 1.1680235211588007e-51,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 96,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 96,
+                "side": "top",
+                "m": 1,
+                "n": 1,
+                "polarization": "s",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.39133381929716216,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.920248793465276,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.8750173295539369
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.3720992365946161
+                  },
+                  {
+                    "real": 1.3798960717727982,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.5955917377108903e-50,
+                "traction_vector": [
+                  {
+                    "real": 3.3399549374057607,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -7.854137183686878,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                396542675670630.1,
+                356318003106592.0
+              ],
+              "float64_recovered": [
+                396572492971601.1,
+                356367082813893.7
+              ],
+              "extended_recovered": [
+                396573127758614.0,
+                356366174078169.5
+              ],
+              "decimal80_recovered": [
+                396573127825544.0,
+                356366174397674.3
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 16965443180.853529,
+              "float64_vs_decimal_relative": 2.0786519617330115e-06,
+              "extended_vs_decimal_relative": 6.122655460611042e-10,
+              "saved_vs_decimal_relative": 0.00010688870412751309,
+              "boundary_absolute_difference": 5.89469063226447e-15,
+              "H": 3.5955917377108903e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            },
+            {
+              "index": 18,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 18,
+                "side": "top",
+                "m": -7,
+                "n": 2,
+                "polarization": "s",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.7716705190465476,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.6360224917677298,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.622773245880037
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.7555955333605618
+                  },
+                  {
+                    "real": 1.3995610475496914,
+                    "imag": -0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1680235211588007e-51,
+                "traction_vector": [
+                  {
+                    "real": 6.782209647688007,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 5.589999583168555,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                7238068051.298655,
+                -63919909359.64247
+              ],
+              "float64_recovered": [
+                -17527329130.14861,
+                -51714396654.22358
+              ],
+              "extended_recovered": [
+                -17327988539.25928,
+                -51828857218.53605
+              ],
+              "decimal80_recovered": [
+                -17328080402.089226,
+                -51829038078.615036
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 476238478419944.1,
+              "float64_vs_decimal_relative": 0.004206398835323885,
+              "extended_vs_decimal_relative": 3.7119175601660694e-06,
+              "saved_vs_decimal_relative": 0.5010225327603248,
+              "boundary_absolute_difference": 5.104413801457717e-16,
+              "H": 1.1680235211588007e-51,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 97,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 97,
+                "side": "top",
+                "m": 1,
+                "n": 1,
+                "polarization": "p",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.5221563935936702
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.22204588283782792
+                  },
+                  {
+                    "real": 0.8234368989449172,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.23352389589770708,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.5491477425363784,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3219516734559782,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1576067770205094e-50,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -4.929138610536302
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -2.096105587971155
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                241480045040399.9,
+                -268528939256106.16
+              ],
+              "float64_recovered": [
+                241502932655323.38,
+                -268527832461665.94
+              ],
+              "extended_recovered": [
+                241503936269249.56,
+                -268528870821108.25
+              ],
+              "decimal80_recovered": [
+                241503936125009.34,
+                -268528871304919.8
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 18770830136.35245,
+              "float64_vs_decimal_relative": 3.999267963500607e-06,
+              "extended_vs_decimal_relative": 1.3978964283952826e-09,
+              "saved_vs_decimal_relative": 6.615241490346521e-05,
+              "boundary_absolute_difference": 2.4711751712924537e-15,
+              "H": 1.1576067770205094e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            },
+            {
+              "index": 92,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 92,
+                "side": "top",
+                "m": 1,
+                "n": -1,
+                "polarization": "s",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.39133381929716216,
+                    "imag": -0.0
+                  },
+                  {
+                    "real": 0.920248793465276,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.8750173295539369
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.3720992365946161
+                  },
+                  {
+                    "real": 1.3798960717727982,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.5955917377108903e-50,
+                "traction_vector": [
+                  {
+                    "real": -3.3399549374057607,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -7.854137183686878,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                396530729051482.75,
+                356347783477989.06
+              ],
+              "float64_recovered": [
+                396518894367223.9,
+                356336920560696.25
+              ],
+              "extended_recovered": [
+                396519035662675.5,
+                356336902935301.7
+              ],
+              "decimal80_recovered": [
+                396519035627669.2,
+                356336902865119.1
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 16967346202.307428,
+              "float64_vs_decimal_relative": 2.6704661672357695e-07,
+              "extended_vs_decimal_relative": 1.471158547704421e-10,
+              "saved_vs_decimal_relative": 2.9961322949762608e-05,
+              "boundary_absolute_difference": 1.652119582285402e-15,
+              "H": 3.5955917377108903e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            }
+          ],
+          "no_field_or_alpha_overwrite": true
+        },
+        {
+          "role": "E3",
+          "source": "e5592c4fc426d3ae917821c8e1bccd1e2c190cf2",
+          "native_sha256": "5b153fe537ee38b7c2394923c5da2611cfadbb90e4dae5386732df797aa6cc37",
+          "field_sha256": "d95fb546834f09ea2d05209010b8c93a7d2066f9c947958e7b7af8512e82f1cf",
+          "original_recovery_relative": 0.001556235707641714,
+          "extended_vs_saved_relative": 0.0015566795157052758,
+          "float64_vs_extended_relative": 1.9512714634206224e-05,
+          "boundary_recovery_relative": 1.2731783350894775e-13,
+          "worst_modes": [
+            {
+              "index": 81,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 81,
+                "side": "top",
+                "m": 0,
+                "n": -2,
+                "polarization": "p",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.4018807182390413
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.4340972908181536
+                  },
+                  {
+                    "real": 0.8062576699864702,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.40199442654031975,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.3721603711500499,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.34994856958798837,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 2.0883229769291348e-57,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -3.340503679892136
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 3.6082935348660294
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.0
+                  }
+                ]
+              },
+              "terms": 240,
+              "frozen_saved": [
+                1685557228383.6006,
+                6817660983735.554
+              ],
+              "float64_recovered": [
+                -10669004060752.635,
+                2495396058210.4473
+              ],
+              "extended_recovered": [
+                -10634763971951.941,
+                2446674446218.8
+              ],
+              "decimal80_recovered": [
+                -10634727498377.328,
+                2446791972747.2026
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 285888078218884.6,
+              "float64_vs_decimal_relative": 0.005450108479492055,
+              "extended_vs_decimal_relative": 1.1276545554593302e-05,
+              "saved_vs_decimal_relative": 1.1979430913840912,
+              "boundary_absolute_difference": 5.508593678430111e-16,
+              "H": 2.0883229769291348e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 88,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 88,
+                "side": "top",
+                "m": 0,
+                "n": 2,
+                "polarization": "s",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.7338122612499751,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.6793523130447104,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.7336046948257281
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.7924137588654038
+                  },
+                  {
+                    "real": 1.4717660865468898,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 5.967513967517627e-57,
+                "traction_vector": [
+                  {
+                    "real": 7.112689267014361,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -6.584820342581399,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 240,
+              "frozen_saved": [
+                3317749459308.5107,
+                4443502799397.764
+              ],
+              "float64_recovered": [
+                3904305981142.9717,
+                -4554155007500.127
+              ],
+              "extended_recovered": [
+                3723055748543.198,
+                -4567587994900.202
+              ],
+              "decimal80_recovered": [
+                3723071383551.8696,
+                -4567555142836.3545
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 289963287664765.06,
+              "float64_vs_decimal_relative": 0.030839777216003745,
+              "extended_vs_decimal_relative": 6.174231871234902e-06,
+              "saved_vs_decimal_relative": 1.5307382318540164,
+              "boundary_absolute_difference": 3.800949720296443e-16,
+              "H": 5.967513967517627e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 80,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 80,
+                "side": "top",
+                "m": 0,
+                "n": -2,
+                "polarization": "s",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.7338122612499751,
+                    "imag": -0.0
+                  },
+                  {
+                    "real": 0.6793523130447104,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.7336046948257281
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.7924137588654038
+                  },
+                  {
+                    "real": 1.4717660865468898,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 5.967513967517627e-57,
+                "traction_vector": [
+                  {
+                    "real": -7.112689267014361,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -6.584820342581399,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 240,
+              "frozen_saved": [
+                -832809858902.4165,
+                -3718922261629.193
+              ],
+              "float64_recovered": [
+                -4823786844153.055,
+                -2096606571321.6003
+              ],
+              "extended_recovered": [
+                -4826463396842.9,
+                -2035194286192.7024
+              ],
+              "decimal80_recovered": [
+                -4826525796293.397,
+                -2035213983375.245
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 326200720136585.44,
+              "float64_vs_decimal_relative": 0.011732102994186469,
+              "extended_vs_decimal_relative": 1.2492080273910034e-05,
+              "saved_vs_decimal_relative": 0.8274268193056901,
+              "boundary_absolute_difference": 1.8263284676932486e-16,
+              "H": 5.967513967517627e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 89,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 89,
+                "side": "top",
+                "m": 0,
+                "n": 2,
+                "polarization": "p",
+                "alpha": {
+                  "real": 8.97461192517716,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 9.692791525312773
+                },
+                "k_vector": [
+                  {
+                    "real": 8.97461192517716,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 9.692791525312773
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.4018807182390413
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.4340972908181536
+                  },
+                  {
+                    "real": 0.8062576699864702,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.40199442654031975,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.3721603711500499,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.34994856958798837,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 2.0883229769291348e-57,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -3.340503679892136
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -3.6082935348660294
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 240,
+              "frozen_saved": [
+                -7324609454060.415,
+                4826716426959.848
+              ],
+              "float64_recovered": [
+                -4416877148210.563,
+                6666961463924.625
+              ],
+              "extended_recovered": [
+                -4406862315203.484,
+                6730498929009.994
+              ],
+              "decimal80_recovered": [
+                -4406881096997.86,
+                6730540091668.873
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 387794202790182.1,
+              "float64_vs_decimal_relative": 0.008000032453054775,
+              "extended_vs_decimal_relative": 5.6240586377007655e-06,
+              "saved_vs_decimal_relative": 0.43305799426767544,
+              "boundary_absolute_difference": 1.4680652036653759e-16,
+              "H": 2.0883229769291348e-57,
+              "boundary_phase_abs": 4.2138342045396575e-29
+            },
+            {
+              "index": 19,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 19,
+                "side": "top",
+                "m": -7,
+                "n": 2,
+                "polarization": "p",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.36460395060220824
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.4423650475404509
+                  },
+                  {
+                    "real": 0.8193760576925574,
+                    "imag": -0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.45177618285456056,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.37236075040873584,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3286228760802029,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.838392488525307e-52,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 3.3423022799121918
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -4.0551335346363615
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                6603402563.818374,
+                -7605760860.880909
+              ],
+              "float64_recovered": [
+                -20589908622.878773,
+                -14042966341.01105
+              ],
+              "extended_recovered": [
+                -20710700449.49237,
+                -13877360265.959867
+              ],
+              "decimal80_recovered": [
+                -20710710619.00416,
+                -13877322940.242416
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 246435622526342.2,
+              "float64_vs_decimal_relative": 0.008223539881301256,
+              "extended_vs_decimal_relative": 1.5517852800102932e-06,
+              "saved_vs_decimal_relative": 1.12413445783478,
+              "boundary_absolute_difference": 5.224564605900135e-16,
+              "H": 3.838392488525307e-52,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 11,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 11,
+                "side": "top",
+                "m": -7,
+                "n": -2,
+                "polarization": "p",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.36460395060220824
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.4423650475404509
+                  },
+                  {
+                    "real": 0.8193760576925574,
+                    "imag": -0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.45177618285456056,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.37236075040873584,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3286228760802029,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.838392488525307e-52,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 3.3423022799121918
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 4.0551335346363615
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                82754962.05309467,
+                8650113457.3914
+              ],
+              "float64_recovered": [
+                16511458015.23844,
+                21679263249.177376
+              ],
+              "extended_recovered": [
+                16455438357.933521,
+                21643950112.03593
+              ],
+              "decimal80_recovered": [
+                16455439109.165504,
+                21643886542.87201
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 225962457465869.56,
+              "float64_vs_decimal_relative": 0.0024368084589427284,
+              "extended_vs_decimal_relative": 2.338214229599945e-06,
+              "saved_vs_decimal_relative": 0.768776239872195,
+              "boundary_absolute_difference": 3.8967181327462897e-16,
+              "H": 3.838392488525307e-52,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 92,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 92,
+                "side": "top",
+                "m": 1,
+                "n": -1,
+                "polarization": "s",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.39133381929716216,
+                    "imag": -0.0
+                  },
+                  {
+                    "real": 0.920248793465276,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.8750173295539369
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.3720992365946161
+                  },
+                  {
+                    "real": 1.3798960717727982,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.5955917377108903e-50,
+                "traction_vector": [
+                  {
+                    "real": -3.3399549374057607,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -7.854137183686878,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                -2153569489700790.5,
+                2219318124791870.2
+              ],
+              "float64_recovered": [
+                -2153569215066282.8,
+                2219309536956978.8
+              ],
+              "extended_recovered": [
+                -2153569205127640.5,
+                2219309500312909.0
+              ],
+              "decimal80_recovered": [
+                -2153569205114148.0,
+                2219309500304345.2
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 432797791.41422975,
+              "float64_vs_decimal_relative": 1.2281473168095478e-08,
+              "extended_vs_decimal_relative": 5.167690584139918e-12,
+              "saved_vs_decimal_relative": 2.7904105302952544e-06,
+              "boundary_absolute_difference": 8.925560873651172e-16,
+              "H": 3.5955917377108903e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            },
+            {
+              "index": 10,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 10,
+                "side": "top",
+                "m": -7,
+                "n": -2,
+                "polarization": "s",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.7716705190465476,
+                    "imag": -0.0
+                  },
+                  {
+                    "real": -0.6360224917677298,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.622773245880037
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.7555955333605618
+                  },
+                  {
+                    "real": 1.3995610475496914,
+                    "imag": -0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1680235211588007e-51,
+                "traction_vector": [
+                  {
+                    "real": -6.782209647688007,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 5.589999583168555,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                142737800.68090895,
+                699893332.2584834
+              ],
+              "float64_recovered": [
+                4369251394.1859865,
+                3481672153.738812
+              ],
+              "extended_recovered": [
+                4327993503.309478,
+                3461091839.4589753
+              ],
+              "decimal80_recovered": [
+                4327988385.151981,
+                3461083571.264038
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 523846092786181.7,
+              "float64_vs_decimal_relative": 0.008321301961403476,
+              "extended_vs_decimal_relative": 1.754714436494966e-06,
+              "saved_vs_decimal_relative": 0.9047797527289394,
+              "boundary_absolute_difference": 9.347455788628487e-17,
+              "H": 1.1680235211588007e-51,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 18,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 18,
+                "side": "top",
+                "m": -7,
+                "n": 2,
+                "polarization": "s",
+                "alpha": {
+                  "real": -7.989988404207724,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 9.694057331077076,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.788996702981342
+                },
+                "k_vector": [
+                  {
+                    "real": -7.989988404207724,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 9.694057331077076,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.788996702981342
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.7716705190465476,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.6360224917677298,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": 0.622773245880037
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.7555955333605618
+                  },
+                  {
+                    "real": 1.3995610475496914,
+                    "imag": -0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1680235211588007e-51,
+                "traction_vector": [
+                  {
+                    "real": 6.782209647688007,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 5.589999583168555,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                2959544688.3260345,
+                -5875514470.277029
+              ],
+              "float64_recovered": [
+                -290761800.98385125,
+                -2039114675.8545918
+              ],
+              "extended_recovered": [
+                -345381759.6111458,
+                -1956390406.7416837
+              ],
+              "decimal80_recovered": [
+                -345383977.8680881,
+                -1956389950.1322021
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 1461261140456473.0,
+              "float64_vs_decimal_relative": 0.049898758965861,
+              "extended_vs_decimal_relative": 1.1399952807715283e-06,
+              "saved_vs_decimal_relative": 2.580536755110092,
+              "boundary_absolute_difference": 9.557327526149099e-17,
+              "H": 1.1680235211588007e-51,
+              "boundary_phase_abs": 1.8642601497149934e-26
+            },
+            {
+              "index": 96,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 96,
+                "side": "top",
+                "m": 1,
+                "n": 1,
+                "polarization": "s",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.39133381929716216,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.920248793465276,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.8750173295539369
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.3720992365946161
+                  },
+                  {
+                    "real": 1.3798960717727982,
+                    "imag": 0.0
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 1.0000000000000002,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 3.5955917377108903e-50,
+                "traction_vector": [
+                  {
+                    "real": 3.3399549374057607,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -7.854137183686878,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                -2153569381931842.5,
+                2219317921575365.0
+              ],
+              "float64_recovered": [
+                -2153565486359683.0,
+                2219318059885416.8
+              ],
+              "extended_recovered": [
+                -2153565551142070.5,
+                2219317965809618.2
+              ],
+              "decimal80_recovered": [
+                -2153565551167980.0,
+                2219317965790565.8
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 432797297.27848494,
+              "float64_vs_decimal_relative": 3.6946140453636976e-08,
+              "extended_vs_decimal_relative": 1.0399710503502929e-11,
+              "saved_vs_decimal_relative": 1.2388316930594242e-06,
+              "boundary_absolute_difference": 3.962599837166473e-16,
+              "H": 3.5955917377108903e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            },
+            {
+              "index": 93,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 93,
+                "side": "top",
+                "m": 1,
+                "n": -1,
+                "polarization": "p",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": -4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": -0.0,
+                    "imag": -0.5221563935936702
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.22204588283782792
+                  },
+                  {
+                    "real": 0.8234368989449172,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": -0.23352389589770708,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.5491477425363784,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3219516734559782,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1576067770205094e-50,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -4.929138610536302
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 2.096105587971155
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": -0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                3730837740094108.5,
+                5899834413804830.0
+              ],
+              "float64_recovered": [
+                3730837411230257.5,
+                5899832508289010.0
+              ],
+              "extended_recovered": [
+                3730837475170095.0,
+                5899832517779718.0
+              ],
+              "decimal80_recovered": [
+                3730837475166646.0,
+                5899832517792337.0
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 143763128.00682718,
+              "float64_vs_decimal_relative": 9.259930126348494e-09,
+              "extended_vs_decimal_relative": 1.8740600993731492e-12,
+              "saved_vs_decimal_relative": 2.742548677428228e-07,
+              "boundary_absolute_difference": 1.980185412598588e-16,
+              "H": 1.1576067770205094e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            },
+            {
+              "index": 97,
+              "mode": {
+                "schema": "fullspace-dtn.mode.v1",
+                "mode_index": 97,
+                "side": "top",
+                "m": 1,
+                "n": 1,
+                "polarization": "p",
+                "alpha": {
+                  "real": 11.398126257946428,
+                  "imag": 0.0
+                },
+                "gamma": {
+                  "real": 4.847028665538538,
+                  "imag": 0.0
+                },
+                "beta": {
+                  "real": 0.0,
+                  "imag": 8.534797588934019
+                },
+                "k_vector": [
+                  {
+                    "real": 11.398126257946428,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 4.847028665538538,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 8.534797588934019
+                  }
+                ],
+                "e_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -0.5221563935936702
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -0.22204588283782792
+                  },
+                  {
+                    "real": 0.8234368989449172,
+                    "imag": 0.0
+                  }
+                ],
+                "h_vector": [
+                  {
+                    "real": 0.23352389589770708,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": -0.5491477425363784,
+                    "imag": 0.0
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 4.9475295044988036e-17
+                  }
+                ],
+                "refractive_index": {
+                  "real": 1.0,
+                  "imag": 0.0
+                },
+                "vertical_sign": 1,
+                "electric_tangential_norm_sq": 0.3219516734559782,
+                "power_per_unit_amplitude": 0.0,
+                "propagating": false,
+                "rayleigh_warning": false,
+                "classification": "evanescent",
+                "rayleigh_tolerance": 1e-06,
+                "projection_denominator": 1.1576067770205094e-50,
+                "traction_vector": [
+                  {
+                    "real": 0.0,
+                    "imag": -4.929138610536302
+                  },
+                  {
+                    "real": -0.0,
+                    "imag": -2.096105587971155
+                  },
+                  {
+                    "real": 0.0,
+                    "imag": 0.0
+                  }
+                ]
+              },
+              "terms": 432,
+              "frozen_saved": [
+                -3730838412143102.0,
+                -5899834375553180.0
+              ],
+              "float64_recovered": [
+                -3730838568179579.5,
+                -5899834834502573.0
+              ],
+              "extended_recovered": [
+                -3730838540273087.0,
+                -5899834863384566.0
+              ],
+              "decimal80_recovered": [
+                -3730838540222110.0,
+                -5899834863356832.0
+              ],
+              "decimal110_identical_after_complex128_rounding": true,
+              "cancellation_sum_abs_over_abs_sum": 143763075.45491678,
+              "float64_vs_decimal_relative": 5.7556098069763735e-09,
+              "extended_vs_decimal_relative": 8.313602819711944e-12,
+              "saved_vs_decimal_relative": 7.22496543030905e-08,
+              "boundary_absolute_difference": 5.216598888160955e-17,
+              "H": 1.1576067770205094e-50,
+              "boundary_phase_abs": 1.034346165713895e-25
+            }
+          ],
+          "no_field_or_alpha_overwrite": true
+        }
+      ],
+      "p6_support": {
+        "bv": {
+          "entries": 2264,
+          "nonzeros": 2264,
+          "norm": 1.3099141613262974e-11,
+          "whole_norm": 333.3029584623618,
+          "fraction": 3.930100612875956e-14,
+          "unique_interior_ids": 120,
+          "interior_ids": [
+            214667,
+            214668,
+            214672,
+            237707,
+            237708,
+            237712,
+            239789,
+            239790,
+            239794,
+            260237,
+            260238,
+            260242,
+            262109,
+            262110,
+            262114,
+            263471,
+            263472,
+            263476,
+            281327,
+            281328,
+            281332,
+            283199,
+            283200,
+            283204,
+            284423,
+            284424,
+            284428,
+            285065,
+            285066,
+            285070,
+            300329,
+            300330,
+            300334,
+            302201,
+            302202,
+            302206,
+            303425,
+            303426,
+            303430,
+            304001,
+            304002,
+            304006,
+            316673,
+            316674,
+            316678,
+            318545,
+            318546,
+            318550,
+            319769,
+            319770,
+            319774,
+            320345,
+            320346,
+            320350,
+            330425,
+            330426,
+            330430,
+            332297,
+            332298,
+            332302,
+            333521,
+            333522,
+            333526,
+            334097,
+            334098,
+            334102,
+            341585,
+            341586,
+            341590,
+            343457,
+            343458,
+            343462,
+            344681,
+            344682,
+            344686,
+            345257,
+            345258,
+            345262,
+            350153,
+            350154,
+            350158,
+            352025,
+            352026,
+            352030,
+            353249,
+            353250,
+            353254,
+            353825,
+            353826,
+            353830,
+            356129,
+            356130,
+            356134,
+            358001,
+            358002,
+            358006,
+            359225,
+            359226,
+            359230,
+            359801,
+            359802,
+            359806,
+            361463,
+            361464,
+            361468,
+            362687,
+            362688,
+            362692,
+            363263,
+            363264,
+            363268,
+            364349,
+            364350,
+            364354,
+            364925,
+            364926,
+            364930,
+            365435,
+            365436,
+            365440
+          ],
+          "local_positions": [
+            557,
+            558,
+            562
+          ],
+          "touched_cells": [
+            319,
+            355,
+            358,
+            390,
+            393,
+            395,
+            423,
+            426,
+            428,
+            429,
+            453,
+            456,
+            458,
+            459,
+            479,
+            482,
+            484,
+            485,
+            501,
+            504,
+            506,
+            507,
+            519,
+            522,
+            524,
+            525,
+            533,
+            536,
+            538,
+            539,
+            543,
+            546,
+            548,
+            549,
+            552,
+            554,
+            555,
+            557,
+            558,
+            559
+          ],
+          "ports": [
+            4,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            30,
+            32,
+            33,
+            34,
+            35,
+            36,
+            38,
+            40,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            50,
+            52,
+            54,
+            55,
+            56,
+            57,
+            58,
+            60,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87
+          ],
+          "max_abs": 5.403922665530524e-13,
+          "exact_topological_zero_not_proved_by_this_array_check": true
+        },
+        "dv": {
+          "entries": 2264,
+          "nonzeros": 2264,
+          "norm": 1.4812270653356738e-12,
+          "whole_norm": 36.112874537306546,
+          "fraction": 4.1016592678200854e-14,
+          "unique_interior_ids": 120,
+          "interior_ids": [
+            214667,
+            214668,
+            214672,
+            237707,
+            237708,
+            237712,
+            239789,
+            239790,
+            239794,
+            260237,
+            260238,
+            260242,
+            262109,
+            262110,
+            262114,
+            263471,
+            263472,
+            263476,
+            281327,
+            281328,
+            281332,
+            283199,
+            283200,
+            283204,
+            284423,
+            284424,
+            284428,
+            285065,
+            285066,
+            285070,
+            300329,
+            300330,
+            300334,
+            302201,
+            302202,
+            302206,
+            303425,
+            303426,
+            303430,
+            304001,
+            304002,
+            304006,
+            316673,
+            316674,
+            316678,
+            318545,
+            318546,
+            318550,
+            319769,
+            319770,
+            319774,
+            320345,
+            320346,
+            320350,
+            330425,
+            330426,
+            330430,
+            332297,
+            332298,
+            332302,
+            333521,
+            333522,
+            333526,
+            334097,
+            334098,
+            334102,
+            341585,
+            341586,
+            341590,
+            343457,
+            343458,
+            343462,
+            344681,
+            344682,
+            344686,
+            345257,
+            345258,
+            345262,
+            350153,
+            350154,
+            350158,
+            352025,
+            352026,
+            352030,
+            353249,
+            353250,
+            353254,
+            353825,
+            353826,
+            353830,
+            356129,
+            356130,
+            356134,
+            358001,
+            358002,
+            358006,
+            359225,
+            359226,
+            359230,
+            359801,
+            359802,
+            359806,
+            361463,
+            361464,
+            361468,
+            362687,
+            362688,
+            362692,
+            363263,
+            363264,
+            363268,
+            364349,
+            364350,
+            364354,
+            364925,
+            364926,
+            364930,
+            365435,
+            365436,
+            365440
+          ],
+          "local_positions": [
+            557,
+            558,
+            562
+          ],
+          "touched_cells": [
+            319,
+            355,
+            358,
+            390,
+            393,
+            395,
+            423,
+            426,
+            428,
+            429,
+            453,
+            456,
+            458,
+            459,
+            479,
+            482,
+            484,
+            485,
+            501,
+            504,
+            506,
+            507,
+            519,
+            522,
+            524,
+            525,
+            533,
+            536,
+            538,
+            539,
+            543,
+            546,
+            548,
+            549,
+            552,
+            554,
+            555,
+            557,
+            558,
+            559
+          ],
+          "ports": [
+            4,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            30,
+            32,
+            33,
+            34,
+            35,
+            36,
+            38,
+            40,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            50,
+            52,
+            54,
+            55,
+            56,
+            57,
+            58,
+            60,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87
+          ],
+          "max_abs": 6.129954476936726e-14,
+          "exact_topological_zero_not_proved_by_this_array_check": true
+        }
+      },
+      "compact_records": [
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/design_binding_v20.json",
+          "sha256": "d925aa23c0aba12f6b0447278b20889702d269559b31ed8174c906a0b8bec5e5",
+          "bytes": 32149
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/gate_decisions_v20.json",
+          "sha256": "0b9e19e2d2a5810152c090f08ca5d667f800bb7aa95d5514155afbf978f4cec7",
+          "bytes": 9019
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/independent_checker_v20.json",
+          "sha256": "9db2f110a9e1cbbbfa3008dc34ac1f8184839ee438820d97bd45974379987852",
+          "bytes": 9687
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/physical_comparison_v20.json",
+          "sha256": "557dd9a238e105f4f21d6ec39e93c9c0ba0666df5d15bfe70ea798e102082607",
+          "bytes": 34685
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/qualification_v20.json",
+          "sha256": "46085936ee82b19f4fb9848b58f6ef5f4c9b474c4e27e96e9fe970c598c56d26",
+          "bytes": 18400
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/render_check_v20.json",
+          "sha256": "2830031ca7884e79d8afa1128c2c08a51e27f01f57683889eaf57c5239850003",
+          "bytes": 7708
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/repair_log_v20.json",
+          "sha256": "d7e487afc3cbec487648cef39241823c1a4e8c6d6a88d5c871287472ae607887",
+          "bytes": 6025
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v20.json",
+          "sha256": "e7e1e992fd5dc3659b5668dd7feaf3c022973b043d5fce1e8c4f81dbc6d944d7",
+          "bytes": 56058
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/run_index_v20.json",
+          "sha256": "c92185ec06cad2bc13f534493cfff7ab68bd35f4f7052cea8b7aa7f46bb8c6fb",
+          "bytes": 110375
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/selective_merge_manifest_v20.json",
+          "sha256": "75731dc41fb416cfe23927ce5fd50aeefc426808ff0932cfbb5e14266d8e588b",
+          "bytes": 5543
+        },
+        {
+          "path": "docs/task042extra_feinn_5nm/outcomes/records/targeted_tests_v20.json",
+          "sha256": "dbf65c79c6c06c2e6fb0205f806aa3452acf604037c9fd9fa6b61b440e1bfeb7",
+          "bytes": 54079
+        }
+      ],
+      "precision": {
+        "float64_mantissa": 52,
+        "longdouble_mantissa": 63,
+        "decimal_digits": [
+          80,
+          110
+        ]
+      },
+      "operations": {
+        "new_FE": 0,
+        "new_solve": 0,
+        "new_factor": 0,
+        "training": 0,
+        "volume_action": 0,
+        "port_dot_diagnostics": true
+      },
+      "source_sha256": "7153b5734caf1a6d06c2ab8810eac77e5a191187edbd26223deb7d18c9bdaa62",
+      "limits": [
+        "Frozen binary64 input exact products only; not a high precision Maxwell solution",
+        "No original recovery gate replaced by boundary norm",
+        "No saved field, old alpha or old scientific status modified"
+      ]
+    },
+    "review_v20_port_backsub_audit": {
+      "schema": "review_v20.frozen_exact_port_diagnosis.v1",
+      "rows": [
+        {
+          "role": "O3",
+          "ports": 340,
+          "exact_binary_vs_decimal90_identical": true,
+          "original_stored_alpha_difference": 0.0002417005462908772,
+          "beta_change_relative": 2.37963362302833e-13,
+          "beta_change_max_absolute": 2.9834083967968013e-13,
+          "B_delta_relative_to_original_g": 7.488062023119583e-13,
+          "frozen_original_c_fe_residual_with_stored_alpha": 9.89739067354078e-12,
+          "frozen_original_c_fe_residual_with_exact_alpha": 9.92670902928406e-12,
+          "frozen_total_fe_residual_with_exact_alpha": 1.2689622862486755e-10,
+          "exact_alpha_norm": 5.543583315471756e+17,
+          "original_stored_alpha_norm": 5.543583209255137e+17,
+          "unchanged_c_sha256": "d46bd31748b55a706aeb018afec01354863efc55f4f4010ac95713acc5fad7c8",
+          "finite": true,
+          "scope": "DIAGNOSTIC_ONLY: no new field published, no old qualification changed; original scalar inputs are binary64, not exact physical integrals"
+        },
+        {
+          "role": "E3",
+          "ports": 340,
+          "exact_binary_vs_decimal90_identical": true,
+          "original_stored_alpha_difference": 0.0015566739462912862,
+          "beta_change_relative": 1.2728991853710046e-13,
+          "beta_change_max_absolute": 1.624423513204259e-14,
+          "B_delta_relative_to_original_g": 9.956957331488176e-12,
+          "frozen_original_c_fe_residual_with_stored_alpha": 8.445716305403494e-11,
+          "frozen_original_c_fe_residual_with_exact_alpha": 8.535842629832753e-11,
+          "frozen_total_fe_residual_with_exact_alpha": 6.870601106973138e-12,
+          "exact_alpha_norm": 1.0810217737019274e+16,
+          "original_stored_alpha_norm": 1.0810217691915394e+16,
+          "unchanged_c_sha256": "424a9ab3ea1ca68a2305f3cb6805c3530fde1e7a1e300c9f1844058e2da9d66f",
+          "finite": true,
+          "scope": "DIAGNOSTIC_ONLY: no new field published, no old qualification changed; original scalar inputs are binary64, not exact physical integrals"
+        }
+      ],
+      "worker_seconds": 1.8658356020459905,
+      "operations": {
+        "saved_volume_actions": 4,
+        "ports_reconstructed": 2,
+        "FE_assembly": 0,
+        "solve": 0,
+        "factor": 0,
+        "training": 0
+      },
+      "all_original_files_read_only": true,
+      "physical_field_accuracy": "NOT_TESTED",
+      "qualified_output": "NONE"
+    },
+    "review_v20_physics_audit": {
+      "schema": "review_v20.raw_physics_audit.v1",
+      "input_head": "f5ae072d09816b899002fc45460dc4cd1840e1af",
+      "bound_files": 186,
+      "bindings": {
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_O6_saved_lookup_20261004T015842297194Z/summary.json": "7076f3e03812453a7dc524009174bbba936af31c9696abaf6ed54ea864a84973",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_O6_saved_lookup_20261004T015842297194Z/supervision/worker.log": "bb4ff1f2d5a2331166899f3a349726c3d76afeae3ad42dac43bc498b0d5dac06",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_air_physical_flux_20261004T033348725920Z/summary.json": "efaf4a45127926e7e829f2198e1e99ea13c35a509d0fe204627faa8439d83463",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_air_physical_flux_20261004T033348725920Z/supervision/worker.log": "5e79c64b22b7d5be0644525d1ac65f0c03aaba130cb2fe6bedf5ee99a42e6c86",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_c_final_targeted_20261004T030727074600Z/summary.json": "a0dae0c713351a63bcc6b978dcb9cf0744cf228772e89626a784313d4a97497e",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_c_final_targeted_20261004T030727074600Z/supervision/worker.log": "9008adc2515a655814843197a1d3653cad5ad0f7eac8399ecf346f6420449850",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_c_negative_fixtures_20261004T030351410311Z/summary.json": "dbf2dd1425256fa5135e73eb3a0446f71f558c8fae6bddd14375d801f79b6d61",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_c_negative_fixtures_20261004T030351410311Z/supervision/worker.log": "fd28cc0ade2aec754277aa76b9ba505d1f80f1fe4eeda3c75bc94c1d5302f49b",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_c_saved_contracts_20261004T030324421899Z/summary.json": "44bbdc310a08a75112ac1b8aa6eb3505a4d3ed13f15c8213ae3885bfbc261c29",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_c_saved_contracts_20261004T030324421899Z/supervision/worker.log": "7ae13f136c8583934f403456e17ee36da589c1ec60420c3aef8e10c16124628c",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_checker_freeze_final_20261004T033447493583Z/summary.json": "2481d8ab56ccc5cd9b0bc24f5f7b983d7b0ca7a617e47e576a8b752be3078d07",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_checker_freeze_final_20261004T033447493583Z/supervision/worker.log": "d0df4bea974cf9ed58f5820deb2aaa38898d7cec70d82e542d53f399a23bc0a6",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_checker_schema_fixture_fix_20261004T033558082365Z/summary.json": "f4074c8ab240580a658b1e26afb156efa4c087adc494e1d703539f17804a8700",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_checker_schema_fixture_fix_20261004T033558082365Z/supervision/worker.log": "30c82438d5429e008d57b1a2689e0bdc75ccdc3d986b9b71c4ca713f712736a6",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z/summary.json": "b77e788b743d99df651fec7b489a98c763f1d5e3f684ba46d0844b5d5030a395",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_compact_collect_20261004T034057692662Z/supervision/worker.log": "af8808296dc94f2a72523ee45cf0c62880f6044227347da36ca1b0e799158dd2",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_control_metadata_fix_20261004T020334172346Z/summary.json": "ed75692f8829710296cadb107c730762cb09ca8aaae2eddd2cc96824cbc1728a",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_control_metadata_fix_20261004T020334172346Z/supervision/worker.log": "4b08de413d25957d754715da40ae13d4c56fc7ca66ed57c359ee6f04395820d1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_analytic_maxwell_20261004T015403147982Z/summary.json": "41e16c3298e90f1ea66b7e195d68b1931ad5125a01f75cf1d3dc8d0f164eebf1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_analytic_maxwell_20261004T015403147982Z/supervision/worker.log": "d62a8109099eb254ea787e76cf82da89e3efa6d423fb220bf9df9953e25f6ac1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_contracts_20261004T014723743817Z/summary.json": "5963118623822de4d2a10f3c907c7046726cf6e27e8d278b4706b366a32d4340",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_contracts_20261004T014723743817Z/supervision/worker.log": "fdbea69a2189e4a1722abadda5c0ce102d5a19bb12efe4b54113643c0d517145",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_adapter_20261004T015000974429Z/summary.json": "fa81589c9d378a3400d91b91172e257c46b7f2ff1ada560d94647307a57c4cb7",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_adapter_20261004T015000974429Z/supervision/worker.log": "6cc27afc457923868d569ee43ec38add5073f4c7dd9bcd73c1adc1939024219a",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_construction_20261004T014756001635Z/summary.json": "18acc353075a4d34af9e57bb326facc3c8909b2fc6a0759a3a1e68646e9183b7",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_construction_20261004T014756001635Z/supervision/worker.log": "6b41af1c952e6a95827cc62a4b8e73e5db035b1e63c764297668087f5f9ef303",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_construction_repair_20261004T014910397021Z/summary.json": "ead2906e949333fe4adb98daf22ffa4e41a924e911e9ecf9f35b13181799914d",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_construction_repair_20261004T014910397021Z/supervision/worker.log": "c842322567cc59e6e86b2228db0a716bb06757a4a9486e5f6dcc542c301f29bf",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_mode_adapter_20261004T015144392685Z/summary.json": "d46312610b27dfd7ad1024af5d5146a8f6e4e4c0caa2dd18de86b57db411f03c",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_mode_adapter_20261004T015144392685Z/supervision/worker.log": "c6dfde3f9bcc0d41df6a577e59abe1633603cb8f3e01b81b8a9ad8e61bb6442c",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_schema_complete_20261004T015103769300Z/summary.json": "5205e9aef7f507435aa06841b8833c1741d331574c0ca57b8c856b5336ed8c2a",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_fe_schema_complete_20261004T015103769300Z/supervision/worker.log": "edc5a946841d98ee9a70888fd93cf60df91ea58960bd62e05cf8fcedca52a45c",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_independent_forms_20261004T015220424777Z/summary.json": "9ef85c971568a2dc19a679c622b3ec6203314aacfd31068469475d178ba01914",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_independent_forms_20261004T015220424777Z/supervision/worker.log": "35d3d75ca4ce3f4f39e00732388567ea0be4070895c9026e9e830127c6a67254",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_material_routing_20261004T014858895819Z/summary.json": "a90ea76f6771335e1f477e672b8f75c62dfa9ce24c48c6b480c52684acecdfb0",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_material_routing_20261004T014858895819Z/supervision/worker.log": "31b00a979ae974daa101b934ce741018479f392b633e0916def4d50f435682ae",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_physical_reconstruction_20261004T015638458666Z/summary.json": "deb72caa383c739fc885dbfb139d724c609942350f6aae733b8f0b80d507a181",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_physical_reconstruction_20261004T015638458666Z/supervision/worker.log": "d62a8109099eb254ea787e76cf82da89e3efa6d423fb220bf9df9953e25f6ac1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_ufl_vector_fix_20261004T015248654381Z/summary.json": "ddcae232cb99e56bd8da6eba5fa5d160d659f3699ae261c28b8423849898bab3",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_dev_ufl_vector_fix_20261004T015248654381Z/supervision/worker.log": "406791179d421e349307d849ec132044aaffdd79d100863470b8d135bb1182ca",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_mode_targeted_20261004T033245568998Z/summary.json": "886f6b47c27e29277c6f85c37b291ed99282f8a5162b17ddf8bf5822216aa43b",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_mode_targeted_20261004T033245568998Z/supervision/worker.log": "467aae21647bbcfe2e7b5b1a2db80fe8e4964337ea22d3542e5022a9c6adb52d",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_pure_tests_20261004T015537328818Z/summary.json": "5218fab40a2387ddc8122244d42497734404b69efac185ac040642c125b0df8b",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_pure_tests_20261004T015537328818Z/supervision/worker.log": "0341ef7a0a8e440f13758e06e1ab09a4adf5a30d037dfc9ee06d78d000914286",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_format_final_20261004T015457564003Z/summary.json": "b1c2a5d45fa6bfcaae6b808e814652ea4a9c42ec3dfaa639677a7cd02499ea43",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_format_final_20261004T015457564003Z/supervision/worker.log": "74d24646bf55a9a2b4f259991888ed0938166ca56fac74117eccc31447ed72f4",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_format_fix_20261004T014948800201Z/summary.json": "4b11145fff50e7145d7a28bef5eeb13f68543efa9da9803a8b525608e81d083d",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_format_fix_20261004T014948800201Z/supervision/worker.log": "1f9912f4ae8ba0a943435ac12aefb28c780434e1b20ddb8f8397e88b2f2a3734",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_freeze_checks_20261004T020051756795Z/summary.json": "40aa4c2cffb36e2c42f6eb2c1ba5b95f848a68d7993ed6f72cca18a20821a952",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_freeze_checks_20261004T020051756795Z/supervision/worker.log": "f42107c594d7bc8adb4bae829d6ec4a5911e0245d2312c96822d0b7bffa2f8cd",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_freeze_final_20261004T020121616699Z/summary.json": "d7b0f3a34c3c83a07927711446cc01d774d9b6920983bd64659820323f05f4b0",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_freeze_final_20261004T020121616699Z/supervision/worker.log": "3675608513dcab6cbc4beb7bd6428a03163018007b3a734657342fbdbde07de7",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_freeze_metadata_final_20261004T020705165739Z/summary.json": "2e903ebab36509cf0d8813a748af2128bad79664d55e473469d710410ac176f5",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_freeze_metadata_final_20261004T020705165739Z/supervision/worker.log": "4b08de413d25957d754715da40ae13d4c56fc7ca66ed57c359ee6f04395820d1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_input_extra_checker_20261004T015907317863Z/summary.json": "c3a46973f6f16923395e870a0fed678cccb59b72844adcfa5b81f1460b7f708b",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_input_extra_checker_20261004T015907317863Z/supervision/worker.log": "7c8b1416d84da1a346e3a5b234d812fc1b9e44e6aef6b3ffff3521ab2d06796c",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_lint_20261004T014924535744Z/summary.json": "dac4bdc3d3f1b92edd73a879ee50e2b2a562ecd54bbdb05ba7b5867a77d22ad7",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_lint_20261004T014924535744Z/supervision/worker.log": "eb09875eecffb8a7683a8b16ee66f7b5d1bb2bac53b62eeb32e056288962600d",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_lint_import_fix_20261004T015035256102Z/summary.json": "5308671120f62edab50778791a83bade544d3f6ebd37d04d5c3735cc9541aa71",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_lint_import_fix_20261004T015035256102Z/supervision/worker.log": "d2e543fd93bb1e67ee11128ac4ada86743077e4e4d38acfa114ca32750fa2337",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_material_identity_20261004T014814778789Z/summary.json": "71a3c49ccbccc6eba99ed4ad8d03f598dbeef36ee7110b45c64bf6c90684fab8",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_material_identity_20261004T014814778789Z/supervision/worker.log": "5ad8b410d1e919cd9055547da465ba5b7ce309baa4696f14f9e2f7ad55bd8ade",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair1_air_residual_20261004T021206041847Z/summary.json": "b6f6e2c6d27cb3fba11282dd39d3e4f6e9e4a4ca5b8be97f1206f9f45557aaa0",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair1_air_residual_20261004T021206041847Z/supervision/worker.log": "339cd69abe99e28102e7a639f7e736dce37c701e40d6796e25759f22c481b793",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair1_contracts_20261004T021317970402Z/summary.json": "84994d5929737c358b752ba1d4c7ab45faa7cc3633d3251ace2ea8340ae8f242",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair1_contracts_20261004T021317970402Z/supervision/worker.log": "b2bb7c736fd764c58b5c084c02be00c2655a150d19312641f7648c97349df7df",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair2_contracts_final_20261004T022514786874Z/summary.json": "242a9cd9e7d200b0f028d3a93e4a7cc4a87562543e62cce01b2b45946873bc4b",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair2_contracts_final_20261004T022514786874Z/supervision/worker.log": "5253e80b353eafb2bccda07d101ced479115b8bc5629c309ae9b4ac661d72a5f",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair2_port_and_partial_final_20261004T022500305331Z/summary.json": "af74dab220d097403ffe5e3a45842bf45ee5f76a617886b6781f81b1cf1b8857",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair2_port_and_partial_final_20261004T022500305331Z/supervision/worker.log": "8b270750318c7246402c0a78f495c7f173fe7c79839f0a802065bb9e35ae1749",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair2_port_coordinates_20261004T022256569411Z/summary.json": "f0de4929b4a4d1f510214f1082bdea2f04150006a1bdde76536f04cdf8c15f7c",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_repair2_port_coordinates_20261004T022256569411Z/supervision/worker.log": "a6937c336950cd459bc590560a715f9bb6be80f97567f7978864bc21c207b765",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_zero_rhs_regression_readmit1_20261004T030554826705Z/summary.json": "c39f2ab94d51e912d3a0faffd6cbf5a0d20fd2a469d4a24eb5ea7058015524e9",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_zero_rhs_regression_readmit1_20261004T030554826705Z/supervision/worker.log": "26b3f000d277d511b5a69c3aea6ced58dfa0d66ed726b6879339f46c6152a6f2",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_document_contracts_20261004T034742880146Z/summary.json": "086a3f2ba1bae0e03b2e33a91d9a86e3bceb619e3e0a274fdc1e765e34ce1fa9",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_document_contracts_20261004T034742880146Z/supervision/worker.log": "02021e4f8d38a3a15d7af3b5cfa14e7d24ed1b91473de95218a3b63118158efe",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_document_contracts_scoped_20261004T034823267977Z/summary.json": "73b1cdd74a2afd2b539717d67df75d51486c994992a865b4de517f8eb3558819",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_document_contracts_scoped_20261004T034823267977Z/supervision/worker.log": "fb5cb7243feea2e5943956db0dedc1a095009d6bc60bf1c449de5455539e8cca",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_document_evidence_20261004T034622030951Z/summary.json": "bbfd23adc59e9d09de435dd6052e0eb179390e7480d9c5698706f3e5241afc23",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_document_evidence_20261004T034622030951Z/supervision/worker.log": "b8cd72fed34758cf2d75e5169554aaf46900097e1931134875c3db785eba8dbb",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_document_contracts_20261004T035038647196Z/summary.json": "6a289f16f7e05b1f80f6619a1a3305dcf0839ea61b4839043aa2837713752b56",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_document_contracts_20261004T035038647196Z/supervision/worker.log": "e0131c81cee173c688b5eaa6f68d89af87677aaa8c04e1cd40ae650461d8df78",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_record_binding_20261004T035011169557Z/summary.json": "e1f7ec526aa8dace12e294b20e749e3831c2e2ac25f2505e965aa3c5607e7cb7",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_record_binding_20261004T035011169557Z/supervision/worker.log": "8af625127da76b461e412741dead9baf1dcdf002ae248fc8a5a5f416af756a75",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z/summary.json": "9516c4e723e7959c0c254d299e42dab9f1ab5fa44990ad4b8024d356a50cf80a",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_final_metadata_seal_20261004T040137842322Z/supervision/worker.log": "a058d2a759906e5b281e6ca980ca275f6402713677249006510bd1a24a69b30e",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_formula_document_repair_20261004T035445236360Z/summary.json": "692d2a6fdc6177d3559bc79cb0ab4c8bc4dd4434e21b64b8b672ba3a5b7e4bd3",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_formula_document_repair_20261004T035445236360Z/supervision/worker.log": "23a3e968694b0c9ae74913117f4ca026b29db958869385fcd2e3b9d007602fd1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_github_render_20261004T035226070355Z/summary.json": "9a66b6667556b12457189275856dc80d1c666654c199cad9d9bb33fe015e3216",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_github_render_20261004T035226070355Z/supervision/worker.log": "bbeb81d2c6ac8fe0a2fd488549a66392cfd5668503491a40d73881ee549285c1",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/summary.json": "bcfe09f7379768e9e5b5eabc05892a67983ca57dee60914e9c5b759ef54b3869",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/checks/v20_github_render_macro_fixed_20261004T035538720455Z/supervision/worker.log": "4aa44ca5174f63979eb6a7d1b7a5e5386b368a96381a6ad1b99bf5c1acb22bb2",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v20/new_window_1.json": "9c0b098aa3fe1f51fabcb5c573e568cb11fa59413bc36b7089255b17eddc417a",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/resource_costs_v18.json": "42dc142ae0672294ed744c89a11799899cfeb8a3fd1bba7dee4266622dd28405",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/closeout_receipt_v19.json": "217e85e355bde95236336376c2b1e4a4213b1abd6f7780c1d90a921275befe5e",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/records/review_v19_evidence_audit.json": "2885fa63dcbc473266b31a19be6af9e9be27ce309c4c002f010dc81138ca69d8",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v20_saved_checker_attempt1.json": "c559259c3e6ce544888d1c84555a2b2e7fb8847f3b5bc3065415aae48a591640",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/review_report_v19.md": "8aa986d336e9d7410a2039568f109d73f2571c385886b1e5fecca2cbdae80dd4",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_published/render_records.json": "e47d3869c631619f84198318c5261bcae213e8602748c26c1d8d8c117235a789",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/render_records.json": "a342603db7581ba606960a5e90f4c48d7d526899555882a23b0ebacaa42493a2",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/00_top.png": "cd882482379f18cb9e725660f48464608270d4e5295fe0445c84b28c1e711cc9",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/00_table_00.png": "0f3c5c90c2cfe15905c580d2facf0d4c313e3462015efa16a156abd11c221c3b",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/00_table_01.png": "e49ad9cf62157765783545e9dcfd7c7e7bf4df9e612a6444e413cf1e02373a76",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/00_table_02.png": "380777bb5472d34066ca6d3ec1f34866c7b90394117ae4d203f0fe3d833a177d",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_top.png": "b3594941c04c93b2555f111d2a66aee322d1f7fe4f0d236b0dda38b6b1b9b6f3",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_table_00.png": "1afc2e049179d5fc57ffa6c2f402157caef9dd89ba403a634466b7284b99d9ef",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_table_01.png": "b57f91b3a93a5f099faff8f22cbe5610ea8a26fd3397c3936ad7156a3813d0d9",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_table_02.png": "9435356412aa1dd546f726404817df7a3d37cead44d251d97272435e644f8efd",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_table_03.png": "c0ad1570be208e26d2cb37d4f3b81460b108f8ade6ad71108dec81fc7b736801",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_table_04.png": "5c5b5159ebf2f16eb6902679ceb5c7fce8a9746693d11a179b26d86c7e0115fd",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_table_05.png": "c61ce1db894a206b4eae65ff68cefa174b066817190b2dd8e13a1b8f630e8cac",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/render/v20_macro_fixed/01_math-renderer_00.png": "c183b87a2d2c6af16a61198133809642e7ecee8ac43a28522b96605c0ecd6863",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/response_v20.md": "4af8be8f44261f400aa3728738dd006a7ef6999625f84db56037f045ed26d610",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/phase_adapted_fe_v20.md": "9100c55f9d8041caff632cc785bcd531878a13cef0d932f6e9ed8052371d1b69",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v20_phase_qualification_attempt2.json": "647e0eb262efa5f6681221eeaad9ba6bc5d35adc2b7940e3dda0ae7a29af1c8f",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v20/air_physical_flux.json": "6f7aa999a0450309c4a3f36a2d4cf0600417c143e7558d7eba7039faca0d5c1f",
+        "/home/fenics/Projects/NN-Lab-V2/src/test/test_fixed_phase_air_flux.py": "ca77034de049409b32c27eafbd3a4a1ce25dc6573a81475b789e21e9b38719df",
+        "/home/fenics/Projects/NN-Lab-V2/input/task042extra_feinn_5nm/design_v20.json": "b42aefb4028db68605f2349c3cfbc33c568924c6a2cdd382f6e04e2f9b6f2676",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/identity.json": "b5494717a0392302d4b1bcbe0e5f7375402e96d59fb859343375c09b7cb352c1",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/identity.json": "b39c0707ddadb9b59d9090ff0b3bb11465990b2d5258a4196f6ce3ac0bcf99d8",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/identity.json": "11772b2fc31c815b1faea78411a4bf3dc428f1d652d0d0713a69b5031dc7a509",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/README.md": "ca31bb6d37edf548cf97eb9f2a85ce973a34c857b35cd4f365e3d686e1293b39",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/summary.md": "46a4499384910b37e319667e66a16ef5b8f1841a04a68f50abeaafce8596527f",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/test_summary.md": "b2de88cf15708d29caa29d1be15781741aa50d19b5be4e944d42f13af2d5feca",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task042extra_feinn_5nm/outcomes/changed_files.md": "d01ee8eb61900d42a74ee916b9804f12fa1d2a4900a95ed3d634093be473804a",
+        "/home/fenics/Projects/NN-Lab-V2/docs/development_progress.md": "e9e2b3b9969e8f3b9cd147d4ff3f8bd1e2e63740fb8854fe41717f05733875e1",
+        "/home/fenics/Projects/NN-Lab-V2/docs/development_model_registry.md": "d282196b0a7c793d169d931990ba4f596287a43d50b1037903cd6af7eb8d0208",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v20/document_checks.json": "64d3e1c7e8381a9f49b49486fb261188196feb3f525e75693c0309304f3539d0",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/run_manifest.json": "69468d636c765b33d5af6c333a6afe609422efa94f7c457f88e8755e61d868aa",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/run_summary.json": "b4322ad977d1df8acd22b1faaad7bf94c3d9e2b7c6f426c846831caf66be6b66",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/events.jsonl": "f58f1461998a4186ec04884c8ecaa441f4fd020a42c8ed9815bc9c9517650c9e",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_control_checks_20261004T020228363071Z/result.json": "eae07acc9d59cfaf5ac843f6776ef005fb5b91a2679f51ec554d841cd9f1216d",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_e3_20261004T022926144000Z/run_manifest.json": "288f47c92b2843d0faaf642610e2c63e152851ececea9e60324fdc7bf7ca37dc",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_e3_20261004T022926144000Z/run_summary.json": "e8b60851b5979cf45e81a26eaaefc57c7ca3b56cadd7aa0e0846bb347261a5dd",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_e3_20261004T022926144000Z/events.jsonl": "5d45ff2511bac0f504f16869fe14fdad279331b74e3a1cbc723682612f7bcf21",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_e3_20261004T022926144000Z/worker_failure.json": "cbf128bbb7d31eb9249d8365f18e31ef033e39c65c84c625b42e742ed5894126",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/field_state.npz": "d95fb546834f09ea2d05209010b8c93a7d2066f9c947958e7b7af8512e82f1cf",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/native.npz": "5b153fe537ee38b7c2394923c5da2611cfadbb90e4dae5386732df797aa6cc37",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/condensed_csr_recovery.npz": "ac10e8546bfe7436cd6e8bf1a5949d4dfb537caa9671e8cf55e81a3c521429cf",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_e3_20261004T022926144000Z/boundary_coordinate_csr.npz": "a08cc96eb7df4d6dcd3580e752db9a82500d8895b172f67664c2e0a0d0881263",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T021625611145Z/run_manifest.json": "be9ae6d38422826a325c6ca083fdcb13b14d59eff281f888fabcd235b2d19733",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T021625611145Z/run_summary.json": "ac6f238c4cc23ba9c30a29f132a9318593de657490a45ccb836b276b49e4b2b5",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T021625611145Z/events.jsonl": "e82cbe11c152763a9b9732536695621c6744b78486d276f59b7577fa22ad994b",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T021625611145Z/worker_failure.json": "f8bbf2eb62a6dbbc0c9ff749f17a0b0e52340c8b386e9829150387735f46b0cd",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T021625611145Z/native.npz": "639cebc3a5d093405226dd8deea4e632c81530b8dd60b1d1d3e72397180b54b9",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T021625611145Z/condensed_csr_recovery.npz": "fee68ed0bfa8be957d8593dd72bdf43eee7e0edd619b27ea02ecf4da1248b62c",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T021625611145Z/identity.json": "361ec2d437d97ae614fed7b7d4f4b4b79593325c43bf4fc955f4250ba9929fd7",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T022559061402Z/run_manifest.json": "6b7d5727ab9bf3aa6398678ac093de2088152322cbc9926d5a2f4126535291a5",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T022559061402Z/run_summary.json": "515f2f3efc69d5a70618ad5beb0fe0fdeb93ac74bad1db7933b41335e9c6af7c",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T022559061402Z/events.jsonl": "5fb524aa7ab3e6846f4fe68e2e20ffd2ae545cd96bbc5ece1f165695d21e939f",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o3_20261004T022559061402Z/worker_failure.json": "7bedc62f804a671d48afc017bd3d6b23f8d5a5e548ec4b9109e69a3e6bbfdcd7",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/field_state.npz": "4e00c42335cd179529c88bcea2c8e4b8a5b27cf3bc415a4611fd9957c6dbac42",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/native.npz": "639cebc3a5d093405226dd8deea4e632c81530b8dd60b1d1d3e72397180b54b9",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/condensed_csr_recovery.npz": "fee68ed0bfa8be957d8593dd72bdf43eee7e0edd619b27ea02ecf4da1248b62c",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o3_20261004T022559061402Z/boundary_coordinate_csr.npz": "dbc396f86996fb52847c880c7125d744875890c603f6928910ab567bc1d7fbe5",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o6_20261004T023256068972Z/run_manifest.json": "ce3ef782630e38eedd3cc7f877cf68b7254664809e3c58a106cc4f6fa51f2cbc",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o6_20261004T023256068972Z/run_summary.json": "8a94807eda8bf882124bdaef57cf3f59567f6111da717c902defa0968f9baee2",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o6_20261004T023256068972Z/events.jsonl": "3123acd6168c399b2e628ce7fb01b673bbee2315794eddb847306175bae84c6e",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_o6_20261004T023256068972Z/worker_failure.json": "ddd97bcf701dc345c0578e60359c4b23974c246c83024d4d4ef6a01cc4975139",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_o6_20261004T023256068972Z/native.npz": "dcbb858703562ee91c0cd318f7032400522eb1daa61d829dfba02b76338ccba1",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/run_manifest.json": "0a0ad55f689ad16a08baaf14db46100f9480a40624ed3a8fdea97d46cc5510e6",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/run_summary.json": "95906653d5eb2147009470b775ee9a0990ee4b6768f9fd2421d5a2c57abc90c5",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/events.jsonl": "d3764a3daba997f1a7fc4ac1cf4c1cdf480de9a7ca40ae59d5f447537a35aa23",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_phase_qualification_20261004T020747732671Z/result.json": "e772942988a011dbbf8b6b312d0bc974d8182f131252b20f182652072fef97e9",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/run_manifest.json": "c7b26c318f51c3d4570f1d72e336fde440305d7bad3ac3324e8f2594060341a1",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/run_summary.json": "95cba61f99f239b2591a5cedc3fad89d93c3c72e2a72e8ff116f34102c7dc0ce",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/events.jsonl": "b16cee2d65fff401d7b241a1aa69cda96673bc3f74b8dd0f7eb016ef801b019a",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_phase_qualification_20261004T021334646405Z/result.json": "bb55918f1b90a86950990bb72790ce04e19f52c3a273d58b3f16ec51bc90c6af",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/run_manifest.json": "1927cd981fe2a681557753117a8b15f8ed68b1a023243488b34d5c08d9dfc51f",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/run_summary.json": "7a0a722a4cded179e1f03eb0845f0dfe1516ef5ec9543eb84759cf696c7fd7c4",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/events.jsonl": "5c4aae9d2cde0ab42317be8768377ff6bb10f7b313d203d0256bca6a99ae984f",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/comparison_integrals.npz": "d8e368911d4fd29731c703236fdfc6406f4494363da0b12c5620a3db2edd5dce",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/result.json": "ca78f7bf81da12d82c399aea508f08694c9306b28c34a15551cca4cae3d14e77",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/role_indices.json": "4636ebda221a8bfe080dac14dfcb3f545a1b7bcf73b33be25bc967248df89c04",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/run_manifest.json": "7045c1ff4cd23f51fe1df2517c30a71be65fc1c749fbb29a09570c887e0e6972",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/run_summary.json": "84aa7277d65d5ae692578a0b1716ff810bf5862e3ceb132704a373b18c95daf1",
+        "/home/fenics/Projects/NN-Lab-V2/results/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/events.jsonl": "550a19ca1cdaf14549c0ab8957da26dffe9794bd798a1d95b44e4706c551c25e",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_saved_checker_20261004T034019066959Z/result.json": "379db69b904202fea780e4bac6bcf97a46ef298b118079a0ab1cb16032d7e876",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v20_physical_compare_attempt1.json": "d3adbabdee8ff687fa550e33ffdeded6e81282b782a6ae85175d183f4989e9d7",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v20_phase_qualification_attempt1.json": "b0ea40de077b5fa34e9dca48f8ff1a4462b79ef3b031281547a8e64a74622422",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/index_v20_control_checks_attempt1.json": "bda52fd7b7a856fdbfb99ff303d36f1c49aa63767a98112c8e69865fb9b394cd",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/setup/fe_abi.json": "79beaa5362e1f24c5daa05ed77e622086b4c21bd0b87a8847807fd38c852f4be",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v20/O6_lookup.json": "ee7befcf5ae670789894328334cd2accd548e4ba452bbdc1f139c3a7fb7fe36d",
+        "/home/fenics/Projects/NN-Lab-V2/tmp/task42extra/v20/Gx784_optional_lookup.json": "07b199aa6d24181c1b21d862d786866a8b7520f0b6e60464d5a170dd279dfc6b",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/saved_negative_O3/observables.npz": "c2115def155b082fdefb08c74c47e820302cdab27a4893aa3a7ee11f12b2a2eb",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task42extra/task42extra_v20_physical_compare_20261004T030757807555Z/saved_negative_E3/observables.npz": "196539a8acba6ca9324fd0fc6a8a9004c735c36ffeb287ed39938cb2723cf6ab"
+      },
+      "physics": [
+        {
+          "role": "O3",
+          "R": 0.9999742561941374,
+          "T": 1.661957963582771e-05,
+          "A_volume": 9.124226701676728e-06,
+          "energy_closure": 4.74953409934642e-13,
+          "minimum_unclipped_power": -3.869734224463185e-23,
+          "norms": [
+            0.2776750644287179,
+            0.2832695366906507,
+            5.854944212185264,
+            5.9141415350984365
+          ]
+        },
+        {
+          "role": "E3",
+          "R": 0.0761265836364785,
+          "T": 0.9057668087268693,
+          "A_volume": 0.01810660764084269,
+          "energy_closure": 4.190425784145191e-12,
+          "minimum_unclipped_power": -2.6312670699416544e-28,
+          "norms": [
+            6.242118729661892,
+            6.241551233371391,
+            0.8963409048667212,
+            0.8962472274187464
+          ]
+        }
+      ],
+      "all_csv_recomputed": {
+        "channels": 680,
+        "samples": 12,
+        "regions": 24
+      },
+      "common_subcell_squared_integral_drift": 3.392747994208756e-12,
+      "full_repository_unchanged_files": 4717,
+      "FE_solve_factor_training": 0,
+      "saved_fields_unchanged": true,
+      "qualified_new_field": false,
+      "worker_seconds": 2.3423074829624966
+    }
+  },
+  "reproducible_read_only_scripts": {
+    "review_v20_saved_audit.py": "\"\"\"Read-only saved-array diagnosis; no FE imports, solve, factor or training.\"\"\"\nfrom collections import Counter\nfrom datetime import datetime, timezone\nfrom decimal import Decimal, localcontext\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport re\nimport subprocess\nimport time\n\nimport numpy as np\n\nROOT = Path('/home/fenics/Projects/NN-Lab-V2')\nTASK = ROOT/'docs/task042extra_feinn_5nm'\nSTART = time.monotonic()\nassert os.environ['TASK42EXTRA_ENV_MODE'] == 'pure'\nassert all(os.environ[k] == '1' for k in ('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS'))\nHEAD = subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT).decode().strip()\nassert HEAD == 'f5ae072d09816b899002fc45460dc4cd1840e1af'\nOUT = ROOT/'tmp/task42extra/review_v20_saved_audit.json'\nassert not OUT.exists()\n\ndef sha(path):\n    h=hashlib.sha256()\n    with Path(path).open('rb') as stream:\n        for chunk in iter(lambda: stream.read(4*1024*1024),b''): h.update(chunk)\n    return h.hexdigest()\n\ndef bind(entry):\n    p=Path(entry['path'])\n    if not p.is_absolute(): p=ROOT/p\n    digest=sha(p)\n    assert digest==entry['sha256'],str(p)\n    return p\n\ndef load_np(path,keys=None):\n    with np.load(path,allow_pickle=False) as z:\n        return {k:z[k] for k in (keys or z.files)}\n\ndef rel(a,b):\n    return float(np.linalg.norm(a-b)/max(np.linalg.norm(b),1e-300))\n\ndef complex_json(z): return [float(z.real),float(z.imag)]\n\ndef decimal_recovery(a,c,j,precision):\n    mask=np.flatnonzero(a['dp']==j)\n    with localcontext() as context:\n        context.prec=precision\n        real,imag=Decimal.from_float(float(a['gp'][j].real)),Decimal.from_float(float(a['gp'][j].imag))\n        absolute=abs(complex(a['gp'][j]))\n        for i in mask:\n            d,v=a['dv'][i],c[a['dr'][i]]\n            dr,di,vr,vi=[Decimal.from_float(float(x)) for x in (d.real,d.imag,v.real,v.imag)]\n            real += dr*vr-di*vi\n            imag += dr*vi+di*vr\n            absolute += abs(d*v)\n        h=Decimal.from_float(float(a['H'][j]))\n        z=complex(float(real/h),float(imag/h))\n        numerator=complex(float(real),float(imag))\n    return z,float(absolute/max(abs(numerator),1e-300)),len(mask)\n\n# Refresh every tracked path, byte hash and text navigation after compaction.\ninventory=[]\nfor path in subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\\0'):\n    if not path: continue\n    raw=(ROOT/path).read_bytes()\n    item=dict(path=path,bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())\n    if path.endswith(('.py','.md')):\n        pattern=r'^(?:async )?(?:def|class)\\s+\\w+[^\\n]*' if path.endswith('.py') else r'^#{1,6} .+'\n        item['navigation']=re.findall(pattern,raw.decode('utf-8',errors='replace'),re.MULTILINE)\n    inventory.append(item)\nindex_file=ROOT/'tmp/task42extra/review_v20_repository_structure.json'\nwith index_file.open('x') as f: json.dump(inventory,f,ensure_ascii=False,indent=2)\n\nindex=json.loads((TASK/'outcomes/records/run_index_v20.json').read_text())\nphysical=json.loads((TASK/'outcomes/records/physical_comparison_v20.json').read_text())\nrows=[]\nfor role in ('O3','E3'):\n    run=next(r for r in index['runs'] if r['role']==role and any(x['path'].endswith('field_state.npz') for x in r['artifacts']))\n    paths={Path(x['path']).name:bind(x) for x in run['artifacts']}\n    a=load_np(paths['native.npz'],['dp','dr','dv','H','gp','masters','background','background_alpha'])\n    state=load_np(paths['field_state.npz'])\n    coords=load_np(paths['boundary_coordinate_csr.npz'],['phase'])\n    phase=coords['phase']; c=state['c_scattered']; saved=state['alpha_scattered']\n    d=np.zeros(len(a['H']),complex); np.add.at(d,a['dp'],a['dv']*c[a['dr']])\n    raw=(d+a['gp'])/a['H']\n    dl=np.zeros(len(a['H']),np.clongdouble)\n    np.add.at(dl,a['dp'],a['dv'].astype(np.clongdouble)*c[a['dr']].astype(np.clongdouble))\n    extended=np.asarray((dl+a['gp'].astype(np.clongdouble))/a['H'].astype(np.longdouble),complex)\n    order=np.argsort(abs(raw-saved))[::-1]\n    modes=json.loads(paths['identity.json'].read_text())['modes']\n    worst=[]\n    for j in order[:12]:\n        hp80,cond,count=decimal_recovery(a,c,int(j),80)\n        hp110,_,_=decimal_recovery(a,c,int(j),110)\n        assert hp80==hp110, '80/110 decimal guard digits disagree'\n        worst.append(dict(index=int(j),mode=modes[int(j)],terms=count,\n            frozen_saved=complex_json(saved[j]),float64_recovered=complex_json(raw[j]),\n            extended_recovered=complex_json(extended[j]),decimal80_recovered=complex_json(hp80),\n            decimal110_identical_after_complex128_rounding=True,\n            cancellation_sum_abs_over_abs_sum=cond,\n            float64_vs_decimal_relative=float(abs(raw[j]-hp80)/max(abs(hp80),1e-300)),\n            extended_vs_decimal_relative=float(abs(extended[j]-hp80)/max(abs(hp80),1e-300)),\n            saved_vs_decimal_relative=float(abs(saved[j]-hp80)/max(abs(hp80),1e-300)),\n            boundary_absolute_difference=float(abs((saved[j]-hp80)*phase[j])),\n            H=float(a['H'][j]),boundary_phase_abs=float(abs(phase[j]))))\n    baseline=physical['physical'][role]['port_coordinate_observation']['original_coordinate_relative']\n    assert abs(rel(raw,saved)-baseline)<1e-14\n    rows.append(dict(role=role,source=run['source_sha'],native_sha256=sha(paths['native.npz']),\n        field_sha256=sha(paths['field_state.npz']),original_recovery_relative=rel(raw,saved),\n        extended_vs_saved_relative=rel(extended,saved),float64_vs_extended_relative=rel(raw,extended),\n        boundary_recovery_relative=rel(raw*phase,saved*phase),worst_modes=worst,\n        no_field_or_alpha_overwrite=True))\n    del a,state,coords\n\nrun=next(r for r in index['runs'] if r['role']=='O6')\npaths={Path(x['path']).name:bind(x) for x in run['artifacts']}\na=load_np(paths['native.npz'],['masters','idofs','br','bp','bv','dr','dp','dv','cell_dofs','erows','eids','evals','classes'])\ninternal=np.searchsorted(a['masters'],np.unique(a['idofs']))\nassert np.array_equal(a['masters'][internal],np.unique(a['idofs']))\nsupport={}\nfor rk,pk,vk in (('br','bp','bv'),('dr','dp','dv')):\n    mask=np.isin(a[rk],internal); values=a[vk][mask]\n    touched=np.unique(a[rk][mask]); erowmask=np.isin(a['eids'],touched)\n    erows=a['erows'][erowmask]; dim=a['cell_dofs'].shape[1]\n    support[vk]=dict(entries=len(values),nonzeros=int(np.count_nonzero(values)),norm=float(np.linalg.norm(values)),\n        whole_norm=float(np.linalg.norm(a[vk])),fraction=float(np.linalg.norm(values)/np.linalg.norm(a[vk])),\n        unique_interior_ids=len(touched),interior_ids=touched.tolist(),local_positions=np.unique(erows%dim).tolist(),\n        touched_cells=np.unique(erows//dim).tolist(),ports=np.unique(a[pk][mask]).tolist(),\n        max_abs=float(abs(values).max(initial=0)),exact_topological_zero_not_proved_by_this_array_check=True)\n\ncompact_bindings=[]\nfor p in sorted((TASK/'outcomes/records').glob('*_v20.json')):\n    json.loads(p.read_text())\n    compact_bindings.append(dict(path=str(p.relative_to(ROOT)),sha256=sha(p),bytes=p.stat().st_size))\nresult=dict(schema='feinn.review-v20.saved-array-diagnosis.v1',input_head=HEAD,\n    observed_utc=datetime.now(timezone.utc).isoformat(),elapsed_seconds=time.monotonic()-START,\n    structure=dict(files=len(inventory),bytes=sum(x['bytes'] for x in inventory),python_files=sum(x['path'].endswith('.py') for x in inventory),\n        top_level=dict(Counter(x['path'].split('/')[0] for x in inventory)),path=str(index_file.relative_to(ROOT)),sha256=sha(index_file),\n        scope='All tracked bytes/hash/navigation; semantic reading is recorded separately, not every line re-reviewed'),\n    ports=rows,p6_support=support,compact_records=compact_bindings,\n    precision=dict(float64_mantissa=np.finfo(float).nmant,longdouble_mantissa=np.finfo(np.longdouble).nmant,decimal_digits=[80,110]),\n    operations=dict(new_FE=0,new_solve=0,new_factor=0,training=0,volume_action=0,port_dot_diagnostics=True),\n    source_sha256=sha(__file__),limits=['Frozen binary64 input exact products only; not a high precision Maxwell solution',\n        'No original recovery gate replaced by boundary norm', 'No saved field, old alpha or old scientific status modified'])\nwith OUT.open('x') as f: json.dump(result,f,ensure_ascii=False,indent=2);f.write('\\n')\nprint(json.dumps(dict(path=str(OUT),sha256=sha(OUT),elapsed_seconds=result['elapsed_seconds'],\n    ports=[{k:r[k] for k in ('role','original_recovery_relative','extended_vs_saved_relative','float64_vs_extended_relative')} for r in rows],\n    p6={k:{x:v[x] for x in ('entries','norm','unique_interior_ids','local_positions')} for k,v in support.items()})))\n",
+    "review_v20_port_backsub_audit.py": "\"\"\"Read-only exact frozen-array port diagnosis. Not a qualified field writer.\"\"\"\nfrom decimal import Decimal, localcontext\nfrom fractions import Fraction\nimport hashlib\nimport json\nfrom pathlib import Path\nimport time\n\nimport numpy as np\n\nROOT = Path('/home/fenics/Projects/NN-Lab-V2')\nOUT = ROOT/'tmp/task42extra/review_v20_port_backsub_audit.json'\nassert not OUT.exists()\nstarted = time.monotonic()\nindex = json.loads((ROOT/'docs/task042extra_feinn_5nm/outcomes/records/run_index_v20.json').read_text())\n\ndef ratio(x):\n    n, d = float(x).as_integer_ratio()\n    return n, d.bit_length()-1\n\ndef mul(a, b):\n    return (a[0]*b[0]) << (2148-a[1]-b[1])\n\ndef exact_ports(a, c):\n    cr = [ratio(x.real) for x in c]\n    ci = [ratio(x.imag) for x in c]\n    real, imag = [], []\n    for z in a['gp']:\n        n, e = ratio(z.real); real.append(n << (2148-e))\n        n, e = ratio(z.imag); imag.append(n << (2148-e))\n    for j, row, d in zip(a['dp'], a['dr'], a['dv']):\n        dr, di = ratio(d.real), ratio(d.imag)\n        real[j] += mul(dr, cr[row])-mul(di, ci[row])\n        imag[j] += mul(dr, ci[row])+mul(di, cr[row])\n    result = []\n    for r, i, h in zip(real, imag, a['H']):\n        hn, he = ratio(h)\n        denominator = hn << (2148-he)\n        result.append(complex(float(Fraction(r, denominator)), float(Fraction(i, denominator))))\n    return np.array(result)\n\ndef decimal_ports(a, c):\n    with localcontext() as context:\n        context.prec = 90\n        real = [Decimal.from_float(float(z.real)) for z in a['gp']]\n        imag = [Decimal.from_float(float(z.imag)) for z in a['gp']]\n        for j, row, d in zip(a['dp'], a['dr'], a['dv']):\n            dr, di, cr, ci = [Decimal.from_float(float(v)) for v in (d.real,d.imag,c[row].real,c[row].imag)]\n            real[j] += dr*cr-di*ci\n            imag[j] += dr*ci+di*cr\n        return np.array([complex(float(r/Decimal.from_float(float(h))), float(i/Decimal.from_float(float(h)))) for r,i,h in zip(real,imag,a['H'])])\n\ndef volume(a,c):\n    shape = a['cell_dofs'].shape\n    local = np.zeros(np.prod(shape),complex)\n    np.add.at(local,a['erows'],a['evals']*c[a['eids']])\n    local = local.reshape(shape)\n    values = np.empty_like(local)\n    for first in range(0,len(local),8):\n        section = slice(first,first+8)\n        values[section] = np.einsum('cij,cj->ci',a['F'][a['classes'][section]],local[section])\n    result = np.zeros_like(c)\n    np.add.at(result,a['eids'],a['evals'].conj()*values.ravel()[a['erows']])\n    return result\n\nrows = []\nfor role in ('O3','E3'):\n    run = next(r for r in index['runs'] if r['role']==role and any(x['path'].endswith('field_state.npz') for x in r['artifacts']))\n    paths = {Path(x['path']).name:ROOT/x['path'] for x in run['artifacts']}\n    with np.load(paths['native.npz']) as z: a={k:z[k] for k in z.files}\n    with np.load(paths['field_state.npz']) as z: c=z['c_scattered']; saved=z['alpha_scattered']\n    with np.load(paths['boundary_coordinate_csr.npz']) as z: phase=z['phase']\n    exact = exact_ports(a,c)\n    decimal = decimal_ports(a,c)\n    assert np.array_equal(exact,decimal), 'Independent exact-binary and decimal90 differ'\n    delta = exact-saved\n    def B(alpha):\n        result=np.zeros_like(c); np.add.at(result,a['br'],a['bv']*alpha[a['bp']]); return result\n    norm=lambda x:float(np.linalg.norm(x))\n    gnorm=norm(a['g'])\n    oldfe=a['g']-volume(a,c)-B(saved)\n    newfe=oldfe-B(delta)\n    # Total equation: a new volume action, retained original background, no solve.\n    totalfe=a['total_g']-volume(a,c+a['background'])-B(exact+a['background_alpha'])\n    rows.append(dict(role=role,ports=len(exact),exact_binary_vs_decimal90_identical=True,\n        original_stored_alpha_difference=norm(delta)/max(norm(saved),1e-12),\n        beta_change_relative=norm(phase*delta)/max(norm(phase*saved),1e-12),\n        beta_change_max_absolute=float(np.max(abs(phase*delta))),\n        B_delta_relative_to_original_g=norm(B(delta))/gnorm,\n        frozen_original_c_fe_residual_with_stored_alpha=norm(oldfe)/gnorm,\n        frozen_original_c_fe_residual_with_exact_alpha=norm(newfe)/gnorm,\n        frozen_total_fe_residual_with_exact_alpha=norm(totalfe)/norm(a['total_g']),\n        exact_alpha_norm=norm(exact), original_stored_alpha_norm=norm(saved),\n        unchanged_c_sha256=hashlib.sha256(c.tobytes()).hexdigest(),\n        finite=bool(np.isfinite(exact).all()),\n        scope='DIAGNOSTIC_ONLY: no new field published, no old qualification changed; original scalar inputs are binary64, not exact physical integrals'))\nresult=dict(schema='review_v20.frozen_exact_port_diagnosis.v1',rows=rows,\n    worker_seconds=time.monotonic()-started,\n    operations=dict(saved_volume_actions=4,ports_reconstructed=2,FE_assembly=0,solve=0,factor=0,training=0),\n    all_original_files_read_only=True,physical_field_accuracy='NOT_TESTED',qualified_output='NONE')\nOUT.write_text(json.dumps(result,indent=2)+'\\n')\nprint(json.dumps(result,indent=2))\n",
+    "review_v20_physics_audit.py": "\"\"\"Independent read-only CSV, raw physics, source and cost checks for review.\"\"\"\nimport csv\nimport hashlib\nimport json\nfrom pathlib import Path\nimport subprocess\nimport time\nimport numpy as np\n\nROOT=Path('/home/fenics/Projects/NN-Lab-V2')\nTASK=ROOT/'docs/task042extra_feinn_5nm'\nOUT=ROOT/'tmp/task42extra/review_v20_physics_audit.json'\nassert not OUT.exists()\nstart=time.monotonic()\nchecked={}\ndef sha(path):\n    h=hashlib.sha256()\n    with path.open('rb') as f:\n        for chunk in iter(lambda:f.read(4*1024*1024),b''): h.update(chunk)\n    return h.hexdigest()\ndef bind(row):\n    p=Path(row['path']); p=p if p.is_absolute() else ROOT/p\n    assert p.resolve().is_relative_to(ROOT)\n    if str(p) not in checked: checked[str(p)]=sha(p)\n    assert checked[str(p)]==row['sha256'],str(p)\n    return p\ndef walk(x):\n    if isinstance(x,dict):\n        if isinstance(x.get('path'),str) and isinstance(x.get('sha256'),str): bind(x)\n        for v in x.values(): walk(v)\n    elif isinstance(x,list):\n        for v in x: walk(v)\nfor p in (TASK/'outcomes/records').glob('*_v20.json'): walk(json.loads(p.read_text()))\nidx=json.loads((ROOT/'benchmarks/artifacts/task42extra/index_v20_physical_compare_attempt1.json').read_text())\nroles=json.loads(bind(idx['files']['role_indices']).read_text())\nwith np.load(bind(idx['files']['integrals'])) as z: integrals={k:z[k] for k in z.files}\nallobs={}; rows=[]\nfor role, rec in roles.items():\n    walk(rec['files'])\n    with np.load(bind(rec['files']['observables'])) as z: a={k:z[k] for k in z.files}\n    allobs[role]=a\n    w=a['quadrature_weights_nm3']; k0=float(a['k0']); mu=complex(a['mu_r'])\n    e=a['mode_e']*a['outgoing_boundary'][:,None]\n    h=np.cross(a['mode_k'],e)/(k0*mu)\n    sign=np.where(a['mode_keys'][:,0]=='top',1,-1)\n    signed_power=np.real(np.cross(e,h.conj()))[:,2]*sign*float(a['port_area'])/(2*float(a['incident_power']))\n    power=np.maximum(signed_power,0)\n    assert np.max(abs(power-a['per_level_power']))<=1e-12\n    reflection=float(sum(power[a['mode_keys'][:,0]=='top']))\n    transmission=float(sum(power[a['mode_keys'][:,0]=='bottom']))\n    absorption=float(.5*k0*np.sum(a['cell_epsilon'].imag[:,None]*w*np.sum(abs(a['total_E'])**2,axis=2))/float(a['incident_power']))\n    norms=[float(np.sqrt(np.sum(w*np.sum(abs(a[k])**2,axis=2)))/(k0 if 'curl' in k else 1)) for k in ('total_E','total_curl','scattered_E','scattered_curl')]\n    assert np.allclose(norms,a['physical_field_norms'],rtol=1e-12,atol=1e-14)\n    for kind in ('total','scattered'):\n        assert np.array_equal(a[kind+'_H'],a[kind+'_curl']/(1j*k0*mu))\n    rows.append(dict(role=role,R=reflection,T=transmission,A_volume=absorption,energy_closure=abs(reflection+transmission+absorption-1),minimum_unclipped_power=float(np.min(signed_power)),norms=norms))\nchannels=list(csv.DictReader((TASK/'outcomes/records/channels_v20.csv').open()))\nassert len(channels)==680\nfor r in channels:\n    a=allobs[r['role']]; key=[r[k] for k in ('side','m','n','polarization')]\n    ids=np.flatnonzero(np.all(a['mode_keys']==key,axis=1)); assert len(ids)==1\n    j=ids[0]\n    assert float(r['reference_z_nm'])==a['mode_boundary_z'][j]\n    assert float(r['power_incident_normalized'])==a['per_level_power'][j]\n    for k in ('total_projection','scattered_projection','outgoing_origin','outgoing_boundary'):\n        assert complex(float(r[k+'_real']),float(r[k+'_imag']))==a[k][j]\nsamples=list(csv.DictReader((TASK/'outcomes/records/samples_v20.csv').open()))\nassert len(samples)==12\nfor r in samples:\n    a=allobs[r['role']]; j=int(r['point'])\n    for v,axis in enumerate(('x','y','z')):\n        assert float(r[axis+'_nm'])==a['selected_points_nm'][j,v]\n        for k in ('total_E','total_H','scattered_E','scattered_H'):\n            assert complex(float(r[k+'_'+axis+'_real']),float(r[k+'_'+axis+'_imag']))==a['selected_'+k][j,v]\nregions=list(csv.DictReader((TASK/'outcomes/records/regions_v20.csv').open()))\nassert len(regions)==24\nfor r in regions:\n    ri=['all','air','substrate','grating','notch','interface_band'].index(r['region'])\n    qi=['total_E','total_scaled_curl','scattered_E','scattered_scaled_curl'].index(r['quantity'])\n    raw=integrals[r['pair']+'_q15'][ri,qi]\n    expected=[np.sqrt(raw[0]),np.sqrt(raw[2]),np.sqrt(raw[1]),max(np.sqrt(raw[1]),1e-12),np.sqrt(raw[0])/max(np.sqrt(raw[1]),1e-12)]\n    for k,v in zip(('absolute','candidate_norm','original_reference_norm','denominator','relative'),expected): assert abs(float(r[k])-v)<=1e-13*max(abs(v),1e-24)\nfirst=integrals['O3_vs_E3_q15']; second=integrals['O3_vs_E3_q30']\ndrift=float(np.max(abs(second-first)/np.maximum(abs(second),1e-24)))\n# Refresh the full repository index after compaction, without claiming a new semantic review.\ninventory=json.loads((ROOT/'tmp/task42extra/review_v20_repository_structure.json').read_text())\nchanges=[p['path'] for p in inventory if sha(ROOT/p['path'])!=p['sha256']]\nassert not changes,changes\n# Per-run ABI hash was not captured; preserve that limitation.\nresult=dict(schema='review_v20.raw_physics_audit.v1',input_head=subprocess.check_output(['git','rev-parse','HEAD']).decode().strip(),\n    bound_files=len(checked),bindings=checked,physics=rows,all_csv_recomputed=dict(channels=680,samples=12,regions=24),\n    common_subcell_squared_integral_drift=drift,full_repository_unchanged_files=len(inventory),\n    FE_solve_factor_training=0,saved_fields_unchanged=True,qualified_new_field=False,\n    worker_seconds=time.monotonic()-start)\nOUT.write_text(json.dumps(result,indent=2)+'\\n')\nprint(json.dumps({k:v for k,v in result.items() if k!='bindings'},indent=2))\n"
+  },
+  "reviewer_checks": [
+    {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v20_saved_audit_20261004T041435299897Z/summary.json",
+        "sha256": "5f594d8294663970e957c9135d68c289a55c0e5e8ebdaab2b41c618fa4c598e1",
+        "bytes": 1898
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 240.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 98447360,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2139620888576,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2139620888576,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 8,
+        "elapsed_seconds": 3.5633320760680363,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v20_port_backsub_20261004T042506256303Z/summary.json",
+        "sha256": "c8996486385137638fac3aee80914bdbfd6af8eee46d1e6b80c0fbb1289e7cdf",
+        "bytes": 1897
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 95420416,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2139649572864,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2139649572864,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 7,
+        "elapsed_seconds": 3.058278089039959,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    },
+    {
+      "summary": {
+        "path": "tmp/task42extra/checks/review_v20_physics_audit_20261004T042838086880Z/summary.json",
+        "sha256": "2537642bec69e632f3f4568a40137f5d256ce13e9091938166942ca0e758fe34",
+        "bytes": 1899
+      },
+      "measurement": {
+        "sampled_root_identity": null,
+        "workflow_deadline_seconds": 300.0,
+        "solve_deadline_seconds": null,
+        "time_limit_mode": "bounded",
+        "resource_stop_policy": "legacy",
+        "rss_hard_limit_bytes": 2147483648,
+        "rss_warning_bytes": 1879048192,
+        "startup_headroom_bytes": null,
+        "swap_policy": "legacy_stop",
+        "global_swap_delta_policy": "observe_only",
+        "cache_metadata_stable": true,
+        "classification": "COMPLETED",
+        "leader_exit_code": 0,
+        "descendants_cleared": true,
+        "remaining_child_pids": [],
+        "observed_child_pids": [
+          51
+        ],
+        "sampled_process_tree_rss_peak_bytes": 143785984,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+        "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+        "global_swap_activity": {
+          "scope": "WSL-global diagnostic, not dedicated job",
+          "baseline": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "end": {
+            "pswpin_pages": 3139063,
+            "pswpout_pages": 5146004
+          },
+          "delta": {
+            "pswpin_pages": 0,
+            "pswpout_pages": 0
+          }
+        },
+        "job_swap_activity": "zero_supported_by_zero_global_activity",
+        "launch_envelope": {
+          "mem_total_bytes": 2163100385280,
+          "mem_available_bytes": 2139628314624,
+          "effective_total_bytes": 2163100385280,
+          "effective_available_bytes": 2139628314624,
+          "reserve_bytes": 628626898944,
+          "launch_cap_bytes": 2147483648,
+          "planning_cap_bytes": 2147483648,
+          "cgroup_limits": [],
+          "system_reserve_bytes": 216310038528,
+          "neighbor_growth_allowance_bytes": 412316860416,
+          "shared_workstation": true
+        },
+        "samples": 8,
+        "elapsed_seconds": 3.5619411789812148,
+        "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_state": "development_worktree; not formal PDE provenance"
+      }
+    }
+  ],
+  "reviewer_operations": {
+    "new_FE_assembly": 0,
+    "new_Maxwell_solve": 0,
+    "new_factor": 0,
+    "training": 0,
+    "saved_volume_actions": 4,
+    "exact_port_reconstruction_roles": 2
+  },
+  "full_review_wall": "UNKNOWN_NO_CONTINUOUS_PARENT_START_CAPTURE; read/search/reasoning/Git/render not replaced by sum of short checks",
+  "evidence_limits": [
+    "All 4717 tracked files hashed/navigation refreshed, not all lines semantically re-reviewed",
+    "Exact binary products and Decimal90 operate on frozen binary64 inputs; no high-precision physical field claimed",
+    "New alpha diagnostics were not published as qualified fields; old recovery failures remain",
+    "p6 trace-support location is an observed pattern; topological zero proof deferred to authorized V21",
+    "V20 physical air flux completed after B/C; complete pre-B qualification not granted retroactively",
+    "V20 ABI record hash observed after runs, not a per-run captured content binding",
+    "Whole-project exact cost remains unknown including historical unmeasured tails"
+  ],
+  "accepted_delivery_not_solution": true,
+  "statuses": [
+    "FEINN_MAIN_SOLVER_ON_HOLD",
+    "NO_VERIFIED_NN_INCREMENT",
+    "FULL_TARGET_NOT_QUALIFIED"
+  ],
+  "next_batch": {
+    "response": "response_v21.md",
+    "whole_wall_seconds": 43200,
+    "final_delivery_reserve_seconds": 1800,
+    "new_B_lifecycles_max": 5,
+    "formal_bug_repair_rounds_max": 2,
+    "training_allowed": false
+  },
+  "final_target": {
+    "original_dimensions_nm": [
+      50,
+      25,
+      140
+    ],
+    "wavelength_nm": 0.7,
+    "full_3D": true,
+    "whole_machine_memory_decimal_bytes": 2000000000000,
+    "whole_required_workflow_seconds": 172800,
+    "own_swap_bytes": 0,
+    "OOC_bytes": 0
+  },
+  "publication": {
+    "render": "PENDING_AFTER_FIRST_PUSH",
+    "notifications_sent": 0,
+    "merge_approval": false,
+    "local_page_check": {
+      "path": "docs/task042extra_feinn_5nm/review_report_v20.md",
+      "sha256": "8b934f9d2e1347f88280ab892937f3d2a94b6ba4ede52a6eb35b12fa39569ac3",
+      "checked_scope": "entire page",
+      "markdown_tables": 7,
+      "parsed_tables": 7,
+      "math_fences": 0,
+      "links": 11
+    },
+    "remote_recheck_before_first_commit": {
+      "FEINN": "f5ae072d09816b899002fc45460dc4cd1840e1af",
+      "main": "d68f5688e6d166aa6a2bc4b6a0dd015f9e31c77b",
+      "dot": "077ec9c8386c976da232093779279fb9d1a93033"
+    }
+  }
+}
