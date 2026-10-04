@@ -110,7 +110,7 @@ def recover(folder, ranks):
     V, mpc = create_distributed_patch(patch["description"], target_config()[0], comm)
     bridge = native_bridge(V, mpc, lit)
     actor = SavedRecoveryConsumer(
-        comm, lit, numbering, classes, bridge, saved["C_native"], saved["D_native"]
+        comm, lit, numbering, classes, bridge, saved["C_adapter"], saved["D_adapter"]
     )
     geometry_seconds = perf_counter() - began
     own = actor.owned_ids
@@ -280,6 +280,8 @@ def recover(folder, ranks):
             "live_consumer_source": sha(
                 ROOT / "src/solvers/distributed_saved_recovery.py"
             ),
+            "production_port_fields": ["V40.C_adapter", "V40.D_adapter"],
+            "independent_port_oracle_fields": ["V40.C_native", "V40.D_native"],
         },
         name="recovery",
     )

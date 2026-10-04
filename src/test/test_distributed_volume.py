@@ -225,6 +225,23 @@ def test_current_mpi_consumer_abi_and_live_producer_packet_identity():
     # Real immutable geometry plus current physics; no saved self-identity.
     packet, _ = producer_store()
     assert packet.dependencies == dependencies()
+    # Production V40 uses the exact literal trace carrier. Native form
+    # quadrature is an independent oracle and may have roundoff interiors.
+    _, saved = packet.read("recovery")
+    _, numbering = packet.read("system")
+    interiors = numbering["cell_interior"]
+    assert np.all(saved["C_adapter"][interiors] == 0)
+    assert np.all(saved["D_adapter"][:, interiors] == 0)
+    assert (
+        np.linalg.norm(saved["C_native"] - saved["C_adapter"])
+        / np.linalg.norm(saved["C_native"])
+        <= 1e-10
+    )
+    assert (
+        np.linalg.norm(saved["D_native"] - saved["D_adapter"])
+        / np.linalg.norm(saved["D_native"])
+        <= 1e-10
+    )
 
 
 def test_saved_owner_consumer_nonhermitian_nonmutual_ports_and_affine_rhs():
